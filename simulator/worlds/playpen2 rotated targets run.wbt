@@ -1,0 +1,161 @@
+#VRML_SIM V8.5 utf8
+CozmoEngine2 {
+  hidden linearVelocity_0 -5.32556e-12 -1.24015e-11 -1.24786e-12
+  hidden angularVelocity_0 -1.3048e-08 9.92617e-09 5.39475e-09
+  translation -0.012997555 -0.070000181 0.048990882
+  rotation 4.4416557e-06 -1 -1.8366746e-06 0.78394309
+  filterLogs TRUE
+}
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.56867819 0.49108445 0.65987966 4.4881295
+  position -1.0978444 -0.016952511 0.52363553
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+  xSize 2
+  ySize 2
+}
+DEF Cozmo_1 CozmoBot2 {
+  hidden position_0_2 -0.0100104
+  hidden linearVelocity_0 2.9619e-15 -1.21226e-11 -3.50257e-17
+  hidden angularVelocity_0 3.39188e-14 3.54156e-14 -2.67812e-11
+  hidden translation_17 3.6876821e-12 -2.7206015e-13 -7.4089368e-08
+  hidden rotation_17 -1.9529747e-16 1 1.46042e-16 -0.78399286
+  hidden linearVelocity_17 3.0946e-13 -1.24055e-11 -8.30561e-14
+  hidden angularVelocity_17 3.52576e-14 4.86492e-10 -2.67795e-11
+  hidden translation_29 3.3758413e-13 -5.2263749e-14 -2.567755e-08
+  hidden rotation_29 -5.7343577e-14 1 -2.7409916e-13 0.010007501
+  hidden position_29_0 -0.010009
+  hidden linearVelocity_29 5.54835e-15 -1.25211e-11 1.69335e-13
+  hidden angularVelocity_29 3.45791e-14 1.40336e-12 -2.67815e-11
+  hidden translation_30 2.0118866e-10 -3.1780134e-14 -2.0097096e-08
+  hidden rotation_30 1.6191025e-14 1 -1.126511e-15 -0.010006758
+  hidden linearVelocity_30 6.8107e-14 -1.3388e-11 3.3476e-13
+  hidden angularVelocity_30 3.48709e-14 -9.11814e-13 -2.67813e-11
+  hidden translation_32 1.0811282e-12 -5.2263749e-14 -2.7861718e-09
+  hidden rotation_32 -5.7375892e-14 1 -2.730988e-13 0.010008207
+  hidden position_32_0 -0.0100097
+  hidden linearVelocity_32 1.38721e-14 -1.25209e-11 1.66861e-13
+  hidden angularVelocity_32 3.48495e-14 -5.15124e-12 -2.67815e-11
+  translation 2.0793106e-08 -0.070000002 0.00029030884
+  rotation 0.073576331 0.99728959 -7.5406679e-06 4.9908503e-05
+  name "CozmoBot_1"
+  headAngle 0.783999
+  liftAngle -0.0100097
+  filterLogs TRUE
+}
+WebotsKeyboardController {
+  robotVolume 0
+  behaviorName "lookAround"
+  userName "Billy"
+  filterLogs TRUE
+  autoConnect FALSE
+}
+CozmoVizDisplay {
+  filterLogs TRUE
+}
+Transform {
+  translation 0.087 -0.002 -0.047971296
+  rotation 0 -1 0 0.99483767
+  children [
+    Transform {
+      translation 0.1 -0.1244 0.068
+      rotation 0 0 1 0.78540031
+      children [
+        CalibrationMarkerStructure {
+          hidden translation_1 -2.7104404e-06 2.7104521e-06 -2.4892766e-06
+          hidden rotation_1 0 1 0 0
+          hidden translation_2 0.01999729 0.02000271 -2.4892766e-06
+          hidden rotation_2 0 1 0 0
+          hidden translation_3 0.03999729 0.04000271 -2.4892766e-06
+          hidden rotation_3 0 1 0 0
+          hidden translation_4 0.05999729 0.06000271 -2.4892766e-06
+          hidden rotation_4 0 1 0 0
+          hidden translation_5 0.07999729 0.08000271 -2.4892766e-06
+          hidden rotation_5 0 1 0 0
+          hidden translation_6 0.09999729 0.10000271 -2.4892766e-06
+          hidden rotation_6 0 1 0 0
+          translation 0 -0.02 0.03
+          numCubes 6
+          listOfMarkers "\"\", \"customSDK/SDK_3Circles.png\", \"\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"\", \"symbols/arrow.png\",\"\","
+        }
+        CalibrationMarkerStructure {
+          hidden translation_1 -2.7104404e-06 2.7104521e-06 -2.4892766e-06
+          hidden rotation_1 0 1 0 0
+          hidden translation_2 0.01999729 0.02000271 -2.4892766e-06
+          hidden rotation_2 0 1 0 0
+          hidden translation_3 0.03999729 0.04000271 -2.4892766e-06
+          hidden rotation_3 0 1 0 0
+          hidden translation_4 0.05999729 0.06000271 -2.4892766e-06
+          hidden rotation_4 0 1 0 0
+          hidden translation_5 0.07999729 0.08000271 -2.4892766e-06
+          hidden rotation_5 0 1 0 0
+          hidden translation_6 0.09999729 0.10000271 -2.4892766e-06
+          hidden rotation_6 0 1 0 0
+          hidden translation_7 0.11999729 0.12000271 -2.4892766e-06
+          hidden rotation_7 0 1 0 0
+          translation 0 -0.04 0.05
+          numCubes 7
+          listOfMarkers "\"\", \"customSDK/SDK_5Hexagons.png\", \"\", \"customSDK/SDK_3Triangles.png\", \"customSDK/SDK_4Triangles.png\", \"customSDK/SDK_5Triangles.png\", \"symbols/bullseye2.png\", \"symbols/star5.png, \"lightCubes/lightCubeK_top.png\", \"lightCubes/lightCubeJ_front.png, \"customSDK/SDK_2Circles.png\", \"\",\"customSDK/SDK_4Hexagons.png\",\"\","
+        }
+        CalibrationMarkerStructure {
+          hidden translation_1 -2.7104404e-06 2.7104521e-06 -2.4892766e-06
+          hidden rotation_1 0 1 0 0
+          hidden translation_2 0.01999729 0.02000271 -2.4892766e-06
+          hidden rotation_2 0 1 0 0
+          hidden translation_3 0.03999729 0.04000271 -2.4892766e-06
+          hidden rotation_3 0 1 0 0
+          hidden translation_4 0.05999729 0.06000271 -2.4892766e-06
+          hidden rotation_4 0 1 0 0
+          hidden translation_5 0.07999729 0.08000271 -2.4892766e-06
+          hidden rotation_5 0 1 0 0
+          hidden translation_6 0.09999729 0.10000271 -2.4892766e-06
+          hidden rotation_6 0 1 0 0
+          hidden translation_7 0.11999729 0.12000271 -2.4892766e-06
+          hidden rotation_7 0 1 0 0
+          hidden translation_8 0.13999729 0.14000271 -2.4892766e-06
+          hidden rotation_8 0 1 0 0
+          translation 0 -0.06 0.07
+          numCubes 8
+          listOfMarkers "\"\", \"customSDK/SDK_2Triangles.png\", \"\", \"lightCubes/lightCubeJ_bottom.png\", \"\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"customSDK/SDK_3Hexagons.png\", \"lightCubes/lightCubeJ_back.png\", \"\",\"customSDK/SDK_4Circles.png\",\"\","
+        }
+        CalibrationMarkerStructure {
+          hidden translation_1 -2.7104404e-06 2.7104521e-06 -2.4892766e-06
+          hidden rotation_1 0 1 0 0
+          hidden translation_2 0.01999729 0.02000271 -2.4892766e-06
+          hidden rotation_2 0 1 0 0
+          hidden translation_3 0.03999729 0.04000271 -2.4892766e-06
+          hidden rotation_3 0 1 0 0
+          hidden translation_4 0.05999729 0.06000271 -2.4892766e-06
+          hidden rotation_4 0 1 0 0
+          hidden translation_5 0.07999729 0.08000271 -2.4892766e-06
+          hidden rotation_5 0 1 0 0
+          listOfMarkers "\"\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"\","
+        }
+      ]
+      rotationStep 0.01
+    }
+  ]
+}

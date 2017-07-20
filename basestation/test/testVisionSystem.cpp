@@ -30,10 +30,16 @@
 #include "gtest/gtest.h"
 #include "json/json.h"
 
-//#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+
+#include "anki/common/basestation/colorRGBA.h"
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
+TEST(VisionSystem, rando)
+{
+  PRINT_NAMED_WARNING("", "here");
+}
 
 TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
 {
@@ -80,15 +86,19 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
    visible when rotation are applied (rotate 45degree on Z and then -30 degree in Y in this origin)
   */
 
-  const Anki::Quad3f originsFrontFace({{12.5, -22, -12.5},
+  const Anki::Quad3f originsFrontFace({
+    {-12.5, -22, 12.5},
     {-12.5, -22, -12.5},
     {12.5, -22, 12.5},
-    {-12.5, -22, 12.5}});
+    {12.5, -22, -12.5}
+    });
   
-  const Anki::Quad3f originsLeftFace({{-22, -12.5, -12.5},
+  const Anki::Quad3f originsLeftFace({
+    {-22, 12.5, 12.5},
     {-22, 12.5, -12.5},
     {-22, -12.5, 12.5},
-    {-22, 12.5, 12.5}});
+    {-22, -12.5, -12.5}
+    });
   
   auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace](bool isFrontFace,
                                  int numCubesRightOfOrigin,
@@ -109,12 +119,13 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
   std::map<Anki::Vision::MarkerType, Anki::Quad3f> _markerTo3dCoords;
   
+  // Bottom row of cubes
   _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT] = GetCoordsForFace(true, 0, 0, 0);
   
   _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT] = GetCoordsForFace(false, 1, -1, 0);
   _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_FRONT] = GetCoordsForFace(true, 1, -1, 0);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BOTTOM] = GetCoordsForFace(false, 2, -2, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(false, 2, -2, 0);
   _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK] = GetCoordsForFace(true, 2, -2, 0);
   
   _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP] = GetCoordsForFace(false, 3, -3, 0);
@@ -122,71 +133,170 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
   _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT] = GetCoordsForFace(false, 4, -4, 0);
   
+  // Second row of cubes
+  _markerTo3dCoords[Anki::Vision::MARKER_ARROW] = GetCoordsForFace(true, 0, 1, 1);
   
-  Anki::Cozmo::VisionSystem visionSystem(cozmoContext);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS] = GetCoordsForFace(true, 1, 0, 1);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5DIAMONDS] = GetCoordsForFace(false, 2, -1, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS] = GetCoordsForFace(true, 2, -1, 1);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS] = GetCoordsForFace(false, 3, -2, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS] = GetCoordsForFace(true, 3, -2, 1);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5CIRCLES] = GetCoordsForFace(false, 4, -3, 1);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES] = GetCoordsForFace(false, 5, -4, 1);
+  
+  // Third row of cubes
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS] = GetCoordsForFace(true, 0, 2, 2);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES] = GetCoordsForFace(true, 1, 1, 2);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT] = GetCoordsForFace(false, 2, 0, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(true, 2, 0, 2);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_STAR5] = GetCoordsForFace(false, 3, -1, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_BULLSEYE2] = GetCoordsForFace(true, 3, -1, 2);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES] = GetCoordsForFace(false, 4, -2, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES] = GetCoordsForFace(true, 4, -2, 2);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES] = GetCoordsForFace(false, 5, -3, 2);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS] = GetCoordsForFace(false, 6, -4, 2);
+  
+  // Fourth row of cubes
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES] = GetCoordsForFace(true, 0, 3, 3);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK] = GetCoordsForFace(true, 1, 2, 3);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT] = GetCoordsForFace(true, 2, 1, 3);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT] = GetCoordsForFace(false, 3, 0, 3);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT] = GetCoordsForFace(true, 3, 0, 3);
+
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 4, -1, 3);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK] = GetCoordsForFace(true, 4, -1, 3);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP] = GetCoordsForFace(false, 5, -2, 3);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 6, -3, 3);
+  
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES] = GetCoordsForFace(false, 7, -4, 3);
+  
+  Anki::Cozmo::VisionSystem* visionSystem = new Anki::Cozmo::VisionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
-  Anki::Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
+  Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-//  Anki::Vision::CameraCalibration calib(720,1280,290.f,290.f,160.f,120.f,0.f);
-//  result = visionSystem.UpdateCameraCalibration(calib);
-//  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-//  
-//  // Turn on _only_ marker detection
-//  result = visionSystem.SetNextMode(Anki::Cozmo::VisionMode::Idle, true);
-//  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-//  
-//  result = visionSystem.SetNextMode(Anki::Cozmo::VisionMode::DetectingMarkers, true);
-//  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-//  
-//  // Make sure we run on every frame
-//  result = visionSystem.PushNextModeSchedule(Anki::Cozmo::AllVisionModesSchedule({{Anki::Cozmo::VisionMode::DetectingMarkers, Anki::Cozmo::VisionModeSchedule(1)}}));
-//  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-//
-//  Anki::Vision::ImageCache imageCache;
-//  
-//  Anki::Vision::ImageRGB img;
-//  result = img.Load("/Users/alchaussee/Desktop/images_29515_0.jpg");
-//  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-//  
-//  imageCache.Reset(img);
-//  
-//  Anki::Cozmo::VisionPoseData robotState; // not needed just to detect markers
-//  result = visionSystem.Update(robotState, imageCache);
-//  ASSERT_EQ(Anki::Result::RESULT_OK, result);
-//  
-//  Anki::Cozmo::VisionProcessingResult processingResult;
-//  bool resultAvailable = visionSystem.CheckMailbox(processingResult);
-//  EXPECT_TRUE(resultAvailable);
+  //fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000
+  Anki::Vision::CameraCalibration calib(720,1280,507.8f,507.8f,639.5f,359.5f,0.f);
+  result = visionSystem->UpdateCameraCalibration(calib);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  // Turn on _only_ marker detection
+  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::Idle, true);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::DetectingMarkers, true);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  // Make sure we run on every frame
+  result = visionSystem->PushNextModeSchedule(Anki::Cozmo::AllVisionModesSchedule({{Anki::Cozmo::VisionMode::DetectingMarkers, Anki::Cozmo::VisionModeSchedule(1)}}));
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+
+  Anki::Vision::ImageCache imageCache;
+  
+  Anki::Vision::ImageRGB img;
+  
+  result = img.Load("/Users/alchaussee/Desktop/images_20265_0.jpg"); //really warped
+//  result = img.Load("/Users/alchaussee/Desktop/images_34975_1.jpg"); //warped and back
+//  result = img.Load("/Users/alchaussee/Desktop/images_15440_1.jpg"); //warped
+//  result = img.Load("/Users/alchaussee/Desktop/images_12905_1.jpg"); // Unwarped
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  imageCache.Reset(img);
+  
+  Anki::Cozmo::VisionPoseData robotState; // not needed just to detect markers
+  result = visionSystem->Update(robotState, imageCache);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  Anki::Cozmo::VisionProcessingResult processingResult;
+  bool resultAvailable = visionSystem->CheckMailbox(processingResult);
+  EXPECT_TRUE(resultAvailable);
+  
+  std::vector<cv::Vec2f> imgPts;
+  std::vector<cv::Vec3f> worldPts;
+  std::set<Anki::Vision::Marker::Code> codes;
+  for(const auto& marker : processingResult.observedMarkers)
+  {
+    PRINT_NAMED_WARNING("", "%s", marker.GetCodeName());
+    ASSERT_TRUE(codes.count(marker.GetCode()) == 0);
+    codes.insert(marker.GetCode());
+    const auto& iter = _markerTo3dCoords.find(static_cast<Anki::Vision::MarkerType>(marker.GetCode()));
+    
+    if(iter != _markerTo3dCoords.end())
+    {
+      const auto& corners = marker.GetImageCorners();
+    
+      imgPts.push_back({corners.GetTopLeft().x(),
+                        corners.GetTopLeft().y()});
+      worldPts.push_back({iter->second.GetTopLeft().x(),
+                          iter->second.GetTopLeft().y(),
+                          iter->second.GetTopLeft().z()});
+      
+      imgPts.push_back({corners.GetTopRight().x(), corners.GetTopRight().y()});
+      worldPts.push_back({iter->second.GetTopRight().x(), iter->second.GetTopRight().y(), iter->second.GetTopRight().z()});
+      
+      imgPts.push_back({corners.GetBottomLeft().x(), corners.GetBottomLeft().y()});
+      worldPts.push_back({iter->second.GetBottomLeft().x(), iter->second.GetBottomLeft().y(), iter->second.GetBottomLeft().z()});
+      
+      imgPts.push_back({corners.GetBottomRight().x(), corners.GetBottomRight().y()});
+      worldPts.push_back({iter->second.GetBottomRight().x(), iter->second.GetBottomRight().y(), iter->second.GetBottomRight().z()});
+    }
+  }
   
   
+  for(int i =0; i < imgPts.size(); ++i)
+  {
+    auto p = imgPts[i];
+    img.DrawFilledCircle({p[0], p[1]}, Anki::NamedColors::RED, 2);
+    
+    auto w = worldPts[i];
+    std::stringstream ss;
+    ss << w[0] << " " << w[1] << " " << w[2];
+    img.DrawText({p[0], p[1]}, ss.str(), Anki::NamedColors::RED, 0.3);
+  }
   
-  /*
-  std::vector<std::vector<cv::Vec2f>> imgPts = {{
-                             {keypoints[0].pt.x, keypoints[0].pt.y},
-                             {keypoints[1].pt.x, keypoints[1].pt.y},
-                             {keypoints[2].pt.x, keypoints[2].pt.y},
-                             {keypoints[3].pt.x, keypoints[3].pt.y},
-                             {keypoints[4].pt.x, keypoints[4].pt.y},
-                             {keypoints[5].pt.x, keypoints[5].pt.y},
-                             {keypoints[6].pt.x, keypoints[6].pt.y},
-                             {keypoints[7].pt.x, keypoints[7].pt.y}}};
+  img.Display("");
+  cv::waitKey();
   
-//  float x = 0.005 * cos(DEG_TO_RAD(13.8));
-//  float z = 0.005 * sin(DEG_TO_RAD(13.8));
-  float x = 0.005 * cos(DEG_TO_RAD(9.2));
-  float z = 0.005 * sin(DEG_TO_RAD(9.2));
-  std::vector<std::vector<cv::Vec3f>> worldPts = {{
-                               {0.1f-x,   0.03, 0.1f-z},
-                               {0.1f-x,  -0.03, 0.09f-z},
-                               {0.2f-x,   0.03, 0.1f-z},
-                               {0.2f-x,  -0.03, 0.08f-z},
-                               {0.15f-x,  0.03, 0.06f-z},
-                               {0.15f-x, -0.03, 0.05f-z},
-                               {0.12f-x,  0,    0.04f-z},
-                               {0.16f-x,  0,    0.02f-z}}};
+//  std::vector<std::vector<cv::Vec2f>> imgPts = {{
+//                             {keypoints[0].pt.x, keypoints[0].pt.y},
+//                             {keypoints[1].pt.x, keypoints[1].pt.y},
+//                             {keypoints[2].pt.x, keypoints[2].pt.y},
+//                             {keypoints[3].pt.x, keypoints[3].pt.y},
+//                             {keypoints[4].pt.x, keypoints[4].pt.y},
+//                             {keypoints[5].pt.x, keypoints[5].pt.y},
+//                             {keypoints[6].pt.x, keypoints[6].pt.y},
+//                             {keypoints[7].pt.x, keypoints[7].pt.y}}};
+//  
+////  float x = 0.005 * cos(DEG_TO_RAD(13.8));
+////  float z = 0.005 * sin(DEG_TO_RAD(13.8));
+//  float x = 0.005 * cos(DEG_TO_RAD(9.2));
+//  float z = 0.005 * sin(DEG_TO_RAD(9.2));
+//  std::vector<std::vector<cv::Vec3f>> worldPts = {{
+//                               {0.1f-x,   0.03, 0.1f-z},
+//                               {0.1f-x,  -0.03, 0.09f-z},
+//                               {0.2f-x,   0.03, 0.1f-z},
+//                               {0.2f-x,  -0.03, 0.08f-z},
+//                               {0.15f-x,  0.03, 0.06f-z},
+//                               {0.15f-x, -0.03, 0.05f-z},
+//                               {0.12f-x,  0,    0.04f-z},
+//                               {0.16f-x,  0,    0.02f-z}}};
   
   cv::Mat_<double> D = cv::Mat::zeros(8, 1, CV_64F);
   std::vector<cv::Mat_<double>> R2;
@@ -194,12 +304,17 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   std::vector<cv::Mat_<double>> T2;
   T2.push_back(cv::Mat::zeros(3,3,CV_64F));
   
+//  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
   cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
-                          100, 0, 160,
-                          0, 100, 120,
+                          507, 0, 639,
+                          0, 507, 359,
                           0, 0, 1);
   
-  cv::calibrateCamera(worldPts, imgPts, cv::Size(img.cols, img.rows),
+  std::vector<std::vector<cv::Vec2f>> imgPts2;
+  std::vector<std::vector<cv::Vec3f>> worldPts2;
+  imgPts2.push_back(imgPts);
+  worldPts2.push_back(worldPts);
+  cv::calibrateCamera(worldPts2, imgPts2, cv::Size(img.GetNumCols(), img.GetNumRows()),
                       K2, D, R2, T2,
                       cv::CALIB_USE_INTRINSIC_GUESS);
   
@@ -210,7 +325,6 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   std::stringstream ss1;
   ss1 << D << std::endl;
   PRINT_NAMED_WARNING("D", "%s", ss1.str().c_str());
-  */
 }
 
 TEST(VisionSystem, MarkerDetectionTests)

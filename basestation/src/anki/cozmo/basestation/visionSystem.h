@@ -380,7 +380,7 @@ namespace Cozmo {
     bool                          _isReadingToolCode;
     
     // Calibration stuff
-    static const u32              _kMinNumCalibImagesRequired = 4;
+    static const u32              _kMinNumCalibImagesRequired = 1;
     std::vector<CalibImage>       _calibImages;
     bool                          _isCalibrating = false;
     std::vector<Pose3d>           _calibPoses;
@@ -464,6 +464,7 @@ namespace Cozmo {
     Result ReadToolCode(const Vision::Image& image);
     
     Result ComputeCalibration();
+    Result ComputeCalibrationSingleImage();
     
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,

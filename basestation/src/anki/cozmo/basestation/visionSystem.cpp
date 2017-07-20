@@ -78,6 +78,8 @@
 #define DRAW_TOOL_CODE_DEBUG 0
 #define DRAW_CALIB_IMAGES 0
 
+#define DO_SINGLE_IMAGE_CALIB 1
+
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
 #endif
@@ -2350,7 +2352,8 @@ namespace Cozmo {
     
     if(ShouldProcessVisionMode(VisionMode::ComputingCalibration) && _calibImages.size() >= _kMinNumCalibImagesRequired)
     {
-      if((lastResult = ComputeCalibration()) != RESULT_OK) {
+      lastResult = (DO_SINGLE_IMAGE_CALIB ? ComputeCalibrationSingleImage() : ComputeCalibration());
+      if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
         return lastResult;
       }
@@ -3162,6 +3165,251 @@ namespace Cozmo {
     const f64 reprojErrThresh_pix = 0.5;
     if (rms > reprojErrThresh_pix) {
       PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
+                    "%f > %f", rms, reprojErrThresh_pix);
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
+  }
+  
+  Result VisionSystem::ComputeCalibrationSingleImage()
+  {
+    Vision::CameraCalibration calibration;
+    _isCalibrating = true;
+    
+    // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
+    // no matter how we return from this function
+    Util::CleanupHelper disableComputingCalibration([this,&calibration]() {
+      PRINT_NAMED_WARNING("", "here");
+      _currentResult.cameraCalibrations.push_back(calibration);
+      this->EnableMode(VisionMode::ComputingCalibration, false);
+      _isCalibrating = false;
+    });
+    
+    // Check that there are enough images
+    if (_calibImages.size() < _kMinNumCalibImagesRequired) {
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NotEnoughImages",
+                    "Got %u. Need %u.", (u32)_calibImages.size(), _kMinNumCalibImagesRequired);
+      return RESULT_FAIL;
+    }
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)_calibImages.size());
+    
+    std::map<Anki::Vision::MarkerType, Anki::Quad3f> _markerTo3dCoords;
+    
+    {
+      const Anki::Quad3f originsFrontFace({
+        {-12.5, -22, 12.5},
+        {-12.5, -22, -12.5},
+        {12.5, -22, 12.5},
+        {12.5, -22, -12.5}
+      });
+      
+      const Anki::Quad3f originsLeftFace({
+        {-22, 12.5, 12.5},
+        {-22, 12.5, -12.5},
+        {-22, -12.5, 12.5},
+        {-22, -12.5, -12.5}
+      });
+      
+      auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace](bool isFrontFace,
+                                                                    int numCubesRightOfOrigin,
+                                                                    int numCubesAwayRobotFromOrigin,
+                                                                    int numCubesAboveOrigin)
+      {
+        
+        Anki::Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
+        
+        Anki::Pose3d p;
+        p.SetTranslation({44.f * numCubesRightOfOrigin,
+          44.f * numCubesAwayRobotFromOrigin,
+          44.f * numCubesAboveOrigin});
+        
+        p.ApplyTo(whichFace, whichFace);
+        return whichFace;
+      };
+      
+      // Bottom row of cubes
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT] = GetCoordsForFace(true, 0, 0, 0);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT] = GetCoordsForFace(false, 1, -1, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_FRONT] = GetCoordsForFace(true, 1, -1, 0);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(false, 2, -2, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK] = GetCoordsForFace(true, 2, -2, 0);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP] = GetCoordsForFace(false, 3, -3, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_RIGHT] = GetCoordsForFace(true, 3, -3, 0);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT] = GetCoordsForFace(false, 4, -4, 0);
+      
+      // Second row of cubes
+      _markerTo3dCoords[Anki::Vision::MARKER_ARROW] = GetCoordsForFace(true, 0, 1, 1);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS] = GetCoordsForFace(true, 1, 0, 1);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5DIAMONDS] = GetCoordsForFace(false, 2, -1, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS] = GetCoordsForFace(true, 2, -1, 1);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS] = GetCoordsForFace(false, 3, -2, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS] = GetCoordsForFace(true, 3, -2, 1);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5CIRCLES] = GetCoordsForFace(false, 4, -3, 1);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES] = GetCoordsForFace(false, 5, -4, 1);
+      
+      // Third row of cubes
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS] = GetCoordsForFace(true, 0, 2, 2);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES] = GetCoordsForFace(true, 1, 1, 2);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT] = GetCoordsForFace(false, 2, 0, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(true, 2, 0, 2);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_STAR5] = GetCoordsForFace(false, 3, -1, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_BULLSEYE2] = GetCoordsForFace(true, 3, -1, 2);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES] = GetCoordsForFace(false, 4, -2, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES] = GetCoordsForFace(true, 4, -2, 2);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES] = GetCoordsForFace(false, 5, -3, 2);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS] = GetCoordsForFace(false, 6, -4, 2);
+      
+      // Fourth row of cubes
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES] = GetCoordsForFace(true, 0, 3, 3);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK] = GetCoordsForFace(true, 1, 2, 3);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT] = GetCoordsForFace(true, 2, 1, 3);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT] = GetCoordsForFace(false, 3, 0, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT] = GetCoordsForFace(true, 3, 0, 3);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 4, -1, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK] = GetCoordsForFace(true, 4, -1, 3);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP] = GetCoordsForFace(false, 5, -2, 3);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 6, -3, 3);
+      
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES] = GetCoordsForFace(false, 7, -4, 3);
+    }
+    
+    std::vector<cv::Vec2f> imgPts;
+    std::vector<cv::Vec3f> worldPts;
+    std::set<Anki::Vision::Marker::Code> codes;
+    for(const auto& marker : _currentResult.observedMarkers)
+    {
+      if(codes.count(marker.GetCode()) != 0)
+      {
+        PRINT_NAMED_ERROR("", "Observed multiple markers with code %s",
+                          marker.GetCodeName());
+        return RESULT_FAIL;
+      }
+      codes.insert(marker.GetCode());
+      const auto& iter = _markerTo3dCoords.find(static_cast<Anki::Vision::MarkerType>(marker.GetCode()));
+      
+      if(iter != _markerTo3dCoords.end())
+      {
+        const auto& corners = marker.GetImageCorners();
+        
+        imgPts.push_back({corners.GetTopLeft().x(),
+          corners.GetTopLeft().y()});
+        worldPts.push_back({iter->second.GetTopLeft().x(),
+          iter->second.GetTopLeft().y(),
+          iter->second.GetTopLeft().z()});
+        
+        imgPts.push_back({corners.GetTopRight().x(), corners.GetTopRight().y()});
+        worldPts.push_back({iter->second.GetTopRight().x(), iter->second.GetTopRight().y(), iter->second.GetTopRight().z()});
+        
+        imgPts.push_back({corners.GetBottomLeft().x(), corners.GetBottomLeft().y()});
+        worldPts.push_back({iter->second.GetBottomLeft().x(), iter->second.GetBottomLeft().y(), iter->second.GetBottomLeft().z()});
+        
+        imgPts.push_back({corners.GetBottomRight().x(), corners.GetBottomRight().y()});
+        worldPts.push_back({iter->second.GetBottomRight().x(), iter->second.GetBottomRight().y(), iter->second.GetBottomRight().z()});
+      }
+    }
+    
+    std::stringstream ss;
+    for(const auto& marker : _markerTo3dCoords)
+    {
+      if(codes.count(marker.first) == 0)
+      {
+        ss << Vision::MarkerTypeStrings[marker.first] << " ";
+      }
+    }
+    
+    std::string s = ss.str();
+    if(!s.empty())
+    {
+      PRINT_NAMED_WARNING("", "Expected to see the following markers but didnt %s",
+                          s.c_str());
+    }
+    
+    const Vision::Image& img = _calibImages[0].img;
+    
+    if (DRAW_CALIB_IMAGES)
+    {
+      Vision::ImageRGB dispImg;
+      cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
+      for(int i =0; i < imgPts.size(); ++i)
+      {
+        auto p = imgPts[i];
+        dispImg.DrawFilledCircle({p[0], p[1]}, Anki::NamedColors::RED, 2);
+      }
+      _currentResult.debugImageRGBs.push_back({"CalibImage", dispImg});
+    }
+    
+    //  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
+    cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
+                                  507, 0, 639,
+                                  0, 507, 359,
+                                  0, 0, 1);
+    
+    std::vector<cv::Vec3d> rvecs, tvecs;
+    cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
+    
+    std::vector<std::vector<cv::Vec2f>> imgPts2;
+    std::vector<std::vector<cv::Vec3f>> worldPts2;
+    imgPts2.push_back(imgPts);
+    worldPts2.push_back(worldPts);
+    const f64 rms = cv::calibrateCamera(worldPts2, imgPts2, cv::Size(img.GetNumCols(), img.GetNumRows()),
+                                        cameraMatrix, distCoeffs, rvecs, tvecs,
+                                        cv::CALIB_USE_INTRINSIC_GUESS);
+    
+    ss.str(std::string());
+    ss << cameraMatrix << std::endl;
+    PRINT_NAMED_WARNING("K", "%s", ss.str().c_str());
+    
+    ss.str(std::string());
+    ss << distCoeffs << std::endl;
+    PRINT_NAMED_WARNING("D", "%s", ss.str().c_str());
+    
+    const f64* distCoeffs_data = distCoeffs[0];
+    std::array<f32,NUM_RADIAL_DISTORTION_COEFFS> distCoeffsVec;
+    std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
+    
+    calibration = Vision::CameraCalibration(img.GetNumCols(), img.GetNumRows(),
+                                            cameraMatrix(0,0), cameraMatrix(1,1),
+                                            cameraMatrix(0,2), cameraMatrix(1,2),
+                                            0.f, // skew
+                                            distCoeffsVec);
+    
+    DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
+                   "VisionSystem.ComputeCalibration.BadCalibPoseData",
+                   "Got %zu rotations and %zu translations",
+                   rvecs.size(), tvecs.size());
+    
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.CalibValues",
+                  "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
+                  calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
+                  calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+    
+    
+    // Check if average reprojection error is too high
+    const f64 reprojErrThresh_pix = 0.5;
+    if (rms > reprojErrThresh_pix) {
+      PRINT_NAMED_WARNING("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
                     "%f > %f", rms, reprojErrThresh_pix);
       return RESULT_FAIL;
     }

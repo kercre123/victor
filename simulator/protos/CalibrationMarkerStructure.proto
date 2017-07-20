@@ -3,7 +3,7 @@
 PROTO CalibrationMarkerStructure[
   field SFString name "CalibrationMarkerStructure"
 
-  field SFVec3f       translation  0 0 0.022
+  field SFVec3f       translation  0 0 0.010
   field SFRotation    rotation     0 0 1 0
 
   field SFFloat numCubes 5
@@ -43,11 +43,13 @@ Solid {
       blockColor 1 1 1
       markerImg_front %{=markers[i+1]}%
       markerImg_left %{=markers[i+2]}%
+      width 0.020
+      markerWidth 0.015
     }
 
     %{ 
-        x = x + 0.044
-        y = y + 0.044
+        x = x + 0.020
+        y = y + 0.020
       end 
     }%
 
