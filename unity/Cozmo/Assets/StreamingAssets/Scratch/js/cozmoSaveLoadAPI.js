@@ -10,31 +10,31 @@
     // The callback has only been tested with a method on window.
     // Example: window.myCallback(userProjectList, sampleProjectList)
     window.getCozmoUserAndSampleProjectLists = function(callback) {
-        window.Unity.call(JSON.stringify({requestId: -1, command: "getCozmoUserAndSampleProjectLists", argString: callback}));
+        window.Unity.call({requestId: -1, command: "getCozmoUserAndSampleProjectLists", argString: callback});
     }
 
     // Delete the project specified by the projectUUID.
     window.deleteCozmoUserProject = function(projectUUID) {
-        window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoDeleteUserProject", argString: projectUUID}));
+        window.Unity.call({requestId: -1, command: "cozmoDeleteUserProject", argString: projectUUID});
     }
 
     // Calls Unity with projectUUID, requesting Unity to send project data to window.openCozmoUserProject()
     window.requestToOpenCozmoUserProject = function(projectUUID) {
-        window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoRequestToOpenUserProject", argString: projectUUID}));
+        window.Unity.call({requestId: -1, command: "cozmoRequestToOpenUserProject", argString: projectUUID});
     }
 
     // Calls Unity with projectUUID, requesting Unity to send project data to window.openCozmoSampleProject()
     window.requestToOpenCozmoSampleProject = function(projectUUID) {
-        window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoRequestToOpenSampleProject", argString: projectUUID}));
+        window.Unity.call({requestId: -1, command: "cozmoRequestToOpenSampleProject", argString: projectUUID});
     }
 
     // Request that workspace be presented with only a green flag on the workspace.
     window.requestToCreateCozmoProject = function() {
-        window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoRequestToCreateProject"}));
+        window.Unity.call({requestId: -1, command: "cozmoRequestToCreateProject"});
     }
 
     // Close minigame.
     window.closeCodeLab = function() {
-        window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoCloseCodeLab"}));
+        window.Unity.call({requestId: -1, command: "cozmoCloseCodeLab"});
     }
 })();

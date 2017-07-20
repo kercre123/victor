@@ -152,11 +152,8 @@
 
         window.previouslySavedProjectXML = xmlText;
 
-        // Replace double-quotes inside XML with single quotes so that we can successfully deserialize the JSON string in Unity
-        xmlText = xmlText.replace(/"/g, "'");
-
         // If we reached this far, Unity will take care of resolving the promise.
-        window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoSaveUserProject", argString: xmlText, argUUID: window.cozmoProjectUUID}));
+        window.Unity.call({requestId: -1, command: "cozmoSaveUserProject", argString: xmlText, argUUID: window.cozmoProjectUUID});
     }
 
     window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {

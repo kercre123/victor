@@ -18,7 +18,7 @@ window.Challenges = (function(){
       _injectFrame();
     }
 
-    window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoChallengesOpen"}));
+    window.Unity.call({requestId: -1, command: "cozmoChallengesOpen"});
 
     // Request a slide number to open to from Unity, to restore the same place
     // in the challenges if the user reopens challenges in this session. Retrieves
@@ -27,7 +27,7 @@ window.Challenges = (function(){
     // callback method will receive a parameter that is an int set to the the last viewed challenge page.
     // The callback has only been tested with a method on window.
     // Example: window.myCallback(lastChallengePageViewed);
-    window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoGetChallengeBookmark",argString: "window.callback_openToSlideNum"}));
+    window.Unity.call({requestId: -1, command: "cozmoGetChallengeBookmark",argString: "window.callback_openToSlideNum"});
 
     // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
     // window.callback_openToSlideNum(6);
@@ -39,7 +39,7 @@ window.Challenges = (function(){
    */
   function hide() {
     Scratch.workspace.playAudio('click');
-    window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoChallengesClose"}));
+    window.Unity.call({requestId: -1, command: "cozmoChallengesClose"});
     document.querySelector('#challenges-frame-container').style.display = 'none';
     document.querySelector('#challenges-frame').setAttribute('src', '');
   }

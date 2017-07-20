@@ -812,7 +812,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // For vertical will need to check more than just CozmoSays,
         // potentially. Also, ideally only strip out CozmoSays
         // payload, not entire JSON string.
-        logJSONStringFromJS = "SayTextAction-Redacted";
+        logJSONStringFromJS = PrivacyGuard.HidePersonallyIdentifiableInfo(logJSONStringFromJS);
       }
 
       ScratchRequest scratchRequest = null;

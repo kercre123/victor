@@ -20679,7 +20679,7 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function (args, util) {
     if (!util.stackFrame.timer) {
         var choiceString = Cast.toString(args.CHOICE);
         var colorHexValue = this._getColor(choiceString);
-        window.Unity.call(JSON.stringify({ requestId: -1, command: "cozmoSetBackpackColor", argString: choiceString, argUInt: colorHexValue }));
+        window.Unity.call({ requestId: -1, command: "cozmoSetBackpackColor", argString: choiceString, argUInt: colorHexValue });
 
         // Yield
         util.stackFrame.timer = new Timer();
@@ -20717,7 +20717,7 @@ Scratch3CozmoBlocks.prototype.driveBlocksHelper = function (args, util, command)
     // will be used as a multiplier against the base dist_mm.
     var distMultiplier = Cast.toNumber(args.DISTANCE);
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: command, argFloat: distMultiplier }));
+    window.Unity.call({ requestId: requestId, command: command, argFloat: distMultiplier });
 
     return this._promiseForCommand(requestId);
 };
@@ -20725,7 +20725,7 @@ Scratch3CozmoBlocks.prototype.driveBlocksHelper = function (args, util, command)
 Scratch3CozmoBlocks.prototype.playAnimationHelper = function (args, util, animName, isMystery) {
     isMystery = isMystery || 0; // if undefined force to 0 as a default value
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery }));
+    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery });
 
     return this._promiseForCommand(requestId);
 };
@@ -20794,7 +20794,7 @@ Scratch3CozmoBlocks.prototype.playMysteryAnimation = function (args, util) {
 Scratch3CozmoBlocks.prototype.setLiftHeight = function (args, util) {
     var liftHeight = Cast.toString(args.CHOICE);
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoForklift", argString: liftHeight }));
+    window.Unity.call({ requestId: requestId, command: "cozmoForklift", argString: liftHeight });
 
     return this._promiseForCommand(requestId);
 };
@@ -20802,28 +20802,28 @@ Scratch3CozmoBlocks.prototype.setLiftHeight = function (args, util) {
 Scratch3CozmoBlocks.prototype.setHeadAngle = function (args, util) {
     var headAngle = Cast.toString(args.CHOICE);
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoHeadAngle", argString: headAngle }));
+    window.Unity.call({ requestId: requestId, command: "cozmoHeadAngle", argString: headAngle });
 
     return this._promiseForCommand(requestId);
 };
 
 Scratch3CozmoBlocks.prototype.dockWithCube = function (args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoDockWithCube" }));
+    window.Unity.call({ requestId: requestId, command: "cozmoDockWithCube" });
 
     return this._promiseForCommand(requestId);
 };
 
 Scratch3CozmoBlocks.prototype.turnLeft = function (args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoTurnLeft" }));
+    window.Unity.call({ requestId: requestId, command: "cozmoTurnLeft" });
 
     return this._promiseForCommand(requestId);
 };
 
 Scratch3CozmoBlocks.prototype.turnRight = function (args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoTurnRight" }));
+    window.Unity.call({ requestId: requestId, command: "cozmoTurnRight" });
 
     return this._promiseForCommand(requestId);
 };
@@ -20831,7 +20831,7 @@ Scratch3CozmoBlocks.prototype.turnRight = function (args, util) {
 Scratch3CozmoBlocks.prototype.speak = function (args, util) {
     var textToSay = Cast.toString(args.STRING);
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoSays", argString: textToSay }));
+    window.Unity.call({ requestId: requestId, command: "cozmoSays", argString: textToSay });
 
     return this._promiseForCommand(requestId);
 };
@@ -20846,10 +20846,10 @@ Scratch3CozmoBlocks.prototype.speak = function (args, util) {
  */
 Scratch3CozmoBlocks.prototype._waitUntilSeeFaceHelper = function (args, util, commandName) {
     // For now pass -1 for requestId to indicate we don't need a Promise resolved.
-    window.Unity.call(JSON.stringify({ requestId: -1, command: "cozmoHeadAngle", argString: "high" }));
+    window.Unity.call({ requestId: -1, command: "cozmoHeadAngle", argString: "high" });
 
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: commandName }));
+    window.Unity.call({ requestId: requestId, command: commandName });
 
     return this._promiseForCommand(requestId);
 };
@@ -20896,10 +20896,10 @@ Scratch3CozmoBlocks.prototype.waitUntilSeeSadFace = function (args, util) {
  */
 Scratch3CozmoBlocks.prototype.waitUntilSeeCube = function (args, util) {
     // For now pass -1 for requestId to indicate we don't need a Promise resolved.
-    window.Unity.call(JSON.stringify({ requestId: -1, command: "cozmoHeadAngle", argString: "low" }));
+    window.Unity.call({ requestId: -1, command: "cozmoHeadAngle", argString: "low" });
 
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoWaitUntilSeeCube" }));
+    window.Unity.call({ requestId: requestId, command: "cozmoWaitUntilSeeCube" });
 
     return this._promiseForCommand(requestId);
 };
@@ -20913,7 +20913,7 @@ Scratch3CozmoBlocks.prototype.waitUntilSeeCube = function (args, util) {
  */
 Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozmoWaitForCubeTap" }));
+    window.Unity.call({ requestId: requestId, command: "cozmoWaitForCubeTap" });
 
     return this._promiseForCommand(requestId);
 };
@@ -20974,7 +20974,7 @@ Scratch3CozmoBlocks.prototype.verticalTurn = function (args, util) {
     var speed = Cast.toNumber(args.SPEED);
 
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozVertTurn", argFloat: turnAngle, argFloat2: speed }));
+    window.Unity.call({ requestId: requestId, command: "cozVertTurn", argFloat: turnAngle, argFloat2: speed });
     return commandPromise;
 };
 
@@ -20984,7 +20984,7 @@ Scratch3CozmoBlocks.prototype.verticalDrive = function (args, util) {
     var speed = Cast.toNumber(args.SPEED);
 
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozVertDrive", argFloat: distance, argFloat2: speed }));
+    window.Unity.call({ requestId: requestId, command: "cozVertDrive", argFloat: distance, argFloat2: speed });
     return commandPromise;
 };
 
@@ -20995,7 +20995,7 @@ Scratch3CozmoBlocks.prototype.verticalPathOffset = function (args, util) {
     var offsetAngle = Cast.toNumber(args.OFFSET_ANGLE);
 
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozVertPathOffset", argFloat: offsetX, argFloat2: offsetY, argFloat3: offsetAngle }));
+    window.Unity.call({ requestId: requestId, command: "cozVertPathOffset", argFloat: offsetX, argFloat2: offsetY, argFloat3: offsetAngle });
     return commandPromise;
 };
 
@@ -21006,7 +21006,7 @@ Scratch3CozmoBlocks.prototype.verticalPathTo = function (args, util) {
     var newAngle = Cast.toNumber(args.NEW_ANGLE);
 
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozVertPathTo", argFloat: newX, argFloat2: newY, argFloat3: newAngle }));
+    window.Unity.call({ requestId: requestId, command: "cozVertPathTo", argFloat: newX, argFloat2: newY, argFloat3: newAngle });
     return commandPromise;
 };
 
@@ -21016,7 +21016,7 @@ Scratch3CozmoBlocks.prototype.verticalSetHeadAngle = function (args, util) {
     var speed = Cast.toNumber(args.SPEED);
 
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozVertHeadAngle", argFloat: angle, argFloat2: speed }));
+    window.Unity.call({ requestId: requestId, command: "cozVertHeadAngle", argFloat: angle, argFloat2: speed });
     return commandPromise;
 };
 
@@ -21026,7 +21026,7 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function (args, util) {
     var speed = Cast.toNumber(args.SPEED);
 
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call(JSON.stringify({ requestId: requestId, command: "cozVertLiftHeight", argFloat: heightRatio, argFloat2: speed }));
+    window.Unity.call({ requestId: requestId, command: "cozVertLiftHeight", argFloat: heightRatio, argFloat2: speed });
     return commandPromise;
 };
 
@@ -21977,13 +21977,13 @@ var Runtime = function (_EventEmitter) {
                 if (this.threads.length == 0) {
                     // Script has just stopped
                     this._ankiAreThreadsRunning = false;
-                    window.Unity.call(JSON.stringify({ command: "cozmoScriptStopped" }));
+                    window.Unity.call({ command: "cozmoScriptStopped" });
                 }
             } else {
                 if (this.threads.length != 0) {
                     // Script has just started
                     this._ankiAreThreadsRunning = true;
-                    window.Unity.call(JSON.stringify({ command: "cozmoScriptStarted" }));
+                    window.Unity.call({ command: "cozmoScriptStarted" });
                 }
             }
         }
@@ -22276,7 +22276,7 @@ var Runtime = function (_EventEmitter) {
         value: function greenFlag() {
             // *** ANKI CHANGE ***
             // Code to handle start/end script events. - mwesley, 05/01/17
-            window.Unity.call(JSON.stringify({ command: "cozmoGreenFlag" }));
+            window.Unity.call({ command: "cozmoGreenFlag" });
 
             this.stopAll();
             this.ioDevices.clock.resetProjectTimer();
@@ -22297,7 +22297,7 @@ var Runtime = function (_EventEmitter) {
         value: function stopAll() {
             // *** ANKI CHANGE ***
             // Code to handle start/end script events. - mwesley, 05/01/17
-            window.Unity.call(JSON.stringify({ command: "cozmoStopAll" }));
+            window.Unity.call({ command: "cozmoStopAll" });
 
             // Dispose all clones.
             var newTargets = [];

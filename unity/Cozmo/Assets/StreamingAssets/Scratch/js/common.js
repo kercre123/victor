@@ -121,7 +121,7 @@
 
             var promiseSaveProject = window.promiseWaitForSaveProject();
             promiseSaveProject.then(function(result) {
-                window.Unity.call(JSON.stringify({requestId: -1, command: "cozmoLoadProjectPage"}));
+                window.Unity.call({requestId: -1, command: "cozmoLoadProjectPage"});
             });
         });
         closeButton.addEventListener('touchmove', function (e) {
