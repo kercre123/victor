@@ -79,6 +79,8 @@
 #define DRAW_CALIB_IMAGES 0
 
 #define DO_SINGLE_IMAGE_CALIB 1
+#define CALIB_MARKER_SIZE_MM 15.f
+#define CALIB_TARGET_FACE_SIZE_MM 20.f
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -3197,18 +3199,20 @@ namespace Cozmo {
     std::map<Anki::Vision::MarkerType, Anki::Quad3f> _markerTo3dCoords;
     
     {
+      const f32 halfMarkerSize_mm = CALIB_MARKER_SIZE_MM / 2.f;
+      const f32 halfTargetFace_mm = CALIB_TARGET_FACE_SIZE_MM / 2.f;
       const Anki::Quad3f originsFrontFace({
-        {-12.5, -22, 12.5},
-        {-12.5, -22, -12.5},
-        {12.5, -22, 12.5},
-        {12.5, -22, -12.5}
+        {-halfMarkerSize_mm, -halfTargetFace_mm, halfMarkerSize_mm},
+        {-halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm},
+        {halfMarkerSize_mm, -halfTargetFace_mm, halfMarkerSize_mm},
+        {halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm}
       });
       
       const Anki::Quad3f originsLeftFace({
-        {-22, 12.5, 12.5},
-        {-22, 12.5, -12.5},
-        {-22, -12.5, 12.5},
-        {-22, -12.5, -12.5}
+        {-halfTargetFace_mm, halfMarkerSize_mm, halfMarkerSize_mm},
+        {-halfTargetFace_mm, halfMarkerSize_mm, -halfMarkerSize_mm},
+        {-halfTargetFace_mm, -halfMarkerSize_mm, halfMarkerSize_mm},
+        {-halfTargetFace_mm, -halfMarkerSize_mm, -halfMarkerSize_mm}
       });
       
       auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace](bool isFrontFace,
@@ -3220,9 +3224,9 @@ namespace Cozmo {
         Anki::Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
         
         Anki::Pose3d p;
-        p.SetTranslation({44.f * numCubesRightOfOrigin,
-          44.f * numCubesAwayRobotFromOrigin,
-          44.f * numCubesAboveOrigin});
+        p.SetTranslation({CALIB_TARGET_FACE_SIZE_MM * numCubesRightOfOrigin,
+          CALIB_TARGET_FACE_SIZE_MM * numCubesAwayRobotFromOrigin,
+          CALIB_TARGET_FACE_SIZE_MM * numCubesAboveOrigin});
         
         p.ApplyTo(whichFace, whichFace);
         return whichFace;
