@@ -21,6 +21,7 @@
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 //#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/cozmoContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -30,12 +31,14 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
-
 #include "cozmoAnim/engineMessages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendToRobot_helper.h"
+
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 
 #define DEBUG_ANIMATION_STREAMING 1
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
@@ -349,6 +352,16 @@ namespace Cozmo {
 //      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
 //    }
 
+
+    Vision::ImageRGB faceImg = ProceduralFaceDrawer::DrawFace(procFace);
+    
+    // Draws frame to face display
+    // TODO: Currently resizing from V1 dimensions to V2 dimensions, but should eventually generate the face
+    //       directly to V2 dimensions the first time.
+    faceImg.Resize(FaceDisplay::FACE_DISPLAY_HEIGHT, FaceDisplay::FACE_DISPLAY_WIDTH);
+    cv::Mat img565;
+    cv::cvtColor(faceImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
+    FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
   }
   
   Result AnimationStreamer::SendStartOfAnimation()

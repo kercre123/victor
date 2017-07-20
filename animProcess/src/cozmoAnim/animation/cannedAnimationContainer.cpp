@@ -12,7 +12,7 @@
  **/
 
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
-//#include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "cozmoAnim/animation/faceAnimationManager.h"
 
 #include "util/logging/logging.h"
 
@@ -23,17 +23,17 @@ namespace Cozmo {
   {
     DefineHardCoded();
    
-//    // Add special animation for procedural animation:
-//    AddAnimation(FaceAnimationManager::ProceduralAnimName);
-//    
-//    Animation* anim = GetAnimation(FaceAnimationManager::ProceduralAnimName);
-//    assert(anim != nullptr);
-//    FaceAnimationKeyFrame kf(FaceAnimationManager::ProceduralAnimName);
-//    if(RESULT_OK != anim->AddKeyFrameToBack(kf))
-//    {
-//      PRINT_NAMED_ERROR("CannedAnimationContainer.Constructor.AddProceduralFailed",
-//                        "Failed to add keyframe to procedural animation.");
-//    }
+    // Add special animation for procedural animation:
+    AddAnimation(FaceAnimationManager::ProceduralAnimName);
+    
+    Animation* anim = GetAnimation(FaceAnimationManager::ProceduralAnimName);
+    assert(anim != nullptr);
+    FaceAnimationKeyFrame kf(FaceAnimationManager::ProceduralAnimName);
+    if(RESULT_OK != anim->AddKeyFrameToBack(kf))
+    {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.Constructor.AddProceduralFailed",
+                        "Failed to add keyframe to procedural animation.");
+    }
   }
   
   Result CannedAnimationContainer::AddAnimation(const std::string& name)
@@ -81,10 +81,10 @@ namespace Cozmo {
     std::vector<std::string> v;
     v.reserve(_animations.size());
     for (std::unordered_map<std::string, Animation>::iterator i=_animations.begin(); i != _animations.end(); ++i) {
-//      // Don't include procedural animation name in list of available animations
-//      if (i->first != FaceAnimationManager::ProceduralAnimName) {
-//        v.push_back(i->first);
-//      }
+      // Don't include procedural animation name in list of available animations
+      if (i->first != FaceAnimationManager::ProceduralAnimName) {
+        v.push_back(i->first);
+      }
     }
     return v;
   }
@@ -141,12 +141,12 @@ namespace Cozmo {
 
   Animation* CannedAnimationContainer::GetAnimationWrapper(std::string& animationName)
   {
-//    if(animationName == FaceAnimationManager::ProceduralAnimName) {
-//      PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.ReservedName",
-//                        "Skipping animation with reserved name '%s'.",
-//                        FaceAnimationManager::ProceduralAnimName.c_str());
-//      return nullptr;
-//    }
+    if(animationName == FaceAnimationManager::ProceduralAnimName) {
+      PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.ReservedName",
+                        "Skipping animation with reserved name '%s'.",
+                        FaceAnimationManager::ProceduralAnimName.c_str());
+      return nullptr;
+    }
     
     if(RESULT_OK != AddAnimation(animationName)) {
       PRINT_NAMED_INFO("CannedAnimationContainer.DefineFromJson.ReplaceName",

@@ -34,9 +34,9 @@ Supervisor {
       numberOfRotations 1
     }
   
-    #CozmoFaceDisplay {
-    #  translation 0.012 0 0
-    #}
+    CozmoFaceDisplay {
+      translation 0.012 0 0
+    }
   ]
   
   boundingObject Box {

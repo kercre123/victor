@@ -1,0 +1,68 @@
+/**
+ * File: faceDisplay.h
+ *
+ * Author: Kevin Yoon
+ * Created: 07/20/2017
+ *
+ * Description:
+ *               Defines interface to face display
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
+
+#ifndef ANKI_COZMOANIM_FACE_DISPLAY_H
+#define ANKI_COZMOANIM_FACE_DISPLAY_H
+#include "anki/common/types.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+
+
+namespace Anki
+{
+  namespace Cozmo
+  {
+    class FaceDisplay
+    {
+    public:
+
+      // Method to fetch singleton instance.
+      static FaceDisplay* getInstance();
+      
+      // Removes instance
+      static void removeInstance();
+      
+      // Dtor
+      ~FaceDisplay();
+
+      static const int FACE_DISPLAY_WIDTH = 184;
+      static const int FACE_DISPLAY_HEIGHT = 96;
+      
+      // Clears the face display
+      void FaceClear();
+      
+      // Draws frame to face display
+      // 'frame' is a buffer of FACE_DISPLAY_WIDTH x FACE_DISPLAY_HEIGHT u16s where each pixel
+      // is a RGB_565 value. You can use OpenCV to create the frame like so.
+      //
+      //      Vision::ImageRGB testImg;
+      //      testImg.Load("testPattern.jpg");
+      //      testImg.Resize(AndroidHAL::FACE_DISPLAY_HEIGHT, AndroidHAL::FACE_DISPLAY_WIDTH);
+      //      cv::Mat img565;
+      //      cv::cvtColor(testImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
+      //      AndroidHAL::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+      void FaceDraw(u16* frame);
+
+      // Print text to face display
+      void FacePrintf(const char *format, ...);
+      
+    private:
+
+      FaceDisplay();
+      static FaceDisplay* _instance;
+      
+    }; // class FaceDisplay
+    
+  } // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_COZMOANIM_FACE_DISPLAY_H
