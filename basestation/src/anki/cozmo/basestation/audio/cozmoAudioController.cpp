@@ -74,7 +74,6 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 
 // Language & locale helpers
 static Language GetLanguage(const CozmoContext* ctx);
-static AudioLocaleType GetAudioLocale(Language language);
 static ExternalLanguage GetExternalLanguage(Language language);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -87,9 +86,7 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
   musicConfig.startEventId = Util::numeric_cast<AudioEventId>( GameEvent::Music::Play );
   musicConfig.stopEventId = Util::numeric_cast<AudioEventId>( GameEvent::Music::Stop );
   InitializeMusicConductor( musicConfig );
-  
-  const Language language = GetLanguage(context);
-  
+
 #if USE_AUDIO_ENGINE
   {
     DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoContext.IsNull");
@@ -184,8 +181,13 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
       PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
     }
 #endif
-    
-    config.audioLocale = GetAudioLocale(language);
+
+    //
+    // Cozmo uses default audio locale regardless of current context.
+    // Locale-specific adjustments are made by setting GameState::External_Language
+    // below.
+    //
+    config.audioLocale = AudioLocaleType::EnglishUS;
     
     // Engine Memory
     config.defaultMemoryPoolSize      = ( 2 * 1024 * 1024 );      // 2 MB
@@ -236,9 +238,10 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
     // Register Game Objects in defined in CLAD
     RegisterCladGameObjectsWithAudioController();
     
-    // Set Locale Game State
-    const GameState::StateGroupType stateGroupId = GameState::StateGroupType::External_Language;
+    // Set GameState::External_Language to match current locale
+    const Language language = GetLanguage(context);
     const GameState::External_Language stateId = GetExternalLanguage(language);
+    const GameState::StateGroupType stateGroupId = GameState::StateGroupType::External_Language;
     SetState(static_cast<AudioStateGroupId>(stateGroupId), static_cast<AudioStateId>(stateId));
   }
 }
@@ -564,28 +567,6 @@ static Language GetLanguage(const CozmoContext* ctx)
   }
   // Otherwise return default
   return Language::en;
-}
-    
-// Get audio locale for given language
-static AudioLocaleType GetAudioLocale(Language language)
-{
-  // Map each supported language to corresponding audio locale
-  static const std::unordered_map<Language, AudioLocaleType> map = {
-    { Language::en, AudioLocaleType::EnglishUS },
-    { Language::fr, AudioLocaleType::FrenchFrance },
-    { Language::de, AudioLocaleType::German },
-    { Language::ja, AudioLocaleType::Japanese }
-  };
-    
-  // Look up audio locale for given language
-  const auto & it = map.find(language);
-  if (it != map.end()) {
-    return it->second;
-  }
-    
-  // Otherwise return default
-  return AudioLocaleType::EnglishUS;
-    
 }
 
 // Get external language for given language
