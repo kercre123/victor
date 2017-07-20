@@ -626,7 +626,7 @@ MonoBehaviour:
   - {fileID: 11443554, guid: ad591d3147f4846f6b649a1de5b699ae, type: 2}
   - {fileID: 11443554, guid: e6ccb6ce9d67e47ff8bab13576debb66, type: 2}
   _PanelPrefabsDisconnected:
-  - {fileID: 11443554, guid: ad591d3147f4846f6b649a1de5b699ae, type: 2}
+  - {fileID: 11443554, guid: 21aac09a6bbf740838e7775df1b21efc, type: 2}
   - {fileID: 11443554, guid: e6ccb6ce9d67e47ff8bab13576debb66, type: 2}
   _SnappableLayoutGroup: {fileID: 114878583970262510}
   _HorizontalLayoutGroup: {fileID: 114306567444602040}
