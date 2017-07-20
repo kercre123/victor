@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/components/pathComponent.h"
 
+#include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -267,11 +268,16 @@ void PathComponent::HandlePossibleOriginChanges()
   }
 
   // should always have valid origin since we're planning
-  DEV_ASSERT(_currPlanParams->commonOrigin != nullptr,
-             "PathComponent.HandlePossibleOriginChanes.NullParamsOrigin");
-
-  DEV_ASSERT(_currPlanParams->commonOrigin->IsOrigin(),
-             "PathComponent.HandlePossibleOriginChanes.OriginIsntAnOrigin");
+  // TODO: COZMO-1637: Once we figure this out, switch these verifies back to dev_asserts for efficiency
+  ANKI_VERIFY(_currPlanParams->commonOrigin != nullptr,
+              "PathComponent.HandlePossibleOriginChanes.NullParamsOrigin", "");
+  
+  ANKI_VERIFY(_currPlanParams->commonOrigin->IsOrigin(),
+              "PathComponent.HandlePossibleOriginChanes.OriginIsntAnOrigin", "");
+  
+  ANKI_VERIFY(_robot.GetPoseOriginList().GetOriginID(_currPlanParams->commonOrigin) != PoseOriginList::UnknownOriginID,
+              "PathComponent.Update.CommonOriginNotInRobotPoseOriginList",
+              "OriginName: %s", _currPlanParams->commonOrigin->GetNamedPathToOrigin(false).c_str());
 
   // haveOriginsChanged: Check if the robot's origin has changed since planning. If no delocs, relocs, or
   // rejiggers have happened, our stored commonOrigin will be the robots world origin. Otherwise, we check
@@ -643,6 +649,11 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
   const Pose3d& driveCenterPose(_robot.GetDriveCenterPose());  
 
   _currPlanParams->commonOrigin = &driveCenterPose.FindOrigin();
+  ANKI_VERIFY(_robot.GetPoseOriginList().GetOriginID(_currPlanParams->commonOrigin) != PoseOriginList::UnknownOriginID,
+              "PathComponent.StartDrivingToPose.CommonOriginNotInRobotPoseOriginList",
+              "OriginName: %s",
+              _currPlanParams->commonOrigin == nullptr ? "<null>" : _currPlanParams->commonOrigin->GetNamedPathToOrigin(false).c_str());
+  
   if( !ANKI_VERIFY( _currPlanParams->commonOrigin != nullptr,
                     "PathComponent.StartDrivingToPose.NullOrigin", "" ) ) {
     SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
