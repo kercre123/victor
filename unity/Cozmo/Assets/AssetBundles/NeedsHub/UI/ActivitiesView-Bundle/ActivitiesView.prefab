@@ -782,8 +782,10 @@ MonoBehaviour:
   _ActivityCardContainer: {fileID: 114905087169597034}
   _ActivityCardPrefab: {fileID: 114712853026632080, guid: de1e2cff12d0042cba28bd0540195e3a,
     type: 2}
-  _MaxNumCardsOnScreen: 3
+  _FreeplayCardPrefab: {fileID: 114938725581726892, guid: e21ad27fb123c4bb8bad4011b6d8e4af,
+    type: 2}
   _ScrollRect: {fileID: 114213708779950632}
+  _FreeplayPanelArrowToggleWidth: 0.2
 --- !u!114 &114646942448145258
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1191,7 +1193,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 112.200195, y: -115.8999}
+  m_AnchoredPosition: {x: 112.19922, y: -115.90039}
   m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224395000100768988

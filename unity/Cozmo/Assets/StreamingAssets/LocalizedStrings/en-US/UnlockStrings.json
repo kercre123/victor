@@ -19,10 +19,10 @@
     ]
   },
   "unlockable.OSNotSupported.Title": {
-    "translation": "Requirements Not Met"    
+    "translation": "Requirements Not Met"
   },
   "unlockable.OSNotSupported.Description": {
-    "translation": "Code Lab requires Android {0} or newer."    
+    "translation": "Code Lab requires Android {0} or newer."
   },
   "unlockable.Mystery.Title": {
     "translation": "Locked Ability"
@@ -233,5 +233,8 @@
   },
   "sparks.CubesNeedUpright.Desc": {
     "translation": "When the Cubes are upright with their lights up, Cozmo can build more quickly."
+  },
+  "sparks.free": {
+    "translation": "Free"
   }
 }
