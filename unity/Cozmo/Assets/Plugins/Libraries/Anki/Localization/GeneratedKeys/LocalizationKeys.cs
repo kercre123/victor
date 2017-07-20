@@ -612,6 +612,9 @@ public static class LocalizationKeys {
   public const string kNeedsFreeplaySparksRewardStackCube = "needs.FreeplaySparksReward.StackCube";
   public const string kNeedsFreeplaySparksRewardWorkout = "needs.FreeplaySparksReward.Workout";
 
+  public const string kNeedsFeedingDetailsOverfedHiccupsTitle = "needs.FeedingOverfedHiccups.Title";
+  public const string kNeedsFeedingDetailsOverfedHiccupsDescription = "needs.FeedingOverfedHiccups.Description";
+
   #endregion
 
   #region OnboardingStrings

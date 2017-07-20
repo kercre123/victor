@@ -9,6 +9,9 @@ using Anki.Cozmo.ExternalInterface;
 namespace Cozmo.Energy.UI {
   public class NeedsEnergyModal : BaseModal {
 
+    public delegate void OverfeedingShouldTriggerHiccups();
+    public event OverfeedingShouldTriggerHiccups CozmoOverfed;
+
     #region SERIALIZED FIELDS
 
     [SerializeField]
@@ -38,6 +41,9 @@ namespace Cozmo.Energy.UI {
     [SerializeField]
     private GameObject _CubeHelpGroup;
 
+    [SerializeField]
+    private float _AlreadyFullTriggerHiccupOdds = 0.2f;
+
     #endregion
 
     #region NON-SERIALIZED FIELDS
@@ -56,6 +62,8 @@ namespace Cozmo.Energy.UI {
 
     private BaseModal _CubeHelpModal;
 
+    private bool _WasCozmoOverfed = false;
+
     #endregion
 
     #region LIFE SPAN
@@ -70,6 +78,8 @@ namespace Cozmo.Energy.UI {
         robot.CancelAction(RobotActionType.UNKNOWN);
         robot.SetEnableFreeplayLightStates(true);
       }
+        
+      _WasCozmoOverfed = false;
 
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.AddCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
@@ -97,7 +107,7 @@ namespace Cozmo.Energy.UI {
       _InactivityTimer = _InactivityTimeOut;
 
       //animate our display energy to the engine energy
-      HandleLatestNeedsLevelChanged(NeedsActionId.Feed);
+      NeedsLevelChangedInternal(NeedsActionId.Feed, false);
 
       RefreshForCurrentBracket(nsm);
 
@@ -117,7 +127,7 @@ namespace Cozmo.Energy.UI {
 
     protected override void RaiseDialogOpenAnimationFinished() {
       base.RaiseDialogOpenAnimationFinished();
-      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnNeedsActionReceived += HandleLatestNeedsLevelChanged;
 
       StartFeedingActivity();
     }
@@ -147,7 +157,7 @@ namespace Cozmo.Energy.UI {
       }
 
       NeedsStateManager.Instance.ResumeAllNeeds();
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnNeedsActionReceived -= HandleLatestNeedsLevelChanged;
       RobotEngineManager.Instance.RemoveCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
@@ -172,7 +182,11 @@ namespace Cozmo.Energy.UI {
 
     #region ROBOT CALLBACK HANDLERS
 
-    private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
+    private void HandleLatestNeedsLevelChanged(NeedsActionId actionID){
+      NeedsLevelChangedInternal (actionID, true);
+    }
+
+    private void NeedsLevelChangedInternal(NeedsActionId actionId, bool triggeredFromMessage) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       RefreshForCurrentBracket(nsm);
 
@@ -182,6 +196,33 @@ namespace Cozmo.Energy.UI {
         _CubeHelpGroup.SetActive(false);
         if (_CubeHelpModal != null) {
           _CubeHelpModal.CloseDialog();
+        }
+
+        // If Cozmo was full and the user fed him again, there's a chance he gets the hiccups
+        if(triggeredFromMessage && 
+          (_WasFull != null) && 
+          (_WasFull == true) &&
+          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
+          System.Random rand = new System.Random();
+          float shouldTriggerFloat = (float)rand.NextDouble();
+          if(shouldTriggerFloat < _AlreadyFullTriggerHiccupOdds) {
+            _WasCozmoOverfed = true;
+
+            // Exit feeding - can't have hiccups during the activity
+            CloseDialog();
+          }
+        }
+      }
+    }
+
+    protected override void CleanUp() {
+      if (_WasCozmoOverfed) {
+        _WasCozmoOverfed = false;
+        // Notify Engine
+        RobotEngineManager.Instance.Message.NotifyOverfeedingShouldTriggerHiccups = new Anki.Cozmo.ExternalInterface.NotifyOverfeedingShouldTriggerHiccups();
+        RobotEngineManager.Instance.SendMessage();
+        if (CozmoOverfed != null) {
+          CozmoOverfed ();
         }
       }
     }

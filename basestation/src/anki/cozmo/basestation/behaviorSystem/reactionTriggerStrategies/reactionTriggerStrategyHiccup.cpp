@@ -84,6 +84,10 @@ ReactionTriggerStrategyHiccup::ReactionTriggerStrategyHiccup(Robot& robot, const
     EngineToGameTag::RobotOffTreadsStateChanged
   });
   
+  SubscribeToTags({
+    GameToEngineTag::NotifyOverfeedingShouldTriggerHiccups
+  });
+  
   // For debug purposes so we can use a console function to give Cozmo the hiccups
   _this = this;
 }
@@ -344,6 +348,24 @@ void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const EngineToGameEvent
       default:
         break;
     }
+  }
+}
+  
+void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot)
+{
+  if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::Hiccup)){
+    switch(event.GetData().GetTag()){
+      case GameToEngineTag::NotifyOverfeedingShouldTriggerHiccups:
+      {
+        ForceHiccups();
+        break;
+      }
+      default:
+        break;
+    }
+  }else{
+    PRINT_NAMED_ERROR("ReactionTriggerStrategyHiccup.AlwaysHandleInternal.OverfedButHiccupDisabled",
+                      "Cozmo was overfed and should get hiccups, but hiccups are disabled");
   }
 }
 

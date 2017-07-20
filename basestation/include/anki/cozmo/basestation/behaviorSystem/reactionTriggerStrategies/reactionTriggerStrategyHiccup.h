@@ -38,6 +38,9 @@ public:
 protected:
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
+  
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot) override;
 
 private:
 
@@ -59,7 +62,6 @@ private:
   // Returns which animation to play depending on our state
   std::vector<AnimationTrigger> GetHiccupAnim() const;
   
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
   virtual void EnabledStateChanged(bool enabled) override;
   

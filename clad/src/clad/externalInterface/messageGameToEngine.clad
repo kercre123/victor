@@ -647,6 +647,10 @@ message SetSparkedMusicState{
   AudioMetaData::SwitchState::Sparked sparkedMusicState
 }
 
+// A message for Game to inform Engine that Cozmo has been overfed and
+// should get the hiccups as a result
+message NotifyOverfeedingShouldTriggerHiccups{
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Blockworld

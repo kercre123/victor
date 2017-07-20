@@ -184,6 +184,17 @@ namespace Cozmo.Needs.UI {
       _VoiceSettingsModalInstance.InitializeVoiceSettingsModal();
     }
 
+    private void HandleCozmoOverfed(){
+      ModalPriorityData priorityData = new ModalPriorityData();
+      var cozmoHasHiccupsData = new AlertModalData("cozmo_overfed_hiccups_alert",
+        LocalizationKeys.kNeedsFeedingDetailsOverfedHiccupsTitle,
+        LocalizationKeys.kNeedsFeedingDetailsOverfedHiccupsDescription,
+        new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+
+      UIManager.OpenAlert(cozmoHasHiccupsData,
+        ModalPriorityData.CreateSlightlyHigherData (priorityData));
+    }
+
     private void HandleRepairButton() {
       if (ShowEdgeCaseAlertIfNeeded()) {
         return;
@@ -208,6 +219,7 @@ namespace Cozmo.Needs.UI {
     private void HandleEnergyModalCreated(BaseModal newModal) {
       _NeedsEnergyModalInstance = (NeedsEnergyModal)newModal;
       _NeedsEnergyModalInstance.InitializeEnergyModal();
+      _NeedsEnergyModalInstance.CozmoOverfed += HandleCozmoOverfed;
     }
 
     private void HandleHelpButton() {
