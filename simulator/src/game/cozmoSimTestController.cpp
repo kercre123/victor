@@ -88,6 +88,10 @@ namespace Anki {
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DisableReactionsWithLock(
                                                          "CozmoSimTestController",
                                                          kAffectTriggersSimTest)));
+    
+    // Disable needs during all tests
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetNeedsPauseState(true)));
+
   }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,
