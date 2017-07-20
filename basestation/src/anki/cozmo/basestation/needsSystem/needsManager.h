@@ -125,8 +125,8 @@ private:
 
   void InitAfterReadFromRobotAttempt();
 
-  void ApplyDecayAllNeeds(bool connected);
-  void ApplyDecayForUnconnectedTime();
+  void ApplyDecayAllNeeds(const bool connected);
+  void ApplyDecayForTimeSinceLastDeviceWrite(const bool connected);
   void StartFullnessCooldownForNeed(const NeedId needId);
 
   void RegisterNeedsActionCompletedInternal(const NeedsActionId actionCompleted,
@@ -135,8 +135,8 @@ private:
 
   bool ShouldRewardSparksForFreeplay();
   int  RewardSparksForFreeplay();
-  int  AwardSparks(int targetSparks, float minPct, float maxPct,
-                   int minSparks, int minMaxSparks);
+  int  AwardSparks(const int targetSparks, const float minPct, const float maxPct,
+                   const int minSparks, const int minMaxSparks);
 
   bool UpdateStarsState(bool cheatGiveStar = false);
 
