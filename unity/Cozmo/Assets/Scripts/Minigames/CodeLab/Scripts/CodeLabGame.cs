@@ -807,7 +807,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void WebViewCallback(string jsonStringFromJS) {
       string logJSONStringFromJS = jsonStringFromJS;
-      if (logJSONStringFromJS.Contains("cozmoSays")) {
+      if (logJSONStringFromJS.Contains("cozmo_says") || logJSONStringFromJS.Contains("cozmoSays")) {
         // TODO Temporary solution for removing PII from logs.
         // For vertical will need to check more than just CozmoSays,
         // potentially. Also, ideally only strip out CozmoSays
@@ -817,30 +817,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       ScratchRequest scratchRequest = null;
       try {
-        DAS.Info("CodeLabGame.WebViewCallback", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+        DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {
         if (exception is JsonReaderException || exception is JsonSerializationException) {
-          DAS.Error("CodeLabGame.WebViewCallback", "JSON exception with text: " + logJSONStringFromJS);
-
-          // Try using UnEscapeURL to see if we have better luck with unescaping the text before calling DeserializeObject
-          jsonStringFromJS = WWW.UnEscapeURL(jsonStringFromJS);
-
-          try {
-            scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
-
-            DAS.Warn("CodeLabGame.WebViewCallbackUnescape", "Successfully deserialized json with WebViewCallbackUnescape after failing with WebViewCallback");
-          }
-          catch (Exception exceptionUnescape) {
-            if (exceptionUnescape is JsonReaderException || exceptionUnescape is JsonSerializationException) {
-              DAS.Error("CodeLabGame.WebViewCallbackUnescape", "JSON exception with text: " + logJSONStringFromJS);
-              return;
-            }
-            else {
-              throw;
-            }
-          }
+          DAS.Error("CodeLabGame.WebViewCallback.Fail", "JSON exception with text: " + logJSONStringFromJS);
+          return;
         }
         else {
           throw;
