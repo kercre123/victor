@@ -539,10 +539,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 503
+    _EnumValue: 504
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 503
+    _EnumValue: 504
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: onboarding.needs.ticker
@@ -559,7 +559,7 @@ MonoBehaviour:
   - -1
   _ForceNeedValuesOnEventId:
     _EnumValueAsString: Count
-    _EnumValue: 45
+    _EnumValue: 48
   _ForceNeedValuesOnEvent:
   - -1
   - -1
@@ -613,9 +613,9 @@ RectTransform:
   m_Father: {fileID: 22461814}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 894, y: -431}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -469.7, y: 212}
   m_SizeDelta: {x: 725, y: 217}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224401514160970918
@@ -667,10 +667,10 @@ RectTransform:
   m_Father: {fileID: 22461814}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -117, y: 291}
-  m_SizeDelta: {x: 1012, y: 582}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -122, y: -413}
+  m_SizeDelta: {x: 995, y: 582}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &224771804516175280
 RectTransform:

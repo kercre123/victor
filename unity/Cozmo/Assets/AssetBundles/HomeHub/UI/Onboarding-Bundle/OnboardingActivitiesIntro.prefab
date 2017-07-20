@@ -50,10 +50,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 499
+    _EnumValue: 504
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 499
+    _EnumValue: 504
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: 
@@ -68,7 +68,9 @@ MonoBehaviour:
   - -1
   - -1
   - -1
-  _ForceNeedValuesOnEventId: 46
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 48
   _ForceNeedValuesOnEvent:
   - -1
   - -1
@@ -402,7 +404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.7058824}
+  m_Color: {r: 0.16176468, g: 0.16176468, b: 0.16176468, a: 0.78431374}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
