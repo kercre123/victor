@@ -300,6 +300,12 @@ namespace Cozmo.Needs.UI {
     private void HandleMechanimEvent(string param) {
       OnboardingManager.Instance.OnOnboardingAnimEvent.Invoke(param);
     }
+    public void OnboardingSkipped() {
+      PopLatestBracketAndUpdateButtons();
+      if (_MetersWidget != null) {
+        _MetersWidget.OnboardingSkipped();
+      }
+    }
     #endregion
   }
 }

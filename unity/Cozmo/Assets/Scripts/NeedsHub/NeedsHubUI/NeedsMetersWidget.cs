@@ -121,6 +121,8 @@ namespace Cozmo.Needs.UI {
         _StaggeredFillCoroutine = StartCoroutine(StaggerMeterFills());
       }
       else {
+        NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+        NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
         NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
         NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
       }
@@ -261,6 +263,10 @@ namespace Cozmo.Needs.UI {
       _EnergyMeter.Dim = dimmedMeters.Contains(NeedId.Energy);
       _RepairMeter.Dim = dimmedMeters.Contains(NeedId.Repair);
       _PlayMeter.Dim = dimmedMeters.Contains(NeedId.Play);
+    }
+
+    public void OnboardingSkipped() {
+      HandleDialogFinishedOpenAnimation();
     }
 
     #endregion
