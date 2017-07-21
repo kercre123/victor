@@ -4,10 +4,6 @@
     "enabled": false
   },
   {
-    "feature": "ObjectTapInteractions",
-    "enabled": true
-  },
-  {
     "feature": "AndroidConnectionFlow",
     "enabled": true
   },

@@ -90,11 +90,23 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
     return false;
   }
 
+  /*
+    HACK FIX: GenerateTextMesh is apparently a highly recursive function and we shouldn't call ParseInputText at all
+      since that dirties the text and will cause a stack overflow when called within GenerateTextMesh. 
+      However because we want m_text to remain the key in editor and not the display text it's required.
+      The real fix after shipping rather than just a lock that only allows ParseInputText to be called the first time 
+      GenerateTextMesh is called is to better seperate display text and keys.
+  */
+  private bool _CozmoTextLock = false;
   protected override void GenerateTextMesh() {
     // don't do any extra work if m_text is not a loc key
     if (!Localization.IsLocalizationKey(m_text)) {
-      ParseInputText();
+      if (!_CozmoTextLock) {
+        _CozmoTextLock = true;
+        ParseInputText();
+      }
       base.GenerateTextMesh();
+      _CozmoTextLock = false;
       return;
     }
 
@@ -114,10 +126,13 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
     }
 
     // parse the new m_text to be rendered
-    base.ParseInputText();
-
+    if (!_CozmoTextLock) {
+      _CozmoTextLock = true;
+      ParseInputText();
+    }
     // actually do the render work
     base.GenerateTextMesh();
+    _CozmoTextLock = false;
 
     // set m_text back to the localized key
     if (!string.IsNullOrEmpty(_RenderStringCache)) {
