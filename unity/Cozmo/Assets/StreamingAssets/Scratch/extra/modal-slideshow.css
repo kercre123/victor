@@ -99,7 +99,6 @@ button:focus {
   display: inline-block;
   color: #1fadda;
   font-weight: bold;
-  text-transform: capitalize;
   font-size: 7vh;
 }
 

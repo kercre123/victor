@@ -97,7 +97,6 @@ button:focus {
   padding: 0 7% 4% 7%;
   color: #fff;
   line-height: 1.2em;
-  text-transform: capitalize;
 }
 .project .project-type {
   position: absolute;
@@ -136,7 +135,6 @@ button:focus {
   color: #fff;
   text-align: center;
   line-height: 1.1em;
-  text-transform: capitalize;
   word-spacing: 9999px;  /* each word on its own line */
   margin-top: 5%;
   font-size: 110%;
