@@ -874,8 +874,14 @@ Result BehaviorManager::Update(Robot& robot)
     SelectUIRequestGameBehavior();
     _shouldRequestGame = false;
   }
+  
+  
+  // Allow reactionary behaviors to request a switch without a message
+  const bool switchedFromReactionTrigger = CheckReactionTriggerStrategies();
 
-  if ((voiceCommandBehavior == nullptr) && (_uiRequestGameBehavior == nullptr))
+  if ((voiceCommandBehavior == nullptr) &&
+      (_uiRequestGameBehavior == nullptr) &&
+      !switchedFromReactionTrigger)
   {
     const bool currentBehaviorIsReactionary =
                   (GetRunningAndResumeInfo().GetCurrentReactionTrigger() !=
@@ -885,9 +891,6 @@ Result BehaviorManager::Update(Robot& robot)
       ChooseNextScoredBehaviorAndSwitch();
     }
   }
-  
-  // Allow reactionary behaviors to request a switch without a message
-  const bool switchedFromReactionTrigger = CheckReactionTriggerStrategies();
   
   // Reaction triggers we just switched to take priority over voice commands and ui requests
   if (!switchedFromReactionTrigger &&
