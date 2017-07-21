@@ -365,6 +365,7 @@ namespace Anki {
         printf("  Toggle engine lights component:  Alt+Shift+l\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Alt+Shift+6\n");
+        printf("  Play Severe needs get out anim:  Alt+g\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
         printf("       Unlock progression unlock:  n\n");
         printf("         Lock progression unlock:  Shift+n\n");
@@ -931,32 +932,40 @@ namespace Anki {
                   SendErasePoseMarker();
                   break;
                 }
-                
-                bool useManualSpeed = altKeyPressed;
-                  
-                if (poseMarkerMode_ == 0) {
-                  // Execute path to pose
-                  printf("Going to pose marker at x=%f y=%f angle=%f (useManualSpeed: %d)\n",
-                         poseMarkerPose_.GetTranslation().x(),
-                         poseMarkerPose_.GetTranslation().y(),
-                         poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
-                         useManualSpeed);
 
-                  SendExecutePathToPose(poseMarkerPose_, pathMotionProfile_, useManualSpeed);
-                  //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
-                } else {
+                if (altKeyPressed ) {
+                  ExternalInterface::QueueSingleAction msg;
+                  msg.action.Set_playNeedsGetOutAnimIfNeeded(ExternalInterface::PlayNeedsGetOutAnimIfNeeded{});
+                  SendAction(msg);
+                }
+                else {
+                
+                  bool useManualSpeed = altKeyPressed;
                   
-                  // Indicate whether or not to place object at the exact rotation specified or
-                  // just use the nearest preActionPose so that it's merely aligned with the specified pose.
-                  printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
+                  if (poseMarkerMode_ == 0) {
+                    // Execute path to pose
+                    printf("Going to pose marker at x=%f y=%f angle=%f (useManualSpeed: %d)\n",
+                           poseMarkerPose_.GetTranslation().x(),
+                           poseMarkerPose_.GetTranslation().y(),
+                           poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
+                           useManualSpeed);
+
+                    SendExecutePathToPose(poseMarkerPose_, pathMotionProfile_, useManualSpeed);
+                    //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
+                  } else {
                   
-                  SendPlaceObjectOnGroundSequence(poseMarkerPose_,
-                                                  pathMotionProfile_,
-                                                  useExactRotation,
-                                                  useManualSpeed);
-                  // Make sure head is tilted down so that it can localize well
-                  //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
+                    // Indicate whether or not to place object at the exact rotation specified or
+                    // just use the nearest preActionPose so that it's merely aligned with the specified pose.
+                    printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
                   
+                    SendPlaceObjectOnGroundSequence(poseMarkerPose_,
+                                                    pathMotionProfile_,
+                                                    useExactRotation,
+                                                    useManualSpeed);
+                    // Make sure head is tilted down so that it can localize well
+                    //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
+                  
+                  }
                 }
                 break;
               }
@@ -977,8 +986,6 @@ namespace Anki {
                 }
                 else if(shiftKeyPressed) {
                   ExternalInterface::QueueSingleAction msg;
-                  msg.robotID = 1;
-                  msg.position = QueueActionPosition::NOW;
                   
                   using SFNOD = ExternalInterface::SearchForNearbyObjectDefaults;
                   ExternalInterface::SearchForNearbyObject searchAction {
@@ -989,9 +996,7 @@ namespace Anki {
                   };
                   msg.action.Set_searchForNearbyObject(std::move(searchAction));
 
-                  ExternalInterface::MessageGameToEngine message;
-                  message.Set_QueueSingleAction(msg);
-                  SendMessage(message);
+                  SendAction(msg);
                 }
                 else if (altKeyPressed) {
                   static bool enableCliffSensor = false;

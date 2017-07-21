@@ -409,14 +409,14 @@ class Runtime extends EventEmitter {
             if (this.threads.length == 0) {
                 // Script has just stopped
                 this._ankiAreThreadsRunning = false
-                window.Unity.call('{"command": "cozmoScriptStopped"}');
+                window.Unity.call({command: "cozmoScriptStopped"});
             }
         }
         else {
             if (this.threads.length != 0) {
                 // Script has just started
                 this._ankiAreThreadsRunning = true
-                window.Unity.call('{"command": "cozmoScriptStarted"}');
+                window.Unity.call({command: "cozmoScriptStarted"});
             }
         }
     };
@@ -680,7 +680,7 @@ class Runtime extends EventEmitter {
     greenFlag () {
         // *** ANKI CHANGE ***
         // Code to handle start/end script events. - mwesley, 05/01/17
-        window.Unity.call('{"command": "cozmoGreenFlag"}');
+        window.Unity.call({command: "cozmoGreenFlag"});
 
         this.stopAll();
         this.ioDevices.clock.resetProjectTimer();
@@ -698,7 +698,7 @@ class Runtime extends EventEmitter {
     stopAll () {
         // *** ANKI CHANGE ***
         // Code to handle start/end script events. - mwesley, 05/01/17
-        window.Unity.call('{"command": "cozmoStopAll"}');
+        window.Unity.call({command: "cozmoStopAll"});
 
         // Dispose all clones.
         const newTargets = [];

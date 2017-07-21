@@ -79,7 +79,7 @@ MonoBehaviour:
   _SegmentPrefab: {fileID: 11499218, guid: 64aa4931b274a42758cbfe256299eba1, type: 2}
   _SegmentContainer: {fileID: 11459944}
   _OnImageSkinComponentId: Checkbox_Checkmark
-  _OffImageSkinComponentId: Checkbox_X
+  _OffImageSkinComponentId: Checkbox_Empty
 --- !u!114 &11459944
 MonoBehaviour:
   m_ObjectHideFlags: 1

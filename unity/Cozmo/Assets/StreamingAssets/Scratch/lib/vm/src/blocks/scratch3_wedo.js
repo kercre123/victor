@@ -55,15 +55,24 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_drive: this.verticalDrive,
         cozmo_vert_path_offset: this.verticalPathOffset,
         cozmo_vert_path_to: this.verticalPathTo,
-        cozmo_vert_headangle: this.verticalHeadAngle,
-        cozmo_vert_liftheight: this.verticalLiftHeight,
+        cozmo_vert_set_headangle: this.verticalSetHeadAngle,
+        cozmo_vert_set_liftheight: this.verticalSetLiftHeight,
         // Sensors / Inputs
-        cozmo_vert_cube_position: this.verticalCubePosition,
-        cozmo_vert_position: this.verticalCozmoPosition,
-        cozmo_vert_angle: this.verticalCozmoAngle,
-        cozmo_vert_face_name: this.verticalFaceName,
-        cozmo_vert_face_2d: this.verticalFace2d,
-        cozmo_vert_face_3d: this.verticalFace3d
+        // Cozmo
+        cozmo_vert_get_position_3d: this.verticalCozmoGetPosition,
+        cozmo_vert_get_angle: this.verticalCozmoGetAngle,
+        cozmo_vert_get_pitch: this.verticalCozmoGetPitch,
+        cozmo_vert_get_lift_height: this.verticalCozmoGetLiftHeight,
+        cozmo_vert_get_head_angle: this.verticalCozmoGetHeadAngle,
+        // Faces
+        cozmo_vert_face_get_is_visible: this.verticalFaceGetIsVisible,
+        cozmo_vert_face_get_name: this.verticalFaceGetName,
+        cozmo_vert_face_get_position_2d: this.verticalFaceGet2d,
+        cozmo_vert_face_get_position_3d: this.verticalFaceGet3d,
+        // Cubes
+        cozmo_vert_cube_get_is_visible: this.verticalCubeGetIsVisible,
+        cozmo_vert_cube_get_position_2d: this.verticalCubeGetPosition2d,
+        cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d
     };
 };
 
@@ -100,7 +109,7 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
     if (!util.stackFrame.timer) {
         var choiceString = Cast.toString(args.CHOICE);
         var colorHexValue = this._getColor(choiceString);
-        window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoSetBackpackColor","argString": "' + choiceString + '", "argUInt": "' + colorHexValue + '"}');
+        window.Unity.call({requestId: -1, command: "cozmoSetBackpackColor", argString: choiceString, argUInt: colorHexValue});
         
         // Yield
         util.stackFrame.timer = new Timer();
@@ -138,7 +147,7 @@ Scratch3CozmoBlocks.prototype.driveBlocksHelper = function(args, util, command) 
     // will be used as a multiplier against the base dist_mm.
     var distMultiplier = Cast.toNumber(args.DISTANCE);
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "' + command + '","argFloat": ' + distMultiplier + '}');
+    window.Unity.call({requestId: requestId, command: command, argFloat: distMultiplier});
 
     return this._promiseForCommand(requestId);
 };
@@ -146,7 +155,7 @@ Scratch3CozmoBlocks.prototype.driveBlocksHelper = function(args, util, command) 
 Scratch3CozmoBlocks.prototype.playAnimationHelper = function(args, util, animName, isMystery) {
     isMystery = isMystery || 0;  // if undefined force to 0 as a default value
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation", "argString": "' + animName + '", "argUInt": ' + isMystery + '}');
+    window.Unity.call({requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery});
 
     return this._promiseForCommand(requestId);
 };
@@ -215,7 +224,7 @@ Scratch3CozmoBlocks.prototype.playMysteryAnimation = function(args, util) {
 Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
     var liftHeight = Cast.toString(args.CHOICE);
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoForklift","argString": "' + liftHeight + '"}');
+    window.Unity.call({requestId: requestId, command: "cozmoForklift", argString: liftHeight});
 
     return this._promiseForCommand(requestId);
 };    
@@ -223,28 +232,28 @@ Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
 Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
     var headAngle = Cast.toString(args.CHOICE);
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
+    window.Unity.call({requestId: requestId, command: "cozmoHeadAngle", argString: headAngle});
 
     return this._promiseForCommand(requestId);
 };
 
 Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDockWithCube"}');
+    window.Unity.call({requestId: requestId, command: "cozmoDockWithCube"});
 
     return this._promiseForCommand(requestId);
 };
                                        
 Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnLeft"}');
+    window.Unity.call({requestId: requestId, command: "cozmoTurnLeft"});
 
     return this._promiseForCommand(requestId);
 };
 
 Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnRight"}');
+    window.Unity.call({requestId: requestId , command: "cozmoTurnRight"});
 
     return this._promiseForCommand(requestId);
 };
@@ -252,7 +261,7 @@ Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
 Scratch3CozmoBlocks.prototype.speak = function(args, util) {
     var textToSay = Cast.toString(args.STRING);
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoSays","argString": "' + textToSay + '"}');
+    window.Unity.call({requestId: requestId, command: "cozmoSays", argString: textToSay});
 
     return this._promiseForCommand(requestId);
 };
@@ -267,10 +276,10 @@ Scratch3CozmoBlocks.prototype.speak = function(args, util) {
  */
 Scratch3CozmoBlocks.prototype._waitUntilSeeFaceHelper = function (args, util, commandName) {
     // For now pass -1 for requestId to indicate we don't need a Promise resolved.
-    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "high"}');
+    window.Unity.call({requestId: -1, command: "cozmoHeadAngle", argString: "high"});
 
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "' + commandName + '"}');
+    window.Unity.call({requestId: requestId, command: commandName});
 
     return this._promiseForCommand(requestId);
 };
@@ -317,10 +326,10 @@ Scratch3CozmoBlocks.prototype.waitUntilSeeSadFace = function (args, util) {
  */
 Scratch3CozmoBlocks.prototype.waitUntilSeeCube = function (args, util) {
     // For now pass -1 for requestId to indicate we don't need a Promise resolved.
-    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "low"}');
+    window.Unity.call({requestId: -1, command: "cozmoHeadAngle", argString: "low"});
 
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeCube"}');
+    window.Unity.call({requestId: requestId, command: "cozmoWaitUntilSeeCube"});
 
     return this._promiseForCommand(requestId);
 };
@@ -334,7 +343,7 @@ Scratch3CozmoBlocks.prototype.waitUntilSeeCube = function (args, util) {
  */
 Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitForCubeTap"}');
+    window.Unity.call({requestId: requestId, command: "cozmoWaitForCubeTap"});
 
     return this._promiseForCommand(requestId);
 };
@@ -421,7 +430,7 @@ Scratch3CozmoBlocks.prototype.verticalTurn = function(args, util) {
     var speed = Cast.toNumber(args.SPEED);
     
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertTurn", "argFloat": "' + turnAngle + '", "argFloat2": "' + speed + '"}');
+    window.Unity.call({requestId: requestId, command: "cozVertTurn", argFloat: turnAngle, argFloat2: speed});
     return commandPromise;
 };
 
@@ -431,7 +440,7 @@ Scratch3CozmoBlocks.prototype.verticalDrive = function(args, util) {
     var speed = Cast.toNumber(args.SPEED);
     
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertDrive", "argFloat": "' + distance + '", "argFloat2": "' + speed + '"}');
+    window.Unity.call({requestId: requestId, command: "cozVertDrive", argFloat: distance, argFloat2: speed});
     return commandPromise;
 };
 
@@ -442,7 +451,7 @@ Scratch3CozmoBlocks.prototype.verticalPathOffset = function(args, util) {
     var offsetAngle = Cast.toNumber(args.OFFSET_ANGLE);
     
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertPathOffset", "argFloat": "' + offsetX + '", "argFloat2": "' + offsetY + '", "argFloat3": "' + offsetAngle + '"}');
+    window.Unity.call({requestId: requestId, command: "cozVertPathOffset", argFloat: offsetX, argFloat2: offsetY, argFloat3: offsetAngle});
     return commandPromise;
 };
 
@@ -453,27 +462,27 @@ Scratch3CozmoBlocks.prototype.verticalPathTo = function(args, util) {
     var newAngle = Cast.toNumber(args.NEW_ANGLE);
     
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertPathTo", "argFloat": "' + newX + '", "argFloat2": "' + newY + '", "argFloat3": "' + newAngle + '"}');
+    window.Unity.call({requestId: requestId, command: "cozVertPathTo", argFloat: newX, argFloat2: newY, argFloat3: newAngle});
     return commandPromise;
 };
 
-Scratch3CozmoBlocks.prototype.verticalHeadAngle = function(args, util) {
+Scratch3CozmoBlocks.prototype.verticalSetHeadAngle = function(args, util) {
     var requestId = this._getRequestId();
     var angle = Cast.toNumber(args.HEAD_ANGLE);
     var speed = Cast.toNumber(args.SPEED);
     
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertHeadAngle", "argFloat": "' + angle + '", "argFloat2": "' + speed + '"}');
+    window.Unity.call({requestId: requestId, command: "cozVertHeadAngle", argFloat: angle, argFloat2: speed});
     return commandPromise;
 };
 
-Scratch3CozmoBlocks.prototype.verticalLiftHeight = function(args, util) {
+Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function(args, util) {
     var requestId = this._getRequestId();
     var heightRatio = Cast.toNumber(args.HEIGHT_RATIO);
     var speed = Cast.toNumber(args.SPEED);
 
     var commandPromise = this._promiseForCommand(requestId);    
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertLiftHeight", "argFloat": "' + heightRatio + '", "argFloat2": "' + speed + '"}');
+    window.Unity.call({requestId: requestId, command: "cozVertLiftHeight", argFloat: heightRatio, argFloat2: speed});
     return commandPromise;
 };      
 
@@ -481,64 +490,111 @@ Scratch3CozmoBlocks.prototype.verticalLiftHeight = function(args, util) {
 // Sensors / Inputs:
 // =================
 
-Scratch3CozmoBlocks.prototype.verticalCubePosition = function(args, util) {
-    var cube = Cast.toNumber(args.CUBE_SELECT);
-    var axis = Cast.toNumber(args.AXIS);
+// Helpers
 
-    var srcCube = gCozmoWorldState.cube3;
-    if (cube == 0) {
-        srcCube = gCozmoWorldState.cube1;
-    }
-    else if (cube == 1) {
-        srcCube = gCozmoWorldState.cube2;
-    }
-
-    if (axis == 0) {
-        return Cast.toNumber(srcCube.pos.x);
-    } else if (axis == 1) {
-        return Cast.toNumber(srcCube.pos.y);
-    } else {
-        return Cast.toNumber(srcCube.pos.z);
+function getVector2Axis(vector2d, axis) {
+    switch (axis) {
+        case 0:
+            return Cast.toNumber(vector2d.x);
+        case 1:
+            return Cast.toNumber(vector2d.y);
+        default:
+            console.error("Invalid 2d axis '" + axis + "'");
+            return 0.0;
     }
 };
 
-Scratch3CozmoBlocks.prototype.verticalCozmoPosition = function(args, util) {
-    var axis = Cast.toNumber(args.AXIS);
-    if (axis == 0) {
-        return Cast.toNumber(gCozmoWorldState.pos.x);
-    } else if (axis == 1) {
-        return Cast.toNumber(gCozmoWorldState.pos.y);
-    } else {
-        return Cast.toNumber(gCozmoWorldState.pos.z);
+function getVector3Axis(vector3d, axis) {
+    switch (axis) {
+        case 0:
+            return Cast.toNumber(vector3d.x);
+        case 1:
+            return Cast.toNumber(vector3d.y);
+        case 2:
+            return Cast.toNumber(vector3d.z);
+        default:
+            console.error("Invalid 3d axis '" + axis + "'");
+            return 0.0;
     }
 };
 
-Scratch3CozmoBlocks.prototype.verticalCozmoAngle = function(args, util) {
+// Cozmo
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetPosition = function(args, util) {
+    var axis = Cast.toNumber(args.AXIS);
+    return getVector3Axis(gCozmoWorldState.pos, axis);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetAngle = function(args, util) {
     return Cast.toNumber(gCozmoWorldState.poseAngle_d);
 };
 
-Scratch3CozmoBlocks.prototype.verticalFaceName = function(args, util) {
+Scratch3CozmoBlocks.prototype.verticalCozmoGetPitch = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.posePitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetLiftHeight = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.liftHeightFactor);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetHeadAngle = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.headAngle_d);
+};
+
+// Faces
+
+Scratch3CozmoBlocks.prototype.verticalFaceGetIsVisible = function(args, util) {
+    return Cast.toBoolean(gCozmoWorldState.face.isVisible);
+};
+
+Scratch3CozmoBlocks.prototype.verticalFaceGetName = function(args, util) {
     return Cast.toString(gCozmoWorldState.face.name);
 };
 
-Scratch3CozmoBlocks.prototype.verticalFace2d = function(args, util) {
-    var axis = Cast.toNumber(args.AXIS);    
-    if (axis == 0) {
-        return Cast.toNumber(gCozmoWorldState.face.camPos.x);
-    } else {
-        return Cast.toNumber(gCozmoWorldState.face.camPos.y);
-    }
+Scratch3CozmoBlocks.prototype.verticalFaceGet2d = function(args, util) {
+    var axis = Cast.toNumber(args.AXIS);
+    return getVector2Axis(gCozmoWorldState.face.camPos, axis);
 };
 
-Scratch3CozmoBlocks.prototype.verticalFace3d = function(args, util) {
+Scratch3CozmoBlocks.prototype.verticalFaceGet3d = function(args, util) {
     var axis = Cast.toNumber(args.AXIS);
-    if (axis == 0) {
-        return Cast.toNumber(gCozmoWorldState.face.pos.x);
-    } else if (axis == 1) {
-        return Cast.toNumber(gCozmoWorldState.face.pos.y);
-    } else {
-        return Cast.toNumber(gCozmoWorldState.face.pos.z);
+    return getVector3Axis(gCozmoWorldState.face.pos, axis);
+};
+
+// Cubes
+
+Scratch3CozmoBlocks.prototype.getCubeHelper = function(cubeIndex) {
+    switch(cubeIndex) {
+        case 1:
+            return gCozmoWorldState.cube1;
+        case 2:
+            return gCozmoWorldState.cube2;
+        case 3:
+            return gCozmoWorldState.cube3;
+        default:
+            console.error("Invalid cubeIndex '" + cubeIndex + "'");
+            return null;
     }
+}
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetIsVisible = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toBoolean(srcCube.isVisible);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetPosition2d = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var axis = Cast.toNumber(args.AXIS);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return getVector2Axis(srcCube.camPos, axis);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetPosition3d = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var axis = Cast.toNumber(args.AXIS);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return getVector3Axis(srcCube.pos, axis);
 };
 
 

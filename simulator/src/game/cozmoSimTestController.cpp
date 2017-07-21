@@ -28,7 +28,6 @@ namespace Anki {
       constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSimTestArray = {
         {ReactionTrigger::CliffDetected,                false},
         {ReactionTrigger::CubeMoved,                    true},
-        {ReactionTrigger::DoubleTapDetected,            false},
         {ReactionTrigger::FacePositionUpdated,          false},
         {ReactionTrigger::FistBump,                     false},
         {ReactionTrigger::Frustration,                  false},
@@ -89,6 +88,10 @@ namespace Anki {
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DisableReactionsWithLock(
                                                          "CozmoSimTestController",
                                                          kAffectTriggersSimTest)));
+    
+    // Disable needs during all tests
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetNeedsPauseState(true)));
+
   }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,

@@ -47,7 +47,6 @@ namespace {
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -669,7 +668,7 @@ void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& starting
   const float maxTranslation_mm = 250.f;
   std::vector<const ObservableObject*> intersectingObjects;
   do {
-    goalPose.TranslateBy(stepIncrement_mm);
+    goalPose.TranslateForward(stepIncrement_mm);
     
     // Stop condition just in case:
     totalTranslation_mm += stepIncrement_mm;

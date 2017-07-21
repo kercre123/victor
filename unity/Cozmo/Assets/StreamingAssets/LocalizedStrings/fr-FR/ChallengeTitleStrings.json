@@ -7,79 +7,79 @@
     "source_key_paths" : ["/{*}"]
   },
   "challengeDetails.needsMoreCubesModal.title" : {
-    "translation" : "Cubes Not Enough"
+    "translation" : "Pas assez de cubes"
   },
   "challengeDetails.needsMoreCubesModal.description" : {
-    "translation" : "besoins Cozmo {0} plus {1} commencer {2} ."
+    "translation" : "Cozmo a besoin de {0} {1} de plus pour commencer {2}."
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "Cozmo est pas prêt"
+    "translation" : "Cozmo n'est pas prêt"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
-    "translation" : "S'il vous plaît aider Cozmo obtenir debout et prêt à jouer."
+    "translation" : "Aide Cozmo à se redresser afin qu'il soit prêt à jouer"
   },
   "challengeDetails.cozmoDizzy.title" : {
-    "translation" : "Cozmo Is Dizzy"
+    "translation" : "Cozmo est étourdi"
   },
   "challengeDetails.cozmoDizzy.description" : {
-    "translation" : "Attendez jusqu'à ce que Cozmo ait récupéré d'être Dizzy et est prêt à jouer."
+    "translation" : "Attends que Cozmo se rétablisse et soit prêt à jouer."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
-    "translation" : "Cozmo Is Waking Up"
+    "translation" : "Cozmo se réveille"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.description" : {
-    "translation" : "S'il vous plaît attendre Cozmo de se réveiller et chasser de son chargeur."
+    "translation" : "Attends que Cozmo se réveille et s'écarte de son chargeur."
   },
   "challengeDetails.needsMoreCubesModal.button" : {
-    "translation" : "ME MONTRER COMMENT"
+    "translation" : "MONTREZ-MOI COMMENT"
   },
   "challengeDetails.cozmoHasHiccups.title" : {
-    "translation" : "Cozmo a le Hiccups"
+    "translation" : "Cozmo a le hoquet"
   },
   "challengeDetails.cozmoHasHiccups.description" : {
-    "translation" : "Essayez d'aider Cozmo en le mettant à l'envers."
+    "translation" : "Essaye d'aider Cozmo en le retournant."
   },
   "cubeSlap.title" : {
     "translation" : "Pas touche"
   },
   "cubeSlap.description" : {
-    "translation" : "Allécher Cozmo à bondir sur un cube, puis retirez-le avant qu'il peut!"
+    "translation" : "Incite Cozmo à se jeter sur un cube, puis éloigne-le avant qu'il ne l'atteigne !"
   },
   "droneMode.title" : {
     "translation" : "Mode Explorateur"
   },
   "droneMode.description" : {
-    "translation" : "Explorez le monde grâce aux yeux de Cozmo!"
+    "translation" : "Explore le monde à travers le regard de Cozmo."
   },
   "faceEnrollment.title" : {
     "translation" : "Première rencontre"
   },
   "faceEnrollment.description" : {
-    "translation" : "Aidez Cozmo à reconnaître les gens et à apprendre leur nom."
+    "translation" : "Aide Cozmo à reconnaître les personnes et à apprendre leur nom."
   },
   "memoryMatchGame.title" : {
     "translation" : "Jeu de mémoire"
   },
   "memoryMatchGame.description" : {
-    "translation" : "Un jeu de modèle qui teste votre mémoire. Regardez les cubes et écoutez attentivement!"
+    "translation" : "Un jeu de séquences qui permet de tester ta mémoire. Observe les cubes et écoute attentivement !"
   },
   "speedTap.title" : {
     "translation" : "Réflexe"
   },
   "speedTap.description" : {
-    "translation" : "Un jeu de correspondance des couleurs des réflexes rapides et esprits pointus."
+    "translation" : "Un jeu de regroupement par couleurs demandant des réflexes rapides et un esprit acéré."
   },
   "cozmoSays.title" : {
     "translation" : "La parole à Cozmo"
   },
   "cozmoSays.description" : {
-    "translation" : "En échange de Sparks, Cozmo tentera de dire un mot ou une phrase!"
+    "translation" : "Contre des étincelles, Cozmo tentera de dire un mot ou une phrase !"
   },
   "codeLab.title" : {
-    "translation" : "code Lab"
+    "translation" : "Atelier de codage"
   },
   "codeLab.description" : {
-    "translation" : "Utilisez votre créativité pour programmer Cozmo et explorez les choses que vous pouvez faire ensemble!"
+    "translation" : "Fais appel à ta créativité pour programmer Cozmo et explorer toutes ses amusantes capacités !"
   },
   "activityView.title" : {
     "translation" : "Découvrir"

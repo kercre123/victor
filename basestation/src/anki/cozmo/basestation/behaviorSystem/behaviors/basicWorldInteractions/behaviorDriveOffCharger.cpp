@@ -35,7 +35,6 @@ static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDriveOffChargerArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

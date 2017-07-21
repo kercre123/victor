@@ -76,7 +76,7 @@ _GIT_COZMO_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@github.com/ank
 _GIT_COZMO_PR_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@api.github.com/repos/anki/cozmo-one/pulls
 
 exit_status=0
-$_SMARTLING_PULL_SCRIPT -t published $_LOCALIZED_STRINGS_DIR || exit_status=$?
+$_SMARTLING_PULL_SCRIPT -t pending $_LOCALIZED_STRINGS_DIR || exit_status=$?
 if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem downloading *.json from Smartling. Check build log!" "danger" $exit_status
 fi

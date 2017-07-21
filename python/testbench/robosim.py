@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 Simulates traffic to / from the robot to test the serial radio
 """

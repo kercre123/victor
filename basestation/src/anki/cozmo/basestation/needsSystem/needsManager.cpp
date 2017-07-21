@@ -352,7 +352,8 @@ void NeedsManager::InitInternal(const float currentTime_s)
       // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
       _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
 
-      ApplyDecayForUnconnectedTime();
+      static const bool connected = false;
+      ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
       appliedDecay = true;
     }
@@ -496,7 +497,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
     // Now apply decay for the unconnected time for THIS robot
     // (We did it earlier, in Init, but that was for a different robot)
-    ApplyDecayForUnconnectedTime();
+    static const bool connected = false;
+    ApplyDecayForTimeSinceLastDeviceWrite(connected);
   }
   
   // Update Game on Robot's last state
@@ -657,6 +659,13 @@ const NeedsState& NeedsManager::GetCurNeedsState()
 void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
   if (_isPausedOverall)
+  {
+    return;
+  }
+
+  // Don't do anything if no robot connected.  This can happen during shutdown,
+  // since we have so much code being executed from the robot class destructor
+  if (_robot == nullptr)
   {
     return;
   }
@@ -876,8 +885,8 @@ int NeedsManager::RewardSparksForFreeplay()
 }
 
 
-int NeedsManager::AwardSparks(int targetSparks, float minPct, float maxPct,
-                              int minSparks, int minMaxSparks)
+int NeedsManager::AwardSparks(const int targetSparks, const float minPct, const float maxPct,
+                              const int minSparks, const int minMaxSparks)
 {
   auto& ic = _robot->GetInventoryComponent();
   const int curSparks = ic.GetInventoryAmount(InventoryType::Sparks);
@@ -1149,7 +1158,10 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
   {
     SendNeedsStateToGame();
 
-    UpdateStarsState();
+    if (_robot != nullptr)
+    {
+      UpdateStarsState();
+    }
 
     DetectBracketChangeForDas();
   }
@@ -1230,10 +1242,10 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
                 "Game being paused set to %s",
                 msg.isPaused ? "TRUE" : "FALSE");
 
-  // When app is backgrounded, we want to also pause the whole needs system
-  // Note:  When pausing, we'll also call WriteToDevice
+  // During app backgrounding, we want to pause the whole needs system
   SetPaused(msg.isPaused);
 
+  // When backgrounding, we'll also write to robot
   if (msg.isPaused)
   {
     if (_robotStorageState == RobotStorageState::Inactive)
@@ -1244,6 +1256,13 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
         StartWriteToRobot();
       }
     }
+  }
+
+  // When un-backgrounding, apply decay
+  if (!msg.isPaused)
+  {
+    const bool connected = (_robot == nullptr ? false : true);
+    ApplyDecayForTimeSinceLastDeviceWrite(connected);
   }
 }
 
@@ -1343,7 +1362,7 @@ void NeedsManager::SendNeedsPauseStatesToGame()
 }
 
 
-void NeedsManager::ApplyDecayAllNeeds(bool connected)
+void NeedsManager::ApplyDecayAllNeeds(const bool connected)
 {
   const DecayConfig& config = connected ? _needsConfig._decayConnected : _needsConfig._decayUnconnected;
 
@@ -1382,20 +1401,19 @@ void NeedsManager::ApplyDecayAllNeeds(bool connected)
 }
 
 
-void NeedsManager::ApplyDecayForUnconnectedTime()
+void NeedsManager::ApplyDecayForTimeSinceLastDeviceWrite(const bool connected)
 {
   // Calculate time elapsed since last connection
   const Time now = system_clock::now();
   const float elasped_s = duration_cast<seconds>(now - _needsState._timeLastWritten).count();
 
-  // Now apply decay according to unconnected config, and elapsed time
+  // Now apply decay according to appropriate config, and elapsed time
   // First, however, we set the timers as if that much time had elapsed:
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
     _lastDecayUpdateTime_s[i] = _currentTime_s - elasped_s;
   }
 
-  static const bool connected = false;
   ApplyDecayAllNeeds(connected);
 }
 
@@ -2030,14 +2048,20 @@ void NeedsManager::DebugFillNeedMeters()
 
   _needsState.DebugFillNeedMeters();
   SendNeedsStateToGame();
-  UpdateStarsState();
+  if (_robot != nullptr)
+  {
+    UpdateStarsState();
+  }
 }
 
 void NeedsManager::DebugGiveStar()
 {
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
-  DebugCompleteDay();
-  UpdateStarsState(true);
+  if (_robot != nullptr)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
+    DebugCompleteDay();
+    UpdateStarsState(true);
+  }
 }
 
 void NeedsManager::DebugCompleteDay()
@@ -2165,7 +2189,12 @@ void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
 
   SendNeedsStateToGame();
 
-  UpdateStarsState();
+  // Don't award daily stars when no robot connected, because that could lead
+  // to unlocks which have to be stored on the robot
+  if (_robot != nullptr)
+  {
+    UpdateStarsState();
+  }
 
   DetectBracketChangeForDas();
 

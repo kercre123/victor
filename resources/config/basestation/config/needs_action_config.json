@@ -322,7 +322,7 @@
     "playDelta": 0.1,
     "playRange": 0,
     "cooldownSecs": 0,
-    "freeplaySparksRewardWeight": 1
+    "freeplaySparksRewardWeight": 0
   },
   {
     "actionId": "PickupCube_Sparked",

@@ -3,7 +3,6 @@ namespace Cozmo {
 
 enum uint_8 FeatureType {
   Invalid,
-  ObjectTapInteractions,
   AndroidConnectionFlow,
   SpeedTapMultiPlayer,
   CodeLabGame,

@@ -46,7 +46,10 @@ PoseOriginID_t PoseOriginList::AddOrigin(PoseOrigin* origin)
 
 void PoseOriginList::AddOriginWithID(PoseOriginID_t ID, PoseOrigin* origin)
 {
-  _origins[ID] = origin;
+  auto result = _origins.insert({ID, origin});
+  DEV_ASSERT_MSG(result.second, "PoseOriginList.AddOriginWithID.DuplicateID", "%d", ID);
+# pragma unused(result) // Prevent errors in non-Debug builds when DEV_ASSERT above is compiled out
+  
   _idLUT[origin] = ID;
   
   _nextID = std::max(ID + 1, _nextID);

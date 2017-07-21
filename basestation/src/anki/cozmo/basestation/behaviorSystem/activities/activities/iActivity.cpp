@@ -51,8 +51,6 @@ static const char* kBehaviorChooserConfigKey          = "behaviorChooser";
 static const char* kInterludeBehaviorChooserConfigKey = "interludeBehaviorChooser";
 static const char* kStrategyConfigKey                 = "activityStrategy";
 static const char* kRequiresSparkKey                  = "requireSpark";
-static const char* kRequiresObjectTapped              = "requireObjectTapped";
-static const char* kSupportsObjectTapInteractionKey   = "supportsObjectTapInteractions";
 static const char* kSmartReactionLockSuffix           = "_activityLock";
 static const std::string kIdleLockPrefix              = "Activity_";
 
@@ -67,8 +65,6 @@ IActivity::IActivity(Robot& robot, const Json::Value& config)
 , _infoAnalysisProcess(AIInformationAnalysis::EProcess::Invalid)
 , _requiredSpark(UnlockId::Count)
 , _hasSetIdle(false)
-, _requireObjectTapped(false)
-, _supportsObjectTapInteractions(false)
 , _lastTimeActivityStartedSecs(-1.0f)
 , _lastTimeActivityStoppedSecs(-1.0f)
 {
@@ -210,10 +206,6 @@ void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
   const Json::Value& strategyConfig = config[kStrategyConfigKey];
   IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(robot, strategyConfig);
   _strategy.reset( newStrategy );
-  
-  
-  JsonTools::GetValueOptional(config, kRequiresObjectTapped, _requireObjectTapped);
-  JsonTools::GetValueOptional(config, kSupportsObjectTapInteractionKey, _supportsObjectTapInteractions);
 }
 
 
@@ -310,15 +302,6 @@ void IActivity::OnDeselected(Robot& robot)
                 {{DDATA, std::to_string(nSecs).c_str()}},
                 "%s", GetIDStr());
   
-  // If the activity requires a tapped object make sure to unset the tapped object when the activity exits
-  if(_requireObjectTapped)
-  {
-    // Don't know which light animation was being played so stop both
-    robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
-    robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
-    
-    robot.GetBehaviorManager().LeaveObjectTapInteraction();
-  }
   OnDeselectedInternal(robot);
 }
 
@@ -439,13 +422,6 @@ void IActivity::SmartDisableReactionWithLock(Robot& robot,
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<IBehaviorPtr> IActivity::GetObjectTapBehaviors(){
-  if(_behaviorChooserPtr != nullptr){
-    return _behaviorChooserPtr->GetObjectTapBehaviors();
-  }
-  return {};
-}
-
 IActivityStrategy* IActivity::DevGetStrategy()
 {
   if(ANKI_DEV_CHEATS)

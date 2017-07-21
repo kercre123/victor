@@ -83,11 +83,6 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       strategy = new ReactionTriggerStrategyCubeMoved(robot, config);
       break;
     }
-    case ReactionTrigger::DoubleTapDetected:
-    {
-      strategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      break;
-    }
     case ReactionTrigger::FacePositionUpdated:
     {
       strategy = new ReactionTriggerStrategyFacePositionUpdated(robot, config);

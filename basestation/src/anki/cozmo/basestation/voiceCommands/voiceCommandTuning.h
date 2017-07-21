@@ -59,7 +59,7 @@ struct TestResultScoreData
   double _score = 0;
   double _maxScore = 0;
   
-  double _targetScoreConstant = 600;
+  static constexpr double _kTargetScoreConstant = 500;
   
   double _hitMult = 1.0f;
   double _missMult = -1.0f;
@@ -86,7 +86,6 @@ class VoiceCommandTuning {
 public:
   VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatform,
                      const CommandPhraseData& commandPhraseData,
-                     double targetScore,
                      Anki::Util::Locale locale,
                      const std::string& sampleGroupDir = "");
   ~VoiceCommandTuning();

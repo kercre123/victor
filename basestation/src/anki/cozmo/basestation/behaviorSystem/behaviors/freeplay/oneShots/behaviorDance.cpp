@@ -28,7 +28,6 @@ namespace {
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDance = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},
@@ -116,7 +115,8 @@ Result BehaviorDance::InitInternal(Robot& robot)
   }
   
   // Start dancing audio
-  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Dance, 0);
+  //robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Dance, 0);
+  DEV_ASSERT(false, "BehaviorDance.Init.MusicTurnedOff");
   
   // Init base class to play our animation sequence
   return BehaviorPlayAnimSequence::InitInternal(robot);

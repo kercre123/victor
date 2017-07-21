@@ -120,7 +120,9 @@ private:
   
   // Use Text to Speech lib to create audio data & reformat into StandardWaveData format
   // Return nullptr if Text to Speech lib fails to create audio data
-  AudioEngine::StandardWaveDataContainer* CreateAudioData(const std::string& text, const float durationScalar);
+  AudioEngine::StandardWaveDataContainer* CreateAudioData(const std::string& text,
+                                                          SayTextVoiceStyle style,
+                                                          float durationScalar);
   
   // Helpers
   // Find TtsBundle for operation

@@ -7,19 +7,19 @@
     "source_key_paths" : ["/{*}"]
   },
   "boot.errorDiskFull" : {
-    "translation" : "Die Cozmo App konnte nicht geladen werden, da der Speicher Ihres Geräts zu voll ist. Versuchen Medien oder ungenutzte Anwendungen von Ihrem Telefon zu entfernen, und versuchen Sie es erneut."
+    "translation" : "Die Cozmo-App konnte nicht geladen werden, da auf deinem Gerät nicht genügend freier Speicherplatz verfügbar ist. Entferne Fotos, Videos oder nicht mehr benötigte Apps, und versuche es dann erneut."
   },
   "boot.errorReadingFiles" : {
-    "translation" : "Die Cozmo App konnte nicht lesen Dateien. Fehler: {0}"
+    "translation" : "Die Cozmo-App konnte die Dateien nicht lesen. Fehler: {0}"
   },
   "boot.needStoragePermission" : {
-    "translation" : "Die Cozmo App muss Spieldateien auf Ihrem Gerät zugreifen, um zu laufen."
+    "translation" : "Die Cozmo-App benötigt Zugriff auf Spieldateien auf deinem Gerät."
   },
   "boot.appSettingsPermission" : {
-    "translation" : "Die Cozmo App muss auf Spieldateien auf Ihrem Gerät zugreifen, um zu laufen. Benutzen Sie den Link unten, um die Cozmo App Einstellungen zu besuchen und tippen Sie auf <b> ERLÄUTERUNGEN&gt; LAGERUNG </b> Um dies zu ermöglichen"
+    "translation" : "Die Cozmo-App benötigt Zugriff auf Spieldateien auf deinem Gerät. Rufe über den Link unten die Einstellungen der Cozmo-App auf und aktiviere den Zugriff, indem du auf <b>BERECHTIGUNGEN &gt; SPEICHER</b> tippst."
   },
   "boot.continue" : {
-    "translation" : "FORTSETZEN"
+    "translation" : "WEITER"
   },
   "boot.settings" : {
     "translation" : "Einstellungen"
@@ -28,6 +28,6 @@
     "translation" : "VERSION: {0}"
   },
   "boot.deviceId" : {
-    "translation" : "GERÄTE ID: {0}"
+    "translation" : "GERÄTE-ID: {0}"
   }
 }

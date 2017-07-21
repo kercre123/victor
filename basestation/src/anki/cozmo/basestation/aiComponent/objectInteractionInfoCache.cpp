@@ -775,15 +775,6 @@ void ObjectInteractionCacheEntry::EnsureInformationValid()
       }
     }
     
-    const auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
-    const bool haveTapIntentionObject = whiteboard.HasTapIntent();
-    
-    
-    // The best object for a tap intention has been set already in ObjectTapInteraction Occurred
-    if(haveTapIntentionObject && _bestObject.IsSet()){
-      return;
-    }
-    
     const bool bestIsStillValid = _validObjects.find(_bestObject) != _validObjects.end();
     // Only update _bestObject if the old best object is no longer valid
     if(!bestIsStillValid)

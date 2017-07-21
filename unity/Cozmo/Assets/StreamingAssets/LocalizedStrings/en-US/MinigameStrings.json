@@ -374,5 +374,14 @@
   },
   "minigame.text.youWin": {
     "translation": "You\nWin!"
+  },
+  "label.MATCH": {
+    "translation": "MATCH!"
+  },
+  "label.NO.MATCH": {
+    "translation": "NO \\nMATCH"
+  },
+  "label.DONT.SLAP": {
+    "translation": "DON'T \\nSLAP!"
   }
 }

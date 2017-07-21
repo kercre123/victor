@@ -744,6 +744,16 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
       
 } // SetLocalizedTo()
   
+const Pose3d* Robot::GetWorldOrigin() const
+{
+  // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
+  ANKI_VERIFY(_poseOriginList->GetOriginID(_worldOrigin) != PoseOriginList::UnknownOriginID,
+              "Robot.GetWorldOrigin.WorldOriginNotInPoseList", "Name: %s",
+              _worldOrigin == nullptr ? "<null>" : _worldOrigin->GetNamedPathToOrigin(false).c_str());
+  
+  return _worldOrigin;
+}
+  
   
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
@@ -775,8 +785,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
 
-  // update path following variables
-  _pathComponent->UpdateRobotData(msg.currPathSegment, msg.lastPathID);
+  // update current path segment in the path component
+  _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);
     
   // Update IMU data
   _robotAccel = msg.accel;
@@ -1866,6 +1876,12 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
               GetID(), _worldOrigin->GetName().c_str(),
               existingObject->GetPose().FindOrigin().GetName().c_str());
     
+    // Before we make any changes, double check that the "old" world origin is in the PoseOriginList
+    ANKI_VERIFY(GetPoseOriginList().GetOriginID(_worldOrigin) != PoseOriginList::UnknownOriginID,
+                "Robot.LocalizeToObject.OldWorldOriginNotInOriginList",
+                "OriginName: %s",
+                _worldOrigin == nullptr ? "<null>" : _worldOrigin->GetName().c_str());
+    
     // Store the current origin we are about to change so that we can
     // find objects that are using it below
     const Pose3d* oldOrigin = _worldOrigin;
@@ -1885,7 +1901,13 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     // Now that the previous origin is hooked up to the new one (which is
     // now the old one's parent), point the worldOrigin at the new one.
     _worldOrigin = const_cast<Pose3d*>(_worldOrigin->GetParent()); // TODO: Avoid const cast?
-        
+    
+    // After updating, the new world origin should _still_ be in the PoseOriginList
+    ANKI_VERIFY(GetPoseOriginList().GetOriginID(_worldOrigin) != PoseOriginList::UnknownOriginID,
+                "Robot.LocalizeToObject.NewWorldOriginNotInOriginList",
+                "OriginName: %s",
+                _worldOrigin == nullptr ? "<null>" : _worldOrigin->GetName().c_str());
+    
     // Now we need to go through all objects and faces whose poses have been adjusted
     // by this origin switch and notify the outside world of the change.
     _blockWorld->UpdateObjectOrigins(oldOrigin, _worldOrigin);
@@ -3109,7 +3131,6 @@ RobotState Robot::GetDefaultRobotState()
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          5.f, //float batteryVoltage,
                          kDefaultStatus, //uint32_t status,
-                         0, //uint16_t lastPathID,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          0, //uint16_t distanceSensor_mm
                          -1); //int8_t currPathSegment

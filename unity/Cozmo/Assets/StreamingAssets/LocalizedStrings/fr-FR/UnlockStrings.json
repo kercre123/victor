@@ -7,79 +7,79 @@
     "source_key_paths" : ["/{*}"]
   },
   "unlockable.OSNotSupported.Title" : {
-    "translation" : "Les exigences ne sont pas satisfaites"
+    "translation" : "Exigences non satisfaites"
   },
   "unlockable.OSNotSupported.Description" : {
-    "translation" : "Code Lab nécessite Android {0} Ou plus récent."
+    "translation" : "L'atelier de code requiert Android {0} ou plus récent."
   },
   "unlockable.Mystery.Title" : {
-    "translation" : "Capacité verrouillée"
+    "translation" : "Compétence verrouillée"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Les boîtes bonus d'ouverture ouvrent parfois de nouvelles capacités!"
+    "translation" : "L'ouverture de boîtes à bonus peut parfois débloquer de nouvelles compétences !"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Check"
   },
   "unlockable.FistBump.Description" : {
-    "translation" : "Vous voulez montrer à Cozmo que vous êtes fier de lui? Donnez-lui un petit coup de poing! Avec cette Trick, Cozmo tiendra son ascenseur dans les airs et vous attendra pour le coincer."
+    "translation" : "Tu veux montrer à Cozmo que tu es fier de lui ? Fais un petit check avec lui ! Avec cette mise à niveau, Cozmo maintiendra son bras élévateur relevé et attendra que tu le tamponnes."
   },
   "unlockable.FistBump.SparkButtonDescription" : {
-    "translation" : "Appuyez pour demander à Cozmo de lancer la poing."
+    "translation" : "Appuie pour demander à Cozmo de faire un check."
   },
   "unlockable.FistBump.SparkedStateDescription" : {
-    "translation" : "When he's ready, fist bump Cozmo."
+    "translation" : "Lorsqu'il est prêt, fais un check avec Cozmo."
   },
   "unlockable.PeekABoo.Title" : {
     "translation" : "Coucou"
   },
   "unlockable.PeekABoo.Description" : {
-    "translation" : "Peekaboo, I see you! With this Trick, play Peekaboo with Cozmo by hiding your face behind your hands, then show your face again to surprise him."
+    "translation" : "Coucou, je te vois ! Avec ce tour, fais Coucou à Cozmo en cachant ton visage derrière tes mains, puis en le lui remontrant pour le surprendre."
   },
   "unlockable.PeekABoo.SparkButtonDescription" : {
-    "translation" : "Appuyez pour demander à Cozmo de jouer au Peekaboo."
+    "translation" : "Appuie pour demander à Cozmo de jouer à Coucou."
   },
   "unlockable.PeekABoo.SparkedStateDescription" : {
-    "translation" : "Tout d'abord cacher votre visage, puis Peekaboo!"
+    "translation" : "Cache ton visage, puis fais Coucou !"
   },
   "unlockable.Workout.Title" : {
     "translation" : "Faire de la muscu avec des cubes"
   },
   "unlockable.Workout.Description" : {
-    "translation" : "Même les robots ont besoin d'exercice! Avec cette Trick, Cozmo apprend à travailler avec un Cube pour rester en pleine forme."
+    "translation" : "Même les robots ont besoin d'exercice ! Avec ce tour, Cozmo apprend à faire de la muscu avec un cube pour rester en pleine forme."
   },
   "unlockable.Workout.SparkButtonDescription" : {
-    "translation" : "Appuyez pour demander à Cozmo de s'entendre."
+    "translation" : "Appuie pour demander à Cozmo de faire de la muscu."
   },
   "unlockable.Workout.SparkedStateDescription" : {
-    "translation" : "Watch Cozmo find a Cube and work out."
+    "translation" : "Observe Cozmo qui recherche un cube et fait de la muscu."
   },
   "unlockable.CubePounce.Title" : {
     "translation" : "Pas touche"
   },
   "unlockable.CubePounce.Description" : {
-    "translation" : "With this Trick, Cozmo learns how to play Keepaway, a game of reflexes and reaction time."
+    "translation" : "Avec ce tour, Cozmo apprend à jouer à Pas touche, un jeu de réflexes et de réactivité."
   },
   "unlockable.FaceEnrollment.Title" : {
     "translation" : "Première rencontre"
   },
   "unlockable.FaceEnrollment.Description" : {
-    "translation" : "Cozmo apprend à se souvenir des visages et à parler des noms. Trouvez ceci dans l'activité Meet Cozmo."
+    "translation" : "Cozmo apprend à mémoriser les visages et à prononcer les noms.\u000a\u000aTu trouveras ce tour dans l'activité Première rencontre."
   },
   "unlockable.MemoryMatch.Title" : {
     "translation" : "Jeu de mémoire"
   },
   "unlockable.MemoryMatch.Description" : {
-    "translation" : "Avec cette Trick, Cozmo apprend comment jouer au jeu Memory Match."
+    "translation" : "Avec ce tour, Cozmo apprend à jouer au Jeu de mémoire."
   },
   "unlockable.SpeedTap.Title" : {
     "translation" : "Réflexe"
   },
   "unlockable.SpeedTap.Description" : {
-    "translation" : "With this Trick, Cozmo learns how to play the game Quick Tap. Over time, his skills will improve!"
+    "translation" : "Avec cette mise à niveau, Cozmo apprend à jouer au jeu Réflexe. Au fil du temps, ses compétences s'amélioreront !"
   },
   "unlockable.CodeLab.Title" : {
-    "translation" : "code Lab"
+    "translation" : "Atelier de codage"
   },
   "unlockable.cozmoSays.Title" : {
     "translation" : "La parole à Cozmo"
@@ -88,138 +88,138 @@
     "translation" : "Faire rouler un cube"
   },
   "unlockable.CubeRollAction.Description" : {
-    "translation" : "Cozmo prefers Cubes to be right-side up. This Trick allows him to roll Cubes, especially when they are on their side."
+    "translation" : "Cozmo préfère que les cubes soient à l'endroit. Cette mise à niveau lui permet de faire rouler les cubes, notamment lorsqu'ils sont sur le côté."
   },
   "unlockable.CubeRollAction.SparkButtonDescription" : {
-    "translation" : "Tap to ask Cozmo to roll a Cube."
+    "translation" : "Appuie pour demander à Cozmo de faire rouler un cube."
   },
   "unlockable.CubeRollAction.SparkedStateDescription" : {
-    "translation" : "Watch Cozmo roll the first Cube he sees."
+    "translation" : "Regarde Cozmo faire rouler le premier cube qu'il voit."
   },
   "unlockable.DroneMode.Title" : {
     "translation" : "Mode Explorateur"
   },
   "unlockable.DroneMode.Description" : {
-    "translation" : "Avec cette Trick, Cozmo vous permettra de le piloter en mode Explorateur."
+    "translation" : "Avec ce tour, Cozmo te permettra de le piloter en Mode Explorateur."
   },
   "unlockable.CubeStackAction.Title" : {
     "translation" : "Empiler des cubes"
   },
   "unlockable.CubeStackAction.Description" : {
-    "translation" : "With this Trick, Cozmo gains the ability to create a stack of two Cubes."
+    "translation" : "Avec ce tour, Cozmo acquiert la compétence requise pour empiler deux cubes."
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
-    "translation" : "Watch Cozmo create a stack of Cubes."
+    "translation" : "Regarde Cozmo empiler des cubes."
   },
   "unlockable.CubeStackAction.SparkButtonDescription" : {
-    "translation" : "Tap to ask Cozmo to stack two Cubes."
+    "translation" : "Appuie pour demander à Cozmo d'empiler deux cubes."
   },
   "unlockable.PounceOnMotionAction.Title" : {
     "translation" : "Prédateur"
   },
   "unlockable.PounceOnMotionAction.Description" : {
-    "translation" : "With this Trick, when Cozmo sees movement on the ground in front of him, such as a finger, he will playfully pounce on it!"
+    "translation" : "Avec ce tour, lorsque Cozmo voit des mouvements au sol devant lui, tels que celui d'un doigt, il joue à l'attaquer tel un prédateur !"
   },
   "unlockable.PounceOnMotionAction.SparkButtonDescription" : {
-    "translation" : "Appuyez pour demander à Cozmo de se mettre sur les doigts."
+    "translation" : "Appuie pour demander à Cozmo d'attaquer tes doigts."
   },
   "unlockable.PounceOnMotionAction.SparkedStateDescription" : {
-    "translation" : "Cozmo will pounce on any movement he sees."
+    "translation" : "Cozmo bondira sur tout mouvement qu'il voit."
   },
   "unlockable.BuildPyramid.Title" : {
     "translation" : "Construire une pyramide"
   },
   "unlockable.BuildPyramid.Description" : {
-    "translation" : "Avec cette Trick, Cozmo obtient la capacité de construire une pyramide sur trois cubes droits."
+    "translation" : "Avec ce tour, Cozmo acquiert la capacité de construire une pyramide à l'aide de trois cubes disposés à l'endroit."
   },
   "unlockable.BuildPyramid.SparkButtonDescription" : {
-    "translation" : "Appuyez pour demander à Cozmo de construire une pyramide."
+    "translation" : "Appuie pour demander à Cozmo de construire une pyramide."
   },
   "unlockable.BuildPyramid.SparkedStateDescription" : {
-    "translation" : "Watch Cozmo build a pyramid out of 3 Cubes."
+    "translation" : "Regarde Cozmo construire une pyramide à l'aide de 3 cubes."
   },
   "unlockable.PopAWheelieAction.Title" : {
     "translation" : "Roue arrière"
   },
   "unlockable.PopAWheelieAction.Description" : {
-    "translation" : "With this Trick, Cozmo can use a Cube to boost himself up, and pop a wheelie."
+    "translation" : "Avec ce tour, il peut se redresser à l'aide d'un cube et effectuer une roue arrière."
   },
   "unlockable.PopAWheelieAction.SparkButtonDescription" : {
-    "translation" : "Tap to ask Cozmo to pop a wheelie."
+    "translation" : "Appuie pour demander à Cozmo de faire une roue arrière."
   },
   "unlockable.PopAWheelieAction.SparkedStateDescription" : {
-    "translation" : "Regardez Cozmo sortir une roue sur un cube."
+    "translation" : "Regarde Cozmo faire une roue arrière à l'aide d'un cube."
   },
   "unlockable.KnockOverThreeCubeStack.Title" : {
     "translation" : "Démolition"
   },
   "unlockable.KnockOverThreeCubeStack.Description" : {
-    "translation" : "With this Trick, any time Cozmo sees a stack of Cubes, he may decide to knock them over."
+    "translation" : "Avec cette mise à niveau, chaque fois que Cozmo voit des cubes empilés, il peut décider de les faire tomber."
   },
   "unlockable.KnockOverThreeCubeStack.SparkButtonDescription" : {
-    "translation" : "Tap to ask Cozmo to knock over a stack."
+    "translation" : "Appuie pour demander à Cozmo de renverser une pile de cubes."
   },
   "unlockable.KnockOverThreeCubeStack.SparkedStateDescription" : {
-    "translation" : "Build a stack of Cubes for Cozmo to tip over."
+    "translation" : "Empile des cubes pour que Cozmo les renverse."
   },
   "unlockable.PickupCube.Title" : {
     "translation" : "Soulever un cube"
   },
   "unlockable.PickupCube.Description" : {
-    "translation" : "With this Trick, Cozmo gains the ability to pick up Cubes and carry them around."
+    "translation" : "Avec ce tour, Cozmo devient capable de prendre des cubes et de les transporter."
   },
   "unlockable.PickupCube.SparkButtonDescription" : {
-    "translation" : "Tap to ask Cozmo to pick up a Cube."
+    "translation" : "Appuie pour demander à Cozmo de prendre un cube."
   },
   "unlockable.PickupCube.SparkedStateDescription" : {
-    "translation" : "Regarde Cozmo ramasser un cube."
+    "translation" : "Regarde Cozmo prendre un cube."
   },
   "unlockable.GatherCubes.Title" : {
-    "translation" : "Recueillir des cubes Titre <placeholder>"
+    "translation" : "Titre de Collecter des cubes<placeholder>"
   },
   "unlockable.GatherCubes.Description" : {
-    "translation" : "Recueillir Description de cubes <placeholder>"
+    "translation" : "Description de Collecter des cubes <placeholder>"
   },
   "unlockable.GatherCubes.SparkButtonDescription" : {
-    "translation" : "Recueillir des cubes Spark Button <placeholder>"
+    "translation" : "Bouton d'étincelle Collecter des cubes <placeholder>"
   },
   "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "Rassembler l'État Spark Cubes <placeholder>"
+    "translation" : "État des étincelles Collecter des cubes <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
-    "translation" : "Arrive bientôt!"
+    "translation" : "Prochainement !"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "Boîtes de bonus d'ouverture a la possibilité de débloquer de nouvelles capacités!"
+    "translation" : "L'ouverture de boîtes à bonus intègre la possibilité de débloquer de nouvelles compétences !"
   },
   "sparks.Sparked" : {
-    "translation" : "Cozmo est déclenché:"
+    "translation" : "Cozmo a des étincelles :"
   },
   "sparks.SparkCozmo" : {
-    "translation" : "Spark Cozmo"
+    "translation" : "Donner des étincelles à Cozmo"
   },
   "sparks.Spark" : {
     "translation" : "Étincelle"
   },
   "sparks.Spark.plural" : {
-    "translation" : "Sparks"
+    "translation" : "Étincelles"
   },
   "sparks.Spark.ConfirmQuit" : {
-    "translation" : "Cozmo est attisée!"
+    "translation" : "Cozmo a des étincelles !"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
-    "translation" : "Si vous partez avant qu'il est fait, Cozmo ne sera plus déclenché."
+    "translation" : "Si tu quittes avant que cela ne soit terminé, Cozmo n'aura plus d'étincelles"
   },
   "sparks.NotEnoughSparks.Title" : {
-    "translation" : "Not Enough Sparks"
+    "translation" : "Pas assez d'étincelles"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "Gagnez plus dans Freeplay et Bonus Boxes"
+    "translation" : "Gagne plus en laissant Cozmo jouer en mode de jeu libre ou dans les boîtes à bonus"
   },
   "sparks.CubesNeedUpright.Title" : {
-    "translation" : "Faire Cubes Sure sont Upright"
+    "translation" : "Vérifie que les cubes sont à l'endroit"
   },
   "sparks.CubesNeedUpright.Desc" : {
-    "translation" : "Lorsque les cubes sont debout avec leurs lumières, Cozmo peut construire plus rapidement."
+    "translation" : "Lorsque les cubes sont à l'endroit, lumières vers le haut, Cozmo peut construire plus rapidement."
   }
 }

@@ -21,8 +21,6 @@ namespace Cozmo.Needs.UI {
       // Make really sure we have up to date info
       RobotEngineManager.Instance.Message.GetNeedsState = Singleton<Anki.Cozmo.ExternalInterface.GetNeedsState>.Instance;
       RobotEngineManager.Instance.SendMessage();
-      // Hide until we get the first need state update
-      _SegmentedBar.gameObject.SetActive(false);
     }
 
     public void OnDestroy() {
@@ -37,7 +35,6 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleGotNeedsState(Anki.Cozmo.ExternalInterface.NeedsState message) {
-      _SegmentedBar.gameObject.SetActive(true);
       UpdateBar(message.numStarsAwarded, message.numStarsForNextUnlock);
     }
 

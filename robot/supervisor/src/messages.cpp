@@ -196,7 +196,6 @@ namespace Anki {
         robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
-        robotState_.lastPathID = PathFollower::GetLastPathID();
 
 #ifdef COZMO_V2
         for (int i=0 ; i < CLIFF_COUNT ; i++) {

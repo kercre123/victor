@@ -50,7 +50,6 @@ static const char* kSparksFailTriggerKey             = "sparksFailTrigger";
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooserArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -80,7 +79,6 @@ static const char* kPlayingFinalAnimationLock         = "finalAnimLockReactions"
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFinalAnimationArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},

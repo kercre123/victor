@@ -4,7 +4,6 @@
     "activityID" : "Selection",
     "highLevelID" : "Selection",
     "activityType" : "BehaviorsOnly",
-    "supportsObjectTapInteractions": false,
     "behaviorChooser" : {
       "type": "Selection"
     },
@@ -19,7 +18,6 @@
     "activityID" : "MeetCozmo",
     "highLevelID" : "MeetCozmoFindFaces",
     "activityType" : "BehaviorsOnly",
-    "supportsObjectTapInteractions": false,
     "behaviorChooser" : {
       "type": "Scoring",
       "behaviors" : [
@@ -86,7 +84,6 @@
     "activityID" : "VoiceCommand",
     "highLevelID" : "VoiceCommand",
     "activityType" : "VoiceCommand",
-    "supportsObjectTapInteractions": false,
     // Activity will be kicked out by behaviorManager
     "activityStrategy":
     {
@@ -118,7 +115,6 @@
     "activityID" : "Freeplay",
     "highLevelID" : "Freeplay",
     "activityType" : "Freeplay",
-    "supportsObjectTapInteractions": true,
     // Activity will be kicked out by behaviorManager
     "activityStrategy":
     {
@@ -131,8 +127,7 @@
       "faceAndCubeActivityName"          : "Socialize",
       "faceOnlyActivityName"             : "Socialize",
       "cubeOnlyActivityName"             : "PlayAlone",
-      "noFaceNoCubeActivityName"         : "Hiking",
-      "objectTapInteractionActivityName" : "ObjectTapInteraction"
+      "noFaceNoCubeActivityName"         : "Hiking"
     },
     // sub-activities to create - ensure they're in priority order
     "subActivities" :
@@ -159,7 +154,6 @@
       { "activityID": "NeedsSevereLowPlayGetIn", "activityPriority" : 3},
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay activities:
-      // objectTapInteraction - when the player has tapped an object and Cozmo will interact with it
       // putDownDispatch      - when Cozmo is put down and wants to figure out what activity to go into
       // socialize            - when Cozmo wants to interact with faces and players, but without playing games
       // playWithHumans       - when Cozmo requests games to play with the player
@@ -169,17 +163,16 @@
       // nothingToDo          - fallback when Cozmo can't do anything else
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "activityID" : "ObjectTapInteraction", "activityPriority" : 10},
-      { "activityID" : "PutDownDispatch", "activityPriority"      : 11},
-      { "activityID" : "Socialize", "activityPriority"            : 12},
-      { "activityID" : "Singing", "activityPriority"              : 13},
-      { "activityID" : "PlayWithHumans", "activityPriority"       : 14},
+      { "activityID" : "PutDownDispatch", "activityPriority"      : 10},
+      { "activityID" : "Socialize", "activityPriority"            : 11},
+      { "activityID" : "Singing", "activityPriority"              : 12},
+      { "activityID" : "PlayWithHumans", "activityPriority"       : 13},
       // pyramid is "cooler" than playing alone or hiking for the user, but it
       // has fairly restrictive runnability and a high cooldown
-      { "activityID" : "BuildPyramid", "activityPriority"         : 15},
-      { "activityID" : "PlayAlone", "activityPriority"            : 16},
-      { "activityID" : "Hiking", "activityPriority"               : 17},
-      { "activityID" : "NothingToDo", "activityPriority"          : 18}
+      { "activityID" : "BuildPyramid", "activityPriority"         : 14},
+      { "activityID" : "PlayAlone", "activityPriority"            : 15},
+      { "activityID" : "Hiking", "activityPriority"               : 16},
+      { "activityID" : "NothingToDo", "activityPriority"          : 17}
     ]
   }
 ]

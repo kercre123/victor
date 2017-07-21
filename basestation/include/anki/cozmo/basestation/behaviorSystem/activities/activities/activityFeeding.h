@@ -30,6 +30,7 @@ namespace Cozmo {
 // forward declarations
 class BehaviorFeedingEat;
 class BehaviorPlayArbitraryAnim;
+class BehaviorFeedingSearchForCube;
 class FeedingCubeController;
 struct ObjectConnectionState;
 
@@ -70,9 +71,12 @@ private:
   float _timeFaceSearchShouldEnd_s;
   
   std::map<ObjectID, std::unique_ptr<FeedingCubeController>> _cubeControllerMap;
+  // Set of objects Cozmo couldn't find and shouldn't search for again
+  std::set<ObjectID> _cubesSearchCouldntFind;
   
   // The object cozmo should eat once he's seen that it's fully charged
   ObjectID _interactID;
+  ObjectID _searchingForID;
   
   // Bool that will be set by a behavior listener callback when the behavior has
   bool _eatingComplete;
@@ -88,7 +92,7 @@ private:
   IBehaviorPtr _searchingForFaceBehavior;
   IBehaviorPtr _searchingForFaceBehavior_Severe;
   IBehaviorPtr _turnToFaceBehavior;
-  IBehaviorPtr _searchForCubeBehavior;
+  std::shared_ptr<BehaviorFeedingSearchForCube> _searchForCubeBehavior;
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
   std::shared_ptr<BehaviorPlayArbitraryAnim> _behaviorPlayAnimation;
   

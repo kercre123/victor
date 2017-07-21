@@ -235,6 +235,13 @@ namespace Cozmo {
         get { return _PlayerPortraitSprite; }
       }
 
+      [SerializeField]
+      private Sprite _Player2PortraitSprite;
+
+      public Sprite Player2Portrait {
+        get { return _Player2PortraitSprite; }
+      }
+
       #endregion
 
       [SerializeField]
@@ -649,7 +656,7 @@ namespace Cozmo {
         get {
           if (_Player2ScoreWidgetInstance == null) {
             _Player2ScoreWidgetInstance = CreateScoreWidget(_Player2ScoreContainer, _ScoreEnterAnimationXOffset,
-                                                           _PlayerPortraitSprite, true);
+                                                           _Player2PortraitSprite, true);
           }
           return _Player2ScoreWidgetInstance;
         }

@@ -28,14 +28,23 @@ MonoBehaviour:
   ChallengeConfig: {fileID: 11400000, guid: 6a52862d9f75e419980e090c244f1e6c, type: 2}
   _ChallengeType: 1
   _ActivityData:
-    ActivityPriority: 0
-    HideInActivityView: 1
+    ActivityPriority: 4
+    HideInActivityView: 0
+    ActivityTitleColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityFrameColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityIcon: {fileID: 0}
   InstructionVideoPath: 
   ChallengeVideoSubtitles: {fileID: 0}
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: CozmoSaysGetIn
-    _EnumValue: 37
+    _EnumValue: 52
   GetOutAnimTrigger:
     _EnumValueAsString: CozmoSaysGetOut
-    _EnumValue: 38
+    _EnumValue: 53
+  _NeedsActionIdWin:
+    _EnumValueAsString: Count
+    _EnumValue: 46
+  _NeedsActionIdLose:
+    _EnumValueAsString: Count
+    _EnumValue: 46

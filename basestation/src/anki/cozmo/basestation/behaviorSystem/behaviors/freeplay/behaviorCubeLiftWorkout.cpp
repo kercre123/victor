@@ -43,7 +43,6 @@ static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersWorkoutArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -124,6 +123,8 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 {
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+
   // Ensure the cube workout lights are not set
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
   

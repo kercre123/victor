@@ -232,19 +232,6 @@ public:
   // and gives sparks the opportunity to end themselves if they are canceled by the user
   void SetRequestedSpark(UnlockId spark, bool softSpark);
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // ObjectTapInteractions
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // Handles switching behavior chooser, activity, and updating whiteboard for object tap interactions
-  void HandleObjectTapInteraction(const ObjectID& objectID);
-  
-  // Leave object interaction state resets the activity and clears the tap-intended object in the whiteboard
-  void LeaveObjectTapInteraction();
-  
-  const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
-  const ObjectID& GetCurrTappedObject() const { return _currDoubleTappedObject; }
-  
   void OnRobotDelocalized();
   
 protected:
@@ -294,12 +281,6 @@ private:
   // Allow unity to set head angles and lift heights to preserve after reactionary behaviors
   void SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight);
   bool AreDefaultHeadAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeadAndLiftState;}
-  
-  // update the tapped object should its pose change
-  void UpdateTappedObject();
-  
-  // update current behavior with the new tapped object
-  void UpdateBehaviorWithObjectTapInteraction();
   
   // Functions which mediate direct access to running/resume info so that the robot
   // can respond appropriately to switching between reactions/resumes
@@ -382,16 +363,6 @@ private:
       
   // For storing event handlers
   std::vector<Signal::SmartHandle> _eventHandlers;
-  
-  // The last object that was double tapped used for clearing object tap interaction lights
-  ObjectID _lastDoubleTappedObject;
-  ObjectID _currDoubleTappedObject;
-  
-  // The object that was just double tapped, will become current double tapped object on next Update()
-  ObjectID _pendingDoubleTappedObject;
-  
-  // Whether or not we need to handle an object being tapped in Update()
-  bool _needToHandleObjectTapped = false;
   
   std::vector<BehaviorStateLightInfo> _behaviorStateLights;
   BehaviorClass _behaviorThatSetLights;

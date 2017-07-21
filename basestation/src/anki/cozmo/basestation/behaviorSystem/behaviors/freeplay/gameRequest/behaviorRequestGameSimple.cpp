@@ -76,7 +76,6 @@ static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRequestGameArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},
@@ -228,7 +227,7 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
   
   if(CheckRequestTimeout()) {
     // timeout acts as a deny
-    StopActing();
+    StopActing(false);
     SendDeny(robot);
     TransitionToPlayingDenyAnim(robot);
   }
@@ -556,7 +555,8 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
   }else if(GetFaceID() != Vision::UnknownFaceID){
     StartActing(new TrackFaceAction(robot, GetFaceID()));
   }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
-    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 0));
+    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 1),
+                &BehaviorRequestGameSimple::TransitionToIdle);
   }else{
     StartActing( new HangAction(robot) );
   }
@@ -678,7 +678,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
 {
-  StopActing();
+  StopActing(false);
 
   TransitionToPlayingDenyAnim(robot);
 }

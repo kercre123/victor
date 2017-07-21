@@ -83,7 +83,6 @@ static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},

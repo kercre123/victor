@@ -18,6 +18,11 @@ namespace Cozmo.Needs {
       }
     }
 
+    // Will notify delegates of any action whether the action resulted in a need change or not
+    public delegate void LatestNeedActionRecieved(NeedsActionId actionReceived);
+    public event LatestNeedActionRecieved OnNeedsActionReceived;
+
+    // Only notifies delegate if the action resulted in a needs level change
     public delegate void LatestNeedLevelChangedHandler(NeedsActionId actionThatCausedChange);
     public event LatestNeedLevelChangedHandler OnNeedsLevelChanged;
 
@@ -152,6 +157,10 @@ namespace Cozmo.Needs {
       }
 
       _LatestStateFromEngine = newNeedsState;
+
+      if (OnNeedsActionReceived != null) {
+        OnNeedsActionReceived(newNeedsState.actionCausingTheUpdate);
+      }
 
       if (needsValueChanged && OnNeedsLevelChanged != null) {
         OnNeedsLevelChanged(newNeedsState.actionCausingTheUpdate);

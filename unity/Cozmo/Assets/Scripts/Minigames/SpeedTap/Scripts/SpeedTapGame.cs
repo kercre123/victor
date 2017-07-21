@@ -326,7 +326,6 @@ namespace SpeedTap {
           else if (numHumans >= 2) {
             playerInfo.scoreWidget = SharedMinigameView.Player2Scoreboard;
             playerInfo.scoreWidget.DimPortaitTintColor = _GameConfig.Player2TintDim;
-            playerInfo.scoreWidget.UnDimmedPortaitTintColor = _GameConfig.Player2Tint;
             // Tech debt for profiles, When profiles are in more than SpeedTap init scoreboard with info earlier
             // and set colors internally.
             // The setters don't actually set the color, Dim is the thing that actually changes state
@@ -337,7 +336,6 @@ namespace SpeedTap {
             playerInfo.scoreWidget = SharedMinigameView.PlayerScoreboard;
             if (playerCount >= 3) {
               playerInfo.scoreWidget.DimPortaitTintColor = _GameConfig.Player1TintDim;
-              playerInfo.scoreWidget.UnDimmedPortaitTintColor = _GameConfig.Player1Tint;
               playerInfo.scoreWidget.Dim = false;
               playerInfo.scoreWidget.SetNameLabelText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextMPScorePlayer, playerInfo.name));
             }

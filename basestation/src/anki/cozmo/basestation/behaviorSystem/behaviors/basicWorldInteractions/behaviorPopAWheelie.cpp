@@ -39,7 +39,6 @@ CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},
@@ -103,14 +102,7 @@ void BehaviorPopAWheelie::StopInternal(Robot& robot)
   ResetBehavior(robot);
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPopAWheelie::StopInternalFromDoubleTap(Robot& robot)
-{
-  ResetBehavior(robot);
-}
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
 {
@@ -185,12 +177,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
-    
-    // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
-    if(RequiresObjectTapped())
-    {
-      robot.GetAIComponent().GetWhiteboard().SetSuppressReactToDoubleTap(true);
-    }
   };
   goPopAWheelie->SetPreDockCallback(disableCliff);
 

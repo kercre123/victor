@@ -51,7 +51,7 @@ MonoBehaviour:
     - {fileID: 114297680771573382, guid: 195b191dc33c44f7f85416435ecf7271, type: 2}
     - {fileID: 114319138142643398, guid: 18b82c4d9acf04dfda1577b29179340c, type: 2}
   - onboardingPrefab:
-    - {fileID: 11442482, guid: b55624e79df5e4ef2aded5e829de10b8, type: 2}
+    - {fileID: 114964696550610726, guid: b55624e79df5e4ef2aded5e829de10b8, type: 2}
   - onboardingPrefab:
     - {fileID: 11442482, guid: 671e06d41525d4f1cb371e797547ed21, type: 2}
 --- !u!224 &22408034

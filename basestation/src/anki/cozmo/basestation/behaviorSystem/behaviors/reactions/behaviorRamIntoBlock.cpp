@@ -37,7 +37,6 @@ const float kSpeedBackUpFromBlock_mmps     = 100.0f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRamIntoBlockArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

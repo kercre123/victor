@@ -34,7 +34,6 @@ CONSOLE_VAR(f32, kBPDB_kBackupDistanceMax_mm,     "Behavior.PutDownBlock", -75.0
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPutDownBlockArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

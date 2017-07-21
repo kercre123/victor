@@ -86,7 +86,7 @@ def get_subpath(partial_path, *args):
       additional os.path.join littered everywhere.
 
   """
-  forward_args = partial_path.split("/") + list(args)
+  forward_args = partial_path.split(os.sep) + list(args)
   if forward_args:
     return os.path.join(COZMO_ENGINE_ROOT, *(forward_args))
   else:
@@ -144,7 +144,7 @@ def firewall_cli(flags, password, sudo=True, executable_path=""):
     The path of executable for arugment of `--add`, `--unblock`, etc.
   """
 
-  socketfilterfw_path = os.path.join('/usr', 'libexec', 'ApplicationFirewall', 'socketfilterfw')
+  socketfilterfw_path = os.path.join(os.sep + 'usr', 'libexec', 'ApplicationFirewall', 'socketfilterfw')
 
   # Check that socketfilterfw exists and is executable
   assert os.path.isfile(socketfilterfw_path)
@@ -201,7 +201,7 @@ def install_certificate(password):
   user's keychain to allow for codesigning to bypass the firewall.
   """
 
-  certificate_path = get_subpath("project/build-scripts/webots/", "{0}.p12".format(CERTIFICATE_NAME))
+  certificate_path = get_subpath(os.path.join("project","build-scripts","webots",""), "{0}.p12".format(CERTIFICATE_NAME))
 
   command = [
     "security",
@@ -246,7 +246,7 @@ def sign_webot_executables(build_type, password):
 
   UtilLog.info("Your password may be needed in order to add the webots executables to the firewall exception list.")
 
-  executables_folder = get_subpath("generated/mac/DerivedData", build_type)
+  executables_folder = get_subpath(os.path.join("generated","mac","DerivedData"), build_type)
 
   executables = [
     'webotsCtrlBuildServerTest',
@@ -289,7 +289,7 @@ def sign_webot_executables(build_type, password):
 
 # build unittest executable
 def build(build_type, cozmo_version_num):
-  derived_data_path = get_subpath("generated/mac/DerivedData")
+  derived_data_path = get_subpath(os.path.join("generated","mac","DerivedData"))
 
   workspace_prefix = 'Cozmo'
   if cozmo_version_num == 2:
@@ -299,7 +299,7 @@ def build(build_type, cozmo_version_num):
 
   build_command = [
     'xcodebuild',
-    '-workspace', get_subpath("generated/mac", workspace_filename),
+    '-workspace', get_subpath(os.path.join("generated","mac"), workspace_filename),
     '-scheme', 'BUILD_WORKSPACE',
     '-sdk', 'macosx',
     '-configuration', build_type.name,
@@ -334,12 +334,12 @@ def run_webots(output, wbt_file_path, show_graphics, log_file_name):
   stop_webots()
 
   run_command = [
-    '/Applications/Webots.app/webots',
+    os.path.join(os.sep + 'Applications','Webots.app','webots'),
     '--stdout',
     '--stderr',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
-    get_subpath("simulator/worlds", GENERATED_WORLD_FILE_NAME)
+    get_subpath(os.path.join("simulator","worlds"), GENERATED_WORLD_FILE_NAME)
     ]
 
   if show_graphics:
@@ -370,7 +370,8 @@ def wait_until(condition_fn, timeout, period=0.25):
   return False
 
 def is_webots_running():
-  process = subprocess.Popen("ps -ax | grep [/]Applications/Webots.app/webots", shell=True, stdout=subprocess.PIPE)
+  process = subprocess.Popen("ps -ax | grep [" + os.sep + "]" + os.path.join("Applications","Webots.app","webots"), 
+                              shell=True, stdout=subprocess.PIPE)
   result = process.communicate()[0]
   if len(result) > 0:
     return True
@@ -412,7 +413,7 @@ def clean_webots():
     return True
 
   # kill webots IPC leftovers
-  run_command = [get_subpath("simulator/kill_ipcs.sh")]
+  run_command = [get_subpath(os.path.join("simulator","kill_ipcs.sh"))]
   result = subprocess.call(run_command)
   if result != 0:
     return False
@@ -525,7 +526,7 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
   total_warning_count = 0
 
   cur_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S')
-  GENERATED_FILE_PATH = get_subpath("simulator/worlds", GENERATED_WORLD_FILE_NAME)
+  GENERATED_FILE_PATH = get_subpath(os.path.join("simulator","worlds"), GENERATED_WORLD_FILE_NAME)
 
   for test_controller, params in tests.items():
     worlds = params['world_file']
@@ -537,7 +538,7 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
       UtilLog.info('Running test: {test_controller} in world {world_file}'.format(
                       test_controller=test_controller, world_file=world_file))
 
-      source_file_path = get_subpath("simulator/worlds", world_file)
+      source_file_path = get_subpath(os.path.join("simulator","worlds"), world_file)
       generate_file_with_replace(GENERATED_FILE_PATH, source_file_path,
                                  WORLD_FILE_TEST_NAME_PLACEHOLDER, test_controller)
 
@@ -573,10 +574,15 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
         if num_retries_counting_up > 0:
           UtilLog.info("Retry #{retry_number}".format(retry_number=num_retries_counting_up))
 
+        # Setup log file
         log_file_name = get_log_file_path(log_folder, test_controller, world_file, cur_time, num_retries_counting_up)
         UtilLog.info('results will be logged to {file}'.format(file=log_file_name))
         log_file_paths.append(log_file_name)
-      
+
+        # Clear out files that shouldn't persist between test runs
+        clear_out_unwanted_persistent_files(cozmo_version)
+
+        # Setup the webots thread to run the test - thread should exit before the join timeout
         output = ThreadOutput()
         run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH, 
                                                                       show_graphics, log_file_name])
@@ -645,10 +651,8 @@ def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, di
       and that the dev_log_folder path is stable.  
       The two asserts in this function ensure that those assumptions are true.
   """
-  cozmoEngineSuffix = ""
-  if(cozmo_version == 2):
-    cozmoEngineSuffix = "2"
-  dev_log_folder = log_folder + "/playbackLogs/webotsCtrlGameEngine" + cozmoEngineSuffix + "/gameLogs/devLogger"
+
+  dev_log_folder = os.path.join(log_folder, "playbackLogs", get_engine_output_folder_name(cozmo_version), "gameLogs","devLogger")
   assert os.path.isdir(dev_log_folder)
   dirs = [entry.path for entry in os.scandir(dev_log_folder) if entry.is_dir()]
   assert len(dirs) == 1
@@ -658,8 +662,15 @@ def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, di
   if(didFail):
     didFailPrefix = "FAILURE_"
 
-  human_readable_output = dev_log_folder + "/" + didFailPrefix + test_controller + "_" + world_file + "_webotsTestTime_" + str(cur_time)
+  human_readable_output = os.path.join(dev_log_folder, didFailPrefix, test_controller + "_" + world_file + "_webotsTestTime_" + str(cur_time))
   shutil.move(dirs[0], human_readable_output)
+
+
+def clear_out_unwanted_persistent_files(cozmo_version):
+  # clear out the persistant needsState file
+  fullPath = get_subpath(os.path.join("simulator","controllers"), get_engine_output_folder_name(cozmo_version), "files", "output", "nurture", "needsState.json")
+  if os.path.exists(fullPath):
+    os.remove(fullPath)
 
 
 def tarzip_logs(log_file_paths, cur_time):
@@ -715,6 +726,11 @@ def parse_output(log_level, log_file):
 
   return (crash_count, error_count, warning_count)
 
+def get_engine_output_folder_name(engine_version):
+  engineSuffix = ""
+  if engine_version == 2:
+    engineSuffix = "2"
+  return "webotsCtrlGameEngine" + engineSuffix
 
 def get_build_folder(build_type):
   """Build the build folder path (where the logs are exported)
@@ -723,7 +739,7 @@ def get_build_folder(build_type):
     The targetted build type. Must be a member of the BuildType enum.
   """
   assert build_type in BuildType
-  return get_subpath("build/mac", build_type.name)
+  return get_subpath(os.path.join("build","mac"), build_type.name)
 
 def get_log_file_path(log_folder, test_name, world_file_name, timestamp="", retry_number=0):
   """Returns what the log file names should be.
@@ -871,7 +887,7 @@ def main(args):
 
   os.chdir(COZMO_ENGINE_ROOT)
 
-  cfg_path = get_subpath("project/build-scripts/webots", options.config_file)
+  cfg_path = get_subpath(os.path.join("project","build-scripts","webots"), options.config_file)
   assert os.path.isfile(cfg_path)
 
   UtilLog.debug(options)

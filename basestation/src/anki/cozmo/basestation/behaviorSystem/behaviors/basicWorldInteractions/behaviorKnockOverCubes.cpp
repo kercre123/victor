@@ -63,7 +63,6 @@ CONSOLE_VAR(f32, kBKS_searchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
 constexpr ReactionTriggerHelpers::FullReactionArray kKnockOverCubesAffectedArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -92,7 +91,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kKnockOverCubesAffectedA
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPreparingKnockOverArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

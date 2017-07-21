@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 ## C++ Lite send message helper function emitter for Cozmo
 ## @author "Daniel Casner <daniel@anki.com>"
 

@@ -22,12 +22,12 @@ SRCS = ../spine/spine_hal.c ../spine/spine_crc.c dfu.c
 OBJ = ../spine/spine_hal.o ../spine/spine_crc.o dfu.o
 OBJL = spine_hal.o spine_crc.o dfu.o
 
-all: fots
+all: dfu
 
 faker: $(OBJ)
 	touch faker
 
-APP = fots
+APP = dfu
 $(APP): faker $(OBJL) 
 	$(CC) -pie -llog $(OBJL) -o $(APP)
 

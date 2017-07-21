@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """ Utility to install and manage Apple provisioning profiles (*.mobileprovision) files.
 """

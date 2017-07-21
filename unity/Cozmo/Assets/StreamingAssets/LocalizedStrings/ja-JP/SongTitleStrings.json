@@ -7,69 +7,69 @@
     "source_key_paths" : ["/{*}"]
   },
   "song.title.camptown" : {
-    "translation" : "キャンプタウンレース"
+    "translation" : "草競馬"
   },
   "song.title.itsyBitsySpider" : {
-    "translation" : "Itsy Bitsy Spider"
+    "translation" : "ちっちゃなクモさん"
   },
   "song.title.beethoven" : {
-    "translation" : "ベートーベン交響曲第5番"
+    "translation" : "ベートーベンの交響曲第5番"
   },
   "song.title.popGoesTheWeasel" : {
-    "translation" : "ポップはイタチに行く"
+    "translation" : "いいやつみつけた"
   },
   "song.title.rowYourBoat" : {
-    "translation" : "行をあなたのボート"
+    "translation" : "こげこげボート"
   },
   "song.title.pachebelCanon" : {
-    "translation" : "パッヘルベルのキヤノン"
+    "translation" : "パッヘルベルのカノン"
   },
   "song.title.odeToJoy" : {
-    "translation" : "ベートーベン交響曲第9番"
+    "translation" : "ベートーベンの第九交響曲"
   },
   "song.title.twinkleTwinkle" : {
-    "translation" : "キラキラ光る"
+    "translation" : "きらきら星"
   },
   "song.title.frereJaqcues" : {
-    "translation" : "フレール・ジャック"
+    "translation" : "フレールジャック"
   },
   "song.title.maryHadALittleLamb" : {
-    "translation" : "メアリー・リトル・ラム"
+    "translation" : "メリーさんのひつじ"
   },
   "song.title.takeMeOutToTheBallgame" : {
-    "translation" : "私をボールゲームに連れて行こう"
+    "translation" : "私を野球に連れてって"
   },
   "song.title.williamTell" : {
-    "translation" : "ウィリアムテルオーバーチュア"
+    "translation" : "ウィリアム・テル序曲"
   },
   "song.title.yankeeDoodle" : {
-    "translation" : "ヤンキードゥードル"
+    "translation" : "アルプス一万尺"
   },
   "song.title.beautifulDreamer" : {
-    "translation" : "美しい夢想家"
+    "translation" : "夢路より"
   },
   "song.title.mountainKing" : {
-    "translation" : "マウンテンキングホール"
+    "translation" : "山の魔王の宮殿にて"
   },
   "song.title.taRaRaBoom" : {
-    "translation" : "タ・ラ・ラ・ブーム・デ・アイ"
+    "translation" : "タララタンタカターン"
   },
   "song.title.entryOfTheGladiators" : {
-    "translation" : "剣闘士の入り口"
+    "translation" : "剣闘士の入場"
   },
   "song.title.helloMyBaby" : {
     "translation" : "ハローマイベイビー"
   },
   "song.title.turkeyInTheStraw" : {
-    "translation" : "トルコでトルコ"
+    "translation" : "オクラホマミキサー"
   },
   "song.title.londonBridge" : {
-    "translation" : "ロンドン橋が下降している"
+    "translation" : "ロンドン橋"
   },
   "song.title.sakura" : {
-    "translation" : "さくら"
+    "translation" : "さくらさくら"
   },
   "song.title.mussIDenn" : {
-    "translation" : "Muss I Denn"
+    "translation" : "別れ"
   }
 }

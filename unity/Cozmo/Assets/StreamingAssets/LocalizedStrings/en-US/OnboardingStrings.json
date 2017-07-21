@@ -108,6 +108,9 @@
   "onboarding.MeetCozmoIntro": {
     "translation": "Well done!\n\nCozmo would like to meet you."
   },
+  "onboarding.MeetCozmo.Button": {
+    "translation": "MEET COZMO"
+  },
   "onboarding.NeedsIntro": {
     "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy."
   },
@@ -119,6 +122,9 @@
   },
   "onboarding.RewardsIntro": {
     "translation": "<b>You’ve earned a Bonus Token.</b>\n\nTokens unlock Bonus Boxes, filled with rewards like Sparks and new abilities."
+  },
+  "onboarding.End": {
+    "translation": "<b>You've learned the basics of being a great owner!</b>\n\nFeel free to explore all Cozmo can do, or leave Cozmo alone and he will automatically play Tricks and Games in Freeplay."
   },
   "onboarding.ActivitiesIntro": {
     "translation": "Discover Activities are special and don't affect Cozmo’s Needs or cost Sparks."

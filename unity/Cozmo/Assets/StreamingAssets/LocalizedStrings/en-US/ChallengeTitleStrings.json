@@ -98,5 +98,11 @@
   },
   "memoryMatchGame.label.incorrect": {
     "translation": "INCORRECT"
+  },
+  "activityView.freeplayDescription": {
+    "translation": "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for games and do tricks, and sometimes even earn sparks."
+  },
+  "activityView.freeplayTitle": {
+    "translation": "COZMO IS CURRENTLY IN FREEPLAY"
   }
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python -u
+#!/usr/bin/env python2 -u
 
 """Issues commands to gyp and generated files."""
 

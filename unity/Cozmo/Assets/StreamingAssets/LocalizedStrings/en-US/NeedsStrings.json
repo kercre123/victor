@@ -141,7 +141,7 @@
   "needs.FreeplaySparksReward.PeekAboo": {
     "translation": "Cozmo just generated {0} Sparks by playing Peekaboo!"
   },
-  "needs.FreeplaySparksReward.PickUpCube": {
+  "needs.FreeplaySparksReward.PickupCube": {
     "translation": "Cozmo just generated {0} Sparks by picking up a Cube!"
   },
   "needs.FreeplaySparksReward.PopAWheelie": {
@@ -167,5 +167,14 @@
   },
   "needs.FreeplaySparksReward.GuardDogLose": {
     "translation": "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
+  },
+  "needs.FeedingOverfedHiccups.Title": {
+    "translation": "Cozmo got the Hiccups"
+  },
+  "needs.FeedingOverfedHiccups.Description": {
+    "translation": "Cozmo is too full - now he has the hiccups!"
   }
+
+
+
 }

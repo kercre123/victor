@@ -1,8 +1,0 @@
-{
-  "behaviorClass": "PickUpCube",
-  "behaviorID": "TapInteractionPickUpCube",
-  "needsActionID": "PickupCube",
-  "displayNameKey":"behavior.PickupCube",
-  "requireObjectTapped" : true,
-  "requiredUnlockId": "PickupCube"
-}

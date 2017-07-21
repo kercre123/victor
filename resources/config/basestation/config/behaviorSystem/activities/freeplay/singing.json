@@ -147,7 +147,7 @@
   },
   "activityStrategy":
   {
-    "type" : "Simple",
+    "type" : "NeedBasedCooldown",
 
     // SingingActivity is locked behind the Singing feature gate
     "featureGate" : "Singing",
@@ -161,9 +161,29 @@
     "cooldownBaseSecs" : 600.0,
 
     // A random value between 0 and 'this' is added to cooldownBaseSecs to determine actual cooldown
-    "cooldownVarianceSecs" : 600.0,
+    "cooldownRandomnessSecs" : 600.0,
 
     // Singing activity starts in cooldown so Cozmo doesn't immediately start singing
-    "startInCooldown" : true
+    "startInCooldown" : true,
+    
+    "needId": "Play",
+    
+    // X axis is Cozmo's Play need level (0.0 - 1.0), Y axis is Cooldown in seconds
+    "needCooldownGraph" : {
+      "nodes" : [
+                 { "x" :  0.0, "y" : 600.0 },
+                 { "x" :  0.8, "y" : 600.0 },
+                 { "x" :  1.0, "y" : 300.0 }
+                 ]
+    },
+    
+    // X axis is Cozmo's Play need level (0.0 - 1.0), Y axis is CooldownRandomness in seconds
+    "needCooldownRandomnessGraph" : {
+      "nodes" : [
+                 { "x" :  0.0, "y" : 600.0 },
+                 { "x" :  0.8, "y" : 600.0 },
+                 { "x" :  1.0, "y" : 300.0 }
+                 ]
+    }
   }
 }

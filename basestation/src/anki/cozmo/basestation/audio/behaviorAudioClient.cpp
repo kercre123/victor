@@ -27,12 +27,17 @@
 #include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include "util/helpers/fullEnumToValueArrayChecker.h"
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
 using namespace AudioMetaData::SwitchState;
   
+using FullStageTagArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<BehaviorStageTag, ActivityID, BehaviorStageTag::Count>;
+using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequentialArray to this namespace
+
 namespace {
   
 const AudioMetaData::GameObjectType kMusicGameObject = AudioMetaData::GameObjectType::Default;
@@ -59,7 +64,6 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // 'needsSevereLowEnergy' - when Cozmo's needstate is severely low energy
 // 'needsSevereLowRepair' - when Cozmo's needstate is severely low repair
 // 'needsSevereLowPlayGetIn' - when Cozmo is transitioning into severely low play state
-// 'objectTapInteraction' - when Cozmo is interacting with a double tapped cube
 // 'playWithHumans'  - when Cozmo requests games to play with the player
 // 'playAlone'       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
 // 'putDownDispatch' - when Cozmo is looking for stuff after returning to on treads
@@ -71,7 +75,6 @@ const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
   { ActivityID::BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { ActivityID::Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Nurture_Feeding },
   { ActivityID::Hiking,                  AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
-  { ActivityID::ObjectTapInteraction,    AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
   { ActivityID::NeedsSevereLowEnergy,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { ActivityID::NeedsSevereLowRepair,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { ActivityID::NeedsSevereLowPlayGetIn, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
@@ -83,12 +86,23 @@ const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
   { ActivityID::NothingToDo,             AudioMetaData::SwitchState::Freeplay_Mood::Bored }
 };
   
+constexpr FullStageTagArray activityAllowedStagesMap
+{
+  { BehaviorStageTag::Feeding, ActivityID::Feeding},
+  { BehaviorStageTag::GuardDog, ActivityID::PlayAlone},
+  { BehaviorStageTag::PyramidConstruction, ActivityID::BuildPyramid},
+  { BehaviorStageTag::Workout, ActivityID::PlayAlone}
+};
+static_assert(IsSequentialArray(activityAllowedStagesMap),
+              "BehaviorAudioClient.Init.IncorrectActivityALlowedARray");
+  
 } // end anonymous namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
 : _robot(robot)
 , _prevActivity(ActivityID::Invalid)
+, _activeBehaviorStage(BehaviorStageTag::Count)
 {
   // Get the appropriate spark music state from unity
   if(robot.HasExternalInterface()){
@@ -248,14 +262,30 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
     
     const BehaviorStageStruct& currPublicStateStruct = stateEvent.userFacingBehaviorStageStruct;
     HandleGuardDogUpdates(currPublicStateStruct);
-    HandleDancingUpdates(currPublicStateStruct);
+    //HandleDancingUpdates(currPublicStateStruct);
     HandleFeedingUpdates(currPublicStateStruct);
-
-    if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Count)
-    {
-      // Update the Activity state to current Activity
-      // This will stop any music currently playing
-      UpdateActivityMusicState(currActivity);
+  }
+  
+  // Ensure that if a stage has been set we're tracking it properly
+  BehaviorStageTag currentStageTag = stateEvent.userFacingBehaviorStageStruct.behaviorStageTag;
+  if(currentStageTag != GetActiveBehaviorStage()){
+    SetActiveBehaviorStage(currentStageTag);
+  }
+  
+  // Ensure behavior stages have been cleared/re-set appropriately if the activity
+  // has changed
+  if(ANKI_DEV_CHEATS){
+    if(GetActiveBehaviorStage() != BehaviorStageTag::Count){
+      for(const auto& entry: activityAllowedStagesMap){
+        if(entry.EnumValue() == GetActiveBehaviorStage()){
+          DEV_ASSERT_MSG(entry.Value() == currActivity,
+                         "BehaviorAudioClient.HandleRobotPublicStateChange.IncorrectBehaviorStage",
+                         "Behavior stage is %s but activity is %s",
+                         BehaviorStageTagToString(entry.EnumValue()),
+                         ActivityIDToString(currActivity));
+          break;
+        }
+      }
     }
   }
 }
@@ -346,11 +376,10 @@ void BehaviorAudioClient::HandleGuardDogUpdates(const BehaviorStageStruct& currP
   // Update the Guard Dog music mood/round if appropriate
   if (currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog) {
     // Change the freeplay mood to GuardDog if not already active
-    if (!_guardDogActive) {
+    if (GetActiveBehaviorStage() != BehaviorStageTag::GuardDog) {
       _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
                                                     static_cast<const GenericSwitch>(Freeplay_Mood::Guard_Dog),
                                                     AudioMetaData::GameObjectType::Default);
-      _guardDogActive = true;
     }
     
     // Update the GuardDog round if needed
@@ -366,9 +395,8 @@ void BehaviorAudioClient::HandleGuardDogUpdates(const BehaviorStageStruct& currP
       
       _prevGuardDogStage = currPublicStateStruct.currentGuardDogStage;
     }
-  } else if (_guardDogActive) {
+  } else if (GetActiveBehaviorStage() != BehaviorStageTag::GuardDog) {
     // reset GuardDog stuff
-    _guardDogActive = false;
     _prevGuardDogStage = GuardDogStage::Count;
   }
 }
@@ -378,19 +406,21 @@ void BehaviorAudioClient::HandleGuardDogUpdates(const BehaviorStageStruct& currP
 void BehaviorAudioClient::HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
   // If this is dancing then post dancing switch
-  if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Dance)
+  /**if((currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Dance) &&
+     (GetActiveBehaviorStage() != BehaviorStageTag::Dance))
   {
     _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
                                                   static_cast<GenericSwitch>(Freeplay_Mood::Dancing),
                                                   AudioMetaData::GameObjectType::Default);
-  }
+  }**/
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
-  if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Feeding){
+  if((currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Feeding) &&
+     (GetActiveBehaviorStage() != BehaviorStageTag::Feeding)){
     const int roundIdx =  static_cast<int>(currPublicStateStruct.currentFeedingStage);
     _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
                                                   static_cast<const GenericSwitch>(kGameplayRoundMap[roundIdx]),
@@ -420,6 +450,26 @@ void BehaviorAudioClient::HandleNeedsUpdates(const NeedsLevels& needsLevel)
                                                 _needsLevel.play);
   }
   
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStageTag BehaviorAudioClient::GetActiveBehaviorStage()
+{
+  return _activeBehaviorStage;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::SetActiveBehaviorStage(BehaviorStageTag stageTag)
+{
+  DEV_ASSERT_MSG((stageTag == BehaviorStageTag::Count) ||
+                 (_activeBehaviorStage == BehaviorStageTag::Count),
+                 "BehaviorAudioClient.SetActiveBehaviorStage.StageAlreadySet",
+                 "Trying to set new stage tag %s, but stage tag is already set as %s",
+                 BehaviorStageTagToString(stageTag),
+                 BehaviorStageTagToString(_activeBehaviorStage));
+  _activeBehaviorStage = stageTag;
 }
 
   

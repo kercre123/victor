@@ -39,6 +39,17 @@ namespace Onboarding {
       }
     }
 
+    public override void OnDestroy() {
+      base.OnDestroy();
+      // if we skipped fast forward past the intro
+      if (_DidSkip) {
+        Cozmo.Needs.UI.NeedsHubView needsHubView = OnboardingManager.Instance.NeedsView;
+        if (needsHubView != null) {
+          needsHubView.OnboardingSkipped();
+        }
+      }
+    }
+
     protected override void HandleContinueClicked() {
       base.HandleContinueClicked();
       // is skip available, Did they skip.

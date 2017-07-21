@@ -42,6 +42,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorCubeLiftWorkout.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveInDesperation.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveToFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorOnConfigSeen.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorPickUpAndPutDownCube.h"
@@ -75,7 +76,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorRamIntoBlock.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToCliff.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToDoubleTap.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToFrustration.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToOnCharger.h"
@@ -583,16 +583,17 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
       newBehavior = IBehaviorPtr(new BehaviorReactToPet(robot, config));
       break;
     }
-    case BehaviorClass::ReactToDoubleTap:
-    {
-      newBehavior = IBehaviorPtr(new BehaviorReactToDoubleTap(robot, config));
-      break;
-    }
     case BehaviorClass::ReactToVoiceCommand:
     {
       newBehavior = IBehaviorPtr(new BehaviorReactToVoiceCommand(robot, config));
       break;
     }
+    case BehaviorClass::DriveInDesperation:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorDriveInDesperation(robot, config));
+      break;
+    }
+       
   }
   
   if(newBehavior != nullptr){

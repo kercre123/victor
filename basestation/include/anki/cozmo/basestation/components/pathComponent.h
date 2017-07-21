@@ -112,7 +112,7 @@ public:
   Result ExecuteCustomPath(const Planning::Path& path, const bool useManualSpeed = false);
 
   // Handle new data from the robot
-  void UpdateRobotData(s8 currPathSegment, u16 lastRecvdPathID);
+  void UpdateCurrentPathSegment(s8 currPathSegment);
 
   void Update();
 

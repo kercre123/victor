@@ -7,6 +7,6 @@
     "source_key_paths" : ["/{*}"]
   },
   "privacyPolicy.title" : {
-    "translation" : "Datenschutz-Bestimmungen"
+    "translation" : "Datenschutzerklärung"
   }
 }

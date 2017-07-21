@@ -7,30 +7,45 @@
     "source_key_paths" : ["/{*}"]
   },
   "cubeHelpStrings.Instructions.Slide0" : {
-    "translation" : "Cozmo ne peut pas entendre tous les cubes. Placez-les près de lui."
+    "translation" : "Cozmo n'entend pas tous les cubes. Place-les près de lui."
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "Robinet <b><color=#d3d3d3> PROCHAIN </color></b> Si vous rencontrez toujours des problèmes"
+    "translation" : "Touche <b>&lt;color=#d3d3d3&gt;SUIVANT</color></b> si tu rencontres encore des problèmes"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "First, go to <b>SETTINGS</b>.\u000aThen, tap <b>REFRESH CUBES</b>."
+    "translation" : "D'abord, accède à <b>PARAMÈTRES</b>.\u000aEnsuite, appuie sur <b>ACTUALISER LES CUBES</b>."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
     "translation" : "Next, try changing your Cube's battery."
   },
   "cubeHelpStrings.Instructions.Slide1altCopy" : {
-    "translation" : "Place it upside down and unscrew the cover."
+    "translation" : "Retourne-le et dévisse le couvercle."
   },
   "cubeHelpStrings.Instructions.Slide2" : {
-    "translation" : "Replace the battery with a fresh N Cell."
+    "translation" : "Remplace la pile par une pile neuve de type N."
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
-    "translation" : "Insert the new battery positive (<b><color=#d3d3d3>+</color></b>) end up."
+    "translation" : "Insère la nouvelle pile côté positif (<b>&lt;color=#d3d3d3&gt;+</color></b>) vers le haut."
   },
   "cubeHelpStrings.Instructions.Slide3" : {
-    "translation" : "Replace the cover and fasten it gently."
+    "translation" : "Remets en place le couvercle et fixe-le délicatement."
   },
   "cubeHelpStrings.Instructions.Slide3altCopy" : {
-    "translation" : "Assurez-vous que le couvercle correspond au Cube. Il devrait maintenant allumer!"
+    "translation" : "Assure-toi que le couvercle s'adapte bien au cube. Il doit maintenant s'allumer !"
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
+    "translation" : "Cozmo too hungry to play?"
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
+    "translation" : "Give him a quick snack while you reconnect his Cubes."
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
+    "translation" : "QUICK SNACK"
+  },
+  "cubeHelpStrings.Instructions.FeedPopup.Title" : {
+    "translation" : "Cozmo can now keep playing"
+  },
+  "cubeHelpStrings.Instructions.FeedPopup.Body" : {
+    "translation" : "To keep him fully fed, follow the instructions to help him recognize his cubes."
   }
 }

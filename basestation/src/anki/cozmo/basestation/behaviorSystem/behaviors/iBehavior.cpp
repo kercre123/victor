@@ -60,8 +60,6 @@ static const char* kRequiredSevereNeedsStateKey      = "requiredSevereNeedsState
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
-static const char* kRequireObjectTappedKey           = "requireObjectTapped";
-static const char* kObjectTapInteractionDisableLock  = "ObjectTapInteraction";
 static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
 static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
@@ -76,7 +74,6 @@ static const float kCooldownFromCliffResumes_sec     = 15.0;
 constexpr ReactionTriggerHelpers::FullReactionArray kObjectTapInteractionDisablesArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -106,7 +103,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kObjectTapInteractionDis
 constexpr ReactionTriggerHelpers::FullReactionArray kSparkBehaviorDisablesArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -304,8 +300,6 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     _executableType = ExecutableBehaviorTypeFromString(executableBehaviorTypeJson.asCString());
   }
   
-  JsonTools::GetValueOptional(config, kRequireObjectTappedKey, _requireObjectTapped);
-  
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
@@ -432,7 +426,6 @@ Result IBehavior::Init()
     SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
   }
   
-  UpdateTappedObjectLights(true);
   InitScored(_robot);
   
   return initResult;
@@ -474,7 +467,6 @@ Result IBehavior::Resume(ReactionTrigger resumingFromType)
       SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
     }
     
-    UpdateTappedObjectLights(true);
   } else {
     _isRunning = false;
   }
@@ -508,9 +500,7 @@ void IBehavior::Stop()
   }
   
   _isRunning = false;
-  // If the behavior uses double tapped objects then call StopInternalFromDoubleTap in case
-  // StopInternal() does things like fire mood events or sets failures to use
-  (RequiresObjectTapped() ? StopInternalFromDoubleTap(_robot) : StopInternal(_robot));
+  StopInternal(_robot);
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
   
@@ -645,21 +635,6 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
     return false;
   }
   
-  // check if the behavior needs a tapped object and if there is a tapped object
-  if(_requireObjectTapped)
-  {
-    if(!robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-    {
-      return false;
-    }
-    // Otherwise there is a tapped object so we need to make sure this behaviors target blocks are up to
-    // date before checking IsRunnableInternal()
-    else
-    {
-      UpdateTargetBlocks(robot);
-    }
-  }
-  
   if((_wantsToRunStrategy != nullptr) &&
      !_wantsToRunStrategy->WantsToRun(robot)){
     return false;
@@ -705,13 +680,6 @@ Result IBehavior::ResumeInternal(Robot& robot)
 {
   // by default, if we are runnable again, initialize and start over
   Result resumeResult = RESULT_FAIL;
-  
-  // If this behavior needs a tapped object and there is a tapped object make sure
-  // to update our target blocks before trying to resume
-  if(_requireObjectTapped && robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    UpdateTargetBlocks(robot);
-  }
   
   BehaviorPreReqRobot preReqData(robot);
   if ( IsRunnable(preReqData) ) {
@@ -852,9 +820,6 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, b
   PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetIDStr().c_str(), EnumToString(objectiveAchieved));
   // send das event
   Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetIDStr().c_str());
-
-  UpdateTappedObjectLights(false);
-
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1085,65 +1050,6 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   }
     
   return ActionResult::SUCCESS;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::UpdateTappedObjectLights(const bool on) const
-{
-  // Prevents enabling/disabling the ReactToCubeMoved behavior multiple times
-  static bool behaviorDisabled = false;
-
-  if(_requireObjectTapped &&
-     _robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
-    
-
-    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
-    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
-    
-    if(on)
-    {
-      _robot.GetCubeLightComponent().SetTapInteractionObject(_tappedObject);
-    
-      if(!behaviorDisabled)
-      {
-        _robot.GetBehaviorManager().DisableReactionsWithLock(kObjectTapInteractionDisableLock,
-                                                            kObjectTapInteractionDisablesArray);
-
-        behaviorDisabled = true;
-      }
-    }
-    else
-    {
-      if(behaviorDisabled)
-      {
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kObjectTapInteractionDisableLock);
-        behaviorDisabled = false;
-      }
-      
-      _robot.GetBehaviorManager().LeaveObjectTapInteraction();
-    }
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::HandleNewDoubleTap(Robot& robot)
-{
-  Stop();
-  UpdateTargetBlocks(robot);
-  
-  BehaviorPreReqRobot preReqData(robot);
-  
-  if(!IsRunnable(preReqData))
-  {
-    return false;
-  }
-  
-  Init();
-  return true;
 }
 
 

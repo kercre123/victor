@@ -9,7 +9,16 @@
  **/
 
 // Android includes
+
+#define RAW_IMU 1
+#define ANDROID_IMU 2
+#define IMU_INTERFACE RAW_IMU
+
+#if IMU_INTERFACE == ANDROID_IMU      
 #include <android/sensor.h>
+#else
+#include "anki/cozmo/robot/spi_imu.h"
+#endif
 
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
@@ -20,6 +29,7 @@ namespace Anki {
 
     namespace { // "Private members"
 
+#if IMU_INTERFACE == ANDROID_IMU      
       // Android sensor (i.e. IMU)
       ASensorManager*    _sensorManager;
       const ASensor*     _accelerometer;
@@ -29,6 +39,7 @@ namespace Anki {
 
       const int SENSOR_REFRESH_RATE_HZ = 200;
       constexpr int32_t SENSOR_REFRESH_PERIOD_US = int32_t(1000000 / SENSOR_REFRESH_RATE_HZ);
+#endif      
 
       const int IMU_DATA_ARRAY_SIZE = 5;
       HAL::IMU_DataStructure _imuDataArr[IMU_DATA_ARRAY_SIZE];
@@ -67,9 +78,11 @@ namespace Anki {
 
     void ProcessIMUEvents()
     {
+      static int64_t lastAccTime, lastGyroTime;
+#if IMU_INTERFACE == ANDROID_IMU      
+      
       ASensorEvent event;
 
-      static int64_t lastAccTime, lastGyroTime;
 
       // NOTE: For information on the meaning of event.timestamp: https://stackoverflow.com/a/41050188
       HAL::IMU_DataStructure imuData;
@@ -90,11 +103,30 @@ namespace Anki {
           PushIMU(imuData);
         }
       }
+#else
+
+#define kIMU_AccelScale (double(IMU_RANGE)/MAX_16BIT_POSITIVE)
+#define kIMU_GyroScale (double(IMU_RANGE)/MAX_16BIT_POSITIVE)
+      IMURawData rawData;
+      HAL::IMU_DataStructure imuData;
+      while ( imu_manage(&rawData) > 0 ) {
+        imuData.acc_x = rawData.acc[0] * kIMU_AccelScale_g * MMPS2_PER_GEE;
+        imuData.acc_y = rawData.acc[1] * kIMU_AccelScale_g * MMPS2_PER_GEE;
+        imuData.acc_z = rawData.acc[2] * kIMU_AccelScale_g * MMPS2_PER_GEE;
+        imuData.rate_x = rawData.gyro[0] * kIMU_GyroScale_dps * RADIANS_PER_DEGREE;
+        imuData.rate_y = rawData.gyro[1] * kIMU_GyroScale_dps * RADIANS_PER_DEGREE;
+        imuData.rate_z = rawData.gyro[2] * kIMU_GyroScale_dps * RADIANS_PER_DEGREE;
+        lastAccTime = lastGyroTime = rawData.timestamp * NS_PER_IMU_TICK;
+        PushIMU(imuData);
+      }
+
+#endif
     }
 
 
     void InitIMU()
     {
+#if IMU_INTERFACE == ANDROID_IMU      
       _sensorManager = ASensorManager_getInstance();
       AnkiConditionalErrorAndReturn(_sensorManager != nullptr, 1216, "HAL.InitIMU.NullSensorManager", 305, "", 0);
 
@@ -127,6 +159,12 @@ namespace Anki {
       status = ASensorEventQueue_setEventRate(_sensorEventQueue, _gyroscope, SENSOR_REFRESH_PERIOD_US);
       AnkiConditionalErrorAndReturn(status >= 0, 1224, "HAL.InitIMU.GyroSetRateFailed", 305, "", 0);
       (void)status;   //to silence unused compiler warning
+#else
+      const char* err = imu_open();
+      //TODO: conditional err and return
+      if (err) {printf("%s",err);return;}
+      imu_init();
+#endif      
     }
 
 
@@ -139,12 +177,15 @@ namespace Anki {
       static TimeStamp_t lastIMURead = 0;
       TimeStamp_t now = HAL::GetTimeStamp();
       if (now - lastIMURead > 4) {
+#if IMU_INTERFACE == ANDROID_IMU
+        // TEMP HACK: Send 0s because on my Nexus 5x, the gyro values are kinda crazy.
         IMUData.acc_x = 0.f;
         IMUData.acc_y = 0.f;
         IMUData.acc_z = 9800.f;
         IMUData.rate_x = 0.f;
         IMUData.rate_y = 0.f;
         IMUData.rate_z = 0.f;
+#endif        
         lastIMURead = now;
         return true;
       }

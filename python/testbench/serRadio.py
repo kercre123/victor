@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 A test script to go with the ESP8266 UDP throughput test firmware.
 This script is specifically for sending formatted packets over UART for relay to UDP.

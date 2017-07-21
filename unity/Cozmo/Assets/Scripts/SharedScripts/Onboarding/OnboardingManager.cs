@@ -40,8 +40,7 @@ public class OnboardingManager : MonoBehaviour {
 
   public static readonly OnboardingPhases[] kRequiredPhases = { OnboardingPhases.InitialSetup,
                                     OnboardingPhases.MeetCozmo, OnboardingPhases.NurtureIntro,OnboardingPhases.FeedIntro,
-                                    OnboardingPhases.PlayIntro, OnboardingPhases.RewardBox,OnboardingPhases.DiscoverIntro,
-                                    OnboardingPhases.VoiceCommands };
+                                    OnboardingPhases.PlayIntro, OnboardingPhases.RewardBox,OnboardingPhases.DiscoverIntro };
 
   public Action<OnboardingPhases, int> OnOnboardingStageStarted;
   public Action<OnboardingPhases> OnOnboardingPhaseStarted;
@@ -517,10 +516,14 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void DebugCompleteAllOnboarding(string param) {
+    OnboardingPhases lastPhase = _CurrPhase;
     // not including none
     int numStates = Enum.GetNames(typeof(OnboardingPhases)).Length - 1;
     for (int i = 0; i < numStates; ++i) {
       OnboardingManager.Instance.CompletePhase((OnboardingPhases)i, false);
+    }
+    if (lastPhase == OnboardingPhases.InitialSetup && _NeedsHubView != null) {
+      _NeedsHubView.OnboardingSkipped();
     }
     HubWorldBase.Instance.StartFreeplay();
   }

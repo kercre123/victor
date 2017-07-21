@@ -64,13 +64,14 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
     return false;
   }
   
-  // Creat Cozmo Says Voice Style map
+  // Create Cozmo Says Voice Style map
   SayTextVoiceStyleMap voiceStyleMap;
   for (uint8_t aStyleIdx = 0; aStyleIdx <  Util::numeric_cast<uint8_t>(SayTextVoiceStyle::Count); ++aStyleIdx) {
     const SayTextVoiceStyle aStyle = static_cast<SayTextVoiceStyle>(aStyleIdx);
     voiceStyleMap.emplace( EnumToString(aStyle), aStyle );
   }
-  // Cereate Say Text Intent Map
+
+  // Create Say Text Intent Map
   std::unordered_map<std::string, SayTextIntent> sayTextIntentMap;
   for (uint8_t anIntentIdx = 0; anIntentIdx < SayTextIntentNumEntries; ++anIntentIdx) {
     const SayTextIntent anIntent = static_cast<SayTextIntent>(anIntentIdx);
@@ -265,6 +266,7 @@ ActionResult SayTextAction::Init()
       const std::unordered_map<SayTextVoiceStyle, SwitchState::Cozmo_Voice_Processing, Util::EnumHasher> processingStateMap {
         { SayTextVoiceStyle::Unprocessed, SwitchState::Cozmo_Voice_Processing::Unprocessed },
         { SayTextVoiceStyle::CozmoProcessing_Name, SwitchState::Cozmo_Voice_Processing::Name },
+        { SayTextVoiceStyle::CozmoProcessing_Name_Question, SwitchState::Cozmo_Voice_Processing::Name },
         { SayTextVoiceStyle::CozmoProcessing_Sentence, SwitchState::Cozmo_Voice_Processing::Sentence }
       };
       DEV_ASSERT(processingStateMap.size() == Util::numeric_cast<uint32_t>(SayTextVoiceStyle::Count),

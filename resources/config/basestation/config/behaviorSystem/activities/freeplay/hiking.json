@@ -15,12 +15,6 @@
     },
     
     "behaviors" : [
-      { "behaviorID" : "CantHandleTallStack",
-        "scoring"      :
-        {
-          "flatScore": 20
-        }
-      },
       { "behaviorID" : "KnockOverCubes",
         "scoring"      :
         {

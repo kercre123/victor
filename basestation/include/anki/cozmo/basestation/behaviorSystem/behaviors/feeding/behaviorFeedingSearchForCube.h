@@ -18,26 +18,47 @@
 
 namespace Anki {
 namespace Cozmo {
-
+  
 class BehaviorFeedingSearchForCube : public IBehavior
 {
 protected:
+  using Base = IBehavior;
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorFeedingSearchForCube(Robot& robot, const Json::Value& config);
   
 public:
-  
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
     
 protected:
   virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
+
   
 private:
-  void TransitionAskForFood(Robot& robot);
-  void TransitionWaitForFood(Robot& robot);
+  enum class State {
+    FirstSearchForCube,
+    MakeFoodRequest,
+    SecondSearchForCube,
+    FailedToFindCubeReaction
+  };
+  
+  State _currentState;
+  float _timeEndSearch_s;
+  
+  void TransitionToSearchForFoodBase(Robot& robot);
+  void TransitionToFirstSearchForFood(Robot& robot);
+  void TransitionToSecondSearchForFood(Robot& robot);
+
+  
+  void TransitionToMakeFoodRequest(Robot& robot);
+  void TransitionToFailedToFindCubeReaction(Robot& robot);
+
+  
+  void SetState_internal(State state, const std::string& stateName);
+
   
   
 };

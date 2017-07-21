@@ -56,7 +56,7 @@ namespace Cozmo.Hub {
     public override void LoadHubWorld() {
       _ChallengeManager = new ChallengeManager(_ChallengeDataPrefabAssetBundle);
       _ChallengeManager.OnShowEndGameDialog += HandleEndGameDialog;
-      _ChallengeManager.OnChallengeViewFinishedClosing += StartLoadNeedsHubView;
+      _ChallengeManager.OnChallengeViewFinishedClosing += HandleChallengeViewFinishedClosing;
       _ChallengeManager.OnChallengeCompleted += HandleChallengeComplete;
       _ChallengeManager.OnChallengeFinishedLoading += HandleChallengeFinishedLoading;
 
@@ -76,7 +76,7 @@ namespace Cozmo.Hub {
     public override void DestroyHubWorld() {
       _ChallengeManager.CleanUp();
       _ChallengeManager.OnShowEndGameDialog -= HandleEndGameDialog;
-      _ChallengeManager.OnChallengeViewFinishedClosing -= StartLoadNeedsHubView;
+      _ChallengeManager.OnChallengeViewFinishedClosing -= HandleChallengeViewFinishedClosing;
       _ChallengeManager.OnChallengeCompleted -= HandleChallengeComplete;
       _ChallengeManager.OnChallengeFinishedLoading -= HandleChallengeFinishedLoading;
 
@@ -123,14 +123,14 @@ namespace Cozmo.Hub {
 
     #region LoadNeedsHub
 
-    public override void StartLoadNeedsHubView() {
+    public override void StartLoadNeedsHubView(bool transitionToFreeplay = true) {
       System.Action<GameObject> needsHubViewPrefabLoaded = (GameObject needsHubViewPrefab) => {
-        StartCoroutine(ShowNeedsHubViewAfterOtherViewClosed(needsHubViewPrefab));
+        StartCoroutine(ShowNeedsHubViewAfterOtherViewClosed(needsHubViewPrefab, transitionToFreeplay));
       };
       LoadGameObjectData(_NeedsHubViewPrefabData, needsHubViewPrefabLoaded);
     }
 
-    private IEnumerator ShowNeedsHubViewAfterOtherViewClosed(GameObject needsHubViewPrefab) {
+    private IEnumerator ShowNeedsHubViewAfterOtherViewClosed(GameObject needsHubViewPrefab, bool transitionToFreeplay = true) {
       // wait until challenge instance is destroyed and also wait until the unlocks are properly loaded from
       // robot.
       while (_ChallengeManager.IsChallengePlaying || !UnlockablesManager.Instance.UnlocksLoaded) {
@@ -148,27 +148,30 @@ namespace Cozmo.Hub {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear);
           PlayNeedsMeterAppearingSound = false;
         }
+        // things like discover tab never brought us out of freeplay if a game was never loaded.
+        if (transitionToFreeplay) {
+          ResetRobotToFreeplaySettings();
 
-        ResetRobotToFreeplaySettings();
+          var robot = RobotEngineManager.Instance.CurrentRobot;
 
-        var robot = RobotEngineManager.Instance.CurrentRobot;
+          if (robot != null && OnboardingManager.Instance.AllowFreeplayOnHubEnter()) {
+            // Display Cozmo's default face
+            robot.DisplayProceduralFace(
+              0,
+              Vector2.zero,
+              Vector2.one,
+              ProceduralEyeParameters.MakeDefaultLeftEye(),
+              ProceduralEyeParameters.MakeDefaultRightEye());
 
-        if (robot != null && OnboardingManager.Instance.AllowFreeplayOnHubEnter()) {
-          // Display Cozmo's default face
-          robot.DisplayProceduralFace(
-            0,
-            Vector2.zero,
-            Vector2.one,
-            ProceduralEyeParameters.MakeDefaultLeftEye(),
-            ProceduralEyeParameters.MakeDefaultRightEye());
-
-          robot.ResetRobotState(() => {
-            robot.SendAnimationTrigger(_ChallengeGetOutAnimTrigger, (bool success) => {
-              _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
-              StartFreeplay();
+            robot.ResetRobotState(() => {
+              robot.SendAnimationTrigger(_ChallengeGetOutAnimTrigger, (bool success) => {
+                _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
+                StartFreeplay();
+              });
             });
-          });
+          }
         }
+
       });
     }
 
@@ -185,8 +188,8 @@ namespace Cozmo.Hub {
       }
 
       // If we're not starting freeplay, make sure idles are turned off by default
-      if(DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
-        robot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.Count, 
+      if (DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
+        robot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.Count,
                                 DebugProfile.kNoFreelpayOnStartLock);
       }
     }
@@ -277,7 +280,7 @@ namespace Cozmo.Hub {
       AssetBundleManager.Instance.UnloadAssetBundle(_SparksViewPrefabData.AssetBundle);
 
       if (!_ChallengeManager.LoadChallenge()) {
-        StartLoadNeedsHubView();
+        StartLoadNeedsHubView(false);
       }
     }
 
@@ -306,6 +309,10 @@ namespace Cozmo.Hub {
         // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
         robot.SetEnableCliffSensor(true);
       }
+    }
+
+    private void HandleChallengeViewFinishedClosing() {
+      StartLoadNeedsHubView();
     }
 
     private void HandleChallengeComplete() {
@@ -346,7 +353,7 @@ namespace Cozmo.Hub {
 
     private void HandleBackToNeedsFromActivitiesPressed() {
       DeregisterActivitiesViewEvents();
-      StartLoadNeedsHubView();
+      StartLoadNeedsHubView(false);
     }
 
     private void HandleStartChallengePressed(string challengeId) {
@@ -383,7 +390,7 @@ namespace Cozmo.Hub {
 
     private void HandleBackToNeedsFromSparksPressed() {
       DeregisterSparksViewEvents();
-      StartLoadNeedsHubView();
+      StartLoadNeedsHubView(false);
     }
 
     #endregion

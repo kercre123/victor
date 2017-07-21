@@ -25,6 +25,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 
 namespace Anki {
   
@@ -221,27 +223,34 @@ namespace Anki {
     , _animTrigger(animEvent)
     , _animGroupName("")
     {
-      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-      if( robot_mgr->HasAnimationForTrigger(animEvent) )
+      SetAnimGroupFromTrigger(animEvent);
+      
+      SetName("PlayAnimation" + _animGroupName);
+      // will FAILURE_ABORT on Init if not an event
+    }
+
+    void TriggerAnimationAction::SetAnimGroupFromTrigger(AnimationTrigger animTrigger)
+    {
+      _animTrigger = animTrigger;
+      
+      RobotManager* robot_mgr = _robot.GetContext()->GetRobotManager();
+      if( robot_mgr->HasAnimationForTrigger(_animTrigger) )
       {
-        _animGroupName = robot_mgr->GetAnimationForTrigger(animEvent);
+        _animGroupName = robot_mgr->GetAnimationForTrigger(_animTrigger);
         if(_animGroupName.empty()) {
           PRINT_NAMED_WARNING("TriggerAnimationAction.EmptyAnimGroupNameForTrigger",
-                              "Event: %s", EnumToString(animEvent));
+                              "Event: %s", EnumToString(_animTrigger));
         }
-        SetName("PlayAnimation" + _animGroupName);
-      } else {
-        PRINT_NAMED_WARNING("TriggerAnimationAction.NoAnimationForTrigger",
-                            "Event: %s", EnumToString(animEvent));
       }
-      // will FAILURE_ABORT on Init if not an event
     }
 
     ActionResult TriggerAnimationAction::Init()
     {
-      // If animGroupName is empty we will already print a warning in the constructor so we can just fail immediately
       if(_animGroupName.empty())
       {
+        PRINT_NAMED_WARNING("TriggerAnimationAction.NoAnimationForTrigger",
+                            "Event: %s", EnumToString(_animTrigger));
+        
         return ActionResult::NO_ANIM_NAME;
       }
       
@@ -447,5 +456,85 @@ namespace Anki {
     {
       return (_animEnded ? ActionResult::SUCCESS : ActionResult::RUNNING);
     }
+
+    PlayNeedsGetOutAnimIfNeeded::PlayNeedsGetOutAnimIfNeeded(Robot& robot)
+      : Base(robot, AnimationTrigger::Count)
+    {
+      SetName("PlayNeedsGetOut");
+    }
+
+    ActionResult PlayNeedsGetOutAnimIfNeeded::Init()
+    {
+      const auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+
+      if( whiteboard.HasSevereNeedExpression() ) {
+        AnimationTrigger animTrigger = AnimationTrigger::Count;        
+
+        switch( whiteboard.GetSevereNeedExpression() ) {
+          case NeedId::Repair: {
+            animTrigger = AnimationTrigger::NeedsSevereLowRepairForceGetOut;
+            break;
+          }
+          case NeedId::Energy: {
+            animTrigger = AnimationTrigger::NeedsSevereLowEnergyForceGetOut;
+            break;
+          }
+          case NeedId::Play: {
+            animTrigger = AnimationTrigger::NeedsSevereLowPlayForceGetOut;
+            break;
+          }
+          case NeedId::Count:
+            PRINT_NAMED_ERROR("PlayNeedsGetOutAnimIfNeeded.InconsistentState",
+                              "AIWhiteboard said we had a severe needs state, but now says its equal to Count");
+            break;
+        }
+
+        if( animTrigger != AnimationTrigger::Count ) {
+          Base::SetAnimGroupFromTrigger(animTrigger);
+          return Base::Init();
+        }
+        else {
+          // we decided not to play something, so this action will immediately success
+          return ActionResult::SUCCESS;
+        }
+        
+      }
+      else {
+        // behavior will succeed automatically in the first CheckIfDone
+        PRINT_CH_INFO("Actions", "PlayNeedsGetOutAnimIfNeeded.NoTransitionNeeded",
+                      "[%d] %s: no transition animation needed",
+                      GetTag(),
+                      GetName().c_str());
+
+        return ActionResult::SUCCESS;
+      }
+    }
+
+    ActionResult PlayNeedsGetOutAnimIfNeeded::CheckIfDone()
+    {      
+      if( ! HasAnimTrigger() ) {
+        // if no animation was required, succeed now
+        return ActionResult::SUCCESS;
+      }
+      else {
+        // This action also needs to clear the severe needs expression. In doing so, it will clear the idle
+        // animation. Because of some quirks in the animation streamer, this can cause an eye pop if it's done
+        // while we _aren't_ streaming another animation. So make sure to do it right after our own animation
+        // starts playing. More specifically, when the idle is canceled, if another animation is not playing,
+        // the streamer may set neutral eyes and/or play the last frame of the idle, but it won't do either if
+        // another (non-idle) animation is currently streaming
+        if( !_hasClearedExpression && PlayAnimationAction::HasAnimStartedPlaying() ) {
+          // even in the case of an interruption, we will jump to the last anim keyframe, so clear the
+          // expression now
+          auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+          whiteboard.ClearSevereNeedExpression();
+          _hasClearedExpression = true;
+        }
+          
+        const ActionResult result = Base::CheckIfDone();
+        return result;
+      }
+    }
+  
   }
 }

@@ -48,6 +48,17 @@ enum VersionStatus {
 };
 
 
+FILE* gImgFilep = NULL;
+
+
+void on_exit(void)
+{
+   if (gImgFilep) {
+      fclose(gImgFilep);
+      gImgFilep = NULL;
+   }
+}
+
 void error_exit(enum DfuAppErrorCode code, const char* msg, ...)
 {
   va_list args;
@@ -57,6 +68,7 @@ void error_exit(enum DfuAppErrorCode code, const char* msg, ...)
   vprintf(msg, args);
   va_end(args);
   printf("\n\n");
+  on_exit();
   exit(code);
 }
 
@@ -79,7 +91,7 @@ enum VersionStatus  CheckVersion(uint8_t desiredVersion[], VersionInfo* firmware
   ShowVersion("Provided", desiredVersion);
 
   // TODO: THIS ISN'T ACTUALLY CHECKING
-  return version_OLDER; //for now, always assume older than desired
+  return version_OLDER;  // for now, always assume older than desired
 }
 
 
@@ -114,7 +126,7 @@ void SendData(FILE* imgfile, int start_addr)
     WriteDFU packet = {0};
     size_t itemcount = fread(&(packet.data[0]), sizeof(uint32_t), 256, imgfile);
     size_t databytes = itemcount * sizeof(uint32_t);
-    dprint("read %d words (%d bytes)\n", itemcount, databytes);
+    dprint("read %zd words (%zd bytes)\n", itemcount, databytes);
 
     if (itemcount < 256) {
       if (ferror(imgfile)) {
@@ -126,7 +138,7 @@ void SendData(FILE* imgfile, int start_addr)
       packet.address = start_addr;
       packet.wordCount = itemcount;
 
-      dprint("writing %d words (%d bytes) for @%x\n", packet.wordCount, databytes, packet.address);
+      dprint("writing %d words (%zd bytes) for @%x\n", packet.wordCount, databytes, packet.address);
       dprint("\t[%x ...  %x]\n", packet.data[0], packet.data[packet.wordCount - 1]);
 
       if (SendCommand(PayloadId_PAYLOAD_DFU_PACKET, &packet, sizeof(packet), 1) == NULL) {
@@ -167,15 +179,15 @@ int main(int argc, const char* argv[])
   }
 
   dprint("opening file\n");
-  FILE* imgfile = fopen(argv[1], "rb");
-  if (!imgfile) {
+  gImgFilep = fopen(argv[1], "rb");
+  if (!gImgFilep) {
     error_exit(app_FILE_OPEN_ERROR, "Can't open %s", argv[1]);
     exit(-2);
   }
 
   dprint("reading image version\n");
   uint8_t versionString[VERSTRING_LEN];
-  size_t nchars = fread(versionString, sizeof(uint8_t), VERSTRING_LEN, imgfile);
+  size_t nchars = fread(versionString, sizeof(uint8_t), VERSTRING_LEN, gImgFilep);
   if (nchars != VERSTRING_LEN) {
     error_exit(app_FILE_READ_ERROR, "Can't read from data file %s", argv[1]);
   }
@@ -191,7 +203,7 @@ int main(int argc, const char* argv[])
     error_exit(app_FLASH_ERASE_ERROR, "Can't erase syscon flash");
   }
 
-  SendData(imgfile, 0);
+  SendData(gImgFilep, 0);
 
   dprint("requestig validation\n");
   if (SendCommand(PayloadId_PAYLOAD_VALIDATE, NULL, 0, 0) == NULL) {
@@ -199,5 +211,6 @@ int main(int argc, const char* argv[])
   }
 
   printf("Success!\n");
+  on_exit();
   return 0;
 }

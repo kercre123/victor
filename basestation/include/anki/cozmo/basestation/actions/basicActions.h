@@ -134,12 +134,12 @@ namespace Cozmo {
       bool                     _objectObservedDuringSearch;
       std::vector<Signal::SmartHandle> _eventHalders;
 
+      void AddToCompoundAction(IActionRunner* action);
       
       f32 _minWaitTime_s = 0.8f;
       f32 _maxWaitTime_s = 1.2f;
       f32 _minSearchAngle_rads = DEG_TO_RAD(15.0f);
       f32 _maxSearchAngle_rads = DEG_TO_RAD(20.0f);
-      bool _shouldPopIdle = false;
       f32 _backupDistance_mm = 0.0f;
       f32 _backupSpeed_mms = 0.0f;
       f32 _headAngle_rad = 0.0f;

@@ -1,0 +1,26 @@
+{
+  "behaviorClass": "DriveInDesperation",
+  
+  "behaviorID": "Needs_SevereLowRepairState",
+  "displayNameKey":"behavior.Needs_SevereLowRepairRequest",
+
+  "useCubes": false,
+
+  "minTimeToIdle": 5.0,
+  "maxTimeToIdle": 20.0,
+  
+  "requestAnimTrigger": "NeedsSevereLowRepairRequest",
+  "motionProfile": {
+    "speed_mmps": 50.0,
+    "accel_mmps2": 500.0,
+    "decel_mmps2": 50.0,
+    "pointTurnSpeed_rad_per_sec": 1.5,
+    "pointTurnAccel_rad_per_sec2": 10.0,
+    "pointTurnDecel_rad_per_sec2": 2.0,
+    "dockSpeed_mmps": 60.0,
+    "dockAccel_mmps2": 200.0,
+    "dockDecel_mmps2": 500.0,
+    "reverseSpeed_mmps": 120.0,
+    "isCustom": 1
+  }
+}

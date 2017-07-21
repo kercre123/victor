@@ -39,7 +39,6 @@ namespace VoiceCommand {
 
 VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatform,
                                        const CommandPhraseData& commandPhraseData,
-                                       double targetScore,
                                        Anki::Util::Locale locale,
                                        const std::string& sampleGroupDir)
 : _contextDataMap(commandPhraseData.GetContextData())
@@ -83,7 +82,6 @@ VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatf
   _baseScoreData._missMult = -5.0f;
   _baseScoreData._falsePositiveMult = -10.0f;
   _baseScoreData._targetScoreDiffMult = -0.001f;
-  _baseScoreData._targetScoreConstant = targetScore;
 }
 
 // forward-declared unique-pointers demand this
@@ -442,7 +440,7 @@ double TestResultScoreData::CalculateScore(const std::string phrase,
   _maxScore = Anki::Util::numeric_cast<double>(hits + misses) * _hitMult;
   
   // We want the deviation from the target score as an absolute value
-  const double& targetScoreDiff = Anki::Util::Abs(averageScore - _targetScoreConstant);
+  const double& targetScoreDiff = Anki::Util::Abs(averageScore - _kTargetScoreConstant);
   
   const double hitScore = Util::numeric_cast<double>(hits) * _hitMult;
   const double missScore = Util::numeric_cast<double>(misses) * _missMult;

@@ -1,7 +1,15 @@
 window.Unity = {
     call: function(msg) {
+        var jsonMsg = JSON.stringify(msg);
+
+        // Encode the stringified JSON object so that special chars like ', " and \ to make it all the way to unity.
+        var encodedJsonMsg = encodeURIComponent(jsonMsg);
+
         var iframe = document.createElement('IFRAME');
-        iframe.setAttribute('src', 'unity:' + msg);
+
+        // The src attribute of an iframe is a URL. If we don't encode the JSON, this call will replace \" with /", which will break when Unity tries to read the string.
+        iframe.setAttribute('src', 'unity:' + encodedJsonMsg); 
+
         document.documentElement.appendChild(iframe);
         iframe.parentNode.removeChild(iframe);
         iframe = null;
@@ -10,7 +18,7 @@ window.Unity = {
         if (gEnableSdkConnection) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "sdk_call", true);
-            xhr.send( JSON.stringify( {msg} ) );
+            xhr.send(encodedJsonMsg);
         }
     }
 }
