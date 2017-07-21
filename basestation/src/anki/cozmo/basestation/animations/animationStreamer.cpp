@@ -219,9 +219,6 @@ namespace Cozmo {
     }
     
     _streamingAnimation = anim;
-#if ANKI_DEV_CHEATS
-    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(anim == nullptr ? "NONE" : anim->GetName());
-#endif
     
     if(_streamingAnimation == nullptr) {
       // Set flag if we are interrupting a streaming animation with nothing.
@@ -470,6 +467,10 @@ namespace Cozmo {
       if(anim != &_liveAnimation) {
         _trackLayerComponent->RemoveKeepFaceAlive(3*IKeyFrame::SAMPLE_LENGTH_MS);
       }
+      
+#if ANKI_DEV_CHEATS
+      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(anim == nullptr ? "NONE" : anim->GetName());
+#endif
     }
     return lastResult;
   }
