@@ -115,7 +115,8 @@ Result BehaviorDance::InitInternal(Robot& robot)
   }
   
   // Start dancing audio
-  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Dance, 0);
+  //robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Dance, 0);
+  DEV_ASSERT(false, "BehaviorDance.Init.MusicTurnedOff");
   
   // Init base class to play our animation sequence
   return BehaviorPlayAnimSequence::InitInternal(robot);

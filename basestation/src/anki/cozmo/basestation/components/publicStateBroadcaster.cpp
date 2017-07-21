@@ -202,7 +202,6 @@ void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stage
       newStruct.currentWorkoutStage = static_cast<WorkoutStage>(stage);
       break;
     }
-    case BehaviorStageTag::Dance: // Dancing doesn't have any stages
     case BehaviorStageTag::Count:
     {
       break;
@@ -268,7 +267,6 @@ int PublicStateBroadcaster::GetStageForBehaviorStageType(BehaviorStageTag stageT
     {
       return Util::EnumToUnderlying(stageStruct.currentWorkoutStage);
     }
-    case BehaviorStageTag::Dance: // Dancing doesn't have any stages
     case BehaviorStageTag::Count:
     {
       return 0;

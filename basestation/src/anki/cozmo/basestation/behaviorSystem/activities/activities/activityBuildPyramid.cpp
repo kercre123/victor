@@ -353,6 +353,8 @@ void ActivityBuildPyramid::OnDeselectedInternal(Robot& robot)
   }
   SetCubeLights(_robot);
   
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+  
   // Make sure no behaviors are deactivated on leaving pyramid in case they're
   // also mapped to another behavior group
   _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForFullPyramidProcess);

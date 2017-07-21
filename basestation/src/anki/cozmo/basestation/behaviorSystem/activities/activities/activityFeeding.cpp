@@ -282,6 +282,8 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
   _cubeControllerMap.clear();
   _eventHandlers.clear();
   
+  // Clear the public state broadcaster
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   
   // DAS Events
   const NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
