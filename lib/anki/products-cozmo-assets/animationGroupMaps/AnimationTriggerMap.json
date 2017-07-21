@@ -534,6 +534,22 @@
       "AnimName": "ag_energy_interruptions"
     },
     {
+      "CladEvent": "FeedingSearchRequest",
+      "AnimName": "ag_energy_requestshortlvl1"
+    },
+    {
+      "CladEvent": "FeedingSearchRequest_Severe",
+      "AnimName": "ag_energy_requestshortlvl2"
+    },
+    {
+      "CladEvent": "FeedingSearchFailure",
+      "AnimName": "ag_energy_cubenotfound_01"
+    },
+    {
+      "CladEvent": "FeedingSearchFailure_Severe",
+      "AnimName": "ag_energy_cubenotfound_02"
+    },
+    {
       "CladEvent": "FeedingReactToFullCube_Normal",
       "AnimName": "ag_energy_cubetone"
     },
