@@ -453,6 +453,10 @@
       "AnimName": "ag_explorer_turbo"
     },
     {
+      "CladEvent": "EarnedSparks",
+      "AnimName": "ag_sparking_earnsparks"
+    },
+    {
       "CladEvent": "FacePlantRoll",
       "AnimName": "ag_reacttocliff_faceplantroll_01"
     },
@@ -1778,6 +1782,10 @@
       "AnimName": "rollCube_success"
     },
     {
+      "CladEvent": "SdkTextToSpeech",
+      "AnimName": "ag_sdk_speak"
+    },
+    {
       "CladEvent": "Shiver",
       "AnimName": "ag_shiver"
     },
@@ -2040,10 +2048,6 @@
     {
       "CladEvent": "WorkoutWeakLift_mediumEnergy",
       "AnimName": "ag_workout_mediumenergy_weak"
-    },
-    {
-      "CladEvent": "SdkTextToSpeech",
-      "AnimName": "ag_sdk_speak"
-    }    
+    }
   ]
 }

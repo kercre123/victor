@@ -30,7 +30,6 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -235,6 +234,8 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , kPathToSavedStateFile((cozmoContext->GetDataPlatform() != nullptr ? cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
 , _robotStorageState(RobotStorageState::Inactive)
 , _faceDistortionComponent(new DesiredFaceDistortionComponent(*this))
+, _pendingSparksRewardMsg(false)
+, _sparksRewardMsg()
 {
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -723,13 +724,19 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
       {
         const int sparksAwarded = RewardSparksForFreeplay();
 
-        // Tell game that sparks were awarded, and how many, and what cozmo was doing
-        ExternalInterface::FreeplaySparksAwarded msg;
-        msg.sparksAwarded = sparksAwarded;
-        msg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey + "." +
-                                      NeedsActionIdToString(actionCompleted);
-        const auto& extInt = _cozmoContext->GetExternalInterface();
-        extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+        if (_pendingSparksRewardMsg)
+        {
+          PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompleted",
+                        "About to create freeplay sparks reward message but there was a pending one, so sending that one now");
+
+          OnSparksRewardAnimComplete();
+        }
+        _pendingSparksRewardMsg = true;
+
+        // Fill in the message that we will send later when the reward behavior completes
+        _sparksRewardMsg.sparksAwarded = sparksAwarded;
+        _sparksRewardMsg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey + "." +
+                                                   NeedsActionIdToString(actionCompleted);
 
         // DAS Event: "needs.freeplay_sparks_awarded"
         // s_val: The number of sparks awarded
@@ -907,6 +914,20 @@ int NeedsManager::AwardSparks(const int targetSparks, const float minPct, const 
   ic.AddInventoryAmount(InventoryType::Sparks, sparksAdded);
 
   return sparksAdded;
+}
+
+
+void NeedsManager::OnSparksRewardAnimComplete()
+{
+  DEV_ASSERT_MSG(_pendingSparksRewardMsg == true,
+                 "NeedsManager.OnSparksRewardAnimComplete",
+                 "About to send sparks reward message but it's already been sent");
+  _pendingSparksRewardMsg = false;
+
+  // Tell game that sparks were awarded, and how many, and what cozmo was doing
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame
+                    (std::move(_sparksRewardMsg)));
 }
 
 
@@ -2082,6 +2103,7 @@ void NeedsManager::DebugResetNeeds()
     _robotHadValidNeedsData = false;
     _deviceHadValidNeedsData = false;
     InitAfterReadFromRobotAttempt();
+    SendNeedsStateToGame();
   }
 }
 

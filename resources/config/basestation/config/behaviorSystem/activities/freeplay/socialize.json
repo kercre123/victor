@@ -54,6 +54,7 @@
   "interludeBehaviorChooser": {
     "type": "StrictPriority",
     "behaviors": [
+      "EarnedSparks",
       "Needs_SevereLowPlayBored",
       "Needs_SevereLowPlayRequest",
       "Needs_MildLowRepairRequest",

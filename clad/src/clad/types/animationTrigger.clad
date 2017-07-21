@@ -126,6 +126,7 @@ enum int_32 AnimationTrigger
   DroneModeIdle,
   DroneModeKeepAlive,
   DroneModeTurboDrivingStart,
+  EarnedSparks,
   FacePlantRoll,
   FacePlantRollArmUp,
   FailedToRightFromFace,
