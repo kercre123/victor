@@ -39,6 +39,10 @@
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
 
+// Maximum number of animations that may be broadcast per Update() call
+// so as not to overwhelm the socket.
+#define MAX_ANIM_BROADCASTS_PER_TIC 50
+
 namespace Anki {
 namespace Cozmo {
 
@@ -255,6 +259,10 @@ void RobotManager::UpdateAllRobots()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
 
+  // If broadcasting animations, continue
+  BroadcastAvailableAnimations_internal();
+
+  
   //for (auto &r : _robots) {
   for(auto r = _robots.begin(); r != _robots.end(); ) {
     // Call update
@@ -313,17 +321,30 @@ void RobotManager::ReadFaceAnimationDir()
 
 void RobotManager::BroadcastAvailableAnimations()
 {
-  Anki::Util::Time::ScopedStep scopeTimer("BroadcastAvailableAnimations");
   // Tell UI about available animations
-  if (nullptr != _context->GetExternalInterface()) {
-    std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
-    for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(*i);
-    }
+  _nextAnimationIndexToBroadcast = 0;
+}
+  
+void RobotManager::BroadcastAvailableAnimations_internal()
+{
+  // Tell UI about available animations, MAX_ANIM_BROADCASTS_PER_TIC at a time.
+  if (_nextAnimationIndexToBroadcast >= 0) {
+    Anki::Util::Time::ScopedStep scopeTimer("BroadcastAvailableAnimations_internal");
 
-    _context->GetExternalInterface()->
-      BroadcastToGame<ExternalInterface::EndOfMessage>(ExternalInterface::MessageType::AnimationAvailable);
-    PRINT_NAMED_DEBUG("RobotManager.BroadcastAvailableAnimations", "Supposedly sent EndOfMessage");
+    if (nullptr != _context->GetExternalInterface()) {
+      std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
+      u32 lastIndexToBroadcast = std::min((s32)animNames.size(), _nextAnimationIndexToBroadcast + MAX_ANIM_BROADCASTS_PER_TIC);
+      while (_nextAnimationIndexToBroadcast < lastIndexToBroadcast) {
+        _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(animNames[_nextAnimationIndexToBroadcast]);
+        ++_nextAnimationIndexToBroadcast;
+      }
+      
+      if (_nextAnimationIndexToBroadcast == animNames.size()) {
+        _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EndOfMessage>(ExternalInterface::MessageType::AnimationAvailable);
+        PRINT_NAMED_DEBUG("RobotManager.BroadcastAvailableAnimations", "Supposedly sent EndOfMessage");
+        _nextAnimationIndexToBroadcast = -1;
+      }
+    }
   }
 }
 
