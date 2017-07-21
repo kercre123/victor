@@ -31,15 +31,15 @@ namespace Cozmo.Needs.Activities.UI {
     public void Initialize(ChallengeData activityData, string parentDialogName) {
       _ChallengeData = activityData;
 
-      _StartActivityButton.Initialize(HandleStartActivityButtonPressed, "large_start_activity_button", parentDialogName);
-
-	  _ActivityTitleLabel.text = Localization.Get(activityData.ChallengeTitleLocKey).ToUpper();
+      _ActivityTitleLabel.text = Localization.Get(activityData.ChallengeTitleLocKey).ToUpper();
       _ActivityDescriptionLabel.text = Localization.Get(activityData.ChallengeDescriptionLocKey);
 
       _ActivityTitleLabel.color = activityData.ActivityData.ActivityTitleColor;
       _ActivityTintedFrame.color = activityData.ActivityData.ActivityFrameColor;
 
       _ActivityIcon.sprite = activityData.ActivityData.ActivityIcon;
+
+      _StartActivityButton.Initialize(HandleStartActivityButtonPressed, "large_start_activity_button", parentDialogName);
     }
 
     private void HandleStartActivityButtonPressed() {

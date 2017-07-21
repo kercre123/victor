@@ -13,12 +13,20 @@
           "ltsFilename" : "lts_en_3.0.raw"
         }
       ],
+      "contextConfigList": [
+        {
+          "contextType": "CommandList",
+          "searchBeam": 50,
+          "searchNOTA": 0.534646,
+          "recogMinDuration": 40
+        }
+      ],
       "phraseCommandsMap": [
         {
           "phrase": "HeyCozmo",
           "commandType": "HeyCozmo",
-          "paramA": -600,
-          "paramB": 550
+          "paramA": -962,
+          "paramB": 722
         },
         {
           "phrase": "Do A Dance",
@@ -26,7 +34,9 @@
         },
         {
           "phrase": "Continue",
-          "commandType": "Continue"
+          "commandType": "Continue",
+          "paramA": -995,
+          "paramB": 652
         },
         {
           "phrase": "Come Over Here",
@@ -46,7 +56,9 @@
         },
         {
           "phrase": "No Thank You",
-          "commandType": "NoThankYou"
+          "commandType": "NoThankYou",
+          "paramA": -719,
+          "paramB": 513
         },
         {
           "phrase": "PeekaBoo",
@@ -54,7 +66,9 @@
         },
         {
           "phrase": "Yes Please",
-          "commandType": "YesPlease"
+          "commandType": "YesPlease",
+          "paramA": -926,
+          "paramB": 635
         },
         {
           "phrase": "Go To Sleep",
@@ -91,6 +105,12 @@
           "commandType": "ComeHere"
         },
         {
+          "phrase": "Mach weiter",
+          "commandType": "Continue",
+          "paramA": -936,
+          "paramB": 756
+        },
+        {
           "phrase": "Zieg Mier Einen Trick",
           "commandType": "DoATrick"
         },
@@ -125,6 +145,10 @@
         {
           "phrase": "Wie geht es dir",
           "commandType": "HowAreYouDoing"
+        },
+        {
+          "phrase": "Schau nach unten",
+          "commandType": "LookDown"
         }
       ]
     },
@@ -145,15 +169,21 @@
           "commandType": "DoADance"
         },
         {
-          "phrase": "Viens là",
+          "phrase": "Viens ici",
           "commandType": "ComeHere"
+        },
+        {
+          "phrase": "Continue",
+          "commandType": "Continue",
+          "paramA": -677,
+          "paramB": 1000
         },
         {
           "phrase": "Fais moi un tour",
           "commandType": "DoATrick"
         },
         {
-          "phrase": "Poing à poing",
+          "phrase": "Fais un check",
           "commandType": "FistBump"
         },
         {
@@ -183,6 +213,10 @@
         {
           "phrase": "Ça va",
           "commandType": "HowAreYouDoing"
+        },
+        {
+          "phrase": "Regarde vers le bas",
+          "commandType": "LookDown"
         }
       ]
     },
@@ -193,21 +227,27 @@
       "ltsFilename" : "lts_ja_6.7.12.raw",
       "phraseCommandsMap": [
         {
-          "phrase": "Ne kozmo",
+          "phrase": "ねぇ kozmo",
           "commandType": "HeyCozmo",
-          "paramA": -900,
-          "paramB": 600
+          "paramA": -1349,
+          "paramB": 947
         },
         {
           "phrase": "Odotte",
           "commandType": "DoADance"
         },
         {
-          "phrase": "Kocchi kite",
+          "phrase": "Kocchi oide",
           "commandType": "ComeHere"
         },
         {
-          "phrase": "Nanika yatte mite",
+          "phrase": "Sonomama",
+          "commandType": "Continue",
+          "paramA": -1212,
+          "paramB": 713
+        },
+        {
+          "phrase": "Torikku shite",
           "commandType": "DoATrick"
         },
         {
@@ -221,8 +261,8 @@
         {
           "phrase": "Iyada",
           "commandType": "NoThankYou",
-          "paramA": -952,
-          "paramB": 696
+          "paramA": -936,
+          "paramB": 774
         },
         {
           "phrase": "Inai inai ba",
@@ -231,8 +271,8 @@
         {
           "phrase": "Onegai",
           "commandType": "YesPlease",
-          "paramA": -877,
-          "paramB": 791
+          "paramA": -936,
+          "paramB": 765
         },
         {
           "phrase": "Nerujikan dayo",
@@ -241,6 +281,10 @@
         {
           "phrase": "Genki",
           "commandType": "HowAreYouDoing"
+        },
+        {
+          "phrase": "Shita muite",
+          "commandType": "LookDown"
         }
       ]
     }

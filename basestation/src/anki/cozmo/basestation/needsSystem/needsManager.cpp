@@ -57,6 +57,9 @@ static const std::string kNumStarsAwardedKey = "NumStarsAwarded";
 static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
 static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
 
+// This key is used as the base of the string for when sparks are sometimes rewarded
+// for freeplay activities, that tells how many sparks were awarded and what Cozmo
+// was doing (we append the NeedsActionId enum string to the end of this string)
 static const std::string kFreeplaySparksRewardStringKey = "needs.FreeplaySparksReward";
 
 static const float kNeedLevelStorageMultiplier = 100000.0f;
@@ -349,7 +352,8 @@ void NeedsManager::InitInternal(const float currentTime_s)
       // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
       _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
 
-      ApplyDecayForUnconnectedTime();
+      static const bool connected = false;
+      ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
       appliedDecay = true;
     }
@@ -493,7 +497,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
     // Now apply decay for the unconnected time for THIS robot
     // (We did it earlier, in Init, but that was for a different robot)
-    ApplyDecayForUnconnectedTime();
+    static const bool connected = false;
+    ApplyDecayForTimeSinceLastDeviceWrite(connected);
   }
   
   // Update Game on Robot's last state
@@ -585,7 +590,10 @@ void NeedsManager::SetPaused(const bool paused)
 {
   if (paused == _isPausedOverall)
   {
-    DEV_ASSERT_MSG(paused != _isPausedOverall, "NeedsManager.SetPaused.Redundant",
+    // This can happen for several reasons, e.g. being in explorer mode (which
+    // pauses the needs system), and then backgrounding the app (which also pauses
+    // the needs system)
+    PRINT_CH_DEBUG(kLogChannelName, "NeedsManager.SetPaused.Redundant",
                    "Setting paused to %s but already in that state",
                    paused ? "true" : "false");
     return;
@@ -650,9 +658,18 @@ const NeedsState& NeedsManager::GetCurNeedsState()
 
 void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
-  if (_isPausedOverall) {
+  if (_isPausedOverall)
+  {
     return;
   }
+
+  // Don't do anything if no robot connected.  This can happen during shutdown,
+  // since we have so much code being executed from the robot class destructor
+  if (_robot == nullptr)
+  {
+    return;
+  }
+
   // Only accept certain types of events
   if (_onlyWhiteListedActionsEnabled)
   {
@@ -695,7 +712,7 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
 
   SendNeedsStateToGame(actionCompleted);
 
-  bool starAwarded = UpdateStarsState();
+  const bool starAwarded = UpdateStarsState();
 
   // If no daily star was awarded, possibly award sparks for freeplay activities
   if (!starAwarded)
@@ -706,16 +723,20 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
       {
         const int sparksAwarded = RewardSparksForFreeplay();
 
-        // Tell game that sparks were awarded, and how many, and the new total
-        auto& ic = _robot->GetInventoryComponent();
-        const int sparksTotal = ic.GetInventoryAmount(InventoryType::Sparks);
+        // Tell game that sparks were awarded, and how many, and what cozmo was doing
         ExternalInterface::FreeplaySparksAwarded msg;
         msg.sparksAwarded = sparksAwarded;
-        msg.sparksTotal = sparksTotal;
-        msg.needsActionId = actionCompleted;
-        msg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey;
+        msg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey + "." +
+                                      NeedsActionIdToString(actionCompleted);
         const auto& extInt = _cozmoContext->GetExternalInterface();
         extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+
+        // DAS Event: "needs.freeplay_sparks_awarded"
+        // s_val: The number of sparks awarded
+        // data: The need action ID that triggered this
+        Anki::Util::sEvent("needs.freeplay_sparks_awarded",
+                           {{DDATA, NeedsActionIdToString(actionCompleted)}},
+                           std::to_string(sparksAwarded).c_str());
       }
     }
   }
@@ -864,8 +885,8 @@ int NeedsManager::RewardSparksForFreeplay()
 }
 
 
-int NeedsManager::AwardSparks(int targetSparks, float minPct, float maxPct,
-                              int minSparks, int minMaxSparks)
+int NeedsManager::AwardSparks(const int targetSparks, const float minPct, const float maxPct,
+                              const int minSparks, const int minMaxSparks)
 {
   auto& ic = _robot->GetInventoryComponent();
   const int curSparks = ic.GetInventoryAmount(InventoryType::Sparks);
@@ -1137,7 +1158,10 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
   {
     SendNeedsStateToGame();
 
-    UpdateStarsState();
+    if (_robot != nullptr)
+    {
+      UpdateStarsState();
+    }
 
     DetectBracketChangeForDas();
   }
@@ -1218,10 +1242,10 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
                 "Game being paused set to %s",
                 msg.isPaused ? "TRUE" : "FALSE");
 
-  // When app is backgrounded, we want to also pause the whole needs system
-  // Note:  When pausing, we'll also call WriteToDevice
+  // During app backgrounding, we want to pause the whole needs system
   SetPaused(msg.isPaused);
 
+  // When backgrounding, we'll also write to robot
   if (msg.isPaused)
   {
     if (_robotStorageState == RobotStorageState::Inactive)
@@ -1232,6 +1256,13 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
         StartWriteToRobot();
       }
     }
+  }
+
+  // When un-backgrounding, apply decay
+  if (!msg.isPaused)
+  {
+    const bool connected = (_robot == nullptr ? false : true);
+    ApplyDecayForTimeSinceLastDeviceWrite(connected);
   }
 }
 
@@ -1331,7 +1362,7 @@ void NeedsManager::SendNeedsPauseStatesToGame()
 }
 
 
-void NeedsManager::ApplyDecayAllNeeds(bool connected)
+void NeedsManager::ApplyDecayAllNeeds(const bool connected)
 {
   const DecayConfig& config = connected ? _needsConfig._decayConnected : _needsConfig._decayUnconnected;
 
@@ -1370,20 +1401,19 @@ void NeedsManager::ApplyDecayAllNeeds(bool connected)
 }
 
 
-void NeedsManager::ApplyDecayForUnconnectedTime()
+void NeedsManager::ApplyDecayForTimeSinceLastDeviceWrite(const bool connected)
 {
   // Calculate time elapsed since last connection
   const Time now = system_clock::now();
   const float elasped_s = duration_cast<seconds>(now - _needsState._timeLastWritten).count();
 
-  // Now apply decay according to unconnected config, and elapsed time
+  // Now apply decay according to appropriate config, and elapsed time
   // First, however, we set the timers as if that much time had elapsed:
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
     _lastDecayUpdateTime_s[i] = _currentTime_s - elasped_s;
   }
 
-  static const bool connected = false;
   ApplyDecayAllNeeds(connected);
 }
 
@@ -1460,6 +1490,7 @@ bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
   return starAwarded;
 }
 
+
 void NeedsManager::SendStarLevelCompletedToGame()
 {
   // Since the rewards config can be changed after this feature is launched,
@@ -1495,10 +1526,10 @@ void NeedsManager::SendStarLevelCompletedToGame()
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendStarLevelCompletedToGame","CurrUnlockLevel: %d, stars for next: %d, currStars: %d",
-                      _needsState._curNeedsUnlockLevel,_needsState._numStarsForNextUnlock, _needsState._numStarsAwarded);
-  
-  // Save is forced after this function is called.
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendStarLevelCompletedToGame",
+                "CurrUnlockLevel: %d, stars for next: %d, currStars: %d",
+                _needsState._curNeedsUnlockLevel, _needsState._numStarsForNextUnlock,
+                _needsState._numStarsAwarded);
 }
 
 
@@ -1531,6 +1562,13 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
         // Put the actual number of sparks awarded into the rewards data that we're about
         // to send to the game, so game will know how many sparks were actually awarded
         rewards.back().data = std::to_string(sparksAdded);
+
+        // DAS Event: "needs.level_sparks_awarded"
+        // s_val: The number of sparks awarded
+        // data: Which level was just unlocked
+        Anki::Util::sEvent("needs.level_sparks_awarded",
+                           {{DDATA, std::to_string(_needsState._curNeedsUnlockLevel).c_str()}},
+                           std::to_string(sparksAdded).c_str());
         break;
       }
       // Songs are treated exactly the same as any other unlock
@@ -2010,14 +2048,20 @@ void NeedsManager::DebugFillNeedMeters()
 
   _needsState.DebugFillNeedMeters();
   SendNeedsStateToGame();
-  UpdateStarsState();
+  if (_robot != nullptr)
+  {
+    UpdateStarsState();
+  }
 }
 
 void NeedsManager::DebugGiveStar()
 {
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
-  DebugCompleteDay();
-  UpdateStarsState(true);
+  if (_robot != nullptr)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
+    DebugCompleteDay();
+    UpdateStarsState(true);
+  }
 }
 
 void NeedsManager::DebugCompleteDay()
@@ -2145,7 +2189,12 @@ void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
 
   SendNeedsStateToGame();
 
-  UpdateStarsState();
+  // Don't award daily stars when no robot connected, because that could lead
+  // to unlocks which have to be stored on the robot
+  if (_robot != nullptr)
+  {
+    UpdateStarsState();
+  }
 
   DetectBracketChangeForDas();
 

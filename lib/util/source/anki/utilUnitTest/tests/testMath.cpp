@@ -419,6 +419,7 @@ TEST(TestMath, FloatZeroComparison)
 {
   const float zeroEquiv = 1e-8f;
   
+  // Test > 0
   EXPECT_TRUE( Anki::Util::IsFltGTZero(1e-3f));
   EXPECT_TRUE( Anki::Util::IsFltGTZero(10.f));
   EXPECT_FALSE( Anki::Util::IsFltGTZero(0.f));
@@ -426,6 +427,7 @@ TEST(TestMath, FloatZeroComparison)
   EXPECT_FALSE( Anki::Util::IsFltGTZero(-zeroEquiv));
   EXPECT_FALSE( Anki::Util::IsFltGTZero(zeroEquiv));
   
+  // Test >= 0
   EXPECT_TRUE( Anki::Util::IsFltGEZero(1e-3f));
   EXPECT_TRUE( Anki::Util::IsFltGEZero(10.f));
   EXPECT_TRUE( Anki::Util::IsFltGEZero(0.f));
@@ -433,6 +435,23 @@ TEST(TestMath, FloatZeroComparison)
   EXPECT_TRUE( Anki::Util::IsFltGEZero(-zeroEquiv));
   EXPECT_TRUE( Anki::Util::IsFltGEZero(zeroEquiv));
   
+  // Test < 0
+  EXPECT_TRUE( Anki::Util::IsFltLTZero(-1e-3f));
+  EXPECT_TRUE( Anki::Util::IsFltLTZero(-10.f));
+  EXPECT_FALSE( Anki::Util::IsFltLTZero(0.f));
+  EXPECT_FALSE( Anki::Util::IsFltLTZero(1e-3f));
+  EXPECT_FALSE( Anki::Util::IsFltLTZero(-zeroEquiv));
+  EXPECT_FALSE( Anki::Util::IsFltLTZero(zeroEquiv));
+  
+  // Test <= 0
+  EXPECT_TRUE( Anki::Util::IsFltLEZero(-1e-3f));
+  EXPECT_TRUE( Anki::Util::IsFltLEZero(-10.f));
+  EXPECT_TRUE( Anki::Util::IsFltLEZero(0.f));
+  EXPECT_FALSE( Anki::Util::IsFltLEZero(1e-3f));
+  EXPECT_TRUE( Anki::Util::IsFltLEZero(zeroEquiv));
+  EXPECT_TRUE( Anki::Util::IsFltLEZero(-zeroEquiv));
+  
+  // Test "near" 0
   EXPECT_TRUE( Anki::Util::IsNearZero(0.f));
   EXPECT_TRUE( Anki::Util::IsNearZero(zeroEquiv));
   EXPECT_TRUE( Anki::Util::IsNearZero(-zeroEquiv));

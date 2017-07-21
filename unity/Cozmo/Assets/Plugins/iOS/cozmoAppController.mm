@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/cozmoAPI/csharp-binding/csharp-binding.h"
 #include "util/console/consoleInterface.h"
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
 
 namespace Anki {
@@ -81,6 +82,7 @@ void tryExecuteBackgroundTransfers()
     NSLog(@"CozmoAppController.BackgroundFetch: no internet");
   }
 }
+
 
 @implementation CozmoAppController
 
@@ -197,5 +199,15 @@ void tryExecuteBackgroundTransfers()
 }
 
 @end
+
+//Methods for Voice Command Settings
+extern "C"{
+    void openAppSettings() {
+        if (&UIApplicationOpenSettingsURLString != NULL) {
+            NSURL *appSettings = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+            [[UIApplication sharedApplication] openURL:appSettings];
+        }
+    }
+}
 
 IMPL_APP_CONTROLLER_SUBCLASS(CozmoAppController);

@@ -96,9 +96,7 @@ private:
 
   Pose3d _faceInteractionPose;
   bool   _hasFaceInteractionPose = false;
-
-  bool   _shouldPopIdle = false;
-
+  
   bool   _shouldUseBlocks;
   
   int    _numRetriesDrivingToFace;

@@ -32,7 +32,7 @@ namespace TextToSpeech {
 class TextToSpeechProviderImpl
 {
 public:
-  TextToSpeechProviderImpl(const CozmoContext* context);
+  TextToSpeechProviderImpl(const CozmoContext* context, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);

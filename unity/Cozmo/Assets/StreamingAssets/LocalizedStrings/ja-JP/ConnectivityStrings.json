@@ -34,40 +34,40 @@
     "translation" : "あなたのコズモを更新しています..."
   },
   "connectivity.updatingFirmwareSubTitle" : {
-    "translation" : "彼の充電器にコズモを保管してください"
+    "translation" : "Cozmoは充電器に保管してください。"
   },
   "connectivity.updatingFirmwareFooter" : {
-    "translation" : "更新が完了した後は、コズモの無線LANに再接続する必要があります。"
+    "translation" : "更新が完了したら、CozmoのWiFiに再接続する必要があります。"
   },
   "connectivity.updateApp" : {
-    "translation" : "続行するにはあなたのコズモアプリを更新する必要があります"
+    "translation" : "続行するには、Cozmo Appを更新する必要があります。"
   },
   "connectivity.pullTabsTitle" : {
-    "translation" : "あなたのキューブのタブを引っ張りなさい"
+    "translation" : "あなたのキューブのタブを引っ張りなさい。"
   },
   "connectivity.enterDOB" : {
     "translation" : "あなたの誕生日を入力してください"
   },
   "connectivity.cozmoSleepTitle" : {
-    "translation" : "寝る"
+    "translation" : "寝る..."
   },
   "connectivity.cozmoSleepDesc" : {
-    "translation" : "コズモはスリープ状態になるだろうとすぐに切断されます"
+    "translation" : "Cozmoは眠りにつき、すぐに切断されます..."
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "Cozmoのバッテリー残量が少ない"
+    "translation" : "Cozmoは低オンバッテリです"
   },
   "connectivity.cozmoLowBatteryDesc" : {
-    "translation" : "彼の充電器にコズモを配置してください。"
+    "translation" : "充電器にCozmoを設置してください。"
   },
   "connectivity.keepCozmoOnCharger" : {
-    "translation" : "セットアップ中に、彼の充電器にコズモを残してください"
+    "translation" : "セットアップ中に充電器にCozmoを残しておいてください。"
   },
   "connectivity.placeCozmoOnCharger" : {
-    "translation" : "彼の充電器にコズモを配置"
+    "translation" : "彼の充電器にCozmoを置きます。"
   },
   "connectivity.replaceCozmoOnCharger" : {
-    "translation" : "彼の充電器にコズモを取り外して交換"
+    "translation" : "充電器のCozmoを取り外して交換します。"
   },
   "label.getHelp" : {
     "translation" : "助けを得ます"
@@ -76,21 +76,24 @@
     "translation" : "キューブは動作していませんか？"
   },
   "connectivity.connectionRejected.title" : {
-    "translation" : "別のデバイスは、そのデバイスを取り外して、もう一度お試しくださいコズモに接続されています"
+    "translation" : "別のデバイスがCozmoに接続されています。デバイスを切断してもう一度お試しください。"
   },
   "needs.unconnected.needToConnect.title" : {
     "translation" : "Cozmoが接続されていない"
   },
   "needs.unconnected.needToConnect.description" : {
-    "translation" : "Cozmoを気遣い、彼のニーズをチェックするには、まず彼に連絡しなければなりません。 "
+    "translation" : "Cozmoを気遣い、彼のニーズをチェックするためには、まず彼に連絡しなければなりません。"
   },
   "label.cancelText" : {
     "translation" : "キャンセル"
   },
   "label.liquidMetalCozmo" : {
-    "translation" : "スペシャルエディション：Liquid Metal"
+    "translation" : "コレクターズ・エディション：Liquid Metal"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "あなたのゲームプレイのデータと統計情報をお送りください。"
+    "translation" : "あなたのゲームプレイのデータと統計情報を送信して、Cozmoをより良くするために協力してください。"
+  },
+  "connectivity.behaviorDisplayDisconnected" : {
+    "translation" : "Cozmoが切断されました。"
   }
 }

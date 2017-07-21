@@ -401,7 +401,8 @@ public:
   const Pose3d&       GetLiftPose()     const { return _liftPose; } // At current lift position!
   const Pose3d&       GetLiftBasePose() const { return _liftBasePose; }
   const PoseFrameID_t GetPoseFrameID()  const { return _frameId; }
-  const Pose3d*       GetWorldOrigin()  const { return _worldOrigin; }
+  const Pose3d*       GetWorldOrigin()  const;
+  
   Pose3d              GetCameraPose(f32 atAngle) const;
   Pose3d              GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
 
@@ -878,6 +879,7 @@ protected:
   GyroData         _robotGyro;
   float            _robotAccelMagnitude = 0.0f; // current magnitude of accelerometer data (norm of all three axes)
   float            _robotAccelMagnitudeFiltered = 0.0f; // low-pass filtered accelerometer magnitude
+  AccelData        _robotAccelFiltered; // low-pass filtered robot accelerometer data (for each axis)
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use
@@ -1033,10 +1035,28 @@ inline const RobotID_t Robot::GetID(void) const
 { return _ID; }
 
 inline const Pose3d& Robot::GetPose(void) const
-{ return _pose; }
+{
+  // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
+  ANKI_VERIFY(&_pose.FindOrigin() == GetWorldOrigin(),
+              "Robot.GetPose.PoseOriginNotWorldOrigin",
+              "WorldOrigin: %s, Pose: %s",
+              GetWorldOrigin()->GetNamedPathToOrigin(false).c_str(),
+              _pose.GetNamedPathToOrigin(false).c_str());
+  
+  return _pose;
+}
 
 inline const Pose3d& Robot::GetDriveCenterPose(void) const
-{return _driveCenterPose; }
+{
+  // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
+  ANKI_VERIFY(&_driveCenterPose.FindOrigin() == GetWorldOrigin(),
+              "Robot.GetDriveCenterPose.PoseOriginNotWorldOrigin",
+              "WorldOrigin: %s, Pose: %s",
+              GetWorldOrigin()->GetNamedPathToOrigin(false).c_str(),
+              _driveCenterPose.GetNamedPathToOrigin(false).c_str());
+  
+  return _driveCenterPose;
+}
 
 inline const f32 Robot::GetHeadAngle() const
 { return _currentHeadAngle; }

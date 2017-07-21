@@ -23,6 +23,7 @@ namespace {
 
 namespace Anki {
 namespace Cozmo {
+namespace VoiceCommand {
 
 bool SampleKeyphraseData::Init(const Json::Value& sampleKeyphraseData)
 {
@@ -132,5 +133,6 @@ const CommandCounts& SampleKeyphraseData::GetCommandCountsForFile(const std::str
   return emptyResult;
 }
 
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki

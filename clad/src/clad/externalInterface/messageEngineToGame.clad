@@ -545,9 +545,7 @@ message NeedsPauseStates {
 
 message FreeplaySparksAwarded {
   int_32        sparksAwarded,
-  int_32        sparksTotal,
-  NeedsActionId needsActionId,
-  string        sparksAwardedDisplayKey
+  string        sparksAwardedDisplayKey,
 }
 
 message StarLevelCompleted {

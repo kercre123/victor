@@ -83,7 +83,6 @@ static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -839,7 +838,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(Robot& robot)
   const f32 kMaxSaveTime_sec = 5.f; // Don't wait the default (long) time for save to complete
   WaitForLambdaAction* action = new WaitForLambdaAction(robot, waitForSave, kMaxSaveTime_sec);
   
-  StartActing(action, [this,&robot](ActionResult actionResult) {
+  StartActing(action, [this](ActionResult actionResult) {
     if (ActionResult::SUCCESS == actionResult) {
       SET_STATE(Success);
     } else {

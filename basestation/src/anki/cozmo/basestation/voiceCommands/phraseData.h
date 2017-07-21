@@ -56,7 +56,7 @@ private:
   int               _paramAVal = 0;
   int               _paramBVal = 0;
   int               _paramCVal = 0;
-  VoiceCommandType  _voiceCommandType = VoiceCommandType::Count;
+  VoiceCommandType  _voiceCommandType = VoiceCommandType::Invalid;
   
   Util::BitFlags32<DataValueType> _dataTypesSet;
 

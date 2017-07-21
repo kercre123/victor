@@ -232,7 +232,9 @@ namespace Vision {
     // Expands 24bpp RGB image into 32bpp RGBA, setting alpha of every pixel
     // to the given value.
     ImageRGBA(const ImageRGB& imageRGB, u8 alpha = 255);
-    
+
+    ImageRGBA(const Array2d<PixelRGBA>& array2d) : ImageBase<PixelRGBA>(array2d) { }
+
 #   if ANKICORETECH_USE_OPENCV
     ImageRGBA(cv::Mat& cvMat);
 #   endif

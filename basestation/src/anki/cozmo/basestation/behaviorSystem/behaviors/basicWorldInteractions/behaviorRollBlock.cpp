@@ -122,14 +122,7 @@ void BehaviorRollBlock::StopInternal(Robot& robot)
   ResetBehavior(robot);
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRollBlock::StopInternalFromDoubleTap(Robot& robot)
-{
-  ResetBehavior(robot);
-}
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
@@ -160,11 +153,6 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   const bool upright = true;
   
   auto preDockCallback = [this](Robot& robot) {
-    // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
-    if(RequiresObjectTapped())
-    {
-      robot.GetAIComponent().GetWhiteboard().SetSuppressReactToDoubleTap(true);
-    }
     _didCozmoAttemptDock = true;
   };
   

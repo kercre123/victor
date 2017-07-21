@@ -22,10 +22,10 @@
     "translation" : "削除"
   },
   "faceEnrollment.instructions.top" : {
-    "translation" : "まっすぐにコズモを見て、まだホールド"
+    "translation" : "Cozmoをまっすぐに見て、まだ押してください。"
   },
   "faceEnrollment.instructions.bottom" : {
-    "translation" : "コズモが完了すると、彼は自分の名前を言いますよ"
+    "translation" : "Cozmoが完了すると、彼はあなたの名前を言うでしょう。"
   },
   "faceEnrollment.errors.neverSawValidFace.title" : {
     "translation" : "コズモはすでに知っています！"

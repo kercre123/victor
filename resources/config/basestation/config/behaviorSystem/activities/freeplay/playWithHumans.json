@@ -17,12 +17,6 @@
           "flatScore": 20
         }
       },
-      { "behaviorID" : "CantHandleTallStack",
-        "scoring"      :
-        {
-          "flatScore": 20
-        }
-      },
       { "behaviorID" : "TrackLaser",
         "scoring"      :
         {
@@ -156,6 +150,8 @@
     "type" : "PlayWithHumans",
     // do not go back immediately even if still feels playful
     // (it should be possible to fire with other triggers, like pick up)
-    "cooldownBaseSecs" : 30.0
+    "cooldownBaseSecs" : 30.0,
+    "cooldownRejectionBaseSecs" : 180.0,
+    "cooldownRejectionExponent" : 1.5
   }
 }

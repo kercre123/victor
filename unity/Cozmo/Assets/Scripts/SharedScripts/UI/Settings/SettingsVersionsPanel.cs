@@ -54,7 +54,10 @@ namespace Cozmo.Settings {
       string dasEventViewName = "settings_version_panel";
 
       _SupportButton.Initialize(HandleOpenSupportViewButtonTapped, "support_button", dasEventViewName);
-      _EraseCozmoButton.Initialize(HandleOpenEraseCozmoViewButtonTapped, "open_erase_cozmo_view_button", dasEventViewName);
+      // this button doesn't exist in the disconnected version
+      if (_EraseCozmoButton != null) {
+        _EraseCozmoButton.Initialize(HandleOpenEraseCozmoViewButtonTapped, "open_erase_cozmo_view_button", dasEventViewName);
+      }
     }
 
     private void Start() {
@@ -78,6 +81,10 @@ namespace Cozmo.Settings {
           _BodyHWVersionLabel.FormattingArgs = new object[] { ShortenData(BodyHWVersionToString(robot.BodyHWVersion)) };
 
           robot.RequestRobotRestoreData();
+        }
+        else {
+          // disble restore buttons when disconnected (it crashes)
+          _RestoreButtonIsActive = false;
         }
       }
     }

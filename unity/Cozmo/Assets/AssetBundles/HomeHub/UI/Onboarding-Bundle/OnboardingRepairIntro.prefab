@@ -83,11 +83,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DimBackground: 1
   _ActiveMenuContent: 1
-  _ReactionsEnabled: 1
-  _PlayIdle: 0
+  _ReactionsEnabled: 0
+  _LoopedAnim:
+    _EnumValueAsString: Count
+    _EnumValue: 504
   _CustomIdle:
     _EnumValueAsString: OnboardingIdleRepair
-    _EnumValue: 297
+    _EnumValue: 305
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.repair.ticker
@@ -99,6 +101,13 @@ MonoBehaviour:
   - -1
   - -1
   _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 46
+  _ForceNeedValuesOnEvent:
   - -1
   - -1
   - -1
@@ -128,8 +137,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#onboarding.RepairIntro'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
-  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
+  m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -153,12 +162,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 65
+  m_fontSize: 85
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 55
-  m_fontSizeMax: 65
+  m_fontSizeMin: 85
+  m_fontSizeMax: 100
   m_fontStyle: 0
   m_textAlignment: 257
   m_isAlignmentEnumConverted: 1
@@ -171,7 +180,7 @@ MonoBehaviour:
   m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
-  m_firstOverflowCharacterIndex: -1
+  m_firstOverflowCharacterIndex: 94
   m_linkedTextComponent: {fileID: 0}
   m_isLinkedTextComponent: 0
   m_enableKerning: 1
@@ -219,7 +228,7 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: General_Description_Text
+  _LinkedComponentId: Onboarding_Text_Large
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
@@ -248,8 +257,8 @@ RectTransform:
   m_Father: {fileID: 22461814}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -123.49, y: 145.3}
-  m_SizeDelta: {x: 914, y: -664.3}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -117, y: 291}
+  m_SizeDelta: {x: 1012, y: 582}
   m_Pivot: {x: 1, y: 0.5}

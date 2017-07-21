@@ -17,7 +17,6 @@
 #define ALL_TRIGGERS_CONSIDERED_TO_FULL_ARRAY(triggers) { \
   {ReactionTrigger::CliffDetected,                triggers.cliffDetected}, \
   {ReactionTrigger::CubeMoved,                    triggers.cubeMoved}, \
-  {ReactionTrigger::DoubleTapDetected,            triggers.doubleTapDetected}, \
   {ReactionTrigger::FacePositionUpdated,          triggers.facePositionUpdated}, \
   {ReactionTrigger::FistBump,                     triggers.fistBump}, \
   {ReactionTrigger::Frustration,                  triggers.frustration}, \
@@ -96,13 +95,6 @@ static void EnsureFullReactionArrayConversionsValid(const FullReactionArray& rea
         DEV_ASSERT((triggersAffected.cubeMoved == reactionEntry.Value()) &&
                    (triggersAffected.cubeMoved == commutativeEntry.Value()),
                    "EnsureFullReactionArrayConversionsValid.CubeMoved");
-        break;
-      }
-      case ReactionTrigger::DoubleTapDetected:
-      {
-        DEV_ASSERT((triggersAffected.doubleTapDetected == reactionEntry.Value()) &&
-                   (triggersAffected.doubleTapDetected == commutativeEntry.Value()),
-                   "EnsureFullReactionArrayConversionsValid.DoubleTapDetected");
         break;
       }
       case ReactionTrigger::FacePositionUpdated:
@@ -257,7 +249,6 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
   AllTriggersConsidered affected = AllTriggersConsidered(
        reactions[Util::EnumToUnderlying(ReactionTrigger::CliffDetected)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::CubeMoved)].Value(),
-       reactions[Util::EnumToUnderlying(ReactionTrigger::DoubleTapDetected)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::FacePositionUpdated)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::FistBump)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::Frustration)].Value(),
@@ -289,7 +280,6 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},

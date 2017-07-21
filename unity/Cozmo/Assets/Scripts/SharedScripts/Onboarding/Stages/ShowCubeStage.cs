@@ -153,12 +153,7 @@ namespace Onboarding {
         }
         break;
       case OnboardingStateEnum.WaitForFinalContinue: {
-          _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body4);
-          _ShowShelfTextLabel.text = "";
-          _CozmoMovedErrorTransform.gameObject.SetActive(false);
-          _CozmoImageTransform.gameObject.SetActive(true);
-          _ContinueButtonInstance.gameObject.SetActive(true);
-          _ContinueButtonInstance.Interactable = true;
+          OnboardingManager.Instance.GoToNextStage();
           Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Attention_Device);
         }
         break;

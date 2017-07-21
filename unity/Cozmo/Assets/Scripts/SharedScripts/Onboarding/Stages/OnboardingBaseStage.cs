@@ -61,7 +61,7 @@ namespace Onboarding {
     protected float[] _ForceNeedValuesOnEnd = new float[3] { -1.0f, -1.0f, -1.0f };
 
     [SerializeField]
-    protected Anki.Cozmo.NeedsActionId _ForceNeedValuesOnEventId = Anki.Cozmo.NeedsActionId.Count;
+    protected NeedsStateManager.SerializableNeedsActionIds _ForceNeedValuesOnEventId;
     [SerializeField]
     protected float[] _ForceNeedValuesOnEvent = new float[3] { -1.0f, -1.0f, -1.0f };
 
@@ -102,7 +102,7 @@ namespace Onboarding {
                                             HandleLoopedAnimationComplete, Anki.Cozmo.QueueActionPosition.NEXT);
         }
 
-        if (_ForceNeedValuesOnEventId != Anki.Cozmo.NeedsActionId.Count) {
+        if (_ForceNeedValuesOnEventId.Value != Anki.Cozmo.NeedsActionId.Count) {
           NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
         }
       }
@@ -185,7 +185,7 @@ namespace Onboarding {
     }
 
     private void HandleLatestNeedsLevelChanged(Anki.Cozmo.NeedsActionId actionId) {
-      if (_ForceNeedValuesOnEventId == actionId) {
+      if (_ForceNeedValuesOnEventId.Value == actionId) {
         RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
                                         Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnEvent);
         RobotEngineManager.Instance.SendMessage();

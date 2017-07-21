@@ -44,7 +44,6 @@ namespace {
   constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSinging = {
     {ReactionTrigger::CliffDetected,                false},
     {ReactionTrigger::CubeMoved,                    true},
-    {ReactionTrigger::DoubleTapDetected,            true},
     {ReactionTrigger::FacePositionUpdated,          true},
     {ReactionTrigger::FistBump,                     false},
     {ReactionTrigger::Frustration,                  false},

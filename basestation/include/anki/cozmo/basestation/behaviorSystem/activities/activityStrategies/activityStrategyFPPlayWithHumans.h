@@ -48,6 +48,9 @@ private:
   // last time Cozmo requested a game
   float _lastGameRequestTimestampSec;
 
+  float _cooldownRejectionBaseSecs;
+  float _cooldownRejectionExponent;
+  int _numRejections;
 };
   
 } // namespace

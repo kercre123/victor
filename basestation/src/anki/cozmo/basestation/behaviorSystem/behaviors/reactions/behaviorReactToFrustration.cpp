@@ -93,7 +93,7 @@ void BehaviorReactToFrustration::AnimationComplete(Robot& robot)
   }
 
   for(auto listener: _frustrationListeners){
-    listener->AnimationComplete();
+    listener->AnimationComplete(robot);
   }
 
   // if we want to drive somewhere, do that AFTER the emotion update, so we don't get stuck in a loop if this

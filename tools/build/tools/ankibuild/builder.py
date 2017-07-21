@@ -43,6 +43,12 @@ class DefaultHelpParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
+class ArgParseUniqueStore(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string):
+        if getattr(namespace, self.dest, self.default) is not None:
+            parser.error(option_string + " appears multiple times.\n")
+        setattr(namespace, self.dest, values)
+
 class Builder(object):
     def __init__(self, config=None, module_config=None):
         self.config = config

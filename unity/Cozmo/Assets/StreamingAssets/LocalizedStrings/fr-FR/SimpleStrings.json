@@ -49,7 +49,7 @@
     "translation" : "TERMINÉ"
   },
   "button.play" : {
-    "translation" : "JOUER"
+    "translation" : "Jouer"
   },
   "button.leave" : {
     "translation" : "LAISSER"
@@ -85,7 +85,7 @@
     "translation" : "RELIER"
   },
   "label.start" : {
-    "translation" : "Début"
+    "translation" : "START"
   },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0}{1} Champs obligatoires"
@@ -106,13 +106,13 @@
     "translation" : "COMMENÇONS"
   },
   "soundcheck.description" : {
-    "translation" : "faire S'il vous plaît que le son de votre appareil est allumé"
+    "translation" : "Assurez-vous que le son de votre appareil est activé."
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Mettez un de chaque côté de Cube Cozmo et appuyez sur «Actualiser». Cozmo se connecter à la 3 qu'il pense sont les plus proches."
+    "translation" : "Mettez l'un de chaque cube à côté de Cozmo et appuyez sur <b><color=#11a2f0ff> RAFRAÎCHIR </color></b> . Cozmo se connecte au 3 qu'il pense être le plus proche."
   },
   "button.replay" : {
-    "translation" : "REJOUER"
+    "translation" : "Rejouer"
   },
   "button.skip" : {
     "translation" : "SAUTER"
@@ -124,7 +124,7 @@
     "translation" : "Cozmo a du mal à voir!"
   },
   "error.badLight.Bottom" : {
-    "translation" : "Évitez les lumières vives et des espaces mal éclairés"
+    "translation" : "Évitez les lumières lumineuses et les espaces faiblement éclairés."
   },
   "label.cozmo.serial" : {
     "translation" : "Cozmo ID: {0}"
@@ -145,7 +145,7 @@
     "translation" : "Total des Sparks: {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "En tapotant &quot; <color=#11a2f0ff> RELIER </color> &quot;, Vous acceptez les termes suivants:"
+    "translation" : "By tapping <b><color=#11a2f0ff>CONNECT</color></b>, you agree to the following terms:"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
@@ -157,7 +157,7 @@
     "translation" : "{0} de {1}"
   },
   "label.RewardHeader" : {
-    "translation" : "RÉCOMPENSES"
+    "translation" : "Récompenses"
   },
   "button.buyACozmo" : {
     "translation" : "ACHETER UN COZMO"

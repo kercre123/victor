@@ -15,9 +15,11 @@ import subprocess
 import sys
 import time
 import yaml
+import hashlib
 
 # ankibuild
 import builder
+import shutil
 import util
 import unity_ios
 import unity_ios_xcode
@@ -25,6 +27,71 @@ import unity_ios_xcode
 class UnityApp(object):
     def __init__(self, unity_app_dir):
         self.app_dir = unity_app_dir
+
+    def patch_unityengine_ui(self, patch_file_name):
+        if self.bundle_version() != '5.6.0f3':
+            # if Unity version is not 5.6.0f3, ignore
+            return
+
+        # md5 of original UnityEngine.UI.dll
+        unityengine_ui_original_md5 = '89cd897feaae4f6fa9a6d02b91e78fa1'
+
+        # md5 of patched UnityEngine.UI.dll
+        unityengine_ui_patched_md5 = '1cc4e5cf2d4c8b0be67b2d6cb4358306'
+
+        # file path to UnityEngine.UI.dll that needs to be patched
+        # (.../Unity.app/Contents/UnityExtensions/Unity/GUISystem/Standalone/UnityEngine.UI.dll)
+        file_name = os.path.join(self.app_dir, 'Contents', 'UnityExtensions', 'Unity', 'GUISystem', 'Standalone', 'UnityEngine.UI.dll')
+
+        if os.path.isfile(file_name):
+            # if the dll exists, read the contents and get the md5 hash
+            # (this should never happen)
+            with open(file_name) as f:
+                contents = f.read()    
+                md5_hash = hashlib.md5(contents).hexdigest()
+        else:
+            # otherwise, print a warning that the dll doesn't exist
+            md5_hash = ''
+            print('[UNITY PATCH] Warning! No Standalone/UnityEngine.UI.dll file found.')
+
+        if md5_hash == unityengine_ui_patched_md5:
+            # hashes match, so we are already patched, nothing further to do
+            print('[UNITY PATCH] UnityEngine.UI.dll is patched to resolve 5.6.0f3 Unity JIT bug.')
+            return
+        else:
+            # hashes don't match, so dll needs patching
+
+            # patch file does not exist
+            # (this should never happen)
+            if not os.path.isfile(patch_file_name):
+                print('[UNITY PATCH] Error! Patch is needed for UnityEngine.UI.dll, but no patch file was found.')
+                return
+
+            with open(patch_file_name) as f:
+                contents = f.read()    
+                md5_hash = hashlib.md5(contents).hexdigest()
+
+                # verify that patched file is the expected patch
+                if md5_hash == unityengine_ui_patched_md5:
+                    # patched file is the correct file
+
+                    # backup old UnityEngine.UI.dll and *.mdb file by adding '.backup'
+                    os.rename(file_name, file_name + '.backup')
+                    os.rename(file_name + '.mdb', file_name + '.mdb.backup')
+
+                    # copy patched version to Unity app directory
+                    shutil.copy2(patch_file_name, file_name)
+
+                    # check to see if mdb patch file exists
+                    # (it should!)
+                    if os.path.isfile(patch_file_name + '.mdb'):
+                        shutil.copy2(patch_file_name + '.mdb', file_name + '.mdb')
+                    else:
+                        print('[UNITY PATCH] Warning! Could not patch the UnityEngine.UI.dll.mdb debug file.')
+
+                    print('[UNITY PATCH] Successfully patched UnityEngine.UI.dll to prevent JIT bug for Unity 5.6.0f3')
+                else:
+                    print('[UNITY PATCH] Error! Patched UnityEngine.UI.dll does not match expected hash. Won\'t patch.')
 
     def version(self):
         info_plist = os.path.join(self.app_dir, 'Contents', 'Info.plist')
@@ -131,6 +198,7 @@ class UnityBuildConfig(object):
         self.verbose = False
         self.unity_exe = UnityBuildConfig.default_unity_exe()
         self.destination_file = None
+        self.sku = None
 
     def set_options(self, options):
         options_dict = vars(options)
@@ -170,6 +238,9 @@ class UnityBuildConfig(object):
                         dest='unity_exe',
                         default=UnityBuildConfig.default_unity_exe(),
                         help="Path to Unity executable")
+        parser.add_argument('--sku',
+                        action=builder.ArgParseUniqueStore,
+                        help="SKU to be used during Unity asset build. Leave blank to build all assets")
 
         parser.add_argument('project_dir', action="store", help="path to Unity project")
         parser.add_argument('--xcode-destination-file', action="store", default=None, dest='destination_file', 
@@ -180,6 +251,7 @@ class UnityBuildConfig(object):
                             platform='mac',
                             config='release')
         options = parser.parse_args(argv)
+
         self.set_options(options)
 
 class UnityBuild(object):
@@ -311,6 +383,11 @@ class UnityBuild(object):
         message += " --asset-path " + self.build_config.asset_destination_path
         message += " --build-type " + self.build_config.build_type
         message += " --build-number " + self.build_config.build_number
+        if self.build_config.sku is not None:
+            message += " --sku " + self.build_config.sku
+        # adding a space at the end of our message makes sure that our last arg does not
+        # get filled with the tail of our message buffer
+        message += " "
 
         logFilePath = os.path.expanduser('~/Library/Logs/Unity/Editor.log')
         handleUnityLog = open(logFilePath, 'r')
@@ -371,6 +448,8 @@ class UnityBuild(object):
         procArgs.extend(["--asset-path", self.build_config.asset_destination_path])
         procArgs.extend(["--build-type", self.build_config.build_type])
         procArgs.extend(["--build-number", self.build_config.build_number])
+        if self.build_config.sku is not None:
+            procArgs.extend(["--sku", self.build_config.sku])
 
         if self.build_config.script_debugging:
             procArgs.extend(["--debug"])

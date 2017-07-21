@@ -11,20 +11,29 @@
 
 #include "util/math/math.h"
 
+static const float kDurationScalarMin = 0.05f;
+static const float kDurationScalarMax = 20.0f;
+
+static const float kSpeechRateMin = 30.0f;
+static const float kSpeechRateMax = 300.0f;
+
+
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
 
-float AcapelaTTS::GetSpeechRate(float durationScalar)
+float AcapelaTTS::GetSpeechRate(int speed, float durationScalar)
 {
-  // Convert Anki unit scale to Acapela percentage scale, then clamp to allowed range
-  static const float kSpeechRateMin = 30.0f;
-  static const float kSpeechRateMax = 300.0f;
-    
-  return Anki::Util::Clamp(durationScalar * 100.0f, kSpeechRateMin, kSpeechRateMax);
+  // Clamp duration scalar to something reasonable before we divide
+  durationScalar = Anki::Util::Clamp(durationScalar, kDurationScalarMin, kDurationScalarMax);
+  
+  // Adjust base rate (100%) by duration scalar
+  const float speechRate = speed / durationScalar;
+  
+  // Clamp adjusted rate to allowable range
+  return Anki::Util::Clamp(speechRate, kSpeechRateMin, kSpeechRateMax);
     
 }
-
   
 } // end namespace TextToSpeech
 } // end namespace Cozmo

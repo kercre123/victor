@@ -20,6 +20,20 @@ namespace Cozmo.ConnectionFlow.UI {
     private NeedsMetersWidget _MetersWidgetPrefab;
     private NeedsMetersWidget _MetersWidget;
 
+    [SerializeField]
+    private CozmoButton _SettingsButton;
+
+    [SerializeField]
+    private CozmoButton _HelpButton;
+
+    [SerializeField]
+    private SettingsModal _SettingsModalPrefab;
+    private SettingsModal _SettingsModalInstance;
+
+    [SerializeField]
+    private BaseModal _HelpTipsModalPrefab;
+    private BaseModal _HelpTipsModalInstance;
+
     // Use this for initialization
     void Start() {
       if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
@@ -28,6 +42,9 @@ namespace Cozmo.ConnectionFlow.UI {
       else {
         _ConnectButton.Initialize(HandleConnectButtonPressed, "connect_button", "needs_unconnected_view");
       }
+
+      _SettingsButton.Initialize(HandleSettingsButton, "settings_button", "needs_unconnected_view");
+      _HelpButton.Initialize(HandleHelpButton, "help_button", "needs_unconnected_view");
 
       _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
       _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName, baseDialog: this);
@@ -70,6 +87,25 @@ namespace Cozmo.ConnectionFlow.UI {
       if (OnMockConnectButtonPressed != null) {
         OnMockConnectButtonPressed();
       }
+    }
+
+
+    private void HandleSettingsButton() {
+      UIManager.OpenModal(_SettingsModalPrefab, new ModalPriorityData(), HandleSettingsModalCreated);
+    }
+
+    private void HandleSettingsModalCreated(BaseModal newModal) {
+      _SettingsModalInstance = (SettingsModal)newModal;
+      _SettingsModalInstance.Initialize(this);
+    }
+
+    private void HandleHelpButton() {
+      UIManager.OpenModal(_HelpTipsModalPrefab, new ModalPriorityData(), HandleHelpModalCreated);
+    }
+
+    private void HandleHelpModalCreated(BaseModal newModal) {
+      _HelpTipsModalInstance = newModal;
+      _HelpTipsModalInstance.Initialize();
     }
 
     private void HandleMeterPressed() {

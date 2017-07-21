@@ -26,6 +26,7 @@
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include "clad/audio/audioStateTypes.h"
+#include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -60,6 +61,9 @@ namespace Audio {
 using namespace AudioEngine;
 using namespace AudioMetaData;
   
+using Language = Anki::Util::Locale::Language;
+using ExternalLanguage = GameState::External_Language;
+
 #if USE_AUDIO_ENGINE
 // Resolve audio asset file path
 static bool ResolvePathToAudioFile( const std::string&, const std::string&, std::string& );
@@ -67,6 +71,10 @@ static bool ResolvePathToAudioFile( const std::string&, const std::string&, std:
 // Setup Ak Logging callback
 static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlayingId, AudioGameObject );
 #endif
+
+// Language & locale helpers
+static Language GetLanguage(const CozmoContext* ctx);
+static ExternalLanguage GetExternalLanguage(Language language);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CozmoAudioController::CozmoAudioController( const CozmoContext* context )
@@ -78,14 +86,14 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
   musicConfig.startEventId = Util::numeric_cast<AudioEventId>( GameEvent::Music::Play );
   musicConfig.stopEventId = Util::numeric_cast<AudioEventId>( GameEvent::Music::Stop );
   InitializeMusicConductor( musicConfig );
-  
+
 #if USE_AUDIO_ENGINE
   {
     DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoContext.IsNull");
     
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
-    
+
     // If assets don't exist don't init the Audio engine
 #ifndef ANDROID
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
@@ -173,9 +181,14 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
       PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
     }
 #endif
-    
-    // Set Local
+
+    //
+    // Cozmo uses default audio locale regardless of current context.
+    // Locale-specific adjustments are made by setting GameState::External_Language
+    // below.
+    //
     config.audioLocale = AudioLocaleType::EnglishUS;
+    
     // Engine Memory
     config.defaultMemoryPoolSize      = ( 2 * 1024 * 1024 );      // 2 MB
     config.defaultLEMemoryPoolSize    = ( 1024 * 1024 );          // 1 MB
@@ -224,6 +237,12 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
     
     // Register Game Objects in defined in CLAD
     RegisterCladGameObjectsWithAudioController();
+    
+    // Set GameState::External_Language to match current locale
+    const Language language = GetLanguage(context);
+    const GameState::External_Language stateId = GetExternalLanguage(language);
+    const GameState::StateGroupType stateGroupId = GameState::StateGroupType::External_Language;
+    SetState(static_cast<AudioStateGroupId>(stateGroupId), static_cast<AudioStateId>(stateId));
   }
 }
 
@@ -539,6 +558,38 @@ void CozmoAudioController::PrintPlugInLog() {
 }
 #endif
 
+// Get language for given context
+static Language GetLanguage(const CozmoContext* ctx)
+{
+  // If context provides locale, return language from locale
+  if (ctx != nullptr && ctx->GetLocale() != nullptr) {
+    return ctx->GetLocale()->GetLanguage();
+  }
+  // Otherwise return default
+  return Language::en;
+}
+
+// Get external language for given language
+static ExternalLanguage GetExternalLanguage(Language language)
+{
+  // Map each supported language to corresponding external language
+  static const std::unordered_map<Language, ExternalLanguage> map = {
+    { Language::en, ExternalLanguage::English },
+    { Language::fr, ExternalLanguage::French },
+    { Language::de, ExternalLanguage::German },
+    { Language::ja, ExternalLanguage::Japanese }
+  };
+    
+  // Look up map entry for given language
+  const auto & it = map.find(language);
+  if (it != map.end()) {
+    return it->second;
+  }
+    
+  // Otherwise return default
+  return ExternalLanguage::English;
+    
+}
   
 } // Audio
 } // Cozmo

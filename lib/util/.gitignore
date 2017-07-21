@@ -14,6 +14,9 @@ project/gyp/networkApp.lst
 project/gyp/utilUnitTestExe.lst
 project/gyp/utilEmbedded.lst
 project/gyp/audioUtil.lst
+project/gyp/clad.lst
+project/gyp/messages.lst
+source/anki/messages
 
 #build artifacts
 *.pyc

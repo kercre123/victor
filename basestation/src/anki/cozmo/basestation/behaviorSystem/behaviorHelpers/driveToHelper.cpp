@@ -101,12 +101,6 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
       driveToAction->SetApproachAngle(_params.approachAngle_rad);
     }
     
-    {
-      PathMotionProfile motionProfile;
-      if(GetPathMotionProfile(robot, motionProfile)){
-        driveToAction->SetMotionProfile(motionProfile);
-      }
-    }
 
     // TODO:(bn) use shared pointers here. This is ok for now because the action must still exist while it's
     // GetPossiblePoses function is called. Even better, make GetPossiblePoses not a member of DriveTo
@@ -150,13 +144,7 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
           
           const bool kForceHeadDown = false;
           auto driveToPoseAction = new DriveToPoseAction(robot, possiblePoses, kForceHeadDown);
-          {
-            // set path motion profile if applicable
-            PathMotionProfile motionProfile;
-            if(GetPathMotionProfile(robot, motionProfile)){
-              driveToPoseAction->SetMotionProfile(motionProfile);
-            }
-          }
+          
           const bool shouldIgnoreFailure = true;
           compoundAction->AddAction(driveToPoseAction, shouldIgnoreFailure);
           

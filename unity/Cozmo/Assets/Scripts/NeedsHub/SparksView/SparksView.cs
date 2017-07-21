@@ -40,7 +40,7 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoButton _ListAbilitiesButton;
 
     [SerializeField]
-    private GameObject _OnboardingDimmer;
+    private GameObject[] _OnboardingDimmers;
 
     [SerializeField]
     private SparksListModal _SparksListModalPrefab;
@@ -79,7 +79,9 @@ namespace Cozmo.Needs.Sparks.UI {
       RequestGameManager.Instance.OnRequestGameAlertCreated += ReenableTouches;
 
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
-        _OnboardingDimmer.SetActive(true);
+        for (int i = 0; i < _OnboardingDimmers.Length; i++) {
+          _OnboardingDimmers[i].SetActive(true);
+        }
         _BackButton.gameObject.SetActive(false);
         OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingPhaseComplete;
       }
@@ -149,6 +151,7 @@ namespace Cozmo.Needs.Sparks.UI {
         // Prevent the player from doing other things
         _IsDisablingTouches = true;
         UIManager.DisableTouchEvents(_DisableTouchKey);
+        ContextManager.Instance.ShowForeground();
 
         // Make sure that we re-enable touches in case something goes wrong with robot comms
         Invoke("ReenableTouches", _ReenableTouchTimeout_s);
@@ -164,6 +167,7 @@ namespace Cozmo.Needs.Sparks.UI {
       if (_IsDisablingTouches) {
         _IsDisablingTouches = false;
         UIManager.EnableTouchEvents(_DisableTouchKey);
+        ContextManager.Instance.HideForeground();
       }
     }
 

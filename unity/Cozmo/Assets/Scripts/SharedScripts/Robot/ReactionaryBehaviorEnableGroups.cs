@@ -16,7 +16,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kWakeupTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: true,
-    doubleTapDetected: true,
     facePositionUpdated: true,
     fistBump: true,
     frustration: true,
@@ -42,7 +41,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kDefaultMinigameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: true,
-    doubleTapDetected: true,
     facePositionUpdated: true,
     fistBump: true,
     frustration: true,
@@ -68,7 +66,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kCubePounceGameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: true,
-    doubleTapDetected: true,
     facePositionUpdated: true,
     fistBump: true,
     frustration: true,
@@ -94,7 +91,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kDroneModeGameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: true,
-    doubleTapDetected: true,
     facePositionUpdated: true,
     fistBump: true,
     frustration: true,
@@ -120,7 +116,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kFaceEnrollmentTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: false,
     fistBump: true,
     frustration: false,
@@ -146,7 +141,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kMemoryMatchGameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: true,
-    doubleTapDetected: true,
     facePositionUpdated: true,
     fistBump: true,
     frustration: true,
@@ -172,7 +166,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kSayTextSlideTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: false,
     fistBump: false,
     frustration: false,
@@ -198,7 +191,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kDroneModeIdleTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: true,
     fistBump: false,
     frustration: false,
@@ -224,7 +216,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kDroneModeDriveTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: true,
     fistBump: false,
     frustration: false,
@@ -250,7 +241,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kSpeedTapRoundEndTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: false,
     fistBump: false,
     frustration: false,
@@ -275,7 +265,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kOnboardingHomeTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: false,
     fistBump: false,
     frustration: false,
@@ -300,7 +289,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kOnboardingShowCubeStageTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: false,
     fistBump: false,
     frustration: false,
@@ -326,7 +314,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kVoiceCommandSleepTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: true,
-    doubleTapDetected: true,
     facePositionUpdated: true,
     fistBump: true,
     frustration: true,
@@ -352,7 +339,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static Anki.Cozmo.AllTriggersConsidered kAppBackgroundedTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
-    doubleTapDetected: false,
     facePositionUpdated: false,
     fistBump: false,
     frustration: false,
@@ -373,4 +359,31 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     unexpectedMovement: false,
     vc: true
   );
+
+  // Reactions disabled when connected to a simulated robot because their sensors don't handle the trigger properly
+  public static Anki.Cozmo.AllTriggersConsidered kSimulatedRobotTriggers = new Anki.Cozmo.AllTriggersConsidered(
+    cliffDetected: false,
+    cubeMoved: false,
+    facePositionUpdated: false,
+    fistBump: false,
+    frustration: false,
+    hiccup: false,
+    motorCalibration: false,
+    noPreDockPoses: false,
+    objectPositionUpdated: false,
+    placedOnCharger: false,
+    petInitialDetection: false,
+    robotPickedUp: false,
+    robotPlacedOnSlope: false,
+    returnedToTreads: false,
+    robotOnBack: false,
+    robotOnFace: false,
+    robotOnSide: false,
+    robotShaken: true,
+    sparked: false,
+    unexpectedMovement: false,
+    vc: false
+  );
+
+
 }

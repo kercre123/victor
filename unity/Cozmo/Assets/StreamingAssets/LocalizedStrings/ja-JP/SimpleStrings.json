@@ -31,7 +31,7 @@
     "translation" : "いいえ、結構です"
   },
   "button.continue" : {
-    "translation" : "持続する"
+    "translation" : "続ける"
   },
   "button.okay" : {
     "translation" : "はい"
@@ -49,7 +49,7 @@
     "translation" : "完了"
   },
   "button.play" : {
-    "translation" : "遊びます"
+    "translation" : "プレイ"
   },
   "button.leave" : {
     "translation" : "離れる"
@@ -79,7 +79,7 @@
     "translation" : "{0} ！"
   },
   "requestGame.description" : {
-    "translation" : "コズモは、再生したいです"
+    "translation" : "コズモは遊びたい"
   },
   "label.connect" : {
     "translation" : "CONNECT"
@@ -106,10 +106,10 @@
     "translation" : "さぁ、始めよう"
   },
   "soundcheck.description" : {
-    "translation" : "お使いのデバイスのサウンドがオンになっていることを確認してください"
+    "translation" : "デバイスのサウンドがオンになっていることを確認してください。"
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "コズモに次の各キューブの1を入れて、「更新」をタップします。コズモは、彼が最も近いと考えて3に接続します。"
+    "translation" : "各キューブの1つをCozmoの横に置き、タップします<b><color=#11a2f0ff>リフレッシュ</color></b> 。 Cozmoは彼が最も近いと思う3に接続します。"
   },
   "button.replay" : {
     "translation" : "リプレイ"
@@ -124,7 +124,7 @@
     "translation" : "Cozmoが見苦しいです！"
   },
   "error.badLight.Bottom" : {
-    "translation" : "明るい光と薄暗いスペースを避けます"
+    "translation" : "明るいライトと薄暗い場所を避けてください。"
   },
   "label.cozmo.serial" : {
     "translation" : "コズモID： {0}"
@@ -145,7 +145,7 @@
     "translation" : "合計スパークス： {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "&quot; <color=#11a2f0ff> CONNECT </color>以下の条件に同意したものとします。"
+    "translation" : "タップすることで<b><color=#11a2f0ff> CONNECT </color></b>次の条件に同意したものとします。"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
@@ -157,7 +157,7 @@
     "translation" : "{0}の{1}"
   },
   "label.RewardHeader" : {
-    "translation" : "報酬"
+    "translation" : "ご褒美"
   },
   "button.buyACozmo" : {
     "translation" : "コズモを買う"

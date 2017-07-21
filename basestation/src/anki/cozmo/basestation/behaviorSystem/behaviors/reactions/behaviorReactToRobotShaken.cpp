@@ -35,7 +35,6 @@ const float kShakenDurationThresholdMedium = 2.5f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRobotShakenArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -76,7 +75,10 @@ Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRobotShakenArray);
   
   // Clear severe needs expression since eyes are being re-set
-  robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+  if(robot.GetAIComponent().GetWhiteboard().HasSevereNeedExpression())
+  {
+    robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+  }
   
   // Reset variables:
   _maxShakingAccelMag = 0.f;

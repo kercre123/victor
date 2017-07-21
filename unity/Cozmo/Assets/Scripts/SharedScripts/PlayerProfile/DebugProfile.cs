@@ -10,7 +10,6 @@ namespace DataPersistence {
     public static string kNoFreelpayOnStartLock = "no_freeplay_on_start";
     public bool LatencyDisplayEnabled;
     public bool DebugPauseEnabled;
-    public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
     public bool NoFreeplayOnStart;
     public bool ShowDroneModeDebugInfo;
     public bool UseFastConnectivityFlow;
@@ -25,7 +24,6 @@ namespace DataPersistence {
     public DebugProfile() {
       LatencyDisplayEnabled = false;
       DebugPauseEnabled = false;
-      FakeTouchRecordings = new Dictionary<string, List<FakeTouch>>();
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
       UseConnectFlowInMock = false;

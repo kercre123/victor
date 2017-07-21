@@ -59,7 +59,6 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // 'needsSevereLowEnergy' - when Cozmo's needstate is severely low energy
 // 'needsSevereLowRepair' - when Cozmo's needstate is severely low repair
 // 'needsSevereLowPlayGetIn' - when Cozmo is transitioning into severely low play state
-// 'objectTapInteraction' - when Cozmo is interacting with a double tapped cube
 // 'playWithHumans'  - when Cozmo requests games to play with the player
 // 'playAlone'       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
 // 'putDownDispatch' - when Cozmo is looking for stuff after returning to on treads
@@ -71,7 +70,6 @@ const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
   { ActivityID::BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { ActivityID::Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Nurture_Feeding },
   { ActivityID::Hiking,                  AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
-  { ActivityID::ObjectTapInteraction,    AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
   { ActivityID::NeedsSevereLowEnergy,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { ActivityID::NeedsSevereLowRepair,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { ActivityID::NeedsSevereLowPlayGetIn, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },

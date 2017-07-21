@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iSubtaskListener.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -34,6 +35,7 @@ public:
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
+  virtual void AddListener(ISubtaskListener* listener) override;
   
   // Begin playing the animations
   void StartPlayingAnimations(Robot& robot);
@@ -57,6 +59,11 @@ private:
 
   // queues actions to play all the animations specified in _animTriggers
   void StartSequenceLoop(Robot& robot);
+  
+  // We call our listeners whenever an animation completes
+  void CallToListeners(Robot& robot);
+  
+  std::set<ISubtaskListener*> _listeners;
 };
   
 

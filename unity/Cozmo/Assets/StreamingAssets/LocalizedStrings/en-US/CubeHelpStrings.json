@@ -44,5 +44,20 @@
   },
   "cubeHelpStrings.Instructions.Slide3altCopy": {
     "translation": "Make sure the cover matches the Cube. It should now light up!"
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Title": {
+    "translation": "Cozmo too hungry to play?"
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Body": {
+    "translation": "Give him a quick snack while you reconnect his Cubes."
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Button": {
+    "translation": "QUICK SNACK"
+  },
+  "cubeHelpStrings.Instructions.FeedPopup.Title": {
+    "translation": "Cozmo can now keep playing"
+  },
+  "cubeHelpStrings.Instructions.FeedPopup.Body": {
+    "translation": "To keep him fully fed, follow the instructions to help him recognize his cubes."
   }
 }

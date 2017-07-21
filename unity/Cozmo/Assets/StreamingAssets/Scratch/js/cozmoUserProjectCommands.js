@@ -5,6 +5,11 @@
     window.cozmoProjectUUID = null;
     window.previouslySavedProjectXML = null;
     window.saveProjectTimerId = null;
+    window.resolvePromiseWaitForSaveProject = null;
+
+    // Prevent saveCozmoUserProject from being called more than once for a project, which can
+    // cause more than one project to be created if Unity UUID has not yet been created.
+    window.isSavingProject = false;
 
     function $t(str) {
         return str;
@@ -39,7 +44,7 @@
       if (window.getNodes().length <= 0) {
         // No other blocks are on the workspace so put green flag back on workspace by itself.
         var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
-        window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+        window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
       }
       else {
         if (!window.isGreenFlagOnWorkspace()) {
@@ -48,7 +53,7 @@
           var xmlText = Blockly.Xml.domToText(xml);
           var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlText.substring(xmlStart.length, xmlText.length);
 
-          window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+          window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
         }
       }
     }
@@ -90,12 +95,39 @@
         return nodes;
     }
 
+    window.saveProjectCompleted = function (unityIsWaitingForCallback) {
+        window.isSavingProject = false;
+
+        // If we have a Promise to resolve, resolve it
+        if (window.resolvePromiseWaitForSaveProject) {
+            window.resolvePromiseWaitForSaveProject();
+            window.resolvePromiseWaitForSaveProject = null;
+        }
+
+        if (unityIsWaitingForCallback) {
+            window.Unity.call('{"requestId": "-1", "command": "cozmoSaveOnQuitCompleted"}');
+        }
+    }
+
+    window.promiseWaitForSaveProject = function () {
+        return new Promise(function (resolve) {
+            window.resolvePromiseWaitForSaveProject = resolve;
+            window.saveCozmoUserProject(false);
+        });
+    };
+
     /* Save all scripts currently on the workspace into a Cozmo Code Lab user project in the Unity user profile.
      * Call this method to save both new and existing projects.
      */
-    window.saveCozmoUserProject = function() {
+    window.saveCozmoUserProject = function(unityIsWaitingForCallback) {
+        if (window.isSavingProject) {
+            return;
+        }
+
+        window.isSavingProject = true;
+
         if (window.isSampleProject) {
-            window.saveProjectCompleted();
+            window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
 
@@ -108,20 +140,20 @@
         
         if (window.cozmoProjectUUID != '' && window.previouslySavedProjectXML == xmlText) {
             // No changes to save
-            window.saveProjectCompleted();
+            window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
 
         // If it's a new project, only save the project if the user has added blocks.
         if (window.cozmoProjectUUID == '' &&  !window.hasUserAddedBlocks()) {
-            window.saveProjectCompleted();
+            window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
 
         window.previouslySavedProjectXML = xmlText;
 
         // If we reached this far, Unity will take care of resolving the promise.
-        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoSaveUserProject','argString': '" + xmlText + "','argUUID': '" + window.cozmoProjectUUID + "'}");
+        window.Unity.call({requestId: -1, command: "cozmoSaveUserProject", argString: xmlText, argUUID: window.cozmoProjectUUID});
     }
 
     window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
@@ -179,7 +211,7 @@
             var timeInterval_ms = 3000;
             window.saveProjectTimerId = setInterval(saveProjectTimer, timeInterval_ms);
             function saveProjectTimer() {
-                window.saveCozmoUserProject();
+                window.saveCozmoUserProject(false);
             }
         }
     }

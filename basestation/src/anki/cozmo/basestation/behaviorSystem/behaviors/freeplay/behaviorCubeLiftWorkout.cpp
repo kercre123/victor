@@ -43,7 +43,6 @@ static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersWorkoutArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -98,7 +97,7 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersWorkoutArray);
 
   // disable idle
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
+  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
 
   const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
   _numStrongLiftsToDo = currWorkout.GetNumStrongLifts(robot);
@@ -124,9 +123,6 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 {
-  // restore previous idle
-  robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
-  
   // Ensure the cube workout lights are not set
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
   

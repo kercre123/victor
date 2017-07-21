@@ -34,7 +34,6 @@ CONSOLE_VAR(f32, kBPDB_kBackupDistanceMax_mm,     "Behavior.PutDownBlock", -75.0
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPutDownBlockArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -101,7 +100,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
   StartActingExtraScore(CreateLookAfterPlaceAction(robot, true), kBPDB_scoreIncreasePostPutDown,
-              [this,&robot]() {
+              [&robot]() {
                 if(robot.GetCarryingComponent().IsCarryingObject()) {
                   // No matter what, even if we didn't see the object we were
                   // putting down for some reason, mark the robot as not carrying
@@ -126,7 +125,7 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bo
     
     CompoundActionParallel* parallel = new CompoundActionParallel(robot,
                                                                   {new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
-                                                                   new DriveStraightAction(robot, kBPDB_verifyBackupDist_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps)});
+                                                                   new DriveStraightAction(robot, kBPDB_verifyBackupDist_mm)});
     action->AddAction(parallel);
     action->AddAction(new WaitForImagesAction(robot, kNumFrames, VisionMode::DetectingMarkers));
   }

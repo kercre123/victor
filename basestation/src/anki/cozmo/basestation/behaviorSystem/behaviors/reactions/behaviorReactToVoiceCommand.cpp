@@ -10,6 +10,7 @@
 *
 **/
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToVoiceCommand.h"
@@ -28,33 +29,30 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  const float kReactToTriggerDelayTime_s = 4.0f;
-  
-  constexpr ReactionTriggerHelpers::FullReactionArray kDisableReactionTriggersArray = {
-    {ReactionTrigger::CliffDetected,                false},
-    {ReactionTrigger::CubeMoved,                    true},
-    {ReactionTrigger::DoubleTapDetected,            true},
-    {ReactionTrigger::FacePositionUpdated,          true},
-    {ReactionTrigger::FistBump,                     true},
-    {ReactionTrigger::Frustration,                  true},
-    {ReactionTrigger::Hiccup,                       false},
-    {ReactionTrigger::MotorCalibration,             false},
-    {ReactionTrigger::NoPreDockPoses,               false},
-    {ReactionTrigger::ObjectPositionUpdated,        false},
-    {ReactionTrigger::PlacedOnCharger,              false},
-    {ReactionTrigger::PetInitialDetection,          true},
-    {ReactionTrigger::RobotPickedUp,                false},
-    {ReactionTrigger::RobotPlacedOnSlope,           false},
-    {ReactionTrigger::ReturnedToTreads,             true},
-    {ReactionTrigger::RobotOnBack,                  false},
-    {ReactionTrigger::RobotOnFace,                  false},
-    {ReactionTrigger::RobotOnSide,                  false},
-    {ReactionTrigger::RobotShaken,                  false},
-    {ReactionTrigger::Sparked,                      false},
-    {ReactionTrigger::UnexpectedMovement,           true},
-    {ReactionTrigger::VC,                           false}
-  };
-}
+constexpr ReactionTriggerHelpers::FullReactionArray kDisableReactionTriggersArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           false}
+};
+} // namespace
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableReactionTriggersArray),
               "Reaction triggers duplicate or non-sequential");
@@ -101,14 +99,12 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
   
   // Tilt the head up slightly, like we're listening, and wait a bit
   {
-    auto* parallelActions = new CompoundActionParallel(robot);
-    parallelActions->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(10.f)));
-    parallelActions->AddAction(new WaitAction(robot, kReactToTriggerDelayTime_s));
-    actionSeries->AddAction(parallelActions);
+    actionSeries->AddAction(
+      new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::VC_Listening));
   }
   
   // After waiting let's turn toward the face we know about, if we have one
-  {
+  if(_desiredFace != Vision::UnknownFaceID){
     const bool sayName = true;
     TurnTowardsFaceAction* turnAction = new TurnTowardsFaceAction(robot,
                                                                   _desiredFace,
@@ -118,7 +114,15 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
     turnAction->SetSayNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed);
     turnAction->SetNoNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceUnnamed);
     turnAction->SetMaxFramesToWait(5);
-    actionSeries->AddAction(turnAction);
+    actionSeries->AddAction(turnAction, false);
+    
+    // Play animation to indicate "You wanted something" since he's looking at the user
+    actionSeries->AddAction(
+       new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::VC_NoFollowupCommand_WithFace));
+  }else{
+    // Play animation to indicate "What was that" since no face to tun towards
+    actionSeries->AddAction(
+       new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::VC_NoFollowupCommand_NoFace));
   }
   
   using namespace ::Anki::Cozmo::VoiceCommand;

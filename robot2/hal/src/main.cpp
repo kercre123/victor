@@ -10,7 +10,8 @@
 #define HAL_NOT_PROVIDING_CLOCK 1
 #endif
 
-int main(void)
+
+int main(int argc, const char* argv[])
 {
   printf("Starting robot process\n");
 
@@ -39,7 +40,5 @@ int main(void)
     //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
     start = end;
   }
-
   return 0;
-
 }

@@ -25,7 +25,7 @@
     "translation" : "Cozmoがめまいから回復し、プレイする準備が整うまで待ってください。"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
-    "translation" : "コズモが目覚めるれます"
+    "translation" : "コズモが目を覚ます"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.description" : {
     "translation" : "コズモが目を覚ますと、彼の充電器のオフに駆動するまでお待ちください。"
@@ -34,7 +34,7 @@
     "translation" : "どうするか教えて"
   },
   "challengeDetails.cozmoHasHiccups.title" : {
-    "translation" : "コズモはしゃっくりを持っています"
+    "translation" : "コズモはしゃっくりをしている"
   },
   "challengeDetails.cozmoHasHiccups.description" : {
     "translation" : "彼に逆さまに置くことによってコズモを助けるようにしてください。"
@@ -82,7 +82,7 @@
     "translation" : "あなたの創造性を使ってCozmoをプログラムし、一緒にできることを探そう！"
   },
   "activityView.title" : {
-    "translation" : "発見する"
+    "translation" : "発見"
   },
   "memoryMatchGame.label.incorrect" : {
     "translation" : "不正確"

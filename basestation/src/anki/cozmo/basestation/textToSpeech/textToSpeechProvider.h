@@ -27,6 +27,10 @@ namespace Anki {
   }
 }
 
+namespace Json {
+  class Value;
+}
+
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
@@ -70,7 +74,12 @@ private:
 class TextToSpeechProvider
 {
 public:
-  TextToSpeechProvider(const CozmoContext* ctx);
+  // Configuration keywords shared by all providers
+  static constexpr const char * kVoiceKey = "voice";
+  static constexpr const char * kSpeedKey = "speed";
+  static constexpr const char * kShapingKey = "shaping";
+  
+  TextToSpeechProvider(const CozmoContext* ctx, const Json::Value& tts_config);
   ~TextToSpeechProvider();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);

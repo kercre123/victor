@@ -37,7 +37,7 @@ static const char* kStartMoodScorerConfigKey      = "startMoodScorer";
 static const char* kActivityCanEndConfigKey       = "activityCanEndDurationSecs";
 static const char* kActivityShouldEndConfigKey    = "activityShouldEndDurationSecs";
 static const char* kActivityCooldownBaseConfigKey = "cooldownBaseSecs";
-static const char* kActivityCooldownVarianceKey   = "cooldownVarianceSecs";
+static const char* kActivityCooldownRandomnessKey = "cooldownRandomnessSecs";
 static const char* kActivityStartInCooldown       = "startInCooldown";
 static const char* kActivityFeatureGate           = "featureGate";
 
@@ -50,7 +50,7 @@ IActivityStrategy::IActivityStrategy(Robot& robot, const Json::Value& config)
 , _activityShouldEndSecs(-1.0f)
 , _baseCooldownSecs(-1.0f)
 , _cooldownSecs(-1.0f)
-, _cooldownVarianceSecs(0.f)
+, _cooldownRandomnessSecs(0.f)
 , _startInCooldown(false)
 , _startMoodScorer(nullptr)
 , _requiredMinStartMoodScore(-1.0f)
@@ -66,7 +66,7 @@ IActivityStrategy::IActivityStrategy(Robot& robot, const Json::Value& config)
   GetValueOptional(config, kActivityCanEndConfigKey,       _activityCanEndSecs);
   GetValueOptional(config, kActivityShouldEndConfigKey,    _activityShouldEndSecs);
   GetValueOptional(config, kActivityCooldownBaseConfigKey, _baseCooldownSecs);
-  GetValueOptional(config, kActivityCooldownVarianceKey,   _cooldownVarianceSecs);
+  GetValueOptional(config, kActivityCooldownRandomnessKey, _cooldownRandomnessSecs);
   GetValueOptional(config, kActivityStartInCooldown,       _startInCooldown);
   
   _cooldownSecs = _baseCooldownSecs;
@@ -106,7 +106,7 @@ IActivityStrategy::IActivityStrategy(Robot& robot, const Json::Value& config)
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy = WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot, wantsToRunConfig);
+    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot, wantsToRunConfig));
   }
 
 }
@@ -235,13 +235,13 @@ bool IActivityStrategy::WantsToEnd(const Robot& robot, float lastTimeActivitySta
 
 void IActivityStrategy::RandomizeCooldown(const Robot& robot) const
 {
-  _cooldownSecs = _baseCooldownSecs + robot.GetRNG().RandDbl(_cooldownVarianceSecs);
+  _cooldownSecs = _baseCooldownSecs + robot.GetRNG().RandDbl(_cooldownRandomnessSecs);
 }
 
-void IActivityStrategy::SetCooldown(float cooldown_ms)
+void IActivityStrategy::SetCooldown(float cooldown_ms, float cooldownRandomness_ms)
 {
   _baseCooldownSecs = cooldown_ms;
-  _cooldownVarianceSecs = 0;
+  _cooldownRandomnessSecs = cooldownRandomness_ms;
   _cooldownSecs = _baseCooldownSecs;
   
 }

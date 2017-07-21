@@ -15,14 +15,18 @@
  */
 
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechProvider.h"
+
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "audioEngine/audioEngineController.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "audioEngine/plugins/ankiPluginInterface.h"
 
 #include "util/dispatchQueue/dispatchQueue.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -39,12 +43,13 @@
 namespace Anki {
 namespace Cozmo {
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
 : _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
-  , _pvdr(new Anki::Cozmo::TextToSpeech::TextToSpeechProvider(context))
 {
+  const Json::Value& tts_config = context->GetDataLoader()->GetTextToSpeechConfig();
+  _pvdr = std::make_unique<TextToSpeech::TextToSpeechProvider>(context, tts_config);
+
   if (nullptr != context && nullptr != context->GetAudioMultiplexer()) {
     _audioController = context->GetAudioMultiplexer()->GetAudioController();
   }
@@ -73,12 +78,14 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
     LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "OperationId %d already in cache", opId);
     return kInvalidOperationId;
   }
+
   // Set initial state
   it.first->second.state = AudioCreationState::Preparing;
+
   // Dispatch work onto another thread
-  Util::Dispatch::Async(_dispatchQueue, [this, text, durationScalar, opId]
+  Util::Dispatch::Async(_dispatchQueue, [this, text, style, durationScalar, opId]
   {
-    AudioEngine::StandardWaveDataContainer* audioData = CreateAudioData(text, durationScalar);
+    AudioEngine::StandardWaveDataContainer* audioData = CreateAudioData(text, style, durationScalar);
     {
       std::lock_guard<std::mutex> lock(_lock);
       const auto bundle = GetTtsBundle(opId);
@@ -214,6 +221,10 @@ AudioMetaData::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayT
       return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
       break;
       
+    case SayTextVoiceStyle::CozmoProcessing_Name_Question:
+      return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing_Question;
+      break;
+
     case SayTextVoiceStyle::Count:
       LOG_ERROR("TextToSpeechComponent.GetAudioEvent", "Invalid SayTextStyle Count");
       break;
@@ -223,7 +234,8 @@ AudioMetaData::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayT
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const std::string& text,
-                                                                               const float durationScalar)
+                                                                               SayTextVoiceStyle style,
+                                                                               float durationScalar)
 {
   using namespace Util::Time;
   using namespace TextToSpeech;
@@ -234,9 +246,15 @@ AudioEngine::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(c
     LOG_INFO("TextToSpeechComponent.CreateAudioData", "Start - text to wave: %s - duration scalar: %f",
              text.c_str(), durationScalar);
   }
-  
+
+  Result result = RESULT_OK;
   TextToSpeechProviderData waveData;
-  Result result = _pvdr->CreateAudioData(text, durationScalar, waveData);
+
+  if (SayTextVoiceStyle::CozmoProcessing_Name_Question == style) {
+    result = _pvdr->CreateAudioData(text + "?", durationScalar, waveData);
+  } else {
+    result = _pvdr->CreateAudioData(text, durationScalar, waveData);
+  }
   
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
     LOG_INFO("TextToSpeechComponent.CreateAudioData", "finish text to wave - time_ms: %f",

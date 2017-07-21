@@ -18,6 +18,8 @@ public class AndroidNetworkCell : MonoBehaviour {
     _SelectedHighlight.SetActive(false);
     _Button.onClick.RemoveAllListeners();
     _Button.Initialize(buttonAction, "select", "android.network");
+    //despite the call to removeAllListeners, there is no need for a repairListeners call.
+    //repairListeners is only necessary for CozmoButton.
     _Label.text = labelText;
   }
 

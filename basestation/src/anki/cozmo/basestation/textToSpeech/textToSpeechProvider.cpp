@@ -22,14 +22,27 @@
 #error "No text-to-speech provider implemented for this platform"
 #endif
 
+#include "anki/cozmo/basestation/cozmoContext.h"
+
+#include "json/json.h"
+
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
       
-TextToSpeechProvider::TextToSpeechProvider(const CozmoContext * ctx) :
-  _impl(new TextToSpeechProviderImpl(ctx))
+TextToSpeechProvider::TextToSpeechProvider(const CozmoContext * ctx, const Json::Value& tts_config)
 {
-  // Nothing to do here
+  // Get configuration struct for this platform
+#if defined(ANKI_PLATFORM_OSX)
+  Json::Value tts_platform_config = tts_config["osx"];
+#elif defined(ANKI_PLATFORM_IOS)
+  Json::Value tts_platform_config = tts_config["ios"];
+#elif defined(ANKI_PLATFORM_ANDROID)
+  Json::Value tts_platform_config = tts_config["android"];
+#endif
+  
+  // Instantiate provider for this platform
+  _impl.reset(new TextToSpeechProviderImpl(ctx, tts_platform_config));
 }
       
 TextToSpeechProvider::~TextToSpeechProvider()

@@ -46,7 +46,6 @@ bool WithinPreActionThreshold(const Robot& robot, std::vector<Pose3d>& possibleP
 constexpr ReactionTriggerHelpers::FullReactionArray kDisableForFlip = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -260,7 +259,7 @@ DriveToFlipBlockPoseAction::DriveToFlipBlockPoseAction(Robot& robot, ObjectID ob
 {
   SetName("DriveToFlipBlockPose");
   SetType(RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE);
-  SetGetPossiblePosesFunc([this, &robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+  SetGetPossiblePosesFunc([&robot](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
   {
     return DriveAndFlipBlockAction::GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
   });

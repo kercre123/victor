@@ -193,26 +193,6 @@ public:
   Vision::FaceID_t GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
                                       const bool preferNamedFaces) const;
 
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Object Tap Interactions
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // Updates _bestObjectForAction so that all ObjectUseIntentions that can use objectID will use it
-  // Will prevent _bestObjectForActions from updating and overriding the objectID
-  void SetObjectTapInteraction(const ObjectID& objectID);
-  
-  // Clears and resets _bestObjectForActions
-  void ClearObjectTapInteraction();
-  
-  bool HasTapIntent() const { return _haveTapIntentionObject; }
-  
-  bool CanReactToDoubleTapReactAgain() const { return _canReactToDoubleTapReactAgain; }
-  void SetReactToDoubleTapCanReactAgain(const bool b) { _canReactToDoubleTapReactAgain = b; }
-  bool IsSuppressingReactToDoubleTap() const { return _suppressReactToDoubleTap; }
-  void SetSuppressReactToDoubleTap(const bool b) { _suppressReactToDoubleTap = b; }
-  
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Impossible States handling
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -354,15 +334,6 @@ private:
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
-  
-  // Whether or not we are intending to interact with an object that has been double tapped
-  bool _haveTapIntentionObject = false;
-  
-  // Whether or not ReactToDoubleTap can react to the same lastDoubleTapped object
-  bool _canReactToDoubleTapReactAgain = false;
-  
-  // Whether or not ReactToDoubleTap can run
-  bool _suppressReactToDoubleTap = false;
     
   // Track objects without pre-doc poses - currently used for pyramid
   ObjectID _objectIDWithoutPreDock;

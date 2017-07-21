@@ -623,6 +623,16 @@ void BehaviorManager::SendDasTransitionMessage(const BehaviorRunningAndResumeInf
                      {{DDATA,
                        BehaviorIDToString(oldBehaviorID)}},
                        BehaviorIDToString(newBehaviorID));
+
+  // if this was the result of a reaction trigger, send that as well
+  if( newBehaviorInfo.GetCurrentReactionTrigger() != ReactionTrigger::Count &&
+      newBehaviorInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger ) {
+    // s_val = trigger name
+    // data = triggered behavior name
+    Anki::Util::sEvent("robot.reaction_trigger",
+                       {{DDATA, BehaviorIDToString(newBehaviorID)}},
+                       ReactionTriggerToString(newBehaviorInfo.GetCurrentReactionTrigger()));
+  }
   
   ExternalInterface::BehaviorTransition msg;
   msg.oldBehaviorID = oldBehaviorID;
@@ -847,7 +857,6 @@ Result BehaviorManager::Update(Robot& robot)
   // Update the currently running activity
   GetCurrentActivity()->Update(robot);
   
-  UpdateTappedObject();
   
   // Make sure to clear the current flags if we are in a reactionary behavior
   if (GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) {
@@ -868,13 +877,6 @@ Result BehaviorManager::Update(Robot& robot)
 
   if ((voiceCommandBehavior == nullptr) && (_uiRequestGameBehavior == nullptr))
   {
-    // Update the current behavior if a new object was double tapped
-    if(_needToHandleObjectTapped)
-    {
-      UpdateBehaviorWithObjectTapInteraction();
-      _needToHandleObjectTapped = false;
-    }
-    
     const bool currentBehaviorIsReactionary =
                   (GetRunningAndResumeInfo().GetCurrentReactionTrigger() !=
                    ReactionTrigger::NoneTrigger);
@@ -1532,319 +1534,9 @@ void BehaviorManager::SetBehaviorStateLights(BehaviorClass classSettingLights,
   _behaviorThatSetLights = classSettingLights;
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
-{
-  // Have to be in freeplay and not picking or placing and flat on the ground
-  if((_currentHighLevelActivity != HighLevelActivity::Freeplay) ||
-     _robot.GetDockingComponent().IsPickingOrPlacing() ||
-     (_robot.GetOffTreadsState() != OffTreadsState::OnTreads))
-  {
-    PRINT_CH_INFO("Behaviors", "HandleObjectTapInteraction.CantRun",
-                  "Robot is not in freeplay chooser or is picking and placing or not on treads");
-    return;
-  }
-
-  if(_activeSpark != UnlockId::Count)
-  {
-    PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.InSpark",
-                  "Currently in spark not switching to double tap");
-    return;
-  }
-  
-  // We can only interrupt the react to double tap reactionary behavior
-  const bool activeBehaviorIsReactionary = GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
-  if(activeBehaviorIsReactionary &&
-      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected)
-  {
-    PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.InReaction",
-                  "Currently in reaction not switching to double tap");
-    return;
-  }
-
-  auto doubleTapIter = _reactionTriggerMap.find(ReactionTrigger::DoubleTapDetected);
-  if(doubleTapIter == _reactionTriggerMap.end()){
-    DEV_ASSERT(false, "BehaviorManager.HandleObjectTapInteraction.FaildToFindDoubleTap");
-    return;
-  }
-  
-  const bool isDoubleTapEnabled = doubleTapIter->second.IsReactionEnabled();
-  
-  if(!isDoubleTapEnabled) {
-    PRINT_CH_INFO("Behavior", "BehaviorManager.HandleObjectTapInteraction.Disabled",
-                  "Object tap interaction disabled, ignoring tap");
-    return;
-  }
-  
-  _needToHandleObjectTapped = true;
-  _pendingDoubleTappedObject = objectID;
-  
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::LeaveObjectTapInteraction()
-{
-  if(!_robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    PRINT_CH_INFO("Behaviors", "BehaviorManager.LeaveObjectTapInteraction.NoTapIntent", "");
-    return;
-  }
-  
-  std::shared_ptr<IActivity> currentActivity = GetCurrentActivity();
-  if(currentActivity->SupportsObjectTapInteractions())
-  {
-    PRINT_CH_INFO("Behaviors", "LeaveObjectTapInteration", "");
-    
-    auto* chooser = dynamic_cast<ActivityFreeplay*>(currentActivity.get());
-    
-    // It is possible that we have requested the ObjectTapInteraction activity but it hasn't actually
-    // been selected so we need to clear the requested activity
-    if(chooser != nullptr)
-    {
-      chooser->ClearObjectTapInteractionRequestedActivity();
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("BehaviorManager.LeaveObjectTapInteraction.NullChooser",
-                        "Current activity is not an ActivityFreeplay but supports object tap interactions");
-    }
-  }
-
-  
-  _robot.GetAIComponent().GetWhiteboard().ClearObjectTapInteraction();
-  
-  _lastDoubleTappedObject.UnSet();
-  _currDoubleTappedObject.UnSet();
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::UpdateTappedObject()
-{
-  auto doubleTapIter = _reactionTriggerMap.find(ReactionTrigger::DoubleTapDetected);
-  if(doubleTapIter == _reactionTriggerMap.end()){
-    DEV_ASSERT(false, "BehaviorManager.UpdateTappedObject.FaildToFindDoubleTap");
-    return;
-  }
-  
-  const bool isDoubleTapEnabled = doubleTapIter->second.IsReactionEnabled();
-  
-  // If we have a tap intent and are not currently in ReactToDoubleTap
-  if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent() &&
-     GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
-     isDoubleTapEnabled)
-  {
-    // If the tapped object is not located (got deleted from the world) then give up and
-    // leave object tap interaction (we expect the object to be dirty/not in the world when
-    // ReactToDoubleTap is running)
-    const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_currDoubleTappedObject);
-    if(object == nullptr)
-    {
-      LeaveObjectTapInteraction();
-    }
-    // Otherwise if there is no behavior currently running but we have a tap interaction
-    // (One of the tap behaviors probably just ended because it realized it couldn't use the tapped object)
-    else if(_runningAndResumeInfo->GetCurrentBehavior() == nullptr)
-    {
-      bool canAnyTapBehaviorUseObject = false;
-      
-      std::shared_ptr<IActivity> freeplayGeneric = _highLevelActivityMap[HighLevelActivity::Freeplay];
-      ActivityFreeplay* activityFreeplay = dynamic_cast<ActivityFreeplay*>(freeplayGeneric.get());
-      
-      const ObjectID& tappedObject = GetCurrTappedObject();
-      for(const auto& behavior : activityFreeplay->GetObjectTapBehaviors())
-      {
-        const auto& intentions = behavior->GetBehaviorObjectInteractionIntentions();
-        for(const auto& intent : intentions)
-        {
-          auto& objInfoCache = _robot.GetAIComponent().GetObjectInteractionInfoCache();
-          if(objInfoCache.IsObjectValidForInteraction(intent, tappedObject))
-          {
-            canAnyTapBehaviorUseObject = true;
-            break;
-          }
-        }
-      }
-      
-      // If no tap interation behavior can currently use the tapped object then leave object tap interaction
-      if(!canAnyTapBehaviorUseObject)
-      {
-        PRINT_CH_INFO("Behaviors", "BehaviorManager.UpdateTappedObject.NoDoubleTapBehaviorCanUseObject",
-                      "Tapped object is no longer valid for any double tap behavior, leaving tap interaction");
-        LeaveObjectTapInteraction();
-      }
-    }
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
-{
-  // Copy pending object to be assigned to current double tapped object
-  const ObjectID objectID = _pendingDoubleTappedObject;
-  
-  std::shared_ptr<IActivity> currentActivity = GetCurrentActivity();
-    
-  if(!currentActivity->SupportsObjectTapInteractions())
-  {
-    PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.SupportTapInteraction",
-                  "Current chooser does not support object tap interactions");
-    return;
-  }
-  
-  auto* chooser = dynamic_cast<ActivityFreeplay*>(currentActivity.get());
-  
-  if(chooser == nullptr)
-  {
-    PRINT_NAMED_ERROR("BehaviorManager.HandleObjectTapInteraction.NullChooser",
-                      "Current activity is not an ActivityFreeplay or is null");
-    return;
-  }
-  
-  // Tell whiteboard we have a object with tap intention
-  _robot.GetAIComponent().GetWhiteboard().SetObjectTapInteraction(objectID);
-  
-  if(_currDoubleTappedObject == objectID)
-  {
-    PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.CurrTappedObject",
-                  "Tapped object %u is the current tapped object not doing anything",
-                  objectID.GetValue());
-    return;
-  }
-  
-  // If the current activity is not the ObjectTapInteraction activity
-  // then update the behavior chooser and request the ObjectTapInteraction activity
-  if(!chooser->IsCurrentActivityObjectTapInteraction())
-  {
-    // Switch to ObjectTapInteraction activity
-    chooser->SwitchToObjectTapInteractionActivity();
-    
-    _lastDoubleTappedObject = _currDoubleTappedObject;
-    _currDoubleTappedObject = objectID;
-  }
-  // Otherwise we are already in the ObjectTapInteraction activity
-  else
-  {
-    bool currentBehaviorIsNullOrWait = GetRunningAndResumeInfo().GetCurrentBehavior() == nullptr ||
-             GetRunningAndResumeInfo().GetCurrentBehavior()->GetClass() == BehaviorClass::Wait;
-    
-    IBehaviorPtr activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
-    // The current behavior of the activity is not Wait
-    if(nullptr != activeBehavior && !currentBehaviorIsNullOrWait)
-    {
-      // Update the interaction object
-      _lastDoubleTappedObject = _currDoubleTappedObject;
-      _currDoubleTappedObject = objectID;
-      
-      // If the current behavior can't handle the new tapped object
-      if(!activeBehavior->HandleNewDoubleTap(_robot))
-      {
-        PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.BehaviorNotRunnable",
-                      "%s is no longer runnable after updating target blocks",
-                      BehaviorIDToString(activeBehavior->GetID()));
-        
-        // If the current behavior is a reactionary behavior (ReactToDoubleTap) then
-        // make sure to update _runningReactionaryBehavior and try to resume the last behavior
-        if(GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
-        {
-          // The only possible reactionary behavior that can be interrupted with a double tap is
-          // ReactToDouble
-
-          DEV_ASSERT(GetRunningAndResumeInfo().GetCurrentReactionTrigger() == ReactionTrigger::DoubleTapDetected,
-                     "Current reactionary behavior should only be ReactToDoubleTap");
-
-          TryToResumeBehavior();
-          
-          // The behavior to resume becomes the currentBehavior so we need to stop, updateTargetBlocks,
-          // and re-init it to make sure the resumed behavior has correct target blocks and the cube lights get
-          // updated
-          // If we are resuming Wait then just quit object tap interaction
-          if(!currentBehaviorIsNullOrWait)
-          {
-            if(!activeBehavior->HandleNewDoubleTap(_robot))
-            {
-              PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.ResumeFailed",
-                            "%s can't run after being resumed",
-                            BehaviorIDToString(activeBehavior->GetID()));
-              LeaveObjectTapInteraction();
-            }
-          }
-          else
-          {
-            PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.ResumingWaitBehavior",
-                          "Was in ReactToDoubleTap, got another double tap and am now trying to resume Wait Behavior");
-            LeaveObjectTapInteraction();
-          }
-          return;
-        }
-        
-        // If, for some reason, the object tap interaction behavior that was running is no longer runnable
-        // then we should start the ReactToDoubleTap behavior to try to find the tapped object.
-        // This is necessary because otherwise the ObjectTapInteraction activity will exit due to not being able
-        // to pick a behavior (all of the ObjectTapInteraction behaviors have similar requirements to run) so
-        // if the current one can't run then the others probably won't be able to run either.
-        
-        
-        auto doubleTapIter = _reactionTriggerMap.find(ReactionTrigger::DoubleTapDetected);
-        if(doubleTapIter == _reactionTriggerMap.end()){
-          DEV_ASSERT(false, "BehaviorManager.DoubleTap.FaildToFindDoubleTap");
-          return;
-        }
-        
-        const auto& doubleTapEntry = doubleTapIter->second;
-        DEV_ASSERT(doubleTapEntry.GetStrategyMap().size() == 1,
-                   "BehaviorManager.DoubleTap.MultipleDoubleTapEntriesInMap");
-
-        if(doubleTapEntry.GetStrategyMap().size() >= 1){
-          
-          
-          IBehaviorPtr reactToDoubleTap = doubleTapEntry.GetStrategyMap().begin()->second;
-          IReactionTriggerStrategy& strategy = *doubleTapEntry.GetStrategyMap().begin()->first;
-          
-          const bool isReactionEnabled = doubleTapEntry.IsReactionEnabled();
-          const bool shouldTrigger = strategy.ShouldTriggerBehavior(_robot, reactToDoubleTap);
-
-          BehaviorPreReqRobot preReqRobot(_robot);
-          if(isReactionEnabled && shouldTrigger)
-          {
-            PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.StartingReactToDoubleTap",
-                          "Forcing ReactToDoubleTap to run because %s can't run with newly double tapped object",
-                          BehaviorIDToString(activeBehavior->GetID()));
-            
-            
-            BehaviorRunningAndResumeInfo reactionaryInfo;
-            reactionaryInfo.SetCurrentBehavior(reactToDoubleTap);
-            reactToDoubleTap->Init();
-            SetRunningAndResumeInfo(reactionaryInfo);
-            return;
-          }
-        }
-        
-        // This will cause the current tapInteraction behavior to end and a new one to be picked
-        BehaviorRunningAndResumeInfo nullInfo;
-        SetRunningAndResumeInfo(nullInfo);
-        return;
-      }
-    }
-  }
-}
 
 void BehaviorManager::OnRobotDelocalized()
 {
-  // If the robot delocalizes and we have a tapped object immediately stop the double tapped lights
-  // Normally the lights would be stopped when the tapInteraction activity exits but that is too late
-  // Eg. Pick Cozmo up after double tapping a cube, the lights will stay on until he is put down and the
-  // tapInteraction activity is kicked out. Instead of having the lights stop when he is put down, they should
-  // stop when he is picked up (delocalizes)
-  // Can't do this on Stop() because tapInteraction behaviors are stopped and started as different objects get tapped
-  if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
-    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
-  }
 }
 
 const std::list<const IActivity* const> BehaviorManager::GetNonSparkFreeplayActivities() const

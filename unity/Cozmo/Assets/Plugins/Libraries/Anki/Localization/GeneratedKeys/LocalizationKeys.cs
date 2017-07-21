@@ -340,6 +340,9 @@ public static class LocalizationKeys {
   public const string kNeedsUnconnectedNeedToConnectDescription = "needs.unconnected.needToConnect.description";
   public const string kLabelCancelText = "label.cancelText";
   public const string kLabelLiquidMetalCozmo = "label.liquidMetalCozmo";
+  public const string kConnectivitySendGameplayDataPrompt = "connectivity.sendGameplayDataPrompt";
+  public const string kNeedsVoiceSettingsModalTitle = "needs.VoiceSettingsModal.Title";
+  public const string kConnectivityBehaviorDisplayDisconnected = "connectivity.behaviorDisplayDisconnected";
 
   #endregion
 
@@ -354,6 +357,11 @@ public static class LocalizationKeys {
   public const string kCubeHelpStringsInstructionsSlide2altCopy = "cubeHelpStrings.Instructions.Slide2altCopy";
   public const string kCubeHelpStringsInstructionsSlide3 = "cubeHelpStrings.Instructions.Slide3";
   public const string kCubeHelpStringsInstructionsSlide3altCopy = "cubeHelpStrings.Instructions.Slide3altCopy";
+  public const string kCubeHelpStringsInstructionsQuickSnackSlideTitle = "cubeHelpStrings.Instructions.QuickSnackSlide.Title";
+  public const string kCubeHelpStringsInstructionsQuickSnackSlideBody = "cubeHelpStrings.Instructions.QuickSnackSlide.Body";
+  public const string kCubeHelpStringsInstructionsQuickSnackSlideButton = "cubeHelpStrings.Instructions.QuickSnackSlide.Button";
+  public const string kCubeHelpStringsInstructionsFeedPopupTitle = "cubeHelpStrings.Instructions.FeedPopup.Title";
+  public const string kCubeHelpStringsInstructionsFeedPopupBody = "cubeHelpStrings.Instructions.FeedPopup.Body";
 
   #endregion
 
@@ -565,6 +573,8 @@ public static class LocalizationKeys {
   public const string kNeedsNeedsEnergyModalInstruction2 = "needs.NeedsEnergyModal.Instruction2";
   public const string kNeedsNeedsEnergyModalInstruction3 = "needs.NeedsEnergyModal.Instruction3";
   public const string kNeedsNeedsEnergyModalFeedingComplete = "needs.NeedsEnergyModal.FeedingComplete";
+  public const string kNeedsNeedsEnergyModalCubeHelpPropmt = "needs.NeedsEnergyModal.CubeHelp.Propmt";
+  public const string kNeedsNeedsEnergyModalCubeHelpPropmtButton = "needs.NeedsEnergyModal.CubeHelp.Propmt.Button";
   public const string kNeedsNeedsRepairModalTitle = "needs.NeedsRepairModal.Title";
   public const string kNeedsNeedsRepairModalRepairSummary = "needs.NeedsRepairModal.RepairSummary";
   public const string kNeedsNeedsRepairModalHeadDamageNotice = "needs.NeedsRepairModal.HeadDamageNotice";
@@ -587,6 +597,23 @@ public static class LocalizationKeys {
   public const string kNeedsRewardsDialogSparksEarned = "needs.RewardsDialog.SparksEarned";
   public const string kNeedsRewardsDialogTrickUnlocked = "needs.RewardsDialog.TrickUnlocked";
   public const string kNeedsRewardsDialogSongUnlocked = "needs.RewardsDialog.SongUnlocked";
+  public const string kNeedsFreeplaySparksRewardCozmoSings = "needs.FreeplaySparksReward.CozmoSings";
+  public const string kNeedsFreeplaySparksRewardFistBump = "needs.FreeplaySparksReward.FistBump";
+  public const string kNeedsFreeplaySparksRewardGatherCubes = "needs.FreeplaySparksReward.GatherCubes";
+  public const string kNeedsFreeplaySparksRewardHiccupsEndBad = "needs.FreeplaySparksReward.HiccupsEndBad";
+  public const string kNeedsFreeplaySparksRewardHiccupsEndGood = "needs.FreeplaySparksReward.HiccupsEndGood";
+  public const string kNeedsFreeplaySparksRewardKnockDownCubes = "needs.FreeplaySparksReward.KnockDownCubes";
+  public const string kNeedsFreeplaySparksRewardPeekAboo = "needs.FreeplaySparksReward.PeekAboo";
+  public const string kNeedsFreeplaySparksRewardPickUpCube = "needs.FreeplaySparksReward.PickUpCube";
+  public const string kNeedsFreeplaySparksRewardPopAWheelie = "needs.FreeplaySparksReward.PopAWheelie";
+  public const string kNeedsFreeplaySparksRewardPounce = "needs.FreeplaySparksReward.Pounce";
+  public const string kNeedsFreeplaySparksRewardPyramidCompleted = "needs.FreeplaySparksReward.PyramidCompleted";
+  public const string kNeedsFreeplaySparksRewardRollACube = "needs.FreeplaySparksReward.RollACube";
+  public const string kNeedsFreeplaySparksRewardStackCube = "needs.FreeplaySparksReward.StackCube";
+  public const string kNeedsFreeplaySparksRewardWorkout = "needs.FreeplaySparksReward.Workout";
+
+  public const string kNeedsFeedingDetailsOverfedHiccupsTitle = "needs.FeedingOverfedHiccups.Title";
+  public const string kNeedsFeedingDetailsOverfedHiccupsDescription = "needs.FeedingOverfedHiccups.Description";
 
   #endregion
 
@@ -646,7 +673,6 @@ public static class LocalizationKeys {
 
   #region RewardedActionStrings
 
-  public const string kRewardDescriptionMissing = "reward.description.Missing";
   public const string kRewardDescriptionFreeplaySpark = "reward.description.Freeplay.Spark";
   public const string kRewardDescriptionFreeplayCompleteBehaviorStack = "reward.description.Freeplay.CompleteBehavior.Stack";
   public const string kRewardDescriptionFreeplayCompleteBehaviorPounce = "reward.description.Freeplay.CompleteBehavior.Pounce";
@@ -813,6 +839,7 @@ public static class LocalizationKeys {
   public const string kLabelBasicCozmo = "label.basicCozmo";
   public const string kLabelCurrentPage = "label.currentPage";
   public const string kLabelRewardHeader = "label.RewardHeader";
+  public const string kButtonBuyACozmo = "button.buyACozmo";
 
   #endregion
 
@@ -992,7 +1019,7 @@ public static class LocalizationKeys {
   public const string kVoiceCommandsLearnCommandsFistBump_desc = "voiceCommands.learnCommands.FistBump_desc";
   public const string kVoiceCommandsLearnCommandsLearnVoiceCommandTitle = "voiceCommands.learnCommands.LearnVoiceCommandTitle";
   public const string kVoiceCommandsLearnCommandsRememberPhrases = "voiceCommands.learnCommands.RememberPhrases";
-  public const string kVoiceCommandsLearnCommandsSpecialPhrases = "voiceCommands.learnCommands.Special Phrases";
+  public const string kVoiceCommandsLearnCommandsSpecialPhrases = "voiceCommands.learnCommands.SpecialPhrases";
   public const string kVoiceCommandsLearnCommandsDoATrick = "voiceCommands.learnCommands.DoATrick";
   public const string kVoiceCommandsLearnCommandsLetsPlay = "voiceCommands.learnCommands.LetsPlay";
   public const string kVoiceCommandsLearnCommandsExplainMicIcon = "voiceCommands.learnCommands.ExplainMicIcon";
@@ -1002,6 +1029,10 @@ public static class LocalizationKeys {
   public const string kVoiceCommandsMainPageButtonAppSettingsButton = "voiceCommands.mainPageButton.AppSettingsButton";
   public const string kVoiceCommandsCommandNoThankYou = "voiceCommands.command.NoThankYou";
   public const string kVoiceCommandsCommandYesPlease = "voiceCommands.command.YesPlease";
+  public const string kVoiceCommandsGoToSleepCancel = "voiceCommands.GoToSleepCancel";
+  public const string kVoiceCommandsTutorialTextEnableMicInstrructions = "voiceCommands.tutorialText.EnableMicInstrructions";
+  public const string kVoiceCommandsTutorialTextFirstEnableMicInstrructions = "voiceCommands.tutorialText.FirstEnableMicInstrructions";
+  public const string kVoiceCommandsTutorialTextForBestResults = "voiceCommands.tutorialText.ForBestResults";
 
   #endregion
 

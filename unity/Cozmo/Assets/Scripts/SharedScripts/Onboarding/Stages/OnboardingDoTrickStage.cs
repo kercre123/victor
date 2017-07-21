@@ -35,6 +35,12 @@ namespace Onboarding {
           // switch to freeplay so sparks work
           CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Freeplay);
           CurrentRobot.EnableSparkUnlock(Anki.Cozmo.UnlockId.RollCube);
+          UnlockableInfo info = UnlockablesManager.Instance.GetUnlockableInfo(Anki.Cozmo.UnlockId.RollCube);
+          Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = info.SparkedMusicState.Sparked;
+          if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {
+            sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
+          }
+          RobotEngineManager.Instance.CurrentRobot.SetSparkedMusicState(sparkedMusicState);
         }
         else {
           var cozmoNotOnTreadsData = new AlertModalData("cozmo_off_treads_alert",
@@ -58,6 +64,11 @@ namespace Onboarding {
       // we don't want to stop them in the event they got a broken cozmo and it cant work.
       // so success or fail just move on.
       OnboardingManager.Instance.GoToNextStage();
+      // just get the users used to having their sparks taken away but don't do it if they quit the app before completion
+      // as they will have to go through this phase again.
+      int sparkCost = (int)Anki.Cozmo.EnumConcept.GetSparkCosts(Anki.Cozmo.SparkableThings.DoATrick, 1);
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(
+                      RewardedActionManager.Instance.SparkID, sparkCost);
     }
 
     public override void SkipPressed() {

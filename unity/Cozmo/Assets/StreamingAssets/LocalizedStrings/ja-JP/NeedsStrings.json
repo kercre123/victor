@@ -46,7 +46,7 @@
     "translation" : "頭は調整が必要"
   },
   "needs.NeedsRepairModal.HeadRepairedNotice" : {
-    "translation" : "ヘッド調整済み"
+    "translation" : "ヘッド調節"
   },
   "needs.NeedsRepairModal.TreadsDamageNotice" : {
     "translation" : "トレッドにはアライメントが必要です"
@@ -58,19 +58,19 @@
     "translation" : "リフトには較正が必要です"
   },
   "needs.NeedsRepairModal.LiftRepairedNotice" : {
-    "translation" : "リフト校正済み"
+    "translation" : "リフトキャリブレーション"
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
     "translation" : "チューンアップするパートをタップします。"
   },
   "needs.NeedsRepairModal.TuneUpInstruction" : {
-    "translation" : "矢印パターンを再作成するには、右のボタンを使用します。それからSENDをタップします。"
+    "translation" : "矢印パターンを再作成するには、右のボタンを使用します。次に、 <b> SEND </b> 。"
   },
   "needs.NeedsRepairModal.NoRepairsNeeded" : {
     "translation" : "Cozmoは完全に調整されています！"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "SEND"
+    "translation" : "送る"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
     "translation" : "SCAN COZMO"
@@ -85,7 +85,7 @@
     "translation" : "トレッドを整列..."
   },
   "needs.ContinueButtonText" : {
-    "translation" : "持続する"
+    "translation" : "続ける"
   },
   "needs.NeedsRepairModal.TuneUpComplete" : {
     "translation" : "Cozmoは完全に調整されています！"
@@ -101,5 +101,47 @@
   },
   "needs.RewardsDialog.SongUnlocked" : {
     "translation" : "あなたはロックされている{0} ！"
+  },
+  "needs.FreeplaySparksReward.CozmoSings" : {
+    "translation" : "Cozmoがちょうど生成されました{0}歌を歌うことで火花！"
+  },
+  "needs.FreeplaySparksReward.FistBump" : {
+    "translation" : "Cozmoがちょうど生成されました{0}拳のバンプをすることによって火花！"
+  },
+  "needs.FreeplaySparksReward.GatherCubes" : {
+    "translation" : "Cozmoがちょうど生成されました{0}彼のキューブを集めることで火花！"
+  },
+  "needs.FreeplaySparksReward.HiccupsEndBad" : {
+    "translation" : "Cozmoがちょうど生成されました{0}彼のしゃっくりを治すことによって火花！"
+  },
+  "needs.FreeplaySparksReward.HiccupsEndGood" : {
+    "translation" : "Cozmoがちょうど生成されました{0}彼のしゃっくりを治すことによって火花！"
+  },
+  "needs.FreeplaySparksReward.KnockDownCubes" : {
+    "translation" : "Cozmoがちょうど生成されました{0}キューブをノックダウンしてスパーク！"
+  },
+  "needs.FreeplaySparksReward.PeekAboo" : {
+    "translation" : "Cozmoがちょうど生成されました{0} Peek A Booを弾くことで火花！"
+  },
+  "needs.FreeplaySparksReward.PickUpCube" : {
+    "translation" : "Cozmoがちょうど生成されました{0}キューブを拾うことで火花！"
+  },
+  "needs.FreeplaySparksReward.PopAWheelie" : {
+    "translation" : "Cozmoがちょうど生成されました{0}ウィリーを飛ばしてスパーク！"
+  },
+  "needs.FreeplaySparksReward.Pounce" : {
+    "translation" : "Cozmoがちょうど生成されました{0}鳴くことで火花！"
+  },
+  "needs.FreeplaySparksReward.PyramidCompleted" : {
+    "translation" : "Cozmoがちょうど生成されました{0}ピラミッドを造ることによって火花！"
+  },
+  "needs.FreeplaySparksReward.RollACube" : {
+    "translation" : "Cozmoがちょうど生成されました{0}キューブを回転させてスパーク！"
+  },
+  "needs.FreeplaySparksReward.StackCube" : {
+    "translation" : "Cozmoがちょうど生成されました{0}キューブを積み重ねることで火花！"
+  },
+  "needs.FreeplaySparksReward.Workout" : {
+    "translation" : "Cozmoがちょうど生成されました{0}運動をしてスパーク！"
   }
 }

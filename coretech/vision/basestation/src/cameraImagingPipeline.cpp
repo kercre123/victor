@@ -14,6 +14,7 @@
 
 
 #include "anki/vision/basestation/cameraImagingPipeline.h"
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/vision/basestation/image.h"
 
 #include "util/console/consoleInterface.h"

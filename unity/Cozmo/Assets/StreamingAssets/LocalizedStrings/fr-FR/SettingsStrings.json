@@ -13,19 +13,19 @@
     "translation" : "Cube Status"
   },
   "settings.cubeStatusPanel.locateText" : {
-    "translation" : "(Appuyez sur pour localiser Cubes)"
+    "translation" : "Tap to locate Cubes."
   },
   "settings.sdkPanel.activateSDKalert.text" : {
     "translation" : "Activer le mode SDK?"
   },
   "settings.sdkPanel.disableButton.text" : {
-    "translation" : "Désactiver SDK"
+    "translation" : "DISABLE SDK"
   },
   "settings.sdkPanel.enableButton.text" : {
-    "translation" : "Activer SDK"
+    "translation" : "ENABLE SDK"
   },
   "settings.sdkPanel.label.title" : {
-    "translation" : "Cozmo SDK"
+    "translation" : "COZMO SDK"
   },
   "settings.sdkPanel.connectionCommandCount.text" : {
     "translation" : "Commandes: {0}"
@@ -64,28 +64,28 @@
     "translation" : "Incompatible SDK Version"
   },
   "settings.sdkPanel.hideScreenButton.text" : {
-    "translation" : "Masquer l'écran"
+    "translation" : "HIDE SCREEN"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo" : {
-    "translation" : "sommeil Cozmo"
+    "translation" : "SLEEP COZMO"
   },
   "settings.sleepCozmoPanel.confirmationModal.title" : {
     "translation" : "Cozmo sommeil?"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "Laissez Cozmo sur son chargeur pour booster sa batterie ou robinet de sommeil pour déconnecter"
+    "translation" : "Laissez Cozmo sur son chargeur pour augmenter sa batterie ou appuyez sur <b><color=#11a2f0ff> DORMIR </color></b> Pour se déconnecter."
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
-    "translation" : "Dormir"
+    "translation" : "DORMIR"
   },
   "settings.supportView.button.restoreCozmo" : {
-    "translation" : "Restaurer Cozmo"
+    "translation" : "RESTORE COZMO"
   },
   "settings.supportView.label.directions" : {
     "translation" : "Soutien à la clientèle est disponible en ligne à"
   },
   "settings.supportView.label.restoreCozmoClarification" : {
-    "translation" : "(Re-applique déverrouille de ce profil à votre Cozmo)"
+    "translation" : "Réapplique des déverrouillages de ce profil à votre Cozmo."
   },
   "settings.supportView.label.title" : {
     "translation" : "Contactez le support"
@@ -94,10 +94,10 @@
     "translation" : "support.anki.com"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton" : {
-    "translation" : "Restaurer"
+    "translation" : "RESTAURER"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13> Impossible de restaurer votre Cozmo </color>"
+    "translation" : "<color=#b52c13>Failed to Restore Your Cozmo.</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
     "translation" : "La restauration de votre Cozmo ..."
@@ -118,16 +118,16 @@
     "translation" : "Remerciements"
   },
   "settings.versionPanel.button.eraseCozmo" : {
-    "translation" : "Effacer Cozmo"
+    "translation" : "ERASE COZMO"
   },
   "settings.versionPanel.button.support" : {
     "translation" : "Soutien"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton" : {
-    "translation" : "Effacer"
+    "translation" : "EFFACER"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13> Impossible d'effacer vos Cozmo </color>"
+    "translation" : "<color=#b52c13>Failed to Erase Your Cozmo.</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
     "translation" : "Effacement Cozmo ..."
@@ -136,7 +136,7 @@
     "translation" : "Effacer Cozmo?"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel" : {
-    "translation" : "AVERTISSEMENT: Ceci effacera les données de Cozmo, et tous se déverrouille. Utilisez cette option uniquement si vous souhaitez recommencer avec Cozmo! Vos Bits et Sparks seront sauvegardés."
+    "translation" : "WARNING: This will clear Cozmo's data, and all unlocks. Use this only if you wish to start over with Cozmo!"
   },
   "settings.versionPanel.label.appRun" : {
     "translation" : "App Run ID: {0}"

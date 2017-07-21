@@ -13,6 +13,10 @@
 #ifndef __Cozmo_Basestation_VoiceCommand_VoiceCommandTuning_H_
 #define __Cozmo_Basestation_VoiceCommand_VoiceCommandTuning_H_
 
+#include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
+#include "anki/cozmo/basestation/voiceCommands/recognitionSetupData.h"
+#include "anki/cozmo/basestation/voiceCommands/sampleKeyphraseData.h"
+
 #include "clad/types/voiceCommandTypes.h"
 #include "audioUtil/audioRecognizerProcessor.h"
 #include "util/environment/locale.h"
@@ -46,45 +50,61 @@ class CommandPhraseData;
 class PhraseData;
 using PhraseDataSharedPtr = std::shared_ptr<PhraseData>;
 
+class LanguagePhraseData;
+using LanguagePhraseDataSharedPtr = std::shared_ptr<LanguagePhraseData>;
+using ConstLanguagePhraseDataSharedPtr = std::shared_ptr<const LanguagePhraseData>;
+
 struct TestResultScoreData
 {
-  std::string _scoredPhrase;
+  double _score = 0;
+  double _maxScore = 0;
   
-  int _hits = 0;
-  int _misses = 0;
-  int _falsePositives = 0;
-  
-  double _targetScoreConstant = 600;
+  static constexpr double _kTargetScoreConstant = 500;
   
   double _hitMult = 1.0f;
   double _missMult = -1.0f;
   double _falsePositiveMult = -1.0f;
   double _targetScoreDiffMult = -1.0f;
   
-  std::map<std::string, std::vector<Anki::AudioUtil::AudioRecognizerProcessor::ResultType>> _filenameToResultsMap;
+  struct TestResultInfo
+  {
+    CommandCounts                                                       _expectedResults;
+    std::vector<Anki::AudioUtil::AudioRecognizerProcessor::ResultType>  _actualResults;
+  };
+  
+  std::map<std::string, TestResultInfo> _filenameToResultsMap;
   
   // Uses hits, misses, and false positives (and their multipliers) along with the score of recognized phrases to give an overall score
-  double GetScore() const;
+  double CalculateScore(const std::string phrase, const ConstLanguagePhraseDataSharedPtr& phraseDataLookup);
   
   // Uses hits and misses and the hits multiplier to give the best possible score (omits calculating negative impacts)
-  double GetMaxScore() const;
+  double GetScore() const { return _score; }
+  double GetMaxScore() const { return _maxScore; }
 };
 
 class VoiceCommandTuning {
 public:
   VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatform,
                      const CommandPhraseData& commandPhraseData,
-                     double targetScore,
-                     Anki::Util::Locale locale);
+                     Anki::Util::Locale locale,
+                     const std::string& sampleGroupDir = "");
   ~VoiceCommandTuning();
   
   TestResultScoreData ScoreParams(const std::set<VoiceCommandType>& testCommandSet,
                                   VoiceCommandType commandType, int paramA, int paramB, bool playAudio = false) const;
   
+  TestResultScoreData ScoreTriggerAndCommand(const ContextConfig& commandListConfig,
+                                             bool playAudio, ContextConfigSharedPtr& out_CombinedConfig) const;
+  
   bool CalculateParamsForCommand(const std::set<VoiceCommandType>& testCommandSet,
                                  VoiceCommandType commandType, int& out_paramA, int& out_paramB) const;
   
+  using ContextConfigSetter = std::function<void(ContextConfig&, float)>;
+  float CalculateContextConfigValue(ContextConfigSetter setterFunc,
+                                    double valueBegin, double valueEnd, bool useGoldenSectionSearch) const;
+  
   static double GSSMaximum(std::function<double(double)> function, double a, double b, int maxIterations);
+  static double FindBestBruteForce(std::function<double(double)> function, double a, double b, int iterations);
   
 private:
   
@@ -94,8 +114,13 @@ private:
   std::string                                                   _generalNNPath;
   std::string                                                   _languageSampleDir;
   TestResultScoreData                                           _baseScoreData;
-  const CommandPhraseData&                                      _commandPhraseData;
-  Anki::Util::Locale                                            _currentLocale;
+  const CommandPhraseData::ContextDataMap&                      _contextDataMap;
+  ConstLanguagePhraseDataSharedPtr                              _languagePhraseData;
+  RecognitionSetupData                                          _triggerPhraseSetup;
+  
+  using ResetTask = std::function<void()>;
+  TestResultScoreData CollectResults(const std::set<VoiceCommandType>& testCommandSet,
+                                     bool playAudio, ResetTask resetTask = ResetTask{}) const;
 };
   
   

@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
@@ -44,6 +43,7 @@
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 
 
 namespace Anki {
@@ -60,12 +60,11 @@ static const char* kRequiredSevereNeedsStateKey      = "requiredSevereNeedsState
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
-static const char* kRequireObjectTappedKey           = "requireObjectTapped";
-static const char* kObjectTapInteractionDisableLock  = "ObjectTapInteraction";
 static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
 static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+static const std::string kIdleLockPrefix             = "Behavior_";
 
 
 static const int kMaxResumesFromCliff                = 2;
@@ -75,7 +74,6 @@ static const float kCooldownFromCliffResumes_sec     = 15.0;
 constexpr ReactionTriggerHelpers::FullReactionArray kObjectTapInteractionDisablesArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -105,7 +103,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kObjectTapInteractionDis
 constexpr ReactionTriggerHelpers::FullReactionArray kSparkBehaviorDisablesArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -210,6 +207,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isRunning(false)
 , _isResuming(false)
+, _hasSetIdle(false)
 {
   if(!ReadFromJson(config)){
     PRINT_NAMED_WARNING("IBehavior.ReadFromJson.Failed",
@@ -302,13 +300,11 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     _executableType = ExecutableBehaviorTypeFromString(executableBehaviorTypeJson.asCString());
   }
   
-  JsonTools::GetValueOptional(config, kRequireObjectTappedKey, _requireObjectTapped);
-  
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy = WantsToRunStrategyFactory::CreateWantsToRunStrategy(_robot, wantsToRunConfig);
+    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(_robot, wantsToRunConfig));
   }
   
   // Doesn't actually read anything from behavior config, but sets defaults
@@ -414,6 +410,7 @@ Result IBehavior::Init()
   _stopRequestedAfterAction = false;
   _actingCallback = nullptr;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _hasSetIdle = false;
   Result initResult = InitInternal(_robot);
   if ( initResult != RESULT_OK ) {
     _isRunning = false;
@@ -429,7 +426,6 @@ Result IBehavior::Init()
     SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
   }
   
-  UpdateTappedObjectLights(true);
   InitScored(_robot);
   
   return initResult;
@@ -471,7 +467,6 @@ Result IBehavior::Resume(ReactionTrigger resumingFromType)
       SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
     }
     
-    UpdateTappedObjectLights(true);
   } else {
     _isRunning = false;
   }
@@ -505,9 +500,7 @@ void IBehavior::Stop()
   }
   
   _isRunning = false;
-  // If the behavior uses double tapped objects then call StopInternalFromDoubleTap in case
-  // StopInternal() does things like fire mood events or sets failures to use
-  (RequiresObjectTapped() ? StopInternalFromDoubleTap(_robot) : StopInternal(_robot));
+  StopInternal(_robot);
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
   
@@ -515,6 +508,15 @@ void IBehavior::Stop()
   // re-enable before stopping
   while(!_smartLockIDs.empty()){
     SmartRemoveDisableReactionsLock(*_smartLockIDs.begin());
+  }
+
+  if(_hasSetIdle){
+    SmartRemoveIdleAnimation(_robot);
+  }
+  
+  // clear the path component motion profile if it was set by the behavior
+  if( _hasSetMotionProfile ) {
+    SmartClearMotionProfile();
   }
 
   // Unlock any tracks which the behavior hasn't had a chance to unlock
@@ -633,21 +635,6 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
     return false;
   }
   
-  // check if the behavior needs a tapped object and if there is a tapped object
-  if(_requireObjectTapped)
-  {
-    if(!robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-    {
-      return false;
-    }
-    // Otherwise there is a tapped object so we need to make sure this behaviors target blocks are up to
-    // date before checking IsRunnableInternal()
-    else
-    {
-      UpdateTargetBlocks(robot);
-    }
-  }
-  
   if((_wantsToRunStrategy != nullptr) &&
      !_wantsToRunStrategy->WantsToRun(robot)){
     return false;
@@ -693,13 +680,6 @@ Result IBehavior::ResumeInternal(Robot& robot)
 {
   // by default, if we are runnable again, initialize and start over
   Result resumeResult = RESULT_FAIL;
-  
-  // If this behavior needs a tapped object and there is a tapped object make sure
-  // to update our target blocks before trying to resume
-  if(_requireObjectTapped && robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    UpdateTargetBlocks(robot);
-  }
   
   BehaviorPreReqRobot preReqData(robot);
   if ( IsRunnable(preReqData) ) {
@@ -840,9 +820,6 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, b
   PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetIDStr().c_str(), EnumToString(objectiveAchieved));
   // send das event
   Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetIDStr().c_str());
-
-  UpdateTappedObjectLights(false);
-
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -855,8 +832,34 @@ void IBehavior::NeedActionCompleted(NeedsActionId needsActionId)
 
   _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needsActionId);
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation)
+{
+  if(ANKI_VERIFY(!_hasSetIdle,
+                 "IBehavior.SmartPushIdleAnimation.IdleAlreadySet",
+                 "Behavior %s has already set an idle animation",
+                 GetIDStr().c_str())){
+    robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
+    _hasSetIdle = true;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartRemoveIdleAnimation(Robot& robot)
+{
+  if(ANKI_VERIFY(_hasSetIdle,
+                 "IBehavior.SmartRemoveIdleAnimation.NoIdleSet",
+                 "Behavior %s is trying to remove an idle, but none is currently set",
+                 GetIDStr().c_str())){
+    robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
+    _hasSetIdle = false;
+  }
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SmartDisableReactionsWithLock(const std::string& lockID,
                                               const TriggersArray& triggers)
@@ -880,7 +883,29 @@ void IBehavior::SmartDisableReactionWithLock(const std::string& lockID, const Re
   _smartLockIDs.insert(lockID);
 }
 #endif
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartSetMotionProfile(const PathMotionProfile& motionProfile)
+{
+  ANKI_VERIFY(!_hasSetMotionProfile,
+              "IBehavior.SmartSetMotionProfile.AlreadySet",
+              "a profile was already set and not cleared");
   
+  _robot.GetPathComponent().SetCustomMotionProfile(motionProfile);
+  _hasSetMotionProfile = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartClearMotionProfile()
+{
+  ANKI_VERIFY(_hasSetMotionProfile,
+              "IBehavior.SmartClearMotionProfile.NotSet",
+              "a profile was not set, so can't be cleared");
+
+  _robot.GetPathComponent().ClearCustomMotionProfile();
+  _hasSetMotionProfile = false;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName)
 {
@@ -1025,65 +1050,6 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   }
     
   return ActionResult::SUCCESS;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::UpdateTappedObjectLights(const bool on) const
-{
-  // Prevents enabling/disabling the ReactToCubeMoved behavior multiple times
-  static bool behaviorDisabled = false;
-
-  if(_requireObjectTapped &&
-     _robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    const ObjectID& _tappedObject = _robot.GetBehaviorManager().GetCurrTappedObject();
-    
-
-    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
-    _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
-    
-    if(on)
-    {
-      _robot.GetCubeLightComponent().SetTapInteractionObject(_tappedObject);
-    
-      if(!behaviorDisabled)
-      {
-        _robot.GetBehaviorManager().DisableReactionsWithLock(kObjectTapInteractionDisableLock,
-                                                            kObjectTapInteractionDisablesArray);
-
-        behaviorDisabled = true;
-      }
-    }
-    else
-    {
-      if(behaviorDisabled)
-      {
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kObjectTapInteractionDisableLock);
-        behaviorDisabled = false;
-      }
-      
-      _robot.GetBehaviorManager().LeaveObjectTapInteraction();
-    }
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::HandleNewDoubleTap(Robot& robot)
-{
-  Stop();
-  UpdateTargetBlocks(robot);
-  
-  BehaviorPreReqRobot preReqData(robot);
-  
-  if(!IsRunnable(preReqData))
-  {
-    return false;
-  }
-  
-  Init();
-  return true;
 }
 
 

@@ -1,9 +1,0 @@
-{
-  "behaviorClass": "RollBlock",
-  "behaviorID": "TapInteractionRollCube",
-  "needsActionID": "RollACube",
-  "displayNameKey":"behavior.RollBlock",
-  "requireObjectTapped" : true,
-  "requiredUnlockId": "RollCube",
-  "isBlockRotationImportant" : true
-}

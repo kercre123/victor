@@ -49,7 +49,6 @@ static constexpr u32 kMaxTimeInPastToHaveObservedFace_ms   = 1000;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFistBumpArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -106,7 +105,7 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersFistBumpArray);
 
   // Disable idle animation
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
+  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   
   _fistBumpRequestCnt = 0;
   _startLookingForFaceTime_s = 0.f;
@@ -299,8 +298,6 @@ void BehaviorFistBump::StopInternal(Robot& robot)
   robot.GetMoveComponent().EnableLiftPower(true);
   robot.GetMoveComponent().EnableHeadPower(true);
   
-  robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
-
   // Make sure trigger is reset if behavior is interrupted
   ResetTrigger(false);
 }

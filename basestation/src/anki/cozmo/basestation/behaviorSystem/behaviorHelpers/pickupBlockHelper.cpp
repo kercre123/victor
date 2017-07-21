@@ -142,15 +142,6 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
       PickupObjectAction* pickupAction = new PickupObjectAction(robot, _targetID);
       // no need to do an extra check in the action
       pickupAction->SetDoNearPredockPoseCheck(false);
-      {
-        // set path motion profile if applicable
-        PathMotionProfile mp;
-        if(GetPathMotionProfile(robot, mp)){
-          pickupAction->SetSpeedAndAccel(mp.dockSpeed_mmps,
-                                         mp.dockAccel_mmps2,
-                                         mp.dockDecel_mmps2);
-        }
-      }
       
       action->AddAction(pickupAction);
     }

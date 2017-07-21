@@ -143,7 +143,7 @@ public class ContextManager : MonoBehaviour {
     }
     Color transparentDimColor = new Color(_DefaultSettings.ContextDimColor.r, _DefaultSettings.ContextDimColor.g, _DefaultSettings.ContextDimColor.b, 0);
     _OverlayForeground.color = transparentDimColor;
-    _ForegroundTweener.Append(_OverlayForeground.DOFade(_DefaultSettings.ContextDimAlpha, _DefaultSettings.ContextFlashDuration));
+    _ForegroundTweener.Append(_OverlayForeground.DOFade(_DefaultSettings.ContextDimColor.a, _DefaultSettings.ContextFlashDuration));
     _ForegroundTweener.Play();
   }
 

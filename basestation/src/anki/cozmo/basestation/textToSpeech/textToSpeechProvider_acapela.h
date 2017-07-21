@@ -24,9 +24,9 @@ public:
   // Acapela Colibri voices are monophonic
   static int GetNumChannels() { return 1; }
   
-  // Convert Anki unit scale (default 1) to Acapela percentage scale (default 100),
-  // then clamp to supported range (30-300)
-  static float GetSpeechRate(float durationScalar);
+  // Adjust base speed by unit scalar, then clamp to supported range
+  static float GetSpeechRate(int speed, float durationScalar);
+  
 };
   
 } // end namespace TextToSpeech

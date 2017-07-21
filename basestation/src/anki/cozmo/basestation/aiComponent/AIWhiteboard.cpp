@@ -314,11 +314,10 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
   outObjectList.clear();
   
   {
-    Robot& robotRef = _robot; // can't capture member of this for lambda, need scoped variable
     // ask for all cubes we know about inside the beacon
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    filter.AddFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
+    filter.AddFilterFcn([this, &outObjectList, beacon](const ObservableObject* blockPtr)
     {
       if(!_robot.GetCarryingComponent().IsCarryingObject(blockPtr->GetID()) )
       {
@@ -1043,8 +1042,10 @@ void AIWhiteboard::SetSevereNeedExpression(NeedId need) {
                  "Set to %s (was %s)",
                  NeedIdToString(need),
                  NeedIdToString(_severeNeedExpression));
-  
-  DEV_ASSERT(_severeNeedExpression == NeedId::Count,
+
+  // shouldn't already be expressing a severe need, except in the case of Play, because there may not have
+  // been a get-out from play yet (e.g. play goes severe first, then hunger)
+  DEV_ASSERT(_severeNeedExpression == NeedId::Count || _severeNeedExpression == NeedId::Play,
              "AIWhiteboard.SetSevereNeedExpression.ExpressionAlreadySet");
   
   //////
@@ -1115,41 +1116,6 @@ void AIWhiteboard::ClearSevereNeedExpression() {
   _severeNeedExpression = NeedId::Count;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
-{
-  const ObservableObject* connectedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
-  
-  // We still want to do something with this double tapped object even if it doesn't exist in the
-  // current frame
-  if(connectedObject != nullptr)
-  {
-    _robot.GetAIComponent().GetObjectInteractionInfoCache().ObjectTapInteractionOccurred(objectID);
-  }
-  else
-  {
-    PRINT_NAMED_WARNING("AIWhiteboard.SetObjectTapInteraction",
-                        "There's no connected instance but we are setting tap interaction for '%d'.", objectID.GetValue());
-  }
-
-  _haveTapIntentionObject = true;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::ClearObjectTapInteraction()
-{
-  _haveTapIntentionObject = false;
-  
-  // Let ReactToDoubleTap be able to react if the next double tapped object is the same as the last
-  // double tapped object
-  _canReactToDoubleTapReactAgain = true;
-  
-  _suppressReactToDoubleTap = false;
-  
-  // Invalidate current valid objects since tapIntention has changed
-  _robot.GetAIComponent().GetObjectInteractionInfoCache().InvalidateAllIntents();
-}
 
 } // namespace Cozmo
 } // namespace Anki

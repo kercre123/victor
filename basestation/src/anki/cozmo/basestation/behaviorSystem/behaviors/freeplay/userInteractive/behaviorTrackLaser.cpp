@@ -469,7 +469,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(Robot& robot)
   
   if(ShouldStreamline())
   {
-    action->AddAction(new MoveHeadToAngleAction(robot, kAbsHeadDown_rad));
+    action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::VC_LookDownForLaser));
   }
   
   // Once we've gottena a couple of images, switch to looking for a laser dot
@@ -504,7 +504,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
   // However, don't override sparks driving or idle animations (i.e. when "streamlining").
   if(!ShouldStreamline() && !_haveAdjustedAnimations)
   {
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::LaserFace, GetIDStr());
+    SmartPushIdleAnimation(robot, AnimationTrigger::LaserFace);
     
     robot.GetDrivingAnimationHandler().PushDrivingAnimations(
      {AnimationTrigger::LaserDriveStart,
@@ -755,7 +755,7 @@ void BehaviorTrackLaser::Cleanup(Robot& robot)
   // Only pop animations if set within this behavior
   if(_haveAdjustedAnimations)
   {
-    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+    SmartRemoveIdleAnimation(robot);
     robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
     _haveAdjustedAnimations = false;
   }

@@ -520,7 +520,277 @@ Blockly.Blocks['cozmo_event_on_cube_tap'] = {
 // Vertical specific blocks
 // ========================================================================================================================
 
-Blockly.Blocks['cozmo_vert_cube_position'] = {
+// Sensors / Inputs
+
+// Cozmo
+
+Blockly.Blocks['cozmo_vert_get_position_3d'] = {
+  /**
+   * Block to read the X,Y or Z component of Cozmo's position
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "Cozmo position %1",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "AXIS",
+            "options": [
+              ['x', '0'],
+              ['y', '1'],
+              ['z', '2']
+            ]
+          }
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_get_angle'] = {
+  /**
+   * Block to read Cozmo's angle (left/right rotation)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Cozmo angle",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_get_pitch'] = {
+  /**
+   * Block to read Cozmo's pitch (up/down rotation)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Cozmo pitch",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_get_lift_height'] = {
+  /**
+   * Block to read Cozmo's lift height (as a factor from 0.0 to 1.0)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Cozmo lift height",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_get_head_angle'] = {
+  /**
+   * Block to read Cozmo's lift height (as a factor from 0.0 to 1.0)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Cozmo head angle",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+// Faces (Sensors / Inputs)
+
+Blockly.Blocks['cozmo_vert_face_get_is_visible'] = {
+  /**
+   * Block to read if there is a visible most recently seen face
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Face is visible",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Boolean",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_face_get_name'] = {
+  /**
+   * Block to read the name of the most recently seen face
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Face name",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "String",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_face_get_position_2d'] = {
+  /**
+   * Block to read the camera x,y position of the most recently seen face
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Face Camera %1",
+      "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "AXIS",
+            "options": [
+              ['x', '0'],
+              ['y', '1']
+            ]
+          }
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_face_get_position_3d'] = {
+  /**
+   * Block to read the world x,y,z position of the most recently seen face
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Face Position %1",
+      "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "AXIS",
+            "options": [
+              ['x', '0'],
+              ['y', '1'],
+              ['z', '2']
+            ]
+          }
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+// Cubes (Sensors / Inputs)
+
+Blockly.Blocks['cozmo_vert_cube_get_is_visible'] = {
+  /**
+   * Block to read if a given cube is visible
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Cube %1 is visible",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3']
+          ]
+        },
+      ],
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Boolean",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_get_position_2d'] = {
+  /**
+   * Block to read the camera x,y position of one of Cozmo's cube's
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      { 
+        "message0": "Cube %1 Camera %2",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+          {
+            "type": "field_dropdown",
+            "name": "AXIS",
+            "options": [
+              ['x', '0'],
+              ['y', '1']
+            ]
+          }
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_get_position_3d'] = {
   /**
    * Block to read the X,Y or Z component of one of Cozmo's cube's position
    * @this Blockly.Block
@@ -559,128 +829,7 @@ Blockly.Blocks['cozmo_vert_cube_position'] = {
   }
 };
 
-Blockly.Blocks['cozmo_vert_position'] = {
-  /**
-   * Block to read the X,Y or Z component of Cozmo's position
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit(
-      {
-        "message0": "Cozmo position %1",
-        "args0": [
-          {
-            "type": "field_dropdown",
-            "name": "AXIS",
-            "options": [
-              ['x', '0'],
-              ['y', '1'],
-              ['z', '2']
-            ]
-          }
-        ],
-        "inputsInline": true,
-        "output": "Number",
-        "colour": Blockly.Colours.sensing.primary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-      });
-  }
-};
-
-Blockly.Blocks['cozmo_vert_angle'] = {
-  /**
-   * Block to read the Cozmo's angle (left/right rotation)
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "message0": "Cozmo angle",
-      "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_vert_face_name'] = {
-  /**
-   * Block to read the name of the most recently seen face
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "message0": "Face name",
-      "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "String",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_vert_face_2d'] = {
-  /**
-   * Block to read the camera x,y position of the most recently seen face
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "message0": "Face Camera %1",
-      "args0": [
-          {
-            "type": "field_dropdown",
-            "name": "AXIS",
-            "options": [
-              ['x', '0'],
-              ['y', '1']
-            ]
-          }
-        ],
-        "inputsInline": true,
-        "output": "Number",
-        "colour": Blockly.Colours.sensing.primary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_vert_face_3d'] = {
-  /**
-   * Block to read the world x,y,z position of the most recently seen face
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "message0": "Face Position %1",
-      "args0": [
-          {
-            "type": "field_dropdown",
-            "name": "AXIS",
-            "options": [
-              ['x', '0'],
-              ['y', '1'],
-              ['z', '2']
-            ]
-          }
-        ],
-        "inputsInline": true,
-        "output": "Number",
-        "colour": Blockly.Colours.sensing.primary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-    });
-  }
-};
+// Actions
 
 Blockly.Blocks['cozmo_vert_drive'] = {
   /**
@@ -810,14 +959,14 @@ Blockly.Blocks['cozmo_vert_turn'] = {
   }
 };
 
-Blockly.Blocks['cozmo_vert_liftheight'] = {
+Blockly.Blocks['cozmo_vert_set_liftheight'] = {
   /**
    * Block to set the lift to the given height at the given speed
    * @this Blockly.Block
   */
   init: function() {
     this.jsonInit({
-        "id": "cozmo_vert_liftheight",
+        "id": "cozmo_vert_set_liftheight",
         "message0": "move lift to %1 at speed %2",
         "args0": [
           {
@@ -841,14 +990,14 @@ Blockly.Blocks['cozmo_vert_liftheight'] = {
 };
 
 
-Blockly.Blocks['cozmo_vert_headangle'] = {
+Blockly.Blocks['cozmo_vert_set_headangle'] = {
   /**
    * Block to set the head to the given angle at the given speed
    * @this Blockly.Block
   */
   init: function() {
     this.jsonInit({
-        "id": "cozmo_vert_headangle", 
+        "id": "cozmo_vert_set_headangle", 
         "message0": "move head to %1 at speed %2",
         "args0": [
           {

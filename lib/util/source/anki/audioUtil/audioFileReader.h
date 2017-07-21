@@ -29,7 +29,7 @@ public:
   const AudioChunkList& GetAudioSamples() const { return _audioSamples; }
   void ClearAudio() { _audioSamples.clear(); }
   
-  void DeliverAudio(bool doRealTime);
+  void DeliverAudio(bool doRealTime, bool addBeginSilence = false, bool addEndSilence = false);
   
 private:
   AudioChunkList  _audioSamples;

@@ -68,18 +68,19 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
         MessageEngineToGameTag::CliffEvent,
         MessageEngineToGameTag::RobotStopped
       };
-      genericStrategy->ConfigureRelevantEvents(relevantTypes);
+      // If the current reaction trigger is already CliffDetected, then we don't want to trigger it again
+      // unless it "canInterruptSelf". This prevents the CliffEvent message (which comes in ~0.5 sec after
+      // the RobotStopped msg) from causing the ReactToCliff behavior to run a second time.
+      auto callback = [genericStrategy](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
+          return (robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::CliffDetected) || genericStrategy->CanInterruptSelf();
+        };
+      genericStrategy->ConfigureRelevantEvents(relevantTypes, callback);
       strategy = genericStrategy;
       break;
     }
     case ReactionTrigger::CubeMoved:
     {
       strategy = new ReactionTriggerStrategyCubeMoved(robot, config);
-      break;
-    }
-    case ReactionTrigger::DoubleTapDetected:
-    {
-      strategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
       break;
     }
     case ReactionTrigger::FacePositionUpdated:
@@ -224,7 +225,9 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       if(strategyToCreate == kGenericStrategyType)
       {
         // Generic strategy wants to run when IdleTimeout is cancelled (cancelled by game when waking up while
-        // going to sleep). The VC reaction trigger needs to be enabled and the current reaction can't be VC.
+        // going to sleep). The VC reaction trigger needs to be enabled and the current reaction can't be VC or
+        // PlacedOnCharger (We expect to potentially receive a CancelIdleTimeout message from game when
+        // on the charger and we don't want that to trigger the strategy).
         // This strategy is used to trigger reactToVoiceCommand_Wakeup when sleeping is cancelled via a cancel
         // button
         auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
@@ -237,9 +240,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
          {
            const bool currentTriggerNotVC = (robot.GetBehaviorManager().GetCurrentReactionTrigger() !=
                                              ReactionTrigger::VC);
+           const bool currentTriggerNotOnCharger = (robot.GetBehaviorManager().GetCurrentReactionTrigger() !=
+                                                    ReactionTrigger::PlacedOnCharger);
            const bool VCTriggerEnabled = robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::VC);
            
-           return (currentTriggerNotVC && VCTriggerEnabled);
+           return (VCTriggerEnabled && currentTriggerNotVC && currentTriggerNotOnCharger);
          }
         );
         

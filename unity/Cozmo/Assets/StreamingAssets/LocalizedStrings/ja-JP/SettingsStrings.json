@@ -13,19 +13,19 @@
     "translation" : "キューブステータス"
   },
   "settings.cubeStatusPanel.locateText" : {
-    "translation" : "（キューブを見つけるためにタップ）"
+    "translation" : "キューブを見つけるためにタップします。"
   },
   "settings.sdkPanel.activateSDKalert.text" : {
     "translation" : "SDKモードをアクティブに？"
   },
   "settings.sdkPanel.disableButton.text" : {
-    "translation" : "無効にするSDK"
+    "translation" : "DISABLE SDK"
   },
   "settings.sdkPanel.enableButton.text" : {
-    "translation" : "SDKを有効にします"
+    "translation" : "ENABLE SDK"
   },
   "settings.sdkPanel.label.title" : {
-    "translation" : "コズモSDK"
+    "translation" : "COZMO SDK"
   },
   "settings.sdkPanel.connectionCommandCount.text" : {
     "translation" : "コマンド： {0}"
@@ -64,7 +64,7 @@
     "translation" : "互換性のないSDKバージョン"
   },
   "settings.sdkPanel.hideScreenButton.text" : {
-    "translation" : "画面を非表示にします"
+    "translation" : "スクリーンを隠す"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo" : {
     "translation" : "スリープコズモ"
@@ -73,19 +73,19 @@
     "translation" : "コズモスリープ？"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "切断する彼のバッテリーやタップスリープを高めるために、彼の充電器にコズモを残します"
+    "translation" : "充電器にCozmoを残して電池を充電したりタップしたりする<b><color=#11a2f0ff>睡眠</color></b>切断する。"
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
     "translation" : "睡眠"
   },
   "settings.supportView.button.restoreCozmo" : {
-    "translation" : "コズモを復元"
+    "translation" : "コズモを元に戻す"
   },
   "settings.supportView.label.directions" : {
     "translation" : "カスタマサポートは、オンラインで入手可能です"
   },
   "settings.supportView.label.restoreCozmoClarification" : {
-    "translation" : "（あなたのコズモにこのプロファイルからアンロックを再適用されます）"
+    "translation" : "このプロフィールからあなたのCozmoへのロック解除を再適用します。"
   },
   "settings.supportView.label.title" : {
     "translation" : "サポート問い合わせ先"
@@ -97,7 +97,7 @@
     "translation" : "リストア"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13>あなたのコズモの復元に失敗しました。 </color>"
+    "translation" : "<color=#b52c13>あなたのCozmoを復元できませんでした。 </color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
     "translation" : "あなたのコズモを復元しています..."
@@ -118,16 +118,16 @@
     "translation" : "謝辞"
   },
   "settings.versionPanel.button.eraseCozmo" : {
-    "translation" : "コズモを消去"
+    "translation" : "コズモを消す"
   },
   "settings.versionPanel.button.support" : {
     "translation" : "サポート"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton" : {
-    "translation" : "消します"
+    "translation" : "消去"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13>あなたのコズモ消去に失敗しました。 </color>"
+    "translation" : "<color=#b52c13>あなたのCozmoを消去できませんでした。 </color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
     "translation" : "あなたのコズモを消去..."
@@ -136,7 +136,7 @@
     "translation" : "コズモを消去？"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel" : {
-    "translation" : "警告：これはコズモのデータ、およびすべてのロック解除をクリアします。あなたはコズモでやり直すしたい場合にのみ、これを使用してください！あなたのビットとスパークスが保存されます。"
+    "translation" : "警告：これにより、Cozmoのデータが消去され、すべてのロックが解除されます。 Cozmoからやり直す場合にのみ、これを使用してください！"
   },
   "settings.versionPanel.label.appRun" : {
     "translation" : "アプリの実行ID： {0}"

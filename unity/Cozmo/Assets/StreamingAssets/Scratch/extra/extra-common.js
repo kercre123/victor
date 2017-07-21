@@ -49,6 +49,21 @@ window.setText = function setText(selector, text) {
   }
 };
 
+
+/**
+ * parses URL get parameters and returns a dictionary of name/values (url decoded)
+ * @returns {Object} name => value
+ */
+window.getUrlVars = function() {
+  var vars = {};
+  var parts = window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi,
+  function(m,key,value) {
+    vars[key] = decodeURIComponent(value);
+  });
+  return vars;
+};
+
+
 /**
  * Fetches JSON and passes it to a callback
  * @param {String} url - url to fetch

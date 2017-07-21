@@ -9,6 +9,9 @@ using Anki.Cozmo.ExternalInterface;
 namespace Cozmo.Energy.UI {
   public class NeedsEnergyModal : BaseModal {
 
+    public delegate void OverfeedingShouldTriggerHiccups();
+    public event OverfeedingShouldTriggerHiccups CozmoOverfed;
+
     #region SERIALIZED FIELDS
 
     [SerializeField]
@@ -32,6 +35,15 @@ namespace Cozmo.Energy.UI {
     [SerializeField]
     private float _InactivityTimeOut = 300f; //in seconds
 
+    [SerializeField]
+    private CozmoButton _CubeHelpButton;
+
+    [SerializeField]
+    private GameObject _CubeHelpGroup;
+
+    [SerializeField]
+    private float _AlreadyFullTriggerHiccupOdds = 0.2f;
+
     #endregion
 
     #region NON-SERIALIZED FIELDS
@@ -48,6 +60,10 @@ namespace Cozmo.Energy.UI {
     //refreshes to _InactivityTimeOut on any touch or feeding
     private float _InactivityTimer = float.MaxValue;
 
+    private BaseModal _CubeHelpModal;
+
+    private bool _WasCozmoOverfed = false;
+
     #endregion
 
     #region LIFE SPAN
@@ -62,6 +78,8 @@ namespace Cozmo.Energy.UI {
         robot.CancelAction(RobotActionType.UNKNOWN);
         robot.SetEnableFreeplayLightStates(true);
       }
+        
+      _WasCozmoOverfed = false;
 
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.AddCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
@@ -84,17 +102,32 @@ namespace Cozmo.Energy.UI {
         _DoneCozmoButton.Initialize(HandleUserClose, "done_button", DASEventDialogName);
       }
 
+      _CubeHelpButton.Initialize(HandleCubeHelpButtonTapped, "cube_help_feed_button", DASEventDialogName);
+
       _InactivityTimer = _InactivityTimeOut;
 
       //animate our display energy to the engine energy
-      HandleLatestNeedsLevelChanged(NeedsActionId.Feed);
+      NeedsLevelChangedInternal(NeedsActionId.Feed, false);
 
       RefreshForCurrentBracket(nsm);
+
+      bool isFeedCritical = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Bracket == NeedBracketId.Critical;
+      bool isInFeedOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro);
+
+      if (_OptionalCloseDialogCozmoButton != null && isInFeedOnboarding) {
+        _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
+      }
+
+      // if no cubes are connected help them get around it.
+      if ((robot != null && robot.LightCubes.Count == 0) && (isFeedCritical || isInFeedOnboarding)) {
+        _CubeHelpGroup.SetActive(true);
+      }
+
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
       base.RaiseDialogOpenAnimationFinished();
-      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnNeedsActionReceived += HandleLatestNeedsLevelChanged;
 
       StartFeedingActivity();
     }
@@ -112,12 +145,19 @@ namespace Cozmo.Energy.UI {
     protected override void RaiseDialogClosed() {
       base.RaiseDialogClosed();
 
+      // Ensure all cube feeding sound FX stop
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
+
       if (_LastNeedBracket != NeedBracketId.Count) {
         AnimateElements(fullElements: _LastNeedBracket == NeedBracketId.Full, hide: true);
       }
 
+      if (_CubeHelpModal != null) {
+        _CubeHelpModal.CloseDialog();
+      }
+
       NeedsStateManager.Instance.ResumeAllNeeds();
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnNeedsActionReceived -= HandleLatestNeedsLevelChanged;
       RobotEngineManager.Instance.RemoveCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
@@ -142,12 +182,48 @@ namespace Cozmo.Energy.UI {
 
     #region ROBOT CALLBACK HANDLERS
 
-    private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
+    private void HandleLatestNeedsLevelChanged(NeedsActionId actionID){
+      NeedsLevelChangedInternal (actionID, true);
+    }
+
+    private void NeedsLevelChangedInternal(NeedsActionId actionId, bool triggeredFromMessage) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       RefreshForCurrentBracket(nsm);
 
       if (actionId == NeedsActionId.Feed) {
         _InactivityTimer = _InactivityTimeOut;
+
+        _CubeHelpGroup.SetActive(false);
+        if (_CubeHelpModal != null) {
+          _CubeHelpModal.CloseDialog();
+        }
+
+        // If Cozmo was full and the user fed him again, there's a chance he gets the hiccups
+        if(triggeredFromMessage && 
+          (_WasFull != null) && 
+          (_WasFull == true) &&
+          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
+          System.Random rand = new System.Random();
+          float shouldTriggerFloat = (float)rand.NextDouble();
+          if(shouldTriggerFloat < _AlreadyFullTriggerHiccupOdds) {
+            _WasCozmoOverfed = true;
+
+            // Exit feeding - can't have hiccups during the activity
+            CloseDialog();
+          }
+        }
+      }
+    }
+
+    protected override void CleanUp() {
+      if (_WasCozmoOverfed) {
+        _WasCozmoOverfed = false;
+        // Notify Engine
+        RobotEngineManager.Instance.Message.NotifyOverfeedingShouldTriggerHiccups = new Anki.Cozmo.ExternalInterface.NotifyOverfeedingShouldTriggerHiccups();
+        RobotEngineManager.Instance.SendMessage();
+        if (CozmoOverfed != null) {
+          CozmoOverfed ();
+        }
       }
     }
 
@@ -190,6 +266,12 @@ namespace Cozmo.Energy.UI {
     #endregion
 
     #region MISC HELPER METHODS
+
+    private void HandleCubeHelpButtonTapped() {
+      UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpModalPrefab, new ModalPriorityData(), (newModal) => {
+        _CubeHelpModal = newModal;
+      });
+    }
 
     private void RefreshForCurrentBracket(NeedsStateManager nsm) {
       NeedBracketId newNeedBracket = nsm.PopLatestEngineValue(NeedId.Energy).Bracket;

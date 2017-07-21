@@ -7,76 +7,76 @@
     "source_key_paths" : ["/{*}"]
   },
   "wifiStrings.Instructions.SlideA.titleCopy" : {
-    "translation" : "Um eine Verbindung zu Cozmo WiFi, müssen Sie auf Ihrem Gerät die Einstellungen zu gehen"
+    "translation" : "Um eine Verbindung zu Cozmos WiFi herzustellen, musst du zu den Einstellungen deines Geräts gehen."
   },
   "wifiStrings.Instructions.SlideA.altCopy" : {
     "translation" : "Lesen Sie alle Anweisungen FIRST"
   },
   "wifiStrings.Instructions.SlideB" : {
-    "translation" : "Lassen Sie uns sicherstellen, dass Cozmo eingeschaltet ist"
+    "translation" : "Let's make sure Cozmo is powered on."
   },
   "wifiStrings.Instructions.SlideB.altCopy" : {
-    "translation" : "Entfernen Sie dann ersetzen ihn am Ladegerät"
+    "translation" : "Remove then replace him on the charger."
   },
   "wifiStrings.Instructions.Slide0" : {
-    "translation" : "Finden und tippen Sie auf Ihrem Gerät Symbol Einstellungen"
+    "translation" : "Find and tap your device's Settings icon."
   },
   "wifiStrings.Instructions.Slide0altCopy" : {
-    "translation" : "Drücken Sie die Home-Taste die Cozmo App zu verlassen"
+    "translation" : "Press the Home button to exit the Cozmo App."
   },
   "wifiStrings.Instructions.Slide0Android" : {
-    "translation" : "Ziehen Sie Ihr Gerät die Einstellungen Panel nach unten"
+    "translation" : "Ziehen Sie das Bedienfeld des Geräts herunter."
   },
   "wifiStrings.Instructions.Slide1" : {
-    "translation" : "Wählen Sie den WiFi Abschnitt aus dem Menü Einstellungen"
+    "translation" : "Wählen Sie den WiFi-Bereich aus dem Menü Einstellungen."
   },
   "wifiStrings.Instructions.Slide2" : {
-    "translation" : "Wählen Sie Cozmo-Netzwerk aus der Liste"
+    "translation" : "Choose Cozmo's network from the list."
   },
   "wifiStrings.Instructions.Slide3" : {
-    "translation" : "Geben Sie das Kennwort auf Ihrem Cozmo gezeigt"
+    "translation" : "Enter the password shown on your Cozmo."
   },
   "wifiStrings.Instructions.Slide3.altCopy" : {
-    "translation" : "Sie kein Passwort sehen? Klick hier:"
+    "translation" : "Sehen Sie kein Passwort? Klick hier:"
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "Verwenden Sie alle CAPS ohne Leerzeichen"
+    "translation" : "Use ALL CAPS with no spaces."
   },
   "wifiStrings.Instructions.Slide3.5" : {
-    "translation" : "Cozmo bietet keine Internetverbindung"
+    "translation" : "Cozmo does not provide an Internet connection."
   },
   "wifiStrings.Instructions.Slide3.5altCopy" : {
-    "translation" : "Tippen Sie auf OK, um in Verbindung bleiben zu Cozmo WiFi"
+    "translation" : "Tap OK to stay connected to Cozmo's WiFi."
   },
   "wifiStrings.Instructions.Slide4" : {
-    "translation" : "Beenden Einstellungen und Rückkehr in die Cozmo App"
+    "translation" : "Beenden Sie die Einstellungen und kehren Sie zur Cozmo App zurück."
   },
   "wifiStrings.Instructions.Slide4altCopy" : {
-    "translation" : "Die App wird wissen, wann Cozmo verbunden ist"
+    "translation" : "The App will know when Cozmo is connected."
   },
   "wifiStrings.nextButton" : {
-    "translation" : "Nächster"
+    "translation" : "NEXT"
   },
   "wifiStrings.backButton" : {
-    "translation" : "Zurück"
+    "translation" : "BACK"
   },
   "wifi.gethelp.title" : {
     "translation" : "Haben Sie Probleme beim Verbinden mit Cozmo WiFi?"
   },
   "wifi.gethelp.description" : {
-    "translation" : "Versuchen Sie Folgendes: 1. Entfernen Sie dann Cozmo ersetzen auf seinem Ladegerät 2. Geräts WiFi Schalten Sie dann wieder EIN"
+    "translation" : "Try the following:\u000a\u000a1. Remove then replace Cozmo on his charger.\u000a2. Turn your device's WiFi <b>OFF</b> then back <b>ON.</b>"
   },
   "wifi.gethelp.description2" : {
-    "translation" : "Wenn Sie Cozmo-Netzwerk Info, heben und senken den Aufzug müssen sehen,"
+    "translation" : "If you need to see Cozmo's network info, raise and lower his lift."
   },
   "wifi.gethelp.footer" : {
-    "translation" : "Noch stecken? Besuch <b> support.anki.com </b> oder auf einem anderen Gerät rufen Sie uns an <b> (877) 721-ANKI </b>"
+    "translation" : "Noch stecken Besuch <b> Support.anki.com </b> Auf einem anderen Gerät."
   },
   "wifi.getHelp.linkText" : {
     "translation" : "Hilfe bekommen"
   },
   "wifi.enterPassword" : {
-    "translation" : "Geben Sie das Kennwort für {0}"
+    "translation" : "Enter password for {0}."
   },
   "wifi.passwordFormat" : {
     "translation" : "Kennwort falsche Länge."
@@ -100,16 +100,16 @@
     "translation" : "Wifi ist ausgeschaltet. Bitte drücken Sie auf die Schaltfläche unten, um ihn einzuschalten."
   },
   "wifi.locationPermission" : {
-    "translation" : "Lassen Sie die Cozmo App machen Verbinden einfacher! Tippen Sie auf \"Zulassen\", wenn für Location Berechtigungen gefragt, so dass die Cozmo App in der Nähe Cozmos finden. Hinweis: Wir werden niemals Ihre Position speichern!"
+    "translation" : "Lassen Sie die Cozmo App die Verbindung einfacher machen! Tippen <b> Zulassen </b> Wenn gefragt nach Location Permissions, so dass die Cozmo App finden können in der Nähe Cozmos. Hinweis: Wir werden Ihren Standort nie speichern!"
   },
   "wifi.pleaseLocationPermission" : {
-    "translation" : "Bist du sicher? Ohne Ort Berechtigungen, werden Sie zu Cozmo verbinden müssen manuell in Ihrem Telefon Wireless-LAN-Einstellungen. Tippen Sie auf \"Allow\", wenn gefragt die Cozmo App zu ermöglichen, für Sie zu verbinden, oder tippen Sie auf \"Abbrechen\", sich zu verbinden."
+    "translation" : "Are you sure? Without Location Permissions, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap <b>Allow</b> when asked to allow the Cozmo App to connect for you, or tap <b>Cancel</b> to connect yourself."
   },
   "wifi.enableLocation" : {
-    "translation" : "Tippen Sie auf „OK“, wenn auf Ort drehen gefragt, so dass die Cozmo App in der Nähe Cozmos finden. Hinweis: Wir werden niemals Ihre Position speichern!"
+    "translation" : "Tippen <b> Zulassen </b> Wenn sie gebeten werden, den Standort einzuschalten, damit die Cozmo App in der Nähe von Cozmos finden kann. Hinweis: Wir werden Ihren Standort nie speichern!"
   },
   "wifi.pleaseEnableLocation" : {
-    "translation" : "Bist du sicher? Ohne Ort, werden Sie zu Cozmo verbinden müssen manuell in Ihrem Telefon Wireless-LAN-Einstellungen. Tippen Sie auf \"Ja\", wenn gefragt die Cozmo App zu ermöglichen, für Sie zu verbinden, oder tippen Sie auf \"Abbrechen\", sich zu verbinden."
+    "translation" : "Are you sure? Without Location, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap <b>Yes</b> when asked to allow the Cozmo App to connect for you, or tap <b>Cancel</b> to connect yourself."
   },
   "wifi.passwordRememberStatement" : {
     "translation" : "Passwort ist sichtbar auf Cozmo Gesicht, geben Sie es genau so, wie es scheint. Ihr Gerät sollte dieses Passwort vergessen haben, so dass Sie nur einmal eingeben müssen."

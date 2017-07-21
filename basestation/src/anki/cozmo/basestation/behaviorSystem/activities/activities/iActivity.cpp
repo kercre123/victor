@@ -51,9 +51,8 @@ static const char* kBehaviorChooserConfigKey          = "behaviorChooser";
 static const char* kInterludeBehaviorChooserConfigKey = "interludeBehaviorChooser";
 static const char* kStrategyConfigKey                 = "activityStrategy";
 static const char* kRequiresSparkKey                  = "requireSpark";
-static const char* kRequiresObjectTapped              = "requireObjectTapped";
-static const char* kSupportsObjectTapInteractionKey   = "supportsObjectTapInteractions";
 static const char* kSmartReactionLockSuffix           = "_activityLock";
+static const std::string kIdleLockPrefix              = "Activity_";
 
 } // end namespace
   
@@ -65,6 +64,7 @@ IActivity::IActivity(Robot& robot, const Json::Value& config)
 , _idleAnimTrigger(AnimationTrigger::Count)
 , _infoAnalysisProcess(AIInformationAnalysis::EProcess::Invalid)
 , _requiredSpark(UnlockId::Count)
+, _hasSetIdle(false)
 , _lastTimeActivityStartedSecs(-1.0f)
 , _lastTimeActivityStoppedSecs(-1.0f)
 {
@@ -206,10 +206,6 @@ void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
   const Json::Value& strategyConfig = config[kStrategyConfigKey];
   IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(robot, strategyConfig);
   _strategy.reset( newStrategy );
-  
-  
-  JsonTools::GetValueOptional(config, kRequiresObjectTapped, _requireObjectTapped);
-  JsonTools::GetValueOptional(config, kSupportsObjectTapInteractionKey, _supportsObjectTapInteractions);
 }
 
 
@@ -234,16 +230,18 @@ void IActivity::OnSelected(Robot& robot)
        _driveEndAnimTrigger},
         GetIDStr());
   }
-
+  
+  _hasSetIdle = false;
   // Set idle animation if desired
   if( _idleAnimTrigger != AnimationTrigger::Count ) {
-    robot.GetAnimationStreamer().PushIdleAnimation(_idleAnimTrigger, GetIDStr());
+    SmartPushIdleAnimation(robot, _idleAnimTrigger);
   }
   
   // request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
     robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetIDStr());
   }
+  
   
   // log event to das - note freeplay_goal is a legacy name for Activities left
   // in place so that data is queriable - please do not change
@@ -281,6 +279,10 @@ void IActivity::OnDeselected(Robot& robot)
     SmartRemoveDisableReactionsLock(robot, *_smartLockIDs.begin());
   }
   _smartLockIDs.clear();
+  
+  if(_hasSetIdle){
+    SmartRemoveIdleAnimation(robot);
+  }
 
   // clear the interlude behavior, if it was set
   _lastChosenInterludeBehavior = nullptr;
@@ -300,15 +302,6 @@ void IActivity::OnDeselected(Robot& robot)
                 {{DDATA, std::to_string(nSecs).c_str()}},
                 "%s", GetIDStr());
   
-  // If the activity requires a tapped object make sure to unset the tapped object when the activity exits
-  if(_requireObjectTapped)
-  {
-    // Don't know which light animation was being played so stop both
-    robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
-    robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
-    
-    robot.GetBehaviorManager().LeaveObjectTapInteraction();
-  }
   OnDeselectedInternal(robot);
 }
 
@@ -369,6 +362,33 @@ IBehaviorPtr IActivity::ChooseNextBehaviorInternal(Robot& robot, const IBehavior
   return nullptr;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation)
+{
+  if(ANKI_VERIFY(!_hasSetIdle,
+                 "IActivity.SmartPushIdleAnimation.IdleAlreadySet",
+                 "Activity %s has already set an idle animation",
+                 GetIDStr())){
+    robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
+    _hasSetIdle = true;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::SmartRemoveIdleAnimation(Robot& robot)
+{
+  if(ANKI_VERIFY(_hasSetIdle,
+                 "IActivity.SmartRemoveIdleAnimation.NoIdleSet",
+                 "Activity %s is trying to remove an idle, but none is currently set",
+                 GetIDStr())){
+    robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
+    _hasSetIdle = false;
+  }
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IActivity::SmartDisableReactionsWithLock(Robot& robot,
                                               const std::string& lockID,
@@ -402,13 +422,6 @@ void IActivity::SmartDisableReactionWithLock(Robot& robot,
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<IBehaviorPtr> IActivity::GetObjectTapBehaviors(){
-  if(_behaviorChooserPtr != nullptr){
-    return _behaviorChooserPtr->GetObjectTapBehaviors();
-  }
-  return {};
-}
-
 IActivityStrategy* IActivity::DevGetStrategy()
 {
   if(ANKI_DEV_CHEATS)

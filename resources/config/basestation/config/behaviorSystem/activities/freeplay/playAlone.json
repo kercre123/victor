@@ -26,12 +26,6 @@
           "flatScore": 20
         }
       },
-      { "behaviorID" : "CantHandleTallStack",
-        "scoring"      :
-        {
-          "flatScore": 20
-        }
-      },
       { "behaviorID" : "TrackLaser",
         "scoring"      :
         {

@@ -90,6 +90,14 @@ enum uint_32 StateGroupType
   Mood = 3128647864,
   Music = 3991942870,
   Music_Dimmer = 920031443,
+  Voice_Commands_Mode = 522893720,
+}
+
+enum uint_32 Voice_Commands_Mode
+{
+  Invalid = 0,
+  Vc_Mode_Off = 1444240748,
+  Vc_Mode_On = 2411592966,
 }
 
 } // GameState

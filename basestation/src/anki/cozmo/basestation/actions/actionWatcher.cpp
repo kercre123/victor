@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/actions/actionWatcher.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "util/helpers/templateHelpers.h"
 
 #define DEBUG_ACTION_WATCHER 0
 

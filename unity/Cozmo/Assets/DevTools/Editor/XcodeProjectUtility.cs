@@ -55,7 +55,7 @@ namespace Xcode {
 
         int step = 0;
         int totalSteps = 7;
-        var projectName = (il2cpp ? "CozmoUnity_iOS.xcodeproj" : "CozmoUnity_iOS_Mono2x.xcodeproj");
+        var projectName = (il2cpp ? "CozmoUnity_ios.xcodeproj" : "CozmoUnity_ios_mono2x.xcodeproj");
         var projectPath = "../ios/" + projectName + "/project.pbxproj";
         Debug.Log("Modifying: " + projectPath);
 

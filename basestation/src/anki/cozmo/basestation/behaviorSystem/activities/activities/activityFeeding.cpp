@@ -53,7 +53,6 @@ static const ColorRGBA FEEDING_CYAN      (0.f, 1.f, 0.7f);
 constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -72,7 +71,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArra
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
+  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kFeedingActivityAffectedArray),
@@ -82,7 +81,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kFeedingActivityAffected
 constexpr ReactionTriggerHelpers::FullReactionArray kSevereFeedingDisables = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -101,7 +99,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kSevereFeedingDisables = {
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
+  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kSevereFeedingDisables),
@@ -132,11 +130,14 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   ////////
   
   // Get the hunger loop behavior
-  _searchForCubeBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingSearchForCube);
-  DEV_ASSERT(_searchForCubeBehavior != nullptr &&
-             _searchForCubeBehavior->GetClass() == BehaviorClass::FeedingSearchForCube,
-             "ActivityFeeding.FeedingSearchForCube.IncorrectBehaviorReceivedFromFactory");
-  
+  {
+    IBehaviorPtr searchBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingSearchForCube);
+    _searchForCubeBehavior = std::static_pointer_cast<BehaviorFeedingSearchForCube>(searchBehavior);
+    DEV_ASSERT(_searchForCubeBehavior != nullptr &&
+               _searchForCubeBehavior->GetClass() == BehaviorClass::FeedingSearchForCube,
+               "ActivityFeeding.FeedingSearchForCube.IncorrectBehaviorReceivedFromFactory");
+  }
+
   // Get the feeding get in behavior
   IBehaviorPtr eatFoodBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingEat);
   DEV_ASSERT(eatFoodBehavior != nullptr &&
@@ -164,12 +165,14 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
              "ActivityFeeding.TurnToFaceBheavior.IncorrectBehaviorReceievedFromFactory");
   
   // Grab the arbitrary animation behavior
-  IBehaviorPtr playAnimPtr = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
-  _behaviorPlayAnimation = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
-  
-  DEV_ASSERT(_behaviorPlayAnimation != nullptr &&
-             _behaviorPlayAnimation->GetClass() == BehaviorClass::PlayArbitraryAnim,
-             "SparksBehaviorChooser.BehaviorPlayAnimPointerNotSet");
+  {
+    IBehaviorPtr playAnimPtr = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
+    _behaviorPlayAnimation = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
+    
+    DEV_ASSERT(_behaviorPlayAnimation != nullptr &&
+               _behaviorPlayAnimation->GetClass() == BehaviorClass::PlayArbitraryAnim,
+               "SparksBehaviorChooser.BehaviorPlayAnimPointerNotSet");
+  }
   
   ////////
   /// Setup UniversalChooser
@@ -441,10 +444,11 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
       if(!HasSingleBehaviorStageStarted(_eatFoodBehavior) ||
          _eatFoodBehavior->IsRunning()){
         bestBehavior = _eatFoodBehavior;
-      }else{
+      }else if(_interactID.IsSet()){
+        _cubesSearchCouldntFind.erase(_interactID);
         // If an attempt was made to eat the cube and it's no longer fully charged
         // clear it out for interaction
-        if(_interactID.IsSet() && !_cubeControllerMap[_interactID]->IsCubeCharged()){
+        if(!_cubeControllerMap[_interactID]->IsCubeCharged()){
           using CS = FeedingCubeController::ControllerState;
           _cubeControllerMap[_interactID]->SetControllerState(robot, CS::Deactivated);
           _cubeControllerMap[_interactID]->SetControllerState(robot, CS::Activated);
@@ -508,11 +512,13 @@ Result ActivityFeeding::Update(Robot& robot)
   }
   
   if(_chooserStage == FeedingActivityStage::WaitingForFullyCharged){
-    bool anyCubesCharged = false;
+    bool anyCubesToSearchFor = false;
     for(const auto& entry: _cubeControllerMap){
-      anyCubesCharged = anyCubesCharged || entry.second->IsCubeCharged();
+      const bool alreadySearchedForCube =
+              (_cubesSearchCouldntFind.find(entry.first) != _cubesSearchCouldntFind.end());
+      anyCubesToSearchFor |= (entry.second->IsCubeCharged() && !alreadySearchedForCube);
     }
-    if(anyCubesCharged){
+    if(anyCubesToSearchFor){
       UPDATE_STAGE(FeedingActivityStage::ReactingToFullyCharged);
       AnimationTrigger bestAnimation = isNeedSevere ?
                           AnimationTrigger::FeedingReactToFullCube_Severe :
@@ -528,6 +534,7 @@ Result ActivityFeeding::Update(Robot& robot)
     for(const auto& entry: _cubeControllerMap){
       anyCubesCharged = anyCubesCharged || entry.second->IsCubeCharged();
     }
+    // if charged cube disconnected, transition out of search
     if(!anyCubesCharged){
       TransitionToBestActivityStage(robot);
     }
@@ -538,6 +545,11 @@ Result ActivityFeeding::Update(Robot& robot)
                                        AnimationTrigger::FeedingReactToSeeCube_Severe :
                                        AnimationTrigger::FeedingReactToSeeCube_Normal;
       UpdateAnimationToPlay(bestTrigger);
+    }else if(!_searchForCubeBehavior->IsRunning()){
+      // if search wants to end, mark as cube search failed and transition out
+      _cubesSearchCouldntFind.insert(_searchingForID);
+      _searchingForID.UnSet();
+      TransitionToBestActivityStage(robot);
     }
   }
 
@@ -601,9 +613,12 @@ IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
 
   // check for cubes that are fully charged or partially charged
   bool anyCubesCharging = false;
-  bool anyCubesFullyCharged = false;
   for(const auto& entry: _cubeControllerMap){
-    anyCubesFullyCharged = anyCubesFullyCharged || entry.second->IsCubeCharged();
+    const bool alreadySearchedForCube =
+           (_cubesSearchCouldntFind.find(entry.first) != _cubesSearchCouldntFind.end());
+    if(entry.second->IsCubeCharged() && !alreadySearchedForCube){
+      _searchingForID = entry.first;
+    }
     anyCubesCharging = anyCubesCharging || entry.second->IsCubeCharging();
   }
   
@@ -613,7 +628,7 @@ IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
     ClearSevereAnims(robot);
   }
   
-  if(anyCubesFullyCharged){
+  if(_searchingForID.IsSet()){
     UPDATE_STAGE(FeedingActivityStage::SearchingForCube);
     if(_interactID.IsSet() &&
        (nullptr == robot.GetBlockWorld().GetLocatedObjectByID(_interactID))){

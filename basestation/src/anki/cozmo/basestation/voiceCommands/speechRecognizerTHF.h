@@ -24,6 +24,8 @@ namespace Cozmo {
 namespace VoiceCommand {
   class PhraseData;
   using PhraseDataSharedPtr = std::shared_ptr<PhraseData>;
+  
+  class RecognitionSetupData;
 }
 
 class SpeechRecognizerTHF : public AudioUtil::SpeechRecognizer
@@ -39,8 +41,8 @@ public:
   bool Init(const std::string& pronunPath);
   bool AddRecognitionDataAutoGen(IndexType index,
                                  const std::string& nnFilePath,
-                                 const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList,
-                                 bool isPhraseSpotted, bool allowsFollowupRecog);
+                                 const VoiceCommand::RecognitionSetupData& setupData);
+  
   bool AddRecognitionDataFromFile(IndexType index,
                                   const std::string& nnFilePath, const std::string& searchFilePath,
                                   bool isPhraseSpotted, bool allowsFollowupRecog);

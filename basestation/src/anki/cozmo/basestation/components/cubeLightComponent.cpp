@@ -148,7 +148,7 @@ void CubeLightComponent::Update(bool shouldPickNextAnim)
       // If there are no more patterns in this animation or the animation is being stopped
       if(objectAnim.curPattern == objectAnim.endOfPattern || objectAnim.stopNow)
       {
-        auto removeAndCallback = [this, &objectAnim, &objectInfo, &layer]()
+        auto removeAndCallback = [&objectAnim, &objectInfo, &layer]()
         {
           auto callback = objectAnim.callback;
           const u32 actionTag = objectAnim.actionTagCallbackIsFrom;
@@ -724,17 +724,6 @@ u32 CubeLightComponent::GetAnimDuration(const CubeAnimationTrigger& trigger)
   return duration_ms;
 }
 
-void CubeLightComponent::SetTapInteractionObject(const ObjectID& objectID)
-{
-  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
-  CubeAnimationTrigger anim = CubeAnimationTrigger::DoubleTappedUnsure;
-  if((object != nullptr) && object->IsPoseStateKnown())
-  {
-    // we know about this cube in this origin
-    anim = CubeAnimationTrigger::DoubleTappedKnown;
-  }
-  PlayLightAnim(objectID, anim);
-}
 
 void CubeLightComponent::OnActiveObjectPoseStateChanged(const ObjectID& objectID,
                                                         const PoseState oldPoseState,

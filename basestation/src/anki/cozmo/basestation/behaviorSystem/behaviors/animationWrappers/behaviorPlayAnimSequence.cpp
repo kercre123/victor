@@ -90,7 +90,8 @@ void BehaviorPlayAnimSequence::StartPlayingAnimations(Robot& robot)
   {
     // simple anim, action loops
     const AnimationTrigger animTrigger = _animTriggers[0];
-    StartActing(new TriggerLiftSafeAnimationAction(robot, animTrigger, _numLoops));
+    StartActing(new TriggerLiftSafeAnimationAction(robot, animTrigger, _numLoops),
+                &BehaviorPlayAnimSequence::CallToListeners);
   }
   else
   {
@@ -115,7 +116,23 @@ void BehaviorPlayAnimSequence::StartSequenceLoop(Robot& robot)
     // count already that the loop is done for the next time
     ++_sequenceLoopsDone;
     // start it and come back here next time to check for more loops
-    StartActing(sequenceAction, &BehaviorPlayAnimSequence::StartSequenceLoop);
+    StartActing(sequenceAction, [this](Robot& robot) {
+      CallToListeners(robot);
+      StartSequenceLoop(robot);
+    });
+  }
+}
+
+void BehaviorPlayAnimSequence::AddListener(ISubtaskListener* listener)
+{
+  _listeners.insert(listener);
+}
+
+void BehaviorPlayAnimSequence::CallToListeners(Robot& robot)
+{
+  for(auto& listener : _listeners)
+  {
+    listener->AnimationComplete(robot);
   }
 }
 

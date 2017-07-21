@@ -21,7 +21,6 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 
 #include "clad/types/actionTypes.h"
@@ -45,6 +44,7 @@ namespace Anki {
     
     // Forward Declarations:
     class Robot;
+    struct PathMotionProfile;
     
     namespace ExternalInterface {
       struct RobotCompletedAction;
@@ -152,6 +152,11 @@ namespace Anki {
       
       static ActionResultCategory GetActionResultCategory(const ActionResult& res) { return static_cast<ActionResultCategory>(static_cast<u32>(res) >> ARCBitShift::NUM_BITS); }
 
+      // This should only be used from the PathComponent. If set, this action will clear the custom profile
+      // when it finishes. This allows actions to be created with a custom motion profile (e.g. from Unity or
+      // SDK)
+      void ClearMotionProfileOnCompletion() { _shouldClearMotionProfile = true; }
+
     protected:
       
       Robot& _robot;
@@ -160,6 +165,13 @@ namespace Anki {
       
       // By default, actions are not interruptable
       virtual bool InterruptInternal() { return false; }
+
+      // Override to handle setting of a motion profile. Returns true if the profile was used correctly (or if
+      // it was irrelevant, e.g. for an animation action). Returns false if the action is unable to use the
+      // profile, e.g. because it is already using manually set speeds. Note that this action only needs to
+      // worry about itself, any other actions created by this action (either as direct sub-actions or added
+      // to a compound action), will have this function automatically called when appropriate
+      virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) { return true; }
       
       bool RetriesRemain();
       
@@ -188,6 +200,8 @@ namespace Anki {
       bool          _preppedForCompletion   = false;
       bool          _suppressTrackLocking   = false;
       bool          _displayMessages        = true;
+
+      bool          _shouldClearMotionProfile = false;
       
       // Auto-generated tag
       u32           _idTag;

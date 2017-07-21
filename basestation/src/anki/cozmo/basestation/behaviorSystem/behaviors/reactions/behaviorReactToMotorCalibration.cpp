@@ -26,7 +26,6 @@ namespace {
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersMotorCalibrationArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -76,7 +75,7 @@ Result BehaviorReactToMotorCalibration::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersMotorCalibrationArray);
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
-  StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res)
+  StartActing(new WaitAction(robot, _kTimeout_sec), [&robot](ActionResult res)
     {
       if (IActionRunner::GetActionResultCategory(res) != ActionResultCategory::CANCELLED  &&
           (!robot.IsHeadCalibrated() || !robot.IsLiftCalibrated())) {

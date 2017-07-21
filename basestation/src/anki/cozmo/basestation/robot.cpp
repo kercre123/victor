@@ -137,9 +137,8 @@ static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
 static const float kPitchAngleOnBackTolerance_deg = 15.0f;
 
 //Constants for on side
-static const float kOnLeftSide_rawYAccel = -9000.0f;
-static const float kOnRightSide_rawYAccel = 10500.0f;
-static const float kOnSideTolerance_rawYAccel =3000.0f;
+static const float kOnSideAccel_mmps2 = 9800.0f;
+static const float kOnSideToleranceAccel_mmps2 = 3000.0f;
 
 // On face angles
 static const float kPitchAngleOnFacePlantMin_rads = DEG_TO_RAD(110.f);
@@ -196,6 +195,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
                   {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
   , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
   , _currentHeadAngle(MIN_HEAD_ANGLE)
+  , _robotAccelFiltered(0.f, 0.f, 0.f)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
   , _inventoryComponent(new InventoryComponent(*this))
@@ -384,15 +384,14 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   //////////
   
   //// COZMO_UP_RIGHT
-  const bool currOntreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerance_rads;
+  const bool currOnTreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerance_rads;
   
   //// COZMO_ON_BACK
   const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
   const bool currOnBack = std::abs( GetPitchAngle().ToDouble() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
   //// COZMO_ON_SIDE
-  const float rawY = msg.accel.y;
-  const bool onRightSide =  (std::abs(rawY - kOnRightSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
-  const bool currOnSide = onRightSide || (std::abs(rawY - kOnLeftSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
+  const bool currOnSide = Util::IsNear(std::abs(_robotAccelFiltered.y), kOnSideAccel_mmps2, kOnSideToleranceAccel_mmps2);
+  const bool onRightSide = currOnSide && (_robotAccelFiltered.y > 0.f);
   //// COZMO_ON_FACE
   const float facePlantMinAngle = IsPhysical() ? kPitchAngleOnFacePlantMin_rads : kPitchAngleOnFacePlantMin_sim_rads;
   const float facePlantMaxAngle = IsPhysical() ? kPitchAngleOnFacePlantMax_rads : kPitchAngleOnFacePlantMax_sim_rads;
@@ -407,6 +406,19 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     if (_awaitingConfirmationTreadState != OffTreadsState::Falling) {
       _awaitingConfirmationTreadState = OffTreadsState::Falling;
       _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
+    }
+  }
+  else if(currOnSide) {
+    if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
+       && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
+    {
+      // Transition to Robot on Side
+      if(onRightSide) {
+        _awaitingConfirmationTreadState = OffTreadsState::OnRightSide;
+      } else {
+        _awaitingConfirmationTreadState = OffTreadsState::OnLeftSide;
+      }
+      _timeOffTreadStateChanged_ms = currentTimestamp;
     }
   }
   else if(currFacePlant) {
@@ -424,20 +436,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       _timeOffTreadStateChanged_ms = currentTimestamp + kRobotTimeToConsiderOfftreadsOnBack_ms;
     }
   }
-  else if(currOnSide) {
-    if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
-       && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
-    {
-      // Transition to Robot on Side
-      if(onRightSide){
-        _awaitingConfirmationTreadState = OffTreadsState::OnRightSide;
-      }else{
-        _awaitingConfirmationTreadState = OffTreadsState::OnLeftSide;
-      }
-      _timeOffTreadStateChanged_ms = currentTimestamp;
-    }
-  }
-  else if(currOntreads) {
+  else if(currOnTreads) {
     if (_awaitingConfirmationTreadState != OffTreadsState::InAir
         && _awaitingConfirmationTreadState != OffTreadsState::OnTreads)
     {
@@ -447,7 +446,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   }// end if(isFalling)
     
   /////
-  // Message based tred state transitions
+  // Message based tread state transitions
   ////
   
   // Transition from ontreads to InAir - happens instantly
@@ -471,8 +470,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   }
   
   //////////
-  // A new tred state has been confirmed
+  // A new tread state has been confirmed
   //////////
+  bool offTreadsStateChanged = false;
   if(_timeOffTreadStateChanged_ms + kRobotTimeToConsiderOfftreads_ms <= currentTimestamp
      && _offTreadsState != _awaitingConfirmationTreadState)
   {
@@ -543,10 +543,19 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       SetOnChargerPlatform(false);
     }
     
-    return true;
+    offTreadsStateChanged = true;
   }
   
-  return false;
+  // Send viz message with current treads states
+  const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
+  const auto vizManager = GetContext()->GetVizManager();
+  vizManager->SetText(VizManager::OFF_TREADS_STATE,
+                      NamedColors::GREEN,
+                      "OffTreadsState: %s  %s",
+                      EnumToString(_offTreadsState),
+                      awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
+  
+  return offTreadsStateChanged;
 }
     
 const Util::RandomGenerator& Robot::GetRNG() const
@@ -735,6 +744,16 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
       
 } // SetLocalizedTo()
   
+const Pose3d* Robot::GetWorldOrigin() const
+{
+  // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
+  ANKI_VERIFY(_poseOriginList->GetOriginID(_worldOrigin) != PoseOriginList::UnknownOriginID,
+              "Robot.GetWorldOrigin.WorldOriginNotInPoseList", "Name: %s",
+              _worldOrigin == nullptr ? "<null>" : _worldOrigin->GetNamedPathToOrigin(false).c_str());
+  
+  return _worldOrigin;
+}
+  
   
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
@@ -766,8 +785,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
 
-  // update path following variables
-  _pathComponent->UpdateRobotData(msg.currPathSegment, msg.lastPathID);
+  // update current path segment in the path component
+  _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);
     
   // Update IMU data
   _robotAccel = msg.accel;
@@ -777,10 +796,17 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                              + _robotAccel.y * _robotAccel.y
                              + _robotAccel.z * _robotAccel.z);
   
-  const float kAccelFilterConstant = 0.95f; // between 0 and 1
-  _robotAccelMagnitudeFiltered = (kAccelFilterConstant * _robotAccelMagnitudeFiltered)
-                              + ((1.0f - kAccelFilterConstant) * _robotAccelMagnitude);
+  const float kAccelMagFilterConstant = 0.95f; // between 0 and 1
+  _robotAccelMagnitudeFiltered = (kAccelMagFilterConstant * _robotAccelMagnitudeFiltered)
+                              + ((1.0f - kAccelMagFilterConstant) * _robotAccelMagnitude);
   
+  const float kAccelFilterConstant = 0.90f; // between 0 and 1
+  _robotAccelFiltered.x = (kAccelFilterConstant * _robotAccelFiltered.x)
+                        + ((1.0f - kAccelFilterConstant) * msg.accel.x);
+  _robotAccelFiltered.y = (kAccelFilterConstant * _robotAccelFiltered.y)
+                        + ((1.0f - kAccelFilterConstant) * msg.accel.y);
+  _robotAccelFiltered.z = (kAccelFilterConstant * _robotAccelFiltered.z)
+                        + ((1.0f - kAccelFilterConstant) * msg.accel.z);
   
   // Update cozmo's internal offTreadsState knowledge
   const OffTreadsState prevOffTreadsState = _offTreadsState;
@@ -1850,6 +1876,12 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
               GetID(), _worldOrigin->GetName().c_str(),
               existingObject->GetPose().FindOrigin().GetName().c_str());
     
+    // Before we make any changes, double check that the "old" world origin is in the PoseOriginList
+    ANKI_VERIFY(GetPoseOriginList().GetOriginID(_worldOrigin) != PoseOriginList::UnknownOriginID,
+                "Robot.LocalizeToObject.OldWorldOriginNotInOriginList",
+                "OriginName: %s",
+                _worldOrigin == nullptr ? "<null>" : _worldOrigin->GetName().c_str());
+    
     // Store the current origin we are about to change so that we can
     // find objects that are using it below
     const Pose3d* oldOrigin = _worldOrigin;
@@ -1869,7 +1901,13 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     // Now that the previous origin is hooked up to the new one (which is
     // now the old one's parent), point the worldOrigin at the new one.
     _worldOrigin = const_cast<Pose3d*>(_worldOrigin->GetParent()); // TODO: Avoid const cast?
-        
+    
+    // After updating, the new world origin should _still_ be in the PoseOriginList
+    ANKI_VERIFY(GetPoseOriginList().GetOriginID(_worldOrigin) != PoseOriginList::UnknownOriginID,
+                "Robot.LocalizeToObject.NewWorldOriginNotInOriginList",
+                "OriginName: %s",
+                _worldOrigin == nullptr ? "<null>" : _worldOrigin->GetName().c_str());
+    
     // Now we need to go through all objects and faces whose poses have been adjusted
     // by this origin switch and notify the outside world of the change.
     _blockWorld->UpdateObjectOrigins(oldOrigin, _worldOrigin);
@@ -3093,7 +3131,6 @@ RobotState Robot::GetDefaultRobotState()
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          5.f, //float batteryVoltage,
                          kDefaultStatus, //uint32_t status,
-                         0, //uint16_t lastPathID,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          0, //uint16_t distanceSensor_mm
                          -1); //int8_t currPathSegment

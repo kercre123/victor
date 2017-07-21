@@ -27,7 +27,7 @@ public:
   virtual bool ShouldResumeLastBehavior() const override { return false;}
 
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }
-  virtual void AnimationComplete() override;
+  virtual void AnimationComplete(Robot& robot) override;
 
 protected:
   virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;

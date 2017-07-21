@@ -57,7 +57,6 @@ static const char* kFaceAndCubeConfigKey  = "faceAndCubeActivityName";
 static const char* kFaceOnlyConfigKey     = "faceOnlyActivityName";
 static const char* kCubeOnlyConfigKey     = "cubeOnlyActivityName";
 static const char* kNoFaceNoCubeConfigKey = "noFaceNoCubeActivityName";
-static const char* kObjectTapConfigKey    = "objectTapInteractionActivityName";
 
 
 #if REMOTE_CONSOLE_ENABLED
@@ -329,8 +328,6 @@ void ActivityFreeplay::CreateFromConfig(Robot& robot, const Json::Value& config)
                       ParseString(desiredActivities, kCubeOnlyConfigKey,     debugName));
     _configParams.noFaceNoCubeActivity = ActivityIDFromString(
                       ParseString(desiredActivities, kNoFaceNoCubeConfigKey, debugName));
-    _configParams.objectTapInteractionActivity = ActivityIDFromString(
-                      ParseString(desiredActivities, kObjectTapConfigKey,    debugName));
   }
 }
 
@@ -703,43 +700,8 @@ void ActivityFreeplay::DebugPrintActivities() const
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<IBehaviorPtr> ActivityFreeplay::GetObjectTapBehaviors()
-{
-  if(_objectTapBehaviorsCache.size() != 0){
-    return _objectTapBehaviorsCache;
-  }
-  
-  for(const auto& activity: _activities[UnlockId::Count]){
-    if(activity->GetID() ==  ActivityID::ObjectTapInteraction){
-      _objectTapBehaviorsCache = activity->GetObjectTapBehaviors();
-      return _objectTapBehaviorsCache;
-    }
-  }
-
-  DEV_ASSERT(false, "ActivityFreeplay.GetObjectTapBehaviors.ObjectTapInteractionNotFound");
-  return _objectTapBehaviorsCache;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ActivityFreeplay::IsCurrentActivityObjectTapInteraction() const
-{
-  return ((_currentActivityPtr != nullptr ) &&
-          (_currentActivityPtr->GetID() == _configParams.objectTapInteractionActivity));
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFreeplay::ClearObjectTapInteractionRequestedActivity()
-{
-  if(_requestedActivity == _configParams.objectTapInteractionActivity)
-  {
-    _requestedActivity = ActivityID::Invalid;
-  }
-}
-
 void ActivityFreeplay::SetActivityStrategyCooldown(const UnlockId& unlockID,
                                            const ActivityID& activityId,
                                            float cooldown_ms)

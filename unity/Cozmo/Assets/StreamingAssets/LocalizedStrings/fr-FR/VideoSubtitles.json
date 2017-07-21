@@ -7,75 +7,75 @@
     "source_key_paths" : ["/{*}"]
   },
   "videoSubtitles.speedTap.first" : {
-    "translation" : "JEU SETUP"
+    "translation" : "Game Setup"
   },
   "videoSubtitles.speedTap.second" : {
-    "translation" : "Cozmo sélectionnerons SON CUBE"
+    "translation" : "Cozmo will select his Cube."
   },
   "videoSubtitles.speedTap.third" : {
-    "translation" : "TAP POUR CHOISIR VOTRE CUBE"
+    "translation" : "Tap to select your Cube."
   },
   "videoSubtitles.speedTap.fourth" : {
-    "translation" : "SOIT PRÊT"
+    "translation" : "Get ready."
   },
   "videoSubtitles.speedTap.fifth" : {
-    "translation" : "TAP SI LES Des couleurs"
+    "translation" : "Appuyez sur si les couleurs correspondent."
   },
   "videoSubtitles.speedTap.sixth" : {
-    "translation" : "AUCUNE CONCORDANCE"
+    "translation" : "Aucune concordance."
   },
   "videoSubtitles.speedTap.seventh" : {
-    "translation" : "NO ROUGE SUR FRAPPE"
+    "translation" : "Pas de taraudage sur le rouge."
   },
   "videoSubtitles.speedTap.eighth" : {
-    "translation" : "PREMIER 5 POINTS WINS"
+    "translation" : "Le premier à 5 points gagne."
   },
   "videoSubtitles.cubePounce.first" : {
-    "translation" : "UTILISER UN CUBE"
+    "translation" : "Use one cube."
   },
   "videoSubtitles.cubePounce.second" : {
-    "translation" : "MOYENS cozmo GREEN peut le voir"
+    "translation" : "Green means Cozmo can see it."
   },
   "videoSubtitles.cubePounce.third" : {
-    "translation" : "Pousser vers cozmo"
+    "translation" : "Poussez-le vers Cozmo."
   },
   "videoSubtitles.cubePounce.fourth" : {
-    "translation" : "Écarter AVANT DE pounces"
+    "translation" : "Pull away before he pounces."
   },
   "videoSubtitles.cubePounce.fifth" : {
-    "translation" : "SI VOUS ETES TROP LENT"
+    "translation" : "Si vous êtes trop lent,"
   },
   "videoSubtitles.cubePounce.sixth" : {
-    "translation" : "Cozmo marquerez UN POINT"
+    "translation" : "Cozmo will score a point."
   },
   "videoSubtitles.memoryMatch.first" : {
-    "translation" : "JEU SETUP"
+    "translation" : "Game Setup"
   },
   "videoSubtitles.memoryMatch.second" : {
-    "translation" : "Cozmo EST PRÊT À JOUER"
+    "translation" : "Cozmo is ready to play."
   },
   "videoSubtitles.memoryMatch.third" : {
-    "translation" : "LE JEU COMMENCE AVEC UN MOTIF"
+    "translation" : "Le jeu commence par un motif."
   },
   "videoSubtitles.memoryMatch.fourth" : {
-    "translation" : "VOIR LE MODÈLE"
+    "translation" : "Regardez le modèle."
   },
   "videoSubtitles.memoryMatch.fifth" : {
-    "translation" : "REPETER IT RETOUR"
+    "translation" : "Then repeat it back."
   },
   "videoSubtitles.memoryMatch.sixth" : {
-    "translation" : "AVEC nous relayons cozmo"
+    "translation" : "Take turns with Cozmo."
   },
   "videoSubtitles.memoryMatch.seventh" : {
-    "translation" : "Chaque tour, le modèle grandiront"
+    "translation" : "Each round, the pattern will grow."
   },
   "videoSubtitles.memoryMatch.eighth" : {
-    "translation" : "FAUTES TROP ET VOUS ETES OUT"
+    "translation" : "Too many mistakes and you are out."
   },
   "videoSubtitles.memoryMatch.nineth" : {
-    "translation" : "Voir jusqu'où vous pouvez obtenir"
+    "translation" : "Voyez jusqu'où vous pouvez obtenir."
   },
   "videoSubtitles.memoryMatch.tenth" : {
-    "translation" : "BONNE CHANCE"
+    "translation" : "Good luck!"
   }
 }

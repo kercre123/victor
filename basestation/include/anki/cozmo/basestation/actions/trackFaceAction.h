@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/actions/trackActionInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {

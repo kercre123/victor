@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -62,7 +63,6 @@ class ActionableObject;
 class DriveToObjectAction;
 class BehaviorHelperFactory;
 class IHelper;
-class IWantsToRunStrategy;
 enum class ObjectInteractionIntention;
   
 class BehaviorPreReqNone;
@@ -82,6 +82,8 @@ class IFeedingListener;
 
 enum class CubeAnimationTrigger;
 struct BehaviorStateLightInfo;
+
+struct PathMotionProfile;
 
 namespace ExternalInterface {
 class MessageEngineToGame;
@@ -200,11 +202,6 @@ public:
   // Get the ObjectUseIntentions this behavior uses
   virtual std::set<ObjectInteractionIntention>
                            GetBehaviorObjectInteractionIntentions() const { return {}; }
-  
-  // Handles stopping, updating target blocks, and re-initing the behavior so things get updated properly with
-  // the newly tapped object
-  // Returns whether or not the behavior can still run after updating target blocks
-  bool HandleNewDoubleTap(Robot& robot);
   
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
@@ -372,6 +369,11 @@ protected:
   /// before the behavior stops.
   ////////////////
   
+  // Push an idle animation which will be removed when the behavior stops
+  void SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation);
+  
+  // Remove an idle animation before the beahvior stops
+  void SmartRemoveIdleAnimation(Robot& robot);
   
   // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
   // these triggers will be automatically re-enabled when the behavior stops
@@ -388,6 +390,12 @@ protected:
   void SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger);
 #endif
 
+  // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
+  // use the specified motion profile for all motions. Note that this will result in an error if the behavior
+  // tries to manually set a speed or acceleration on an action. This may be called automatically based on
+  // behavior json data here at the IBehavior level
+  void SmartSetMotionProfile(const PathMotionProfile& motionProfile);
+  void SmartClearMotionProfile();
   
   // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior
   // being interrupted and leaving the track locked
@@ -427,17 +435,6 @@ protected:
 
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const {};
   
-  // Updates the double tapped object lights
-  // If on == true will turn on the double tapped lights for the current tapped object
-  // If on == false will clear double tapped lights
-  void UpdateTappedObjectLights(const bool on) const;
-  
-  bool RequiresObjectTapped() const { return _requireObjectTapped; }
-  
-  // Override if a behavior that uses double tapped objects needs to do something different when it stops
-  // due to a double tap
-  virtual void StopInternalFromDoubleTap(Robot& robot) { if(!RequiresObjectTapped()) { StopInternal(robot); } }
-  
   // Convenience Method for accessing the behavior helper factory
   BehaviorHelperFactory& GetBehaviorHelperFactory();
   
@@ -457,7 +454,7 @@ private:
   float _lastRunTime_s;
   float _startedRunningTime_s;
   
-  IWantsToRunStrategy* _wantsToRunStrategy;
+  IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool IsRunnableBase(const Robot& robot, bool allowWhileRunning) const;
@@ -513,10 +510,14 @@ private:
   // these will be automatically re-enabled on behavior stop
   std::set<std::string> _smartLockIDs;
   
+  // track whether the behavior has set an idle
+  bool _hasSetIdle;
+  
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
+
+  bool _hasSetMotionProfile = false;
   
-  bool _requireObjectTapped = false;
   
   // Handle for SmartDelegateToHelper
   WeakHelperHandle _currentHelperHandle;

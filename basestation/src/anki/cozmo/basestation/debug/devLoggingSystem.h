@@ -69,6 +69,8 @@ private:
   static const DevLoggingClock::time_point kAppRunStartTime;
   static const std::string kArchiveExtensionString;
   static const std::string kAppRunExtension;
+  static const std::string kWavFileExtension;
+  static const std::string kLogFileExtension;
 
   Util::Dispatch::Queue*                      _queue;
   std::unique_ptr<Util::RollingFileLogger>    _gameToEngineLog;

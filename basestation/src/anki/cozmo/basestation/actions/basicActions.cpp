@@ -39,8 +39,6 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const char* kIdleAnimLock = "basic_actions_anim_lock";
-  
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
     
@@ -74,10 +72,12 @@ namespace Anki {
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
                             RAD_TO_DEG(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _maxSpeed_radPerSec = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxSpeed_radPerSec);
+        _motionProfileManuallySet = true;
       } else if (maxSpeed_radPerSec == 0) {
         _maxSpeed_radPerSec = _kDefaultSpeed;
       } else {
         _maxSpeed_radPerSec = maxSpeed_radPerSec;
+        _motionProfileManuallySet = true;
       }
     }
     
@@ -86,10 +86,24 @@ namespace Anki {
         _accel_radPerSec2 = _kDefaultAccel;
       } else {
         _accel_radPerSec2 = accel_radPerSec2;
+        _motionProfileManuallySet = true;
       }
     }
     
-    
+
+    bool TurnInPlaceAction::SetMotionProfile(const PathMotionProfile& motionProfile)
+    {
+      if( _motionProfileManuallySet ) {
+        // don't want to use the custom profile since someone manually specified speeds
+        return false;
+      }
+      else {
+        _maxSpeed_radPerSec = motionProfile.pointTurnSpeed_rad_per_sec;
+        _accel_radPerSec2 = motionProfile.pointTurnAccel_rad_per_sec2;
+        return true;
+      }
+    }
+  
     void TurnInPlaceAction::SetTolerance(const Radians& angleTol_rad)
     {
       _angleTolerance = angleTol_rad.getAbsoluteVal();
@@ -402,10 +416,6 @@ namespace Anki {
   
     SearchForNearbyObjectAction::~SearchForNearbyObjectAction()
     {
-      if( _shouldPopIdle ) {
-        _robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleAnimLock);
-        _shouldPopIdle = false;
-      }
       _compoundAction.PrepForCompletion();
     }
   
@@ -445,39 +455,47 @@ namespace Anki {
                         RAD_TO_DEG(secondAngle_rads),
                         afterSecondTurnWait_s);
 
-      _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
+      AddToCompoundAction(new WaitAction(_robot, initialWait_s));
+
+      DriveStraightAction* driveBackAction = nullptr;
+
+      const float defaultBackupSpeed = Util::numeric_cast<f32>(Util::EnumToUnderlying(SFNOD::BackupSpeed_mms));
+      if( Util::IsFltNear(defaultBackupSpeed, _backupSpeed_mms ) ) {
+        // if using the default backup speed, don't specify it to the action (So the motion profile can take
+        // over if it's set)
+        driveBackAction = new DriveStraightAction(_robot, _backupDistance_mm);
+        driveBackAction->SetShouldPlayAnimation(false);
+      }
+      else {
+        // otherwise, manually specify the backup speed
+        driveBackAction = new DriveStraightAction(_robot, _backupDistance_mm, _backupSpeed_mms, false);
+      }
       
       IActionRunner* driveAndLook = new CompoundActionParallel(_robot, {
-        new DriveStraightAction(_robot, _backupDistance_mm, _backupSpeed_mms, false),
+        driveBackAction,
         new MoveHeadToAngleAction(_robot,_headAngle_rad)
       });
       
       
-      _compoundAction.AddAction(driveAndLook);
+      AddToCompoundAction(driveAndLook);
       
-      _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
+      AddToCompoundAction(new WaitAction(_robot, initialWait_s));
 
       TurnInPlaceAction* turn0 = new TurnInPlaceAction(_robot, firstAngle_rads, false);
       turn0->SetTolerance(DEG_TO_RAD(4.0f));
-      _compoundAction.AddAction(turn0);
+      AddToCompoundAction(turn0);
       
-      _compoundAction.AddAction(new WaitAction(_robot, afterFirstTurnWait_s));
+      AddToCompoundAction(new WaitAction(_robot, afterFirstTurnWait_s));
 
       TurnInPlaceAction* turn1 = new TurnInPlaceAction(_robot, secondAngle_rads, false);
       turn1->SetTolerance(DEG_TO_RAD(4.0f));
-      _compoundAction.AddAction(turn1);
+      AddToCompoundAction(turn1);
 
-      _compoundAction.AddAction(new WaitAction(_robot, afterSecondTurnWait_s));
+      AddToCompoundAction(new WaitAction(_robot, afterSecondTurnWait_s));
 
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
       _compoundAction.ShouldSuppressTrackLocking(true);
 
-      // disable the live idle animation, so we aren't moving during the "wait" sections
-      if( ! _shouldPopIdle ) {
-        _shouldPopIdle = true;
-        _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, kIdleAnimLock);
-      }
-      
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
@@ -509,26 +527,56 @@ namespace Anki {
       
       return internalResult;
     }
-  
+
+    void SearchForNearbyObjectAction::AddToCompoundAction(IActionRunner* action)
+    {
+      // in addition to whichever tracks the action is using, also lock the head and lift so that they don't
+      // move during idles
+      const u8 bodyAndHead = ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
+      const u8 tracksToLock = action->GetTracksToLock() | bodyAndHead;
+      action->SetTracksToLock( tracksToLock );
+
+      _compoundAction.AddAction(action);
+    }
+
 #pragma mark ---- DriveStraightAction ----
     
-    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation)
+    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm)
     : IAction(robot,
               "DriveStraight",
               RobotActionType::DRIVE_STRAIGHT,
               (u8)AnimTrackFlag::BODY_TRACK)
     , _dist_mm(dist_mm)
-    , _speed_mmps(speed_mmps)
-    , _shouldPlayDrivingAnimation(shouldPlayAnimation)
     {
-      if(_speed_mmps < 0.f) {
+
+      // set default speed based on the driving direction
+      if( dist_mm >= 0.0f ) {
+        _speed_mmps = DEFAULT_PATH_MOTION_PROFILE.speed_mmps;
+      }
+      else {
+        _speed_mmps = -DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps;
+      }
+      
+      SetName("DriveStraight" + std::to_string(_dist_mm) + "mm");
+    }
+  
+    DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation)
+      : DriveStraightAction(robot, dist_mm)
+    {
+      _speed_mmps = speed_mmps;
+      _motionProfileManuallySet = true; // speed has been specified manually
+      _shouldPlayDrivingAnimation = shouldPlayAnimation;
+      
+      if(Util::IsFltLTZero(_speed_mmps))
+      {
         PRINT_NAMED_WARNING("DriveStraightAction.Constructor.NegativeSpeed",
                             "Speed should always be positive (not %f). Making positive.",
                             _speed_mmps);
         _speed_mmps = -_speed_mmps;
       }
       
-      if(dist_mm < 0.f) {
+      if(Util::IsFltLTZero(dist_mm))
+      {
         // If distance is negative, we are driving backward and will negate speed
         // internally. Yes, we could have just double-negated if the caller passed in
         // a negative speed already, but this avoids confusion on caller's side about
@@ -549,12 +597,38 @@ namespace Anki {
 
       _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
     }
+
+    void DriveStraightAction::SetAccel(f32 accel_mmps2)
+    {
+      _accel_mmps2 = accel_mmps2;
+      _motionProfileManuallySet = true;
+    }
+
+    void DriveStraightAction::SetDecel(f32 decel_mmps2)
+    {
+      _decel_mmps2 = decel_mmps2;
+      _motionProfileManuallySet = true;
+    }
+
+    bool DriveStraightAction::SetMotionProfile(const PathMotionProfile& profile)
+    {
+      if( _motionProfileManuallySet ) {
+        // don't want to use the custom profile since someone manually specified speeds
+        return false;
+      }
+      else {
+        _speed_mmps = ( _dist_mm < 0.0f ) ? -profile.reverseSpeed_mmps : profile.speed_mmps;
+        _accel_mmps2 = profile.accel_mmps2;
+        _decel_mmps2 = profile.decel_mmps2;
+        return true;
+      }
+    }
   
     ActionResult DriveStraightAction::Init()
     {
       _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
       
-      if(_dist_mm == 0.f) {
+      if(Util::IsNearZero(_dist_mm)) {
         // special case
         _hasStarted = true;
         return ActionResult::SUCCESS;
@@ -601,12 +675,17 @@ namespace Anki {
       if(!_hasStarted) {
         PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.GetPathComponent().HasPathToFollow();
-        if( _hasStarted && _shouldPlayDrivingAnimation) {
-          _robot.GetDrivingAnimationHandler().PlayStartAnim();
+        if( _hasStarted )
+        {
+          PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustStarted", "");
+          if(_shouldPlayDrivingAnimation) {
+            _robot.GetDrivingAnimationHandler().PlayStartAnim();
+          }
         }
       }
 
       if ( _hasStarted && !_robot.GetPathComponent().IsActive() ) {
+        PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustCompleted", "");
         if( _shouldPlayDrivingAnimation ) {
           if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
             return ActionResult::RUNNING;
@@ -1093,8 +1172,10 @@ namespace Anki {
                             "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.",
                             RAD_TO_DEG(maxSpeed_radPerSec), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _maxPanSpeed_radPerSec = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxSpeed_radPerSec);
+        _panSpeedsManuallySet = true;
       } else {
         _maxPanSpeed_radPerSec = maxSpeed_radPerSec;
+        _panSpeedsManuallySet = true;
       }
     }
     
@@ -1105,6 +1186,7 @@ namespace Anki {
         _panAccel_radPerSec2 = _kDefaultPanAccel;
       } else {
         _panAccel_radPerSec2 = accel_radPerSec2;
+        _panSpeedsManuallySet = true;
       }
     }
     
@@ -1133,6 +1215,7 @@ namespace Anki {
         _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
       } else {
         _maxTiltSpeed_radPerSec = maxSpeed_radPerSec;
+        _tiltSpeedsManuallySet = true;
       }
     }
     
@@ -1142,6 +1225,7 @@ namespace Anki {
         _tiltAccel_radPerSec2 = _kDefaultTiltAccel;
       } else {
         _tiltAccel_radPerSec2 = accel_radPerSec2;
+        _tiltSpeedsManuallySet = true;
       }
     }
     
@@ -1164,25 +1248,29 @@ namespace Anki {
         _tiltAngleTol = HEAD_ANGLE_TOL;
       }
     }
-    
+
     ActionResult PanAndTiltAction::Init()
     {
       // Incase we are re-running this action
       _compoundAction.ClearActions();
       _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
       
-      TurnInPlaceAction* action = new TurnInPlaceAction(_robot, _bodyPanAngle.ToFloat(), _isPanAbsolute);
+      TurnInPlaceAction* action = new TurnInPlaceAction(_robot, _bodyPanAngle.ToFloat(), _isPanAbsolute);      
       action->SetTolerance(_panAngleTol);
-      action->SetMaxSpeed(_maxPanSpeed_radPerSec);
-      action->SetAccel(_panAccel_radPerSec2);
       action->SetMoveEyes(_moveEyes);
+      if( _panSpeedsManuallySet ) {
+        action->SetMaxSpeed(_maxPanSpeed_radPerSec);
+        action->SetAccel(_panAccel_radPerSec2);
+      }
       _compoundAction.AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot.GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(_robot, newHeadAngle, _tiltAngleTol);
-      headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
-      headAction->SetAccel(_tiltAccel_radPerSec2);
       headAction->SetMoveEyes(_moveEyes);
+      if( _tiltSpeedsManuallySet ) {
+        headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
+        headAction->SetAccel(_tiltAccel_radPerSec2);
+      }
       _compoundAction.AddAction(headAction);
 
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
@@ -1403,7 +1491,6 @@ namespace Anki {
             // If we need to refine the turn just reset this action, set appropriate variables
             Reset(false);
             ShouldDoRefinedTurn(false);
-            SetMaxPanSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
             SetPanTolerance(_refinedTurnAngleTol_rad);
             
             PRINT_CH_INFO("Actions", "TurnTowardsObjectAction.CheckIfDone.RefiningTurn",

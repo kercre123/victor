@@ -162,7 +162,9 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, Robot& robot)
       auto searchNearby = new SearchForNearbyObjectAction(robot, targetID);
       
       CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-      compoundAction->AddAction(new TurnTowardsObjectAction(robot, targetID), true);
+      if(targetID.IsSet()){
+        compoundAction->AddAction(new TurnTowardsObjectAction(robot, targetID), true);
+      }
       compoundAction->AddAction(searchNearby);
       StartActing(compoundAction, &SearchForBlockHelper::SearchForBlock);
       _nextSearchIntensity = SearchIntensity::StandardSearch;

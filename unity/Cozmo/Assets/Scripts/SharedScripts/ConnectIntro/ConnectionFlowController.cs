@@ -218,6 +218,8 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void QuitConnectionFlow() {
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
+
     if (ConnectionFlowQuit != null) {
       ConnectionFlowQuit();
     }
@@ -241,6 +243,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void InitConnectionFlow() {
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(true);
     if (StartAndroidFlowIfApplicable()) {
       return;
     }
@@ -477,14 +480,14 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void CheckForRestoreRobotFlow() {
     OnboardingManager.Instance.FirstTime = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow;
-    // we've never connected before so still have setup
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
-      // we are done with first time user flow..
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
-      DataPersistence.DataPersistenceManager.Instance.Save();
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    if (robot != null) {
+      // we've never connected before so still have setup
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+        // we are done with first time user flow..
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
+        DataPersistence.DataPersistenceManager.Instance.Save();
 
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
         // Need to create the struct that will be written to the NVEntryTag, set values in it, and then pack it into a
         // memoryStream which will modify the byte array it was constructed with. That byte array is then what is
         // passed to the NVStorageWrite message.
@@ -496,21 +499,23 @@ public class ConnectionFlowController : MonoBehaviour {
 
         robot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
         robot.SendAnimationTrigger(AnimationTrigger.StartSleeping);
-      }
-      else {
-        DAS.Warn("ConnectionFlowController.CheckForRestoreRobotFlow", "Robot has disconnected");
-      }
 
-      FinishConnectionFlow();
+
+        FinishConnectionFlow();
+      }
+      // connected before but quit while the "special moments" were still happening so play again rather than normal wakeup
+      else if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup)) {
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.StartSleeping);
+        FinishConnectionFlow();
+      }
+      // normal flow
+      else {
+        WakeupSequence();
+      }
     }
-    // connected before but quit while the "special moments" were still happening so play again rather than normal wakeup
-    else if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup)) {
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.StartSleeping);
-      FinishConnectionFlow();
-    }
-    // normal flow
     else {
-      WakeupSequence();
+      // Robot has disconnected cleanup in HandleRobotDisconnect
+      DAS.Info("ConnectionFlowController.CheckForRestoreRobotFlow", "Robot has disconnected");
     }
   }
 
@@ -565,6 +570,8 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void FinishConnectionFlow() {
     DestroyBackgroundModal();
+
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
 
     // explicitly enable wake up behaviors that are off in engine by default.
     if (RobotEngineManager.Instance.CurrentRobot != null) {

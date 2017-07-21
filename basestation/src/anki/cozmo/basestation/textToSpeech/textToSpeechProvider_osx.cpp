@@ -15,12 +15,14 @@
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechProvider_acapela.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechProvider_osx.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataScope.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "util/environment/locale.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include <cmath>
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
@@ -37,33 +39,18 @@
 #include "ifBabTtsDyn.h"
 #undef _BABTTSDYN_IMPL_
 
-// Acapela config params
-//
-#define TTS_VOICE_FRENCH   "Bruno22k_CO"
-#define TTS_VOICE_GERMAN   "Klaus22k_CO"
-#define TTS_VOICE_JAPANESE "Sakura22k_CO"
-#define TTS_VOICE_DEFAULT  "Ryan22k_CO"
-
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
 
 
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx)
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx, const Json::Value& tts_platform_config)
 {
-  // Which voice do we want to use?
   using Locale = Anki::Util::Locale;
-  using Language = Anki::Util::Locale::Language;
   using Scope = Anki::Util::Data::Scope;
   using DataPlatform = Anki::Util::Data::DataPlatform;
   
-  const Locale * locale = ctx->GetLocale();
-  if (nullptr == locale) {
-    // This may happen during unit tests
-    LOG_WARNING("TextToSpeechProvider.Initialize.NoLocale", "Unable to initialize TTS provider");
-    return;
-  }
-  
+  // Check for valid data platform before we do any work
   const DataPlatform * dataPlatform = ctx->GetDataPlatform();
   if (nullptr == dataPlatform) {
     // This may happen during unit tests
@@ -71,7 +58,31 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx)
     return;
   }
 
-    // Initialize Acapela DLL
+  // Check for valid locale before we do any work
+  const Locale * locale = ctx->GetLocale();
+  if (nullptr == locale) {
+    // This may happen during unit tests
+    LOG_WARNING("TextToSpeechProvider.Initialize.NoLocale", "Unable to initialize TTS provider");
+    return;
+  }
+  
+  // Set up default parameters
+  _tts_language = locale->GetLanguageString();
+  _tts_voice = "Ryan22k_CO";
+  _tts_speed = 100;
+  _tts_shaping = 100;
+
+  // Allow language configuration to override defaults
+  Json::Value tts_language_config = tts_platform_config[_tts_language.c_str()];
+  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kVoiceKey, _tts_voice);
+  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
+  JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
+    
+  LOG_INFO("TextToSpeechProviderImpl.Initialize",
+           "tts_language=%s tts_voice=%s tts_speed=%d tts_shaping=%d",
+           _tts_language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
+
+  // Initialize Acapela DLL
   std::string resources = dataPlatform->pathToResource(Scope::Resources, "tts");
   HMODULE h = BabTtsInitDllEx(resources.c_str());
   if (nullptr == h) {
@@ -101,31 +112,24 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx)
     return;
   }
   
-  // Which language are we using?
-  const Language language = locale->GetLanguage();
-  std::string voice;
-  
-  switch (language) {
-    case Language::fr:
-      voice = TTS_VOICE_FRENCH;
-      break;
-    case Language::de:
-      voice = TTS_VOICE_GERMAN;
-      break;
-    case Language::ja:
-      voice = TTS_VOICE_JAPANESE;
-      break;
-    default:
-      voice = TTS_VOICE_DEFAULT;
-      break;
-  }
-  
-  BabTtsError err = BabTTS_Open(_lpBabTTS, voice.c_str(), BABTTS_USEDEFDICT);
+  BabTtsError err = BabTTS_Open(_lpBabTTS, _tts_voice.c_str(), BABTTS_USEDEFDICT);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.Initialize.Open", "Unable to open TTS provider (%s)", BabTTS_GetErrorName(err));
     return;
   }
   
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, _tts_speed);
+  if (E_BABTTS_NOERROR != err) {
+    LOG_ERROR("TextToSpeechProvider.Initialize.SetSpeed", "Unable to set speed=%d (%s)",
+              _tts_speed, BabTTS_GetErrorName(err));
+  }
+  
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_VOCALTRACT, _tts_shaping);
+  if (E_BABTTS_NOERROR != err) {
+    LOG_ERROR("TextToSpeechProvider.Initialize.SetPitch", "Unable to set shaping=%d (%s)",
+              _tts_shaping, BabTTS_GetErrorName(err));
+  }
+
 }
   
 TextToSpeechProviderImpl::~TextToSpeechProviderImpl()
@@ -145,17 +149,13 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     LOG_ERROR("TextToSpeechProvider.CreateAudioData", "No provider handle");
     return RESULT_FAIL_INVALID_OBJECT;
   }
-  // Convert Anki unit scale to Acapela percentage scale
-  durationScalar = durationScalar * 100.f;
   
-  // Clamp to supported range (30% - 300%)
-  durationScalar = Util::Clamp(durationScalar, 30.f, 300.f);
-  
-  // Convert float to integer speed param
-  int speedParam = Util::numeric_cast<int>(durationScalar);
+  // Adjust base speed by duration scalar
+  const float speechRate = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
+  const int speed = Anki::Util::numeric_cast<int>(std::round(speechRate));
   
   // Update TTS engine to use new speed param
-  BabTtsError err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, speedParam);
+  BabTtsError err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, speed);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetSettings", "Unable to set speed (%s)", BabTTS_GetErrorName(err));
     return RESULT_FAIL_INVALID_PARAMETER;

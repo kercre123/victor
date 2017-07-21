@@ -1,4 +1,4 @@
-#!/usr/bin/env python -u
+#!/usr/bin/env python2 -u
 
 """Issues commands to gyp and generated files."""
 
@@ -204,7 +204,8 @@ def parse_game_arguments():
         ArgumentParser.Command('clean', 'issue the clean command to projects'),
         ArgumentParser.Command('delete', 'delete all generated projects'),
         ArgumentParser.Command('wipeall!',
-                               'delete, then wipe all ignored files in the entire repo (including generated projects)')]
+                               'delete, then wipe all ignored files in the entire repo (including generated projects)'),
+        ArgumentParser.Command('deleteclad', 'delete all generated CLAD files')]
     parser.add_command_arguments(commands)
 
     platforms = ['mac', 'ios', 'android']
@@ -383,9 +384,9 @@ class GamePlatformConfiguration(object):
             version_tag = 'v2' if options.engine_v2 else ''
             self.workspace_name = '{0}{1}Workspace_{2}'.format(PRODUCT_NAME,
                                                                version_tag,
-                                                               self.platform.upper())
+                                                               self.platform.lower())
             if platform == 'ios' and options.selected_script_engine == 'mono2x':
-                self.workspace_name += '_Mono2x'
+                self.workspace_name += '_mono2x'
             self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
 
             self.scheme = 'BUILD_WORKSPACE'
@@ -416,9 +417,9 @@ class GamePlatformConfiguration(object):
             if options.selected_script_engine == 'il2cpp':
                 proj_name = '{0}Unity_{1}.xcodeproj'
             else:
-                proj_name = '{0}Unity_{1}_Mono2x.xcodeproj'
+                proj_name = '{0}Unity_{1}_mono2x.xcodeproj'
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
-                                                         proj_name.format(PRODUCT_NAME, self.platform.upper()))
+                                                         proj_name.format(PRODUCT_NAME, self.platform.lower()))
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
             try:
                 if self.options.provision_profile is not None:
@@ -616,19 +617,7 @@ class GamePlatformConfiguration(object):
             workspace.generate(self.workspace_path, self.derived_data_dir)
 
         # These are special boot strings that need to be localized, but need to be pulled out of asset bundles and loaded early.
-        localized_strings_dir_src = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'StreamingAssets', 'LocalizedStrings')
-        localized_strings_dir_dest = os.path.join(self.unity_project_root, 'Assets', 'Resources', 'bootstrap', 'LocalizedStrings')
-        if not os.path.exists(localized_strings_dir_dest):
-            os.makedirs(localized_strings_dir_dest)
-        for localeName in os.listdir(localized_strings_dir_src):
-            if os.path.isdir(os.path.join(localized_strings_dir_src, localeName)):
-                single_locale_src = os.path.join(localized_strings_dir_src, localeName, 'BootStrings.json')
-                single_locale_dir = os.path.join(localized_strings_dir_dest, localeName)
-                if not os.path.exists(single_locale_dir):
-                    os.makedirs(single_locale_dir)
-                single_locale_dest = os.path.join(localized_strings_dir_dest, localeName, 'BootStrings.json')
-                if not os.path.exists(single_locale_dest) or os.stat(single_locale_src).st_mtime - os.stat(single_locale_dest).st_mtime > 1:
-                    shutil.copy2(single_locale_src, single_locale_dest)
+        ankibuild.util.File.execute([os.path.join(ENGINE_ROOT, 'project', 'buildScripts', 'create_boot_strings.py')])
 
         # Copy in DASConfig.json, but don't actually update the file if it is the same as it was the last time
         DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration,

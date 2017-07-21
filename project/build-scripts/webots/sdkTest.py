@@ -285,7 +285,7 @@ def build(build_type):
 
   build_command = [
     'xcodebuild',
-    '-workspace', get_subpath("generated/mac", "CozmoWorkspace_MAC.xcworkspace"),
+    '-workspace', get_subpath("generated/mac", "CozmoWorkspace_mac.xcworkspace"),
     '-scheme', 'BUILD_WORKSPACE',
     '-sdk', 'macosx',
     '-configuration', build_type.name,

@@ -135,7 +135,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   
   if(msg.motionProf.isCustom)
   {
-    action->SetMotionProfile(msg.motionProf);
+    robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
   }
   return action;
 }
@@ -153,7 +153,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FlipBlock&
   
   if(msg.motionProf.isCustom)
 {
-    action->SetMotionProfile(msg.motionProf);
+    robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
   }
   return action;
 }
@@ -188,7 +188,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
                                                                       msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     
@@ -197,7 +197,10 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
   else
   {
     PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    if(msg.motionProf.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
+    }
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -228,7 +231,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelOb
                                                                           msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     return action;
   } else {
@@ -265,7 +268,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
                                                                         msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
@@ -310,7 +313,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoObject
   
   if(msg.motionProf.isCustom)
   {
-    action->SetMotionProfile(msg.motionProf);
+    robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
   }
   
   return action;
@@ -337,7 +340,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
                                                                             msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     
     return action;
@@ -347,7 +350,10 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
                                                               msg.distanceFromMarker_mm,
                                                               msg.alignmentType,
                                                               msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    if(msg.motionProf.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
+    }
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about aligning with a specific marker just that we are aligning with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -399,13 +405,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     action->EnableDeepRoll(msg.doDeepRoll);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
     RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    if(msg.motionProf.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
+    }
     action->EnableDeepRoll(msg.doDeepRoll);
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
@@ -435,13 +444,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
                                                                     msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     
     return action;
   } else {
     PopAWheelieAction* action = new PopAWheelieAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    if(msg.motionProf.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
+    }
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -468,13 +480,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant&
                                                                 msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     
     return action;
   } else {
     FacePlantAction* action = new FacePlantAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    if(msg.motionProf.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
+    }
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
@@ -494,12 +509,15 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseOb
                                                                                 msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     return action;
   } else {
     TraverseObjectAction* traverseAction = new TraverseObjectAction(robot, selectedObjectID, msg.useManualSpeed);
-    traverseAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    if(msg.motionProf.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, traverseAction);
+    }
     return traverseAction;
   }
 }
@@ -522,12 +540,15 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
     
     if(msg.motionProf.isCustom)
     {
-      action->SetMotionProfile(msg.motionProf);
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
     return action;
   } else {
     MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, msg.useManualSpeed);
-    chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    if(msg.motionProf.isCustom)
+    {
+      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, chargerAction);
+    }
     return chargerAction;
   }
 }
@@ -837,7 +858,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
   }
   return newAction;
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayNeedsGetOutAnimIfNeeded& msg)
+{
+  return new PlayNeedsGetOutAnimIfNeeded(robot);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::ReadToolCode& msg)
@@ -1036,6 +1064,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
       DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
       DEFINE_HANDLER(playCubeAnimationTrigger, PlayCubeAnimationTrigger, 0),
+      DEFINE_HANDLER(playNeedsGetOutAnimIfNeeded, PlayNeedsGetOutAnimIfNeeded, 0),
       DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
       DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
       DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
@@ -1772,7 +1801,7 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
   {
     // SetControllerGains
     _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ControllerGains,
-                                                         [this, robot] (const GameToEngineEvent& event)
+                                                         [robot] (const GameToEngineEvent& event)
                                                          {
                                                            const ExternalInterface::ControllerGains& msg = event.GetData().Get_ControllerGains();
                                                            
@@ -1781,7 +1810,7 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
     
     // SetMotionModelParams
     _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMotionModelParams,
-                                                         [this, robot] (const GameToEngineEvent& event)
+                                                         [robot] (const GameToEngineEvent& event)
                                                          {
                                                            const ExternalInterface::SetMotionModelParams& msg = event.GetData().Get_SetMotionModelParams();
                                                            
@@ -1790,7 +1819,7 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
     
     // RollActionParams
     _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::RollActionParams,
-                                                         [this, robot] (const GameToEngineEvent& event)
+                                                         [robot] (const GameToEngineEvent& event)
                                                          {
                                                            const ExternalInterface::RollActionParams& msg = event.GetData().Get_RollActionParams();
                                                            

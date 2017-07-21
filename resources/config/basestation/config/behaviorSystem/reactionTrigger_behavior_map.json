@@ -95,16 +95,6 @@
       "behaviorID": "ReactToCubeMoved"
     },
     {
-      "reactionTrigger": "DoubleTapDetected",
-      "behaviorID": "ReactToDoubleTap",
-      "genericStrategyParams": {
-        "shouldResumeLast": true,
-        "canInterruptOtherTriggeredBehavior": false,
-        "needsRobotPreReq": true,
-        "debugStrategyName": "Trigger Strategy Double Tap"
-      }
-    },
-    {
       "reactionTrigger": "Frustration",
       "behaviorID": "ReactToFrustrationMinor",
       "frustrationParams": {
@@ -129,10 +119,7 @@
     },
     {
       "reactionTrigger": "NoPreDockPoses",
-      "behaviorID": "RamIntoBlock",
-      "wantsToRunStrategyConfig": {
-        "strategyType" : "NoPreDockPoses"
-      }
+      "behaviorID": "RamIntoBlock"
     },
     {
       "reactionTrigger": "PlacedOnCharger",

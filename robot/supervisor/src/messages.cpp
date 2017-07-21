@@ -185,7 +185,6 @@ namespace Anki {
         robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
-        robotState_.lastPathID = PathFollower::GetLastPathID();
 
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
@@ -300,8 +299,6 @@ namespace Anki {
         f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
         /*Result res =*/ Localization::UpdatePoseWithKeyframe(msg.origin_id, msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
-        //Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
-        //Localization::SetPoseFrameId(msg.pose_frame_id);
 
         /*
         AnkiInfo( 115, "Messages.Process_absLocalizationUpdate.Recvd", 363, "Result %d, currTime=%d, updated frame time=%d: (%.3f,%.3f) at %.1f degrees (frame = %d)\n", 7,

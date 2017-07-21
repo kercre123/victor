@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/actions/actionWatcher.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -185,6 +186,11 @@ namespace Anki {
       if(!_preppedForCompletion) {
         PRINT_NAMED_ERROR("IActionRunner.Destructor.NotPreppedForCompletion", "[%d]", GetTag());
       }
+
+      // clear the motion profile, if desired
+      if( _shouldClearMotionProfile ) {
+        _robot.GetPathComponent().ClearCustomMotionProfile();
+      }
       
       // Erase the tags as they are no longer in use
       IActionRunner::sInUseTagSet.erase(_customTag);
@@ -318,6 +324,20 @@ namespace Anki {
         case ActionResult::NOT_STARTED:
         case ActionResult::INTERRUPTED:
         {
+          // Before we set the action to running, apply the motion profile to this action if there is
+          // one. This will apply the profile automatically to every action that runs, including nested or
+          // compound actions. It's up to each individual action to implement the SetMotionProfile function to
+          // update their motion profile appropriately
+          if( _robot.GetPathComponent().HasCustomMotionProfile() ) {
+            const bool profileApplied = SetMotionProfile( _robot.GetPathComponent().GetCustomMotionProfile() );
+            if( !profileApplied ) {
+              PRINT_CH_INFO("Actions", "IActionRunner.SetMotionProfile.Unused",
+                            "Action %s [%d] unable to set motion profile. Perhaps speeds already set manually?",
+                            GetName().c_str(),
+                            GetTag());
+            }
+          }
+
           _state = ActionResult::RUNNING;
           if (!_suppressTrackLocking)
           {

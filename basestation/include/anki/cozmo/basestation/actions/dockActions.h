@@ -14,6 +14,7 @@
 #define ANKI_COZMO_DOCKACTIONS_H
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
@@ -73,6 +74,9 @@ namespace Anki {
       void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2);
       void SetSpeed(f32 speed_mmps);
       void SetAccel(f32 accel_mmps2, f32 decel_mmps2);
+
+      // update speeds and accels from motion profile
+      virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
       // Set placement offset relative to marker
       void SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad);
@@ -238,6 +242,7 @@ namespace Anki {
       f32                        _dockSpeed_mmps                 = DEFAULT_PATH_MOTION_PROFILE.dockSpeed_mmps;
       f32                        _dockAccel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockAccel_mmps2;
       f32                        _dockDecel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockDecel_mmps2;
+      bool                       _motionProfileManuallySet       = false;
       bool                       _doNearPredockPoseCheck         = true;
       u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
@@ -443,8 +448,6 @@ namespace Anki {
                                       const bool useManualSpeed = false,
                                       const bool checkFreeDestination = false,
                                       const float destinationObjectPadding_mm = 0.0f);
-      
-      void SetMotionProfile(const PathMotionProfile& motionProfile);
       
     private:
       std::weak_ptr<IActionRunner> _driveAction;

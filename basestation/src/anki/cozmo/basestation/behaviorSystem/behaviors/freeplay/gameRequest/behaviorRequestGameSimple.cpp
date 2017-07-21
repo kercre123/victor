@@ -76,7 +76,6 @@ static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRequestGameArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},
@@ -184,11 +183,10 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
-  // disable idle animation, but save the old one on the stack
-  if( ! _shouldPopIdle ) {
-    _shouldPopIdle = true;
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
-  }
+  // use the driving motion profile by default
+  SmartSetMotionProfile(_driveToPlaceProfile);
+
+  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
 
   if( GetNumBlocks(robot) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
@@ -272,11 +270,6 @@ void BehaviorRequestGameSimple::RequestGame_StopInternal(Robot& robot)
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
   StopActing(false);
-
-  if( _shouldPopIdle ) {
-    _shouldPopIdle = false;
-    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
-  }
 }
 
   
@@ -358,11 +351,23 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
   
   ObjectID targetBlockID = GetRobotsBlockID(robot);
 
+  // use the pickup motion profile for pickup, clearing the driving one first
+  SmartClearMotionProfile();
+  SmartSetMotionProfile(_driveToPickupProfile);
+
   auto onPickupSuccess = [this](Robot& robot){
+    // restore the driving motion profile
+    SmartClearMotionProfile();
+    SmartSetMotionProfile(_driveToPlaceProfile);
+    
     TransitionToDrivingToFace(robot);
   };
   
   auto onPickupFailure = [this](Robot& robot){
+    // restore the driving motion profile
+    SmartClearMotionProfile();
+    SmartSetMotionProfile(_driveToPlaceProfile);
+
     // couldn't pick up this block. If we have another, try that. Otherwise, fail
     if( SwitchRobotsBlock(robot) ) {
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail),
@@ -375,9 +380,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
     }
   };
   
-  
   auto& helperComp = robot.GetAIComponent().GetBehaviorHelperComponent();
-  helperComp.SetMotionProfile(_driveToPickupProfile);
   
   auto& factory = helperComp.GetBehaviorHelperFactory();
   PickupBlockParamaters params;
@@ -421,7 +424,6 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
                                                       false,
                                                       _driveToPlacePoseThreshold_mm,
                                                       _driveToPlacePoseThreshold_rads);
-    action->SetMotionProfile(_driveToPlaceProfile);
     StartActing(action,
                 [this, &robot](ActionResult result) {
                   if ( result == ActionResult::SUCCESS ) {

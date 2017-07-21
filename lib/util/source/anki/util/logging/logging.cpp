@@ -435,6 +435,21 @@ void sDebugBreak()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+#ifndef ALLOW_BREAK_ON_ERROR
+#define ALLOW_BREAK_ON_ERROR 1
+#endif
+
+void sDebugBreakOnError()
+{
+  #if ALLOW_BREAK_ON_ERROR
+  sDebugBreak();
+  #endif
+}
+
+#undef ALLOW_BREAK_ON_ERROR
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 void sAbort()
 {
   LogError("Util.Logging.Abort", {}, "Application abort");

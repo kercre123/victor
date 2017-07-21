@@ -1,0 +1,16 @@
+/** Clad definitions of path event types
+ * ROBOT_CLAD_SHARED
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 PathEventType {
+  PATH_STARTED,
+  PATH_INTERRUPTED,
+  PATH_COMPLETED
+}
+
+} // namespace Cozmo
+} // namespace Anki

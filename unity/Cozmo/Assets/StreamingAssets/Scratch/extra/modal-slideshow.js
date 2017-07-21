@@ -88,7 +88,7 @@
     var url = elem.getAttribute('href');
     setTimeout(function(){
       // navigate to anchor tag's url after sound finishes
-      window.location.href = url;
+      window.location.href = url + '?locale=' + LOCALE;
     }, 50);
   }
 
@@ -263,7 +263,7 @@
       // for challenges, save the slide page number in Unity to possibly reopen to later
       if (isChallenges) {
         // Save the current challenge page last viewed.
-        window.Unity.call('{"requestId": "-1", "command": "cozmoSetChallengeBookmark","argUInt": "' + slideNum + '"}');
+        window.Unity.call({requestId: -1, command: "cozmoSetChallengeBookmark",argUInt: slideNum});
       }
 
       // set the progress text

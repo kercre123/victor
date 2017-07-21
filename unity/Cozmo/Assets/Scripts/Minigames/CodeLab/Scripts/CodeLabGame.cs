@@ -1,5 +1,6 @@
 using UnityEngine;
 using Anki.Cozmo;
+using Anki.Cozmo.Audio;
 using Anki.Cozmo.ExternalInterface;
 using Newtonsoft.Json;
 using DataPersistence;
@@ -29,6 +30,11 @@ namespace CodeLab {
       CreateNewProject,     // Workspace displays only green flag
       DisplayUserProject,   // Display a previously-saved user project. User project UUID saved in _ProjectUUIDToOpen.
       DisplaySampleProject  // Display a previously-saved sample project. Sample project UUID saved in _ProjectUUIDToOpen.
+    }
+
+    private enum MusicRoundStates {
+      WorkspaceMusicRound = 1,
+      LobbyMusicRound = 2
     }
 
     // Look at CodeLabGameUnlockable.asset in editor to set when unlocked.
@@ -121,9 +127,11 @@ namespace CodeLab {
     }
 
     private GameToGameConn _GameToGameConn = new GameToGameConn(); // Dev-Connection for non-SHIPPING builds
-    private string _CurrentURLFilename = null; // The currently displayed URL (used for hot-reloading)
+    private string _CurrentURLFilename = null; // The currently displayed URL
     private string _DevLoadPath = null; // Custom path for loading assets in dev builds
     private bool _DevLoadPathFirstRequest = true;
+
+    private bool _QuitCodeLabWhenOnCharger = true; // released app does this, but it's annoying for dev
 
     private uint _ChallengeBookmark = 1;
 
@@ -199,6 +207,23 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           LoadURL(_CurrentURLFilename);
         }
         break;
+      case "ReInit":
+        if (_WebViewObject != null) {
+          GameObject.Destroy(_WebViewObject);
+          _WebViewObject = new GameObject("WebView", typeof(WebViewObject));
+          _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+          _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
+          if (_CurrentURLFilename != null) {
+            LoadURL(_CurrentURLFilename);
+          }
+        }
+        break;
+      case "AllowOnCharger":
+        _QuitCodeLabWhenOnCharger = false;
+        break;
+      case "QuitOnCharger":
+        _QuitCodeLabWhenOnCharger = true;
+        break;
       case "SetAppPath":
         _DevLoadPath = null;
         DAS.Info("CodeLab.SetAppPath", "_DevLoadPath = null");
@@ -260,11 +285,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void SetCubeStateForCodeLab(CubeStateForCodeLab cubeDest, LightCube cubeSrc) {
       if (cubeSrc == null) {
         cubeDest.pos = new Vector3(0.0f, 0.0f, 0.0f);
+        cubeDest.camPos = new Vector2(0.0f, 0.0f);
         cubeDest.isValid = false;
+        cubeDest.isVisible = false;
       }
       else {
         cubeDest.pos = cubeSrc.WorldPosition;
+        cubeDest.camPos = cubeSrc.VizRect.center;
         cubeDest.isValid = true;
+        const int kMaxVisionFramesSinceSeeingCube = 30;
+        cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
       }
     }
 
@@ -305,6 +335,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
         _LatestCozmoState.pos = robot.WorldPosition;
         _LatestCozmoState.poseAngle_d = robot.PoseAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.liftHeightFactor = robot.LiftHeightFactor;
+        _LatestCozmoState.headAngle_d = robot.HeadAngle * Mathf.Rad2Deg;
 
         // Set cube data
 
@@ -352,8 +385,23 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
         // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
         // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
-        if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
-          RaiseChallengeQuit();
+        if (_QuitCodeLabWhenOnCharger && ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0)) {
+          if (IsDisplayingWorkspacePage()) {
+            try {
+              // We want to exit Code Lab, but first, let's check if we have
+              // a project to save before exiting. Unity will wait until
+              // JavaScript calls back into Unity with cozmoSaveOnQuitCompleted,
+              // and then Unity will exit Code Lab.
+              this.EvaluateJS("window.saveCozmoUserProject(true);");
+            }
+            catch (Exception) {
+              // If anything unexpected happens, don't wait to exit Code Lab.
+              RaiseChallengeQuit();
+            }
+          }
+          else {
+            RaiseChallengeQuit();
+          }
         }
       }
     }
@@ -377,7 +425,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (_WebViewObject == null) {
         _WebViewObject = new GameObject("WebView", typeof(WebViewObject));
         _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
-        _WebViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
+        _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
 
         int timesPlayedCodeLab = 0;
         DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(ChallengeID, out timesPlayedCodeLab);
@@ -707,6 +755,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       case "cozmoStopAll":
         OnStopAll();
         return true;
+      case "cozmoSaveOnQuitCompleted":
+        // JavaScript is confirming project has been saved,
+        // so now we can exit Code Lab. 
+        RaiseChallengeQuit();
+        return true;
       case "getCozmoUserAndSampleProjectLists":
         OnGetCozmoUserAndSampleProjectLists(scratchRequest);
         return true;
@@ -754,40 +807,23 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void WebViewCallback(string jsonStringFromJS) {
       string logJSONStringFromJS = jsonStringFromJS;
-      if (logJSONStringFromJS.Contains("cozmoSays")) {
+      if (logJSONStringFromJS.Contains("cozmo_says") || logJSONStringFromJS.Contains("cozmoSays")) {
         // TODO Temporary solution for removing PII from logs.
         // For vertical will need to check more than just CozmoSays,
         // potentially. Also, ideally only strip out CozmoSays
         // payload, not entire JSON string.
-        logJSONStringFromJS = "SayTextAction-Redacted";
+        logJSONStringFromJS = PrivacyGuard.HidePersonallyIdentifiableInfo(logJSONStringFromJS);
       }
 
       ScratchRequest scratchRequest = null;
       try {
-        DAS.Info("CodeLabGame.WebViewCallback", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+        DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {
         if (exception is JsonReaderException || exception is JsonSerializationException) {
-          DAS.Error("CodeLabGame.WebViewCallback", "JSON exception with text: " + logJSONStringFromJS);
-
-          // Try using UnEscapeURL to see if we have better luck with unescaping the text before calling DeserializeObject
-          jsonStringFromJS = WWW.UnEscapeURL(jsonStringFromJS);
-
-          try {
-            scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
-
-            DAS.Warn("CodeLabGame.WebViewCallbackUnescape", "Successfully deserialized json with WebViewCallbackUnescape after failing with WebViewCallback");
-          }
-          catch (Exception exceptionUnescape) {
-            if (exceptionUnescape is JsonReaderException || exceptionUnescape is JsonSerializationException) {
-              DAS.Error("CodeLabGame.WebViewCallbackUnescape", "JSON exception with text: " + logJSONStringFromJS);
-              return;
-            }
-            else {
-              throw;
-            }
-          }
+          DAS.Error("CodeLabGame.WebViewCallback.Fail", "JSON exception with text: " + logJSONStringFromJS);
+          return;
         }
         else {
           throw;
@@ -959,7 +995,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
         for (int i = 0; i < cozmoSaysText.Length; i++) {
           char currentChar = cozmoSaysText[i];
-          if (char.IsLetter(currentChar) || char.IsWhiteSpace(currentChar) || IsPunctuation(currentChar)) {
+          if (char.IsLetterOrDigit(currentChar) || char.IsWhiteSpace(currentChar) || IsPunctuation(currentChar)) {
             cozmoSaysTextCleaned += currentChar;
           }
         }
@@ -1110,6 +1146,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 #endif // UNITY_EDITOR
     }
 
+    private bool IsDisplayingWorkspacePage() {
+      if (_CurrentURLFilename.IndexOf(kHorizontalIndexFilename, StringComparison.Ordinal) > -1) {
+        return true;
+      }
+      else if (_CurrentURLFilename.IndexOf(kVerticalIndexFilename, StringComparison.Ordinal) > -1) {
+        return true;
+      }
+      return false;
+    }
+
     private void LoadURL(string scratchPathToHTML) {
       if (_SessionState.IsProgramRunning()) {
         // Program is currently running and we won't receive OnScriptStopped notification
@@ -1127,10 +1173,20 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       DAS.Info("CodeLab.LoadURL", "urlPath = '" + urlPath + "'");
 
-      _CurrentURLFilename = scratchPathToHTML;  // The currently displayed URL (used for hot-reloading)
+      _CurrentURLFilename = scratchPathToHTML;
       _WebViewObjectComponent.LoadURL(urlPath);
       if ((_DevLoadPath != null) && _DevLoadPathFirstRequest) {
         _DevLoadPathFirstRequest = false;
+      }
+
+      // Set "lobby" versus "workspace" music
+      if (IsDisplayingWorkspacePage()) {
+        // Workspace music: plays for horizontal and vertical workspace as well as challenges
+        GameAudioClient.SetMusicRoundState((int)MusicRoundStates.WorkspaceMusicRound);
+      }
+      else {
+        // Lobby music: plays for tutorial and save/load UI
+        GameAudioClient.SetMusicRoundState((int)MusicRoundStates.LobbyMusicRound);
       }
     }
 

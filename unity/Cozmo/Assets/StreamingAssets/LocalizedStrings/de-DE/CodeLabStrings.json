@@ -133,7 +133,7 @@
     "translation" : "Antwort # 14"
   },
   "codeLabChallenge_PushCube.questionSlide.primaryText" : {
-    "translation" : "# 15: Schieben Sie einen Würfel."
+    "translation" : "#15: Push a Cube."
   },
   "codeLabChallenge_PushCube.questionSlide.secondaryText" : {
     "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
@@ -151,7 +151,7 @@
     "translation" : "Antwort # 16"
   },
   "codeLabChallenge_LiftCube.questionSlide.primaryText" : {
-    "translation" : "# 17: <span class='purple'> AUFZUG </span> Ein Würfel"
+    "translation" : "# 17: <span class='purple'> AUFZUG </span> Ein Würfel."
   },
   "codeLabChallenge_LiftCube.questionSlide.secondaryText" : {
     "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
@@ -160,7 +160,7 @@
     "translation" : "Antwort # 17"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText" : {
-    "translation" : "# 18: Workout mit Würfel: <span class='blue'> DRIVE TO CUBE, </span><span class='purple'> AUFZUG </span> Es oben und auf halbem Weg 3 <span class='orange'> MAL, </span> dann <span class='purple'> SETZTE ES AB. </span>"
+    "translation" : "#18: Work out with Cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText" : {
     "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
@@ -241,7 +241,7 @@
     "translation" : "Antwort # 26"
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText" : {
-    "translation" : "# 27: Stapel 2 Würfel, dann Tip sie über."
+    "translation" : "# 27: Stack 2 Cubes, dann Trinke sie über."
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText" : {
     "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
@@ -268,7 +268,7 @@
     "translation" : "Antwort # 29"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText" : {
-    "translation" : "# 30: Fetch Cubes: Beginne mit Würfeln ein paar Meter hinter Cozmo. <span class='yellow'> WENN GESICHT GESEHEN IST, </span> Holt einen Würfel und bring ihn zurück. <span class='orange'> WIEDER WIEDER VERWENDEN. </span>"
+    "translation" : "#30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a Cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText" : {
     "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
@@ -277,7 +277,7 @@
     "translation" : "Antwort # 30"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText" : {
-    "translation" : "# 31: Setzen Sie Würfel zurück: <span class='yellow'> WENN WÜRFEL IST, </span> Cozmo haben <span class='blue'> WENDE </span> Und setze den Würfel ein paar Füße hinter ihm und kehre zurück. <span class='orange'> WIEDER WIEDER VERWENDEN. </span>"
+    "translation" : "#31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the Cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText" : {
     "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
@@ -331,7 +331,7 @@
     "translation" : "Cozmo Code Lab"
   },
   "codeLab.projects.tutorialLabel" : {
-    "translation" : "Tutorial"
+    "translation" : "Einführung"
   },
   "codeLab.projects.newProjectButtonLabel" : {
     "translation" : "Neues Projekt"
@@ -352,7 +352,7 @@
     "translation" : "Stornieren"
   },
   "codeLab.projects.confirmDeleteProject.confirmPromptTitle" : {
-    "translation" : "Löschen \\ ' {0} \\ '"
+    "translation" : "Delete \"{0}\"?"
   },
   "codeLab.projects.confirmDeleteProject.confirmButton.labelText" : {
     "translation" : "Ja, Löschen"
@@ -382,7 +382,7 @@
     "translation" : "Push Cube"
   },
   "codeLabSampleProject_Peekaboo.projectName" : {
-    "translation" : "Guck-Guck"
+    "translation" : "Kuckuck"
   },
   "codeLabSampleProject_WorkoutwithCube.projectName" : {
     "translation" : "Workout mit Cube"

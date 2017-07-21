@@ -1,0 +1,5 @@
+{
+  "behaviorClass": "PlayAnimWithFace",
+  "behaviorID": "VC_AlrightyResponse",
+  "animTriggers": ["VC_Alrighty"]
+}

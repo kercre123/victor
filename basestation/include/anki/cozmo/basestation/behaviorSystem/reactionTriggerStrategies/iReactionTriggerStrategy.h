@@ -16,6 +16,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -30,7 +31,6 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-class IWantsToRunStrategy;
 
 namespace ReactionTriggerConst{
 static const BehaviorPreReqNone kNoPreReqs;
@@ -81,7 +81,7 @@ protected:
   using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
   
   
-  IWantsToRunStrategy* _wantsToRunStrategy;
+  IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Derived classes should use these methods to subscribe to any tags they
   // are interested in handling.

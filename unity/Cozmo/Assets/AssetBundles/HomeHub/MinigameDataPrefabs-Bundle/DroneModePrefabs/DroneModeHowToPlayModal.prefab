@@ -2728,7 +2728,6 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224357866626470346}
-  - component: {fileID: 114584469610067218}
   - component: {fileID: 114000164273312912}
   m_Layer: 5
   m_Name: CloseButtonDay
@@ -4108,7 +4107,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+  m_Sprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
   m_Type: 1
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -4423,18 +4422,6 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
---- !u!114 &114584469610067218
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1432962430943958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cae0516cb45e948d7becdf238325a467, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _QuitButtonInstance: {fileID: 114000164273312912}
 --- !u!114 &114616989985910670
 MonoBehaviour:
   m_ObjectHideFlags: 1

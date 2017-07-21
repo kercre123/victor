@@ -47,7 +47,6 @@ namespace {
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -163,9 +162,6 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
 {
   // Disable reactionary behaviors that we don't want interrupting this:
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersGuardDogArray);
-  
-  // Disable idle animation (TODO: needed?)
-  //robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
@@ -672,7 +668,7 @@ void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& starting
   const float maxTranslation_mm = 250.f;
   std::vector<const ObservableObject*> intersectingObjects;
   do {
-    goalPose.TranslateBy(stepIncrement_mm);
+    goalPose.TranslateForward(stepIncrement_mm);
     
     // Stop condition just in case:
     totalTranslation_mm += stepIncrement_mm;
@@ -830,6 +826,10 @@ void BehaviorGuardDog::RecordResult(std::string&& result)
   if( _result == "PlayerSuccess")
   {
     NeedActionCompleted(NeedsActionId::GuardDogWin);
+  }
+  else if (_result == "TimeoutCubesUntouched")
+  {
+    NeedActionCompleted(NeedsActionId::GuardDogNoInteraction);
   }
   else
   {

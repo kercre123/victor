@@ -140,5 +140,20 @@ Vision::FaceID_t ReactionTriggerStrategyVoiceCommand::GetDesiredFace(const Robot
   return desiredFace;
 }
 
+void ReactionTriggerStrategyVoiceCommand::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
+{
+  if(behavior != nullptr)
+  {
+    behavior->AddListener(this);
+  }
+}
+
+void ReactionTriggerStrategyVoiceCommand::AnimationComplete(Robot& robot)
+{
+  // When one of the behaviors this strategy is responsible for completes/decides to call
+  // its listeners, we want to make sure to set the listening context back to TriggerPhrase
+  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
+}
+
 } // namespace Cozmo
 } // namespace Anki

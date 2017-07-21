@@ -39,6 +39,7 @@ goog.require('Blockly.Options');
 goog.require('Blockly.ScrollbarPair');
 goog.require('Blockly.Touch');
 goog.require('Blockly.Trashcan');
+goog.require('Blockly.CozmoWatermark');
 //goog.require('Blockly.VerticalFlyout');
 goog.require('Blockly.Workspace');
 goog.require('Blockly.WorkspaceDragSurfaceSvg');
@@ -181,6 +182,10 @@ Blockly.WorkspaceSvg.prototype.scale = 1;
  * @type {Blockly.Trashcan}
  */
 Blockly.WorkspaceSvg.prototype.trashcan = null;
+
+// *** ANKI CHANGE ***
+// Add watermark to workspace
+Blockly.WorkspaceSvg.prototype.watermark = null;
 
 /**
  * This workspace's scrollbars, if they exist.
@@ -372,6 +377,9 @@ Blockly.WorkspaceSvg.prototype.createDom = function(opt_backgroundClass) {
   }
 
   if (!this.isFlyout) {
+    // *** ANKI CHANGE ***
+    this.addWatermark_();
+
     Blockly.bindEventWithChecks_(this.svgGroup_, 'mousedown', this,
         this.onMouseDown_);
     if (this.options.zoomOptions && this.options.zoomOptions.wheel) {
@@ -425,6 +433,13 @@ Blockly.WorkspaceSvg.prototype.dispose = function() {
     this.trashcan.dispose();
     this.trashcan = null;
   }
+
+  // *** ANKI CHANGE ***
+  if (this.watermark) {
+    this.watermark.dispose();
+    this.watermark = null;
+  }
+
   if (this.scrollbar) {
     this.scrollbar.dispose();
     this.scrollbar = null;
@@ -475,6 +490,17 @@ Blockly.WorkspaceSvg.prototype.addTrashcan_ = function(bottom) {
   var svgTrashcan = this.trashcan.createDom();
   this.svgGroup_.insertBefore(svgTrashcan, this.svgBlockCanvas_);
   return this.trashcan.init(bottom);
+};
+
+/**
+ * *** ANKI CHANGE ***
+ * Add a watermark.
+ * @private
+ */
+Blockly.WorkspaceSvg.prototype.addWatermark_ = function() {
+  this.watermark = new Blockly.CozmoWatermark(this);
+  var svgWatermark = this.watermark.createDom();
+  this.svgGroup_.insertBefore(svgWatermark, this.svgBlockCanvas_);
 };
 
 /**
@@ -582,6 +608,12 @@ Blockly.WorkspaceSvg.prototype.resize = function() {
   if (this.trashcan) {
     this.trashcan.position();
   }
+
+  // *** ANKI CHANGE ***
+  if (this.watermark) {
+    this.watermark.position();
+  }
+
   if (this.zoomControls_) {
     this.zoomControls_.position();
   }

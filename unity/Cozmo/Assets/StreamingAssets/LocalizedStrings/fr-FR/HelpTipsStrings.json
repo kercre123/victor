@@ -10,7 +10,7 @@
     "translation" : "Aide & Conseils"
   },
   "helpTipsStrings.Slide0.title" : {
-    "translation" : "Créer un espace Great Play"
+    "translation" : "Créez un espace de jeu idéal."
   },
   "helpTipsStrings.Slide0.body" : {
     "translation" : "Cozmo aime un environnement propre, table ouverte dans une pièce bien éclairée. Il voit mieux à l'intérieur et à l'extérieur de la lumière directe du soleil."
@@ -19,13 +19,13 @@
     "translation" : "Cubes de Cozmo"
   },
   "helpTipsStrings.Slide1.body" : {
-    "translation" : "Cozmo aime être autour de ses Cubes. Ils fonctionnent mieux quand il peut voir le symbole clairement, et ils sont à l'endroit. Vérifiez les paramètres pour l'entretien du Cube."
+    "translation" : "Cozmo likes to be around his Cubes. They work best when he can see the symbol clearly, and they're right side up. Check out <b><color=#d3d3d3>SETTINGS</color></b> for Cube maintenance."
   },
   "helpTipsStrings.Slide2.title" : {
-    "translation" : "Lorsque vous ne jouez pas un jeu, les lumières Cube peuvent vous dire que ..."
+    "translation" : "Lorsque vous ne jouez pas à un jeu, les lumières Cube peuvent vous dire que:"
   },
   "helpTipsStrings.Slide2.subtitle1" : {
-    "translation" : "Cozmo a vu ce Cube"
+    "translation" : "Cozmo has seen\u000athis Cube."
   },
   "helpTipsStrings.Slide2.subtitle2" : {
     "translation" : "Cozmo veut utiliser ce Cube"
@@ -34,16 +34,16 @@
     "translation" : "Ce cube est faible sur les batteries"
   },
   "helpTipsStrings.Slide3.title" : {
-    "translation" : "Cozmo Gets Better Over Time"
+    "translation" : "Cozmo s'améliore avec le temps."
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "Vous pouvez <color=orange> Surclassement </color> Cozmo pour apprendre plus de capacités, et regarder Cozmo grandir. Vous pouvez également débloquer de nouveaux Cozmo <color=#00aee0ff> applications </color> , Et obtenir plus de jeux et activités."
+    "translation" : "<b><color=#ff69b4> FPO! </color></b> : Chaque jour, vous remplissez la barre de jeu jaune de Cozmo, vous gagnez un jeton Bonus. Bonus Tokens débloquer des boîtes de bonus, rempli de récompenses comme Sparks, Games et Habilités."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "Surclassement"
+    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "App"
+    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
   },
   "helpTipsStrings.Slide4.title" : {
     "translation" : "Énergie, Bits, et Sparks"
@@ -61,37 +61,37 @@
     "translation" : "Sparks"
   },
   "helpTipsStrings.Slide5.title" : {
-    "translation" : "Check-in avec Cozmo"
+    "translation" : "Enregistrez-vous sur Cozmo."
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Lancez l'App Cozmo check-in tous les jours et recevoir de nouvelles récompenses. Connectez-vous à Cozmo pour le réveiller et lui donner l'attention dont il a besoin."
+    "translation" : "Launch the Cozmo App to check in each day to keep Cozmo happy and help him learn and grow through unlocking more Abilities. Connect to Cozmo to wake him up and give him the attention he needs."
   },
   "helpTipsStrings.Slide6.title" : {
-    "translation" : "Gardez Cozmo Safe"
+    "translation" : "Keep Cozmo safe."
   },
   "helpTipsStrings.Slide6.body" : {
-    "translation" : "Cozmo besoin de vous pour le garder en sécurité. Il est juste comme un hamster ou un autre animal de petite taille. Gardez un oeil sur lui au cas où il est en difficulté; il peut avoir besoin de votre aide pour obtenir un-collé."
+    "translation" : "Cozmo needs you to keep him safe, just like a small pet. Keep an eye on him in case he gets into trouble; he may need your help to get unstuck."
   },
   "helpTipsStrings.Slide7.title" : {
-    "translation" : "Les feux de sac à dos de Cozmo peux vous dire que ..."
+    "translation" : "Cozmo's backpack lights can tell you that:"
   },
   "helpTipsStrings.Slide7.subtitle1" : {
-    "translation" : "Cozmo est chargé"
+    "translation" : "Cozmo is\u000acharged."
   },
   "helpTipsStrings.Slide7.subtitle2" : {
-    "translation" : "Cozmo est en charge"
+    "translation" : "Cozmo is\u000acharging."
   },
   "helpTipsStrings.Slide7.subtitle3" : {
-    "translation" : "Cozmo a une batterie faible"
+    "translation" : "Cozmo has a\u000alow battery."
   },
   "helpTipsStrings.Slide8.title" : {
-    "translation" : "Cozmo est sécurisé"
+    "translation" : "Cozmo is secure."
   },
   "helpTipsStrings.Slide8.body" : {
     "translation" : "Cozmo et sa caméra sont sûres et sécuritaires. Aucune image ou vidéo ne sont jamais stockées, en ligne ou hors ligne. Cozmo ne parler à des périphériques que vous autorisez."
   },
   "helpTipsStrings.Slide9.title" : {
-    "translation" : "Charger"
+    "translation" : "Keep Cozmo charged."
   },
   "helpTipsStrings.Slide9.body" : {
     "translation" : "Cozmo a besoin de son chargeur, alors gardez-le avec vous. Lorsque vous avez fini de jouer, placez-le sur son chargeur pour le mettre à dormir."

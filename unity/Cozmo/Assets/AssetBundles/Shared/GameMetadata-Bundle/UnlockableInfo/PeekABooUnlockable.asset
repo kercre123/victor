@@ -15,10 +15,6 @@ MonoBehaviour:
     _EnumValueAsString: PeekABoo
     _EnumValue: 37
   UnlockableType: 1
-  Prerequisites:
-  - _EnumValueAsString: BuildPyramid
-    _EnumValue: 3
-  AnyPrereqUnlock: 0
   _ComingSoon: 0
   DescriptionKey: unlockable.PeekABoo.Description
   TitleKey: unlockable.PeekABoo.Title
@@ -35,3 +31,4 @@ MonoBehaviour:
   SortOrder: 1100
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0
+  _CanVoiceActivate: 1

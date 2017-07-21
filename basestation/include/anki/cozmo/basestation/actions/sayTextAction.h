@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "clad/types/sayTextStyles.h"
 #include "clad/types/animationTrigger.h"
+#include "util/helpers/templateHelpers.h"
 #include <limits>
 
 

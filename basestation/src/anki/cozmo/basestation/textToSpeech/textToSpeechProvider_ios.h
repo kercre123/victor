@@ -32,12 +32,18 @@ class TextToSpeechProviderImpl
 {
 public:
   
-  TextToSpeechProviderImpl(const CozmoContext* ctx);
+  TextToSpeechProviderImpl(const CozmoContext* ctx, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
+  // Voice configuration
+  std::string _tts_language;
+  std::string _tts_voice;
+  int _tts_speed;
+  int _tts_shaping;
+  
   // Path to temporary audio file
   std::string _path;
   

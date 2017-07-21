@@ -1019,6 +1019,18 @@ namespace Anki {
       return m.idTag;
     }
 
+    void UiGameController::SendAction(const ExternalInterface::QueueSingleAction& msg_in)
+    {
+      ExternalInterface::QueueSingleAction m(msg_in);
+      m.robotID = 1;
+      m.idTag = ++_queueActionIdTag;
+      m.position = QueueActionPosition::NOW;
+      m.numRetries = 1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_QueueSingleAction(m);
+      SendMessage(message);
+    }      
+
     void UiGameController::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
       ExternalInterface::TurnInPlaceAtSpeed m;

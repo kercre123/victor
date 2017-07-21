@@ -349,14 +349,6 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
 
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::GetPathMotionProfile(Robot& robot, PathMotionProfile& profile)
-{
-  return robot.GetAIComponent().GetBehaviorHelperComponent().GetPathMotionProfile(profile);
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
 {

@@ -72,10 +72,6 @@ public:
   // sets the name of an activity we want to force for debugging (not to be used in production)
   void SetConsoleRequestedActivity(ActivityID activityID) { _debugConsoleRequestedActivity = activityID; }
   
-  // So that the behavior manager can check whether it should switch to the
-  // object tap interaction activity
-  std::vector<IBehaviorPtr> GetObjectTapBehaviors();
-  
   void SetActivityStrategyCooldown(const UnlockId& unlockID,
                                    const ActivityID& activityId,
                                    float cooldown_ms);
@@ -91,11 +87,6 @@ public:
   
   // template for all events we subscribe to
   template<typename T> void HandleMessage(const T& msg);
-  
-  void SwitchToObjectTapInteractionActivity() { _requestedActivity = _configParams.objectTapInteractionActivity; }
-  void ClearObjectTapInteractionRequestedActivity();
-  
-  bool IsCurrentActivityObjectTapInteraction() const;
 
 protected:
 
@@ -114,7 +105,6 @@ private:
     ActivityID faceOnlyActivity;
     ActivityID cubeOnlyActivity;
     ActivityID noFaceNoCubeActivity;
-    ActivityID objectTapInteractionActivity;
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -155,9 +145,6 @@ private:
   ActivityID _debugConsoleRequestedActivity;
   
   Robot& _robot;
-  
-  // cache of behaviors in the objectTapInteraction activity
-  std::vector<IBehaviorPtr> _objectTapBehaviorsCache;
 };
   
 

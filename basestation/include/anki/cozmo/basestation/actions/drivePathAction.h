@@ -16,7 +16,8 @@
 
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-
+#include "anki/planning/shared/path.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 
@@ -35,6 +36,8 @@ class Robot;
 class DrivePathAction : public IAction
 {
 public:
+  // NOTE: this action does not support custom motion profiles from the path component. It will always
+  // execute the given path at the speed specified in path.
   DrivePathAction(Robot& robot, const Planning::Path& path);
   
 protected:

@@ -152,10 +152,8 @@ bool VoiceCommandComponent::Init()
     for (const auto& contextDataEntry : contextDataMap)
     {
       const auto typeIndex = Util::EnumToUnderlying(contextDataEntry.first);
-      const auto& contextData = contextDataEntry.second;
-      
-      newRecognizer->AddRecognitionDataAutoGen(typeIndex, generalNNPath, _phraseData->GetPhraseDataList(currentLanguageType, contextDataEntry.first),
-                                               contextData._isPhraseSpotted, contextData._allowsFollowup);
+      newRecognizer->AddRecognitionDataAutoGen(typeIndex, generalNNPath,
+                                               _phraseData->GetRecognitionSetupData(currentLanguageType, contextDataEntry.first));
     }
     
     _recognizer.reset(newRecognizer);
@@ -330,7 +328,7 @@ void VoiceCommandComponent::Update()
     const auto& commandDataFound = _phraseData->GetDataForPhrase(_locale->GetLanguage(), nextPhrase);
     const auto& commandType = commandDataFound->GetVoiceCommandType();
     
-    if (commandType == VoiceCommandType::Count)
+    if (commandType == VoiceCommandType::Invalid)
     {
       LOG_INFO("VoiceCommandComponent.HeardPhraseNoCommand", "Heard phrase with no command: %s", nextPhrase.c_str());
       continue;
@@ -415,7 +413,7 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
     
   switch(_listenContext)
   {
-    case VoiceCommandListenContext::Count:
+    case VoiceCommandListenContext::Invalid:
     {
       // Intentionally ignore commands when there is no context to handle them
       break;
@@ -575,7 +573,7 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
     return;
   }
   
-  if (commandType == VoiceCommandType::Count)
+  if (commandType == VoiceCommandType::Invalid)
   {
     return;
   }
@@ -594,7 +592,7 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
   auto rawIndex = _recognizer->GetRecognizerIndex();
   if (rawIndex == SpeechRecognizer::InvalidIndex ||
       rawIndex < 0 ||
-      rawIndex >= Util::EnumToUnderlying(VoiceCommandListenContext::Count))
+      rawIndex >= Util::EnumToUnderlying(VoiceCommandListenContext::Invalid))
   {
     return;
   }

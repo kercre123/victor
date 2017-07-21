@@ -58,6 +58,8 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
+
+      bool HasAnimStartedPlaying() const { return _startedPlaying; }
       
       std::string               _animName;
       u32                       _numLoopsRemaining;
@@ -96,7 +98,12 @@ namespace Anki {
     protected:
       virtual ActionResult Init() override;
 
-      const AnimationTrigger _animTrigger;
+      void SetAnimGroupFromTrigger(AnimationTrigger animTrigger);
+
+      bool HasAnimTrigger() const { return _animTrigger != AnimationTrigger::Count; }
+
+    private:
+      AnimationTrigger _animTrigger;
       std::string _animGroupName;
       
     }; // class TriggerAnimationAction
@@ -183,6 +190,24 @@ namespace Anki {
       CubeAnimationTrigger _trigger = CubeAnimationTrigger::Count;
       bool _animEnded = false;
     };
+
+    // if Cozmo is expressing a severe need, this action will automatically play the correct get-out
+    // animation, and clear that need expression. Otherwise, it will succeed immediately
+    class PlayNeedsGetOutAnimIfNeeded : public TriggerAnimationAction
+    {
+      using Base = TriggerAnimationAction;
+    public:
+      PlayNeedsGetOutAnimIfNeeded(Robot& robot);
+      
+    protected:
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+
+    private:
+      bool _hasClearedExpression = false;
+    };
+      
+  
   }
 }
 

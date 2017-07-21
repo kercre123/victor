@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using DG.Tweening;
 
 namespace Cozmo {
   namespace UI {
@@ -61,6 +62,35 @@ namespace Cozmo {
           _ModalForceClosed = true;
           CloseDialog();
         }
+      }
+
+      protected override void ConstructOpenAnimation(Sequence openAnimation) {
+        if (!ConstructOpenAnimationBasedOnSettings(ref openAnimation)) {
+          ConstructDefaultPopupOpenAnimation(openAnimation);
+        }
+      }
+
+      protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+        if (!ConstructCloseAnimationBasedOnSettings(ref closeAnimation)) {
+          ConstructDefaultPopupCloseAnimation(closeAnimation);
+        }
+      }
+
+      protected void ConstructDefaultPopupOpenAnimation(Sequence openAnimation) {
+        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+        openAnimation.Append(transform.DOLocalMoveY(
+          75, settings.MoveOpenDurationSeconds).From().SetEase(settings.MoveOpenEase).SetRelative());
+        CreateAlphaControllerIfNull();
+        _AlphaController.alpha = 0;
+        openAnimation.Join(_AlphaController.DOFade(1, settings.FadeInTransitionDurationSeconds).SetEase(settings.FadeInEasing));
+      }
+
+      protected void ConstructDefaultPopupCloseAnimation(Sequence closeAnimation) {
+        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+        closeAnimation.Append(transform.DOLocalMoveY(
+          -75, settings.MoveCloseDurationSeconds).SetEase(settings.MoveCloseEase).SetRelative());
+        CreateAlphaControllerIfNull();
+        closeAnimation.Join(_AlphaController.DOFade(0, settings.FadeOutTransitionDurationSeconds).SetEase(settings.FadeOutEasing));
       }
 
       private void CreateFullScreenCloseCollider() {

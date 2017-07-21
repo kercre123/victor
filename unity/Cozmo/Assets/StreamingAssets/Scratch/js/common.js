@@ -114,22 +114,6 @@
             close.style.left = 290 + "px";
         }
 
-        window.resolvePromiseWaitForSaveProject = null;
-        window.saveProjectCompleted = function () {
-            // If we have a Promise to resolve, resolve it
-            if (window.resolvePromiseWaitForSaveProject) {
-                window.resolvePromiseWaitForSaveProject();
-                window.resolvePromiseWaitForSaveProject = null;
-            }
-        }
-
-        window.promiseWaitForSaveProject = function () {
-            return new Promise(function (resolve) {
-                window.resolvePromiseWaitForSaveProject = resolve;
-                window.saveCozmoUserProject();
-            });
-        };
-
         closeButton.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
             vm.stopAll();
@@ -137,7 +121,7 @@
 
             var promiseSaveProject = window.promiseWaitForSaveProject();
             promiseSaveProject.then(function(result) {
-                window.Unity.call('{"requestId": "-1", "command": "cozmoLoadProjectPage"}');
+                window.Unity.call({requestId: -1, command: "cozmoLoadProjectPage"});
             });
         });
         closeButton.addEventListener('touchmove', function (e) {

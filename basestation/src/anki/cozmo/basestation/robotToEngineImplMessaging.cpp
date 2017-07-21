@@ -130,7 +130,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::state");
                                                        const RobotState& payload = message.GetData().Get_state();
                                                        robot->UpdateFullRobotState(payload);
@@ -140,7 +140,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   
   // lambda for some simple message handling
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::animState,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::animState");
                                                        if (robot->GetTimeSynced()) {
                                                          robot->SetNumAnimationBytesPlayed(message.GetData().Get_animState().numAnimBytesPlayed);
@@ -151,35 +151,35 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::rampTraverseStarted");
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a ramp.", robot->GetID());
                                                        robot->SetOnRamp(true);
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseCompleted,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::rampTraverseCompleted");
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a ramp.", robot->GetID());
                                                        robot->SetOnRamp(false);
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::bridgeTraverseStarted,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::bridgeTraverseStarted");
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a bridge.", robot->GetID());
                                                        //SetOnBridge(true);
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::bridgeTraverseCompleted,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::bridgeTraverseCompleted");
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a bridge.", robot->GetID());
                                                        //SetOnBridge(false);
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::chargerMountCompleted");
                                                        
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d charger mount %s.", robot->GetID(), message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
@@ -190,7 +190,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::mainCycleTimeError,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::mainCycleTimeError");
                                                        
                                                        const RobotInterface::MainCycleTimeError& payload = message.GetData().Get_mainCycleTimeError();
@@ -203,7 +203,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                      }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::dataDump,
-                                                     [this, robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::dataDump");
                                                        
                                                        const RobotInterface::DataDump& payload = message.GetData().Get_dataDump();

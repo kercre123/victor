@@ -30,15 +30,11 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-static const float kInitialDriveSpeed = 100.0f;
-static const float kInitialDriveAccel = 40.0f;
-
 static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDriveOffChargerArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -176,8 +172,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
   if( robot.IsOnChargerPlatform() )
   {
     // probably interrupted by getting off the charger platform
-    DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm, kInitialDriveSpeed);
-    action->SetAccel(kInitialDriveAccel);
+    DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm);
     StartActing(action,[this, &robot](ActionResult res){
       if(res == ActionResult::SUCCESS){
         BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);

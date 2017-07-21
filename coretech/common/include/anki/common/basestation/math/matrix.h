@@ -80,10 +80,6 @@ namespace Anki {
     
   }; // class Matrix
 
-  // The type for representing matrix dimensions
-  // (Should this be something else? unsigned int? uchar? int?)
-  using MatDimType = s32;
-  
   // A class for small matrices, whose size is known at compile time
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   class SmallMatrix

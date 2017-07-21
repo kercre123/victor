@@ -66,8 +66,6 @@ public:
   
   void OnSelected(Robot& robot);
   void OnDeselected(Robot& robot);
-  bool SupportsObjectTapInteractions() { return _supportsObjectTapInteractions;}
-
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behaviors
@@ -96,9 +94,6 @@ public:
   float GetLastTimeStartedSecs() const { return _lastTimeActivityStartedSecs; }
   float GetLastTimeStoppedSecs() const { return _lastTimeActivityStoppedSecs; }
   
-  // Used to access objectTapInteraction behaviors
-  std::vector<IBehaviorPtr> GetObjectTapBehaviors();
-  
 protected:
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
   
@@ -110,6 +105,12 @@ protected:
   
   // Allows activities to pass up a display name from sub activities
   void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
+  
+  // Push an idle animation which will be removed when the activity is deselected
+  void SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation);
+  
+  // Remove an idle animation before the activity is deselected
+  void SmartRemoveIdleAnimation(Robot& robot);
   
   void SmartDisableReactionsWithLock(Robot& robot,
                                      const std::string& lockID,
@@ -183,9 +184,9 @@ private:
   // spark required for this activity
   UnlockId _requiredSpark;
   
-  bool _requireObjectTapped = false;
-
-  bool _supportsObjectTapInteractions = false;
+  // track whether the activity has set an idle
+  bool _hasSetIdle;
+  
   
   // last time the activity started running
   float _lastTimeActivityStartedSecs;

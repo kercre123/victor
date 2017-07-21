@@ -57,7 +57,6 @@ static const float kHeadBottomCheckTopBlock_rad = DEG_TO_RAD(15);
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersBuildPyramidArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

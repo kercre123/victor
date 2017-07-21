@@ -24,10 +24,6 @@ namespace Cozmo {
       public Color ContextDimColor { get { return _ContextDimColor; } }
 
       [SerializeField]
-      private float _ContextDimAlpha = 0.4f;
-      public float ContextDimAlpha { get { return _ContextDimAlpha; } }
-
-      [SerializeField]
       private float _ContextFlashDuration = 0.2f;
       public float ContextFlashDuration { get { return _ContextFlashDuration; } }
 
@@ -70,6 +66,14 @@ namespace Cozmo {
       [SerializeField]
       private Ease _MoveCloseEase;
       public Ease MoveCloseEase { get { return _MoveCloseEase; } }
+
+      [SerializeField]
+      private float _SwipeDuration_sec;
+      public float SwipeDurationSeconds { get { return _SwipeDuration_sec; } }
+
+      [SerializeField]
+      private Ease _SwipeSlideEase;
+      public Ease SwipeSlideEase { get { return _SwipeSlideEase; } }
 
       #endregion
 

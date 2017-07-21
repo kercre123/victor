@@ -1,0 +1,12 @@
+{
+  "clad": {
+    "path": "tools/message-buffers",
+    "initial": "31ac23a38226f2a141dd895a25fc11fa444552c0",
+    "onto": "f3c76bd"
+  },
+  "anki-util": {
+    "path": "lib/util",
+    "initial": "c0868d69deb369ca150f20bf0f143d70c5bcf70e",
+    "onto": "785d965"
+  }
+}

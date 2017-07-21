@@ -26,6 +26,9 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private float _InitialFillStaggerTime = 1f;
 
+    [SerializeField]
+    private float _InitialFillOnboardingStaggerTime = 0.5f;
+
     private bool _RepairMeterPaused = false;
     public bool RepairMeterPaused {
       get {
@@ -34,6 +37,34 @@ namespace Cozmo.Needs.UI {
       set {
         bool unpaused = _RepairMeterPaused && !value;
         _RepairMeterPaused = value;
+        if (unpaused) {
+          HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
+        }
+      }
+    }
+
+    private bool _EnergyMeterPaused = false;
+    public bool EnergyMeterPaused {
+      get {
+        return _EnergyMeterPaused;
+      }
+      set {
+        bool unpaused = _EnergyMeterPaused && !value;
+        _EnergyMeterPaused = value;
+        if (unpaused) {
+          HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
+        }
+      }
+    }
+
+    private bool _PlayMeterPaused = false;
+    public bool PlayMeterPaused {
+      get {
+        return _PlayMeterPaused;
+      }
+      set {
+        bool unpaused = _PlayMeterPaused && !value;
+        _PlayMeterPaused = value;
         if (unpaused) {
           HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
         }
@@ -67,8 +98,12 @@ namespace Cozmo.Needs.UI {
         _PlayMeter.transform.SetAsLastSibling();
         break;
       }
-
-      baseDialog.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        OnboardingManager.Instance.OnOnboardingAnimEvent += HandleOnboardingAnimEvent;
+      }
+      else {
+        baseDialog.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
+      }
     }
 
     private void OnDestroy() {
@@ -77,10 +112,27 @@ namespace Cozmo.Needs.UI {
       }
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
+      OnboardingManager.Instance.OnOnboardingAnimEvent -= HandleOnboardingAnimEvent;
     }
 
     private void HandleDialogFinishedOpenAnimation() {
-      _StaggeredFillCoroutine = StartCoroutine(StaggerMeterFills());
+      // Onboarding disables this game object until it's done and starts on it's own.
+      if (isActiveAndEnabled) {
+        _StaggeredFillCoroutine = StartCoroutine(StaggerMeterFills());
+      }
+      else {
+        NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+        NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
+        NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+        NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
+      }
+    }
+
+    private void HandleOnboardingAnimEvent(string eventName) {
+      const string _kMechanimEventOnboardingNeedsMeterShow = "NeedsMeterStartEvent";
+      if (eventName == _kMechanimEventOnboardingNeedsMeterShow) {
+        HandleDialogFinishedOpenAnimation();
+      }
     }
 
     private void PlayMeterMoveSound(float oldVal, float newVal) {
@@ -94,43 +146,61 @@ namespace Cozmo.Needs.UI {
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
-      NeedsValue repairValue, energyValue, playValue;
-      NeedsValue oldRepairValue = nsm.GetCurrentDisplayValue(NeedId.Repair);
-      NeedsValue oldEnergyValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
-      NeedsValue oldPlayValue = nsm.GetCurrentDisplayValue(NeedId.Play);
-      repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
-      energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
-      playValue = nsm.PopLatestEngineValue(NeedId.Play);
 
-      PlayMeterMoveSound(repairValue.Value, oldRepairValue.Value);
-      PlayMeterMoveSound(energyValue.Value, oldEnergyValue.Value);
-      PlayMeterMoveSound(playValue.Value, oldPlayValue.Value);
-
-      UpdateMeters(repairValue.Value, energyValue.Value, playValue.Value);
-    }
-
-    private void UpdateMeters(float repairValue, float energyValue, float playValue) {
       if (!_RepairMeterPaused) {
-        _RepairMeter.SetTargetAndAnimate(repairValue);
+        NeedsValue oldRepairValue = nsm.GetCurrentDisplayValue(NeedId.Repair);
+        NeedsValue repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
+        PlayMeterMoveSound(oldRepairValue.Value, repairValue.Value);
+        _RepairMeter.SetTargetAndAnimate(repairValue.Value);
       }
-      _EnergyMeter.SetTargetAndAnimate(energyValue);
-      _PlayMeter.SetTargetAndAnimate(playValue);
+
+      if (!_EnergyMeterPaused) {
+        NeedsValue oldEnergyValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
+        NeedsValue energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
+        PlayMeterMoveSound(oldEnergyValue.Value, energyValue.Value);
+        _EnergyMeter.SetTargetAndAnimate(energyValue.Value);
+      }
+
+      if (!_PlayMeterPaused) {
+        NeedsValue oldPlayValue = nsm.GetCurrentDisplayValue(NeedId.Play);
+        NeedsValue playValue = nsm.PopLatestEngineValue(NeedId.Play);
+        PlayMeterMoveSound(oldPlayValue.Value, playValue.Value);
+        _PlayMeter.SetTargetAndAnimate(playValue.Value);
+      }
     }
 
     private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
-      NeedsValue repairValue, energyValue;
-      repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
-      energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
-      NeedsValue playValue = nsm.PopLatestEngineValue(NeedId.Play);
-      if ((needId == NeedId.Repair && repairValue.Bracket == NeedBracketId.Critical) ||
-          (needId == NeedId.Energy && energyValue.Bracket == NeedBracketId.Critical) ||
-          (needId == NeedId.Play && playValue.Bracket == NeedBracketId.Critical)) {
+
+      bool enteredCriticalBracket = false;
+      bool enteredFullBracket = false;
+      switch (needId) {
+      case NeedId.Repair:
+        if (!_RepairMeterPaused) {
+          NeedsValue repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
+          enteredCriticalBracket = repairValue.Bracket == NeedBracketId.Critical;
+          enteredFullBracket = repairValue.Bracket == NeedBracketId.Full;
+        }
+        break;
+      case NeedId.Energy:
+        if (!_EnergyMeterPaused) {
+          NeedsValue energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
+          enteredCriticalBracket = energyValue.Bracket == NeedBracketId.Critical;
+          enteredFullBracket = energyValue.Bracket == NeedBracketId.Full;
+        }
+        break;
+      case NeedId.Play:
+        if (!_PlayMeterPaused) {
+          NeedsValue playValue = nsm.PopLatestEngineValue(NeedId.Energy);
+          enteredCriticalBracket = playValue.Bracket == NeedBracketId.Critical;
+          enteredFullBracket = playValue.Bracket == NeedBracketId.Full;
+        }
+        break;
+      }
+      if (enteredCriticalBracket) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Severe_Start);
       }
-      if ((needId == NeedId.Repair && repairValue.Bracket == NeedBracketId.Full) ||
-          (needId == NeedId.Energy && energyValue.Bracket == NeedBracketId.Full) ||
-          (needId == NeedId.Play && energyValue.Bracket == NeedBracketId.Full)) {
+      if (enteredFullBracket) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Full);
       }
     }
@@ -159,20 +229,26 @@ namespace Cozmo.Needs.UI {
       PlayMeterMoveSound(oldValue, newValue);
       _RepairMeter.SetTargetAndAnimate(newValue);
 
-      yield return new WaitForSeconds(_InitialFillStaggerTime);
+      float staggerTime = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro) ?
+                                     _InitialFillOnboardingStaggerTime : _InitialFillStaggerTime;
+
+      yield return new WaitForSeconds(staggerTime);
 
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Energy).Value;
       PlayMeterMoveSound(oldValue, newValue);
       _EnergyMeter.SetTargetAndAnimate(newValue);
 
-      yield return new WaitForSeconds(_InitialFillStaggerTime);
+      yield return new WaitForSeconds(staggerTime);
 
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Play).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Play).Value;
       PlayMeterMoveSound(oldValue, newValue);
       _PlayMeter.SetTargetAndAnimate(newValue);
 
+      yield return new WaitForSeconds(_InitialFillStaggerTime);
+
+      HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
       //now that we are done with our initial fills, let's subscribed to further changes
       NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
       NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
@@ -187,6 +263,10 @@ namespace Cozmo.Needs.UI {
       _EnergyMeter.Dim = dimmedMeters.Contains(NeedId.Energy);
       _RepairMeter.Dim = dimmedMeters.Contains(NeedId.Repair);
       _PlayMeter.Dim = dimmedMeters.Contains(NeedId.Play);
+    }
+
+    public void OnboardingSkipped() {
+      HandleDialogFinishedOpenAnimation();
     }
 
     #endregion

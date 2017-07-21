@@ -67,7 +67,6 @@ namespace Anki {
     static constexpr ReactionTriggerHelpers::FullReactionArray kAffectObjectPositionTriggerArray = {
       {ReactionTrigger::CliffDetected,                false},
       {ReactionTrigger::CubeMoved,                    false},
-      {ReactionTrigger::DoubleTapDetected,            false},
       {ReactionTrigger::FacePositionUpdated,          false},
       {ReactionTrigger::FistBump,                     false},
       {ReactionTrigger::Frustration,                  false},
@@ -96,7 +95,6 @@ namespace Anki {
     constexpr ReactionTriggerHelpers::FullReactionArray kFacePlantDisablesArray = {
       {ReactionTrigger::CliffDetected,                true},
       {ReactionTrigger::CubeMoved,                    true},
-      {ReactionTrigger::DoubleTapDetected,            false},
       {ReactionTrigger::FacePositionUpdated,          false},
       {ReactionTrigger::FistBump,                     false},
       {ReactionTrigger::Frustration,                  false},
@@ -234,18 +232,35 @@ namespace Anki {
       _dockSpeed_mmps = speed_mmps;
       _dockAccel_mmps2 = accel_mmps2;
       _dockDecel_mmps2 = decel_mmps2;
+      _motionProfileManuallySet = true;
     }
 
     void IDockAction::SetSpeed(f32 speed_mmps)
     {
       _dockSpeed_mmps = speed_mmps;
+      _motionProfileManuallySet = true;
     }
 
     void IDockAction::SetAccel(f32 accel_mmps2, f32 decel_mmps2)
     {
       _dockAccel_mmps2 = accel_mmps2;
       _dockDecel_mmps2 = decel_mmps2;
+      _motionProfileManuallySet = true;
     }
+
+    bool IDockAction::SetMotionProfile(const PathMotionProfile& profile)
+    {
+      if( _motionProfileManuallySet ) {
+        return false;
+      }
+      else {
+        _dockSpeed_mmps = profile.dockSpeed_mmps;
+        _dockAccel_mmps2 = profile.dockAccel_mmps2;
+        _dockDecel_mmps2 = profile.dockDecel_mmps2;
+        return true;
+      }
+    }
+
 
     void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
     {
@@ -1731,22 +1746,7 @@ namespace Anki {
       AddAction(action);
       SetProxyTag(action->GetTag());
     }
-    
-    void PlaceObjectOnGroundAtPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
-    {
-      if(!_driveAction.expired()) {
-        // For debug builds do a dynamic cast for validity checks
-        DEV_ASSERT(dynamic_cast<DriveToPlaceCarriedObjectAction*>(_driveAction.lock().get()) != nullptr,
-                   "PlaceObjectOnGroundAtPoseAction.SetMotionProfile.DynamicCastFailed");
         
-        DriveToPlaceCarriedObjectAction* rawDriveAction =
-          static_cast<DriveToPlaceCarriedObjectAction*>(_driveAction.lock().get());
-        rawDriveAction->SetMotionProfile(motionProfile);
-      } else {
-        PRINT_NAMED_WARNING("PlaceObjectOnGroundAtPoseAction.SetMotionProfile.NullDriveAction", "");
-      }
-    }
-    
 #pragma mark ---- PlaceRelObjectAction ----
     
     PlaceRelObjectAction::PlaceRelObjectAction(Robot& robot,

@@ -11,7 +11,6 @@
     "type" : "StrictPriority",
     "behaviors" : [
       "DriveOffCharger",
-      "CantHandleTallStack",
       "KnockOverCubes",
       "SparksStackBlock",
       "SparksPickupSingleCubeToStack",

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -25,18 +26,32 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  namespace {
+  static const char* kActivityCooldownRejectionBaseConfigKey = "cooldownRejectionBaseSecs";
+  static const char* kActivityCooldownRejectionExponentConfigKey = "cooldownRejectionExponent";
+  static const char* debugName = "ActivityStrategyFPPlayWithHumans";
+  };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(Robot& robot, const Json::Value& config)
 : IActivityStrategy(robot, config)
 , _lastGameRequestTimestampSec(0.0f)
+, _cooldownRejectionBaseSecs(0.0f)
+, _cooldownRejectionExponent(1.0f)
+, _numRejections(0)
 {
+  
 
   // register to receive notifications of game requests
   if ( robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _eventHandles);
     helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::RequestGameStart>();
+    helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::DenyGameStart>();
   }
+  
+  _cooldownRejectionBaseSecs = JsonTools::ParseFloat(config, kActivityCooldownRejectionBaseConfigKey, debugName);
+  _cooldownRejectionExponent = JsonTools::ParseFloat(config, kActivityCooldownRejectionExponentConfigKey, debugName);
 }
 
   
@@ -75,10 +90,14 @@ void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::Re
   // set timestamp
   _lastGameRequestTimestampSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
- 
-  
 
-
+template<>
+void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::DenyGameStart& msg)
+{
+  _numRejections++;
+  const float cooldown = _cooldownRejectionBaseSecs * pow(_numRejections, _cooldownRejectionExponent);
+  SetCooldown(cooldown);
+}
 
 } // namespace
 } // namespace

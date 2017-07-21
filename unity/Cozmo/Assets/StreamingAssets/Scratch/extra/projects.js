@@ -32,7 +32,7 @@
       CozmoAPI.getProjects('window.renderProjects');
 
       // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
-      //_devLoadProjects();
+      // _devLoadProjects();
     });
 
     // register main click handler for the document
@@ -175,7 +175,7 @@
     var url = elem.getAttribute('href');
     setTimeout(function(){
       // navigate to anchor tag's url after sound finishes
-      window.location.href = url;
+      window.location.href = url + '?locale=' + LOCALE;
     }, 50);
   }
 

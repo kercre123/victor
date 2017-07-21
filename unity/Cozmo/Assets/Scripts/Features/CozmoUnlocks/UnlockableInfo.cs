@@ -86,6 +86,10 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   public string AndroidReleaseVersion;
   public int AndroidSDKVersion;
 
+  [SerializeField]
+  private bool _CanVoiceActivate = false;
+  public bool CanVoiceActivate { get { return _CanVoiceActivate; } }
+
   public string DASName {
     get { return Id.Value.ToString(); }
   }

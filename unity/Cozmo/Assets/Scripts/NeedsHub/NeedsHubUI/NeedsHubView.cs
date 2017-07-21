@@ -1,4 +1,5 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
+using Anki.Cozmo.VoiceCommand;
 using Cozmo.Energy.UI;
 using Cozmo.Play.UI;
 using Cozmo.Repair.UI;
@@ -21,6 +22,12 @@ namespace Cozmo.Needs.UI {
     private CozmoButton _SettingsButton;
 
     [SerializeField]
+    private CozmoButton _VoiceSettingsButton;
+
+    [SerializeField]
+    private CozmoButton _VoiceSettingsOffButton;
+
+    [SerializeField]
     private CozmoButton _SparksButton;
 
     [SerializeField]
@@ -38,6 +45,10 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private SettingsModal _SettingsModalPrefab;
     private SettingsModal _SettingsModalInstance;
+
+    [SerializeField]
+    private VoiceSettingsModal _VoiceSettingsModalPrefab;
+    private VoiceSettingsModal _VoiceSettingsModalInstance;
 
     [SerializeField]
     private BaseModal _HelpTipsModalPrefab;
@@ -66,10 +77,22 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private GameObject _LiquidMetalTitle;
 
-    public void Start() {
+    private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
+
+    // absolutely needs to be in awake to prevent one frame pops.
+    private void Awake() {
+      OnboardingManager.Instance.InitInitalOnboarding(this);
+    }
+
+    private void Start() {
+      VoiceCommandManager.Instance.StateDataCallback += HandleMicrophoneAuthorizationStatusUpdate;
+      VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
+
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
+      _VoiceSettingsButton.Initialize(HandleVoiceSettingsButton, "voice_settings_button", DASEventDialogName);
+      _VoiceSettingsOffButton.Initialize(HandleVoiceSettingsButton, "voice_settings_button_off", DASEventDialogName);
       _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
 
       _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
@@ -102,12 +125,18 @@ namespace Cozmo.Needs.UI {
 
       this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
 
-      OnboardingManager.Instance.InitInitalOnboarding(this);
+      ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy
+                      | ChallengeEdgeCases.CheckForHiccups
+                      | ChallengeEdgeCases.CheckForDriveOffCharger
+                      | ChallengeEdgeCases.CheckForOnTreads;
+      _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(new ModalPriorityData(), challengeEdgeCases);
     }
 
     protected override void CleanUp() {
-      _MetersWidget.OnRepairPressed -= HandleRepairButton;
-      _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
+      if (_MetersWidget != null) {
+        _MetersWidget.OnRepairPressed -= HandleRepairButton;
+        _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
+      }
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
@@ -140,7 +169,37 @@ namespace Cozmo.Needs.UI {
       _SettingsModalInstance.Initialize(this);
     }
 
+    private void HandleVoiceSettingsButton() {
+      UIManager.OpenModal(_VoiceSettingsModalPrefab, new ModalPriorityData(), HandleVoiceSettingsModalCreated);
+    }
+
+    private void HandleMicrophoneAuthorizationStatusUpdate(StateData stateData) {
+      bool isEnabled = (stateData.capturePermissionState == AudioCapturePermissionState.Granted);
+      _VoiceSettingsButton.gameObject.SetActive(isEnabled);
+      _VoiceSettingsOffButton.gameObject.SetActive(!isEnabled);
+    }
+
+    private void HandleVoiceSettingsModalCreated(BaseModal newModal) {
+      _VoiceSettingsModalInstance = (VoiceSettingsModal)newModal;
+      _VoiceSettingsModalInstance.InitializeVoiceSettingsModal();
+    }
+
+    private void HandleCozmoOverfed(){
+      ModalPriorityData priorityData = new ModalPriorityData();
+      var cozmoHasHiccupsData = new AlertModalData("cozmo_overfed_hiccups_alert",
+        LocalizationKeys.kNeedsFeedingDetailsOverfedHiccupsTitle,
+        LocalizationKeys.kNeedsFeedingDetailsOverfedHiccupsDescription,
+        new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+
+      UIManager.OpenAlert(cozmoHasHiccupsData,
+        ModalPriorityData.CreateSlightlyHigherData (priorityData));
+    }
+
     private void HandleRepairButton() {
+      if (ShowEdgeCaseAlertIfNeeded()) {
+        return;
+      }
+
       UIManager.OpenModal(_NeedsRepairModalPrefab, new ModalPriorityData(), HandleRepairModalCreated);
     }
 
@@ -150,12 +209,17 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleEnergyButton() {
+      if (ShowEdgeCaseAlertIfNeeded()) {
+        return;
+      }
+
       UIManager.OpenModal(_NeedsEnergyModalPrefab, new ModalPriorityData(), HandleEnergyModalCreated);
     }
 
     private void HandleEnergyModalCreated(BaseModal newModal) {
       _NeedsEnergyModalInstance = (NeedsEnergyModal)newModal;
       _NeedsEnergyModalInstance.InitializeEnergyModal();
+      _NeedsEnergyModalInstance.CozmoOverfed += HandleCozmoOverfed;
     }
 
     private void HandleHelpButton() {
@@ -170,8 +234,6 @@ namespace Cozmo.Needs.UI {
     private void HandleDialogFinishedOpenAnimation() {
       PopLatestBracketAndUpdateButtons();
       NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
-
-      OnboardingManager.Instance.StartAnyPhaseIfNeeded();
     }
 
     private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {
@@ -189,17 +251,46 @@ namespace Cozmo.Needs.UI {
     }
 
     private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
-      if (repairBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Critical) {
+      // Onboarding overrides this stuff.
+      if (OnboardingManager.Instance.IsOnboardingOverridingNavButtons()) {
+        return;
+      }
+
+      // Always enable the buttons in mock mode
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        return;
+      }
+
+      // Sparks button is labelled play.
+      if (repairBracket == NeedBracketId.Critical) {
+        _FeedButton.Interactable = false;
+        _SparksButton.Interactable = false;
+      }
+      else if (energyBracket == NeedBracketId.Critical) {
+        _FeedButton.Interactable = true;
         _SparksButton.Interactable = false;
       }
       else {
+        _FeedButton.Interactable = true;
         _SparksButton.Interactable = true;
       }
+    }
+
+    private bool ShowEdgeCaseAlertIfNeeded() {
+      // We can send in default values because we are not checking cubes or os
+      return _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(null, 0, true, null);
     }
 
     #region Onboarding
     public CozmoImage OnboardingBlockoutImage;
     public CozmoImage NavBackgroundImage;
+
+    protected override void ConstructOpenAnimation(Sequence openAnimation) {
+      // onboarding has an elaborate mechanim thing constructed
+      if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        base.ConstructOpenAnimation(openAnimation);
+      }
+    }
     public NeedsMetersWidget MetersWidget {
       get { return _MetersWidget; }
     }
@@ -217,6 +308,15 @@ namespace Cozmo.Needs.UI {
     }
     public StarBar RewardBar {
       get { return _StarBar; }
+    }
+    private void HandleMechanimEvent(string param) {
+      OnboardingManager.Instance.OnOnboardingAnimEvent.Invoke(param);
+    }
+    public void OnboardingSkipped() {
+      PopLatestBracketAndUpdateButtons();
+      if (_MetersWidget != null) {
+        _MetersWidget.OnboardingSkipped();
+      }
     }
     #endregion
   }

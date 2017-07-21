@@ -534,6 +534,22 @@
       "AnimName": "ag_energy_interruptions"
     },
     {
+      "CladEvent": "FeedingSearchRequest",
+      "AnimName": "ag_energy_requestshortlvl1"
+    },
+    {
+      "CladEvent": "FeedingSearchRequest_Severe",
+      "AnimName": "ag_energy_requestshortlvl2"
+    },
+    {
+      "CladEvent": "FeedingSearchFailure",
+      "AnimName": "ag_energy_cubenotfound_01"
+    },
+    {
+      "CladEvent": "FeedingSearchFailure_Severe",
+      "AnimName": "ag_energy_cubenotfound_02"
+    },
+    {
       "CladEvent": "FeedingReactToFullCube_Normal",
       "AnimName": "ag_energy_cubetone"
     },
@@ -1022,6 +1038,10 @@
       "AnimName": "ag_energy_stuckonblock_lvl2"
     },
     {
+      "CladEvent": "NeedsSevereLowPlayForceGetOut",
+      "AnimName": "ag_play_getout"
+    },
+    {
       "CladEvent": "NeedsSevereLowPlayGetIn",
       "AnimName": "ag_play_getin"
     },
@@ -1458,6 +1478,22 @@
       "AnimName": "ag_reactToStop"
     },
     {
+      "CladEvent": "ReactToUnexpectedMovement_Severe_Energy",
+      "AnimName": "ag_energy_reacttostop_lvl2"
+    },
+    {
+      "CladEvent": "ReactToUnexpectedMovement_Severe_Repair",
+      "AnimName": "ag_repair_severe_reacttostop"
+    },
+    {
+      "CladEvent": "RepairFailMild",
+      "AnimName": "ag_repair_mild_fix_fail_01"
+    },
+    {
+      "CladEvent": "RepairFailSevere",
+      "AnimName": "ag_repair_severe_fix_fail_01"
+    },
+    {
       "CladEvent": "RepairFixMildGetIn",
       "AnimName": "ag_repair_fix_getin_01"
     },
@@ -1882,12 +1918,32 @@
       "AnimName": "ag_askForBlock"
     },
     {
+      "CladEvent": "VC_Alrighty",
+      "AnimName": "ag_vc_alrighty"
+    },
+    {
       "CladEvent": "VC_HowAreYouDoing_AllGood",
       "AnimName": "ag_vc_reaction_feeling_good_01"
     },
     {
+      "CladEvent": "VC_Listening",
+      "AnimName": "ag_vc_listening"
+    },
+    {
+      "CladEvent": "VC_LookDownForLaser",
+      "AnimName": "ag_vc_laser_lookdown"
+    },
+    {
       "CladEvent": "VC_LookDownNoLaser",
       "AnimName": "ag_explorer_huh"
+    },
+    {
+      "CladEvent": "VC_NoFollowupCommand_NoFace",
+      "AnimName": "ag_vc_reaction_whatwasthat"
+    },
+    {
+      "CladEvent": "VC_NoFollowupCommand_WithFace",
+      "AnimName": "ag_vc_reaction_yesfaceheardyou"
     },
     {
       "CladEvent": "VC_Refuse_energy",

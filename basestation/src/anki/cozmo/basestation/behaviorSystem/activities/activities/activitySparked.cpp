@@ -50,7 +50,6 @@ static const char* kSparksFailTriggerKey             = "sparksFailTrigger";
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooserArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -80,7 +79,6 @@ static const char* kPlayingFinalAnimationLock         = "finalAnimLockReactions"
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFinalAnimationArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},
@@ -184,7 +182,7 @@ void ActivitySparked::OnSelectedInternal(Robot& robot)
       AnimationTrigger::SparkDrivingLoop,
       AnimationTrigger::SparkDrivingStop},
       GetIDStr());
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle, GetIDStr());
+    SmartPushIdleAnimation(robot, AnimationTrigger::SparkIdle);
     robot.GetBodyLightComponent().StartLoopingBackpackLights(
                             kLoopingSparkLights,
                             BackpackLightSource::Behavior,
@@ -295,7 +293,6 @@ void ActivitySparked::ResetLightsAndAnimations(Robot& robot)
   if(_idleAnimationsSet){
     // Revert to driving anims
     robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
-    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
     robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
     _idleAnimationsSet = false;
   }

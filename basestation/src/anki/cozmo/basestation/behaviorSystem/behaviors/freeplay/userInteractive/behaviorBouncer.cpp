@@ -80,7 +80,6 @@ CONSOLE_VAR_RANGED(s32, kBouncerBallRadius_px, CONSOLE_GROUP, 3, 1, 5);
 constexpr ReactionTriggerHelpers::FullReactionArray kReactionArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -235,7 +234,7 @@ void BehaviorBouncer::StartAnimation(Robot& robot,
   // This should never be called when action is already in progress
   DEV_ASSERT(!IsActing(), "BehaviorBouncer.StartAnimation.ShouldNotBeActing");
     
-  auto callback = [this, animationTrigger, nextState] {
+  auto callback = [this, nextState] {
     LOG_TRACE("BehaviorBouncer.StartAnimation.Callback", "Finish animation %s, nextState %s",
               AnimationTriggerToString(animationTrigger), EnumToString(nextState));
     TransitionToState(nextState);
@@ -304,8 +303,7 @@ Result BehaviorBouncer::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kReactionArray);
   
   // Disable idle animation
-  auto & animationStreamer = robot.GetAnimationStreamer();
-  animationStreamer.PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
+  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   
   // Stash robot parameters
   _displayWidth_px = robot.GetDisplayWidthInPixels();
@@ -465,7 +463,7 @@ void BehaviorBouncer::UpdateDisplay(Robot& robot)
     LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
     const u32 duration_ms = IKeyFrame::SAMPLE_LENGTH_MS;
     IActionRunner * setFaceAction = new SetFaceAction(robot, image, duration_ms);
-    SimpleCallback callback = [this]() {
+    SimpleCallback callback = []() {
       LOG_TRACE("BehaviorBouncer.UpdateDisplay.Callback", "Face action complete");
     };
     StartActing(setFaceAction, callback);
@@ -590,10 +588,6 @@ void BehaviorBouncer::StopInternal(Robot& robot)
   LOG_TRACE("BehaviorBouncer.StopInternal", "Stop behavior");
   
   // TODO: Record relevant DAS events here.
- 
-  // Restore idle animation
-  auto & animationStreamer = robot.GetAnimationStreamer();
-  animationStreamer.RemoveIdleAnimation(GetIDStr());
 }
   
 } // namespace Cozmo

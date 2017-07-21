@@ -75,6 +75,8 @@ private:
   
 };
 
+using IWantsToRunStrategyPtr = std::unique_ptr<IWantsToRunStrategy>;
+
 template<class EventType>
 void IWantsToRunStrategy::HandleEvent(const EventType& event)
 {

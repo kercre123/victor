@@ -15,6 +15,8 @@
 #ifndef __Anki_Cozmo_ActiveObjectHelpers_H__
 #define __Anki_Cozmo_ActiveObjectHelpers_H__
 
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
+
 namespace Anki {
 namespace Cozmo {
   

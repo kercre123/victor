@@ -46,7 +46,6 @@ static const char* kMaxTimeBeforeTimeoutSecKey = "Timeout_Sec";
 constexpr ReactionTriggerHelpers::FullReactionArray kOnboardingTriggerAffectedArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},
@@ -352,7 +351,7 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
   
   DriveToPickupObjectAction* driveAndPickupAction = new DriveToPickupObjectAction(robot, _targetBlock);
   driveAndPickupAction->SetPostDockLiftMovingAnimation(AnimationTrigger::OnboardingSoundOnlyLiftEffortPickup);
-  RetryWrapperAction::RetryCallback retryCallback = [this, driveAndPickupAction](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
+  RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
   {
     animTrigger = AnimationTrigger::Count;
     

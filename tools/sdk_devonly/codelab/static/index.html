@@ -34,6 +34,14 @@
 
             <button id="enableDevConnectionId" onClick="sendGameToGameMessage(this, 'EnableGameToGame', null)"
                     style="font-size: 14px">Enable Dev Connection</button>
+            <p />
+
+            <button id="allowOnChargerId" onClick="sendGameToGameMessage(this, 'AllowOnCharger', null)"
+                    style="font-size: 14px">Allow On Charger</button>
+
+            <button id="quitOnChargerId" onClick="sendGameToGameMessage(this, 'QuitOnCharger', null)"
+                    style="font-size: 14px">Quit On Charger</button>
+            (Quit = Default)
 
             <h2>Upload to device cache:</h2>
             <button id="deleteCacheButtonId" onClick="postHttpRequest('DeleteCache', null)"
@@ -66,6 +74,11 @@
             <button id="reloadUrlButtonId" onClick="sendGameToGameMessage(this, 'ReloadURL', null)"
                     style="font-size: 14px">Reload Current Page</button>
             (trigger Unity to reload current page, but on the current path)
+            <p />
+
+            <button id="reinitWebViewButtonId" onClick="sendGameToGameMessage(this, 'ReInit', null)"
+                    style="font-size: 14px">ReInit WebView</button>
+            (trigger Unity to re-init WebView + reload - needed for JS changes)
             <p />
 
             <button id="loadUrlButtonId" onClick="sendGameToGameMessage(this, 'LoadURL', 'loadUrlTextId')"

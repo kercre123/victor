@@ -23,14 +23,14 @@ BUILDTOOLS=$TOPLEVEL/tools/build
 
 # build
 xcodebuild \
--workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
+-workspace $PROJECT/CozmoWorkspace_mac.xcworkspace \
 -scheme BUILD_WORKSPACE \
 -sdk macosx \
 -configuration $BUILD_TYPE \
 build
 
 BUILD_DIR=`xcodebuild \
--workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
+-workspace $PROJECT/CozmoWorkspace_mac.xcworkspace \
 -scheme BUILD_WORKSPACE \
 -sdk macosx \
 -configuration $BUILD_TYPE \

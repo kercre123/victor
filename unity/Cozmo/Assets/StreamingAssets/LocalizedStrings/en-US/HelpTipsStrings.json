@@ -18,7 +18,6 @@
       "/{*}"
     ]
   },
-
   "helpTipsStrings.viewTitle": {
     "translation": "Help & Tips"
   },
@@ -41,12 +40,11 @@
     "translation": "Cozmo has seen\nthis Cube."
   },
   "helpTipsStrings.Slide2.subtitle2": {
-    "translation": "Cozmo wants to use\nthis Cube."
+    "translation": "Cozmo wants to\nuse this Cube"
   },
   "helpTipsStrings.Slide2.subtitle3": {
     "translation": "This Cube is low\non batteries"
   },
-  
   "helpTipsStrings.Slide3.title": {
     "translation": "Cozmo gets better over time."
   },

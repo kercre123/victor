@@ -43,7 +43,6 @@ static const float kCliffBackupSpeed_mmps = 100.0f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersReactToCliffArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -118,9 +117,10 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
         return true;
       };
       
+      // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
-      // skip the "huh" animation if in severe energy
-      if(NeedId::Energy == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+      NeedId expressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+      if((expressedNeed == NeedId::Energy) || (expressedNeed == NeedId::Repair)){
         callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
       }
       
