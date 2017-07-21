@@ -19,112 +19,118 @@
     "translation" : "Spielen"
   },
   "needs.NeedsEnergyModal.Title" : {
-    "translation" : "Feed Cozmo"
+    "translation" : "Cozmo füttern"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
-    "translation" : "Cozmo muss gefüttert werden, um energisch und fröhlich zu bleiben."
+    "translation" : "Cozmo musst gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
   },
   "needs.NeedsEnergyModal.Instruction1" : {
-    "translation" : "Ergreife jeden Würfel, der blau pulsiert."
+    "translation" : "Nimm einen blau blinkenden Cube."
   },
   "needs.NeedsEnergyModal.Instruction2" : {
-    "translation" : "Schütt den Würfel, bis alle Lichter hell leuchten."
+    "translation" : "Schüttle den Cube, bis alle Lichter hell leuchten."
   },
   "needs.NeedsEnergyModal.Instruction3" : {
-    "translation" : "Lege den Würfel, wo Cozmo es sehen kann, also kann er sich selbst ernähren."
+    "translation" : "Platziere den Cube hier, wo Cozmo ihn sehen kann, sodass er sich selbst füttern kann."
   },
   "needs.NeedsEnergyModal.FeedingComplete" : {
-    "translation" : "Cozmo ist voll gefüttert!"
+    "translation" : "Cozmo ist satt!"
+  },
+  "needs.NeedsEnergyModal.CubeHelp.Propmt" : {
+    "translation" : "Cozmo can't be fed because he can't hear his cubes"
+  },
+  "needs.NeedsEnergyModal.CubeHelp.Propmt.Button" : {
+    "translation" : "RECONNECT CUBES"
   },
   "needs.NeedsRepairModal.Title" : {
-    "translation" : "Tausende Cozmo"
+    "translation" : "Cozmo-Tuning"
   },
   "needs.NeedsRepairModal.RepairSummary" : {
-    "translation" : "Cozmo muss abgestimmt werden, um optimiert und on-the-move zu bleiben."
+    "translation" : "Für Cozmo muss ein Tuning durchgeführt werden, damit er weiterhin optimiert ist und mobil bleibt."
   },
   "needs.NeedsRepairModal.HeadDamageNotice" : {
-    "translation" : "Kopf braucht Anpassung"
+    "translation" : "Der Kopf muss justiert werden."
   },
   "needs.NeedsRepairModal.HeadRepairedNotice" : {
-    "translation" : "Head Adjusted"
+    "translation" : "Der Kopf wurde justiert."
   },
   "needs.NeedsRepairModal.TreadsDamageNotice" : {
-    "translation" : "Treppen benötigen Ausrichtung"
+    "translation" : "Die Laufwerke müssen ausgerichtet werden."
   },
   "needs.NeedsRepairModal.TreadsRepairedNotice" : {
-    "translation" : "Treads Aligned"
+    "translation" : "Die Laufwerke wurden ausgerichtet."
   },
   "needs.NeedsRepairModal.LiftDamageNotice" : {
-    "translation" : "Lift benötigt Kalibrierung"
+    "translation" : "Die Krangabel muss kalibriert werden."
   },
   "needs.NeedsRepairModal.LiftRepairedNotice" : {
-    "translation" : "Lift Calibrated"
+    "translation" : "Die Krangabel wurde kalibriert."
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
-    "translation" : "Tippen Sie auf die zu stimmenden Teile."
+    "translation" : "Tippe die Teile an, für die du das Tuning durchführen möchtest."
   },
   "needs.NeedsRepairModal.TuneUpInstruction" : {
-    "translation" : "Use the buttons on the right to recreate the arrow pattern. Then tap <b>SEND</b>."
+    "translation" : "Bilde das Pfeilmuster mithilfe der Tasten auf der rechten Seite nach. Tippe dann auf <b>SENDEN</b>."
   },
   "needs.NeedsRepairModal.NoRepairsNeeded" : {
-    "translation" : "Cozmo ist voll eingestellt!"
+    "translation" : "Das Cozmo-Tuning ist abgeschlossen!"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
     "translation" : "Senden"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
-    "translation" : "SCAN COZMO"
+    "translation" : "COZMO SCANNEN"
   },
   "needs.NeedsRepairModal.AlligningHead" : {
-    "translation" : "Einstellkopf ..."
+    "translation" : "Kopf wird justiert..."
   },
   "needs.NeedsRepairModal.AligningLift" : {
-    "translation" : "Kalibrieren ..."
+    "translation" : "Krangabel wird kalibriert..."
   },
   "needs.NeedsRepairModal.AligningTreads" : {
-    "translation" : "Ausrichten von ..."
+    "translation" : "Laufwerke werden ausgerichtet..."
   },
   "needs.ContinueButtonText" : {
-    "translation" : "FORTSETZEN"
+    "translation" : "WEITER"
   },
   "needs.NeedsRepairModal.TuneUpComplete" : {
-    "translation" : "Cozmo ist voll eingestellt!"
+    "translation" : "Das Cozmo-Tuning ist abgeschlossen!"
   },
   "needs.Done" : {
-    "translation" : "ERLEDIGT"
+    "translation" : "FERTIG"
   },
   "needs.RewardsDialog.SparksEarned" : {
-    "translation" : "Du hast mehr Sparks verdient!"
+    "translation" : "Du hast dir weitere Sparks verdient!"
   },
   "needs.RewardsDialog.TrickUnlocked" : {
-    "translation" : "Du hast freigeschaltet {0} Nein"
+    "translation" : "Du hast Folgendes freigeschaltet: {0}!"
   },
   "needs.RewardsDialog.SongUnlocked" : {
-    "translation" : "Du hast freigeschaltet {0} Nein"
+    "translation" : "Du hast Folgendes freigeschaltet: {0}!"
   },
   "needs.FreeplaySparksReward.CozmoSings" : {
     "translation" : "Cozmo just generated {0} Sparks by singing a song!"
   },
   "needs.FreeplaySparksReward.FistBump" : {
-    "translation" : "Cozmo just generated {0} Sparks by doing a fist bump!"
+    "translation" : "Cozmo just generated {0} Sparks by doing a Fist Bump!"
   },
   "needs.FreeplaySparksReward.GatherCubes" : {
-    "translation" : "Cozmo just generated {0} Sparks by gathering his cubes!"
+    "translation" : "Cozmo just generated {0} Sparks by gathering his Cubes!"
   },
   "needs.FreeplaySparksReward.HiccupsEndBad" : {
-    "translation" : "Cozmo just generated {0} Sparks by curing his hiccups!"
+    "translation" : "Cozmo just generated {0} Sparks by curing his Hiccups!"
   },
   "needs.FreeplaySparksReward.HiccupsEndGood" : {
-    "translation" : "Cozmo just generated {0} Sparks by curing his hiccups!"
+    "translation" : "Cozmo just generated {0} Sparks by curing his Hiccups!"
   },
   "needs.FreeplaySparksReward.KnockDownCubes" : {
-    "translation" : "Cozmo just generated {0} Sparks by knocking down cubes!"
+    "translation" : "Cozmo just generated {0} Sparks by knocking down Cubes!"
   },
   "needs.FreeplaySparksReward.PeekAboo" : {
-    "translation" : "Cozmo just generated {0} Sparks by playing Peek A Boo!"
+    "translation" : "Cozmo just generated {0} Sparks by playing Peekaboo!"
   },
   "needs.FreeplaySparksReward.PickUpCube" : {
-    "translation" : "Cozmo just generated {0} Sparks by picking up a cube!"
+    "translation" : "Cozmo just generated {0} Sparks by picking up a Cube!"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
     "translation" : "Cozmo just generated {0} Sparks by popping a wheelie!"
@@ -136,12 +142,18 @@
     "translation" : "Cozmo just generated {0} Sparks by building a pyramid!"
   },
   "needs.FreeplaySparksReward.RollACube" : {
-    "translation" : "Cozmo just generated {0} Sparks by rolling a cube!"
+    "translation" : "Cozmo just generated {0} Sparks by rolling a Cube!"
   },
   "needs.FreeplaySparksReward.StackCube" : {
-    "translation" : "Cozmo just generated {0} Sparks by stacking cubes!"
+    "translation" : "Cozmo just generated {0} Sparks by stacking Cubes!"
   },
   "needs.FreeplaySparksReward.Workout" : {
     "translation" : "Cozmo just generated {0} Sparks by performing a workout!"
+  },
+  "needs.FreeplaySparksReward.GuardDogWin" : {
+    "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
+  },
+  "needs.FreeplaySparksReward.GuardDogLose" : {
+    "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
   }
 }

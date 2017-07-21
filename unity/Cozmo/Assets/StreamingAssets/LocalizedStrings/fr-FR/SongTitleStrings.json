@@ -7,64 +7,64 @@
     "source_key_paths" : ["/{*}"]
   },
   "song.title.camptown" : {
-    "translation" : "Camptown Races"
+    "translation" : "Le port de Tacoma"
   },
   "song.title.itsyBitsySpider" : {
     "translation" : "Itsy Bitsy Spider"
   },
   "song.title.beethoven" : {
-    "translation" : "La 5ème Symphonie de Beethoven"
+    "translation" : "5e symphonie de Beethoven"
   },
   "song.title.popGoesTheWeasel" : {
     "translation" : "Pop Goes the Weasel"
   },
   "song.title.rowYourBoat" : {
-    "translation" : "Ligne de votre bateau"
+    "translation" : "Row Your Boat"
   },
   "song.title.pachebelCanon" : {
     "translation" : "Canon Pachelbel"
   },
   "song.title.odeToJoy" : {
-    "translation" : "La 9ème symphonie de Beethoven"
+    "translation" : "9e symphonie de Beethoven"
   },
   "song.title.twinkleTwinkle" : {
-    "translation" : "Twinkle Twinkle Little Star"
+    "translation" : "Ah vous dirai-je Maman"
   },
   "song.title.frereJaqcues" : {
     "translation" : "Frère Jacques"
   },
   "song.title.maryHadALittleLamb" : {
-    "translation" : "Mary avait un petit agneau"
+    "translation" : "Mary Had a Little Lamb"
   },
   "song.title.takeMeOutToTheBallgame" : {
-    "translation" : "Emmenez-moi au jeu de balles"
+    "translation" : "Take Me Out to the Ballgame"
   },
   "song.title.williamTell" : {
-    "translation" : "William Tell Overture"
+    "translation" : "Ouverture de Guillaume Tell"
   },
   "song.title.yankeeDoodle" : {
     "translation" : "Yankee Doodle"
   },
   "song.title.beautifulDreamer" : {
-    "translation" : "Beau rêveur"
+    "translation" : "Beautiful Dreamer"
   },
   "song.title.mountainKing" : {
-    "translation" : "Temple du Roi de la Montagne"
+    "translation" : "Hall of the Mountain King"
   },
   "song.title.taRaRaBoom" : {
     "translation" : "Ta Ra Ra Boom De Ay"
   },
   "song.title.entryOfTheGladiators" : {
-    "translation" : "Entrée des Gladiateurs"
+    "translation" : "L'entrée des gladiateurs"
   },
   "song.title.helloMyBaby" : {
-    "translation" : "Bonjour mon bébé"
+    "translation" : "Hello My Baby"
   },
   "song.title.turkeyInTheStraw" : {
-    "translation" : "Turquie Dans La Paille"
+    "translation" : "Turkey In The Straw"
   },
   "song.title.londonBridge" : {
-    "translation" : "Le pont de Londres s'effondre"
+    "translation" : "London Bridge is Falling Down"
   },
   "song.title.sakura" : {
     "translation" : "Sakura"

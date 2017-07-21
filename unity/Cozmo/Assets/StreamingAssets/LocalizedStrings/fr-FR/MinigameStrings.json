@@ -7,58 +7,58 @@
     "source_key_paths" : ["/{*}"]
   },
   "minigame.text.playerWins" : {
-    "translation" : "{0} Victoires!"
+    "translation" : "{0}\u000agagne !"
   },
   "minigame.text.cozmoWins" : {
-    "translation" : "Cozmo gagne!"
+    "translation" : "Cozmo\u000agagne !"
   },
   "minigame.text.Tie" : {
-    "translation" : "Attacher!"
+    "translation" : "Match nul !"
   },
   "minigame.quitView.title" : {
-    "translation" : "Quitter le jeu?"
+    "translation" : "Quitter le jeu ?"
   },
   "minigame.quitView.title.activity" : {
-    "translation" : "Quittez l'activité?"
+    "translation" : "Quitter l'activité ?"
   },
   "minigame.text.winner" : {
-    "translation" : "Gagnant!"
+    "translation" : "Gagnant !"
   },
   "minigame.text.score" : {
-    "translation" : "But"
+    "translation" : "Score"
   },
   "minigame.text.score.player" : {
-    "translation" : "Score du Joueur"
+    "translation" : "Score du joueur"
   },
   "minigame.text.score.cozmo" : {
-    "translation" : "Cozmo Score"
+    "translation" : "Score de Cozmo"
   },
   "minigame.label.showCubes.singular" : {
-    "translation" : "Put {0} Cube in front of Cozmo. It will turn green when he can see it."
+    "translation" : "Place {0} cube en face de Cozmo. Il deviendra vert lorsqu'il le verra."
   },
   "minigame.label.showCubes.plural" : {
-    "translation" : "Mettre {0} Cubes devant Cozmo. Ils vont devenir verts quand il peut les voir."
+    "translation" : "Place {0} cubes en face de Cozmo. Ils deviendront verts lorsqu'il les verra."
   },
   "minigame.label.waitingForCubes.singular" : {
-    "translation" : "En attendant Cube ..."
+    "translation" : "Attente du cube..."
   },
   "minigame.label.waitingForCubes.plural" : {
-    "translation" : "Waiting for Cubes ..."
+    "translation" : "Attente des cubes..."
   },
   "minigame.label.cubesReady.singular" : {
-    "translation" : "{0} Cube prêt!"
+    "translation" : "{0} cube prêt"
   },
   "minigame.label.cubesReady.plural" : {
-    "translation" : "{0} Cubes prêt!"
+    "translation" : "{0} cubes prêts"
   },
   "minigame.label.cozmoPrep" : {
-    "translation" : "Cozmo se prépare à jouer ..."
+    "translation" : "Cozmo se prépare à jouer..."
   },
   "minigame.label.gameOver" : {
-    "translation" : "Jeu terminé"
+    "translation" : "Partie terminée"
   },
   "minigame.text.waitForCozmo" : {
-    "translation" : "Cozmo se prépare ..."
+    "translation" : "Cozmo se prépare..."
   },
   "droneMode.unknownFaceReticleLabel" : {
     "translation" : "Humain"
@@ -70,13 +70,13 @@
     "translation" : "Cube"
   },
   "droneMode.petLabel" : {
-    "translation" : "Animal de compagnie"
+    "translation" : "Animal domestique"
   },
   "droneMode.safePlay.title" : {
-    "translation" : "Safe Play:"
+    "translation" : "Jeu sécurisé :"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "Explorez à l'intérieur dans des espaces bien éclairés. Conduisez sur des surfaces planes. Faites attention de tomber des bords. Restez à proximité de Cozmo pour la meilleure expérience."
+    "translation" : "Lance les explorations à l'intérieur, dans des espaces bien éclairés.\u000a\u000aPilote-le sur des surfaces planes.⏎\u000aFais attention aux rebords pour éviter toute chute.\u000a\u000aReste à proximité de Cozmo pour connaître la meilleure expérience."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Saluer"
@@ -85,175 +85,175 @@
     "translation" : "Saluer"
   },
   "droneMode.button.action.generic" : {
-    "translation" : "action"
+    "translation" : "Action"
   },
   "droneMode.button.action.liftCube" : {
-    "translation" : "Ascenseur Cube"
+    "translation" : "Soulever le cube"
   },
   "droneMode.button.action.dropCube" : {
-    "translation" : "Goutte Cube"
+    "translation" : "Jeter le cube"
   },
   "droneMode.button.action.stackCube" : {
-    "translation" : "Stack Cube"
+    "translation" : "Empiler le cube"
   },
   "droneMode.button.action.rollCube" : {
-    "translation" : "Rouleau Cube"
+    "translation" : "Faire rouler le cube"
   },
   "droneMode.text.howToPlaySteering" : {
-    "translation" : "Inclinez votre appareil pour diriger Cozmo gauche et à droite."
+    "translation" : "Incline ton appareil pour diriger Cozmo à gauche et à droite"
   },
   "droneMode.text.howToPlaySpeed" : {
-    "translation" : "Faites glisser et maintenez pour déplacer Cozmo avant ou en arrière. Lâchez d'arrêter."
+    "translation" : "Fais glisser et maintiens pour déplacer Cozmo vers l'avant ou l'arrière\u000aLâche prise pour arrêter."
   },
   "droneMode.text.toggleNightVision" : {
-    "translation" : "Tap to toggle Nightvision on or off."
+    "translation" : "Touche pour activer ou désactiver la vision de nuit."
   },
   "droneMode.text.raiseLowerHead" : {
-    "translation" : "Drag to move Cozmo's Head or Lift up and down."
+    "translation" : "Fais glisser pour déplacer la tête de Cozmo ou soulever ou abaisser le bras élévateur."
   },
   "droneMode.text.switchHeadOrLift" : {
-    "translation" : "Tapez pour basculer entre la tête et le contrôle de levage."
+    "translation" : "Appuie pour basculer entre la commande de la tête et celle du bras élévateur."
   },
   "droneMode.text.cozmoReticleHeader" : {
-    "translation" : "Lorsque Cozmo sélectionne un objet, vous pouvez le voir ici."
+    "translation" : "Lorsque Cozmo sélectionne un objet, tu peux le voir ici."
   },
   "droneMode.text.reticleOutlineDescrip" : {
     "translation" : "Un contour apparaîtra autour de l'objet sélectionné."
   },
   "droneMode.text.cozmoInteractionChoice" : {
-    "translation" : "Tapez sur les options qui semblent créer Cozmo interactif."
+    "translation" : "Touche les options qui apparaissent pour faire interagir Cozmo."
   },
   "memoryMatchGame.howToPlay" : {
-    "translation" : "Vous et Cozmo se relaieront. Comme les Cubes clignotent, mémoriser le motif. Appuyez ensuite sur les cubes afin de le répéter."
+    "translation" : "Cozmo et toi jouerez chacun à votre tour.\u000aLorsque les cubes clignotent, mémorise la séquence. Appuie ensuite sur les cubes pour la répéter."
   },
   "memoryMatchGame.solo.howToPlay" : {
-    "translation" : "Vous jouez alors Cozmo montres. Comme les Cubes clignotent, mémoriser le modèle, puis répéter."
+    "translation" : "Pendant que tu joues, Cozmo regarde.\u000aLorsque les cubes clignotent, mémorise la séquence puis répète-la."
   },
   "memoryMatchGame.difficulty.hardDescription.locked" : {
-    "translation" : "Unlock by winning Memory Match YOU VS. COZMO mode."
+    "translation" : "Pour débloquer, tu dois gagner en mode TOI contre COZMO."
   },
   "memoryMatchGame.label.yourTurn" : {
-    "translation" : "À ton tour"
+    "translation" : "C'est ton tour"
   },
   "memoryMatchGame.label.cozmoTurn" : {
-    "translation" : "tour de Cozmo"
+    "translation" : "C'est au tour de Cozmo"
   },
   "memoryMatchGame.label.listen" : {
-    "translation" : "Écouter ..."
+    "translation" : "Écoute..."
   },
   "memoryMatchGame.label.repeat" : {
-    "translation" : "Répéter!"
+    "translation" : "Répète !"
   },
   "memoryMatchGame.label.playPattern" : {
-    "translation" : "Jouer Motif"
+    "translation" : "Jouer la séquence"
   },
   "memoryMatchGame.label.correct" : {
-    "translation" : "Vous avez raison!"
+    "translation" : "C'est CORRECT !"
   },
   "memoryMatchGame.label.nextRound" : {
-    "translation" : "Tour suivant!"
+    "translation" : "Tour suivant !"
   },
   "memoryMatchGame.text.patternLength" : {
-    "translation" : "Longueur de motif: {0}"
+    "translation" : "Longueur de la séquence : {0}"
   },
   "memoryMatchGame.mode.vs" : {
-    "translation" : "YOU VS. COZMO"
+    "translation" : "TOI CONTRE COZMO"
   },
   "memoryMatchGame.mode.solo" : {
     "translation" : "SOLO"
   },
   "memoryMatchGame.label.placeCenter" : {
-    "translation" : "Mettez 1 Cube devant Cozmo, et deux autres de chaque côté. Laissez un espace entre les deux."
+    "translation" : "Place 1 cube en face de Cozmo et les deux autres de chaque côté.\u000a\u000aLaisse un espace entre eux."
   },
   "memoryMatchGame.label.waitingForCubes.placeCenter" : {
-    "translation" : "En attendant de voir Cube centre ..."
+    "translation" : "En attente de voir le cube central..."
   },
   "memoryMatchGame.label.cubeReady" : {
-    "translation" : "Cube prêt!"
+    "translation" : "Cube prêt"
   },
   "memoryMatchGame.label.tooCloseError" : {
-    "translation" : "Déplacer des cubes plus espacés."
+    "translation" : "Éloigne les cubes les uns des autres."
   },
   "memoryMatchGame.label.waitingForCubes.scanning" : {
-    "translation" : "Cozmo vérifie les Cubes ..."
+    "translation" : "Cozmo vérifie les cubes..."
   },
   "memoryMatchGame.solo.NewHighScore" : {
-    "translation" : "You set a new record!"
+    "translation" : "Tu as établi un nouveau record !"
   },
   "memoryMatchGame.solo.GameOver" : {
-    "translation" : "Bien joué!"
+    "translation" : "Bien joué !"
   },
   "speedTap.roundsText" : {
-    "translation" : "Rond {0:N0}"
+    "translation" : "Partie {0:N0}"
   },
   "speedTap.tapBlock" : {
-    "translation" : "Tapez un Cube clignotant avec lequel vous souhaitez jouer."
+    "translation" : "Touche le cube clignotant avec lequel tu veux jouer."
   },
   "speedTap.separateBlocks" : {
-    "translation" : "Cubes should be separated."
+    "translation" : "Les cubes doivent être séparés."
   },
   "speedTap.tapBlockForRound" : {
-    "translation" : "Tapez sur votre Cube pour commencer le tour suivant."
+    "translation" : "Touche le cube pour commencer la partie suivante."
   },
   "speedTap.multiplayer.overTime" : {
-    "translation" : "Heures supplémentaires!"
+    "translation" : "Temps dépassé !"
   },
   "speedTap.multiplayer.player1" : {
-    "translation" : "Joueur 1"
+    "translation" : "Joueur 1"
   },
   "speedTap.multiplayer.player2" : {
-    "translation" : "Joueur 2"
+    "translation" : "Joueur 2"
   },
   "minigame.dontMoveCozmo.title" : {
-    "translation" : "Cozmo a déménagé!"
+    "translation" : "Cosmo a bougé !"
   },
   "minigame.dontMoveCozmo.description" : {
-    "translation" : "Cozmo a déménagé et ne peut pas continuer le jeu."
+    "translation" : "Cozmo a bougé et ne peut pas poursuivre la partie."
   },
   "minigame.lostTrackOfBlock.title" : {
-    "translation" : "cube Disconnected"
+    "translation" : "Cube déconnecté"
   },
   "minigame.lostTrackOfBlock.description" : {
-    "translation" : "L'un des cubes s'est déconnecté. Visite <b> PARAMÈTRES </b> Pour en savoir plus sur le dépannage des cubes."
+    "translation" : "L'un des cubes s'est déconnecté. Accède aux <b>PARAMÈTRES</b> pour en savoir plus sur le dépannage des cubes."
   },
   "minigame.timeout.title" : {
-    "translation" : "Le jeu est terminé"
+    "translation" : "La partie est terminée"
   },
   "minigame.timeout.description" : {
-    "translation" : "Cozmo est fatigué d'attendre, et veut faire d'autres choses."
+    "translation" : "Cozmo est fatigué d'attendre et veut faire autre chose."
   },
   "cubePounce.info.playerWinPoint" : {
-    "translation" : "Vous étiez trop rapide pour Cozmo!"
+    "translation" : "Tu as été trop rapide pour Cozmo !"
   },
   "cubePounce.info.cozmoWinPoint" : {
-    "translation" : "Il était trop rapide pour vous!"
+    "translation" : "Il a été trop rapide pour toi !"
   },
   "cubePounce.info.setupText" : {
-    "translation" : "Placer un cube en face de Cozmo et maintenez-le toujours quand il devient vert."
+    "translation" : "Place un cube en face de Cozmo et maintiens-le quand il devient vert."
   },
   "cubePounce.header.playerWinPoint" : {
-    "translation" : "Tu as le point!"
+    "translation" : "Tu as marqué le point !"
   },
   "cubePounce.header.waitForPounce" : {
-    "translation" : "Attendez que Cozmo dépasse!"
+    "translation" : "Attends que Cozmo bondisse !"
   },
   "cubePounce.header.pushCubeTowardCozmo" : {
-    "translation" : "Poussez lentement le Cube vers Cozmo ... mais pas trop près!"
+    "translation" : "Pousse lentement le cube vers Cozmo... mais pas trop près  "
   },
   "cubePounce.header.cozmoWinPoint" : {
-    "translation" : "Cozmo a obtenu le point!"
+    "translation" : "Cozmo a marqué le point !"
   },
   "cubePounce.header.setupText" : {
-    "translation" : "Configuration du jeu:"
+    "translation" : "Configuration du jeu :"
   },
   "minigame.text.howToPlay" : {
     "translation" : "Comment jouer"
   },
   "minigame.text.howToPlayHeader" : {
-    "translation" : "Comment jouer:"
+    "translation" : "Comment jouer :"
   },
   "minigame.difficulty.easy" : {
-    "translation" : "UNE COULEUR"
+    "translation" : "UNE SEULE COULEUR"
   },
   "minigame.difficulty.medium" : {
     "translation" : "DEUX COULEURS"
@@ -265,102 +265,102 @@
     "translation" : "QUATRE COULEURS"
   },
   "speedTap.difficulty.easyDescription" : {
-    "translation" : "Soyez le premier à taper Cube lorsque les couleurs correspondent, mais jamais taper sur le rouge!"
+    "translation" : "Sois le premier à toucher ton cube lorsque les couleurs correspondent, mais ne touche jamais le rouge !"
   },
   "speedTap.difficulty.mediumDescription" : {
-    "translation" : "Tapez sur votre Cube premier lorsque les motifs correspondent, mais Cubes peuvent maintenant avoir 1 ou 2 couleurs."
+    "translation" : "Touche le cube en premier lorsque les séquences correspondent, mais les cubes peuvent désormais avoir une ou deux couleurs."
   },
   "speedTap.difficulty.hardDescription" : {
-    "translation" : "Fais attention! les modèles Cube peuvent être plus complexes, avec un maximum de 3 couleurs à la fois."
+    "translation" : "Attention ! Les séquences de cubes peuvent être plus complexes et comporter trois couleurs à la fois."
   },
   "speedTap.difficulty.expertDescription" : {
-    "translation" : "Experts seulement! Cubes peuvent maintenant avoir jusqu'à 4 couleurs à la fois, défiant même les meilleurs joueurs."
+    "translation" : "Pour experts uniquement ! Les cubes peuvent maintenant comporter jusqu'à 4 couleurs simultanément : un défi même pour les meilleurs joueurs."
   },
   "button.retry" : {
     "translation" : "RÉESSAYER"
   },
   "speedTap.text.waitForCozmo" : {
-    "translation" : "Cozmo se prépare ..."
+    "translation" : "Cozmo se prépare..."
   },
   "speedTap.difficulty.easyDescription.locked" : {
-    "translation" : "Déverrouiller en déverrouillant Quick Tap."
+    "translation" : "Pour débloquer, déverrouille Réflexe."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "Two Color Mode is locked.\u000aUnlock by winning Quick Tap in <b>ONE COLOR MODE</b>."
+    "translation" : "Le mode deux couleurs est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE UNE COULEUR </b>."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "Le mode Trois couleurs est verrouillé. Débloquer en gagnant Quick Tap in <b> DEUX MODE DE COULEUR </b> ."
+    "translation" : "Le mode trois couleurs est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE DEUX COULEURS</b>."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "Le mode quatre couleurs est verrouillé. Débloquer en gagnant Quick Tap in <b> TROIS MODE DE COULEUR </b> ."
+    "translation" : "Le mode quatre couleurs est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE TROIS COULEURS</b>."
   },
   "speedTap.text.getReady" : {
-    "translation" : "Soit prêt!"
+    "translation" : "Soit prêt !"
   },
   "speedTap.text.bestOf" : {
-    "translation" : "<b> Gagnant: </b> Meilleur de {0} rounds"
+    "translation" : "<b>Gagnant :</b> Le meilleur sur {0} parties"
   },
   "speedTap.text.displayWinnerSubtitle" : {
-    "translation" : "prend ronde {0} !"
+    "translation" : "gagne la partie {0} !"
   },
   "speedTap.text.roundScore" : {
-    "translation" : "Joueur: {0} - Cozmo: {1}"
+    "translation" : "Joueur : {0} - Cozmo : {1}"
   },
   "speedTap.text.roundScoreMP" : {
-    "translation" : "{2} : {3} - {4} : {5} - {0} : {1}"
+    "translation" : "{2}: {3} - {4}: {5} - {0}: {1}"
   },
   "speedTap.text.MP.score.player" : {
-    "translation" : "{0} But"
+    "translation" : "Score {0}"
   },
   "speedTap.text.MP.bestOf" : {
-    "translation" : "<b> Gagnant: </b> Premier à 2 tours"
+    "translation" : "<b>Gagnant :</b> Premier sur 2 tours"
   },
   "speedTap.title.MP.Locked" : {
-    "translation" : "Fermé à clef!"
+    "translation" : "Verrouillé !"
   },
   "speedTap.text.MP.Locked" : {
-    "translation" : "To unlock 3 player mode, play Human vs. Cozmo once on this difficulty."
+    "translation" : "Pour débloquer le mode 3 joueurs, joue à Humain contre Cozmo une fois sur ce niveau de difficulté."
   },
   "speedTapGame.label.vs" : {
-    "translation" : "vs."
+    "translation" : "Contre"
   },
   "speedTapGame.mode.HvC" : {
-    "translation" : "Human vs. Cozmo"
+    "translation" : "Humain contre Cozmo"
   },
   "speedTapGame.mode.HvHvC" : {
-    "translation" : "Human vs. Human vs. Cozmo"
+    "translation" : "Humain contre Humain contre Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "Tapez un mot ou une phrase et d'entendre dire qu'il Cozmo"
+    "translation" : "Saisis un mot ou une phrase et écoute Cozmo le prononcer"
   },
   "sayCozmo.button.say" : {
-    "translation" : "Dire"
+    "translation" : "Dis"
   },
   "speedTap.playerTwo" : {
-    "translation" : "Joueur 2:"
+    "translation" : "Joueur 2 :"
   },
   "speedTap.SelectGameType" : {
-    "translation" : "Sélectionner le type de jeu"
+    "translation" : "Sélectionne le type de jeu"
   },
   "speedTap.playerOne" : {
-    "translation" : "Joueur 1:"
+    "translation" : "Joueur 1 :"
   },
   "speedTap.tapBlock2" : {
-    "translation" : "Appuyez sur le cube clignotant."
+    "translation" : "Touche le cube clignotant."
   },
   "minigame.GuardDog.Title" : {
-    "translation" : "Cozmo garde ses cubes"
+    "translation" : "Cozmo surveille ses cubes"
   },
   "minigame.GuardDog.Desc" : {
-    "translation" : "Try to slowly and carefully turn all of Cozmo's Cubes upside down without waking him up.\u000a\u000aCareful... Cozmo can sense when his cubes are moving!"
+    "translation" : "Essaye de retourner lentement et délicatement tous les cubes de Cozmo sans le réveiller.\u000a\u000aAttention... Cozmo détecte quand ses cubes se déplacent !"
   },
   "speedTap.driveToCubeFail.title" : {
-    "translation" : "Cozmo ne peut pas trouver son cube!"
+    "translation" : "Cozmo ne trouve pas son cube !"
   },
   "speedTap.driveToCubeFail.description" : {
-    "translation" : "Cozmo a du mal à trouver son cube. Assurez-vous que Cozmo peut le voir."
+    "translation" : "Cozmo a du mal à trouver son cube. Assure-toi que Cozmo peut le voir."
   },
   "minigame.text.youWin" : {
-    "translation" : "Vous gagnez!"
+    "translation" : "Tu as\u000agagné !"
   }
 }

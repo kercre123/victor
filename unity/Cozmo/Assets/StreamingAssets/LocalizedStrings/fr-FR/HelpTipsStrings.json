@@ -7,31 +7,31 @@
     "source_key_paths" : ["/{*}"]
   },
   "helpTipsStrings.viewTitle" : {
-    "translation" : "Aide & Conseils"
+    "translation" : "Aide et conseils"
   },
   "helpTipsStrings.Slide0.title" : {
-    "translation" : "Créez un espace de jeu idéal."
+    "translation" : "Crée un superbe espace de jeu."
   },
   "helpTipsStrings.Slide0.body" : {
-    "translation" : "Cozmo aime un environnement propre, table ouverte dans une pièce bien éclairée. Il voit mieux à l'intérieur et à l'extérieur de la lumière directe du soleil."
+    "translation" : "Cozmo aime disposer d'une table propre et dégagée dans une pièce bien éclairée. Il voit mieux à l’intérieur et à l’abri du soleil."
   },
   "helpTipsStrings.Slide1.title" : {
     "translation" : "Cubes de Cozmo"
   },
   "helpTipsStrings.Slide1.body" : {
-    "translation" : "Cozmo likes to be around his Cubes. They work best when he can see the symbol clearly, and they're right side up. Check out <b><color=#d3d3d3>SETTINGS</color></b> for Cube maintenance."
+    "translation" : "Cozmo aime être dans les parages avec ses cubes. Ils fonctionnent mieux lorsqu'il peut voir clairement le symbole, et qu'ils sont à l'endroit. Vérifie les <b>&lt;color=#d3d3d3&gt;PARAMÈTRES</color></b> pour l'entretien des cubes."
   },
   "helpTipsStrings.Slide2.title" : {
-    "translation" : "Lorsque vous ne jouez pas à un jeu, les lumières Cube peuvent vous dire que:"
+    "translation" : "Lorsque tu ne joues pas à un jeu,\u000ales voyants des cubes peuvent t'indiquer que :"
   },
   "helpTipsStrings.Slide2.subtitle1" : {
-    "translation" : "Cozmo has seen\u000athis Cube."
+    "translation" : "Cozmo a vu\u000ace cube."
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmo veut utiliser ce Cube"
+    "translation" : "Cozmo veut utiliser\u000a ce cube"
   },
   "helpTipsStrings.Slide2.subtitle3" : {
-    "translation" : "Ce cube est faible sur les batteries"
+    "translation" : "La pile de ce cube\u000aest faible"
   },
   "helpTipsStrings.Slide3.title" : {
     "translation" : "Cozmo s'améliore avec le temps."
@@ -46,54 +46,54 @@
     "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
   },
   "helpTipsStrings.Slide4.title" : {
-    "translation" : "Énergie, Bits, et Sparks"
+    "translation" : "Énergie, bits et étincelles"
   },
   "helpTipsStrings.Slide4.body" : {
-    "translation" : "Gagner <color=#00bd3dff> Énergie </color> en remplissant vos objectifs quotidiens. Energie vous récompense avec <color=#fe8f00ff> Morceaux </color> et <color=#11a2f0ff> Sparks </color> : Les utiliser pour débloquer des améliorations et les applications de Cozmo!"
+    "translation" : "Gagne de l'&lt;color=#00bd3dff&gt;énergie</color> en atteignant tes objectifs quotidiens. Grâce à l'énergie, tu obtiens des &lt;color=#fe8f00ff&gt;bits</color> et des &lt;color=#11a2f0ff&gt;étincelles</color> : utilise-les pour débloquer les mises à niveau et les applications Cozmo !"
   },
   "helpTipsStrings.Slide4.bodyEnergy" : {
     "translation" : "Énergie"
   },
   "helpTipsStrings.Slide4.bodyBits" : {
-    "translation" : "Morceaux"
+    "translation" : "Bits"
   },
   "helpTipsStrings.Slide4.bodySparks" : {
-    "translation" : "Sparks"
+    "translation" : "Étincelles"
   },
   "helpTipsStrings.Slide5.title" : {
-    "translation" : "Enregistrez-vous sur Cozmo."
+    "translation" : "Enregistre-toi auprès de Cozmo."
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Launch the Cozmo App to check in each day to keep Cozmo happy and help him learn and grow through unlocking more Abilities. Connect to Cozmo to wake him up and give him the attention he needs."
+    "translation" : "Lance l'application Cozmo pour t'enregistrer chaque jour afin de satisfaire Cozmo et de l'aider à apprendre et progresser en débloquant de nouvelles compétences. Connecte-toi à Cozmo pour le réveiller et lui porter l'attention dont il a besoin."
   },
   "helpTipsStrings.Slide6.title" : {
-    "translation" : "Keep Cozmo safe."
+    "translation" : "Assure la sécurité de Cozmo."
   },
   "helpTipsStrings.Slide6.body" : {
-    "translation" : "Cozmo needs you to keep him safe, just like a small pet. Keep an eye on him in case he gets into trouble; he may need your help to get unstuck."
+    "translation" : "Cozmo a besoin que tu le protèges. Il est semblable à un hamster ou un autre petit animal domestique. Garde un œil sur lui au cas où il aurait un problème ; il peut avoir besoin de ton aide en cas de blocage."
   },
   "helpTipsStrings.Slide7.title" : {
-    "translation" : "Cozmo's backpack lights can tell you that:"
+    "translation" : "Les voyants au dos de Cozmo peuvent t'indiquer que :"
   },
   "helpTipsStrings.Slide7.subtitle1" : {
-    "translation" : "Cozmo is\u000acharged."
+    "translation" : "Cozmo est\u000achargé."
   },
   "helpTipsStrings.Slide7.subtitle2" : {
-    "translation" : "Cozmo is\u000acharging."
+    "translation" : "Cozmo est\u000aen train de se charger."
   },
   "helpTipsStrings.Slide7.subtitle3" : {
-    "translation" : "Cozmo has a\u000alow battery."
+    "translation" : "La batterie de\u000aCozmo est faible."
   },
   "helpTipsStrings.Slide8.title" : {
-    "translation" : "Cozmo is secure."
+    "translation" : "Cozmo est en sécurité."
   },
   "helpTipsStrings.Slide8.body" : {
-    "translation" : "Cozmo et sa caméra sont sûres et sécuritaires. Aucune image ou vidéo ne sont jamais stockées, en ligne ou hors ligne. Cozmo ne parler à des périphériques que vous autorisez."
+    "translation" : "Cozmo et sa caméra sont en sécurité Aucune photo ni vidéo n'est jamais enregistrée, ni en ligne ni hors ligne. Cozmo n'échange qu'avec les appareils que tu autorises."
   },
   "helpTipsStrings.Slide9.title" : {
-    "translation" : "Keep Cozmo charged."
+    "translation" : "Veille à ce que Cozmo soit chargé."
   },
   "helpTipsStrings.Slide9.body" : {
-    "translation" : "Cozmo a besoin de son chargeur, alors gardez-le avec vous. Lorsque vous avez fini de jouer, placez-le sur son chargeur pour le mettre à dormir."
+    "translation" : "Cozmo a besoin de son chargeur : garde-le à portée de main. Lorsque tu as fini de jouer, place-le sur son chargeur pour qu'il s'endorme."
   }
 }

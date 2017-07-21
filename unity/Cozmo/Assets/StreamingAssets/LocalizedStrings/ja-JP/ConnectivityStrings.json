@@ -7,91 +7,94 @@
     "source_key_paths" : ["/{*}"]
   },
   "connectivity.connectingToCozmoText" : {
-    "translation" : "あなたのコズモに接続しています..."
+    "translation" : "Cozmoに接続しています..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "あなたはコズモに接続する必要があります"
+    "translation" : "Cozmoに接続してください"
   },
   "connectivity.moreInfo" : {
     "translation" : "詳細情報"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "コズモを入に"
+    "translation" : "Cozmoをオンにする"
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "WiFiの設定で接続します"
+    "translation" : "WiFi設定で接続する"
   },
   "connectivity.searchingForCozmo" : {
-    "translation" : "コズモの検索..."
+    "translation" : "Cozmoを探しています..."
   },
   "connectivity.securingConnection" : {
-    "translation" : "あなたの接続を保護します..."
+    "translation" : "接続しています..."
   },
   "connection.wakingUpCozmo" : {
-    "translation" : "コズモを目覚めます..."
+    "translation" : "Cozmoを起こしています..."
   },
   "connectivity.updatingFirmware" : {
-    "translation" : "あなたのコズモを更新しています..."
+    "translation" : "Cozmoを更新しています..."
   },
   "connectivity.updatingFirmwareSubTitle" : {
-    "translation" : "Cozmoは充電器に保管してください。"
+    "translation" : "Cozmoをチャージャーに置いたままにしてください。"
   },
   "connectivity.updatingFirmwareFooter" : {
-    "translation" : "更新が完了したら、CozmoのWiFiに再接続する必要があります。"
+    "translation" : "更新が完了したら、CozmoのWiFiに再接続してください。"
   },
   "connectivity.updateApp" : {
-    "translation" : "続行するには、Cozmo Appを更新する必要があります。"
+    "translation" : "続けるにはCozmoアプリを更新してください。"
   },
   "connectivity.pullTabsTitle" : {
-    "translation" : "あなたのキューブのタブを引っ張りなさい。"
+    "translation" : "キューブのツマミを引っ張ります。"
   },
   "connectivity.enterDOB" : {
-    "translation" : "あなたの誕生日を入力してください"
+    "translation" : "あなたの誕生日を入力します"
   },
   "connectivity.cozmoSleepTitle" : {
-    "translation" : "寝る..."
+    "translation" : "スリープします..."
   },
   "connectivity.cozmoSleepDesc" : {
-    "translation" : "Cozmoは眠りにつき、すぐに切断されます..."
+    "translation" : "Cozmoはスリープ状態に入り、間もなく接続が解除されます..."
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "Cozmoは低オンバッテリです"
+    "translation" : "Cozmoの電池が切れそうです"
   },
   "connectivity.cozmoLowBatteryDesc" : {
-    "translation" : "充電器にCozmoを設置してください。"
+    "translation" : "Cozmoをチャージャーに置いてください。"
   },
   "connectivity.keepCozmoOnCharger" : {
-    "translation" : "セットアップ中に充電器にCozmoを残しておいてください。"
+    "translation" : "設定中はCozmoをチャージャーに置いたままにしてください。"
   },
   "connectivity.placeCozmoOnCharger" : {
-    "translation" : "彼の充電器にCozmoを置きます。"
+    "translation" : "Cozmoをチャージャーに置きます。"
   },
   "connectivity.replaceCozmoOnCharger" : {
-    "translation" : "充電器のCozmoを取り外して交換します。"
+    "translation" : "Cozmoをチャージャーから外してもう一度置きます。"
   },
   "label.getHelp" : {
-    "translation" : "助けを得ます"
+    "translation" : "ヘルプを見る"
   },
   "label.cubesNotWorking" : {
-    "translation" : "キューブは動作していませんか？"
+    "translation" : "キューブが動作していませんか？"
   },
   "connectivity.connectionRejected.title" : {
-    "translation" : "別のデバイスがCozmoに接続されています。デバイスを切断してもう一度お試しください。"
+    "translation" : "Cozmoに別のデバイスが接続されています。\u000aデバイスの接続を外してからもう一度試してください。"
   },
   "needs.unconnected.needToConnect.title" : {
-    "translation" : "Cozmoが接続されていない"
+    "translation" : "Cozmoは接続されていません"
   },
   "needs.unconnected.needToConnect.description" : {
-    "translation" : "Cozmoを気遣い、彼のニーズをチェックするためには、まず彼に連絡しなければなりません。"
+    "translation" : "Cozmoをお世話してニーズメーターをチェックするには、まずCozmoに接続する必要があります。"
   },
   "label.cancelText" : {
     "translation" : "キャンセル"
   },
   "label.liquidMetalCozmo" : {
-    "translation" : "コレクターズ・エディション：Liquid Metal"
+    "translation" : "コレクター版：液体金属"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "あなたのゲームプレイのデータと統計情報を送信して、Cozmoをより良くするために協力してください。"
+    "translation" : "あなたのゲームプレイのデータと統計情報をお送りください。"
+  },
+  "needs.VoiceSettingsModal.Title" : {
+    "translation" : "音声コマンド"
   },
   "connectivity.behaviorDisplayDisconnected" : {
     "translation" : "Cozmoが切断されました。"

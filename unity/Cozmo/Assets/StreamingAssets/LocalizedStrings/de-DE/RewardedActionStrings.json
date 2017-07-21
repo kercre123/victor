@@ -7,132 +7,132 @@
     "source_key_paths" : ["/{*}"]
   },
   "reward.description.Freeplay.Spark" : {
-    "translation" : "Funken eines Upgrade"
+    "translation" : "Upgrade mit Sparks kaufen"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack" : {
-    "translation" : "die 'Stack Cubes' Verhalten erfolgreichen Abschluss"
+    "translation" : "\"Cubes stapeln\" erfolgreich abschließen"
   },
   "reward.description.Freeplay.CompleteBehavior.Pounce" : {
-    "translation" : "erfolgreichen Abschluss der \"Anspringen On Fingers 'Verhalten"
+    "translation" : "\"Finger fangen\" erfolgreich abschließen"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid" : {
-    "translation" : "die \"bauen eine Pyramide 'Verhalten erfolgreichen Abschluss"
+    "translation" : "\"Pyramide bauen\" erfolgreich abschließen"
   },
   "reward.description.Freeplay.CompleteBehavior.PopWheelie" : {
-    "translation" : "die \"Pop einen Wheelie 'Verhalten erfolgreichen Abschluss"
+    "translation" : "\"Wheelie machen\" erfolgreich abschließen"
   },
   "reward.description.Freeplay.CompleteBehavior.FistBump" : {
-    "translation" : "erfolgreichen Abschluss der \"Faust-Stoß-Verhalten"
+    "translation" : "\"Fauststoß\" erfolgreich abschließen"
   },
   "reward.description.MemoryMatch.Played.Solo" : {
-    "translation" : "Gespielt eine Partie Memory Match in Solo-Modus"
+    "translation" : "Gedächtnisspiel im Solo-Modus gespielt"
   },
   "reward.description.MemoryMatch.Played.Vs" : {
-    "translation" : "Gespielt ein Spiel von Memory Match in Vs. Modus"
+    "translation" : "Gedächtnisspiel im Versus-Modus gespielt"
   },
   "reward.description.MemoryMatch.WinGame.Vs" : {
-    "translation" : "ein Spiel von Memory Match gewann in Vs. Modus"
+    "translation" : "Gedächtnisspiel im Versus-Modus gewonnen"
   },
   "reward.description.MemoryMatch.Lives.OneLeft" : {
-    "translation" : "Won Memory Match Vs. Modus auf Ihrem letzten Leben"
+    "translation" : "Gedächtnisspiel mit dem letzten Leben im Versus-Modus gewonnen"
   },
   "reward.description.MemoryMatch.Lives.TwoLeft" : {
-    "translation" : "Won Memory Match Vs. Modus mit zwei Leben gelassen"
+    "translation" : "Gedächtnisspiel mit zwei verbleibenden Leben im Versus-Modus gewonnen"
   },
   "reward.description.MemoryMatch.Lives.ThreeLeft" : {
-    "translation" : "Won Memory Match Vs. Modus ohne ein Leben zu verlieren"
+    "translation" : "Gedächtnisspiel im Versus-Modus gewonnen, ohne ein Leben zu verlieren"
   },
   "reward.description.MemoryMatch.PatternLength.Five" : {
-    "translation" : "Abgeschlossene lange ein Memory Match Muster> 5 leuchtet."
+    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 5 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Ten" : {
-    "translation" : "Abgeschlossene lange ein Memory Match Muster> 10 Leuchten."
+    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 10 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Fifteen" : {
-    "translation" : "Abgeschlossen lange ein Memory Match Muster> 15 Lichter."
+    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 15 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
-    "translation" : "Abgeschlossene lange ein Memory Match Muster> 20 Lichter."
+    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 20 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
-    "translation" : "Abgeschlossen lange ein Memory Match Muster> 25 Lichter."
+    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 25 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Thirty" : {
-    "translation" : "Abgeschlossen lange ein Memory Match Muster> 30 Lichter."
+    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 30 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
-    "translation" : "Legen Sie ein neues Muster Rekord für Memory Match Solo"
+    "translation" : "Neuen Muster-Rekord im Solo-Modus im Gedächtnisspiel erzielt"
   },
   "reward.description.QuickTap.Played" : {
-    "translation" : "Gespielt ein Spiel von Quick Tap"
+    "translation" : "Geschwindigkeitsspiel gespielt"
   },
   "reward.description.QuickTap.WinGame.OneColor" : {
-    "translation" : "Gewann ein Spiel von Quick Tap in 'One Color' Modus"
+    "translation" : "Geschwindigkeitsspiel im 1-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.WinGame.TwoColor" : {
-    "translation" : "Gewann in \"Zwei Farben\" -Modus ein Spiel von Quick Tap"
+    "translation" : "Geschwindigkeitsspiel im 2-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.WinGame.ThreeColor" : {
-    "translation" : "Gewann in \"Drei Farben\" -Modus ein Spiel von Quick Tap"
+    "translation" : "Geschwindigkeitsspiel im 3-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.WinGame.FourColor" : {
-    "translation" : "Gewann in 'Vier Farben-Modus ein Spiel von Quick Tap"
+    "translation" : "Geschwindigkeitsspiel im 4-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.Accuracy.50" : {
-    "translation" : "ein Spiel von Quick Tap mit Leitungs Genauigkeit> 50% Finished"
+    "translation" : "Geschwindigkeitsspiel mit einer Tippgenauigkeit von über 50 % abgeschlossen"
   },
   "reward.description.QuickTap.Accuracy.75" : {
-    "translation" : "ein Spiel von Quick Tap mit Leitungs Genauigkeit> 75% Finished"
+    "translation" : "Geschwindigkeitsspiel mit einer Tippgenauigkeit von über 75 % abgeschlossen"
   },
   "reward.description.QuickTap.Accuracy.100" : {
-    "translation" : "ein Spiel von Quick Tap mit 100% Leitungs Genauigkeit Fertig!"
+    "translation" : "Geschwindigkeitsspiel mit einer Tippgenauigkeit von 100 % abgeschlossen!"
   },
   "reward.description.QuickTap.Shutout.SingleRound" : {
-    "translation" : "Gewann eine Runde Schnell Tap 5-0"
+    "translation" : "Eine Runde des Geschwindigkeitsspiels 5:0 gewonnen"
   },
   "reward.description.QuickTap.TieBreaker.OneRound" : {
-    "translation" : "eine Runde Schnell Tap Won nach 4-4 gebunden zu sein"
+    "translation" : "Eine Runde des Geschwindigkeitsspiels gewonnen, nachdem es vorher 4:4 stand"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "Gespielt Schnell Tap Mensch gegen Mensch gegen Cozmo"
+    "translation" : "Geschwindigkeitsspiel im Modus \"Mensch vs Mensch vs Cozmo\" gespielt"
   },
   "reward.description.Keepaway.Played" : {
-    "translation" : "Gespielt ein Spiel von Keepaway"
+    "translation" : "Das Spiel \"Fernhalten\" gespielt"
   },
   "reward.description.Keepaway.Won" : {
-    "translation" : "Gewann ein Spiel von Keepaway"
+    "translation" : "Das Spiel \"Fernhalten\" gewonnen"
   },
   "reward.description.Keepaway.Shutout" : {
-    "translation" : "Gewann ein Spiel von Keepaway 5-0"
+    "translation" : "Das Spiel \"Fernhalten\" 5:0 gewonnen"
   },
   "reward.description.Keepaway.TieBreaker" : {
-    "translation" : "Gewann Keepaway nach 4-4 gebunden zu sein"
+    "translation" : "Das Spiel \"Fernhalten\" gewonnen, nachdem es vorher 4:4 stand"
   },
   "reward.description.Explorer.Time.5" : {
-    "translation" : "Gespielt Explorer Modus für länger als 5 Minuten"
+    "translation" : "Erkundungsmodus länger als 5 Minuten gespielt"
   },
   "reward.description.Explorer.Time.10" : {
-    "translation" : "Gespielt Explorer Modus für länger als 10 Minuten"
+    "translation" : "Erkundungsmodus länger als 10 Minuten gespielt"
   },
   "reward.description.Explorer.Time.15" : {
-    "translation" : "Gespielt Explorer Modus für länger als 15 Minuten"
+    "translation" : "Erkundungsmodus länger als 15 Minuten gespielt"
   },
   "reward.description.Explorer.Time.20" : {
-    "translation" : "Gespielt Explorer Modus für länger als 20 Minuten"
+    "translation" : "Erkundungsmodus länger als 20 Minuten gespielt"
   },
   "reward.collect.CollectEnergyButton" : {
-    "translation" : "Sammeln Sie Energie"
+    "translation" : "Energie sammeln"
   },
   "reward.description.NewDifficulty" : {
     "translation" : "{0} Modus freigeschaltet!"
   },
   "reward.description.StartNewDay" : {
-    "translation" : "Check Streak Belohnung"
+    "translation" : "Belohnung für regelmäßige Kontrolle"
   },
   "reward.description.SkillUp" : {
-    "translation" : "Cozmo des {0} Geschick hat zugenommen!"
+    "translation" : "Die {0}-Fähigkeit von Cozmo wurde gesteigert!"
   },
   "reward.freeplay.BehaviorDisplay" : {
-    "translation" : "Cozmo bekam + {0} Energie aus {1} !"
+    "translation" : "Cozmo hat +{0} Energie von {1} erhalten!"
   }
 }
