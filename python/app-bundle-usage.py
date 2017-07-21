@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # python app-bundle-usage.py --bundle build/android/Cozmo.apk
 

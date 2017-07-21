@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 #
 # Copyright (c) 2015 Ali Zaidi  All rights reserved.
@@ -39,7 +39,7 @@ def __line__():
 #################
 
 PROLOGUE_LINE = __line__()
-PROLOGUE = """#!/usr/bin/env python
+PROLOGUE = """#!/usr/bin/env python2
 
 #
 # The initial part of this file belongs to the ribosome project.
