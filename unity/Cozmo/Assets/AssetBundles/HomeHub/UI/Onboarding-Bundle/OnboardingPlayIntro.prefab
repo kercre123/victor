@@ -116,7 +116,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 75
+  m_fontSize: 69.55
   m_fontSizeBase: 100
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -156,12 +156,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114229842452859774}
-    characterCount: 87
+    characterCount: 129
     spriteCount: 0
-    spaceCount: 17
-    wordCount: 17
+    spaceCount: 25
+    wordCount: 25
     linkCount: 0
-    lineCount: 5
+    lineCount: 7
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -208,10 +208,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 504
+    _EnumValue: 509
   _CustomIdle:
     _EnumValueAsString: OnboardingIdlePlay
-    _EnumValue: 304
+    _EnumValue: 305
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.play.ticker
@@ -228,7 +228,7 @@ MonoBehaviour:
   - -1
   _ForceNeedValuesOnEventId:
     _EnumValueAsString: Count
-    _EnumValue: 46
+    _EnumValue: 48
   _ForceNeedValuesOnEvent:
   - -1
   - -1
@@ -257,8 +257,8 @@ RectTransform:
   m_Father: {fileID: 22461814}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -117, y: 291}
-  m_SizeDelta: {x: 1012, y: 582}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -120, y: -417}
+  m_SizeDelta: {x: 905, y: 582}
   m_Pivot: {x: 1, y: 0.5}
