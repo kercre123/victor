@@ -39,6 +39,7 @@ public static class ThemeKeys {
       public const string kCozmoButtonCalibrateBackground = "CozmoButton_Calibrate_Background";
       public const string kCozmoButtonCloseBackground = "CozmoButton_Close_Background";
       public const string kCozmoButtonCloseLiteBackground = "CozmoButton_Close_LiteBackground";
+      public const string kCozmoButtonIconVoiceCommand = "CozmoButton_Icon_VoiceCommand";
       public const string kCozmoButtonInvisibleHitZone = "CozmoButton_InvisibleHitZone";
       public const string kCozmoButtonPrimaryBlueBackground = "CozmoButton_Primary_BlueBackground";
       public const string kCozmoButtonPrimaryGoldBackground = "CozmoButton_Primary_GoldBackground";
@@ -58,6 +59,9 @@ public static class ThemeKeys {
       public const string kFrameTextfield = "Frame_Textfield";
       public const string kIconCheckmarkLarge = "Icon_Checkmark_Large";
       public const string kIconXLarge = "Icon_X_Large";
+      public const string kImageArrowCurvedLeft = "Image_Arrow_CurvedLeft";
+      public const string kImageArrowCurvedRight = "Image_Arrow_CurvedRight";
+      public const string kImageArrowStraight = "Image_Arrow_Straight";
       public const string kLEGACYImageCozmoButtonPrimaryBackground = "LEGACY_Image_CozmoButton_PrimaryBackground";
       public const string kLEGACYImageCozmoButtonSecondaryBackground = "LEGACY_Image_CozmoButton_SecondaryBackground";
       public const string kLEGACYImageCozmoButtonTertiaryBackground = "LEGACY_Image_CozmoButton_TertiaryBackground";
@@ -106,6 +110,8 @@ public static class ThemeKeys {
       public const string kMinigameStatusText = "Minigame_Status_Text";
       public const string kMinigameTitleText = "Minigame_Title_Text";
       public const string kMinigameWinnerText = "Minigame_Winner_Text";
+      public const string kOnboardingDescriptionText = "Onboarding_Description_Text";
+      public const string kOnboardingTextLarge = "Onboarding_Text_Large";
       public const string kPageIndicatorText = "Page_Indicator_Text";
       public const string kScreenHeaderText = "Screen_Header_Text";
       public const string kScreenSubtitileTextWhite = "Screen_Subtitile_Text_White";

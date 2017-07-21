@@ -71,10 +71,10 @@ namespace FaceEnrollment {
     private void RequestDeleteEnrolledFace(int faceID) {
 
       AlertModalButtonData primaryButtonData = new AlertModalButtonData("confirm_delete_button",
-                                                                        LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton,
+                                                                        LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, false,
                                                                         () => HandleDeleteEnrolledFaceConfirmButton(faceID));
       AlertModalButtonData cancelButtonData = new AlertModalButtonData("cancel_button",
-                                                                       LocalizationKeys.kButtonCancel);
+                                                                       LocalizationKeys.kButtonCancel, false);
       AlertModalData requestDeleteEnrolledData = new AlertModalData("delete_enrolled_face_alert",
                                                                     LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle,
                                                                     primaryButtonData: primaryButtonData,

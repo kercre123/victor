@@ -70,8 +70,8 @@ namespace Cozmo.RequestGame {
       _RequestGameAlertData = new AlertModalData("request_game_alert",
                 LocalizationKeys.kRequestGameTitle,
                 LocalizationKeys.kRequestGameDescription,
-                new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYesPlease, HandleMiniGameConfirm),
-                new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNoThankYou, HandleMiniGameRejection),
+                new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYesPlease, true, HandleMiniGameConfirm),
+                new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNoThankYou, true, HandleMiniGameRejection),
                 icon: data.ChallengeIcon,
                 dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
                 titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });

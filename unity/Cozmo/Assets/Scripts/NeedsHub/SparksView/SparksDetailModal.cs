@@ -324,9 +324,11 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void CreateConfirmQuitTrickAlert() {
       // Hook up callbacks
-      var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked, HandleStaySparked,
+      var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked,
+                                                           false, HandleStaySparked,
                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
-      var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave, HandleLeaveSpark);
+      var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave,
+                                                          false, HandleLeaveSpark);
 
       var confirmQuitSparkData = new AlertModalData("confirm_quit_spark_alert",
             LocalizationKeys.kSparksSparkConfirmQuit,

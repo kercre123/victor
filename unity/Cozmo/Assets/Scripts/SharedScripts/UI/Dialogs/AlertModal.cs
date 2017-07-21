@@ -127,7 +127,7 @@ namespace Cozmo {
 
       private void InitializePrimaryButton(AlertModalButtonData buttonData, object[] primaryButtonLocArgs) {
         if (buttonData != null) {
-          SetupButton(_PrimaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey,
+          SetupButton(_PrimaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey, buttonData.SupportsVoiceCommand,
                       buttonData.ClickCallback, buttonData.ClickSoundEffect, buttonData.themeType);
           if (primaryButtonLocArgs != null) {
             _PrimaryButton.FormattingArgs = primaryButtonLocArgs;
@@ -137,7 +137,7 @@ namespace Cozmo {
 
       private void InitializeSecondaryButton(AlertModalButtonData buttonData) {
         if (buttonData != null) {
-          SetupButton(_SecondaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey,
+          SetupButton(_SecondaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey, buttonData.SupportsVoiceCommand,
                       buttonData.ClickCallback, buttonData.ClickSoundEffect, buttonData.themeType);
 
           if (_SecondaryButtonLayoutElement != null) {
@@ -158,10 +158,11 @@ namespace Cozmo {
         _SecondaryButton.Interactable = false;
       }
 
-      private void SetupButton(Cozmo.UI.CozmoButton button, string dasEventButtonName, string titleKey, Action action,
+      private void SetupButton(Cozmo.UI.CozmoButton button, string dasEventButtonName, string titleKey, bool supportsVoiceCommands, Action action,
                                Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter),
                                AlertModalButtonData.ThemeType themeType = AlertModalButtonData.ThemeType.Default) {
         if (button != null) {
+          button.UpdateVoiceCommandSupport(supportsVoiceCommands);
           string title = Localization.Get(titleKey);
           button.gameObject.SetActive(true);
           button.Text = title;
@@ -279,16 +280,19 @@ namespace Cozmo {
       public readonly ThemeType themeType;
       public readonly string DasEventButtonName;
       public readonly string LabelLocKey;
+      public readonly bool SupportsVoiceCommand;
       public readonly Action ClickCallback;
       public readonly AudioEventParameter ClickSoundEffect;
 
       public AlertModalButtonData(string dasEventButtonName,
                                   string labelLocKey,
+                                  bool supportsVoiceCommand = false,
                                   Action clickCallback = null,
                                   AudioEventParameter clickSoundEffect = default(AudioEventParameter),
                                  ThemeType themeType = ThemeType.Default) {
         this.DasEventButtonName = dasEventButtonName;
         this.LabelLocKey = labelLocKey;
+        this.SupportsVoiceCommand = supportsVoiceCommand;
         this.ClickCallback = clickCallback;
         this.themeType = themeType;
         this.ClickSoundEffect = clickSoundEffect;

@@ -63,7 +63,8 @@ namespace Cozmo.Needs.Sparks.UI {
       var cozmoNotReadyData = new AlertModalData("coming_soon_sparks_cell",
                                                  LocalizationKeys.kUnlockableComingSoonTitle,
                                                  LocalizationKeys.kUnlockableComingSoonDescription,
-                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose,
+                                                                    false));
 
       ModalPriorityData comingSoonPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow,
                                          0,

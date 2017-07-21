@@ -110,7 +110,7 @@ namespace Cozmo.ConnectionFlow.UI {
 
     private void HandleMeterPressed() {
       AlertModalButtonData okayButtonData = new AlertModalButtonData("okay_button",
-                                                                     LocalizationKeys.kButtonOkay);
+                                                                     LocalizationKeys.kButtonOkay, false);
 
       AlertModalData needToConnectData = new AlertModalData("need_to_connect_alert",
                                                             LocalizationKeys.kNeedsUnconnectedNeedToConnectTitle,

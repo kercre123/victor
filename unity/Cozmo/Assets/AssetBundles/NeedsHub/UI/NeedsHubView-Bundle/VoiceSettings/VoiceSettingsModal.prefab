@@ -360,7 +360,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &1560865879517220
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 5
@@ -814,7 +814,7 @@ MonoBehaviour:
         duration_sec: 0
         easing: 0
     - target: {fileID: 224174700257012790}
-      originOffset: {x: 0, y: 100}
+      originOffset: {x: 0, y: 1000}
       openSetting:
         startTime_sec: 0
         useCustom: 0
@@ -932,6 +932,7 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1195,6 +1196,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114308775915208934}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1919,6 +1921,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114459357777989222}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2457,6 +2460,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Back
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -3218,7 +3222,7 @@ RectTransform:
   - {fileID: 224369691638065680}
   - {fileID: 224621149602951506}
   m_Father: {fileID: 224086582671753642}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
@@ -3255,6 +3259,7 @@ RectTransform:
   m_Children:
   - {fileID: 224534818002248488}
   - {fileID: 224168734457051760}
+  - {fileID: 224174700257012790}
   - {fileID: 224061505972583108}
   - {fileID: 224524479718389796}
   m_Father: {fileID: 0}
@@ -3371,7 +3376,7 @@ RectTransform:
   - {fileID: 224058386397308816}
   - {fileID: 224862211463577306}
   - {fileID: 224714798974145204}
-  m_Father: {fileID: 224534818002248488}
+  m_Father: {fileID: 224086582671753642}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -3689,7 +3694,7 @@ RectTransform:
   - {fileID: 224651058341313528}
   - {fileID: 224423075612540106}
   m_Father: {fileID: 224086582671753642}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
@@ -3708,7 +3713,6 @@ RectTransform:
   m_Children:
   - {fileID: 224357621042748138}
   - {fileID: 224085562842162872}
-  - {fileID: 224174700257012790}
   m_Father: {fileID: 224086582671753642}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
