@@ -1,3 +1,4 @@
+using System;
 using Anki.Cozmo;
 using Cozmo.Challenge;
 using Cozmo.RequestGame;
@@ -9,6 +10,8 @@ namespace Cozmo.Needs.Sparks.UI {
   public class SparksDetailModal : BaseModal {
     public delegate void SparkGameClickedHandler(string challengeId);
     public static event SparkGameClickedHandler OnSparkGameClicked;
+
+    public Action OnSparkCompleteToReturn;
 
     [SerializeField]
     private CozmoImage _Icon;
@@ -235,6 +238,8 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void HandleSparkEnded(Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine message) {
+      bool returnToHub = true;
+
       // Update inventory and spark cost appropriately
       if (message.success) {
         // cozmo performed the spark
@@ -254,6 +259,7 @@ namespace Cozmo.Needs.Sparks.UI {
           Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
           playerInventory.AddItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount);
         }
+        returnToHub = false;
       }
 
       StopSparkTrick(isDialogCleanup: false, doEngineCleanup: true);
@@ -264,7 +270,13 @@ namespace Cozmo.Needs.Sparks.UI {
 
       DataPersistenceManager.Instance.Save();
 
-      if (_IsEngineDrivenTrick) {
+      if (returnToHub) {
+        CloseDialog();
+        if (OnSparkCompleteToReturn != null) {
+          OnSparkCompleteToReturn();
+        }
+      }
+      else if (_IsEngineDrivenTrick) {
         CloseDialog();
       }
     }

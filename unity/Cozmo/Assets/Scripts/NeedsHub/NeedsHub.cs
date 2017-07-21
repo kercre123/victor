@@ -386,6 +386,9 @@ namespace Cozmo.Hub {
     private void DeregisterSparksViewEvents() {
       _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
       _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+      if (_SparksDetailModalInstance != null) {
+        _SparksDetailModalInstance.OnSparkCompleteToReturn -= HandleSparkEnded;
+      }
     }
 
     private void HandleBackToNeedsFromSparksPressed() {
@@ -443,8 +446,14 @@ namespace Cozmo.Hub {
         SparksDetailModal sparkModal = (SparksDetailModal)modalOpened;
         if (_SparksDetailModalInstance == null) {
           _SparksDetailModalInstance = sparkModal;
+          sparkModal.OnSparkCompleteToReturn += HandleSparkEnded;
         }
       }
+    }
+
+    private void HandleSparkEnded() {
+      // quit back to needs hub
+      HandleBackToNeedsFromSparksPressed();
     }
 
     #endregion
