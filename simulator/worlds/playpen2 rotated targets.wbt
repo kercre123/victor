@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.18003894 0.54832391 0.81665591 3.702359
-  position -0.95467043 1.1109524 0.58648925
+  orientation 0.0093032228 0.66145748 0.74992496 3.1508498
+  position -0.071246929 1.2570233 0.26177518
 }
 Background {
   skyColor [
@@ -25,14 +25,10 @@ DirectionalLight {
   direction 0 2 -1
   intensity 0.5
 }
-CozmoMat {
-  showMarkers FALSE
-  xSize 2
-  ySize 2
+FactoryTestFixtureFloor {
 }
 DEF Cozmo_1 CozmoBot2 {
-  translation 0 -0.07 0
-  rotation 0 0 -1 0
+  translation -0.15969854 0 0.00029056594
   name "CozmoBot_1"
   filterLogs TRUE
 }
@@ -41,17 +37,18 @@ WebotsKeyboardController {
   behaviorName "lookAround"
   userName "Billy"
   filterLogs TRUE
+  translation -0.38 0 0.08
   autoConnect FALSE
 }
 CozmoVizDisplay {
   filterLogs TRUE
 }
 Transform {
-  translation 0.087 -0.002 -0.047971296
+  translation 0.048875267 0.071 -0.10667824
   rotation 0 -1 0 0.99483767
   children [
     Transform {
-      translation 0.1 -0.1244 0.068
+      translation 0.1 -0.1244 0.208
       rotation 0 0 1 0.78540031
       children [
         CalibrationMarkerStructure {
