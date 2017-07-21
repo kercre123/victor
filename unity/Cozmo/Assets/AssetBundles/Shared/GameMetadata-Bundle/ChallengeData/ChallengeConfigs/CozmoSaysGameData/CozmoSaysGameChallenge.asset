@@ -30,9 +30,9 @@ MonoBehaviour:
   _ActivityData:
     ActivityPriority: 4
     HideInActivityView: 0
-    ActivityTitleColor: {r: 0, g: 0, b: 0, a: 0}
-    ActivityFrameColor: {r: 0, g: 0, b: 0, a: 0}
-    ActivityIcon: {fileID: 0}
+    ActivityTitleColor: {r: 0.051318526, g: 0.6764706, b: 0, a: 1}
+    ActivityFrameColor: {r: 0.06972626, g: 0.9191176, b: 0, a: 1}
+    ActivityIcon: {fileID: 21300000, guid: f5882c613fab64c378843548e5e61b8c, type: 3}
   InstructionVideoPath: 
   ChallengeVideoSubtitles: {fileID: 0}
   DifficultyOptions: []
@@ -44,7 +44,7 @@ MonoBehaviour:
     _EnumValue: 53
   _NeedsActionIdWin:
     _EnumValueAsString: Count
-    _EnumValue: 46
+    _EnumValue: 48
   _NeedsActionIdLose:
     _EnumValueAsString: Count
-    _EnumValue: 46
+    _EnumValue: 48
