@@ -22,8 +22,8 @@ extern "C" {
 #define RADIANS_PER_DEGREE ((M_PI*2.0)/360.0)
 #define MMPS2_PER_GEE    (9810/1.0)
    
-#define kIMU_AccelScale_g (double(IMU_ACC_RANGE)/MAX_16BIT_POSITIVE)
-#define kIMU_GyroScale_dps (double(IMU_GYRO_RANGE)/MAX_16BIT_POSITIVE)
+#define IMU_ACCEL_SCALE_G (double(IMU_ACC_RANGE)/MAX_16BIT_POSITIVE)
+#define IMU_GYRO_SCALE_DPS (double(IMU_GYRO_RANGE)/MAX_16BIT_POSITIVE)
 
 struct __attribute__((packed)) IMURawData {
    int16_t gyro[3];

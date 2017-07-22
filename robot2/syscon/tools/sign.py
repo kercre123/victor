@@ -8,8 +8,14 @@ from Crypto import Random
 
 import argparse
 import random
+import time
 import math
 import os
+
+
+VICTOR_EPOCH = 1498237200 #2017-06-23 10:00a PST
+BUILD_TIME = int(time.time()-VICTOR_EPOCH)
+BUILD_TIMESTAMP = "{:07x}".format(BUILD_TIME)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--key", type=str,
@@ -18,7 +24,7 @@ parser.add_argument("-b", "--binary", type=str,
                     help="Output file to a binary")
 parser.add_argument("image", type=str,
                     help="AXF/ELF of image")
-parser.add_argument("-v", "--version", type=str, default="Development",
+parser.add_argument("-v", "--version", type=str, default="DevBuild"+BUILD_TIMESTAMP,
                     help="Version of build")
 
 

@@ -34,6 +34,12 @@ const void* hal_get_frame(uint16_t type);
 //Sends given frame
 void hal_send_frame(uint16_t type, const void* data, int len);
 
+   
+enum RobotMode { //todo: mode is a dummy value. If ever needed, this should be in clad file.
+    RobotMode_IDLE,
+    RobotMode_RUN,
+};
+   
 void hal_set_mode(int new_mode);
 
 #ifdef __cplusplus

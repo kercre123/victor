@@ -15,7 +15,7 @@ static const uint32_t* COZMO_MODEL_NUMBER           = (uint32_t*)0x14;
 
 static const int FLASH_PAGE_SIZE = 0x400;
 
-enum FaultType : uint16_t {
+enum FaultType  {
   FAULT_WATCHDOG = 0x0001,
   FAULT_NONE = 0xFFFF
 };
@@ -30,7 +30,7 @@ struct SystemHeader {
   uint8_t           certificate[256];
   union {
     const uint32_t* stackStart;
-    const uint8_t   signedStart; 
+    uint8_t   signedStart; 
   };
   VectorPtr         resetVector;
   uint8_t           applicationVersion[16];
