@@ -311,7 +311,7 @@ namespace Cozmo.Repair.UI {
 
           _InactivityTimer_sec -= Time.deltaTime;
 
-          if (_InactivityTimer_sec <= 0f) {
+          if (_InactivityTimer_sec <= 0f && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
             HandleUserClose();
           }
         }

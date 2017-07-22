@@ -136,7 +136,7 @@ namespace Cozmo.Energy.UI {
       if (_InactivityTimer > 0f) {
         _InactivityTimer -= Time.deltaTime;
 
-        if (_InactivityTimer <= 0f) {
+        if (_InactivityTimer <= 0f && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
           HandleUserClose();
         }
       }
