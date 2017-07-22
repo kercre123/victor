@@ -117,7 +117,7 @@ void CubeStateTracker::SetChargeState(ChargeState newChargeState)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 FeedingCubeController::FeedingCubeController(Robot& robot, const ObjectID& objectControlling)
-: _currentStage(ControllerState::Deactivated)
+: _currentState(ControllerState::Deactivated)
 , _cubeStateTracker(std::make_unique<CubeStateTracker>(objectControlling))
 {
   kFillingBlockLights.onColors = {{NamedColors::CYAN, NamedColors::CYAN,
@@ -134,7 +134,7 @@ FeedingCubeController::~FeedingCubeController()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::SetControllerState(Robot& robot, ControllerState newState, float eatingDuration_s)
 {
-  if(_currentStage == newState){
+  if(_currentState == newState){
     PRINT_NAMED_WARNING("FeedingCubeController.SetControllerState.StateAlreadySet",
                         "Attempting to set new controller state %s, but that is already the state",
                         ControllerStateToString(newState));
@@ -165,7 +165,7 @@ void FeedingCubeController::SetControllerState(Robot& robot, ControllerState new
                 "Feeding cube controller for id %d switched to state %s",
                 _cubeStateTracker->_id.GetValue(),
                 ControllerStateToString(newState));
-  _currentStage = newState;
+  _currentState = newState;
 }
 
   
@@ -207,7 +207,7 @@ void FeedingCubeController::ClearController(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::Update(Robot& robot)
 {
-  switch(_currentStage){
+  switch(_currentState){
     case ControllerState::Activated:
     {
       CheckForChargeStateChanges(robot);
@@ -290,7 +290,7 @@ void FeedingCubeController::CheckForChargeStateChanges(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::StartCubeDrain(Robot& robot, float eatingDuration_s)
 {
-  _currentStage = ControllerState::DrainCube;
+  _currentState = ControllerState::DrainCube;
   _cubeStateTracker->_timeStartedDraining_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _cubeStateTracker->_timeToDrainCube = eatingDuration_s;
 }
@@ -417,7 +417,7 @@ void FeedingCubeController::ShakeDetected(Robot& robot, const float shakeScore)
 {
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool cubeCanCharge =
-              (_currentStage == ControllerState::Activated) &&
+              (_currentState == ControllerState::Activated) &&
               (_cubeStateTracker->GetChargeState() != ChargeState::FullyCharged) &&
               (_cubeStateTracker->GetChargeState() != ChargeState::Drained);
   

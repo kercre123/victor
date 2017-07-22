@@ -116,10 +116,18 @@ enum uint_8 BehaviorID {
   FPPeekABoo,
   FactoryCentroidExtractor,
   FactoryTest,
+
   FeedingEat,
   FeedingFindFacesSevere,
   FeedingSearchForCube,
   FeedingTurnToFace,
+  FeedingReactCubeShake,
+  FeedingReactCubeShake_Severe,
+  FeedingReactFullCube,
+  FeedingReactFullCube_Severe,
+  FeedingReactSeeCharged,
+  FeedingReactSeeCharged_Severe,
+
   FindFaces_socialize,
   FistBump,
   GuardDog,

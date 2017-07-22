@@ -44,6 +44,7 @@ public:
   
   // Implementation of IFeedingListener
   virtual void StartedEating(Robot& robot, const int duration_s) override;
+  virtual void EatingInterrupted(Robot& robot) override;
   
 protected:
   virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
@@ -53,18 +54,20 @@ protected:
   
 private:
   enum class FeedingActivityStage{
-    None,
     SearchForFace,
+    SearchForFace_Severe,
     TurnToFace,
     WaitingForShake,
     ReactingToShake,
+    ReactingToShake_Severe,
     WaitingForFullyCharged,
     ReactingToFullyCharged,
+    ReactingToFullyCharged_Severe,
     SearchingForCube,
-    ReactingToCube,
+    ReactingToSeeCharged,
+    ReactingToSeeCharged_Severe,
     EatFood
   };
-  
   
   FeedingActivityStage _chooserStage;
   float _lastStageChangeTime_s;
@@ -82,6 +85,7 @@ private:
   bool _eatingComplete;
   
   bool _severeAnimsSet;
+  bool _usingLookingUpIdle;
   
   std::vector<Signal::SmartHandle> _eventHandlers;
   
@@ -94,7 +98,15 @@ private:
   IBehaviorPtr _turnToFaceBehavior;
   std::shared_ptr<BehaviorFeedingSearchForCube> _searchForCubeBehavior;
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
-  std::shared_ptr<BehaviorPlayArbitraryAnim> _behaviorPlayAnimation;
+  
+  IBehaviorPtr _waitBehavior;
+  IBehaviorPtr _reactCubeShakeBehavior;
+  IBehaviorPtr _reactCubeShakeBehavior_Severe;
+  IBehaviorPtr _reactFullCubeBehavior;
+  IBehaviorPtr _reactFullCubeBehavior_Severe;
+  IBehaviorPtr _reactSeeCharged;
+  IBehaviorPtr _reactSeeCharged_Severe;
+
   
   
   // DAS info trackers
@@ -112,10 +124,8 @@ private:
   IBehaviorPtr TransitionToBestActivityStage(Robot& robot);
   
   // Handle object observations
-  void RobotObservedObject(const ObjectID& objID);
-  
-  void UpdateAnimationToPlay(AnimationTrigger animTrigger);
-  
+  void RobotObservedObject(const ObjectID& objID, Robot& robot);
+    
   void HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState);
   
   void ClearSevereAnims(Robot& robot);
@@ -123,7 +133,10 @@ private:
   bool HasSingleBehaviorStageStarted(IBehaviorPtr behavior);
   
   void SetupSevereAnims(Robot& robot);
-
+  
+  
+  // Setup map
+  std::map<FeedingActivityStage, IBehaviorPtr> _stageToBehaviorMap;
 };
 
 

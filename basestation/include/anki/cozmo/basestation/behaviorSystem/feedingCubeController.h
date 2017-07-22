@@ -42,6 +42,7 @@ public:
   void Update(Robot& robot);
   // Set what state the controller should be in
   void SetControllerState(Robot& robot, ControllerState newState, float eatingDuration_s = -1.0);
+  ControllerState GetControllerState() const{ return _currentState;}
   
   // Functions which can be queried to find out the state of the cube being
   // controlled
@@ -59,7 +60,7 @@ private:
     Charge_Stop = 4
   };
   
-  ControllerState  _currentStage;
+  ControllerState  _currentState;
   std::unique_ptr<CubeStateTracker> _cubeStateTracker;
   
   // Functions which start/stop listening for shakes and

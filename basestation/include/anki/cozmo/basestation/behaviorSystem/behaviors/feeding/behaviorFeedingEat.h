@@ -55,7 +55,8 @@ private:
   enum class State{
     DrivingToFood,
     Eating,
-    ReactingToInterruption
+    ReactingToInterruption,
+    WaitForUserToMoveCube
   };
   
   mutable ObjectID _targetID;
@@ -73,6 +74,7 @@ private:
   void TransitionToDrivingToFood(Robot& robot);
   void TransitionToEating(Robot& robot);
   void TransitionToReactingToInterruption(Robot& robot);
+  void TransitionToWaitingForUserToMoveCube(Robot& robot);
 
   
   void CubeMovementHandler(Robot& robot, const float movementScore);

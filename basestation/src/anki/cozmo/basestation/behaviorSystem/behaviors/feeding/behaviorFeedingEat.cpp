@@ -47,11 +47,11 @@ namespace{
 CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  45.0f);
   
 // Constants for the CubeAccelComponent MovementListener:
-const float kHighPassFiltCoef = 1.f;
+const float kHighPassFiltCoef = 0.8f;
 const float kMaxMovementScoreToAdd = 10.f;
 const float kMovementScoreDecay = 3.f;
 const float kFeedingMovementScoreMax = 50.f;
-const float kCubeMovedTooFastInterrupt = 25.f;
+CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, "Behavior.FeedingEat",  45.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Disable reactions that interrupt Cozmo's eating animation when he lifts himself
@@ -170,6 +170,38 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
   return base::UpdateInternal(robot);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementScore)
+{
+  PRINT_NAMED_WARNING("SEARCH_FOR_ME","movement: %f", movementScore);
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  // Logic for determining whether the player has "stolen" cozmo's cube while he's
+  // eating.  We only want to respond if the player pulls the cube away while
+  // Cozmo is actively in the "eating" stage and has not drained the cube yet
+  if(robot.IsPhysical()){
+    if(movementScore > kCubeMovedTooFastInterrupt){
+      if((_currentState == State::Eating) &&
+         (_timeCubeIsSuccessfullyDrained_sec > currentTime_s)){
+        StopActing(false);
+        TransitionToReactingToInterruption(robot);
+        for(auto& listener: _feedingListeners){
+          listener->EatingInterrupted(robot);
+        }
+      }else if(_currentState == State::DrivingToFood){
+        StopActing(false);
+        //TransitionToWaitingForUserToMoveCube(robot);
+      }
+      
+    }else if((movementScore < kCubeMovedTooFastInterrupt) &&
+             (_currentState == State::WaitForUserToMoveCube)){
+      StopActing(false);
+      TransitionToDrivingToFood(robot);
+    }
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::StopInternal(Robot& robot)
@@ -278,14 +310,18 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementScore)
+void BehaviorFeedingEat::TransitionToWaitingForUserToMoveCube(Robot& robot)
 {
-  if((_currentState != State::ReactingToInterruption) &&
-     (movementScore > kCubeMovedTooFastInterrupt)){
-    StopActing(false);
-    TransitionToReactingToInterruption(robot);
-  }
+  // The user is trying to help cozmo - wait for the movement score to
+  // fall below the movement threshold before trying to drive again
+  SET_STATE(WaitForUserToMoveCube);
+  StartActing(new WaitAction(robot, 1.f),
+              &BehaviorFeedingEat::TransitionToWaitingForUserToMoveCube);
+  
 }
+
+
+
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
