@@ -16,13 +16,12 @@ namespace Cozmo {
     // Regular (Passive) Blocks ("1x1 Cubes")
     //
     //    Block_ANGRYFACE,
-        Block_BULLSEYE2,
+
     //    Block_BULLSEYE2_INVERTED,
     //    Block_SQTARGET,
     //    Block_FIRE,
     //    Block_ANKILOGO,
-        Block_STAR5,
-        Block_ARROW,
+
     //    Block_FLAG,
     //    Block_FLAG2,
     //    Block_FLAG_INVERTED,
@@ -109,6 +108,10 @@ namespace Cozmo {
 
     // Custom "fixed" object (i.e. obstacle)
     CustomFixedObstacle,
+
+Block_STAR5,
+Block_ARROW,
+Block_BULLSEYE2,
 
   } // enum class ObjectType
   
