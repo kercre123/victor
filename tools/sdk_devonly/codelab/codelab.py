@@ -28,7 +28,16 @@ import queue
 import sys
 from threading import Thread
 import time
+import urllib
 import webbrowser
+
+try:
+    from aiohttp import web, web_request
+except ImportError:
+    sys.exit("Cannot import from aiohttp. Do `pip3 install --user aiohttp` to install")
+
+
+LOCALE_OPTIONS = ["de-DE", "en-US", "fr-FR", "ja-JP"]
 
 
 def parse_command_args():
@@ -68,6 +77,11 @@ def parse_command_args():
                         default=None,
                         action='store',
                         help='The CodeLab HTML page to open (if set)')
+    arg_parser.add_argument('-loc', '--locale',
+                        dest='locale_to_use',
+                        default="en-US",
+                        action='store',
+                        help='The language locale to use (one of ' + str(LOCALE_OPTIONS) +')')
     arg_parser.add_argument('--projects',
                         dest='show_projects',
                         default=False,
@@ -94,10 +108,11 @@ def parse_command_args():
                         help='Open the vertical grammar page')
 
     options = arg_parser.parse_args()
-
     return options
 
+
 command_args = parse_command_args()
+
 
 pending_log_text = ""
 def log_text(text_to_log):
@@ -106,29 +121,26 @@ def log_text(text_to_log):
     # limit pending_log_text in event of it not being polled?
     print(text_to_log)
 
-log_text("command_args.use_tcp = %s" % command_args.use_tcp)
-log_text("command_args.connect_to_sdk = %s" % command_args.connect_to_sdk)
-log_text("command_args.connect_to_robot = %s" % command_args.connect_to_robot)
-log_text("command_args.page_to_load = %s" % command_args.page_to_load)
+
+if command_args.locale_to_use not in LOCALE_OPTIONS:
+    sys.exit("Unexpected locale %s" % command_args.locale_to_use)
+
+locale_suffix = "?locale=" + command_args.locale_to_use
+
 
 if command_args.page_to_load is not None:
     PAGE_TO_LOAD = command_args.page_to_load
 elif command_args.show_horizontal:
-    PAGE_TO_LOAD = "index.html"
+    PAGE_TO_LOAD = "index.html" + locale_suffix
 elif command_args.show_vertical:
-    PAGE_TO_LOAD = "index_vertical.html"
+    PAGE_TO_LOAD = "index_vertical.html" + locale_suffix
 elif command_args.show_tutorial:
-    PAGE_TO_LOAD = "extra/tutorial.html"
+    PAGE_TO_LOAD = "extra/tutorial.html" + locale_suffix
 elif command_args.show_projects:
-    PAGE_TO_LOAD = "extra/projects.html"
+    PAGE_TO_LOAD = "extra/projects.html" + locale_suffix
 else:
     PAGE_TO_LOAD = None
 log_text("PAGE_TO_LOAD = %s" % PAGE_TO_LOAD)
-
-try:
-    from aiohttp import web
-except ImportError:
-    sys.exit("Cannot import from aiohttp. Do `pip3 install --user aiohttp` to install")
 
 
 def check_tcp_port(force_tcp_port=True, sdk_port=5106):
@@ -232,7 +244,7 @@ def override_unity_block_handling(msg_payload : str):
 
 
 def send_game_to_game(message_type, msg_payload):
-    log_text("SendToUnity: %s('%s')" % (message_type, message_type))
+    log_text("SendToUnity: %s('%s')" % (message_type, msg_payload))
     conn = app['sdk_conn']  # type: cozmo.conn.CozmoConnection
 
     if conn is None:
@@ -251,16 +263,16 @@ def send_game_to_game(message_type, msg_payload):
                 text_to_send = text_to_send[0 : MAX_PAYLOAD_SIZE]
                 msg_payload = msg_payload[MAX_PAYLOAD_SIZE:]
 
-            msg = cozmo._clad._clad_to_engine_iface.GameToGame(i, part_count, message_type, text_to_send)
+            msg = _clad_to_engine_iface.GameToGame(i, part_count, message_type, text_to_send)
             #log_text("sending msg: '%s'" % msg)
             conn.send_msg(msg)
 
 
-async def handle_sdk_call(request):
-    log_text("handle_sdk_call")
+async def handle_sdk_call(request: web_request.Request):
+    #log_text("handle_sdk_call")
     # get the msg from the json request
-    json_object = await request.json()
-    msg_payload = json_object["msg"]
+    text_object = await request.text()
+    msg_payload = urllib.parse.unquote(text_object)
 
     if not override_unity_block_handling(msg_payload):
         # Send straight on to C# / Unity
@@ -350,7 +362,9 @@ def handle_game_to_game_contents(message_type, message_payload):
             _coz_state_commands_for_web.put(message_payload)
             pass
         else:
-            log_text("FromUnity:[%s]" % str(message_payload))
+            message_payload_str = str(message_payload)
+            if "window.Scratch.vm.runtime.startHats" not in message_payload_str:
+                log_text("FromUnity:[%s]" % str(message_payload_str))
             global _commands_for_web
             _commands_for_web.put(message_payload)
     else:
@@ -571,8 +585,8 @@ def set_console_var(conn, var_name, new_value):
     # Set a Console Variable in the Engine (Only works in non-SHIPPING
     # builds of the App, otherwise the variables are const and the
     # message is ignored).
-    msg = cozmo._clad._clad_to_engine_iface.SetDebugConsoleVarMessage(
-        varName=var_name, tryValue=new_value)
+    msg = _clad_to_engine_iface.SetDebugConsoleVarMessage(varName=var_name,
+                                                          tryValue=new_value)
     conn.send_msg(msg)
 
 

@@ -86,6 +86,18 @@ def run(coz_conn):
 
     start_sim(coz_conn)
     coz = coz_conn.wait_for_robot()
+
+    if _options.enter_sdk_mode:
+        # EnterSdkMode is banned from SDK connection, so must first enable
+        # banned messages (only possible in dev builds)
+        msg = cozmo._clad._clad_to_engine_iface.SetDebugConsoleVarMessage(
+            varName="AllowBannedSdkMessages", tryValue="1")
+        coz_conn.send_msg(msg)
+
+        # Enter SDK mode (ensures nothing else tries to drive robot around)
+        msg = cozmo._clad._clad_to_engine_iface.EnterSdkMode(isExternalSdkMode=True)
+        coz_conn.send_msg(msg)
+
     cozmo.logger.info("Done")
     if _options and _options.is_freeplay:
       # Put Cozmo in freeplay
@@ -114,6 +126,12 @@ if __name__ == '__main__':
                         action='store_const',
                         const=True,
                         help='Connecting to Cozmo V2')
+    parser.add_argument('-sdk', '--sdk-mode',
+                        dest='enter_sdk_mode',
+                        default=False,
+                        action='store_const',
+                        const=True,
+                        help='Enter SDK Mode after connection')
     _options = parser.parse_args()
     cozmo.setup_basic_logging()
   
