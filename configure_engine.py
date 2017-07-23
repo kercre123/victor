@@ -460,7 +460,7 @@ class EnginePlatformConfiguration(object):
             print_status('Building workspace for platform {0}...'.format(self.platform))
         
         if not os.path.exists(self.project_path):
-            print_status('Project {0} does not exist. (Note: clean does not generate projects.)'.format(self.workspace_path))
+            print_status('Project {0} does not exist. (Note: clean does not generate projects.)'.format(self.project_path))
             sys.exit(0)
         else:
             if self.options.command == 'clean':
