@@ -4,8 +4,6 @@ using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using DataPersistence;
-using System;
 
 namespace Cozmo.Needs.Activities.UI {
   public class ActivitiesView : BaseView {
@@ -24,31 +22,21 @@ namespace Cozmo.Needs.Activities.UI {
     private ActivityCard _ActivityCardPrefab;
 
     [SerializeField]
-    private FreeplayCard _FreeplayCardPrefab;
-    private FreeplayCard _FreeplayCardInstance;
+    private int _MaxNumCardsOnScreen = 3;
 
     [SerializeField]
     private ScrollRect _ScrollRect;
 
     private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
 
-    [SerializeField]
-    private float _FreeplayPanelArrowToggleWidth;
-    private float _FreeplayPanelNormalizedWidth;
-
     public void InitializeActivitiesView(List<ChallengeManager.ChallengeStatePacket> activityData) {
       _BackButton.Initialize(HandleBackButtonPressed, "back_button", DASEventDialogName);
-
-      // add the freeplay card
-      GameObject newCard = UIManager.CreateUIElement(_FreeplayCardPrefab, _ActivityCardContainer.transform);
-      _FreeplayCardInstance = newCard.GetComponent<FreeplayCard>();
-      _FreeplayCardInstance.Initialize(this);
 
       int numCards = 0;
       foreach (var data in activityData) {
         // IVY TODO: Add check to see if activity is unlocked? Requires loading a different "defaultUnlocks" config
         if (!data.Data.ActivityData.HideInActivityView) {
-          newCard = UIManager.CreateUIElement(_ActivityCardPrefab, _ActivityCardContainer.transform);
+          GameObject newCard = UIManager.CreateUIElement(_ActivityCardPrefab, _ActivityCardContainer.transform);
           ActivityCard cardScript = newCard.GetComponent<ActivityCard>();
           cardScript.Initialize(data.Data, DASEventDialogName);
           cardScript.OnActivityButtonPressed += HandleActivityButtonPressed;
@@ -56,23 +44,11 @@ namespace Cozmo.Needs.Activities.UI {
         }
       }
 
-      LayoutRebuilder.ForceRebuildLayoutImmediate(_ScrollRect.content);
-
-      // calculate panel width
-      float width = (_ScrollRect.content.rect.width - _ScrollRect.viewport.rect.width);
-      float spacing = _ScrollRect.content.GetComponent<HorizontalLayoutGroup>().spacing;
-      _FreeplayPanelNormalizedWidth = (_FreeplayCardInstance.GetComponent<RectTransform>().rect.width + spacing) / width;
-      if (_FreeplayPanelNormalizedWidth > 1.0f) {
-        _FreeplayPanelNormalizedWidth = 1.0f;
-      }
-
-      if (DataPersistenceManager.Instance.Data.DefaultProfile.HideFreeplayCard) {
-        HideFreeplayCard(true);
-        _FreeplayCardInstance.SlideArrowFaceLeft(true);
+      if (numCards <= _MaxNumCardsOnScreen) {
+        _ScrollRect.enabled = false;
       }
       else {
-        ShowFreeplayCard(true);
-        _FreeplayCardInstance.SlideArrowFaceLeft(false);
+        _ScrollRect.horizontalNormalizedPosition = 0f;
       }
 
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DiscoverIntro)) {
@@ -86,38 +62,6 @@ namespace Cozmo.Needs.Activities.UI {
       _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(new ModalPriorityData(), edgeCases);
     }
 
-    internal void HideFreeplayCard(bool instant = false) {
-      if (instant) {
-        _ScrollRect.horizontalNormalizedPosition = _FreeplayPanelNormalizedWidth;
-      }
-      else {
-        _ScrollRect.DOHorizontalNormalizedPos(_FreeplayPanelNormalizedWidth, 0.3f);
-      }
-    }
-
-    internal void ShowFreeplayCard(bool instant = false) {
-      float normalizedPos = 0;
-      if (instant) {
-        _ScrollRect.horizontalNormalizedPosition = normalizedPos;
-      }
-      else {
-        _ScrollRect.DOHorizontalNormalizedPos(normalizedPos, 0.3f);
-      }
-    }
-
-    protected void Update() {
-      if (_ScrollRect.horizontalNormalizedPosition < _FreeplayPanelNormalizedWidth - _FreeplayPanelArrowToggleWidth) {
-        _FreeplayCardInstance.SlideArrowFaceLeft(false);
-      }
-      else {
-        // a tiny bit of slop for the left arrow
-        float faceLeftPosition = Mathf.Min(_FreeplayPanelNormalizedWidth - 0.01f, 0.99f);
-        if (_ScrollRect.horizontalNormalizedPosition > faceLeftPosition) {
-          _FreeplayCardInstance.SlideArrowFaceLeft(true);
-        }
-      }
-    }
-
     protected override void CleanUp() {
       if (_EdgeCaseAlertController != null) {
         _EdgeCaseAlertController.CleanUp();
@@ -128,8 +72,6 @@ namespace Cozmo.Needs.Activities.UI {
       if (OnBackButtonPressed != null) {
         OnBackButtonPressed();
       }
-      // makes the slide off right look better
-      _ScrollRect.DOHorizontalNormalizedPos(0, 0.3f);
     }
 
     private void HandleActivityButtonPressed(ChallengeData challengeData) {

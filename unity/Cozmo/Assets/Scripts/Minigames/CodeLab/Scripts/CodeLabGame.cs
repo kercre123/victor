@@ -376,7 +376,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     protected override void Update() {
       base.Update();
 
-      SendWorldStateToWebView();
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        SendWorldStateToWebView();
+      }
 
       // Error case exiting conditions:
       // WebView visibility is the same as being "loaded." Attaching is platform depended so for this edge case
@@ -818,6 +820,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       ScratchRequest scratchRequest = null;
       try {
         DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+
+        // Required on Android since JavaScript is calling encodeURIComponent.
+        // Doesn't seem to be required on iOS or Mac Unity editor.
+        jsonStringFromJS = WWW.UnEscapeURL(jsonStringFromJS);
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {

@@ -115,7 +115,8 @@ enum int_32 NeedsRewardType
 structure NeedsReward
 {
   NeedsRewardType rewardType,
-  string          data
+  string          data,
+  bool inventoryIsFull = 0
 }
 
 

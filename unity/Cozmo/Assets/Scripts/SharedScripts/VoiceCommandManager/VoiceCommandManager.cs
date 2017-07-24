@@ -25,6 +25,9 @@ namespace Anki.Cozmo.VoiceCommand {
 
     public static void CreateInstance() {
       _Instance = new VoiceCommandManager();
+
+      //Check microphone authorization status
+      SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
     }
 
     public static VoiceCommandManager Instance {
@@ -66,6 +69,11 @@ namespace Anki.Cozmo.VoiceCommand {
 
       RespondingToCommandStartCallback += HandleRespondCommandStart;
       RespondingToCommandEndCallback += HandleRespondCommandEnd;
+
+      //Get status of microphone permission.
+      _CapturePermissionState = AudioCapturePermissionState.Unknown;
+      StateDataCallback += OnMicrophoneAuthorizationStatusUpdate;
+
     }
 
     public void Init() {
@@ -155,10 +163,27 @@ namespace Anki.Cozmo.VoiceCommand {
 
       if (enabledStatus) {
         DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState = VoiceCommandEnabledState.Enabled;
-      } else {
+      }
+      else {
         DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState = VoiceCommandEnabledState.Disabled;
       }
       DataPersistenceManager.Instance.Save();
     }
+
+    public bool IsAudioRecordingAllowed {
+      get {
+        bool isAllowed = _CapturePermissionState == AudioCapturePermissionState.Granted;
+#if UNITY_EDITOR
+        //Force to true for editor
+        isAllowed = true;
+#endif
+        return isAllowed;
+      }
+    }
+    private AudioCapturePermissionState _CapturePermissionState;
+    private void OnMicrophoneAuthorizationStatusUpdate(StateData stateData) {
+      _CapturePermissionState = stateData.capturePermissionState;
+    }
+
   }
 }

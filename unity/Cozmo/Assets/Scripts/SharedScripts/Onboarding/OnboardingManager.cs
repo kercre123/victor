@@ -451,8 +451,8 @@ public class OnboardingManager : MonoBehaviour {
       OnboardingPhases completedPhase = _CurrPhase;
       _CurrPhase = OnboardingPhases.None;
       UpdateStage();
-      // only Meet Cozmo phase takes us out of pausing inside needshub
-      if (completedPhase != OnboardingPhases.MeetCozmo) {
+      // immediately start next phase if we were already on needsview, otherwise start next on open anim callback
+      if (completedPhase != OnboardingPhases.MeetCozmo && completedPhase != OnboardingPhases.PlayIntro) {
         if (canStartNewPhase) {
           StartAnyPhaseIfNeeded();
         }

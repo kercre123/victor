@@ -594,6 +594,7 @@ public static class LocalizationKeys {
   public const string kNeedsContinueButtonText = "needs.ContinueButtonText";
   public const string kNeedsNeedsRepairModalTuneUpComplete = "needs.NeedsRepairModal.TuneUpComplete";
   public const string kNeedsDone = "needs.Done";
+  public const string kNeedsRewardsDialogSparksInventoryFull = "needs.RewardsDialog.SparksInventoryFull";
   public const string kNeedsRewardsDialogSparksEarned = "needs.RewardsDialog.SparksEarned";
   public const string kNeedsRewardsDialogTrickUnlocked = "needs.RewardsDialog.TrickUnlocked";
   public const string kNeedsRewardsDialogSongUnlocked = "needs.RewardsDialog.SongUnlocked";

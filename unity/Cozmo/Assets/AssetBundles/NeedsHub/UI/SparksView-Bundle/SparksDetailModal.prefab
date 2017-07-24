@@ -2022,7 +2022,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 70
+  m_fontSizeMin: 55
   m_fontSizeMax: 70
   m_fontStyle: 0
   m_textAlignment: 516
@@ -2055,7 +2055,7 @@ MonoBehaviour:
   m_firstVisibleCharacter: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 56.567005, y: 43.04295, z: 0, w: 34.434242}
+  m_margin: {x: 3.3051279, y: 2.0724049, z: 0, w: 1.6577606}
   m_textInfo:
     textComponent: {fileID: 114723380905507716}
     characterCount: 29
@@ -3000,8 +3000,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 171.5, y: 0}
+  m_SizeDelta: {x: 283, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224202105788908592
 RectTransform:
@@ -3019,7 +3019,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -1358, y: 69}
-  m_SizeDelta: {x: 840, y: 200}
+  m_SizeDelta: {x: 840, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224214011469353574
 RectTransform:
@@ -3323,7 +3323,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 85.56, y: 0}
+  m_AnchoredPosition: {x: 84.667336, y: 0}
   m_SizeDelta: {x: 0, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224797815621663728
@@ -3527,7 +3527,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -1358, y: 43}
-  m_SizeDelta: {x: 1756.1, y: 200}
+  m_SizeDelta: {x: 1756.1, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &225594643365646330
 CanvasGroup:

@@ -15,7 +15,12 @@ def get_issue_comments(access_token, repo, issue_num):
   url = 'https://' + access_token + ':x-oauth-basic@api.github.com/repos/anki/' + repo + '/issues/' + str(issue_num) \
     + '/comments'
   try:
-    return json.loads(util.File.evaluate(['curl', url]))
+    comments = json.loads(util.File.evaluate(['curl', url]))
+    if not isinstance(comments, list):
+      print 'Server return value is not a comment list: ' + str(comments)
+      return []
+    else:
+      return comments
   except Exception as err:
     print 'Error trying to get comments: ' + str(err)
     return []

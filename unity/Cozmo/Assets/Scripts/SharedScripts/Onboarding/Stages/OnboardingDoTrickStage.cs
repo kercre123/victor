@@ -46,7 +46,7 @@ namespace Onboarding {
           var cozmoNotOnTreadsData = new AlertModalData("cozmo_off_treads_alert",
                              LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle,
                              LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription,
-                             new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+                             new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose, false));
           // Usually we wait for a button press to respark again. Since this screen doesn't have a spark button, just go.
           System.Action<AlertModal> errorAlertCreated = (alertModal) => {
             alertModal.DialogClosed += StartSparkIfRobotInValidState;

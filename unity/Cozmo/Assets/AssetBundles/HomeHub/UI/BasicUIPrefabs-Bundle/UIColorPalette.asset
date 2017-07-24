@@ -23,6 +23,7 @@ MonoBehaviour:
   _NeutralTextColor: {r: 1, g: 1, b: 1, a: 1}
   _SetupTextColor: {r: 0.027450982, g: 0.6666667, b: 0.82745105, a: 1}
   _MinigameTextColor: {r: 1, g: 1, b: 1, a: 1}
+  _WarningTextColor: {r: 0.9843137, g: 0.39215687, b: 0.15686275, a: 1}
   _GameSetupColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 0}
   _GameBackgroundColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 0}
   _ActivityBackgroundColor: {r: 0.3647059, g: 0.41960785, b: 0.9098039, a: 1}

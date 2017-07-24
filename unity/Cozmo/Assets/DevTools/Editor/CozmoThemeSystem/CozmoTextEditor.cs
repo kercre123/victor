@@ -12,6 +12,8 @@ namespace Cozmo.UI {
   [CustomEditor(typeof(CozmoText))]
   [CanEditMultipleObjects]
   public class CozmoTextEditor : AnkiTextMeshProEditor {
+    private CozmoText _TargetCozmoText;
+
     private SerializedProperty _Text;
     private SerializedProperty _TextAlignmentProperty;
     private string _LocalizedString;
@@ -40,7 +42,8 @@ namespace Cozmo.UI {
 
     public override void OnInspectorGUI() {
       if (_ScriptTarget == null) {
-        _ScriptTarget = (CozmoText)target;
+        _TargetCozmoText = (CozmoText)target;
+        _ScriptTarget = _TargetCozmoText;
       }
 
       serializedObject.Update();

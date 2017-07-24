@@ -79,37 +79,7 @@ Build everything from the cozmo-one folder.
 
 Webots is what we use for simulation and visualization. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
 
-We are currently using [version 8.5.3](https://www.cyberbotics.com/archive/mac/webots-8.5.3.dmg). You will need to get a license from IT.
-
-Webots runs concurrent processes for each active simulation object via "controllers". Cozmo simulations consist of the following controllers which can be found in /simulator/controllers. In order to debug with breakpoints you'll need to first attach to the appropriate process.
-
- * webotsCtrlGameEngine - Engine
- 
- * webotsCtrlRobot - Robot
- 
- * webotsCtrlLightCube - LightCube
-
- * webotsCtrlViz - Visualization overlays and display windows
- 
- * webotsCtrlKeyboard - Keyboard interface for communicating with engine in place of the Unity app. Useful for quick headless (i.e. no Unity UI/Game) development.
- 
- * webotsCtrlDevLog - For visualizing logs recorded from an application run. (Only used in devLogViz.wbt)
- 
- * webotsCtrlBuildServerTest - For Webots-based tests (that are executed on the build server with every PR)
-
-The Webots worlds can be found in /simulator/worlds
-
-Useful worlds:
-
- * cozmoViz.wbt - Includes a keyboard controller and the engine. Used to talk to a physical robot.
-
- * cozmoVizForUnity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
-
- * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
-
- * remoteAnimationWorld.wbt - Used by the animation tool to see your animation on a simulated robot.
- 
- * devLogViz.wbt - For visualizing logs recorded from an application run. Useful for debugging issues reported by QA.
+Refer to [simulator/README.md](simulator/README.md) for more information about setting up and troubleshooting Webots.
 
 # Optional Info
 
@@ -140,13 +110,6 @@ delete does not properly remove the HockeySDK file and the link is broken.
     
     
     ** BUILD FAILED **
-    
-
-### webots orphaned processes
-
- * Happens often when simulator crashes
- * `ps -ef | grep simulator\/controllers | cut -d ' ' -f 4 | xargs kill`
- * You can also search for orphaned processes in Activity Monitor.
 
 ### ios-deploy
 

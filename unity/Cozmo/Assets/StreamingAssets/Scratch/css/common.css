@@ -107,21 +107,19 @@ button:focus {
 }
 
 #close .primary button {
+    display: block;
+    position: relative;
     width: 72px;
     height: 72px;
-    border: 0;
-    margin-left: -1px;
     background-color: transparent;
-    background-image: url('../images/ui/ui_icon_close_up.svg');
-    background-repeat: no-repeat;
-    background-position: 50% 50%;
-    background-size: 75%;
-    transition: background-color 100ms;
+    background-image: url('../images/ui/close.svg');
+    background-size: cover;
     pointer-events: auto;
+    border: 0;
 }
 
 #close .primary button:active {
-    background-image: url('../images/ui/ui_icon_close_down.svg');
+    background-position:0px -72px;
 }
 
 /**
@@ -147,21 +145,19 @@ button:focus {
 }
 
 #challenges .primary button {
+    display: block;
+    position: relative;
     width: 72px;
     height: 72px;
-    border: 0;
-    margin-left: -1px;
     background-color: transparent;
-    background-image: url('../images/ui/challenges_up.svg');
-    background-repeat: no-repeat;
-    background-position: 50% 50%;
-    background-size: 75%;
-    transition: background-color 100ms;
+    background-image: url('../images/ui/challenges.svg');
+    background-size: cover;
     pointer-events: auto;
+    border: 0;
 }
 
 #challenges .primary button:active {
-    background-image: url('../images/ui/challenges_down.svg');
+    background-position:0px -72px;
 }
 
 /**
@@ -227,13 +223,14 @@ button:focus {
     width: 72px;
     height: 72px;
     background-color: transparent;
-    background-image: url('../images/ui/greenflag-up.svg');
+    background-image: url('../images/ui/greenflag.svg');
+    background-size: cover;
     pointer-events: auto;
     border: 0;
 }
 
 #navigation .greenflag button:active {
-    background-image: url('../images/ui/greenflag-down.svg');
+    background-position:0px -72px;
 }
 
 #navigation .greenflag button img {
@@ -255,13 +252,14 @@ button:focus {
     width: 72px;
     height: 72px;
     background-color: transparent;
-    background-image: url('../images/ui/stop-up.svg');
-    border: 0;
+    background-image: url('../images/ui/stop.svg');
+    background-size: cover;
     pointer-events: auto;
+    border: 0;
 }
 
 #navigation .stop button:active {
-    background-image: url('../images/ui/stop-down.svg');
+    background-position:0px -72px;
 }
 
 #navigation .stop button img {
@@ -344,6 +342,10 @@ button:focus {
         height:44px;
     }
 
+    #close .primary button:active {
+        background-position:0px -44px;
+    }
+
     #challenges .primary {
         display: block;
         position: absolute;
@@ -354,6 +356,10 @@ button:focus {
     #challenges .primary button {
         width:44px;
         height:44px;
+    }
+
+    #challenges .primary button:active {
+        background-position:0px -44px;
     }
 
     #projecttext {
@@ -379,6 +385,10 @@ button:focus {
         height:44px;
     }
 
+    #navigation .greenflag button:active {
+        background-position:0px -44px;
+    }
+
     #navigation .stop {
         left: calc(100% - 55px);
         top: calc(100% - 125px);;
@@ -387,6 +397,10 @@ button:focus {
     #navigation .stop button {
         width:44px;
         height:44px;
+    }
+
+    #navigation .stop button:active {
+        background-position:0px -44px;
     }
 
     .blocklyTooltipDiv {

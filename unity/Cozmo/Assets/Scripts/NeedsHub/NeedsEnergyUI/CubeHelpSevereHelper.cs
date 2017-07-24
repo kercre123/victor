@@ -25,7 +25,7 @@ namespace Cozmo.Energy.UI {
 
       var quickSnackCompleteData = new AlertModalData("quick_snack_alert", LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupTitle,
                                                     LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupBody,
-                                                    new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay));
+                                                    new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay, true));
 
       var quickSnackCompletePriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
                                                                LowPriorityModalAction.Queue,

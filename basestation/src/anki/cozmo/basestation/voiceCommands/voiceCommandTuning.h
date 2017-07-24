@@ -90,8 +90,12 @@ public:
                      const std::string& sampleGroupDir = "");
   ~VoiceCommandTuning();
   
+  // Allows for scoring a command set when configuring the params for one of the commands
   TestResultScoreData ScoreParams(const std::set<VoiceCommandType>& testCommandSet,
                                   VoiceCommandType commandType, int paramA, int paramB, bool playAudio = false) const;
+  
+  // Allows for scoring a command set using the currently configured values
+  TestResultScoreData ScoreParams(const std::set<VoiceCommandType>& testCommandSet, bool playAudio) const;
   
   TestResultScoreData ScoreTriggerAndCommand(const ContextConfig& commandListConfig,
                                              bool playAudio, ContextConfigSharedPtr& out_CombinedConfig) const;

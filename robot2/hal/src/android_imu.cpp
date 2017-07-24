@@ -24,6 +24,7 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 
+
 namespace Anki {
   namespace Cozmo {
 
@@ -105,17 +106,15 @@ namespace Anki {
       }
 #else
 
-#define kIMU_AccelScale (double(IMU_RANGE)/MAX_16BIT_POSITIVE)
-#define kIMU_GyroScale (double(IMU_RANGE)/MAX_16BIT_POSITIVE)
       IMURawData rawData;
       HAL::IMU_DataStructure imuData;
       while ( imu_manage(&rawData) > 0 ) {
-        imuData.acc_x = rawData.acc[0] * kIMU_AccelScale_g * MMPS2_PER_GEE;
-        imuData.acc_y = rawData.acc[1] * kIMU_AccelScale_g * MMPS2_PER_GEE;
-        imuData.acc_z = rawData.acc[2] * kIMU_AccelScale_g * MMPS2_PER_GEE;
-        imuData.rate_x = rawData.gyro[0] * kIMU_GyroScale_dps * RADIANS_PER_DEGREE;
-        imuData.rate_y = rawData.gyro[1] * kIMU_GyroScale_dps * RADIANS_PER_DEGREE;
-        imuData.rate_z = rawData.gyro[2] * kIMU_GyroScale_dps * RADIANS_PER_DEGREE;
+        imuData.acc_x = rawData.acc[0] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
+        imuData.acc_y = rawData.acc[1] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
+        imuData.acc_z = rawData.acc[2] * IMU_ACCEL_SCALE_G * MMPS2_PER_GEE;
+        imuData.rate_x = rawData.gyro[0] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+        imuData.rate_y = rawData.gyro[1] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+        imuData.rate_z = rawData.gyro[2] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
         lastAccTime = lastGyroTime = rawData.timestamp * NS_PER_IMU_TICK;
         PushIMU(imuData);
       }

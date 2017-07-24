@@ -136,11 +136,22 @@ namespace Cozmo.Needs.UI {
     }
 
     private void PlayMeterMoveSound(float oldVal, float newVal) {
+      bool isConnectedToRobot = (RobotEngineManager.Instance.CurrentRobot != null);
       if (newVal - oldVal > float.Epsilon) {
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Up);
+        if (isConnectedToRobot) {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Up);
+        }
+        else {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Up_Disconnected);
+        }
       }
       else if (newVal - oldVal < -float.Epsilon) {
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Down);
+        if (isConnectedToRobot) {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Down_Connected);
+        }
+        else {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Down);
+        }
       }
     }
 
@@ -224,18 +235,23 @@ namespace Cozmo.Needs.UI {
     }
 
     private IEnumerator StaggerMeterFills() {
+
+      bool isOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro);
+      if (isOnboarding) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear_Onboarding);
+      }
       float oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Repair).Value;
       float newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Repair).Value;
       PlayMeterMoveSound(oldValue, newValue);
       _RepairMeter.SetTargetAndAnimate(newValue);
-
-      float staggerTime = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro) ?
-                                     _InitialFillOnboardingStaggerTime : _InitialFillStaggerTime;
-
+      float staggerTime = isOnboarding ? _InitialFillOnboardingStaggerTime : _InitialFillStaggerTime;
       yield return new WaitForSeconds(staggerTime);
 
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Energy).Value;
+      if (isOnboarding) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear_Onboarding);
+      }
       PlayMeterMoveSound(oldValue, newValue);
       _EnergyMeter.SetTargetAndAnimate(newValue);
 
@@ -243,6 +259,9 @@ namespace Cozmo.Needs.UI {
 
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Play).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Play).Value;
+      if (isOnboarding) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear_Onboarding);
+      }
       PlayMeterMoveSound(oldValue, newValue);
       _PlayMeter.SetTargetAndAnimate(newValue);
 

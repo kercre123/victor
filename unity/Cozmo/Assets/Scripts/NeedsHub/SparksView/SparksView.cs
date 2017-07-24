@@ -6,6 +6,8 @@ using Cozmo.UI;
 using DataPersistence;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using DG.Tweening;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparksView : BaseView {
@@ -46,6 +48,23 @@ namespace Cozmo.Needs.Sparks.UI {
     private SparksListModal _SparksListModalPrefab;
     private SparksListModal _SparksListModalInstance;
 
+    [SerializeField]
+    private ScrollRect _ScrollRect;
+
+    [SerializeField]
+    private FreeplayCard _FreeplayCardInstance;
+
+    [SerializeField]
+    private float _FreeplayPanelShowRightArrowWidth = 0.2f;
+
+    [SerializeField]
+    private float _FreeplayPanelShowLeftArrowWidth = 0.01f;
+
+    [SerializeField]
+    private float _FreeplayPanelShowHideInterpolateTime = 0.3f;
+
+    private float _FreeplayPanelNormalizedWidth;
+
     private List<UnlockableInfo> _AllUnlockData;
     private List<ChallengeManager.ChallengeStatePacket> _MinigameData;
 
@@ -78,12 +97,34 @@ namespace Cozmo.Needs.Sparks.UI {
 
       RequestGameManager.Instance.OnRequestGameAlertCreated += ReenableTouches;
 
+      bool hideFreeplayCard = DataPersistenceManager.Instance.Data.DefaultProfile.HideFreeplayCard;
+
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
         for (int i = 0; i < _OnboardingDimmers.Length; i++) {
           _OnboardingDimmers[i].SetActive(true);
         }
         _BackButton.gameObject.SetActive(false);
+        hideFreeplayCard = true;
         OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingPhaseComplete;
+      }
+
+      // calculate freeplay panel width
+      LayoutRebuilder.ForceRebuildLayoutImmediate(_ScrollRect.content);
+      float width = (_ScrollRect.content.rect.width - _ScrollRect.viewport.rect.width);
+      float spacing = _ScrollRect.content.GetComponent<HorizontalLayoutGroup>().spacing;
+      _FreeplayPanelNormalizedWidth = (_FreeplayCardInstance.GetComponent<RectTransform>().rect.width + spacing) / width;
+      if (_FreeplayPanelNormalizedWidth > 1.0f) {
+        _FreeplayPanelNormalizedWidth = 1.0f;
+      }
+
+      _FreeplayCardInstance.Initialize(this);
+      if (hideFreeplayCard) {
+        HideFreeplayCard(instant: true);
+        _FreeplayCardInstance.ShowSlideLeftArrow();
+      }
+      else {
+        ShowFreeplayCard(instant: true);
+        _FreeplayCardInstance.ShowSlideRightArrow();
       }
 
       ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy
@@ -207,6 +248,38 @@ namespace Cozmo.Needs.Sparks.UI {
     private void UpdateStateData(StateData stateData) {
       _AskForTrickMicIcon.gameObject.SetActive(stateData.isVCEnabled);
       _AskForGameMicIcon.gameObject.SetActive(stateData.isVCEnabled);
+    }
+
+    internal void HideFreeplayCard(bool instant = false) {
+      if (instant) {
+        _ScrollRect.horizontalNormalizedPosition = _FreeplayPanelNormalizedWidth;
+      }
+      else {
+        _ScrollRect.DOHorizontalNormalizedPos(_FreeplayPanelNormalizedWidth, _FreeplayPanelShowHideInterpolateTime);
+      }
+    }
+
+    internal void ShowFreeplayCard(bool instant = false) {
+      float normalizedPos = 0;
+      if (instant) {
+        _ScrollRect.horizontalNormalizedPosition = normalizedPos;
+      }
+      else {
+        _ScrollRect.DOHorizontalNormalizedPos(normalizedPos, _FreeplayPanelShowHideInterpolateTime);
+      }
+    }
+
+    protected void Update() {
+      float showRightWidth = _FreeplayPanelNormalizedWidth * (1.0f - _FreeplayPanelShowRightArrowWidth);
+      if (_ScrollRect.horizontalNormalizedPosition < showRightWidth) {
+        _FreeplayCardInstance.ShowSlideRightArrow();
+      }
+      else {
+        float showLeftWidth = _FreeplayPanelNormalizedWidth * (1.0f - _FreeplayPanelShowLeftArrowWidth);
+        if (_ScrollRect.horizontalNormalizedPosition >= showLeftWidth) {
+          _FreeplayCardInstance.ShowSlideLeftArrow();
+        }
+      }
     }
   }
 }

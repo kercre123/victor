@@ -109,15 +109,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.16176468, g: 0.16176468, b: 0.16176468, a: 0.8627451}
+  m_Color: {r: 0.6911765, g: 0.6911765, b: 0.6911765, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: ab0a61e7a92454afdbb383b3e74ca8e2, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -312,8 +312,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 70}
-  m_SizeDelta: {x: 0, y: 139}
+  m_AnchoredPosition: {x: 0, y: 42.5}
+  m_SizeDelta: {x: 0, y: 167.1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &22534124
 CanvasGroup:
@@ -608,12 +608,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 90
+  m_fontSize: 86
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 56
+  m_fontSizeMax: 86
   m_fontStyle: 0
   m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
@@ -964,6 +964,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Grey
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114959074440803056}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1037,8 +1038,8 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 9f3c3dba3515d4350aa4db11ed5739e9, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: b8fe41390232f401096d2030b89dc19a, type: 3}
+  m_Type: 1
   m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1092,6 +1093,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114770125595000832}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1431,9 +1433,10 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Replay
+  _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114337680415537552}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1442,15 +1445,15 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114719355150663490}
-    pressedSprite: {fileID: 21300000, guid: 9f3c3dba3515d4350aa4db11ed5739e9, type: 3}
-    pressedColor: {r: 0.53676474, g: 0.53676474, b: 0.53676474, a: 1}
-    disabledSprite: {fileID: 21300000, guid: 9f3c3dba3515d4350aa4db11ed5739e9, type: 3}
-    disabledColor: {r: 0.1397059, g: 0.1397059, b: 0.1397059, a: 1}
+    pressedSprite: {fileID: 21300000, guid: 942b55f1352c04f71ba096f2c3c58295, type: 3}
+    pressedColor: {r: 1, g: 1, b: 1, a: 1}
+    disabledSprite: {fileID: 21300000, guid: 03a7f97be37e64d34b32b5671289ec74, type: 3}
+    disabledColor: {r: 1, g: 1, b: 1, a: 0.7058824}
   - targetImage: {fileID: 114282850729874152}
     pressedSprite: {fileID: 21300000, guid: cf6a33e2339794279b2f0e6783f3c429, type: 3}
-    pressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    pressedColor: {r: 0.8308824, g: 0.8308824, b: 0.8308824, a: 1}
     disabledSprite: {fileID: 21300000, guid: cf6a33e2339794279b2f0e6783f3c429, type: 3}
-    disabledColor: {r: 0.1397059, g: 0.1397059, b: 0.1397059, a: 1}
+    disabledColor: {r: 0.63235295, g: 0.63235295, b: 0.63235295, a: 0.7058824}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
   _AlwaysShowGlintWhenEnabled: 0
@@ -1572,9 +1575,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -340, y: -133.19482}
-  m_SizeDelta: {x: 600, y: 200}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -44, y: -51.1}
+  m_SizeDelta: {x: 725, y: 217}
+  m_Pivot: {x: 1, y: 1}
 --- !u!224 &224071974716056740
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1590,8 +1593,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 5.3522}
+  m_SizeDelta: {x: -59.605, y: -70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224153031561466714
 RectTransform:
@@ -1611,9 +1614,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -439, y: -134}
-  m_SizeDelta: {x: 800, y: 202}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -44, y: -51.1}
+  m_SizeDelta: {x: 725, y: 217}
+  m_Pivot: {x: 1, y: 1}
 --- !u!224 &224211029499416104
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1645,10 +1648,10 @@ RectTransform:
   m_Father: {fileID: 224714345046072362}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -327}
-  m_SizeDelta: {x: -140, y: -445}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: -0.000015258789}
+  m_SizeDelta: {x: 460, y: 121}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224377823160772932
 RectTransform:
@@ -1681,11 +1684,11 @@ RectTransform:
   m_Father: {fileID: 22495320}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -5}
-  m_SizeDelta: {x: 0, y: -10}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 136}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &224680186629330150
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1701,8 +1704,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -60, y: -60}
+  m_AnchoredPosition: {x: 0, y: 5.3522034}
+  m_SizeDelta: {x: -137, y: -139}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224714345046072362
 RectTransform:
@@ -1723,7 +1726,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 600, y: 600}
+  m_SizeDelta: {x: 389, y: 389}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224733549643596208
 RectTransform:

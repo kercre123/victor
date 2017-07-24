@@ -782,10 +782,8 @@ MonoBehaviour:
   _ActivityCardContainer: {fileID: 114905087169597034}
   _ActivityCardPrefab: {fileID: 114712853026632080, guid: de1e2cff12d0042cba28bd0540195e3a,
     type: 2}
-  _FreeplayCardPrefab: {fileID: 114938725581726892, guid: e21ad27fb123c4bb8bad4011b6d8e4af,
-    type: 2}
+  _MaxNumCardsOnScreen: 3
   _ScrollRect: {fileID: 114213708779950632}
-  _FreeplayPanelArrowToggleWidth: 0.2
 --- !u!114 &114646942448145258
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -891,6 +889,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Back
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1329,7 +1328,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.11328125, y: -29.5}
+  m_AnchoredPosition: {x: 0.09814453, y: -29.5}
   m_SizeDelta: {x: 0, y: 47}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!225 &225659591566240356

@@ -6,6 +6,10 @@
 // Top-level object contains a nested object for each supported platform.
 // Each platform object contains a nested object for each supported language.
 //
+// Note that Acapala TTS SDK does not support pitch setting on all platforms.
+// Pitch values are included here for documentation but pitch adjustment
+// is actually performed by audio layer.
+//
 {
   "osx":
   {
@@ -61,22 +65,22 @@
   {
     "en":
     {
-      "voice": "enu_ryan_22k_co.fl",
+      "voice": "Ryan",
       "speed": 80
     },
     "fr":
     {
-      "voice": "frf_bruno_22k_co.fl",
+      "voice": "Bruno",
       "speed": 75
     },
     "de":
     {
-      "voice": "ged_klaus_22k_co.fl",
+      "voice": "Klaus",
       "speed": 75
     },
     "ja":
     {
-      "voice": "ja_jp_sakura_22k_co.fl",
+      "voice": "Sakura",
       "speed": 75,
       "pitch": 75,
       "shaping": 65

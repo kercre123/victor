@@ -350,9 +350,11 @@ namespace Cozmo {
                                                       LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription,
                                                       new AlertModalButtonData("confirm_sleep_button",
                                                                                LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
+                                                                               false,
                                                                                HandleConfirmEngineTriggeredSleepCozmoButtonTapped,
                                                                                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Disconnect)),
-                                                      new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel, HandleEngineTriggeredSleepCancel));
+                                                      new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel,
+                                                                               false, HandleEngineTriggeredSleepCancel));
 
         }
         else {
@@ -361,9 +363,11 @@ namespace Cozmo {
                                                       LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription,
                                                       new AlertModalButtonData("confirm_sleep_button",
                                                                                LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
+                                                                               false,
                                                                                HandleConfirmSleepCozmoButtonTapped,
                                                                                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Disconnect)),
-                                                      new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel));
+                                                      new AlertModalButtonData("cancel_sleep_button",
+                                                                               LocalizationKeys.kButtonCancel, false));
         }
 
         var confirmSleepCozmoPriority = new ModalPriorityData(ModalPriorityLayer.High, 1,

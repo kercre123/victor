@@ -99,6 +99,9 @@
   "needs.Done" : {
     "translation" : "TERMINÉ"
   },
+  "needs.RewardsDialog.SparksInventoryFull" : {
+    "translation" : "Your Sparks inventory is full"
+  },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "Tu as gagné plus d'étincelles !"
   },

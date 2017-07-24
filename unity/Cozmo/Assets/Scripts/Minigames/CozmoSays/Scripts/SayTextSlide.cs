@@ -7,10 +7,10 @@ using System.Collections;
 public class SayTextSlide : MonoBehaviour {
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _SayTextButton;
+  private Cozmo.UI.CozmoButton _SayTextButton;
 
   [SerializeField]
-  private UnityEngine.UI.InputField _TextInput;
+  private TMPro.TMP_InputField _TextInput;
 
   [SerializeField]
   private Color _TextFieldInactiveColor;
@@ -19,7 +19,7 @@ public class SayTextSlide : MonoBehaviour {
   private Color _TextFieldActiveColor;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLegacy _TotalSparksLabel;
+  private CozmoText _TotalSparksLabel;
 
   [SerializeField]
   [Cozmo.ItemId]
@@ -29,7 +29,7 @@ public class SayTextSlide : MonoBehaviour {
   private int _SayCost;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLegacy _CostLabel;
+  private CozmoText _CostLabel;
 
   [SerializeField]
   private GameObject _ActiveContentContainer;
@@ -68,7 +68,7 @@ public class SayTextSlide : MonoBehaviour {
     _CostLabel.text = _SayCost.ToString();
     _TextInput.onValueChanged.AddListener(HandleOnTextFieldChange);
     _TextInput.onValidateInput += HandleInputValidation;
-    _TextInput.GetComponent<InputFieldEventListeners>().onSelect += OnSelect;
+    _TextInput.onSelect.AddListener(OnSelect);
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
     SetButtonInteractivity();
@@ -81,12 +81,12 @@ public class SayTextSlide : MonoBehaviour {
 
     _TextInput.onValueChanged.RemoveListener(HandleOnTextFieldChange);
     _TextInput.onValidateInput -= HandleInputValidation;
-    _TextInput.GetComponent<InputFieldEventListeners>().onSelect -= OnSelect;
+    _TextInput.onSelect.RemoveListener(OnSelect);
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
   }
 
-  private void OnSelect(BaseEventData data) {
+  private void OnSelect(string text) {
     if (_PendingClearField) {
       _TextInput.text = "";
       _PendingClearField = false;
@@ -114,7 +114,7 @@ public class SayTextSlide : MonoBehaviour {
 
   private void UpdateTotalSparkCount() {
     _SparksInInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(_SparkItemId);
-    _TotalSparksLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalSparks, new object[] { _SparksInInventory });
+    _TotalSparksLabel.text = Localization.GetNumber(_SparksInInventory);
     _NotEnoughSparks = _SparksInInventory < _SayCost;
   }
 

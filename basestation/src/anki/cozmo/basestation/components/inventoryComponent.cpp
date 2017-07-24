@@ -10,6 +10,7 @@
  *
  **/
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
@@ -23,7 +24,7 @@ namespace Anki {
 namespace Cozmo {
   
 static const int kMinimumTimeBetweenRobotSaves_sec = 5;
-
+static const std::string kInventoryTypeCapsConfigKey = "InventoryTypeCaps";
 
 InventoryComponent::InventoryComponent(Robot& robot)
   : _robot(robot)
@@ -40,7 +41,7 @@ InventoryComponent::InventoryComponent(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InventoryComponent::Init()
+void InventoryComponent::Init(const Json::Value& config)
 {
   ReadCurrentInventoryFromRobot();
   
@@ -52,6 +53,18 @@ void InventoryComponent::Init()
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestAdd>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestSet>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestGet>();
+  }
+  
+  // parse inventory caps from json
+  const Json::Value& inventoryTypeCaps = config[kInventoryTypeCapsConfigKey];
+  for (int i = 0; i < InventoryTypeNumEntries; i++)
+  {
+    InventoryType inventoryID = (InventoryType)i;
+    const Json::Value& cap = inventoryTypeCaps[InventoryTypeToString(inventoryID)];
+    if (!cap.isNull())
+    {
+      _inventoryTypeCaps[inventoryID] = JsonTools::GetValue<int>(cap);
+    }
   }
 }
   
@@ -69,6 +82,11 @@ void InventoryComponent::SetInventoryAmount(InventoryType inventoryID, int total
                 InventoryTypeToString(inventoryID),GetInventoryAmount(inventoryID));
   if( _readFromRobot )
   {
+    const int cap = GetInventoryCap(inventoryID);
+    if (cap != kInfinity && total > cap)
+    {
+      total = cap;
+    }
     _currentInventory.inventoryItemAmount[static_cast<size_t>(inventoryID)] = total;
     TryWriteCurrentInventoryToRobot();
   }
@@ -101,9 +119,31 @@ void InventoryComponent::AddInventoryAmount(InventoryType inventoryID, int delta
                      inventoryType.c_str());
 }
   
-int  InventoryComponent::GetInventoryAmount(InventoryType inventoryID)
+int  InventoryComponent::GetInventoryAmount(InventoryType inventoryID) const
 {
   return _currentInventory.inventoryItemAmount[static_cast<size_t>(inventoryID)];
+}
+
+int InventoryComponent::GetInventoryCap(InventoryType inventoryID) const
+{
+  return _inventoryTypeCaps.find(inventoryID) != _inventoryTypeCaps.end()
+    ? _inventoryTypeCaps.at(inventoryID)
+    : kInfinity;
+}
+
+int InventoryComponent::GetInventorySpaceRemaining(InventoryType inventoryID) const
+{
+  const int cap = GetInventoryCap(inventoryID);
+  const int currentAmount = GetInventoryAmount(inventoryID);
+  
+  if (cap == kInfinity)
+  {
+    return kInfinity;
+  }
+
+  return (currentAmount < cap)
+    ? cap - currentAmount
+    : 0;
 }
   
 void InventoryComponent::SendInventoryAllToGame()

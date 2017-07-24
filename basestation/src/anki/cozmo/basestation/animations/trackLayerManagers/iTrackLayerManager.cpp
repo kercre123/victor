@@ -90,8 +90,6 @@ bool ITrackLayerManager<FRAME_TYPE>::ApplyLayersToFrame(FRAME_TYPE& frame,
                               layer.name.c_str(), layer.tag);
           }
           
-          layer.sentOnce = true; // mark that it has been sent at least once
-          
           // We no longer need anything but the last frame (which should now be
           // "current")
           layer.track.ClearUpToCurrent();
@@ -138,7 +136,6 @@ Result ITrackLayerManager<FRAME_TYPE>::AddLayer(const std::string& name,
   newLayer.startTime_ms = delay_ms;
   newLayer.streamTime_ms = 0;
   newLayer.isPersistent = false;
-  newLayer.sentOnce = false;
   newLayer.name = name;
   
   _layers[_layerTagCtr] = std::move(newLayer);
@@ -160,7 +157,6 @@ AnimationTag ITrackLayerManager<FRAME_TYPE>::AddPersistentLayer(const std::strin
   newLayer.startTime_ms = 0;
   newLayer.streamTime_ms = 0;
   newLayer.isPersistent = true;
-  newLayer.sentOnce = false;
   newLayer.name = name;
   
   _layers[_layerTagCtr] = std::move(newLayer);
@@ -184,7 +180,6 @@ void ITrackLayerManager<FRAME_TYPE>::AddToPersistentLayer(AnimationTag tag, FRAM
                             keyframe.GetTriggerTime());
     
     track.AddKeyFrameToBack(keyframe);
-    layerIter->second.sentOnce = false;
   }
 }
 
@@ -199,7 +194,6 @@ void ITrackLayerManager<AnimKeyFrame::AudioSample>::AddToPersistentLayer(Animati
     assert(nullptr != track.GetLastKeyFrame());
     
     track.AddKeyFrameToBack(keyframe);
-    layerIter->second.sentOnce = false;
   }
 }
 
@@ -267,29 +261,7 @@ void ITrackLayerManager<AnimKeyFrame::AudioSample>::RemovePersistentLayer(Animat
 template<class FRAME_TYPE>
 bool ITrackLayerManager<FRAME_TYPE>::HaveLayersToSend() const
 {
-  if(_layers.empty())
-  {
-    return false;
-  }
-  else
-  {
-    // There are layers, but we want to ignore any that are persistent that
-    // have already been sent once
-    for(auto & layer : _layers)
-    {
-      if(!layer.second.isPersistent || !layer.second.sentOnce)
-      {
-        // There's at least one non-persistent layer, or a persistent layer
-        // that has not been sent in its entirety at least once: return that there
-        // are still layers to send
-        return true;
-      }
-    }
-    // All layers are persistent ones that have been sent, so no need to keep sending them
-    // by themselves. They only need to be re-applied while there's something
-    // else being sent
-    return false;
-  }
+  return !_layers.empty();
 }
 
 template<class FRAME_TYPE>

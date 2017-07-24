@@ -61,10 +61,10 @@ namespace Cozmo {
       private void HandleQuitButtonTap() {
         string titleKey = _IsMinigame ? LocalizationKeys.kMinigameQuitViewTitle : LocalizationKeys.kMinigameQuitViewTitleActivity;
 
-        var confirmQuitButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonQuit, HandleQuitConfirmed,
+        var confirmQuitButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonQuit, false, HandleQuitConfirmed,
                                                              Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
 
-        var cancelQuitButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, HandleQuitCancelled);
+        var cancelQuitButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, false, HandleQuitCancelled);
 
         var quitGameAlertData = new AlertModalData("quit_minigame_alert",
                                                    titleKey,

@@ -149,7 +149,7 @@ namespace FaceEnrollment {
         errorAlertData = new AlertModalData("enroll_never_saw_valid_face_alert",
                                             LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceTitle,
                                             LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceDescription,
-                                            new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, ReturnToFaceSlide),
+                                            new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, true, ReturnToFaceSlide),
                                             descLocArgs: new object[] { faceEnrollmentCompleted.name });
         break;
 
@@ -159,8 +159,8 @@ namespace FaceEnrollment {
         errorAlertData = new AlertModalData("enroll_time_out_alert",
                                             LocalizationKeys.kFaceEnrollmentErrorsTimeOutTitle,
                                             LocalizationKeys.kFaceEnrollmentErrorsTimeOutDescription,
-                                            new AlertModalButtonData("retry_button", LocalizationKeys.kButtonRetry, SendEnrollFace),
-                                            new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, ReturnToFaceSlide));
+                                            new AlertModalButtonData("retry_button", LocalizationKeys.kButtonRetry, false, SendEnrollFace),
+                                            new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, false, ReturnToFaceSlide));
         break;
       }
 
@@ -197,7 +197,7 @@ namespace FaceEnrollment {
       var doneAlertData = new AlertModalData("enroll_first_time_finished_alert",
                                              LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle,
                                              LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertDescription,
-                                             new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, ReturnToFaceSlide));
+                                             new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, false, ReturnToFaceSlide));
 
       var doneAlertPriorityData = ModalPriorityData.CreateSlightlyHigherData(_FaceEnrollmentInstructionsModalInstance.PriorityData);
 

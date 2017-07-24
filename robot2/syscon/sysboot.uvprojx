@@ -10,7 +10,6 @@
       <TargetName>syscon</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F030C8</Device>
@@ -70,11 +69,11 @@
           </BeforeCompile>
           <BeforeMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
+            <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>python ./tools/export.py build/publickeys.h</UserProg1Name>
             <UserProg2Name>python ./tools/message-buffers/emitters/CPPLite_emitter.py  ./schema/messages.clad -r build -o build</UserProg2Name>
-            <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
-            <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <UserProg1Dos16Mode>1</UserProg1Dos16Mode>
+            <UserProg2Dos16Mode>1</UserProg2Dos16Mode>
             <nStopB1X>0</nStopB1X>
             <nStopB2X>0</nStopB2X>
           </BeforeMake>
@@ -85,8 +84,6 @@
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
-            <nStopA1X>0</nStopA1X>
-            <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
@@ -324,17 +321,11 @@
             <uSurpInc>0</uSurpInc>
             <uC99>0</uC99>
             <useXO>0</useXO>
-            <v6Lang>1</v6Lang>
-            <v6LangP>1</v6LangP>
-            <vShortEn>1</vShortEn>
-            <vShortWch>1</vShortWch>
-            <v6Lto>0</v6Lto>
-            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--cpp11 --gnu</MiscControls>
               <Define>STM32F030X8</Define>
               <Undefine></Undefine>
-              <IncludePath>common,build,crypto</IncludePath>
+              <IncludePath>.\common;build;crypto</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

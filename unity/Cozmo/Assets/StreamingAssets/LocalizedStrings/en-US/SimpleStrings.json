@@ -124,7 +124,7 @@
     "translation": "Put one of each Cube next to Cozmo and tap <b><color=#11a2f0ff>REFRESH</color></b>. Cozmo will Connect to the 3 that he thinks are closest."
   },
   "button.replay": {
-    "translation": "Replay"
+    "translation": "REPLAY"
   },
   "button.skip": {
     "translation": "SKIP"

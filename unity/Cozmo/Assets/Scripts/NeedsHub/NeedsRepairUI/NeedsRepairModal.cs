@@ -311,7 +311,7 @@ namespace Cozmo.Repair.UI {
 
           _InactivityTimer_sec -= Time.deltaTime;
 
-          if (_InactivityTimer_sec <= 0f) {
+          if (_InactivityTimer_sec <= 0f && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
             HandleUserClose();
           }
         }
@@ -1368,7 +1368,7 @@ namespace Cozmo.Repair.UI {
     private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
       if (_InterruptedAlert == null) {
         var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
-                                new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
+                                new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay, false,
                                              clickCallback: CloseInterruptionAlert));
 
         var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,

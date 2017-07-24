@@ -14,10 +14,12 @@
 #define __Anki_Cozmo_Basestation_Components_InventoryComponent_H__
 
 #include "clad/types/inventoryTypes.h"
+#include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 #include <chrono>
+#include <map>
 #include <vector>
 
 namespace Anki {
@@ -29,15 +31,17 @@ class CozmoContext;
 class InventoryComponent : private Util::noncopyable
 {
 public:
+  static const int kInfinity = -1;
 
   explicit InventoryComponent(Robot& robot);
 
-  void Init();
+  void Init(const Json::Value& config);
   void Update(const float currentTime_s);
   
   void SetInventoryAmount(InventoryType inventoryID, int total);
   void AddInventoryAmount(InventoryType inventoryID, int delta);
-  int  GetInventoryAmount(InventoryType inventoryID);
+  int  GetInventoryAmount(InventoryType inventoryID) const;
+  int  GetInventorySpaceRemaining(InventoryType inventoryID) const;
   
   // Handle various message types
   template<typename T>
@@ -53,6 +57,8 @@ private:
   void WriteCurrentInventoryToRobot();
   void ReadCurrentInventoryFromRobot();
   
+  int GetInventoryCap(InventoryType inventoryID) const;
+  
   // clad array for easy unpacking
   InventoryList _currentInventory;
   bool          _readFromRobot;
@@ -63,6 +69,7 @@ private:
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
+  std::map<InventoryType, int>  _inventoryTypeCaps;
 };
 
 }

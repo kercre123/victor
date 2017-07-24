@@ -288,7 +288,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 52
+  m_fontSizeMin: 40
   m_fontSizeMax: 52
   m_fontStyle: 4
   m_textAlignment: 513
@@ -324,10 +324,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 11406588}
-    characterCount: 8
+    characterCount: 17
     spriteCount: 0
-    spaceCount: 1
-    wordCount: 2
+    spaceCount: 2
+    wordCount: 3
     linkCount: 0
     lineCount: 1
     pageCount: 1
@@ -359,7 +359,7 @@ MonoBehaviour:
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &11413304
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -413,6 +413,7 @@ MonoBehaviour:
   ButtonGraphics: []
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -517,19 +518,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11414238}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 0b04a22aa44b04b8f9245ff53062a837, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: ad0c46e4618aa43ba895aed8b757e768, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 11487942}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -584,7 +584,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 52
+  m_fontSizeMin: 40
   m_fontSizeMax: 52
   m_fontStyle: 0
   m_textAlignment: 516
@@ -620,10 +620,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 11442428}
-    characterCount: 18
+    characterCount: 24
     spriteCount: 0
-    spaceCount: 2
-    wordCount: 3
+    spaceCount: 3
+    wordCount: 4
     linkCount: 0
     lineCount: 1
     pageCount: 1
@@ -655,7 +655,7 @@ MonoBehaviour:
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &11447886
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -764,7 +764,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 11468914}
-    characterCount: 21
+    characterCount: 20
     spriteCount: 0
     spaceCount: 3
     wordCount: 4
@@ -1277,7 +1277,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 180, y: 80}
-  m_SizeDelta: {x: 422, y: 120}
+  m_SizeDelta: {x: 492, y: 90}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22428346
 RectTransform:
@@ -1388,7 +1388,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 130, y: 80}
-  m_SizeDelta: {x: 700, y: 100}
+  m_SizeDelta: {x: 815, y: 90}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22481076
 RectTransform:

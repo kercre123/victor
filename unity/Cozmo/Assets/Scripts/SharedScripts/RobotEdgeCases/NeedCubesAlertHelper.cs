@@ -20,7 +20,7 @@ namespace Cozmo.UI {
         UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpModalPrefab, cubeHelpModalPriorityData, null);
       };
       return new AlertModalButtonData("open_cube_help_modal_button",
-              LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
+              LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton, false,
               cubeHelpButtonPressed);
     }
 

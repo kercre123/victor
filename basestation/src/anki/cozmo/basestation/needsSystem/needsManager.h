@@ -18,8 +18,9 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
+#include "util/global/globalDefinitions.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <assert.h>
 #include <chrono>
@@ -78,10 +79,13 @@ public:
     assert(_faceDistortionComponent);
     return *_faceDistortionComponent;
   }
-  const DesiredFaceDistortionComponent& GetDesiredFaceDistortionComponent() const  {
+  const DesiredFaceDistortionComponent& GetDesiredFaceDistortionComponent() const {
     assert(_faceDistortionComponent);
     return *_faceDistortionComponent;
   }
+
+  bool IsPendingSparksRewardMsg() const { return _pendingSparksRewardMsg; }
+  void OnSparksRewardAnimComplete();
 
   static const char* kLogChannelName;
 
@@ -209,6 +213,9 @@ private:
   // component to figure out what the current face distortion level should be
   // This gets instantiated when Init is called
   std::unique_ptr<DesiredFaceDistortionComponent> _faceDistortionComponent;
+
+  bool          _pendingSparksRewardMsg;
+  ExternalInterface::FreeplaySparksAwarded _sparksRewardMsg;
 };
 
 
