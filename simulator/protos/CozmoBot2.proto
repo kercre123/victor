@@ -8,7 +8,7 @@ PROTO CozmoBot2 [
   field SFString name "CozmoBot2"
 
   field SFFloat headAngle          0
-  field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
+  field SFFloat headAngle_lowLimit -0.3491 # 20 degrees down
   field SFFloat headAngle_highLimit 0.7854 # 45 degrees up
 
   field SFFloat liftAngle 0
