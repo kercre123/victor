@@ -11,7 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6e180f901937487ca059d92793961e3, type: 3}
   m_Name: SongLocMap
   m_EditorClassIdentifier: 
-  _SongIcon: {fileID: 0}
+  _SongIcon: {fileID: 21300000, guid: 0a5e1f0d37612476c840afeb0f1f2b10, type: 3}
   _SongEntries:
   - SongId:
       _EnumValueAsString: Singing_Camptown
