@@ -325,7 +325,7 @@ namespace Cozmo.UI {
       }
 
       if (_SupportsVoiceCommand && IsInteractable() && _VoiceCommandIcon != null) {
-        if (VoiceCommandManager.Instance.IsAudioRecordingAllowed &&
+        if (VoiceCommandManager.IsMicrophoneAuthorized &&
           DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState == VoiceCommandEnabledState.Enabled) {
           _VoiceCommandIcon.SetActive(true);
           _TextLabel.UpdateSkinnableElements(CozmoThemeSystemUtils.sInstance.GetCurrentThemeId(),

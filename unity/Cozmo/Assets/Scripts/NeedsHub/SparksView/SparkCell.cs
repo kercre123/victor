@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Cozmo.UI;
+using Anki.Cozmo.VoiceCommand;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparkCell : MonoBehaviour {
@@ -52,11 +52,20 @@ namespace Cozmo.Needs.Sparks.UI {
                                        _SparkCountText,
                                        UIColorPalette.GeneralSparkTintColor);
 
-      _SparkMicIcon.gameObject.SetActive(unlockInfo.CanVoiceActivate);
+      _SparkMicIcon.gameObject.SetActive(false);
+      if (_UnlockInfo.CanVoiceActivate) {
+        VoiceCommandManager.Instance.StateDataCallback += OnMicrophoneAuthorizationStatusUpdate;
+        VoiceCommandManager.RequestCurrentStateData();
+      }
     }
 
     private void OnDestroy() {
+      VoiceCommandManager.Instance.StateDataCallback -= OnMicrophoneAuthorizationStatusUpdate;
       _CostLabelHelper.DeregisterEvents();
+    }
+
+    private void OnMicrophoneAuthorizationStatusUpdate(StateData stateData) {
+      _SparkMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
     }
 
     private void HandleTappedComingSoon() {

@@ -1,12 +1,10 @@
-﻿using UnityEngine;
-using Cozmo.UI;
-using System;
+﻿using System;
 using DataPersistence;
-using Cozmo.ConnectionFlow;
-
 using Anki.Cozmo.Audio;
 using Anki.Cozmo.Audio.VolumeParameters;
+using Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Anki.Cozmo.VoiceCommand {
 
@@ -16,19 +14,12 @@ namespace Anki.Cozmo.VoiceCommand {
     Disabled
   };
 
-  public class VoiceCommandManager {
+  public class VoiceCommandManager : MonoBehaviour {
 
     public delegate void UserResponseToPromptHandler(bool positiveResponse);
     public event UserResponseToPromptHandler OnUserPromptResponse;
 
     private static VoiceCommandManager _Instance;
-
-    public static void CreateInstance() {
-      _Instance = new VoiceCommandManager();
-
-      //Check microphone authorization status
-      SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
-    }
 
     public static VoiceCommandManager Instance {
       get {
@@ -51,11 +42,16 @@ namespace Anki.Cozmo.VoiceCommand {
     public event Action<RespondingToCommandStart> RespondingToCommandStartCallback;
     public event Action<RespondingToCommandEnd> RespondingToCommandEndCallback;
     public event Action<RespondingToCommand> RespondingToCommand;
-    public event Action<Anki.Cozmo.VoiceCommand.StateData> StateDataCallback;
+    public event Action<StateData> StateDataCallback;
 
     private float _VolumeLevelToRestore = -1.0f;
 
     private const float kReducedVolumeLevel = 0.25f;
+
+    private StateData _CurrentStateData;
+#if UNITY_EDITOR
+    public StateData CurrentStateData { get { return _CurrentStateData; } }
+#endif
 
     public static void SendVoiceCommandEvent<T>(T eventSubType) {
       VoiceCommandEventUnion initializedUnion = Singleton<VoiceCommandEventUnion>.Instance.Initialize(eventSubType);
@@ -64,26 +60,69 @@ namespace Anki.Cozmo.VoiceCommand {
       RobotEngineManager.Instance.SendMessage();
     }
 
-    private VoiceCommandManager() {
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.VoiceCommand.VoiceCommandEvent>(HandleVoiceCommandEvent);
+    public static void RequestCurrentStateData() {
+      SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
+
+#if UNITY_EDITOR
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        if (_Instance.StateDataCallback != null) {
+          _Instance.StateDataCallback(_Instance._CurrentStateData);
+        }
+      }
+#endif
+    }
+
+    public static bool IsMicrophoneAuthorized {
+      get {
+        return _Instance._CurrentStateData.capturePermissionState == AudioCapturePermissionState.Granted;
+      }
+    }
+
+    public static bool IsVoiceCommandsEnabledInApp {
+      get {
+        return _Instance._CurrentStateData.isVCEnabled;
+      }
+    }
+
+    public static bool IsVoiceCommandsEnabled(StateData stateData) {
+      // Voice commands are enabled if we have app permissions and the user has turned them on in the app
+      return (stateData.capturePermissionState == AudioCapturePermissionState.Granted && stateData.isVCEnabled);
+    }
+
+    private void Awake() {
+      _Instance = this;
+      RobotEngineManager.Instance.AddCallback<VoiceCommandEvent>(HandleVoiceCommandEvent);
 
       RespondingToCommandStartCallback += HandleRespondCommandStart;
       RespondingToCommandEndCallback += HandleRespondCommandEnd;
-
-      //Get status of microphone permission.
-      _CapturePermissionState = AudioCapturePermissionState.Unknown;
-      StateDataCallback += OnMicrophoneAuthorizationStatusUpdate;
-
     }
 
     public void Init() {
       VoiceCommandEnabledState enabledState = DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState;
+
+#if UNITY_EDITOR
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        _CurrentStateData = new StateData();
+        _CurrentStateData.isVCEnabled = (enabledState == VoiceCommandEnabledState.Enabled);
+        _CurrentStateData.capturePermissionState = AudioCapturePermissionState.Unknown;
+      }
+#endif
+
       if (enabledState == VoiceCommandEnabledState.Enabled) {
-        SetVoiceCommandEnabled(true);
+        SetVoiceCommandEnabledInApp(true);
+      }
+
+      RequestCurrentStateData();
+    }
+
+    private void OnApplicationPause(bool isPaused) {
+      if (!isPaused) {
+        // Request for mic state again in case the user turned app settings off
+        RequestCurrentStateData();
       }
     }
 
-    private void HandleVoiceCommandEvent(Anki.Cozmo.VoiceCommand.VoiceCommandEvent voiceCommandEvent) {
+    private void HandleVoiceCommandEvent(VoiceCommandEvent voiceCommandEvent) {
       VoiceCommandEventUnion eventData = voiceCommandEvent.voiceCommandEvent;
       VoiceCommandEventUnion.Tag eventType = eventData.GetTag();
       switch (eventType) {
@@ -106,6 +145,7 @@ namespace Anki.Cozmo.VoiceCommand {
           break;
         }
       case VoiceCommandEventUnion.Tag.stateData: {
+          _CurrentStateData = eventData.stateData;
           if (StateDataCallback != null) {
             StateDataCallback(eventData.stateData);
           }
@@ -158,7 +198,7 @@ namespace Anki.Cozmo.VoiceCommand {
       }
     }
 
-    public static void SetVoiceCommandEnabled(bool enabledStatus) {
+    public static void SetVoiceCommandEnabledInApp(bool enabledStatus) {
       SendVoiceCommandEvent<ChangeEnabledStatus>(Singleton<ChangeEnabledStatus>.Instance.Initialize(enabledStatus));
 
       if (enabledStatus) {
@@ -168,22 +208,20 @@ namespace Anki.Cozmo.VoiceCommand {
         DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState = VoiceCommandEnabledState.Disabled;
       }
       DataPersistenceManager.Instance.Save();
-    }
 
-    public bool IsAudioRecordingAllowed {
-      get {
-        bool isAllowed = _CapturePermissionState == AudioCapturePermissionState.Granted;
 #if UNITY_EDITOR
-        //Force to true for editor
-        isAllowed = true;
-#endif
-        return isAllowed;
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        _Instance._CurrentStateData.isVCEnabled = enabledStatus;
       }
-    }
-    private AudioCapturePermissionState _CapturePermissionState;
-    private void OnMicrophoneAuthorizationStatusUpdate(StateData stateData) {
-      _CapturePermissionState = stateData.capturePermissionState;
+#endif
+      RequestCurrentStateData();
     }
 
+#if UNITY_EDITOR
+    public static void MockSetMicPermissions(AudioCapturePermissionState newState) {
+      _Instance._CurrentStateData.capturePermissionState = newState;
+      RequestCurrentStateData();
+    }
+#endif
   }
 }

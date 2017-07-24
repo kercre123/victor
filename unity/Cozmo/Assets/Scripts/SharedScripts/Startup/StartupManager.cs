@@ -458,12 +458,12 @@ public class StartupManager : MonoBehaviour {
   private void AddComponents() {
     // Add managers to this object here
     gameObject.AddComponent<ObjectTagRegistryManager>();
+    gameObject.AddComponent<Anki.Cozmo.VoiceCommand.VoiceCommandManager>();
 
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.InitInventory();
 
-    Anki.Cozmo.VoiceCommand.VoiceCommandManager.CreateInstance();
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
   }
 

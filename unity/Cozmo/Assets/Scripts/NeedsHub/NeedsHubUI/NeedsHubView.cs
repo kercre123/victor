@@ -1,7 +1,5 @@
 using Anki.Cozmo;
-using Anki.Cozmo.VoiceCommand;
 using Cozmo.Energy.UI;
-using Cozmo.Play.UI;
 using Cozmo.Repair.UI;
 using Cozmo.UI;
 using DG.Tweening;
@@ -22,12 +20,6 @@ namespace Cozmo.Needs.UI {
     private CozmoButton _SettingsButton;
 
     [SerializeField]
-    private CozmoButton _VoiceSettingsButton;
-
-    [SerializeField]
-    private CozmoButton _VoiceSettingsOffButton;
-
-    [SerializeField]
     private CozmoButton _SparksButton;
 
     [SerializeField]
@@ -45,10 +37,6 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private SettingsModal _SettingsModalPrefab;
     private SettingsModal _SettingsModalInstance;
-
-    [SerializeField]
-    private VoiceSettingsModal _VoiceSettingsModalPrefab;
-    private VoiceSettingsModal _VoiceSettingsModalInstance;
 
     [SerializeField]
     private BaseModal _HelpTipsModalPrefab;
@@ -85,14 +73,9 @@ namespace Cozmo.Needs.UI {
     }
 
     private void Start() {
-      VoiceCommandManager.Instance.StateDataCallback += HandleMicrophoneAuthorizationStatusUpdate;
-      VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
-
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
-      _VoiceSettingsButton.Initialize(HandleVoiceSettingsButton, "voice_settings_button", DASEventDialogName);
-      _VoiceSettingsOffButton.Initialize(HandleVoiceSettingsButton, "voice_settings_button_off", DASEventDialogName);
       _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
 
       _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
@@ -167,23 +150,6 @@ namespace Cozmo.Needs.UI {
     private void HandleSettingsModalCreated(BaseModal newModal) {
       _SettingsModalInstance = (SettingsModal)newModal;
       _SettingsModalInstance.Initialize(this);
-    }
-
-    private void HandleVoiceSettingsButton() {
-      UIManager.OpenModal(_VoiceSettingsModalPrefab, new ModalPriorityData(), HandleVoiceSettingsModalCreated);
-    }
-
-    private void HandleMicrophoneAuthorizationStatusUpdate(StateData stateData) {
-      bool isEnabled = (stateData.capturePermissionState == AudioCapturePermissionState.Granted);
-      if (_VoiceSettingsButton != null) {
-        _VoiceSettingsButton.gameObject.SetActive(isEnabled);
-        _VoiceSettingsOffButton.gameObject.SetActive(!isEnabled);
-      }
-    }
-
-    private void HandleVoiceSettingsModalCreated(BaseModal newModal) {
-      _VoiceSettingsModalInstance = (VoiceSettingsModal)newModal;
-      _VoiceSettingsModalInstance.InitializeVoiceSettingsModal();
     }
 
     private void HandleCozmoOverfed() {

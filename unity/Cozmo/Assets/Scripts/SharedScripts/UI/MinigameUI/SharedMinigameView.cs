@@ -874,7 +874,6 @@ namespace Cozmo {
         VoiceCommandManager.SendVoiceCommandEvent<ChangeContext>(
           Singleton<ChangeContext>.Instance.Initialize(newContext));
 
-
         _inContinueContext = shouldAllowContinueVC;
       }
 

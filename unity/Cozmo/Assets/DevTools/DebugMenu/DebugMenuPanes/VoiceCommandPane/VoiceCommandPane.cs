@@ -12,6 +12,9 @@ namespace Cozmo {
     private Button _ToggleEnabledButton;
 
     [SerializeField]
+    private Dropdown _MockMicPermissionDropdown;
+
+    [SerializeField]
     private Text _EnabledStatusText;
 
     [SerializeField]
@@ -54,13 +57,32 @@ namespace Cozmo {
       _RecordAudioClipButton.onClick.AddListener(OnRecordAudioClipButton);
 
       VoiceCommandManager.Instance.StateDataCallback += UpdateStateData;
-      VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
+      VoiceCommandManager.RequestCurrentStateData();
 
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleIgnoreMicInput);
       GetDebugConsoleVarMessage initializedGetMessage = Singleton<GetDebugConsoleVarMessage>.Instance.Initialize(_kIgnoreMicKey);
       RobotEngineManager.Instance.Message.Initialize(initializedGetMessage);
       RobotEngineManager.Instance.SendMessage();
       PopulateOptions();
+
+#if UNITY_EDITOR
+      _MockMicPermissionDropdown.gameObject.SetActive(RobotEngineManager.Instance.RobotConnectionType
+                                                        == RobotEngineManager.ConnectionType.Mock);
+      List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
+      options.Add(new Dropdown.OptionData(AudioCapturePermissionState.Unknown.ToString()));
+      options.Add(new Dropdown.OptionData(AudioCapturePermissionState.Granted.ToString()));
+      options.Add(new Dropdown.OptionData(AudioCapturePermissionState.DeniedAllowRetry.ToString()));
+      options.Add(new Dropdown.OptionData(AudioCapturePermissionState.DeniedNoRetry.ToString()));
+      _MockMicPermissionDropdown.options = options;
+      _MockMicPermissionDropdown.value = (int)VoiceCommandManager.Instance.CurrentStateData.capturePermissionState;
+
+      _MockMicPermissionDropdown.onValueChanged.AddListener((int index) => {
+        VoiceCommandManager.MockSetMicPermissions(
+          (AudioCapturePermissionState)System.Enum.Parse(typeof(AudioCapturePermissionState), options[index].text));
+      });
+#else
+      _MockMicPermissionDropdown.gameObject.SetActive(false);
+#endif
     }
 
     void OnDestroy() {
@@ -85,7 +107,7 @@ namespace Cozmo {
     }
 
     private void OnToggleButton() {
-      VoiceCommandManager.SetVoiceCommandEnabled(!_IsEnabled);
+      VoiceCommandManager.SetVoiceCommandEnabledInApp(!_IsEnabled);
     }
 
     private void OnMicIgnoredToggle(bool newValue) {
@@ -93,7 +115,7 @@ namespace Cozmo {
     }
 
     private void OnHearVoiceCommandButton() {
-      IssueVoiceCommand(GetSelectedVoiceCommand ());
+      IssueVoiceCommand(GetSelectedVoiceCommand());
     }
 
     private void OnHeyCozmoButton() {
@@ -111,7 +133,7 @@ namespace Cozmo {
     private VoiceCommandType GetSelectedVoiceCommand() {
       return (VoiceCommandType)System.Enum.Parse(typeof(VoiceCommandType), _VoiceCommandSelection.options[_VoiceCommandSelection.value].text);
     }
-      
+
     private void HandleIgnoreMicInput(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage message) {
       if (message.varName == _kIgnoreMicKey && message.success) {
         _ToggleMicIgnored.isOn = message.varValue.varBool == 0 ? false : true;
@@ -125,18 +147,15 @@ namespace Cozmo {
 
       _StatusExplanationText.text = "";
       switch (stateData.capturePermissionState) {
-      case AudioCapturePermissionState.DeniedAllowRetry:
-        {
+      case AudioCapturePermissionState.DeniedAllowRetry: {
           _StatusExplanationText.text = _DeniedAllowRetryExplanation;
           break;
         }
-      case AudioCapturePermissionState.DeniedNoRetry:
-        {
+      case AudioCapturePermissionState.DeniedNoRetry: {
           _StatusExplanationText.text = _DeniedNoRetryExplanation;
           break;
         }
-      default:
-        {
+      default: {
           break;
         }
       }

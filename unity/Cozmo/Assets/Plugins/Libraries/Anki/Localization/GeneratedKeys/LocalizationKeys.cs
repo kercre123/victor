@@ -612,6 +612,8 @@ public static class LocalizationKeys {
   public const string kNeedsFreeplaySparksRewardRollACube = "needs.FreeplaySparksReward.RollACube";
   public const string kNeedsFreeplaySparksRewardStackCube = "needs.FreeplaySparksReward.StackCube";
   public const string kNeedsFreeplaySparksRewardWorkout = "needs.FreeplaySparksReward.Workout";
+  public const string kNeedsFreeplaySparksRewardGuardDogWin = "needs.FreeplaySparksReward.GuardDogWin";
+  public const string kNeedsFreeplaySparksRewardGuardDogLose = "needs.FreeplaySparksReward.GuardDogLose";
 
   public const string kNeedsFeedingDetailsOverfedHiccupsTitle = "needs.FeedingOverfedHiccups.Title";
   public const string kNeedsFeedingDetailsOverfedHiccupsDescription = "needs.FeedingOverfedHiccups.Description";
@@ -992,6 +994,7 @@ public static class LocalizationKeys {
   #region VoiceCommandStrings
 
   public const string kVoiceCommandsTutorialTextEnableMicPrePrompt = "voiceCommands.tutorialText.EnableMicPrePrompt";
+  public const string kVoiceCommandsTutorialTextPrivacyDisclaimer = "voiceCommands.tutorialText.PrivacyDisclaimer";
   public const string kVoiceCommandsTutorialTextEnableMicPrompt_primary = "voiceCommands.tutorialText.EnableMicPrompt_primary";
   public const string kVoiceCommandsTutorialTextEnableMicPrompt_secondary = "voiceCommands.tutorialText.EnableMicPrompt_secondary";
   public const string kVoiceCommandsTutorialTextMicCheck = "voiceCommands.tutorialText.MicCheck";

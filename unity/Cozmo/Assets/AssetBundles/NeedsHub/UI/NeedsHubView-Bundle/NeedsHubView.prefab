@@ -897,6 +897,7 @@ GameObject:
   - component: {fileID: 114471098088570178}
   - component: {fileID: 225584830591259054}
   - component: {fileID: 114741899832926054}
+  - component: {fileID: 114846919980675454}
   m_Layer: 5
   m_Name: NeedsHubView
   m_TagString: Untagged
@@ -3017,16 +3018,12 @@ MonoBehaviour:
         easing: 0
   _ActivitiesButton: {fileID: 114446962315980540}
   _SettingsButton: {fileID: 114273081088830324}
-  _VoiceSettingsButton: {fileID: 114230418206486318}
-  _VoiceSettingsOffButton: {fileID: 114371206341503252}
   _SparksButton: {fileID: 114407009027686870}
   _HelpButton: {fileID: 114905935062576232}
   _RepairButton: {fileID: 114743978935695850}
   _FeedButton: {fileID: 114261238547696976}
   _StarBar: {fileID: 114566856538031404}
   _SettingsModalPrefab: {fileID: 114595580861209808, guid: 5ffefb52ea4cf4db7924a2c00b6d5ac7,
-    type: 2}
-  _VoiceSettingsModalPrefab: {fileID: 114008808968037536, guid: 9240efc66c8b1405c836e16e120c6eed,
     type: 2}
   _HelpTipsModalPrefab: {fileID: 11489240, guid: e8253b38997414ae39d897571e6d7ed8,
     type: 2}
@@ -3728,6 +3725,24 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114846919980675454
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1715304759342780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eb16111cdc514d7ab3972da42090e7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _NeedsHubView: {fileID: 114471098088570178}
+  _VoiceSettingsButton: {fileID: 114230418206486318}
+  _VoiceSettingsOffButton: {fileID: 114371206341503252}
+  _VoiceSettingsModalPrefab: {fileID: 114008808968037536, guid: 9240efc66c8b1405c836e16e120c6eed,
+    type: 2}
+  _VoicePrePromptModalPrefab: {fileID: 114760965702307480, guid: fb271e783c2744dbab85751388ff5e22,
+    type: 2}
 --- !u!114 &114849658332472422
 MonoBehaviour:
   m_ObjectHideFlags: 1

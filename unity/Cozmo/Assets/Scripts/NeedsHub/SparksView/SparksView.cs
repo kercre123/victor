@@ -93,7 +93,9 @@ namespace Cozmo.Needs.Sparks.UI {
       playerInventory.ItemCountUpdated += HandleItemValueChanged;
 
       VoiceCommandManager.Instance.StateDataCallback += UpdateStateData;
-      VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
+      VoiceCommandManager.RequestCurrentStateData();
+      _AskForGameMicIcon.gameObject.SetActive(false);
+      _AskForTrickMicIcon.gameObject.SetActive(false);
 
       RequestGameManager.Instance.OnRequestGameAlertCreated += ReenableTouches;
 
@@ -246,8 +248,8 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void UpdateStateData(StateData stateData) {
-      _AskForTrickMicIcon.gameObject.SetActive(stateData.isVCEnabled);
-      _AskForGameMicIcon.gameObject.SetActive(stateData.isVCEnabled);
+      _AskForTrickMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
+      _AskForGameMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
     }
 
     internal void HideFreeplayCard(bool instant = false) {

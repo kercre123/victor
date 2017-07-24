@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Anki.Cozmo.VoiceCommand {
   public class VoiceSettingsModal : BaseModal {
-
     [SerializeField]
     private CozmoText _StatusLabel;
 
@@ -36,12 +35,13 @@ namespace Anki.Cozmo.VoiceCommand {
     private GameObject _VCDisabledShelf;
 
     [SerializeField]
-    private BaseModal _VCLearnCommandsModalPrefab;
+    private GameObject _VCDisabledArrow;
+
+    [SerializeField]
+    private VoiceLearnCommandsModal _VCLearnCommandsModalPrefab;
 
     [SerializeField]
     private CozmoButton _LearnCommandsButton;
-
-    private AudioCapturePermissionState _CurrentAudioCapturePermissionState;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
   private AndroidJavaObject _PermissionUtil;
@@ -56,11 +56,11 @@ namespace Anki.Cozmo.VoiceCommand {
       _AppSettingsButton.Initialize(HandleAppSettingsClicked, "open_app_settings_button", DASEventDialogName);
       _LearnCommandsButton.Initialize(HandleLearnCommandsButtonClicked, "open_learn_commands_button", DASEventDialogName);
 
-      _CurrentAudioCapturePermissionState = AudioCapturePermissionState.Unknown;
-      VoiceCommandManager.Instance.StateDataCallback += OnMicrophoneAuthorizationStatusUpdate;
-      VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
-
       UpdateStatus();
+      _VCDisabledArrow.SetActive(false);
+
+      VoiceCommandManager.Instance.StateDataCallback += OnMicrophoneAuthorizationStatusUpdate;
+      VoiceCommandManager.RequestCurrentStateData();
     }
 
     protected override void CleanUp() {
@@ -69,17 +69,22 @@ namespace Anki.Cozmo.VoiceCommand {
     }
 
     private void OnMicrophoneAuthorizationStatusUpdate(StateData stateData) {
-      _CurrentAudioCapturePermissionState = stateData.capturePermissionState;
       UpdateStatus();
     }
 
     private void HandleSwitchButtonClicked() {
-      VoiceCommandManager.SetVoiceCommandEnabled(!IsMicrophoneEnabled);
-      UpdateStatus();
+      // Emulate an "App Settings" press if mic permission not available
+      if (!VoiceCommandManager.IsMicrophoneAuthorized) {
+        HandleAppSettingsClicked();
+      }
+      else {
+        VoiceCommandManager.SetVoiceCommandEnabledInApp(!VoiceCommandManager.IsVoiceCommandsEnabledInApp);
+        UpdateStatus();
+      }
     }
 
     private void UpdateStatus() {
-      if (IsMicrophoneAuthorizationDenied) {
+      if (!VoiceCommandManager.IsMicrophoneAuthorized) {
         _VCEnabledDescription.SetActive(false);
         _VCDisabledDescription.SetActive(true);
 
@@ -89,9 +94,10 @@ namespace Anki.Cozmo.VoiceCommand {
         _AuthorizationNeededShelf.SetActive(true);
         _LearnCommandsShelf.SetActive(false);
         _VCDisabledShelf.SetActive(false);
+        _VCDisabledArrow.SetActive(false);
       }
       else {
-        if (IsMicrophoneEnabled) {
+        if (VoiceCommandManager.IsVoiceCommandsEnabledInApp) {
           _VCEnabledDescription.SetActive(true);
           _VCDisabledDescription.SetActive(false);
 
@@ -101,6 +107,7 @@ namespace Anki.Cozmo.VoiceCommand {
           _AuthorizationNeededShelf.SetActive(false);
           _LearnCommandsShelf.SetActive(true);
           _VCDisabledShelf.SetActive(false);
+          _VCDisabledArrow.SetActive(false);
         }
         else {
           _VCEnabledDescription.SetActive(false);
@@ -112,6 +119,7 @@ namespace Anki.Cozmo.VoiceCommand {
           _AuthorizationNeededShelf.SetActive(false);
           _LearnCommandsShelf.SetActive(false);
           _VCDisabledShelf.SetActive(true);
+          _VCDisabledArrow.SetActive(true);
         }
       }
     }
@@ -130,30 +138,6 @@ namespace Anki.Cozmo.VoiceCommand {
 
     private void HandleLearnCommandsButtonClicked() {
       UIManager.OpenModal(_VCLearnCommandsModalPrefab, ModalPriorityData.CreateSlightlyHigherData(PriorityData), null);
-    }
-
-    private bool IsMicrophoneAuthorized {
-      get {
-        return _CurrentAudioCapturePermissionState == AudioCapturePermissionState.Granted;
-      }
-    }
-
-    private bool IsMicrophoneAuthorizationDenied {
-      get {
-        if (_CurrentAudioCapturePermissionState == AudioCapturePermissionState.DeniedNoRetry ||
-           _CurrentAudioCapturePermissionState == AudioCapturePermissionState.DeniedAllowRetry) {
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
-    }
-
-    private bool IsMicrophoneEnabled {
-      get {
-        return DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState == VoiceCommandEnabledState.Enabled;
-      }
     }
   }
 }

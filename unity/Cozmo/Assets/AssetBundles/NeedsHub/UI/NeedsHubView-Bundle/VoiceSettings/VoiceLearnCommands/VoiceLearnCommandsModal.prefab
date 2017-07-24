@@ -154,7 +154,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224256456393887600}
   - component: {fileID: 222396288610631878}
-  - component: {fileID: 114097908213635048}
+  - component: {fileID: 114664349568333934}
   m_Layer: 5
   m_Name: VoiceLearnCommandsModal
   m_TagString: Untagged
@@ -192,35 +192,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
---- !u!114 &114097908213635048
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1870754874844740}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3800d861de90b4d079baa19b48ba7d59, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _DASEventDialogName: voice_learn_commands_modal
-  _OpenAudioEvent:
-    _Event: Play__Ui__Window_Open
-    _EventType: Ui
-  _AlphaController: {fileID: 0}
-  _MoveTweenSettings:
-    staggerType: 0
-    uniformStagger_sec: 0
-    targets: []
-  _FadeTweenSettings:
-    staggerType: 0
-    uniformStagger_sec: 0
-    targets: []
-  _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 0}
-  _OptionalCloseDialogCozmoButton: {fileID: 114880551231734468}
-  _PreventForceClose: 0
-  DimBackground: 1
 --- !u!114 &114181605475069072
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -232,12 +203,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6579bf731e26496da1ac1e4e45051b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SlidePrefabs:
-  - {fileID: 1069862297385294, guid: d5d7c37dae33f4a39aaded39e9340033, type: 2}
-  - {fileID: 1681076049143474, guid: cf93c82ce61ba4eda81d185dba55d2bc, type: 2}
-  - {fileID: 1608190428333208, guid: b38e8f5dceb5941ffb50e0160bacb9f5, type: 2}
-  - {fileID: 1177537763673900, guid: bac75a20051024a209b5dedff7b5b833, type: 2}
-  - {fileID: 1424227730898508, guid: b465596c5b3444d19a7273d45b5fd4b2, type: 2}
+  _SlidePrefabs: []
   _SwipeContainer: {fileID: 224058431325785268}
   _PageIndicatorPrefab: {fileID: 11435474, guid: 570bebd44cb114622b6d8fb39a91247a,
     type: 2}
@@ -384,8 +350,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#voiceCommands.learnCommands.LearnVoiceCommandTitle'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
-  m_sharedMaterial: {fileID: 2134148, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -413,7 +379,7 @@ MonoBehaviour:
   m_fontSizeBase: 120
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 108
+  m_fontSizeMin: 98
   m_fontSizeMax: 108
   m_fontStyle: 0
   m_textAlignment: 516
@@ -477,7 +443,7 @@ MonoBehaviour:
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
   _LinkedComponentId: Helpscreen_Text_Large
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 0
+  _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
@@ -545,6 +511,74 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114664349568333934
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1870754874844740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e991c188844ec406791f12f92fdb4259, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _DASEventDialogName: voice_learn_commands_modal
+  _OpenAudioEvent:
+    _Event: Play__Ui__Window_Open
+    _EventType: Ui
+  _AlphaController: {fileID: 0}
+  _MoveTweenSettings:
+    staggerType: 0
+    uniformStagger_sec: 0
+    targets: []
+  _FadeTweenSettings:
+    staggerType: 0
+    uniformStagger_sec: 0
+    targets: []
+  _CloseDialogOnTapOutside: 0
+  _OptionalCloseDialogButton: {fileID: 0}
+  _OptionalCloseDialogCozmoButton: {fileID: 114880551231734468}
+  _PreventForceClose: 0
+  DimBackground: 1
+  _SwipeSlidesScript: {fileID: 114181605475069072}
+  _SlidePrefabsBeforeCommands: []
+  _VoiceCommandListSlidePrefab: {fileID: 114400682234839312, guid: d5d7c37dae33f4a39aaded39e9340033,
+    type: 2}
+  _SlidePrefabsAfterCommands:
+  - {fileID: 1608190428333208, guid: b38e8f5dceb5941ffb50e0160bacb9f5, type: 2}
+  - {fileID: 1177537763673900, guid: bac75a20051024a209b5dedff7b5b833, type: 2}
+  - {fileID: 1424227730898508, guid: b465596c5b3444d19a7273d45b5fd4b2, type: 2}
+  _VoiceCommandData:
+  - _CommandLocKey: voiceCommands.learnCommands.ComeHere_command
+    _DescriptionLocKey: voiceCommands.learnCommands.ComeHere_desc
+    _PrereqUnlockId:
+      _EnumValueAsString: Invalid
+      _EnumValue: 0
+  - _CommandLocKey: voiceCommands.learnCommands.GoToSleep_command
+    _DescriptionLocKey: voiceCommands.learnCommands.GoToSleep_desc
+    _PrereqUnlockId:
+      _EnumValueAsString: Invalid
+      _EnumValue: 0
+  - _CommandLocKey: voiceCommands.learnCommands.HowAreYouDoing_command
+    _DescriptionLocKey: voiceCommands.learnCommands.HowAreYouDoing_desc
+    _PrereqUnlockId:
+      _EnumValueAsString: Invalid
+      _EnumValue: 0
+  - _CommandLocKey: voiceCommands.learnCommands.PeekABoo_command
+    _DescriptionLocKey: voiceCommands.learnCommands.PeekABoo_desc
+    _PrereqUnlockId:
+      _EnumValueAsString: PeekABoo
+      _EnumValue: 37
+  - _CommandLocKey: voiceCommands.learnCommands.FistBump_command
+    _DescriptionLocKey: voiceCommands.learnCommands.FistBump_desc
+    _PrereqUnlockId:
+      _EnumValueAsString: FistBump
+      _EnumValue: 35
+  - _CommandLocKey: voiceCommands.learnCommands.LookDown_command
+    _DescriptionLocKey: voiceCommands.learnCommands.LookDown_desc
+    _PrereqUnlockId:
+      _EnumValueAsString: Invalid
+      _EnumValue: 0
 --- !u!114 &114758277980840926
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -658,6 +692,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Close
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114194229543911068}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}

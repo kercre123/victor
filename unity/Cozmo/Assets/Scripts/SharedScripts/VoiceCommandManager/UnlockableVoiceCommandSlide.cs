@@ -1,23 +1,11 @@
 ﻿using UnityEngine;
 
 namespace Anki.Cozmo.VoiceCommand {
-  [System.Serializable]
-  public class VoiceCommandData {
-    [SerializeField]
-    private string _CommandLocKey;
-    public string CommandLocKey { get { return _CommandLocKey; } }
-
-    [SerializeField]
-    private string _DescriptionLocKey;
-    public string DescriptionLocKey { get { return _DescriptionLocKey; } }
-
-    [SerializeField]
-    private UnlockableInfo.SerializableUnlockIds _PrereqUnlockId;
-    public UnlockId PrereqUnlockId { get { return _PrereqUnlockId.Value; } }
-  }
 
   public class UnlockableVoiceCommandSlide : MonoBehaviour {
     private const int _kNumCellsInRow = 2;
+    private const int _kNumRowsPerSlide = 2;
+    public const int kMaxCellsPerSlide = _kNumCellsInRow * _kNumRowsPerSlide;
 
     [SerializeField]
     private VoiceCommandCell _VoiceCommandCellPrefab;
@@ -28,18 +16,15 @@ namespace Anki.Cozmo.VoiceCommand {
     [SerializeField]
     private Transform _BottomRowContainer;
 
-    [SerializeField]
-    private VoiceCommandData[] _VoiceCommandData;
-
-    private void Start() {
-      if (_VoiceCommandData.Length <= 0 || _VoiceCommandData.Length > _kNumCellsInRow * 2) {
+    public void Initialize(VoiceCommandData[] voiceCommandData) {
+      if (voiceCommandData.Length <= 0 || voiceCommandData.Length > kMaxCellsPerSlide) {
         DAS.Error("UnlockableVoiceCommandSlide.DataValidation",
-                  string.Format("_VoiceCommandData must have from 1-{0} elements!", _kNumCellsInRow * 2));
+                  string.Format("voiceCommandData must have from 1-{0} elements!", kMaxCellsPerSlide));
       }
 
       int numCellsCreated = 0;
-      for (int i = 0; i < _VoiceCommandData.Length; i++) {
-        VoiceCommandData currentData = _VoiceCommandData[i];
+      for (int i = 0; i < voiceCommandData.Length; i++) {
+        VoiceCommandData currentData = voiceCommandData[i];
         if (currentData.PrereqUnlockId == UnlockId.Invalid
             || UnlockablesManager.Instance.IsUnlocked(currentData.PrereqUnlockId)) {
           Transform cellParent = (numCellsCreated < _kNumCellsInRow) ? _TopRowContainer : _BottomRowContainer;

@@ -39,12 +39,18 @@ public class SwipeSlides : MonoBehaviour {
   private RectTransform _RectTransform;
 
   private void Start() {
+    if (_SlidePrefabs.Length > 0) {
+      Initialize(_SlidePrefabs);
+    }
+  }
+
+  public void Initialize(GameObject[] slidePrefabs) {
     _RectTransform = GetComponent<RectTransform>();
 
     //_ThresholdSpeed = GetComponent<RectTransform>().rect.width * 0.5f;
 
-    for (int i = 0; i < _SlidePrefabs.Length; ++i) {
-      GameObject slideInstance = GameObject.Instantiate(_SlidePrefabs[i]);
+    for (int i = 0; i < slidePrefabs.Length; ++i) {
+      GameObject slideInstance = GameObject.Instantiate(slidePrefabs[i]);
       slideInstance.transform.SetParent(_SwipeContainer, false);
       slideInstance.transform.localPosition = new Vector3(i * GetComponent<RectTransform>().rect.width, slideInstance.transform.localPosition.y, slideInstance.transform.localPosition.z);
       _SlideInstances.Add(slideInstance);
@@ -55,14 +61,18 @@ public class SwipeSlides : MonoBehaviour {
 
     _PageIndicatorInstance = GameObject.Instantiate(_PageIndicatorPrefab.gameObject).GetComponent<SwipePageIndicator>();
     _PageIndicatorInstance.transform.SetParent(_SwipeContainerMask.transform, false);
-    _PageIndicatorInstance.SetPageCount(_SlidePrefabs.Length);
+    _PageIndicatorInstance.SetPageCount(slidePrefabs.Length);
     _PageIndicatorInstance.SetCurrentPage(_CurrentIndex);
     _PageIndicatorInstance.OnNextButton += TransitionRight;
     _PageIndicatorInstance.OnBackButton += TransitionLeft;
   }
 
+  public GameObject GetSlideInstanceAt(int index) {
+    return _SlideInstances[index];
+  }
+
   public void GoToIndex(int index) {
-    if (index < 0 || index >= _SlidePrefabs.Length) {
+    if (index < 0 || index >= _SlideInstances.Count) {
       DAS.Error("SwipeSlides.GoToIndex", "out of bounds: " + index);
       return;
     }
@@ -96,7 +106,7 @@ public class SwipeSlides : MonoBehaviour {
   }
 
   private void TransitionRight() {
-    if (_CurrentIndex >= _SlidePrefabs.Length - 1 || _Transitioning) {
+    if (_CurrentIndex >= _SlideInstances.Count - 1 || _Transitioning) {
       return;
     }
     _CurrentIndex++;

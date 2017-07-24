@@ -21,6 +21,9 @@
   "voiceCommands.tutorialText.EnableMicPrePrompt": {
     "translation": "Would you like to enable your microphone so you can talk to Cozmo?"
   },
+  "voiceCommands.tutorialText.PrivacyDisclaimer": {
+    "translation": "Your privacy is important to us.\nMicrophone audio is never stored or transmitted."
+  },
   "voiceCommands.tutorialText.EnableMicPrompt_primary": {
     "translation": "Cozmo Would Like to Access the Microphone"
   },
