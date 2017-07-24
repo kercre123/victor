@@ -14,6 +14,7 @@ enum uint_8 ActivityType {
   Feeding,
   Freeplay,
   GatherCubes,
+  PlaypenTest,
   Socialize,
   Sparked,
   VoiceCommand,
@@ -37,6 +38,7 @@ enum uint_8 ActivityID {
   NeedsSevereLowPlayGetIn,
   NothingToDo,
   PlayAlone,
+  PlaypenTest,
   PlayWithHumans,
   PutDownDispatch,
   Selection,
@@ -72,6 +74,7 @@ enum uint_8 ActivityStrategy {
 enum uint_8 HighLevelActivity {
   Feeding,
   Freeplay,
+  PlaypenTest,
   Selection,
   MeetCozmoFindFaces,
   VoiceCommand,

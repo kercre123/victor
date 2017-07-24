@@ -3182,7 +3182,6 @@ namespace Cozmo {
     // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
     // no matter how we return from this function
     Util::CleanupHelper disableComputingCalibration([this,&calibration]() {
-      PRINT_NAMED_WARNING("", "here");
       _currentResult.cameraCalibrations.push_back(calibration);
       this->EnableMode(VisionMode::ComputingCalibration, false);
       _isCalibrating = false;
@@ -3202,16 +3201,16 @@ namespace Cozmo {
       const f32 halfMarkerSize_mm = CALIB_MARKER_SIZE_MM / 2.f;
       const f32 halfTargetFace_mm = CALIB_TARGET_FACE_SIZE_MM / 2.f;
       const Anki::Quad3f originsFrontFace({
-        {-halfMarkerSize_mm, -halfTargetFace_mm, halfMarkerSize_mm},
+        {-halfMarkerSize_mm, -halfTargetFace_mm,  halfMarkerSize_mm},
         {-halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm},
-        {halfMarkerSize_mm, -halfTargetFace_mm, halfMarkerSize_mm},
-        {halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm}
+        { halfMarkerSize_mm, -halfTargetFace_mm,  halfMarkerSize_mm},
+        { halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm}
       });
       
       const Anki::Quad3f originsLeftFace({
-        {-halfTargetFace_mm, halfMarkerSize_mm, halfMarkerSize_mm},
-        {-halfTargetFace_mm, halfMarkerSize_mm, -halfMarkerSize_mm},
-        {-halfTargetFace_mm, -halfMarkerSize_mm, halfMarkerSize_mm},
+        {-halfTargetFace_mm,  halfMarkerSize_mm,  halfMarkerSize_mm},
+        {-halfTargetFace_mm,  halfMarkerSize_mm, -halfMarkerSize_mm},
+        {-halfTargetFace_mm, -halfMarkerSize_mm,  halfMarkerSize_mm},
         {-halfTargetFace_mm, -halfMarkerSize_mm, -halfMarkerSize_mm}
       });
       
@@ -3235,68 +3234,68 @@ namespace Cozmo {
       // Bottom row of cubes
       _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT] = GetCoordsForFace(true, 0, 0, 0);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT] = GetCoordsForFace(false, 1, -1, 0);
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_FRONT] = GetCoordsForFace(true, 1, -1, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(false, 1, -1, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_FRONT]  = GetCoordsForFace(true, 1, -1, 0);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(false, 2, -2, 0);
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK] = GetCoordsForFace(true, 2, -2, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(false, 2, -2, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK]   = GetCoordsForFace(true, 2, -2, 0);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP] = GetCoordsForFace(false, 3, -3, 0);
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_RIGHT] = GetCoordsForFace(true, 3, -3, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP]    = GetCoordsForFace(false, 3, -3, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_RIGHT]  = GetCoordsForFace(true, 3, -3, 0);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT] = GetCoordsForFace(false, 4, -4, 0);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT]   = GetCoordsForFace(false, 4, -4, 0);
       
       // Second row of cubes
-      _markerTo3dCoords[Anki::Vision::MARKER_ARROW] = GetCoordsForFace(true, 0, 1, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_ARROW]             = GetCoordsForFace(true, 0, 1, 1);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS] = GetCoordsForFace(true, 1, 0, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS]     = GetCoordsForFace(true, 1, 0, 1);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5DIAMONDS] = GetCoordsForFace(false, 2, -1, 1);
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS] = GetCoordsForFace(true, 2, -1, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5DIAMONDS]     = GetCoordsForFace(false, 2, -1, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS]     = GetCoordsForFace(true, 2, -1, 1);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS] = GetCoordsForFace(false, 3, -2, 1);
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS] = GetCoordsForFace(true, 3, -2, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 3, -2, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS]     = GetCoordsForFace(true, 3, -2, 1);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5CIRCLES] = GetCoordsForFace(false, 4, -3, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5CIRCLES]      = GetCoordsForFace(false, 4, -3, 1);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES] = GetCoordsForFace(false, 5, -4, 1);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES]      = GetCoordsForFace(false, 5, -4, 1);
       
       // Third row of cubes
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS] = GetCoordsForFace(true, 0, 2, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS]     = GetCoordsForFace(true, 0, 2, 2);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES] = GetCoordsForFace(true, 1, 1, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES]      = GetCoordsForFace(true, 1, 1, 2);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT] = GetCoordsForFace(false, 2, 0, 2);
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(true, 2, 0, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT]  = GetCoordsForFace(false, 2, 0, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(true, 2, 0, 2);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_STAR5] = GetCoordsForFace(false, 3, -1, 2);
-      _markerTo3dCoords[Anki::Vision::MARKER_BULLSEYE2] = GetCoordsForFace(true, 3, -1, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_STAR5]             = GetCoordsForFace(false, 3, -1, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_BULLSEYE2]         = GetCoordsForFace(true, 3, -1, 2);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES] = GetCoordsForFace(false, 4, -2, 2);
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES] = GetCoordsForFace(true, 4, -2, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES]    = GetCoordsForFace(false, 4, -2, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES]    = GetCoordsForFace(true, 4, -2, 2);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES] = GetCoordsForFace(false, 5, -3, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 5, -3, 2);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS] = GetCoordsForFace(false, 6, -4, 2);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS]     = GetCoordsForFace(false, 6, -4, 2);
       
       // Fourth row of cubes
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES] = GetCoordsForFace(true, 0, 3, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(true, 0, 3, 3);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK] = GetCoordsForFace(true, 1, 2, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK]   = GetCoordsForFace(true, 1, 2, 3);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT] = GetCoordsForFace(true, 2, 1, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT]  = GetCoordsForFace(true, 2, 1, 3);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT] = GetCoordsForFace(false, 3, 0, 3);
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT] = GetCoordsForFace(true, 3, 0, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT]   = GetCoordsForFace(false, 3, 0, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT]  = GetCoordsForFace(true, 3, 0, 3);
       
       _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 4, -1, 3);
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK] = GetCoordsForFace(true, 4, -1, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK]   = GetCoordsForFace(true, 4, -1, 3);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP] = GetCoordsForFace(false, 5, -2, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP]    = GetCoordsForFace(false, 5, -2, 3);
       
       _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 6, -3, 3);
       
-      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES] = GetCoordsForFace(false, 7, -4, 3);
+      _markerTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(false, 7, -4, 3);
     }
     
     std::vector<cv::Vec2f> imgPts;
@@ -3383,11 +3382,11 @@ namespace Cozmo {
     
     ss.str(std::string());
     ss << cameraMatrix << std::endl;
-    PRINT_NAMED_WARNING("K", "%s", ss.str().c_str());
+    PRINT_NAMED_INFO("K", "%s", ss.str().c_str());
     
     ss.str(std::string());
     ss << distCoeffs << std::endl;
-    PRINT_NAMED_WARNING("D", "%s", ss.str().c_str());
+    PRINT_NAMED_INFO("D", "%s", ss.str().c_str());
     
     const f64* distCoeffs_data = distCoeffs[0];
     std::array<f32,NUM_RADIAL_DISTORTION_COEFFS> distCoeffsVec;

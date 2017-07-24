@@ -106,6 +106,8 @@ enum uint_8 FactoryTestResultCode {
   PARSE_HEADER_FAILED,
   ONE_POINT_ZERO_FIRMWARE,
 
+  // Victor specific error codes
+
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
   // ==== NB: Factory expects codes to be 0-99 so if you exceed 100 errors codes let them know! ===

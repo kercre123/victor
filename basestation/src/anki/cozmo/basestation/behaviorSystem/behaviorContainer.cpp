@@ -38,6 +38,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorLiftLoadTest.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
@@ -487,6 +488,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::PlayAnimOnNeedsChange:
     {
       newBehavior = IBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenCameraCalibration:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenCameraCalibration(robot, config));
       break;
     }
     
