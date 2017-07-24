@@ -84,7 +84,6 @@ private:
     TimeStamp_t  startTime_ms;
     TimeStamp_t  streamTime_ms;
     bool         isPersistent;
-    bool         sentOnce;
     AnimationTag tag;
     std::string  name;
   };
