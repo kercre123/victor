@@ -105,6 +105,9 @@ private:
   
   // running count of the number of times we've observed motion without pouncing
   int _motionObservedNoPounceCount;
+
+  // set if we think a human has interacted, to decide whether to register needs action completed
+  bool  _humanInteracted;
   
   // modeled off of startActing callbacks
   template<typename T>
