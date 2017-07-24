@@ -237,7 +237,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // Initialize progression
   _progressionUnlockComponent->Init();
   
-  _inventoryComponent->Init();
+  _inventoryComponent->Init(_context->GetDataLoader()->GetInventoryConfig());
 
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());

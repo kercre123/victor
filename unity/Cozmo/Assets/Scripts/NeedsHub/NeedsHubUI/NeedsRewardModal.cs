@@ -112,6 +112,9 @@ namespace Cozmo.Needs.UI {
     private void UpdateRewardDisplay() {
       _SparkRewardContainer.SetActive(false);
       _UnlockRewardContainer.SetActive(false);
+      
+      // reset reward text color in case it was changed by last reward
+      _RewardText.color = UIColorPalette.NeutralTextColor;
 
       NeedsReward currentReward = _RewardsToDisplay[_CurrentUnlockRewardIndex];
       switch (currentReward.rewardType) {
@@ -147,8 +150,15 @@ namespace Cozmo.Needs.UI {
 
     private void DisplaySparkReward(NeedsReward currentReward) {
       _SparkRewardContainer.SetActive(true);
-      _RewardText.text = Localization.GetWithArgs(LocalizationKeys.kNeedsRewardsDialogSparksEarned);
-
+      
+      if (currentReward.inventoryIsFull) {
+        _RewardText.text = Localization.GetWithArgs(LocalizationKeys.kNeedsRewardsDialogSparksInventoryFull);
+        _RewardText.color = UIColorPalette.WarningTextColor;
+      }
+      else {
+        _RewardText.text = Localization.GetWithArgs(LocalizationKeys.kNeedsRewardsDialogSparksEarned);
+      }
+      
       int numSparksEarned = -1;
       int.TryParse(currentReward.data, out numSparksEarned);
       if (numSparksEarned != -1) {

@@ -90,13 +90,18 @@ public class NeedsPane : MonoBehaviour {
       StarLevelCompleted starLevelCompleted = new StarLevelCompleted();
       Anki.Cozmo.NeedsReward[] needsRewards = new Anki.Cozmo.NeedsReward[3];
       // Test one and two digit numbers
-      needsRewards[0] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Sparks, Random.Range(9, 11).ToString());
+      needsRewards[0] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Sparks,
+                                                   Random.Range(9, 11).ToString(),
+                                                   inventoryIsFull: false);
       // Test game and trick unlocks
       Anki.Cozmo.UnlockId newUnlock = (Random.Range(0f, 1f) > 0.5f)
         ? Anki.Cozmo.UnlockId.QuickTapGame : Anki.Cozmo.UnlockId.RollCube;
-      needsRewards[1] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Unlock, newUnlock.ToString());
+      needsRewards[1] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Unlock,
+                                                   newUnlock.ToString(),
+                                                   inventoryIsFull: false);
       needsRewards[2] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Song,
-                                                   Anki.Cozmo.UnlockId.Singing_TakeMeOutToTheBallgame.ToString());
+                                                   Anki.Cozmo.UnlockId.Singing_TakeMeOutToTheBallgame.ToString(),
+                                                   inventoryIsFull: false);
       starLevelCompleted.Initialize(1, 3, needsRewards);
       messageEngineToGame.StarLevelCompleted = starLevelCompleted;
       RobotEngineManager.Instance.MockCallback(messageEngineToGame);

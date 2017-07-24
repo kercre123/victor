@@ -793,6 +793,18 @@ void RobotDataLoader::LoadRobotConfigs()
     const std::string fileContents{Util::FileUtils::ReadFile(filename)};
     _context->GetFeatureGate()->Init(fileContents);
   }
+  
+  // Inventory config
+  {
+    static const std::string jsonFilename = "config/basestation/config/inventory_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _inventoryConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.InventoryConfigNotFound",
+                        "Inventory Config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

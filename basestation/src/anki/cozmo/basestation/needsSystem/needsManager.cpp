@@ -1572,7 +1572,8 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
           continue;
         }
 
-        const int sparksAdded = AwardSparks(_starRewardsConfig->GetTargetSparksTotalForLevel(level),
+        const int sparksSpaceRemaining = _robot->GetInventoryComponent().GetInventorySpaceRemaining(InventoryType::Sparks);
+        const int numAttemptedSparksAwarded = AwardSparks(_starRewardsConfig->GetTargetSparksTotalForLevel(level),
                                             _starRewardsConfig->GetMinSparksPctForLevel(level),
                                             _starRewardsConfig->GetMaxSparksPctForLevel(level),
                                             _starRewardsConfig->GetMinSparksForLevel(level),
@@ -1580,16 +1581,19 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
 
         rewards.push_back(rewardsThisLevel[rewardIndex]);
 
-        // Put the actual number of sparks awarded into the rewards data that we're about
-        // to send to the game, so game will know how many sparks were actually awarded
-        rewards.back().data = std::to_string(sparksAdded);
-
+        // Put the attempted number of sparks awarded into the rewards data that we're about
+        // to send to the game, so game will know how many sparks were attempted
+        rewards.back().data = std::to_string(numAttemptedSparksAwarded);
+        
+        rewards.back().inventoryIsFull = sparksSpaceRemaining != InventoryComponent::kInfinity
+                                         && sparksSpaceRemaining < numAttemptedSparksAwarded;
+        
         // DAS Event: "needs.level_sparks_awarded"
         // s_val: The number of sparks awarded
         // data: Which level was just unlocked
         Anki::Util::sEvent("needs.level_sparks_awarded",
                            {{DDATA, std::to_string(_needsState._curNeedsUnlockLevel).c_str()}},
-                           std::to_string(sparksAdded).c_str());
+                           std::to_string(numAttemptedSparksAwarded).c_str());
         break;
       }
       // Songs are treated exactly the same as any other unlock
