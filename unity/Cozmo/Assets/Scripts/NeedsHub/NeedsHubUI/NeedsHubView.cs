@@ -175,8 +175,10 @@ namespace Cozmo.Needs.UI {
 
     private void HandleMicrophoneAuthorizationStatusUpdate(StateData stateData) {
       bool isEnabled = (stateData.capturePermissionState == AudioCapturePermissionState.Granted);
-      _VoiceSettingsButton.gameObject.SetActive(isEnabled);
-      _VoiceSettingsOffButton.gameObject.SetActive(!isEnabled);
+      if (_VoiceSettingsButton != null) {
+        _VoiceSettingsButton.gameObject.SetActive(isEnabled);
+        _VoiceSettingsOffButton.gameObject.SetActive(!isEnabled);
+      }
     }
 
     private void HandleVoiceSettingsModalCreated(BaseModal newModal) {

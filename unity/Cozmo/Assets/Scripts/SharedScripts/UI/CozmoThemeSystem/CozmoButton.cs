@@ -335,6 +335,9 @@ namespace Cozmo.UI {
           _VoiceCommandIcon.SetActive(false);
         }
       }
+      else if (_VoiceCommandIcon != null) {
+        _VoiceCommandIcon.SetActive(false);
+      }
     }
 
     private bool DisableInteraction() {
