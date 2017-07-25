@@ -148,7 +148,7 @@
     "translation": "Privacy Policy"
   },
   "label.pressAndHoldInstruction": {
-    "translation": "PRESS AND HOLD {0} TO CONFIRM"
+    "translation": "Press and hold <b><color=#fe5641>{0}</color></b> to confirm."
   },
   "label.termsOfUse": {
     "translation": "Terms of Use"

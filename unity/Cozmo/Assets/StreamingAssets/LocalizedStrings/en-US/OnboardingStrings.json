@@ -151,6 +151,6 @@
     "translation": "<b>Cozmo needs to be fed.</b>\n\nWhen the blue bar is low, it means Cozmo is hungry. Tap the <b><color=#31EBFF>FEED</color></b> button."
   },
   "onboarding.DoATrickDesc": {
-    "translation": "Cozmo is a playful robot and loves doing Tricks!\n\nWith the Roll a Cube Trick, Cozmo can discover a cube and roll it. Make sure there’s a cube he can see."
+    "translation": "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a cube he can see, and then watch him roll it."
   }
 }

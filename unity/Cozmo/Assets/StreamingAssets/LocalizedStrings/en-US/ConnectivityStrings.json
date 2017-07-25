@@ -22,16 +22,16 @@
     "translation": "Connecting to your Cozmo..."
   },
   "connectivity.searchForCozmoFailedText": {
-    "translation": "You need to connect to Cozmo"
+    "translation": "You need to connect to Cozmo."
   },
   "connectivity.moreInfo": {
     "translation": "MORE INFO"
   },
   "connectivity.turnCozmoOn": {
-    "translation": "Turn Cozmo On"
+    "translation": "Turn Cozmo on."
   },
   "connectivity.connectInWifiSettings": {
-    "translation": "Connect in WiFi Settings"
+    "translation": "Connect in WiFi Settings."
   },
   "connectivity.searchingForCozmo": {
     "translation": "Searching for Cozmo..."
@@ -67,7 +67,7 @@
     "translation": "Cozmo is going to sleep and will disconnect soon..."
   },
   "connectivity.cozmoLowBatteryTitle": {
-    "translation": "Cozmo is Low On Battery"
+    "translation": "Cozmo Is Low On Battery"
   },
   "connectivity.cozmoLowBatteryDesc": {
     "translation": "Please place Cozmo on his charger."
