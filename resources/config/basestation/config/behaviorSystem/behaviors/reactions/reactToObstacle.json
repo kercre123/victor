@@ -1,0 +1,9 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "ReactToObstacle",
+  "displayNameKey":"behavior.ReactToObstacle",
+  "animTriggers": ["ReactToObstacle"],
+  "wantsToRunStrategyConfig": {
+    "strategyType" : "ObstacleDetected"
+  }
+}

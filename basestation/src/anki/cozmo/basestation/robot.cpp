@@ -784,6 +784,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
+  
+  // Update forward prox sensor
+  SetForwardSensorValue(msg.distanceSensor_mm);
 
   // update current path segment in the path component
   _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);

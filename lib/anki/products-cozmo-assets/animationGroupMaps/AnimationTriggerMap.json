@@ -1438,6 +1438,10 @@
       "AnimName": "ag_reacttocliff_edge"
     },
     {
+      "CladEvent": "ReactToObstacle",
+      "AnimName": "ag_reacttocliff_huh_01"
+    },
+    {
       "CladEvent": "ReactToNewBlockAsk",
       "AnimName": "ag_askForBlock"
     },

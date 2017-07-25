@@ -376,6 +376,7 @@ enum int_32 AnimationTrigger
   ReactToBlockRetryPickup,
   ReactToCliff,
   ReactToCliffDetectorStop,
+  ReactToObstacle,
   ReactToMotorCalibration,
   ReactToNewBlockAsk,
   ReactToNewBlockBig,
@@ -584,4 +585,3 @@ enum int_32 CubeAnimationTrigger
 
 } // end namespace Cozmo
 } // end namespace Anki
-

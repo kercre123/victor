@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyPlacedOnCharger.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyRobotPlacedOnSlope.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyRobotShaken.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyObstacleDetected.h"
 
 
 #include "anki/cozmo/basestation/robot.h"
@@ -63,6 +64,11 @@ IWantsToRunStrategy* WantsToRunStrategyFactory::CreateWantsToRunStrategy(Robot& 
     case WantsToRunStrategyType::InNeedsBracket:
     {
       strategy = new StrategyInNeedsBracket(robot, config);
+      break;
+    }
+    case WantsToRunStrategyType::ObstacleDetected:
+    {
+      strategy = new StrategyObstacleDetected(robot, config);
       break;
     }
     case WantsToRunStrategyType::PlacedOnCharger:
