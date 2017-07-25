@@ -126,7 +126,7 @@
 
         window.isSavingProject = true;
 
-        if (window.isSampleProject) {
+        if (window.isCozmoSampleProject) {
             window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
