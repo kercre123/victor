@@ -175,8 +175,9 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.CancelAllCallbacks();
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
 
-      CurrentRobot.SetEnableFreeplayActivity(false);
-      CurrentRobot.SetEnableFreeplayLightStates(false);
+      // Selection Wait Chooser, cube lights, turns off game requests
+      HubWorldBase.Instance.StopFreeplay();
+
 
       if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
         CurrentRobot.PlaceObjectOnGroundHere((success) => {
