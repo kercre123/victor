@@ -144,13 +144,16 @@ private:
 
   bool UpdateStarsState(bool cheatGiveStar = false);
 
-  void DetectBracketChangeForDas();
+  void DetectBracketChangeForDas(bool forceSend = false);
   void SendRepairDasEvent(const NeedsState& needsState,
                           const NeedsActionId cause,
                           const RepairablePartId part);
 
   void FormatStringOldAndNewLevels(std::ostringstream& stream,
                                    NeedsState::CurNeedsMap& prevNeedsLevels);
+
+  void SendNeedsLevelsDasEvent(const char * whenTag);
+  void SendTimeSinceBackgroundedDasEvent();
 
   void SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate = NeedsActionId::NoAction);
   void SendNeedsPauseStateToGame();
@@ -192,6 +195,7 @@ private:
   std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenPaused_s;
   std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenCooldownStarted_s;
   std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenCooldownOver_s;
+  std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenBracketChanged_s;
 
   std::array<std::vector<NeedDelta>, static_cast<size_t>(NeedId::Count)> _queuedNeedDeltas;
 

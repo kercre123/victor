@@ -25,6 +25,9 @@ namespace Cozmo {
 
 NeedsState::NeedsState()
 : _timeLastWritten(Time())
+, _timeLastDisconnect(Time())
+, _timeLastAppBackgrounded(Time())
+, _timesOpenedSinceLastDisconnect(0)
 , _robotSerialNumber(0)
 , _rng(nullptr)
 , _curNeedsLevels()
@@ -52,7 +55,10 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
 {
   Reset();
 
-  _timeLastWritten = Time();  // ('never')
+  _timeLastWritten         = Time();  // ('never')
+  _timeLastDisconnect      = Time();  // ('never')
+  _timeLastAppBackgrounded = Time();  // ('never')
+  _timesOpenedSinceLastDisconnect = 0;
 
   _needsConfig = &needsConfig;
 
@@ -287,11 +293,11 @@ bool NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, con
 }
 
 
-NeedBracketId NeedsState::GetNeedBracketByIndex(size_t i)
+NeedBracketId NeedsState::GetNeedBracketByIndex(size_t needIndex)
 {
   UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
 
-  return _curNeedsBracketsCache[static_cast<NeedId>(i)];
+  return _curNeedsBracketsCache[static_cast<NeedId>(needIndex)];
 }
 
 bool NeedsState::AreNeedsMet()

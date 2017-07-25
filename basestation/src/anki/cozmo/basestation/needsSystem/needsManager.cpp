@@ -55,6 +55,9 @@ static const std::string kCurNeedsUnlockLevelKey = "CurNeedsUnlockLevel";
 static const std::string kNumStarsAwardedKey = "NumStarsAwarded";
 static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
 static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
+static const std::string kTimeLastDisconnectKey = "TimeLastDisconnect";
+static const std::string kTimeLastAppBackgroundedKey = "TimeLastAppBackgrounded";
+static const std::string kOpenAppAfterDisconnectKey = "OpenAppAfterDisconnect";
 
 // This key is used as the base of the string for when sparks are sometimes rewarded
 // for freeplay activities, that tells how many sparks were awarded and what Cozmo
@@ -224,6 +227,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _timeWhenPaused_s()
 , _timeWhenCooldownStarted_s()
 , _timeWhenCooldownOver_s()
+, _timeWhenBracketChanged_s()
 , _queuedNeedDeltas()
 , _actionCooldown_s()
 , _onlyWhiteListedActionsEnabled(false)
@@ -246,6 +250,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
     _timeWhenPaused_s[i] = 0.0f;
     _timeWhenCooldownStarted_s[i] = 0.0f;
     _timeWhenCooldownOver_s[i] = 0.0f;
+    _timeWhenBracketChanged_s[i] = 0.0f;
 
     _queuedNeedDeltas[i].clear();
   }
@@ -322,6 +327,7 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
     _lastDecayUpdateTime_s[i] = _currentTime_s;
     _timeWhenCooldownStarted_s[i] = 0.0f;
     _timeWhenCooldownOver_s[i] = 0.0f;
+    _timeWhenBracketChanged_s[i] = _currentTime_s;
 
     _isDecayPausedForNeed[i] = false;
     _isActionsPausedForNeed[i] = false;
@@ -357,6 +363,10 @@ void NeedsManager::InitInternal(const float currentTime_s)
       ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
       appliedDecay = true;
+
+      _needsState._timesOpenedSinceLastDisconnect++;
+
+      SendTimeSinceBackgroundedDasEvent();
     }
   }
 
@@ -365,6 +375,8 @@ void NeedsManager::InitInternal(const float currentTime_s)
   // Save to device, because we've either applied a bunch of unconnected decay,
   // or we never had valid needs data on this device yet
   WriteToDevice();
+
+  SendNeedsLevelsDasEvent("app_start");
 
 #if ANKI_DEV_CHEATS
   g_DebugNeedsManager = this;
@@ -431,18 +443,25 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // (Use case:  Robot has been used with another device)
     needToWriteToDevice = true;
     useStateFromRobot = true;
+    // Reset the needs state's 'time of last disconnect', since that doesn't apply
+    // any more (and it's not stored on robot); look below to see where we preserve
+    // this field when overriding needs state with needs state from robot
+    _needsState._timeLastDisconnect = Time();
   }
   else if (!_robotHadValidNeedsData && _deviceHadValidNeedsData)
   {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Robot does NOT have needs data, but device does");
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
+                  "Robot does NOT have needs data, but device does");
     // Robot does NOT have needs data, but device does
     // So just go with device data, and write that to robot
     needToWriteToRobot = true;
   }
   else
   {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Both robot and device have needs data...");
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Serial numbers %x and %x", _previousRobotSerialNumber, _needsStateFromRobot._robotSerialNumber);
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
+                  "Both robot and device have needs data...Serial numbers %x and %x",
+                  _previousRobotSerialNumber, _needsStateFromRobot._robotSerialNumber);
+
     // Both robot and device have needs data
     if (_previousRobotSerialNumber == _needsStateFromRobot._robotSerialNumber)
     {
@@ -483,6 +502,12 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       // Use the robot's state; copy it to the device.
       needToWriteToDevice = true;
       useStateFromRobot = true;
+      // Reset the needs state's 'time of last disconnect', since that doesn't apply
+      // any more (and it's not stored on robot); look below to see where we preserve
+      // this field when overriding needs state with needs state from robot
+      _needsState._timeLastDisconnect = Time();
+      // Similar for time since last app backgrounded; let's not confuse things
+      _needsState._timeLastAppBackgrounded = Time();
 
       // Notify the game, so it can put up a dialog to notify the user
       ExternalInterface::ConnectedToDifferentRobot message;
@@ -493,17 +518,35 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
   if (useStateFromRobot)
   {
+    const Time savedTimeLastDisconnect = _needsState._timeLastDisconnect;
+    const Time savedTimeLastAppBackgrounded = _needsState._timeLastAppBackgrounded;
+
     // Copy the loaded robot needs state into our device needs state
     _needsState = _needsStateFromRobot;
+
+    _needsState._timeLastDisconnect = savedTimeLastDisconnect;
+    _needsState._timeLastAppBackgrounded = savedTimeLastAppBackgrounded;
 
     // Now apply decay for the unconnected time for THIS robot
     // (We did it earlier, in Init, but that was for a different robot)
     static const bool connected = false;
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
   }
-  
+
   // Update Game on Robot's last state
   SendNeedsOnboardingToGame();
+
+  if (_needsState._timeLastDisconnect != Time()) // (don't send if we've never disconnected)
+  {
+    // DAS Event: "needs.disconnect_time"
+    // s_val: The number of seconds since the last disconnection
+    // data: Unused
+    const Time now = system_clock::now();
+    const auto elapsed = now - _needsState._timeLastDisconnect;
+    const auto secsSinceLastDisconnect = duration_cast<seconds>(elapsed).count();
+    Anki::Util::sEvent("needs.disconnect_time", {},
+                       std::to_string(secsSinceLastDisconnect).c_str());
+  }
 
   const Time now = system_clock::now();
 
@@ -551,11 +594,19 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
 void NeedsManager::OnRobotDisconnected()
 {
+  _needsState._timeLastDisconnect = system_clock::now();
+  _needsState._timesOpenedSinceLastDisconnect = 0;
+
   WriteToDevice();
 
   _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
 
   _robot = nullptr;
+
+  static const bool forceSend = true;
+  DetectBracketChangeForDas(forceSend);
+
+  SendNeedsLevelsDasEvent("disconnect");
 }
 
 
@@ -637,6 +688,8 @@ void NeedsManager::SetPaused(const bool paused)
         _timeWhenCooldownOver_s[needIndex] += durationOfPause;
         _timeWhenCooldownStarted_s[needIndex] += durationOfPause;
       }
+
+      _timeWhenBracketChanged_s[needIndex] += durationOfPause;
     }
   }
 
@@ -967,6 +1020,46 @@ void NeedsManager::FormatStringOldAndNewLevels(std::ostringstream& stream,
 }
 
 
+void NeedsManager::SendNeedsLevelsDasEvent(const char * whenTag)
+{
+  // DAS Event: "needs.needs_levels"
+  // s_val: The 'when' tag ("app_start", "app_background", "app_unbackground", "disconnect")
+  // data: The needs levels at that time, colon-separated
+  //       (e.g. "1.0000:0.6000:0.7242")
+  std::ostringstream stream;
+  stream.precision(5);
+  stream << std::fixed;
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    if (needIndex > 0)
+    {
+      stream << ":";
+    }
+    stream << _needsState.GetNeedLevelByIndex(needIndex);
+  }
+  Anki::Util::sEvent("needs.needs_levels", {{DDATA, whenTag}}, stream.str().c_str());
+}
+
+
+void NeedsManager::SendTimeSinceBackgroundedDasEvent()
+{
+  if (_needsState._timeLastAppBackgrounded != Time()) // (don't send if we've never backgrounded)
+  {
+    // DAS Event: "needs.app_backgrounded_time"
+    // s_val: The number of seconds since the last time the user backgrounded
+    //        the app
+    // data: The number of times the user has opened or unbackgrounded the app
+    //       since the last robot disconnection
+    const Time now = system_clock::now();
+    const auto elapsed = now - _needsState._timeLastAppBackgrounded;
+    const auto secsSinceLastBackgrounded = duration_cast<seconds>(elapsed).count();
+    Anki::Util::sEvent("needs.app_backgrounded_time",
+                       {{DDATA, std::to_string(_needsState._timesOpenedSinceLastDisconnect).c_str()}},
+                       std::to_string(secsSinceLastBackgrounded).c_str());
+  }
+}
+
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 {
@@ -996,7 +1089,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& m
 
   // DAS Event: "needs.force_set_needs_levels"
   // s_val: The needs levels before the completion, followed by the needs levels after
-  //       the completion, all colon-separated (e.g. "1.0000:0.6000:0.7242:0.6000:0.5990:0.7202"
+  //        the completion, all colon-separated (e.g. "1.0000:0.6000:0.7242:0.6000:0.5990:0.7202"
   // data: Unused
   std::ostringstream stream;
   FormatStringOldAndNewLevels(stream, prevNeedsLevels);
@@ -1263,12 +1356,17 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
                 "Game being paused set to %s",
                 msg.isPaused ? "TRUE" : "FALSE");
 
+  if (msg.isPaused)
+  {
+    _needsState._timeLastAppBackgrounded = system_clock::now();
+  }
+
   // During app backgrounding, we want to pause the whole needs system
   SetPaused(msg.isPaused);
 
-  // When backgrounding, we'll also write to robot
   if (msg.isPaused)
   {
+    // When backgrounding, we'll also write to robot if connected
     if (_robotStorageState == RobotStorageState::Inactive)
     {
       if (_robot != nullptr)
@@ -1277,13 +1375,21 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
         StartWriteToRobot();
       }
     }
+
+    SendNeedsLevelsDasEvent("app_background");
   }
 
-  // When un-backgrounding, apply decay
   if (!msg.isPaused)
   {
+    // When un-backgrounding, apply decay
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
+
+    SendNeedsLevelsDasEvent("app_unbackground");
+
+    _needsState._timesOpenedSinceLastDisconnect++;
+
+    SendTimeSinceBackgroundedDasEvent();
   }
 }
 
@@ -1666,24 +1772,35 @@ void NeedsManager::SendNeedsOnboardingToGame()
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
-void NeedsManager::DetectBracketChangeForDas()
+void NeedsManager::DetectBracketChangeForDas(bool forceSend)
 {
   for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
   {
     const auto oldBracket = _needsState.GetPrevNeedBracketByIndex(needIndex);
     const auto newBracket = _needsState.GetNeedBracketByIndex(needIndex);
 
-    if (oldBracket != newBracket)
+    if (forceSend || (oldBracket != newBracket))
     {
       // DAS Event: "needs.bracket_changed"
       // s_val: The need whose bracket is changing (e.g. "Play")
-      // data: Old bracket name, followed by new bracket name, separated by
-      //       colon, e.g. "Normal:Full"
+      // data: Old bracket name, followed by new bracket name, followed by the
+      //       number of seconds we've been in the old bracket (while
+      //       connected), separated by colons, e.g. "Normal:Full:287"
+      //       (Note that when we send this on robot disconnect, the old and
+      //       new brackets will be the same)
+      const int elapsed_s = Util::numeric_cast<int>(_currentTime_s -
+                                                    _timeWhenBracketChanged_s[needIndex]);
       std::string data = std::string(NeedBracketIdToString(oldBracket)) + ":" +
-                         std::string(NeedBracketIdToString(newBracket));
+                         std::string(NeedBracketIdToString(newBracket)) + ":" +
+                         std::to_string(elapsed_s);
       Anki::Util::sEvent("needs.bracket_changed",
                          {{DDATA, data.c_str()}},
                          NeedIdToString(static_cast<NeedId>(needIndex)));
+
+      if (!forceSend)
+      {
+        _timeWhenBracketChanged_s[needIndex] = _currentTime_s;
+      }
     }
   }
 }
@@ -1721,6 +1838,14 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
 
   const auto time_s = duration_cast<seconds>(_needsState._timeLastWritten.time_since_epoch()).count();
   state[kDateTimeKey] = Util::numeric_cast<Json::LargestInt>(time_s);
+
+  const auto timeLastDisconnect_s = duration_cast<seconds>(_needsState._timeLastDisconnect.time_since_epoch()).count();
+  state[kTimeLastDisconnectKey] = Util::numeric_cast<Json::LargestInt>(timeLastDisconnect_s);
+
+  const auto timeLastAppBackgrounded_s = duration_cast<seconds>(_needsState._timeLastAppBackgrounded.time_since_epoch()).count();
+  state[kTimeLastAppBackgroundedKey] = Util::numeric_cast<Json::LargestInt>(timeLastAppBackgrounded_s);
+
+  state[kOpenAppAfterDisconnectKey] = _needsState._timesOpenedSinceLastDisconnect;
 
   state[kSerialNumberKey] = _needsState._robotSerialNumber;
 
@@ -1776,6 +1901,24 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
 
   const seconds durationSinceEpoch_s(state[kDateTimeKey].asLargestInt());
   _needsState._timeLastWritten = time_point<system_clock>(durationSinceEpoch_s);
+
+  if (versionLoaded >= 3)
+  {
+    const seconds durationSinceEpochLastDisconnect_s(state[kTimeLastDisconnectKey].asLargestInt());
+    _needsState._timeLastDisconnect = time_point<system_clock>(durationSinceEpochLastDisconnect_s);
+
+    const seconds durationSinceEopchLastAppBackgrounded_s(state[kTimeLastAppBackgroundedKey].asLargestInt());
+    _needsState._timeLastAppBackgrounded = time_point<system_clock>(durationSinceEopchLastAppBackgrounded_s);
+
+    _needsState._timesOpenedSinceLastDisconnect = state[kOpenAppAfterDisconnectKey].asInt();
+  }
+  else
+  {
+    // For older versions, sensible defaults
+    _needsState._timeLastDisconnect = Time();
+    _needsState._timeLastAppBackgrounded = Time();
+    _needsState._timesOpenedSinceLastDisconnect = 0;
+  }
 
   _needsState._robotSerialNumber = state[kSerialNumberKey].asUInt();
 

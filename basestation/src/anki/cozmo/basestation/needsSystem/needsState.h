@@ -66,9 +66,9 @@ public:
   float         GetNeedLevel(NeedId need) const;
   NeedBracketId GetNeedBracket(NeedId need);
   
-  float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
-  NeedBracketId GetNeedBracketByIndex(size_t i);
-  bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };
+  float         GetNeedLevelByIndex(size_t needIndex)     { return _curNeedsLevels[static_cast<NeedId>(needIndex)]; }
+  NeedBracketId GetNeedBracketByIndex(size_t needIndex);
+  bool          GetPartIsDamagedByIndex(size_t needIndex) { return _partIsDamaged[static_cast<RepairablePartId>(needIndex)]; };
 
   // Return true if all needs are "met"
   bool AreNeedsMet();
@@ -97,10 +97,26 @@ public:
   // Note that changing format of robot storage serialization will be more difficult,
   // because it serializes a CLAD structure, so for backward compatibility we'd have
   // to preserve older versions of that CLAD structure.
-  static const int kDeviceStorageVersion = 2;
+  static const int kDeviceStorageVersion = 3;
   static const int kRobotStorageVersion = 3;
 
   Time _timeLastWritten;
+
+  // Time of last disconnect:  This is for DAS purposes, to find out 'how long has
+  // the user left Cozmo disconnected.'  We can't really store this on the robot,
+  // because on disconnect it's too late to write to the robot.  Therefore this is
+  // device-storage-only, and consequently if the device connects to a different
+  // robot, this time will be reset.
+  Time _timeLastDisconnect;
+
+  // Time of last app backgrounding:  This is for DAS purposes, to find out 'how
+  // long has it been since the user exited (backgrounded) the app.  Similar to
+  // the above, we don't bother storing this on the robot.
+  Time _timeLastAppBackgrounded;
+
+  // Also for DAS purposes, this is the number of times the user has opened or
+  // unbackgrounded the app, since the last robot disconnect.
+  int  _timesOpenedSinceLastDisconnect;
 
   u32 _robotSerialNumber;
 
