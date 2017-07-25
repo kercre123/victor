@@ -5,7 +5,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/cozmo",
-                "version": "22"
+                "version": "23"
             },
             "cozmo-assets": {
                 "allow_extra_files": "True",
