@@ -90,7 +90,7 @@ ITrackAction::UpdateResult TrackObjectAction::UpdateTracking(Radians& absPanAngl
                       EnumToString(_objectType));
       }
       return UpdateResult::NoNewInfo;
-    } else if(ActiveIdentityState::Identified == matchingObject->GetIdentityState()) {
+    } else {
       // We've possibly switched IDs that we're tracking. Keep MovementComponent's ID in sync.
       _robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
     }

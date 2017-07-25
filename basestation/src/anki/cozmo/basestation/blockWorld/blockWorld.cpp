@@ -1852,17 +1852,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       DEV_ASSERT(&observedObject->GetPose().FindOrigin() == currFrame,
                  "BlockWorld.AddAndUpdateObjects.ObservedObjectNotInCurrentFrame");
       
-      // Add all observed markers of this object as occluders, once it has been
-      // identified (it's possible we're seeing an existing object behind its
-      // last-known location, in which case we don't want to delete the existing
-      // one before realizing the new observation is the same object):
-      if(ActiveIdentityState::Identified == observedObject->GetIdentityState())
-      {
-        std::vector<const Vision::KnownMarker *> observedMarkers;
-        observedObject->GetObservedMarkers(observedMarkers);
-        for(auto marker : observedMarkers) {
-          _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
-        }
+      // Add all observed markers of this object as occluders
+      std::vector<const Vision::KnownMarker *> observedMarkers;
+      observedObject->GetObservedMarkers(observedMarkers);
+      for(auto marker : observedMarkers) {
+        _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
       }
       
       const ObjectID obsID = observedObject->GetID();
