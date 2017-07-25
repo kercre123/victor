@@ -477,17 +477,21 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
   
   if (heardTriggerPhrase && robot && _commandLightTimeRemaining_s < 0.f)
   {
+    static const ColorRGBA kGrey0 = ColorRGBA(0.3f, 0.3f, 0.3f);
+    static const ColorRGBA kGrey1 = ColorRGBA(0.5f, 0.5f, 0.5f);
+    static const ColorRGBA kGrey2 = ColorRGBA(0.9f, 0.9f, 0.9f);
+    
     static const BackpackLights kHeardCommandLights = {
-      .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLUE, NamedColors::BLACK}},
+      .onColors               = {{NamedColors::BLACK, kGrey0, kGrey2, kGrey1, NamedColors::BLACK}},
       .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-      .onPeriod_ms            = {{0,0,0,1450,0}},
-      .offPeriod_ms           = {{0,0,0,1000,0}},
-      .transitionOnPeriod_ms  = {{0,0,0,50,0}},
-      .transitionOffPeriod_ms = {{0,0,0,500,0}},
+      .onPeriod_ms            = {{0,120,475,270,0}},
+      .offPeriod_ms           = {{0,3000,3000,3000,0}},
+      .transitionOnPeriod_ms  = {{0,150,25,90,0}},
+      .transitionOffPeriod_ms = {{0,330,100,240,0}},
       .offset                 = {{0,0,0,0,0}}
     };
     
-    static constexpr auto kIndexOfVoiceLight = Util::EnumToUnderlying(LEDId::LED_BACKPACK_BACK);
+    static constexpr auto kIndexOfVoiceLight = Util::EnumToUnderlying(LEDId::LED_BACKPACK_MIDDLE);
     
     // Add up the time we transition on, stay on, and transition off to figure out how long we should display.
     static const float kTimeForCommandLight_s = Util::numeric_cast<float>(0.001f * (100 + // Add in a little time for the light to be off
