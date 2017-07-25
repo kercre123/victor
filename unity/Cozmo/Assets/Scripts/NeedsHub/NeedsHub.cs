@@ -226,6 +226,8 @@ namespace Cozmo.Hub {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
         AllowFreeplayUI(false);
+        RobotEngineManager.Instance.CurrentRobot.PlayNeedsGetOutAnimIfNeeded();
+
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
         RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig();

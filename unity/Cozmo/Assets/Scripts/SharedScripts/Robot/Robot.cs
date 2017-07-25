@@ -420,8 +420,8 @@ public class Robot : IRobot {
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
 
-    if((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
-      DisableReactionsWithLock ("sim", ReactionaryBehaviorEnableGroups.kSimulatedRobotTriggers);
+    if ((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
+      DisableReactionsWithLock("sim", ReactionaryBehaviorEnableGroups.kSimulatedRobotTriggers);
     }
   }
 
@@ -459,7 +459,7 @@ public class Robot : IRobot {
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
 
-    if((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
+    if ((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
       RemoveDisableReactionsLock("sim");
     }
   }
@@ -1397,12 +1397,16 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
-
+  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues,
+                                             bool setUnspecifiedToDefault = false) {
     RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters =
       Singleton<SetLiveIdleAnimationParameters>.Instance.Initialize(paramNames, paramValues, ID, setUnspecifiedToDefault);
     RobotEngineManager.Instance.SendMessage();
+  }
 
+  public void PlayNeedsGetOutAnimIfNeeded() {
+    RobotEngineManager.Instance.Message.PlayNeedsGetOutAnimIfNeeded = Singleton<PlayNeedsGetOutAnimIfNeeded>.Instance;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName) {

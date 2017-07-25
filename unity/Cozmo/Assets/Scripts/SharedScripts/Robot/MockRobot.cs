@@ -338,6 +338,10 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void PlayNeedsGetOutAnimIfNeeded() {
+    // Do nothing
+  }
+
   public void RemoveDrivingAnimations(string lockName) {
     // Do nothing
   }

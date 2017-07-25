@@ -242,6 +242,8 @@ public interface IRobot : IDisposable {
 
   void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false);
 
+  void PlayNeedsGetOutAnimIfNeeded();
+
   float GetHeadAngleFactor();
 
   void SetHeadAngle(float angleFactor = -0.8f,
