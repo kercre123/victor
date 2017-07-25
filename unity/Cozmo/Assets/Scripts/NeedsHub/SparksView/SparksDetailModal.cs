@@ -11,6 +11,11 @@ namespace Cozmo.Needs.Sparks.UI {
     public delegate void SparkGameClickedHandler(string challengeId);
     public static event SparkGameClickedHandler OnSparkGameClicked;
 
+    public delegate void SparkTrickHandler();
+    public static event SparkTrickHandler OnSparkTrickStarted;
+    public static event SparkTrickHandler OnSparkTrickEnded;
+    public static event SparkTrickHandler OnSparkTrickQuit;
+
     public Action OnSparkCompleteToReturn;
 
     [SerializeField]
@@ -203,6 +208,10 @@ namespace Cozmo.Needs.Sparks.UI {
       if (isEngineDriven) {
         PlaySparkedSounds();
         // Button state already updated by InitializeButtonState above
+
+        if (OnSparkTrickStarted != null) {
+          OnSparkTrickStarted();
+        }
       }
     }
 
@@ -222,6 +231,10 @@ namespace Cozmo.Needs.Sparks.UI {
 
       PlaySparkedSounds();
       UpdateButtonState();
+
+      if (OnSparkTrickStarted != null) {
+        OnSparkTrickStarted();
+      }
     }
 
     private void PlaySparkedSounds() {
@@ -263,6 +276,9 @@ namespace Cozmo.Needs.Sparks.UI {
       }
 
       StopSparkTrick(isDialogCleanup: false, doEngineCleanup: true);
+      if (OnSparkTrickEnded != null) {
+        OnSparkTrickEnded();
+      }
 
       if (_QuitConfirmAlertModal != null) {
         UIManager.CloseModal(_QuitConfirmAlertModal);
@@ -350,6 +366,9 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void HandleQuitTrickAlertClosed() {
       if (_ConfirmedQuitTrick) {
+        if (OnSparkTrickQuit != null) {
+          OnSparkTrickQuit();
+        }
         CloseDialog();
       }
       _ConfirmedQuitTrick = false;

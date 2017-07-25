@@ -1,6 +1,5 @@
 ﻿using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -85,6 +84,14 @@ namespace Cozmo.Needs {
       latestValue.Bracket = _LatestStateFromEngine.curNeedBracket[needIndex];
       _CurrentDisplayState.curNeedLevel[needIndex] = latestValue.Value;
       _CurrentDisplayState.curNeedBracket[needIndex] = latestValue.Bracket;
+      return latestValue;
+    }
+
+    public NeedsValue PeekLatestEngineValue(NeedId needId) {
+      int needIndex = (int)needId;
+      NeedsValue latestValue;
+      latestValue.Value = _LatestStateFromEngine.curNeedLevel[needIndex];
+      latestValue.Bracket = _LatestStateFromEngine.curNeedBracket[needIndex];
       return latestValue;
     }
 

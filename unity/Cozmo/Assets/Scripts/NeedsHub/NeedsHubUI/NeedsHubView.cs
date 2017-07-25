@@ -155,8 +155,8 @@ namespace Cozmo.Needs.UI {
     private void HandleCozmoOverfed() {
       ModalPriorityData priorityData = new ModalPriorityData();
       var cozmoHasHiccupsData = new AlertModalData("cozmo_overfed_hiccups_alert",
-        LocalizationKeys.kNeedsFeedingDetailsOverfedHiccupsTitle,
-        LocalizationKeys.kNeedsFeedingDetailsOverfedHiccupsDescription,
+                                                   LocalizationKeys.kNeedsFeedingOverfedHiccupsTitle,
+                                                   LocalizationKeys.kNeedsFeedingOverfedHiccupsDescription,
         new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose, false));
 
       UIManager.OpenAlert(cozmoHasHiccupsData,

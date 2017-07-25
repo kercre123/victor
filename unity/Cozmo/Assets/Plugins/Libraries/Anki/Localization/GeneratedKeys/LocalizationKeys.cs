@@ -87,6 +87,7 @@ public static class LocalizationKeys {
   public const string kBehaviorNeeds_SevereLowRepairRequest = "behavior.Needs_SevereLowRepairRequest";
   public const string kBehaviorVC_TrackLaser = "behavior.VC_TrackLaser";
   public const string kButtonCONTINUECaps = "button.CONTINUE.caps";
+  public const string kButtonHide = "button.hide";
 
   #endregion
 
@@ -132,6 +133,8 @@ public static class LocalizationKeys {
   public const string kCodeLabDescription = "codeLab.description";
   public const string kActivityViewTitle = "activityView.title";
   public const string kMemoryMatchGameLabelIncorrect = "memoryMatchGame.label.incorrect";
+  public const string kActivityViewFreeplayDescription = "activityView.freeplayDescription";
+  public const string kActivityViewFreeplayTitle = "activityView.freeplayTitle";
 
   #endregion
 
@@ -265,6 +268,8 @@ public static class LocalizationKeys {
   public const string kCodeLabSampleProject_PeekabooProjectName = "codeLabSampleProject_Peekaboo.projectName";
   public const string kCodeLabSampleProject_WorkoutwithCubeProjectName = "codeLabSampleProject_WorkoutwithCube.projectName";
   public const string kCodeLabSampleProject_IntruderAlarmProjectName = "codeLabSampleProject_IntruderAlarm.projectName";
+  public const string kCodeLabSaveProjectAutosaved = "codeLab.SaveProject.Autosaved";
+  public const string kCodeLabSaveProjectNotSaved = "codeLab.SaveProject.NotSaved";
   public const string kCodeLabHorizontalUserProjectMyProject = "codeLabHorizontal.UserProject.MyProject";
   public const string kCodeLabHorizontalCozmoSaysBlockDefaultText = "codeLabHorizontal.CozmoSaysBlock.DefaultText";
   public const string kCodeLabHorizontalTooltipRepeatForever = "codeLabHorizontal.Tooltip.RepeatForever";
@@ -558,6 +563,9 @@ public static class LocalizationKeys {
   public const string kSpeedTapDriveToCubeFailTitle = "speedTap.driveToCubeFail.title";
   public const string kSpeedTapDriveToCubeFailDescription = "speedTap.driveToCubeFail.description";
   public const string kMinigameTextYouWin = "minigame.text.youWin";
+  public const string kLabelMATCH = "label.MATCH";
+  public const string kLabelNOMATCH = "label.NO.MATCH";
+  public const string kLabelDONTSLAP = "label.DONT.SLAP";
 
   #endregion
 
@@ -605,7 +613,7 @@ public static class LocalizationKeys {
   public const string kNeedsFreeplaySparksRewardHiccupsEndGood = "needs.FreeplaySparksReward.HiccupsEndGood";
   public const string kNeedsFreeplaySparksRewardKnockDownCubes = "needs.FreeplaySparksReward.KnockDownCubes";
   public const string kNeedsFreeplaySparksRewardPeekAboo = "needs.FreeplaySparksReward.PeekAboo";
-  public const string kNeedsFreeplaySparksRewardPickUpCube = "needs.FreeplaySparksReward.PickUpCube";
+  public const string kNeedsFreeplaySparksRewardPickupCube = "needs.FreeplaySparksReward.PickupCube";
   public const string kNeedsFreeplaySparksRewardPopAWheelie = "needs.FreeplaySparksReward.PopAWheelie";
   public const string kNeedsFreeplaySparksRewardPounce = "needs.FreeplaySparksReward.Pounce";
   public const string kNeedsFreeplaySparksRewardPyramidCompleted = "needs.FreeplaySparksReward.PyramidCompleted";
@@ -614,9 +622,12 @@ public static class LocalizationKeys {
   public const string kNeedsFreeplaySparksRewardWorkout = "needs.FreeplaySparksReward.Workout";
   public const string kNeedsFreeplaySparksRewardGuardDogWin = "needs.FreeplaySparksReward.GuardDogWin";
   public const string kNeedsFreeplaySparksRewardGuardDogLose = "needs.FreeplaySparksReward.GuardDogLose";
-
-  public const string kNeedsFeedingDetailsOverfedHiccupsTitle = "needs.FeedingOverfedHiccups.Title";
-  public const string kNeedsFeedingDetailsOverfedHiccupsDescription = "needs.FeedingOverfedHiccups.Description";
+  public const string kNeedsFeedingOverfedHiccupsTitle = "needs.FeedingOverfedHiccups.Title";
+  public const string kNeedsFeedingOverfedHiccupsDescription = "needs.FeedingOverfedHiccups.Description";
+  public const string kNeedsSevereAlertEnergyTitle = "needs.severeAlert.energy.title";
+  public const string kNeedsSevereAlertEnergyDescription = "needs.severeAlert.energy.description";
+  public const string kNeedsSevereAlertRepairTitle = "needs.severeAlert.repair.title";
+  public const string kNeedsSevereAlertRepairDescription = "needs.severeAlert.repair.description";
 
   #endregion
 
@@ -652,10 +663,12 @@ public static class LocalizationKeys {
   public const string kOnboardingOldRobotSkip = "onboarding.OldRobotSkip";
   public const string kOnboardingBirthWait = "onboarding.BirthWait";
   public const string kOnboardingMeetCozmoIntro = "onboarding.MeetCozmoIntro";
+  public const string kOnboardingMeetCozmoButton = "onboarding.MeetCozmo.Button";
   public const string kOnboardingNeedsIntro = "onboarding.NeedsIntro";
   public const string kOnboardingNeedsIntroReturning = "onboarding.NeedsIntroReturning";
   public const string kOnboardingPlayIntro = "onboarding.PlayIntro";
   public const string kOnboardingRewardsIntro = "onboarding.RewardsIntro";
+  public const string kOnboardingEnd = "onboarding.End";
   public const string kOnboardingActivitiesIntro = "onboarding.ActivitiesIntro";
   public const string kOnboardingNeedsTicker = "onboarding.needs.ticker";
   public const string kOnboardingRepairTicker = "onboarding.repair.ticker";
@@ -959,6 +972,7 @@ public static class LocalizationKeys {
   public const string kSparksNotEnoughSparksDesc = "sparks.NotEnoughSparks.Desc";
   public const string kSparksCubesNeedUprightTitle = "sparks.CubesNeedUpright.Title";
   public const string kSparksCubesNeedUprightDesc = "sparks.CubesNeedUpright.Desc";
+  public const string kSparksFree = "sparks.free";
 
   #endregion
 

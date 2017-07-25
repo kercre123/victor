@@ -70,6 +70,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private bool _IsDisablingTouches = false;
     private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
+    private NeedSevereAlertController _NeedSevereAlertController;
 
     public void InitializeSparksView(List<ChallengeManager.ChallengeStatePacket> minigameData) {
       _BackButton.Initialize(HandleBackButtonPressed, "back_button", DASEventDialogName);
@@ -134,6 +135,16 @@ namespace Cozmo.Needs.Sparks.UI {
                                       | ChallengeEdgeCases.CheckForDriveOffCharger
                                       | ChallengeEdgeCases.CheckForOnTreads;
       _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(new ModalPriorityData(), challengeEdgeCases);
+
+      _NeedSevereAlertController = new NeedSevereAlertController(new ModalPriorityData(ModalPriorityLayer.High,
+                                                                                       1,
+                                                                                       LowPriorityModalAction.CancelSelf,
+                                                                                       HighPriorityModalAction.Stack));
+      _NeedSevereAlertController.AllowAlert = true;
+      _NeedSevereAlertController.OnNeedSevereAlertClosed += HandleNeedSevereAlertClosed;
+      SparksDetailModal.OnSparkTrickStarted += HandleSparkTrickStarted;
+      SparksDetailModal.OnSparkTrickEnded += HandleSparkTrickEnded;
+      SparksDetailModal.OnSparkTrickQuit += HandleSparkTrickEnded;
     }
 
     protected override void CleanUp() {
@@ -149,10 +160,22 @@ namespace Cozmo.Needs.Sparks.UI {
 
       OnboardingManager.Instance.OnOnboardingPhaseCompleted -= HandleOnboardingPhaseComplete;
 
+      _NeedSevereAlertController.OnNeedSevereAlertClosed -= HandleNeedSevereAlertClosed;
+      SparksDetailModal.OnSparkTrickStarted -= HandleSparkTrickStarted;
+      SparksDetailModal.OnSparkTrickEnded -= HandleSparkTrickEnded;
+      SparksDetailModal.OnSparkTrickQuit -= HandleSparkTrickEnded;
+      _NeedSevereAlertController.CleanUp();
+      _NeedSevereAlertController = null;
+
       if (_IsDisablingTouches) {
         CancelInvoke();
         ReenableTouches();
       }
+    }
+
+    private void HandleNeedSevereAlertClosed() {
+      // Emulate a back button press to return back to NeedsHubView
+      HandleBackButtonPressed();
     }
 
     private void HandleBackButtonPressed() {
@@ -269,6 +292,14 @@ namespace Cozmo.Needs.Sparks.UI {
       else {
         _ScrollRect.DOHorizontalNormalizedPos(normalizedPos, _FreeplayPanelShowHideInterpolateTime);
       }
+    }
+
+    private void HandleSparkTrickStarted() {
+      _NeedSevereAlertController.AllowAlert = false;
+    }
+
+    private void HandleSparkTrickEnded() {
+      _NeedSevereAlertController.AllowAlert = true;
     }
 
     protected void Update() {
