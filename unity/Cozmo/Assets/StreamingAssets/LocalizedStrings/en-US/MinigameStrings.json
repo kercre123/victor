@@ -383,5 +383,8 @@
   },
   "label.DONT.SLAP": {
     "translation": "DON'T \\nSLAP!"
+  },
+  "label.enterText": {
+    "translation": "Enter text..."
   }
 }
