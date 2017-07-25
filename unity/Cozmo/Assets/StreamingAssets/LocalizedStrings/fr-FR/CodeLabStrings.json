@@ -390,6 +390,12 @@
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "Alarme anti-intrusion !"
   },
+  "codeLab.SaveProject.Autosaved": {
+      "translation": "Autosaved"
+  },
+  "codeLab.SaveProject.NotSaved": {
+      "translation": "Sample projects not saved"
+  },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mon projet {0}"
   },

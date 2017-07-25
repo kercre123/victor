@@ -187,9 +187,9 @@
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
         setText('#app-title', $t(projectName));
 
-        var autosavedText = 'Autosaved';
+        var autosavedText = window.$t('codeLab.SaveProject.Autosaved');
         if (isSampleProject) {
-            autosavedText = 'Sample projects not saved';
+            autosavedText = window.$t('codeLab.SaveProject.NotSaved');
         }
         else if (projectName == '' || projectName == null) {
             // When user selects 'Create New Project' from save/load UI, at first project has no name and is not yet autosaved.
