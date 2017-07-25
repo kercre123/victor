@@ -182,6 +182,8 @@ namespace Cozmo.Needs.Sparks.UI {
       if (OnBackButtonPressed != null) {
         OnBackButtonPressed();
       }
+      // slide scrollview all the way left so it goes offscreen
+      ShowFreeplayCard();
     }
 
     private void HandleOnboardingPhaseComplete(OnboardingManager.OnboardingPhases phase) {
