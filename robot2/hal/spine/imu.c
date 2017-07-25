@@ -12,6 +12,7 @@
 #include "platform/platform.h"
 #include "anki/cozmo/robot/spi_imu.h"
 
+
 //#define CONSOLE_DEBUG_PRINTF
 #ifdef CONSOLE_DEBUG_PRINTF
 #define imu_debug(fmt, args...) printf(fmt, ##args)
@@ -19,7 +20,7 @@
 #define imu_debug(fmt, args...) (LOGD( fmt, ##args))
 #endif
 
-
+#define REALTIME_CONSOLE_OUTPUT 0
 
 //-*****************************************
 
@@ -84,8 +85,8 @@
 #define ACC_CONF (0x40)
 
 #define FIFO_DATA (0x24)
-#define FIFO_LENGTH_0 (0x22)
 #define FIFO_LENGTH_1 (0x23)
+#define FIFO_LENGTH_0 (0x22)
 #define TEMPERATURE_1 (0x21)
 #define TEMPERATURE_0 (0x20)
 #define INT_STATUS_3 (0x1f)
@@ -120,6 +121,10 @@
 #define ERR_REG (0x02)
 #define CHIP_ID (0x00)
 
+
+#define TIME_BYTES 3          //SENSORTIME_0..SENSORTIME_2
+#define TEMP_AND_LEN_BYTES 4  //TEMPERATURE_0..FIFO_LENGTH_1
+#define DATA_BYTES 12         //DATA_0..DATA_11   
 
 
 // IMU CHIP Configuration
@@ -274,34 +279,56 @@ void imu_init()
 int imu_manage(struct IMURawData* data)
 {
   assert(data != NULL);
-  uint8_t rawtime[4];
-  uint8_t raw[13];
-  uint8_t lenbytes[3];
+
+  //buffers must be 1 byte longer than actual response, which will start at index 1
+  uint8_t rawtime[TIME_BYTES+1];
+  uint8_t rawdata[DATA_BYTES+1];
+  uint8_t rawtemplen[TEMP_AND_LEN_BYTES+1];
   int16_t len;
 
-  if (spi_read_n(FIFO_LENGTH_0, lenbytes, 2)) {
+  //reading 4 bytes from TEMP0 (0x20) gives us 2 bytes of TEMP and 2 bytes of len
+  if (spi_read_n(TEMPERATURE_0, rawtemplen, TEMP_AND_LEN_BYTES)) {
     return -1; //TODO: crash harder
   }
-
-  len = lenbytes[1] + (lenbytes[2] & 7) * 256;
+  len = rawtemplen[3] + ((rawtemplen[4] & 7) << 8);
   if (len > 0) {
 
-    spi_read_n(SENSORTIME_0, rawtime, 3);
+    spi_read_n(SENSORTIME_0, rawtime, TIME_BYTES);
 
-    if (spi_read_n(FIFO_DATA, (uint8_t*)raw, 12)) {
+    if (spi_read_n(FIFO_DATA, (uint8_t*)rawdata, DATA_BYTES)) {
 
       return -2; //TODO: crash harder
     }
 
-    data->gyro[0] = (raw[2] << 8) | raw[1];
-    data->gyro[1] = (raw[4] << 8) | raw[3];
-    data->gyro[2] = (raw[6] << 8) | raw[5];
-    data->acc[0] =  (raw[8] << 8) | raw[7];
-    data->acc[1] = (raw[10] << 8) | raw[9];
-    data->acc[2] = (raw[12] << 8) | raw[11];
+    data->gyro[0] = (rawdata[2] << 8) | rawdata[1];
+    data->gyro[1] = (rawdata[4] << 8) | rawdata[3];
+    data->gyro[2] = (rawdata[6] << 8) | rawdata[5];
+    data->acc[0] =  (rawdata[8] << 8) | rawdata[7];
+    data->acc[1] = (rawdata[10] << 8) | rawdata[9];
+    data->acc[2] = (rawdata[12] << 8) | rawdata[11];
 
     data->timestamp = (rawtime[3] << 16) | (rawtime[2] << 8) | rawtime[1];
+    data->temperature = rawtemplen[1] + (rawtemplen[2] << 8);
 
+#if REALTIME_CONSOLE_OUTPUT
+    {
+       static int rate_limiter=0;
+       if (++rate_limiter == 10) {
+       rate_limiter = 0;
+
+       printf("%d %f %f %f %f %f %f %f\r",
+              data->timestamp,
+              data->gyro[0]*IMU_GYRO_SCALE_DPS,
+              data->gyro[1]*IMU_GYRO_SCALE_DPS,
+              data->gyro[2]*IMU_GYRO_SCALE_DPS,
+              data->acc[0]*IMU_ACC_SCALE_G,
+              data->acc[1]*IMU_ACC_SCALE_G,
+              data->acc[2]*IMU_ACC_SCALE_G,
+              IMU_TEMP_RAW_TO_C(data->temperature)
+          );
+       }
+    }
+#endif    
     return 1; //good data
   }
   return 0;
