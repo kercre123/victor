@@ -1,4 +1,13 @@
 ----------------
+Release v105
+----------------
+
+Firmware:
+-sys_boot: rev version code -> 6 (BODY_VER_1v5c) ... indicates new lift gearbox ratio
+-syscon: bugfix, correct handling new BODY_VER code
+-esp.safe.bin: update for modified syscon
+
+----------------
 Release v104
 ----------------
 
