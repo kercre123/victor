@@ -43,15 +43,19 @@ namespace Cozmo {
   
 namespace{
 #define SET_STATE(s) SetState_internal(State::s, #s)
+
+#define CONSOLE_GROUP "Behavior.FeedingEat"
   
-CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  45.0f);
+CONSOLE_VAR(f32, kDistanceFromMarker_mm, CONSOLE_GROUP,  45.0f);
   
 // Constants for the CubeAccelComponent MovementListener:
 const float kHighPassFiltCoef = 0.8f;
 const float kMaxMovementScoreToAdd = 10.f;
 const float kMovementScoreDecay = 3.f;
 const float kFeedingMovementScoreMax = 50.f;
-CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, "Behavior.FeedingEat",  45.0f);
+CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, CONSOLE_GROUP,  45.0f);
+
+CONSOLE_VAR(f32, kFeedingPreActionAngleTol_deg, CONSOLE_GROUP, 15.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Disable reactions that interrupt Cozmo's eating animation when he lifts himself
@@ -105,9 +109,18 @@ bool BehaviorFeedingEat::IsRunnableInternal(const BehaviorPreReqAcknowledgeObjec
                  "BehaviorFeedingEat.PassedInInvalidNumberOfTargets",
                  "Passed in %zu targets",
                  preReqData.GetTargets().size())){
-    _targetID = *preReqData.GetTargets().begin();
+    const ObjectID objID = *preReqData.GetTargets().begin();
     const Robot& robot = preReqData.GetRobot();
-    return robot.GetBlockWorld().GetLocatedObjectByID(_targetID) != nullptr;
+
+    if( IsCubeBad(robot, objID ) ) {
+      return false;
+    }
+    
+    _targetID = objID;
+    const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+
+    // require a known object so we don't drive to and try to eat a moved cube
+    return (obj != nullptr) && obj->IsPoseStateKnown();
   }
   return false;
 }
@@ -174,7 +187,6 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementScore)
 {
-  PRINT_NAMED_WARNING("SEARCH_FOR_ME","movement: %f", movementScore);
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // Logic for determining whether the player has "stolen" cozmo's cube while he's
@@ -233,15 +245,37 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
                       AnimationTrigger::FeedingPlaceLiftOnCube_Normal;
   
   CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new DriveToAlignWithObjectAction(robot, _targetID, kDistanceFromMarker_mm));
+
+  {
+    DriveToAlignWithObjectAction* driveAction = new DriveToAlignWithObjectAction(robot,
+                                                                                 _targetID,
+                                                                                 kDistanceFromMarker_mm);
+    driveAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kFeedingPreActionAngleTol_deg));
+    action->AddAction(driveAction);
+  }
+  
   action->AddAction(new TriggerAnimationAction(robot, bestAnim));
   StartActing(action, [this, &robot](ActionResult result){
-    if(result == ActionResult::SUCCESS){
+    if( result == ActionResult::SUCCESS ){
       TransitionToEating(robot);
-    }else{
-      TransitionToDrivingToFood(robot);
     }
-  });
+    else if( result == ActionResult::VISUAL_OBSERVATION_FAILED ) {
+      // can't see the cube, maybe it's obstructed? give up on the cube until we see it again. Let the
+      // behavior end (it may get re-selected with a different cube)
+      MarkCubeAsBad(robot);
+    }
+    else {
+      const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
+
+      if( resCat == ActionResultCategory::RETRY ) {
+        TransitionToDrivingToFood(robot);
+      }
+      else {
+        // something else is wrong. Make this cube invalid, let the behavior end
+        MarkCubeAsBad(robot);
+      }
+    }
+    });
 }
   
   
@@ -322,8 +356,6 @@ void BehaviorFeedingEat::TransitionToWaitingForUserToMoveCube(Robot& robot)
 
 
 
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation(Robot& robot)
 {
@@ -366,6 +398,37 @@ AnimationTrigger BehaviorFeedingEat::CheckNeedsStateAndCalculateAnimation(Robot&
   return bestAnimation;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFeedingEat::MarkCubeAsBad(const Robot& robot)
+{
+  if( ! ANKI_VERIFY(_targetID.IsSet(), "BehaviorFeedingEat.MarkCubeAsBad.NoTargetID",
+                    "Behavior %s trying to mark target cube as bad, but target is unset",
+                    GetIDStr().c_str()) ) {
+    return;
+  }
+
+  const TimeStamp_t lastPoseUpdateTime_ms = robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_targetID);
+  _badCubesMap[_targetID] = lastPoseUpdateTime_ms;
+  _targetID.UnSet();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorFeedingEat::IsCubeBad(const Robot& robot, const ObjectID& objectID) const
+{
+  const TimeStamp_t lastPoseUpdateTime_ms = robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(objectID);
+
+  auto iter = _badCubesMap.find( objectID );
+  if( iter != _badCubesMap.end() ) {
+    if( lastPoseUpdateTime_ms <= iter->second ) {
+      // cube hasn't been re-observed, so is bad (shouldn't be used by the behavior
+      return true;
+    }
+    // otherwise, the cube was invalid, but has a new pose, so consider it OK
+  }
+
+  // cube isn't bad
+  return false;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::SetState_internal(State state, const std::string& stateName)

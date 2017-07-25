@@ -13,7 +13,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 
 namespace Anki {
 namespace Cozmo {

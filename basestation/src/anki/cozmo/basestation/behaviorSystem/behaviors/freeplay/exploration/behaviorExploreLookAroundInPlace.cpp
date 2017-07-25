@@ -124,10 +124,6 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   } else {
     _configParams.behavior_NumberOfScansBeforeStop = 0;
   }
-  // turn speed
-  _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
-  _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec", debugName);
-  _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec", debugName);
   // chance that the main turn will be counter clockwise (vs ccw)
   _configParams.s0_MainTurnCWChance = ParseFloat(config, "s0_MainTurnCWChance", debugName);
   // [min,max] range for random turn angles for step 1
@@ -166,21 +162,25 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg", debugName);
 
   if( config.isMember("motionProfile") ) {
+    
     _configParams.customMotionProfile = std::make_unique<PathMotionProfile>();
     _configParams.customMotionProfile->SetFromJSON(config["motionProfile"]);
 
-    ANKI_VERIFY(Util::IsNearZero(_configParams.sx_BodyTurnSpeed_degPerSec),
-                debugName.c_str(),
-                "Body turn speed set to %f, but using a motion profile, so should be 0. The speed won't be applied",
-                _configParams.sx_BodyTurnSpeed_degPerSec);
-    ANKI_VERIFY(Util::IsNearZero(_configParams.sxt_HeadTurnSpeed_degPerSec),
-                debugName.c_str(),
-                "sxt head speed set to %f, but using a motion profile, so should be 0. The speed won't be applied",
-                _configParams.sxt_HeadTurnSpeed_degPerSec);
-    ANKI_VERIFY(Util::IsNearZero(_configParams.sxh_HeadTurnSpeed_degPerSec),
-                debugName.c_str(),
-                "sxh head speed set to %f, but using a motion profile, so should be 0. The speed won't be applied",
-                _configParams.sxh_HeadTurnSpeed_degPerSec);
+    ANKI_VERIFY( !config.isMember("sx_BodyTurnSpeed_degPerSec"),
+                 debugName.c_str(),
+                 "Using motion profile, shouldn't set body turn speed in JSON" );
+    ANKI_VERIFY( !config.isMember("sxt_HeadTurnSpeed_degPerSec"),
+                 debugName.c_str(),
+                 "Using motion profile, shouldn't set sxt head turn speed in JSON" );
+    ANKI_VERIFY( !config.isMember("sxh_HeadTurnSpeed_degPerSec"),
+                 debugName.c_str(),
+                 "Using motion profile, shouldn't set sxh head turn speed in JSON" );
+  }
+  else {
+    // manual turn speeds
+    _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
+    _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec", debugName);
+    _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec", debugName);
   }
   
 }

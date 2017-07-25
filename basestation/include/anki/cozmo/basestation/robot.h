@@ -422,6 +422,8 @@ public:
   const PoseOriginList&  GetPoseOriginList() const { assert(_poseOriginList); return *_poseOriginList; }
   
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
+  const ObjectPoseConfirmer& GetObjectPoseConfirmer() const {
+    assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
   
   // These change the robot's internal (basestation) representation of its
   // head angle, and lift angle, but do NOT actually command the

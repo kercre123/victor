@@ -103,12 +103,9 @@ void BehaviorFeedingSearchForCube::TransitionToSecondSearchForFood(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase(Robot& robot)
 {
-  AnimationTrigger searchIdle = AnimationTrigger::Count;
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  if(currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical)){
+  AnimationTrigger searchIdle = AnimationTrigger::FeedingIdleSearch_Normal;
+  if(robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression() == NeedId::Energy){
     searchIdle = AnimationTrigger::FeedingIdleSearch_Severe;
-  }else{
-    searchIdle = AnimationTrigger::FeedingIdleSearch_Normal;
   }
   
   IActionRunner* searchAction = new CompoundActionParallel(robot, {

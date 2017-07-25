@@ -512,7 +512,14 @@
       "CladEvent": "FeedingIdleSearch_Severe",
       "AnimName": "ag_energy_idle_l2_searchforcube"
     },
-
+    {
+      "CladEvent": "FeedingIdleSearchForFaces_Normal",
+      "AnimName": "ag_energy_idle_01"
+    },
+    {
+      "CladEvent": "FeedingIdleSearchForFaces_Severe",
+      "AnimName": "ag_energy_idle_02_nohead"
+    },
     {
       "CladEvent": "FeedingIdleWaitForFullCube_Normal",
       "AnimName": "ag_energy_idle_01"
@@ -530,12 +537,16 @@
       "AnimName": "ag_energy_idle_02"
     },
     {
+      "CladEvent": "FeedingIdleWaitForShakeNoHead_Severe",
+      "AnimName": "ag_energy_idle_02_nohead"
+    },
+    {
       "CladEvent": "FeedingInterrupted",
       "AnimName": "ag_energy_interruptions"
     },
     {
       "CladEvent": "FeedingInterrupted_Severe",
-      "AnimName": "ag_energy_interruptions"
+      "AnimName": "ag_energy_shortreact_lvl2"
     },
     {
       "CladEvent": "FeedingSearchRequest",

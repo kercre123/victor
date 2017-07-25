@@ -119,14 +119,15 @@ enum uint_8 BehaviorID {
 
   FeedingEat,
   FeedingFindFacesSevere,
-  FeedingSearchForCube,
-  FeedingTurnToFace,
+  FeedingPlayRequestAtFace,
+  FeedingPlayRequestAtFace_Severe,
   FeedingReactCubeShake,
   FeedingReactCubeShake_Severe,
   FeedingReactFullCube,
   FeedingReactFullCube_Severe,
   FeedingReactSeeCharged,
   FeedingReactSeeCharged_Severe,
+  FeedingSearchForCube,
 
   FindFaces_socialize,
   FistBump,

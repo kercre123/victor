@@ -106,12 +106,14 @@ private:
   
 void CubeStateTracker::SetChargeState(ChargeState newChargeState)
 {
-  PRINT_CH_INFO("Feeding",
-                "CubeStateTracker.SetChargeState.NewChargeState",
-                "Charge state for object %d set from %s to %s",
-                _id.GetValue(),
-                ChargeStateToString(_chargeState),
-                ChargeStateToString(newChargeState));
+  if( _chargeState != newChargeState ) {
+    PRINT_CH_INFO("Feeding",
+                  "CubeStateTracker.SetChargeState.NewChargeState",
+                  "Charge state for object %d set from %s to %s",
+                  _id.GetValue(),
+                  ChargeStateToString(_chargeState),
+                  ChargeStateToString(newChargeState));
+  }
   _chargeState = newChargeState;
 }
   
@@ -159,12 +161,15 @@ void FeedingCubeController::SetControllerState(Robot& robot, ControllerState new
       break;
     }
   }
+
+  if( newState != _currentState ) {
+    PRINT_CH_INFO("Feeding",
+                  "FeedingCubeController.SetControllerState.NewState",
+                  "Feeding cube controller for id %d switched to state %s",
+                  _cubeStateTracker->_id.GetValue(),
+                  ControllerStateToString(newState));
+  }
   
-  PRINT_CH_INFO("Feeding",
-                "FeedingCubeController.SetControllerState.NewState",
-                "Feeding cube controller for id %d switched to state %s",
-                _cubeStateTracker->_id.GetValue(),
-                ControllerStateToString(newState));
   _currentState = newState;
 }
 
@@ -245,11 +250,11 @@ void FeedingCubeController::CheckForChargeStateChanges(Robot& robot)
       _cubeStateTracker->_timeLoseNextCharge_s = currentTime_s + kTimeBetweenLoosingCharge_s;
       _cubeStateTracker->_currentChargeLevel--;
       
-      PRINT_CH_INFO("Feeding",
-                    "FeedingCubeController.CheckForChargeStateChanges.ShakeDecreasing",
-                    "Cube with id %d has not detected new shake, so decreasing shake count to %d",
-                    _cubeStateTracker->_id.GetValue(),
-                    _cubeStateTracker->_currentChargeLevel);
+      PRINT_CH_DEBUG("Feeding",
+                     "FeedingCubeController.CheckForChargeStateChanges.ShakeDecreasing",
+                     "Cube with id %d has not detected new shake, so decreasing shake count to %d",
+                     _cubeStateTracker->_id.GetValue(),
+                     _cubeStateTracker->_currentChargeLevel);
       
       // update charge audio to match
       if(_cubeStateTracker->_currentChargeLevel == 0){
@@ -433,11 +438,11 @@ void FeedingCubeController::ShakeDetected(Robot& robot, const float shakeScore)
       UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Up);
       UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Up);
       
-      PRINT_CH_INFO("Feeding",
-                    "FeedingCubeController.ShakeDetected.ShakeIncreasing",
-                    "Cube with id %d now has %d shakes",
-                    _cubeStateTracker->_id.GetValue(),
-                    _cubeStateTracker->_currentChargeLevel);
+      PRINT_CH_DEBUG("Feeding",
+                     "FeedingCubeController.ShakeDetected.ShakeIncreasing",
+                     "Cube with id %d now has %d shakes",
+                     _cubeStateTracker->_id.GetValue(),
+                     _cubeStateTracker->_currentChargeLevel);
     }else if(_cubeStateTracker->_currentChargeLevel == 1){
       UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Start);
     }
@@ -448,11 +453,11 @@ void FeedingCubeController::ShakeDetected(Robot& robot, const float shakeScore)
     _cubeStateTracker->_timeLoseNextCharge_s   = currentTime_s + kTimeBeforeStartLosingCharge_s;
     _cubeStateTracker->_timeNextShakeCounts_s = currentTime_s + kTimeBetweenShakes_s;
     
-    PRINT_CH_INFO("Feeding",
-                  "FeedingCubeController.IncrementingShakeCount",
-                  "Shake count for active ID %d is now %d",
-                  _cubeStateTracker->_id.GetValue(),
-                  _cubeStateTracker->_currentChargeLevel);
+    PRINT_CH_DEBUG("Feeding",
+                   "FeedingCubeController.IncrementingShakeCount",
+                   "Shake count for active ID %d is now %d",
+                   _cubeStateTracker->_id.GetValue(),
+                   _cubeStateTracker->_currentChargeLevel);
     
   }
 }
@@ -505,11 +510,11 @@ void FeedingCubeController::SetCubeLights(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::UpdateChargeAudioRound(Robot& robot, ChargeStateChange changeEnumVal)
 {
-  PRINT_CH_INFO("Feeding",
-                "FeedingCubeController.UpdateChargeAudioRound.ChargeStateChange",
-                "Cube with id %d is broadcasting audio state change %s",
-                _cubeStateTracker->_id.GetValue(),
-                ChargeStateChangeToString(changeEnumVal));
+  PRINT_CH_DEBUG("Feeding",
+                 "FeedingCubeController.UpdateChargeAudioRound.ChargeStateChange",
+                 "Cube with id %d is broadcasting audio state change %s",
+                 _cubeStateTracker->_id.GetValue(),
+                 ChargeStateChangeToString(changeEnumVal));
   
   ExternalInterface::FeedingSFXStageUpdate message;
   message.stage = Util::EnumToUnderlying(changeEnumVal);

@@ -29,7 +29,6 @@ namespace Cozmo {
   
 // forward declarations
 class BehaviorFeedingEat;
-class BehaviorPlayArbitraryAnim;
 class BehaviorFeedingSearchForCube;
 class FeedingCubeController;
 struct ObjectConnectionState;
@@ -54,9 +53,10 @@ protected:
   
 private:
   enum class FeedingActivityStage{
-    SearchForFace,
+    SearchForFace = 0,
     SearchForFace_Severe,
-    TurnToFace,
+    TurningToFace,
+    TurningToFace_Severe,
     WaitingForShake,
     ReactingToShake,
     ReactingToShake_Severe,
@@ -69,7 +69,7 @@ private:
     EatFood
   };
   
-  FeedingActivityStage _chooserStage;
+  FeedingActivityStage _activityStage;
   float _lastStageChangeTime_s;
   float _timeFaceSearchShouldEnd_s;
   
@@ -78,14 +78,16 @@ private:
   std::set<ObjectID> _cubesSearchCouldntFind;
   
   // The object cozmo should eat once he's seen that it's fully charged
-  ObjectID _interactID;
-  ObjectID _searchingForID;
+  ObjectID _cubeIDToEat;
+  ObjectID _cubeIDToSearchFor;
   
   // Bool that will be set by a behavior listener callback when the behavior has
   bool _eatingComplete;
   
   bool _severeAnimsSet;
-  bool _usingLookingUpIdle;
+
+  AnimationTrigger _currIdle;
+  bool _hasSetIdle;
   
   std::vector<Signal::SmartHandle> _eventHandlers;
   
@@ -96,6 +98,7 @@ private:
   IBehaviorPtr _searchingForFaceBehavior;
   IBehaviorPtr _searchingForFaceBehavior_Severe;
   IBehaviorPtr _turnToFaceBehavior;
+  IBehaviorPtr _turnToFaceBehavior_Severe;
   std::shared_ptr<BehaviorFeedingSearchForCube> _searchForCubeBehavior;
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
   
@@ -111,29 +114,34 @@ private:
   
   // DAS info trackers
   int _DASCubesPerFeeding = 0;
-  int _DASFeedingSessionsPerAppRun = 0;
-  float _DASTimeLastFeedingStageStarted = -1.0f;
-  int   _DASMostCubesInParallel = 0;
+  int _DASFeedingSessionsPerConnectedSession = 0;
+  int _DASMostCubesInParallel = 0;
+
+  void UpdateCurrentStage(Robot& robot);
+  void UpdateCubeToEat(Robot& robot);
   
-  void UpdateActivityStage(FeedingActivityStage newStage, const std::string& newStageName);
+  void SetActivityStage(Robot& robot, FeedingActivityStage newStage, const std::string& newStageName);
+
+  void SetIdleForCurrentStage(Robot& robot);
   
   // Updates the activity stage to the best thing Cozmo can do right now
   // e.g. wait for a cube to shake, search for a shaken cube etc.
-  // Returns the behavior to run this tick since this is frequently used
-  // in the middle of the ChooseNextBehavior switch statement
-  IBehaviorPtr TransitionToBestActivityStage(Robot& robot);
+  void TransitionToBestActivityStage(Robot& robot);
+
+  IBehaviorPtr GetBestBehaviorFromMap() const;
   
-  // Handle object observations
-  void RobotObservedObject(const ObjectID& objID, Robot& robot);
-    
+  // Handle object connection state issues
   void HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState);
   
   void ClearSevereAnims(Robot& robot);
   
   bool HasSingleBehaviorStageStarted(IBehaviorPtr behavior);
+
+  bool HasFaceToTurnTo(Robot& robot) const;
   
   void SetupSevereAnims(Robot& robot);
-  
+
+  void SendCubeDasEventsIfNeeded();
   
   // Setup map
   std::map<FeedingActivityStage, IBehaviorPtr> _stageToBehaviorMap;
