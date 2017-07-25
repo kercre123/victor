@@ -808,6 +808,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void WebViewCallback(string jsonStringFromJS) {
+      // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
       string logJSONStringFromJS = jsonStringFromJS;
       if (logJSONStringFromJS.Contains("cozmo_says") || logJSONStringFromJS.Contains("cozmoSays")) {
         // TODO Temporary solution for removing PII from logs.
@@ -821,9 +822,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       try {
         DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
 
-        // Required on Android since JavaScript is calling encodeURIComponent.
-        // Doesn't seem to be required on iOS or Mac Unity editor.
-        jsonStringFromJS = WWW.UnEscapeURL(jsonStringFromJS);
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {
