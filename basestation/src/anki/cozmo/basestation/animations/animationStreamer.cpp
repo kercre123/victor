@@ -336,11 +336,9 @@ namespace Cozmo {
     }
     _idleAnimationNameStack.push_back(std::make_pair(animName, lockName));
     
-    if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation",
-                        "Setting idle animation to '%s'.",
-                        EnumToString(animName));
-    }
+    PRINT_CH_INFO("Animations", "AnimationStreamer.PushIdleAnimation",
+                  "Setting idle animation to '%s'.",
+                  EnumToString(animName));
     
     return RESULT_OK;
   } // PushIdleAnimation()
