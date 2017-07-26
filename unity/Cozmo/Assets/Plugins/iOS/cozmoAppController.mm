@@ -203,7 +203,7 @@ void tryExecuteBackgroundTransfers()
 //Methods for Voice Command Settings
 extern "C"{
     void openAppSettings() {
-        if (&UIApplicationOpenSettingsURLString != NULL) {
+        if (UIApplicationOpenSettingsURLString != NULL) {
             NSURL *appSettings = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
             [[UIApplication sharedApplication] openURL:appSettings];
         }
