@@ -36,6 +36,7 @@ NeedsState::NeedsState()
 , _numStarsAwarded(0)
 , _numStarsForNextUnlock(1)
 , _timeLastStarAwarded(Time())
+, _forceNextSong(UnlockId::Invalid)
 , _needsConfig(nullptr)
 , _starRewardsConfig(nullptr)
 , _curNeedsBracketsCache()
@@ -86,6 +87,7 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
   _curNeedsUnlockLevel = 0;
   _numStarsAwarded = 0;
   _numStarsForNextUnlock = _starRewardsConfig->GetMaxStarsForLevel(0);
+  _forceNextSong = UnlockId::Invalid;
 }
 
 

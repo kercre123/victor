@@ -58,6 +58,7 @@ static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
 static const std::string kTimeLastDisconnectKey = "TimeLastDisconnect";
 static const std::string kTimeLastAppBackgroundedKey = "TimeLastAppBackgrounded";
 static const std::string kOpenAppAfterDisconnectKey = "OpenAppAfterDisconnect";
+static const std::string kForceNextSongKey = "ForceNextSong";
 
 // This key is used as the base of the string for when sparks are sometimes rewarded
 // for freeplay activities, that tells how many sparks were awarded and what Cozmo
@@ -731,6 +732,11 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
     {
       return;
     }
+  }
+
+  if (actionCompleted == NeedsActionId::CozmoSings)
+  {
+    _needsState._forceNextSong = UnlockId::Invalid;
   }
 
   const int actionIndex = static_cast<int>(actionCompleted);
@@ -1588,8 +1594,9 @@ bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
       starAwarded = true;
 
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
-                    "now: %d, lastsave: %d",
-                    nowLocalTime.tm_yday, lastLocalTime.tm_yday);
+                    "now day: %d, lastsave day: %d, level: %d",
+                    nowLocalTime.tm_yday, lastLocalTime.tm_yday,
+                    _needsState._curNeedsUnlockLevel);
       
       _needsState._timeLastStarAwarded = nowTime;
       _needsState._numStarsAwarded++;
@@ -1669,7 +1676,9 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
   // Issue rewards in inventory
   for (int rewardIndex = 0; rewardIndex < rewardsThisLevel.size(); ++rewardIndex)
   {
-    switch(rewardsThisLevel[rewardIndex].rewardType)
+    const auto& rewardType = rewardsThisLevel[rewardIndex].rewardType;
+
+    switch(rewardType)
     {
       case NeedsRewardType::Sparks:
       {
@@ -1714,6 +1723,10 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
           {
             _robot->GetProgressionUnlockComponent().SetUnlock(id, true);
             rewards.push_back(rewardsThisLevel[rewardIndex]);
+            if (rewardType == NeedsRewardType::Song)
+            {
+              _needsState._forceNextSong = id;
+            }
             if (allowedPriorUnlocks != nullptr)
             {
               (*allowedPriorUnlocks)--;
@@ -1829,7 +1842,7 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
 
   if (stampWithNowTime)
   {
-    _needsState._timeLastWritten = system_clock::now();
+    _needsState._timeLastWritten = startTime;
   }
 
   Json::Value state;
@@ -1866,11 +1879,14 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
   const auto timeStarAwarded_s = duration_cast<seconds>(_needsState._timeLastStarAwarded.time_since_epoch()).count();
   state[kTimeLastStarAwardedKey] = Util::numeric_cast<Json::LargestInt>(timeStarAwarded_s);
 
+  state[kForceNextSongKey] = EnumToString(_needsState._forceNextSong);
+
   const auto midTime = system_clock::now();
   if (!_cozmoContext->GetDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.WriteToDevice.WriteStateFailed", "Failed to write needs state file");
   }
+
   const auto endTime = system_clock::now();
   const auto microsecsMid = duration_cast<microseconds>(endTime - midTime);
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
@@ -1946,6 +1962,15 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
     _needsState._timeLastStarAwarded = Time(); // For older versions, a sensible default
   }
 
+  if (versionLoaded >= 4)
+  {
+    _needsState._forceNextSong = UnlockIdFromString(state[kForceNextSongKey].asString());
+  }
+  else
+  {
+    _needsState._forceNextSong = UnlockId::Invalid;
+  }
+
   if (versionLoaded < NeedsState::kDeviceStorageVersion)
   {
     versionUpdated = true;
@@ -2016,7 +2041,8 @@ void NeedsManager::StartWriteToRobot()
 
   NeedsStateOnRobot stateForRobot(NeedsState::kRobotStorageVersion, timeLastWritten, curNeedLevels,
                                   _needsState._curNeedsUnlockLevel, _needsState._numStarsAwarded,
-                                  partIsDamaged, timeLastStarAwarded, _robotOnboardingStageCompleted);
+                                  partIsDamaged, timeLastStarAwarded, _robotOnboardingStageCompleted,
+                                  _needsState._forceNextSong);
 
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
@@ -2037,8 +2063,8 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
               "Robot storage state should be Writing but instead is %d", _robotStorageState);
   _robotStorageState = RobotStorageState::Inactive;
 
-  auto endTime = system_clock::now();
-  auto microsecs = duration_cast<microseconds>(endTime - startTime);
+  const auto endTime = system_clock::now();
+  const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
 
   if (res < NVStorage::NVResult::NV_OKAY)
@@ -2164,6 +2190,25 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
         stateOnRobot.onboardingStageCompleted = 0;
         break;
       }
+      case 3:
+      {
+        NeedsStateOnRobot_v03 stateOnRobot_v03;
+        stateOnRobot_v03.Unpack(data, size);
+
+        stateOnRobot.version = NeedsState::kRobotStorageVersion;
+        stateOnRobot.timeLastWritten = stateOnRobot_v03.timeLastWritten;
+        for (int i = 0; i < MAX_NEEDS; i++)
+          stateOnRobot.curNeedLevel[i] = stateOnRobot_v03.curNeedLevel[i];
+        stateOnRobot.curNeedsUnlockLevel = stateOnRobot_v03.curNeedsUnlockLevel;
+        stateOnRobot.numStarsAwarded = stateOnRobot_v03.numStarsAwarded;
+        for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
+          stateOnRobot.partIsDamaged[i] = stateOnRobot_v03.partIsDamaged[i];
+        stateOnRobot.timeLastStarAwarded = stateOnRobot_v03.timeLastStarAwarded;
+        stateOnRobot.onboardingStageCompleted = stateOnRobot_v03.onboardingStageCompleted;
+        // Version 4 added this variable
+        stateOnRobot.forceNextSong = UnlockId::Invalid;
+        break;
+      }
       default:
       {
         PRINT_CH_DEBUG(kLogChannelName, "NeedsManager.FinishReadFromRobot.UnsupportedOldRobotStorageVersion",
@@ -2196,6 +2241,8 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
 
   const seconds durationSinceEpochLastStar_s(stateOnRobot.timeLastStarAwarded);
   _needsStateFromRobot._timeLastStarAwarded = time_point<system_clock>(durationSinceEpochLastStar_s);
+
+  _needsStateFromRobot._forceNextSong = stateOnRobot.forceNextSong;
 
   // Other initialization for things that do not come from storage:
   _needsStateFromRobot._robotSerialNumber = _robot->GetBodySerialNumber();

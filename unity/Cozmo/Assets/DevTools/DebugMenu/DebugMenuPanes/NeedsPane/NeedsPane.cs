@@ -66,9 +66,9 @@ public class NeedsPane : MonoBehaviour {
   }
 
   private void HandleNeedsStateFromEngine(NeedsState newNeedsState) {
-    _LevelEnergyInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Energy].ToString("N2");
-    _LevelPlayInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Play].ToString("N2");
-    _LevelRepairInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Repair].ToString("N2");
+    _LevelEnergyInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Energy].ToString("N6");
+    _LevelPlayInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Play].ToString("N6");
+    _LevelRepairInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Repair].ToString("N6");
     // Remove so that it doesn't change past first init
     RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
   }

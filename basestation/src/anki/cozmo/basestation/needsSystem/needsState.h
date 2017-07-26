@@ -16,7 +16,8 @@
 
 #include "anki/common/types.h"
 #include "clad/types/needsSystemTypes.h"
-#include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
+#include "clad/types/unlockTypes.h"
+#include "util/global/globalDefinitions.h"
 #include "util/random/randomGenerator.h"
 
 #include <assert.h>
@@ -97,8 +98,8 @@ public:
   // Note that changing format of robot storage serialization will be more difficult,
   // because it serializes a CLAD structure, so for backward compatibility we'd have
   // to preserve older versions of that CLAD structure.
-  static const int kDeviceStorageVersion = 3;
-  static const int kRobotStorageVersion = 3;
+  static const int kDeviceStorageVersion = 4;
+  static const int kRobotStorageVersion = 4;
 
   Time _timeLastWritten;
 
@@ -128,10 +129,11 @@ public:
   using PartIsDamagedMap = std::map<RepairablePartId, bool>;
   PartIsDamagedMap _partIsDamaged;
 
-  int _curNeedsUnlockLevel;
-  int _numStarsAwarded;
-  int _numStarsForNextUnlock;
-  Time _timeLastStarAwarded;
+  int      _curNeedsUnlockLevel;
+  int      _numStarsAwarded;
+  int      _numStarsForNextUnlock;
+  Time     _timeLastStarAwarded;
+  UnlockId _forceNextSong;
   
   void SetStarLevel(int newLevel);
 

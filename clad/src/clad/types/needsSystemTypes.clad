@@ -1,6 +1,7 @@
 /** Clad message definitions for Needs system
 */
 
+#include "clad/types/unlockTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -116,7 +117,7 @@ structure NeedsReward
 {
   NeedsRewardType rewardType,
   string          data,
-  bool inventoryIsFull = 0
+  bool            inventoryIsFull = 0
 }
 
 
@@ -129,6 +130,20 @@ structure NeedsReward
 
 structure NeedsStateOnRobot
 {
+  int_32   version,
+  uint_64  timeLastWritten,
+  int_32   curNeedLevel[10],   // MAX_NEEDS
+  int_32   curNeedsUnlockLevel,
+  int_32   numStarsAwarded,
+  bool     partIsDamaged[32],  // MAX_REPAIRABLE_PARTS
+  uint_64  timeLastStarAwarded,
+  int_32   onboardingStageCompleted,
+  UnlockId forceNextSong
+}
+
+// Prior versions here:
+structure NeedsStateOnRobot_v03
+{
   int_32  version,
   uint_64 timeLastWritten,
   int_32  curNeedLevel[10],   // MAX_NEEDS
@@ -139,7 +154,6 @@ structure NeedsStateOnRobot
   int_32  onboardingStageCompleted
 }
 
-// Prior versions here:
 structure NeedsStateOnRobot_v02
 {
   int_32  version,
