@@ -112,6 +112,7 @@ private:
   void HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleNeedsUpdates(const NeedsLevels& needsLevel);
+  void HandleDimMusicForActivity(const RobotPublicState& stateEvent);
 
   
 };

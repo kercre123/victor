@@ -253,6 +253,9 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   // Inform the audio engine of changes in needs levels
   HandleNeedsUpdates(stateEvent.needsLevels);
   
+  // Check if we need to dim the music for the current activity
+  HandleDimMusicForActivity(stateEvent);
+  
   // Handle AI Activity transitions and Guard Dog behavior transitions
   const auto& currActivity = stateEvent.currentActivity;
   if (currActivity != _prevActivity) {
@@ -470,6 +473,22 @@ void BehaviorAudioClient::SetActiveBehaviorStage(BehaviorStageTag stageTag)
                  BehaviorStageTagToString(stageTag),
                  BehaviorStageTagToString(_activeBehaviorStage));
   _activeBehaviorStage = stageTag;
+}
+
+
+void BehaviorAudioClient::HandleDimMusicForActivity(const RobotPublicState& stateEvent)
+{
+  if(_prevActivity != stateEvent.currentActivity)
+  {
+    if(stateEvent.currentActivity == ActivityID::Singing)
+    {
+      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::App::Music_Dim_On));
+    }
+    else if(_prevActivity == ActivityID::Singing)
+    {
+      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::App::Music_Dim_Off));
+    }
+  }
 }
 
   
