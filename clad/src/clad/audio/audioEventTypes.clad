@@ -4,6 +4,15 @@ namespace Anki {
 namespace AudioMetaData {
 namespace GameEvent {
 
+enum uint_32 App
+{
+  Invalid = 0,  // Use this to check for Invalid events
+  Music_Dim_Off = 1721389992,
+  Music_Dim_On = 3577443762,
+  Music_Vc_Mode_Off = 2840054831,
+  Music_Vc_Mode_On = 708318267,
+}
+
 enum uint_32 Coz_App
 {
   Enter_Background = 2017190380,
@@ -42,6 +51,7 @@ enum uint_32 Dev_Robot
 
 enum uint_32 EventGroupType
 {
+  App,
   Coz_App,
   Cue_World_Event,
   Dev_Device,
@@ -57,6 +67,10 @@ enum uint_32 EventGroupType
 enum uint_32 GenericEvent
 {
   Invalid = 0,  // Use this to check for Invalid events
+  Play__App__Music_Dim_Off = 1721389992,
+  Play__App__Music_Dim_On = 3577443762,
+  Play__App__Music_Vc_Mode_Off = 2840054831,
+  Play__App__Music_Vc_Mode_On = 708318267,
   Play__Coz_App__Enter_Background = 2017190380,
   Play__Coz_App__Enter_Foreground = 1225777195,
   Play__Cue_World_Event__Cubes_Stacked = 3962867948,
@@ -543,6 +557,7 @@ enum uint_32 GenericEvent
   Play__Sfx__Relationship_Gain_Collect = 447401587,
   Play__Sfx__Repair_Calibrate = 1047777997,
   Play__Sfx__Repair_Level_Success = 3944925464,
+  Play__Sfx__Repair_Pattern_Complete = 1670593078,
   Play__Sfx__Repair_Pattern_Down = 3820109879,
   Play__Sfx__Repair_Pattern_Error = 2689322891,
   Play__Sfx__Repair_Pattern_Up = 4229457120,
@@ -553,10 +568,6 @@ enum uint_32 GenericEvent
   Play__Sfx__Repair_Tap_Arrow = 821377663,
   Play__Sfx__Spark_Launch = 38276463,
   Play__Sfx__Spark_Success = 3587224415,
-  Play__Ui__App_Music_Dim_Off = 3779261527,
-  Play__Ui__App_Music_Dim_On = 524475811,
-  Play__Ui__App_Music_Vc_Mode_Off = 223426252,
-  Play__Ui__App_Music_Vc_Mode_On = 608780518,
   Play__Ui__Attention_Device = 796149778,
   Play__Ui__Click_Back = 3218349115,
   Play__Ui__Click_General = 902542,
@@ -1128,6 +1139,7 @@ enum uint_32 Sfx
   Relationship_Gain_Collect = 447401587,
   Repair_Calibrate = 1047777997,
   Repair_Level_Success = 3944925464,
+  Repair_Pattern_Complete = 1670593078,
   Repair_Pattern_Down = 3820109879,
   Repair_Pattern_Error = 2689322891,
   Repair_Pattern_Up = 4229457120,
@@ -1143,10 +1155,6 @@ enum uint_32 Sfx
 
 enum uint_32 Ui
 {
-  App_Music_Dim_Off = 3779261527,
-  App_Music_Dim_On = 524475811,
-  App_Music_Vc_Mode_Off = 223426252,
-  App_Music_Vc_Mode_On = 608780518,
   Attention_Device = 796149778,
   Click_Back = 3218349115,
   Click_General = 902542,
