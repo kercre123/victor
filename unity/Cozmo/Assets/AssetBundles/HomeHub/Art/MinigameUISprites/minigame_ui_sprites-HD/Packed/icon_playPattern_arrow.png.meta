@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 577c5dbc742c14fb28c0a27e73b87bc3
-timeCreated: 1500938609
+guid: de3b8384feb6e40e8946c6217d9452e1
+timeCreated: 1500936460
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -24,7 +24,7 @@ TextureImporter:
   generateCubemap: 6
   cubemapConvolution: 0
   seamlessCubemap: 0
-  textureFormat: -3
+  textureFormat: 1
   maxTextureSize: 2048
   textureSettings:
     filterMode: 1
@@ -40,7 +40,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 50
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
@@ -58,19 +58,11 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
-  - buildTarget: Standalone
-    maxTextureSize: 2048
-    textureFormat: -1
-    textureCompression: 0
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
   spriteSheet:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: 
+  spritePackingTag: minigame_ui_spritesHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
