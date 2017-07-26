@@ -23,6 +23,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
         cozmo_drive_backward_fast: this.driveBackwardFast,
+        cozmo_play_animation_from_dropdown: this.playAnimationFromDropdown,
         cozmo_happy_animation: this.playHappyAnimation,
         cozmo_victory_animation: this.playVictoryAnimation,
         cozmo_unhappy_animation: this.playUnhappyAnimation,
@@ -160,6 +161,17 @@ Scratch3CozmoBlocks.prototype.playAnimationHelper = function(args, util, animNam
     return this._promiseForCommand(requestId);
 };
 
+Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function(args, util) {
+    var animName = Cast.toString(args.ANIMATION);
+    if (animName == 'mystery'){
+        var randomAnim = this._getAnimation(animName);
+        return this.playAnimationHelper(args, util, randomAnim, 1);
+    }
+    else{
+        return this.playAnimationHelper(args, util, animName);
+    }
+};
+
 Scratch3CozmoBlocks.prototype.playHappyAnimation = function(args, util) {
     return this.playAnimationHelper(args, util, "happy");
 };
@@ -227,7 +239,7 @@ Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
     window.Unity.call({requestId: requestId, command: "cozmoForklift", argString: liftHeight});
 
     return this._promiseForCommand(requestId);
-};    
+};
 
 Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
     var headAngle = Cast.toString(args.CHOICE);

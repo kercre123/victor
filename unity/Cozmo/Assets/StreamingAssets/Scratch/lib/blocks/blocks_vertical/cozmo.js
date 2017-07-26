@@ -74,295 +74,38 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
   }
 };
 
-Blockly.Blocks['cozmo_happy_animation'] = {
+Blockly.Blocks['cozmo_play_animation_from_dropdown'] = {
   /**
-   * Block to play a happy animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_happy_animation",
-      "message0": "Play Happy Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_victory_animation'] = {
-  /**
-   * Block to play a victory animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_victory_animation",
-      "message0": "Play Victory Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_unhappy_animation'] = {
-  /**
-   * Block to play a unhappy animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_unhappy_animation",
-      "message0": "Play Unhappy Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_surprise_animation'] = {
-  /**
-   * Block to play a surprise animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_surprise_animation",
-      "message0": "Play Surprise Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_dog_animation'] = {
-  /**
-   * Block to play a "see dog" animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_dog_animation",
-      "message0": "Play Dog Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_cat_animation'] = {
-  /**
-   * Block to play a "see cat" animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_cat_animation",
-      "message0": "Play Cat Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_sneeze_animation'] = {
-  /**
-   * Block to play a sneeze animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_sneeze_animation",
-      "message0": "Play Sneeze Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_excited_animation'] = {
-  /**
-   * Block to play an excited animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_excited_animation",
-      "message0": "Play Excited Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_thinking_animation'] = {
-  /**
-   * Block to play a thinking animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_thinking_animation",
-      "message0": "Play Thinking Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_bored_animation'] = {
-  /**
-   * Block to play a bored animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_bored_animation",
-      "message0": "Play Bored Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_frustrated_animation'] = {
-  /**
-   * Block to play a frustrated animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_frustrated_animation",
-      "message0": "Play Frustrated Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_chatty_animation'] = {
-  /**
-   * Block to play a chatty animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_chatty_animation",
-      "message0": "Play Chatty Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_dejected_animation'] = {
-  /**
-   * Block to play a disappointed animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_dejected_animation",
-      "message0": "Play Dejected Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_sleep_animation'] = {
-  /**
-   * Block to play a sleep animation.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_sleep_animation",
-      "message0": "Play Sleep Animation",
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "category": Blockly.Categories.actions,
-      "colour": Blockly.Colours.actions.primary,
-      "colourSecondary": Blockly.Colours.actions.secondary,
-      "colourTertiary": Blockly.Colours.actions.tertiary
-    });
-  }
-};
-
-Blockly.Blocks['cozmo_mystery_animation'] = {
-  /**
-   * Block to play a mystery animation (one will be chosen at random).
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "id": "cozmo_mystery_animation",
-      "message0": "Play a random Animation",
+    * Block to make Cozmo play an animation
+    * @this Blockly.Block
+  */
+init: function() {
+  this.jsonInit({
+    "id": "cozmo_play_animation_from_dropdown",
+    "message0": "Play %1 Animation",
+    "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "ANIMATION",
+          "options": [
+              ['Happy', 'happy'],
+              ['Winner', 'victory'],
+              ['Sad', 'unhappy'],
+              ['Surprised', 'surprise'],
+              ['Dog', 'dog'],
+              ['Cat', 'cat'],
+              ['Sneeze', 'sneeze'],
+              ['Excited', 'excited'],
+              ['Think Hard', 'thinking'],
+              ['Bored', 'bored'],
+              ['Frustrated', 'frustrated'],
+              ['Chatty', 'chatty'],
+              ['Disappointed', 'dejected'],
+              ['Snore', 'sleep'],
+              ['Mystery', 'mystery']      
+            ]
+        }
+      ],
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
