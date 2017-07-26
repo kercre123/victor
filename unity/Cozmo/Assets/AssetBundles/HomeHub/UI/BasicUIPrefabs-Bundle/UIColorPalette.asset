@@ -14,7 +14,7 @@ MonoBehaviour:
   _GeneralBackgroundColor: {r: 1, g: 1, b: 1, a: 1}
   _GeneralSparkTintColor:
     CanAffordColor: {r: 0.07450981, g: 0.5019608, b: 0.61960787, a: 1}
-    CannotAffordColor: {r: 0.65882355, g: 0.65882355, b: 0.65882355, a: 1}
+    CannotAffordColor: {r: 0.442, g: 0.442, b: 0.442, a: 1}
   _ButtonSparkTintColor:
     CanAffordColor: {r: 1, g: 1, b: 1, a: 1}
     CannotAffordColor: {r: 0.65882355, g: 0.65882355, b: 0.65882355, a: 1}
