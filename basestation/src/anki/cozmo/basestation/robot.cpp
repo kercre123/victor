@@ -683,6 +683,8 @@ void Robot::Delocalize(bool isCarryingObject)
   
   _behaviorMgr->OnRobotDelocalized();
   
+  _movementComponent->OnRobotDelocalized();
+  
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized(GetID())));
@@ -1609,6 +1611,14 @@ Result Robot::SetNewPose(const Pose3d& newPose)
     
 void Robot::SetPose(const Pose3d &newPose)
 {
+  // The new pose should have our current world origin as its origin
+  if(!ANKI_VERIFY((&newPose.FindOrigin() == _worldOrigin),
+                  "Robot.SetPose.NewPoseOriginAndWorldOriginMismatch",
+                  ""))
+  {
+    return;
+  }
+
   // Update our current pose and keep the name consistent
   const std::string name = _pose.GetName();
   _pose = newPose;

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -2540,6 +2541,111 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
   // Object slightly off the ground, but not fully above robot should be Dirty
   ASSERT_EQ(PoseState::Dirty, CheckPoseStateAtHeight(0.75f*ROBOT_BOUNDING_Z));
 
+}
+
+TEST(Localization, UnexpectedMovement)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  robot.SetPhysicalRobot(true);
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  // Fake a state message update for robot
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // For faking observations of a block
+  const ObjectType firstType = ObjectType::Block_LIGHTCUBE1;
+  const Block_Cube1x1 firstCube(firstType);
+  const Vision::Marker::Code firstCode  = firstCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  const Quad2f closeCorners1{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  const ObjectID firstID = robot.GetBlockWorld().AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
+  ASSERT_TRUE(firstID.IsSet());
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  
+  VisionProcessingResult procResult;
+  TimeStamp_t fakeTime = 10;
+  const s32 kNumObservations = 5;
+  
+  // After first seeing three times, should be Known and localizable
+  lastResult = ObserveMarkerHelper(kNumObservations, {{firstCode, closeCorners1}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have the first object present in block world now
+  filter.SetAllowedTypes({firstType});
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+  ASSERT_NE(nullptr, matchingObject);
+  
+  const ObjectID obsFirstID = matchingObject->GetID();
+  ASSERT_EQ(firstID, obsFirstID);
+  
+  // Should be localized to "first" object
+  ASSERT_EQ(firstID, robot.GetLocalizedTo());
+  
+  auto FakeUnexpectedMovement = [](RobotState& stateMsg, Robot& robot, TimeStamp_t& fakeTime) -> Result
+  {
+    // "Move" the robot with a fake state message indicating movement
+    stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
+    stateMsg.timestamp = fakeTime;
+    stateMsg.lwheel_speed_mmps = 50;
+    stateMsg.rwheel_speed_mmps = 0;
+    fakeTime += 10;
+    Result lastResult = robot.UpdateFullRobotState(stateMsg);
+    return lastResult;
+  };
+  
+  // Fake unexpected movement until we are one state message away from triggering it
+  for(int i = 0; i < robot.GetMoveComponent().GetMaxUnexpectedMovementCount(); ++i)
+  {
+    FakeUnexpectedMovement(stateMsg, robot, fakeTime);
+  }
+  
+  // Delocalize the robot to create a new origin
+  robot.Delocalize(false);
+  
+  // Fake one more unexpected movement which used to cause unexpected movement to fully trigger
+  // setting the robot's pose to a pose in history (when the unexpected movement started). This
+  // would be from an old origin, before the delocalize, causing the robot's pose's origin to be
+  // different from the robot's world origin
+  FakeUnexpectedMovement(stateMsg, robot, fakeTime);
+  
+  ASSERT_EQ(robot.GetWorldOrigin(), &robot.GetPose().FindOrigin());
 }
 
 #define CONFIGROOT "ANKICONFIGROOT"

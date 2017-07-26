@@ -70,6 +70,11 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   // Engine to game
   helper.SubscribeEngineToGame<MessageEngineToGameTag::ChargerEvent>();
 }
+
+void MovementComponent::OnRobotDelocalized()
+{
+  _unexpectedMovement.Reset();
+}
   
 void MovementComponent::Update(const Cozmo::RobotState& robotState)
 {

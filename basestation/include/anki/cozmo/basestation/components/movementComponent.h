@@ -39,6 +39,8 @@ public:
   
   void Update(const RobotState& robotState);
   
+  void OnRobotDelocalized();
+  
   // Checks for unexpected movement specifically while turning such as
   // - Cozmo is turning one direction but you turn him the other way
   // - Cozmo is turning one direction and you turn him faster so he overshoots his turn angle
@@ -142,6 +144,8 @@ public:
   void IgnoreDirectDriveMessages(bool ignore) { _ignoreDirectDrive = ignore; }
   
   bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift) && !_ignoreDirectDrive); }
+  
+  u8 GetMaxUnexpectedMovementCount() const { return kMaxUnexpectedMovementCount; }
   
 private:
   
