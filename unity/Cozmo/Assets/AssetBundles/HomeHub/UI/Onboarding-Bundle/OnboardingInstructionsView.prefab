@@ -134,10 +134,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: OnboardingPreBirth
-    _EnumValue: 307
+    _EnumValue: 313
   _CustomIdle:
     _EnumValueAsString: OnboardingPreBirth
-    _EnumValue: 307
+    _EnumValue: 313
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: 
@@ -145,16 +145,16 @@ MonoBehaviour:
   _EnableWhiteListOnly: 1
   _WhiteListedActions: []
   _ForceNeedValuesOnStart:
+  - 0.63
   - 0.7
-  - 0.7
-  - 0.7
+  - 0.55
   _ForceNeedValuesOnEnd:
   - -1
   - -1
   - -1
   _ForceNeedValuesOnEventId:
     _EnumValueAsString: Count
-    _EnumValue: 45
+    _EnumValue: 48
   _ForceNeedValuesOnEvent:
   - -1
   - -1
@@ -707,6 +707,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114809964116548810}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}

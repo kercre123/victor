@@ -86,10 +86,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 509
+    _EnumValue: 514
   _CustomIdle:
     _EnumValueAsString: OnboardingIdleRepair
-    _EnumValue: 306
+    _EnumValue: 311
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.repair.ticker

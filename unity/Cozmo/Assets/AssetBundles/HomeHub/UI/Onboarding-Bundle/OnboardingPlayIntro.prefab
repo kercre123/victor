@@ -208,10 +208,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 509
+    _EnumValue: 514
   _CustomIdle:
     _EnumValueAsString: OnboardingIdlePlay
-    _EnumValue: 305
+    _EnumValue: 310
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.play.ticker
@@ -221,7 +221,7 @@ MonoBehaviour:
   _ForceNeedValuesOnStart:
   - 1
   - 1
-  - 0.7
+  - 0.55
   _ForceNeedValuesOnEnd:
   - -1
   - -1

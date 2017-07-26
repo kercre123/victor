@@ -90,10 +90,12 @@ MonoBehaviour:
   _DimBackground: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
-  _PlayIdle: 0
+  _LoopedAnim:
+    _EnumValueAsString: Count
+    _EnumValue: 514
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 490
+    _EnumValue: 514
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: 
@@ -108,6 +110,13 @@ MonoBehaviour:
   - -1
   - -1
   - -1
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 48
+  _ForceNeedValuesOnEvent:
+  - -1
+  - -1
+  - -1
   _UnPausedNeedMeter: 3
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3
@@ -115,7 +124,7 @@ MonoBehaviour:
   _ButtonStatePlay: 3
   _Animation:
     _EnumValueAsString: OnboardingBirth
-    _EnumValue: 285
+    _EnumValue: 299
   _Logo: {fileID: 22482554}
   _OldRobotLogoPos: {fileID: 22419098}
 --- !u!222 &22277488
