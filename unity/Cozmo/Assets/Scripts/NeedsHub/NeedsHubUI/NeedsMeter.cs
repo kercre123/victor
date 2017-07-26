@@ -29,11 +29,12 @@ namespace Cozmo {
       [SerializeField]
       private ParticleSystem _StartBurstParticles = null;
 
+      // 0 - 6 based on our quality level
       [SerializeField]
-      private int _MinParticles = 0;
+      private int[] _MinParticles = { 2, 5, 10, 15, 20, 20 };
 
       [SerializeField]
-      private int _MaxParticles = 100;
+      private int[] _MaxParticles = { 10, 50, 80, 200, 300, 500 };
 
       [SerializeField]
       private float _MaskFillMin = 0f;
@@ -301,7 +302,8 @@ namespace Cozmo {
           SetBurstColor(_OffColor);
 
           var emissionMod = _ConstantParticles.emission;
-          emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles, _MaxParticles, currentValue));
+          int lvl = PerformanceManager.Instance.GetQualitySetting();
+          emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles[lvl], _MaxParticles[lvl], currentValue));
 
           if (_TargetValue > currentValue) {
             _ImageFillGlow.color = _IncreasingColor;
