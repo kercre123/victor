@@ -118,10 +118,10 @@
     "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy.\n\nCozmo's App may look a little different but you'll keep any unlocked Games, Upgrades, or Sparks you've earned."
   },
   "onboarding.PlayIntro": {
-    "translation": "<b>Cozmo needs to play.</b>\n\nTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Bonus Token."
+    "translation": "<b>Cozmo needs to play.</b>\n\nTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Play Token."
   },
   "onboarding.RewardsIntro": {
-    "translation": "<b>You’ve earned a Bonus Token.</b>\n\nTokens unlock Bonus Boxes, filled with rewards like Sparks and new abilities."
+    "translation": "<b>You’ve earned a Play Token.</b>\n\nTokens unlock Bonus Boxes, filled with rewards like Sparks and new Abilities."
   },
   "onboarding.End": {
     "translation": "<b>You've learned the basics of being a great owner!</b>\n\nFeel free to explore all Cozmo can do, or leave Cozmo alone and he will automatically play Tricks and Games in Freeplay."
