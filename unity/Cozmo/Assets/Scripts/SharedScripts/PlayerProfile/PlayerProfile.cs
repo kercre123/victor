@@ -41,6 +41,10 @@ namespace DataPersistence {
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
+    public int DisplayedStars;
+
+    public List<Anki.Cozmo.ExternalInterface.StarLevelCompleted> NewStarLevels;
+
     public List<string> PreviousTags;
 
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
@@ -73,6 +77,8 @@ namespace DataPersistence {
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
+      DisplayedStars = 0;
+      NewStarLevels = new List<Anki.Cozmo.ExternalInterface.StarLevelCompleted>();
       PreviousTags = new List<string>();
       VoiceCommandEnabledState = Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState.Unknown;
     }

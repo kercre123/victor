@@ -1,4 +1,4 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
 using UnityEngine;
@@ -51,6 +51,8 @@ namespace Cozmo.Needs {
     private void Awake() {
       RobotEngineManager.Instance.ConnectedToClient += (s) => RequestNeedsState();
       RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
+      RobotEngineManager.Instance.AddCallback<StarLevelCompleted>(HandleStarLevelCompleted);
+      RobotEngineManager.Instance.AddCallback<StarUnlocked>(HandleStarUnlocked);
       _LatestStateFromEngine = CreateNewNeedsState();
       _CurrentDisplayState = CreateNewNeedsState();
 
@@ -61,6 +63,8 @@ namespace Cozmo.Needs {
     private void OnDestroy() {
       if (RobotEngineManager.Instance != null) {
         RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
+        RobotEngineManager.Instance.RemoveCallback<StarLevelCompleted>(HandleStarLevelCompleted);
+        RobotEngineManager.Instance.RemoveCallback<StarUnlocked>(HandleStarUnlocked);
       }
     }
 
@@ -178,6 +182,14 @@ namespace Cozmo.Needs {
           OnNeedsBracketChanged(newNeedsState.actionCausingTheUpdate, (NeedId)need);
         }
       }
+    }
+
+    private void HandleStarLevelCompleted(StarLevelCompleted message) {
+      DataPersistence.DataPersistenceManager.Instance.AddNewStarLevel(message);
+    }
+
+    private void HandleStarUnlocked(StarUnlocked message) {
+      _LatestStateFromEngine.numStarsAwarded = message.currentStars;
     }
 
     private NeedsState CreateNewNeedsState() {

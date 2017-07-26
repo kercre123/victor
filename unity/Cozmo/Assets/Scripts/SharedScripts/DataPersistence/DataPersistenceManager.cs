@@ -155,6 +155,40 @@ namespace DataPersistence {
       }
     }
 
+    public int DisplayedStars {
+      get {
+        return Data.DefaultProfile.DisplayedStars;
+      }
+      set {
+        Data.DefaultProfile.DisplayedStars = value;
+        Save();
+      }
+    }
+
+    public bool StarLevelToDisplay {
+      get {
+        return Data.DefaultProfile.NewStarLevels != null && Data.DefaultProfile.NewStarLevels.Count > 0;
+      }
+    }
+
+    public void ClearNewStarLevels() {
+      Data.DefaultProfile.NewStarLevels.Clear();
+      Save();
+    }
+
+    public void AddNewStarLevel(Anki.Cozmo.ExternalInterface.StarLevelCompleted message) {
+      Data.DefaultProfile.NewStarLevels.Add(message);
+      Save();
+    }
+
+    public NeedsReward[] GetNeedsRewardsFromNewStarLevels() {
+      List<NeedsReward> rewards = new List<NeedsReward>();
+      foreach (Anki.Cozmo.ExternalInterface.StarLevelCompleted lvl in Data.DefaultProfile.NewStarLevels) {
+        rewards.AddRange(lvl.rewards);
+      }
+      return rewards.ToArray();
+    }
+
     public void SetHasConnectedWithCozmo(bool connected = true) {
       if (DataPersistenceManager.Instance.CurrentSession != null) {
         if (!DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo) {

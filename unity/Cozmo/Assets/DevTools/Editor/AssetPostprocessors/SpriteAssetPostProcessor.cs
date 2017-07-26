@@ -77,8 +77,10 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     textureImporter.maxTextureSize = _kMaxTextureSize;
     textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
 
+    //if our source sprite is FullRect, our copies should be as well
+    bool setSpriteMeshTypeToFullRect = false;
     if (!IsUHDAsset()) {
-      textureImporter.spriteBorder = GetBorderFromUHDSprite();
+      textureImporter.spriteBorder = GetBorderFromUHDSprite(out setSpriteMeshTypeToFullRect);
     }
 
     // This is required for textures to be packed.
@@ -87,6 +89,10 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     TextureImporterSettings tis = new TextureImporterSettings();
     textureImporter.ReadTextureSettings(tis);
     tis.spriteAlignment = (int)SpriteAlignment.Center;
+
+    if (setSpriteMeshTypeToFullRect) {
+      tis.spriteMeshType = SpriteMeshType.FullRect;
+    }
 
     textureImporter.SetTextureSettings(tis);
   }
@@ -118,7 +124,8 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     return ppu;
   }
 
-  private Vector4 GetBorderFromUHDSprite() {
+  private Vector4 GetBorderFromUHDSprite(out bool uhdSpriteIsFullRect) {
+    uhdSpriteIsFullRect = false;
     Vector4 border = Vector4.one;
     string uhdAssetPath = null;
     float borderScale = 1f;
@@ -139,6 +146,14 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
         }
         else {
           border = uhdSprite.border * borderScale;
+        }
+
+        //if our source sprite is FullRect, our copies should be as well
+        TextureImporter textureImporter = AssetImporter.GetAtPath(uhdAssetPath) as TextureImporter;
+        if (textureImporter != null) {
+          TextureImporterSettings tis = new TextureImporterSettings();
+          textureImporter.ReadTextureSettings(tis);
+          uhdSpriteIsFullRect = (tis.spriteMeshType == SpriteMeshType.FullRect);
         }
       }
       else {
@@ -202,7 +217,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   }
 
   private bool InHubParentFolder(string assetPath) {
-	return assetPath.Contains(_kNeedsHubParentFolder) || assetPath.Contains(_kHomeHubParentFolder);
+    return assetPath.Contains(_kNeedsHubParentFolder) || assetPath.Contains(_kHomeHubParentFolder);
   }
 
   private bool IsUHDAsset() {
