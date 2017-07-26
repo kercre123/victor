@@ -10,7 +10,7 @@
     "translation" : "Cozmoは全部のキューブを聞き取れません。キューブをCozmoの近くに置いてください。"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "まだ問題がある場合は<b>&lt;color=#d3d3d3&gt;次へ</color></b>タップします"
+    "translation" : "まだ問題がある場合は<b><color=#d3d3d3>次へ</color></b>タップします"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
     "translation" : "まず<b>設定</b>に移動します。\u000aそれから<b>キューブの更新</b>をタップします。"
@@ -25,7 +25,7 @@
     "translation" : "電池を取り出して新品の単5電池に交換します。"
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
-    "translation" : "新しい電池を、プラス（<b>&lt;color=#d3d3d3&gt;+</color></b>）側を上にして入れます。"
+    "translation" : "新しい電池を、プラス（<b><color=#d3d3d3>+</color></b>）側を上にして入れます。"
   },
   "cubeHelpStrings.Instructions.Slide3" : {
     "translation" : "カバーを戻して静かにネジを締め付けます。"

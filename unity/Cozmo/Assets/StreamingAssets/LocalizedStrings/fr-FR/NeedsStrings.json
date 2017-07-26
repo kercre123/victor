@@ -67,10 +67,10 @@
     "translation" : "Bras élévateur étalonné"
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
-    "translation" : "Touche les parties à régler."
+    "translation" : "Appuie sur les éléments à régler."
   },
   "needs.NeedsRepairModal.TuneUpInstruction" : {
-    "translation" : "Utilise les boutons sur la droite pour recréer la disposition des flèches. Ensuite, touche <b>ENVOYER</b>."
+    "translation" : "Utilise les boutons sur la droite pour recréer la disposition des flèches. Ensuite, appuie sur <b>ENVOYER</b>."
   },
   "needs.NeedsRepairModal.NoRepairsNeeded" : {
     "translation" : "Cozmo est totalement réglé !"
@@ -98,9 +98,6 @@
   },
   "needs.Done" : {
     "translation" : "TERMINÉ"
-  },
-  "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Your Sparks inventory is full"
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "Tu as gagné plus d'étincelles !"
@@ -132,7 +129,7 @@
   "needs.FreeplaySparksReward.PeekAboo" : {
     "translation" : "Cozmo just generated {0} Sparks by playing Peekaboo!"
   },
-  "needs.FreeplaySparksReward.PickUpCube" : {
+  "needs.FreeplaySparksReward.PickupCube" : {
     "translation" : "Cozmo just generated {0} Sparks by picking up a Cube!"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
@@ -158,5 +155,11 @@
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
     "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
+  },
+  "needs.FeedingOverfedHiccups.Title" : {
+    "translation" : "Cozmo got the Hiccups"
+  },
+  "needs.FeedingOverfedHiccups.Description" : {
+    "translation" : "Cozmo is too full - now he has the hiccups!"
   }
 }

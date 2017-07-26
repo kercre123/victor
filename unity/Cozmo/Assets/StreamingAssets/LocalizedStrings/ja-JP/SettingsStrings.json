@@ -67,13 +67,13 @@
     "translation" : "画面を隠す"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo" : {
-    "translation" : "Cozmoをスリープさせる"
+    "translation" : "Cozmoをスリープ"
   },
   "settings.sleepCozmoPanel.confirmationModal.title" : {
     "translation" : "Cozmoをスリープさせますか？"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "Cozmoをチャージャーに置いて充電させるか、<b>「&lt;color=#11a2f0ff&gt;SLEEP</color></b>をタップして接続を解除します。"
+    "translation" : "Cozmoをチャージャーに置いて充電させるか、<b>「<color=#11a2f0ff>SLEEP</color></b>をタップして接続を解除します。"
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
     "translation" : "スリープ"
@@ -97,7 +97,7 @@
     "translation" : "復元"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
-    "translation" : "&lt;color=#b52c13&gt;Cozmoの復元に失敗しました。</color>"
+    "translation" : "<color=#b52c13>Cozmoの復元に失敗しました。</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
     "translation" : "Cozmoを復元しています..."
@@ -127,7 +127,7 @@
     "translation" : "消去"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
-    "translation" : "&lt;color=#b52c13&gt;Cozmoの消去に失敗しました。</color>"
+    "translation" : "<color=#b52c13>Cozmoの消去に失敗しました。</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
     "translation" : "Cozmoを消去しています..."

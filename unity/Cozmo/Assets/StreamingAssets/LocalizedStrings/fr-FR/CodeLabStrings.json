@@ -310,10 +310,10 @@
     "translation" : "Terminé"
   },
   "codeLab.tutorial.modalTitle" : {
-    "translation" : "Tutoriel de l'atelier de codage"
+    "translation" : "Tutoriel du Code Lab"
   },
   "codeLab.tutorial.slide_letsYouProgramCozmo" : {
-    "translation" : "L'atelier de codage te permet de programmer Cozmo."
+    "translation" : "Le Code Lab te permet de programmer Cozmo."
   },
   "codeLab.tutorial.slide_tapBlockToSeeFunction" : {
     "translation" : "Tu peux appuyer sur un bloc de code pour voir ce qu'il fait."
@@ -390,12 +390,6 @@
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "Alarme anti-intrusion !"
   },
-  "codeLab.SaveProject.Autosaved": {
-      "translation": "Autosaved"
-  },
-  "codeLab.SaveProject.NotSaved": {
-      "translation": "Sample projects not saved"
-  },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mon projet {0}"
   },
@@ -463,7 +457,7 @@
     "translation" : "Paraître bavard"
   },
   "codeLabHorizontal.Tooltip.ActDisappointed" : {
-    "translation" : "Paraître désappointé"
+    "translation" : "Paraître déçu"
   },
   "codeLabHorizontal.Tooltip.Snore" : {
     "translation" : "Ronfler"

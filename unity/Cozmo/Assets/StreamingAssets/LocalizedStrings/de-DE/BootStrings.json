@@ -16,7 +16,7 @@
     "translation" : "Die Cozmo-App benötigt Zugriff auf Spieldateien auf deinem Gerät."
   },
   "boot.appSettingsPermission" : {
-    "translation" : "Die Cozmo-App benötigt Zugriff auf Spieldateien auf deinem Gerät. Rufe über den Link unten die Einstellungen der Cozmo-App auf und aktiviere den Zugriff, indem du auf <b>BERECHTIGUNGEN &gt; SPEICHER</b> tippst."
+    "translation" : "Die Cozmo-App benötigt Zugriff auf Spieldateien auf deinem Gerät. Rufe über den Link unten die Einstellungen der Cozmo-App auf und aktiviere den Zugriff, indem du auf <b>BERECHTIGUNGEN > SPEICHER</b> tippst."
   },
   "boot.continue" : {
     "translation" : "WEITER"

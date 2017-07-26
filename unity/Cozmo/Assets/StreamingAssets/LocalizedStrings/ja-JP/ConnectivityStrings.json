@@ -73,7 +73,7 @@
     "translation" : "ヘルプを見る"
   },
   "label.cubesNotWorking" : {
-    "translation" : "キューブが動作していませんか？"
+    "translation" : "キューブが作動していませんか？"
   },
   "connectivity.connectionRejected.title" : {
     "translation" : "Cozmoに別のデバイスが接続されています。\u000aデバイスの接続を外してからもう一度試してください。"

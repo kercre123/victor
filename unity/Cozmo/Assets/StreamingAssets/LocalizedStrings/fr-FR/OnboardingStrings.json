@@ -52,7 +52,7 @@
     "translation" : "Place un cube devant Cozmo."
   },
   "onboarding.Phase3.Body1" : {
-    "translation" : "Celui-ci deviendra &lt;color=#00FFFF&gt;bleu</color> lorsque Cozmo le verra."
+    "translation" : "Celui-ci deviendra <color=#00FFFF>bleu</color> lorsque Cozmo le verra."
   },
   "onboarding.Phase3.Body2" : {
     "translation" : "<b>Parfait !</b>\u000aCozmo a du mal à voir le cube s'il est trop près."
@@ -96,6 +96,9 @@
   "onboarding.MeetCozmoIntro" : {
     "translation" : "Well done!\u000a\u000aCozmo would like to meet you."
   },
+  "onboarding.MeetCozmo.Button" : {
+    "translation" : "MEET COZMO"
+  },
   "onboarding.NeedsIntro" : {
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux."
   },
@@ -103,10 +106,13 @@
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux.\u000a\u000aL'application Cozmo aura peut-être une apparence légèrement différente, mais tu conserveras tous les jeux débloqués, les mises à niveau et les étincelles que tu as gagnés."
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b>&lt;color=#f5ea12&gt;JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un token de bonus."
+    "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un token de bonus."
   },
   "onboarding.RewardsIntro" : {
     "translation" : "<b>Tu as gagné un token de bonus.</b>\u000a\u000aLes Tokens débloquent les boîtes de bonus, pleines de récompenses telles que des étincelles ou de nouvelles compétences."
+  },
+  "onboarding.End" : {
+    "translation" : "<b>You've learned the basics of being a great owner!</b>\u000a\u000aFeel free to explore all Cozmo can do, or leave Cozmo alone and he will automatically play Tricks and Games in Freeplay."
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "Les activités de découverte sont particulières ; elles n'affectent pas les besoins de Cozmo et ne coûtent pas d'étincelles."
@@ -127,10 +133,10 @@
     "translation" : "Regarde Cozmo faire rouler un cube..."
   },
   "onboarding.RepairIntro" : {
-    "translation" : "<b>Cozmo a besoin d'un réglage...</b>\u000a\u000aLorsque le niveau de la barre rouge est faible, appuie sur le bouton <b>&lt;color=#fe5641&gt;RÉGLAGE</color></b> pour numériser Cozmo."
+    "translation" : "<b>Cozmo a besoin d'un réglage...</b>\u000a\u000aLorsque le niveau de la barre rouge est faible, appuie sur le bouton <b><color=#fe5641>RÉGLAGE</color></b> pour numériser Cozmo."
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b>Cozmo doit être nourri.</b>\u000a\u000aLorsque le niveau de la barre bleue est faible, c'est que Cozmo a faim. Appuie sur le bouton <b>&lt;color=#31EBFF&gt;NOURRIR</color></b>."
+    "translation" : "<b>Cozmo doit être nourri.</b>\u000a\u000aLorsque le niveau de la barre bleue est faible, c'est que Cozmo a faim. Appuie sur le bouton <b><color=#31EBFF>NOURRIR</color></b>."
   },
   "onboarding.DoATrickDesc" : {
     "translation" : "Cozmo est un robot joueur et adore faire des tours !\u000a\u000aAvec le tour Faire rouler un cube, Cozmo peut découvrir un cube et le faire rouler. Assure-toi qu'un cube qu'il puisse voir soit disponible."

@@ -43,7 +43,7 @@
     "translation" : "Antwort 4"
   },
   "codeLabChallenge_sayHi.questionSlide.primaryText" : {
-    "translation" : "#5: &quot;Hallo&quot; <span class='purple'>SAGEN</span>."
+    "translation" : "#5: \"Hallo\" <span class='purple'>SAGEN</span>."
   },
   "codeLabChallenge_sayHi.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -70,7 +70,7 @@
     "translation" : "Antwort 7"
   },
   "codeLabChallenge_whenFaceSay.questionSlide.primaryText" : {
-    "translation" : "#8: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, &quot;Ich sehe dich&quot; <span class='purple'>SAGEN</span>."
+    "translation" : "#8: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, \"Ich sehe dich\" <span class='purple'>SAGEN</span>."
   },
   "codeLabChallenge_whenFaceSay.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -214,7 +214,7 @@
     "translation" : "Antwort 23"
   },
   "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText" : {
-    "translation" : "#24: &quot;Lächle!&quot; <span class='purple'>SAGEN</span>. <span class='yellow'>WENN EIN LÄCHELN ERKANNT WIRD</span>, <span class='violet'>WIE EIN GEWINNER BENEHMEN</span>."
+    "translation" : "#24: \"Lächle!\" <span class='purple'>SAGEN</span>. <span class='yellow'>WENN EIN LÄCHELN ERKANNT WIRD</span>, <span class='violet'>WIE EIN GEWINNER BENEHMEN</span>."
   },
   "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -286,7 +286,7 @@
     "translation" : "Antwort 31"
   },
   "codeLabChallenge_intruder.questionSlide.primaryText" : {
-    "translation" : "#32: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, <span class='violet'>ÜBERRASCHT SEIN</span>, dann <span class='orange'>FÜR IMMER:</span> <span class='purple'>RUCKSACK LEUCHTEN LASSEN</span> in Rot, &quot;Eindringling!&quot; <span class='purple'>SAGEN</span> und Beleuchtung des <span class='purple'>RUCKSACKS</span> ausschalten."
+    "translation" : "#32: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, <span class='violet'>ÜBERRASCHT SEIN</span>, dann <span class='orange'>FÜR IMMER:</span> <span class='purple'>RUCKSACK LEUCHTEN LASSEN</span> in Rot, \"Eindringling!\" <span class='purple'>SAGEN</span> und Beleuchtung des <span class='purple'>RUCKSACKS</span> ausschalten."
   },
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -390,12 +390,6 @@
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "Warnung vor Eindringlingen!"
   },
-  "codeLab.SaveProject.Autosaved": {
-      "translation": "Autosaved"
-  },
-  "codeLab.SaveProject.NotSaved": {
-      "translation": "Sample projects not saved"
-  },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mein Projekt \"{0}\""
   },
@@ -469,7 +463,7 @@
     "translation" : "Schnarchen"
   },
   "codeLabHorizontal.Tooltip.MysteryAnimation" : {
-    "translation" : "Mysteriöse Animation"
+    "translation" : "Unbestimmte Animation"
   },
   "codeLabHorizontal.Tooltip.MoveLift" : {
     "translation" : "Krangabel bewegen"

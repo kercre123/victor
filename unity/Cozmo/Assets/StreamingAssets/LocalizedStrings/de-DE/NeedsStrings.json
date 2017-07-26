@@ -67,7 +67,7 @@
     "translation" : "Die Krangabel wurde kalibriert."
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
-    "translation" : "Tippe die Teile an, für die du das Tuning durchführen möchtest."
+    "translation" : "Tippe die Teile an, die du tunen möchtest."
   },
   "needs.NeedsRepairModal.TuneUpInstruction" : {
     "translation" : "Bilde das Pfeilmuster mithilfe der Tasten auf der rechten Seite nach. Tippe dann auf <b>SENDEN</b>."
@@ -99,9 +99,6 @@
   "needs.Done" : {
     "translation" : "FERTIG"
   },
-  "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Your Sparks inventory is full"
-  },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "Du hast dir weitere Sparks verdient!"
   },
@@ -132,7 +129,7 @@
   "needs.FreeplaySparksReward.PeekAboo" : {
     "translation" : "Cozmo just generated {0} Sparks by playing Peekaboo!"
   },
-  "needs.FreeplaySparksReward.PickUpCube" : {
+  "needs.FreeplaySparksReward.PickupCube" : {
     "translation" : "Cozmo just generated {0} Sparks by picking up a Cube!"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
@@ -158,5 +155,11 @@
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
     "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
+  },
+  "needs.FeedingOverfedHiccups.Title" : {
+    "translation" : "Cozmo got the Hiccups"
+  },
+  "needs.FeedingOverfedHiccups.Description" : {
+    "translation" : "Cozmo is too full - now he has the hiccups!"
   }
 }

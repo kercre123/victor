@@ -10,7 +10,7 @@
     "translation" : "Exigences non satisfaites"
   },
   "unlockable.OSNotSupported.Description" : {
-    "translation" : "L'atelier de code requiert Android {0} ou plus récent."
+    "translation" : "Le Code Lab requiert Android {0} ou plus récent."
   },
   "unlockable.Mystery.Title" : {
     "translation" : "Compétence verrouillée"
@@ -79,7 +79,7 @@
     "translation" : "Avec cette mise à niveau, Cozmo apprend à jouer au jeu Réflexe. Au fil du temps, ses compétences s'amélioreront !"
   },
   "unlockable.CodeLab.Title" : {
-    "translation" : "Atelier de codage"
+    "translation" : "Code Lab"
   },
   "unlockable.cozmoSays.Title" : {
     "translation" : "La parole à Cozmo"
@@ -221,5 +221,8 @@
   },
   "sparks.CubesNeedUpright.Desc" : {
     "translation" : "Lorsque les cubes sont à l'endroit, lumières vers le haut, Cozmo peut construire plus rapidement."
+  },
+  "sparks.free" : {
+    "translation" : "Free"
   }
 }

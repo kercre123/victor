@@ -13,7 +13,7 @@
     "translation" : "名前を入力します。"
   },
   "faceEnrollment.faceEnrollmentList.description" : {
-    "translation" : "あなた、またはほかの誰かを認識できるようにCozmoに教えます。"
+    "translation" : "あなたや友達をCozmoに認識させましょう。"
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
     "translation" : "{0}を削除しますか？"

@@ -28,7 +28,7 @@
     "translation" : "NON"
   },
   "button.noThankYou" : {
-    "translation" : "NON MERCI"
+    "translation" : "NON, MERCI"
   },
   "button.continue" : {
     "translation" : "CONTINUER"
@@ -109,7 +109,7 @@
     "translation" : "Assure-toi que le son de ton appareil est activé."
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Place chacun des cubes près de Cozmo et appuie sur <b>&lt;color=#11a2f0ff&gt;ACTUALISER</color></b>. Cozmo se connectera aux 3 cubes qu'il considère comme les plus proches."
+    "translation" : "Place chacun des cubes près de Cozmo et appuie sur <b><color=#11a2f0ff>ACTUALISER</color></b>. Cozmo se connectera aux 3 cubes qu'il considère comme les plus proches."
   },
   "button.replay" : {
     "translation" : "Rejouer"
@@ -145,13 +145,13 @@
     "translation" : "Nombre total d'étincelles : {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "En tapant<b> &lt;color=#11a2f0ff&gt;CONNECT</color></b>, tu acceptes les conditions suivantes :"
+    "translation" : "En tapant<b> <color=#11a2f0ff>CONNECT</color></b>, tu acceptes les conditions suivantes :"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
   },
   "label.basicCozmo" : {
-    "translation" : "Puissant cerveau. Encore plus de personnalité."
+    "translation" : "Extraordinaire. Extraverti."
   },
   "label.currentPage" : {
     "translation" : "{0} sur {1}"

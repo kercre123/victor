@@ -260,5 +260,8 @@
   },
   "button.CONTINUE.caps" : {
     "translation" : "続ける"
+  },
+  "button.hide" : {
+    "translation" : "隠す"
   }
 }

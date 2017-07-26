@@ -28,7 +28,7 @@
     "translation" : "Tire vers le bas le volet de paramètres de ton appareil."
   },
   "wifiStrings.Instructions.Slide1" : {
-    "translation" : "Sélectionne la section Wi-Fi dans le menu Paramètres."
+    "translation" : "Sélectionne la section Wi-Fi dans tes paramètres."
   },
   "wifiStrings.Instructions.Slide2" : {
     "translation" : "Choisis le réseau de Cozmo dans la liste."
@@ -100,7 +100,7 @@
     "translation" : "Le Wi-Fi est désactivé. Appuie sur le bouton ci-dessous pour l'activer."
   },
   "wifi.locationPermission" : {
-    "translation" : "Laisse l'application Cozmo faciliter la connexion ! Appuie sur «<b>Autoriser</b>» lorsque les autorisations de localisation te sont demandées, afin que l'application Cozmo puisse trouver les Cozmo à proximité.\u000a\u000aRemarque : Nous n'enregistrons jamais ton emplacement !"
+    "translation" : "Laisse l'application Cozmo faciliter la connexion ! Appuie sur «<b>Autoriser</b>» lorsque les autorisations de localisation te sont demandées, afin que l'application Cozmo puisse trouver les Cozmos à proximité.\u000a\u000aRemarque : Nous n'enregistrons jamais ton emplacement !"
   },
   "wifi.pleaseLocationPermission" : {
     "translation" : "En es-tu sûr ? Sans autorisation de localisation, tu devras te connecter manuellement à Cozmo dans les paramètres Wi-Fi de ton téléphone. Appuie sur <b>Autoriser</b> lorsque tu y es invité pour permettre à l'application Cozmo de se connecter à ta place, ou appuie sur <b>Annuler</b> pour te connecter par toi-même."

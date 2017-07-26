@@ -19,7 +19,7 @@
     "translation" : "プレイ"
   },
   "needs.NeedsEnergyModal.Title" : {
-    "translation" : "Cozmoにチャージする"
+    "translation" : "Cozmoに\u000aチャージする"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
     "translation" : "Cozmoを元気いっぱいの状態に保つには、チャージが必要です。"
@@ -31,7 +31,7 @@
     "translation" : "すべてのライトが明るく輝くまでそのキューブを振ります。"
   },
   "needs.NeedsEnergyModal.Instruction3" : {
-    "translation" : "Cozmoが自分でチャージできるように、Cozmoが見える位置にキューブを置きます。"
+    "translation" : "Cozmoが見える位置にキューブを置きチャージできるようにします。"
   },
   "needs.NeedsEnergyModal.FeedingComplete" : {
     "translation" : "Cozmoは満タンにチャージされました！"
@@ -70,7 +70,7 @@
     "translation" : "チューンアップするパーツをタップします。"
   },
   "needs.NeedsRepairModal.TuneUpInstruction" : {
-    "translation" : "右のボタンを使って矢印パターンを再作成します。それから<b>送信</b>をタップします。"
+    "translation" : "矢印のパターン通りに、右のボタンをタップします。パターンがつくれたら<b>送信</b>をタップしましょう。"
   },
   "needs.NeedsRepairModal.NoRepairsNeeded" : {
     "translation" : "Cozmoは満タンにチューンアップされました！"
@@ -79,7 +79,7 @@
     "translation" : "送る"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
-    "translation" : "Cozmoをスキャンする"
+    "translation" : "Cozmoをスキャン"
   },
   "needs.NeedsRepairModal.AlligningHead" : {
     "translation" : "ヘッドを調整しています..."
@@ -98,9 +98,6 @@
   },
   "needs.Done" : {
     "translation" : "完了"
-  },
-  "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Your Sparks inventory is full"
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "さらにスパークを獲得しました！"
@@ -132,7 +129,7 @@
   "needs.FreeplaySparksReward.PeekAboo" : {
     "translation" : "Cozmoがちょうど生成されました{0} Peekabooを弾くことによって火花！"
   },
-  "needs.FreeplaySparksReward.PickUpCube" : {
+  "needs.FreeplaySparksReward.PickupCube" : {
     "translation" : "Cozmoがちょうど生成されました{0}キューブを拾うことで火花！"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
@@ -158,5 +155,11 @@
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
     "translation" : "Cozmoがあなたに与えた{0}彼と一緒にGuard Dogをプレイするためのスパーク！"
+  },
+  "needs.FeedingOverfedHiccups.Title" : {
+    "translation" : "コズモはヒカップスを手に入れた"
+  },
+  "needs.FeedingOverfedHiccups.Description" : {
+    "translation" : "Cozmoがいっぱいです - 今、彼はしゃっくりをしています！"
   }
 }

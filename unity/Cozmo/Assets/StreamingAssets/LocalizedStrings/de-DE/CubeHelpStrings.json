@@ -10,7 +10,7 @@
     "translation" : "Cozmo kann nicht alle Cubes hören. Positioniere sie in seiner Nähe."
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "Tippe auf <b>&lt;color=#d3d3d3&gt;WEITER</color></b>, falls das Problem weiterhin besteht."
+    "translation" : "Tippe auf <b><color=#d3d3d3>WEITER</color></b>, falls das Problem weiterhin besteht."
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
     "translation" : "Wähle <b>EINSTELLUNGEN</b> aus.\u000aTippe anschließend auf <b>CUBES AKTUALISIEREN</b>."
@@ -25,7 +25,7 @@
     "translation" : "Ersetze die Batterie durch eine neue vom Typ \"Lady\"."
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
-    "translation" : "Achte beim Einsetzen der Batterie darauf, dass der Plus-Pol (<b>&lt;color=#d3d3d3&gt;+</color></b>) oben ist."
+    "translation" : "Achte beim Einsetzen der Batterie darauf, dass der Plus-Pol (<b><color=#d3d3d3>+</color></b>) oben ist."
   },
   "cubeHelpStrings.Instructions.Slide3" : {
     "translation" : "Bringe die Abdeckung wieder an und zieh sie vorsichtig fest."

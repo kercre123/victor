@@ -52,7 +52,7 @@
     "translation" : "Spielen"
   },
   "button.leave" : {
-    "translation" : "BEENDEN"
+    "translation" : "VERLASSEN"
   },
   "button.back" : {
     "translation" : "ZURÜCK"
@@ -88,7 +88,7 @@
     "translation" : "STARTEN"
   },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
-    "translation" : "{0} {1} Erforderlich"
+    "translation" : "{0} {1} erforderlich"
   },
   "label.emptyWithArg" : {
     "translation" : "{0}"
@@ -109,7 +109,7 @@
     "translation" : "Stelle sicher, dass der Ton deines Geräts eingeschaltet ist."
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Platziere jeweils einen Cube auf jeder Seite von Cozmo und tippe auf <b>&lt;color=#11a2f0ff&gt;AKTUALISIEREN</color></b>. Cozmo verbindet sich dann mit den drei Cubes, die am nächsten liegen."
+    "translation" : "Platziere jeweils einen Cube auf jeder Seite von Cozmo und tippe auf <b><color=#11a2f0ff>AKTUALISIEREN</color></b>. Cozmo verbindet sich dann mit den drei Cubes, die am nächsten liegen."
   },
   "button.replay" : {
     "translation" : "Wiederholen"
@@ -145,7 +145,7 @@
     "translation" : "Sparks insgesamt: {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "Indem du <b>&lt;color=#11a2f0ff&gt;VERBINDEN</color></b> antippst, stimmst du den folgenden Bedingungen zu:"
+    "translation" : "Indem du <b><color=#11a2f0ff>VERBINDEN</color></b> antippst, stimmst du den folgenden Bedingungen zu:"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"

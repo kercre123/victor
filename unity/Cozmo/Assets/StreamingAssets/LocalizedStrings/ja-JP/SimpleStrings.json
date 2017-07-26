@@ -37,7 +37,7 @@
     "translation" : "OK"
   },
   "button.again" : {
-    "translation" : "もう一度遊ぶ"
+    "translation" : "もう一度プレイ"
   },
   "button.refresh" : {
     "translation" : "更新"
@@ -61,7 +61,7 @@
     "translation" : "次へ"
   },
   "button.staySparked" : {
-    "translation" : "スパークで指示のままでいる"
+    "translation" : "スパーク状態"
   },
   "button.soundsGood" : {
     "translation" : "いいですね"
@@ -109,7 +109,7 @@
     "translation" : "デバイスのサウンドがオンになっているか確認してください。"
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Cozmoの横に1つのキューブを置いて<b>&lt;color=#11a2f0ff&gt;更新</color></b>をタップします。Cozmoは一番近いと思う3つに接続します。"
+    "translation" : "Cozmoの横に1つのキューブを置いて<b><color=#11a2f0ff>更新</color></b>をタップします。Cozmoは一番近いと思う3つに接続します。"
   },
   "button.replay" : {
     "translation" : "リプレイ"
@@ -145,7 +145,7 @@
     "translation" : "スパーク合計：{0}"
   },
   "label.termsInstructions" : {
-    "translation" : "<b>&lt;color=#11a2f0ff&gt;接続</color></b>をタップすることで、以下の利用規約に同意したことになります："
+    "translation" : "<b><color=#11a2f0ff>接続</color></b>をタップすることで、以下の利用規約に同意したことになります："
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"

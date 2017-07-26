@@ -10,7 +10,7 @@
     "translation" : "Verbindung zu Cozmo wird hergestellt..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "Du musst eine Verbindung zu Cozmo herstellen."
+    "translation" : "Stelle eine Verbindung zu Cozmo her."
   },
   "connectivity.moreInfo" : {
     "translation" : "WEITERE INFOS"

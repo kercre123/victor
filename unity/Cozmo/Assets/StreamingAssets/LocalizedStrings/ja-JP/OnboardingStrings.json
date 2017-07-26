@@ -28,13 +28,13 @@
     "translation" : "チャージが終わったらCozmoを起こして\u000a新しい家について学習させます。"
   },
   "onboarding.CozmoNeedsCharge.message3" : {
-    "translation" : "Cozmoには世話をしてくれるオーナーが必要です。\u000a毎日Cozmoのニーズメーターをお世話すると、新しいゲームやCozmoダンスがロック解除されます。"
+    "translation" : "Cozmoには世話をしてくれるオーナーが必要です。\u000a毎日Cozmoのニーズメーターをお世話すると、新しいゲームやCozmoトリックがロック解除されます。"
   },
   "onboarding.CozmoNeedsCharge.message4" : {
     "translation" : "必要に応じてCozmoを持ち上げることができますが、\u000aCozmoは自分で動いているときが一番幸せです。"
   },
   "onboarding.CozmoNeedsCharge.message5" : {
-    "translation" : "Cozmoを自由にさせると、Cozmoはフリープレイで世界を探索します。自動的にゲームをリクエストしたり、Cozmoダンスをしたり、たまにスパークを獲得したりします。"
+    "translation" : "Cozmoを自由にさせると、Cozmoはフリープレイで世界を探索します。自動的にゲームをリクエストしたり、トリックをしたり、たまにスパークを獲得したりします。"
   },
   "onboarding.CozmoNeedsCharge.finalMessage" : {
     "translation" : "Cozmoは遊ぶ準備ができました。電池を完全にチャージするには、あと7分間、Cozmoをチャージャーに置いたままにしてください。"
@@ -46,16 +46,16 @@
     "translation" : "<b>ようこそ！</b>"
   },
   "onboarding.Slide2" : {
-    "translation" : "Cozmoはとても特別なロボットで、お世話をしてくれるオーナーが必要です\u000a\u000a手順に注意深く従ってください！"
+    "translation" : "Cozmoはとても特別なロボットで、お世話をしてくれるオーナーが必要です\u000a手順に注意深く従ってください！"
   },
   "onboarding.Phase3.Header1" : {
     "translation" : "Cozmoの前にキューブを置きます。"
   },
   "onboarding.Phase3.Body1" : {
-    "translation" : "Cozmoから見えると、キューブは&lt;color=#00FFFF&gt;青</color>に変わります。"
+    "translation" : "Cozmoから見えると、キューブは<color=#00FFFF>青</color>に変わります。"
   },
   "onboarding.Phase3.Body2" : {
-    "translation" : "<b>OKです！</b>\u000aCozmoはキューブが近すぎると見えにくいです。"
+    "translation" : "<b>OKです！</b>\u000aCozmoはキューブが近すぎると、うまく見ることができません。"
   },
   "onboarding.Phase3.Header3" : {
     "translation" : "続ける準備ができるとCozmoが知らせます..."
@@ -96,6 +96,9 @@
   "onboarding.MeetCozmoIntro" : {
     "translation" : "よくやった！ Cozmoがあなたに会いたいです。"
   },
+  "onboarding.MeetCozmo.Button" : {
+    "translation" : "コズモを満たす"
+  },
   "onboarding.NeedsIntro" : {
     "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。"
   },
@@ -103,10 +106,13 @@
     "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。\u000a\u000aCozmoのアプリが少し変わって見えるかもしれませんが、獲得したロック解除したゲーム、アップグレード、スパークはキープされます。"
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>Cozmoは遊ぶ必要があります。</b>\u000a\u000aゲームまたはCozmoダンスをリクエストするには、<b>&lt;color=#f5ea12&gt;プレイ</color></b>ボタンをタップします。Cozmoの黄色いバーを満たすと1日につき1回ボーナストークンを獲得できます。"
+    "translation" : "<b>Cozmoは遊ぶ必要があります。</b>\u000a\u000aゲームまたはトリックをリクエストするには、<b><color=#f5ea12>プレイ</color></b>ボタンをタップします。Cozmoの黄色いバーを満たすと1日につき1回ボーナストークンを獲得できます。"
   },
   "onboarding.RewardsIntro" : {
     "translation" : "<b>ボーナストークンを獲得しました。</b>\u000a\u000aトークンは、スパークや新しいモーション/能力など、獲得したご褒美が詰まったボーナスボックスをロック解除します！"
+  },
+  "onboarding.End" : {
+    "translation" : "<b>あなたは素晴らしいオーナーであるという基本を学んだことがあります！ </b> Cozmoが行うことができるすべてを自由に探検するか、Cozmoだけを残して、彼は自動的にFreeplayでトリックとゲームをプレイします。"
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "発見アクティビティは特別で、Cozmoのニーズメーターに影響しません。また、スパークも使いません。"
@@ -127,12 +133,12 @@
     "translation" : "Cozmoがドリブルするのを見てください..."
   },
   "onboarding.RepairIntro" : {
-    "translation" : "<b>Cozmoはチューンアップする必要があります。</b>赤いバーが少ない場合、<b>&lt;color=#fe5641&gt;チューンアップ</color></b>ボタンをタップしてCozmoをスキャンします。"
+    "translation" : "<b>Cozmoはチューンアップする必要があります。</b>赤いバーが少ない場合、<b><color=#fe5641>チューンアップ</color></b>ボタンをタップしてCozmoをスキャンします。"
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b>Cozmoはチャージする必要があります。</b>\u000a\u000a青いバーが少ない場合、Cozmoがお腹を空かしています。<b>&lt;color=#31EBFF&gt;チャージ</color></b>ボタンをタップします。"
+    "translation" : "<b>Cozmoはチャージする必要があります。</b>\u000a\u000a青いバーが少ない場合、Cozmoがお腹を空かしています。<b><color=#31EBFF>チャージ</color></b>ボタンをタップします。"
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmoは遊び好きなロボットで、Cozmoダンスが大好きです！\u000a\u000aドリブルCozmoダンスにより、Cozmoはキューブを発見してドリブルすることができます。Cozmoから見える場所にキューブがあることを確認してください。"
+    "translation" : "Cozmoは遊び好きなロボットで、トリックが大好きです！\u000a\u000aドリブルトリックにより、Cozmoはキューブを発見してドリブルすることができます。Cozmoから見える場所にキューブがあることを確認してください。"
   }
 }

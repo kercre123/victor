@@ -10,7 +10,7 @@
     "translation" : "{0}\u000aの勝ち！"
   },
   "minigame.text.cozmoWins" : {
-    "translation" : "Cozmoの\u000a勝ち！"
+    "translation" : "Cozmoの勝ち！"
   },
   "minigame.text.Tie" : {
     "translation" : "引き分け！"
@@ -28,10 +28,10 @@
     "translation" : "スコア"
   },
   "minigame.text.score.player" : {
-    "translation" : "プレーヤーのスコア"
+    "translation" : "プレイヤーの\u000aスコア"
   },
   "minigame.text.score.cozmo" : {
-    "translation" : "Cozmoのスコア"
+    "translation" : "Cozmoの\u000aスコア"
   },
   "minigame.label.showCubes.singular" : {
     "translation" : "Cozmoの前に{0}個のキューブを置いてください。Cozmoから見えるキューブは緑色に変わります。"
@@ -157,7 +157,7 @@
     "translation" : "パターンの長さ：{0}"
   },
   "memoryMatchGame.mode.vs" : {
-    "translation" : "あなた対Cozmo"
+    "translation" : "あなた VS. Cozmo"
   },
   "memoryMatchGame.mode.solo" : {
     "translation" : "ソロ"
@@ -325,13 +325,13 @@
     "translation" : "対戦"
   },
   "speedTapGame.mode.HvC" : {
-    "translation" : "人間対Cozmo"
+    "translation" : "人間 VS. Cozmo"
   },
   "speedTapGame.mode.HvHvC" : {
-    "translation" : "人間対人間対Cozmo"
+    "translation" : "人間 VS. 人間 VS. Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "単語またはフレーズを入力して、Cozmoがそれを話すのを聞きます"
+    "translation" : "単語やフレーズを入力して、Cozmoに言葉をしゃべらせましょう"
   },
   "sayCozmo.button.say" : {
     "translation" : "話す"
@@ -340,7 +340,7 @@
     "translation" : "プレイヤー2："
   },
   "speedTap.SelectGameType" : {
-    "translation" : "ゲームの種類を選択してください"
+    "translation" : "ゲームの種類を選択"
   },
   "speedTap.playerOne" : {
     "translation" : "プレイヤー1："
@@ -361,6 +361,15 @@
     "translation" : "Cozmoは自分のキューブを見つけるのに苦労しています。Cozmoからキューブが見えるようにしてください。"
   },
   "minigame.text.youWin" : {
-    "translation" : "あなたの\u000a勝ち！"
+    "translation" : "あなたの勝ち！"
+  },
+  "label.MATCH" : {
+    "translation" : "一致！"
+  },
+  "label.NO.MATCH" : {
+    "translation" : "いいえ\\ n目次"
+  },
+  "label.DONT.SLAP" : {
+    "translation" : "\\ nスラップしないでください！"
   }
 }

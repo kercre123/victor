@@ -58,7 +58,7 @@
     "translation" : "La batterie de Cozmo est faible"
   },
   "connectivity.cozmoLowBatteryDesc" : {
-    "translation" : "Place Cozmo sur son chargeur."
+    "translation" : "Tu devrais placer Cozmo sur son chargeur."
   },
   "connectivity.keepCozmoOnCharger" : {
     "translation" : "Laisse Cozmo sur son chargeur pendant la configuration."

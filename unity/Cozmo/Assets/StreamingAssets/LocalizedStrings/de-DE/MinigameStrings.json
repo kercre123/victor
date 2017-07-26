@@ -322,7 +322,7 @@
     "translation" : "Um den 3-Spieler-Modus freizuschalten, musst du \"Mensch gegen Cozmo\" ein Mal in diesem Schwierigkeitsgrad spielen."
   },
   "speedTapGame.label.vs" : {
-    "translation" : "gegen"
+    "translation" : "vs."
   },
   "speedTapGame.mode.HvC" : {
     "translation" : "Mensch gegen Cozmo"
@@ -362,5 +362,14 @@
   },
   "minigame.text.youWin" : {
     "translation" : "Du\u000agewinnst!"
+  },
+  "label.MATCH" : {
+    "translation" : "MATCH!"
+  },
+  "label.NO.MATCH" : {
+    "translation" : "NO \\u000aMATCH"
+  },
+  "label.DONT.SLAP" : {
+    "translation" : "DON'T \\u000aSLAP!"
   }
 }

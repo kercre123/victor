@@ -133,7 +133,7 @@
     "translation" : "Cozmo a le hoquet..."
   },
   "button.clearThisSlot" : {
-    "translation" : "EFFACER CET EMPLACEMENT"
+    "translation" : "Effacer cet emplacement"
   },
   "behavior.singing.Camptown" : {
     "translation" : "Cozmo chante Le port de Tacoma..."
@@ -260,5 +260,8 @@
   },
   "button.CONTINUE.caps" : {
     "translation" : "CONTINUER"
+  },
+  "button.hide" : {
+    "translation" : "HIDE"
   }
 }

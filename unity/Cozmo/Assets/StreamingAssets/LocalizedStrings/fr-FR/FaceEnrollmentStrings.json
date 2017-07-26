@@ -13,7 +13,7 @@
     "translation" : "Saisis ton prénom"
   },
   "faceEnrollment.faceEnrollmentList.description" : {
-    "translation" : "Apprends à Cozmo à te reconnaître ou à reconnaître quelqu'un d'autre !"
+    "translation" : "Apprends à Cozmo à reconnaître un visage !"
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
     "translation" : "Supprimer {0} ?"

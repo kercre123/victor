@@ -40,7 +40,7 @@
     "translation" : "パスワードが表示されませんか？ここをタップ："
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "すべて大文字でスペースを使用しません。"
+    "translation" : "すべて大文字で入力してください。スペースは使用できません。"
   },
   "wifiStrings.Instructions.Slide3.5" : {
     "translation" : "Cozmoはインターネットアクセスを提供しません。"
@@ -73,7 +73,7 @@
     "translation" : "問題が解消しない場合は、別のデバイスで<b>support.anki.com</b>にアクセスしてください。"
   },
   "wifi.getHelp.linkText" : {
-    "translation" : "ヘルプを見る"
+    "translation" : "ヘルプ"
   },
   "wifi.enterPassword" : {
     "translation" : "{0}のパスワードを入力します。"

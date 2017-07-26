@@ -106,7 +106,7 @@
     "translation" : "Fais glisser et maintiens pour déplacer Cozmo vers l'avant ou l'arrière\u000aLâche prise pour arrêter."
   },
   "droneMode.text.toggleNightVision" : {
-    "translation" : "Touche pour activer ou désactiver la vision de nuit."
+    "translation" : "Appuie pour activer ou désactiver la vision de nuit."
   },
   "droneMode.text.raiseLowerHead" : {
     "translation" : "Fais glisser pour déplacer la tête de Cozmo ou soulever ou abaisser le bras élévateur."
@@ -121,7 +121,7 @@
     "translation" : "Un contour apparaîtra autour de l'objet sélectionné."
   },
   "droneMode.text.cozmoInteractionChoice" : {
-    "translation" : "Touche les options qui apparaissent pour faire interagir Cozmo."
+    "translation" : "Appuie sur les options qui apparaissent pour faire interagir Cozmo."
   },
   "memoryMatchGame.howToPlay" : {
     "translation" : "Cozmo et toi jouerez chacun à votre tour.\u000aLorsque les cubes clignotent, mémorise la séquence. Appuie ensuite sur les cubes pour la répéter."
@@ -362,5 +362,14 @@
   },
   "minigame.text.youWin" : {
     "translation" : "Tu as\u000agagné !"
+  },
+  "label.MATCH" : {
+    "translation" : "MATCH!"
+  },
+  "label.NO.MATCH" : {
+    "translation" : "NO \\u000aMATCH"
+  },
+  "label.DONT.SLAP" : {
+    "translation" : "DON'T \\u000aSLAP!"
   }
 }

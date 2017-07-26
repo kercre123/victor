@@ -86,5 +86,11 @@
   },
   "memoryMatchGame.label.incorrect" : {
     "translation" : "間違い"
+  },
+  "activityView.freeplayDescription" : {
+    "translation" : "Cozmoは、彼がどのようにプレーしたいかを選択することが大好きです。彼は自動的にゲームを求めたり、トリックをしたり、時には火花を得ることさえあります。"
+  },
+  "activityView.freeplayTitle" : {
+    "translation" : "コスモは現在フリーである"
   }
 }

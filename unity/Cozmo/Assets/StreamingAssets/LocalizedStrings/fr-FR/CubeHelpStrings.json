@@ -10,7 +10,7 @@
     "translation" : "Cozmo n'entend pas tous les cubes. Place-les près de lui."
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "Touche <b>&lt;color=#d3d3d3&gt;SUIVANT</color></b> si tu rencontres encore des problèmes"
+    "translation" : "Appuie sur <b><color=#d3d3d3>SUIVANT</color></b> si tu rencontres encore des problèmes"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
     "translation" : "D'abord, accède à <b>PARAMÈTRES</b>.\u000aEnsuite, appuie sur <b>ACTUALISER LES CUBES</b>."
@@ -25,7 +25,7 @@
     "translation" : "Remplace la pile par une pile neuve de type N."
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
-    "translation" : "Insère la nouvelle pile côté positif (<b>&lt;color=#d3d3d3&gt;+</color></b>) vers le haut."
+    "translation" : "Insère la nouvelle pile côté positif (<b><color=#d3d3d3>+</color></b>) vers le haut."
   },
   "cubeHelpStrings.Instructions.Slide3" : {
     "translation" : "Remets en place le couvercle et fixe-le délicatement."

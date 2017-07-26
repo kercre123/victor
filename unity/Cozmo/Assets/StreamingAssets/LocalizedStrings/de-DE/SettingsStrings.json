@@ -73,7 +73,7 @@
     "translation" : "Cozmo schlafen legen?"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "Lass Cozmo auf seiner Ladestation, damit sich seine Batterie aufladen kann, oder tippe auf <b>&lt;color=#11a2f0ff&gt;SCHLAFEN</color></b>, um die Verbindung zu trennen."
+    "translation" : "Lass Cozmo auf seiner Ladestation, damit sich seine Batterie aufladen kann, oder tippe auf <b><color=#11a2f0ff>SCHLAFEN</color></b>, um die Verbindung zu trennen."
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
     "translation" : "SCHLAFEN"
@@ -97,7 +97,7 @@
     "translation" : "WIEDERHERSTELLEN"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
-    "translation" : "&lt;color=#b52c13&gt;Cozmo konnte nicht wiederhergestellt werden.</color>"
+    "translation" : "<color=#b52c13>Cozmo konnte nicht wiederhergestellt werden.</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
     "translation" : "Cozmo wird wiederhergestellt..."
@@ -127,7 +127,7 @@
     "translation" : "LÖSCHEN"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
-    "translation" : "&lt;color=#b52c13&gt;Cozmo konnte nicht gelöscht werden.</color>"
+    "translation" : "<color=#b52c13>Cozmo konnte nicht gelöscht werden.</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
     "translation" : "Cozmo wird gelöscht..."

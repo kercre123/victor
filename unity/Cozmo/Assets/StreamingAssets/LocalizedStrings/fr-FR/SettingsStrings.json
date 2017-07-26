@@ -73,7 +73,7 @@
     "translation" : "Faire dormir Cozmo ?"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "Laisse Cozmo sur son chargeur pour recharger au maximum sa batterie ou touche <b>&lt;color=#11a2f0ff&gt;SOMMEIL</color></b> pour le déconnecter."
+    "translation" : "Laisse Cozmo sur son chargeur pour recharger au maximum sa batterie ou appuie sur <b><color=#11a2f0ff>SOMMEIL</color></b> pour le déconnecter."
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
     "translation" : "SOMMEIL"
@@ -97,7 +97,7 @@
     "translation" : "RESTAURATION"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
-    "translation" : "&lt;color=#b52c13&gt;La restauration de Cozmo a échoué</color>"
+    "translation" : "<color=#b52c13>La restauration de Cozmo a échoué</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
     "translation" : "Restauration de Cozmo..."
@@ -127,7 +127,7 @@
     "translation" : "EFFACER"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
-    "translation" : "&lt;color=#b52c13&gt;Impossible d'effacer ton Cozmo</color>"
+    "translation" : "<color=#b52c13>Impossible d'effacer ton Cozmo</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
     "translation" : "Effacement de Cozmo en cours..."
@@ -151,13 +151,13 @@
     "translation" : "Couleur de Cozmo : {0}"
   },
   "settings.versionPanel.label.cozmoColor.white" : {
-    "translation" : "Original"
+    "translation" : "Originale"
   },
   "settings.versionPanel.label.cozmoColor.liquidMetal" : {
     "translation" : "Métal liquide"
   },
   "settings.versionPanel.label.cozmoColor.unknown" : {
-    "translation" : "Inconnu"
+    "translation" : "Inconnue"
   },
   "settings.versionPanel.label.cozmoVersion" : {
     "translation" : "Version de Cozmo : {0}"
@@ -175,7 +175,7 @@
     "translation" : "FAIBLE"
   },
   "settings.volumePanel.robotToggle.high" : {
-    "translation" : "HAUTE"
+    "translation" : "ÉLEVÉ"
   },
   "settings.volumePanel.robotToggle.medium" : {
     "translation" : "MOYEN"

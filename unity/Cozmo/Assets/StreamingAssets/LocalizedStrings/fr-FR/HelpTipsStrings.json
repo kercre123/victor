@@ -19,7 +19,7 @@
     "translation" : "Cubes de Cozmo"
   },
   "helpTipsStrings.Slide1.body" : {
-    "translation" : "Cozmo aime être dans les parages avec ses cubes. Ils fonctionnent mieux lorsqu'il peut voir clairement le symbole, et qu'ils sont à l'endroit. Vérifie les <b>&lt;color=#d3d3d3&gt;PARAMÈTRES</color></b> pour l'entretien des cubes."
+    "translation" : "Cozmo aime être dans les parages avec ses cubes. Ils fonctionnent mieux lorsqu'il peut voir clairement le symbole, et qu'ils sont à l'endroit. Vérifie les <b><color=#d3d3d3>PARAMÈTRES</color></b> pour l'entretien des cubes."
   },
   "helpTipsStrings.Slide2.title" : {
     "translation" : "Lorsque tu ne joues pas à un jeu,\u000ales voyants des cubes peuvent t'indiquer que :"
@@ -49,7 +49,7 @@
     "translation" : "Énergie, bits et étincelles"
   },
   "helpTipsStrings.Slide4.body" : {
-    "translation" : "Gagne de l'&lt;color=#00bd3dff&gt;énergie</color> en atteignant tes objectifs quotidiens. Grâce à l'énergie, tu obtiens des &lt;color=#fe8f00ff&gt;bits</color> et des &lt;color=#11a2f0ff&gt;étincelles</color> : utilise-les pour débloquer les mises à niveau et les applications Cozmo !"
+    "translation" : "Gagne de l'<color=#00bd3dff>énergie</color> en atteignant tes objectifs quotidiens. Grâce à l'énergie, tu obtiens des <color=#fe8f00ff>bits</color> et des <color=#11a2f0ff>étincelles</color> : utilise-les pour débloquer les mises à niveau et les applications Cozmo !"
   },
   "helpTipsStrings.Slide4.bodyEnergy" : {
     "translation" : "Énergie"
