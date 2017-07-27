@@ -366,6 +366,10 @@ def generate_gyp(path, command, platform, options, dep_location):
 
     arguments += ['--coretechExternal', options.use_cte]
     arguments += ['--with-clad', CLAD_ROOT]
+
+    if options.configuration.lower() == 'shipping':
+        arguments += ['--useReleaseWwise', options.configuration.lower()]
+        
     if os.environ.get("EXTERNALS_DIR"):
         arguments += ['--externals', os.environ.get("EXTERNALS_DIR")]
     else:

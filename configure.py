@@ -821,6 +821,8 @@ class GamePlatformConfiguration(object):
         args += ['--platform', self.platform]
         args += ['--config', self.options.configuration]
         args += ['--script-engine', self.options.selected_script_engine]
+        if self.options.configuration.lower() == 'shipping':
+            args += ['--useReleaseWwise']
 
         engine_target = 'cozmoEngine2' if self.options.engine_v2 else 'cozmoEngine'
         args += ['--cozmo-engine-target', engine_target]
