@@ -531,6 +531,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // (We did it earlier, in Init, but that was for a different robot)
     static const bool connected = false;
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
   }
 
   // Update Game on Robot's last state
@@ -1387,16 +1389,17 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 
     SendNeedsLevelsDasEvent("app_background");
   }
-
-  if (!msg.isPaused)
+  else
   {
     // When un-backgrounding, apply decay
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
-    SendNeedsLevelsDasEvent("app_unbackground");
-
     _needsState._timesOpenedSinceLastDisconnect++;
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
+
+    SendNeedsLevelsDasEvent("app_unbackground");
 
     SendTimeSinceBackgroundedDasEvent();
   }
@@ -1538,9 +1541,21 @@ void NeedsManager::ApplyDecayForTimeSinceLastDeviceWrite(const bool connected)
 
   // Now apply decay according to appropriate config, and elapsed time
   // First, however, we set the timers as if that much time had elapsed:
-  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
   {
-    _lastDecayUpdateTime_s[i] = _currentTime_s - elasped_s;
+    _lastDecayUpdateTime_s[needIndex] = _currentTime_s - elasped_s;
+
+    if (_timeWhenCooldownOver_s[needIndex] != 0.0f)
+    {
+      // Note: There is a very small chance that the following subtraction
+      // could result in a value of exactly zero, which means 'no cooldown'.
+      // In that case ApplyDecayAllNeeds would not account for the remaining
+      // fullness cooldown period to not apply decay.  A real fix for this
+      // would be to have another array of bools for '_cooldownActive'
+      // (instead of double-use of this _timeWhenCooldownOver_s)
+      _timeWhenCooldownOver_s[needIndex] -= elasped_s;
+      _timeWhenCooldownStarted_s[needIndex] -= elasped_s;
+    }
   }
 
   ApplyDecayAllNeeds(connected);
