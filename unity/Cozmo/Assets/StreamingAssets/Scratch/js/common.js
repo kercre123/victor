@@ -111,7 +111,7 @@
         // TODO Temporary hack to make close button visible
         if (window.isVertical) {
             var close = document.querySelector('#close');
-            close.style.left = 290 + "px";
+            close.style.left = 410 + "px";
         }
 
         closeButton.addEventListener('click', function () {
@@ -127,14 +127,18 @@
         closeButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
-        challengesButton.addEventListener('click', function () {
-          // show challenges dialog
-          Scratch.workspace.playAudio('click');
-          Challenges.show();
-        });
-        challengesButton.addEventListener('touchmove', function (e) {
-            e.preventDefault();
-        });
+
+        if (!window.isVertical) {
+            challengesButton.addEventListener('click', function () {
+              // show challenges dialog
+              Scratch.workspace.playAudio('click');
+              Challenges.show();
+            });
+            challengesButton.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
+        }
+
         greenFlag.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
             vm.greenFlag();
