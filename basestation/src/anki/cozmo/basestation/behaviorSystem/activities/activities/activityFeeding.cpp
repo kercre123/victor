@@ -4,7 +4,7 @@
  * Author: Kevin M. Karol
  * Created: 04/27/17
  *
- * Description: Activity for building a pyramid
+ * Description: Activity for feeding
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -162,7 +162,7 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   _turnToFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingTurnToFace);
   DEV_ASSERT(_turnToFaceBehavior != nullptr &&
              _turnToFaceBehavior->GetClass() == BehaviorClass::TurnToFace,
-             "ActivityFeeding.TurnToFaceBheavior.IncorrectBehaviorReceievedFromFactory");
+             "ActivityFeeding.TurnToFaceBehavior.IncorrectBehaviorReceivedFromFactory");
   
   // Grab the arbitrary animation behavior
   {
@@ -178,8 +178,8 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   /// Setup UniversalChooser
   ////////
   const Json::Value& universalChooserJSON = config[kUniversalChooser];
-  _universalResponseChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, universalChooserJSON);
-  DEV_ASSERT(_universalResponseChooser != nullptr, "ActivityFeeding.UniversalChooserNotSpecifed");
+  _universalResponseChooser.reset(BehaviorChooserFactory::CreateBehaviorChooser(robot, universalChooserJSON));
+  DEV_ASSERT(_universalResponseChooser != nullptr, "ActivityFeeding.UniversalChooserNotSpecified");
   
   ////////
   /// Setup Lights

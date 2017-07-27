@@ -4,7 +4,7 @@
  * Author: Kevin M. Karol
  * Created: 04/27/17
  *
- * Description: Activity for building a pyramid
+ * Description: Activity for feeding
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -86,7 +86,7 @@ private:
   std::vector<Signal::SmartHandle> _eventHandlers;
   
   // Chooser which manages universal response behaviors
-  IBehaviorChooser* _universalResponseChooser;
+  std::unique_ptr<IBehaviorChooser> _universalResponseChooser;
   
   // Behaviors that the chooser calls directly
   IBehaviorPtr _searchingForFaceBehavior;
