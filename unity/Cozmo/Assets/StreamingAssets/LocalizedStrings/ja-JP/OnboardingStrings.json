@@ -97,7 +97,7 @@
     "translation" : "よくやった！ Cozmoがあなたに会いたいです。"
   },
   "onboarding.MeetCozmo.Button" : {
-    "translation" : "コズモを満たす"
+    "translation" : "顔認識"
   },
   "onboarding.NeedsIntro" : {
     "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。"
@@ -139,6 +139,6 @@
     "translation" : "<b>Cozmoはチャージする必要があります。</b>\u000a\u000a青いバーが少ない場合、Cozmoがお腹を空かしています。<b><color=#31EBFF>チャージ</color></b>ボタンをタップします。"
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmoは遊び好きなロボットで、トリックが大好きです！\u000a\u000aドリブルトリックにより、Cozmoはキューブを発見してドリブルすることができます。Cozmoから見える場所にキューブがあることを確認してください。"
+    "translation" : "Cozmoは遊び心のあるロボットであり、トリックをやるのが大好きです。彼が見ることができる立方体があることを確かめ、それから彼がそれを回転するのを見る。"
   }
 }

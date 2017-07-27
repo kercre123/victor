@@ -319,7 +319,7 @@
     "translation" : "Du hast die Möglichkeit, auf einen Codeblock zu tippen, um zu sehen, was dieser bewirkt."
   },
   "codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft" : {
-    "translation" : "Nach links drehen"
+    "translation" : "Links abbiegen"
   },
   "codeLab.tutorial.slide_dragBlocksToMakePrograms" : {
     "translation" : "Um ein Programm zu erstellen, musst du einfach nur verschiedene Codeblöcke zusammenziehen."
@@ -390,6 +390,12 @@
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "Warnung vor Eindringlingen!"
   },
+  "codeLab.SaveProject.Autosaved" : {
+    "translation" : "Autosaved"
+  },
+  "codeLab.SaveProject.NotSaved" : {
+    "translation" : "Sample projects not saved"
+  },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mein Projekt \"{0}\""
   },
@@ -421,43 +427,43 @@
     "translation" : "Schnell rückwärts fahren"
   },
   "codeLabHorizontal.Tooltip.ActHappy" : {
-    "translation" : "So tun, als wäre er glücklich"
+    "translation" : "Fröhlich sein"
   },
   "codeLabHorizontal.Tooltip.ActLikeWinner" : {
-    "translation" : "So tun, als hätte er gewonnen"
+    "translation" : "Wie ein Gewinner benehmen"
   },
   "codeLabHorizontal.Tooltip.ActSad" : {
-    "translation" : "So tun, als wäre er traurig"
+    "translation" : "Traurig sein"
   },
   "codeLabHorizontal.Tooltip.ActSurprised" : {
-    "translation" : "So tun, als wäre er überrascht"
+    "translation" : "Überrascht sein"
   },
   "codeLabHorizontal.Tooltip.ActLikeDog" : {
-    "translation" : "So tun, als wäre er ein Hund"
+    "translation" : "Einen Hund nachahmen"
   },
   "codeLabHorizontal.Tooltip.ActLikeCat" : {
-    "translation" : "So tun, als wäre er eine Katze"
+    "translation" : "Eine Katze nachmachen"
   },
   "codeLabHorizontal.Tooltip.Sneeze" : {
     "translation" : "Niesen"
   },
   "codeLabHorizontal.Tooltip.ActExcited" : {
-    "translation" : "So tun, als wäre er aufgeregt"
+    "translation" : "Aufgeregt sein"
   },
   "codeLabHorizontal.Tooltip.ThinkHard" : {
     "translation" : "Gut nachdenken"
   },
   "codeLabHorizontal.Tooltip.ActBored" : {
-    "translation" : "So tun, als wäre er gelangweilt"
+    "translation" : "Gelangweilt sein"
   },
   "codeLabHorizontal.Tooltip.ActFrustrated" : {
-    "translation" : "So tun, als wäre er frustriert"
+    "translation" : "Frustriert sein"
   },
   "codeLabHorizontal.Tooltip.ActChatty" : {
-    "translation" : "So tun, als wäre er gesprächig"
+    "translation" : "Gesprächig sein"
   },
   "codeLabHorizontal.Tooltip.ActDisappointed" : {
-    "translation" : "So tun, als wäre er enttäuscht"
+    "translation" : "Enttäuscht sein"
   },
   "codeLabHorizontal.Tooltip.Snore" : {
     "translation" : "Schnarchen"

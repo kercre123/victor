@@ -10,16 +10,16 @@
     "translation" : "Cozmoに接続しています..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "Cozmoに接続してください"
+    "translation" : "あなたはCozmoに接続する必要があります。"
   },
   "connectivity.moreInfo" : {
     "translation" : "詳細情報"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "Cozmoをオンにする"
+    "translation" : "Cozmoをオンにする。"
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "WiFi設定で接続する"
+    "translation" : "WiFi設定で接続します。"
   },
   "connectivity.searchingForCozmo" : {
     "translation" : "Cozmoを探しています..."
@@ -70,7 +70,7 @@
     "translation" : "Cozmoをチャージャーから外してもう一度置きます。"
   },
   "label.getHelp" : {
-    "translation" : "ヘルプを見る"
+    "translation" : "ヘルプ"
   },
   "label.cubesNotWorking" : {
     "translation" : "キューブが作動していませんか？"
@@ -94,7 +94,7 @@
     "translation" : "あなたのゲームプレイのデータと統計情報をお送りください。"
   },
   "needs.VoiceSettingsModal.Title" : {
-    "translation" : "音声コマンド"
+    "translation" : "声で指示"
   },
   "connectivity.behaviorDisplayDisconnected" : {
     "translation" : "Cozmoが切断されました。"

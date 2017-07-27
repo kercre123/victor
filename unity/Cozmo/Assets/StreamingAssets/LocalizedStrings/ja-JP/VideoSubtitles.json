@@ -25,7 +25,7 @@
     "translation" : "一致なし。"
   },
   "videoSubtitles.speedTap.seventh" : {
-    "translation" : "赤をタップしない。"
+    "translation" : "赤をタップしてはいけません。"
   },
   "videoSubtitles.speedTap.eighth" : {
     "translation" : "5ポイント先取で勝ち。"
@@ -37,7 +37,7 @@
     "translation" : "緑色はCozmoから見えていることを示しています。"
   },
   "videoSubtitles.cubePounce.third" : {
-    "translation" : "それをCozmoの方に押します。"
+    "translation" : "キューブをCozmoの方に押します。"
   },
   "videoSubtitles.cubePounce.fourth" : {
     "translation" : "Cozmoがアタックする前に引っ込めます。"
@@ -58,22 +58,22 @@
     "translation" : "ゲームは1つのパターンから始まります。"
   },
   "videoSubtitles.memoryMatch.fourth" : {
-    "translation" : "パターンを見てください。"
+    "translation" : "まず、キューブのパターンを覚えます。"
   },
   "videoSubtitles.memoryMatch.fifth" : {
-    "translation" : "次にそれを再現します。"
+    "translation" : "次にその覚えたパターンを繰り返します。"
   },
   "videoSubtitles.memoryMatch.sixth" : {
     "translation" : "次はCozmoの番です。"
   },
   "videoSubtitles.memoryMatch.seventh" : {
-    "translation" : "ラウンドごとにパターンが大きくなります。"
+    "translation" : "ラウンドごとにパターンが難しくなります。"
   },
   "videoSubtitles.memoryMatch.eighth" : {
     "translation" : "間違いが多すぎるとあなたの負けです。"
   },
   "videoSubtitles.memoryMatch.nineth" : {
-    "translation" : "これまでの得点を確認します。"
+    "translation" : "得点を確認します。"
   },
   "videoSubtitles.memoryMatch.tenth" : {
     "translation" : "がんばってください！"

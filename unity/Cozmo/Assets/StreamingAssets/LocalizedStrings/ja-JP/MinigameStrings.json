@@ -277,7 +277,7 @@
     "translation" : "エキスパート限定！キューブは4色になることもあります。トッププレーヤーでも難しいでしょう。"
   },
   "button.retry" : {
-    "translation" : "もう一度やり直してください"
+    "translation" : "もう一度やり直す"
   },
   "speedTap.text.waitForCozmo" : {
     "translation" : "Cozmoは準備中です..."
@@ -331,7 +331,7 @@
     "translation" : "人間 VS. 人間 VS. Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "単語やフレーズを入力して、Cozmoに言葉をしゃべらせましょう"
+    "translation" : "単語やフレーズを入力し、Cozmoがそれを言うのを聞く："
   },
   "sayCozmo.button.say" : {
     "translation" : "話す"
@@ -371,5 +371,8 @@
   },
   "label.DONT.SLAP" : {
     "translation" : "\\ nスラップしないでください！"
+  },
+  "label.enterText" : {
+    "translation" : "テキストを入力..."
   }
 }

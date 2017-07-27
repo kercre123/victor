@@ -13,7 +13,7 @@
     "translation" : "Cozmo a besoin de {0} {1} de plus pour commencer {2}."
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "Cozmo n'est pas prêt"
+    "translation" : "Cozmo Is Not Ready"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "Aide Cozmo à se redresser afin qu'il soit prêt à jouer"

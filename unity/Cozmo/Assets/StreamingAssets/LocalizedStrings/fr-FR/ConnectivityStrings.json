@@ -10,16 +10,16 @@
     "translation" : "Connexion à ton Cozmo..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "Tu dois te connecter à Cozmo"
+    "translation" : "You need to connect to Cozmo."
   },
   "connectivity.moreInfo" : {
     "translation" : "PLUS D'INFORMATIONS"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "Active Cozmo"
+    "translation" : "Turn Cozmo on."
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "Connecte-toi dans les paramètres Wi-Fi"
+    "translation" : "Connect in WiFi Settings."
   },
   "connectivity.searchingForCozmo" : {
     "translation" : "Recherche de Cozmo"
@@ -94,7 +94,7 @@
     "translation" : "Aidez-nous à améliorer Cozmo en nous envoyant vos données de jeu et vos statistiques"
   },
   "needs.VoiceSettingsModal.Title" : {
-    "translation" : "Voice Commands"
+    "translation" : "Commandes vocales"
   },
   "connectivity.behaviorDisplayDisconnected" : {
     "translation" : "Cozmo has been disconnected."

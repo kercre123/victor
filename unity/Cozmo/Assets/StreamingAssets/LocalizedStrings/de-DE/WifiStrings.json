@@ -37,7 +37,7 @@
     "translation" : "Gib das Passwort ein, das auf Cozmo zu sehen ist."
   },
   "wifiStrings.Instructions.Slide3.altCopy" : {
-    "translation" : "Du siehst kein Passwort? Dann tippe hier:"
+    "translation" : "Du siehst kein Passwort? Dann tippe auf:"
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
     "translation" : "Verwende ausschließlich Großbuchstaben und keine Leerzeichen."
@@ -70,7 +70,7 @@
     "translation" : "Wenn du die Netzwerkdaten von Cozmo sehen möchtest, hebe die Krangabel an und senke sie wieder."
   },
   "wifi.gethelp.footer" : {
-    "translation" : "Bestehen die Probleme weiterhin? Besuche auf einem anderen Gerät unsere Support-Website: <b>support.anki.com</b>."
+    "translation" : "Klappt es immer noch nicht? Besuche auf einem anderen Gerät unsere Support-Website: <b>support.anki.com</b>."
   },
   "wifi.getHelp.linkText" : {
     "translation" : "Hilfe"

@@ -25,10 +25,10 @@
     "translation" : "ゲームをしていない場合、\u000aキューブのライトは次のことを示します。"
   },
   "helpTipsStrings.Slide2.subtitle1" : {
-    "translation" : "Cozmoが\u000aこのキューブを見た。"
+    "translation" : "Cozmoが\u000a見ているキューブ"
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmoは\u000aこのキューブを使いたい"
+    "translation" : "Cozmoはこのキューブを使いたい。"
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "このキューブは\u000a電池の残りが少ない"
@@ -37,7 +37,7 @@
     "translation" : "Cozmoは時間とともに成長します。"
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "<b><color=#ff69b4> ！FPO！ </color></b> ：毎日Cozmoの黄色のプレイバーを埋めると、ボーナストークンを獲得します。ボーナストークンは、Sparks、Games、Abilitiesのような報酬で満たされたBonus Boxesのロックを解除します。"
+    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Each day you fill Cozmo's yellow Play bar, you earn a Bonus Token. Bonus Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Abilities."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
     "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
@@ -61,10 +61,10 @@
     "translation" : "スパーク"
   },
   "helpTipsStrings.Slide5.title" : {
-    "translation" : "Cozmoにチェックインします。"
+    "translation" : "Cozmoをお世話しましょう。"
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Cozmoアプリを毎日起動してチェックインし、Cozmoを幸せな状態に保ち、新しいモーション/能力をロック解除してCozmoが学び、成長するのを助けます。Cozmoに接続して目覚めさせ、ニーズメーターを確認します。"
+    "translation" : "Cozmoアプリを毎日起動して、Cozmoを幸せな状態に保ち、新しいモーション/能力をロック解除してCozmoが学び、成長するのを助けます。Cozmoに接続して目覚めさせ、ニーズメーターを確認します。"
   },
   "helpTipsStrings.Slide6.title" : {
     "translation" : "Cozmoを守る。"
@@ -76,13 +76,13 @@
     "translation" : "Cozmoのバックライトは、次のことを示します。"
   },
   "helpTipsStrings.Slide7.subtitle1" : {
-    "translation" : "Cozmoは\u000aチャージされた。"
+    "translation" : "フルチャージ"
   },
   "helpTipsStrings.Slide7.subtitle2" : {
-    "translation" : "Cozmoは\u000aチャージ中。"
+    "translation" : "チャージ中"
   },
   "helpTipsStrings.Slide7.subtitle3" : {
-    "translation" : "Cozmoは\u000a電池の残量が少ない。"
+    "translation" : "電池の残量不足"
   },
   "helpTipsStrings.Slide8.title" : {
     "translation" : "Cozmoは安全。"

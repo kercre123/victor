@@ -37,7 +37,7 @@
     "translation" : "OK"
   },
   "button.again" : {
-    "translation" : "NOCH EINMAL SPIELEN"
+    "translation" : "ERNEUT SPIELEN"
   },
   "button.refresh" : {
     "translation" : "AKTUALISIEREN"
@@ -103,7 +103,7 @@
     "translation" : "STARTEN"
   },
   "button.begin" : {
-    "translation" : "BEGINNEN"
+    "translation" : "LOSLEGEN"
   },
   "soundcheck.description" : {
     "translation" : "Stelle sicher, dass der Ton deines Geräts eingeschaltet ist."
@@ -136,7 +136,7 @@
     "translation" : "Datenschutzerklärung"
   },
   "label.pressAndHoldInstruction" : {
-    "translation" : "ZUM BESTÄTIGEN {0} GEDRÜCKT HALTEN"
+    "translation" : "Press and hold <b><color=#fe5641>{0}</color></b> to confirm."
   },
   "label.termsOfUse" : {
     "translation" : "Nutzungsbedingungen"

@@ -25,7 +25,7 @@
     "translation" : "グータッチをして、Cozmoをほめてあげましょう！Cozmoがリフトを持ち上げたら、あなたはCozmoのリフトにグータッチしてあげます。"
   },
   "unlockable.FistBump.SparkButtonDescription" : {
-    "translation" : "タップしてCozmoにグータッチを求めます。"
+    "translation" : "タップしてCozmoとグータッチをします。"
   },
   "unlockable.FistBump.SparkedStateDescription" : {
     "translation" : "Cozmoが準備できたらグータッチをします。"
@@ -214,7 +214,7 @@
     "translation" : "スパークが足りません"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "フリープレイやボーナスボックスからもっと獲得します"
+    "translation" : "フリープレイとボーナスボックスでさらに獲得してください。"
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "キューブが直立していることを確認します"

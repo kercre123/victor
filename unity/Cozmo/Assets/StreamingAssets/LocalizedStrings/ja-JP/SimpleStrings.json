@@ -136,7 +136,7 @@
     "translation" : "プライバシーポリシー"
   },
   "label.pressAndHoldInstruction" : {
-    "translation" : "{0}を押したままにして確認します"
+    "translation" : "押したまま<b><color=#fe5641>{0}</color></b>確認するために。"
   },
   "label.termsOfUse" : {
     "translation" : "利用規約"

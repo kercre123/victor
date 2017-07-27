@@ -331,7 +331,7 @@
     "translation" : "Mensch gegen Mensch gegen Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "Gib ein Wort oder einen Begriff ein und lasse Cozmo dieses bzw. diesen sagen."
+    "translation" : "Type a word or phrase and hear Cozmo say it:"
   },
   "sayCozmo.button.say" : {
     "translation" : "Sagen"
@@ -371,5 +371,8 @@
   },
   "label.DONT.SLAP" : {
     "translation" : "DON'T \\u000aSLAP!"
+  },
+  "label.enterText" : {
+    "translation" : "Enter text..."
   }
 }

@@ -13,7 +13,7 @@
     "translation" : "Cozmoが{2}を開始するには、あと{0}個の{1}が必要です。"
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "Cozmoは準備ができていません"
+    "translation" : "コズモは準備ができていない"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "Cozmoを立たせてプレイできるようにしてください。"

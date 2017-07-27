@@ -49,7 +49,7 @@
     "translation" : "TERMINÉ"
   },
   "button.play" : {
-    "translation" : "Jouer"
+    "translation" : "JOUER"
   },
   "button.leave" : {
     "translation" : "QUITTER"
@@ -112,7 +112,7 @@
     "translation" : "Place chacun des cubes près de Cozmo et appuie sur <b><color=#11a2f0ff>ACTUALISER</color></b>. Cozmo se connectera aux 3 cubes qu'il considère comme les plus proches."
   },
   "button.replay" : {
-    "translation" : "Rejouer"
+    "translation" : "REJOUER"
   },
   "button.skip" : {
     "translation" : "IGNORER"
@@ -136,7 +136,7 @@
     "translation" : "Politique de confidentialité"
   },
   "label.pressAndHoldInstruction" : {
-    "translation" : "APPUIE SUR {0} ET MAINTIENS-LE POUR CONFIRMER"
+    "translation" : "Press and hold <b><color=#fe5641>{0}</color></b> to confirm."
   },
   "label.termsOfUse" : {
     "translation" : "Conditions d'utilisation"
@@ -145,7 +145,7 @@
     "translation" : "Nombre total d'étincelles : {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "En tapant<b> <color=#11a2f0ff>CONNECT</color></b>, tu acceptes les conditions suivantes :"
+    "translation" : "En appuyant sur<b> <color=#11a2f0ff>CONNECTER</color></b>, tu acceptes les conditions suivantes :"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"

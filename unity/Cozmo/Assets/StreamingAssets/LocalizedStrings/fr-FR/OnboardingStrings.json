@@ -97,7 +97,7 @@
     "translation" : "Well done!\u000a\u000aCozmo would like to meet you."
   },
   "onboarding.MeetCozmo.Button" : {
-    "translation" : "MEET COZMO"
+    "translation" : "Première rencontre"
   },
   "onboarding.NeedsIntro" : {
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux."
@@ -133,12 +133,12 @@
     "translation" : "Regarde Cozmo faire rouler un cube..."
   },
   "onboarding.RepairIntro" : {
-    "translation" : "<b>Cozmo a besoin d'un réglage...</b>\u000a\u000aLorsque le niveau de la barre rouge est faible, appuie sur le bouton <b><color=#fe5641>RÉGLAGE</color></b> pour numériser Cozmo."
+    "translation" : "<b>Cozmo a besoin d'un réglage...</b>\u000a\u000aLorsque le niveau de la barre rouge est faible, appuie sur le bouton <b><color=#fe5641>RÉGLAGE</color></b> pour scanner Cozmo."
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b>Cozmo doit être nourri.</b>\u000a\u000aLorsque le niveau de la barre bleue est faible, c'est que Cozmo a faim. Appuie sur le bouton <b><color=#31EBFF>NOURRIR</color></b>."
+    "translation" : "<b>Cozmo doit être nourri.</b>\u000a\u000aLorsque le niveau de la barre bleue est faible, c'est que Cozmo a faim. Appuie sur le bouton <b><color=#31EBFF>ALIMENTER</color></b>."
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmo est un robot joueur et adore faire des tours !\u000a\u000aAvec le tour Faire rouler un cube, Cozmo peut découvrir un cube et le faire rouler. Assure-toi qu'un cube qu'il puisse voir soit disponible."
+    "translation" : "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a cube he can see, and then watch him roll it."
   }
 }

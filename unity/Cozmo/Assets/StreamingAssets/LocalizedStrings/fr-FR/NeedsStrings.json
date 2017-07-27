@@ -99,6 +99,9 @@
   "needs.Done" : {
     "translation" : "TERMINÉ"
   },
+  "needs.RewardsDialog.SparksInventoryFull" : {
+    "translation" : "Your Sparks inventory is full"
+  },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "Tu as gagné plus d'étincelles !"
   },
@@ -161,5 +164,17 @@
   },
   "needs.FeedingOverfedHiccups.Description" : {
     "translation" : "Cozmo is too full - now he has the hiccups!"
+  },
+  "needs.severeAlert.energy.title" : {
+    "translation" : "Energy Severe Title FPO"
+  },
+  "needs.severeAlert.energy.description" : {
+    "translation" : "Needs Energy Severe Alert Description FPO"
+  },
+  "needs.severeAlert.repair.title" : {
+    "translation" : "Repair Severe Title FPO"
+  },
+  "needs.severeAlert.repair.description" : {
+    "translation" : "Needs Repair Severe Alert Description FPO"
   }
 }

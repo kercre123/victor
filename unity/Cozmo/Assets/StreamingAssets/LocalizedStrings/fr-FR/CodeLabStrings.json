@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "codeLabChallenge_driveForwardFour.questionSlide.primaryText" : {
-    "translation" : "#1<span class='blue'>AVANCER</span> 4."
+    "translation" : "#1 :<span class='blue'>AVANCER</span> 4."
   },
   "codeLabChallenge_driveForwardFour.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -16,7 +16,7 @@
     "translation" : "Réponse 1"
   },
   "codeLabChallenge_driveAndSneeze.questionSlide.primaryText" : {
-    "translation" : "#2 <span class='blue'>AVANCER</span> de 4, puis <span class='violet'>ÉTERNUER</span>"
+    "translation" : "#2 : <span class='blue'>AVANCER</span> de 4, puis <span class='violet'>ÉTERNUER</span>"
   },
   "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -43,7 +43,7 @@
     "translation" : "Réponse 4"
   },
   "codeLabChallenge_sayHi.questionSlide.primaryText" : {
-    "translation" : "#5 : <span class='purple'>DIS</span>« Salut »."
+    "translation" : "#5 : <span class='purple'>DIRE</span>« Salut »."
   },
   "codeLabChallenge_sayHi.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -52,7 +52,7 @@
     "translation" : "Réponse 5"
   },
   "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText" : {
-    "translation" : "#6 :<span class='purple'>ALLUME LES VOYANTS DORSAUX</span> en vert."
+    "translation" : "#6 : <span class='purple'>ALLUME LES VOYANTS DORSAUX</span> en vert."
   },
   "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -88,7 +88,7 @@
     "translation" : "Réponse 9"
   },
   "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText" : {
-    "translation" : "#10: <span class='purple'>ALLUMER LES VOYANTS DORSAUX</span> dans une couleur mystérieuse en permanence dans une <span class='orange'>BOUCLE.</span>"
+    "translation" : "#10 : <span class='purple'>ALLUMER LES VOYANTS DORSAUX</span> dans une couleur mystérieuse en permanence dans une <span class='orange'>BOUCLE.</span>"
   },
   "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -97,7 +97,7 @@
     "translation" : "Réponse 10"
   },
   "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText" : {
-    "translation" : "#11: <span class='yellow'>LORSQUE LE CUBE EST TOUCHÉ, </span> <span class='purple'>ALLUMER LES VOYANTS DORSAUX</span> dans une couleur mystérieuse."
+    "translation" : "#11 : <span class='yellow'>LORSQUE LE CUBE EST TOUCHÉ, </span> <span class='purple'>ALLUMER LES VOYANTS DORSAUX</span> dans une couleur mystérieuse."
   },
   "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -115,7 +115,7 @@
     "translation" : "Réponse 12"
   },
   "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText" : {
-    "translation" : "#13: <span class='yellow'>VOIR LE CUBE,</span> puis <span class='violet'>PARAÎTRE HEUREUX.</span>"
+    "translation" : "#13 : <span class='yellow'>VOIR LE CUBE,</span> puis <span class='violet'>PARAÎTRE HEUREUX.</span>"
   },
   "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -124,7 +124,7 @@
     "translation" : "Réponse 13"
   },
   "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.primaryText" : {
-    "translation" : "#14: <span class='yellow'>VOIR LE CUBE,</span> puis <span class='blue'>AVANCER JUSQU'AU CUBE.</span>"
+    "translation" : "#14 : <span class='yellow'>VOIR LE CUBE,</span> puis <span class='blue'>AVANCER JUSQU'AU CUBE.</span>"
   },
   "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -133,7 +133,7 @@
     "translation" : "Réponse 14"
   },
   "codeLabChallenge_PushCube.questionSlide.primaryText" : {
-    "translation" : "#15: Pousser un cube."
+    "translation" : "#15 : Pousser un cube."
   },
   "codeLabChallenge_PushCube.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -142,7 +142,7 @@
     "translation" : "Réponse 15"
   },
   "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText" : {
-    "translation" : "#16: <span class='purple'>DÉPLACER LE BRAS ÉLÉVATEUR</span> vers le haut et le bas 3 <span class='orange'>FOIS.</span>"
+    "translation" : "#16 : <span class='purple'>DÉPLACER LE BRAS ÉLÉVATEUR</span> vers le haut et le bas 3 <span class='orange'>FOIS.</span>"
   },
   "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -151,7 +151,7 @@
     "translation" : "Réponse 16"
   },
   "codeLabChallenge_LiftCube.questionSlide.primaryText" : {
-    "translation" : "#17: <span class='purple'>SOULEVER</span> un cube."
+    "translation" : "#17 : <span class='purple'>SOULEVER</span> un cube."
   },
   "codeLabChallenge_LiftCube.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -160,7 +160,7 @@
     "translation" : "Réponse 17"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText" : {
-    "translation" : "#18: Muscu avec un cube : <span class='blue'>AVANCER JUSQU'AU CUBE, le </span> <span class='purple'>SOULEVER</span> puis l'abaisser à mi-hauteur 3 <span class='orange'>FOIS,</span>puis le <span class='purple'>POSER.</span>"
+    "translation" : "#18 : Muscu avec un cube : <span class='blue'>AVANCER JUSQU'AU CUBE, le </span> <span class='purple'>SOULEVER</span> puis l'abaisser à mi-hauteur 3 <span class='orange'>FOIS,</span>puis le <span class='purple'>POSER.</span>"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -169,7 +169,7 @@
     "translation" : "Réponse 18"
   },
   "codeLabChallenge_DriveFastSquare.questionSlide.primaryText" : {
-    "translation" : "#19: <span class='blue'>AVANCER RAPIDEMENT</span> dans un carré."
+    "translation" : "#19 : <span class='blue'>AVANCER RAPIDEMENT</span> dans un carré."
   },
   "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -178,7 +178,7 @@
     "translation" : "Réponse 19"
   },
   "codeLabChallenge_DriveSquareAdvanced.questionSlide.primaryText" : {
-    "translation" : "#19: <span class='blue'>AVANCER RAPIDEMENT</span> dans un carré en utilisant seulement 4 blocs de code."
+    "translation" : "#20 : <span class='blue'>AVANCER RAPIDEMENT</span> dans un carré en utilisant seulement 4 blocs de code."
   },
   "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -196,7 +196,7 @@
     "translation" : "Réponse 21"
   },
   "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText" : {
-    "translation" : "#22: <span class='yellow'>EN CAS DE DÉTECTION D'UN SOURIRE,</span> <span class='violet'>PARAÎTRE HEUREUX.</span>"
+    "translation" : "#22 : <span class='yellow'>EN CAS DE DÉTECTION D'UN SOURIRE,</span> <span class='violet'>PARAÎTRE HEUREUX.</span>"
   },
   "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -205,7 +205,7 @@
     "translation" : "Réponse 22"
   },
   "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText" : {
-    "translation" : "#23: <span class='yellow'>EN CAS DE DÉTECTION D'UN SOURIRE,</span> <span class='blue'>AVANCER</span> sur un côté d'un carré et <span class='blue'>TOURNER.</span>"
+    "translation" : "#23 : <span class='yellow'>EN CAS DE DÉTECTION D'UN SOURIRE,</span> <span class='blue'>AVANCER</span> sur un côté d'un carré et <span class='blue'>TOURNER.</span>"
   },
   "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -214,7 +214,7 @@
     "translation" : "Réponse 23"
   },
   "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText" : {
-    "translation" : "#24: <span class='purple'>DIRE,</span> « Souris ! » <span class='yellow'>EN CAS DE DÉTECTION D'UN SOURIRE,</span> <span class='violet'>SE COMPORTER COMME UN GAGNANT.</span>"
+    "translation" : "#24 : <span class='purple'>DIRE,</span> « Souris ! » <span class='yellow'>EN CAS DE DÉTECTION D'UN SOURIRE,</span> <span class='violet'>SE COMPORTER COMME UN GAGNANT.</span>"
   },
   "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -223,7 +223,7 @@
     "translation" : "Réponse 24"
   },
   "codeLabChallenge_peekaboo.questionSlide.primaryText" : {
-    "translation" : "#25 : Jouer à Coucou. (<span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ</span> <span class='violet'>PARAÎTRE HEUREUX.</span> <span class='orange'>RÉPÉTER TOUJOURS.</span>)"
+    "translation" : "#25 : Jouer à Coucou. (<span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ</span> <span class='violet'>PARAÎTRE HEUREUX.</span> <span class='orange'> TOUJOURS RÉPÉTER.</span>)"
   },
   "codeLabChallenge_peekaboo.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -232,7 +232,7 @@
     "translation" : "Réponse 25"
   },
   "codeLabChallenge_stackCubes.questionSlide.primaryText" : {
-    "translation" : "#26 :Empiler 2 cubes."
+    "translation" : "#26 : Empiler 2 cubes."
   },
   "codeLabChallenge_stackCubes.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -250,7 +250,7 @@
     "translation" : "Réponse 27"
   },
   "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText" : {
-    "translation" : "#28: <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> <span class='blue'>TOURNER</span> complètement autour."
+    "translation" : "#28 : <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> <span class='blue'>TOURNER</span> complètement autour."
   },
   "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -259,7 +259,7 @@
     "translation" : "Réponse 28"
   },
   "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText" : {
-    "translation" : "#29: <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> <span class='violet'>PARAÎTRE SURPRIS,</span> puis <span class='blue'>TOURNER</span> complètement autour."
+    "translation" : "#29 : <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> <span class='violet'>PARAÎTRE SURPRIS,</span> puis <span class='blue'>TOURNER</span> complètement autour."
   },
   "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -268,7 +268,7 @@
     "translation" : "Réponse 29"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText" : {
-    "translation" : "#30 : Rapporter des cubes : Commence par placer les cubes à une soixantaine de centimètres derrière Cozmo. <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> aller chercher un cube et le rapporter. <span class='orange'>RÉPÉTER EN PERMANCE.</span>"
+    "translation" : "#30 : Rapporter des cubes : Commence par placer les cubes à une soixantaine de centimètres derrière Cozmo. <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> aller chercher un cube et le rapporter. <span class='orange'>TOUJOURS RÉPÉTER.</span>"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -277,7 +277,7 @@
     "translation" : "Réponse 30"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText" : {
-    "translation" : "#31: Remettre les cubes en place : <span class='yellow'>LORSQU'UN CUBE EST DÉTECTÉ,</span> faire en sorte que Cozmo se <span class='blue'>RETOURNE</span> et pose le cube à une soixantaine de centimètres derrière lui et revienne. <span class='orange'>RÉPÉTER EN PERMANCE.</span>"
+    "translation" : "#31 : Remettre les cubes en place : <span class='yellow'>LORSQU'UN CUBE EST DÉTECTÉ,</span> faire en sorte que Cozmo se <span class='blue'>RETOURNE</span> et pose le cube à une soixantaine de centimètres derrière lui et revienne. <span class='orange'>TOUJOURS RÉPÉTER.</span>"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -286,7 +286,7 @@
     "translation" : "Réponse 31"
   },
   "codeLabChallenge_intruder.questionSlide.primaryText" : {
-    "translation" : "#32: <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> <span class='violet'>PARAÎTRE SURPRIS,</span> puis <span class='orange'>TOUJOURS :</span> <span class='purple'>ALLUMER LES VOYANTS DORSAUX</span> en rouge, <span class='purple'>DIRE,</span> « Instrus ! » et éteindre les <span class='purple'>VOYANTS DORSAUX</span>."
+    "translation" : "#32 : <span class='yellow'>LORSQU'UN VISAGE EST DÉTECTÉ,</span> <span class='violet'>PARAÎTRE SURPRIS,</span> puis <span class='orange'>TOUJOURS :</span> <span class='purple'>ALLUMER LES VOYANTS DORSAUX</span> en rouge, <span class='purple'>DIRE,</span> « Intrus ! » et éteindre les <span class='purple'>VOYANTS DORSAUX</span>."
   },
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
@@ -389,6 +389,12 @@
   },
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "Alarme anti-intrusion !"
+  },
+  "codeLab.SaveProject.Autosaved" : {
+    "translation" : "Autosaved"
+  },
+  "codeLab.SaveProject.NotSaved" : {
+    "translation" : "Sample projects not saved"
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mon projet {0}"

@@ -28,7 +28,7 @@
     "translation" : "Cozmo a vu\u000ace cube."
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmo veut utiliser\u000a ce cube"
+    "translation" : "Cozmo wants to\u000ause this Cube."
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "La pile de ce cube\u000aest faible"
@@ -37,7 +37,7 @@
     "translation" : "Cozmo s'améliore avec le temps."
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "<b><color=#ff69b4> FPO! </color></b> : Chaque jour, vous remplissez la barre de jeu jaune de Cozmo, vous gagnez un jeton Bonus. Bonus Tokens débloquer des boîtes de bonus, rempli de récompenses comme Sparks, Games et Habilités."
+    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Each day you fill Cozmo's yellow Play bar, you earn a Bonus Token. Bonus Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Abilities."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
     "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
@@ -61,10 +61,10 @@
     "translation" : "Étincelles"
   },
   "helpTipsStrings.Slide5.title" : {
-    "translation" : "Enregistre-toi auprès de Cozmo."
+    "translation" : "Occupe-toi bien de Cozmo."
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Lance l'application Cozmo pour t'enregistrer chaque jour afin de satisfaire Cozmo et de l'aider à apprendre et progresser en débloquant de nouvelles compétences. Connecte-toi à Cozmo pour le réveiller et lui porter l'attention dont il a besoin."
+    "translation" : "Lance l'application de Cozmo chaque jour afin qu'il puisse rester heureux et aide-le à apprendre et à progresser tout en débloquant de nouvelles compétences. Connecte-toi à Cozmo pour le réveiller et lui porter l'attention dont il a besoin."
   },
   "helpTipsStrings.Slide6.title" : {
     "translation" : "Assure la sécurité de Cozmo."
@@ -73,7 +73,7 @@
     "translation" : "Cozmo a besoin que tu le protèges. Il est semblable à un hamster ou un autre petit animal domestique. Garde un œil sur lui au cas où il aurait un problème ; il peut avoir besoin de ton aide en cas de blocage."
   },
   "helpTipsStrings.Slide7.title" : {
-    "translation" : "Les voyants au dos de Cozmo peuvent t'indiquer que :"
+    "translation" : "Les voyants dorsaux de Cozmo indiquent que :"
   },
   "helpTipsStrings.Slide7.subtitle1" : {
     "translation" : "Cozmo est\u000achargé."

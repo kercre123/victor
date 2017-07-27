@@ -16,13 +16,13 @@
     "translation" : "D'abord, accède à <b>PARAMÈTRES</b>.\u000aEnsuite, appuie sur <b>ACTUALISER LES CUBES</b>."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
-    "translation" : "Next, try changing your Cube's battery."
+    "translation" : "Ensuite, essaye de remplacer la pile de ton cube."
   },
   "cubeHelpStrings.Instructions.Slide1altCopy" : {
     "translation" : "Retourne-le et dévisse le couvercle."
   },
   "cubeHelpStrings.Instructions.Slide2" : {
-    "translation" : "Remplace la pile par une pile neuve de type N."
+    "translation" : "Remplace-la par une pile neuve de type N."
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
     "translation" : "Insère la nouvelle pile côté positif (<b><color=#d3d3d3>+</color></b>) vers le haut."
@@ -43,7 +43,7 @@
     "translation" : "QUICK SNACK"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmo can now keep playing"
+    "translation" : "Cozmo Can Now Keep Playing"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
     "translation" : "To keep him fully fed, follow the instructions to help him recognize his cubes."

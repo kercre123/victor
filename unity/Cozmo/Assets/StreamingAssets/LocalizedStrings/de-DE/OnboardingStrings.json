@@ -97,7 +97,7 @@
     "translation" : "Well done!\u000a\u000aCozmo would like to meet you."
   },
   "onboarding.MeetCozmo.Button" : {
-    "translation" : "MEET COZMO"
+    "translation" : "Kennenlernen"
   },
   "onboarding.NeedsIntro" : {
     "translation" : "<b>Cozmo hat Bedürfnisse.</b>\u000a\u000aKümmere dich jeden Tag um ihn, damit er bei guter Laune bleibt."
@@ -139,6 +139,6 @@
     "translation" : "<b>Cozmo muss gefüttert werden.</b>\u000a\u000aWenn die blaue Leiste fast leer ist, hat Cozmo Hunger. Tippe auf <b><color=#31EBFF>FÜTTERN</color></b>."
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmo ist ein verspielter Roboter, der auch einige Tricks auf Lager hat!\u000a\u000aBeim Trick \"Cube rollen\" sucht Cozmo einen Cube und rollt ihn dann. Achte darauf, dass Cozmo einen Cube sehen kann."
+    "translation" : "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a cube he can see, and then watch him roll it."
   }
 }

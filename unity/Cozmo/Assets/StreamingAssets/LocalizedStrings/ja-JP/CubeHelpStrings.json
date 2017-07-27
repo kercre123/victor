@@ -7,10 +7,10 @@
     "source_key_paths" : ["/{*}"]
   },
   "cubeHelpStrings.Instructions.Slide0" : {
-    "translation" : "Cozmoは全部のキューブを聞き取れません。キューブをCozmoの近くに置いてください。"
+    "translation" : "Cozmoがすべてのキューブを認識できません。キューブをCozmoの近くに置いてください。"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "まだ問題がある場合は<b><color=#d3d3d3>次へ</color></b>タップします"
+    "translation" : "まだ問題がある場合は「<b><color=#d3d3d3>次へ</color></b>」をタップします"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
     "translation" : "まず<b>設定</b>に移動します。\u000aそれから<b>キューブの更新</b>をタップします。"
@@ -43,7 +43,7 @@
     "translation" : "クイックスナック"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmoは今プレーできる"
+    "translation" : "Cozmoは今遊ぶことができます"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
     "translation" : "彼に十分な餌を与え続けるために、指示に従って彼が自分の立方体を認識できるようにしてください。"

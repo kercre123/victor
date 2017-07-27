@@ -99,6 +99,9 @@
   "needs.Done" : {
     "translation" : "完了"
   },
+  "needs.RewardsDialog.SparksInventoryFull" : {
+    "translation" : "スパークスの在庫がいっぱいです"
+  },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "さらにスパークを獲得しました！"
   },
@@ -161,5 +164,17 @@
   },
   "needs.FeedingOverfedHiccups.Description" : {
     "translation" : "Cozmoがいっぱいです - 今、彼はしゃっくりをしています！"
+  },
+  "needs.severeAlert.energy.title" : {
+    "translation" : "エネルギー重度タイトルFPO"
+  },
+  "needs.severeAlert.energy.description" : {
+    "translation" : "エネルギー重大アラートが必要FPO"
+  },
+  "needs.severeAlert.repair.title" : {
+    "translation" : "重度のタイトルFPOを修復する"
+  },
+  "needs.severeAlert.repair.description" : {
+    "translation" : "修復が必要重大なアラート説明FPO"
   }
 }

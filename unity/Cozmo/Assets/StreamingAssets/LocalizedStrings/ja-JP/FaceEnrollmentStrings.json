@@ -10,7 +10,7 @@
     "translation" : "Cozmoがあなたを調べます。まっすぐCozmoを見て動かないでください。\u000a\u000a終わるとチャイムが鳴ります。"
   },
   "faceEnrollment.enterName.placeholderText" : {
-    "translation" : "名前を入力します。"
+    "translation" : "あなたの名を入力してください："
   },
   "faceEnrollment.faceEnrollmentList.description" : {
     "translation" : "あなたや友達をCozmoに認識させましょう。"
@@ -34,7 +34,7 @@
     "translation" : "Cozmoはあなたを{0}として認識しています"
   },
   "faceEnrollment.errors.timeOut.title" : {
-    "translation" : "Cozmoにはあなたが見えていません"
+    "translation" : "コズモがあなたに会うのを悩ませている"
   },
   "faceEnrollment.errors.timeOut.description" : {
     "translation" : "室内を明るくして、Cozmoをまっすぐ見てください。Cozmoを平らで安定した場所に置いてください。"
@@ -61,7 +61,7 @@
     "translation" : "{0}日前"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
-    "translation" : "Cozmoがあなたをもっと簡単に認識できるようにしてあげましょう"
+    "translation" : "Cozmoがあなたをより簡単に認識できるようにする："
   },
   "faceEnrollment.label.lastScanned" : {
     "translation" : "前回スキャンした日："

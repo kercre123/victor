@@ -73,7 +73,7 @@
     "translation" : "Cozmoをスリープさせますか？"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "Cozmoをチャージャーに置いて充電させるか、<b>「<color=#11a2f0ff>SLEEP</color></b>をタップして接続を解除します。"
+    "translation" : "Cozmoをチャージャーに置いて充電させるか、<b><color=#11a2f0ff>スリープ</color></b>をタップして接続を解除します。"
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
     "translation" : "スリープ"

@@ -16,7 +16,7 @@
     "translation" : "Wähle <b>EINSTELLUNGEN</b> aus.\u000aTippe anschließend auf <b>CUBES AKTUALISIEREN</b>."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
-    "translation" : "Nun solltest du die Batterie des Cube wechseln."
+    "translation" : "Wenn nötig solltest du die Batterie des Cube wechseln."
   },
   "cubeHelpStrings.Instructions.Slide1altCopy" : {
     "translation" : "Lege ihn so vor dich, dass die Unterseite oben ist, und schraube die Abdeckung ab."
@@ -43,7 +43,7 @@
     "translation" : "QUICK SNACK"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmo can now keep playing"
+    "translation" : "Cozmo Can Now Keep Playing"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
     "translation" : "To keep him fully fed, follow the instructions to help him recognize his cubes."
