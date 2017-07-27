@@ -1,10 +1,11 @@
+
 #ifndef __TIMER_H
 #define __TIMER_H
 
 #include <stdint.h>
 
 #include "hardware.h"
-#include "schema/messages.h"
+#include "messages.h"
 
 static const uint32_t TARGET_EXEC_PERIOD = 200;
 static const uint32_t MICROSEC_TO_SYSTICK = (SYSTEM_CLOCK / 1000000) << 8;

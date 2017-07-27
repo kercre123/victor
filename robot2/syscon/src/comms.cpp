@@ -11,7 +11,7 @@
 #include "mics.h"
 #include "touch.h"
 
-#include "schema/messages.h"
+#include "messages.h"
 
 using namespace Anki::Cozmo::Spine;
 

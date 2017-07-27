@@ -5,16 +5,16 @@
 
 #include "encoders.h"
 #include "motors.h"
-#include "schema/messages.h"
+#include "messages.h"
 
 using namespace Anki::Cozmo::Spine;
 
 static const int MOTOR_SERVICE_COUNTDOWN = 4;
 static const int MAX_ENCODER_FRAMES = 25; // 0.1250s
 static const int MAX_POWER = 0x8000;
-static const uint16_t MOTOR_PERIOD = 20000; // 20khz 
+static const uint16_t MOTOR_PERIOD = 20000; // 20khz
 static const int16_t MOTOR_MAX_POWER = SYSTEM_CLOCK / MOTOR_PERIOD;
- 
+
 struct MotorConfig {
   // Pin BRSS
   volatile uint32_t* P_BSRR;
@@ -26,7 +26,7 @@ struct MotorConfig {
   const uint32_t     N1_ModeMask;
   const uint32_t     N1_ModeAlt;
   const uint32_t     N1_ModeOutput;
-  
+
   // N2 Pin
   volatile uint32_t* N2CC;
   GPIO_TypeDef*      N2_Bank;
@@ -49,22 +49,22 @@ struct MotorStatus {
   (PIN::bank), ~(3 << (PIN::pin * 2)), (MODE_ALTERNATE << (PIN::pin * 2)), (MODE_OUTPUT << (PIN::pin * 2))
 
 static const MotorConfig MOTOR_DEF[Anki::Cozmo::Spine::MOTOR_COUNT] = {
-  { 
+  {
     &LTP1::bank->BSRR, LTP1::mask,
     &TIM1->CCR2, CONFIG_N(LTN1),
     &TIM1->CCR2, CONFIG_N(LTN2)
   },
-  { 
+  {
     &RTP1::bank->BSRR, RTP1::mask,
     &TIM1->CCR1, CONFIG_N(RTN1),
     &TIM1->CCR1, CONFIG_N(RTN2)
   },
-  { 
+  {
     &LP1::bank->BSRR, LP1::mask,
     &TIM1->CCR3, CONFIG_N(LN1),
     &TIM1->CCR4, CONFIG_N(LN2)
   },
-  { 
+  {
     &HP1::bank->BSRR, HP1::mask,
     &TIM3->CCR2, CONFIG_N(HN1),
     &TIM3->CCR4, CONFIG_N(HN2)
@@ -126,9 +126,9 @@ static void Motors::receive(HeadToBody *payload) {
 static void Motors::transmit(BodyToHead *payload) {
   uint32_t* time_last;
   int32_t* delta_last;
-  
+
   Encoders::flip(time_last, delta_last);
-  
+
   // Radio silence = power down motors
   if (moterServiced <= 0) {
     memset(motorPower, 0, sizeof(motorPower));
@@ -180,19 +180,19 @@ static void configure_timer(TIM_TypeDef* timer) {
   timer->CCMR1 =
     TIM_CCMR1_OC1PE | TIM_CCMR1_OC1FE | (TIM_CCMR1_OC1M_0 * 6) |
     TIM_CCMR1_OC2PE | TIM_CCMR1_OC2FE | (TIM_CCMR1_OC2M_0 * 6);
-  timer->CCER = 
+  timer->CCER =
     TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E |
     TIM_CCER_CC1NE | TIM_CCER_CC2NE | TIM_CCER_CC3NE |
     TIM_CCER_CC1NP | TIM_CCER_CC2NP | TIM_CCER_CC3NP;
 
   timer->BDTR = TIM_BDTR_MOE;
-  
+
   // Clear our comparison registers
   timer->CCR1 =
   timer->CCR2 =
   timer->CCR3 =
   timer->CCR4 = 0;
-  
+
   // Configure (PWM edge-aligned, count up, 20khz)
   timer->PSC = 0;
   timer->ARR = MOTOR_MAX_POWER - 1;
@@ -202,7 +202,7 @@ static void configure_timer(TIM_TypeDef* timer) {
 void Motors::init() {
   // Setup motor power
   memset(&motorStatus, 0, sizeof(motorStatus));
-  
+
   configure_timer(TIM1);
   configure_timer(TIM3);
   configure_pins();

@@ -5,7 +5,7 @@
 #include "power.h"
 
 #include "opto.h"
-#include "schema/messages.h"
+#include "messages.h"
 
 using namespace Anki::Cozmo::Spine;
 

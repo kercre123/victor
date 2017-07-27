@@ -8,7 +8,7 @@
 
 #include "stm32f0xx.h"
 
-#include "schema/messages.h"
+#include "messages.h"
 
 using namespace Anki::Cozmo::Spine;
 

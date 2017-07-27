@@ -48,7 +48,7 @@ void Main_Execution(void) {
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
-  Opto::tick();
+  //Opto::tick();
   Analog::tick();
   Contacts::tick();
   Lights::tick();
@@ -72,7 +72,7 @@ int main (void) {
   __enable_irq(); // Start firing interrupts
 
   // This is all driven by IRQ logic
-  Opto::init();
+  //Opto::init();
 
   // Low priority interrupts are now our main execution
   for (;;) {

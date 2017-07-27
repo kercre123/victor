@@ -31,7 +31,7 @@ struct SystemHeader {
   uint8_t           certificate[256];
   union {
     const uint32_t* stackStart;
-    const uint8_t   signedStart; 
+    uint8_t   signedStart;
   };
   VectorPtr         resetVector;
   uint8_t           applicationVersion[16];
