@@ -84,12 +84,6 @@ namespace Onboarding {
       HubWorldBase.Instance.StartFreeplay();
     }
 
-    protected override void HandleLoopedAnimationComplete(bool success = true) {
-      if (!_DidSkip) {
-        base.HandleLoopedAnimationComplete(success);
-      }
-    }
-
   }
 
 }

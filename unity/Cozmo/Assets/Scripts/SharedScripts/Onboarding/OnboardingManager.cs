@@ -163,9 +163,9 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public bool IsOldRobot() {
-    // Pounce is the first thing unlocked in the new nurture unlock order.
+    // FistBump is the first thing unlocked in the new nurture unlock order.
     return _LastOnboardingPhaseCompletedRobot > 0 ||
-           UnlockablesManager.Instance.IsUnlocked(UnlockId.PounceOnMotionAction);
+           UnlockablesManager.Instance.IsUnlocked(UnlockId.FistBump);
   }
 
   private void HandleGetWantsNeedsOnboarding(Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding message) {
