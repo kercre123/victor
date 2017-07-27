@@ -9,11 +9,10 @@
 TIM1  Motors
 TIM3  Motors
 TIM6  Byte counter (uart DMA)
-TIM7  <not present>
 TIM14 Main-exec / Backpack
 TIM15 SPI Master clock
-TIM16
-TIM17
+TIM16 Touch Sense 1
+TIM17 Touch Sense 2
 */
 
 static const uint32_t SYSTEM_CLOCK = 48000000;
@@ -31,6 +30,7 @@ enum IRQ_Priority {
   PRIORITY_SPINE_COMMS = 2,
   PRIORITY_CONTACTS_COMMS = 2,
   PRIORITY_MICS = 3,
+  PRIORITY_TOUCH_SENSE = 3
 };
 
 // H-Bridge

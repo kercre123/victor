@@ -14,9 +14,9 @@ void Touch::init(void) {
   TIM16->CCMR1 = TIM17->CCMR1 = 0
     | (TIM_CCMR1_IC1F_0 * 4)    // Four sample debounce
     | (TIM_CCMR1_IC1PSC_0 * 0)  // No-prescalar
-    | (TIM_CCMR1_CC1S_0 * 1)    // TI1 input mode  
+    | (TIM_CCMR1_CC1S_0 * 1)    // TI1 input mode
     ;
-  
+
   TIM16->CCER = TIM17->CCER = 0
     | (TIM_CCER_CC1P * 0)       // Rising edge
     | TIM_CCER_CC1E             // Enable Capture 1
@@ -32,7 +32,7 @@ void Touch::init(void) {
   // Configure the pins
   CAPO::reset();
   CAPO::mode(MODE_OUTPUT);
-  
+
   CAP1I::alternate(2);
   CAP1I::mode(MODE_ALTERNATE);
 
@@ -40,7 +40,7 @@ void Touch::init(void) {
   CAP2I::mode(MODE_ALTERNATE);
 
   NVIC_EnableIRQ(TIM16_IRQn);
-  NVIC_SetPriority(TIM16_IRQn, 3);
+  NVIC_SetPriority(TIM16_IRQn, PRIORITY_TOUCH_SENSE);
 }
 
 extern "C" void TIM16_IRQHandler(void) {
