@@ -154,10 +154,10 @@
     "translation" : "Cozmoがちょうど生成されました{0}運動をしてスパーク！"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmoがあなたに与えた{0}彼と一緒にGuard Dogをプレイするためのスパーク！"
+    "translation" : "Cozmoがあなたに与えた{0}彼と一緒にCube Guardをプレイするためのスパーク！"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmoがあなたに与えた{0}彼と一緒にGuard Dogをプレイするためのスパーク！"
+    "translation" : "Cozmoがあなたに与えた{0}彼と一緒にCube Guardをプレイするためのスパーク！"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "コズモはヒカップスを手に入れた"

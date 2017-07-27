@@ -51,6 +51,12 @@ namespace Cozmo.UI {
     }
 
     private void OpenNeedSevereAlert(NeedId severeNeed) {
+#if UNITY_EDITOR
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        return;
+      }
+#endif
+
       AlertModalButtonData buttonData = new AlertModalButtonData("severe_okay_button",
                                      LocalizationKeys.kButtonOkay,
                                      clickCallback: HandleSevereAlertClosed);

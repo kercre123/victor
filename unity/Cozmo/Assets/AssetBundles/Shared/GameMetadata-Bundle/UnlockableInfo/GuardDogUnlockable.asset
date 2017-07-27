@@ -9,27 +9,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
-  m_Name: RecognizePetsUnlockable
+  m_Name: GuardDogUnlockable
   m_EditorClassIdentifier: 
   Id:
-    _EnumValueAsString: TakeCubeFromHand
-    _EnumValue: 11
+    _EnumValueAsString: GuardDog
+    _EnumValue: 63
   UnlockableType: 1
-  Prerequisites: []
-  AnyPrereqUnlock: 0
   _ComingSoon: 0
-  DescriptionKey: unlockable.RecognizePets.Description
-  TitleKey: unlockable.RecognizePets.Title
+  DescriptionKey: unlockable.GuardDog.Description
+  TitleKey: unlockable.GuardDog.Title
   SparkButtonDescription: 
   SparkedStateDescription: 
   SparkedMusicState:
-    _Sparked: 0
+    _Sparked: 468648200
+  IsSparkable: 0
   RequestTrickCostItemId: spark
   _SparkableThingID:
     _EnumValueAsString: NoCost
     _EnumValue: 0
-  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
-  CubesRequired: 0
-  SortOrder: 900
+  CoreUpgradeIcon: {fileID: 21300000, guid: 92e1a6518fd5747e8b71ffefdc3bc146, type: 3}
+  CubesRequired: 3
+  SortOrder: 850
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0
+  _CanVoiceActivate: 0

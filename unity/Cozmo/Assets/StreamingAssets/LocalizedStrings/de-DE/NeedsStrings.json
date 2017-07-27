@@ -154,10 +154,10 @@
     "translation" : "Cozmo just generated {0} Sparks by performing a workout!"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
+    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
+    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmo got the Hiccups"

@@ -291,6 +291,7 @@ namespace SpeedTap {
       //Moved this before getting player info in order to create the ShelfWidget so that the correctly sized Score Widget is used.
       if (playerCount > 2) {
         SharedMinigameView.CurrentScoreBoardType = Cozmo.MinigameWidgets.SharedMinigameView.ScoreBoardType.Short;
+        SharedMinigameView.ShelfWidget.HideBackground();
         // Display the current round
         if (WantsHideRoundLabel) {
           SharedMinigameView.ShelfWidget.SetMinigameText("");

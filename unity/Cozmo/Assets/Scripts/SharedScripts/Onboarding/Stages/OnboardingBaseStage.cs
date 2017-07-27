@@ -98,8 +98,7 @@ namespace Onboarding {
         // Really doesn't show a one frame pop to default idle between states
         if (_LoopedAnim.Value != Anki.Cozmo.AnimationTrigger.Count) {
           // The connection might still be playing the intro so queue this as next
-          currentRobot.SendAnimationTrigger(_LoopedAnim.Value,
-                                            HandleLoopedAnimationComplete, Anki.Cozmo.QueueActionPosition.NEXT);
+          currentRobot.SendAnimationTrigger(_LoopedAnim.Value, loops: 0);
         }
 
         if (_ForceNeedValuesOnEventId.Value != Anki.Cozmo.NeedsActionId.Count) {
@@ -109,10 +108,6 @@ namespace Onboarding {
     }
 
     public virtual void OnDestroy() {
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
-      }
-
       HubWorldBase instance = HubWorldBase.Instance;
       if (instance != null && _FreeplayEnabledOnExit) {
         instance.StartFreeplay();
@@ -158,6 +153,10 @@ namespace Onboarding {
         if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
           robot.RemoveIdleAnimation(kOnboardingIdleAnimLock);
         }
+        // since the animation is looped was looped, force kill it.
+        if (_LoopedAnim.Value != Anki.Cozmo.AnimationTrigger.Count) {
+          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+        }
       }
       // Clean up needs manager
       SetNeedsActionWhitelist(false);
@@ -194,12 +193,6 @@ namespace Onboarding {
 
     public virtual void SkipPressed() {
       OnboardingManager.Instance.GoToNextStage();
-    }
-
-    protected virtual void HandleLoopedAnimationComplete(bool success = true) {
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(_LoopedAnim.Value, HandleLoopedAnimationComplete);
-      }
     }
   }
 
