@@ -50,6 +50,8 @@ namespace Cozmo.UI {
 
     private string _DASEventButtonName = "";
 
+    private string _DASSuffix = "";
+
     private string _DASEventViewController = "";
 
     [SerializeField]
@@ -114,6 +116,11 @@ namespace Cozmo.UI {
         return _DASEventButtonName;
       }
       set { _DASEventButtonName = value; }
+    }
+
+    public string DASSuffix {
+        get { return _DASSuffix; }
+        set { _DASSuffix = value; }
     }
 
     public string DASEventViewController {
@@ -276,8 +283,11 @@ namespace Cozmo.UI {
           this.gameObject.name));
         automationIdComponent.Id = this.gameObject.name;
       }
-      else {
+      else if (string.IsNullOrEmpty(_DASSuffix)) {
         automationIdComponent.Id = _DASEventButtonName;
+      }
+      else {
+        automationIdComponent.Id = _DASEventButtonName + _DASSuffix;
       }
       if (string.IsNullOrEmpty(_DASEventViewController)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASViewController! Falling back to parent's names.",
