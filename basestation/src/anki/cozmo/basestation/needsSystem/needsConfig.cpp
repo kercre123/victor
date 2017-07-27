@@ -214,7 +214,7 @@ struct SortDecayRatesByThresholdDescending
 {
   bool operator()(const DecayRate& a, const DecayRate& b) const
   {
-    return (a._threshold >= b._threshold);
+    return (a._threshold > b._threshold);
   }
 };
 
@@ -222,7 +222,7 @@ struct SortDecayModifiersByThresholdDescending
 {
   bool operator()(const DecayModifier& a, const DecayModifier& b) const
   {
-    return (a._threshold >= b._threshold);
+    return (a._threshold > b._threshold);
   }
 };
 
