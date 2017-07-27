@@ -9,6 +9,7 @@
 
 #include <string.h>
 
+#include "backpackLightController.h"
 #include "blockLightController.h"
 #include "dockingController.h"
 #include "headController.h"
@@ -924,7 +925,7 @@ namespace Anki {
       }
       void Process_setBackpackLights(RobotInterface::SetBackpackLights const& msg)
       {
-        AnkiWarn( 1242, "Messages.setBackpackLights.NoHALFunction", 305, "", 0);
+        BackpackLightController::SetParams(msg);
       }
       
       void Process_enableLiveTwitching(RobotInterface::EnableLiveTwitching const& msg)
@@ -1033,8 +1034,8 @@ namespace Anki {
       void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
       void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
 
-      void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer&) {
-        // Handled on the NRF
+      void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
+        BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);
       }
 
       void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle&) {

@@ -6,21 +6,19 @@ namespace Anki {
 namespace Cozmo {
 
 // Layer to set the animations for
-enum uint_8 BackpackLayer {
+enum uint_8 BackpackLightLayer {
   BPL_USER = 0, // Do not change, lest be eaten by a grue
   BPL_ANIMATION,
-  BPL_IMPULSE,
-  BACKPACK_LAYERS
+  BPL_NUM_LAYERS
 }
 
 // Health / direction bar on the top of the backpack
 enum uint_8 LEDId {
-  // Directional arrangement
-  LED_BACKPACK_LEFT = 0,
-  LED_BACKPACK_FRONT,
-  LED_BACKPACK_MIDDLE,
-  LED_BACKPACK_BACK,
-  LED_BACKPACK_RIGHT,
+  LED_BACKPACK_0 = 0,  // TODO: Need to sync with HAL::LEDId
+  LED_BACKPACK_1,
+  LED_BACKPACK_2,
+  LED_BACKPACK_3,
+
   NUM_BACKPACK_LEDS
 }
 

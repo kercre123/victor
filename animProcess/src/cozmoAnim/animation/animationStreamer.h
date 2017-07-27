@@ -148,6 +148,10 @@ namespace Cozmo {
     Result SendStartOfAnimation();
     Result SendEndOfAnimation();
     
+    // Enables/Disables the backpack lights animation layer on the robot
+    // if it hasn't already been enabled/disabled
+    Result EnableBackpackAnimationLayer(bool enable);
+    
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
     
@@ -189,6 +193,8 @@ namespace Cozmo {
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
     bool _wasAnimationInterruptedWithNothing = false;
+    
+    bool _backpackAnimationLayerEnabled = false;
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time

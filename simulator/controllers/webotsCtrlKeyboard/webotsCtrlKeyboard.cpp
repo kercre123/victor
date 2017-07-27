@@ -606,7 +606,7 @@ namespace Anki {
                   // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
                   // p3: The color to set it to (applies if LTF_CYCLE_ALL not enabled)
                   p1 = (s32)LightTestFlags::LTF_CYCLE_ALL;
-                  p2 = (s32)LEDId::LED_BACKPACK_RIGHT;
+                  p2 = (s32)LEDId::LED_BACKPACK_0;
                   p3 = (s32)LEDColor::LED_GREEN;
                   break;
                 case TestMode::TM_STOP_TEST:
@@ -1027,11 +1027,10 @@ namespace Anki {
                 
                   if(!backpackLightsOn) {
                     // Use red channel to control left and right lights
-                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_RIGHT]  = ::Anki::NamedColors::RED >> 1; // Make right light dimmer
-                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_LEFT]   = ::Anki::NamedColors::RED;
-                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK]   = ::Anki::NamedColors::RED;
-                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = ::Anki::NamedColors::CYAN;
-                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT]  = ::Anki::NamedColors::YELLOW;
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_0] = ::Anki::NamedColors::RED >> 1; // Shift to make dimmer
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_1] = ::Anki::NamedColors::YELLOW;
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_2] = ::Anki::NamedColors::CYAN;
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_3] = ::Anki::NamedColors::RED;
                   }
                 
                   ExternalInterface::MessageGameToEngine msgWrapper;

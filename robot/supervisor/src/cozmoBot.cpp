@@ -11,6 +11,7 @@
 #ifndef TARGET_K02
 #include "animationController.h"
 #endif
+#include "backpackLightController.h"
 #include "dockingController.h"
 #include "liftController.h"
 #include "localization.h"
@@ -113,6 +114,9 @@ namespace Anki {
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 227, "CozmoBot.InitFail.AnimationController", 305, "", 0);
 #endif
+        lastResult = BackpackLightController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 1249, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
+        
         lastResult = Messages::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 220, "CozmoBot.InitFail.Messages", 305, "", 0);
 
@@ -277,9 +281,15 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
+        
+        MARK_NEXT_TIME_PROFILE(CozmoBot, LIGHTS);
+        BackpackLightController::Update();
+        
 #ifdef SIMULATOR
+        // TODO: Move this to animation process since that's where they'll be controlled from
         BlockLightController::Update();
 #endif
+        
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();

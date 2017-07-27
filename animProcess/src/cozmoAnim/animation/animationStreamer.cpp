@@ -241,6 +241,7 @@ namespace Cozmo {
       // Reset streamer state
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
+      EnableBackpackAnimationLayer(false);
 
 //      if (_audioClient.HasAnimation()) {
 //        _audioClient.GetCurrentAnimation()->AbortAnimation();
@@ -364,6 +365,29 @@ namespace Cozmo {
     FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
   }
   
+  Result AnimationStreamer::EnableBackpackAnimationLayer(bool enable)
+  {
+    RobotInterface::BackpackSetLayer msg;
+    
+    if (enable && !_backpackAnimationLayerEnabled) {
+      msg.layer = 1; // 1 == BPL_ANIMATION
+      _backpackAnimationLayerEnabled = true;
+    } else if (!enable && _backpackAnimationLayerEnabled) {
+      msg.layer = 0; // 1 == BPL_USER
+      _backpackAnimationLayerEnabled = false;
+    } else {
+      // Do nothing
+      return RESULT_OK;
+    }
+
+    RobotInterface::EngineToRobot message(std::move(msg));
+    if (!Messages::SendPacketToRobot(message.GetBuffer(), message.Size())) {
+      return RESULT_FAIL;
+    }
+
+    return RESULT_OK;
+  }
+  
   Result AnimationStreamer::SendStartOfAnimation()
   {
     if(DEBUG_ANIMATION_STREAMING) {
@@ -402,6 +426,9 @@ namespace Cozmo {
     
     _endOfAnimationSent = true;
     _startOfAnimationSent = false;
+    
+    // Every time we end an animation we should also re-enable BPL_USER layer on robot
+    EnableBackpackAnimationLayer(false);
     
     return lastResult;
   } // SendEndOfAnimation()
@@ -446,7 +473,9 @@ namespace Cozmo {
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
-        SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK);
+        if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
+          EnableBackpackAnimationLayer(true);
+        }
       }
       
       // If we have face keyframes to send
@@ -613,7 +642,9 @@ namespace Cozmo {
       
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
-        SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK);
+        if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
+          EnableBackpackAnimationLayer(true);
+        }
       }
       
       if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {

@@ -443,7 +443,7 @@ namespace Cozmo {
   class BackpackLightsKeyFrame : public IKeyFrame
   {
   public:
-    BackpackLightsKeyFrame() { }
+    BackpackLightsKeyFrame();
 
     Result DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug);
     

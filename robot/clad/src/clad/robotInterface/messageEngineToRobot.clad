@@ -428,7 +428,8 @@ message TurnToRecordedHeading
 
 message SetBackpackLights
 {
-  uint_16 colors[5],
+  LightState lights[4],
+  uint_8 layer = 0      // 0 is BPL_USER
 }
 
 message EnableLiveTwitching

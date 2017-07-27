@@ -56,7 +56,7 @@ BodyLightComponent::BodyLightComponent(Robot& robot, const CozmoContext* context
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
   }
   
-  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 5, "BodyLightComponent.WrongNumBackpackLights");
+  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 4, "BodyLightComponent.WrongNumBackpackLights");
 }
 
 void BodyLightComponent::UpdateChargingLightConfig()
@@ -167,34 +167,17 @@ void BodyLightComponent::HandleMessage(const ExternalInterface::SetHeadlight& ms
 
 Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& lights)
 {
-  std::array<Anki::Cozmo::LightState, 2> turnSignals;
-  u8 turnCount = 0;
-  std::array<Anki::Cozmo::LightState, 3> middleLights;
-  u8 middleCount = 0;
+  std::array<Anki::Cozmo::LightState, (int)LEDId::NUM_BACKPACK_LEDS> lightStates;
   for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i)
   {
-    if(i == (int)LEDId::LED_BACKPACK_RIGHT || i == (int)LEDId::LED_BACKPACK_LEFT)
-    {
-      turnSignals[turnCount].onColor  = ENCODED_COLOR(lights.onColors[i]);
-      turnSignals[turnCount].offColor = ENCODED_COLOR(lights.offColors[i]);
-      turnSignals[turnCount].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
-      turnSignals[turnCount].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
-      turnSignals[turnCount].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
-      turnSignals[turnCount].transitionOffFrames = MS_TO_LED_FRAMES(lights.transitionOffPeriod_ms[i]);
-      turnSignals[turnCount].offset = MS_TO_LED_FRAMES(lights.offset[i]);
-      ++turnCount;
-    }
-    else
-    {
-      middleLights[middleCount].onColor  = ENCODED_COLOR(lights.onColors[i]);
-      middleLights[middleCount].offColor = ENCODED_COLOR(lights.offColors[i]);
-      middleLights[middleCount].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
-      middleLights[middleCount].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
-      middleLights[middleCount].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
-      middleLights[middleCount].transitionOffFrames = MS_TO_LED_FRAMES(lights.transitionOffPeriod_ms[i]);
-      middleLights[middleCount].offset = MS_TO_LED_FRAMES(lights.offset[i]);
-      ++middleCount;
-    }
+    lightStates[i].onColor  = ENCODED_COLOR(lights.onColors[i]);
+    lightStates[i].offColor = ENCODED_COLOR(lights.offColors[i]);
+    lightStates[i].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
+    lightStates[i].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
+    lightStates[i].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
+    lightStates[i].transitionOffFrames = MS_TO_LED_FRAMES(lights.transitionOffPeriod_ms[i]);
+    lightStates[i].offset = MS_TO_LED_FRAMES(lights.offset[i]);
+
     
     if(DEBUG_LIGHTS)
     {
@@ -210,8 +193,7 @@ Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& light
     }
   }
   
-  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsMiddle(middleLights, 0)));
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsTurnSignals(turnSignals, 0)));
+  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetBackpackLights(lightStates, 0)));
 }
 
 const char* BodyLightComponent::StateToString(const BackpackLightsState& state) const
@@ -232,13 +214,13 @@ const char* BodyLightComponent::StateToString(const BackpackLightsState& state) 
 const BackpackLights& BodyLightComponent::GetOffBackpackLights()
 {
   static const BackpackLights kBackpackLightsOff = {
-    .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{0,0,0,0,0}},
-    .offPeriod_ms           = {{0,0,0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0,0,0}},
-    .offset                 = {{0,0,0,0,0}}
+    .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .onPeriod_ms            = {{0,0,0,0}},
+    .offPeriod_ms           = {{0,0,0,0}},
+    .transitionOnPeriod_ms  = {{0,0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0,0}},
+    .offset                 = {{0,0,0,0}}
   };
 
   return kBackpackLightsOff;
