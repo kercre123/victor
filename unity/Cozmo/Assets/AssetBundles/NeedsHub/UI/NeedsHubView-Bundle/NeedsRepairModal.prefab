@@ -2097,8 +2097,8 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1072014389522722}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1260, y: -9, z: -0.001}
-  m_LocalScale: {x: 1, y: 0.01, z: 1}
+  m_LocalPosition: {x: -1365, y: 0, z: -0.0001}
+  m_LocalScale: {x: 0.81221735, y: 0.78164345, z: -1}
   m_Children: []
   m_Father: {fileID: 224892538718430202}
   m_RootOrder: 1
@@ -2137,7 +2137,7 @@ Transform:
   m_GameObject: {fileID: 1193015254743592}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -1260, y: -9, z: -0.0010112152}
-  m_LocalScale: {x: 1.0004243, y: 0.01075725, z: 1.0004243}
+  m_LocalScale: {x: 2.4385343, y: 0.00040879077, z: 1.0004243}
   m_Children: []
   m_Father: {fileID: 224892538718430202}
   m_RootOrder: 0
@@ -2150,7 +2150,7 @@ Transform:
   m_GameObject: {fileID: 1931040071124876}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -1260, y: -9, z: -0.001}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: -1}
   m_Children: []
   m_Father: {fileID: 224892538718430202}
   m_RootOrder: 2
@@ -2514,6 +2514,7 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2758,7 +2759,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
-  delay: 0.5
+  delay: 0.65
   duration: 1
   easeType: 6
   easeCurve:
@@ -3091,7 +3092,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.5019608}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.7058824}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -3166,7 +3167,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: CozmoButton_Secondary_Background
+  _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114249897659867852
@@ -3243,6 +3244,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_RepairPart
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -3530,8 +3532,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4284506208
-  m_fontColor: {r: 0.3764706, g: 0.3764706, b: 0.3764706, a: 1}
+    rgba: 4281305445
+  m_fontColor: {r: 0.39607844, g: 0.5372549, b: 0.18431373, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -4224,6 +4226,7 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4493,6 +4496,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_RepairPart
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4713,6 +4717,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_RepairArrow
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -5251,6 +5256,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Close
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -5591,6 +5597,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_RepairPart
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -5901,6 +5908,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114843506697709542}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -5969,6 +5977,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_RepairArrow
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -6676,6 +6685,7 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -7200,6 +7210,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114690825099855218}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -7310,18 +7321,19 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Calibrate
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114311854118912434}
   _TextLabelOffset: 0
-  TextEnabledColor: {r: 0.3764706, g: 0.3764706, b: 0.3764706, a: 1}
-  TextPressedColor: {r: 0.8980392, g: 0.9843137, b: 0.99215686, a: 1}
-  TextDisabledColor: {r: 0.47609022, g: 0.6544118, b: 0.22134519, a: 1}
+  TextEnabledColor: {r: 0.39607844, g: 0.5372549, b: 0.18431373, a: 1}
+  TextPressedColor: {r: 0.28769463, g: 0.3897059, b: 0.13467777, a: 1}
+  TextDisabledColor: {r: 0.20392157, g: 0.25882354, b: 0.047058824, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114584536099169966}
     pressedSprite: {fileID: 21300000, guid: 0d7cd7ed038144fdea5b18f48c19bc23, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: 3cacede1bab5c4d3e9e336ad87f041b0, type: 3}
-    disabledColor: {r: 0.2647059, g: 0.26665226, b: 0.26665226, a: 1}
+    disabledSprite: {fileID: 21300000, guid: 0d7cd7ed038144fdea5b18f48c19bc23, type: 3}
+    disabledColor: {r: 0.36764705, g: 0.36764705, b: 0.36764705, a: 0.878}
   - targetImage: {fileID: 114819324907766042}
     pressedSprite: {fileID: 21300000, guid: 0d7cd7ed038144fdea5b18f48c19bc23, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
@@ -10332,7 +10344,7 @@ ParticleSystem:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1931040071124876}
   serializedVersion: 5
-  lengthInSec: 0.5
+  lengthInSec: 0.25
   simulationSpeed: 1
   looping: 0
   prewarm: 0
@@ -10380,13 +10392,13 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: 369599220
+  randomSeed: -2045450686
   InitialModule:
     serializedVersion: 3
     enabled: 1
     startLifetime:
       minMaxState: 3
-      scalar: 0.5
+      scalar: 0.8
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -10404,7 +10416,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 1
+          value: 0.3125
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -10512,10 +10524,10 @@ ParticleSystem:
         m_NumColorKeys: 2
         m_NumAlphaKeys: 2
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.62659854, g: 0.8088235, b: 0, a: 0.547}
+      maxColor: {r: 0.90391773, g: 1, b: 0.5735294, a: 0.234}
     startSize:
       minMaxState: 3
-      scalar: 20
+      scalar: 40
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -10533,7 +10545,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 1
+          value: 0.15
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -10675,7 +10687,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 0
-    randomizeRotationDirection: 0
+    randomizeRotationDirection: 1
     maxNumParticles: 1000
     size3D: 0
     rotation3D: 0
@@ -10721,15 +10733,15 @@ ParticleSystem:
   ShapeModule:
     serializedVersion: 4
     enabled: 1
-    type: 12
-    angle: 25
+    type: 3
+    angle: 0
     length: 5
     boxX: 0
     boxY: 0
     boxZ: 0
     radius:
-      value: 3.3
-      mode: 2
+      value: 1
+      mode: 3
       spread: 0
       speed:
         minMaxState: 0
@@ -10772,8 +10784,8 @@ ParticleSystem:
           m_RotationOrder: 4
     arc:
       value: 360
-      mode: 1
-      spread: 0
+      mode: 3
+      spread: 0.15
       speed:
         minMaxState: 0
         scalar: 1
@@ -10823,14 +10835,14 @@ ParticleSystem:
     m_UseMeshMaterialIndex: 0
     m_UseMeshColors: 1
     alignToDirection: 0
-    randomDirectionAmount: 0
+    randomDirectionAmount: 1
     sphericalDirectionAmount: 0
   EmissionModule:
     enabled: 1
     serializedVersion: 4
     rateOverTime:
       minMaxState: 0
-      scalar: 30
+      scalar: 50
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -11157,7 +11169,7 @@ ParticleSystem:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 0}
         key1: {r: 1, g: 1, b: 1, a: 1}
-        key2: {r: 0, g: 0, b: 0, a: 0}
+        key2: {r: 0, g: 0, b: 0, a: 1}
         key3: {r: 0, g: 0, b: 0, a: 0}
         key4: {r: 0, g: 0, b: 0, a: 0}
         key5: {r: 0, g: 0, b: 0, a: 0}
@@ -11172,16 +11184,16 @@ ParticleSystem:
         ctime6: 0
         ctime7: 0
         atime0: 0
-        atime1: 9830
-        atime2: 65535
-        atime3: 0
+        atime1: 11951
+        atime2: 28334
+        atime3: 65535
         atime4: 0
         atime5: 0
         atime6: 0
         atime7: 0
         m_Mode: 0
         m_NumColorKeys: 2
-        m_NumAlphaKeys: 3
+        m_NumAlphaKeys: 4
       minGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -11312,7 +11324,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 1
+          value: -1
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -11385,7 +11397,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 0
-    inWorldSpace: 1
+    inWorldSpace: 0
   InheritVelocityModule:
     enabled: 0
     m_Mode: 0
@@ -12516,7 +12528,7 @@ ParticleSystem:
         m_RotationOrder: 4
     maxLights: 20
   TrailModule:
-    enabled: 0
+    enabled: 1
     ratio: 1
     lifetime:
       minMaxState: 0
@@ -13228,7 +13240,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: 1719453594
+  randomSeed: -1332624726
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -13360,7 +13372,7 @@ ParticleSystem:
         m_NumColorKeys: 2
         m_NumAlphaKeys: 2
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.62659854, g: 0.8088235, b: 0, a: 1}
+      maxColor: {r: 0.62659854, g: 0.8088235, b: 0, a: 0.316}
     startSize:
       minMaxState: 3
       scalar: 0.3
@@ -13577,7 +13589,7 @@ ParticleSystem:
     boxZ: 0
     radius:
       value: 3.3
-      mode: 2
+      mode: 3
       spread: 0
       speed:
         minMaxState: 0
@@ -14232,7 +14244,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 0
-    inWorldSpace: 1
+    inWorldSpace: 0
   InheritVelocityModule:
     enabled: 0
     m_Mode: 0
@@ -18904,8 +18916,8 @@ ParticleSystem:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1072014389522722}
   serializedVersion: 5
-  lengthInSec: 0.5
-  simulationSpeed: 1
+  lengthInSec: 0.25
+  simulationSpeed: 2
   looping: 0
   prewarm: 0
   playOnAwake: 1
@@ -18952,13 +18964,13 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: -1375600868
+  randomSeed: 818484540
   InitialModule:
     serializedVersion: 3
     enabled: 1
     startLifetime:
       minMaxState: 3
-      scalar: 0.5
+      scalar: 1.25
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -18976,7 +18988,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 1
+          value: 0.4
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -18985,7 +18997,7 @@ ParticleSystem:
         m_RotationOrder: 0
     startSpeed:
       minMaxState: 0
-      scalar: 8
+      scalar: 11.6
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -19087,7 +19099,7 @@ ParticleSystem:
       maxColor: {r: 0.62659854, g: 0.8088235, b: 0, a: 1}
     startSize:
       minMaxState: 3
-      scalar: 0.3
+      scalar: 1
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -19105,7 +19117,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 0.6666666
+          value: 0.19999999
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -19222,7 +19234,7 @@ ParticleSystem:
         m_RotationOrder: 0
     startRotation:
       minMaxState: 3
-      scalar: 6.283185
+      scalar: 4.468043
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -19240,15 +19252,15 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 0
+          value: 0.0390625
           inSlope: 0
           outSlope: 0
           tangentMode: 0
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 0
-    randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    randomizeRotationDirection: 1
+    maxNumParticles: 400
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -19293,15 +19305,15 @@ ParticleSystem:
   ShapeModule:
     serializedVersion: 4
     enabled: 1
-    type: 12
+    type: 2
     angle: 25
     length: 5
     boxX: 0.7
     boxY: 0.1
     boxZ: 0
     radius:
-      value: 3.3
-      mode: 2
+      value: 1.19
+      mode: 3
       spread: 0
       speed:
         minMaxState: 0
@@ -19344,8 +19356,8 @@ ParticleSystem:
           m_RotationOrder: 4
     arc:
       value: 360
-      mode: 2
-      spread: 0
+      mode: 3
+      spread: 1
       speed:
         minMaxState: 0
         scalar: 1
@@ -19396,7 +19408,7 @@ ParticleSystem:
     serializedVersion: 4
     rateOverTime:
       minMaxState: 0
-      scalar: 100
+      scalar: 600
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -19878,7 +19890,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 1
+          value: -1
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -24780,7 +24792,7 @@ ParticleSystemRenderer:
   m_RenderMode: 0
   m_SortMode: 0
   m_MinParticleSize: 0
-  m_MaxParticleSize: 0.5
+  m_MaxParticleSize: 3.02
   m_CameraVelocityScale: 0
   m_VelocityScale: 0
   m_LengthScale: 2
@@ -24831,7 +24843,7 @@ ParticleSystemRenderer:
   m_RenderMode: 0
   m_SortMode: 0
   m_MinParticleSize: 0
-  m_MaxParticleSize: 10
+  m_MaxParticleSize: 20
   m_CameraVelocityScale: 0
   m_VelocityScale: 0
   m_LengthScale: 2
@@ -25875,8 +25887,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -790, y: 35.1}
-  m_SizeDelta: {x: 700, y: 250}
+  m_AnchoredPosition: {x: -790, y: 42.5}
+  m_SizeDelta: {x: 725, y: 217}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!224 &224113242298318514
 RectTransform:
@@ -26133,8 +26145,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -2.5}
+  m_SizeDelta: {x: -80, y: -35}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224228705596445670
 RectTransform:
@@ -26230,8 +26242,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 180, y: 160}
-  m_SizeDelta: {x: 1780, y: 200}
+  m_AnchoredPosition: {x: 122.5, y: 160}
+  m_SizeDelta: {x: 1837.5, y: 200}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &224252143448348116
 RectTransform:
@@ -26675,8 +26687,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -50, y: 160}
-  m_SizeDelta: {x: 700, y: 250}
+  m_AnchoredPosition: {x: -106.6001, y: 151.50003}
+  m_SizeDelta: {x: 725, y: 217}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &224419485159780224
 RectTransform:
@@ -27246,8 +27258,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -2.5}
+  m_SizeDelta: {x: -80, y: -35}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224703298899450010
 RectTransform:
