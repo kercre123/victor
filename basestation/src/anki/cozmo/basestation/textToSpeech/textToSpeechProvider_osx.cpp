@@ -50,7 +50,8 @@ namespace Cozmo {
 namespace TextToSpeech {
 
 
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx, const Json::Value& tts_platform_config)
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx,
+                                                   const Json::Value& tts_platform_config)
 {
   using Locale = Anki::Util::Locale;
   using Scope = Anki::Util::Data::Scope;
@@ -60,7 +61,8 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx, cons
   const DataPlatform * dataPlatform = ctx->GetDataPlatform();
   if (nullptr == dataPlatform) {
     // This may happen during unit tests
-    LOG_WARNING("TextToSpeechProvider.Initialize.NoDataPlatform", "Unable to initialize TTS provider");
+    LOG_WARNING("TextToSpeechProvider.Initialize.NoDataPlatform",
+                "Unable to initialize TTS provider");
     return;
   }
 
@@ -68,7 +70,8 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx, cons
   const Locale * locale = ctx->GetLocale();
   if (nullptr == locale) {
     // This may happen during unit tests
-    LOG_WARNING("TextToSpeechProvider.Initialize.NoLocale", "Unable to initialize TTS provider");
+    LOG_WARNING("TextToSpeechProvider.Initialize.NoLocale",
+                "Unable to initialize TTS provider");
     return;
   }
   
@@ -93,29 +96,35 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx, cons
   std::string resources = dataPlatform->pathToResource(Scope::Resources, "tts");
   HMODULE h = BabTtsInitDllEx(resources.c_str());
   if (nullptr == h) {
-    LOG_ERROR("TextToSpeechProvider.Initialize.InitDll", "Unable to initialize TTS provider DLL");
+    LOG_ERROR("TextToSpeechProvider.Initialize.InitDll",
+              "Unable to initialize TTS provider DLL");
     return;
   }
   
   bool ok = BabTTS_Init();
   if (!ok) {
-    LOG_ERROR("TextToSpeechProvider.Initialize.Init", "Unable to initialize TTS provider");
+    LOG_ERROR("TextToSpeechProvider.Initialize.Init",
+              "Unable to initialize TTS provider");
     return;
   }
   
   const long numVoices = BabTTS_GetNumVoices();
   
-  LOG_DEBUG("TextToSpeechProvider.Initialize.NumVoices", "TTS provider has %ld voices", numVoices);
+  LOG_DEBUG("TextToSpeechProvider.Initialize.NumVoices",
+            "TTS provider has %ld voices", numVoices);
+
   for (int i = 0; i < numVoices; ++i) {
     char voice[ACAPELA_VOICE_BUFSIZ];
     BabTtsError err = BabTTS_EnumVoices(i, voice);
     DEV_ASSERT(err == E_BABTTS_NOERROR, "TextToSpeechProvider.Initialize.EnumVoices");
-    LOG_DEBUG("TextToSpeechProvider.Initialize.EnumVoices", "TTS provider has voice %s", voice);
+    LOG_DEBUG("TextToSpeechProvider.Initialize.EnumVoices",
+              "TTS provider has voice %s", voice);
   }
   
   _lpBabTTS = BabTTS_Create();
   if (nullptr == _lpBabTTS) {
-    LOG_ERROR("TextToSpeechProvider.Initialize.Create", "Unable to create TTS provider handle");
+    LOG_ERROR("TextToSpeechProvider.Initialize.Create",
+              "Unable to create TTS provider handle");
     return;
   }
   
@@ -125,24 +134,44 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx, cons
     _tts_licensed = true;
   } else if (E_BABTTS_NOTVALIDLICENSE == err) {
     /* unlicensed install */
-    LOG_WARNING("TextToSpeechProvider.Initialize.Open", "Unable to open TTS voice (%s)", BabTTS_GetErrorName(err));
+    LOG_WARNING("TextToSpeechProvider.Initialize.Open",
+                "Unable to open TTS voice (%s)",
+                BabTTS_GetErrorName(err));
     return;
   } else {
     /* some other error */
-    LOG_ERROR("TextToSpeechProvider.Initialize.Open", "Unable to open TTS voice (%s)", BabTTS_GetErrorName(err));
+    LOG_ERROR("TextToSpeechProvider.Initialize.Open",
+              "Unable to open TTS voice (%s)",
+              BabTTS_GetErrorName(err));
     return;
   }
   
   err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, _tts_speed);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.Initialize.SetSpeed", "Unable to set speed=%d (%s)",
+    LOG_ERROR("TextToSpeechProvider.Initialize.SetSpeed",
+              "Unable to set speed=%d (%s)",
               _tts_speed, BabTTS_GetErrorName(err));
   }
   
   err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_VOCALTRACT, _tts_shaping);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.Initialize.SetPitch", "Unable to set shaping=%d (%s)",
+    LOG_ERROR("TextToSpeechProvider.Initialize.SetPitch",
+              "Unable to set shaping=%d (%s)",
               _tts_shaping, BabTTS_GetErrorName(err));
+  }
+
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_LEADINGSILENCE, 0);
+  if (E_BABTTS_NOERROR != err) {
+    LOG_ERROR("TextToSpeechProvider.Initialize.SetLeadingSilence",
+              "Unable to set leading silence (%s)",
+              BabTTS_GetErrorName(err));
+  }
+
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_TRAILINGSILENCE, 0);
+  if (E_BABTTS_NOERROR != err) {
+    LOG_ERROR("TextToSpeechProvider.Initialize.SetTrailingSilence",
+              "Unable to set trailing silence (%s)",
+              BabTTS_GetErrorName(err));
   }
 
 }
@@ -162,13 +191,15 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
 {
   if (nullptr == _lpBabTTS) {
     /* Log an error, return an error */
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.NoProvider", "No provider handle");
+    LOG_ERROR("TextToSpeechProvider.CreateAudioData.NoProvider",
+              "No provider handle");
     return RESULT_FAIL_INVALID_OBJECT;
   }
 
   if (!_tts_licensed) {
     /* Log a warning, return dummy data */
-    LOG_WARNING("TextToSpeechProvider.CreateAudioData.NoLicense", "No license to generate speech");
+    LOG_WARNING("TextToSpeechProvider.CreateAudioData.NoLicense",
+                "No license to generate speech");
     const int sampleRate = AcapelaTTS::GetSampleRate();
     const int numChannels = AcapelaTTS::GetNumChannels();
     data.Init(sampleRate, numChannels);
@@ -183,7 +214,8 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   // Update TTS engine to use new speed param
   BabTtsError err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_SPEED, speed);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetSettings", "Unable to set speed (%s)", BabTTS_GetErrorName(err));
+    LOG_ERROR("TextToSpeechProvider.CreateAudioData.SetSettings",
+              "Unable to set speed (%s)", BabTTS_GetErrorName(err));
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
@@ -194,7 +226,8 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   DWORD dwTextFlags = BABTTS_TEXT | BABTTS_TXT_UTF8 | BABTTS_READ_DEFAULT | BABTTS_TAG_NO;
   err = BabTTS_InsertText(_lpBabTTS, text.c_str(), dwTextFlags);
   if (E_BABTTS_NOERROR != err) {
-    LOG_ERROR("TextToSpeechProvider.CreateAudioData.InsertText", "Unable to insert text (%s)", BabTTS_GetErrorName(err));
+    LOG_ERROR("TextToSpeechProvider.CreateAudioData.InsertText",
+              "Unable to insert text (%s)", BabTTS_GetErrorName(err));
     return RESULT_FAIL;
   }
   
@@ -206,18 +239,21 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     DWORD num_samples = 0;
     err = BabTTS_ReadBuffer(_lpBabTTS, buf, ACAPELA_SAMPLE_BUFSIZ, &num_samples);
     if (W_BABTTS_NOMOREDATA == err)  {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadBuffer", "%d new samples, no more data", num_samples);
+      LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadBuffer",
+                "%d new samples, no more data", num_samples);
       for (DWORD i = 0; i < num_samples; ++i) {
         chunk.push_back(buf[i]);
       }
       break;
     } else if (E_BABTTS_NOERROR == err) {
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadBuffer", "%d new samples", num_samples);
+      LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadBuffer",
+                "%d new samples", num_samples);
       for (DWORD i = 0; i < num_samples; ++i) {
         chunk.push_back(buf[i]);
       }
     } else {
-      LOG_ERROR("TextToSpeechProvider.CreateAudioData.ReadBuffer", "Error %d (%s)", err, BabTTS_GetErrorName(err));
+      LOG_ERROR("TextToSpeechProvider.CreateAudioData.ReadBuffer",
+                "Error %d (%s)", err, BabTTS_GetErrorName(err));
       return RESULT_FAIL;
     }
   }

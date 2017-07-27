@@ -126,6 +126,8 @@
   
     [_acaTTS setRate:speed];
     [_acaTTS setVoiceShaping:shaping];
+    [_acaTTS setTTSSetting:@"LEADINGSILENCE" settingvalue:0];
+    [_acaTTS setTTSSetting:@"TRAILINGSILENCE" settingvalue:0];
     
     //
     // Set SDK delegate for diagnostics.  At present, delegate methods don't do anything else,
