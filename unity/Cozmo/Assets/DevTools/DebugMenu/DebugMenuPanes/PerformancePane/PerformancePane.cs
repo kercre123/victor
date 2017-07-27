@@ -88,7 +88,7 @@ public class PerformancePane : MonoBehaviour {
     for (int i = 0; i < qualityNames.Length; ++i) {
       _QualityDropDown.options.Add(new Dropdown.OptionData(i + " " + qualityNames[i]));
     }
-    _QualityDropDown.value = QualitySettings.GetQualityLevel();
+    _QualityDropDown.value = Cozmo.PerformanceManager.Instance.GetQualitySetting();
     _QualityDropDown.Select();
     _QualityDropDown.RefreshShownValue();
 
