@@ -18,21 +18,21 @@ static const int16_t MOTOR_MAX_POWER = SYSTEM_CLOCK / MOTOR_PERIOD;
 struct MotorConfig {
   // Pin BRSS
   volatile uint32_t* P_BSRR;
-  uint32_t     P_Set;
+  const uint32_t     P_Set;
 
   // N1 Pin
   volatile uint32_t* N1CC;
   GPIO_TypeDef*      N1_Bank;
-  uint32_t     N1_ModeMask;
-  uint32_t     N1_ModeAlt;
-  uint32_t     N1_ModeOutput;
+  const uint32_t     N1_ModeMask;
+  const uint32_t     N1_ModeAlt;
+  const uint32_t     N1_ModeOutput;
   
   // N2 Pin
   volatile uint32_t* N2CC;
   GPIO_TypeDef*      N2_Bank;
-  uint32_t     N2_ModeMask;
-  uint32_t     N2_ModeAlt;
-  uint32_t     N2_ModeOutput;
+  const uint32_t     N2_ModeMask;
+  const uint32_t     N2_ModeAlt;
+  const uint32_t     N2_ModeOutput;
 };
 
 // Current status of the motors
@@ -46,7 +46,7 @@ struct MotorStatus {
 };
 
 #define CONFIG_N(PIN) \
-  (##PIN::bank), ~(3 << (##PIN::pin * 2)), (MODE_ALTERNATE << (##PIN::pin * 2)), (MODE_OUTPUT << (##PIN::pin * 2))
+  (PIN::bank), ~(3 << (PIN::pin * 2)), (MODE_ALTERNATE << (PIN::pin * 2)), (MODE_OUTPUT << (PIN::pin * 2))
 
 static const MotorConfig MOTOR_DEF[Anki::Cozmo::Spine::MOTOR_COUNT] = {
   { 

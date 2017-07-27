@@ -5,13 +5,33 @@
 
 #include "common.h"
 
+/*
+TIM1  Motors
+TIM3  Motors
+TIM6  Byte counter (uart DMA)
+TIM7  <not present>
+TIM14 Main-exec / Backpack
+TIM15 SPI Master clock
+TIM16
+TIM17
+*/
+
 static const uint32_t SYSTEM_CLOCK = 48000000;
-static const uint32_t CONTACT_BAUDRATE = 3000000;
+static const uint32_t CONTACT_BAUDRATE = 57600;
 static const uint32_t COMMS_BAUDRATE = 3000000;
 
 static const uint32_t WATCHDOG_CLOCK  = 10000;
 static const uint32_t WATCHDOG_LIMIT  = WATCHDOG_CLOCK / 200 * 2; // 2 main execution frames
 static const uint32_t WATCHDOG_WINDOW = WATCHDOG_LIMIT - (WATCHDOG_CLOCK / 75);
+
+enum IRQ_Priority {
+  PRIORITY_ENCODERS = 0,
+  PRIORITY_MAIN_EXEC = 2,
+  PRIORITY_I2C_TRANSMIT = 2,
+  PRIORITY_SPINE_COMMS = 2,
+  PRIORITY_CONTACTS_COMMS = 2,
+  PRIORITY_MICS = 3,
+};
 
 // H-Bridge
 namespace LP1 GPIO_DEFINE(F, 0);
