@@ -150,10 +150,10 @@ namespace Cozmo {
           _DroneModeControlsSlide.OnQuitConfirmed += _DroneModeGame.SharedMinigameView.HandleQuitConfirmed;
 
           // Show how to play when the player plays drone mode for the first time
-          int timesPlayedDroneMode = 0;
-          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(_DroneModeGame.ChallengeID, out timesPlayedDroneMode);
-          if (timesPlayedDroneMode <= 0) {
+          if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen) {
             _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
+            DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen = true;
+            DataPersistence.DataPersistenceManager.Instance.Save();
           }
 
           // Send get in animation; do not accept input while animation is playing

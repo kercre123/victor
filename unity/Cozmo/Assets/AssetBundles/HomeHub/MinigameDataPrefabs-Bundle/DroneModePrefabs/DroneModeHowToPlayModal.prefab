@@ -3538,10 +3538,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114294052895377550}
-    characterCount: 50
+    characterCount: 49
     spriteCount: 0
-    spaceCount: 8
-    wordCount: 9
+    spaceCount: 9
+    wordCount: 10
     linkCount: 0
     lineCount: 2
     pageCount: 1
@@ -3660,7 +3660,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114304128138498548}
-    characterCount: 6
+    characterCount: 4
     spriteCount: 0
     spaceCount: 0
     wordCount: 1
@@ -3899,7 +3899,7 @@ MonoBehaviour:
   m_fontSizeMin: 45
   m_fontSizeMax: 80
   m_fontStyle: 0
-  m_textAlignment: 516
+  m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -3932,10 +3932,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114465698348410288}
-    characterCount: 58
+    characterCount: 47
     spriteCount: 0
-    spaceCount: 10
-    wordCount: 11
+    spaceCount: 8
+    wordCount: 9
     linkCount: 0
     lineCount: 1
     pageCount: 1
@@ -4054,12 +4054,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114476384125773910}
-    characterCount: 59
+    characterCount: 36
     spriteCount: 0
     spaceCount: 6
     wordCount: 7
     linkCount: 0
-    lineCount: 3
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -4236,7 +4236,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114491162697820948}
-    characterCount: 6
+    characterCount: 4
     spriteCount: 0
     spaceCount: 0
     wordCount: 1
@@ -4388,12 +4388,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114518225578983326}
-    characterCount: 58
+    characterCount: 50
     spriteCount: 0
-    spaceCount: 8
-    wordCount: 9
+    spaceCount: 7
+    wordCount: 8
     linkCount: 0
-    lineCount: 3
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -4551,7 +4551,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 77.85
+  m_fontSize: 80
   m_fontSizeBase: 72
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -4591,12 +4591,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114659746404497340}
-    characterCount: 80
+    characterCount: 46
     spriteCount: 0
-    spaceCount: 14
-    wordCount: 15
+    spaceCount: 9
+    wordCount: 10
     linkCount: 0
-    lineCount: 3
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -4703,7 +4703,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 76.25
+  m_fontSize: 80
   m_fontSizeBase: 72
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -4743,12 +4743,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114764754042192390}
-    characterCount: 105
+    characterCount: 64
     spriteCount: 0
-    spaceCount: 17
-    wordCount: 18
+    spaceCount: 12
+    wordCount: 13
     linkCount: 0
-    lineCount: 4
+    lineCount: 3
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -4937,12 +4937,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114980880926026328}
-    characterCount: 71
+    characterCount: 54
     spriteCount: 0
     spaceCount: 9
     wordCount: 10
     linkCount: 0
-    lineCount: 3
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -5059,12 +5059,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114991603205586238}
-    characterCount: 75
+    characterCount: 44
     spriteCount: 0
-    spaceCount: 11
-    wordCount: 12
+    spaceCount: 7
+    wordCount: 8
     linkCount: 0
-    lineCount: 3
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
