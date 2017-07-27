@@ -57,16 +57,14 @@ public:
   
   void SetUp()
   {
-    animationContainer = CreateAnimationContainer();
-    auto container = CreateAnimationContainer();
-    animation = container->GetAnimation("ANIMATION_TEST");
+    animationContainer.reset(CreateAnimationContainer());
+    animation = animationContainer->GetAnimation("ANIMATION_TEST");
     EXPECT_TRUE( animation != nullptr );
   }
 
   void TearDown()
   {
     animation = nullptr;
-    Util::SafeDelete( animationContainer );
   }
   
   CannedAnimationContainer* CreateAnimationContainer()
@@ -139,7 +137,7 @@ public:
   AnimationAudioTestConfig config;
   RobotAudioTestClient audioClient;
 
-  CannedAnimationContainer* animationContainer = nullptr;
+  std::unique_ptr<CannedAnimationContainer> animationContainer = nullptr;
   Animation* animation = nullptr;
   
 };

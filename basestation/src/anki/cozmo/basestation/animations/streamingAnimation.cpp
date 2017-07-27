@@ -119,6 +119,12 @@ StreamingAnimation::StreamingAnimation(const Animation& originalAnimation,
 StreamingAnimation::~StreamingAnimation()
 {
   AbortAnimation();
+
+  // Release any unplayed audio frames
+  while (!_audioFrames.empty()) {
+    delete _audioFrames.front();
+    _audioFrames.pop_front();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
