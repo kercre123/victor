@@ -208,7 +208,7 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 514
+    _EnumValue: 515
   _CustomIdle:
     _EnumValueAsString: OnboardingIdlePlay
     _EnumValue: 310
