@@ -54,7 +54,7 @@ void Lights::init(void) {
   terminate();
 }
 
-void Lights::receive(uint8_t* data) {
+void Lights::receive(const uint8_t* data) {
   memcpy(value, data, sizeof(value));
 }
 

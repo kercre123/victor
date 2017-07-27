@@ -5,7 +5,7 @@ namespace Lights {
   void init(void);
   void tick(void);
   void disable(void);
-  void receive(uint8_t* values);
+  void receive(const uint8_t* values);
 }
 
 #endif
