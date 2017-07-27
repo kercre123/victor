@@ -306,7 +306,6 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeDeviceNeedsData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
@@ -656,6 +655,8 @@ void NeedsManager::SetPaused(const bool paused)
 
   if (_isPausedOverall)
   {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.SetPaused.Pausing",
+                  "Pausing Needs system");
     // Calculate and record how much time was left until the next decay
     _pausedDurRemainingPeriodicDecay = _timeForNextPeriodicDecay_s - _currentTime_s;
 
@@ -671,6 +672,8 @@ void NeedsManager::SetPaused(const bool paused)
   }
   else
   {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.SetPaused.UnPausing",
+                  "Un-Pausing Needs system");
     // When unpausing, set the next 'time for periodic decay'
     _timeForNextPeriodicDecay_s = _currentTime_s + _pausedDurRemainingPeriodicDecay;
 
@@ -1397,13 +1400,6 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 
     SendTimeSinceBackgroundedDasEvent();
   }
-}
-
-template<>
-void NeedsManager::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
-{
-  // Pause the needs system during explorer mode
-  SetPaused(msg.isStarted);
 }
 
 
