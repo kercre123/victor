@@ -482,11 +482,11 @@ void BehaviorAudioClient::HandleDimMusicForActivity(const RobotPublicState& stat
   {
     if(stateEvent.currentActivity == ActivityID::Singing)
     {
-      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::Ui::App_Music_Dim_On));
+      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::App::Music_Dim_On));
     }
     else if(_prevActivity == ActivityID::Singing)
     {
-      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::Ui::App_Music_Dim_Off));
+      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::App::Music_Dim_Off));
     }
   }
 }
