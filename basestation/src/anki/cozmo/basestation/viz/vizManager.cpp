@@ -281,6 +281,11 @@ namespace Anki {
       return vizID;
     }
     
+    void VizManager::DisplayCameraImage(const TimeStamp_t timestamp)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::DisplayImage(timestamp)));
+    }
+    
     void VizManager::DrawCameraOval(const Point2f &center,
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)

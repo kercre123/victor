@@ -924,6 +924,13 @@ void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface
      BaseStationTimer::getInstance()->GetCurrentTimeStamp());
      */
     
+    // If we _are_ displaying processed images only, VisionComponent is responsible for sending the DisplayCameraImage
+    // message instead of sending it here.
+    if(!robot->GetVisionComponent().IsDisplayingProcessedImagesOnly())
+    {
+      robot->GetContext()->GetVizManager()->DisplayCameraImage(payload.frameTimeStamp);
+    }
+    
     const double currentMessageTime = message.GetCurrentTime();
 
     if (currentMessageTime != _lastImageRecvTime)

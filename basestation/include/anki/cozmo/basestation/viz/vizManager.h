@@ -225,6 +225,9 @@ namespace Anki {
                            const T zHeight,
                            const ColorRGBA& color);
       
+      
+      void DisplayCameraImage(const TimeStamp_t timestamp);
+      
       // Draw a generic 2D quad in the camera display
       // TopColor is the color of the line connecting the upper left and upper right corners.
       template<typename T>

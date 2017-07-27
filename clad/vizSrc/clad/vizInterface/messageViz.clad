@@ -365,6 +365,13 @@ message EndRobotUpdate
 {
 }
 
+// Display the image previously sent with the given timestamp
+// Will delete anything older as well
+message DisplayImage
+{
+  uint_32 timestamp
+}
+
 message SaveImages
 {
   ImageSendMode mode,
