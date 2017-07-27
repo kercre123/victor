@@ -83,6 +83,8 @@ enum int_32 UnlockId
   Singing_Sakura                 = 61,
   Singing_MussIDenn              = 62,
 
+  GuardDog                       = 63,
+
   // ADD NEW UNLOCKS HERE
 
   Count

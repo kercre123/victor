@@ -566,6 +566,7 @@ public static class LocalizationKeys {
   public const string kLabelMATCH = "label.MATCH";
   public const string kLabelDontSlap = "label.dontSlap";
   public const string kLabelNoMatch = "label.noMatch";
+  public const string kLabelEnterText = "label.enterText";
 
   #endregion
 
@@ -962,6 +963,8 @@ public static class LocalizationKeys {
   public const string kUnlockableGatherCubesSparkedStateDescription = "unlockable.GatherCubes.SparkedStateDescription";
   public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
+  public const string kUnlockableGuardDogTitle = "unlockable.GuardDog.Title";
+  public const string kUnlockableGuardDogDescription = "unlockable.GuardDog.Description";
   public const string kSparksSparked = "sparks.Sparked";
   public const string kSparksSparkCozmo = "sparks.SparkCozmo";
   public const string kSparksSpark = "sparks.Spark";
@@ -973,6 +976,7 @@ public static class LocalizationKeys {
   public const string kSparksCubesNeedUprightTitle = "sparks.CubesNeedUpright.Title";
   public const string kSparksCubesNeedUprightDesc = "sparks.CubesNeedUpright.Desc";
   public const string kSparksFree = "sparks.free";
+  public const string kSparksNotSparkable = "sparks.notSparkable";
 
   #endregion
 

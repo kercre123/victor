@@ -28,6 +28,12 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoText _Title;
 
     [SerializeField]
+    private CozmoText _NotSparkableLabel;
+
+    [SerializeField]
+    private GameObject[] _SparkableInfoContainers;
+
+    [SerializeField]
     private CozmoButton _SparkButton;
 
     [SerializeField]
@@ -189,10 +195,19 @@ namespace Cozmo.Needs.Sparks.UI {
       InitializeDescription(unlockInfo.CoreUpgradeIcon, unlockInfo.TitleKey, unlockInfo.DescriptionKey);
       InitializeUnlockInfo();
 
+      // Initialize the button to avoid an error
       _SparkButton.Initialize(() => {
         SparkCozmo(unlockInfo);
       }, "spark_specific_trick_button", this.DASEventDialogName);
-      InitializeButtonState();
+
+      if (unlockInfo.IsSparkable) {
+        InitializeButtonState();
+      }
+
+      for (int i = 0; i < _SparkableInfoContainers.Length; i++) {
+        _SparkableInfoContainers[i].gameObject.SetActive(unlockInfo.IsSparkable);
+      }
+      _NotSparkableLabel.gameObject.SetActive(!unlockInfo.IsSparkable);
 
       // Handle edge cases; don't check for cubes
       ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy

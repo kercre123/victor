@@ -2,6 +2,6 @@
   "behaviorClass": "GuardDog",
   "behaviorID": "GuardDog",
   "displayNameKey": "behavior.GuardDog",
-  "requiredUnlockId": "BuildPyramid"    // Lock GuardDog behind Pyramid unlock (COZMO-10385)
+  "requiredUnlockId": "GuardDog"
 
 }

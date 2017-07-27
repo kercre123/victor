@@ -36,11 +36,12 @@ namespace Cozmo.Needs.Sparks.UI {
       if (unlockInfo.ComingSoon) {
         _SparksButton.onClick.AddListener(HandleTappedComingSoon);
         _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
-        _SparkCostContainer.gameObject.SetActive(false);
       }
       else {
         _SparksButton.onClick.AddListener(HandleTappedUnlocked);
       }
+
+      _SparkCostContainer.gameObject.SetActive(!(unlockInfo.ComingSoon || !unlockInfo.IsSparkable));
 
       _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
       _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);

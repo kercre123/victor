@@ -204,6 +204,12 @@
   "unlockable.ComingSoon.Description": {
     "translation": "Opening Bonus Boxes has a possibility of unlocking new Abilities!"
   },
+  "unlockable.GuardDog.Title": {
+    "translation": "Cube Guard"
+  },
+  "unlockable.GuardDog.Description": {
+    "translation": "When Cozmo’s cubes are close together, he might take a nap while guarding them. Carefully turn his cubes upside-down without waking him."
+  },
   "sparks.Sparked": {
     "translation": "Cozmo is sparked:"
   },
@@ -236,5 +242,8 @@
   },
   "sparks.free": {
     "translation": "Free"
+  },
+  "sparks.notSparkable": {
+    "translation": "Not Sparkable"
   }
 }
