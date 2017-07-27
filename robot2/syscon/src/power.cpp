@@ -6,21 +6,24 @@
 
 #include "contacts.h"
 
-typedef void (*irq_handler)(void);
-
 extern "C" void SoftReset(const uint32_t reset);
 
 static const uint32_t APB1_CLOCKS = 0
               | RCC_APB1ENR_USART2EN
-              | RCC_APB1ENR_TIM6EN
               | RCC_APB1ENR_TIM3EN
+              | RCC_APB1ENR_TIM6EN
               | RCC_APB1ENR_TIM14EN
               | RCC_APB1ENR_I2C2EN
+              | RCC_APB1ENR_SPI2EN
               ;
 
 static const uint32_t APB2_CLOCKS = 0
               | RCC_APB2ENR_USART1EN
               | RCC_APB2ENR_TIM1EN
+              | RCC_APB2ENR_TIM15EN
+              | RCC_APB2ENR_TIM16EN
+              | RCC_APB2ENR_TIM17EN
+              | RCC_APB2ENR_SPI1EN
               | RCC_APB2ENR_SYSCFGEN
               | RCC_APB2ENR_ADC1EN
               ;
@@ -28,11 +31,11 @@ static const uint32_t APB2_CLOCKS = 0
 static volatile bool ejectSystem = false;
 
 void Power::init(void) {
-  nVDDs_EN::reset();
-  nVDDs_EN::mode(MODE_OUTPUT);
-
   nCHG_EN::reset();
   nCHG_EN::mode(MODE_OUTPUT);
+
+  nVDDs_EN::reset();
+  nVDDs_EN::mode(MODE_OUTPUT);
 }
 
 void Power::stop(void) {

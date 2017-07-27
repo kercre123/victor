@@ -5,6 +5,9 @@
 
 #include "analog.h"
 #include "power.h"
+#include "lights.h"
+#include "vectors.h"
+#include "flash.h"
 
 static const int channels[ADC_CHANNELS] = {
   ADC_CHSELR_CHSEL2,
@@ -12,7 +15,8 @@ static const int channels[ADC_CHANNELS] = {
   ADC_CHSELR_CHSEL6
 };
 
-static const int POWER_DOWN_TIME = 333; // Hold down for 5s
+static const int POWER_DOWN_TIME = 100;
+static const int POWER_WIPE_TIME = 500;
 static const int BUTTON_THRESHOLD = 0xC00;
 static const int BOUNCE_LENGTH = 3;
 
@@ -31,6 +35,7 @@ static void start_sample(void) {
   if (++current_channel >= ADC_CHANNELS) {
     // Debounce buttons
     bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
+
     if (bouncy_button != new_button) {
       bouncy_button = new_button;
       bouncy_count = 0;
@@ -41,7 +46,16 @@ static void start_sample(void) {
     if (button_pressed) {
       if (hold_count < POWER_DOWN_TIME) {
         hold_count++;
-      }
+      } else if (hold_count < POWER_WIPE_TIME) {
+        Lights::disable();
+      } else {
+        // Mark the application as invalid
+        // NOTE: This should only happen if the robot is on the charger
+        for (int i = 0; i < MAX_FAULT_COUNT; i++) {
+          Flash::writeFaultReason(FAULT_USER_WIPE);
+        }
+        NVIC_SystemReset();
+      } 
     } else {
       if (hold_count >= POWER_DOWN_TIME) {
         Power::stop();

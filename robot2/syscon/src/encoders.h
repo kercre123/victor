@@ -1,7 +1,7 @@
 #ifndef __ENCODERS_H
 #define __ENCODERS_H
 
-#include "schema/messages.h"
+#include "messages.h"
 
 namespace Encoders {
   void init();

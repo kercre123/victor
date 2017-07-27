@@ -4,7 +4,6 @@
 namespace Contacts {
   void init(void);
   void stop(void);
-  void putc(uint8_t ch);
   void tick(void);
 }
 

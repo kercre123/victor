@@ -46,9 +46,9 @@ void Encoders::init(void) {
   EXTI->RTSR |= EVENT_MASK;
   EXTI->IMR  |= EVENT_MASK;
 
-  NVIC_SetPriority(EXTI0_1_IRQn, 0);
-  NVIC_SetPriority(EXTI2_3_IRQn, 0);
-  NVIC_SetPriority(EXTI4_15_IRQn, 0);
+  NVIC_SetPriority(EXTI0_1_IRQn, PRIORITY_ENCODERS);
+  NVIC_SetPriority(EXTI2_3_IRQn, PRIORITY_ENCODERS);
+  NVIC_SetPriority(EXTI4_15_IRQn, PRIORITY_ENCODERS);
   NVIC_EnableIRQ(EXTI0_1_IRQn);
   NVIC_EnableIRQ(EXTI2_3_IRQn);
   NVIC_EnableIRQ(EXTI4_15_IRQn);

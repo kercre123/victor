@@ -10,6 +10,7 @@
       <TargetName>syscon</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F030C8</Device>
@@ -70,9 +71,9 @@
           <BeforeMake>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>python ./tools/message-buffers/emitters/CPPLite_emitter.py  ./schema/messages.clad -r build -o build</UserProg1Name>
+            <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
-            <UserProg1Dos16Mode>1</UserProg1Dos16Mode>
+            <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopB1X>0</nStopB1X>
             <nStopB2X>0</nStopB2X>
@@ -80,10 +81,12 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>python ./tools/sign.py -b build\@L.bin !L</UserProg1Name>
-            <UserProg2Name>$K\ARM\ARMCC\bin\fromelf.exe --bin --output=build\@L.bin !L</UserProg2Name>
+            <UserProg1Name>c:\cygwin\bin\bash -c "python3 ./tools/sign.py -b build/syscon.bin build/syscon/syscon.axf"</UserProg1Name>
+            <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopA1X>0</nStopA1X>
+            <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
@@ -186,6 +189,7 @@
             <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
+            <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
             <RwSelD>3</RwSelD>
             <CodeSel>0</CodeSel>
@@ -320,11 +324,17 @@
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
             <useXO>0</useXO>
+            <v6Lang>1</v6Lang>
+            <v6LangP>1</v6LangP>
+            <vShortEn>1</vShortEn>
+            <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
             <VariousControls>
-              <MiscControls></MiscControls>
+              <MiscControls>--gnu</MiscControls>
               <Define>STM32F030X8</Define>
               <Undefine></Undefine>
-              <IncludePath>common;include;build;.\common</IncludePath>
+              <IncludePath>common;schema;build</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -345,7 +355,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -354,7 +364,7 @@
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile></ScatterFile>
+            <ScatterFile>.\src\syscon.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -383,11 +393,6 @@
               <FilePath>.\src\main.cpp</FilePath>
             </File>
             <File>
-              <FileName>analog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\src\analog.cpp</FilePath>
-            </File>
-            <File>
               <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\motors.cpp</FilePath>
@@ -403,14 +408,14 @@
               <FilePath>.\src\power.cpp</FilePath>
             </File>
             <File>
-              <FileName>vectors.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\src\vectors.s</FilePath>
-            </File>
-            <File>
               <FileName>contacts.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\contacts.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>vectors.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\src\vectors.s</FilePath>
             </File>
             <File>
               <FileName>opto.cpp</FileName>
@@ -421,6 +426,26 @@
               <FileName>flash.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\common\flash.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>analog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\analog.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\lights.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>mics.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\mics.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>touch.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\touch.cpp</FilePath>
             </File>
           </Files>
         </Group>

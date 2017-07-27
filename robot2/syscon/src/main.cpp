@@ -9,6 +9,11 @@
 #include "encoders.h"
 #include "opto.h"
 #include "analog.h"
+#include "lights.h"
+#include "mics.h"
+#include "touch.h"
+
+//#define DISABLE_WDOG
 
 extern "C" {
   void __visitor_init() {
@@ -34,12 +39,20 @@ extern "C" {
 }
 
 void Main_Execution(void) {
+  #ifndef DISABLE_WDOG
+  // Kick watch dog when we enter our service routine
+  IWDG->KR = 0xAAAA;
+  WWDG->CR = 0xFF;  // Enabled with 64 ticks
+  #endif
+
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
-  Opto::tick();
+  //Opto::tick();
   Analog::tick();
   Contacts::tick();
+  Lights::tick();
+  Touch::tick();
 }
 
 int main (void) {
@@ -48,10 +61,13 @@ int main (void) {
                 | (SYSCFG_CFGR1_MEM_MODE_0 * 3)
                 ;
 
+  //Mics::init(); // This does not work with the motors enabled
   Timer::init();
   Comms::init();
   Motors::init();
   Encoders::init();
+  Lights::init();
+  Touch::init();
 
   __enable_irq(); // Start firing interrupts
 

@@ -1,8 +1,45 @@
-Stack_Size      EQU     0x00000400
-Heap_Size       EQU     0x00000000
+;******************** (C) COPYRIGHT 2014 STMicroelectronics ********************
+;* File Name          : startup_stm32f030xc.s
+;* Author             : MCD Application Team
+;* Version            : V1.5.0
+;* Date               : 05-December-2014
+;* Description        : STM32F030CC/STM32F030RC devices vector table for MDK-ARM toolchain.
+;*                      This module performs:
+;*                      - Set the initial SP
+;*                      - Set the initial PC == Reset_Handler
+;*                      - Set the vector table entries with the exceptions ISR address
+;*                      - Configure the system clock
+;*                      - Branches to __main in the C library (which eventually
+;*                        calls main()).
+;*                      After Reset the CortexM0 processor is in Thread mode,
+;*                      priority is Privileged, and the Stack is set to Main.
+;* <<< Use Configuration Wizard in Context Menu >>>
+;*******************************************************************************
+;  @attention
+;
+;  Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+;  You may not use this file except in compliance with the License.
+;  You may obtain a copy of the License at:
+;
+;         http://www.st.com/software_license_agreement_liberty_v2
+;
+;  Unless required by applicable law or agreed to in writing, software
+;  distributed under the License is distributed on an "AS IS" BASIS,
+;  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;  See the License for the specific language governing permissions and
+;  limitations under the License.
+;
+;*******************************************************************************
+;
+; Amount of memory (in bytes) allocated for Stack
+; Tailor this value to your application needs
+; <h> Stack Configuration
+;   <o> Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
+; </h>
+
+Stack_Size      EQU     0x00001800  ; Most of my ram should be stack
 
                 AREA    STACK, NOINIT, READWRITE, ALIGN=3
-                EXPORT  __initial_sp
 Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
@@ -10,6 +47,8 @@ __initial_sp
 ; <h> Heap Configuration
 ;   <o>  Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
 ; </h>
+
+Heap_Size       EQU     0
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
@@ -19,37 +58,27 @@ __heap_limit
                 PRESERVE8
                 THUMB
 
-                AREA    RESET, CODE, READONLY
-                IMPORT  __main
-                IMPORT  __visitor_init
-                IMPORT  __visitor_stop
-                IMPORT  __visitor_tick
 
-                DCD     0x4F4D3243      ; Magic cozmo header (also evil byte)
-                DCD     0xFFFFFFFF      ; "safe" flags
-                DCD     0xFFFFFFFF
-                DCD     0xFFFFFFFF
-                SPACE   0x100           ; Certificate
-                DCD     __initial_sp    ;
-                DCD     __main
-                SPACE   16
-                DCD     __visitor_init
-                DCD     __visitor_stop
-                DCD     __visitor_tick
+; Vector Table Mapped to Address 0 at Reset
+                AREA    RESET, DATA, READONLY
+                EXPORT  __Vectors
+                EXPORT  __Vectors_End
+                EXPORT  __Vectors_Size
 
-                AREA    ||.ARM.__AT_0x20000000||, DATA, READWRITE
+                EXPORT  __HW_REVISION
+                EXPORT  __HW_MODEL
+                EXPORT  __EIN
 
-                EXPORT  __VectorTable
-__VectorTable   DCD     0                              ; Top of Stack
-                DCD     0                              ; Reset Handler
+__Vectors       DCD     __initial_sp                   ; Top of Stack
+                DCD     Reset_Handler                  ; Reset Handler
                 DCD     NMI_Handler                    ; NMI Handler
                 DCD     HardFault_Handler              ; Hard Fault Handler
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
+__HW_REVISION   DCD     1                              ; Current Hardware Revision
+__HW_MODEL      DCD     1                              ; Current Model
+__EIN           DCD     0xFFFFFFFF                     ; EIN(0)
+                DCD     0xFFFFFFFF                     ; EIN(1)
+                DCD     0xFFFFFFFF                     ; EIN(2)
+                DCD     0xFFFFFFFF                     ; EIN(3)
                 DCD     0                              ; Reserved
                 DCD     SVC_Handler                    ; SVCall Handler
                 DCD     0                              ; Reserved
@@ -88,40 +117,56 @@ __VectorTable   DCD     0                              ; Top of Stack
                 DCD     USART1_IRQHandler              ; USART1
                 DCD     USART2_IRQHandler              ; USART2
 
+__Vectors_End
+
+__Vectors_Size  EQU  __Vectors_End - __Vectors
+
                 AREA    |.text|, CODE, READONLY
 
-                ALIGN
+; Reset handler routine
+Reset_Handler    PROC
+                 EXPORT  Reset_Handler                 [WEAK]
+        IMPORT  __main
+        IMPORT  SystemInit
 
+        LDR     R0, =__initial_sp          ; set stack pointer
+        MSR     MSP, R0
 
-                EXPORT SoftReset
-SoftReset
-                CPSID I
-                BX  R0
+;;Check if boot space corresponds to test memory
 
-;*******************************************************************************
-; User Stack and Heap initialization
-;*******************************************************************************
-                 IF      :DEF:__MICROLIB
+        LDR R0,=0x00000004
+        LDR R1, [R0]
+        LSRS R1, R1, #24
+        LDR R2,=0x1F
+        CMP R1, R2
 
-                 EXPORT  __heap_base
-                 EXPORT  __heap_limit
+        BNE ApplicationStart
 
-                 ELSE
+;; SYSCFG clock enable
 
-                 IMPORT  __use_two_region_memory
-                 EXPORT  __user_initial_stackheap
+        LDR R0,=0x40021018
+        LDR R1,=0x00000001
+        STR R1, [R0]
 
-__user_initial_stackheap
+;; Set CFGR1 register with flash memory remap at address 0
 
-                 LDR     R0, =  Heap_Mem
-                 LDR     R1, =(Stack_Mem + Stack_Size)
-                 LDR     R2, = (Heap_Mem +  Heap_Size)
-                 LDR     R3, = Stack_Mem
-                 BX      LR
+        LDR R0,=0x40010000
+        LDR R1,=0x00000000
+        STR R1, [R0]
+ApplicationStart
+        LDR     R0, =SystemInit
+        BLX     R0
+        LDR     R0, =__main
+        CPSIE   I
+        BX      R0
+        ENDP
 
-                 ALIGN
-
-                 ENDIF
+        ; Pass execution to the loaded (verified) application
+        EXPORT StartApplication
+StartApplication
+        CPSID I
+        MOV SP, R0
+        BX  R1
 
 ; Dummy Exception Handlers (infinite loops which can be modified)
 
@@ -163,8 +208,6 @@ Default_Handler PROC
                 EXPORT  TIM1_BRK_UP_TRG_COM_IRQHandler [WEAK]
                 EXPORT  TIM1_CC_IRQHandler             [WEAK]
                 EXPORT  TIM3_IRQHandler                [WEAK]
-                EXPORT  TIM6_IRQHandler                [WEAK]
-                EXPORT  TIM7_IRQHandler                [WEAK]
                 EXPORT  TIM14_IRQHandler               [WEAK]
                 EXPORT  TIM15_IRQHandler               [WEAK]
                 EXPORT  TIM16_IRQHandler               [WEAK]
@@ -175,7 +218,6 @@ Default_Handler PROC
                 EXPORT  SPI2_IRQHandler                [WEAK]
                 EXPORT  USART1_IRQHandler              [WEAK]
                 EXPORT  USART2_IRQHandler              [WEAK]
-                EXPORT  USART3_6_IRQHandler            [WEAK]
 
 
 WWDG_IRQHandler
@@ -192,8 +234,6 @@ ADC1_IRQHandler
 TIM1_BRK_UP_TRG_COM_IRQHandler
 TIM1_CC_IRQHandler
 TIM3_IRQHandler
-TIM6_IRQHandler
-TIM7_IRQHandler
 TIM14_IRQHandler
 TIM15_IRQHandler
 TIM16_IRQHandler
@@ -204,10 +244,39 @@ SPI1_IRQHandler
 SPI2_IRQHandler
 USART1_IRQHandler
 USART2_IRQHandler
-USART3_6_IRQHandler
 
                 B       .
 
                 ENDP
 
-                END
+                ALIGN
+
+;*******************************************************************************
+; User Stack and Heap initialization
+;*******************************************************************************
+                 IF      :DEF:__MICROLIB
+
+                 EXPORT  __initial_sp
+                 EXPORT  __heap_base
+                 EXPORT  __heap_limit
+
+                 ELSE
+
+                 IMPORT  __use_two_region_memory
+                 EXPORT  __user_initial_stackheap
+
+__user_initial_stackheap
+
+                 LDR     R0, =  Heap_Mem
+                 LDR     R1, =(Stack_Mem + Stack_Size)
+                 LDR     R2, = (Heap_Mem +  Heap_Size)
+                 LDR     R3, = Stack_Mem
+                 BX      LR
+
+                 ALIGN
+
+                 ENDIF
+
+                 END
+
+;************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE*****
