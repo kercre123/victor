@@ -564,8 +564,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapDriveToCubeFailDescription = "speedTap.driveToCubeFail.description";
   public const string kMinigameTextYouWin = "minigame.text.youWin";
   public const string kLabelMATCH = "label.MATCH";
-  public const string kLabelNOMATCH = "label.NO.MATCH";
-  public const string kLabelDONTSLAP = "label.DONT.SLAP";
+  public const string kLabelDontSlap = "label.dontSlap";
+  public const string kLabelNoMatch = "label.noMatch";
 
   #endregion
 

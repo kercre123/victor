@@ -378,11 +378,11 @@
   "label.MATCH": {
     "translation": "MATCH!"
   },
-  "label.NO.MATCH": {
-    "translation": "NO \\nMATCH"
-  },
-  "label.DONT.SLAP": {
+  "label.dontSlap": {
     "translation": "DON'T \\nSLAP!"
+  },
+  "label.noMatch": {
+    "translation": "NO \\nMATCH"
   },
   "label.enterText": {
     "translation": "Enter text..."
