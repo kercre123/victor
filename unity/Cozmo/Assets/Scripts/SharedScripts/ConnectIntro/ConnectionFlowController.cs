@@ -689,22 +689,30 @@ public class ConnectionFlowController : MonoBehaviour {
 #endif
     }
   }
-
-  public void HandleRobotDisconnect() {
+  
+  public bool ShouldIgnoreRobotDisconnect() {
     if (_ReplaceCozmoOnChargerModalInstance != null) {
       // don't try to go through the search flow if the replace cozmo on charger view is up.
-      return;
+      return true;
     }
 
     // If we're showing the update app view, the user will need to get a new version, so don't do anything when
     // the robot disconnects
     if (_UpdateAppModalInstance != null) {
-      return;
+      return true;
     }
 
     if (_UpdateFirmwareScreenInstance != null && _UpdateFirmwareScreenInstance.DoneUpdateDelayInProgress) {
       // if we are delaying the firmware screen to wait for robot reboot don't reset the flow during the
       // delay.
+      return true;
+    }
+    
+    return false;
+  }
+
+  public void HandleRobotDisconnect() {
+    if (ShouldIgnoreRobotDisconnect()) {
       return;
     }
 
