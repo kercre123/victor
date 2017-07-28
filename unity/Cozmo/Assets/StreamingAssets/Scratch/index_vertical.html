@@ -37,7 +37,11 @@
         <script src="./js/CozmoSaveLoadAPI.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
+
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
+        <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
+        <!-- <script src="./lib/vm/dist/web/scratch-vm.js"></script> -->
+        
         <script src="./extra/extra-common.js"></script>
         <script src="./LocalizedStrings/en-US/CodeLabStrings.js"></script>
 
@@ -152,7 +156,7 @@
               </block>
               <block type="cozmo_says">
                   <value name="STRING">
-                      <shadow type="text_with_validator">
+                      <shadow type="text">
                           <field name="TEXT">Hi</field>
                       </shadow>
                   </value>
