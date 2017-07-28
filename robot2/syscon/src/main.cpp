@@ -48,7 +48,7 @@ void Main_Execution(void) {
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
-  //Opto::tick();
+  Opto::tick();
   Analog::tick();
   Contacts::tick();
   Lights::tick();
@@ -61,7 +61,7 @@ int main (void) {
                 | (SYSCFG_CFGR1_MEM_MODE_0 * 3)
                 ;
 
-  //Mics::init(); // This does not work with the motors enabled
+  Mics::init();
   Timer::init();
   Comms::init();
   Motors::init();
