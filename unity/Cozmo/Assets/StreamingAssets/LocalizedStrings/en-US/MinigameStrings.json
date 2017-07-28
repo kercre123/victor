@@ -373,10 +373,10 @@
     "translation": "MATCH!"
   },
   "label.dontSlap": {
-    "translation": "DON'T \\nSLAP!"
+    "translation": "DON'T\nSLAP!"
   },
   "label.noMatch": {
-    "translation": "NO \\nMATCH"
+    "translation": "NO\nMATCH"
   },
   "label.enterText": {
     "translation": "Enter text..."
