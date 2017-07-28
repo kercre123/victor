@@ -155,6 +155,7 @@ namespace Cozmo.Needs.Sparks.UI {
         SparkCozmo(challengePacket);
       }, "spark_specific_game_button", this.DASEventDialogName);
       InitializeButtonState();
+      _NotSparkableLabel.gameObject.SetActive(false);
 
       // Handle edge cases      
       ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy | ChallengeEdgeCases.CheckForCubes
