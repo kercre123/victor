@@ -50,27 +50,27 @@ void Mics::init(void) {
   sample_index = 0;
 
   // Set our MISO lines to SPI1 and SPI2
-  MIC1MISO::alternate(0);
-  MIC1MISO::speed(SPEED_HIGH);
-  MIC1MISO::mode(MODE_ALTERNATE);
+  MIC1_MISO::alternate(0);
+  MIC1_MISO::speed(SPEED_HIGH);
+  MIC1_MISO::mode(MODE_ALTERNATE);
 
-  MIC2MISO::alternate(0);
-  MIC2MISO::speed(SPEED_HIGH);
-  MIC2MISO::mode(MODE_ALTERNATE);
+  MIC2_MISO::alternate(0);
+  MIC2_MISO::speed(SPEED_HIGH);
+  MIC2_MISO::mode(MODE_ALTERNATE);
 
   // Setup our output clock to TIM15
-  MIC1MOSI::alternate(1);
-  MIC1MOSI::speed(SPEED_HIGH);
-  MIC1MOSI::mode(MODE_ALTERNATE);
+  MIC_LR::alternate(1);
+  MIC_LR::speed(SPEED_HIGH);
+  MIC_LR::mode(MODE_ALTERNATE);
 
   // Set and output clock for the SPI perf so reads work (not connected)
-  MIC1SCK::alternate(0);
-  MIC1SCK::speed(SPEED_HIGH);
-  MIC1SCK::mode(MODE_ALTERNATE);
+  MIC1_SCK::alternate(0);
+  MIC1_SCK::speed(SPEED_HIGH);
+  MIC1_SCK::mode(MODE_ALTERNATE);
 
-  MIC2SCK::alternate(0);
-  MIC2SCK::speed(SPEED_HIGH);
-  MIC2SCK::mode(MODE_ALTERNATE);
+  MIC2_SCK::alternate(0);
+  MIC2_SCK::speed(SPEED_HIGH);
+  MIC2_SCK::mode(MODE_ALTERNATE);
 
   // Start configuring out clock
   TIM15->PSC = 0;

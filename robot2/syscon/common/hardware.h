@@ -70,13 +70,11 @@ namespace VEXT_SENSE GPIO_DEFINE(A, 2);
 namespace VBAT_SENSE GPIO_DEFINE(A, 4);
 
 // Microphones
-namespace MIC1MOSI GPIO_DEFINE(B, 15);
-
-namespace MIC2MISO GPIO_DEFINE(B, 4);
-namespace MIC1MISO GPIO_DEFINE(B, 14);
-
-namespace MIC2SCK GPIO_DEFINE(A, 5);
-namespace MIC1SCK GPIO_DEFINE(B, 13);
+namespace MIC_LR      GPIO_DEFINE(B, 15);
+namespace MIC2_MISO   GPIO_DEFINE(B, 4);
+namespace MIC1_MISO   GPIO_DEFINE(B, 14);
+namespace MIC2_SCK    GPIO_DEFINE(A, 5);
+namespace MIC1_SCK    GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAPO GPIO_DEFINE(A, 3);
