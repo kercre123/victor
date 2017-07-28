@@ -50,9 +50,8 @@ namespace DataPersistence {
 
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
 
-    public Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState VoiceCommandEnabledState;
-
     public static int kSaveVersionCurrent = 2;
+
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
     public int SaveVersion = kSaveVersionCurrent;
 
@@ -82,7 +81,6 @@ namespace DataPersistence {
       DisplayedStars = 0;
       NewStarLevels = new List<Anki.Cozmo.ExternalInterface.StarLevelCompleted>();
       PreviousTags = new List<string>();
-      VoiceCommandEnabledState = Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState.Unknown;
     }
   }
 }

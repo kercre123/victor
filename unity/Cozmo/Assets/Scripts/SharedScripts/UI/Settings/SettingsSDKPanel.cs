@@ -36,8 +36,8 @@ namespace Cozmo.Settings {
           // If this is the first time enabling the SDK, display a confirmation modal
           // with EULA and only EnableSDK on confirmation.
           // Create alert view with Icon
-          var enableSDKButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonYesPlease, true, EnableSDK);
-          var cancelSDKButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonNoThankYou, true, HandleCloseSDKPopup);
+          var enableSDKButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonYesPlease, EnableSDK);
+          var cancelSDKButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonNoThankYou, HandleCloseSDKPopup);
 
           var confirmEnableSDKAlert = new AlertModalData("confirm_enable_sdk_alert",
                                                          LocalizationKeys.kSettingsSdkPanelActivateSDKalertText,

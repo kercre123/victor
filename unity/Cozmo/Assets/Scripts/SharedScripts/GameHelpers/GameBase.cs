@@ -1384,7 +1384,6 @@ public abstract class GameBase : MonoBehaviour {
     if (_InterruptedAlertView == null) {
       var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
                                                     new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
-                                                                             false,
                                                                              clickCallback: HandleInterruptionQuitGameViewClosed));
 
       var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,

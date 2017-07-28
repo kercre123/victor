@@ -1368,7 +1368,7 @@ namespace Cozmo.Repair.UI {
     private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
       if (_InterruptedAlert == null) {
         var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
-                                new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay, false,
+                                new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
                                              clickCallback: CloseInterruptionAlert));
 
         var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,

@@ -207,9 +207,6 @@
   "behavior.singing.MussIDenn" : {
     "translation" : "Cozmo singt \"Muss i denn, muss i denn zum Städtele hinaus\"..."
   },
-  "behavior.ReactToVoiceCommand" : {
-    "translation" : "Cozmo hört dir zu..."
-  },
   "behavior.VC_Refuse_Energy" : {
     "translation" : "Cozmo muss gefüttert werden..."
   },

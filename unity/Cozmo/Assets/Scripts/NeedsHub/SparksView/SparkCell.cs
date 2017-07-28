@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using Cozmo.UI;
-using Anki.Cozmo.VoiceCommand;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparkCell : MonoBehaviour {
@@ -21,9 +20,6 @@ namespace Cozmo.Needs.Sparks.UI {
 
     [SerializeField]
     private GameObject _SparkCostContainer;
-
-    [SerializeField]
-    private CozmoImage _SparkMicIcon;
 
     [SerializeField]
     private SparksDetailModal _SparksDetailModalPrefab;
@@ -52,29 +48,17 @@ namespace Cozmo.Needs.Sparks.UI {
                                        unlockInfo.RequestTrickCostAmount,
                                        _SparkCountText,
                                        UIColorPalette.GeneralSparkTintColor);
-
-      _SparkMicIcon.gameObject.SetActive(false);
-      if (_UnlockInfo.CanVoiceActivate) {
-        VoiceCommandManager.Instance.StateDataCallback += OnMicrophoneAuthorizationStatusUpdate;
-        VoiceCommandManager.RequestCurrentStateData();
-      }
     }
 
     private void OnDestroy() {
-      VoiceCommandManager.Instance.StateDataCallback -= OnMicrophoneAuthorizationStatusUpdate;
       _CostLabelHelper.DeregisterEvents();
-    }
-
-    private void OnMicrophoneAuthorizationStatusUpdate(StateData stateData) {
-      _SparkMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
     }
 
     private void HandleTappedComingSoon() {
       var cozmoNotReadyData = new AlertModalData("coming_soon_sparks_cell",
                                                  LocalizationKeys.kUnlockableComingSoonTitle,
                                                  LocalizationKeys.kUnlockableComingSoonDescription,
-                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose,
-                                                                    false));
+                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
 
       ModalPriorityData comingSoonPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow,
                                          0,

@@ -24,7 +24,7 @@ namespace Cozmo {
         var cozmoHasHiccupsData = new AlertModalData("cozmo_has_hiccups_alert",
                                                      LocalizationKeys.kChallengeDetailsCozmoHasHiccupsTitle,
                                                      LocalizationKeys.kChallengeDetailsCozmoHasHiccupsDescription,
-                                                     new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose, false),
+                                                     new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
                                                      dialogCloseAnimationFinishedCallback: dialogCloseAnimationFinishedCallback);
 
         UIManager.OpenAlert(cozmoHasHiccupsData,

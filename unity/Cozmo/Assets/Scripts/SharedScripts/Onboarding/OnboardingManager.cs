@@ -28,7 +28,6 @@ public class OnboardingManager : MonoBehaviour {
     RewardBox,
     DiscoverIntro,
     GameRequests,
-    VoiceCommands,
     // Start OLD
     Home,
     Loot,

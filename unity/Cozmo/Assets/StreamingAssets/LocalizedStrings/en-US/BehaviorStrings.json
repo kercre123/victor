@@ -216,9 +216,6 @@
   "behavior.singing.MussIDenn": {
     "translation": "Cozmo is singing Muss I Denn..."
   },
-  "behavior.ReactToVoiceCommand": {
-    "translation": "Cozmo is listening to you..."
-  },
   "behavior.VC_Refuse_Energy": {
     "translation": "Cozmo needs to be Fed..."
   },

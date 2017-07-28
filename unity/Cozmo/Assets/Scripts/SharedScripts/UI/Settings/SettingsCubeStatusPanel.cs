@@ -65,9 +65,9 @@ namespace Cozmo.Settings {
                                                      LocalizationKeys.kSettingsCubeStatusPanelButtonCubeRefresh,
                                                      LocalizationKeys.kRefreshCubesPromptDescription,
                                                      new AlertModalButtonData("refresh_button", LocalizationKeys.kButtonRefresh,
-                                                                              false, HandleRefreshBlockPool),
+                                                                              HandleRefreshBlockPool),
                                                      new AlertModalButtonData("cancel_button",
-                                                                              LocalizationKeys.kButtonCancel, false));
+                                                                              LocalizationKeys.kButtonCancel));
 
       System.Action<AlertModal> refreshBlockPoolCreated = (alertModal) => {
         _ConfirmBlockPoolRefreshView = alertModal;

@@ -93,9 +93,6 @@
   "connectivity.sendGameplayDataPrompt" : {
     "translation" : "Aidez-nous à améliorer Cozmo en nous envoyant vos données de jeu et vos statistiques"
   },
-  "needs.VoiceSettingsModal.Title" : {
-    "translation" : "Commandes vocales"
-  },
   "connectivity.behaviorDisplayDisconnected" : {
     "translation" : "Cozmo has been disconnected."
   }

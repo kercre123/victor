@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
-using Anki.Cozmo.VoiceCommand;
 using DataPersistence;
 
 namespace Cozmo.UI {
@@ -26,11 +25,6 @@ namespace Cozmo.UI {
         }
       }
     }
-
-    [SerializeField]
-    private GameObject _VoiceCommandIcon = null;
-
-    public GameObject VoiceCommandIcon { get { return _VoiceCommandIcon; } }
 
     [Serializable]
     public new class ButtonClickedEvent : UnityEvent {
@@ -119,8 +113,8 @@ namespace Cozmo.UI {
     }
 
     public string DASSuffix {
-        get { return _DASSuffix; }
-        set { _DASSuffix = value; }
+      get { return _DASSuffix; }
+      set { _DASSuffix = value; }
     }
 
     public string DASEventViewController {
@@ -319,37 +313,6 @@ namespace Cozmo.UI {
       base.OnEnable();
     }
 
-    private bool _SupportsVoiceCommand = true;
-
-    public void UpdateVoiceCommandSupport(bool supportsVoiceCommand) {
-      if (_VoiceCommandIcon == null || _VoiceCommandIcon.activeSelf == supportsVoiceCommand) {
-        return;
-      }
-      _SupportsVoiceCommand = supportsVoiceCommand;
-      VoiceCommandSetup();
-    }
-
-    private void VoiceCommandSetup() {
-      if (!Application.isPlaying) {
-        return;
-      }
-
-      if (_SupportsVoiceCommand && IsInteractable() && _VoiceCommandIcon != null) {
-        if (VoiceCommandManager.IsMicrophoneAuthorized &&
-          DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState == VoiceCommandEnabledState.Enabled) {
-          _VoiceCommandIcon.SetActive(true);
-          _TextLabel.UpdateSkinnableElements(CozmoThemeSystemUtils.sInstance.GetCurrentThemeId(),
-                                             CozmoThemeSystemUtils.sInstance.GetCurrentSkinId());
-        }
-        else {
-          _VoiceCommandIcon.SetActive(false);
-        }
-      }
-      else if (_VoiceCommandIcon != null) {
-        _VoiceCommandIcon.SetActive(false);
-      }
-    }
-
     private bool DisableInteraction() {
       return !IsActive() || !IsInteractable();
     }
@@ -424,7 +387,6 @@ namespace Cozmo.UI {
       else {
         if (IsInteractable()) {
           ShowEnabledState();
-          VoiceCommandSetup();
         }
         else {
           ShowDisabledState();
@@ -484,10 +446,6 @@ namespace Cozmo.UI {
     }
 
     protected virtual void ShowDisabledState() {
-      if (_VoiceCommandIcon != null) {
-        _VoiceCommandIcon.SetActive(false);
-      }
-
       if (ButtonGraphics != null) {
         foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (IsInitialized(graphic)) {

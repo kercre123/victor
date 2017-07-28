@@ -68,7 +68,6 @@ public static class LocalizationKeys {
   public const string kBehaviorSingingLondonBridge = "behavior.singing.LondonBridge";
   public const string kBehaviorSingingSakura = "behavior.singing.Sakura";
   public const string kBehaviorSingingMussIDenn = "behavior.singing.MussIDenn";
-  public const string kBehaviorReactToVoiceCommand = "behavior.ReactToVoiceCommand";
   public const string kBehaviorVC_Refuse_Energy = "behavior.VC_Refuse_Energy";
   public const string kBehaviorVC_Refuse_Repair = "behavior.VC_Refuse_Repair";
   public const string kBehaviorVC_Refuse_Sparks = "behavior.VC_Refuse_Sparks";
@@ -344,7 +343,6 @@ public static class LocalizationKeys {
   public const string kLabelCancelText = "label.cancelText";
   public const string kLabelLiquidMetalCozmo = "label.liquidMetalCozmo";
   public const string kConnectivitySendGameplayDataPrompt = "connectivity.sendGameplayDataPrompt";
-  public const string kNeedsVoiceSettingsModalTitle = "needs.VoiceSettingsModal.Title";
   public const string kConnectivityBehaviorDisplayDisconnected = "connectivity.behaviorDisplayDisconnected";
 
   #endregion
@@ -992,55 +990,6 @@ public static class LocalizationKeys {
   public const string kVideoSubtitlesMemoryMatchEighth = "videoSubtitles.memoryMatch.eighth";
   public const string kVideoSubtitlesMemoryMatchNineth = "videoSubtitles.memoryMatch.nineth";
   public const string kVideoSubtitlesMemoryMatchTenth = "videoSubtitles.memoryMatch.tenth";
-
-  #endregion
-
-  #region VoiceCommandStrings
-
-  public const string kVoiceCommandsTutorialTextEnableMicPrePrompt = "voiceCommands.tutorialText.EnableMicPrePrompt";
-  public const string kVoiceCommandsTutorialTextPrivacyDisclaimer = "voiceCommands.tutorialText.PrivacyDisclaimer";
-  public const string kVoiceCommandsTutorialTextEnableMicPrompt_primary = "voiceCommands.tutorialText.EnableMicPrompt_primary";
-  public const string kVoiceCommandsTutorialTextEnableMicPrompt_secondary = "voiceCommands.tutorialText.EnableMicPrompt_secondary";
-  public const string kVoiceCommandsTutorialTextMicCheck = "voiceCommands.tutorialText.MicCheck";
-  public const string kVoiceCommandsTutorialTextSpeakClearlyDesc = "voiceCommands.tutorialText.SpeakClearlyDesc";
-  public const string kVoiceCommandsTutorialTextSayHeyCozmo = "voiceCommands.tutorialText.SayHeyCozmo";
-  public const string kVoiceCommandsTutorialTextConfirmMicWorking = "voiceCommands.tutorialText.ConfirmMicWorking";
-  public const string kVoiceCommandsMainPageTextGifDescription = "voiceCommands.mainPageText.GifDescription";
-  public const string kVoiceCommandsMainPageTextVoiceCommandTitle = "voiceCommands.mainPageText.VoiceCommandTitle";
-  public const string kVoiceCommandsMainPageTextEnabled = "voiceCommands.mainPageText.Enabled";
-  public const string kVoiceCommandsMainPageTextDisabled = "voiceCommands.mainPageText.Disabled";
-  public const string kVoiceCommandsMainPageTextCannotHear = "voiceCommands.mainPageText.CannotHear";
-  public const string kVoiceCommandsMainPageTextCanHear = "voiceCommands.mainPageText.CanHear";
-  public const string kVoiceCommandsLearnCommandsComeHere_command = "voiceCommands.learnCommands.ComeHere_command";
-  public const string kVoiceCommandsLearnCommandsComeHere_desc = "voiceCommands.learnCommands.ComeHere_desc";
-  public const string kVoiceCommandsLearnCommandsGoToSleep_command = "voiceCommands.learnCommands.GoToSleep_command";
-  public const string kVoiceCommandsLearnCommandsGoToSleep_desc = "voiceCommands.learnCommands.GoToSleep_desc";
-  public const string kVoiceCommandsLearnCommandsAskHungry_command = "voiceCommands.learnCommands.AskHungry_command";
-  public const string kVoiceCommandsLearnCommandsAskHungry_desc = "voiceCommands.learnCommands.AskHungry_desc";
-  public const string kVoiceCommandsLearnCommandsHowAreYouDoing_command = "voiceCommands.learnCommands.HowAreYouDoing_command";
-  public const string kVoiceCommandsLearnCommandsHowAreYouDoing_desc = "voiceCommands.learnCommands.HowAreYouDoing_desc";
-  public const string kVoiceCommandsLearnCommandsPeekABoo_command = "voiceCommands.learnCommands.PeekABoo_command";
-  public const string kVoiceCommandsLearnCommandsPeekABoo_desc = "voiceCommands.learnCommands.PeekABoo_desc";
-  public const string kVoiceCommandsLearnCommandsLookDown_command = "voiceCommands.learnCommands.LookDown_command";
-  public const string kVoiceCommandsLearnCommandsLookDown_desc = "voiceCommands.learnCommands.LookDown_desc";
-  public const string kVoiceCommandsLearnCommandsFistBump_command = "voiceCommands.learnCommands.FistBump_command";
-  public const string kVoiceCommandsLearnCommandsFistBump_desc = "voiceCommands.learnCommands.FistBump_desc";
-  public const string kVoiceCommandsLearnCommandsLearnVoiceCommandTitle = "voiceCommands.learnCommands.LearnVoiceCommandTitle";
-  public const string kVoiceCommandsLearnCommandsRememberPhrases = "voiceCommands.learnCommands.RememberPhrases";
-  public const string kVoiceCommandsLearnCommandsSpecialPhrases = "voiceCommands.learnCommands.SpecialPhrases";
-  public const string kVoiceCommandsLearnCommandsDoATrick = "voiceCommands.learnCommands.DoATrick";
-  public const string kVoiceCommandsLearnCommandsLetsPlay = "voiceCommands.learnCommands.LetsPlay";
-  public const string kVoiceCommandsLearnCommandsExplainMicIcon = "voiceCommands.learnCommands.ExplainMicIcon";
-  public const string kVoiceCommandsTutorialButtonStartMicCheckButton = "voiceCommands.tutorialButton.StartMicCheckButton";
-  public const string kVoiceCommandsMainPageButtonLearnCommandsButton = "voiceCommands.mainPageButton.LearnCommandsButton";
-  public const string kVoiceCommandsTutorialButtonMaybeLaterButton = "voiceCommands.tutorialButton.MaybeLaterButton";
-  public const string kVoiceCommandsMainPageButtonAppSettingsButton = "voiceCommands.mainPageButton.AppSettingsButton";
-  public const string kVoiceCommandsCommandNoThankYou = "voiceCommands.command.NoThankYou";
-  public const string kVoiceCommandsCommandYesPlease = "voiceCommands.command.YesPlease";
-  public const string kVoiceCommandsGoToSleepCancel = "voiceCommands.GoToSleepCancel";
-  public const string kVoiceCommandsTutorialTextEnableMicInstrructions = "voiceCommands.tutorialText.EnableMicInstrructions";
-  public const string kVoiceCommandsTutorialTextFirstEnableMicInstrructions = "voiceCommands.tutorialText.FirstEnableMicInstrructions";
-  public const string kVoiceCommandsTutorialTextForBestResults = "voiceCommands.tutorialText.ForBestResults";
 
   #endregion
 

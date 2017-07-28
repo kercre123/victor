@@ -1,5 +1,4 @@
 ﻿using Anki.Cozmo;
-using Anki.Cozmo.VoiceCommand;
 using Cozmo.Challenge;
 using Cozmo.RequestGame;
 using Cozmo.UI;
@@ -27,16 +26,10 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoText _AskForTrickCostText;
 
     [SerializeField]
-    private CozmoImage _AskForTrickMicIcon;
-
-    [SerializeField]
     private CozmoButton _AskForGameButton;
 
     [SerializeField]
     private CozmoText _AskForGameCostText;
-
-    [SerializeField]
-    private CozmoImage _AskForGameMicIcon;
 
     [SerializeField]
     private CozmoButton _ListAbilitiesButton;
@@ -93,11 +86,6 @@ namespace Cozmo.Needs.Sparks.UI {
       playerInventory.ItemCountSet += HandleItemValueChanged;
       playerInventory.ItemCountUpdated += HandleItemValueChanged;
 
-      VoiceCommandManager.Instance.StateDataCallback += UpdateStateData;
-      VoiceCommandManager.RequestCurrentStateData();
-      _AskForGameMicIcon.gameObject.SetActive(false);
-      _AskForTrickMicIcon.gameObject.SetActive(false);
-
       RequestGameManager.Instance.OnRequestGameAlertCreated += ReenableTouches;
 
       bool hideFreeplayCard = DataPersistenceManager.Instance.Data.DefaultProfile.HideFreeplayCard;
@@ -153,8 +141,6 @@ namespace Cozmo.Needs.Sparks.UI {
       playerInventory.ItemRemoved -= HandleItemValueChanged;
       playerInventory.ItemCountSet -= HandleItemValueChanged;
       playerInventory.ItemCountUpdated -= HandleItemValueChanged;
-
-      VoiceCommandManager.Instance.StateDataCallback -= UpdateStateData;
 
       RequestGameManager.Instance.OnRequestGameAlertCreated -= ReenableTouches;
 
@@ -270,11 +256,6 @@ namespace Cozmo.Needs.Sparks.UI {
       _AskForGameButton.Interactable = canAffordRandomGame;
       _AskForGameCostText.color = canAffordRandomGame ? UIColorPalette.GeneralSparkTintColor.CanAffordColor
         : UIColorPalette.GeneralSparkTintColor.CannotAffordColor;
-    }
-
-    private void UpdateStateData(StateData stateData) {
-      _AskForTrickMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
-      _AskForGameMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
     }
 
     internal void HideFreeplayCard(bool instant = false) {

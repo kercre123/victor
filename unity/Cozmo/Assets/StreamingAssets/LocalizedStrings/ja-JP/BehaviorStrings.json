@@ -207,9 +207,6 @@
   "behavior.singing.MussIDenn" : {
     "translation" : "Cozmoは「別れ」を歌っています..."
   },
-  "behavior.ReactToVoiceCommand" : {
-    "translation" : "Cozmoはあなたの声を聞いています..."
-  },
   "behavior.VC_Refuse_Energy" : {
     "translation" : "Cozmoはチャージが必要です..."
   },
