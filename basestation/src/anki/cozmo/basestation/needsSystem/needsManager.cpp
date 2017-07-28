@@ -1318,8 +1318,12 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeDeviceNeedsData& m
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg)
 {
-  // When the debug 'erase everything' button is pressed, that means we also need
-  // to re-initialize the needs levels
+  // When the debug 'erase everything' button is pressed, or the user-facing
+  // "ERASE COZMO" button is pressed, that means we also need to re-initialize
+  // the needs system
+
+  Util::FileUtils::DeleteFile(kPathToSavedStateFile + kNeedsStateFile);
+
   InitInternal(_currentTime_s);
 }
 
