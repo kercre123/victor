@@ -53,10 +53,6 @@ public class ConnectionFlowController : MonoBehaviour {
   private GameObject _WakingUpCozmoScreenInstance;
 
   [SerializeField]
-  private SimpleConnectModal _ReplaceCozmoOnChargerModalPrefab;
-  private SimpleConnectModal _ReplaceCozmoOnChargerModalInstance;
-
-  [SerializeField]
   private PullCubeTabModal _PullCubeTabModalPrefab;
   private PullCubeTabModal _PullCubeTabModalInstance;
 
@@ -171,10 +167,6 @@ public class ConnectionFlowController : MonoBehaviour {
 
     if (_UpdateFirmwareScreenInstance != null) {
       GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
-    }
-
-    if (_ReplaceCozmoOnChargerModalInstance != null) {
-      UIManager.CloseModalImmediately(_ReplaceCozmoOnChargerModalInstance);
     }
 
     if (_WakingUpCozmoScreenInstance != null) {
@@ -421,22 +413,6 @@ public class ConnectionFlowController : MonoBehaviour {
     if (!started) {
       ReturnToSearch();
     }
-  }
-
-  private void ReplaceCozmoOnCharger() {
-    ModalPriorityData replaceCozmoPriorityData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
-    UIManager.OpenModal(_ReplaceCozmoOnChargerModalPrefab, replaceCozmoPriorityData, HandleReplaceCozmoOnChargerCreated);
-  }
-
-  private void HandleReplaceCozmoOnChargerCreated(BaseModal newSimpleConnectModal) {
-    _ReplaceCozmoOnChargerModalInstance = (SimpleConnectModal)newSimpleConnectModal;
-    _ReplaceCozmoOnChargerModalInstance.OnConnectButton += ReplaceCozmoOnChargerConnect;
-    _ReplaceCozmoOnChargerModalInstance.ModalClosedWithCloseButtonOrOutside += ReturnToTitle;
-  }
-
-  private void ReplaceCozmoOnChargerConnect() {
-    UIManager.CloseModal(_ReplaceCozmoOnChargerModalInstance);
-    ReturnToSearch();
   }
 
   private void ShowSecuringConnectionScreen() {
@@ -691,11 +667,6 @@ public class ConnectionFlowController : MonoBehaviour {
   }
   
   public bool ShouldIgnoreRobotDisconnect() {
-    if (_ReplaceCozmoOnChargerModalInstance != null) {
-      // don't try to go through the search flow if the replace cozmo on charger view is up.
-      return true;
-    }
-
     // If we're showing the update app view, the user will need to get a new version, so don't do anything when
     // the robot disconnects
     if (_UpdateAppModalInstance != null) {
