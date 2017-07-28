@@ -63,12 +63,14 @@ void Mics::init(void) {
   MIC1MOSI::speed(SPEED_HIGH);
   MIC1MOSI::mode(MODE_ALTERNATE);
 
-  /* TEMP CODE UNTIL REV 2 */
-  POWER_EN::reset();
-  POWER_EN::mode(MODE_OUTPUT);
-  RTN2::alternate(0);
-  RTN2::mode(MODE_ALTERNATE);
-  /* TEMP CODE UNTIL REV 2 */
+  // Set and output clock for the SPI perf so reads work (not connected)
+  MIC1SCK::alternate(0);
+  MIC1SCK::speed(SPEED_HIGH);
+  MIC1SCK::mode(MODE_ALTERNATE);
+
+  MIC2SCK::alternate(0);
+  MIC2SCK::speed(SPEED_HIGH);
+  MIC2SCK::mode(MODE_ALTERNATE);
 
   // Start configuring out clock
   TIM15->PSC = 0;

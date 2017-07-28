@@ -11,7 +11,7 @@
 
 static const int channels[ADC_CHANNELS] = {
   ADC_CHSELR_CHSEL2,
-  ADC_CHSELR_CHSEL5,
+  ADC_CHSELR_CHSEL4,
   ADC_CHSELR_CHSEL6
 };
 
@@ -31,7 +31,7 @@ static int hold_count __attribute__((section("SHARED_RAM")));
 
 static void start_sample(void) {
   using namespace Analog;
-  
+
   if (++current_channel >= ADC_CHANNELS) {
     // Debounce buttons
     bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
@@ -55,7 +55,7 @@ static void start_sample(void) {
           Flash::writeFaultReason(FAULT_USER_WIPE);
         }
         NVIC_SystemReset();
-      } 
+      }
     } else {
       if (hold_count >= POWER_DOWN_TIME) {
         Power::stop();
@@ -97,7 +97,7 @@ void Analog::init(void) {
   current_channel = 0;
   hold_count = 0;
   start_sample();
-  
+
 }
 
 void Analog::stop(void) {

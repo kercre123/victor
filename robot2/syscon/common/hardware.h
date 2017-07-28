@@ -39,12 +39,12 @@ namespace LN1 GPIO_DEFINE(A, 10);
 namespace LN2 GPIO_DEFINE(A, 11);
 
 namespace HP1 GPIO_DEFINE(F, 1);
-namespace HN1 GPIO_DEFINE(A, 7);
+namespace HN1 GPIO_DEFINE(B, 5);
 namespace HN2 GPIO_DEFINE(B, 1);
 
 namespace RTP1 GPIO_DEFINE(B, 12);
 namespace RTN1 GPIO_DEFINE(A, 8);
-namespace RTN2 GPIO_DEFINE(B, 13);
+namespace RTN2 GPIO_DEFINE(A, 7);
 
 namespace LTP1 GPIO_DEFINE(A, 15);
 namespace LTN1 GPIO_DEFINE(A, 9);
@@ -67,13 +67,16 @@ namespace nCHG_HC GPIO_DEFINE(B, 12);
 namespace nVDDs_EN GPIO_DEFINE(C, 13);
 namespace nCHG_OK GPIO_DEFINE(F, 1);
 namespace VEXT_SENSE GPIO_DEFINE(A, 2);
-namespace VBAT_SENSE GPIO_DEFINE(A, 5);
+namespace VBAT_SENSE GPIO_DEFINE(A, 4);
 
 // Microphones
-namespace MIC2MISO GPIO_DEFINE(B, 4);
-namespace MIC2MOSI GPIO_DEFINE(B, 5);
-namespace MIC1MISO GPIO_DEFINE(B, 14);
 namespace MIC1MOSI GPIO_DEFINE(B, 15);
+
+namespace MIC2MISO GPIO_DEFINE(B, 4);
+namespace MIC1MISO GPIO_DEFINE(B, 14);
+
+namespace MIC2SCK GPIO_DEFINE(A, 5);
+namespace MIC1SCK GPIO_DEFINE(B, 13);
 
 // Cap Sense
 namespace CAPO GPIO_DEFINE(A, 3);
@@ -92,6 +95,5 @@ namespace SDA2 GPIO_DEFINE(F, 7);
 // Lights
 namespace LED_DAT GPIO_DEFINE(A, 13);
 namespace LED_CLK GPIO_DEFINE(A, 14);
-namespace FLASHLIGHT GPIO_DEFINE(A, 4);
 
 #endif
