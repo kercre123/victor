@@ -37,10 +37,10 @@
     "translation" : "Cozmo ist satt!"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt" : {
-    "translation" : "Cozmo can't be fed because he can't hear his cubes"
+    "translation" : "Cozmo kann nicht gefüttert werden, da er seine Cubes nicht hören kann."
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt.Button" : {
-    "translation" : "RECONNECT CUBES"
+    "translation" : "VERBINDUNG MIT CUBES WIEDERHERSTELLEN"
   },
   "needs.NeedsRepairModal.Title" : {
     "translation" : "Cozmo-Tuning"
@@ -100,7 +100,7 @@
     "translation" : "FERTIG"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Your Sparks inventory is full"
+    "translation" : "Dein Sparks-Inventar ist voll."
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "Du hast dir weitere Sparks verdient!"
@@ -112,69 +112,69 @@
     "translation" : "Du hast Folgendes freigeschaltet: {0}!"
   },
   "needs.FreeplaySparksReward.CozmoSings" : {
-    "translation" : "Cozmo just generated {0} Sparks by singing a song!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er ein Lied gesungen hat!"
   },
   "needs.FreeplaySparksReward.FistBump" : {
-    "translation" : "Cozmo just generated {0} Sparks by doing a Fist Bump!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er einen Fauststoß gegeben hat!"
   },
   "needs.FreeplaySparksReward.GatherCubes" : {
-    "translation" : "Cozmo just generated {0} Sparks by gathering his Cubes!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er seine Cubes eingesammelt hat!"
   },
   "needs.FreeplaySparksReward.HiccupsEndBad" : {
-    "translation" : "Cozmo just generated {0} Sparks by curing his Hiccups!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er seinen Schluckauf geheilt hat!"
   },
   "needs.FreeplaySparksReward.HiccupsEndGood" : {
-    "translation" : "Cozmo just generated {0} Sparks by curing his Hiccups!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er seinen Schluckauf geheilt hat!"
   },
   "needs.FreeplaySparksReward.KnockDownCubes" : {
-    "translation" : "Cozmo just generated {0} Sparks by knocking down Cubes!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er Cubes umgeworfen hat!"
   },
   "needs.FreeplaySparksReward.PeekAboo" : {
-    "translation" : "Cozmo just generated {0} Sparks by playing Peekaboo!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er Kuckuck gespielt hat!"
   },
   "needs.FreeplaySparksReward.PickupCube" : {
-    "translation" : "Cozmo just generated {0} Sparks by picking up a Cube!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er einen Cube aufgenommen hat!"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
-    "translation" : "Cozmo just generated {0} Sparks by popping a wheelie!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er einen Wheelie gemacht hat!"
   },
   "needs.FreeplaySparksReward.Pounce" : {
-    "translation" : "Cozmo just generated {0} Sparks by pouncing!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er zugeschnappt hat!"
   },
   "needs.FreeplaySparksReward.PyramidCompleted" : {
-    "translation" : "Cozmo just generated {0} Sparks by building a pyramid!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er eine Pyramide gebaut hat!"
   },
   "needs.FreeplaySparksReward.RollACube" : {
-    "translation" : "Cozmo just generated {0} Sparks by rolling a Cube!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er einen Cube gerollt hat!"
   },
   "needs.FreeplaySparksReward.StackCube" : {
-    "translation" : "Cozmo just generated {0} Sparks by stacking Cubes!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er Cubes gestapelt hat!"
   },
   "needs.FreeplaySparksReward.Workout" : {
-    "translation" : "Cozmo just generated {0} Sparks by performing a workout!"
+    "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er trainiert hat!"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo hat dir {0} Sparks gegeben, weil du mit ihm Wachhund gespielt hast!"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo hat dir {0} Sparks gegeben, weil du mit ihm Wachhund gespielt hast!"
   },
   "needs.FeedingOverfedHiccups.Title" : {
-    "translation" : "Cozmo got the Hiccups"
+    "translation" : "Cozmo hat Schluckauf."
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "Cozmo is too full - now he has the hiccups!"
+    "translation" : "Cozmo hat zu viel gegessen. Jetzt hat er Schluckauf!"
   },
   "needs.severeAlert.energy.title" : {
-    "translation" : "Energy Severe Title FPO"
+    "translation" : "Cozmo Really Needs Feeding"
   },
   "needs.severeAlert.energy.description" : {
-    "translation" : "Needs Energy Severe Alert Description FPO"
+    "translation" : "You'll need to feed Cozmo before continuing."
   },
   "needs.severeAlert.repair.title" : {
-    "translation" : "Repair Severe Title FPO"
+    "translation" : "Cozmo Really Needs a Tune-Up"
   },
   "needs.severeAlert.repair.description" : {
-    "translation" : "Needs Repair Severe Alert Description FPO"
+    "translation" : "You'll need to tune up Cozmo before continuing."
   }
 }

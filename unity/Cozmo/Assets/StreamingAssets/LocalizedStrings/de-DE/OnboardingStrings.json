@@ -94,7 +94,7 @@
     "translation" : "Cozmo wird zum Leben erweckt."
   },
   "onboarding.MeetCozmoIntro" : {
-    "translation" : "Well done!\u000a\u000aCozmo would like to meet you."
+    "translation" : "Super!\u000a\u000aCozmo würde dich gerne kennenlernen."
   },
   "onboarding.MeetCozmo.Button" : {
     "translation" : "Kennenlernen"
@@ -106,13 +106,13 @@
     "translation" : "<b>Cozmo hat Bedürfnisse.</b>\u000a\u000aKümmere dich jeden Tag um ihn, damit er bei guter Laune bleibt.\u000a\u000aDie Cozmo-App sieht möglicherweise etwas anders aus, aber alle freigeschalteten Spiele und Upgrades sowie alle Sparks, die du dir verdient hast, bleiben erhalten."
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>Cozmo muss spielen.</b>\u000a\u000aTippe auf <b><color=#f5ea12>SPIELEN</color></b>, damit Cozmo dir Spiele oder Tricks zeigt. Für jeden Tag, an dem du seine gelbe Leiste füllst, erhältst du eine Bonusmarke."
+    "translation" : "<b>Cozmo needs to play.</b>\u000a\u000aTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Play Token."
   },
   "onboarding.RewardsIntro" : {
-    "translation" : "<b>Du hast dir eine Bonusmarke verdient.</b>\u000a\u000aMit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks und neue Fähigkeiten enthalten."
+    "translation" : "<b>You’ve earned a Play Token.</b>\u000a\u000aTokens unlock Bonus Boxes, filled with rewards like Sparks and new Abilities."
   },
   "onboarding.End" : {
-    "translation" : "<b>You've learned the basics of being a great owner!</b>\u000a\u000aFeel free to explore all Cozmo can do, or leave Cozmo alone and he will automatically play Tricks and Games in Freeplay."
+    "translation" : "<b>Du weißt jetzt alles, was du wissen musst!</b>\u000a\u000aNun kannst du erkunden, welche Möglichkeiten Cozmo bietet. Wenn du Cozmo stattdessen sich selbst überlässt, wird der Modus \"Freies Spiel\" aktiviert, in dem Cozmo dir Tricks und Spiele zeigt."
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "Entdecken-Aktivitäten sind besonders. Sie wirken sich nicht auf den Bedarf von Cozmo aus und kosten auch keine Sparks."
@@ -139,6 +139,6 @@
     "translation" : "<b>Cozmo muss gefüttert werden.</b>\u000a\u000aWenn die blaue Leiste fast leer ist, hat Cozmo Hunger. Tippe auf <b><color=#31EBFF>FÜTTERN</color></b>."
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a cube he can see, and then watch him roll it."
+    "translation" : "Cozmo ist ein verspielter Roboter, der auch einige Tricks auf Lager hat. Achte darauf, dass Cozmo einen Cube sehen kann, und schau ihm dann zu, wie er den Cube rollt."
   }
 }

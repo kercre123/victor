@@ -37,13 +37,13 @@
     "translation" : "Cozmo s'améliore avec le temps."
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Each day you fill Cozmo's yellow Play bar, you earn a Bonus Token. Bonus Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Abilities."
+    "translation" : "Each day you fill Cozmo's Play Need, you earn a Play Token. Play Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Tricks."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
+    "translation" : "<color=#FFFFFF>Earn </color><b><color=#F5BF2D>Play Tokens</color></b><color=#FFFFFF> each day.</color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
+    "translation" : "<color=#FFFFFF>3 Tokens unlock a </color><b><color=#F5BF2D>Bonus Box.</color></b>"
   },
   "helpTipsStrings.Slide4.title" : {
     "translation" : "Énergie, bits et étincelles"

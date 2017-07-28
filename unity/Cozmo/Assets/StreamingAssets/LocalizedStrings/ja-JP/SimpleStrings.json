@@ -136,7 +136,7 @@
     "translation" : "プライバシーポリシー"
   },
   "label.pressAndHoldInstruction" : {
-    "translation" : "押したまま<b><color=#fe5641>{0}</color></b>確認するために。"
+    "translation" : "確定するには<b><color=#fe5641>{0}</color></b>を長押しします。"
   },
   "label.termsOfUse" : {
     "translation" : "利用規約"
@@ -151,7 +151,7 @@
     "translation" : "{0} {1}"
   },
   "label.basicCozmo" : {
-    "translation" : "偉大な知能。もっと偉大なパーソナリティ。"
+    "translation" : "やんちゃでかしこい、あいぼう。"
   },
   "label.currentPage" : {
     "translation" : "{0}/{1}"

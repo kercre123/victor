@@ -286,13 +286,13 @@
     "translation" : "Pour débloquer, déverrouille Réflexe."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "Le mode deux couleurs est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE UNE COULEUR </b>."
+    "translation" : "<b>TWO COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>ONE COLOR</b> mode."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "Le mode trois couleurs est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE DEUX COULEURS</b>."
+    "translation" : "<b>THREE COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>TWO COLORS</b> mode."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "Le mode quatre couleurs est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE TROIS COULEURS</b>."
+    "translation" : "<b>FOUR COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>THREE COLORS</b> mode."
   },
   "speedTap.text.getReady" : {
     "translation" : "Soit prêt !"

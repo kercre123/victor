@@ -28,7 +28,7 @@
     "translation" : "Cozmoが\u000a見ているキューブ"
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmoはこのキューブを使いたい。"
+    "translation" : "Cozmoは\u000aこのキューブを使いたがっています。"
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "このキューブは\u000a電池の残りが少ない"
@@ -37,13 +37,13 @@
     "translation" : "Cozmoは時間とともに成長します。"
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Each day you fill Cozmo's yellow Play bar, you earn a Bonus Token. Bonus Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Abilities."
+    "translation" : "CozmoのPlay Needを埋める毎日、プレイトークンを獲得します。プレイトークンは、スパーク、ゲーム、トリックなどの報酬で満たされたボーナスボックスのロックを解除します。"
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
+    "translation" : "<color=#FFFFFF>獲得する</color><b><color=#F5BF2D>トークンを再生する</color></b><color=#FFFFFF>毎日。 </color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
+    "translation" : "<color=#FFFFFF> 3つのトークンがロックを解除</color><b><color=#F5BF2D>ボーナスボックス。 </color></b>"
   },
   "helpTipsStrings.Slide4.title" : {
     "translation" : "エネルギー、ビット、スパーク"

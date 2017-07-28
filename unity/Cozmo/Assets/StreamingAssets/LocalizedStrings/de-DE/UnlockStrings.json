@@ -16,7 +16,7 @@
     "translation" : "Noch nicht freigeschaltete Fähigkeit"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Beim Öffnen von Bonuskisten werden manchmal neue Fähigkeiten freigeschaltet!"
+    "translation" : "Fill Cozmo's Play Need each day to earn a Play Token. These unlock Bonus Boxes, which may contain new Abilities!"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Fauststoß"
@@ -214,7 +214,7 @@
     "translation" : "Nicht genügend Sparks"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "Earn more in Freeplay and Bonus Boxes."
+    "translation" : "In den Modi \"Freies Spiel\" und \"Bonuskisten\" kannst du mehr verdienen."
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "Stelle sicher, dass die Cubes aufrecht sind."
@@ -223,6 +223,6 @@
     "translation" : "Wenn die Cubes aufrecht sind (Lichter sind oben), kann Cozmo schneller bauen."
   },
   "sparks.free" : {
-    "translation" : "Free"
+    "translation" : "Gratis"
   }
 }

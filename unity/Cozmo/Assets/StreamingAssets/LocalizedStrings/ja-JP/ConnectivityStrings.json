@@ -10,16 +10,16 @@
     "translation" : "Cozmoに接続しています..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "あなたはCozmoに接続する必要があります。"
+    "translation" : "Cozmoに接続してください。"
   },
   "connectivity.moreInfo" : {
     "translation" : "詳細情報"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "Cozmoをオンにする。"
+    "translation" : "Cozmoをオンにしてください。"
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "WiFi設定で接続します。"
+    "translation" : "WiFi設定で接続してください。"
   },
   "connectivity.searchingForCozmo" : {
     "translation" : "Cozmoを探しています..."
@@ -91,12 +91,12 @@
     "translation" : "コレクター版：液体金属"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "あなたのゲームプレイのデータと統計情報をお送りください。"
+    "translation" : "Cozmoの改善のため、ゲームプレイのデータと統計を送信してください。"
   },
   "needs.VoiceSettingsModal.Title" : {
     "translation" : "声で指示"
   },
   "connectivity.behaviorDisplayDisconnected" : {
-    "translation" : "Cozmoが切断されました。"
+    "translation" : "Cozmoの接続が解除されました。"
   }
 }

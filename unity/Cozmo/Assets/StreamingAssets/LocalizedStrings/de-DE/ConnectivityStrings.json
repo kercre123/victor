@@ -10,16 +10,16 @@
     "translation" : "Verbindung zu Cozmo wird hergestellt..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "You need to connect to Cozmo."
+    "translation" : "Stelle eine Verbindung zu Cozmo her."
   },
   "connectivity.moreInfo" : {
     "translation" : "WEITERE INFOS"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "Turn Cozmo on."
+    "translation" : "Schalte Cozmo an."
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "Connect in WiFi Settings."
+    "translation" : "Stelle in den WLAN-Einstellungen eine Verbindung her."
   },
   "connectivity.searchingForCozmo" : {
     "translation" : "Cozmo wird gesucht..."
@@ -55,7 +55,7 @@
     "translation" : "Cozmo geht schlafen und trennt demnächst die Verbindung..."
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "Cozmo Is Low On Battery"
+    "translation" : "Der Ladestand der Batterie von Cozmo ist niedrig."
   },
   "connectivity.cozmoLowBatteryDesc" : {
     "translation" : "Bitte setze Cozmo auf die Ladestation."
@@ -91,12 +91,12 @@
     "translation" : "Collector’s Edition: Liquid Metal"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "Helfen Sie uns, Cozmo besser zu machen, indem Sie uns Ihre Gameplay-Daten und Statistiken senden"
+    "translation" : "Hilf uns, Cozmo noch besser zu machen, indem du uns deine Spieldaten und -statistiken sendest."
   },
   "needs.VoiceSettingsModal.Title" : {
     "translation" : "Sprachbefehle"
   },
   "connectivity.behaviorDisplayDisconnected" : {
-    "translation" : "Cozmo has been disconnected."
+    "translation" : "Die Verbindung zu Cozmo wurde getrennt."
   }
 }

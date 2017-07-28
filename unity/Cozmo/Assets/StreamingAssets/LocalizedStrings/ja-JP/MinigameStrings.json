@@ -286,13 +286,13 @@
     "translation" : "クイックタップをロック解除してロックを外します"
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "2色モードはロックされています。\u000a<b>1色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b> 2色</b>モードがロックされています。クイックタップを獲得してロックを解除<b> ONE COLOR </b>モード。"
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "3色モードはロックされています。\u000a<b>2色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b>三つの色</b>モードがロックされています。クイックタップを獲得してロックを解除<b> 2色</b>モード。"
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "4色モードはロックされています。\u000a<b>3色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b> 4色</b>モードがロックされています。クイックタップを獲得してロックを解除<b>三つの色</b>モード。"
   },
   "speedTap.text.getReady" : {
     "translation" : "準備してください！"
@@ -331,7 +331,7 @@
     "translation" : "人間 VS. 人間 VS. Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "単語やフレーズを入力し、Cozmoがそれを言うのを聞く："
+    "translation" : "単語やフレーズを入力して、Cozmoに言葉をしゃべらせましょう："
   },
   "sayCozmo.button.say" : {
     "translation" : "話す"
@@ -364,15 +364,15 @@
     "translation" : "あなたの勝ち！"
   },
   "label.MATCH" : {
-    "translation" : "一致！"
+    "translation" : "勝負！"
   },
   "label.NO.MATCH" : {
-    "translation" : "いいえ\\ n目次"
+    "translation" : "勝負 \\u000aなし"
   },
   "label.DONT.SLAP" : {
-    "translation" : "\\ nスラップしないでください！"
+    "translation" : "叩かないで \\u000aください！"
   },
   "label.enterText" : {
-    "translation" : "テキストを入力..."
+    "translation" : "テキストを入力してください..."
   }
 }

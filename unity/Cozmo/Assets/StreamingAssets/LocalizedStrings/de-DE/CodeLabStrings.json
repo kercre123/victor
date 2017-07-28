@@ -391,10 +391,10 @@
     "translation" : "Warnung vor Eindringlingen!"
   },
   "codeLab.SaveProject.Autosaved" : {
-    "translation" : "Autosaved"
+    "translation" : "Automatisch gespeichert"
   },
   "codeLab.SaveProject.NotSaved" : {
-    "translation" : "Sample projects not saved"
+    "translation" : "Beispielprojekte wurden nicht gespeichert."
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mein Projekt \"{0}\""

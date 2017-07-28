@@ -154,10 +154,10 @@
     "translation" : "Cozmo just generated {0} Sparks by performing a workout!"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmo got the Hiccups"
@@ -166,15 +166,15 @@
     "translation" : "Cozmo is too full - now he has the hiccups!"
   },
   "needs.severeAlert.energy.title" : {
-    "translation" : "Energy Severe Title FPO"
+    "translation" : "Cozmo Really Needs Feeding"
   },
   "needs.severeAlert.energy.description" : {
-    "translation" : "Needs Energy Severe Alert Description FPO"
+    "translation" : "You'll need to feed Cozmo before continuing."
   },
   "needs.severeAlert.repair.title" : {
-    "translation" : "Repair Severe Title FPO"
+    "translation" : "Cozmo Really Needs a Tune-Up"
   },
   "needs.severeAlert.repair.description" : {
-    "translation" : "Needs Repair Severe Alert Description FPO"
+    "translation" : "You'll need to tune up Cozmo before continuing."
   }
 }

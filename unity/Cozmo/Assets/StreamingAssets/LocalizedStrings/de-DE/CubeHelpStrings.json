@@ -34,18 +34,18 @@
     "translation" : "Achte darauf, dass die Abdeckung zum Cube passt. Der Cube sollte jetzt leuchten."
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
-    "translation" : "Cozmo too hungry to play?"
+    "translation" : "Ist Cozmo zu hungrig, um zu spielen?"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
-    "translation" : "Give him a quick snack while you reconnect his Cubes."
+    "translation" : "Gib ihm einen Snack, während du die Verbindung mit seinen Cubes wiederherstellst."
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
-    "translation" : "QUICK SNACK"
+    "translation" : "SNACK"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmo Can Now Keep Playing"
+    "translation" : "Cozmo kann jetzt weiterspielen."
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
-    "translation" : "To keep him fully fed, follow the instructions to help him recognize his cubes."
+    "translation" : "Damit er nicht wieder Hunger bekommt, kannst du die folgenden Schritte ausführen, sodass er seine Cubes erkennt."
   }
 }

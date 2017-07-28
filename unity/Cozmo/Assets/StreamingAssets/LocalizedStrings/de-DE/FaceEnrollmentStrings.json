@@ -10,7 +10,7 @@
     "translation" : "Cozmo muss sich dich genau ansehen. Schau gerade aus in die Richtung von Cozmo und bewege dich nicht.\u000a\u000aWenn er fertig ist, hörst du einen Ton."
   },
   "faceEnrollment.enterName.placeholderText" : {
-    "translation" : "Enter your first name:"
+    "translation" : "Gib deinen Vornamen ein:"
   },
   "faceEnrollment.faceEnrollmentList.description" : {
     "translation" : "Lehre Cozmo, dich oder eine andere Person zu erkennen."
@@ -34,7 +34,7 @@
     "translation" : "Cozmo erkennt dich als {0}."
   },
   "faceEnrollment.errors.timeOut.title" : {
-    "translation" : "Cozmo Is Having Trouble Seeing You"
+    "translation" : "Cozmo kann dich nicht richtig sehen."
   },
   "faceEnrollment.errors.timeOut.description" : {
     "translation" : "Stelle sicher, dass der Raum gut beleuchtet ist und du genau in die Richtung von Cozmo schaust. Cozmo sollte auf einer flachen und ebenen Oberfläche positioniert werden."
@@ -61,7 +61,7 @@
     "translation" : "Vor {0} Tagen"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
-    "translation" : "Help Cozmo recognize you more easily:"
+    "translation" : "Hilf Cozmo, dich einfacher zu erkennen:"
   },
   "faceEnrollment.label.lastScanned" : {
     "translation" : "Letzter Scan:"

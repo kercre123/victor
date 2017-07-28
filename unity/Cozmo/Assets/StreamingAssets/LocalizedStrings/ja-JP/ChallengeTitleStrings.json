@@ -13,7 +13,7 @@
     "translation" : "Cozmoが{2}を開始するには、あと{0}個の{1}が必要です。"
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "コズモは準備ができていない"
+    "translation" : "Cozmoは準備ができていません"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "Cozmoを立たせてプレイできるようにしてください。"
@@ -88,9 +88,9 @@
     "translation" : "間違い"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmoは、彼がどのようにプレーしたいかを選択することが大好きです。彼は自動的にゲームを求めたり、トリックをしたり、時には火花を得ることさえあります。"
+    "translation" : "Cozmoは自由に行動することが好きです。自動的にゲームをリクエストしたり、トリックをしたり、たまにスパークを獲得したりします。"
   },
   "activityView.freeplayTitle" : {
-    "translation" : "コスモは現在フリーである"
+    "translation" : "Cozmoは現在フリープレイ中です"
   }
 }

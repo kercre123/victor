@@ -286,13 +286,13 @@
     "translation" : "Zum Freischalten muss das Geschwindigkeitsspiel freigeschaltet werden."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "Der 2-Farben-Modus ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im <b>1-FARBEN-MODUS</b> gewinnen."
+    "translation" : "<b>TWO COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>ONE COLOR</b> mode."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "Der 3-Farben-Modus ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im <b>2-FARBEN-MODUS</b> gewinnen."
+    "translation" : "<b>THREE COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>TWO COLORS</b> mode."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "Der 4-Farben-Modus ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im <b>3-FARBEN-MODUS</b> gewinnen."
+    "translation" : "<b>FOUR COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>THREE COLORS</b> mode."
   },
   "speedTap.text.getReady" : {
     "translation" : "Mach dich bereit!"
@@ -331,7 +331,7 @@
     "translation" : "Mensch gegen Mensch gegen Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "Type a word or phrase and hear Cozmo say it:"
+    "translation" : "Gib ein Wort oder einen Begriff ein und lasse Cozmo dieses bzw. diesen sagen:"
   },
   "sayCozmo.button.say" : {
     "translation" : "Sagen"
@@ -364,15 +364,15 @@
     "translation" : "Du\u000agewinnst!"
   },
   "label.MATCH" : {
-    "translation" : "MATCH!"
+    "translation" : "ÜBEREINSTIMMUNG!"
   },
   "label.NO.MATCH" : {
-    "translation" : "NO \\u000aMATCH"
+    "translation" : "KEINE \\u000aÜBEREINSTIMMUNG"
   },
   "label.DONT.SLAP" : {
-    "translation" : "DON'T \\u000aSLAP!"
+    "translation" : "NICHT \\u000aSCHLAGEN!"
   },
   "label.enterText" : {
-    "translation" : "Enter text..."
+    "translation" : "Text eingeben..."
   }
 }

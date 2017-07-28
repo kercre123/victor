@@ -391,10 +391,10 @@
     "translation" : "侵入者警報！"
   },
   "codeLab.SaveProject.Autosaved" : {
-    "translation" : "自動保存"
+    "translation" : "自動保存されました"
   },
   "codeLab.SaveProject.NotSaved" : {
-    "translation" : "保存されていないサンプルプロジェクト"
+    "translation" : "サンプルプロジェクトが保存されていません"
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "マイプロジェクト{0}"

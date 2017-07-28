@@ -106,10 +106,10 @@
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux.\u000a\u000aL'application Cozmo aura peut-être une apparence légèrement différente, mais tu conserveras tous les jeux débloqués, les mises à niveau et les étincelles que tu as gagnés."
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un token de bonus."
+    "translation" : "<b>Cozmo needs to play.</b>\u000a\u000aTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Play Token."
   },
   "onboarding.RewardsIntro" : {
-    "translation" : "<b>Tu as gagné un token de bonus.</b>\u000a\u000aLes Tokens débloquent les boîtes de bonus, pleines de récompenses telles que des étincelles ou de nouvelles compétences."
+    "translation" : "<b>You’ve earned a Play Token.</b>\u000a\u000aTokens unlock Bonus Boxes, filled with rewards like Sparks and new Abilities."
   },
   "onboarding.End" : {
     "translation" : "<b>You've learned the basics of being a great owner!</b>\u000a\u000aFeel free to explore all Cozmo can do, or leave Cozmo alone and he will automatically play Tricks and Games in Freeplay."

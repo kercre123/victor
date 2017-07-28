@@ -16,7 +16,7 @@
     "translation" : "ロックされたモーション/能力"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "ボーナスボックスを開くと、新しいモーション/能力がロック解除される場合があります！"
+    "translation" : "Cozmo's Playをプレイする毎日プレイトークンを獲得する必要があります。これらは新しい能力を含むボーナスボックスのロックを解除します！"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "グータッチ"
@@ -214,7 +214,7 @@
     "translation" : "スパークが足りません"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "フリープレイとボーナスボックスでさらに獲得してください。"
+    "translation" : "フリープレイやボーナスボックスからもっと獲得します。"
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "キューブが直立していることを確認します"
