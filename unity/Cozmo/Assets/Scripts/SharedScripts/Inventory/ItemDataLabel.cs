@@ -82,7 +82,12 @@ namespace Cozmo {
       private void HandleItemValueChanged(string itemId, int delta, int newCount) {
         if (itemId == _ItemId) {
           if (delta > 0) {
-            _ItemIconAnimatorInstance.Play(_ItemIconBurstAnimHash);
+            if (_ItemIconAnimatorInstance != null) {
+              _ItemIconAnimatorInstance.Play(_ItemIconBurstAnimHash);
+            }
+            else {
+              DAS.Error(this, string.Format("Missing animator for {0}", name));
+            }
           }
           SetCountText(newCount);
         }
