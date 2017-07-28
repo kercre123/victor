@@ -234,12 +234,6 @@
   "minigame.timeout.description": {
     "translation": "Cozmo is tired of waiting, and wants to do other things."
   },
-  "cubePounce.info.playerWinPoint": {
-    "translation": "You were too fast for Cozmo!"
-  },
-  "cubePounce.info.cozmoWinPoint": {
-    "translation": "He was too fast for you!"
-  },
   "cubePounce.info.setupText": {
     "translation": "Place a Cube in front of Cozmo and hold it still when it turns green."
   },

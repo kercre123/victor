@@ -75,9 +75,6 @@
   "onboarding.Phase3.Body3": {
     "translation": "Let Cozmo inspect the Cube on his own."
   },
-  "onboarding.Phase3.Body4": {
-    "translation": "Well done!"
-  },
   "onboarding.Phase3.ErrorCube": {
     "translation": "The Cube has moved!"
   },

@@ -57,21 +57,6 @@
   "helpTipsStrings.Slide3.bodyApp": {
     "translation": "<color=#FFFFFF>3 Tokens unlock a </color><b><color=#F5BF2D>Bonus Box.</color></b>"
   },
-  "helpTipsStrings.Slide4.title": {
-    "translation": "Energy, Bits, and Sparks"
-  },
-  "helpTipsStrings.Slide4.body": {
-    "translation": "Earn <color=#00bd3dff>Energy</color> by completing your Daily Goals. Energy rewards you with <color=#fe8f00ff>Bits</color> and <color=#11a2f0ff>Sparks</color>: use these to unlock Cozmo's Upgrades & Apps!"
-  },
-  "helpTipsStrings.Slide4.bodyEnergy": {
-    "translation": "Energy"
-  },
-  "helpTipsStrings.Slide4.bodyBits": {
-    "translation": "Bits"
-  },
-  "helpTipsStrings.Slide4.bodySparks": {
-    "translation": "Sparks"
-  },
   "helpTipsStrings.Slide5.title": {
     "translation": "Check in on Cozmo."
   },
