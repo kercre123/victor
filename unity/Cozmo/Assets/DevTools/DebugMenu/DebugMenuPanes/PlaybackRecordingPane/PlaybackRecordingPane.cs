@@ -30,8 +30,8 @@ namespace Cozmo.UI {
     private const string _kPlayTimesStartMessage = "Number of times to repeat playback";
     
     //unity doesn't support tuples for some silly reason so this is a hack
-    private List<KeyValuePair<UnityEngine.Object, Type>> _ObjsOnScreen = 
-                    new List<KeyValuePair<UnityEngine.Object, Type>>();
+    private List<KeyValuePair<UnityEngine.GameObject, Type>> _ObjsOnScreen = 
+                    new List<KeyValuePair<UnityEngine.GameObject, Type>>();
     private List<string> _RecordingNames = new List<string>();
 
     protected void Awake() {
@@ -61,20 +61,17 @@ namespace Cozmo.UI {
       //update dropdown of stuff to verify
       _ObjsOnScreen.Clear();
       _ObjOnScreenDropdown.options.Clear();
-      foreach (KeyValuePair<Type, Type> objStep in Anki.Core.UI.Automation.Automation.Instance.SupportedObjectTypes()) {
-        //get an objType and a stepType, in that order (showType = stepType)
-        Type objType = objStep.Key;
-        Type stepType = objStep.Value;
-        foreach (UnityEngine.Object obj in Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType)) {
+      foreach (Type stepType in Anki.Core.UI.Automation.Automation.Instance.SupportedObjectTypes()) {
+        foreach (UnityEngine.GameObject obj in Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType)) {
           Dropdown.OptionData ObjOptionData = new Dropdown.OptionData();
           ObjOptionData.text = Anki.Core.UI.Automation.Automation.Instance.ShortString(obj, stepType);
-          _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.Object, Type>(obj, stepType));
+          _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.GameObject, Type>(obj, stepType));
           _ObjOnScreenDropdown.options.Add(ObjOptionData);
         }
       }
       Dropdown.OptionData objMessage = new Dropdown.OptionData();
       objMessage.text = _kObjOnScreenMessage;
-      _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.Object, Type>(null, null));
+      _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.GameObject, Type>(null, null));
       _ObjOnScreenDropdown.options.Add(objMessage);
       _ObjOnScreenDropdown.RefreshShownValue();
     }
@@ -87,7 +84,7 @@ namespace Cozmo.UI {
       if (_ObjOnScreenDropdown.captionText.text.Equals(_kObjOnScreenMessage)) {
         return;
       }
-      KeyValuePair<UnityEngine.Object, Type> obj = _ObjsOnScreen[_ObjOnScreenDropdown.value];
+      KeyValuePair<UnityEngine.GameObject, Type> obj = _ObjsOnScreen[_ObjOnScreenDropdown.value];
       Anki.Core.UI.Automation.Automation.Instance.RecordVerifyObject(obj.Key, obj.Value);
     }
 

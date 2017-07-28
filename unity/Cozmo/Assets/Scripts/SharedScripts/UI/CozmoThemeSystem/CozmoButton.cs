@@ -272,6 +272,7 @@ namespace Cozmo.UI {
         automationIdComponent = gameObject.AddComponent<Anki.Core.UI.Automation.AutomationIdComponent>();
       }
 
+      automationIdComponent.InteractableObj = this;
       if (string.IsNullOrEmpty(_DASEventButtonName)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.",
           this.gameObject.name));
