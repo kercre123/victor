@@ -541,13 +541,13 @@ bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
                                        const AnimLayerEnum& layer,
                                        const ObjectID& objectID,
                                        bool shouldPickNextAnim)
-{
+{  
   PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.StopLightAnim",
-                "Stopping %s on object %d on layer %s",
+                "Stopping %s on object %d on layer %s.",
                 EnumToString(animTrigger),
                 objectID.GetValue(),
                 LayerToString(layer));
-  
+
   auto helper = [this](const CubeAnimationTrigger& animTrigger,
                        const ObjectID& objectID,
                        const AnimLayerEnum& layer,
@@ -582,7 +582,32 @@ bool CubeLightComponent::StopLightAnim(const CubeAnimationTrigger& animTrigger,
   
   // Manually update so the anims are immediately stopped
   Update(shouldPickNextAnim);
-  
+
+  std::stringstream ss;
+  for( const auto& objectInfoPair : _objectInfo ){
+    if( objectID.IsSet() && objectID != objectInfoPair.first ) {
+      continue;
+    }
+    
+    ss << "object=" << objectInfoPair.first.GetValue() << " layer=" << LayerToString(layer)
+       << " currLayer=" << LayerToString(objectInfoPair.second.curLayer) << " [";
+    
+    for(auto& anim : objectInfoPair.second.animationsOnLayer[layer]) {
+      ss << anim.name << ":" << CubeAnimationTriggerToString( anim.trigger ) << "@" << anim.timeCurPatternEnds;
+      if( anim.stopNow ) {
+        ss << ":STOP_NOW";
+      }
+      ss << " ";
+    }
+    ss << "]";
+  }
+
+  PRINT_CH_DEBUG("CubeLightComponent", "CubeLightComponent.StopLignAnim.Result",
+                 "%s anim '%s'. Current state: %s",
+                 foundAnimWithTrigger ? "found" : "did not find",
+                 EnumToString(animTrigger),
+                 ss.str().c_str());
+    
   return foundAnimWithTrigger;
 }
 
@@ -772,7 +797,12 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
       for(auto& pair : _objectInfo)
       {
         pair.second.isOnlyGameLayerEnabled = false;
-        pair.second.curLayer = AnimLayerEnum::State;
+        if( pair.second.animationsOnLayer[AnimLayerEnum::Engine].empty() ) {
+          pair.second.curLayer = AnimLayerEnum::State;
+        }
+        else {
+          pair.second.curLayer = AnimLayerEnum::Engine;
+        }
         PickNextAnimForDefaultLayer(pair.first);
       }
     }
@@ -794,7 +824,12 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
       {
         StopAllAnimsOnLayer(AnimLayerEnum::User, objectID);
         StopAllAnimsOnLayer(AnimLayerEnum::State, objectID);
-        iter->second.curLayer = AnimLayerEnum::State;
+        if( iter->second.animationsOnLayer[AnimLayerEnum::Engine].empty() ) {
+          iter->second.curLayer = AnimLayerEnum::State;
+        }
+        else {
+          iter->second.curLayer = AnimLayerEnum::Engine;
+        }
         iter->second.isOnlyGameLayerEnabled = false;
         PickNextAnimForDefaultLayer(objectID);
       }
