@@ -429,6 +429,7 @@ namespace Cozmo.Needs.Sparks.UI {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
         _SparkButton.Interactable = false;
+        _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
         _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
         _ButtonPromptDescription.text = Localization.Get(_UnlockInfo.SparkedStateDescription);
         _SparkSpinnerContainer.gameObject.SetActive(true);
