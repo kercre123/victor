@@ -93,6 +93,9 @@
   "connectivity.sendGameplayDataPrompt" : {
     "translation" : "Cozmoの改善のため、ゲームプレイのデータと統計を送信してください。"
   },
+  "needs.VoiceSettingsModal.Title" : {
+    "translation" : "声で指示"
+  },
   "connectivity.behaviorDisplayDisconnected" : {
     "translation" : "Cozmoの接続が解除されました。"
   }

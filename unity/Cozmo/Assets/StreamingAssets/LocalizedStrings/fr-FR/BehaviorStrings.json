@@ -207,6 +207,9 @@
   "behavior.singing.MussIDenn" : {
     "translation" : "Cozmo chante Muss I Denn..."
   },
+  "behavior.ReactToVoiceCommand" : {
+    "translation" : "Cozmo t'écoute..."
+  },
   "behavior.VC_Refuse_Energy" : {
     "translation" : "Cozmo doit être nourri..."
   },
@@ -259,6 +262,6 @@
     "translation" : "CONTINUER"
   },
   "button.hide" : {
-    "translation" : "HIDE"
+    "translation" : "MASQUER"
   }
 }

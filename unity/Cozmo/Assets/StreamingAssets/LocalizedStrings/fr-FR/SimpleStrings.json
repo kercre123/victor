@@ -136,7 +136,7 @@
     "translation" : "Politique de confidentialité"
   },
   "label.pressAndHoldInstruction" : {
-    "translation" : "Press and hold <b><color=#fe5641>{0}</color></b> to confirm."
+    "translation" : "Appuie sur <b><color=#fe5641>{0}</color></b> de manière prolongée pour confirmer."
   },
   "label.termsOfUse" : {
     "translation" : "Conditions d'utilisation"

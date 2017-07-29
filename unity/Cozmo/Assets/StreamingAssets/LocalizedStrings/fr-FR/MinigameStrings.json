@@ -286,13 +286,13 @@
     "translation" : "Pour débloquer, déverrouille Réflexe."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "<b>TWO COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>ONE COLOR</b> mode."
+    "translation" : "Le mode <b>DEUX COULEURS</b> est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE UNE COULEUR </b>."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "<b>THREE COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>TWO COLORS</b> mode."
+    "translation" : "Le mode <b>TROIS COULEURS</b> est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE DEUX COULEURS</b>."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "<b>FOUR COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>THREE COLORS</b> mode."
+    "translation" : "Le mode <b>QUATRE COULEURS</b> est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en <b>MODE TROIS COULEURS</b>."
   },
   "speedTap.text.getReady" : {
     "translation" : "Soit prêt !"
@@ -331,7 +331,7 @@
     "translation" : "Humain contre Humain contre Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "Type a word or phrase and hear Cozmo say it:"
+    "translation" : "Saisis un mot ou une phrase et écoute Cozmo le prononcer :"
   },
   "sayCozmo.button.say" : {
     "translation" : "Dis"
@@ -364,15 +364,15 @@
     "translation" : "Tu as\u000agagné !"
   },
   "label.MATCH" : {
-    "translation" : "MATCH!"
+    "translation" : "CORRESPONDANCE !"
   },
   "label.NO.MATCH" : {
-    "translation" : "NO \\u000aMATCH"
+    "translation" : "PAS DE \\u000aCORRESPONDANCE"
   },
   "label.DONT.SLAP" : {
-    "translation" : "DON'T \\u000aSLAP!"
+    "translation" : "NE TAPE \\u000aPAS !"
   },
   "label.enterText" : {
-    "translation" : "Enter text..."
+    "translation" : "Saisis le texte..."
   }
 }

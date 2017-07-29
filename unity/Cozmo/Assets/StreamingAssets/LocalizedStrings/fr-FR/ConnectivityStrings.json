@@ -10,16 +10,16 @@
     "translation" : "Connexion à ton Cozmo..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "You need to connect to Cozmo."
+    "translation" : "Tu dois te connecter à Cozmo"
   },
   "connectivity.moreInfo" : {
     "translation" : "PLUS D'INFORMATIONS"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "Turn Cozmo on."
+    "translation" : "Active Cozmo."
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "Connect in WiFi Settings."
+    "translation" : "Connecte-toi dans les paramètres Wi-Fi."
   },
   "connectivity.searchingForCozmo" : {
     "translation" : "Recherche de Cozmo"
@@ -91,9 +91,12 @@
     "translation" : "Édition Collector : Métal liquide"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "Aidez-nous à améliorer Cozmo en nous envoyant vos données de jeu et vos statistiques"
+    "translation" : "Aide-nous à améliorer Cozmo en nous envoyant des données et des statistiques concernant ta façon de jouer"
+  },
+  "needs.VoiceSettingsModal.Title" : {
+    "translation" : "Commandes vocales"
   },
   "connectivity.behaviorDisplayDisconnected" : {
-    "translation" : "Cozmo has been disconnected."
+    "translation" : "Cozmo a été déconnecté."
   }
 }

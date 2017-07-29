@@ -13,7 +13,7 @@
     "translation" : "Cozmo a besoin de {0} {1} de plus pour commencer {2}."
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "Cozmo Is Not Ready"
+    "translation" : "Cozmo n'est pas prêt"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "Aide Cozmo à se redresser afin qu'il soit prêt à jouer"
@@ -88,9 +88,9 @@
     "translation" : "INCORRECT"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for games and do tricks, and sometimes even earn sparks."
+    "translation" : "Cozmo adore avoir le droit de choisir comment il veut jouer.  Il demandera automatiquement à faire des jeux, exécutera des tours et gagnera parfois des étincelles."
   },
   "activityView.freeplayTitle" : {
-    "translation" : "COZMO IS CURRENTLY IN FREEPLAY"
+    "translation" : "COZMO EST ACTUELLEMENT EN MODE DE JEU LIBRE"
   }
 }

@@ -28,7 +28,7 @@
     "translation" : "Cozmo a vu\u000ace cube."
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmo wants to\u000ause this Cube."
+    "translation" : "Cozmo veut\u000autiliser ce cube."
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "La pile de ce cube\u000aest faible"
@@ -37,13 +37,13 @@
     "translation" : "Cozmo s'améliore avec le temps."
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "Each day you fill Cozmo's Play Need, you earn a Play Token. Play Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Tricks."
+    "translation" : "Chaque fois que tu satisfais l'envie de jouer de Cozmo, tu gagnes un Token. Les Tokens débloquent les boîtes à bonus, pleines de récompenses telles que des étincelles, des jeux et des tours."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<color=#FFFFFF>Earn </color><b><color=#F5BF2D>Play Tokens</color></b><color=#FFFFFF> each day.</color>"
+    "translation" : "<color=#FFFFFF>Gagne des </color><b><color=#F5BF2D>Tokens</color></b><color=#FFFFFF> chaque jour.</color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<color=#FFFFFF>3 Tokens unlock a </color><b><color=#F5BF2D>Bonus Box.</color></b>"
+    "translation" : "<color=#FFFFFF>3 Tokens débloquent une </color><b><color=#F5BF2D>boîte à bonus.</color></b>"
   },
   "helpTipsStrings.Slide4.title" : {
     "translation" : "Énergie, bits et étincelles"

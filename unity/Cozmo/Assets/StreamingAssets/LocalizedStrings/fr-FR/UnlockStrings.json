@@ -16,7 +16,7 @@
     "translation" : "Compétence verrouillée"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Fill Cozmo's Play Need each day to earn a Play Token. These unlock Bonus Boxes, which may contain new Abilities!"
+    "translation" : "Satisfais les besoins de jeu de Cozmo tous les jours pour gagner un Token. Les Tokens débloquent les boîtes à bonus, qui peuvent contenir de nouvelles compétences."
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Check"
@@ -214,7 +214,7 @@
     "translation" : "Pas assez d'étincelles"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "Earn more in Freeplay and Bonus Boxes."
+    "translation" : "Gagne plus en laissant Cozmo jouer en mode de jeu libre ou dans les boîtes à bonus"
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "Vérifie que les cubes sont à l'endroit"
@@ -223,6 +223,6 @@
     "translation" : "Lorsque les cubes sont à l'endroit, lumières vers le haut, Cozmo peut construire plus rapidement."
   },
   "sparks.free" : {
-    "translation" : "Free"
+    "translation" : "Gratuit"
   }
 }
