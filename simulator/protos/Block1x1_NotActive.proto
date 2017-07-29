@@ -131,6 +131,7 @@ Solid {
       appearance Appearance {
         material Material {
           diffuseColor IS blockColor
+          ambientIntensity 1
         }
       }
       geometry Box {
@@ -180,12 +181,7 @@ Solid {
   
 
   ] # Block Children
-  
-  boundingObject USE Block1x1Shape
-  physics DEF Block1x1Physics Physics {
-    mass IS mass
-    density -1
-  }
+
 } # "Robot" (the actual block)
 
   

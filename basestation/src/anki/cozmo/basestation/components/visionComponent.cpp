@@ -195,7 +195,7 @@ namespace Cozmo {
     
   } //Init()
   
-  void VisionComponent::SetCameraCalibration(Vision::CameraCalibration& camCalib)
+  void VisionComponent::SetCameraCalibration(const Vision::CameraCalibration& camCalib)
   {
     if(_camCalib != camCalib || !_isCamCalibSet)
     {

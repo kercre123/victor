@@ -107,6 +107,15 @@ enum uint_8 FactoryTestResultCode {
   ONE_POINT_ZERO_FIRMWARE,
 
   // Victor specific error codes
+  WRITE_TO_LOG_FAILED,
+  BEHAVIOR_NOT_RUNNABLE,
+  NOT_SEEING_CALIB_TARGET_TIMEOUT,
+  UNEXPECTED_ON_CHARGER,
+  HEAD_MOTOR_DISABLED,
+  LIFT_MOTOR_DISABLED,
+  MOTOR_DISABLED,
+  UNEXPECTED_MOVEMENT_DETECTED,
+  ACTION_FAILED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===

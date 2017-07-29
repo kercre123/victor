@@ -43,24 +43,6 @@ TEST(VisionSystem, rando)
 
 TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
 {
-//  using namespace Anki;
-//  auto img = cv::imread("/Users/alchaussee/Desktop/images_24180_0.jpg");
-//  auto img = cv::imread("/Users/alchaussee/Desktop/images_22165_12.jpg");
-//  std::vector<cv::KeyPoint> keypoints;
-//  auto detector = cv::SimpleBlobDetector::create();
-//  detector->detect(img, keypoints);
-//  
-//  std::sort(keypoints.begin(), keypoints.end(), [](cv::KeyPoint x, cv::KeyPoint y){ return x.pt.y<y.pt.y; });
-//  
-//  
-//  cv::Mat out = img;
-//  int i = 0;
-//  for(auto p : keypoints)
-//  {
-//    cv::putText(out, std::to_string(i), keypoints[i].pt, cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0,0,255));
-//    i++;
-//  }
-
   /*
   
    _
@@ -87,31 +69,40 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   */
 
   const Anki::Quad3f originsFrontFace({
-    {-12.5, -22, 12.5},
-    {-12.5, -22, -12.5},
-    {12.5, -22, 12.5},
-    {12.5, -22, -12.5}
+    {-7.5, -15, 7.5},
+    {-7.5, -15, -7.5},
+    {7.5, -15, 7.5},
+    {7.5, -15, -7.5}
     });
   
   const Anki::Quad3f originsLeftFace({
-    {-22, 12.5, 12.5},
-    {-22, 12.5, -12.5},
-    {-22, -12.5, 12.5},
-    {-22, -12.5, -12.5}
+    {-15, 7.5, 7.5},
+    {-15, 7.5, -7.5},
+    {-15, -7.5, 7.5},
+    {-15, -7.5, -7.5}
     });
   
-  auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace](bool isFrontFace,
+  const Anki::Quad3f originsBottomFace({
+    {-7.5, -7.5 , -15},
+    {-7.5, 7.5 , -15},
+    {7.5, -7.5 , -15},
+    {7.5, 7.5 , -15},
+  });
+  
+  auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace, &originsBottomFace](bool isFrontFace,
                                  int numCubesRightOfOrigin,
                                  int numCubesAwayRobotFromOrigin,
-                                 int numCubesAboveOrigin)
+                                 int numCubesAboveOrigin,
+                                 bool isBottomFace = false)
   {
     
     Anki::Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
+    whichFace = (isBottomFace ? originsBottomFace : whichFace);
 
     Anki::Pose3d p;
-    p.SetTranslation({44.f * numCubesRightOfOrigin,
-                      44.f * numCubesAwayRobotFromOrigin,
-                      44.f * numCubesAboveOrigin});
+    p.SetTranslation({30.f * numCubesRightOfOrigin,
+                      30.f * numCubesAwayRobotFromOrigin,
+                      30.f * numCubesAboveOrigin});
     
     p.ApplyTo(whichFace, whichFace);
     return whichFace;
@@ -120,70 +111,49 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   std::map<Anki::Vision::MarkerType, Anki::Quad3f> _markerTo3dCoords;
   
   // Bottom row of cubes
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT] = GetCoordsForFace(true, 0, 0, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT] = GetCoordsForFace(true, 0, 0, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT] = GetCoordsForFace(true, 1, 0, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(true, 2, 0, 0);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT] = GetCoordsForFace(false, 1, -1, 0);
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_FRONT] = GetCoordsForFace(true, 1, -1, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES] = GetCoordsForFace(true, -1, 0, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP] = GetCoordsForFace(true, 0, 0, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK] = GetCoordsForFace(true, 1, 0, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BOTTOM] = GetCoordsForFace(true, 2, 0, 1);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(false, 2, -2, 0);
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK] = GetCoordsForFace(true, 2, -2, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES] = GetCoordsForFace(true, -1, 0, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS] = GetCoordsForFace(true, 0, 0, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS] = GetCoordsForFace(true, 1, 0, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES] = GetCoordsForFace(true, 2, 0, 2);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP] = GetCoordsForFace(false, 3, -3, 0);
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_RIGHT] = GetCoordsForFace(true, 3, -3, 0);
+  // Left face
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 3, -1, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT] = GetCoordsForFace(false, 3, -2, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT] = GetCoordsForFace(false, 3, -3, 0);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT] = GetCoordsForFace(false, 4, -4, 0);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT] = GetCoordsForFace(false, 3, -1, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT] = GetCoordsForFace(false, 3, -2, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP] = GetCoordsForFace(false, 3, -3, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK] = GetCoordsForFace(false, 3, -4, 1);
   
-  // Second row of cubes
-  _markerTo3dCoords[Anki::Vision::MARKER_ARROW] = GetCoordsForFace(true, 0, 1, 1);
+  _markerTo3dCoords[Anki::Vision::MARKER_ARROW] = GetCoordsForFace(false, 3, -1, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK] = GetCoordsForFace(false, 3, -2, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 3, -3, 2);
+  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT] = GetCoordsForFace(false, 3, -4, 2);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS] = GetCoordsForFace(true, 1, 0, 1);
+//  // Bottom of top face
+  _markerTo3dCoords[Anki::Vision::MARKER_BULLSEYE2] = GetCoordsForFace(false, -1, -1, 3, true);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES] = GetCoordsForFace(false, 0, -1, 3, true);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES] = GetCoordsForFace(false, 1, -1, 3, true);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS] =  GetCoordsForFace(false, 2, -1, 3, true);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5DIAMONDS] = GetCoordsForFace(false, 2, -1, 1);
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS] = GetCoordsForFace(true, 2, -1, 1);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS] = GetCoordsForFace(false, 3, -2, 1);
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS] = GetCoordsForFace(true, 3, -2, 1);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5CIRCLES] = GetCoordsForFace(false, 4, -3, 1);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES] = GetCoordsForFace(false, 5, -4, 1);
-  
-  // Third row of cubes
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS] = GetCoordsForFace(true, 0, 2, 2);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES] = GetCoordsForFace(true, 1, 1, 2);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT] = GetCoordsForFace(false, 2, 0, 2);
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(true, 2, 0, 2);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_STAR5] = GetCoordsForFace(false, 3, -1, 2);
-  _markerTo3dCoords[Anki::Vision::MARKER_BULLSEYE2] = GetCoordsForFace(true, 3, -1, 2);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES] = GetCoordsForFace(false, 4, -2, 2);
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES] = GetCoordsForFace(true, 4, -2, 2);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES] = GetCoordsForFace(false, 5, -3, 2);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS] = GetCoordsForFace(false, 6, -4, 2);
-  
-  // Fourth row of cubes
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES] = GetCoordsForFace(true, 0, 3, 3);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK] = GetCoordsForFace(true, 1, 2, 3);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT] = GetCoordsForFace(true, 2, 1, 3);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT] = GetCoordsForFace(false, 3, 0, 3);
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT] = GetCoordsForFace(true, 3, 0, 3);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS] = GetCoordsForFace(false, 0, -2, 3, true);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES] =          GetCoordsForFace(false, 1, -2, 3, true);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS] =      GetCoordsForFace(false, 2, -2, 3, true);
 
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 4, -1, 3);
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK] = GetCoordsForFace(true, 4, -1, 3);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3HEXAGONS] = GetCoordsForFace(false, 1, -3, 3, true);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES] =  GetCoordsForFace(false, 2, -3, 3, true);
   
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP] = GetCoordsForFace(false, 5, -2, 3);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 6, -3, 3);
-  
-  _markerTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES] = GetCoordsForFace(false, 7, -4, 3);
+  _markerTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS] = GetCoordsForFace(false, 2, -4, 3, true);
   
   Anki::Cozmo::VisionSystem* visionSystem = new Anki::Cozmo::VisionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
@@ -193,7 +163,14 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
   //fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000
-  Anki::Vision::CameraCalibration calib(720,1280,507.8f,507.8f,639.5f,359.5f,0.f);
+//  const f32 kRadialDistCoeff1     = -0.02f;
+//  const f32 kRadialDistCoeff2     = -0.01f;
+//  const f32 kRadialDistCoeff3     = -0.005f;
+//  const f32 kTangentialDistCoeff1 = 0.005f;
+//  const f32 kTangentialDistCoeff2 = 0.0025f;
+
+  Anki::Vision::CameraCalibration calib(240,320,290,290,160,120,0.f);
+//  Anki::Vision::CameraCalibration calib(720,1280,507.8f,507.8f,639.5f,359.5f,0.f);
   result = visionSystem->UpdateCameraCalibration(calib);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
@@ -212,7 +189,12 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
   Anki::Vision::ImageRGB img;
   
-  result = img.Load("/Users/alchaussee/Desktop/images_20265_0.jpg"); //really warped
+//  result = img.Load("/Users/alchaussee/Desktop/images_4410_0.jpg");
+  result = img.Load("/Users/alchaussee/Desktop/images_31635_0.jpg");
+  
+  
+//  result = img.Load("/Users/alchaussee/Desktop/images_5135_0.jpg");
+//  result = img.Load("/Users/alchaussee/Desktop/images_20265_0.jpg"); //really warped
 //  result = img.Load("/Users/alchaussee/Desktop/images_34975_1.jpg"); //warped and back
 //  result = img.Load("/Users/alchaussee/Desktop/images_15440_1.jpg"); //warped
 //  result = img.Load("/Users/alchaussee/Desktop/images_12905_1.jpg"); // Unwarped
@@ -274,30 +256,6 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   img.Display("");
   cv::waitKey();
   
-//  std::vector<std::vector<cv::Vec2f>> imgPts = {{
-//                             {keypoints[0].pt.x, keypoints[0].pt.y},
-//                             {keypoints[1].pt.x, keypoints[1].pt.y},
-//                             {keypoints[2].pt.x, keypoints[2].pt.y},
-//                             {keypoints[3].pt.x, keypoints[3].pt.y},
-//                             {keypoints[4].pt.x, keypoints[4].pt.y},
-//                             {keypoints[5].pt.x, keypoints[5].pt.y},
-//                             {keypoints[6].pt.x, keypoints[6].pt.y},
-//                             {keypoints[7].pt.x, keypoints[7].pt.y}}};
-//  
-////  float x = 0.005 * cos(DEG_TO_RAD(13.8));
-////  float z = 0.005 * sin(DEG_TO_RAD(13.8));
-//  float x = 0.005 * cos(DEG_TO_RAD(9.2));
-//  float z = 0.005 * sin(DEG_TO_RAD(9.2));
-//  std::vector<std::vector<cv::Vec3f>> worldPts = {{
-//                               {0.1f-x,   0.03, 0.1f-z},
-//                               {0.1f-x,  -0.03, 0.09f-z},
-//                               {0.2f-x,   0.03, 0.1f-z},
-//                               {0.2f-x,  -0.03, 0.08f-z},
-//                               {0.15f-x,  0.03, 0.06f-z},
-//                               {0.15f-x, -0.03, 0.05f-z},
-//                               {0.12f-x,  0,    0.04f-z},
-//                               {0.16f-x,  0,    0.02f-z}}};
-  
   cv::Mat_<double> D = cv::Mat::zeros(8, 1, CV_64F);
   std::vector<cv::Mat_<double>> R2;
   R2.push_back(cv::Mat::zeros(3, 3, CV_64F));
@@ -306,9 +264,14 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
 //  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
   cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
-                          507, 0, 639,
-                          0, 507, 359,
+                          290, 0, 160,
+                          0, 290, 120,
                           0, 0, 1);
+  
+//  cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
+//                         507, 0, 639,
+//                         0, 507, 359,
+//                         0, 0, 1);
   
   std::vector<std::vector<cv::Vec2f>> imgPts2;
   std::vector<std::vector<cv::Vec3f>> worldPts2;

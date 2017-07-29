@@ -1814,17 +1814,24 @@ namespace Anki {
 
               case (s32)'@':
               {
-                static bool enable = true;
-                ExternalInterface::SendAvailableObjects msg;
-                msg.robotID = 1;
-                msg.enable = enable;
-                
-                LOG_INFO("SendAvailableObjects", "enable: %d", enable);
-                ExternalInterface::MessageGameToEngine msgWrapper;
-                msgWrapper.Set_SendAvailableObjects(msg);
-                SendMessage(msgWrapper);
-                
-                enable = !enable;
+                if(altKeyPressed)
+                {
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::PlaypenTest)));
+                }
+                else
+                {
+                  static bool enable = true;
+                  ExternalInterface::SendAvailableObjects msg;
+                  msg.robotID = 1;
+                  msg.enable = enable;
+                  
+                  LOG_INFO("SendAvailableObjects", "enable: %d", enable);
+                  ExternalInterface::MessageGameToEngine msgWrapper;
+                  msgWrapper.Set_SendAvailableObjects(msg);
+                  SendMessage(msgWrapper);
+                  
+                  enable = !enable;
+                }
                 break;
               }
               case (s32)'#':

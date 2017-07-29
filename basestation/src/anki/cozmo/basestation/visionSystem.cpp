@@ -3195,6 +3195,18 @@ namespace Cozmo {
     }
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)_calibImages.size());
     
+    // Check that there are enough markers
+    // TODO Figure out min number of markers (what if top row is cut off thats like 12 markers)
+    const u32 kNumMarkersNeededForCalibration = 20;
+    if(_currentResult.observedMarkers.size() < kNumMarkersNeededForCalibration)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.ComputeCalibration.NotEnoughMarkers",
+                          "Seeing only %zu markers, need to be seeing at least %d",
+                          _currentResult.observedMarkers.size(),
+                          kNumMarkersNeededForCalibration);
+      return RESULT_FAIL;
+    }
+    
     std::map<Anki::Vision::MarkerType, Anki::Quad3f> _markerTo3dCoords;
     
     {
@@ -3364,10 +3376,17 @@ namespace Cozmo {
     }
     
     //  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
+#ifdef COZMO_V2
     cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
                                   507, 0, 639,
                                   0, 507, 359,
                                   0, 0, 1);
+#else
+    cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
+                                  290, 0, 160,
+                                  0, 290, 120,
+                                  0, 0, 1);
+#endif
     
     std::vector<cv::Vec3d> rvecs, tvecs;
     cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
@@ -3376,9 +3395,21 @@ namespace Cozmo {
     std::vector<std::vector<cv::Vec3f>> worldPts2;
     imgPts2.push_back(imgPts);
     worldPts2.push_back(worldPts);
-    const f64 rms = cv::calibrateCamera(worldPts2, imgPts2, cv::Size(img.GetNumCols(), img.GetNumRows()),
-                                        cameraMatrix, distCoeffs, rvecs, tvecs,
-                                        cv::CALIB_USE_INTRINSIC_GUESS);
+    
+    f64 rms = 0;
+    try
+    {
+      rms = cv::calibrateCamera(worldPts2, imgPts2, cv::Size(img.GetNumCols(), img.GetNumRows()),
+                                cameraMatrix, distCoeffs, rvecs, tvecs,
+                                cv::CALIB_USE_INTRINSIC_GUESS);
+    }
+    catch(cv::Exception& e)
+    {
+      PRINT_NAMED_ERROR("VisionSystem.ComputeCalibrationSingleImage.OpenCVError",
+                        "%s",
+                        e.what());
+      return RESULT_FAIL;
+    }
     
     ss.str(std::string());
     ss << cameraMatrix << std::endl;

@@ -1,12 +1,10 @@
 /**
- * File: behaviorDance.h
+ * File: behaviorPlaypenCameraCalibration.h
  *
  * Author: Al Chaussee
- * Created: 05/11/17
+ * Created: 07/25/17
  *
- * Description: Behavior to have Cozmo dance
- *              Plays dancing animation, triggers music from device, and
- *              plays cube light animations
+ * Description:
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -28,14 +26,24 @@ protected:
   friend class BehaviorContainer;
   BehaviorPlaypenCameraCalibration(Robot& robot, const Json::Value& config);
   
-public:
-
-  virtual BehaviorStatus GetResults() override;
-  
 protected:
   
-  virtual Result InitInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
+  virtual Result         InternalInitInternal(Robot& robot)   override;
+  virtual BehaviorStatus InternalUpdateInternal(Robot& robot) override;
+  virtual void           StopInternal(Robot& robot)   override;
+  
+  virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
+  
+  virtual void GetResultsInternal() override;
+  
+private:
+
+  void HandleCameraCalibration(Robot& robot, const CameraCalibration& calibMsg);
+  void HandleRobotObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
+
+  bool        _computingCalibration        = false;
+  TimeStamp_t _timeStartedWaitingForTarget = 0;
+  bool        _seeingTarget                = false;
 };
 
 }
