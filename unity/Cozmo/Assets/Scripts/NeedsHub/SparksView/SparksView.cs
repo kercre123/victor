@@ -65,6 +65,11 @@ namespace Cozmo.Needs.Sparks.UI {
     private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
     private NeedSevereAlertController _NeedSevereAlertController;
 
+    protected override void RaiseDialogClosed() {
+      base.RaiseDialogClosed();
+      ShowFreeplayCard();
+    }
+
     public void InitializeSparksView(List<ChallengeManager.ChallengeStatePacket> minigameData) {
       _BackButton.Initialize(HandleBackButtonPressed, "back_button", DASEventDialogName);
       _AskForTrickButton.Initialize(HandleAskForTrickButtonPressed, "ask_for_trick", DASEventDialogName);
@@ -168,8 +173,6 @@ namespace Cozmo.Needs.Sparks.UI {
       if (OnBackButtonPressed != null) {
         OnBackButtonPressed();
       }
-      // slide scrollview all the way left so it goes offscreen
-      ShowFreeplayCard();
     }
 
     private void HandleOnboardingPhaseComplete(OnboardingManager.OnboardingPhases phase) {

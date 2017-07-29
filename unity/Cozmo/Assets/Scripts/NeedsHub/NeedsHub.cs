@@ -386,8 +386,10 @@ namespace Cozmo.Hub {
     }
 
     private void DeregisterSparksViewEvents() {
-      _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
-      _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+      if (_SparksViewInstance != null) {
+        _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
+        _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+      }
       if (_SparksDetailModalInstance != null) {
         _SparksDetailModalInstance.OnSparkCompleteToReturn -= HandleSparkEnded;
       }
