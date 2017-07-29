@@ -1396,10 +1396,8 @@ MonoBehaviour:
   _BackButton: {fileID: 114853766208602460}
   _AskForTrickButton: {fileID: 114105065982268826}
   _AskForTrickCostText: {fileID: 114601863021708972}
-  _AskForTrickMicIcon: {fileID: 0}
   _AskForGameButton: {fileID: 114947989075916690}
   _AskForGameCostText: {fileID: 114177082458038448}
-  _AskForGameMicIcon: {fileID: 0}
   _ListAbilitiesButton: {fileID: 114693786301658534}
   _OnboardingDimmers:
   - {fileID: 1527962819327542}
@@ -1943,7 +1941,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2217,7 +2214,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114026315794341340}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2642,10 +2638,10 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 70
+  m_fontSize: 72
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -3576,7 +3572,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4249,7 +4244,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Back
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4318,7 +4312,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4625,7 +4618,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
