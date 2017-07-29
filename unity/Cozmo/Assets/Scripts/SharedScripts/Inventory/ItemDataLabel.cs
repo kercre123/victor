@@ -82,11 +82,12 @@ namespace Cozmo {
       private void HandleItemValueChanged(string itemId, int delta, int newCount) {
         if (itemId == _ItemId) {
           if (delta > 0) {
-            if (_ItemIconAnimatorInstance != null) {
+            if (_ItemIconAnimatorInstance != null && _ItemIconBurstAnimHash != 0) {
               _ItemIconAnimatorInstance.Play(_ItemIconBurstAnimHash);
             }
             else {
-              DAS.Error(this, string.Format("Missing animator for {0}", name));
+              DAS.Error(this, string.Format("Missing animator for {0}, item id: {1}, count: {2}, animName: {3}",
+                                            name, itemId, newCount, _ItemIconBurstAnimStateName));
             }
           }
           SetCountText(newCount);
@@ -94,11 +95,17 @@ namespace Cozmo {
       }
 
       private void SetCountText(int newCount) {
-        _CountLabel.text = Localization.GetNumber(newCount);
+        if (_CountLabel != null) {
+          _CountLabel.text = Localization.GetNumber(newCount);
 
-        // Force the rect transform to update for use with ContentSizeFitters
-        _CountLabel.gameObject.SetActive(false);
-        _CountLabel.gameObject.SetActive(true);
+          // Force the rect transform to update for use with ContentSizeFitters
+          _CountLabel.gameObject.SetActive(false);
+          _CountLabel.gameObject.SetActive(true);
+        }
+        else {
+          DAS.Error(this, string.Format("Missing Count Label for {0}, item id: {1}, count: {2}, animName: {3}",
+                                        name, _ItemId, newCount, _ItemIconBurstAnimStateName));
+        }
       }
     }
   }
