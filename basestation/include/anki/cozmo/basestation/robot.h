@@ -516,6 +516,10 @@ public:
   // Returns the current accelerometer magnitude, after being low-pass filtered.
   float GetHeadAccelMagnitudeFiltered() const {return _robotAccelMagnitudeFiltered; }
   
+  // IMU temperature sent from the robot
+  void SetImuTemperature(const float temp) { _robotImuTemperature_degC = temp; }
+  float GetImuTemperature() const {return _robotImuTemperature_degC; }
+  
   // send the request down to the robot
   Result RequestIMU(const u32 length_ms) const;
 
@@ -879,6 +883,7 @@ protected:
   float            _robotAccelMagnitude = 0.0f; // current magnitude of accelerometer data (norm of all three axes)
   float            _robotAccelMagnitudeFiltered = 0.0f; // low-pass filtered accelerometer magnitude
   AccelData        _robotAccelFiltered; // low-pass filtered robot accelerometer data (for each axis)
+  float            _robotImuTemperature_degC = 0.f;
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use

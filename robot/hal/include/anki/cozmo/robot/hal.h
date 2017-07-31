@@ -284,6 +284,7 @@ namespace Anki
         void Reset() {
           acc_x = acc_y = acc_z = 0;
           rate_x = rate_y = rate_z = 0;
+          temperature_degC = 0.f;
         }
         
         f32 acc_x;      // mm/s/s
@@ -292,6 +293,8 @@ namespace Anki
         f32 rate_x;     // rad/s
         f32 rate_y;
         f32 rate_z;
+        
+        f32 temperature_degC;
       };
 
       // Read acceleration and rate
