@@ -696,6 +696,7 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   // needed for StopOnNextActionComplete to work properly, don't allow starting new actions if we've requested
   // the behavior to stop
   if( _stopRequestedAfterAction ) {
+    delete action;
     return false;
   }
   
@@ -703,6 +704,7 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
                         GetIDStr().c_str(), action->GetName().c_str());
+    delete action;
     return false;
   }
 
@@ -711,6 +713,7 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
                         "Behavior '%s' can't start %s action because it is already running an action in state %s",
                         GetIDStr().c_str(), action->GetName().c_str(),
                         GetDebugStateName().c_str());
+    delete action;
     return false;
   }
 
@@ -718,7 +721,16 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   _lastActionTag = action->GetTag();
   
   ScoredActingStateChanged(true);
-  _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
+
+  Result result = _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
+  if (RESULT_OK != result) {
+    PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotQueued",
+                        "Behavior '%s' can't queue action '%s' (error %d)",
+                        GetIDStr().c_str(), action->GetName().c_str(), result);
+    delete action;
+    return false;
+  }
+
   return true;
 }
 
