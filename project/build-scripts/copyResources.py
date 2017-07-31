@@ -57,7 +57,7 @@ class CopyResources(object):
                         action='store', default=None, help='where cube animation groups are located')
     parser.add_argument('--rewardedActionsPath', dest='rewardedActionsPath', required=True,
                         action='store', default=None, help='Where rewarded actions data is located')
-    parser.add_argument('--voiceCommandResourcesPath', dest='voiceCommandResourcesPath', required=True,
+    parser.add_argument('--voiceCommandResourcesPath', dest='voiceCommandResourcesPath', required=False,
                         action='store', default=None, help='Where voice command resources are located')
     parser.add_argument('--engineResourcesPath', dest='engineResourcesPath', required=True,
                         action='store', default=None, help='where engine resources are located')
@@ -179,9 +179,10 @@ class CopyResources(object):
     voiceCommandResourcesPath = os.path.join(cozmoResourcesPath, 'assets/voiceCommand')
     if os.path.isdir(voiceCommandResourcesPath):
       ankibuild.util.File.rm_rf(voiceCommandResourcesPath)
-    if not ankibuild.util.File.cptree(self.options.voiceCommandResourcesPath, voiceCommandResourcesPath):
-      self.log.error("error copying {0} to {1}".format (self.options.voiceCommandResourcesPath, voiceCommandResourcesPath))
-      return False
+    if self.options.voiceCommandResourcesPath is not None:
+      if not ankibuild.util.File.cptree(self.options.voiceCommandResourcesPath, voiceCommandResourcesPath):
+        self.log.error("error copying {0} to {1}".format (self.options.voiceCommandResourcesPath, voiceCommandResourcesPath))
+        return False
 
     # engine resources
     engineResourcesPath = os.path.join(cozmoResourcesPath, 'config')
@@ -262,9 +263,10 @@ class CopyResources(object):
 
     # voice command resources
     voiceCommandResourcesPath = os.path.join(cozmoResourcesPath, 'assets/voiceCommand')
-    args = baseargs[:]
-    args += [self.options.voiceCommandResourcesPath, voiceCommandResourcesPath]
-    ankibuild.util.File.execute(args)
+    if self.options.voiceCommandResourcesPath is not None:
+      args = baseargs[:]
+      args += [self.options.voiceCommandResourcesPath, voiceCommandResourcesPath]
+      ankibuild.util.File.execute(args)
 
     # engine resources
     engineResourcesPath = os.path.join(cozmoResourcesPath, 'config')

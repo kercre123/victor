@@ -33,6 +33,8 @@
 #include <cmath>
 #include <thread>
 
+#if THF_FUNCTIONALITY
+
 namespace Anki {
 namespace Cozmo {
 namespace VoiceCommand {
@@ -533,3 +535,5 @@ double VoiceCommandTuning::FindBestBruteForce(std::function<double(double)> func
 } // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
+
+#endif // THF_FUNCTIONALITY

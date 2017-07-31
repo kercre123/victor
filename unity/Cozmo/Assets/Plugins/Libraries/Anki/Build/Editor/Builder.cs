@@ -216,8 +216,6 @@ namespace Anki {
                                                    assetFolder + "/assets/cubeAnimationGroupMaps");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
                                                    assetFolder + "/assets/RewardedActions");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/voiceCommand/exports",
-                                                   assetFolder + "/assets/voiceCommand");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
 
         // Copy generated platform resources
