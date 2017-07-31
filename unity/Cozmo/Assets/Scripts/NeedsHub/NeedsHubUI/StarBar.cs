@@ -18,7 +18,8 @@ namespace Cozmo.Needs.UI {
       BLING,  //newly earned stars are about to be display, spawn bling effect over needs meter
       STARS,  //spawn or despawn stars to match the current count from engine
       CRATE,  //spawn a crate icon
-      MODAL   //spawn the reward modal and hand it our accumulated star level rewards to display to user
+      MODAL,   //spawn the reward modal and hand it our accumulated star level rewards to display to user
+      ONBOARDING_WAIT_FOR_FILL, // before bling in onboarding, show an explination, wait for click to continue
     }
 
     #endregion //Nested Definitions
@@ -135,6 +136,14 @@ namespace Cozmo.Needs.UI {
     private bool StateTransition() {
       switch (_CurrentState) {
       case RewardState.IDLE:
+        // start onboarding if we have one token and have completed the previous section of onboarding, but dont restart if already in it.
+        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.RewardBox) &&
+            NeedsStateManager.Instance.GetLatestStarAwardedFromEngine() > 0 &&
+            !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro) &&
+             OnboardingManager.Instance.GetCurrentPhase() != OnboardingManager.OnboardingPhases.RewardBox) {
+          OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.RewardBox);
+          return ChangeState(RewardState.ONBOARDING_WAIT_FOR_FILL);
+        }
         if (DataPersistenceManager.Instance.StarLevelToDisplay) {
           return ChangeState(RewardState.BLING);
         }
@@ -166,6 +175,18 @@ namespace Cozmo.Needs.UI {
       case RewardState.MODAL:
         if (_NeedsModal == null) {
           return ChangeState(RewardState.IDLE);
+        }
+        break;
+      case RewardState.ONBOARDING_WAIT_FOR_FILL:
+        // iff onboarding says we've reached stage 2, show the bling animation
+        if (OnboardingManager.Instance.GetCurrentPhase() == OnboardingManager.OnboardingPhases.RewardBox) {
+          if (OnboardingManager.Instance.GetCurrStageInPhase(OnboardingManager.OnboardingPhases.RewardBox) > 0) {
+            return ChangeState(RewardState.BLING);
+          }
+        }
+        else {
+          // they've debug skipped past the phase
+          return ChangeState(RewardState.BLING);
         }
         break;
       }

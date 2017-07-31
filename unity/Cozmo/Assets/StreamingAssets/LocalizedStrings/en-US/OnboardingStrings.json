@@ -117,12 +117,6 @@
   "onboarding.PlayIntro": {
     "translation": "<b>Cozmo needs to play.</b>\n\nTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Play Token."
   },
-  "onboarding.RewardsIntro": {
-    "translation": "<b>You’ve earned a Play Token.</b>\n\nTokens unlock Bonus Boxes, filled with rewards like Sparks, Games, Tricks, and more."
-  },
-  "onboarding.End": {
-    "translation": "<b>You've learned the basics of being a great owner!</b>\n\nFeel free to explore all Cozmo can do, or leave Cozmo alone and he will automatically play Tricks and Games in Freeplay."
-  },
   "onboarding.ActivitiesIntro": {
     "translation": "Discover Activities are special and don't affect Cozmo’s Needs or cost Sparks."
   },
@@ -149,5 +143,20 @@
   },
   "onboarding.DoATrickDesc": {
     "translation": "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a cube he can see, and then watch him roll it."
+  },
+  "onboarding.RewardsIntro.Part1": {
+    "translation": "You’ve filled Cozmo’s <color=#f5ea12>Play Need.</color>"
+  },
+  "onboarding.RewardsIntro.Part2": {
+    "translation": "Each day you fill his <color=#f5ea12>Play Need</color> you’ll earn a <color=#f5ea12>Bonus Token.</color>"
+  },
+  "onboarding.TokensIntro.Part1": {
+    "translation": "Fill Cozmo’s <color=#f5ea12>Play Need</color> on three days to unlock a <color=#f5ea12>Bonus Box.</color>"
+  },
+  "onboarding.TokensIntro.Part2": {
+    "translation": "You’ve learned how to be a caring owner! As you unlock Bonus Boxes for Cozmo, he’ll discover Sparks and sometimes learn new things."
+  },
+  "onboarding.button.end": {
+    "translation": "COMPLETE"
   }
 }

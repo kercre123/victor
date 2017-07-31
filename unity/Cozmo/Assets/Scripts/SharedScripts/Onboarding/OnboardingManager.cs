@@ -105,7 +105,7 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
-  private int GetCurrStageInPhase(OnboardingPhases phase) {
+  public int GetCurrStageInPhase(OnboardingPhases phase) {
     if (phase == OnboardingPhases.None) {
       return 0;
     }
@@ -151,6 +151,9 @@ public class OnboardingManager : MonoBehaviour {
   }
   public bool IsAnyOnboardingActive() {
     return _CurrPhase != OnboardingPhases.None;
+  }
+  public OnboardingPhases GetCurrentPhase() {
+    return _CurrPhase;
   }
   public bool IsReturningUser() {
     PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
@@ -322,12 +325,6 @@ public class OnboardingManager : MonoBehaviour {
     if (!IsOnboardingRequired(OnboardingPhases.FeedIntro) && IsOnboardingRequired(OnboardingPhases.PlayIntro)) {
       StartPhase(OnboardingPhases.PlayIntro);
     }
-
-    if (Cozmo.Needs.NeedsStateManager.Instance.GetLatestStarAwardedFromEngine() > 0) {
-      if (!IsOnboardingRequired(OnboardingPhases.PlayIntro) && IsOnboardingRequired(OnboardingPhases.RewardBox)) {
-        StartPhase(OnboardingPhases.RewardBox);
-      }
-    }
   }
 
   public bool PreloadOnboarding() {
@@ -397,7 +394,7 @@ public class OnboardingManager : MonoBehaviour {
 
   public bool AllowFreeplayOnHubEnter() {
     return !IsOnboardingRequired(OnboardingPhases.InitialSetup) &&
-           !IsOnboardingRequired(OnboardingPhases.PlayIntro);
+           !IsOnboardingRequired(OnboardingPhases.RewardBox);
   }
 
   public bool IsOnboardingOverridingNavButtons() {
@@ -621,10 +618,6 @@ public class OnboardingManager : MonoBehaviour {
     if (_NeedsHubView != null) {
       _NeedsHubView.gameObject.SetActive(showContent);
       _NeedsHubView.OnboardingBlockoutImage.gameObject.SetActive(showDimmer);
-      // Last phase, don't dim the reward boxes by placing the blocker behind them
-      if (_CurrPhase == OnboardingPhases.RewardBox) {
-        _NeedsHubView.OnboardingBlockoutImage.transform.SetSiblingIndex(_NeedsHubView.OnboardingBlockoutImage.transform.GetSiblingIndex() - 1);
-      }
       bool anyDimmed = false;
       anyDimmed |= UpdateButtonState(_NeedsHubView.DiscoverButton, showButtonDiscover);
       anyDimmed |= UpdateButtonState(_NeedsHubView.RepairButton, showButtonRepair);
