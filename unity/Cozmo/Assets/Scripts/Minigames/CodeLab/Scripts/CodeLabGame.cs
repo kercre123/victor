@@ -1059,6 +1059,28 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
+      else if (scratchRequest.command == "cozmoSetCubeLightCorners") {
+         uint color1 = scratchRequest.argUInt;
+         uint color2 = scratchRequest.argUInt2;
+         uint color3 = scratchRequest.argUInt3;
+         uint color4 = scratchRequest.argUInt4;
+         uint cubeIndex = scratchRequest.argUInt5;
+         ObjectType lightCubeId = ObjectType.UnknownObject;
+         switch (cubeIndex) {
+         case 1:
+           lightCubeId = ObjectType.Block_LIGHTCUBE1;
+           break;
+         case 2:
+           lightCubeId = ObjectType.Block_LIGHTCUBE2;
+           break;
+         case 3:
+           lightCubeId = ObjectType.Block_LIGHTCUBE3;
+           break;
+         }
+         LightCube cubeToLight = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithObjectType(lightCubeId);
+         Color[] colorArray = new Color[] { color1.ToColor(), color2.ToColor(), color3.ToColor(), color4.ToColor() };
+         cubeToLight.SetLEDs(colorArray);
+       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeFace") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
         RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedFace);

@@ -36,6 +36,10 @@ namespace CodeLab {
     public string argUUID { get; set; }
     public int argInt { get; set; }
     public uint argUInt { get; set; }
+    public uint argUInt2 { get; set; }
+    public uint argUInt3 { get; set; }
+    public uint argUInt4 { get; set; }
+    public uint argUInt5 { get; set; }
     public float argFloat { get; set; }
     public float argFloat2 { get; set; }
     public float argFloat3 { get; set; }

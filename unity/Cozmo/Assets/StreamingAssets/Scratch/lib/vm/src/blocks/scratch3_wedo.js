@@ -19,6 +19,7 @@ var Scratch3CozmoBlocks = function (runtime) {
 Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
+        cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         cozmo_drive_forward: this.driveForward,
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
@@ -498,6 +499,14 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function(args, util) {
     return commandPromise;
 };      
 
+Scratch3CozmoBlocks.prototype.setCubeLightCorners = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var color1 = this._getColor(Cast.toString(args.CORNER_1_COLOR));
+    var color2 = this._getColor(Cast.toString(args.CORNER_2_COLOR));
+    var color3 = this._getColor(Cast.toString(args.CORNER_3_COLOR));
+    var color4 = this._getColor(Cast.toString(args.CORNER_4_COLOR));
+    window.Unity.call({requestId: -1, command: "cozmoSetCubeLightCorners", argUInt: color1, argUInt2: color2, argUInt3: color3, argUInt4: color4, argUInt5: cubeIndex});
+}
 // =================
 // Sensors / Inputs:
 // =================

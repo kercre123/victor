@@ -762,3 +762,94 @@ Blockly.Blocks['cozmo_vert_set_headangle'] = {
     });
   }
 };
+
+Blockly.Blocks['cozmo_vert_set_cube_light_corners'] = {
+  /**
+   * Block to set a cube's corner lights individually
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Set Cube %1 lights %2 %3 %4 %5",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_1_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_2_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_3_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_4_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary,
+    });
+  }
+};
+
