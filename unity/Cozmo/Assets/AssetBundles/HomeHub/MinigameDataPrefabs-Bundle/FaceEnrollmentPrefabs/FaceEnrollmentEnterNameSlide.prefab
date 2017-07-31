@@ -446,7 +446,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114879360837137348}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1176,7 +1175,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -400, y: -287}
+  m_AnchoredPosition: {x: -400, y: -202}
   m_SizeDelta: {x: 920, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224453373816091996
@@ -1290,7 +1289,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 559, y: -291}
+  m_AnchoredPosition: {x: 559, y: -206}
   m_SizeDelta: {x: 800, y: 204}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224732949990966126
@@ -1308,7 +1307,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 25, y: -112}
+  m_AnchoredPosition: {x: 25, y: -27}
   m_SizeDelta: {x: 1770, y: 153}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224935154832117870
