@@ -214,6 +214,10 @@ namespace Cozmo.Needs.UI {
               DataPersistenceManager.Instance.ClearNewStarLevels();
             });
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Bonus_Box);
+
+        // Make really sure we have up to date info
+        RobotEngineManager.Instance.Message.GetNeedsState = Singleton<GetNeedsState>.Instance;
+        RobotEngineManager.Instance.SendMessage();
         break;
       }
     }
