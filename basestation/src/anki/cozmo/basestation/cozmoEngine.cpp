@@ -59,10 +59,6 @@
 #include <DAS/DASPlatform.h>
 #endif
 
-#if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
-#endif
-
 #include "anki/cozmo/basestation/animations/animationTransfer.h"
 
 #if ANKI_PROFILING_ENABLED
@@ -84,9 +80,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
   //, _bleSystem(new BLESystem())
-#if ANKI_DEV_CHEATS && !defined(ANDROID)
-  , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
-#endif
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
   DEV_ASSERT(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");

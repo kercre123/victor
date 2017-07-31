@@ -35,9 +35,6 @@
 
 #include "anki/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
-#if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
-#endif
 
 namespace Anki {
 namespace Cozmo {

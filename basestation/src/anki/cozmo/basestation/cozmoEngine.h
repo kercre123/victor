@@ -58,7 +58,6 @@ class IExternalInterface;
 class CozmoContext;
 class UiMessageHandler;
 class GameMessagePort;
-class USBTunnelServer;
 class AnimationTransfer;
 class BLESystem;
 class DeviceDataManager;
@@ -136,9 +135,6 @@ protected:
   
   EngineState _engineState = EngineState::Stopped;
 
-#if ANKI_DEV_CHEATS && !defined(ANDROID)
-  std::unique_ptr<USBTunnelServer>                          _usbTunnelServerDebug;
-#endif
   std::unique_ptr<AnimationTransfer>                        _animationTransferHandler;
   
 }; // class CozmoEngine
