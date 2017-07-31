@@ -148,13 +148,13 @@
     "translation": "You’ve filled Cozmo’s <color=#f5ea12>Play Need.</color>"
   },
   "onboarding.RewardsIntro.Part2": {
-    "translation": "Each day you fill his <color=#f5ea12>Play Need</color> you’ll earn a <color=#f5ea12>Bonus Token.</color>"
+    "translation": "Each day you fill his \n<color=#f5ea12>Play Need</color> you’ll earn a \n<color=#f5ea12>Bonus Token.</color>"
   },
   "onboarding.TokensIntro.Part1": {
     "translation": "Fill Cozmo’s <color=#f5ea12>Play Need</color> on three days to unlock a <color=#f5ea12>Bonus Box.</color>"
   },
   "onboarding.TokensIntro.Part2": {
-    "translation": "You’ve learned how to be a caring owner! As you unlock Bonus Boxes for Cozmo, he’ll discover Sparks and sometimes learn new things."
+    "translation": "Cozmo is lucky to have you as an owner! Time to explore together!"
   },
   "onboarding.button.end": {
     "translation": "COMPLETE"
