@@ -147,7 +147,7 @@ namespace Anki {
     }
     
     
-  } // namesapce Vision
+  } // namespace Vision
 } // namespace Anki
 
 #endif // ANKI_CORETECH_VISION_BASESTATION_CAMERA_CALIBRATION_H_

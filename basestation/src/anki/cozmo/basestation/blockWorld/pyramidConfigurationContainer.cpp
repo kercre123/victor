@@ -73,6 +73,6 @@ void PyramidConfigurationContainer::ClearCache()
 }
 
   
-} // namesapce BlockConfiguration
+} // namespace BlockConfiguration
 } // namespace Cozmo
 } // namespace Anki
