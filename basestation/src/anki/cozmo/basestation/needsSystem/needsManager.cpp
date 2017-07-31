@@ -599,7 +599,16 @@ void NeedsManager::OnRobotDisconnected()
   _needsState._timeLastDisconnect = system_clock::now();
   _needsState._timesOpenedSinceLastDisconnect = 0;
 
-  WriteToDevice();
+  // Write latest needs state to device, but not if needs system is paused.
+  // If we're paused, we've already written needs state to device when we
+  // paused.  And we don't want to write again, because if the robot gets
+  // disconnected while app is backgrounded (and thus paused), we don't
+  // want to update the 'time last written' because when we un-background,
+  // we use that time to apply accumulated decay.
+  if (!_isPausedOverall)
+  {
+    WriteToDevice();
+  }
 
   _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
 
