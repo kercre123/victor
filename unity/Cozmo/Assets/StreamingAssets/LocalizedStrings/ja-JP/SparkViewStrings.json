@@ -1,0 +1,30 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "sparksView.title" : {
+    "translation" : "プレイ"
+  },
+  "sparksView.askForGameCard.title" : {
+    "translation" : "ゲームをスパーク"
+  },
+  "sparksView.askForTrickCard.title" : {
+    "translation" : "トリックをスパーク"
+  },
+  "sparksView.listAbilitiesCard.title" : {
+    "translation" : "トリックとゲーム"
+  },
+  "sparksView.listAbilitiesCard.description" : {
+    "translation" : "特定のトリックまたはゲームをするようにCozmoに頼みます。"
+  },
+  "sparksView.sparkCount.label" : {
+    "translation" : "利用可能なスパーク"
+  },
+  "sparksView.sparksRewarded.label" : {
+    "translation" : "スパーク"
+  }
+}
