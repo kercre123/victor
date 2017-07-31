@@ -2513,6 +2513,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -3243,6 +3244,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_RepairPart
   _OverrideSkinTransition: 0
+  _DebugGlint: 1
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -3264,7 +3266,7 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114834808904404790}
-  _AlwaysShowGlintWhenEnabled: 0
+  _AlwaysShowGlintWhenEnabled: 1
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -4225,6 +4227,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -4495,6 +4498,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_RepairPart
   _OverrideSkinTransition: 0
+  _DebugGlint: 1
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -4516,7 +4520,7 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114557778670053008}
-  _AlwaysShowGlintWhenEnabled: 0
+  _AlwaysShowGlintWhenEnabled: 1
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -4716,6 +4720,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_RepairArrow
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -5255,6 +5260,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_Close
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -5596,6 +5602,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_RepairPart
   _OverrideSkinTransition: 0
+  _DebugGlint: 1
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -5617,7 +5624,7 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114291652436123760}
-  _AlwaysShowGlintWhenEnabled: 0
+  _AlwaysShowGlintWhenEnabled: 1
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -5907,6 +5914,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114843506697709542}
@@ -5976,6 +5984,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_RepairArrow
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -6684,6 +6693,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
@@ -7209,6 +7219,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114690825099855218}
@@ -7320,6 +7331,7 @@ MonoBehaviour:
       Culture=neutral, PublicKeyToken=null
   _LinkedComponentId: CozmoButton_Calibrate
   _OverrideSkinTransition: 0
+  _DebugGlint: 0
   _Interactable: 1
   _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114311854118912434}
