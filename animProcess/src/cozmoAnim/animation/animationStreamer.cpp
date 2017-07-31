@@ -305,7 +305,7 @@ namespace Cozmo {
           case AnimTrackFlag::LIFT_TRACK:
           case AnimTrackFlag::BODY_TRACK:
           case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
-            res = Messages::SendPacketToRobot(msg->GetBuffer(), msg->Size());
+            res = Messages::SendToRobot(*msg);
             break;
           default:
             // Audio, face, and event frames are handled separately since they don't actually result in a EngineToRobot message
@@ -380,8 +380,7 @@ namespace Cozmo {
       return RESULT_OK;
     }
 
-    RobotInterface::EngineToRobot message(std::move(msg));
-    if (!Messages::SendPacketToRobot(message.GetBuffer(), message.Size())) {
+    if (!RobotInterface::SendMessageToRobot(msg)) {
       return RESULT_FAIL;
     }
 
@@ -395,7 +394,7 @@ namespace Cozmo {
     }
     RobotInterface::AnimationStarted startMsg;
     startMsg.tag = _tag;
-    if (!RobotInterface::SendMessage(startMsg)) {
+    if (!RobotInterface::SendMessageToEngine(startMsg)) {
       return RESULT_FAIL;
     }
     
@@ -420,7 +419,7 @@ namespace Cozmo {
     
     RobotInterface::AnimationEnded endMsg;
     endMsg.tag = _tag;
-    if (!RobotInterface::SendMessage(endMsg)) {
+    if (!RobotInterface::SendMessageToEngine(endMsg)) {
       return RESULT_FAIL;
     }
     
@@ -625,7 +624,7 @@ namespace Cozmo {
         eventMsg.event_id = eventKeyFrame.GetAnimEvent();
         eventMsg.timestamp = currTime_ms;
         eventMsg.tag = _tag;
-        RobotInterface::SendMessage(eventMsg);
+        RobotInterface::SendMessageToEngine(eventMsg);
 
         eventTrack.MoveToNextKeyFrame();
       }

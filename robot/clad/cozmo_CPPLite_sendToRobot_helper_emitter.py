@@ -36,7 +36,7 @@ class SendHelperHeaderEmitter(ast.NodeVisitor):
 
     def visit_UnionDecl(self, node):
         for member in node.members():
-            self.output.write('inline bool SendMessage(const {member_type}& msg) {{ return Anki::Cozmo::Messages::SendPacketToRobot(msg.GetBuffer(), msg.Size()); }}\n'.format(
+            self.output.write('inline bool SendMessageToRobot(const {member_type}& msg) {{ return Anki::Cozmo::Messages::SendToRobot( RobotInterface::EngineToRobot(msg)); }}\n'.format(
                 member_name=member.name, member_type=CPP_emitter.cpp_value_type(member.type)))
 
 

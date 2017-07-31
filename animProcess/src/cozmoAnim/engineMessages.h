@@ -37,16 +37,9 @@ namespace Messages {
   Result Init(AnimationStreamer* animStreamer);
 
   void Update();
-
   
-  /** Wrapper method for sending messages NOT PACKETS
-   * @param msgID The ID (tag) of the message to be sent
-   * @param buffer A pointer to the message to be sent
-   * @return True if sucessfully queued, false otherwise
-   */
-  bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
-  
-  bool SendPacketToRobot(const void *buffer, const u32 length);
+  bool SendToEngine(const void *buffer, const u16 size, const u8 msgID);
+  bool SendToRobot(const RobotInterface::EngineToRobot& msg);
   
   
 } // namespace Messages
