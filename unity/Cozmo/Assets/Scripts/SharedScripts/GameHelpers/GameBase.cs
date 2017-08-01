@@ -1009,23 +1009,40 @@ public abstract class GameBase : MonoBehaviour {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextTie);
     }
     else if (currentEndIndex >= 0) {
+
+      bool useFlatText = _ShowEndWinnerSlide || showWinnerTextInShelf;
+
       PlayerInfo player = _PlayerInfo[currentEndIndex];
       if (player.playerType == PlayerType.Cozmo) {
-        winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+        if (useFlatText) {
+          winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWinsFlat);
+        }
+        else {
+          winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+        }
       }
       else {
         //If the player doesn't have a name, instead of "" WINS!, change the message to YOU WIN!
         if (!string.IsNullOrEmpty(player.name)) {
-          winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+          if (useFlatText) {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+          }
+          else {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWinsFlat, new object[] { player.name });
+          }
         }
         else {
-          winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextYouWin);
+          if (useFlatText) {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextYouWinFlat);
+          }
+          else {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextYouWin);
+          }
         }
       }
     }
 
     if (_ShowEndWinnerSlide) {
-      winnerText = winnerText.Replace("\n", " ");
       SharedMinigameView.ShowWinnerStateSlide(DidHumanWin(), winnerText, footerText);
       SharedMinigameView.HideTitleWidget();
     }

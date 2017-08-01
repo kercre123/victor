@@ -556,6 +556,9 @@ public static class LocalizationKeys {
   public const string kLabelDontSlap = "label.dontSlap";
   public const string kLabelNoMatch = "label.noMatch";
   public const string kLabelEnterText = "label.enterText";
+  public const string kMinigameTextCozmoWinsFlat = "minigame.text.cozmoWinsFlat";
+  public const string kMinigameTextPlayerWinsFlat = "minigame.text.playerWinsFlat";
+  public const string kMinigameTextYouWinFlat = "minigame.text.youWinFlat";
 
   #endregion
 
@@ -656,8 +659,6 @@ public static class LocalizationKeys {
   public const string kOnboardingNeedsIntro = "onboarding.NeedsIntro";
   public const string kOnboardingNeedsIntroReturning = "onboarding.NeedsIntroReturning";
   public const string kOnboardingPlayIntro = "onboarding.PlayIntro";
-  public const string kOnboardingRewardsIntro = "onboarding.RewardsIntro";
-  public const string kOnboardingEnd = "onboarding.End";
   public const string kOnboardingActivitiesIntro = "onboarding.ActivitiesIntro";
   public const string kOnboardingNeedsTicker = "onboarding.needs.ticker";
   public const string kOnboardingRepairTicker = "onboarding.repair.ticker";
@@ -667,6 +668,11 @@ public static class LocalizationKeys {
   public const string kOnboardingRepairIntro = "onboarding.RepairIntro";
   public const string kOnboardingFeedIntro = "onboarding.FeedIntro";
   public const string kOnboardingDoATrickDesc = "onboarding.DoATrickDesc";
+  public const string kOnboardingRewardsIntroPart1 = "onboarding.RewardsIntro.Part1";
+  public const string kOnboardingRewardsIntroPart2 = "onboarding.RewardsIntro.Part2";
+  public const string kOnboardingTokensIntroPart1 = "onboarding.TokensIntro.Part1";
+  public const string kOnboardingTokensIntroPart2 = "onboarding.TokensIntro.Part2";
+  public const string kOnboardingButtonEnd = "onboarding.button.end";
 
   #endregion
 
