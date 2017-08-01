@@ -192,6 +192,10 @@ namespace Cozmo.Needs.Sparks.UI {
         OnboardingManager.Instance.GoToNextStage();
       }
       else if (RobotEngineManager.Instance.CurrentRobot != null) {
+        // Prevent the player from doing other things
+        _IsDisablingTouches = true;
+        UIManager.DisableTouchEvents(_DisableTouchKey);
+
         RobotEngineManager.Instance.CurrentRobot.DoRandomSpark();
       }
     }
@@ -282,6 +286,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void HandleSparkTrickStarted() {
       _NeedSevereAlertController.AllowAlert = false;
+      ReenableTouches();
     }
 
     private void HandleSparkTrickEnded() {
