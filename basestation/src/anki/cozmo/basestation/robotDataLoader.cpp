@@ -586,9 +586,15 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
     if (!success)
     {
+#if THF_FUNCTIONALITY
       PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
                         "Voice Command Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
+#else
+      PRINT_NAMED_INFO("RobotDataLoader.VoiceCommandConfigJsonFailed",
+                       "Voice Command Json config file %s not found or failed to parse",
+                       jsonFilename.c_str());
+#endif
       _voiceCommandConfig.clear();
     }
   }
