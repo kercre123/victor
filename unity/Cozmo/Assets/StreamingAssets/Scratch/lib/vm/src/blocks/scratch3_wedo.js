@@ -74,7 +74,10 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         // Cubes
         cozmo_vert_cube_get_is_visible: this.verticalCubeGetIsVisible,
         cozmo_vert_cube_get_position_2d: this.verticalCubeGetPosition2d,
-        cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d
+        cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d,
+        cozmo_vert_cube_get_pitch: this.verticalCubeGetPitch,
+        cozmo_vert_cube_get_roll: this.verticalCubeGetRoll,
+        cozmo_vert_cube_get_yaw: this.verticalCubeGetYaw
     };
 };
 
@@ -618,5 +621,22 @@ Scratch3CozmoBlocks.prototype.verticalCubeGetPosition3d = function(args, util) {
     return getVector3Axis(srcCube.pos, axis);
 };
 
+Scratch3CozmoBlocks.prototype.verticalCubeGetPitch = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.pitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetRoll = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.roll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetYaw = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.yaw_d);
+};
 
 module.exports = Scratch3CozmoBlocks;

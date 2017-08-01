@@ -572,6 +572,96 @@ Blockly.Blocks['cozmo_vert_cube_get_position_3d'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_cube_get_pitch'] = {
+  /**
+   * Block to read the pitch of one of Cozmo's cube's position
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "Cube %1 pitch",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_get_roll'] = {
+  /**
+   * Block to read the roll of one of Cozmo's cube's position
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "Cube %1 roll",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_get_yaw'] = {
+  /**
+   * Block to read the yaw of one of Cozmo's cube's position
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "Cube %1 yaw",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
 // Actions
 
 Blockly.Blocks['cozmo_vert_drive'] = {

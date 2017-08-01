@@ -288,6 +288,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         cubeDest.camPos = new Vector2(0.0f, 0.0f);
         cubeDest.isValid = false;
         cubeDest.isVisible = false;
+        cubeDest.pitch_d = 0.0f;
+        cubeDest.roll_d = 0.0f;
+        cubeDest.yaw_d = 0.0f;
       }
       else {
         cubeDest.pos = cubeSrc.WorldPosition;
@@ -295,6 +298,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         cubeDest.isValid = true;
         const int kMaxVisionFramesSinceSeeingCube = 30;
         cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
+        cubeDest.pitch_d = cubeSrc.PitchDegrees;
+        cubeDest.roll_d = cubeSrc.RollDegrees;
+        cubeDest.yaw_d = cubeSrc.YawDegrees;
       }
     }
 

@@ -8,6 +8,9 @@ namespace CodeLab {
     public Vector2 camPos;
     public bool isValid;
     public bool isVisible;
+    public float pitch_d;
+    public float roll_d;
+    public float yaw_d;
   }
 
   public class FaceStateForCodeLab {
