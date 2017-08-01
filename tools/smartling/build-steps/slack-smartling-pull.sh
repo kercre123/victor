@@ -112,7 +112,7 @@ if [ "$_status" ]; then
     $GIT config user.email "anki-smartling@anki.com"
     $GIT config user.name "anki-smartling"
     $GIT checkout -b update-localized-strings-json
-    $GIT add $_LOCALIZED_STRINGS_DIR/*
+    $GIT add $_UNITY_PROJECT_DIR/*
     $GIT commit -m "Updating localized *.json from Smartling download."
     $GIT push origin update-localized-strings-json
 
