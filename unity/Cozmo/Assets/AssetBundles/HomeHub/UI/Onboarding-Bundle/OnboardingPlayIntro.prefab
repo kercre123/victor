@@ -221,7 +221,7 @@ MonoBehaviour:
   _ForceNeedValuesOnStart:
   - 1
   - 1
-  - 0.55
+  - 0.7
   _ForceNeedValuesOnEnd:
   - -1
   - -1
