@@ -165,14 +165,26 @@ Scratch3CozmoBlocks.prototype.playAnimationHelper = function(args, util, animNam
     return this._promiseForCommand(requestId);
 };
 
+Scratch3CozmoBlocks.prototype.playAnimationHelperVertical = function(args, util, animName, isMystery) {
+    isMystery = isMystery || 0;  // if undefined force to 0 as a default value
+    var requestId = this._getRequestId();
+    var shouldIgnoreBodyTrack = Cast.toBoolean(args.IGNORE_WHEELS);
+    var shouldIgnoreHead = Cast.toBoolean(args.IGNORE_HEAD);
+    var shouldIgnoreLift = Cast.toBoolean(args.IGNORE_LIFT);
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery, argBool: shouldIgnoreBodyTrack, argBool2: shouldIgnoreHead, argBool3: shouldIgnoreLift});
+
+    return commandPromise;
+};
+
 Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function(args, util) {
     var animName = Cast.toString(args.ANIMATION);
     if (animName == 'mystery'){
         var randomAnim = this._getAnimation(animName);
-        return this.playAnimationHelper(args, util, randomAnim, 1);
+        return this.playAnimationHelperVertical(args, util, randomAnim, 1);
     }
     else{
-        return this.playAnimationHelper(args, util, animName);
+        return this.playAnimationHelperVertical(args, util, animName);
     }
 };
 

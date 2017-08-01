@@ -985,8 +985,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       else if (scratchRequest.command == "cozmoPlayAnimation") {
         Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
         bool wasMystery = (scratchRequest.argUInt != 0);
+        bool shouldIgnoreBodyTrack = false;
+        bool shouldIgnoreHead = false;
+        bool shouldIgnoreLift = false;
+        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+          shouldIgnoreBodyTrack = scratchRequest.argBool;
+          shouldIgnoreHead = scratchRequest.argBool2;
+          shouldIgnoreLift = scratchRequest.argBool3;
+        }
         _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
         _RequiresResetToNeutralFace = true;
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {

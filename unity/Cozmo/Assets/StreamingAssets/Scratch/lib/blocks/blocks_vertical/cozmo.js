@@ -82,7 +82,7 @@ Blockly.Blocks['cozmo_play_animation_from_dropdown'] = {
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_from_dropdown",
-    "message0": "Play %1 Animation",
+    "message0": "Play %1 Animation with %2, %3, %4",
     "args0": [
         {
           "type": "field_dropdown",
@@ -103,6 +103,30 @@ init: function() {
               ['Disappointed', 'dejected'],
               ['Snore', 'sleep'],
               ['Mystery', 'mystery']      
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_WHEELS",
+          "options": [
+              ['Wheels', 'false'],
+              ['No Wheels', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_HEAD",
+          "options": [
+              ['Head', 'false'],
+              ['No Head', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_LIFT",
+          "options": [
+              ['Lift', 'false'],
+              ['No Lift', 'true'],    
             ]
         }
       ],
