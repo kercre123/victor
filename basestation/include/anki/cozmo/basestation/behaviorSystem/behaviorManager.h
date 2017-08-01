@@ -28,6 +28,7 @@
 #include "clad/types/unlockTypes.h"
 
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -186,6 +187,15 @@ public:
   IBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
   IBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
 
+  // Sometimes it's necessary to downcast to a behavior to a specific behavior pointer, e.g. so an Activity
+  // can access it's member functions. This function will help with that and provide a few assert checks along
+  // the way. It sets outPtr in arguemnts, and returns true if the cast is successful
+  template<typename T>
+  bool FindBehaviorByIDAndDowncast(BehaviorID behaviorID,
+                                   BehaviorClass requiredClass, 
+                                   std::shared_ptr<T>& outPtr ) const;
+  // TODO:(bn) automatically infer requiredClass from T
+
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
@@ -292,6 +302,9 @@ private:
   
   // Clears flags and attributes related to running a ui-driven game request
   void EnsureRequestGameIsClear();
+
+  // helper to avoid including iBehavior.h here
+  BehaviorClass GetBehaviorClass(IBehaviorPtr behavior) const;
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -368,6 +381,38 @@ private:
   BehaviorClass _behaviorThatSetLights;
   bool _behaviorStateLightsPersistOnReaction;
 }; // class BehaviorManager
+
+template<typename T>
+bool BehaviorManager::FindBehaviorByIDAndDowncast(BehaviorID behaviorID,
+                                                  BehaviorClass requiredClass,
+                                                  std::shared_ptr<T>& outPtr) const
+{
+
+  IBehaviorPtr behavior = FindBehaviorByID(behaviorID);
+  if( ANKI_VERIFY(behavior != nullptr,
+                  "BehaviorContainer.FindBehaviorByIDAndDowncast.NoBehavior",
+                  "BehaviorID: %s requiredClass: %s",
+                  BehaviorIDToString(behaviorID),
+                  BehaviorClassToString(requiredClass)) &&
+
+      ANKI_VERIFY(behavior != nullptr && GetBehaviorClass(behavior) == requiredClass,
+                  "BehaviorContainer.FindBehaviorByIDAndDowncast.WrongClass",
+                  "BehaviorID: %s requiredClass: %s",
+                  BehaviorIDToString(behaviorID),
+                  BehaviorClassToString(requiredClass)) ) {
+
+    outPtr = std::static_pointer_cast<T>(behavior);
+
+    if( ANKI_VERIFY(outPtr != nullptr, "BehaviorContainer.FindBehaviorByIDAndDowncast.CastFailed",
+                    "BehaviorID: %s requiredClass: %s",
+                    BehaviorIDToString(behaviorID),
+                    BehaviorClassToString(requiredClass)) ) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 } // namespace Cozmo
 } // namespace Anki
