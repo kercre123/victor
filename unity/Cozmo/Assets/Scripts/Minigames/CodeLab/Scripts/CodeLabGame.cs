@@ -376,7 +376,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     protected override void Update() {
       base.Update();
 
-      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical && IsDisplayingWorkspacePage()) {
         SendWorldStateToWebView();
       }
 
@@ -627,7 +627,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
         CodeLabProject proj = new CodeLabProject();
         proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
-        proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName;
+        proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName.Replace("\"", "\\\"");
+
         copyCodeLabProjectList.Add(proj);
       }
       string userProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabProjectList);
@@ -640,7 +641,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         CodeLabSampleProject proj = new CodeLabSampleProject();
         proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
         proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
-        proj.ProjectName = _CodeLabSampleProjects[i].ProjectName;
+        proj.ProjectName = _CodeLabSampleProjects[i].ProjectName.Replace("\"", "\\\"");
         copyCodeLabSampleProjectList.Add(proj);
       }
 
@@ -1293,12 +1294,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         if (_ProjectUUIDToOpen != null) {
           CodeLabProject projectToOpen = FindUserProjectWithUUID(_ProjectUUIDToOpen);
           if (projectToOpen != null) {
-            // Escape quotes in XML
-            // TODO need to do the same for project name and project uuid?
+            // Escape quotes in user project name and project XML
+            // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
+            String projectNameEscaped = projectToOpen.ProjectName.Replace("\"", "\\\"");
             String projectXMLEscaped = projectToOpen.ProjectXML.Replace("\"", "\\\"");
 
             // Open requested project in webview
-            this.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectToOpen.ProjectName + "',\"" + projectXMLEscaped + "\",'false');");
+            this.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
           }
         }
         else {
@@ -1314,13 +1316,15 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           Predicate<CodeLabSampleProject> findProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
           codeLabSampleProject = _CodeLabSampleProjects.Find(findProject);
 
-          // Escape quotes in XML
-          // TODO need to do the same for project name and project uuid?
+          String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
+
+          // Escape quotes in XML and project name
+          // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
           String projectXMLEscaped = codeLabSampleProject.ProjectXML.Replace("\"", "\\\"");
+          String sampleProjectNameEscaped = sampleProjectName.Replace("\"", "\\\"");
 
           // Open requested project in webview
-          String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
-          this.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectName + "',\"" + projectXMLEscaped + "\",'true');");
+          this.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
