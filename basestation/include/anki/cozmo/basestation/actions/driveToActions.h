@@ -142,6 +142,10 @@ namespace Anki {
       // Whether or not to verify the final pose, once the path is complete,
       // according to the latest know preAction pose for the specified object.
       void DoPositionCheckOnPathCompletion(bool doCheck) { _doPositionCheckOnPathCompletion = doCheck; }
+
+      // Set the angle tolerance to use for the pre action pose checks done by this action. Defaults to using
+      // the default value specified in cozmo config
+      void SetPreActionPoseAngleTolerance(f32 angle_rad) { _preActionPoseAngleTolerance_rad = angle_rad; }
             
       using GetPossiblePosesFunc = std::function<ActionResult(ActionableObject* object,
                                                               std::vector<Pose3d>& possiblePoses,
@@ -189,6 +193,9 @@ namespace Anki {
       bool                       _doPositionCheckOnPathCompletion = true;
                   
     private:
+
+      f32 _preActionPoseAngleTolerance_rad;
+      
       GetPossiblePosesFunc _getPossiblePosesFunc;
       bool _lightsSet = false;
       
@@ -255,6 +262,10 @@ namespace Anki {
       
       void SetMaxTurnTowardsFaceAngle(const Radians angle);
       void SetTiltTolerance(const Radians tol);
+
+      // Set the angle tolerance to use for the pre action pose checks done by this action. Defaults to using
+      // the default value specified in cozmo config
+      void SetPreActionPoseAngleTolerance(f32 angle_rad);
       
       DriveToObjectAction* GetDriveToObjectAction() {
         // For debug builds do a dynamic cast for the validity checks
