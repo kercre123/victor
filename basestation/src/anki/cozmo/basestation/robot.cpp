@@ -787,7 +787,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
   
-  // Update forward prox sensor
+  // Update forward distanceSensor_mm
   SetForwardSensorValue(msg.distanceSensor_mm);
 
   // update current path segment in the path component
@@ -1045,6 +1045,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     }
     
   }
+  
+  // check for new obstacles from prox sensor
+  _blockWorld->UpdateProxObstaclePoses();
   
   _gyroDriftDetector->DetectGyroDrift(msg);
   _gyroDriftDetector->DetectBias(msg);

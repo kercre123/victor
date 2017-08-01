@@ -65,12 +65,6 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
 
-// The amount of time a proximity obstacle exists beyond the latest detection
-#define PROX_OBSTACLE_LIFETIME_MS  4000
-
-// The sensor value that must be met/exceeded in order to have detected an obstacle
-#define PROX_OBSTACLE_DETECT_THRESH   5
-
 // TODO: Expose these as parameters
 #define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
 
@@ -141,6 +135,11 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld.Memo
   
 // How "recently" a cube can be seen for it not to get updated via UpdateStacks
 CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
+
+namespace {
+  const u16 kMinObsThreshold_mm = 30;   // Minimum distance for registering an object detected by prox sensor as an obstacle
+  const u16 kMaxObsThreshold_mm = 300;  // Maximum distance for registering an object detected by prox sensor as an obstacle  
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace
@@ -2205,9 +2204,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Check if the obstacle intersects with any other existing objects in the scene.
     BlockWorldFilter filter;
     if(_robot->GetLocalizedTo().IsSet()) {
-      // Ignore the mat object that the robot is localized to (?)
-      filter.AddIgnoreID(_robot->GetLocalizedTo());
+      filter.AddAllowedFamily(ObjectFamily::LightCube);
+      filter.AddAllowedFamily(ObjectFamily::MarkerlessObject);
     }
+    
     FindLocatedIntersectingObjects(markerlessObject.get(), existingObjects, 0, filter);
     if (!existingObjects.empty()) {
       return RESULT_OK;
@@ -2222,29 +2222,50 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     _robotMsgTimeStampAtChange = lastTimestamp;
     
     // add cliffs to memory map, or other objects if feature is enabled
-    if ( type == ObjectType::CliffDetection )
-    {
-      // cliffs currently have extra data (for directionality)
-      const Pose3d& robotPose = _robot->GetPose();
-      const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToOrigin();
-      NavMemoryMapQuadData_Cliff cliffData;
-      Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-      cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
+    switch (type) {
+      case ObjectType::CliffDetection:
+      {
+        // cliffs currently have extra data (for directionality)
+        const Pose3d& robotPose = _robot->GetPose();
+        const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToOrigin();
+        NavMemoryMapQuadData_Cliff cliffData;
+        Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
+        cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
+        
+        // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
+        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
       
-      // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
-      const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
-    
-      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-      DEV_ASSERT(currentNavMemoryMap, "BlockWorld.OnRobotPoseChanged.NoMemoryMap");
-      currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
-      
-      // Currently we don't add markerless objects to the memory map, however if we did, we just added here the Cliff.
-      // The way we Notify and add objects needs some clean up, because we have to pass every single parameter like
-      // family, type, pose. In the case of cliffs it would be problematic because we have to calculate the bounding
-      // quad. In the future I want to make adding objects to the map easier (for example if they track the objectID,
-      // I don't need to remove them by pose but by ID, so that API can be greatly simplified)
-      // 	COZMO-7844, COZMO-7496
-      DEV_ASSERT(!kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.AddMarkerlessObject.MemoryMapCliffAddedTwice");
+        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+        DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
+        currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
+        
+        // Currently we don't add markerless objects to the memory map, however if we did, we just added here the Cliff.
+        // The way we Notify and add objects needs some clean up, because we have to pass every single parameter like
+        // family, type, pose. In the case of cliffs it would be problematic because we have to calculate the bounding
+        // quad. In the future I want to make adding objects to the map easier (for example if they track the objectID,
+        // I don't need to remove them by pose but by ID, so that API can be greatly simplified)
+        // 	COZMO-7844, COZMO-7496
+        DEV_ASSERT(!kAddUnrecognizedMarkerlessObjectsToMemMap, 
+                   "BlockWorld.AddMarkerlessObject.MemoryMapCliffAddedTwice");
+        break;
+      }
+      case ObjectType::ProxObstacle:
+      {
+        const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
+        
+        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+        DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
+        
+        currentNavMemoryMap->AddQuad(proxQuad, INavMemoryMap::EContentType::ObstacleUnrecognized);
+        DEV_ASSERT(!kAddUnrecognizedMarkerlessObjectsToMemMap, 
+                   "BlockWorld.AddMarkerlessObject.MemoryMapProxObstacleAddedTwice");
+        break;
+      }
+      default:
+      {
+        // Don't do anything for object types that don't need to be added to memory map
+        break;
+      }
     }
     
     return RESULT_OK;
@@ -2286,104 +2307,55 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     return _robotMsgTimeStampAtChange;
   }
 
-  /*
-  Result BlockWorld::UpdateProxObstaclePoses()
-  {
-    TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+  
+  void BlockWorld::UpdateProxObstaclePoses()
+  {        
+    BlockWorldFilter filter;      
+    filter.AddAllowedType(ObjectType::ProxObstacle);
+    filter.AddAllowedFamily(ObjectFamily::MarkerlessObject);
+    std::vector<ObservableObject*> result;
     
-    // Add prox obstacle if detected and one doesn't already exist
-    for (ProxSensor_t sensor = (ProxSensor_t)(0); sensor < NUM_PROX; sensor = (ProxSensor_t)(sensor + 1)) {
-      if (!_robot->IsProxSensorBlocked(sensor) && _robot->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
-        
-        // Create an instance of the detected object
-        MarkerlessObject *m = new MarkerlessObject(ObjectType::ProxObstacle);
-        
-        // Get pose of detected object relative to robot according to which sensor it was detected by.
-        Pose3d proxTransform = Robot::ProxDetectTransform[sensor];
-        
-        // Raise origin of object above ground.
-        // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
-        Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*m->GetSize().z()));
-        proxTransform = proxTransform * raiseObject;
-        
-        proxTransform.SetParent(_robot->GetPose().GetParent());
-        
-        // Compute pose of detected object
-        Pose3d obsPose(_robot->GetPose());
-        obsPose = obsPose * proxTransform;
-        m->SetPose(obsPose);
-        m->SetPoseParent(_robot->GetPose().GetParent());
-        
-        // Check if this prox obstacle already exists
-        std::vector<ObservableObject*> existingObjects;
-        FindOverlappingObjects(m, _locatedObjects[ObjectFamily::MarkerlessObject], existingObjects);
-        
-        // Update the last observed time of existing overlapping obstacles
-        for(auto obj : existingObjects) {
-          obj->SetLastObservedTime(lastTimestamp);
-        }
-        
-        // No need to add the obstacle again if it already exists
-        if (!existingObjects.empty()) {
-          delete m;
-          return RESULT_OK;
-        }
-        
-        
-        // Check if the obstacle intersects with any other existing objects in the scene.
-        std::set<ObjectFamily> ignoreFamilies;
-        std::set<ObjectType> ignoreTypes;
-        std::set<ObjectID> ignoreIDs;
-        if(_robot->IsLocalized()) {
-          // Ignore the mat object that the robot is localized to (?)
-          ignoreIDs.insert(_robot->GetLocalizedTo());
-        }
-        FindIntersectingObjects(m, existingObjects, 0, ignoreFamilies, ignoreTypes, ignoreIDs);
-        if (!existingObjects.empty()) {
-          delete m;
-          return RESULT_OK;
-        }
+    FindLocatedMatchingObjects(filter, result);
+    
+    if (result.size() > 500) {
+      PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.UpdateProxObstaclePoses", 
+                          "Large number of markerless objects to search through");
+    }  
+    
+    u16 distMeasurement_mm = _robot->GetForwardSensorValue();  
+    
+    if (distMeasurement_mm >= kMinObsThreshold_mm) {     
+      // Clear out any obstacles between the robot and ray if we have good signal strength 
+      MarkerlessObject tempObstacle(ObjectType::ProxObstacle);    // temp object for getting measurements
 
-        
-        m->SetLastObservedTime(lastTimestamp);
-        AddNewObject(ObjectFamily::MarkerlessObject, m);
-        _didObjectsChange = true;
-        _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
+      // build quad for ray cast by getting the robot pose, casting forward by sensor reading, then adding thickness
+      Pose2d  p1(_robot->GetPose());
+      Pose2d  p2(_robot->GetPose());
+      p2.TranslateForward(fmin(distMeasurement_mm, kMaxObsThreshold_mm) - tempObstacle.GetSize().x());
+      
+      // add clear info to map
+      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      if ( currentNavMemoryMap ) {
+        currentNavMemoryMap->AddLine(p1.GetTranslation(), p2.GetTranslation(), 
+                                     INavMemoryMap::EContentType::ClearOfObstacle);
       }
-    } // end for all prox sensors
-    
-    // Delete any existing prox objects that are too old.
-    // Note that we use find() here because there may not be any markerless objects
-    // yet, and using [] indexing will create things.
-    auto markerlessFamily = _locatedObjects.find(ObjectFamily::MarkerlessObject);
-    if(markerlessFamily != _locatedObjects.end())
-    {
-      auto proxTypeMap = markerlessFamily->second.find(ObjectType::ProxObstacle);
-      if(proxTypeMap != markerlessFamily->second.end())
-      {
-        for (auto proxObsIter = proxTypeMap->second.begin();
-             proxObsIter != proxTypeMap->second.end();
-                 */
-/* increment iter in loop, depending on erase*/    /*
-)
-        {
-          if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS)
-          {
-            proxObsIter = ClearObject(proxObsIter, ObjectType::ProxObstacle,
-                                      ObjectFamily::MarkerlessObject);
-            
-          } else {
-            // Didn't erase anything, increment iterator
-            ++proxObsIter;
-          }
-        }
+      
+      Quad2f ray(p1.GetTranslation(), p1.GetTranslation(), 
+                 p2.GetTranslation(), p2.GetTranslation());
+      
+      // Check if the ray intersects with any other existing prox objects in the scene, then delete the
+      DeleteIntersectingObjects(ray, 0, filter);
+      
+      
+      // Add prox obstacle if detected and close to robot
+      if (distMeasurement_mm <= kMaxObsThreshold_mm) {        
+        Vec3f dist(distMeasurement_mm + .5f * tempObstacle.GetSize().x(),0,0);
+        Pose3d obsPose(0, Z_AXIS_3D(), dist);
+        
+        AddProxObstacle(_robot->GetPose()*obsPose);
       }
     }
-    
-    return RESULT_OK;
   }
-  */
-
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ObjectID BlockWorld::AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ObjectType objType)
@@ -2741,6 +2713,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                         "Adding ghost objects to BlockWorld is not permitted");
       return;
     }	
+    
+    // Check if the object intersects with any other existing prox objects in the scene, then delete them
+    BlockWorldFilter filter;
+    filter.AddAllowedType(ObjectType::ProxObstacle);
+    DeleteIntersectingObjects(object, 0, filter);
+    
 
     // grab the current pointer and check it's empty (do not expect overwriting)
     std::shared_ptr<ObservableObject>& objectLocation =
@@ -4065,13 +4043,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
     
-    /*
-    Result lastResult = UpdateProxObstaclePoses();
-    if(lastResult != RESULT_OK) {
-      return lastResult;
-    }
-    */
-    
     if(ANKI_DEVELOPER_CODE)
     {
       DEV_ASSERT(RESULT_OK == SanityCheckBookkeeping(), "BlockWorld.Update.SanityCheckBookkeepingFailed");
@@ -4538,6 +4509,24 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     FindLocatedMatchingObjects(GetIntersectingObjectsFilter(quad, padding_mm, filterIn), intersectingExistingObjects);
   }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteIntersectingObjects(const Quad2f& quad,
+                                           f32 padding_mm,
+                                           const BlockWorldFilter& filter)
+  {
+    DeleteLocatedObjects(GetIntersectingObjectsFilter(quad, padding_mm, filter));
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteIntersectingObjects(const std::shared_ptr<ObservableObject>& object,
+                                             f32 padding_mm,
+                                             const BlockWorldFilter& filter)
+  {
+    Quad2f quadSeen = object->GetBoundingQuadXY(object->GetPose(), padding_mm);
+    DeleteLocatedObjects(GetIntersectingObjectsFilter(quadSeen, padding_mm, filter));
+  }
+  
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::GetLocatedObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight, const f32 padding,

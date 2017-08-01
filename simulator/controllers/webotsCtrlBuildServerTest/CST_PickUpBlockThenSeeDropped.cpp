@@ -33,7 +33,6 @@ namespace {
 const f32 ROBOT_POSITION_TOL_MM = 15;
 const f32 ROBOT_ANGLE_TOL_DEG = 5;
 const f32 BLOCK_Z_TOL_MM = 5;
-
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -48,6 +47,8 @@ private:
   TestState _testState = TestState::Init;
   
   bool _lastActionSucceeded = false;
+  s32  _cubeId = 0;
+
 
   // causes the lifted cube to drop
   void DropCube();
@@ -93,14 +94,19 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                             NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                            GetNumObjects() == 1)
+                                            GetNumObjectsInFamily(ObjectFamily::LightCube) == 1)
       {
         ExternalInterface::QueueSingleAction m;
         m.robotID = 1;
         m.position = QueueActionPosition::NOW;
         m.idTag = 1;
-        // Pickup object 0
-        m.action.Set_pickupObject(ExternalInterface::PickupObject(0, _defaultTestMotionProfile, 0, false, true, false, true));
+        
+        // Pickup first lightcube object
+        std::vector<s32> cubeIds = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+        CST_ASSERT(!cubeIds.empty(), "No lightcubes found!");
+        _cubeId = cubeIds[0];
+        
+        m.action.Set_pickupObject(ExternalInterface::PickupObject(_cubeId, _defaultTestMotionProfile, 0, false, true, false, true));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);
@@ -115,7 +121,7 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
                                             NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG),
                                             NEAR(GetRobotPose().GetTranslation().x(), 36, ROBOT_POSITION_TOL_MM),
                                             NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM),
-                                            GetCarryingObjectID() == 0)
+                                            GetCarryingObjectID() == _cubeId)
       {
         DropCube();
         
@@ -131,7 +137,7 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
     
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
-                                            GetCarryingObjectID() == 0,
+                                            GetCarryingObjectID() == _cubeId,
                                             NEAR(cubeZ, robotZ, BLOCK_Z_TOL_MM)) // near Z (cube should be resting on floor)
       {
         // move back
