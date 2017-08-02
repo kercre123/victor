@@ -39,6 +39,8 @@ namespace MemoryMatch {
       _GameInstance.SharedMinigameView.HideMiddleBackground();
       _GameInstance.SharedMinigameView.HideShelf();
       _GameInstance.SharedMinigameView.HideInstructionsVideoButton();
+      _GameInstance.SharedMinigameView.ShowWideGameStateSlide(_GameInstance.WaitForCozmoSlidePrefab, "WaitForCozmoSlide");
+      _GameInstance.SharedMinigameView.ShowSpinnerWidget();
       if (_ShowLabel) {
         _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kMinigameTextWaitForCozmo);
       }
@@ -51,6 +53,7 @@ namespace MemoryMatch {
 
     public override void Exit() {
       base.Exit();
+      _GameInstance.SharedMinigameView.HideSpinnerWidget();
       if (_ShowLabel) {
         _GameInstance.SharedMinigameView.InfoTitleText = "";
       }

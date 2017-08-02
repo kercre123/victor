@@ -53,6 +53,13 @@ namespace MemoryMatch {
     [SerializeField]
     private float _BannerAnimationDurationSeconds = 1.5f;
 
+    [SerializeField]
+    private GameObject _WaitForCozmoSlidePrefab;
+
+    public GameObject WaitForCozmoSlidePrefab {
+      get { return _WaitForCozmoSlidePrefab; }
+    }
+
     public MemoryMatchTurnSlide MemoryMatchTurnSlidePrefab {
       get { return _MemoryMatchTurnSlidePrefab; }
     }
@@ -110,7 +117,7 @@ namespace MemoryMatch {
       CurrentPlayer = _FirstPlayer;
 
       State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
-                          new WaitForNextRoundMemoryMatchState()),
+        new WaitForNextRoundMemoryMatchState(), showLabel: false),
                           DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
                                           _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec, false);
