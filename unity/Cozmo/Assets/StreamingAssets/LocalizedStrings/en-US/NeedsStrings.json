@@ -112,7 +112,7 @@
     "translation": "DONE"
   },
   "needs.RewardsDialog.SparksInventoryFull": {
-    "translation": "Your Sparks inventory is full"
+    "translation": "Your Sparks inventory is full."
   },
   "needs.RewardsDialog.SparksEarned": {
     "translation": "You've earned more Sparks!"
