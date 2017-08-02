@@ -204,7 +204,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 70
+  m_fontSizeMin: 60
   m_fontSizeMax: 70
   m_fontStyle: 0
   m_textAlignment: 516
@@ -320,7 +320,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114252318510184884}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -632,8 +631,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 6, y: 23.750015}
-  m_SizeDelta: {x: -1715, y: -48}
+  m_AnchoredPosition: {x: -71, y: 24}
+  m_SizeDelta: {x: -1560, y: -130}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224815487720022468
 RectTransform:

@@ -1319,7 +1319,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 80
+  m_fontSizeMin: 70
   m_fontSizeMax: 90
   m_fontStyle: 0
   m_textAlignment: 514
@@ -1739,8 +1739,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -1740, y: -360}
+  m_AnchoredPosition: {x: 7.5, y: 0}
+  m_SizeDelta: {x: -1795, y: -360}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224950557329927118
 RectTransform:
