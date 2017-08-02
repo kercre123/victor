@@ -66,10 +66,12 @@ namespace Cozmo.Upgrades {
       _ReopenModalCooldownStartTimestamp = -1;
       UIManager.OpenModal(_PyramidCubeUprightModalPrefab,
                           new UI.ModalPriorityData(UI.ModalPriorityLayer.High, 0, UI.LowPriorityModalAction.CancelSelf, UI.HighPriorityModalAction.Stack),
-                          (baseModal) => {
-                            _PyramidCubeUprightModalInstance = (PyramidCubeUprightModal)baseModal;
-                            _PyramidCubeUprightModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleCubeUprightModalClosedByUser;
-                          });
+                          HandleCubeShouldBeUprightModalCreated);
+    }
+
+    private void HandleCubeShouldBeUprightModalCreated(Cozmo.UI.BaseModal newModal) {
+      _PyramidCubeUprightModalInstance = (PyramidCubeUprightModal)newModal;
+      _PyramidCubeUprightModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleCubeUprightModalClosedByUser;
     }
 
     private void HandleSparkComplete(HardSparkEndedByEngine message) {

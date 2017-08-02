@@ -111,15 +111,15 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void HandleShowMeButton() {
-    System.Action<Cozmo.UI.BaseModal> wifiModalCreated = (wifiModal) => {
-      _WifiInstructionsModalInstance = (WifiInstructionsModal)wifiModal;
-      _WifiInstructionsModalInstance.ModalClosedWithCloseButtonOrOutside += QuitFlow;
-    };
-
     var wifiInstructionsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
                                                                   LowPriorityModalAction.CancelSelf,
                                                                   HighPriorityModalAction.Stack);
 
-    UIManager.OpenModal(_WifiInstructionsModalPrefab, wifiInstructionsModalPriorityData, wifiModalCreated);
+    UIManager.OpenModal(_WifiInstructionsModalPrefab, wifiInstructionsModalPriorityData, HandleWifiModalCreated);
+  }
+
+  private void HandleWifiModalCreated(BaseModal newModal) {
+    _WifiInstructionsModalInstance = (WifiInstructionsModal)newModal;
+    _WifiInstructionsModalInstance.ModalClosedWithCloseButtonOrOutside += QuitFlow;
   }
 }
