@@ -246,9 +246,7 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
   if(currentSevereExpression == NeedId::Energy){
     SetupSevereAnims(robot);
   }else{
-    robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
-            BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
-    _severeAnimsSet = false;
+    ClearSevereAnims(robot);
   }
   
   // Set up _cubeControllerMap with all connected cubes
