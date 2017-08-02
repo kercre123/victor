@@ -150,7 +150,7 @@ inline constexpr bool IsFltGTZero(double x)
   return (x > Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE);
 }
   
-// IsFltGZero implementations
+// IsFltGEZero implementations
 // TRUE if greater or equal than the negative of the tolerance
   
 inline constexpr bool IsFltGEZero(float x)
@@ -231,6 +231,32 @@ inline constexpr bool IsFltLT(double x, float y)
   return IsFltLT(x, (double)y);
 }
 
+// IsFltLTZero implementations
+// TRUE if less than the negative tolerance
+
+inline constexpr bool IsFltLTZero(float x)
+{
+  return (x < -Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+}
+
+inline constexpr bool IsFltLTZero(double x)
+{
+  return (x < -Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE);
+}
+
+// IsFltLEZero implementations
+// TRUE if less than or equal to the tolerance
+
+inline constexpr bool IsFltLEZero(float x)
+{
+  return (x <= Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+}
+
+inline constexpr bool IsFltLEZero(double x)
+{
+  return (x <= Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE);
+}
+  
 // TRUE if val is within the range [minVal, maxVal], else FALSE
 template<typename T>
 inline constexpr bool InRange(const T& val, const T& minVal, const T& maxVal) {

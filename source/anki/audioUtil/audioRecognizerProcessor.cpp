@@ -12,12 +12,13 @@
 
 #include "audioUtil/audioRecognizerProcessor.h"
 
-#include "audioUtil/audioCaptureSystem.h"
+#include "audioUtil/iAudioInputSource.h"
 #include "audioUtil/speechRecognizer.h"
 #include "audioUtil/waveFile.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/global/globalDefinitions.h"
+#include "util/logging/logging.h"
 
 #include <chrono>
 
@@ -134,7 +135,13 @@ void AudioRecognizerProcessor::AudioSamplesCallback(const AudioSample* buffer, u
       {
         Util::FileUtils::CreateDirectory(_savedAudioDir);
       }
-      WaveFile::SaveFile(Util::FileUtils::FullFilePath({_savedAudioDir, curTimeString + ".wav"}), _savedAudio);
+      const auto& saveFilePath = Util::FileUtils::FullFilePath({_savedAudioDir, curTimeString + ".wav"});
+      if (!WaveFile::SaveFile(saveFilePath, _savedAudio))
+      {
+        PRINT_NAMED_ERROR("AudioRecognizerProcessor.AudioSamplesCallback.SaveAudioClipFail",
+                          "Audio clip saving failed at path %s",
+                          saveFilePath.c_str());
+      }
       _savedAudio.clear();
     }
     else

@@ -555,14 +555,18 @@ public final class WifiUtil {
 
   private static Network findNetworkForInfo(final NetworkInfo info) {
     // why does this method have to be a thing? am I just an idiot and missing something?
+    final String tag = TAG + ".WifiUtil.findNetworkForInfo";
     String infoString = info.toString();
     Network foundNetwork = null;
     Network lessStrictNetwork = null;
     for (Network network : mConnectivityManager.getAllNetworks()) {
       final NetworkInfo tempInfo = mConnectivityManager.getNetworkInfo(network);
-      if (infoString.equals(tempInfo.toString())) {
+      if (tempInfo == null) {
+        Log.v(tag, "Skip invalid network " + network);
+      }
+      else if (infoString.equals(tempInfo.toString())) {
         if (foundNetwork != null) {
-          Log.v(TAG, "found duplicate info!!");
+          Log.v(tag, "found duplicate info!!");
         }
         foundNetwork = network;
       }
@@ -572,7 +576,7 @@ public final class WifiUtil {
       }
     }
     if (foundNetwork == null && lessStrictNetwork == null) {
-      Log.v(TAG, "AAAHHH COULDN'T FIND NETWORK");
+      Log.v(tag, "AAAHHH COULDN'T FIND NETWORK");
     }
     return foundNetwork != null ? foundNetwork : lessStrictNetwork;
   }

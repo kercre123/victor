@@ -18,7 +18,12 @@ public class AudioCaptureSystem {
   public static void requestCapturePermission() {
     final AnkitivityDispatcher.PermissionListener listener = new AnkitivityDispatcher.PermissionListener() {
       @Override public void onRequestPermissionsResult(final String[] permissions, final int[] grantResults) {
-        NativeRequestCapturePermissionCallback(grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        if (grantResults.length > 0) {
+          NativeRequestCapturePermissionCallback(grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        }
+        else {
+          NativeRequestCapturePermissionCallback(false);
+        }
       }
     };
     PermissionUtil.askForPermission(Manifest.permission.RECORD_AUDIO, listener);

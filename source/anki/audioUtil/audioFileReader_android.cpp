@@ -47,7 +47,7 @@ bool AudioFileReader::TrimPrimingAndRemainder(const NativeAudioFileData& fileDat
   return true;
 }
 
-void AudioFileReader::DeliverAudio(bool doRealTime)
+void AudioFileReader::DeliverAudio(bool doRealTime, bool addBeginSilence, bool addEndSilence)
 {
   
 }
