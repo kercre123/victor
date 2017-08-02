@@ -77,7 +77,11 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d,
         cozmo_vert_cube_get_pitch: this.verticalCubeGetPitch,
         cozmo_vert_cube_get_roll: this.verticalCubeGetRoll,
-        cozmo_vert_cube_get_yaw: this.verticalCubeGetYaw
+        cozmo_vert_cube_get_yaw: this.verticalCubeGetYaw,
+        // Devices
+        cozmo_vert_device_get_pitch: this.verticalDeviceGetPitch,
+        cozmo_vert_device_get_roll: this.verticalDeviceGetRoll,
+        cozmo_vert_device_get_yaw: this.verticalDeviceGetYaw
     };
 };
 
@@ -649,6 +653,20 @@ Scratch3CozmoBlocks.prototype.verticalCubeGetYaw = function(args, util) {
     var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
     var srcCube = this.getCubeHelper(cubeIndex);
     return Cast.toNumber(srcCube.yaw_d);
+};
+
+// Devices
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetPitch = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.pitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetRoll = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.roll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetYaw = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.yaw_d);
 };
 
 module.exports = Scratch3CozmoBlocks;

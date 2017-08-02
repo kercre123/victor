@@ -686,6 +686,60 @@ Blockly.Blocks['cozmo_vert_cube_get_yaw'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_device_get_pitch'] = {
+  /**
+   * Block to read the roll of the user's device
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Device pitch",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_device_get_roll'] = {
+  /**
+   * Block to read the roll of the user's device
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Device roll",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_device_get_yaw'] = {
+  /**
+   * Block to read the roll of the user's device
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Device yaw",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
 // Actions
 
 Blockly.Blocks['cozmo_vert_drive'] = {

@@ -372,6 +372,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           _LatestCozmoState.face.isVisible = false;
         }
 
+        // Set Device data
+        _LatestCozmoState.device.pitch_d = Input.gyro.attitude.eulerAngles.y;
+        _LatestCozmoState.device.roll_d = Input.gyro.attitude.eulerAngles.x;
+        _LatestCozmoState.device.yaw_d = Input.gyro.attitude.eulerAngles.z;
+
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
 
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);

@@ -20,6 +20,12 @@ namespace CodeLab {
     public bool isVisible;
   }
 
+  public class DeviceStateForCodeLab {
+    public float pitch_d;
+    public float roll_d;
+    public float yaw_d;
+  }
+
   public class CozmoStateForCodeLab {
     public float poseAngle_d;
     public float posePitch_d;
@@ -30,6 +36,7 @@ namespace CodeLab {
     public CubeStateForCodeLab cube2 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube3 = new CubeStateForCodeLab();
     public FaceStateForCodeLab face = new FaceStateForCodeLab();
+    public DeviceStateForCodeLab device = new DeviceStateForCodeLab();
   }
 
   public class ScratchRequest {
