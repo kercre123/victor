@@ -54,12 +54,6 @@
   "wifiStrings.Instructions.Slide4altCopy" : {
     "translation" : "L'application saura quand Cozmo est connecté."
   },
-  "wifiStrings.nextButton" : {
-    "translation" : "SUIVANT"
-  },
-  "wifiStrings.backButton" : {
-    "translation" : "PRÉCÉDENT"
-  },
   "wifi.gethelp.title" : {
     "translation" : "Tu rencontres des difficultés pour te connecter au Wi-Fi de Cozmo ?"
   },

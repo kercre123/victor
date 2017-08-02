@@ -54,12 +54,6 @@
   "wifiStrings.Instructions.Slide4altCopy" : {
     "translation" : "Die App weiß, wenn eine Verbindung zu Cozmo besteht."
   },
-  "wifiStrings.nextButton" : {
-    "translation" : "WEITER"
-  },
-  "wifiStrings.backButton" : {
-    "translation" : "ZURÜCK"
-  },
   "wifi.gethelp.title" : {
     "translation" : "Hast du Probleme beim Herstellen der Verbindung mit dem WLAN von Cozmo?"
   },

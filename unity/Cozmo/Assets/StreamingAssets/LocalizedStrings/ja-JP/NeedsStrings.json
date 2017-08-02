@@ -154,10 +154,10 @@
     "translation" : "Cozmoがエクササイズをして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "番犬ゲームの相手をしたので、Cozmoが {0} スパークをくれました！"
+    "translation" : "Cozmoがあなたに与えた{0}彼とキューブガードをプレイするためのスパーク！"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "番犬ゲームの相手をしたので、Cozmoが {0} スパークをくれました！"
+    "translation" : "Cozmoがあなたに与えた{0}彼とキューブガードをプレイするためのスパーク！"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmoはしゃっくりをしました"

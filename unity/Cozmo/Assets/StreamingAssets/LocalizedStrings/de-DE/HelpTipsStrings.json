@@ -45,26 +45,11 @@
   "helpTipsStrings.Slide3.bodyApp" : {
     "translation" : "<color=#FFFFFF>3 Tokens unlock a </color><b><color=#F5BF2D>Bonus Box.</color></b>"
   },
-  "helpTipsStrings.Slide4.title" : {
-    "translation" : "Energie, Bits und Sparks"
-  },
-  "helpTipsStrings.Slide4.body" : {
-    "translation" : "Für das Erfüllen täglicher Ziele erhältst du <color=#00bd3dff>Energie</color>. Die Energie kannst du in <color=#fe8f00ff>Bits</color> und <color=#11a2f0ff>Sparks</color> umwandeln, mit denen sich Upgrades und Funktionen von Cozmo freischalten lassen!"
-  },
-  "helpTipsStrings.Slide4.bodyEnergy" : {
-    "translation" : "Energie"
-  },
-  "helpTipsStrings.Slide4.bodyBits" : {
-    "translation" : "Bits"
-  },
-  "helpTipsStrings.Slide4.bodySparks" : {
-    "translation" : "Sparks"
-  },
   "helpTipsStrings.Slide5.title" : {
     "translation" : "Sieh regelmäßig nach, was Cozmo momentan macht."
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Starte die Cozmo-App jeden Tag, damit es Cozmo gut geht. Außerdem kannst du ihm helfen, neue Dinge zu lernen, indem du mehr Fähigkeiten freischaltest. Stelle eine Verbindung zu Cozmo her, um ihn aufzuwecken und ihm die Aufmerksamkeit zu schenken, die er braucht."
+    "translation" : "Launch the Cozmo App to check in each day to keep Cozmo happy. When you fill his Play Need daily, you help him learn and grow by earning Bonus Boxes. Connect to Cozmo to wake him up and give him the attention he needs."
   },
   "helpTipsStrings.Slide6.title" : {
     "translation" : "Achte auf die Sicherheit von Cozmo."

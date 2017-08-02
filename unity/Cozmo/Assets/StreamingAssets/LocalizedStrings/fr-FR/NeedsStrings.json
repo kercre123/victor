@@ -154,10 +154,10 @@
     "translation" : "Cozmo vient de générer des étincelles {0} en faisant de la muscu !"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmo t'a donné des {0} étincelles pour avoir joué au chien de garde avec lui !"
+    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmo t'a donné des {0} étincelles pour avoir joué au chien de garde avec lui !"
+    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmo a le hoquet"

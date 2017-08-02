@@ -63,9 +63,6 @@
   "onboarding.Phase3.Body3" : {
     "translation" : "Laisse Cozmo inspecter le cube par lui-même."
   },
-  "onboarding.Phase3.Body4" : {
-    "translation" : "Bien joué !"
-  },
   "onboarding.Phase3.ErrorCube" : {
     "translation" : "Le cube a bougé !"
   },
@@ -103,16 +100,10 @@
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux."
   },
   "onboarding.NeedsIntroReturning" : {
-    "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux.\u000a\u000aL'application Cozmo aura peut-être une apparence légèrement différente, mais tu conserveras tous les jeux débloqués, les mises à niveau et les étincelles que tu as gagnés."
+    "translation" : "<b>Cozmo has Needs.</b>\u000a\u000aCare for him each day to keep him happy.\u000a\u000aCozmo's App may look a little different but you'll keep any unlocks you've earned."
   },
   "onboarding.PlayIntro" : {
     "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un Token."
-  },
-  "onboarding.RewardsIntro" : {
-    "translation" : "<b>Tu as gagné un Token.</b>\u000a\u000aLes Tokens débloquent les boîtes à bonus, pleines de récompenses telles que des étincelles ou de nouvelles compétences."
-  },
-  "onboarding.End" : {
-    "translation" : "<b>Tu as acquis toutes les notions de base qui font de toi un parfait propriétaire !</b>\u000a\u000aN'hésite pas à explorer librement tout le potentiel de Cozmo, ou laisse-le tranquille : de lui-même, il passera en mode Jeu libre, dans lequel il te réserve quelques tours et jeux de son cru."
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "Les activités de découverte sont particulières ; elles n'affectent pas les besoins de Cozmo et ne coûtent pas d'étincelles."
@@ -140,5 +131,20 @@
   },
   "onboarding.DoATrickDesc" : {
     "translation" : "Cozmo est un robot joueur et adore faire des tours !\u000a\u000a Assure-toi qu'un cube qu'il puisse voir soit disponible et regarde-le le faire rouler."
+  },
+  "onboarding.RewardsIntro.Part1" : {
+    "translation" : "You’ve filled Cozmo’s <color=#f5ea12>Play Need.</color>"
+  },
+  "onboarding.RewardsIntro.Part2" : {
+    "translation" : "Each day you fill his \u000a<color=#f5ea12>Play Need</color> you’ll earn a \u000a<color=#f5ea12>Bonus Token.</color>"
+  },
+  "onboarding.TokensIntro.Part1" : {
+    "translation" : "Fill Cozmo’s <color=#f5ea12>Play Need</color> on three days to unlock a <color=#f5ea12>Bonus Box.</color>"
+  },
+  "onboarding.TokensIntro.Part2" : {
+    "translation" : "Cozmo is lucky to have you as an owner! Time to explore together!"
+  },
+  "onboarding.button.end" : {
+    "translation" : "COMPLETE"
   }
 }

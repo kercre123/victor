@@ -131,8 +131,5 @@
   },
   "reward.description.SkillUp" : {
     "translation" : "La compétence {0} de Cozmo a augmenté !"
-  },
-  "reward.freeplay.BehaviorDisplay" : {
-    "translation" : "Cozmo a reçu +{0} unités d'énergie de {1} !"
   }
 }

@@ -16,7 +16,7 @@
     "translation" : "ロックされたモーション/能力"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Cozmo's Playをプレイする毎日プレイトークンを獲得する必要があります。これらは新しい能力を含むボーナスボックスのロックを解除します！"
+    "translation" : "Cozmo's Playをプレーする必要があります。毎日プレイトークンを獲得する必要があります。これらは、Sparks、Games、Tricksなどの報酬でボーナスボックスのロックを解除します！"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "グータッチ"
@@ -187,10 +187,16 @@
     "translation" : "キューブのスパーク状態<placeholder>を収集します"
   },
   "unlockable.ComingSoon.Title" : {
-    "translation" : "間もなく登場！"
+    "translation" : "ロックされた能力"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "ボーナスボックスを開くことで、新しいモーション/能力がロック解除される可能性があります！"
+    "translation" : "Cozmoのプレイを毎日行う必要があり、スパーク、トリックなどの報酬でボーナスボックスを開くことができます！"
+  },
+  "unlockable.GuardDog.Title" : {
+    "translation" : "キューブガード"
+  },
+  "unlockable.GuardDog.Description" : {
+    "translation" : "Cozmoの立方体が近くにあるとき、彼はそれらを守っている間、昼寝を取るかもしれない。慎重に彼の目を覚ますことなく、彼の立方体を裏返しにしてください。"
   },
   "sparks.Sparked" : {
     "translation" : "Cozmoはスパークで指示されました："
@@ -224,5 +230,8 @@
   },
   "sparks.free" : {
     "translation" : "無料"
+  },
+  "sparks.notSparkable" : {
+    "translation" : "スパークされない"
   }
 }

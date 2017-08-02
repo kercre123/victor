@@ -84,9 +84,6 @@
   "label.connect" : {
     "translation" : "接続"
   },
-  "label.start" : {
-    "translation" : "スタート"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0} {1}が必要です"
   },
@@ -140,9 +137,6 @@
   },
   "label.termsOfUse" : {
     "translation" : "利用規約"
-  },
-  "label.totalSparks" : {
-    "translation" : "スパーク合計：{0}"
   },
   "label.termsInstructions" : {
     "translation" : "<b><color=#11a2f0ff>接続</color></b>をタップすることで、以下の利用規約に同意したことになります："

@@ -23,8 +23,5 @@
   },
   "sparksView.sparkCount.label" : {
     "translation" : "利用可能なスパーク"
-  },
-  "sparksView.sparksRewarded.label" : {
-    "translation" : "スパーク"
   }
 }

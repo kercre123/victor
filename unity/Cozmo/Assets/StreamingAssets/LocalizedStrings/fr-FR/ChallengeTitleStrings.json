@@ -73,7 +73,7 @@
     "translation" : "La parole à Cozmo"
   },
   "cozmoSays.description" : {
-    "translation" : "Contre des étincelles, Cozmo tentera de dire un mot ou une phrase !"
+    "translation" : "Ask Cozmo to say a word or phrase!"
   },
   "codeLab.title" : {
     "translation" : "Code Lab"
@@ -88,7 +88,7 @@
     "translation" : "INCORRECT"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmo adore avoir le droit de choisir comment il veut jouer.  Il demandera automatiquement à faire des jeux, exécutera des tours et gagnera parfois des étincelles."
+    "translation" : "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for Games and do Tricks, and sometimes even earn Sparks."
   },
   "activityView.freeplayTitle" : {
     "translation" : "COZMO EST ACTUELLEMENT EN MODE DE JEU LIBRE"

@@ -66,9 +66,6 @@
   "connectivity.placeCozmoOnCharger" : {
     "translation" : "Place Cozmo sur son chargeur."
   },
-  "connectivity.replaceCozmoOnCharger" : {
-    "translation" : "Retire Cozmo et replace-le sur son chargeur."
-  },
   "label.getHelp" : {
     "translation" : "Obtenir de l'aide"
   },
@@ -92,9 +89,6 @@
   },
   "connectivity.sendGameplayDataPrompt" : {
     "translation" : "Aide-nous à améliorer Cozmo en nous envoyant des données et des statistiques concernant ta façon de jouer"
-  },
-  "needs.VoiceSettingsModal.Title" : {
-    "translation" : "Commandes vocales"
   },
   "connectivity.behaviorDisplayDisconnected" : {
     "translation" : "Cozmo a été déconnecté."

@@ -23,8 +23,5 @@
   },
   "sparksView.sparkCount.label" : {
     "translation" : "Étincelles disponibles"
-  },
-  "sparksView.sparksRewarded.label" : {
-    "translation" : "ÉTINCELLES"
   }
 }

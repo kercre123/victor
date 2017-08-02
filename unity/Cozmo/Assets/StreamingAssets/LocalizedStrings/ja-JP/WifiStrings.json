@@ -54,12 +54,6 @@
   "wifiStrings.Instructions.Slide4altCopy" : {
     "translation" : "Cozmoが接続されると、アプリはそれを認識します。"
   },
-  "wifiStrings.nextButton" : {
-    "translation" : "次へ"
-  },
-  "wifiStrings.backButton" : {
-    "translation" : "戻る"
-  },
   "wifi.gethelp.title" : {
     "translation" : "CozmoのWifiへの接続に問題がありますか？"
   },

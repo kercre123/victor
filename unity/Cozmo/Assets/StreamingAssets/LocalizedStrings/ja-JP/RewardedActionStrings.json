@@ -131,8 +131,5 @@
   },
   "reward.description.SkillUp" : {
     "translation" : "Cozmoの{0}スキルが増えました！"
-  },
-  "reward.freeplay.BehaviorDisplay" : {
-    "translation" : "Cozmoは{1}から+{0}エネルギーをゲットしました！"
   }
 }

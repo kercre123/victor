@@ -76,7 +76,7 @@
     "translation" : "Sicheres Spielen:"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "Erkunde gut beleuchtete Innenräume.\u000a\u000aFahre auf flachen Oberflächen.\u000a\u000aPass auf, dass Cozmo nicht runterfällt.\u000a\u000aBleibe in der Nähe von Cozmo, um maximalen Spielspaß zu haben."
+    "translation" : "• Explore indoors in well lit spaces.\u000a\u000a• Drive on flat surfaces.\u000a\u000a• Be careful of falling off edges.\u000a\u000a• Stay close to Cozmo for the best experience."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Grüßen"
@@ -184,7 +184,7 @@
     "translation" : "Super!"
   },
   "speedTap.roundsText" : {
-    "translation" : "Runde {0:N0}"
+    "translation" : "ROUND {0:N0}"
   },
   "speedTap.tapBlock" : {
     "translation" : "Tippe einen blinkenden Cube an,\u000amit dem du spielen möchtest."
@@ -221,12 +221,6 @@
   },
   "minigame.timeout.description" : {
     "translation" : "Cozmo möchte nicht mehr warten, sondern andere Dinge tun."
-  },
-  "cubePounce.info.playerWinPoint" : {
-    "translation" : "Du warst zu schnell für Cozmo!"
-  },
-  "cubePounce.info.cozmoWinPoint" : {
-    "translation" : "Er war zu schnell für dich!"
   },
   "cubePounce.info.setupText" : {
     "translation" : "Stelle einen Cube vor Cozmo auf und halte ihn still, wenn er grün wird."
@@ -366,11 +360,11 @@
   "label.MATCH" : {
     "translation" : "ÜBEREINSTIMMUNG!"
   },
-  "label.NO.MATCH" : {
-    "translation" : "KEINE \\u000aÜBEREINSTIMMUNG"
+  "label.dontSlap" : {
+    "translation" : "DON'T\u000aSLAP!"
   },
-  "label.DONT.SLAP" : {
-    "translation" : "NICHT \\u000aSCHLAGEN!"
+  "label.noMatch" : {
+    "translation" : "NO\u000aMATCH"
   },
   "label.enterText" : {
     "translation" : "Text eingeben..."
