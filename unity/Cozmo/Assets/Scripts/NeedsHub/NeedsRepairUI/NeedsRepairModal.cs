@@ -690,6 +690,7 @@ namespace Cozmo.Repair.UI {
 
         if (_RoundIndex < _RoundProgressPips.Count) {
           _RoundProgressPips[_RoundIndex].SetComplete(true);
+          GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Pattern_Complete);
         }
 
         _TuneUpValuesEntered.Clear();
