@@ -45,6 +45,11 @@ namespace Anki {
   
   // Forward declaration:
   namespace Util {
+  namespace AnkiLab {
+    struct ActivateExperimentRequest;
+    struct AssignmentDef;
+    enum class AssignmentStatus : uint8_t;
+  }
   namespace Data {
     class DataPlatform;
   }
@@ -103,6 +108,9 @@ public:
   std::vector<RobotID_t> const& GetRobotIDList() const;
 
   void ExecuteBackgroundTransfers();
+
+  Util::AnkiLab::AssignmentStatus ActivateExperiment(const Util::AnkiLab::ActivateExperimentRequest& request,
+                                                     std::string& outVariationKey);
   
   // Handle various message types
   template<typename T>
@@ -132,6 +140,10 @@ protected:
   void UpdateLatencyInfo();
   void SendSupportInfo() const;
   void InitUnityLogger();
+
+  void InitExperiments() const;
+  void AutoActivateExperiments(const std::string& userId) const;
+  void HandleAssignmentsUpdated(const std::vector<Util::AnkiLab::AssignmentDef>& activeAssignments) const;
   
   EngineState _engineState = EngineState::Stopped;
 

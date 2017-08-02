@@ -401,12 +401,16 @@ AssignmentStatus AnkiLab::ForceActivateExperiment(const std::string& experimentK
   if (nullptr == assignment) {
     AssignmentDef def{experimentKey, userId, variationKey};
     _forceAssignments.emplace_back(std::move(def));
+    assignment = &_forceAssignments.back();
   } else {
     if (assignment->GetVariation_key() != variationKey) {
       // changed
       assignment->SetVariation_key(variationKey);
     }
   }
+
+  PRINT_NAMED_INFO("AnkiLab.ForceActivate", "ForceAssigned: %s -> %s",
+                   experiment->GetKey().c_str(), variation->GetKey().c_str());
 
   return AssignmentStatus::ForceAssigned;
 }

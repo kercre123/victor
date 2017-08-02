@@ -27,6 +27,9 @@ namespace Util {
   class RandomGenerator;
   class TransferQueueMgr;
   class Locale;
+  namespace AnkiLab {
+    class AnkiLab;
+  }
   namespace Data {
     class DataPlatform;
   }
@@ -44,6 +47,7 @@ class AudioMultiplexer;
 
 namespace Cozmo {
   
+class CozmoAudienceTags;
 class CozmoEngine;
 class CozmoFeatureGate;
 class IExternalInterface;
@@ -97,7 +101,9 @@ public:
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
   NeedsManager*                         GetNeedsManager() const { return _needsManager.get(); }
-  
+  Util::AnkiLab::AnkiLab*               GetAnkiLab() const { return _ankiLab.get(); }
+  CozmoAudienceTags*                    GetAudienceTags() const { return _audienceTags.get(); }
+
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
   
@@ -130,6 +136,8 @@ private:
   std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
   std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
   std::unique_ptr<NeedsManager>                         _needsManager;
+  std::unique_ptr<Util::AnkiLab::AnkiLab>               _ankiLab;
+  std::unique_ptr<CozmoAudienceTags>                    _audienceTags;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

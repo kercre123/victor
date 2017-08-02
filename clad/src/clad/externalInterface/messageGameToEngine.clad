@@ -35,6 +35,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
+#include "util/ankiLab/ankiLabDef.clad"
 
 
 namespace Anki {
@@ -1006,6 +1007,10 @@ message InventoryRequestGet {
 // Request engine to send data like device id, app run id, etc
 message RequestDeviceData {
 
+}
+
+message StoredLabAssignments {
+  Anki::Util::AnkiLab::AssignmentDef assignments[uint_16]
 }
 
 ///////////////////////////////////////////////////////////////////////////////

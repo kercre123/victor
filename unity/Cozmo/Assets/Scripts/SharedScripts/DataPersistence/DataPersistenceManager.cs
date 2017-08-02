@@ -284,6 +284,11 @@ namespace DataPersistence {
       DeviceId = info.deviceId;
     }
 
+    public void HandleUpdatedAssignments(Anki.Cozmo.ExternalInterface.UpdatedAssignments message) {
+      Data.DefaultProfile.LabAssignments = message.assignments;
+      Save();
+    }
+
     #endregion
 
 

@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "cozmo_anim_generated.h"
 #include "threadedPrintStressTester.h"
+#include "util/ankiLab/ankiLab.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -800,6 +801,13 @@ void RobotDataLoader::LoadRobotConfigs()
     _context->GetFeatureGate()->Init(fileContents);
   }
   
+  // A/B testing definition
+  {
+    const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/experiments.json")};
+    const std::string fileContents{Util::FileUtils::ReadFile(filename)};
+    _context->GetAnkiLab()->Load(fileContents);
+  }
+
   // Inventory config
   {
     static const std::string jsonFilename = "config/basestation/config/inventory_config.json";

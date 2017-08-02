@@ -50,6 +50,8 @@ namespace DataPersistence {
 
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
 
+    public Anki.Util.AnkiLab.AssignmentDef[] LabAssignments;
+
     public static int kSaveVersionCurrent = 2;
 
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
@@ -81,6 +83,7 @@ namespace DataPersistence {
       DisplayedStars = 0;
       NewStarLevels = new List<Anki.Cozmo.ExternalInterface.StarLevelCompleted>();
       PreviousTags = new List<string>();
+      LabAssignments = new Anki.Util.AnkiLab.AssignmentDef[0];
     }
   }
 }

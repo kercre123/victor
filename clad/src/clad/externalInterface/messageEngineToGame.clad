@@ -47,6 +47,7 @@
 #include "clad/types/visionModes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/memoryMap.clad"
+#include "util/ankiLab/ankiLabDef.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -900,6 +901,10 @@ message FeedingSFXStageUpdate {
 
 message ResponseLocale {
   string locale
+}
+
+message UpdatedAssignments {
+  Anki::Util::AnkiLab::AssignmentDef assignments[uint_16]
 }
 
 ///////////////////////////////////////////////////////////////////////////////

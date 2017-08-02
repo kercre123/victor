@@ -17,9 +17,11 @@
 #include "util/helpers/noncopyable.h"
 #include "json/json.h"
 
-#include <thread>
 #include <atomic>
+#include <functional>
 #include <memory>
+#include <mutex>
+#include <thread>
 
 namespace Anki {
   
@@ -50,6 +52,10 @@ public:
   void ReceiveMessages(const uint8_t* buffer, size_t size);
   void ExecuteBackgroundTransfers();
 
+  // Activate A/B experiment
+  uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
+                              uint8_t* responseBuffer, size_t responseLen);
+
   // Debug viz communication
   size_t SendVizMessages(uint8_t* buffer, size_t bufferSize);
   
@@ -74,6 +80,7 @@ private:
     GameMessagePort* GetGameMessagePort() const { return _gameMessagePort.get(); }
     GameMessagePort* GetVizMessagePort() const { return _vizMessagePort.get(); }
     CozmoEngine* GetEngine() const { return _cozmoInstance.get(); }
+    void SyncWithEngineUpdate(const std::function<void()>& func) const;
     
   private:
     static GameMessagePort* CreateVizMessagePort();
@@ -81,6 +88,7 @@ private:
     std::unique_ptr<GameMessagePort> _vizMessagePort;
     std::unique_ptr<CozmoEngine> _cozmoInstance;
     std::atomic<bool> _isRunning;
+    mutable std::mutex _updateMutex;
 
   }; // class CozmoInstanceRunner
   

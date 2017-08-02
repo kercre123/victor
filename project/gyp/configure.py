@@ -325,6 +325,12 @@ def main(scriptArgs):
     UtilLog.error("error compiling clad files")
     return False
 
+  #run clad's make for util
+  if (subprocess.call(['make', '--silent', 'OUTPUT_DIR=' + unityGeneratedPath, 'CLAD_EMITTER_DIR=' + os.path.join(options.cladPath, 'emitters'), 'csharp'],
+    cwd=os.path.join(options.ankiUtilPath, 'source', 'anki', 'clad')) != 0):
+    UtilLog.error("error compiling clad files")
+    return False
+
   #generate unity's metafiles
   if (generateUnityMeta.generateMetaFiles(unityGeneratedPath, options.verbose)):
     UtilLog.error("error generating unity meta files")
