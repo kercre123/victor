@@ -113,7 +113,7 @@ namespace MemoryMatch {
                           new WaitForNextRoundMemoryMatchState()),
                           DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
-                                          _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec);
+                                          _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec, false);
       _StateMachine.SetNextState(initCubeState);
       if (CurrentRobot != null) {
         CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);

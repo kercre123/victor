@@ -867,10 +867,10 @@ namespace Cozmo {
 
       #region Game State Slides
 
-      public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired, TweenCallback endInTweenCallback = null) {
+      public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired, bool showTransparentCube = true, TweenCallback endInTweenCallback = null) {
         GameObject slideObject = ShowWideGameStateSlide(_ShowCozmoCubesSlidePrefab, "setup_cubes_slide", endInTweenCallback);
         ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-        cubeSlide.Initialize(numCubesRequired, CubePalette.Instance.InViewColor, CubePalette.Instance.OutOfViewColor);
+        cubeSlide.Initialize(numCubesRequired, CubePalette.Instance.InViewColor, CubePalette.Instance.OutOfViewColor, showTransparentCube);
         return cubeSlide;
       }
 

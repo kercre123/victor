@@ -35,16 +35,29 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
 
   private Tweener _Tween;
 
-  public void Initialize(int numCubesToShow, CubePalette.CubeColor inViewColor, CubePalette.CubeColor outViewColor) {
+  private bool _ShowTransparentCube;
+
+  public bool ShowTransparentCube {
+    get { return _ShowTransparentCube; }
+    set {
+      _ShowTransparentCube = value;
+      if (!_ShowTransparentCube) {
+        _TransparentCubeContainer.gameObject.SetActive(false);
+      }
+    }
+  }
+
+  public void Initialize(int numCubesToShow, CubePalette.CubeColor inViewColor, CubePalette.CubeColor outViewColor, bool showTransparentCube = true) {
     _InViewColor = inViewColor;
     _OutViewColor = outViewColor;
+    _ShowTransparentCube = showTransparentCube;
     CreateCubes(numCubesToShow, inViewColor.uiSprite);
     LightUpCubes(0);
     string locKeyToUse = (numCubesToShow > 1) ? LocalizationKeys.kMinigameLabelShowCubesPlural : LocalizationKeys.kMinigameLabelShowCubesSingular;
     _ShowCozmoCubesLabel.text = Localization.GetWithArgs(locKeyToUse,
           numCubesToShow);
 
-    _TransparentCubeContainer.gameObject.SetActive(true);
+    _TransparentCubeContainer.gameObject.SetActive(_ShowTransparentCube);
     _Tween = null;
   }
 
@@ -93,7 +106,9 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
       }
       _CubeImages[i].IconImage.enabled = _CubeImages[i].IconImage.sprite != null;
     }
-    _TransparentCubeContainer.gameObject.SetActive(numberCubes < _CubeImages.Length);
+    if (_ShowTransparentCube) {
+      _TransparentCubeContainer.gameObject.SetActive(numberCubes < _CubeImages.Length);
+    }
   }
 
   public void LightUpCubes(List<int> cubeIndices) {
@@ -110,7 +125,9 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
       }
       _CubeImages[i].IconImage.enabled = _CubeImages[i].IconImage.sprite != null;
     }
-    _TransparentCubeContainer.gameObject.SetActive(cubeIndices.Count == 0);
+    if (_ShowTransparentCube) {
+      _TransparentCubeContainer.gameObject.SetActive(cubeIndices.Count == 0);
+    }
   }
 
   private void CreateCubes(int numCubesToShow, Sprite inViewSprite) {

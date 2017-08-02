@@ -34,13 +34,15 @@ namespace MemoryMatch {
 
     private int _FirstBlockSeenID = -1;
 
-    public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan, float ScanTimeoutSecMax) : base(nextState, cubesRequired) {
+    public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan,
+                                   float ScanTimeoutSecMax, bool showTransparentCube = true) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
       _BlockPosComparer = new BlockToCozmoPositionComparerByID(_CurrentRobot);
       _MinDistBetweenCubesMM = MinDistBetweenCubesMM;
       _RotateSecScan = RotateSecScan;
       _ScanTimeoutSecMax = ScanTimeoutSecMax;
+      _ShowTransparentCube = showTransparentCube;
     }
 
     public override void Enter() {
@@ -251,7 +253,7 @@ namespace MemoryMatch {
     private void InitShowCubesSlide() {
       if (_ShowCozmoCubesSlide == null) {
         GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Window_Open);
-        _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+        _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired, _ShowTransparentCube);
       }
       _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelPlaceCenter));
       _ShowCozmoCubesSlide.SetCubeSpacing(100);
