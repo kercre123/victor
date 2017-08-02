@@ -581,24 +581,20 @@ void RobotDataLoader::LoadActivities()
 
 void RobotDataLoader::LoadVoiceCommandConfigs()
 {
+#if THF_FUNCTIONALITY
   // Configuration for voice command component 
   {
     std::string jsonFilename = "assets/voiceCommand/voiceCommand_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
     if (!success)
     {
-#if THF_FUNCTIONALITY
       PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
                         "Voice Command Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
-#else
-      PRINT_NAMED_INFO("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                       "Voice Command Json config file %s not found or failed to parse",
-                       jsonFilename.c_str());
-#endif
       _voiceCommandConfig.clear();
     }
   }
+#endif
   
   // Configuration for "lets play" game selection
   {
