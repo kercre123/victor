@@ -1616,7 +1616,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114084850859748042}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1807,7 +1806,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2222,7 +2220,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 1
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114052148228947764}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2500,7 +2497,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114432719196799456}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2823,14 +2819,16 @@ MonoBehaviour:
   _BlingAnchor: {fileID: 224561424295851892}
   _BlingPrefab: {fileID: 1404152446195122, guid: f7169fbed09d348a48b7f89e056977bb,
     type: 2}
-  _BlingDuration_sec: 2
+  _BlingDuration_sec: 0.7
   _StarAnchor: {fileID: 224112869421590676}
   _StarPrefab: {fileID: 164212, guid: fd898ade9b55d4f489de6ad2bd66d130, type: 2}
-  _StarDuration_sec: 2
+  _StarAwardedEffectPrefab: {fileID: 164212, guid: 17cfd3d25eedb486ebed2fc8eb0de228,
+    type: 2}
+  _StarDuration_sec: 1
   _CrateAnchor: {fileID: 224282739073296420}
   _CratePrefab: {fileID: 1025772493188068, guid: 36fbd418bfa3d4ce2bb4c9bc74d73274,
     type: 2}
-  _CrateDuration_sec: 2
+  _CrateDuration_sec: 1
   _RewardModalPrefab: {fileID: 114384868453747056, guid: 5f46ab2cc797f43498a5b4e4250bb425,
     type: 2}
   _AddStarDebugButton: {fileID: 114581230522602540}
@@ -3234,7 +3232,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary
   _OverrideSkinTransition: 1
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114270182097669664}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -3607,7 +3604,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}

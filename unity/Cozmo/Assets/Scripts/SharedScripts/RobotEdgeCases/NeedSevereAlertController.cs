@@ -66,14 +66,14 @@ namespace Cozmo.UI {
                           LocalizationKeys.kNeedsSevereAlertRepairTitle,
                           LocalizationKeys.kNeedsSevereAlertRepairDescription,
                           buttonData);
-        UIManager.OpenAlert(alertData, _NeedSevereAlertPriority);
+        UIManager.OpenAlert(alertData, _NeedSevereAlertPriority, overrideCloseOnTouchOutside: false);
       }
       else if (severeNeed == NeedId.Energy) {
         AlertModalData alertData = new AlertModalData("energy_severe_alert",
                           LocalizationKeys.kNeedsSevereAlertEnergyTitle,
                           LocalizationKeys.kNeedsSevereAlertEnergyDescription,
                           buttonData);
-        UIManager.OpenAlert(alertData, _NeedSevereAlertPriority);
+        UIManager.OpenAlert(alertData, _NeedSevereAlertPriority, overrideCloseOnTouchOutside: false);
       }
     }
 
