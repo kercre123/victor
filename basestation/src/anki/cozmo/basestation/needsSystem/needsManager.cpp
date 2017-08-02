@@ -802,7 +802,7 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
           PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompleted",
                         "About to create freeplay sparks reward message but there was a pending one, so sending that one now");
 
-          OnSparksRewardAnimComplete();
+          SparksRewardCommunicatedToUser();
         }
         _pendingSparksRewardMsg = true;
 
@@ -990,7 +990,7 @@ int NeedsManager::AwardSparks(const int targetSparks, const float minPct, const 
 }
 
 
-void NeedsManager::OnSparksRewardAnimComplete()
+void NeedsManager::SparksRewardCommunicatedToUser()
 {
   DEV_ASSERT_MSG(_pendingSparksRewardMsg == true,
                  "NeedsManager.OnSparksRewardAnimComplete",
