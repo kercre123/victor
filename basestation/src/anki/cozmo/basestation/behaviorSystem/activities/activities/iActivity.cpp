@@ -247,7 +247,7 @@ void IActivity::OnSelected(Robot& robot)
   
   // log event to das - note freeplay_goal is a legacy name for Activities left
   // in place so that data is queriable - please do not change
-  Util::sEventF("robot.freeplay_goal_started", {}, "%s", GetIDStr());
+  Util::sEventF("robot.freeplay_goal_started", {}, "%s", ActivityIDToString(_id));
   OnSelectedInternal(robot);
 }
 
@@ -309,7 +309,7 @@ void IActivity::OnDeselected(Robot& robot)
   // in place so that data is queriable - please do not change
   Util::sEventF("robot.freeplay_goal_ended",
                 {{DDATA, std::to_string(nSecs).c_str()}},
-                "%s", GetIDStr());
+                "%s", ActivityIDToString(_id));
   
   OnDeselectedInternal(robot);
 }
