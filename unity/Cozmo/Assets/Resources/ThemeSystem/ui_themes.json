@@ -4949,7 +4949,7 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 65.0,
+                            "AutoSizingMin": 5.0,
                             "AutoSizingMax": 80.0,
                             "RectTF": {
                                 "AnchoredPosition": {

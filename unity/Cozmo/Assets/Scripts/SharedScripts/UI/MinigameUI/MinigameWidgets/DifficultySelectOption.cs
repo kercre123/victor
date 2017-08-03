@@ -29,6 +29,8 @@ public class DifficultySelectOption : MonoBehaviour {
   [SerializeField]
   private GameObject _DisabledIcon;
 
+  [SerializeField]
+  private GameObject _DisabledBackground;
 
   private DifficultySelectOptionData _Data;
 
@@ -78,6 +80,7 @@ public class DifficultySelectOption : MonoBehaviour {
     _Button.gameObject.name = _Data.DifficultyName + "_Button";
 
     _DisabledIcon.gameObject.SetActive(_IsLocked);
+	_DisabledBackground.gameObject.SetActive(_IsLocked);
   }
 
 }
