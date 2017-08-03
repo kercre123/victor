@@ -465,9 +465,7 @@ void StreamingAnimation::AbortAnimation()
       // TODO: Cancel dispatch after events
       
       if (nullptr != _audioBuffer) {
-        // Check if all posted events have been completed
-        const bool isComplete = ( GetPostedEventCount() <= GetCompletedEventCount() );
-        _audioBuffer->ResetAudioBufferAnimationCompleted(isComplete);
+        _audioBuffer->ResetAudioBufferAnimationCompleted();
       }
       _audioClient.StopCozmoEvent(_gameObj);
       
