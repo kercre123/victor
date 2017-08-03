@@ -336,10 +336,11 @@ MonoBehaviour:
     targets: []
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
-  _OptionalCloseDialogCozmoButton: {fileID: 114232184766504676}
+  _OptionalCloseDialogCozmoButton: {fileID: 0}
   _PreventForceClose: 0
   DimBackground: 0
   _NameForFaceLabel: {fileID: 114490285469943762}
+  _QuitMinigameButton: {fileID: 114140722370524372}
 --- !u!222 &22200494
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -674,7 +675,7 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224733871886907914}
-  - component: {fileID: 114083956402584606}
+  - component: {fileID: 114140722370524372}
   m_Layer: 5
   m_Name: QuitMiniGameButton
   m_TagString: Untagged
@@ -837,7 +838,7 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
---- !u!114 &114083956402584606
+--- !u!114 &114140722370524372
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}

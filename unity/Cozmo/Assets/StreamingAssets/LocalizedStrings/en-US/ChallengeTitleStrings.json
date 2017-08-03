@@ -104,5 +104,8 @@
   },
   "activityView.freeplayTitle": {
     "translation": "COZMO IS CURRENTLY IN FREEPLAY"
+  },
+  "faceEnrollment.title.cancelScanning": {
+    "translation": "Cancel Face Scanning?"
   }
 }

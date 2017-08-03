@@ -133,6 +133,7 @@ public static class LocalizationKeys {
   public const string kMemoryMatchGameLabelIncorrect = "memoryMatchGame.label.incorrect";
   public const string kActivityViewFreeplayDescription = "activityView.freeplayDescription";
   public const string kActivityViewFreeplayTitle = "activityView.freeplayTitle";
+  public const string kFaceEnrollmentTitleCancelScanning = "faceEnrollment.title.cancelScanning";
 
   #endregion
 

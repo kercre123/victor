@@ -112,11 +112,21 @@ namespace FaceEnrollment {
       }
     }
 
+    private void OnCancelFaceScan() {
+      if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
+        //If this is the first face, go back to the needs hub.
+        SharedMinigameView.HandleQuitConfirmed();
+      }
+      else {
+        _StateMachine.SetNextState(new FaceSlideState());
+      }
+    }
+
     public void EnterNameForNewFace(string preFilledName) {
       FaceNameSlideState newNameSlideState = new FaceNameSlideState();
       newNameSlideState.Initialize(preFilledName, (string faceName) => {
         FaceEnrollInstructionState faceEnrollInstructionState = new FaceEnrollInstructionState();
-        faceEnrollInstructionState.Initialize(faceName, () => EnterNameForNewFace(faceName));
+        faceEnrollInstructionState.Initialize(faceName, OnCancelFaceScan);
         _StateMachine.SetNextState(faceEnrollInstructionState);
       });
       _StateMachine.SetNextState(newNameSlideState);
@@ -124,7 +134,7 @@ namespace FaceEnrollment {
 
     public void RequestReEnrollFace(int faceId, string nameForFace) {
       FaceEnrollInstructionState faceEnrollInstructionState = new FaceEnrollInstructionState();
-      faceEnrollInstructionState.Initialize(nameForFace, () => _StateMachine.SetNextState(new FaceSlideState()), faceId);
+      faceEnrollInstructionState.Initialize(nameForFace, OnCancelFaceScan, faceId);
       _StateMachine.SetNextState(faceEnrollInstructionState);
     }
 
