@@ -70,7 +70,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArra
   {ReactionTrigger::RobotOnSide,                  false},
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
-  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::UnexpectedMovement,           false},
   {ReactionTrigger::VC,                           true}
 };
 
@@ -98,7 +98,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kSevereFeedingDisables = {
   {ReactionTrigger::RobotOnSide,                  true},
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
-  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::UnexpectedMovement,           false},
   {ReactionTrigger::VC,                           true}
 };
 
