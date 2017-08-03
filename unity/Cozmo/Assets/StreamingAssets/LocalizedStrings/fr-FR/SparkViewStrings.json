@@ -23,5 +23,11 @@
   },
   "sparksView.sparkCount.label" : {
     "translation" : "Étincelles disponibles"
+  },
+  "sparksView.sparksRequired.label": {
+    "translation": "(FR) Sparks Required"
+  },
+  "sparksDetailModal.sparkButton.label": {
+    "translation": "(FR) SPARKS"
   }
 }

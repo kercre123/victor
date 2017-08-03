@@ -23,5 +23,11 @@
   },
   "sparksView.sparkCount.label" : {
     "translation" : "Sparks verfügbar"
+  },
+  "sparksView.sparksRequired.label": {
+    "translation": "(DE) Sparks Required"
+  },
+  "sparksDetailModal.sparkButton.label": {
+    "translation": "(DE) SPARKS"
   }
 }

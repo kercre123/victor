@@ -804,9 +804,7 @@ public static class LocalizationKeys {
   public const string kButtonQuit = "button.quit";
   public const string kButtonCancel = "button.cancel";
   public const string kButtonYes = "button.yes";
-  public const string kButtonYesPlease = "button.yesPlease";
   public const string kButtonNo = "button.no";
-  public const string kButtonNoThankYou = "button.noThankYou";
   public const string kButtonContinue = "button.continue";
   public const string kButtonOkay = "button.okay";
   public const string kButtonAgain = "button.again";
@@ -887,6 +885,8 @@ public static class LocalizationKeys {
   public const string kSparksViewListAbilitiesCardTitle = "sparksView.listAbilitiesCard.title";
   public const string kSparksViewListAbilitiesCardDescription = "sparksView.listAbilitiesCard.description";
   public const string kSparksViewSparkCountLabel = "sparksView.sparkCount.label";
+  public const string kSparksViewSparksRequiredLabel = "sparksView.sparksRequired.label";
+  public const string kSparksDetailModalSparkButtonLabel = "sparksDetailModal.sparkButton.label";
 
   #endregion
 
