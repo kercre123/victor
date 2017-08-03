@@ -61,6 +61,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleInstructionsModalCreated(BaseModal newInstructionsModal) {
+      _FaceEnrollmentGame.SharedMinigameView.HideShelf();
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentGame.SharedMinigameView.HideQuitButton();
       _FaceEnrollmentInstructionsModalInstance = (FaceEnrollmentInstructionsModal)newInstructionsModal;
