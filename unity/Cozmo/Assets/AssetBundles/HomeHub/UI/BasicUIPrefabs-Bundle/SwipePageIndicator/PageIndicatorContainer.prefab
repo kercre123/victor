@@ -107,10 +107,10 @@ RectTransform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 187.00003}
-  m_SizeDelta: {x: 2600, y: 246}
+  m_SizeDelta: {x: -90, y: 246}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22434094
 RectTransform:
@@ -125,10 +125,10 @@ RectTransform:
   m_Father: {fileID: 22421906}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: -246}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:
@@ -492,7 +492,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114904934687159872}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1041,7 +1040,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114739322297186172}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}

@@ -3656,10 +3656,10 @@ RectTransform:
   m_Father: {fileID: 22460934}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -345, y: -6.7494507}
-  m_SizeDelta: {x: 690, y: 700}
+  m_AnchoredPosition: {x: 338, y: -6.7494507}
+  m_SizeDelta: {x: -676, y: 700}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22452856
 RectTransform:
@@ -4106,9 +4106,9 @@ RectTransform:
   m_Father: {fileID: 22452856}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1164, y: 430}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -202, y: 430}
   m_SizeDelta: {x: 324, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22496344
@@ -4167,10 +4167,10 @@ RectTransform:
   m_Father: {fileID: 22460934}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -2390, y: -6.750046}
-  m_SizeDelta: {x: 686, y: 2238}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -341, y: -6.750061}
+  m_SizeDelta: {x: -680, y: 702}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:
@@ -4444,7 +4444,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4538,7 +4537,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114951225118319922}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4691,7 +4689,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -4755,7 +4752,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114887015554723648}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}

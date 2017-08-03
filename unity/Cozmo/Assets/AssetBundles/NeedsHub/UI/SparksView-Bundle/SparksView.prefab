@@ -1342,7 +1342,7 @@ MonoBehaviour:
     uniformStagger_sec: 0
     targets:
     - target: {fileID: 224934394105177626}
-      originOffset: {x: 2700, y: 0}
+      originOffset: {x: 3700, y: 0}
       openSetting:
         startTime_sec: 0
         useCustom: 0
@@ -6049,7 +6049,7 @@ RectTransform:
   m_GameObject: {fileID: 1760944651883604}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.000064, y: 1.000064, z: 1.000064}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 224247419339723298}
   - {fileID: 224787098414231678}
@@ -6317,7 +6317,7 @@ RectTransform:
   m_GameObject: {fileID: 1767065257618684}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.999424, y: 0.999424, z: 0.999424}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 224252405162192100}
   m_Father: {fileID: 224519314985003428}
