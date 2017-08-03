@@ -100,7 +100,7 @@
     "translation" : "完了"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "スパークのインベントリがいっぱいです"
+    "translation" : "スパークスの在庫がいっぱいです。"
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "さらにスパークを獲得しました！"

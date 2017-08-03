@@ -100,7 +100,7 @@
     "translation" : "FERTIG"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Dein Sparks-Inventar ist voll."
+    "translation" : "Your Sparks inventory is full."
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "Du hast dir weitere Sparks verdient!"

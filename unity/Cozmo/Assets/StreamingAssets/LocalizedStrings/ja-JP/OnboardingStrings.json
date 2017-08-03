@@ -136,7 +136,7 @@
     "translation" : "あなたはCozmo'sを埋めました<color=#f5ea12>必要なものを再生する。 </color>"
   },
   "onboarding.RewardsIntro.Part2" : {
-    "translation" : "毎日あなたは彼を埋める<color=#f5ea12>必要なものを再生する</color>あなたは<color=#f5ea12>ボーナストークン。 </color>"
+    "translation" : "毎日あなたは彼を埋める<color=#f5ea12>必要なものを再生する</color>あなたは<color=#f5ea12>トークンを再生する。 </color>"
   },
   "onboarding.TokensIntro.Part1" : {
     "translation" : "コズモを埋める<color=#f5ea12>必要なものを再生する</color>ロックを解除する3日間で<color=#f5ea12>ボーナスボックス。 </color>"

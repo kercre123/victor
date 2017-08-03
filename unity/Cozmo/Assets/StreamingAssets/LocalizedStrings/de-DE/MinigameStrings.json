@@ -368,5 +368,14 @@
   },
   "label.enterText" : {
     "translation" : "Text eingeben..."
+  },
+  "minigame.text.cozmoWinsFlat" : {
+    "translation" : "Cozmo Wins!"
+  },
+  "minigame.text.playerWinsFlat" : {
+    "translation" : "{0} Wins!"
+  },
+  "minigame.text.youWinFlat" : {
+    "translation" : "You Win!"
   }
 }

@@ -368,5 +368,14 @@
   },
   "label.enterText" : {
     "translation" : "テキストを入力してください..."
+  },
+  "minigame.text.cozmoWinsFlat" : {
+    "translation" : "Cozmoの勝ち！"
+  },
+  "minigame.text.playerWinsFlat" : {
+    "translation" : "{0}勝つ！"
+  },
+  "minigame.text.youWinFlat" : {
+    "translation" : "あなたの勝ち！"
   }
 }
