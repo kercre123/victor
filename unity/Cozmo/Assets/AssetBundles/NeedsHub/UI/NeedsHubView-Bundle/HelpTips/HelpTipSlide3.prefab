@@ -207,8 +207,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 262, y: -301}
-  m_SizeDelta: {x: 390, y: 116}
+  m_AnchoredPosition: {x: 272, y: -323}
+  m_SizeDelta: {x: 498, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22413572
 RectTransform:
@@ -263,8 +263,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -235.00006, y: -301}
-  m_SizeDelta: {x: 390, y: 116}
+  m_AnchoredPosition: {x: -249.13, y: -312}
+  m_SizeDelta: {x: 497.75, y: 182}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22473944
 RectTransform:
@@ -402,10 +402,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114526683974512888}
-    characterCount: 137
+    characterCount: 143
     spriteCount: 0
     spaceCount: 24
-    wordCount: 24
+    wordCount: 25
     linkCount: 0
     lineCount: 5
     pageCount: 1
@@ -484,11 +484,11 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 80
+  m_fontSize: 60.05
   m_fontSizeBase: 80
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 80
+  m_fontSizeMin: 50
   m_fontSizeMax: 80
   m_fontStyle: 0
   m_textAlignment: 514
@@ -524,12 +524,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114675277603286830}
-    characterCount: 7
+    characterCount: 26
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 1
+    spaceCount: 4
+    wordCount: 5
     linkCount: 0
-    lineCount: 1
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -559,7 +559,7 @@ MonoBehaviour:
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114771391649173732
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -606,11 +606,11 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 80
+  m_fontSize: 66.1
   m_fontSizeBase: 80
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 80
+  m_fontSizeMin: 50
   m_fontSizeMax: 80
   m_fontStyle: 0
   m_textAlignment: 514
@@ -646,12 +646,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114771391649173732}
-    characterCount: 3
+    characterCount: 28
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 1
+    spaceCount: 5
+    wordCount: 6
     linkCount: 0
-    lineCount: 1
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -681,7 +681,7 @@ MonoBehaviour:
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114903426653092158
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -768,7 +768,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114903426653092158}
-    characterCount: 27
+    characterCount: 28
     spriteCount: 0
     spaceCount: 4
     wordCount: 5
