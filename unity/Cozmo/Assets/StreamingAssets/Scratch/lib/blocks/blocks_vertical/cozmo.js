@@ -196,7 +196,7 @@ Blockly.Blocks['cozmo_event_on_face'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_face",
-      "message0": "When See Face",
+      "message0": "when see face",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -215,7 +215,7 @@ Blockly.Blocks['cozmo_event_on_happy_face'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_happy_face",
-      "message0": "When See Happy Face",
+      "message0": "when see happy face",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -234,7 +234,7 @@ Blockly.Blocks['cozmo_event_on_sad_face'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_sad_face",
-      "message0": "When See Sad Face",
+      "message0": "when see sad face",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -253,7 +253,7 @@ Blockly.Blocks['cozmo_event_on_see_cube'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_see_cube",
-      "message0": "When See Cube",
+      "message0": "when see cube",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -266,13 +266,24 @@ Blockly.Blocks['cozmo_event_on_see_cube'] = {
 
 Blockly.Blocks['cozmo_event_on_cube_tap'] = {
   /**
-   * Block to wait until a cube that Cozmo can see is tapped.
+   * Block to detect that a specific cube is tapped.
    * @this Blockly.Block
   */
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_cube_tap",
-      "message0": "When Cube is Tapped",
+      "message0": "when cube %1 is tapped",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3']
+          ]
+        },
+      ],
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
