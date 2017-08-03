@@ -152,7 +152,7 @@
     // do not go back immediately even if still feels playful
     // (it should be possible to fire with other triggers, like pick up)
     "cooldownBaseSecs" : 30.0,
-    "cooldownRejectionBaseSecs" : 180.0,
-    "cooldownRejectionExponent" : 1.5
+    "cooldownRejectionBaseSecs" : 120.0,
+    "cooldownRejectionExponent" : 1.3
   }
 }

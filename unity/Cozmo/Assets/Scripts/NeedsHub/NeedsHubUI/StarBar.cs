@@ -18,7 +18,8 @@ namespace Cozmo.Needs.UI {
       BLING,  //newly earned stars are about to be display, spawn bling effect over needs meter
       STARS,  //spawn or despawn stars to match the current count from engine
       CRATE,  //spawn a crate icon
-      MODAL   //spawn the reward modal and hand it our accumulated star level rewards to display to user
+      MODAL,   //spawn the reward modal and hand it our accumulated star level rewards to display to user
+      ONBOARDING_WAIT_FOR_FILL, // before bling in onboarding, show an explination, wait for click to continue
     }
 
     #endregion //Nested Definitions
@@ -39,6 +40,9 @@ namespace Cozmo.Needs.UI {
 
     [SerializeField]
     private GameObject _StarPrefab = null;
+
+    [SerializeField]
+    private GameObject _StarAwardedEffectPrefab = null;
 
     [SerializeField]
     private float _StarDuration_sec = 2f;
@@ -67,9 +71,10 @@ namespace Cozmo.Needs.UI {
 
     private List<GameObject> _DisplayedStars = new List<GameObject>();
 
-    private GameObject _BlingEffect = null;
     private GameObject _CrateIcon = null;
     private NeedsRewardModal _NeedsModal = null;
+
+    private const string _DisableTouchKey = "StarBarRewardSequenceUnderway";
 
     #endregion //Non-serialized Fields
 
@@ -85,7 +90,7 @@ namespace Cozmo.Needs.UI {
 #endif
       }
 
-      UpdateStars(DataPersistenceManager.Instance.DisplayedStars);
+      UpdateStars(DataPersistenceManager.Instance.DisplayedStars, false);
 
       // Make really sure we have up to date info
       RobotEngineManager.Instance.Message.GetNeedsState = Singleton<GetNeedsState>.Instance;
@@ -109,16 +114,6 @@ namespace Cozmo.Needs.UI {
 
     private void OnDestroy() {
       ExitState();
-
-      if (_BlingEffect != null) {
-        GameObject.Destroy(_BlingEffect);
-      }
-      _BlingEffect = null;
-
-      if (_CrateIcon != null) {
-        GameObject.Destroy(_CrateIcon);
-      }
-      _CrateIcon = null;
     }
 
     #endregion //Life Span
@@ -135,6 +130,14 @@ namespace Cozmo.Needs.UI {
     private bool StateTransition() {
       switch (_CurrentState) {
       case RewardState.IDLE:
+        // start onboarding if we have one token and have completed the previous section of onboarding, but dont restart if already in it.
+        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.RewardBox) &&
+            NeedsStateManager.Instance.GetLatestStarAwardedFromEngine() > 0 &&
+            !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro) &&
+             OnboardingManager.Instance.GetCurrentPhase() != OnboardingManager.OnboardingPhases.RewardBox) {
+          OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.RewardBox);
+          return ChangeState(RewardState.ONBOARDING_WAIT_FOR_FILL);
+        }
         if (DataPersistenceManager.Instance.StarLevelToDisplay) {
           return ChangeState(RewardState.BLING);
         }
@@ -168,6 +171,18 @@ namespace Cozmo.Needs.UI {
           return ChangeState(RewardState.IDLE);
         }
         break;
+      case RewardState.ONBOARDING_WAIT_FOR_FILL:
+        // iff onboarding says we've reached stage 2, show the bling animation
+        if (OnboardingManager.Instance.GetCurrentPhase() == OnboardingManager.OnboardingPhases.RewardBox) {
+          if (OnboardingManager.Instance.GetCurrStageInPhase(OnboardingManager.OnboardingPhases.RewardBox) > 0) {
+            return ChangeState(RewardState.BLING);
+          }
+        }
+        else {
+          // they've debug skipped past the phase
+          return ChangeState(RewardState.BLING);
+        }
+        break;
       }
       return false;
     }
@@ -187,9 +202,15 @@ namespace Cozmo.Needs.UI {
     private void EnterState() {
       _TimeInState_sec = 0f;
 
+      if (DisableTouchEventsForState(_CurrentState)) {
+        UIManager.DisableTouchEvents(_DisableTouchKey);
+      }
+
       switch (_CurrentState) {
       case RewardState.BLING:
-        _BlingEffect = GameObject.Instantiate(_BlingPrefab, _BlingAnchor);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear_Onboarding);
+        //this effect will clean itself up after playing via the DestroySelf component
+        GameObject.Instantiate(_BlingPrefab, _BlingAnchor);
         break;
       case RewardState.STARS:
         int starToDisplay = NeedsStateManager.Instance.GetLatestStarAwardedFromEngine();
@@ -199,10 +220,11 @@ namespace Cozmo.Needs.UI {
         if (starToDisplay > _DisplayedStars.Count) {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Token);
         }
-        UpdateStars(starToDisplay);
+        UpdateStars(starToDisplay, true);
         break;
       case RewardState.CRATE:
         _CrateIcon = GameObject.Instantiate(_CratePrefab, _CrateAnchor);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Bonus_Box);
         break;
       case RewardState.MODAL:
         UIManager.OpenModal(_RewardModalPrefab,
@@ -213,7 +235,10 @@ namespace Cozmo.Needs.UI {
               //empty our accrued rewards from the record once we show the modal
               DataPersistenceManager.Instance.ClearNewStarLevels();
             });
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Bonus_Box);
+
+        // Make really sure we have up to date info
+        RobotEngineManager.Instance.Message.GetNeedsState = Singleton<GetNeedsState>.Instance;
+        RobotEngineManager.Instance.SendMessage();
         break;
       }
     }
@@ -223,20 +248,17 @@ namespace Cozmo.Needs.UI {
     }
 
     private void ExitState() {
+      if (DisableTouchEventsForState(_CurrentState)) {
+        UIManager.EnableTouchEvents(_DisableTouchKey);
+      }
+
       switch (_CurrentState) {
-      case RewardState.BLING:
-        if (_BlingEffect != null) {
-          GameObject.Destroy(_BlingEffect);
-        }
-        _BlingEffect = null;
-        break;
       case RewardState.MODAL:
         if (_CrateIcon != null) {
           GameObject.Destroy(_CrateIcon);
         }
         _CrateIcon = null;
-        //DataPersistenceManager.Instance.NewStars = 0;
-        UpdateStars(0);
+        UpdateStars(0, false);
         break;
       }
     }
@@ -245,10 +267,25 @@ namespace Cozmo.Needs.UI {
 
     #region Misc Helper Methods
 
-    private void UpdateStars(int count) {
+    private bool DisableTouchEventsForState(RewardState state) {
+      switch (state) {
+      case RewardState.BLING:
+      case RewardState.STARS:
+      case RewardState.CRATE:
+        return true;
+      }
+      return false;
+    }
+
+    private void UpdateStars(int count, bool playAwardedEffect) {
       while (_DisplayedStars.Count < count) {
         GameObject star = GameObject.Instantiate(_StarPrefab, _StarAnchor);
         _DisplayedStars.Add(star);
+
+        if (playAwardedEffect) {
+          //this effect will clean itself up after playing via the DestroySelf component 
+          GameObject.Instantiate(_StarAwardedEffectPrefab, star.transform);
+        }
       }
 
       while (_DisplayedStars.Count > count && _DisplayedStars.Count > 0) {

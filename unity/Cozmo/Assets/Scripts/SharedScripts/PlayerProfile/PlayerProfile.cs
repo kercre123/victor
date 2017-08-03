@@ -36,6 +36,7 @@ namespace DataPersistence {
     public int DaysWithCozmo;
     public int CodeLabUserProjectNum;
     public bool HideFreeplayCard;
+    public bool DroneModeInstructionsSeen;
 
     public List<DataPersistence.CodeLabProject> CodeLabProjects;
 
@@ -49,9 +50,10 @@ namespace DataPersistence {
 
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
 
-    public Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState VoiceCommandEnabledState;
+    public Anki.Util.AnkiLab.AssignmentDef[] LabAssignments;
 
-    public static int kSaveVersionCurrent = 1;
+    public static int kSaveVersionCurrent = 2;
+
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
     public int SaveVersion = kSaveVersionCurrent;
 
@@ -74,13 +76,14 @@ namespace DataPersistence {
       DaysWithCozmo = 0;
       CodeLabUserProjectNum = 1;
       HideFreeplayCard = false;
+      DroneModeInstructionsSeen = false;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       DisplayedStars = 0;
       NewStarLevels = new List<Anki.Cozmo.ExternalInterface.StarLevelCompleted>();
       PreviousTags = new List<string>();
-      VoiceCommandEnabledState = Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState.Unknown;
+      LabAssignments = new Anki.Util.AnkiLab.AssignmentDef[0];
     }
   }
 }

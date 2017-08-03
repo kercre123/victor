@@ -19,6 +19,7 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224390200740430652}
+  - component: {fileID: 114391805333032090}
   m_Layer: 5
   m_Name: RewardEffect
   m_TagString: Untagged
@@ -73,6 +74,7 @@ GameObject:
   - component: {fileID: 114481715790785046}
   - component: {fileID: 114193731138923898}
   - component: {fileID: 114023897696264966}
+  - component: {fileID: 114867636686678420}
   m_Layer: 5
   m_Name: RadialOutline
   m_TagString: Untagged
@@ -185,7 +187,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Duration_sec: 0.5
-  _Delay_sec: 0
+  _Delay_sec: 0.5
   _StartFillAmount: 0
   _TargetFillAmount: 1
 --- !u!114 &114157108631562166
@@ -422,6 +424,18 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &114391805333032090
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1404152446195122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43fd655cd7c4248769c606170c90b280, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Lifespan_sec: 3
 --- !u!114 &114481715790785046
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -434,7 +448,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 0, a: 0.166}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.2509804}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -461,6 +475,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
+--- !u!114 &114867636686678420
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1760449075648500}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43fd655cd7c4248769c606170c90b280, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _Lifespan_sec: 10
 --- !u!198 &198193760359281326
 ParticleSystem:
   m_ObjectHideFlags: 1
@@ -516,7 +542,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 2
-  randomSeed: -1991890586
+  randomSeed: -1621528085
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -3412,7 +3438,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: 494928912
+  randomSeed: 1959849165
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -6397,7 +6423,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 2
-  randomSeed: -1560117518
+  randomSeed: 66172948
   InitialModule:
     serializedVersion: 3
     enabled: 1

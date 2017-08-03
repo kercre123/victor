@@ -28,7 +28,7 @@
     "translation" : "Cozmoが\u000a見ているキューブ"
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmoはこのキューブを使いたい。"
+    "translation" : "Cozmoは\u000aこのキューブを使いたがっています。"
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "このキューブは\u000a電池の残りが少ない"
@@ -37,34 +37,19 @@
     "translation" : "Cozmoは時間とともに成長します。"
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Each day you fill Cozmo's yellow Play bar, you earn a Bonus Token. Bonus Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Abilities."
+    "translation" : "CozmoのPlay Needを埋める毎日、プレイトークンを獲得します。プレイトークンは、スパーク、ゲーム、トリックなどの報酬で満たされたボーナスボックスのロックを解除します。"
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
+    "translation" : "<color=#FFFFFF>獲得する</color><b><color=#F5BF2D>トークンを再生する</color></b><color=#FFFFFF>毎日。 </color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
-  },
-  "helpTipsStrings.Slide4.title" : {
-    "translation" : "エネルギー、ビット、スパーク"
-  },
-  "helpTipsStrings.Slide4.body" : {
-    "translation" : "毎日の目標を達成して、<color=#00bd3dff>エネルギー</color>を獲得しましょう。エネルギーは<color=#fe8f00ff>ビット</color>と<color=#11a2f0ff>スパーク</color>で与えられます。これらを使用して、Cozmoのアップグレードやアプリをロック解除しましょう！"
-  },
-  "helpTipsStrings.Slide4.bodyEnergy" : {
-    "translation" : "エネルギー"
-  },
-  "helpTipsStrings.Slide4.bodyBits" : {
-    "translation" : "ビット"
-  },
-  "helpTipsStrings.Slide4.bodySparks" : {
-    "translation" : "スパーク"
+    "translation" : "<color=#FFFFFF> 3つのトークンがロックを解除</color><b><color=#F5BF2D>ボーナスボックス。 </color></b>"
   },
   "helpTipsStrings.Slide5.title" : {
     "translation" : "Cozmoをお世話しましょう。"
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Cozmoアプリを毎日起動して、Cozmoを幸せな状態に保ち、新しいモーション/能力をロック解除してCozmoが学び、成長するのを助けます。Cozmoに接続して目覚めさせ、ニーズメーターを確認します。"
+    "translation" : "Cozmoアプリを起動して毎日チェックインして、Cozmoを幸せにしてください。彼のPlay Needが毎日いっぱいになると、彼はボーナスボックスを獲得することによって彼が学び成長するのを手伝います。彼を目覚めるためにCozmoに接続し、彼に必要な注意を払う。"
   },
   "helpTipsStrings.Slide6.title" : {
     "translation" : "Cozmoを守る。"

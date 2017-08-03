@@ -16,7 +16,7 @@
     "translation" : "Noch nicht freigeschaltete Fähigkeit"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Beim Öffnen von Bonuskisten werden manchmal neue Fähigkeiten freigeschaltet!"
+    "translation" : "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Games, Tricks, and more!"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Fauststoß"
@@ -187,10 +187,16 @@
     "translation" : "Spark-Status für \"Cubes sammeln\" <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
-    "translation" : "Demnächst verfügbar!"
+    "translation" : "Locked Ability"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "Beim Öffnen von Bonuskisten kann es vorkommen, dass neue Fähigkeiten freigeschaltet werden!"
+    "translation" : "Fill Cozmo's Play Need daily and unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
+  },
+  "unlockable.GuardDog.Title" : {
+    "translation" : "Cube Guard"
+  },
+  "unlockable.GuardDog.Description" : {
+    "translation" : "When Cozmo’s cubes are close together, he might take a nap while guarding them. Carefully turn his cubes upside-down without waking him."
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo besitzt Sparks:"
@@ -214,7 +220,7 @@
     "translation" : "Nicht genügend Sparks"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "Earn more in Freeplay and Bonus Boxes."
+    "translation" : "In den Modi \"Freies Spiel\" und \"Bonuskisten\" kannst du mehr verdienen."
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "Stelle sicher, dass die Cubes aufrecht sind."
@@ -223,6 +229,9 @@
     "translation" : "Wenn die Cubes aufrecht sind (Lichter sind oben), kann Cozmo schneller bauen."
   },
   "sparks.free" : {
-    "translation" : "Free"
+    "translation" : "Keine Sparks erforderlich"
+  },
+  "sparks.notSparkable" : {
+    "translation" : "Not Sparkable"
   }
 }

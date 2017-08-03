@@ -139,7 +139,7 @@ Supervisor {
                         0.400   410  .0,
                         1.200  1210  .0] # offset for its own translation
           numberOfRays 1
-          aperture 0.01
+          aperture 0.218
         }
 
         %{ end }%  # vizMode

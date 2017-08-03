@@ -96,9 +96,6 @@
   "label.connect": {
     "translation": "CONNECT"
   },
-  "label.start": {
-    "translation": "START"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded": {
     "translation": "{0} {1} Required"
   },
@@ -152,9 +149,6 @@
   },
   "label.termsOfUse": {
     "translation": "Terms of Use"
-  },
-  "label.totalSparks": {
-    "translation": "Total Sparks: {0}"
   },
   "label.termsInstructions": {
     "translation": "By tapping <b><color=#11a2f0ff>CONNECT</color></b>, you agree to the following terms:"

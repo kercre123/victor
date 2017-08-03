@@ -14,9 +14,9 @@
         <!-- BOTTOM COMPRESSED FILES -->
 
         <!-- TOP UNCOMPRESSED FILES -->
-        <!-- NOTE: When updating lib/blocks/*, use these files instead of the above compressed files -->
+        <!-- NOTE: When updating Scratch/lib/blocks/*, use these files instead of the above compressed files -->
         <!-- to see your changes immediately. When using these uncompressed files (either in browser -->
-        <!-- or in app), must also copy tools/scratch/closure-library to Scratch/lib/closure-library -->
+        <!-- or in app), must also copy cozmo-one/tools/scratch/closure-library to Scratch/lib/closure-library -->
         <!--
         <script src="./lib/blocks/blockly_uncompressed_horizontal.js"></script>
         <script src="./lib/blocks/blocks_common/math.js"></script>
@@ -35,7 +35,11 @@
         <script src="./js/CozmoSaveLoadAPI.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
+
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
+        <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
+        <!-- <script src="./lib/vm/dist/web/scratch-vm.js"></script> -->
+
         <script src="./extra/challenges-frame.js"></script>
         <script src="./extra/extra-common.js"></script>
         <script src="./extra/localize.js"></script>
@@ -106,7 +110,7 @@
             </block>
             <block type="cozmo_says">
                 <value name="STRING">
-                    <shadow type="text_with_validator">
+                    <shadow type="text">
                         <field name="TEXT" id="cozmo_says_text">Hi</field>
                     </shadow>
                 </value>

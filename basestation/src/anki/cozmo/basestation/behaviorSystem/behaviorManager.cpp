@@ -1096,6 +1096,11 @@ void BehaviorManager::EnsureRequestGameIsClear()
   _shouldRequestGame = false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorClass BehaviorManager::GetBehaviorClass(IBehaviorPtr behavior) const
+{
+  return behavior->GetClass();
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::CheckReactionTriggerStrategies()

@@ -1,0 +1,27 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "sparksView.title" : {
+    "translation" : "Jouer"
+  },
+  "sparksView.askForGameCard.title" : {
+    "translation" : "Étinceler un jeu"
+  },
+  "sparksView.askForTrickCard.title" : {
+    "translation" : "Étinceler un tour"
+  },
+  "sparksView.listAbilitiesCard.title" : {
+    "translation" : "TOURS ET JEUX"
+  },
+  "sparksView.listAbilitiesCard.description" : {
+    "translation" : "Demande à Cozmo de faire un tour ou un jeu particulier."
+  },
+  "sparksView.sparkCount.label" : {
+    "translation" : "Étincelles disponibles"
+  }
+}

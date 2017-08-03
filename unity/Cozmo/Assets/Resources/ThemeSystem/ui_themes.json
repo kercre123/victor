@@ -16878,14 +16878,14 @@
                             }
                         },
                         {
-                            "Id": "CozmoButton_Icon_VoiceCommand",
+                            "Id": "CozmoButton_HitRegion",
                             "Type": 1,
                             "SkinImageColor": true,
                             "ImageColor": {
                                 "r": 1.0,
                                 "g": 1.0,
                                 "b": 1.0,
-                                "a": 1.0
+                                "a": 0.0
                             },
                             "SkinFontColor": false,
                             "FontColor": {
@@ -16895,7 +16895,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonIconSprites/common_icon_sprites-UHD/Packed/img_mic_small.png",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,

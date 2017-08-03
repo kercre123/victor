@@ -10,7 +10,7 @@
     "translation" : "Cozmo doit t'examiner ! Regarde Cozmo directement sans bouger\u000a\u000aQuand il aura terminé, tu entendras un carillon."
   },
   "faceEnrollment.enterName.placeholderText" : {
-    "translation" : "Enter your first name:"
+    "translation" : "Entre ton prénom :"
   },
   "faceEnrollment.faceEnrollmentList.description" : {
     "translation" : "Apprends à Cozmo à reconnaître un visage !"
@@ -34,7 +34,7 @@
     "translation" : "Cozmo te reconnaît comme {0}"
   },
   "faceEnrollment.errors.timeOut.title" : {
-    "translation" : "Cozmo Is Having Trouble Seeing You"
+    "translation" : "Cozmo a du mal à te voir"
   },
   "faceEnrollment.errors.timeOut.description" : {
     "translation" : "Vérifie que tu es dans une pièce bien éclairée et que tu es bien en face de son visage Cozmo doit se trouver sur une surface plane et stable."
@@ -61,7 +61,7 @@
     "translation" : "{0} jours auparavant"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
-    "translation" : "Help Cozmo recognize you more easily:"
+    "translation" : "Aide Cozmo à te reconnaître plus facilement :"
   },
   "faceEnrollment.label.lastScanned" : {
     "translation" : "Dernière numérisation :"

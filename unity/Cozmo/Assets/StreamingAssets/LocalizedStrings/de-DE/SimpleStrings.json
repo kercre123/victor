@@ -84,9 +84,6 @@
   "label.connect" : {
     "translation" : "VERBINDEN"
   },
-  "label.start" : {
-    "translation" : "STARTEN"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0} {1} erforderlich"
   },
@@ -136,13 +133,10 @@
     "translation" : "Datenschutzerklärung"
   },
   "label.pressAndHoldInstruction" : {
-    "translation" : "Press and hold <b><color=#fe5641>{0}</color></b> to confirm."
+    "translation" : "Halte <b><color=#fe5641>{0}</color></b> gedrückt, um zu bestätigen."
   },
   "label.termsOfUse" : {
     "translation" : "Nutzungsbedingungen"
-  },
-  "label.totalSparks" : {
-    "translation" : "Sparks insgesamt: {0}"
   },
   "label.termsInstructions" : {
     "translation" : "Indem du <b><color=#11a2f0ff>VERBINDEN</color></b> antippst, stimmst du den folgenden Bedingungen zu:"

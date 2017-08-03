@@ -82,7 +82,7 @@ Blockly.Blocks['cozmo_play_animation_from_dropdown'] = {
 init: function() {
   this.jsonInit({
     "id": "cozmo_play_animation_from_dropdown",
-    "message0": "Play %1 Animation",
+    "message0": "Play %1 Animation with %2, %3, %4",
     "args0": [
         {
           "type": "field_dropdown",
@@ -103,6 +103,30 @@ init: function() {
               ['Disappointed', 'dejected'],
               ['Snore', 'sleep'],
               ['Mystery', 'mystery']      
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_WHEELS",
+          "options": [
+              ['Wheels', 'false'],
+              ['No Wheels', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_HEAD",
+          "options": [
+              ['Head', 'false'],
+              ['No Head', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_LIFT",
+          "options": [
+              ['Lift', 'false'],
+              ['No Lift', 'true'],    
             ]
         }
       ],
@@ -172,7 +196,7 @@ Blockly.Blocks['cozmo_event_on_face'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_face",
-      "message0": "When See Face",
+      "message0": "when see face",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -191,7 +215,7 @@ Blockly.Blocks['cozmo_event_on_happy_face'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_happy_face",
-      "message0": "When See Happy Face",
+      "message0": "when see happy face",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -210,7 +234,7 @@ Blockly.Blocks['cozmo_event_on_sad_face'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_sad_face",
-      "message0": "When See Sad Face",
+      "message0": "when see sad face",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -229,7 +253,7 @@ Blockly.Blocks['cozmo_event_on_see_cube'] = {
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_see_cube",
-      "message0": "When See Cube",
+      "message0": "when see cube",
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -242,13 +266,24 @@ Blockly.Blocks['cozmo_event_on_see_cube'] = {
 
 Blockly.Blocks['cozmo_event_on_cube_tap'] = {
   /**
-   * Block to wait until a cube that Cozmo can see is tapped.
+   * Block to detect that a specific cube is tapped.
    * @this Blockly.Block
   */
   init: function() {
     this.jsonInit({
       "id": "cozmo_event_on_cube_tap",
-      "message0": "When Cube is Tapped",
+      "message0": "when cube %1 is tapped",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3']
+          ]
+        },
+      ],
       "inputsInline": true,
       "nextStatement": null,
       "category": Blockly.Categories.event,
@@ -572,6 +607,150 @@ Blockly.Blocks['cozmo_vert_cube_get_position_3d'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_cube_get_pitch'] = {
+  /**
+   * Block to read the pitch of one of Cozmo's cube's position
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "Cube %1 pitch",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_get_roll'] = {
+  /**
+   * Block to read the roll of one of Cozmo's cube's position
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "Cube %1 roll",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_get_yaw'] = {
+  /**
+   * Block to read the yaw of one of Cozmo's cube's position
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "Cube %1 yaw",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
+        "inputsInline": true,
+        "output": "Number",
+        "colour": Blockly.Colours.sensing.primary,
+        "colourSecondary": Blockly.Colours.sensing.secondary,
+        "colourTertiary": Blockly.Colours.sensing.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_device_get_pitch'] = {
+  /**
+   * Block to read the roll of the user's device
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Device pitch",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_device_get_roll'] = {
+  /**
+   * Block to read the roll of the user's device
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Device roll",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_device_get_yaw'] = {
+  /**
+   * Block to read the roll of the user's device
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Device yaw",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
 // Actions
 
 Blockly.Blocks['cozmo_vert_drive'] = {
@@ -762,3 +941,94 @@ Blockly.Blocks['cozmo_vert_set_headangle'] = {
     });
   }
 };
+
+Blockly.Blocks['cozmo_vert_set_cube_light_corners'] = {
+  /**
+   * Block to set a cube's corner lights individually
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "Set Cube %1 lights %2 %3 %4 %5",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_1_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_2_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_3_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "CORNER_4_COLOR",
+          "options": [
+            ['Coral', 'coral'],
+            ['Orange', 'orange'],
+            ['Yellow', 'yellow'],
+            ['Green', 'green'],
+            ['Blue', 'blue'],
+            ['Purple', 'purple'],
+            ['White', 'white'],
+            ['Off', 'off'],
+            ['Mystery', 'mystery']
+          ]
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary,
+    });
+  }
+};
+

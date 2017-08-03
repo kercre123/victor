@@ -198,17 +198,11 @@
   "behavior.singing.LondonBridge" : {
     "translation" : "Cozmo chante London Bridge Is Falling Down..."
   },
-  "behavior.singing.CozMambo" : {
-    "translation" : "Cozmo chante le mambo de Cozmo..."
-  },
   "behavior.singing.Sakura" : {
     "translation" : "Cozmo chante Sakura..."
   },
   "behavior.singing.MussIDenn" : {
     "translation" : "Cozmo chante Muss I Denn..."
-  },
-  "behavior.ReactToVoiceCommand" : {
-    "translation" : "Cozmo t'écoute..."
   },
   "behavior.VC_Refuse_Energy" : {
     "translation" : "Cozmo doit être nourri..."
@@ -262,6 +256,6 @@
     "translation" : "CONTINUER"
   },
   "button.hide" : {
-    "translation" : "HIDE"
+    "translation" : "MASQUER"
   }
 }

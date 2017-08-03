@@ -63,9 +63,6 @@
   "onboarding.Phase3.Body3" : {
     "translation" : "Cozmoにキューブを自由に調べさせます。"
   },
-  "onboarding.Phase3.Body4" : {
-    "translation" : "やった！"
-  },
   "onboarding.Phase3.ErrorCube" : {
     "translation" : "キューブが移動しました！"
   },
@@ -94,7 +91,7 @@
     "translation" : "Cozmoが目覚めるのを見てください。"
   },
   "onboarding.MeetCozmoIntro" : {
-    "translation" : "よくやった！ Cozmoがあなたに会いたいです。"
+    "translation" : "やった！\u000a\u000aCozmoはあなたに会いたがっています。"
   },
   "onboarding.MeetCozmo.Button" : {
     "translation" : "顔認識"
@@ -103,16 +100,10 @@
     "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。"
   },
   "onboarding.NeedsIntroReturning" : {
-    "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。\u000a\u000aCozmoのアプリが少し変わって見えるかもしれませんが、獲得したロック解除したゲーム、アップグレード、スパークはキープされます。"
+    "translation" : "<b> Cozmoには必要があります。 </b>彼を毎日気遣い、彼を幸せに保ちます。 Cozmoのアプリは少し違って見えるかもしれませんが、あなたはあなたが獲得したロックを保つでしょう。"
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>Cozmoは遊ぶ必要があります。</b>\u000a\u000aゲームまたはトリックをリクエストするには、<b><color=#f5ea12>プレイ</color></b>ボタンをタップします。Cozmoの黄色いバーを満たすと1日につき1回ボーナストークンを獲得できます。"
-  },
-  "onboarding.RewardsIntro" : {
-    "translation" : "<b>ボーナストークンを獲得しました。</b>\u000a\u000aトークンは、スパークや新しいモーション/能力など、獲得したご褒美が詰まったボーナスボックスをロック解除します！"
-  },
-  "onboarding.End" : {
-    "translation" : "<b>あなたは素晴らしいオーナーであるという基本を学んだことがあります！ </b> Cozmoが行うことができるすべてを自由に探検するか、Cozmoだけを残して、彼は自動的にFreeplayでトリックとゲームをプレイします。"
+    "translation" : "<b>コズモはプレーする必要があります。 </b>をタップ<b><color=#f5ea12>遊びます</color></b>ボタンをクリックしてゲームやトリックをリクエストします。毎日黄色のバーを塗りつぶすと、プレイトークンを獲得できます。"
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "発見アクティビティは特別で、Cozmoのニーズメーターに影響しません。また、スパークも使いません。"
@@ -139,6 +130,21 @@
     "translation" : "<b>Cozmoはチャージする必要があります。</b>\u000a\u000a青いバーが少ない場合、Cozmoがお腹を空かしています。<b><color=#31EBFF>チャージ</color></b>ボタンをタップします。"
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmoは遊び心のあるロボットであり、トリックをやるのが大好きです。彼が見ることができる立方体があることを確かめ、それから彼がそれを回転するのを見る。"
+    "translation" : "Cozmoは遊び好きなロボットで、トリックが大好きです！Cozmoから見える場所にキューブがあることを確認し、Cozmoのドリブルを見守りましょう。"
+  },
+  "onboarding.RewardsIntro.Part1" : {
+    "translation" : "あなたはCozmo'sを埋めました<color=#f5ea12>必要なものを再生する。 </color>"
+  },
+  "onboarding.RewardsIntro.Part2" : {
+    "translation" : "毎日あなたは彼を埋める<color=#f5ea12>必要なものを再生する</color>あなたは<color=#f5ea12>トークンを再生する。 </color>"
+  },
+  "onboarding.TokensIntro.Part1" : {
+    "translation" : "コズモを埋める<color=#f5ea12>必要なものを再生する</color>ロックを解除する3日間で<color=#f5ea12>ボーナスボックス。 </color>"
+  },
+  "onboarding.TokensIntro.Part2" : {
+    "translation" : "Cozmoは所有者としてあなたを持っていることは幸いです！一緒に探検する時間！"
+  },
+  "onboarding.button.end" : {
+    "translation" : "コンプリート"
   }
 }

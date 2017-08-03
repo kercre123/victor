@@ -52,10 +52,8 @@ VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
 }
   
 
-void VizControllerImpl::Init(u32 blankImageFrequency_ms)
+void VizControllerImpl::Init()
 {
-  _blankImageFreqency_ms = blankImageFrequency_ms;
-  
   // bind to specific handlers in the robot class
   Subscribe(VizInterface::MessageVizTag::SetRobot,
     std::bind(&VizControllerImpl::ProcessVizSetRobotMessage, this, std::placeholders::_1));
@@ -75,6 +73,8 @@ void VizControllerImpl::Init(u32 blankImageFrequency_ms)
     std::bind(&VizControllerImpl::ProcessVizCameraOvalMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::CameraText,
     std::bind(&VizControllerImpl::ProcessVizCameraTextMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::DisplayImage,
+    std::bind(&VizControllerImpl::ProcessVizDisplayImageMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ImageChunk,
     std::bind(&VizControllerImpl::ProcessVizImageChunkMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::TrackerQuad,
@@ -455,72 +455,147 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
 void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_ImageChunk();
-  const bool isImageReady = _encodedImage.AddChunk(payload);
+  
+  EncodedImage& encodedImage = _bufferedImages[_imageBufferIndex];
+  const bool isImageReady = encodedImage.AddChunk(payload);
 
   if(isImageReady)
   {
-    if(_saveImageMode != ImageSendMode::Off || _saveVizImage)
+    DEV_ASSERT_MSG(payload.frameTimeStamp == encodedImage.GetTimeStamp(),
+                   "VizControllerImpl.ProcessVizImageChunkMessage.TimestampMismath",
+                   "Payload:%u Image:%u", payload.frameTimeStamp, encodedImage.GetTimeStamp());
+
+    // Add an entry in EncodedImages map for this new image, now that it's complete
+    auto result = _encodedImages.emplace(payload.frameTimeStamp, _imageBufferIndex);
+    DEV_ASSERT_MSG(result.second, "VizControllerImpl.ProcessVizImageChunkMessage.DuplicateTimestamp",
+                   "t=%u", payload.frameTimeStamp);
+    DEV_ASSERT_MSG(result.first->second == _imageBufferIndex,
+                   "VizControllerImpl.ProcessVizImageChunkMessage.BadInsertion",
+                   "Expected index:%zu Got:%zu", _imageBufferIndex, result.first->second);
+#   pragma unused(result) // Avoid unused variable error in Release (only used in DEV_ASSERTs)
+    
+    // Move to next buffered index circularly
+    ++_imageBufferIndex;
+    if(_imageBufferIndex == _bufferedImages.size())
+    {
+      _imageBufferIndex = 0;
+    }
+    
+    // Invalidate anything in encodedImages using the index we are about to start adding chunks to (not the one we
+    // just completed; i.e. encodedImage != _bufferedImages[_imageBufferIndex] now because we incremented the index!)
+    _encodedImages.erase(_bufferedImages[_imageBufferIndex].GetTimeStamp());
+    
+    const bool saveImage = (_saveImageMode != ImageSendMode::Off);
+    
+    // Store the mapping for its timestamp to save counter so we can keep saved "viz" images' counters and filenames
+    // in sync with these raw images files.
+    // Have to do this anytime saveVizImage is enabled (which it could be even while _saveImageMode is Off, thanks
+    // to the vision system potentially processing images more slowly than full frame rate) or when it is about to
+    // be enabled (when saveImage is true)
+    if(saveImage || _saveVizImage)
+    {
+      _bufferedSaveCtrs[encodedImage.GetTimeStamp()] = _saveCtr;
+    }
+    
+    if(saveImage)
     {
       if (!_savedImagesFolder.empty() && !Util::FileUtils::CreateDirectory(_savedImagesFolder, false, true)) {
         PRINT_NAMED_WARNING("VizControllerImpl.CreateDirectory", "Could not create images directory");
       }
 
-      if(_saveVizImage)
-      {
-        // Save previous image with any viz overlaid before we delete it
-        webots::ImageRef* copyImg = _camDisp->imageCopy(0, 0, _camDisp->getWidth(), _camDisp->getHeight());
-        std::stringstream vizFilename;
-        vizFilename << "viz_images_" << _curImageTimestamp << "_" << (_saveCtr-1) << ".png";
-        _camDisp->imageSave(copyImg, Util::FileUtils::FullFilePath({_savedImagesFolder, vizFilename.str()}));
-        _camDisp->imageDelete(copyImg);
-        _saveVizImage = false;
-      }
-      
-      if(_saveImageMode != ImageSendMode::Off)
-      {
-        // Save original image
-        std::stringstream origFilename;
-        origFilename << "images_" << _encodedImage.GetTimeStamp() << "_" << _saveCtr << ".jpg";
-        _encodedImage.Save(Util::FileUtils::FullFilePath({_savedImagesFolder, origFilename.str()}));
-        _saveVizImage = true;
-        ++_saveCtr;
-      }
+      // Save original image
+      std::stringstream origFilename;
+      origFilename << "images_" << encodedImage.GetTimeStamp() << "_" << _saveCtr << ".jpg";
+      encodedImage.Save(Util::FileUtils::FullFilePath({_savedImagesFolder, origFilename.str()}));
+      _saveVizImage = true;
+      ++_saveCtr;
       
       if(_saveImageMode == ImageSendMode::SingleShot) {
         _saveImageMode = ImageSendMode::Off;
       }
     }
-    
-    // Delete existing image if there is one
-    if (_camImg != nullptr) {
-      _camDisp->imageDelete(_camImg);
-    }
-    
-    // This apparently has to happen _after_ we do the _camDisp->imageSave() call above. I HAVE NO IDEA WHY. (?!?!)
-    // (Otherwise, the channels seem to cycle and we get rainbow effects in Webots while saving is on, even though
-    // the saved images are fine.)
-    Vision::ImageRGB img;
-    Result result = _encodedImage.DecodeImageRGB(img);
-    if(RESULT_OK != result) {
-      PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizImageChunkMessage.DecodeFailed", "t=%d", payload.frameTimeStamp);
-      return;
-    }
-    
-    if(img.IsEmpty()) {
-      PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizImageChunkMessage.EmptyImageDecoded", "t=%d", payload.frameTimeStamp);
-      return;
-    }
-    
-    //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
 
-    _camImg = _camDisp->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
-    _camDisp->imagePaste(_camImg, 0, 0);
-    SetColorHelper(_camDisp, NamedColors::RED);
-    _camDisp->drawText(std::to_string(payload.frameTimeStamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
-    _curImageTimestamp = payload.frameTimeStamp;
-    
-    DisplayCameraInfo();
   }
+}
+  
+void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_DisplayImage();
+  
+  auto encImgIter = _encodedImages.find(payload.timestamp);
+  if(encImgIter == _encodedImages.end())
+  {
+    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.InvalidTimestamp",
+                        "t=%u", payload.timestamp);
+    return;
+  }
+  
+  const TimeStamp_t timestamp = encImgIter->first;
+  const EncodedImage& encodedImage = _bufferedImages[encImgIter->second];
+  DEV_ASSERT_MSG(timestamp == encodedImage.GetTimeStamp(),
+                 "VizControllerImpl.ProcessVizDisplayImage.TimeStampMisMatch",
+                 "key=%u vs. encImg=%u", timestamp, encodedImage.GetTimeStamp());
+  
+  if(_saveVizImage && _curImageTimestamp > 0)
+  {
+    if (!_savedImagesFolder.empty() && !Util::FileUtils::CreateDirectory(_savedImagesFolder, false, true)) {
+      PRINT_NAMED_WARNING("VizControllerImpl.CreateDirectory", "Could not create images directory");
+    }
+    
+    auto saveCtrIter = _bufferedSaveCtrs.find(_curImageTimestamp);
+    if(saveCtrIter != _bufferedSaveCtrs.end())
+    {
+      // Save previous image with any viz overlaid before we delete it
+      webots::ImageRef* copyImg = _camDisp->imageCopy(0, 0, _camDisp->getWidth(), _camDisp->getHeight());
+      std::stringstream vizFilename;
+      vizFilename << "viz_images_" << _curImageTimestamp << "_" << saveCtrIter->second << ".png";
+      _camDisp->imageSave(copyImg, Util::FileUtils::FullFilePath({_savedImagesFolder, vizFilename.str()}));
+      _camDisp->imageDelete(copyImg);
+      _saveVizImage = false;
+      
+      // Remove all saved counters up to and including timestamp we just saved (the assumption is we never
+      // go backward, so once we've saved this one, we don't need it or anything that came before it)
+      _bufferedSaveCtrs.erase(_bufferedSaveCtrs.begin(), ++saveCtrIter);
+      
+    }
+  }
+
+  // Delete existing image if there is one
+  if (_camImg != nullptr) {
+    _camDisp->imageDelete(_camImg);
+  }
+  
+  // This apparently has to happen _after_ we do the _camDisp->imageSave() call above. I HAVE NO IDEA WHY. (?!?!)
+  // (Otherwise, the channels seem to cycle and we get rainbow effects in Webots while saving is on, even though
+  // the saved images are fine.)
+  Vision::ImageRGB img;
+  Result result = encodedImage.DecodeImageRGB(img);
+  if(RESULT_OK != result) {
+    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.DecodeFailed", "t=%d", timestamp);
+    return;
+  }
+  
+  if(img.IsEmpty()) {
+    PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizDisplayImage.EmptyImageDecoded", "t=%d", timestamp);
+    return;
+  }
+  
+  //printf("Displaying image %d x %d\n", imgWidth, imgHeight);
+
+  _camImg = _camDisp->imageNew(img.GetNumCols(), img.GetNumRows(), img.GetDataPointer(), webots::Display::RGB);
+  _camDisp->imagePaste(_camImg, 0, 0);
+  SetColorHelper(_camDisp, NamedColors::RED);
+  _camDisp->drawText(std::to_string(timestamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
+  
+  // Store the timestamp for the currently displayed image so we can use it to save
+  // that image with the right filename next call
+  _curImageTimestamp = timestamp;
+  
+  DisplayCameraInfo();
+  
+  // Remove all encoded images up to and including the specified timestamp (the assumption is we never
+  // go backward, so once we've displayed this one, we don't need it or anything that came before it)
+  _encodedImages.erase(_encodedImages.begin(), ++encImgIter);
 }
 
 void VizControllerImpl::ProcessCameraInfo(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -579,11 +654,20 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     RAD_TO_DEG(payload.state.pose.pitch_angle + payload.state.headAngle));
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_PITCH, Anki::NamedColors::GREEN, txt);
   
+#ifdef COZMO_V2
+  sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2  ImuTemp %+6.2f degC",
+          payload.state.accel.x,
+          payload.state.accel.y,
+          payload.state.accel.z,
+          payload.imuTemperature_degC);
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
+#else
   sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2",
           payload.state.accel.x,
           payload.state.accel.y,
           payload.state.accel.z);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
+#endif
   
   sprintf(txt, "Gyro: %6.1f %6.1f %6.1f deg/s",
     RAD_TO_DEG(payload.state.gyro.x),
@@ -661,17 +745,7 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_BODY_ACC_MODE ? "" : "(BODY)");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
-  
-  // Blank the image if enabled and it's time (until we have better solution with COZMO-10240)
-  if(_blankImageFreqency_ms != 0 &&
-     (payload.state.timestamp - _lastStateTimeStamp) > _blankImageFreqency_ms)
-  {
-    _camDisp->setColor(0);
-    _camDisp->fillRectangle(0, 0, _camDisp->getWidth(), _camDisp->getHeight());
     
-    _lastStateTimeStamp = payload.state.timestamp;
-  }
-  
   // Save state to file
   if(_saveState)
   {

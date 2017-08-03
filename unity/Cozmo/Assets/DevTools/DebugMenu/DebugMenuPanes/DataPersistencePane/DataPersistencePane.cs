@@ -118,9 +118,6 @@ namespace DataPersistence {
           _IsResettingEverything = true;
           _LblStatus.text = "THINKING. Stop touching things.";
           _LblStatus.color = Color.blue;
-          // Passing false here because WipeRobotGameData will do the initialization
-          // (Avoid doing it twice)
-          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData(false);
           RobotEngineManager.Instance.CurrentRobot.WipeRobotGameData();
         }
       }

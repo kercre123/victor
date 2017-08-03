@@ -272,7 +272,6 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_ios)',
                     '<@(text_to_speech_library_dirs)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
@@ -314,7 +313,6 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_ios)',
                     '<@(text_to_speech_library_dirs)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
@@ -356,7 +354,6 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_ios)',
                     '<@(text_to_speech_library_dirs)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
                   '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
@@ -398,7 +395,6 @@
                     '<(webots_path)/lib/',
                     '<@(text_to_speech_library_dirs)',
                     '<@(flatbuffers_lib_search_path_ios)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
                  'FRAMEWORK_SEARCH_PATHS': [
                   '../../lib/HockeySDK-iOS/HockeySDK.embeddedframework',
@@ -708,7 +704,6 @@
               '<@(flatbuffers_include)',
               '<@(text_to_speech_include_dirs)',
               '<@(routing_http_server_include)',
-              '<@(voice_recog_library_includes)',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -738,7 +733,6 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
               '<@(routing_http_server_libs)',
-              '<@(voice_recog_library_libs)',
             ],
 
             #Force linked due to objective-C categories.
@@ -1355,7 +1349,6 @@
         '../../generated/clad/game',
         '<@(libarchive_include)',
         '<@(das_include)',
-        '<@(voice_recog_library_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -1399,7 +1392,6 @@
               '<@(text_to_speech_libraries)',
               '<@(routing_http_server_libs)',
               '<@(libarchive_libs)',
-              '<@(voice_recog_library_libs)',
             ],
           },
       	  'OS=="android"',
@@ -1435,7 +1427,6 @@
               # '<@(opencv_libs)',
               '<@(flatbuffers_libs_android)',
               '<@(text_to_speech_libraries)',
-              '<@(voice_recog_library_libs)',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/libIlmImf.a',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjasper.a',
               #'<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjpeg.a',
@@ -1569,6 +1560,13 @@
               ],
             }, # end action
           ], # end actions
+          
+          'include_dirs': [
+            '<@(voice_recog_library_includes)',
+          ],
+          'libraries': [
+            '<@(voice_recog_library_libs)',
+          ],
         }],
         ['OS=="ios" or OS=="android"', {
           'actions': [

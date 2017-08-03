@@ -224,6 +224,9 @@ public class FirstTimeConnectView : BaseView {
 
   public void HandleRobotDisconnect(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     if (_ConnectionFlowInstance != null) {
+      if (_ConnectionFlowInstance.ShouldIgnoreRobotDisconnect()) {
+        return;
+      }
       _ConnectionFlowInstance.HandleRobotDisconnect();
     }
     HandleConnectionFlowQuit();

@@ -1,8 +1,8 @@
 //Generated File made by GenerateThemeKeyConstFile, do not edit
 public static class ThemeKeys {
-  
+
   public static class Cozmo {
-    
+
     public static class Button {
       public const string kCozmoButtonBack = "CozmoButton_Back";
       public const string kCozmoButtonCalibrate = "CozmoButton_Calibrate";
@@ -22,7 +22,7 @@ public static class ThemeKeys {
       public const string kLEGACYCozmoButtonSecondary = "LEGACY_CozmoButton_Secondary";
       public const string kLEGACYCozmoButtonTertiary = "LEGACY_CozmoButton_Tertiary";
     }
-    
+
     public static class Image {
       public const string kAnnouncementBanner = "Announcement_Banner";
       public const string kAppBackground = "App_Background";
@@ -39,7 +39,6 @@ public static class ThemeKeys {
       public const string kCozmoButtonCalibrateBackground = "CozmoButton_Calibrate_Background";
       public const string kCozmoButtonCloseBackground = "CozmoButton_Close_Background";
       public const string kCozmoButtonCloseLiteBackground = "CozmoButton_Close_LiteBackground";
-      public const string kCozmoButtonIconVoiceCommand = "CozmoButton_Icon_VoiceCommand";
       public const string kCozmoButtonInvisibleHitZone = "CozmoButton_InvisibleHitZone";
       public const string kCozmoButtonPrimaryBlueBackground = "CozmoButton_Primary_BlueBackground";
       public const string kCozmoButtonPrimaryGoldBackground = "CozmoButton_Primary_GoldBackground";
@@ -78,7 +77,7 @@ public static class ThemeKeys {
       public const string kSpinnerMiddle = "Spinner_Middle";
       public const string kSpinnerOuter = "Spinner_Outer";
     }
-    
+
     public static class TextMeshPro {
       public const string kCardDescriptionText = "Card_Description_Text";
       public const string kCardDescriptionTextLarge = "Card_Description_Text_Large";

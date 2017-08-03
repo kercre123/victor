@@ -9,11 +9,7 @@ namespace Cozmo.UI {
   [CanEditMultipleObjects]
   public class CozmoButtonEditor : AnkiButtonEditor {
 
-    private CozmoButton _CozmoScriptTarget = null;
-
     private string _localizedStringFile;
-
-    private bool _editingVoiceText;
 
     public override void OnInspectorGUI() {
       serializedObject.UpdateIfRequiredOrScript();
@@ -21,7 +17,6 @@ namespace Cozmo.UI {
       //Get Target Script
       if (_ScriptTarget == null) {
         _ScriptTarget = (AnkiButton)target;
-        _CozmoScriptTarget = (CozmoButton)target;
       }
 
       //Show the button here so it's at the top of the inspector.
@@ -40,52 +35,6 @@ namespace Cozmo.UI {
       EditorGUILayout.PropertyField(serializedObject.FindProperty("_UISoundEvent"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("_ShowDisabledStateWhenInteractable"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("ButtonGraphics"), true);
-
-      SerializedProperty voiceCommandProperty = serializedObject.FindProperty("_VoiceCommandIcon");
-      SerializedProperty VCLocalizationKeyProperty = serializedObject.FindProperty("_VoiceCommandLocalizationKey");
-
-      if (_CozmoScriptTarget.VoiceCommandIcon == null) {
-        if (GUILayout.Button("Make Voice Icon")) {
-          GameObject iconObject = new GameObject("ButtonIconVoiceCommand", typeof(CozmoImage));
-          voiceCommandProperty.objectReferenceValue = iconObject;
-          iconObject.transform.SetParent(_CozmoScriptTarget.transform);
-          RectTransform rt = iconObject.transform as RectTransform;
-          rt.localPosition = Vector3.zero;
-          rt.localScale = new Vector3(1, 1, 1);
-          rt.pivot = new Vector2(1f, 0.5f);
-          rt.anchorMin = new Vector2(1, 0.5f);
-          rt.anchorMax = new Vector2(1, 0.5f);
-          rt.offsetMin = new Vector2(-100, 0);
-          rt.offsetMax = new Vector2(0, 70);
-          rt.anchoredPosition = new Vector2(-55, 10);
-
-          CozmoImage iconImage = iconObject.GetComponent<CozmoImage>();
-          iconImage.LinkedComponentId = ThemeKeys.Cozmo.Image.kCozmoButtonIconVoiceCommand;
-          iconImage.UpdateSkinnableElements(CozmoThemeSystemUtils.sInstance.GetCurrentThemeId(), CozmoThemeSystemUtils.sInstance.GetCurrentSkinId());
-          iconImage.preserveAspect = true;
-        }
-      }
-      EditorGUILayout.PropertyField(voiceCommandProperty);
-
-      if (voiceCommandProperty.objectReferenceValue != null) {
-        _editingVoiceText = EditorGUILayout.Foldout(_editingVoiceText, "Voice Command Label", true);
-        if (_editingVoiceText) {
-          EditorGUI.indentLevel++;
-          EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-          string key = VCLocalizationKeyProperty.stringValue;
-          if (key == null) {
-            key = "";
-          }
-          if (_localizedStringFile == null) {
-            _localizedStringFile = "";
-          }
-
-          EditorDrawingUtility.DrawLocalizationString(ref key, ref _localizedStringFile);
-          VCLocalizationKeyProperty.stringValue = key;
-          EditorGUILayout.EndVertical();
-          EditorGUI.indentLevel--;
-        }
-      }
 
       serializedObject.ApplyModifiedProperties();
 

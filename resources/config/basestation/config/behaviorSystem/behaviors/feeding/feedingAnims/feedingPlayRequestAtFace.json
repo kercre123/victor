@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "PlayAnimWithFace",
+  
+  "behaviorID": "FeedingPlayRequestAtFace",
+  "animTriggers": ["NeedsMildLowEnergyRequest"]  
+}

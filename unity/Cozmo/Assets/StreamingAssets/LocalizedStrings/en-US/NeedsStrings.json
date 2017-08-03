@@ -80,7 +80,7 @@
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction": {
     "translation": "Tap the parts to be tuned up."
-  },  
+  },
   "needs.NeedsRepairModal.TuneUpInstruction": {
     "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap <b>SEND</b>."
   },
@@ -111,8 +111,8 @@
   "needs.Done": {
     "translation": "DONE"
   },
-  "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Your Sparks inventory is full"
+  "needs.RewardsDialog.SparksInventoryFull": {
+    "translation": "Your Sparks inventory is full."
   },
   "needs.RewardsDialog.SparksEarned": {
     "translation": "You've earned more Sparks!"
@@ -186,7 +186,7 @@
   "needs.severeAlert.repair.title": {
     "translation": "Cozmo Really Needs a Tune-Up"
   },
-  "needs.severeAlert.repair.description":{
+  "needs.severeAlert.repair.description": {
     "translation": "You'll need to tune up Cozmo before continuing."
   }
 }

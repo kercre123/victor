@@ -3,8 +3,10 @@
 copy-clad:
 	rm -rf dist/*
 	rm -rf src/cozmoclad/clad/*
+	rm -rf src/cozmoclad/util/*
 	rm -rf src/cozmoclad/msgbuffers/*
 	cp -r ../../../generated/cladPython/clad src/cozmoclad/
+	cp -r ../../../generated/cladPython/util src/cozmoclad/
 	cp -r ../../message-buffers/support/python/msgbuffers src/cozmoclad/
 	# Add license header file to each python file
 	# skip msgbuffers as it already has the license in the header.
@@ -15,8 +17,10 @@ copy-clad:
 
 copy-csharp-clad:
 	rm -rf csharp_clad/clad/*
+	rm -rf csharp_clad/util/*
 	rm -f csharp_clad/cladcsharp.csproj
 	rsync -r --exclude=*.meta ../../../unity/Cozmo/Assets/Scripts/Generated/clad csharp_clad/
+	rsync -r --exclude=*.meta ../../../unity/Cozmo/Assets/Scripts/Generated/util csharp_clad/
 	# Add license header file to each CS file
 	find csharp_clad \
 		-name '*.cs' \

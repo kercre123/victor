@@ -306,7 +306,6 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeDeviceNeedsData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
@@ -532,6 +531,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // (We did it earlier, in Init, but that was for a different robot)
     static const bool connected = false;
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
   }
 
   // Update Game on Robot's last state
@@ -598,7 +599,16 @@ void NeedsManager::OnRobotDisconnected()
   _needsState._timeLastDisconnect = system_clock::now();
   _needsState._timesOpenedSinceLastDisconnect = 0;
 
-  WriteToDevice();
+  // Write latest needs state to device, but not if needs system is paused.
+  // If we're paused, we've already written needs state to device when we
+  // paused.  And we don't want to write again, because if the robot gets
+  // disconnected while app is backgrounded (and thus paused), we don't
+  // want to update the 'time last written' because when we un-background,
+  // we use that time to apply accumulated decay.
+  if (!_isPausedOverall)
+  {
+    WriteToDevice();
+  }
 
   _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
 
@@ -656,6 +666,8 @@ void NeedsManager::SetPaused(const bool paused)
 
   if (_isPausedOverall)
   {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.SetPaused.Pausing",
+                  "Pausing Needs system");
     // Calculate and record how much time was left until the next decay
     _pausedDurRemainingPeriodicDecay = _timeForNextPeriodicDecay_s - _currentTime_s;
 
@@ -671,6 +683,8 @@ void NeedsManager::SetPaused(const bool paused)
   }
   else
   {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.SetPaused.UnPausing",
+                  "Un-Pausing Needs system");
     // When unpausing, set the next 'time for periodic decay'
     _timeForNextPeriodicDecay_s = _currentTime_s + _pausedDurRemainingPeriodicDecay;
 
@@ -788,7 +802,7 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
           PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompleted",
                         "About to create freeplay sparks reward message but there was a pending one, so sending that one now");
 
-          OnSparksRewardAnimComplete();
+          SparksRewardCommunicatedToUser();
         }
         _pendingSparksRewardMsg = true;
 
@@ -976,7 +990,7 @@ int NeedsManager::AwardSparks(const int targetSparks, const float minPct, const 
 }
 
 
-void NeedsManager::OnSparksRewardAnimComplete()
+void NeedsManager::SparksRewardCommunicatedToUser()
 {
   DEV_ASSERT_MSG(_pendingSparksRewardMsg == true,
                  "NeedsManager.OnSparksRewardAnimComplete",
@@ -1313,8 +1327,12 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeDeviceNeedsData& m
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg)
 {
-  // When the debug 'erase everything' button is pressed, that means we also need
-  // to re-initialize the needs levels
+  // When the debug 'erase everything' button is pressed, or the user-facing
+  // "ERASE COZMO" button is pressed, that means we also need to re-initialize
+  // the needs system
+
+  Util::FileUtils::DeleteFile(kPathToSavedStateFile + kNeedsStateFile);
+
   InitInternal(_currentTime_s);
 }
 
@@ -1384,26 +1402,20 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 
     SendNeedsLevelsDasEvent("app_background");
   }
-
-  if (!msg.isPaused)
+  else
   {
     // When un-backgrounding, apply decay
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
-    SendNeedsLevelsDasEvent("app_unbackground");
-
     _needsState._timesOpenedSinceLastDisconnect++;
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
+
+    SendNeedsLevelsDasEvent("app_unbackground");
 
     SendTimeSinceBackgroundedDasEvent();
   }
-}
-
-template<>
-void NeedsManager::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
-{
-  // Pause the needs system during explorer mode
-  SetPaused(msg.isStarted);
 }
 
 
@@ -1542,9 +1554,21 @@ void NeedsManager::ApplyDecayForTimeSinceLastDeviceWrite(const bool connected)
 
   // Now apply decay according to appropriate config, and elapsed time
   // First, however, we set the timers as if that much time had elapsed:
-  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
   {
-    _lastDecayUpdateTime_s[i] = _currentTime_s - elasped_s;
+    _lastDecayUpdateTime_s[needIndex] = _currentTime_s - elasped_s;
+
+    if (_timeWhenCooldownOver_s[needIndex] != 0.0f)
+    {
+      // Note: There is a very small chance that the following subtraction
+      // could result in a value of exactly zero, which means 'no cooldown'.
+      // In that case ApplyDecayAllNeeds would not account for the remaining
+      // fullness cooldown period to not apply decay.  A real fix for this
+      // would be to have another array of bools for '_cooldownActive'
+      // (instead of double-use of this _timeWhenCooldownOver_s)
+      _timeWhenCooldownOver_s[needIndex] -= elasped_s;
+      _timeWhenCooldownStarted_s[needIndex] -= elasped_s;
+    }
   }
 
   ApplyDecayAllNeeds(connected);

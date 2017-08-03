@@ -35,9 +35,6 @@
 
 #include "anki/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
-#if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
-#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -129,12 +126,7 @@ void RobotManager::AddRobot(const RobotID_t withID)
       std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface(), _fwVersion, _fwTime));
   } else {
     PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
-  }
-  
-  if (_context->GetExternalInterface())
-  {
-    _robotEventHandler.SetupGainsHandlers(*(_context->GetExternalInterface()));
-  }
+  }  
 }
 
 void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnection)

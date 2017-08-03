@@ -78,9 +78,6 @@
   "connectivity.placeCozmoOnCharger": {
     "translation": "Place Cozmo on his charger."
   },
-  "connectivity.replaceCozmoOnCharger": {
-    "translation": "Remove and replace Cozmo on his charger."
-  },
   "label.getHelp": {
     "translation": "Get Help"
   },
@@ -104,9 +101,6 @@
   },
   "connectivity.sendGameplayDataPrompt": {
     "translation": "Help us make Cozmo better by sending us your gameplay data and statistics"
-  },
-  "needs.VoiceSettingsModal.Title": {
-    "translation": "Voice Commands"
   },
   "connectivity.behaviorDisplayDisconnected": {
     "translation": "Cozmo has been disconnected."

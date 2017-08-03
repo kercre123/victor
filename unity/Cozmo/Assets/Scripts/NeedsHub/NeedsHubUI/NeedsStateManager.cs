@@ -99,6 +99,12 @@ namespace Cozmo.Needs {
       return latestValue;
     }
 
+    public bool PeekLatestEnginePartIsBroken(RepairablePartId partId) {
+      int partIndex = (int)partId;
+      bool latestValue = _LatestStateFromEngine.partIsDamaged[partIndex];
+      return latestValue;
+    }
+
     public bool PopLatestEnginePartIsBroken(RepairablePartId partId) {
       int partIndex = (int)partId;
       bool latestValue = _LatestStateFromEngine.partIsDamaged[partIndex];

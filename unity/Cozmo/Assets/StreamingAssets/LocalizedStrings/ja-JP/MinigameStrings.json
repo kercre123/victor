@@ -76,7 +76,7 @@
     "translation" : "安全な遊び方："
   },
   "droneMode.safePlay.description" : {
-    "translation" : "照明が十分な室内で探索してください。\u000a\u000a平らな場所で動かしてください。\u000a\u000aテーブルなどの端から落ちないように注意してください\u000a\u000aCozmoの近くにいるようにしてください。"
+    "translation" : "•明るい場所で室内を探索する。 •平らな場所で運転する。 •端から脱落しないように注意してください。 •最高の経験を得るために、Cozmoの近くに滞在してください。"
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "あいさつ"
@@ -184,7 +184,7 @@
     "translation" : "やった！"
   },
   "speedTap.roundsText" : {
-    "translation" : "ラウンド {0:N0}"
+    "translation" : "円形{0:N0}"
   },
   "speedTap.tapBlock" : {
     "translation" : "あなたがプレイしたい\u000a光るキューブをタップします。"
@@ -221,12 +221,6 @@
   },
   "minigame.timeout.description" : {
     "translation" : "Cozmoは待ちくたびれて、別のことをしたがっています。"
-  },
-  "cubePounce.info.playerWinPoint" : {
-    "translation" : "あなたが速かった！"
-  },
-  "cubePounce.info.cozmoWinPoint" : {
-    "translation" : "Cozmoが速かった！"
   },
   "cubePounce.info.setupText" : {
     "translation" : "1個のキューブをCozmoの前に置いて、緑色になるのを静かに待ちます。"
@@ -286,13 +280,13 @@
     "translation" : "クイックタップをロック解除してロックを外します"
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "2色モードはロックされています。\u000a<b>1色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b> 2色</b>モードがロックされています。クイックタップを獲得してロックを解除<b> ONE COLOR </b>モード。"
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "3色モードはロックされています。\u000a<b>2色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b>三つの色</b>モードがロックされています。クイックタップを獲得してロックを解除<b> 2色</b>モード。"
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "4色モードはロックされています。\u000a<b>3色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b> 4色</b>モードがロックされています。クイックタップを獲得してロックを解除<b>三つの色</b>モード。"
   },
   "speedTap.text.getReady" : {
     "translation" : "準備してください！"
@@ -331,7 +325,7 @@
     "translation" : "人間 VS. 人間 VS. Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "単語やフレーズを入力し、Cozmoがそれを言うのを聞く："
+    "translation" : "単語やフレーズを入力して、Cozmoに言葉をしゃべらせましょう："
   },
   "sayCozmo.button.say" : {
     "translation" : "話す"
@@ -364,15 +358,24 @@
     "translation" : "あなたの勝ち！"
   },
   "label.MATCH" : {
-    "translation" : "一致！"
+    "translation" : "勝負！"
   },
-  "label.NO.MATCH" : {
-    "translation" : "いいえ\\ n目次"
+  "label.dontSlap" : {
+    "translation" : "スリップしないでください！"
   },
-  "label.DONT.SLAP" : {
-    "translation" : "\\ nスラップしないでください！"
+  "label.noMatch" : {
+    "translation" : "勝ち目がない"
   },
   "label.enterText" : {
-    "translation" : "テキストを入力..."
+    "translation" : "テキストを入力してください..."
+  },
+  "minigame.text.cozmoWinsFlat" : {
+    "translation" : "Cozmoの勝ち！"
+  },
+  "minigame.text.playerWinsFlat" : {
+    "translation" : "{0}勝つ！"
+  },
+  "minigame.text.youWinFlat" : {
+    "translation" : "あなたの勝ち！"
   }
 }

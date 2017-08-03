@@ -137,6 +137,7 @@ union RobotToEngine {
   RobotErrorReport           robotError             = 0xD9,
   LiftLoad                   liftLoad               = 0xDA,
   BackpackButton             backpackButton         = 0xDB,
+  IMUTemperature             imuTemperature         = 0xDC,
 
   WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,

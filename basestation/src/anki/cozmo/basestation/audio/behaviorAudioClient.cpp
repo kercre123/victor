@@ -103,6 +103,8 @@ BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
 : _robot(robot)
 , _prevActivity(ActivityID::Invalid)
 , _activeBehaviorStage(BehaviorStageTag::Count)
+, _prevGuardDogStage(GuardDogStage::Count)
+, _prevFeedingStage(FeedingStage::MildEnergy)
 {
   // Get the appropriate spark music state from unity
   if(robot.HasExternalInterface()){
@@ -422,11 +424,14 @@ void BehaviorAudioClient::HandleDancingUpdates(const BehaviorStageStruct& currPu
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
+  const bool stageOrRoundChanged = (GetActiveBehaviorStage() != BehaviorStageTag::Feeding) ||
+                                     (_prevFeedingStage != currPublicStateStruct.currentFeedingStage);
+  
   if((currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Feeding) &&
-     (GetActiveBehaviorStage() != BehaviorStageTag::Feeding)){
-    const int roundIdx =  static_cast<int>(currPublicStateStruct.currentFeedingStage);
+     stageOrRoundChanged){
+    _prevFeedingStage =  currPublicStateStruct.currentFeedingStage;
     _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
-                                                  static_cast<const GenericSwitch>(kGameplayRoundMap[roundIdx]),
+                                                  static_cast<const GenericSwitch>(kGameplayRoundMap[_round]),
                                                   AudioMetaData::GameObjectType::Default);
   }
 }
@@ -476,6 +481,7 @@ void BehaviorAudioClient::SetActiveBehaviorStage(BehaviorStageTag stageTag)
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleDimMusicForActivity(const RobotPublicState& stateEvent)
 {
   if(_prevActivity != stateEvent.currentActivity)

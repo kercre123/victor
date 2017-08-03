@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "cozmo_anim_generated.h"
 #include "threadedPrintStressTester.h"
+#include "util/ankiLab/ankiLab.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -580,9 +581,10 @@ void RobotDataLoader::LoadActivities()
 
 void RobotDataLoader::LoadVoiceCommandConfigs()
 {
+#if THF_FUNCTIONALITY
   // Configuration for voice command component 
   {
-    std::string jsonFilename = "config/basestation/config/voiceCommand_config.json";
+    std::string jsonFilename = "assets/voiceCommand/voiceCommand_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
     if (!success)
     {
@@ -592,6 +594,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
       _voiceCommandConfig.clear();
     }
   }
+#endif
   
   // Configuration for "lets play" game selection
   {
@@ -794,6 +797,13 @@ void RobotDataLoader::LoadRobotConfigs()
     _context->GetFeatureGate()->Init(fileContents);
   }
   
+  // A/B testing definition
+  {
+    const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/experiments.json")};
+    const std::string fileContents{Util::FileUtils::ReadFile(filename)};
+    _context->GetAnkiLab()->Load(fileContents);
+  }
+
   // Inventory config
   {
     static const std::string jsonFilename = "config/basestation/config/inventory_config.json";

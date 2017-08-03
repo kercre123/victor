@@ -36,7 +36,7 @@ namespace Cozmo.Repair.UI {
       REVEAL_SYMBOLS,   //reveal one symbol at a time until all showing
       ENTER_SYMBOLS,    //user hitting symbol buttons to match pattern
       PATTERN_MISMATCH, //user submitted incorrect symbol
-      PATTERN_MATCHED,  //full pattern entered successfully, increment round cleared icons
+      PATTERN_MATCHED,  //full pattern entered successfully, increment round icons
       ROBOT_RESPONSE,   //tell robot to animate the pattern and wait with screen dulled
       TUNE_UP_COMPLETE  //show any activity complete effects and robot anims
     }
@@ -202,6 +202,8 @@ namespace Cozmo.Repair.UI {
     private ushort _ScanSFXCallbackID = 0;
 
     private int _NumPartsRepaired = 0; //tallied for analytics
+    private int _NumberOfBrokenParts = 0;
+    private int _NumberOfBrokenPartsDisplayed = 0;
 
     #endregion //Non-serialized Fields
 
@@ -247,10 +249,11 @@ namespace Cozmo.Repair.UI {
       InitializePartElements(HandleRepairLiftButtonPressed, "repair_lift_button", _LiftElements);
       InitializePartElements(HandleRepairTreadsButtonPressed, "repair_treads_button", _TreadsElements);
 
-      int partsBroken = RefreshAllPartElements();
+      _NumberOfBrokenParts = RefreshAllPartElements();
       DAS.Event("activity.repair.num_broken_parts_on_modal_launch",
                 DASEventDialogName,
-                DASUtil.FormatExtraData(partsBroken.ToString()));
+                DASUtil.FormatExtraData(_NumberOfBrokenParts.ToString()));
+      _NumberOfBrokenPartsDisplayed = _NumberOfBrokenParts;
 
       //start in scanner mode
       _ScanButton.Initialize(HandleScanButtonPressed, "scan_button", DASEventDialogName);
@@ -395,6 +398,9 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.PRE_SCAN:
+        if (_TimeInModalState_sec < 0.2f && _NumberOfBrokenParts != _NumberOfBrokenPartsDisplayed) {
+          return ChangeModalState(RepairModalState.SCAN);
+        }
         if (_ScanRequested) {
           return ChangeModalState(RepairModalState.SCAN);
         }
@@ -403,6 +409,9 @@ namespace Cozmo.Repair.UI {
         if (_TimeInModalState_sec >= _ScanDuration_sec) {
           if (!_RepairNeeded) {
             return ChangeModalState(RepairModalState.REPAIRED);
+          }
+          if (_NumberOfBrokenParts != _NumberOfBrokenPartsDisplayed) {
+            return ChangeModalState(RepairModalState.PRE_SCAN);
           }
         }
         if (_RepairRequested) {
@@ -419,7 +428,7 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.REPAIRED:
-        if (_RepairNeeded) {
+        if (_NumberOfBrokenParts != _NumberOfBrokenPartsDisplayed) {
           return ChangeModalState(RepairModalState.SCAN);
         }
         break;
@@ -455,10 +464,10 @@ namespace Cozmo.Repair.UI {
       case RepairModalState.SCAN:
         DAS.Event("activity.repair.scan", DASEventDialogName);
         _MetersWidget.RepairMeterPaused = true;
-        int partsBroken = RefreshAllPartElements();
+        _NumberOfBrokenPartsDisplayed = RefreshAllPartElements();
         DAS.Event("activity.repair.scan_num_broken_parts",
                   DASEventDialogName,
-                  DASUtil.FormatExtraData(partsBroken.ToString()));
+                  DASUtil.FormatExtraData(_NumberOfBrokenPartsDisplayed.ToString()));
 
         NeedsStateManager nsm = NeedsStateManager.Instance;
         float repairValue = nsm.PopLatestEngineValue(NeedId.Repair).Value;
@@ -510,6 +519,7 @@ namespace Cozmo.Repair.UI {
         if (_MetersWidget.RepairMeterPaused && _TimeInModalState_sec >= _ScanDuration_sec) {
           _MetersWidget.RepairMeterPaused = false;
           HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
+          _NumberOfBrokenPartsDisplayed = RefreshAllPartElements();
         }
         break;
       case RepairModalState.TUNE_UP:
@@ -690,6 +700,7 @@ namespace Cozmo.Repair.UI {
 
         if (_RoundIndex < _RoundProgressPips.Count) {
           _RoundProgressPips[_RoundIndex].SetComplete(true);
+          GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Pattern_Complete);
         }
 
         _TuneUpValuesEntered.Clear();
@@ -900,7 +911,8 @@ namespace Cozmo.Repair.UI {
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       PlayRobotRepairIdleAnim();
-      RefreshAllPartElements();
+
+      _NumberOfBrokenParts = GetCurrentNumberOfBrokenParts();
     }
 
     // light up the next arrow, note: this may be removed if deemed too distracting by design
@@ -1023,6 +1035,25 @@ namespace Cozmo.Repair.UI {
       }
     }
 
+    private int GetCurrentNumberOfBrokenParts() {
+      bool headBroken = NeedsStateManager.Instance.PeekLatestEnginePartIsBroken(RepairablePartId.Head);
+      bool liftBroken = NeedsStateManager.Instance.PeekLatestEnginePartIsBroken(RepairablePartId.Lift);
+      bool treadsBroken = NeedsStateManager.Instance.PeekLatestEnginePartIsBroken(RepairablePartId.Treads);
+
+      int partsBroken = 0;
+      if (headBroken) {
+        partsBroken++;
+      }
+      if (liftBroken) {
+        partsBroken++;
+      }
+      if (treadsBroken) {
+        partsBroken++;
+      }
+
+      return partsBroken;
+    }
+
     private int RefreshAllPartElements() {
       bool headBroken = NeedsStateManager.Instance.PopLatestEnginePartIsBroken(RepairablePartId.Head);
       RefreshPartElements(headBroken, _HeadElements);
@@ -1098,7 +1129,6 @@ namespace Cozmo.Repair.UI {
 
         switch (_PartToRepair) {
         case RepairablePartId.Head:
-
           if (severe) {
             robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady,
                                        HandleCalibrateAnimMiddle,
@@ -1139,7 +1169,6 @@ namespace Cozmo.Repair.UI {
           robot.SetHeadAngle(0.0f, null, QueueActionPosition.AT_END);
           break;
         case RepairablePartId.Lift:
-
           if (severe) {
             robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady,
                                        null,
@@ -1151,16 +1180,11 @@ namespace Cozmo.Repair.UI {
                                        QueueActionPosition.AT_END);
           }
 
-          //fix lift height
-          if (severe) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereRaiseLift,
-                                       HandleCalibrateAnimMiddle,
-                                       QueueActionPosition.AT_END);
-          }
-          else {
+          //fix lift height, only do this for mild animations
+          if (!severe) {
             robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildRaiseLift,
-                                       HandleCalibrateAnimMiddle,
-                                       QueueActionPosition.AT_END);
+                                                   HandleCalibrateAnimMiddle,
+                                                   QueueActionPosition.AT_END);
           }
 
           for (int i = 0; i < _TuneUpPatternToMatch.Count; ++i) {
@@ -1192,7 +1216,6 @@ namespace Cozmo.Repair.UI {
           robot.SetLiftHeight(0.0f, null, QueueActionPosition.AT_END);
           break;
         case RepairablePartId.Treads:
-
           if (severe) {
             robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady,
                                        HandleCalibrateAnimMiddle,
@@ -1368,7 +1391,7 @@ namespace Cozmo.Repair.UI {
     private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
       if (_InterruptedAlert == null) {
         var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
-                                new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay, false,
+                                new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
                                              clickCallback: CloseInterruptionAlert));
 
         var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,

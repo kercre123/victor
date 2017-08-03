@@ -62,6 +62,7 @@ namespace Anki {
     , _compoundAction(robot)
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
+    , _preActionPoseAngleTolerance_rad(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
     {
       SetGetPossiblePosesFunc([this](ActionableObject* object,
                                      std::vector<Pose3d>& possiblePoses,
@@ -87,6 +88,7 @@ namespace Anki {
     , _compoundAction(robot)
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
+    , _preActionPoseAngleTolerance_rad(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
     {
       SetGetPossiblePosesFunc([this](ActionableObject* object,
                                      std::vector<Pose3d>& possiblePoses,
@@ -135,7 +137,7 @@ namespace Anki {
                                                                _actionType,
                                                                false,
                                                                _predockOffsetDistX_mm,
-                                                               DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
+                                                               _preActionPoseAngleTolerance_rad,
                                                                _useApproachAngle,
                                                                _approachAngle_rad.ToFloat());
       IDockAction::PreActionPoseOutput preActionPoseOutput;
@@ -168,7 +170,7 @@ namespace Anki {
                                                                _actionType,
                                                                false,
                                                                _predockOffsetDistX_mm,
-                                                               DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
+                                                               _preActionPoseAngleTolerance_rad,
                                                                _useApproachAngle,
                                                                _approachAngle_rad.ToFloat());
       IDockAction::PreActionPoseOutput preActionPoseOutput;
@@ -789,7 +791,7 @@ namespace Anki {
           {
             const Point2f thresh = ComputePreActionPoseDistThreshold(_goalPoses[*_selectedGoalIndex],
                                                                      _objectPoseGoalsGeneratedFrom,
-                                                                     DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+                                                                     _goalAngleThreshold);
             
             distanceThreshold.x() = thresh.x();
             distanceThreshold.y() = thresh.y();
@@ -1114,6 +1116,27 @@ namespace Anki {
                         "Setting tilt tolerance to %f degrees", tol.getDegrees());
       static_cast<TurnTowardsLastFacePoseAction*>(_turnTowardsLastFacePoseAction.lock().get())->SetTiltTolerance(tol);
       static_cast<TurnTowardsObjectAction*>(_turnTowardsObjectAction.lock().get())->SetTiltTolerance(tol);
+    }
+
+    void IDriveToInteractWithObject::SetPreActionPoseAngleTolerance(f32 angle_rad)
+    {
+      if( GetState() != ActionResult::NOT_STARTED ) {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetPreActionPoseAngleTolerance.Invalid",
+                            "Tried to set the preaction pose angle tolerance, but action has already started");
+        return;
+      }
+
+      if(!_driveToObjectAction.expired()) {
+        PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetPreActionPoseAngleTolerance",
+                      "[%d] %f rad",
+                      GetTag(),
+                      angle_rad);
+        
+        static_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get())->SetPreActionPoseAngleTolerance(angle_rad);
+      } else {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.NullDriveToAction", "");
+      }
+
     }
 
     void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)

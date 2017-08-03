@@ -25,7 +25,14 @@
  
     // Starting point for one script to appear on phones and tablets.
     window.getScriptStartingPoint = function() {
-        var point = new CLPoint(120, 200);
+        var point = null;
+        if (window.isVertical) {
+            point = new CLPoint(480, 200);
+        }
+        else {
+            point = new CLPoint(120, 200);
+        }
+
         if (window.innerWidth <= 799) {
             point.x = 100;
             point.y = 110;

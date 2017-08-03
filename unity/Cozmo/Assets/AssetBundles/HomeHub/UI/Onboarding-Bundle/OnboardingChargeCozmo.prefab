@@ -355,9 +355,9 @@ MonoBehaviour:
   _EnableWhiteListOnly: 1
   _WhiteListedActions: []
   _ForceNeedValuesOnStart:
-  - 0.63
+  - 0.68
+  - 0.75
   - 0.7
-  - 0.55
   _ForceNeedValuesOnEnd:
   - -1
   - -1
@@ -2442,7 +2442,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114614492251710268}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}

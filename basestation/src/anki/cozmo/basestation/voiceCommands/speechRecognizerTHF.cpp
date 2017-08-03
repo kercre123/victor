@@ -21,6 +21,8 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
+#if THF_FUNCTIONALITY
+
 #include "trulyhandsfree.h"
 
 #include <algorithm>
@@ -654,3 +656,5 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   
 } // end namespace Cozmo
 } // end namespace Anki
+
+#endif // THF_FUNCTIONALITY

@@ -945,9 +945,10 @@ bool UDPTransport::TryToReadMessage()
   {
     if (EWOULDBLOCK != errno) // EWOULDBLOCK just means there's nothing in there
     {
-      PRINT_NAMED_ERROR("UDPTransport.ReadFailed",
-                        "Error: recvmsg(_socketId = %d _port = %d) returned %zd, errno = %d '%s'",
-                        _socketId, _port, bytesReceived, errno, strerror(errno));
+      // This is a warning, not an error, because it sometimes happens in a normal disconnection flow.
+      PRINT_NAMED_WARNING("UDPTransport.ReadFailed",
+                          "recvmsg(_socketId = %d _port = %d) returned %zd, errno = %d '%s'",
+                          _socketId, _port, bytesReceived, errno, strerror(errno));
     }
     
     if (ENOTCONN == errno)

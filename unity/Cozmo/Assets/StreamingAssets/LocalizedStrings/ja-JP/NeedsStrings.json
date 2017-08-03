@@ -37,10 +37,10 @@
     "translation" : "Cozmoは満タンにチャージされました！"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt" : {
-    "translation" : "彼はキューブを聞くことができないので、Cozmoは食べられない"
+    "translation" : "Cozmoはキューブを認識できないので、チャージできません。"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt.Button" : {
-    "translation" : "再接続キューブ"
+    "translation" : "キューブの再接続"
   },
   "needs.NeedsRepairModal.Title" : {
     "translation" : "Cozmoをチューンアップする"
@@ -100,7 +100,7 @@
     "translation" : "完了"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "スパークスの在庫がいっぱいです"
+    "translation" : "スパークスの在庫がいっぱいです。"
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "さらにスパークを獲得しました！"
@@ -112,69 +112,69 @@
     "translation" : "{0}をロック解除しました！"
   },
   "needs.FreeplaySparksReward.CozmoSings" : {
-    "translation" : "Cozmoがちょうど生成されました{0}歌を歌うことで火花！"
+    "translation" : "Cozmoが歌をうたって {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.FistBump" : {
-    "translation" : "Cozmoがちょうど生成されました{0} Fist Bumpを行うことでスパーク！"
+    "translation" : "Cozmoがグータッチをして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.GatherCubes" : {
-    "translation" : "Cozmoがちょうど生成されました{0}彼のキューブを集めることによって火花！"
+    "translation" : "Cozmoがキューブを集めて {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.HiccupsEndBad" : {
-    "translation" : "Cozmoがちょうど生成されました{0}彼のしゃっくりを癒すことでスパーク！"
+    "translation" : "Cozmoがしゃっくりを治して {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.HiccupsEndGood" : {
-    "translation" : "Cozmoがちょうど生成されました{0}彼のしゃっくりを癒すことでスパーク！"
+    "translation" : "Cozmoがしゃっくりを治して {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.KnockDownCubes" : {
-    "translation" : "Cozmoがちょうど生成されました{0}キューブをノックダウンしてスパーク！"
+    "translation" : "Cozmoがキューブに突撃して {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.PeekAboo" : {
-    "translation" : "Cozmoがちょうど生成されました{0} Peekabooを弾くことによって火花！"
+    "translation" : "Cozmoがいないいないばあをして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.PickupCube" : {
-    "translation" : "Cozmoがちょうど生成されました{0}キューブを拾うことで火花！"
+    "translation" : "Cozmoがキューブをひろって {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
-    "translation" : "Cozmoがちょうど生成されました{0}ウィリーを飛ばしてスパーク！"
+    "translation" : "Cozmoがウィーリーをして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.Pounce" : {
-    "translation" : "Cozmoがちょうど生成されました{0}鳴くことで火花！"
+    "translation" : "Cozmoがアタックして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.PyramidCompleted" : {
-    "translation" : "Cozmoがちょうど生成されました{0}ピラミッドを造ることによって火花！"
+    "translation" : "Cozmoがピラミッド作りをして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.RollACube" : {
-    "translation" : "Cozmoがちょうど生成されました{0}キューブを回転させてスパーク！"
+    "translation" : "Cozmoがドリブルして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.StackCube" : {
-    "translation" : "Cozmoがちょうど生成されました{0}キューブを積み重ねてスパーク！"
+    "translation" : "Cozmoがキューブを重ねて {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.Workout" : {
-    "translation" : "Cozmoがちょうど生成されました{0}運動をしてスパーク！"
+    "translation" : "Cozmoがエクササイズをして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmoがあなたに与えた{0}彼と一緒にCube Guardをプレイするためのスパーク！"
+    "translation" : "Cozmoがあなたに与えた{0}彼とキューブガードをプレイするためのスパーク！"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmoがあなたに与えた{0}彼と一緒にCube Guardをプレイするためのスパーク！"
+    "translation" : "Cozmoがあなたに与えた{0}彼とキューブガードをプレイするためのスパーク！"
   },
   "needs.FeedingOverfedHiccups.Title" : {
-    "translation" : "コズモはヒカップスを手に入れた"
+    "translation" : "Cozmoはしゃっくりをしました"
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "Cozmoがいっぱいです - 今、彼はしゃっくりをしています！"
+    "translation" : "Cozmoはお腹がいっぱいになり、しゃっくりが出ます！"
   },
   "needs.severeAlert.energy.title" : {
-    "translation" : "エネルギー重度タイトルFPO"
+    "translation" : "Cozmoは本当に餌を必要とします"
   },
   "needs.severeAlert.energy.description" : {
-    "translation" : "エネルギー重大アラートが必要FPO"
+    "translation" : "あなたは継続する前にCozmoを供給する必要があります。"
   },
   "needs.severeAlert.repair.title" : {
-    "translation" : "重度のタイトルFPOを修復する"
+    "translation" : "Cozmoは本当にチューンアップを必要とする"
   },
   "needs.severeAlert.repair.description" : {
-    "translation" : "修復が必要重大なアラート説明FPO"
+    "translation" : "続行する前にCozmoを調整する必要があります。"
   }
 }

@@ -89,8 +89,7 @@ namespace SpeedTap {
                                                                  LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle,
                                                                   LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription,
                                                                  new AlertModalButtonData("text_close_button",
-                                                                                          LocalizationKeys.kButtonClose,
-                                                                                          false),
+                                                                                          LocalizationKeys.kButtonClose),
                                                                  descLocArgs: descLocArgs);
           UIManager.OpenAlert(notEnoughCubesData, new ModalPriorityData(ModalPriorityLayer.Low, 0,
                                                                         LowPriorityModalAction.Queue,
@@ -103,7 +102,7 @@ namespace SpeedTap {
                                                        LocalizationKeys.kSpeedTapTitleMPLocked,
                                                        LocalizationKeys.kSpeedTapTextMPLocked,
                                                        new AlertModalButtonData("text_close_button",
-                                                                                LocalizationKeys.kButtonClose, false));
+                                                                                LocalizationKeys.kButtonClose));
         ModalPriorityData lockedPriority = new ModalPriorityData(ModalPriorityLayer.Low, 0,
                                                                  LowPriorityModalAction.Queue,
                                                                  HighPriorityModalAction.Queue);

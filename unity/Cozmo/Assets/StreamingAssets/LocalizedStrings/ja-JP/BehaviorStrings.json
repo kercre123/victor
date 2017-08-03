@@ -198,17 +198,11 @@
   "behavior.singing.LondonBridge" : {
     "translation" : "Cozmoは「ロンドン橋」を歌っています..."
   },
-  "behavior.singing.CozMambo" : {
-    "translation" : "Cozmoは「Cozmoマンボ」を歌っています..."
-  },
   "behavior.singing.Sakura" : {
     "translation" : "Cozmoは「さくらさくら」を歌っています..."
   },
   "behavior.singing.MussIDenn" : {
     "translation" : "Cozmoは「別れ」を歌っています..."
-  },
-  "behavior.ReactToVoiceCommand" : {
-    "translation" : "Cozmoはあなたの声を聞いています..."
   },
   "behavior.VC_Refuse_Energy" : {
     "translation" : "Cozmoはチャージが必要です..."
@@ -262,6 +256,6 @@
     "translation" : "続ける"
   },
   "button.hide" : {
-    "translation" : "隠す"
+    "translation" : "非表示"
   }
 }

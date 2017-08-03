@@ -194,9 +194,16 @@ void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
   const ActiveObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(objectAccel.objectID);
   if(object == nullptr)
   {
-    PRINT_NAMED_ERROR("CubeAccelComponent.HandleObjectAccel.NullObject",
-                      "No connected object with id %u found",
-                      objectAccel.objectID);
+    // It's possible to receive an objectAccel message before the cube
+    // re-connection message resulting in the object not being in block world
+    // So assert that we don't have any tracking data still valid on the cube
+    // we can't find
+    auto iter = _objectAccelHistory.find(objectAccel.objectID);
+    DEV_ASSERT_MSG((iter == _objectAccelHistory.end()) ||
+                   iter->second.listeners.empty(),
+                   "CubeAccelComponent.HandleObjectAccel.NoConnectedObject",
+                   "Object %d is not in block world, but we still have data on it",
+                   objectAccel.objectID);
     return;
   }
   

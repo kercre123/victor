@@ -76,7 +76,7 @@
     "translation" : "Sicheres Spielen:"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "Erkunde gut beleuchtete Innenräume.\u000a\u000aFahre auf flachen Oberflächen.\u000a\u000aPass auf, dass Cozmo nicht runterfällt.\u000a\u000aBleibe in der Nähe von Cozmo, um maximalen Spielspaß zu haben."
+    "translation" : "• Explore indoors in well lit spaces.\u000a\u000a• Drive on flat surfaces.\u000a\u000a• Be careful of falling off edges.\u000a\u000a• Stay close to Cozmo for the best experience."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Grüßen"
@@ -184,7 +184,7 @@
     "translation" : "Super!"
   },
   "speedTap.roundsText" : {
-    "translation" : "Runde {0:N0}"
+    "translation" : "ROUND {0:N0}"
   },
   "speedTap.tapBlock" : {
     "translation" : "Tippe einen blinkenden Cube an,\u000amit dem du spielen möchtest."
@@ -221,12 +221,6 @@
   },
   "minigame.timeout.description" : {
     "translation" : "Cozmo möchte nicht mehr warten, sondern andere Dinge tun."
-  },
-  "cubePounce.info.playerWinPoint" : {
-    "translation" : "Du warst zu schnell für Cozmo!"
-  },
-  "cubePounce.info.cozmoWinPoint" : {
-    "translation" : "Er war zu schnell für dich!"
   },
   "cubePounce.info.setupText" : {
     "translation" : "Stelle einen Cube vor Cozmo auf und halte ihn still, wenn er grün wird."
@@ -286,13 +280,13 @@
     "translation" : "Zum Freischalten muss das Geschwindigkeitsspiel freigeschaltet werden."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "Der 2-Farben-Modus ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im <b>1-FARBEN-MODUS</b> gewinnen."
+    "translation" : "<b>TWO COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>ONE COLOR</b> mode."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "Der 3-Farben-Modus ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im <b>2-FARBEN-MODUS</b> gewinnen."
+    "translation" : "<b>THREE COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>TWO COLORS</b> mode."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "Der 4-Farben-Modus ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im <b>3-FARBEN-MODUS</b> gewinnen."
+    "translation" : "<b>FOUR COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>THREE COLORS</b> mode."
   },
   "speedTap.text.getReady" : {
     "translation" : "Mach dich bereit!"
@@ -331,7 +325,7 @@
     "translation" : "Mensch gegen Mensch gegen Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "Type a word or phrase and hear Cozmo say it:"
+    "translation" : "Gib ein Wort oder einen Begriff ein und lasse Cozmo dieses bzw. diesen sagen:"
   },
   "sayCozmo.button.say" : {
     "translation" : "Sagen"
@@ -364,15 +358,24 @@
     "translation" : "Du\u000agewinnst!"
   },
   "label.MATCH" : {
-    "translation" : "MATCH!"
+    "translation" : "ÜBEREINSTIMMUNG!"
   },
-  "label.NO.MATCH" : {
-    "translation" : "NO \\u000aMATCH"
+  "label.dontSlap" : {
+    "translation" : "DON'T\u000aSLAP!"
   },
-  "label.DONT.SLAP" : {
-    "translation" : "DON'T \\u000aSLAP!"
+  "label.noMatch" : {
+    "translation" : "NO\u000aMATCH"
   },
   "label.enterText" : {
-    "translation" : "Enter text..."
+    "translation" : "Text eingeben..."
+  },
+  "minigame.text.cozmoWinsFlat" : {
+    "translation" : "Cozmo Wins!"
+  },
+  "minigame.text.playerWinsFlat" : {
+    "translation" : "{0} Wins!"
+  },
+  "minigame.text.youWinFlat" : {
+    "translation" : "You Win!"
   }
 }

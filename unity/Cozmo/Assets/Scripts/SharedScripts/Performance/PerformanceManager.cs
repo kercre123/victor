@@ -22,6 +22,11 @@ namespace Cozmo {
     private float _SecondsSinceQualityCheck = 0f;
     private bool _QualityForceSet = false;
 
+    // don't use real quality settings since those cause artifacts and are mostly settings we don't use.
+    // but the premade names are useful.
+    private int _MaxQualityLevel;
+    private int _QualityLevel;
+
     public static PerformanceManager Instance {
       get {
         if (_Instance == null) {
@@ -42,6 +47,8 @@ namespace Cozmo {
 
     private void Awake() {
       Instance = this;
+      _MaxQualityLevel = QualitySettings.names.Length;
+      _QualityLevel = _MaxQualityLevel - 1;
       _FpsSamples = new LinkedList<int>();
     }
 
@@ -58,14 +65,14 @@ namespace Cozmo {
         // Add to samples
         _FpsSamples.AddLast(_NumFramesInSecond);
         if (_FpsSamples.Count >= _AvgFPSSampleSize) {
-          // This only runs once per second so not too thrashy
-          _FpsSamples.RemoveFirst();
           // Have enough samples to get an average and haven't checked in several seconds
           // downscale again.
           if (_SecondsSinceQualityCheck > _AvgFPSSampleSize && !_QualityForceSet) {
             CheckQualitySettingsUpdate();
             _SecondsSinceQualityCheck = 0f;
           }
+          // This only runs once per second so not too thrashy
+          _FpsSamples.RemoveFirst();
         }
 
         // Reset time tracker
@@ -79,32 +86,34 @@ namespace Cozmo {
       _IsBackgrounded = bPause;
     }
 
+    // Not using real unity quality settings because they cause weird bugs on iOS and mostly use
+    // settings that don't effect us.
     public int GetQualitySetting() {
-      return QualitySettings.GetQualityLevel();
+      return _QualityLevel;
     }
 
     // Once debug quality has been set, let it stay there.
     public void ForceSetQuality(int quality) {
-      QualitySettings.SetQualityLevel(quality, true);
+      _QualityLevel = quality;
       _QualityForceSet = true;
     }
 
     private void CheckQualitySettingsUpdate() {
-      int currQualityLevel = QualitySettings.GetQualityLevel();
+      int currQualityLevel = GetQualitySetting();
       int wantsQualityLevel = currQualityLevel;
       int targetFrameRate = Application.targetFrameRate;
       double actualAvgFPS = CalculateAvgFPS();
       // if we're only running at less than 40% of our target, downscale to lowest
       for (int i = 0; i < _LowThresholdPercents.Length; ++i) {
         double thresholdMax = _LowThresholdPercents[i] * targetFrameRate;
-        if (thresholdMax <= actualAvgFPS) {
+        if (actualAvgFPS <= thresholdMax) {
           wantsQualityLevel = i;
           break;
         }
       }
       // Don't upscale usually, once we go down stay down
       if (wantsQualityLevel < currQualityLevel) {
-        QualitySettings.SetQualityLevel(wantsQualityLevel, false);
+        _QualityLevel = wantsQualityLevel;
         DAS.Event("PerformanceManager.QualityLevelChange", wantsQualityLevel.ToString());
       }
     }

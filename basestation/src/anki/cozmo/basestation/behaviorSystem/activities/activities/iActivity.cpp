@@ -27,8 +27,10 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -286,6 +288,13 @@ void IActivity::OnDeselected(Robot& robot)
 
   // clear the interlude behavior, if it was set
   _lastChosenInterludeBehavior = nullptr;
+  
+  // We're changing what cozmo's doing at a high level, so we don't want to
+  // communicate the sparks reward to the user, just pretend we have
+  if(robot.GetContext()->GetNeedsManager()->IsPendingSparksRewardMsg()){
+    robot.GetContext()->GetNeedsManager()->SparksRewardCommunicatedToUser();
+  }
+  
   
   // log event to das
   int nSecs = Util::numeric_cast<int>(_lastTimeActivityStoppedSecs - _lastTimeActivityStartedSecs);

@@ -97,7 +97,10 @@ private:
   
   // Keep track of the last GuardDog behavior stage so we can set the
   //  proper audio round when transitioning between stages.
-  GuardDogStage _prevGuardDogStage = GuardDogStage::Count;
+  GuardDogStage _prevGuardDogStage;
+  
+  // Keep track of the last feeding stage so we can identify music changes
+  FeedingStage _prevFeedingStage;
   
   // Keep track of the last needs levels so we can broadcast when they change
   NeedsLevels _needsLevel;

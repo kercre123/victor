@@ -145,7 +145,7 @@ public:
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
   // derived class should implement.
-  Status Update() ;
+  Status Update();
     
   // This behavior was the currently running behavior, but is now stopping (to make way for a new current
   // behavior). Any behaviors from StartActing will be canceled.
@@ -308,12 +308,15 @@ protected:
   // called (this is necessary to prevent non-running behaviors from doing things with the robot). If the
   // behavior is stopped, within the Stop function, any actions which are still running will be canceled
   // (and you will not get any callback for it).
-
+  //
   // Each StartActing function returns true if the action was started, false otherwise. Reasons actions
   // might not be started include:
   // 1. Another action (from StartActing) is currently running or queued
   // 2. You are not running ( IsRunning() returns false )
-
+  //
+  // StartActing takes ownership of the action.  If the action is not
+  // successfully queued, the action is immediately destroyed.
+  //
   // Start an action now, and optionally provide a callback which will be called with the
   // RobotCompletedAction that corresponds to the action
   using RobotCompletedActionCallback = BehaviorRobotCompletedActionCallback;
@@ -540,7 +543,7 @@ public:
   // Allow us to load scored JSON in seperately from the rest of parameters
   bool ReadFromScoredJson(const Json::Value& config, const bool fromScoredChooser = true);
   
-  // Stops the behavaior immediately but gives it a couple of tick window during which score
+  // Stops the behavior immediately but gives it a couple of tick window during which score
   // evaluation will not include its running penalty.  This allows behaviors to
   // stop themselves in hopes of being re-selected with new fast-forwarding and
   // block settings without knocking its score down so something else is selected

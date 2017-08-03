@@ -85,7 +85,7 @@ public:
   }
 
   bool IsPendingSparksRewardMsg() const { return _pendingSparksRewardMsg; }
-  void OnSparksRewardAnimComplete();
+  void SparksRewardCommunicatedToUser();
 
   static const char* kLogChannelName;
 

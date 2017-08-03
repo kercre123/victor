@@ -18,7 +18,6 @@ android_library(
   deps = [':unity_classes',
           ':acattsandroid-sdk-library',
           '//lib/util/android:util',
-          '//lib/util/android:audioUtil',
           '//lib/crash-reporting-android/HockeyAppAndroid:hockey-app',
           '//lib/das-client/android/DASJavaLib:DASJavaLib'],
   visibility = ['PUBLIC'],

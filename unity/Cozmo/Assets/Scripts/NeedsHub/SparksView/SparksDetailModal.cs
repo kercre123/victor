@@ -155,6 +155,7 @@ namespace Cozmo.Needs.Sparks.UI {
         SparkCozmo(challengePacket);
       }, "spark_specific_game_button", this.DASEventDialogName);
       InitializeButtonState();
+      _NotSparkableLabel.gameObject.SetActive(false);
 
       // Handle edge cases      
       ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy | ChallengeEdgeCases.CheckForCubes
@@ -356,10 +357,10 @@ namespace Cozmo.Needs.Sparks.UI {
     private void CreateConfirmQuitTrickAlert() {
       // Hook up callbacks
       var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked,
-                                                           false, HandleStaySparked,
+                                                           HandleStaySparked,
                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
       var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave,
-                                                          false, HandleLeaveSpark);
+                                                          HandleLeaveSpark);
 
       var confirmQuitSparkData = new AlertModalData("confirm_quit_spark_alert",
             LocalizationKeys.kSparksSparkConfirmQuit,
@@ -429,6 +430,7 @@ namespace Cozmo.Needs.Sparks.UI {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
         _SparkButton.Interactable = false;
+        _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
         _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
         _ButtonPromptDescription.text = Localization.Get(_UnlockInfo.SparkedStateDescription);
         _SparkSpinnerContainer.gameObject.SetActive(true);

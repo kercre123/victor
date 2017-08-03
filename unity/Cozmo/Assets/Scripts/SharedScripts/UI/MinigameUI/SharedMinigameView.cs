@@ -4,7 +4,6 @@ using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Anki.Cozmo.VoiceCommand;
 
 namespace Cozmo {
   namespace MinigameWidgets {
@@ -273,7 +272,6 @@ namespace Cozmo {
         HideNarrowInfoTextSlide();
         _IsMinigame = data.IsMinigame;
         _ChallengeData = data;
-        VoiceCommandManager.Instance.RespondingToCommand += HandleRespondingToCommand;
       }
 
       #region Base View
@@ -321,10 +319,6 @@ namespace Cozmo {
           kvp.Value.Kill();
         }
         _AddWidgetSequences.Clear();
-
-
-        UpdateVoiceCommandContext(false);
-        VoiceCommandManager.Instance.RespondingToCommand -= HandleRespondingToCommand;
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -366,16 +360,6 @@ namespace Cozmo {
         }
         sequenceToUse.Join(targetImage.DOFade(targetAlpha, duration).SetEase(easing));
         return sequenceToUse;
-      }
-
-      private void HandleRespondingToCommand(RespondingToCommand commandHeard) {
-        if (commandHeard.voiceCommandType == VoiceCommandType.Continue) {
-          if (_ContinueButtonInstance != null) {
-            _ContinueButtonInstance.HandleContinueButtonClicked();
-          }
-        }
-
-
       }
 
       #endregion
@@ -840,13 +824,11 @@ namespace Cozmo {
 
         HideWidget(_ContinueButtonInstance);
         _ContinueButtonInstance = null;
-        UpdateVoiceCommandContext(false);
       }
 
       public void EnableContinueButton(bool enable) {
         if (_ContinueButtonInstance != null) {
           _ContinueButtonInstance.SetButtonInteractivity(enable);
-          UpdateVoiceCommandContext(enable);
         }
       }
 
@@ -854,27 +836,6 @@ namespace Cozmo {
         if (_ContinueButtonInstance != null) {
           _ContinueButtonInstance.SetShelfText(text, color);
         }
-      }
-
-      private bool _inContinueContext = false;
-
-      private void UpdateVoiceCommandContext(bool shouldAllowContinueVC) {
-        if (shouldAllowContinueVC == _inContinueContext) {
-          return;
-        }
-
-        VoiceCommandListenContext newContext;
-        if (shouldAllowContinueVC) {
-          newContext = VoiceCommandListenContext.ContinuePrompt;
-        }
-        else {
-          newContext = VoiceCommandListenContext.TriggerPhrase;
-        }
-        // Let engine know about Continue button interactivity for Voice Commands
-        VoiceCommandManager.SendVoiceCommandEvent<ChangeContext>(
-          Singleton<ChangeContext>.Instance.Initialize(newContext));
-
-        _inContinueContext = shouldAllowContinueVC;
       }
 
       #endregion
@@ -906,10 +867,10 @@ namespace Cozmo {
 
       #region Game State Slides
 
-      public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired, TweenCallback endInTweenCallback = null) {
+      public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired, bool showTransparentCube = true, TweenCallback endInTweenCallback = null) {
         GameObject slideObject = ShowWideGameStateSlide(_ShowCozmoCubesSlidePrefab, "setup_cubes_slide", endInTweenCallback);
         ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-        cubeSlide.Initialize(numCubesRequired, CubePalette.Instance.InViewColor, CubePalette.Instance.OutOfViewColor);
+        cubeSlide.Initialize(numCubesRequired, CubePalette.Instance.InViewColor, CubePalette.Instance.OutOfViewColor, showTransparentCube);
         return cubeSlide;
       }
 

@@ -131,7 +131,7 @@ namespace Cozmo.ConnectionFlow {
       if (_FirstTimeConnectViewInstance != null) {
         _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
         _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
-        _FirstTimeConnectViewInstance.CloseDialog();
+        _FirstTimeConnectViewInstance.CloseDialogImmediately();
         _FirstTimeConnectViewInstance = null;
       }
       IntroFlowComplete();

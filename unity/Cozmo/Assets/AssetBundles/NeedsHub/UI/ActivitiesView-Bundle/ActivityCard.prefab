@@ -199,7 +199,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 72
+  m_fontSizeMin: 50
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_textAlignment: 514
@@ -270,7 +270,7 @@ MonoBehaviour:
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114198477561844114
 MonoBehaviour:
   m_ObjectHideFlags: 1

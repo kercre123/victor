@@ -34,18 +34,18 @@
     "translation" : "Assure-toi que le couvercle s'adapte bien au cube. Il doit maintenant s'allumer !"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
-    "translation" : "Cozmo too hungry to play?"
+    "translation" : "Cozmo a trop faim pour jouer ?"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
-    "translation" : "Give him a quick snack while you reconnect his Cubes."
+    "translation" : "Donne lui vite à manger pendant que tu reconnectes ses cubes."
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
-    "translation" : "QUICK SNACK"
+    "translation" : "COLLATION RAPIDE"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmo Can Now Keep Playing"
+    "translation" : "Cozmo peut désormais continuer à jouer"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
-    "translation" : "To keep him fully fed, follow the instructions to help him recognize his cubes."
+    "translation" : "Pour qu'il soit bien nourri, suis les instructions pour l'aider à reconnaître ses cubes."
   }
 }

@@ -13,7 +13,7 @@
     "translation" : "Cozmo a besoin de {0} {1} de plus pour commencer {2}."
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "Cozmo Is Not Ready"
+    "translation" : "Cozmo n'est pas prêt"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "Aide Cozmo à se redresser afin qu'il soit prêt à jouer"
@@ -73,7 +73,7 @@
     "translation" : "La parole à Cozmo"
   },
   "cozmoSays.description" : {
-    "translation" : "Contre des étincelles, Cozmo tentera de dire un mot ou une phrase !"
+    "translation" : "Ask Cozmo to say a word or phrase!"
   },
   "codeLab.title" : {
     "translation" : "Code Lab"
@@ -88,9 +88,9 @@
     "translation" : "INCORRECT"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for games and do tricks, and sometimes even earn sparks."
+    "translation" : "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for Games and do Tricks, and sometimes even earn Sparks."
   },
   "activityView.freeplayTitle" : {
-    "translation" : "COZMO IS CURRENTLY IN FREEPLAY"
+    "translation" : "COZMO EST ACTUELLEMENT EN MODE DE JEU LIBRE"
   }
 }

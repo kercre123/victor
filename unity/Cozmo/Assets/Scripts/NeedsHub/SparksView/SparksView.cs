@@ -1,5 +1,4 @@
 ﻿using Anki.Cozmo;
-using Anki.Cozmo.VoiceCommand;
 using Cozmo.Challenge;
 using Cozmo.RequestGame;
 using Cozmo.UI;
@@ -27,16 +26,10 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoText _AskForTrickCostText;
 
     [SerializeField]
-    private CozmoImage _AskForTrickMicIcon;
-
-    [SerializeField]
     private CozmoButton _AskForGameButton;
 
     [SerializeField]
     private CozmoText _AskForGameCostText;
-
-    [SerializeField]
-    private CozmoImage _AskForGameMicIcon;
 
     [SerializeField]
     private CozmoButton _ListAbilitiesButton;
@@ -72,6 +65,11 @@ namespace Cozmo.Needs.Sparks.UI {
     private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
     private NeedSevereAlertController _NeedSevereAlertController;
 
+    protected override void RaiseDialogClosed() {
+      base.RaiseDialogClosed();
+      ShowFreeplayCard();
+    }
+
     public void InitializeSparksView(List<ChallengeManager.ChallengeStatePacket> minigameData) {
       _BackButton.Initialize(HandleBackButtonPressed, "back_button", DASEventDialogName);
       _AskForTrickButton.Initialize(HandleAskForTrickButtonPressed, "ask_for_trick", DASEventDialogName);
@@ -92,11 +90,6 @@ namespace Cozmo.Needs.Sparks.UI {
       playerInventory.ItemRemoved += HandleItemValueChanged;
       playerInventory.ItemCountSet += HandleItemValueChanged;
       playerInventory.ItemCountUpdated += HandleItemValueChanged;
-
-      VoiceCommandManager.Instance.StateDataCallback += UpdateStateData;
-      VoiceCommandManager.RequestCurrentStateData();
-      _AskForGameMicIcon.gameObject.SetActive(false);
-      _AskForTrickMicIcon.gameObject.SetActive(false);
 
       RequestGameManager.Instance.OnRequestGameAlertCreated += ReenableTouches;
 
@@ -154,8 +147,6 @@ namespace Cozmo.Needs.Sparks.UI {
       playerInventory.ItemCountSet -= HandleItemValueChanged;
       playerInventory.ItemCountUpdated -= HandleItemValueChanged;
 
-      VoiceCommandManager.Instance.StateDataCallback -= UpdateStateData;
-
       RequestGameManager.Instance.OnRequestGameAlertCreated -= ReenableTouches;
 
       OnboardingManager.Instance.OnOnboardingPhaseCompleted -= HandleOnboardingPhaseComplete;
@@ -182,8 +173,6 @@ namespace Cozmo.Needs.Sparks.UI {
       if (OnBackButtonPressed != null) {
         OnBackButtonPressed();
       }
-      // slide scrollview all the way left so it goes offscreen
-      ShowFreeplayCard();
     }
 
     private void HandleOnboardingPhaseComplete(OnboardingManager.OnboardingPhases phase) {
@@ -203,6 +192,10 @@ namespace Cozmo.Needs.Sparks.UI {
         OnboardingManager.Instance.GoToNextStage();
       }
       else if (RobotEngineManager.Instance.CurrentRobot != null) {
+        // Prevent the player from doing other things
+        _IsDisablingTouches = true;
+        UIManager.DisableTouchEvents(_DisableTouchKey);
+
         RobotEngineManager.Instance.CurrentRobot.DoRandomSpark();
       }
     }
@@ -272,11 +265,6 @@ namespace Cozmo.Needs.Sparks.UI {
         : UIColorPalette.GeneralSparkTintColor.CannotAffordColor;
     }
 
-    private void UpdateStateData(StateData stateData) {
-      _AskForTrickMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
-      _AskForGameMicIcon.gameObject.SetActive(VoiceCommandManager.IsVoiceCommandsEnabled(stateData));
-    }
-
     internal void HideFreeplayCard(bool instant = false) {
       if (instant) {
         _ScrollRect.horizontalNormalizedPosition = _FreeplayPanelNormalizedWidth;
@@ -298,6 +286,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void HandleSparkTrickStarted() {
       _NeedSevereAlertController.AllowAlert = false;
+      ReenableTouches();
     }
 
     private void HandleSparkTrickEnded() {

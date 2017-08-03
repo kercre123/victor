@@ -40,9 +40,6 @@ namespace Cozmo {
 
     private AlertModal _SleepCozmoConfirmDialog;
 
-    [SerializeField]
-    private BaseModal _VoiceCommandGoToSleepDialogPrefab;
-
     public bool IsConfirmSleepDialogOpen { get { return (null != _SleepCozmoConfirmDialog); } }
     public bool IsGoToSleepDialogOpen { get { return (null != _GoToSleepDialog); } }
     public bool IsLowBatteryDialogOpen { get { return (null != _LowBatteryAlertInstance); } }
@@ -50,8 +47,6 @@ namespace Cozmo {
       get { return _IdleTimeOutEnabled; }
       set { _IdleTimeOutEnabled = value; }
     }
-
-    private bool _SleepTriggeredFromVoiceCommand = false;
 
     [SerializeField]
     private AlertModal _LowBatteryAlertPrefab;
@@ -142,8 +137,8 @@ namespace Cozmo {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
-      // Stop sleeping if the sleep dialog is open or sleep was triggered from a voice command and a reactionary behavior other than PlacedOnCharger runs 
-      if ((IsConfirmSleepDialogOpen || _SleepTriggeredFromVoiceCommand) &&
+      // Stop sleeping if the sleep dialog is open and a reactionary behavior other than PlacedOnCharger runs 
+      if ((IsConfirmSleepDialogOpen) &&
           message.newTrigger != Anki.Cozmo.ReactionTrigger.PlacedOnCharger &&
           message.newTrigger != Anki.Cozmo.ReactionTrigger.NoneTrigger) {
         HandleCancelSleepToWakeUp();
@@ -229,15 +224,7 @@ namespace Cozmo {
     public void StartPlayerInducedSleep(bool fromEngineTriggeredSleep) {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
-        // If sleep was triggered from a voice command then disable all reactions except for the voice command reaction so that sleep can be cancelled
-        // by saying "Hey Cozmo"
-        if (_SleepTriggeredFromVoiceCommand) {
-          robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId, ReactionaryBehaviorEnableGroups.kVoiceCommandSleepTriggers);
-        }
-        // Otherwise disable all reactions
-        else {
-          robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
-        }
+        robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
       }
       StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
       OpenGoToSleepDialogAndFreezeUI();
@@ -267,7 +254,7 @@ namespace Cozmo {
       }
     }
 
-    // Handles message sent from engine when the player puts cozmo on the charger or says a voice command to sleep.
+    // Handles message sent from engine when the player puts cozmo on the charger
     private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
@@ -275,15 +262,8 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       _EngineTriggeredSleep = true;
-      _SleepTriggeredFromVoiceCommand = msg.triggeredFromVoiceCommand;
 
-      // If sleep was triggered from a voice command skip the confirm dialog and go straight to sleeping
-      if (msg.triggeredFromVoiceCommand) {
-        StartPlayerInducedSleep(true);
-      }
-      else {
-        OpenConfirmSleepCozmoDialog(handleSleepCancel: true);
-      }
+      OpenConfirmSleepCozmoDialog(handleSleepCancel: true);
     }
 
     private void HandleDisconnectionMessage(Anki.Cozmo.ExternalInterface.RobotDisconnected msg) {
@@ -303,7 +283,7 @@ namespace Cozmo {
       if (!_StartedIdleTimeout) {
         IRobot robot = RobotEngineManager.Instance.CurrentRobot;
         if (null != robot) {
-          robot.ResetRobotState(null, !_SleepTriggeredFromVoiceCommand);
+          robot.ResetRobotState(null);
           robot.EnableCubeSleep(true);
         }
 
@@ -350,11 +330,10 @@ namespace Cozmo {
                                                       LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription,
                                                       new AlertModalButtonData("confirm_sleep_button",
                                                                                LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                                               false,
                                                                                HandleConfirmEngineTriggeredSleepCozmoButtonTapped,
                                                                                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Disconnect)),
                                                       new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel,
-                                                                               false, HandleEngineTriggeredSleepCancel));
+                                                                               HandleEngineTriggeredSleepCancel));
 
         }
         else {
@@ -363,11 +342,10 @@ namespace Cozmo {
                                                       LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription,
                                                       new AlertModalButtonData("confirm_sleep_button",
                                                                                LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                                               false,
                                                                                HandleConfirmSleepCozmoButtonTapped,
                                                                                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Disconnect)),
                                                       new AlertModalButtonData("cancel_sleep_button",
-                                                                               LocalizationKeys.kButtonCancel, false));
+                                                                               LocalizationKeys.kButtonCancel));
         }
 
         var confirmSleepCozmoPriority = new ModalPriorityData(ModalPriorityLayer.High, 1,
@@ -399,24 +377,14 @@ namespace Cozmo {
                                                       LowPriorityModalAction.Queue,
                                                       HighPriorityModalAction.ForceCloseOthersAndOpen);
 
-        // Voice Command triggered sleep has a special modal with a cancel button so we need to handle things differently than the
-        // normal alert modal for going to sleep
-        if (_SleepTriggeredFromVoiceCommand) {
-          UIManager.OpenModal(_VoiceCommandGoToSleepDialogPrefab,
-                              goToSleepPriority,
-                              HandleVCGoToSleepAlertCreated,
-                              overrideCloseOnTouchOutside: false);
-        }
-        else {
-          var goToSleepAlertData = new AlertModalData("cozmo_going_to_sleep_alert",
-                                                      LocalizationKeys.kConnectivityCozmoSleepTitle,
-                                                      LocalizationKeys.kConnectivityCozmoSleepDesc);
+        var goToSleepAlertData = new AlertModalData("cozmo_going_to_sleep_alert",
+                                                    LocalizationKeys.kConnectivityCozmoSleepTitle,
+                                                    LocalizationKeys.kConnectivityCozmoSleepDesc);
 
-          UIManager.OpenAlert(goToSleepAlertData,
-                              goToSleepPriority,
-                              HandleGoToSleepAlertCreated,
-                              overrideCloseOnTouchOutside: false);
-        }
+        UIManager.OpenAlert(goToSleepAlertData,
+                            goToSleepPriority,
+                            HandleGoToSleepAlertCreated,
+                            overrideCloseOnTouchOutside: false);
       }
     }
 
@@ -476,15 +444,6 @@ namespace Cozmo {
       }
     }
 
-    private void HandleVCGoToSleepAlertCreated(BaseModal modal) {
-      // If the modal is closed make sure to wake Cozmo up
-      modal.DialogClosed += (() => {
-        HandleCancelSleepToWakeUp();
-      });
-
-      HandleGoToSleepAlertCreated(modal);
-    }
-
     private void HandleGoToSleepAlertCreated(BaseModal modal) {
       _GoToSleepDialog = modal;
       // Set Music State
@@ -494,7 +453,6 @@ namespace Cozmo {
     private void HandleCancelSleepToWakeUp() {
       StopIdleTimeout();
       _EngineTriggeredSleep = false;
-      _SleepTriggeredFromVoiceCommand = false;
       CloseGoToSleepDialog();
       CloseConfirmSleepDialog();
     }

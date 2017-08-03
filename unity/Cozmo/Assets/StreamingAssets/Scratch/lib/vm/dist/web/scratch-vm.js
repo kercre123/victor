@@ -63,38 +63,11 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 55);
+/******/ 	return __webpack_require__(__webpack_require__.s = 54);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 1 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -123,6 +96,33 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -133,7 +133,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(23);
+var Color = __webpack_require__(22);
 
 /**
  * @fileoverview
@@ -376,8 +376,8 @@ module.exports = Cast;
 
 
 
-var base64 = __webpack_require__(82)
-var ieee754 = __webpack_require__(110)
+var base64 = __webpack_require__(81)
+var ieee754 = __webpack_require__(109)
 var isArray = __webpack_require__(44)
 
 exports.Buffer = Buffer
@@ -2156,7 +2156,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
 /* 4 */
@@ -2470,7 +2470,7 @@ function isUndefined(arg) {
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var microee = __webpack_require__(116);
+var microee = __webpack_require__(115);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -2554,7 +2554,7 @@ exports.Readable = exports;
 exports.Writable = __webpack_require__(30);
 exports.Duplex = __webpack_require__(9);
 exports.Transform = __webpack_require__(48);
-exports.PassThrough = __webpack_require__(138);
+exports.PassThrough = __webpack_require__(137);
 
 
 /***/ }),
@@ -2857,27 +2857,6 @@ process.umask = function() { return 0; };
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -2887,10 +2866,6 @@ process.umask = function() { return 0; };
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(16);
-/*</replacement>*/
-
-/*<replacement>*/
 var objectKeys = Object.keys || function (obj) {
   var keys = [];
   for (var key in obj) {
@@ -2902,8 +2877,12 @@ var objectKeys = Object.keys || function (obj) {
 module.exports = Duplex;
 
 /*<replacement>*/
+var processNextTick = __webpack_require__(28);
+/*</replacement>*/
+
+/*<replacement>*/
 var util = __webpack_require__(14);
-util.inherits = __webpack_require__(1);
+util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
 var Readable = __webpack_require__(47);
@@ -2948,34 +2927,6 @@ function onEndNT(self) {
   self.end();
 }
 
-Object.defineProperty(Duplex.prototype, 'destroyed', {
-  get: function () {
-    if (this._readableState === undefined || this._writableState === undefined) {
-      return false;
-    }
-    return this._readableState.destroyed && this._writableState.destroyed;
-  },
-  set: function (value) {
-    // we ignore the value if the stream
-    // has not been initialized yet
-    if (this._readableState === undefined || this._writableState === undefined) {
-      return;
-    }
-
-    // backward compatibility, the user is explicitly
-    // managing destroyed
-    this._readableState.destroyed = value;
-    this._writableState.destroyed = value;
-  }
-});
-
-Duplex.prototype._destroy = function (err, cb) {
-  this.push(null);
-  this.end();
-
-  processNextTick(cb, err);
-};
-
 function forEach(xs, f) {
   for (var i = 0, l = xs.length; i < l; i++) {
     f(xs[i], i);
@@ -2989,7 +2940,7 @@ function forEach(xs, f) {
 "use strict";
 
 
-var minilog = __webpack_require__(123);
+var minilog = __webpack_require__(122);
 minilog.enable();
 
 module.exports = minilog('vm');
@@ -2999,7 +2950,7 @@ module.exports = minilog('vm');
 /***/ (function(module, exports, __webpack_require__) {
 
 var Parser = __webpack_require__(41),
-    DomHandler = __webpack_require__(88);
+    DomHandler = __webpack_require__(87);
 
 function defineProp(name, value){
 	delete module.exports[name];
@@ -3013,22 +2964,22 @@ module.exports = {
 	ElementType: __webpack_require__(15),
 	DomHandler: DomHandler,
 	get FeedHandler(){
-		return defineProp("FeedHandler", __webpack_require__(106));
+		return defineProp("FeedHandler", __webpack_require__(105));
 	},
 	get Stream(){
-		return defineProp("Stream", __webpack_require__(108));
+		return defineProp("Stream", __webpack_require__(107));
 	},
 	get WritableStream(){
 		return defineProp("WritableStream", __webpack_require__(43));
 	},
 	get ProxyHandler(){
-		return defineProp("ProxyHandler", __webpack_require__(107));
+		return defineProp("ProxyHandler", __webpack_require__(106));
 	},
 	get DomUtils(){
-		return defineProp("DomUtils", __webpack_require__(90));
+		return defineProp("DomUtils", __webpack_require__(89));
 	},
 	get CollectingHandler(){
-		return defineProp("CollectingHandler", __webpack_require__(105));
+		return defineProp("CollectingHandler", __webpack_require__(104));
 	},
 	// For legacy support
 	DefaultHandler: DomHandler,
@@ -3081,10 +3032,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var adapter = __webpack_require__(67);
+var adapter = __webpack_require__(66);
 var mutationAdapter = __webpack_require__(34);
-var xmlEscape = __webpack_require__(80);
-var MonitorRecord = __webpack_require__(69);
+var xmlEscape = __webpack_require__(79);
+var MonitorRecord = __webpack_require__(68);
 
 /**
  * @fileoverview
@@ -3963,57 +3914,6 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-
-if (!process.version ||
-    process.version.indexOf('v0.') === 0 ||
-    process.version.indexOf('v1.') === 0 && process.version.indexOf('v1.8.') !== 0) {
-  module.exports = nextTick;
-} else {
-  module.exports = process.nextTick;
-}
-
-function nextTick(fn, arg1, arg2, arg3) {
-  if (typeof fn !== 'function') {
-    throw new TypeError('"callback" argument must be a function');
-  }
-  var len = arguments.length;
-  var args, i;
-  switch (len) {
-  case 0:
-  case 1:
-    return process.nextTick(fn);
-  case 2:
-    return process.nextTick(function afterTickOne() {
-      fn.call(null, arg1);
-    });
-  case 3:
-    return process.nextTick(function afterTickTwo() {
-      fn.call(null, arg1, arg2);
-    });
-  case 4:
-    return process.nextTick(function afterTickThree() {
-      fn.call(null, arg1, arg2, arg3);
-    });
-  default:
-    args = new Array(len - 1);
-    i = 0;
-    while (i < args.length) {
-      args[i++] = arguments[i];
-    }
-    return process.nextTick(function afterTick() {
-      fn.apply(null, args);
-    });
-  }
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -4038,7 +3938,7 @@ var List = function List(name, contents) {
 module.exports = List;
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4397,7 +4297,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4440,13 +4340,13 @@ var Variable = function () {
 module.exports = Variable;
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var StringUtil = __webpack_require__(24);
+var StringUtil = __webpack_require__(23);
 var log = __webpack_require__(10);
 
 /**
@@ -4526,13 +4426,13 @@ var loadCostume = function loadCostume(md5ext, costume, runtime) {
 module.exports = loadCostume;
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var StringUtil = __webpack_require__(24);
+var StringUtil = __webpack_require__(23);
 var log = __webpack_require__(10);
 
 /**
@@ -4567,7 +4467,7 @@ var loadSound = function loadSound(sound, runtime) {
 module.exports = loadSound;
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4583,7 +4483,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var log = __webpack_require__(10);
 var MathUtil = __webpack_require__(7);
-var Target = __webpack_require__(72);
+var Target = __webpack_require__(71);
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -5534,7 +5434,7 @@ var RenderedTarget = function (_Target) {
 module.exports = RenderedTarget;
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5792,7 +5692,7 @@ var Color = function () {
 module.exports = Color;
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5860,7 +5760,7 @@ var StringUtil = function () {
 module.exports = StringUtil;
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -7992,7 +7892,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -8004,7 +7904,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -12988,7 +12888,7 @@ module.exports = {
 }));
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -13215,14 +13115,65 @@ function base64DetectIncompleteChar(buffer) {
 
 
 /***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+if (!process.version ||
+    process.version.indexOf('v0.') === 0 ||
+    process.version.indexOf('v1.') === 0 && process.version.indexOf('v1.8.') !== 0) {
+  module.exports = nextTick;
+} else {
+  module.exports = process.nextTick;
+}
+
+function nextTick(fn, arg1, arg2, arg3) {
+  if (typeof fn !== 'function') {
+    throw new TypeError('"callback" argument must be a function');
+  }
+  var len = arguments.length;
+  var args, i;
+  switch (len) {
+  case 0:
+  case 1:
+    return process.nextTick(fn);
+  case 2:
+    return process.nextTick(function afterTickOne() {
+      fn.call(null, arg1);
+    });
+  case 3:
+    return process.nextTick(function afterTickTwo() {
+      fn.call(null, arg1, arg2);
+    });
+  case 4:
+    return process.nextTick(function afterTickThree() {
+      fn.call(null, arg1, arg2, arg3);
+    });
+  default:
+    args = new Array(len - 1);
+    i = 0;
+    while (i < args.length) {
+      args[i++] = arguments[i];
+    }
+    return process.nextTick(function afterTick() {
+      fn.apply(null, args);
+    });
+  }
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
+
+/***/ }),
 /* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-exports.decode = exports.parse = __webpack_require__(134);
-exports.encode = exports.stringify = __webpack_require__(135);
+exports.decode = exports.parse = __webpack_require__(133);
+exports.encode = exports.stringify = __webpack_require__(134);
 
 
 /***/ }),
@@ -13230,60 +13181,17 @@ exports.encode = exports.stringify = __webpack_require__(135);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(process, setImmediate, global) {// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// A bit simpler than readable streams.
+/* WEBPACK VAR INJECTION */(function(process, setImmediate) {// A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
 // the drain event emission and buffering.
 
 
 
-/*<replacement>*/
-
-var processNextTick = __webpack_require__(16);
-/*</replacement>*/
-
 module.exports = Writable;
 
-/* <replacement> */
-function WriteReq(chunk, encoding, cb) {
-  this.chunk = chunk;
-  this.encoding = encoding;
-  this.callback = cb;
-  this.next = null;
-}
-
-// It seems a linked list but it is not
-// there will be only 2 of these for each stream
-function CorkedRequest(state) {
-  var _this = this;
-
-  this.next = null;
-  this.entry = null;
-  this.finish = function () {
-    onCorkedFinish(_this, state);
-  };
-}
-/* </replacement> */
+/*<replacement>*/
+var processNextTick = __webpack_require__(28);
+/*</replacement>*/
 
 /*<replacement>*/
 var asyncWrite = !process.browser && ['v0.10', 'v0.9.'].indexOf(process.version.slice(0, 5)) > -1 ? setImmediate : processNextTick;
@@ -13297,35 +13205,33 @@ Writable.WritableState = WritableState;
 
 /*<replacement>*/
 var util = __webpack_require__(14);
-util.inherits = __webpack_require__(1);
+util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
 /*<replacement>*/
 var internalUtil = {
-  deprecate: __webpack_require__(152)
+  deprecate: __webpack_require__(151)
 };
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(50);
+var Stream = __webpack_require__(49);
 /*</replacement>*/
 
 /*<replacement>*/
 var Buffer = __webpack_require__(31).Buffer;
-var OurUint8Array = global.Uint8Array || function () {};
-function _uint8ArrayToBuffer(chunk) {
-  return Buffer.from(chunk);
-}
-function _isUint8Array(obj) {
-  return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
-}
 /*</replacement>*/
-
-var destroyImpl = __webpack_require__(49);
 
 util.inherits(Writable, Stream);
 
 function nop() {}
+
+function WriteReq(chunk, encoding, cb) {
+  this.chunk = chunk;
+  this.encoding = encoding;
+  this.callback = cb;
+  this.next = null;
+}
 
 function WritableState(options, stream) {
   Duplex = Duplex || __webpack_require__(9);
@@ -13346,10 +13252,7 @@ function WritableState(options, stream) {
   this.highWaterMark = hwm || hwm === 0 ? hwm : defaultHwm;
 
   // cast to ints.
-  this.highWaterMark = Math.floor(this.highWaterMark);
-
-  // if _final has been called
-  this.finalCalled = false;
+  this.highWaterMark = ~~this.highWaterMark;
 
   // drain event flag.
   this.needDrain = false;
@@ -13359,9 +13262,6 @@ function WritableState(options, stream) {
   this.ended = false;
   // when 'finish' is emitted
   this.finished = false;
-
-  // has it been destroyed
-  this.destroyed = false;
 
   // should we decode strings into buffers before passing to _write?
   // this is here so that some node-core streams can optimize string
@@ -13444,7 +13344,7 @@ WritableState.prototype.getBuffer = function getBuffer() {
     Object.defineProperty(WritableState.prototype, 'buffer', {
       get: internalUtil.deprecate(function () {
         return this.getBuffer();
-      }, '_writableState.buffer is deprecated. Use _writableState.getBuffer ' + 'instead.', 'DEP0003')
+      }, '_writableState.buffer is deprecated. Use _writableState.getBuffer ' + 'instead.')
     });
   } catch (_) {}
 })();
@@ -13490,10 +13390,6 @@ function Writable(options) {
     if (typeof options.write === 'function') this._write = options.write;
 
     if (typeof options.writev === 'function') this._writev = options.writev;
-
-    if (typeof options.destroy === 'function') this._destroy = options.destroy;
-
-    if (typeof options.final === 'function') this._final = options.final;
   }
 
   Stream.call(this);
@@ -13534,11 +13430,7 @@ function validChunk(stream, state, chunk, cb) {
 Writable.prototype.write = function (chunk, encoding, cb) {
   var state = this._writableState;
   var ret = false;
-  var isBuf = _isUint8Array(chunk) && !state.objectMode;
-
-  if (isBuf && !Buffer.isBuffer(chunk)) {
-    chunk = _uint8ArrayToBuffer(chunk);
-  }
+  var isBuf = Buffer.isBuffer(chunk);
 
   if (typeof encoding === 'function') {
     cb = encoding;
@@ -13593,12 +13485,8 @@ function decodeChunk(state, chunk, encoding) {
 // If we return false, then we need a drain event, so set that flag.
 function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
   if (!isBuf) {
-    var newChunk = decodeChunk(state, chunk, encoding);
-    if (chunk !== newChunk) {
-      isBuf = true;
-      encoding = 'buffer';
-      chunk = newChunk;
-    }
+    chunk = decodeChunk(state, chunk, encoding);
+    if (Buffer.isBuffer(chunk)) encoding = 'buffer';
   }
   var len = state.objectMode ? 1 : chunk.length;
 
@@ -13610,13 +13498,7 @@ function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
 
   if (state.writing || state.corked) {
     var last = state.lastBufferedRequest;
-    state.lastBufferedRequest = {
-      chunk: chunk,
-      encoding: encoding,
-      isBuf: isBuf,
-      callback: cb,
-      next: null
-    };
+    state.lastBufferedRequest = new WriteReq(chunk, encoding, cb);
     if (last) {
       last.next = state.lastBufferedRequest;
     } else {
@@ -13641,26 +13523,10 @@ function doWrite(stream, state, writev, len, chunk, encoding, cb) {
 
 function onwriteError(stream, state, sync, er, cb) {
   --state.pendingcb;
+  if (sync) processNextTick(cb, er);else cb(er);
 
-  if (sync) {
-    // defer the callback if we are being called synchronously
-    // to avoid piling up things on the stack
-    processNextTick(cb, er);
-    // this can emit finish, and it will always happen
-    // after error
-    processNextTick(finishMaybe, stream, state);
-    stream._writableState.errorEmitted = true;
-    stream.emit('error', er);
-  } else {
-    // the caller expect this to happen before if
-    // it is async
-    cb(er);
-    stream._writableState.errorEmitted = true;
-    stream.emit('error', er);
-    // this can emit finish, but finish must
-    // always follow error
-    finishMaybe(stream, state);
-  }
+  stream._writableState.errorEmitted = true;
+  stream.emit('error', er);
 }
 
 function onwriteStateUpdate(state) {
@@ -13725,14 +13591,11 @@ function clearBuffer(stream, state) {
     holder.entry = entry;
 
     var count = 0;
-    var allBuffers = true;
     while (entry) {
       buffer[count] = entry;
-      if (!entry.isBuf) allBuffers = false;
       entry = entry.next;
       count += 1;
     }
-    buffer.allBuffers = allBuffers;
 
     doWrite(stream, state, true, state.length, buffer, '', holder.finish);
 
@@ -13806,37 +13669,23 @@ Writable.prototype.end = function (chunk, encoding, cb) {
 function needFinish(state) {
   return state.ending && state.length === 0 && state.bufferedRequest === null && !state.finished && !state.writing;
 }
-function callFinal(stream, state) {
-  stream._final(function (err) {
-    state.pendingcb--;
-    if (err) {
-      stream.emit('error', err);
-    }
+
+function prefinish(stream, state) {
+  if (!state.prefinished) {
     state.prefinished = true;
     stream.emit('prefinish');
-    finishMaybe(stream, state);
-  });
-}
-function prefinish(stream, state) {
-  if (!state.prefinished && !state.finalCalled) {
-    if (typeof stream._final === 'function') {
-      state.pendingcb++;
-      state.finalCalled = true;
-      processNextTick(callFinal, stream, state);
-    } else {
-      state.prefinished = true;
-      stream.emit('prefinish');
-    }
   }
 }
 
 function finishMaybe(stream, state) {
   var need = needFinish(state);
   if (need) {
-    prefinish(stream, state);
     if (state.pendingcb === 0) {
+      prefinish(stream, state);
       state.finished = true;
       stream.emit('finish');
+    } else {
+      prefinish(stream, state);
     }
   }
   return need;
@@ -13852,49 +13701,30 @@ function endWritable(stream, state, cb) {
   stream.writable = false;
 }
 
-function onCorkedFinish(corkReq, state, err) {
-  var entry = corkReq.entry;
-  corkReq.entry = null;
-  while (entry) {
-    var cb = entry.callback;
-    state.pendingcb--;
-    cb(err);
-    entry = entry.next;
-  }
-  if (state.corkedRequestsFree) {
-    state.corkedRequestsFree.next = corkReq;
-  } else {
-    state.corkedRequestsFree = corkReq;
-  }
+// It seems a linked list but it is not
+// there will be only 2 of these for each stream
+function CorkedRequest(state) {
+  var _this = this;
+
+  this.next = null;
+  this.entry = null;
+  this.finish = function (err) {
+    var entry = _this.entry;
+    _this.entry = null;
+    while (entry) {
+      var cb = entry.callback;
+      state.pendingcb--;
+      cb(err);
+      entry = entry.next;
+    }
+    if (state.corkedRequestsFree) {
+      state.corkedRequestsFree.next = _this;
+    } else {
+      state.corkedRequestsFree = _this;
+    }
+  };
 }
-
-Object.defineProperty(Writable.prototype, 'destroyed', {
-  get: function () {
-    if (this._writableState === undefined) {
-      return false;
-    }
-    return this._writableState.destroyed;
-  },
-  set: function (value) {
-    // we ignore the value if the stream
-    // has not been initialized yet
-    if (!this._writableState) {
-      return;
-    }
-
-    // backward compatibility, the user is explicitly
-    // managing destroyed
-    this._writableState.destroyed = value;
-  }
-});
-
-Writable.prototype.destroy = destroyImpl.destroy;
-Writable.prototype._undestroy = destroyImpl.undestroy;
-Writable.prototype._destroy = function (err, cb) {
-  this.end();
-  cb(err);
-};
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(32).setImmediate, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(32).setImmediate))
 
 /***/ }),
 /* 31 */
@@ -13904,17 +13734,13 @@ Writable.prototype._destroy = function (err, cb) {
 var buffer = __webpack_require__(3)
 var Buffer = buffer.Buffer
 
-// alternative to using Object.keys for old browsers
-function copyProps (src, dst) {
-  for (var key in src) {
-    dst[key] = src[key]
-  }
-}
 if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
   module.exports = buffer
 } else {
   // Copy properties from require('buffer')
-  copyProps(buffer, exports)
+  Object.keys(buffer).forEach(function (prop) {
+    exports[prop] = buffer[prop]
+  })
   exports.Buffer = SafeBuffer
 }
 
@@ -13923,7 +13749,9 @@ function SafeBuffer (arg, encodingOrOffset, length) {
 }
 
 // Copy static methods from Buffer
-copyProps(Buffer, SafeBuffer)
+Object.keys(Buffer).forEach(function (prop) {
+  SafeBuffer[prop] = Buffer[prop]
+})
 
 SafeBuffer.from = function (arg, encodingOrOffset, length) {
   if (typeof arg === 'number') {
@@ -14018,7 +13846,7 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(143);
+__webpack_require__(142);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
@@ -14051,8 +13879,8 @@ exports.clearImmediate = clearImmediate;
 
 
 
-var punycode = __webpack_require__(133);
-var util = __webpack_require__(151);
+var punycode = __webpack_require__(132);
+var util = __webpack_require__(150);
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -14822,7 +14650,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(22);
+var RenderedTarget = __webpack_require__(21);
 var Blocks = __webpack_require__(12);
 
 var Sprite = function () {
@@ -15024,7 +14852,7 @@ Object.keys(domLvl1).forEach(function(key) {
 /* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var decodeMap = __webpack_require__(101);
+var decodeMap = __webpack_require__(100);
 
 module.exports = decodeCodePoint;
 
@@ -15291,7 +15119,7 @@ function Parser(cbs, options){
 	if(this._cbs.onparserinit) this._cbs.onparserinit(this);
 }
 
-__webpack_require__(1)(Parser, __webpack_require__(4).EventEmitter);
+__webpack_require__(0)(Parser, __webpack_require__(4).EventEmitter);
 
 Parser.prototype._updatePosition = function(initialOffset){
 	if(this.endIndex === null){
@@ -15531,9 +15359,9 @@ module.exports = Parser;
 module.exports = Tokenizer;
 
 var decodeCodePoint = __webpack_require__(39),
-    entityMap = __webpack_require__(25),
+    entityMap = __webpack_require__(24),
     legacyMap = __webpack_require__(40),
-    xmlMap    = __webpack_require__(26),
+    xmlMap    = __webpack_require__(25),
 
     i = 0,
 
@@ -16443,8 +16271,8 @@ Tokenizer.prototype._emitPartial = function(value){
 module.exports = Stream;
 
 var Parser = __webpack_require__(41),
-    WritableStream = __webpack_require__(145).Writable || __webpack_require__(159).Writable,
-    StringDecoder = __webpack_require__(28).StringDecoder,
+    WritableStream = __webpack_require__(144).Writable || __webpack_require__(158).Writable,
+    StringDecoder = __webpack_require__(27).StringDecoder,
     Buffer = __webpack_require__(3).Buffer;
 
 function Stream(cbs, options){
@@ -16458,7 +16286,7 @@ function Stream(cbs, options){
 	});
 }
 
-__webpack_require__(1)(Stream, WritableStream);
+__webpack_require__(0)(Stream, WritableStream);
 
 WritableStream.prototype._write = function(chunk, encoding, cb){
 	if(chunk instanceof Buffer) chunk = this._decoder.write(chunk);
@@ -16510,7 +16338,7 @@ module.exports = color;
 "use strict";
 
 
-module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(131);
+module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(130);
 
 
 /***/ }),
@@ -16518,35 +16346,13 @@ module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(1
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-
-/*<replacement>*/
-
-var processNextTick = __webpack_require__(16);
-/*</replacement>*/
+/* WEBPACK VAR INJECTION */(function(process) {
 
 module.exports = Readable;
+
+/*<replacement>*/
+var processNextTick = __webpack_require__(28);
+/*</replacement>*/
 
 /*<replacement>*/
 var isArray = __webpack_require__(44);
@@ -16567,29 +16373,20 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(50);
+var Stream = __webpack_require__(49);
 /*</replacement>*/
 
-// TODO(bmeurer): Change this back to const once hole checks are
-// properly optimized away early in Ignition+TurboFan.
 /*<replacement>*/
 var Buffer = __webpack_require__(31).Buffer;
-var OurUint8Array = global.Uint8Array || function () {};
-function _uint8ArrayToBuffer(chunk) {
-  return Buffer.from(chunk);
-}
-function _isUint8Array(obj) {
-  return Buffer.isBuffer(obj) || obj instanceof OurUint8Array;
-}
 /*</replacement>*/
 
 /*<replacement>*/
 var util = __webpack_require__(14);
-util.inherits = __webpack_require__(1);
+util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
 /*<replacement>*/
-var debugUtil = __webpack_require__(160);
+var debugUtil = __webpack_require__(159);
 var debug = void 0;
 if (debugUtil && debugUtil.debuglog) {
   debug = debugUtil.debuglog('stream');
@@ -16598,8 +16395,7 @@ if (debugUtil && debugUtil.debuglog) {
 }
 /*</replacement>*/
 
-var BufferList = __webpack_require__(139);
-var destroyImpl = __webpack_require__(49);
+var BufferList = __webpack_require__(138);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -16638,7 +16434,7 @@ function ReadableState(options, stream) {
   this.highWaterMark = hwm || hwm === 0 ? hwm : defaultHwm;
 
   // cast to ints.
-  this.highWaterMark = Math.floor(this.highWaterMark);
+  this.highWaterMark = ~~this.highWaterMark;
 
   // A linked list is used to store data chunks instead of an array because the
   // linked list can remove elements from the beginning faster than
@@ -16652,10 +16448,10 @@ function ReadableState(options, stream) {
   this.endEmitted = false;
   this.reading = false;
 
-  // a flag to be able to tell if the event 'readable'/'data' is emitted
-  // immediately, or on a later tick.  We set this to true at first, because
-  // any actions that shouldn't happen until "later" should generally also
-  // not happen before the first read call.
+  // a flag to be able to tell if the onwrite cb is called immediately,
+  // or on a later tick.  We set this to true at first, because any
+  // actions that shouldn't happen until "later" should generally also
+  // not happen before the first write call.
   this.sync = true;
 
   // whenever we return null, then we set a flag to say
@@ -16665,13 +16461,14 @@ function ReadableState(options, stream) {
   this.readableListening = false;
   this.resumeScheduled = false;
 
-  // has it been destroyed
-  this.destroyed = false;
-
   // Crypto is kind of old and crusty.  Historically, its default string
   // encoding is 'binary' so we have to make this configurable.
   // Everything else in the universe uses 'utf8', though.
   this.defaultEncoding = options.defaultEncoding || 'utf8';
+
+  // when piping, we only care about 'readable' events that happen
+  // after read()ing all the bytes and not getting any pushback.
+  this.ranOut = false;
 
   // the number of writers that are awaiting a drain event in .pipe()s
   this.awaitDrain = 0;
@@ -16682,7 +16479,7 @@ function ReadableState(options, stream) {
   this.decoder = null;
   this.encoding = null;
   if (options.encoding) {
-    if (!StringDecoder) StringDecoder = __webpack_require__(28).StringDecoder;
+    if (!StringDecoder) StringDecoder = __webpack_require__(27).StringDecoder;
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
@@ -16698,41 +16495,10 @@ function Readable(options) {
   // legacy
   this.readable = true;
 
-  if (options) {
-    if (typeof options.read === 'function') this._read = options.read;
-
-    if (typeof options.destroy === 'function') this._destroy = options.destroy;
-  }
+  if (options && typeof options.read === 'function') this._read = options.read;
 
   Stream.call(this);
 }
-
-Object.defineProperty(Readable.prototype, 'destroyed', {
-  get: function () {
-    if (this._readableState === undefined) {
-      return false;
-    }
-    return this._readableState.destroyed;
-  },
-  set: function (value) {
-    // we ignore the value if the stream
-    // has not been initialized yet
-    if (!this._readableState) {
-      return;
-    }
-
-    // backward compatibility, the user is explicitly
-    // managing destroyed
-    this._readableState.destroyed = value;
-  }
-});
-
-Readable.prototype.destroy = destroyImpl.destroy;
-Readable.prototype._undestroy = destroyImpl.undestroy;
-Readable.prototype._destroy = function (err, cb) {
-  this.push(null);
-  cb(err);
-};
 
 // Manually shove something into the read() buffer.
 // This returns true if the highWaterMark has not been hit yet,
@@ -16740,85 +16506,74 @@ Readable.prototype._destroy = function (err, cb) {
 // write() some more.
 Readable.prototype.push = function (chunk, encoding) {
   var state = this._readableState;
-  var skipChunkCheck;
 
-  if (!state.objectMode) {
-    if (typeof chunk === 'string') {
-      encoding = encoding || state.defaultEncoding;
-      if (encoding !== state.encoding) {
-        chunk = Buffer.from(chunk, encoding);
-        encoding = '';
-      }
-      skipChunkCheck = true;
+  if (!state.objectMode && typeof chunk === 'string') {
+    encoding = encoding || state.defaultEncoding;
+    if (encoding !== state.encoding) {
+      chunk = Buffer.from(chunk, encoding);
+      encoding = '';
     }
-  } else {
-    skipChunkCheck = true;
   }
 
-  return readableAddChunk(this, chunk, encoding, false, skipChunkCheck);
+  return readableAddChunk(this, state, chunk, encoding, false);
 };
 
 // Unshift should *always* be something directly out of read()
 Readable.prototype.unshift = function (chunk) {
-  return readableAddChunk(this, chunk, null, true, false);
+  var state = this._readableState;
+  return readableAddChunk(this, state, chunk, '', true);
 };
 
-function readableAddChunk(stream, chunk, encoding, addToFront, skipChunkCheck) {
-  var state = stream._readableState;
-  if (chunk === null) {
+Readable.prototype.isPaused = function () {
+  return this._readableState.flowing === false;
+};
+
+function readableAddChunk(stream, state, chunk, encoding, addToFront) {
+  var er = chunkInvalid(state, chunk);
+  if (er) {
+    stream.emit('error', er);
+  } else if (chunk === null) {
     state.reading = false;
     onEofChunk(stream, state);
-  } else {
-    var er;
-    if (!skipChunkCheck) er = chunkInvalid(state, chunk);
-    if (er) {
-      stream.emit('error', er);
-    } else if (state.objectMode || chunk && chunk.length > 0) {
-      if (typeof chunk !== 'string' && !state.objectMode && Object.getPrototypeOf(chunk) !== Buffer.prototype) {
-        chunk = _uint8ArrayToBuffer(chunk);
+  } else if (state.objectMode || chunk && chunk.length > 0) {
+    if (state.ended && !addToFront) {
+      var e = new Error('stream.push() after EOF');
+      stream.emit('error', e);
+    } else if (state.endEmitted && addToFront) {
+      var _e = new Error('stream.unshift() after end event');
+      stream.emit('error', _e);
+    } else {
+      var skipAdd;
+      if (state.decoder && !addToFront && !encoding) {
+        chunk = state.decoder.write(chunk);
+        skipAdd = !state.objectMode && chunk.length === 0;
       }
 
-      if (addToFront) {
-        if (state.endEmitted) stream.emit('error', new Error('stream.unshift() after end event'));else addChunk(stream, state, chunk, true);
-      } else if (state.ended) {
-        stream.emit('error', new Error('stream.push() after EOF'));
-      } else {
-        state.reading = false;
-        if (state.decoder && !encoding) {
-          chunk = state.decoder.write(chunk);
-          if (state.objectMode || chunk.length !== 0) addChunk(stream, state, chunk, false);else maybeReadMore(stream, state);
+      if (!addToFront) state.reading = false;
+
+      // Don't add to the buffer if we've decoded to an empty string chunk and
+      // we're not in object mode
+      if (!skipAdd) {
+        // if we want the data now, just emit it.
+        if (state.flowing && state.length === 0 && !state.sync) {
+          stream.emit('data', chunk);
+          stream.read(0);
         } else {
-          addChunk(stream, state, chunk, false);
+          // update the buffer info.
+          state.length += state.objectMode ? 1 : chunk.length;
+          if (addToFront) state.buffer.unshift(chunk);else state.buffer.push(chunk);
+
+          if (state.needReadable) emitReadable(stream);
         }
       }
-    } else if (!addToFront) {
-      state.reading = false;
+
+      maybeReadMore(stream, state);
     }
+  } else if (!addToFront) {
+    state.reading = false;
   }
 
   return needMoreData(state);
-}
-
-function addChunk(stream, state, chunk, addToFront) {
-  if (state.flowing && state.length === 0 && !state.sync) {
-    stream.emit('data', chunk);
-    stream.read(0);
-  } else {
-    // update the buffer info.
-    state.length += state.objectMode ? 1 : chunk.length;
-    if (addToFront) state.buffer.unshift(chunk);else state.buffer.push(chunk);
-
-    if (state.needReadable) emitReadable(stream);
-  }
-  maybeReadMore(stream, state);
-}
-
-function chunkInvalid(state, chunk) {
-  var er;
-  if (!_isUint8Array(chunk) && typeof chunk !== 'string' && chunk !== undefined && !state.objectMode) {
-    er = new TypeError('Invalid non-string/buffer chunk');
-  }
-  return er;
 }
 
 // if it's past the high water mark, we can push in some more.
@@ -16832,13 +16587,9 @@ function needMoreData(state) {
   return !state.ended && (state.needReadable || state.length < state.highWaterMark || state.length === 0);
 }
 
-Readable.prototype.isPaused = function () {
-  return this._readableState.flowing === false;
-};
-
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = __webpack_require__(28).StringDecoder;
+  if (!StringDecoder) StringDecoder = __webpack_require__(27).StringDecoder;
   this._readableState.decoder = new StringDecoder(enc);
   this._readableState.encoding = enc;
   return this;
@@ -16984,6 +16735,14 @@ Readable.prototype.read = function (n) {
   return ret;
 };
 
+function chunkInvalid(state, chunk) {
+  var er = null;
+  if (!Buffer.isBuffer(chunk) && typeof chunk !== 'string' && chunk !== null && chunk !== undefined && !state.objectMode) {
+    er = new TypeError('Invalid non-string/buffer chunk');
+  }
+  return er;
+}
+
 function onEofChunk(stream, state) {
   if (state.ended) return;
   if (state.decoder) {
@@ -17075,13 +16834,10 @@ Readable.prototype.pipe = function (dest, pipeOpts) {
   if (state.endEmitted) processNextTick(endFn);else src.once('end', endFn);
 
   dest.on('unpipe', onunpipe);
-  function onunpipe(readable, unpipeInfo) {
+  function onunpipe(readable) {
     debug('onunpipe');
     if (readable === src) {
-      if (unpipeInfo && unpipeInfo.hasUnpiped === false) {
-        unpipeInfo.hasUnpiped = true;
-        cleanup();
-      }
+      cleanup();
     }
   }
 
@@ -17200,7 +16956,6 @@ function pipeOnDrain(src) {
 
 Readable.prototype.unpipe = function (dest) {
   var state = this._readableState;
-  var unpipeInfo = { hasUnpiped: false };
 
   // if we're not piping anywhere, then do nothing.
   if (state.pipesCount === 0) return this;
@@ -17216,7 +16971,7 @@ Readable.prototype.unpipe = function (dest) {
     state.pipes = null;
     state.pipesCount = 0;
     state.flowing = false;
-    if (dest) dest.emit('unpipe', this, unpipeInfo);
+    if (dest) dest.emit('unpipe', this);
     return this;
   }
 
@@ -17231,7 +16986,7 @@ Readable.prototype.unpipe = function (dest) {
     state.flowing = false;
 
     for (var i = 0; i < len; i++) {
-      dests[i].emit('unpipe', this, unpipeInfo);
+      dests[i].emit('unpipe', this);
     }return this;
   }
 
@@ -17243,7 +16998,7 @@ Readable.prototype.unpipe = function (dest) {
   state.pipesCount -= 1;
   if (state.pipesCount === 1) state.pipes = state.pipes[0];
 
-  dest.emit('unpipe', this, unpipeInfo);
+  dest.emit('unpipe', this);
 
   return this;
 };
@@ -17264,7 +17019,7 @@ Readable.prototype.on = function (ev, fn) {
       if (!state.reading) {
         processNextTick(nReadingNextTick, this);
       } else if (state.length) {
-        emitReadable(this);
+        emitReadable(this, state);
       }
     }
   }
@@ -17525,34 +17280,13 @@ function indexOf(xs, x) {
   }
   return -1;
 }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(8)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
 /***/ }),
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -17603,7 +17337,7 @@ var Duplex = __webpack_require__(9);
 
 /*<replacement>*/
 var util = __webpack_require__(14);
-util.inherits = __webpack_require__(1);
+util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
 util.inherits(Transform, Duplex);
@@ -17626,9 +17360,7 @@ function afterTransform(stream, er, data) {
 
   var cb = ts.writecb;
 
-  if (!cb) {
-    return stream.emit('error', new Error('write callback called multiple times'));
-  }
+  if (!cb) return stream.emit('error', new Error('no writecb in Transform class'));
 
   ts.writechunk = null;
   ts.writecb = null;
@@ -17721,15 +17453,6 @@ Transform.prototype._read = function (n) {
   }
 };
 
-Transform.prototype._destroy = function (err, cb) {
-  var _this = this;
-
-  Duplex.prototype._destroy.call(this, err, function (err2) {
-    cb(err2);
-    _this.emit('close');
-  });
-};
-
 function done(stream, er, data) {
   if (er) return stream.emit('error', er);
 
@@ -17751,94 +17474,16 @@ function done(stream, er, data) {
 /* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+module.exports = __webpack_require__(4).EventEmitter;
 
-
-/*<replacement>*/
-
-var processNextTick = __webpack_require__(16);
-/*</replacement>*/
-
-// undocumented cb() API, needed for core, not for public API
-function destroy(err, cb) {
-  var _this = this;
-
-  var readableDestroyed = this._readableState && this._readableState.destroyed;
-  var writableDestroyed = this._writableState && this._writableState.destroyed;
-
-  if (readableDestroyed || writableDestroyed) {
-    if (cb) {
-      cb(err);
-    } else if (err && (!this._writableState || !this._writableState.errorEmitted)) {
-      processNextTick(emitErrorNT, this, err);
-    }
-    return;
-  }
-
-  // we set destroyed to true before firing error callbacks in order
-  // to make it re-entrance safe in case destroy() is called within callbacks
-
-  if (this._readableState) {
-    this._readableState.destroyed = true;
-  }
-
-  // if this is a duplex stream mark the writable part as destroyed as well
-  if (this._writableState) {
-    this._writableState.destroyed = true;
-  }
-
-  this._destroy(err || null, function (err) {
-    if (!cb && err) {
-      processNextTick(emitErrorNT, _this, err);
-      if (_this._writableState) {
-        _this._writableState.errorEmitted = true;
-      }
-    } else if (cb) {
-      cb(err);
-    }
-  });
-}
-
-function undestroy() {
-  if (this._readableState) {
-    this._readableState.destroyed = false;
-    this._readableState.reading = false;
-    this._readableState.ended = false;
-    this._readableState.endEmitted = false;
-  }
-
-  if (this._writableState) {
-    this._writableState.destroyed = false;
-    this._writableState.ended = false;
-    this._writableState.ending = false;
-    this._writableState.finished = false;
-    this._writableState.errorEmitted = false;
-  }
-}
-
-function emitErrorNT(self, err) {
-  self.emit('error', err);
-}
-
-module.exports = {
-  destroy: destroy,
-  undestroy: undestroy
-};
 
 /***/ }),
 /* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(4).EventEmitter;
-
-
-/***/ }),
-/* 51 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(146)
-var extend = __webpack_require__(156)
-var statusCodes = __webpack_require__(83)
+/* WEBPACK VAR INJECTION */(function(global) {var ClientRequest = __webpack_require__(145)
+var extend = __webpack_require__(155)
+var statusCodes = __webpack_require__(82)
 var url = __webpack_require__(33)
 
 var http = exports
@@ -17915,10 +17560,10 @@ http.METHODS = [
 	'UNLOCK',
 	'UNSUBSCRIBE'
 ]
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 52 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
@@ -17991,10 +17636,10 @@ function isFunction (value) {
 
 xhr = null // Help gc
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 53 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -18522,7 +18167,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(154);
+exports.isBuffer = __webpack_require__(153);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -18566,7 +18211,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(153);
+exports.inherits = __webpack_require__(152);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -18584,29 +18229,29 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(8)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(8)))
 
 /***/ }),
-/* 54 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const VirtualMachine = __webpack_require__(81);
+const VirtualMachine = __webpack_require__(80);
 
 module.exports = VirtualMachine;
 
 
 /***/ }),
-/* 55 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
-module.exports = global["VirtualMachine"] = __webpack_require__(54);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+module.exports = global["VirtualMachine"] = __webpack_require__(53);
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 56 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18778,7 +18423,7 @@ var Scratch3ControlBlocks = function () {
 module.exports = Scratch3ControlBlocks;
 
 /***/ }),
-/* 57 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18946,7 +18591,7 @@ var Scratch3DataBlocks = function () {
 module.exports = Scratch3DataBlocks;
 
 /***/ }),
-/* 58 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19075,7 +18720,7 @@ var Scratch3EventBlocks = function () {
 module.exports = Scratch3EventBlocks;
 
 /***/ }),
-/* 59 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19330,7 +18975,7 @@ var Scratch3LooksBlocks = function () {
 module.exports = Scratch3LooksBlocks;
 
 /***/ }),
-/* 60 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19601,7 +19246,7 @@ var Scratch3MotionBlocks = function () {
 module.exports = Scratch3MotionBlocks;
 
 /***/ }),
-/* 61 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19799,7 +19444,7 @@ var Scratch3OperatorsBlocks = function () {
 module.exports = Scratch3OperatorsBlocks;
 
 /***/ }),
-/* 62 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19811,9 +19456,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(36);
-var Color = __webpack_require__(23);
+var Color = __webpack_require__(22);
 var MathUtil = __webpack_require__(7);
-var RenderedTarget = __webpack_require__(22);
+var RenderedTarget = __webpack_require__(21);
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -20235,7 +19880,7 @@ var Scratch3PenBlocks = function () {
 module.exports = Scratch3PenBlocks;
 
 /***/ }),
-/* 63 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20305,7 +19950,7 @@ var Scratch3ProcedureBlocks = function () {
 module.exports = Scratch3ProcedureBlocks;
 
 /***/ }),
-/* 64 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20532,7 +20177,7 @@ var Scratch3SensingBlocks = function () {
 module.exports = Scratch3SensingBlocks;
 
 /***/ }),
-/* 65 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20917,7 +20562,7 @@ var Scratch3SoundBlocks = function () {
 module.exports = Scratch3SoundBlocks;
 
 /***/ }),
-/* 66 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20944,6 +20589,7 @@ var Scratch3CozmoBlocks = function Scratch3CozmoBlocks(runtime) {
 Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
+        cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         cozmo_drive_forward: this.driveForward,
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
@@ -20998,7 +20644,14 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         // Cubes
         cozmo_vert_cube_get_is_visible: this.verticalCubeGetIsVisible,
         cozmo_vert_cube_get_position_2d: this.verticalCubeGetPosition2d,
-        cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d
+        cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d,
+        cozmo_vert_cube_get_pitch: this.verticalCubeGetPitch,
+        cozmo_vert_cube_get_roll: this.verticalCubeGetRoll,
+        cozmo_vert_cube_get_yaw: this.verticalCubeGetYaw,
+        // Devices
+        cozmo_vert_device_get_pitch: this.verticalDeviceGetPitch,
+        cozmo_vert_device_get_roll: this.verticalDeviceGetRoll,
+        cozmo_vert_device_get_yaw: this.verticalDeviceGetYaw
     };
 };
 
@@ -21086,13 +20739,25 @@ Scratch3CozmoBlocks.prototype.playAnimationHelper = function (args, util, animNa
     return this._promiseForCommand(requestId);
 };
 
+Scratch3CozmoBlocks.prototype.playAnimationHelperVertical = function (args, util, animName, isMystery) {
+    isMystery = isMystery || 0; // if undefined force to 0 as a default value
+    var requestId = this._getRequestId();
+    var shouldIgnoreBodyTrack = Cast.toBoolean(args.IGNORE_WHEELS);
+    var shouldIgnoreHead = Cast.toBoolean(args.IGNORE_HEAD);
+    var shouldIgnoreLift = Cast.toBoolean(args.IGNORE_LIFT);
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery, argBool: shouldIgnoreBodyTrack, argBool2: shouldIgnoreHead, argBool3: shouldIgnoreLift });
+
+    return commandPromise;
+};
+
 Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function (args, util) {
     var animName = Cast.toString(args.ANIMATION);
     if (animName == 'mystery') {
         var randomAnim = this._getAnimation(animName);
-        return this.playAnimationHelper(args, util, randomAnim, 1);
+        return this.playAnimationHelperVertical(args, util, randomAnim, 1);
     } else {
-        return this.playAnimationHelper(args, util, animName);
+        return this.playAnimationHelperVertical(args, util, animName);
     }
 };
 
@@ -21396,6 +21061,14 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function (args, util) {
     return commandPromise;
 };
 
+Scratch3CozmoBlocks.prototype.setCubeLightCorners = function (args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var color1 = this._getColor(Cast.toString(args.CORNER_1_COLOR));
+    var color2 = this._getColor(Cast.toString(args.CORNER_2_COLOR));
+    var color3 = this._getColor(Cast.toString(args.CORNER_3_COLOR));
+    var color4 = this._getColor(Cast.toString(args.CORNER_4_COLOR));
+    window.Unity.call({ requestId: -1, command: "cozmoSetCubeLightCorners", argUInt: color1, argUInt2: color2, argUInt3: color3, argUInt4: color4, argUInt5: cubeIndex });
+};
 // =================
 // Sensors / Inputs:
 // =================
@@ -21507,10 +21180,42 @@ Scratch3CozmoBlocks.prototype.verticalCubeGetPosition3d = function (args, util) 
     return getVector3Axis(srcCube.pos, axis);
 };
 
+Scratch3CozmoBlocks.prototype.verticalCubeGetPitch = function (args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.pitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetRoll = function (args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.roll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetYaw = function (args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.yaw_d);
+};
+
+// Devices
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetPitch = function (args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.pitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetRoll = function (args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.roll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetYaw = function (args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.yaw_d);
+};
+
 module.exports = Scratch3CozmoBlocks;
 
 /***/ }),
-/* 67 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21679,16 +21384,16 @@ var adapter = function adapter(e) {
 module.exports = adapter;
 
 /***/ }),
-/* 68 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var log = __webpack_require__(10);
-var Thread = __webpack_require__(18);
+var Thread = __webpack_require__(17);
 
-var _require = __webpack_require__(27),
+var _require = __webpack_require__(26),
     Map = _require.Map;
 
 /**
@@ -21962,13 +21667,13 @@ var execute = function execute(sequencer, thread) {
 module.exports = execute;
 
 /***/ }),
-/* 69 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _require = __webpack_require__(27),
+var _require = __webpack_require__(26),
     Record = _require.Record;
 
 var MonitorRecord = Record({
@@ -21981,7 +21686,7 @@ var MonitorRecord = Record({
 module.exports = MonitorRecord;
 
 /***/ }),
-/* 70 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21998,33 +21703,33 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var EventEmitter = __webpack_require__(4);
-var Sequencer = __webpack_require__(71);
+var Sequencer = __webpack_require__(70);
 var Blocks = __webpack_require__(12);
-var Thread = __webpack_require__(18);
+var Thread = __webpack_require__(17);
 
-var _require = __webpack_require__(27),
+var _require = __webpack_require__(26),
     OrderedMap = _require.OrderedMap;
 
 // Virtual I/O devices.
 
 
-var Clock = __webpack_require__(73);
-var DeviceManager = __webpack_require__(74);
-var Keyboard = __webpack_require__(75);
-var Mouse = __webpack_require__(76);
+var Clock = __webpack_require__(72);
+var DeviceManager = __webpack_require__(73);
+var Keyboard = __webpack_require__(74);
+var Mouse = __webpack_require__(75);
 
 var defaultBlockPackages = {
-    scratch3_control: __webpack_require__(56),
-    scratch3_event: __webpack_require__(58),
-    scratch3_looks: __webpack_require__(59),
-    scratch3_motion: __webpack_require__(60),
-    scratch3_operators: __webpack_require__(61),
-    scratch3_pen: __webpack_require__(62),
-    scratch3_sound: __webpack_require__(65),
-    scratch3_sensing: __webpack_require__(64),
-    scratch3_data: __webpack_require__(57),
-    scratch3_procedures: __webpack_require__(63),
-    scratch3_wedo: __webpack_require__(66)
+    scratch3_control: __webpack_require__(55),
+    scratch3_event: __webpack_require__(57),
+    scratch3_looks: __webpack_require__(58),
+    scratch3_motion: __webpack_require__(59),
+    scratch3_operators: __webpack_require__(60),
+    scratch3_pen: __webpack_require__(61),
+    scratch3_sound: __webpack_require__(64),
+    scratch3_sensing: __webpack_require__(63),
+    scratch3_data: __webpack_require__(56),
+    scratch3_procedures: __webpack_require__(62),
+    scratch3_wedo: __webpack_require__(65)
 };
 
 /**
@@ -23289,7 +22994,7 @@ var Runtime = function (_EventEmitter) {
 module.exports = Runtime;
 
 /***/ }),
-/* 71 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23300,8 +23005,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Timer = __webpack_require__(13);
-var Thread = __webpack_require__(18);
-var execute = __webpack_require__(68);
+var Thread = __webpack_require__(17);
+var execute = __webpack_require__(67);
 
 var Sequencer = function () {
     function Sequencer(runtime) {
@@ -23568,7 +23273,7 @@ var Sequencer = function () {
 module.exports = Sequencer;
 
 /***/ }),
-/* 72 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23585,8 +23290,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(4);
 
 var Blocks = __webpack_require__(12);
-var Variable = __webpack_require__(19);
-var List = __webpack_require__(17);
+var Variable = __webpack_require__(18);
+var List = __webpack_require__(16);
 var uid = __webpack_require__(37);
 
 /**
@@ -23772,7 +23477,7 @@ var Target = function (_EventEmitter) {
 module.exports = Target;
 
 /***/ }),
-/* 73 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23833,7 +23538,7 @@ var Clock = function () {
 module.exports = Clock;
 
 /***/ }),
-/* 74 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23843,8 +23548,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var got = __webpack_require__(103);
-var io = __webpack_require__(144);
+var got = __webpack_require__(102);
+var io = __webpack_require__(143);
 var querystring = __webpack_require__(29);
 
 /**
@@ -24299,7 +24004,7 @@ var DeviceManager = function () {
 module.exports = DeviceManager;
 
 /***/ }),
-/* 75 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24442,7 +24147,7 @@ var Keyboard = function () {
 module.exports = Keyboard;
 
 /***/ }),
-/* 76 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24554,7 +24259,7 @@ var Mouse = function () {
 module.exports = Mouse;
 
 /***/ }),
-/* 77 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24570,17 +24275,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(12);
-var RenderedTarget = __webpack_require__(22);
+var RenderedTarget = __webpack_require__(21);
 var Sprite = __webpack_require__(35);
-var Color = __webpack_require__(23);
+var Color = __webpack_require__(22);
 var log = __webpack_require__(10);
 var uid = __webpack_require__(37);
-var specMap = __webpack_require__(78);
-var Variable = __webpack_require__(19);
-var List = __webpack_require__(17);
+var specMap = __webpack_require__(77);
+var Variable = __webpack_require__(18);
+var List = __webpack_require__(16);
 
-var loadCostume = __webpack_require__(20);
-var loadSound = __webpack_require__(21);
+var loadCostume = __webpack_require__(19);
+var loadSound = __webpack_require__(20);
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -25014,7 +24719,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 78 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26129,7 +25834,7 @@ var specMap = {
 module.exports = specMap;
 
 /***/ }),
-/* 79 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26141,14 +25846,14 @@ module.exports = specMap;
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-var vmPackage = __webpack_require__(157);
+var vmPackage = __webpack_require__(156);
 var Blocks = __webpack_require__(12);
 var Sprite = __webpack_require__(35);
-var Variable = __webpack_require__(19);
-var List = __webpack_require__(17);
+var Variable = __webpack_require__(18);
+var List = __webpack_require__(16);
 
-var loadCostume = __webpack_require__(20);
-var loadSound = __webpack_require__(21);
+var loadCostume = __webpack_require__(19);
+var loadSound = __webpack_require__(20);
 
 /**
  * Serializes the specified VM runtime.
@@ -26301,7 +26006,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 80 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26335,7 +26040,7 @@ var xmlEscape = function xmlEscape(unsafe) {
 module.exports = xmlEscape;
 
 /***/ }),
-/* 81 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26354,13 +26059,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(4);
 
 var log = __webpack_require__(10);
-var Runtime = __webpack_require__(70);
-var sb2 = __webpack_require__(77);
-var sb3 = __webpack_require__(79);
-var StringUtil = __webpack_require__(24);
+var Runtime = __webpack_require__(69);
+var sb2 = __webpack_require__(76);
+var sb3 = __webpack_require__(78);
+var StringUtil = __webpack_require__(23);
 
-var loadCostume = __webpack_require__(20);
-var loadSound = __webpack_require__(21);
+var loadCostume = __webpack_require__(19);
+var loadSound = __webpack_require__(20);
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -27040,7 +26745,7 @@ var VirtualMachine = function (_EventEmitter) {
 module.exports = VirtualMachine;
 
 /***/ }),
-/* 82 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27161,7 +26866,7 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 83 */
+/* 82 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -27231,7 +26936,7 @@ module.exports = {
 
 
 /***/ }),
-/* 84 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27256,12 +26961,12 @@ module.exports = Error.captureStackTrace || function (error) {
 
 
 /***/ }),
-/* 85 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var captureStackTrace = __webpack_require__(84);
+var captureStackTrace = __webpack_require__(83);
 
 function inherits(ctor, superCtor) {
 	ctor.super_ = superCtor;
@@ -27307,14 +27012,14 @@ module.exports = function createErrorClass(className, setup) {
 
 
 /***/ }),
-/* 86 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
   Module dependencies
 */
-var ElementType = __webpack_require__(87);
-var entities = __webpack_require__(98);
+var ElementType = __webpack_require__(86);
+var entities = __webpack_require__(97);
 
 /*
   Boolean Attributes
@@ -27491,7 +27196,7 @@ function renderComment(elem) {
 
 
 /***/ }),
-/* 87 */
+/* 86 */
 /***/ (function(module, exports) {
 
 //Types of elements found in the DOM
@@ -27510,14 +27215,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 88 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(15);
 
 var re_whitespace = /\s+/g;
 var NodePrototype = __webpack_require__(38);
-var ElementPrototype = __webpack_require__(89);
+var ElementPrototype = __webpack_require__(88);
 
 function DomHandler(callback, options, elementCB){
 	if(typeof callback === "object"){
@@ -27733,7 +27438,7 @@ module.exports = DomHandler;
 
 
 /***/ }),
-/* 89 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // DOM-Level-1-compliant structure
@@ -27759,18 +27464,18 @@ Object.keys(domLvl1).forEach(function(key) {
 
 
 /***/ }),
-/* 90 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var DomUtils = module.exports;
 
 [
-	__webpack_require__(95),
-	__webpack_require__(96),
-	__webpack_require__(93),
 	__webpack_require__(94),
+	__webpack_require__(95),
 	__webpack_require__(92),
-	__webpack_require__(91)
+	__webpack_require__(93),
+	__webpack_require__(91),
+	__webpack_require__(90)
 ].forEach(function(ext){
 	Object.keys(ext).forEach(function(key){
 		DomUtils[key] = ext[key].bind(DomUtils);
@@ -27779,7 +27484,7 @@ var DomUtils = module.exports;
 
 
 /***/ }),
-/* 91 */
+/* 90 */
 /***/ (function(module, exports) {
 
 // removeSubsets
@@ -27926,7 +27631,7 @@ exports.uniqueSort = function(nodes) {
 
 
 /***/ }),
-/* 92 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(15);
@@ -28019,7 +27724,7 @@ exports.getElementsByTagType = function(type, element, recurse, limit){
 
 
 /***/ }),
-/* 93 */
+/* 92 */
 /***/ (function(module, exports) {
 
 exports.removeElement = function(elem){
@@ -28102,7 +27807,7 @@ exports.prepend = function(elem, prev){
 
 
 /***/ }),
-/* 94 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var isTag = __webpack_require__(15).isTag;
@@ -28207,11 +27912,11 @@ function findAll(test, rootElems){
 
 
 /***/ }),
-/* 95 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ElementType = __webpack_require__(15),
-    getOuterHTML = __webpack_require__(86),
+    getOuterHTML = __webpack_require__(85),
     isTag = ElementType.isTag;
 
 module.exports = {
@@ -28236,7 +27941,7 @@ function getText(elem){
 
 
 /***/ }),
-/* 96 */
+/* 95 */
 /***/ (function(module, exports) {
 
 var getChildren = exports.getChildren = function(elem){
@@ -28266,7 +27971,7 @@ exports.getName = function(elem){
 
 
 /***/ }),
-/* 97 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28349,11 +28054,11 @@ module.exports.DuplexWrapper = DuplexWrapper;
 
 
 /***/ }),
-/* 98 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var encode = __webpack_require__(100),
-    decode = __webpack_require__(99);
+var encode = __webpack_require__(99),
+    decode = __webpack_require__(98);
 
 exports.decode = function(data, level){
 	return (!level || level <= 0 ? decode.XML : decode.HTML)(data);
@@ -28388,12 +28093,12 @@ exports.escape = encode.escape;
 
 
 /***/ }),
-/* 99 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var entityMap = __webpack_require__(25),
+var entityMap = __webpack_require__(24),
     legacyMap = __webpack_require__(40),
-    xmlMap    = __webpack_require__(26),
+    xmlMap    = __webpack_require__(25),
     decodeCodePoint = __webpack_require__(39);
 
 var decodeXMLStrict  = getStrictDecoder(xmlMap),
@@ -28465,15 +28170,15 @@ module.exports = {
 };
 
 /***/ }),
-/* 100 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var inverseXML = getInverseObj(__webpack_require__(26)),
+var inverseXML = getInverseObj(__webpack_require__(25)),
     xmlReplacer = getInverseReplacer(inverseXML);
 
 exports.XML = getInverse(inverseXML, xmlReplacer);
 
-var inverseHTML = getInverseObj(__webpack_require__(25)),
+var inverseHTML = getInverseObj(__webpack_require__(24)),
     htmlReplacer = getInverseReplacer(inverseHTML);
 
 exports.HTML = getInverse(inverseHTML, htmlReplacer);
@@ -28544,7 +28249,7 @@ exports.escape = escapeXML;
 
 
 /***/ }),
-/* 101 */
+/* 100 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -28579,14 +28284,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 102 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var util = __webpack_require__(53);
-var isArrayish = __webpack_require__(111);
+var util = __webpack_require__(52);
+var isArrayish = __webpack_require__(110);
 
 var errorEx = function errorEx(name, properties) {
 	if (!name || name.constructor !== String) {
@@ -28719,33 +28424,33 @@ module.exports = errorEx;
 
 
 /***/ }),
-/* 103 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(setImmediate, Buffer) {
 
 var EventEmitter = __webpack_require__(4).EventEmitter;
-var http = __webpack_require__(51);
-var https = __webpack_require__(109);
+var http = __webpack_require__(50);
+var https = __webpack_require__(108);
 var urlLib = __webpack_require__(33);
 var querystring = __webpack_require__(29);
-var objectAssign = __webpack_require__(127);
+var objectAssign = __webpack_require__(126);
 var PassThrough = __webpack_require__(6).PassThrough;
-var duplexer2 = __webpack_require__(97);
-var isStream = __webpack_require__(114);
-var readAllStream = __webpack_require__(136);
-var timedOut = __webpack_require__(148);
-var urlParseLax = __webpack_require__(150);
-var lowercaseKeys = __webpack_require__(115);
-var isRedirect = __webpack_require__(112);
+var duplexer2 = __webpack_require__(96);
+var isStream = __webpack_require__(113);
+var readAllStream = __webpack_require__(135);
+var timedOut = __webpack_require__(147);
+var urlParseLax = __webpack_require__(149);
+var lowercaseKeys = __webpack_require__(114);
+var isRedirect = __webpack_require__(111);
 var PinkiePromise = __webpack_require__(46);
-var unzipResponse = __webpack_require__(158);
-var createErrorClass = __webpack_require__(85);
-var nodeStatusCodes = __webpack_require__(126);
-var parseJson = __webpack_require__(128);
-var isRetryAllowed = __webpack_require__(113);
-var pkg = __webpack_require__(104);
+var unzipResponse = __webpack_require__(157);
+var createErrorClass = __webpack_require__(84);
+var nodeStatusCodes = __webpack_require__(125);
+var parseJson = __webpack_require__(127);
+var isRetryAllowed = __webpack_require__(112);
+var pkg = __webpack_require__(103);
 
 function requestAsEventEmitter(opts) {
 	opts = opts || {};
@@ -29128,7 +28833,7 @@ module.exports = got;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(32).setImmediate, __webpack_require__(3).Buffer))
 
 /***/ }),
-/* 104 */
+/* 103 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -29143,7 +28848,7 @@ module.exports = {
 				"spec": "5.7.1",
 				"type": "version"
 			},
-			"/Users/max/Desktop/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm"
+			"/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm"
 		]
 	],
 	"_from": "got@5.7.1",
@@ -29178,7 +28883,7 @@ module.exports = {
 	"_shasum": "5f81635a61e4a6589f180569ea4e381680a51f35",
 	"_shrinkwrap": null,
 	"_spec": "got@5.7.1",
-	"_where": "/Users/max/Desktop/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm",
+	"_where": "/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm",
 	"browser": {
 		"unzip-response": false
 	},
@@ -29279,7 +28984,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 105 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = CollectingHandler;
@@ -29340,7 +29045,7 @@ CollectingHandler.prototype.restart = function(){
 
 
 /***/ }),
-/* 106 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var index = __webpack_require__(11),
@@ -29352,7 +29057,7 @@ function FeedHandler(callback, options){
 	this.init(callback, options);
 }
 
-__webpack_require__(1)(FeedHandler, DomHandler);
+__webpack_require__(0)(FeedHandler, DomHandler);
 
 FeedHandler.prototype.init = DomHandler;
 
@@ -29441,7 +29146,7 @@ module.exports = FeedHandler;
 
 
 /***/ }),
-/* 107 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = ProxyHandler;
@@ -29473,7 +29178,7 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 108 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = Stream;
@@ -29484,7 +29189,7 @@ function Stream(options){
 	Parser.call(this, new Cbs(this), options);
 }
 
-__webpack_require__(1)(Stream, Parser);
+__webpack_require__(0)(Stream, Parser);
 
 Stream.prototype.readable = true;
 
@@ -29513,10 +29218,10 @@ Object.keys(EVENTS).forEach(function(name){
 });
 
 /***/ }),
-/* 109 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var http = __webpack_require__(51);
+var http = __webpack_require__(50);
 
 var https = module.exports;
 
@@ -29533,7 +29238,7 @@ https.request = function (params, cb) {
 
 
 /***/ }),
-/* 110 */
+/* 109 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -29623,7 +29328,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 111 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29640,7 +29345,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 112 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29661,7 +29366,7 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 113 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29728,7 +29433,7 @@ module.exports = function (err) {
 
 
 /***/ }),
-/* 114 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29756,7 +29461,7 @@ isStream.transform = function (stream) {
 
 
 /***/ }),
-/* 115 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29774,7 +29479,7 @@ module.exports = function (obj) {
 
 
 /***/ }),
-/* 116 */
+/* 115 */
 /***/ (function(module, exports) {
 
 function M() { this._events = {}; }
@@ -29830,7 +29535,7 @@ module.exports = M;
 
 
 /***/ }),
-/* 117 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // default filter
@@ -29892,11 +29597,11 @@ module.exports = Filter;
 
 
 /***/ }),
-/* 118 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(5),
-    Filter = __webpack_require__(117);
+    Filter = __webpack_require__(116);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -29943,7 +29648,7 @@ exports.enable = function() {
 
 
 /***/ }),
-/* 119 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(5),
@@ -29963,7 +29668,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 120 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(5);
@@ -29994,14 +29699,14 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(121);
-logger.minilog = __webpack_require__(122);
+logger.color = __webpack_require__(120);
+logger.minilog = __webpack_require__(121);
 
 module.exports = logger;
 
 
 /***/ }),
-/* 121 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(5),
@@ -30025,7 +29730,7 @@ module.exports = logger;
 
 
 /***/ }),
-/* 122 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(5),
@@ -30057,15 +29762,15 @@ module.exports = logger;
 
 
 /***/ }),
-/* 123 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Minilog = __webpack_require__(118);
+var Minilog = __webpack_require__(117);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(120);
+    console = __webpack_require__(119);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -30097,15 +29802,15 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(119),
+  array: __webpack_require__(118),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(125),
-  jQuery: __webpack_require__(124)
+  localStorage: __webpack_require__(124),
+  jQuery: __webpack_require__(123)
 };
 
 
 /***/ }),
-/* 124 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(5);
@@ -30185,7 +29890,7 @@ module.exports = AjaxLogger;
 
 
 /***/ }),
-/* 125 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(5),
@@ -30205,7 +29910,7 @@ logger.write = function(name, level, args) {
 module.exports = logger;
 
 /***/ }),
-/* 126 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30274,7 +29979,7 @@ module.exports = {
 
 
 /***/ }),
-/* 127 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30371,13 +30076,13 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 128 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var errorEx = __webpack_require__(102);
-var fallback = __webpack_require__(129);
+var errorEx = __webpack_require__(101);
+var fallback = __webpack_require__(128);
 
 var JSONError = errorEx('JSONError', {
 	fileName: errorEx.append('in %s')
@@ -30413,7 +30118,7 @@ module.exports = function (x, reviver, filename) {
 
 
 /***/ }),
-/* 129 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -30424,7 +30129,7 @@ module.exports = function (x, reviver, filename) {
 
 // RTFM: http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf
 
-var Uni = __webpack_require__(130)
+var Uni = __webpack_require__(129)
 
 function isHexDigit(x) {
   return (x >= '0' && x <= '9')
@@ -31171,7 +30876,7 @@ module.exports.tokenize = function tokenizeJSON(input, options) {
 
 
 /***/ }),
-/* 130 */
+/* 129 */
 /***/ (function(module, exports) {
 
 
@@ -31248,7 +30953,7 @@ module.exports.NonAsciiIdentifierPart = /[\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u0
 
 
 /***/ }),
-/* 131 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31545,10 +31250,10 @@ Promise.reject = function (reason) {
 
 module.exports = Promise;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(32).setImmediate))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(32).setImmediate))
 
 /***/ }),
-/* 132 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31569,7 +31274,7 @@ module.exports = function (url) {
 
 
 /***/ }),
-/* 133 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -32105,10 +31810,10 @@ module.exports = function (url) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(155)(module), __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(154)(module), __webpack_require__(1)))
 
 /***/ }),
-/* 134 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32199,7 +31904,7 @@ var isArray = Array.isArray || function (xs) {
 
 
 /***/ }),
-/* 135 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32291,14 +31996,14 @@ var objectKeys = Object.keys || function (obj) {
 
 
 /***/ }),
-/* 136 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(Buffer) {
 
 var Writable = __webpack_require__(6).Writable;
-var inherits = __webpack_require__(53).inherits;
+var inherits = __webpack_require__(52).inherits;
 var Promise = __webpack_require__(46);
 
 function BufferStream() {
@@ -32371,38 +32076,17 @@ module.exports = function read(stream, options, cb) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3).Buffer))
 
 /***/ }),
-/* 137 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(9);
 
 
 /***/ }),
-/* 138 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -32415,7 +32099,7 @@ var Transform = __webpack_require__(48);
 
 /*<replacement>*/
 var util = __webpack_require__(14);
-util.inherits = __webpack_require__(1);
+util.inherits = __webpack_require__(0);
 /*</replacement>*/
 
 util.inherits(PassThrough, Transform);
@@ -32431,7 +32115,7 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 };
 
 /***/ }),
-/* 139 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32439,100 +32123,90 @@ PassThrough.prototype._transform = function (chunk, encoding, cb) {
 
 /*<replacement>*/
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 var Buffer = __webpack_require__(31).Buffer;
 /*</replacement>*/
 
-function copyBuffer(src, target, offset) {
-  src.copy(target, offset);
+module.exports = BufferList;
+
+function BufferList() {
+  this.head = null;
+  this.tail = null;
+  this.length = 0;
 }
 
-module.exports = function () {
-  function BufferList() {
-    _classCallCheck(this, BufferList);
+BufferList.prototype.push = function (v) {
+  var entry = { data: v, next: null };
+  if (this.length > 0) this.tail.next = entry;else this.head = entry;
+  this.tail = entry;
+  ++this.length;
+};
 
-    this.head = null;
-    this.tail = null;
-    this.length = 0;
+BufferList.prototype.unshift = function (v) {
+  var entry = { data: v, next: this.head };
+  if (this.length === 0) this.tail = entry;
+  this.head = entry;
+  ++this.length;
+};
+
+BufferList.prototype.shift = function () {
+  if (this.length === 0) return;
+  var ret = this.head.data;
+  if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
+  --this.length;
+  return ret;
+};
+
+BufferList.prototype.clear = function () {
+  this.head = this.tail = null;
+  this.length = 0;
+};
+
+BufferList.prototype.join = function (s) {
+  if (this.length === 0) return '';
+  var p = this.head;
+  var ret = '' + p.data;
+  while (p = p.next) {
+    ret += s + p.data;
+  }return ret;
+};
+
+BufferList.prototype.concat = function (n) {
+  if (this.length === 0) return Buffer.alloc(0);
+  if (this.length === 1) return this.head.data;
+  var ret = Buffer.allocUnsafe(n >>> 0);
+  var p = this.head;
+  var i = 0;
+  while (p) {
+    p.data.copy(ret, i);
+    i += p.data.length;
+    p = p.next;
   }
-
-  BufferList.prototype.push = function push(v) {
-    var entry = { data: v, next: null };
-    if (this.length > 0) this.tail.next = entry;else this.head = entry;
-    this.tail = entry;
-    ++this.length;
-  };
-
-  BufferList.prototype.unshift = function unshift(v) {
-    var entry = { data: v, next: this.head };
-    if (this.length === 0) this.tail = entry;
-    this.head = entry;
-    ++this.length;
-  };
-
-  BufferList.prototype.shift = function shift() {
-    if (this.length === 0) return;
-    var ret = this.head.data;
-    if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
-    --this.length;
-    return ret;
-  };
-
-  BufferList.prototype.clear = function clear() {
-    this.head = this.tail = null;
-    this.length = 0;
-  };
-
-  BufferList.prototype.join = function join(s) {
-    if (this.length === 0) return '';
-    var p = this.head;
-    var ret = '' + p.data;
-    while (p = p.next) {
-      ret += s + p.data;
-    }return ret;
-  };
-
-  BufferList.prototype.concat = function concat(n) {
-    if (this.length === 0) return Buffer.alloc(0);
-    if (this.length === 1) return this.head.data;
-    var ret = Buffer.allocUnsafe(n >>> 0);
-    var p = this.head;
-    var i = 0;
-    while (p) {
-      copyBuffer(p.data, ret, i);
-      i += p.data.length;
-      p = p.next;
-    }
-    return ret;
-  };
-
-  return BufferList;
-}();
+  return ret;
+};
 
 /***/ }),
-/* 140 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(6).PassThrough
 
 
 /***/ }),
-/* 141 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(6).Transform
 
 
 /***/ }),
-/* 142 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(30);
 
 
 /***/ }),
-/* 143 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -32722,10 +32396,10 @@ module.exports = __webpack_require__(30);
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0), __webpack_require__(8)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(8)))
 
 /***/ }),
-/* 144 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -40931,7 +40605,7 @@ return /******/ (function(modules) { // webpackBootstrap
 //# sourceMappingURL=socket.io.js.map
 
 /***/ }),
-/* 145 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -40958,14 +40632,14 @@ return /******/ (function(modules) { // webpackBootstrap
 module.exports = Stream;
 
 var EE = __webpack_require__(4).EventEmitter;
-var inherits = __webpack_require__(1);
+var inherits = __webpack_require__(0);
 
 inherits(Stream, EE);
 Stream.Readable = __webpack_require__(6);
-Stream.Writable = __webpack_require__(142);
-Stream.Duplex = __webpack_require__(137);
-Stream.Transform = __webpack_require__(141);
-Stream.PassThrough = __webpack_require__(140);
+Stream.Writable = __webpack_require__(141);
+Stream.Duplex = __webpack_require__(136);
+Stream.Transform = __webpack_require__(140);
+Stream.PassThrough = __webpack_require__(139);
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
@@ -41064,14 +40738,14 @@ Stream.prototype.pipe = function(dest, options) {
 
 
 /***/ }),
-/* 146 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(52)
-var inherits = __webpack_require__(1)
-var response = __webpack_require__(147)
+/* WEBPACK VAR INJECTION */(function(Buffer, global, process) {var capability = __webpack_require__(51)
+var inherits = __webpack_require__(0)
+var response = __webpack_require__(146)
 var stream = __webpack_require__(6)
-var toArrayBuffer = __webpack_require__(149)
+var toArrayBuffer = __webpack_require__(148)
 
 var IncomingMessage = response.IncomingMessage
 var rStates = response.readyStates
@@ -41374,14 +41048,14 @@ var unsafeHeaders = [
 	'via'
 ]
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3).Buffer, __webpack_require__(0), __webpack_require__(8)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3).Buffer, __webpack_require__(1), __webpack_require__(8)))
 
 /***/ }),
-/* 147 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(52)
-var inherits = __webpack_require__(1)
+/* WEBPACK VAR INJECTION */(function(process, Buffer, global) {var capability = __webpack_require__(51)
+var inherits = __webpack_require__(0)
 var stream = __webpack_require__(6)
 
 var rStates = exports.readyStates = {
@@ -41563,10 +41237,10 @@ IncomingMessage.prototype._onXHRProgress = function () {
 	}
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(3).Buffer, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8), __webpack_require__(3).Buffer, __webpack_require__(1)))
 
 /***/ }),
-/* 148 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41628,7 +41302,7 @@ module.exports = function (req, time) {
 
 
 /***/ }),
-/* 149 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Buffer = __webpack_require__(3).Buffer
@@ -41661,13 +41335,13 @@ module.exports = function (buf) {
 
 
 /***/ }),
-/* 150 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var url = __webpack_require__(33);
-var prependHttp = __webpack_require__(132);
+var prependHttp = __webpack_require__(131);
 
 module.exports = function (x) {
 	var withProtocol = prependHttp(x);
@@ -41682,7 +41356,7 @@ module.exports = function (x) {
 
 
 /***/ }),
-/* 151 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41705,7 +41379,7 @@ module.exports = {
 
 
 /***/ }),
-/* 152 */
+/* 151 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -41776,10 +41450,10 @@ function config (name) {
   return String(val).toLowerCase() === 'true';
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 153 */
+/* 152 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -41808,7 +41482,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 154 */
+/* 153 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -41819,7 +41493,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 155 */
+/* 154 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -41847,7 +41521,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 156 */
+/* 155 */
 /***/ (function(module, exports) {
 
 module.exports = extend
@@ -41872,7 +41546,7 @@ function extend() {
 
 
 /***/ }),
-/* 157 */
+/* 156 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -41920,7 +41594,7 @@ module.exports = {
 		"minilog": "3.1.0",
 		"promise": "7.1.1",
 		"scratch-audio": "^0.1.0-prerelease.0",
-		"scratch-blocks": "^0.1.0-prerelease.0",
+		"scratch-blocks": "0.1.0-prerelease.1501594643",
 		"scratch-render": "^0.1.0-prerelease.0",
 		"scratch-storage": "^0.2.0",
 		"script-loader": "0.7.0",
@@ -41934,6 +41608,12 @@ module.exports = {
 };
 
 /***/ }),
+/* 157 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
 /* 158 */
 /***/ (function(module, exports) {
 
@@ -41941,12 +41621,6 @@ module.exports = {
 
 /***/ }),
 /* 159 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
-/* 160 */
 /***/ (function(module, exports) {
 
 /* (ignored) */

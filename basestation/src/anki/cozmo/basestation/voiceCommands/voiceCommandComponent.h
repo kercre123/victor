@@ -17,10 +17,16 @@
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "audioUtil/audioCaptureSystem.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/voiceCommandTypes.h"
+
+#define VC_BROADCASTING_FUNCTIONALITY 0
+
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
+#include "audioUtil/audioCaptureSystem.h"
+#endif
 
 #include <memory>
 #include <mutex>
@@ -28,6 +34,7 @@
 namespace Anki {
   
 namespace AudioUtil {
+  class AudioCaptureSystem;
   class AudioRecognizerProcessor;
   class SpeechRecognizer;
 }
@@ -77,7 +84,6 @@ private:
   const CozmoContext&                                   _context;
   std::unique_ptr<Util::Locale>                         _locale;
   std::unique_ptr<AudioUtil::AudioRecognizerProcessor>  _recogProcessor;
-  std::unique_ptr<AudioUtil::AudioCaptureSystem>        _captureSystem;
   std::unique_ptr<AudioUtil::SpeechRecognizer>          _recognizer;
   std::unique_ptr<CommandPhraseData>                    _phraseData;
   BackpackLightDataLocator                              _bodyLightDataLocator{};
@@ -99,10 +105,13 @@ private:
   bool HandleCommand(const VoiceCommandType& command);
   
   void UpdateContextForRecognizer();
-  bool RequestEnableVoiceCommand(AudioUtil::AudioCaptureSystem::PermissionState permissionState);
   
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
+  std::unique_ptr<AudioUtil::AudioCaptureSystem>        _captureSystem;
+  bool RequestEnableVoiceCommand(AudioUtil::AudioCaptureSystem::PermissionState permissionState);
   AudioCapturePermissionState ConvertAudioCapturePermission(AudioUtil::AudioCaptureSystem::PermissionState state);
   bool StateRequiresCallback(AudioUtil::AudioCaptureSystem::PermissionState permissionState) const;
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
   
   void SetListenContext(VoiceCommandListenContext listenContext);
   
@@ -112,6 +121,7 @@ private:
 template<typename T>
 void VoiceCommandComponent::BroadcastVoiceEvent(T&& event, bool useDeferred)
 {
+#if VC_BROADCASTING_FUNCTIONALITY
   auto* externalInterface = _context.GetExternalInterface();
   if (externalInterface)
   {
@@ -124,6 +134,7 @@ void VoiceCommandComponent::BroadcastVoiceEvent(T&& event, bool useDeferred)
       externalInterface->BroadcastToGame<VoiceCommandEvent>(VoiceCommandEventUnion(std::forward<T>(event)));
     }
   }
+#endif // VC_BROADCASTING_FUNCTIONALITY
 }
 
   

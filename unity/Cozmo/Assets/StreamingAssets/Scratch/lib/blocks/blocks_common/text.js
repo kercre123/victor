@@ -32,9 +32,6 @@ goog.require('Blockly.Colours');
 
 goog.require('Blockly.constants');
 
-// *** ANKI Change ***
-var MAX_TEXT_LENGTH = 32;
-
 Blockly.Blocks['text'] = {
   /**
    * Block for text value.
@@ -52,39 +49,6 @@ Blockly.Blocks['text'] = {
       "output": "String",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "colour": Blockly.Colours.textField
-    });
-  }
-};
-
-// *** ANKI Change ***
-// Same as text block above, with a validator added
-Blockly.Blocks['text_with_validator'] = {
-  /**
-   * Block for text value.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit({
-      "message0": "%1",
-      "args0": [
-        {
-          "type": "field_input",
-          "name": "TEXT"
-        }
-      ],
-      "output": "String",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "colour": Blockly.Colours.textField
-    });
-
-    // Add validator for cozmo_says block to limit the length of the string to
-    // MAX_TEXT_LENGTH characters.
-    this.getField("TEXT").setValidator(function(inputText) {
-      if (inputText.length > MAX_TEXT_LENGTH) {
-        inputText = inputText.slice(0, MAX_TEXT_LENGTH);
-      }
-
-      return inputText;
     });
   }
 };

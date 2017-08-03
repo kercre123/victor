@@ -386,8 +386,10 @@ namespace Cozmo.Hub {
     }
 
     private void DeregisterSparksViewEvents() {
-      _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
-      _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+      if (_SparksViewInstance != null) {
+        _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
+        _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+      }
       if (_SparksDetailModalInstance != null) {
         _SparksDetailModalInstance.OnSparkCompleteToReturn -= HandleSparkEnded;
       }
@@ -400,17 +402,17 @@ namespace Cozmo.Hub {
 
     #endregion
 
-    #region Open Sparks Detail View from VC/Random
+    #region Open Sparks Detail View from Random
 
     private void HandleRandomTrickStarted(HardSparkStartedByEngine sparkStartedMsg) {
-      // Open the SparksDetailView if it was from VC or random "Do A Trick", not from specific UI interaction
+      // Open the SparksDetailView if it was from random "Do A Trick", not from specific UI interaction
       bool playerSparksModalNotOpen = (_SparksDetailModalInstance == null);
       // Onboarding is using it's own screen that removes all this functionality.
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
         return;
       }
 
-      // When sparks are started by engine via VC or offer flow, HardSparkStartedByEngine is sent
+      // When sparks are started by engine offer flow, HardSparkStartedByEngine is sent
       // before robot.IsSparked is updated. However, in the player driven "specific spark" flow, 
       // robot.IsSparked is updated before this message is recieved. 
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;

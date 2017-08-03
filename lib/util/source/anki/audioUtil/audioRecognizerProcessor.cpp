@@ -12,7 +12,7 @@
 
 #include "audioUtil/audioRecognizerProcessor.h"
 
-#include "audioUtil/audioCaptureSystem.h"
+#include "audioUtil/iAudioInputSource.h"
 #include "audioUtil/speechRecognizer.h"
 #include "audioUtil/waveFile.h"
 

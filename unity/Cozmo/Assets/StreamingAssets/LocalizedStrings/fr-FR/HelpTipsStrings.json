@@ -28,7 +28,7 @@
     "translation" : "Cozmo a vu\u000ace cube."
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmo wants to\u000ause this Cube."
+    "translation" : "Cozmo veut\u000autiliser ce cube."
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "La pile de ce cube\u000aest faible"
@@ -37,34 +37,19 @@
     "translation" : "Cozmo s'améliore avec le temps."
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Each day you fill Cozmo's yellow Play bar, you earn a Bonus Token. Bonus Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Abilities."
+    "translation" : "Chaque fois que tu satisfais l'envie de jouer de Cozmo, tu gagnes un Token. Les Tokens débloquent les boîtes à bonus, pleines de récompenses telles que des étincelles, des jeux et des tours."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
+    "translation" : "<color=#FFFFFF>Gagne des </color><b><color=#F5BF2D>Tokens</color></b><color=#FFFFFF> chaque jour.</color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
-  },
-  "helpTipsStrings.Slide4.title" : {
-    "translation" : "Énergie, bits et étincelles"
-  },
-  "helpTipsStrings.Slide4.body" : {
-    "translation" : "Gagne de l'<color=#00bd3dff>énergie</color> en atteignant tes objectifs quotidiens. Grâce à l'énergie, tu obtiens des <color=#fe8f00ff>bits</color> et des <color=#11a2f0ff>étincelles</color> : utilise-les pour débloquer les mises à niveau et les applications Cozmo !"
-  },
-  "helpTipsStrings.Slide4.bodyEnergy" : {
-    "translation" : "Énergie"
-  },
-  "helpTipsStrings.Slide4.bodyBits" : {
-    "translation" : "Bits"
-  },
-  "helpTipsStrings.Slide4.bodySparks" : {
-    "translation" : "Étincelles"
+    "translation" : "<color=#FFFFFF>3 Tokens débloquent une </color><b><color=#F5BF2D>boîte à bonus.</color></b>"
   },
   "helpTipsStrings.Slide5.title" : {
     "translation" : "Occupe-toi bien de Cozmo."
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Lance l'application de Cozmo chaque jour afin qu'il puisse rester heureux et aide-le à apprendre et à progresser tout en débloquant de nouvelles compétences. Connecte-toi à Cozmo pour le réveiller et lui porter l'attention dont il a besoin."
+    "translation" : "Launch the Cozmo App to check in each day to keep Cozmo happy. When you fill his Play Need daily, you help him learn and grow by earning Bonus Boxes. Connect to Cozmo to wake him up and give him the attention he needs."
   },
   "helpTipsStrings.Slide6.title" : {
     "translation" : "Assure la sécurité de Cozmo."

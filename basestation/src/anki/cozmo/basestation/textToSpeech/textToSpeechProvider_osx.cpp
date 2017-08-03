@@ -223,7 +223,7 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   data.Init(AcapelaTTS::GetSampleRate(), AcapelaTTS::GetNumChannels());
   
   // Start processing text
-  DWORD dwTextFlags = BABTTS_TEXT | BABTTS_TXT_UTF8 | BABTTS_READ_DEFAULT | BABTTS_TAG_NO;
+  DWORD dwTextFlags = BABTTS_TEXT | BABTTS_TXT_UTF8 | BABTTS_READ_DEFAULT | BABTTS_TAG_SAPI;
   err = BabTTS_InsertText(_lpBabTTS, text.c_str(), dwTextFlags);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.CreateAudioData.InsertText",

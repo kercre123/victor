@@ -281,6 +281,11 @@ namespace Anki {
       return vizID;
     }
     
+    void VizManager::DisplayCameraImage(const TimeStamp_t timestamp)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::DisplayImage(timestamp)));
+    }
+    
     void VizManager::DrawCameraOval(const Point2f &center,
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)
@@ -838,10 +843,11 @@ namespace Anki {
                                     const u8 videoFrameRateHz,
                                     const u8 imageProcFrameRateHz,
                                     const u8 enabledAnimTracks,
-                                    const u8 animTag)
+                                    const u8 animTag,
+                                    const f32 imuTemperature_degC)
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, numAnimAudioFramesFree, videoFrameRateHz, imageProcFrameRateHz, enabledAnimTracks, animTag, imuTemperature_degC)));
     }
     
     void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)

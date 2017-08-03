@@ -142,6 +142,7 @@ CONSOLE_FUNC( ActivitySetSingingCooldown, "ActivityFreeplay", float cooldown_ms)
 ActivityFreeplay::ActivityFreeplay(Robot& robot, const Json::Value& config)
 : IActivity(robot, config)
 , _currentActivityPtr(nullptr)
+, _requestedActivity(ActivityID::Invalid)
 , _debugConsoleRequestedActivity(ActivityID::Invalid)
 , _robot(robot)
 {

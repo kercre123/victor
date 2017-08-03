@@ -94,6 +94,7 @@ namespace Cozmo {
     ObjectID _objectID_C;
     
     std::set<ObjectID> _objectsSeen;
+    std::map<ObjectID, u8> _objectIDToIdx;
     
     bool _turnInPlaceDone = false;
     bool _isMoving = false;
@@ -147,7 +148,7 @@ namespace Cozmo {
         
       case TestState::WaitForCubeConnections:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 3, 5) {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 3, 3) {
           _testState = TestState::InitialLocalization;
         }
         break;
@@ -217,7 +218,7 @@ namespace Cozmo {
                      "Localization to second object failed.");
           
           // We should only know about one object now: Object B
-          CST_ASSERT(CheckObjectPoses({1}, "LocalizeToObjectB"),
+          CST_ASSERT(CheckObjectPoses({_objectID_B}, "LocalizeToObjectB"),
                      "LocalizeToObjectB: Object pose checks failed");
           
           // Turn back to see object A
@@ -237,7 +238,7 @@ namespace Cozmo {
                      "Localization after re-seeing first object failed.");
           
           // We should only know about two objects now: Objects A and B
-          CST_ASSERT(CheckObjectPoses({0,1}, "ReSeeObjectA"),
+          CST_ASSERT(CheckObjectPoses({_objectID_A,_objectID_B}, "ReSeeObjectA"),
                      "ReSeeObjectA: Object pose checks failed");
           
           // Kidnap the robot (move actual robot and just tell it to delocalize
@@ -259,7 +260,7 @@ namespace Cozmo {
                                               _robotState.localizedToObjectID == _objectID_C)
         {
           // We should only know about one object now: Object C
-          CST_ASSERT(CheckObjectPoses({2}, "LocalizeToObjectC"),
+          CST_ASSERT(CheckObjectPoses({_objectID_C}, "LocalizeToObjectC"),
                      "LocalizeToObjectC: Object pose checks failed");
           
           // Kidnap the robot (move actual robot and just tell it to delocalize
@@ -282,7 +283,7 @@ namespace Cozmo {
                      "SeeObjectAWithoutLocalizing: Should not localize to object A - should be too far");
           
           // We should only know about one object now: Objects A
-          CST_ASSERT(CheckObjectPoses({0}, "SeeObjectAWithoutLocalizing"),
+          CST_ASSERT(CheckObjectPoses({_objectID_A}, "SeeObjectAWithoutLocalizing"),
                      "SeeObjectAWithoutLocalizing: Object pose checks failed");
 
           // Turn towards C again
@@ -300,7 +301,7 @@ namespace Cozmo {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_C, 3)
         {
           // We should only know about A and C now
-          CST_ASSERT(CheckObjectPoses({0,2}, "RelocalizeToObjectC"),
+          CST_ASSERT(CheckObjectPoses({_objectID_A,_objectID_C}, "RelocalizeToObjectC"),
                      "RelocalizeToObjectC: Object pose checks failed");
           
           // Turn towards B again
@@ -317,7 +318,7 @@ namespace Cozmo {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_B, 3)
         {
           // We should know about all three objects now
-          CST_ASSERT(CheckObjectPoses({0,1,2}, "RelocalizeToObjectB"),
+          CST_ASSERT(CheckObjectPoses({_objectID_A,_objectID_B,_objectID_C}, "RelocalizeToObjectB"),
                      "RelocalizeToObjectC: Object pose checks failed");
           
           _testState = TestState::TestDone;
@@ -348,7 +349,8 @@ namespace Cozmo {
     
     for(auto & objectID : IDs)
     {
-      if(!IsObjectPoseWrtRobotCorrect(objectID, *_objectPosesActual[objectID], _poseDistThresh_mm, _poseAngleThresh, debugStr))
+      if(!IsObjectPoseWrtRobotCorrect(objectID, *_objectPosesActual[_objectIDToIdx[objectID]], 
+                                      _poseDistThresh_mm, _poseAngleThresh, debugStr))
       {
         return false;
       }
@@ -369,14 +371,17 @@ namespace Cozmo {
     {
       case TestState::InitialLocalization:
         _objectID_A = _robotState.localizedToObjectID;
+        _objectIDToIdx[_objectID_A] = 0;
         break;
         
       case TestState::LocalizeToObjectB:
         _objectID_B = _robotState.localizedToObjectID;
+        _objectIDToIdx[_objectID_B] = 1;
         break;
     
       case TestState::LocalizeToObjectC:
         _objectID_C = _robotState.localizedToObjectID;
+        _objectIDToIdx[_objectID_C] = 2;
         break;
         
       default:

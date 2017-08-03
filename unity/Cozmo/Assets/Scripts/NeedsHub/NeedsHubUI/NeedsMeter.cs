@@ -21,9 +21,6 @@ namespace Cozmo {
       private CozmoImage _ImageBurst = null;
 
       [SerializeField]
-      private CozmoImage _DimmedImage;
-
-      [SerializeField]
       private ParticleSystem _ConstantParticles = null;
 
       [SerializeField]
@@ -81,9 +78,6 @@ namespace Cozmo {
       [SerializeField]
       private Color _IncreasingColor = Color.white;
 
-      [SerializeField]
-      private Animator _FilledEffectAnimator = null;
-
       #endregion //Serialized Fields
 
       #region Non-serialized Fields
@@ -134,15 +128,6 @@ namespace Cozmo {
       private float _BurstTimer = 0f;
 
       private bool _Initialized = false;
-
-      public bool Dim {
-        get {
-          return _DimmedImage.gameObject.activeInHierarchy;
-        }
-        set {
-          _DimmedImage.gameObject.SetActive(value);
-        }
-      }
 
       #endregion // Non-serialized Fields
 
@@ -315,10 +300,6 @@ namespace Cozmo {
             _ImageFillGlow.color = _NormalColor;
             _AnimStartValue = currentValue;
             _BurstTimer = _BurstTime_sec;
-
-            if (_FilledEffectAnimator != null && currentValue >= 1f) {
-              _FilledEffectAnimator.SetTrigger("play");
-            }
           }
         }
       }

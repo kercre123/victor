@@ -569,6 +569,9 @@ namespace Anki {
       IMUData.acc_y = (f32)(vals[1] * 1000);
       IMUData.acc_z = (f32)(vals[2] * 1000);
       
+      // TODO: Compute estimated IMU temperature here
+      IMUData.temperature_degC = 20.f;
+      
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;
       bool newReading = lastReadTimestamp != HAL::GetTimeStamp();

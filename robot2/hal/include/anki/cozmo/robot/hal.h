@@ -106,6 +106,7 @@ namespace Anki
         inline void Reset() {
           acc_x = acc_y = acc_z = 0.0f;
           rate_x = rate_y = rate_z = 0.0f;
+          temperature_degC = 0.f;
         }
         
         f32 acc_x;  ///< mm/s/s
@@ -114,6 +115,8 @@ namespace Anki
         f32 rate_x; ///< rad/s
         f32 rate_y; ///< rad/s
         f32 rate_z; ///< rad/s
+        
+        f32 temperature_degC;
       };
 
       /** Read acceleration and rate

@@ -33,56 +33,46 @@ public static class CozmoBinding {
   public static Guid AppRunId = GetAppRunId();
 
   #if UNITY_IOS || UNITY_STANDALONE
+  private const string _DllName = "__Internal";
+  #elif UNITY_ANDROID
+  private const string _DllName = "cozmoEngine";
+  #endif
 
-  [DllImport("__Internal")]
+  #if UNITY_IOS || UNITY_STANDALONE || UNITY_ANDROID
+
+  [DllImport(_DllName)]
   private static extern int cozmo_startup(string configuration_data);
 
-  [DllImport("__Internal")]
+  [DllImport(_DllName)]
   private static extern int cozmo_shutdown();
 
-  [DllImport("__Internal")]
+  [DllImport(_DllName)]
   private static extern int cozmo_wifi_setup(string wifiSSID, string wifiPasskey);
 
-  [DllImport("__Internal")]
+  [DllImport(_DllName)]
   private static extern void cozmo_send_to_clipboard(string logData);
 
-  [DllImport("__Internal")]
+  [DllImport(_DllName)]
   public static extern uint cozmo_transmit_engine_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
 
-  [DllImport("__Internal")]
+  [DllImport(_DllName)]
   public static extern void cozmo_transmit_game_to_engine(byte[] bytes, System.UIntPtr len);
 
-  [DllImport("__Internal")]
+  [DllImport(_DllName)]
   public static extern uint cozmo_transmit_viz_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
 
-  [DllImport("__Internal")]
+  [DllImport(_DllName)]
   public static extern void cozmo_execute_background_transfers();
 
-  #elif UNITY_ANDROID
+  [DllImport(_DllName)]
+  private static extern UInt32 cozmo_activate_experiment(System.IntPtr requestBuffer,
+                                                         System.UIntPtr requestBufferlen,
+                                                         System.IntPtr responseBuffer,
+                                                         System.UIntPtr responseBufferLen);
 
-  [DllImport("cozmoEngine")]
-  private static extern int cozmo_startup(string configuration_data);
+  #endif
 
-  [DllImport("cozmoEngine")]
-  private static extern int cozmo_shutdown();
-
-  [DllImport("cozmoEngine")]
-  private static extern int cozmo_wifi_setup(string wifiSSID, string wifiPasskey);
-
-  [DllImport("cozmoEngine")]
-  private static extern void cozmo_send_to_clipboard(string logData);
-
-  [DllImport("cozmoEngine")]
-  private static extern string cozmo_get_device_id_file_path(string persistentDataPath);
-
-  [DllImport("cozmoEngine")]
-  public static extern uint cozmo_transmit_engine_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
-
-  [DllImport("cozmoEngine")]
-  public static extern void cozmo_transmit_game_to_engine(byte[] bytes, System.UIntPtr len);
-
-  [DllImport("cozmoEngine")]
-  public static extern uint cozmo_transmit_viz_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
+  #if UNITY_ANDROID
 
   [DllImport("cozmoEngine")]
   public static extern void cozmo_install_google_breakpad(string path);
@@ -91,7 +81,7 @@ public static class CozmoBinding {
   public static extern void cozmo_uninstall_google_breakpad();
 
   [DllImport("cozmoEngine")]
-  public static extern void cozmo_execute_background_transfers();
+  private static extern string cozmo_get_device_id_file_path(string persistentDataPath);
 
   #endif
 
@@ -161,6 +151,60 @@ public static class CozmoBinding {
       #endif
     }
 
+  }
+
+  public static Anki.Util.AnkiLab.AssignmentStatus
+    AnkiLabActivateExperiment(string experimentKey, out string variationKey)
+  {
+    var robot = RobotEngineManager.Instance.CurrentRobot;
+    string robotId = robot != null ? robot.SerialNumber.ToString() : "";
+
+    Anki.Util.AnkiLab.ActivateExperimentRequest req =
+      new Anki.Util.AnkiLab.ActivateExperimentRequest();
+    req.experiment_key = experimentKey;
+    req.user_id = robotId;
+
+    System.IO.MemoryStream requestStream = new System.IO.MemoryStream();
+    req.Pack(requestStream);
+
+    // storage for response
+    const uint responseBufferLen = 512;
+    byte[] responseBuffer = new byte[responseBufferLen];
+    byte[] requestBuffer = requestStream.GetBuffer();
+
+    GCHandle requestHandle = GCHandle.Alloc(requestBuffer, GCHandleType.Pinned);
+    GCHandle responseHandle = GCHandle.Alloc(responseBuffer, GCHandleType.Pinned);
+
+    UInt32 bytesWritten = cozmo_activate_experiment(requestHandle.AddrOfPinnedObject(),
+      (System.UIntPtr)requestStream.Length,
+      responseHandle.AddrOfPinnedObject(),
+      (System.UIntPtr)responseBufferLen);
+
+    System.IO.MemoryStream responseStream = new System.IO.MemoryStream(responseBuffer);
+
+    Anki.Util.AnkiLab.AssignmentStatus status = Anki.Util.AnkiLab.AssignmentStatus.Invalid;
+    if (bytesWritten > 0) {
+      Anki.Util.AnkiLab.ActivateExperimentResponse response =
+        new Anki.Util.AnkiLab.ActivateExperimentResponse(responseStream);
+      variationKey = response.variation_key;
+      status = response.status;
+    }
+    else {
+      variationKey = null;
+    }
+
+    requestHandle.Free();
+    responseHandle.Free();
+
+    return status;
+  }
+
+  // Returns the variationKey for the current profile in the specified experiment.
+  // The returned string will be null if the user is not part of the experiment.
+  public static string AnkiLabActivateExperiment(string experimentKey) {
+    string variationKey = null;
+    AnkiLabActivateExperiment(experimentKey, out variationKey);
+    return variationKey;
   }
 
   #if (UNITY_ANDROID && !UNITY_EDITOR)

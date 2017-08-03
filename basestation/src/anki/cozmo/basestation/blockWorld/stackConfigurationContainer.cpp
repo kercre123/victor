@@ -99,6 +99,6 @@ const BlockConfigurations::StackWeakPtr StackConfigurationContainer::GetTallestS
 }
 
   
-} // namesapce BlockConfiguration
+} // namespace BlockConfiguration
 } // namespace Cozmo
 } // namespace Anki

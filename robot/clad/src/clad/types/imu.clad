@@ -52,7 +52,9 @@ structure IMURawDataChunk {
   uint_8  timestamp
 }
 
-
+message IMUTemperature {
+  float_32 temperature_degC
+}
 
 } // RobotInterface
 } // Cozmo

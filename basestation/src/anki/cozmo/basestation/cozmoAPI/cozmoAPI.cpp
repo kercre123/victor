@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/cozmoAPI/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageShared.h"
+#include "util/ankiLab/ankiLabDef.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
@@ -127,6 +128,42 @@ void CozmoAPI::ExecuteBackgroundTransfers()
   engine->ExecuteBackgroundTransfers();
 }
 
+uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
+                                      uint8_t* responseBuffer, size_t responseLen)
+{
+  using namespace Anki::Util::AnkiLab;
+
+  // Response buffer will be filled in by ActivateExperiment. Set default values here.
+  ActivateExperimentResponse res{AssignmentStatus::Invalid, ""};
+  const size_t minResponseBufferLen = res.Size();
+
+  // Assert that parameters are valid
+  ASSERT_NAMED((nullptr != requestBuffer) && (requestLen > 0),
+               "Must provide a valid requestBuffer/requestBufferLen to activate experiment");
+  ASSERT_NAMED((nullptr != responseBuffer) && (responseLen >= minResponseBufferLen),
+               "Must provide a valid responseBuffer/responseBufferLen to activate experiment");
+
+  if (!_cozmoRunner) {
+    return 0;
+  }
+
+  _cozmoRunner->SyncWithEngineUpdate([this, &res, requestBuffer, requestLen] {
+
+    auto* engine = _cozmoRunner->GetEngine();
+    if (engine == nullptr) {
+      return;
+    }
+
+    // Unpack request buffer
+    ActivateExperimentRequest req{requestBuffer, requestLen};
+
+    res.status = engine->ActivateExperiment(req, res.variation_key);
+  });
+
+  const size_t bytesPacked = res.Pack(responseBuffer, responseLen);
+  return Anki::Util::numeric_cast<uint32_t>(bytesPacked);
+}
+
 size_t CozmoAPI::SendVizMessages(uint8_t* buffer, size_t bufferSize)
 {
   GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetVizMessagePort() : nullptr;
@@ -232,11 +269,22 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 
 bool CozmoAPI::CozmoInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
 {
-  Result updateResult = _cozmoInstance->Update(currentTime_nanosec);
+
+  Result updateResult;
+  {
+    std::lock_guard<std::mutex> lock{_updateMutex};
+    updateResult = _cozmoInstance->Update(currentTime_nanosec);
+  }
   if (updateResult != RESULT_OK) {
     PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
   }
   return updateResult == RESULT_OK;
+}
+
+void CozmoAPI::CozmoInstanceRunner::SyncWithEngineUpdate(const std::function<void ()>& func) const
+{
+  std::lock_guard<std::mutex> lock{_updateMutex};
+  func();
 }
 
 GameMessagePort* CozmoAPI::CozmoInstanceRunner::CreateVizMessagePort()

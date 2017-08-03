@@ -34,18 +34,18 @@
     "translation" : "カバーがキューブにはまっていることを確認します。これで点灯するはずです！"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
-    "translation" : "コズモも遊ぶのが空腹ですか？"
+    "translation" : "Cozmoがお腹を空かせていますか？"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
-    "translation" : "あなたがキューブに再接続している間、彼に素早い軽食を与えなさい。"
+    "translation" : "Cozmoのキューブに再接続している間に、おやつをあげてください。"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
-    "translation" : "クイックスナック"
+    "translation" : "おやつ"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmoは今遊ぶことができます"
+    "translation" : "Cozmoは遊び続けることができます"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
-    "translation" : "彼に十分な餌を与え続けるために、指示に従って彼が自分の立方体を認識できるようにしてください。"
+    "translation" : "Cozmoを十分にチャージするために、キューブを認識できるよう手順に従ってください。"
   }
 }

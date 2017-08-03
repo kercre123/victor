@@ -149,7 +149,7 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Initialization
 
-  // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
+  // called when the game starts to disable reactionary behaviors, then again when the game exs to re-enable them
   protected virtual void InitializeReactionaryBehaviorsForGameStart() {
     RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
   }
@@ -161,6 +161,10 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void InitializeChallenge(ChallengeData challengeData) {
+    if (challengeData.IsActivity) {
+      Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(true);
+    }
+
     _GameStartTime = Time.time;
     _GameIntervalLastTimestamp = -1;
     _StateMachine.SetGameRef(this);
@@ -918,6 +922,10 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     QuitChallenge();
+
+    if (_ChallengeData.IsActivity) {
+      Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
+    }
   }
 
   protected virtual void SendCustomEndGameDasEvents() {
@@ -962,6 +970,10 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void UpdatePlayNeed() {
+    if (_ChallengeData.IsActivity) {
+      Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
+    }
+
     if (Cozmo.Needs.NeedsStateManager.Instance != null) {
       if (_ChallengeData.IsMinigame) {
         if (DidHumanWin()) {
@@ -997,23 +1009,40 @@ public abstract class GameBase : MonoBehaviour {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextTie);
     }
     else if (currentEndIndex >= 0) {
+
+      bool useFlatText = _ShowEndWinnerSlide || showWinnerTextInShelf;
+
       PlayerInfo player = _PlayerInfo[currentEndIndex];
       if (player.playerType == PlayerType.Cozmo) {
-        winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+        if (useFlatText) {
+          winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWinsFlat);
+        }
+        else {
+          winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+        }
       }
       else {
         //If the player doesn't have a name, instead of "" WINS!, change the message to YOU WIN!
         if (!string.IsNullOrEmpty(player.name)) {
-          winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+          if (useFlatText) {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+          }
+          else {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWinsFlat, new object[] { player.name });
+          }
         }
         else {
-          winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextYouWin);
+          if (useFlatText) {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextYouWinFlat);
+          }
+          else {
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextYouWin);
+          }
         }
       }
     }
 
     if (_ShowEndWinnerSlide) {
-      winnerText = winnerText.Replace("\n", " ");
       SharedMinigameView.ShowWinnerStateSlide(DidHumanWin(), winnerText, footerText);
       SharedMinigameView.HideTitleWidget();
     }
@@ -1372,7 +1401,6 @@ public abstract class GameBase : MonoBehaviour {
     if (_InterruptedAlertView == null) {
       var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
                                                     new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
-                                                                             false,
                                                                              clickCallback: HandleInterruptionQuitGameViewClosed));
 
       var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,

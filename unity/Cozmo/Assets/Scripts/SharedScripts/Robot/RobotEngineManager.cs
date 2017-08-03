@@ -280,6 +280,11 @@ public class RobotEngineManager : MonoBehaviour {
     if (BlockPoolTracker == null) {
       BlockPoolTracker = new Cozmo.BlockPool.BlockPoolTracker(this);
     }
+
+    // Send A/B test data to engine
+    var defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    Message.StoredLabAssignments = new StoredLabAssignments(defaultProfile.LabAssignments.ToArray());
+    SendMessage();
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -327,6 +332,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.BehaviorObjectiveAchieved:
       ProcessBehaviorObjectiveAchieved(message.BehaviorObjectiveAchieved);
+      break;
+    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.UpdatedAssignments:
+      ProcessUpdatedAssignments(message.UpdatedAssignments);
       break;
     }
 
@@ -416,6 +424,10 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ProcessBehaviorObjectiveAchieved(Anki.Cozmo.ExternalInterface.BehaviorObjectiveAchieved message) {
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayBehaviorSuccess, message.behaviorObjective));
+  }
+
+  private void ProcessUpdatedAssignments(Anki.Cozmo.ExternalInterface.UpdatedAssignments message) {
+    DataPersistence.DataPersistenceManager.Instance.HandleUpdatedAssignments(message);
   }
 
   public void StartEngine(string locale) {
