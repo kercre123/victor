@@ -338,7 +338,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void PlayNeedsGetOutAnimIfNeeded() {
+  public void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
     // Do nothing
   }
 

@@ -1404,9 +1404,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PlayNeedsGetOutAnimIfNeeded() {
-    RobotEngineManager.Instance.Message.PlayNeedsGetOutAnimIfNeeded = Singleton<PlayNeedsGetOutAnimIfNeeded>.Instance;
-    RobotEngineManager.Instance.SendMessage();
+  public void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
+    SendQueueSingleAction(Singleton<PlayNeedsGetOutAnimIfNeeded>.Instance, callback);
   }
 
   public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName) {

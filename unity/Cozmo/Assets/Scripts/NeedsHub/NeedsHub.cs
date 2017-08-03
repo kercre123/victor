@@ -224,18 +224,21 @@ namespace Cozmo.Hub {
 
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
-        AllowFreeplayUI(false);
-        RobotEngineManager.Instance.CurrentRobot.PlayNeedsGetOutAnimIfNeeded();
+        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity (false);
+        AllowFreeplayUI (false);
 
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
-        RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig();
+        RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig ();
         if (rc != null) {
-          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger.Value);
+          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger (rc.RequestAcceptedAnimationTrigger.Value, HandleRequestAnimationComplete);
+        } else {
+          RobotEngineManager.Instance.CurrentRobot.PlayNeedsGetOutAnimIfNeeded (HandleRequestAnimationComplete);
         }
       }
+    }
 
+    private void HandleRequestAnimationComplete(bool animSuccessful = false) {
       // Close needs dialog if open
       if (_NeedsViewHubInstance != null) {
         DeregisterNeedsViewEvents();

@@ -859,7 +859,9 @@ Result BehaviorManager::Update(Robot& robot)
   
   
   // Make sure to clear the current flags if we are in a reactionary behavior
-  if (GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) {
+  // or if we've transitioned out of freeplay
+  if ((GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) ||
+      (_currentHighLevelActivity != HighLevelActivity::Freeplay)) {
     EnsureRequestGameIsClear();
   }
   
