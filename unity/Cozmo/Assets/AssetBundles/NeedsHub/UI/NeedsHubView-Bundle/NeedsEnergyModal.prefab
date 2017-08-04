@@ -3945,7 +3945,7 @@ MonoBehaviour:
   - {fileID: 114279688461799594}
   - {fileID: 114769811178298478}
   _MetersAnchor: {fileID: 224575174861205536}
-  _MetersWidgetPrefab: {fileID: 114382418139542362, guid: adf297d41e68d4520a6ad21dc4ed2e09,
+  _MetersWidgetPrefab: {fileID: 114457709407214418, guid: 0edf6af149c5e472c8fb72e859803eff,
     type: 2}
   _DoneCozmoButton: {fileID: 114977090514957632}
   _TweenSettings_CozmoHungryElements:

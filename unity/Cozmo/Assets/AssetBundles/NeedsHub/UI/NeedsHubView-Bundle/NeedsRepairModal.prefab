@@ -4343,7 +4343,7 @@ MonoBehaviour:
   _PreventForceClose: 0
   DimBackground: 1
   _MetersAnchor: {fileID: 224292376265430476}
-  _MetersWidgetPrefab: {fileID: 114382418139542362, guid: adf297d41e68d4520a6ad21dc4ed2e09,
+  _MetersWidgetPrefab: {fileID: 114457709407214418, guid: 0edf6af149c5e472c8fb72e859803eff,
     type: 2}
   _HeadElements:
     Buttons:
@@ -7289,7 +7289,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
