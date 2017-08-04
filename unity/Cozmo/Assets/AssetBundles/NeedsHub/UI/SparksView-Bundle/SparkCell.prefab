@@ -130,6 +130,8 @@ MonoBehaviour:
   _SparkCostContainer: {fileID: 1108910264490554}
   _SparksDetailModalPrefab: {fileID: 114836480710974580, guid: 252fd0f2d19f44513b171eb03531edd9,
     type: 2}
+  _UnlockableAlertIcon: {fileID: 21300000, guid: d4b0acd9a90974addb33b3931c05d473,
+    type: 3}
 --- !u!114 &114199587071953558
 MonoBehaviour:
   m_ObjectHideFlags: 1
