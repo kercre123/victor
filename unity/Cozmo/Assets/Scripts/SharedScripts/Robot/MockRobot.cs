@@ -339,7 +339,7 @@ public class MockRobot : IRobot {
   }
 
   public void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
-    // Do nothing
+    QueueCallback(0.1f, callback);
   }
 
   public void RemoveDrivingAnimations(string lockName) {
