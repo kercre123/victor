@@ -552,7 +552,7 @@ public class OnboardingManager : MonoBehaviour {
     return false;
   }
 
-  private void GiveStartingInventory() {
+  public void GiveStartingInventory() {
     PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
     Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(Cozmo.UI.GenericRewardsConfig.Instance.SparkID);
     int giveSparksAmount = itemData.StartingAmount;

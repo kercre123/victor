@@ -174,6 +174,7 @@ namespace Cozmo.Settings {
         RobotEngineManager.Instance.AddCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
 
         RobotEngineManager.Instance.CurrentRobot.WipeRobotGameData();
+        // This button actually means "erase everything" so we continue to restart everything in HandleEraseRobotStatus
       }
     }
 
@@ -191,6 +192,14 @@ namespace Cozmo.Settings {
           System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
           data.Pack(ms);
           RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
+
+          // Reset what is normally a read only value.
+          typeof(DataPersistence.DataPersistenceManager).GetField("Data").SetValue(DataPersistence.DataPersistenceManager.Instance,
+                                                                                  new DataPersistence.SaveData());
+          DataPersistence.DataPersistenceManager.Instance.Save();
+
+          // In the event after this disconnect you connect to yet another device, we still want you to have default sparks
+          OnboardingManager.Instance.GiveStartingInventory();
 
           _EraseCozmoModalInstance.CloseDialog();
           PauseManager.Instance.StartPlayerInducedSleep(false);
