@@ -307,7 +307,7 @@
     "translation": "<b>Winner:</b> Best of {0} Rounds"
   },
   "speedTap.text.displayWinnerSubtitle": {
-    "translation": "takes Round {0}!"
+    "translation": "takes ROUND {0}!"
   },
   "speedTap.text.roundScore": {
     "translation": "Player: {0} - Cozmo: {1}"
