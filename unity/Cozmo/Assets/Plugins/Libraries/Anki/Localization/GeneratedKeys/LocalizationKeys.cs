@@ -364,6 +364,7 @@ public static class LocalizationKeys {
   public const string kCubeHelpStringsInstructionsQuickSnackSlideButton = "cubeHelpStrings.Instructions.QuickSnackSlide.Button";
   public const string kCubeHelpStringsInstructionsFeedPopupTitle = "cubeHelpStrings.Instructions.FeedPopup.Title";
   public const string kCubeHelpStringsInstructionsFeedPopupBody = "cubeHelpStrings.Instructions.FeedPopup.Body";
+  public const string kCubeHelpStringsInstructionsSlideA2Copy = "cubeHelpStrings.Instructions.SlideA2Copy";
 
   #endregion
 
