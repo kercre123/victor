@@ -118,6 +118,7 @@ private:
   void TransitionToVerifyingFace(Robot& robot);
   void TransitionToPlayingRequstAnim(Robot& robot);
   void TransitionToIdle(Robot& robot);
+  void IdleLoop(Robot& robot);
   void TransitionToPlayingDenyAnim(Robot& robot);
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
   void ComputeFaceInteractionPose(Robot& robot);

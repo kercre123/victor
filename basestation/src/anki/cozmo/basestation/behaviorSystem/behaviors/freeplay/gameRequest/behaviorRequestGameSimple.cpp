@@ -542,14 +542,20 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
               &BehaviorRequestGameSimple::TransitionToIdle);
   SET_STATE(PlayingRequestAnim);
 }
- 
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
   SET_STATE(Idle);
   SendRequest(robot);
-  
+  IdleLoop(robot);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRequestGameSimple::IdleLoop(Robot& robot){
+
   
   if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count
      && GetFaceID() != Vision::UnknownFaceID){
@@ -562,7 +568,7 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
     StartActing(new TrackFaceAction(robot, GetFaceID()));
   }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
     StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 1),
-                &BehaviorRequestGameSimple::TransitionToIdle);
+                &BehaviorRequestGameSimple::IdleLoop);
   }else{
     StartActing( new HangAction(robot) );
   }
@@ -570,7 +576,7 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
   BehaviorObjectiveAchieved(BehaviorObjective::RequestedGame);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
