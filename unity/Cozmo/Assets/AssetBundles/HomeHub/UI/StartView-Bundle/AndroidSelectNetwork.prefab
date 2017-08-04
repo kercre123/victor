@@ -872,12 +872,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 80
+  m_fontSize: 70
   m_fontSizeBase: 72
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 80
-  m_fontSizeMax: 80
+  m_fontSizeMin: 45
+  m_fontSizeMax: 70
   m_fontStyle: 0
   m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
@@ -912,7 +912,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114948487268908030}
-    characterCount: 9
+    characterCount: 8
     spriteCount: 0
     spaceCount: 0
     wordCount: 1
@@ -1120,7 +1120,7 @@ MonoBehaviour:
   m_fontSizeBase: 100
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 108
+  m_fontSizeMin: 85
   m_fontSizeMax: 108
   m_fontStyle: 0
   m_textAlignment: 513
@@ -1156,10 +1156,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: -3.099257, w: 0}
   m_textInfo:
     textComponent: {fileID: 114974740370318896}
-    characterCount: 42
+    characterCount: 29
     spriteCount: 0
-    spaceCount: 6
-    wordCount: 7
+    spaceCount: 5
+    wordCount: 6
     linkCount: 0
     lineCount: 1
     pageCount: 1
@@ -1187,11 +1187,11 @@ MonoBehaviour:
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
-  _OverrideSkinFontSize: 0
+  _OverrideSkinFontSize: 1
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!222 &222134075160662900
 CanvasRenderer:
   m_ObjectHideFlags: 1
