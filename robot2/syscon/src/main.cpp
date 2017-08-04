@@ -48,7 +48,7 @@ void Main_Execution(void) {
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
-  //Opto::tick();
+  Opto::tick();
   Analog::tick();
   Contacts::tick();
   Lights::tick();
