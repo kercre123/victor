@@ -361,10 +361,10 @@
     "translation" : "CORRESPONDANCE !"
   },
   "label.dontSlap" : {
-    "translation" : "(FR) DON'T\u000aSLAP!"
+    "translation" : "DON'T\u000aSLAP!"
   },
   "label.noMatch" : {
-    "translation" : "(FR) NO\u000aMATCH"
+    "translation" : "NO\u000aMATCH"
   },
   "label.enterText" : {
     "translation" : "Saisis le texte..."

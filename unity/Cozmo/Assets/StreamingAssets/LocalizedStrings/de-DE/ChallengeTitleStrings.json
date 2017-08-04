@@ -88,9 +88,12 @@
     "translation" : "FALSCH"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "(DE) Cozmo loves being left to choose how he wants to play.  He'll automatically ask for Games and do Tricks, and sometimes even earn Sparks."
+    "translation" : "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for Games and do Tricks, and sometimes even earn Sparks."
   },
   "activityView.freeplayTitle" : {
     "translation" : "AKTUELLER MODUS: FREIES SPIEL"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "Cancel Face Scanning?"
   }
 }

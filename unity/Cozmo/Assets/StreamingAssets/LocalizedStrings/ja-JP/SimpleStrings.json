@@ -21,8 +21,14 @@
   "button.yes" : {
     "translation" : "はい"
   },
+  "button.yesPlease" : {
+    "translation" : "はい、お願いします"
+  },
   "button.no" : {
     "translation" : "いいえ"
+  },
+  "button.noThankYou" : {
+    "translation" : "いいえ、結構です"
   },
   "button.continue" : {
     "translation" : "続ける"

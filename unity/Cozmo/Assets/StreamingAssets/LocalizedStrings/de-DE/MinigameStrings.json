@@ -361,10 +361,10 @@
     "translation" : "ÜBEREINSTIMMUNG!"
   },
   "label.dontSlap" : {
-    "translation" : "(DE) DON'T\u000aSLAP!"
+    "translation" : "DON'T\u000aSLAP!"
   },
   "label.noMatch" : {
-    "translation" : "(DE) NO\u000aMATCH"
+    "translation" : "NO\u000aMATCH"
   },
   "label.enterText" : {
     "translation" : "Text eingeben..."

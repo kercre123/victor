@@ -21,8 +21,14 @@
   "button.yes" : {
     "translation" : "OUI"
   },
+  "button.yesPlease" : {
+    "translation" : "OUI, S'IL TE PLAIT"
+  },
   "button.no" : {
     "translation" : "NON"
+  },
+  "button.noThankYou" : {
+    "translation" : "NON, MERCI"
   },
   "button.continue" : {
     "translation" : "CONTINUER"

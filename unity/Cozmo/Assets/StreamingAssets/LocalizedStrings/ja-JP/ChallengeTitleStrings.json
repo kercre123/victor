@@ -92,5 +92,8 @@
   },
   "activityView.freeplayTitle" : {
     "translation" : "Cozmoは現在フリープレイ中です"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "顔のスキャンをキャンセルしますか？"
   }
 }

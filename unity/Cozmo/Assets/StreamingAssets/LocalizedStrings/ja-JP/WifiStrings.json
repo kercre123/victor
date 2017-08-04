@@ -40,7 +40,7 @@
     "translation" : "パスワードが表示されませんか？ここをタップ："
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "すべて大文字で入力してください。スペースは使用できません。"
+    "translation" : "空白のないすべてのCAPSを使用してください。ダッシュを含めます。"
   },
   "wifiStrings.Instructions.Slide3.5" : {
     "translation" : "Cozmoはインターネットアクセスを提供しません。"
