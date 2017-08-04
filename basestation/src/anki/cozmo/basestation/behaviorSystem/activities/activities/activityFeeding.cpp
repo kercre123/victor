@@ -729,8 +729,6 @@ void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 void ActivityFeeding::EatingInterrupted(Robot& robot)
 {
   using CS = FeedingCubeController::ControllerState;
-  DEV_ASSERT(_cubeControllerMap[_cubeIDToEat]->GetControllerState() == CS::DrainCube,
-             "ActivityFeeding.EatingInterrupted.CubeNotDraining");
   _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Deactivated);
   _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Activated);
 }
