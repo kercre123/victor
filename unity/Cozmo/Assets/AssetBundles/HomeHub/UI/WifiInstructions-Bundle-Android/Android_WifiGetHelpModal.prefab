@@ -534,13 +534,13 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 80
+  m_fontSize: 90
   m_fontSizeBase: 100
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 70
-  m_fontSizeMax: 80
-  m_fontStyle: 1
+  m_fontSizeMin: 80
+  m_fontSizeMax: 90
+  m_fontStyle: 0
   m_textAlignment: 260
   m_isAlignmentEnumConverted: 1
   m_characterSpacing: 0
@@ -600,16 +600,16 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: CozmoText_Settings_Title
+  _LinkedComponentId: Screen_Header_Text
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 1
+  _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
-  _OverrideSkinFontSize: 1
+  _OverrideSkinFontSize: 0
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 1
+  _OverrideSkinAutoSizing: 0
 --- !u!114 &114361363689837056
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -690,7 +690,7 @@ MonoBehaviour:
   m_fontSizeBase: 74
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 50
+  m_fontSizeMin: 45
   m_fontSizeMax: 65
   m_fontStyle: 0
   m_textAlignment: 514
@@ -969,11 +969,11 @@ MonoBehaviour:
   _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
-  _OverrideSkinFontSize: 1
-  _OverrideSkinFontStyle: 1
+  _OverrideSkinFontSize: 0
+  _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114718790122414122
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1214,7 +1214,7 @@ MonoBehaviour:
   m_fontSizeBase: 74
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 50
+  m_fontSizeMin: 45
   m_fontSizeMax: 65
   m_fontStyle: 0
   m_textAlignment: 513
@@ -1285,7 +1285,7 @@ MonoBehaviour:
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114904642752393038
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1443,6 +1443,6 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 175.3, y: -174.2}
+  m_AnchoredPosition: {x: 175.2998, y: -174.19995}
   m_SizeDelta: {x: 220, y: 220}
   m_Pivot: {x: 0.5, y: 0.5}

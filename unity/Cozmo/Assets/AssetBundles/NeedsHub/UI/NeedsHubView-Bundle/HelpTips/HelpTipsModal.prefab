@@ -345,8 +345,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4291930653
+  m_fontColor: {r: 0.11372549, g: 0.6666667, b: 0.81960785, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -363,12 +363,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 98
+  m_fontSize: 90
   m_fontSizeBase: 120
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 80
-  m_fontSizeMax: 98
+  m_fontSizeMax: 90
   m_fontStyle: 0
   m_textAlignment: 516
   m_isAlignmentEnumConverted: 1
@@ -429,9 +429,9 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: Helpscreen_Text_Large
+  _LinkedComponentId: Screen_Header_Text
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 1
+  _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
@@ -458,7 +458,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1

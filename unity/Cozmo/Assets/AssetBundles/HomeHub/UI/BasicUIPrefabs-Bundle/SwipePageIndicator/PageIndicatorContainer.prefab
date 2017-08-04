@@ -468,10 +468,10 @@ MonoBehaviour:
   m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0, g: 0, b: 0, a: 0}
-    m_PressedColor: {r: 0.88235295, g: 0.99215686, b: 1, a: 1}
-    m_DisabledColor: {r: 0.44313726, g: 0.627451, b: 0.7019608, a: 1}
-    m_ColorMultiplier: 0
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.8980392, g: 0.9843137, b: 0.99215686, a: 1}
+    m_DisabledColor: {r: 0.3254902, g: 0.36862746, b: 0.38431373, a: 1}
+    m_ColorMultiplier: 1
     m_FadeDuration: 0
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
@@ -489,20 +489,20 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Primary_Blue
+  _LinkedComponentId: CozmoButton_Primary_Grey
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 114904934687159872}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
-  TextPressedColor: {r: 0.88235295, g: 0.99215686, b: 1, a: 1}
-  TextDisabledColor: {r: 0.44313726, g: 0.627451, b: 0.7019608, a: 1}
+  TextPressedColor: {r: 0.8980392, g: 0.9843137, b: 0.99215686, a: 1}
+  TextDisabledColor: {r: 0.3254902, g: 0.36862746, b: 0.38431373, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114012479980243080}
-    pressedSprite: {fileID: 21300000, guid: 942b55f1352c04f71ba096f2c3c58295, type: 3}
+    pressedSprite: {fileID: 21300000, guid: 0b04a22aa44b04b8f9245ff53062a837, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: 03a7f97be37e64d34b32b5671289ec74, type: 3}
+    disabledSprite: {fileID: 21300000, guid: ad0c46e4618aa43ba895aed8b757e768, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114257864003974752}
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
@@ -1016,10 +1016,10 @@ MonoBehaviour:
   m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0, g: 0, b: 0, a: 0}
-    m_PressedColor: {r: 0.88235295, g: 0.99215686, b: 1, a: 1}
-    m_DisabledColor: {r: 0.44313726, g: 0.627451, b: 0.7019608, a: 1}
-    m_ColorMultiplier: 0
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.8980392, g: 0.9843137, b: 0.99215686, a: 1}
+    m_DisabledColor: {r: 0.3254902, g: 0.36862746, b: 0.38431373, a: 1}
+    m_ColorMultiplier: 1
     m_FadeDuration: 0
   m_SpriteState:
     m_HighlightedSprite: {fileID: 0}
@@ -1037,20 +1037,20 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Primary_Blue
+  _LinkedComponentId: CozmoButton_Primary_Grey
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 114739322297186172}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
-  TextPressedColor: {r: 0.88235295, g: 0.99215686, b: 1, a: 1}
-  TextDisabledColor: {r: 0.44313726, g: 0.627451, b: 0.7019608, a: 1}
+  TextPressedColor: {r: 0.8980392, g: 0.9843137, b: 0.99215686, a: 1}
+  TextDisabledColor: {r: 0.3254902, g: 0.36862746, b: 0.38431373, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114020602516761460}
-    pressedSprite: {fileID: 21300000, guid: 942b55f1352c04f71ba096f2c3c58295, type: 3}
+    pressedSprite: {fileID: 21300000, guid: 0b04a22aa44b04b8f9245ff53062a837, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: 03a7f97be37e64d34b32b5671289ec74, type: 3}
+    disabledSprite: {fileID: 21300000, guid: ad0c46e4618aa43ba895aed8b757e768, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114435900976489836}
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
