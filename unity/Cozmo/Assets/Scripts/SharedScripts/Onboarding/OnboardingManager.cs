@@ -258,7 +258,9 @@ public class OnboardingManager : MonoBehaviour {
     }
     // Because sparks are now saved on the robot they could have changed robots between these checkpoints.
     // Make sure they have a min number of sparks for places right before required to spend them.
-    if (_CurrPhase == OnboardingPhases.PlayIntro || _CurrPhase == OnboardingPhases.NurtureIntro) {
+    if (_CurrPhase == OnboardingPhases.InitialSetup ||
+        _CurrPhase == OnboardingPhases.PlayIntro ||
+        _CurrPhase == OnboardingPhases.NurtureIntro) {
       GiveStartingInventory();
     }
 #endif
