@@ -121,6 +121,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
 : IBehaviorRequestGame(robot, config)
 , _numRetriesDrivingToFace(0)
 , _numRetriesPlacingBlock(0)
+, _wasTriggeredAsInterrupt(false)
 {
   if( config.isNull() ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.Config.Error",
@@ -187,8 +188,12 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   SmartSetMotionProfile(_driveToPlaceProfile);
 
   SmartPushIdleAnimation(robot, AnimationTrigger::Count);
-
-  if( GetNumBlocks(robot) == 0 ) {
+  
+  if(_wasTriggeredAsInterrupt){
+    _activeConfig = &_zeroBlockConfig;
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGameInterrupt),
+                &BehaviorRequestGameSimple::TransitionToLookingAtFace);
+  }else if( GetNumBlocks(robot) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
     if( ! IsActing() ) {
       // skip the block stuff and go right to the face
@@ -269,6 +274,7 @@ void BehaviorRequestGameSimple::RequestGame_StopInternal(Robot& robot)
 
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
+  _wasTriggeredAsInterrupt = false;
   StopActing(false);
 }
 
@@ -571,7 +577,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
   IActionRunner* denyAnimAction = new TriggerAnimationAction( robot, _activeConfig->denyAnimTrigger );
   StartActing(denyAnimAction);
   SET_STATE(PlayingDenyAnim);
-}
+} 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

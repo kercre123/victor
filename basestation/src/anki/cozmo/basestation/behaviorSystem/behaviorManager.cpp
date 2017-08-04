@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFreeplay.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
@@ -245,25 +246,16 @@ BehaviorManager::BehaviorManager(Robot& robot)
   LoadBehaviorsIntoFactory();
   
   // Setup the UnlockID to game request behavior map for ui driven requests
-  IBehaviorPtr VC_Keepaway = FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
-  IBehaviorPtr VC_QT = FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
-  IBehaviorPtr VC_MM = FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
+  std::shared_ptr<BehaviorRequestGameSimple> VC_Keepaway;
+  FindBehaviorByIDAndDowncast(BehaviorID::VC_RequestKeepAway, BehaviorClass::RequestGameSimple, VC_Keepaway);
+  std::shared_ptr<BehaviorRequestGameSimple> VC_QT;
+  FindBehaviorByIDAndDowncast(BehaviorID::VC_RequestSpeedTap, BehaviorClass::RequestGameSimple, VC_QT);
+  std::shared_ptr<BehaviorRequestGameSimple> VC_MM;
+  FindBehaviorByIDAndDowncast(BehaviorID::VC_RequestMemoryMatch, BehaviorClass::RequestGameSimple, VC_MM);
 
   _uiGameRequestMap.insert(std::make_pair(UnlockId::KeepawayGame, VC_Keepaway));
   _uiGameRequestMap.insert(std::make_pair(UnlockId::QuickTapGame, VC_QT));
   _uiGameRequestMap.insert(std::make_pair(UnlockId::MemoryMatchGame, VC_MM));
-  
-#if ANKI_DEV_CHEATS
-  if (!_behaviorContainer->GetBehaviorMap().empty()){
-    for(const auto& entry: _uiGameRequestMap){
-      DEV_ASSERT_MSG(entry.second != nullptr &&
-                     entry.second->GetClass() == BehaviorClass::RequestGameSimple,
-                     "BehaviorManager.Constructor.UIGameRequestMap",
-                     "nullptr or wrong class for unlockID %s",
-                     UnlockIdToString(entry.first));
-    }
-  }
-#endif
 }
 
   
@@ -875,6 +867,11 @@ Result BehaviorManager::Update(Robot& robot)
     // Set IBehaviorPtr for requested game
     SelectUIRequestGameBehavior();
     _shouldRequestGame = false;
+    if(GetRunningAndResumeInfo().GetCurrentBehavior() != nullptr &&
+       GetRunningAndResumeInfo().GetCurrentBehavior()->GetClass() == BehaviorClass::RequestGameSimple){
+      // Transitioning from one request to another - so play an interrupt anim
+      _uiRequestGameBehavior->TriggeringAsInterrupt();
+    }
   }
   
   
@@ -1236,7 +1233,8 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
       // this avoids disabling buttons in the UI and getting into a weird state where
       // the app may be locked out from listening for a game request pop-up to open
       // that will not happen because of a reactionary behavior
-      if (_uiRequestGameBehavior == nullptr) {
+      if (_uiRequestGameBehavior == nullptr ||
+          _uiRequestGameBehavior->IsRunning()) {
         _shouldRequestGame = true;
       }
       break;
@@ -1545,10 +1543,13 @@ void BehaviorManager::SetBehaviorStateLights(BehaviorClass classSettingLights,
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::OnRobotDelocalized()
 {
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const std::list<const IActivity* const> BehaviorManager::GetNonSparkFreeplayActivities() const
 {
   std::list<const IActivity* const> activities;

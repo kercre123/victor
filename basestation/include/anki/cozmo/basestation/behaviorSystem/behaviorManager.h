@@ -49,6 +49,7 @@ namespace Cozmo {
   
 // Forward declaration
 class BehaviorContainer;
+class BehaviorRequestGameSimple;
 class IActivity;
 class IReactionTriggerStrategy;
 class Robot;
@@ -319,7 +320,7 @@ private:
   f32 _defaultLiftHeight;
   
   // Maps UnlockIds to the appropriate request behavior to play when the ui requests it
-  std::map<UnlockId, IBehaviorPtr> _uiGameRequestMap;
+  std::map<UnlockId, std::shared_ptr<BehaviorRequestGameSimple>> _uiGameRequestMap;
   
   // - - - - - - - - - - - - - - -
   // current running behavior
@@ -335,7 +336,7 @@ private:
   std::map<HighLevelActivity, std::shared_ptr<IActivity>> _highLevelActivityMap;
   
   // Pointer to current request game behavior driven by UI, if any
-  IBehaviorPtr _uiRequestGameBehavior;
+  std::shared_ptr<BehaviorRequestGameSimple> _uiRequestGameBehavior;
   bool _shouldRequestGame = false;
   
   // - - - - - - - - - - - - - - -
