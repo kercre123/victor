@@ -12,7 +12,7 @@ namespace Cozmo.UI {
     [SerializeField]
     private Button _RecordToggleButton;
     private Text _RecordToggleText;
-    
+
     [SerializeField]
     private Dropdown _RecordingDropdown;
     private const string _kFileSelectMessage = "Select File for Playback";
@@ -28,16 +28,16 @@ namespace Cozmo.UI {
     [SerializeField]
     private InputField _NumPlayTimes;
     private const string _kPlayTimesStartMessage = "Number of times to repeat playback";
-    
+
     //unity doesn't support tuples for some silly reason so this is a hack
-    private List<KeyValuePair<UnityEngine.GameObject, Type>> _ObjsOnScreen = 
+    private List<KeyValuePair<UnityEngine.GameObject, Type>> _ObjsOnScreen =
                     new List<KeyValuePair<UnityEngine.GameObject, Type>>();
     private List<string> _RecordingNames = new List<string>();
 
     protected void Awake() {
       _RecordToggleButton.onClick.AddListener(HandleRecordToggleClicked);
       _RecordingDropdown.onValueChanged.AddListener(HandleFileSelected);
-      _ObjOnScreenDropdown.onValueChanged.AddListener(HandleVerifySelected);     
+      _ObjOnScreenDropdown.onValueChanged.AddListener(HandleVerifySelected);
     }
 
     private void Start() {
@@ -62,11 +62,14 @@ namespace Cozmo.UI {
       _ObjsOnScreen.Clear();
       _ObjOnScreenDropdown.options.Clear();
       foreach (Type stepType in Anki.Core.UI.Automation.Automation.Instance.SupportedObjectTypes()) {
-        foreach (UnityEngine.GameObject obj in Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType)) {
-          Dropdown.OptionData ObjOptionData = new Dropdown.OptionData();
-          ObjOptionData.text = Anki.Core.UI.Automation.Automation.Instance.ShortString(obj, stepType);
-          _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.GameObject, Type>(obj, stepType));
-          _ObjOnScreenDropdown.options.Add(ObjOptionData);
+        var objects = Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType);
+        if (objects != null) {
+          foreach (UnityEngine.GameObject obj in Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType)) {
+            Dropdown.OptionData ObjOptionData = new Dropdown.OptionData();
+            ObjOptionData.text = Anki.Core.UI.Automation.Automation.Instance.ShortString(obj, stepType);
+            _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.GameObject, Type>(obj, stepType));
+            _ObjOnScreenDropdown.options.Add(ObjOptionData);
+          }
         }
       }
       Dropdown.OptionData objMessage = new Dropdown.OptionData();
@@ -129,7 +132,7 @@ namespace Cozmo.UI {
         else {
           _RecordToggleText.text = "Stop Playing";
         }
-      } 
+      }
     }
 
   }
