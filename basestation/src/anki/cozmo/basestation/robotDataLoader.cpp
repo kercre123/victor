@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/cozmo/basestation/animations/faceAnimationManager.h"
 #include "anki/cozmo/basestation/animations/proceduralFace.h"
+#include "anki/cozmo/basestation/utils/cozmoExperiments.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "cozmo_anim_generated.h"
 #include "threadedPrintStressTester.h"
@@ -801,7 +802,7 @@ void RobotDataLoader::LoadRobotConfigs()
   {
     const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/experiments.json")};
     const std::string fileContents{Util::FileUtils::ReadFile(filename)};
-    _context->GetAnkiLab()->Load(fileContents);
+    _context->GetExperiments()->GetAnkiLab().Load(fileContents);
   }
 
   // Inventory config

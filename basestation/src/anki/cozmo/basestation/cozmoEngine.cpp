@@ -33,15 +33,13 @@
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
-#include "anki/cozmo/basestation/utils/cozmoAudienceTags.h"
+#include "anki/cozmo/basestation/utils/cozmoExperiments.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "util/ankiLab/ankiLab.h"
-#include "util/ankiLab/extLabInterface.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
@@ -129,7 +127,8 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
     _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdatedAssignments>(assignments);
   };
-  _signalHandles.emplace_back(_context->GetAnkiLab()->ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
+  _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
+                              .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
 
   _debugConsoleManager.Init(_context->GetExternalInterface());
   _dasToSdkHandler.Init(_context->GetExternalInterface());
@@ -230,7 +229,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _context->GetDataLoader()->LoadRobotConfigs();
 
-  InitExperiments();
+  _context->GetExperiments()->InitExperiments();
 
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _context->GetNeedsManager()->Init(currentTime,
@@ -335,10 +334,10 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::StoredLabAssignments& msg)
 {
   using namespace Util::AnkiLab;
-  AnkiLab* lab = _context->GetAnkiLab();
+  AnkiLab& lab = _context->GetExperiments()->GetAnkiLab();
 
   for (const auto& assignment : msg.assignments) {
-    (void) lab->RestoreActiveExperiment(assignment.experiment_key, assignment.user_id, assignment.variation_key);
+    (void) lab.RestoreActiveExperiment(assignment.experiment_key, assignment.user_id, assignment.variation_key);
   }
 }
 
@@ -643,9 +642,6 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     
     // Set Robot Audio Client Message Handler to link to Input and Robot Audio Buffer ( Audio played on Robot )
     robot->GetRobotAudioClient()->SetMessageHandler( engineInput->GetMessageHandler() );
-
-    // Initiate lab experiments for this robot
-    AutoActivateExperiments(std::to_string(robot->GetBodySerialNumber()));
   }
   
   return lastResult;
@@ -796,54 +792,10 @@ void CozmoEngine::ExecuteBackgroundTransfers()
   _context->GetTransferQueue()->ExecuteTransfers();
 }
 
-static const char* GetDeviceId()
-{
-#if USE_DAS
-  return DASGetPlatform()->GetDeviceId();
-#else
-  return "";
-#endif
-}
-
-void CozmoEngine::InitExperiments() const
-{
-  _context->GetAnkiLab()->Enable(!Util::AnkiLab::ShouldABTestingBeDisabled());
-
-  AutoActivateExperiments(GetDeviceId());
-
-  (void) _context->GetAudienceTags()->VerifyTags(_context->GetAnkiLab()->GetKnownAudienceTags());
-
-  // Provide external A/B interface what it needs to work with Cozmo
-  auto labOpRunner = [this] (const Util::AnkiLab::LabOperation& op) {
-    op(_context->GetAnkiLab());
-  };
-  auto userIdAccessor = [this] {
-    Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-    return robot != nullptr ? std::to_string(robot->GetBodySerialNumber()) : GetDeviceId();
-  };
-  Util::AnkiLab::InitializeABInterface(labOpRunner, userIdAccessor);
-}
-
 Util::AnkiLab::AssignmentStatus CozmoEngine::ActivateExperiment(
   const Util::AnkiLab::ActivateExperimentRequest& request, std::string& outVariationKey)
 {
-  std::string deviceId;
-  const std::string* userIdString = &request.user_id;
-  if (request.user_id.empty()) {
-    userIdString = &deviceId;
-    deviceId = GetDeviceId();
-  }
-  const CozmoAudienceTags* audienceTags = _context->GetAudienceTags();
-
-  const auto& tags = audienceTags->GetQualifiedTags();
-  return _context->GetAnkiLab()->ActivateExperiment(request.experiment_key, *userIdString, tags, outVariationKey);
-}
-
-void CozmoEngine::AutoActivateExperiments(const std::string& userId) const
-{
-  const CozmoAudienceTags* audienceTags = _context->GetAudienceTags();
-  const auto& tags = audienceTags->GetQualifiedTags();
-  (void) _context->GetAnkiLab()->AutoActivateExperimentsForUser(userId, tags);
+  return _context->GetExperiments()->ActivateExperiment(request, outVariationKey);
 }
 
 } // namespace Cozmo
