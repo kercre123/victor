@@ -211,6 +211,10 @@ namespace Cozmo.Needs.UI {
     }
 
     private void PopLatestBracketAndUpdateButtons() {
+      // Wait until Needs meter animates up for first time
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        return;
+      }
       NeedsStateManager nsm = NeedsStateManager.Instance;
       NeedsValue repairValue, energyValue;
       repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
