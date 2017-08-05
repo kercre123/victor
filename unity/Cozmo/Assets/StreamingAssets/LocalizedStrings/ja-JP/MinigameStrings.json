@@ -76,7 +76,7 @@
     "translation" : "安全な遊び方："
   },
   "droneMode.safePlay.description" : {
-    "translation" : "•明るい場所で室内を探索する。 •平らな場所で運転する。 •端から脱落しないように注意してください。 •最高の経験を得るために、Cozmoの近くに滞在してください。"
+    "translation" : "• 室内の明るい場所で遊んでください。\u000a\u000a•平らな場所で動かしてください。\u000a\u000a• 机などの端から落ちないように注意してください。\u000a\u000a•できるだけCozmoから離れないようにしてください。"
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "あいさつ"
@@ -184,7 +184,7 @@
     "translation" : "やった！"
   },
   "speedTap.roundsText" : {
-    "translation" : "円形{0:N0}"
+    "translation" : "{0:N0}ラウンド"
   },
   "speedTap.tapBlock" : {
     "translation" : "あなたがプレイしたい\u000a光るキューブをタップします。"
@@ -280,13 +280,13 @@
     "translation" : "クイックタップをロック解除してロックを外します"
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "<b> 2色</b>モードがロックされています。クイックタップを獲得してロックを解除<b> ONE COLOR </b>モード。"
+    "translation" : "<b>2色</b>モードはロックされています。\u000a<b>1色</b>モードでクイックタップに勝つとロックが解除されます。"
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "<b>三つの色</b>モードがロックされています。クイックタップを獲得してロックを解除<b> 2色</b>モード。"
+    "translation" : "<b>3色</b>モードはロックされています。\u000a<b>2色</b>モードでクイックタップに勝つとロックが解除されます。"
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "<b> 4色</b>モードがロックされています。クイックタップを獲得してロックを解除<b>三つの色</b>モード。"
+    "translation" : "<b>4色</b>モードはロックされています。\u000a<b>3色</b>モードでクイックタップに勝つとロックが解除されます。"
   },
   "speedTap.text.getReady" : {
     "translation" : "準備してください！"
@@ -295,7 +295,7 @@
     "translation" : "<b>勝者：</b>{0}ラウンドマッチ"
   },
   "speedTap.text.displayWinnerSubtitle" : {
-    "translation" : "ラウンド{0}に勝利！"
+    "translation" : "ROUNDを取る{0} ！"
   },
   "speedTap.text.roundScore" : {
     "translation" : "プレイヤー：{0} - Cozmo：{1}"
@@ -361,10 +361,10 @@
     "translation" : "勝負！"
   },
   "label.dontSlap" : {
-    "translation" : "スリップしないでください！"
+    "translation" : "叩かないで\u000aください！"
   },
   "label.noMatch" : {
-    "translation" : "勝ち目がない"
+    "translation" : "一致なし"
   },
   "label.enterText" : {
     "translation" : "テキストを入力してください..."
@@ -373,7 +373,7 @@
     "translation" : "Cozmoの勝ち！"
   },
   "minigame.text.playerWinsFlat" : {
-    "translation" : "{0}勝つ！"
+    "translation" : "{0}の勝ち！"
   },
   "minigame.text.youWinFlat" : {
     "translation" : "あなたの勝ち！"

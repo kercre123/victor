@@ -21,14 +21,8 @@
   "button.yes" : {
     "translation" : "OUI"
   },
-  "button.yesPlease" : {
-    "translation" : "OUI, S'IL TE PLAIT"
-  },
   "button.no" : {
     "translation" : "NON"
-  },
-  "button.noThankYou" : {
-    "translation" : "NON, MERCI"
   },
   "button.continue" : {
     "translation" : "CONTINUER"
@@ -76,7 +70,7 @@
     "translation" : "En attente..."
   },
   "requestGame.title" : {
-    "translation" : "{0} !"
+    "translation" : "{0}!"
   },
   "requestGame.description" : {
     "translation" : "Cozmo veut jouer"
@@ -106,7 +100,7 @@
     "translation" : "Assure-toi que le son de ton appareil est activé."
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Place chacun des cubes près de Cozmo et appuie sur <b><color=#11a2f0ff>ACTUALISER</color></b>. Cozmo se connectera aux 3 cubes qu'il considère comme les plus proches."
+    "translation" : "Place chacun des cubes près de Cozmo et appuie sur <b><color=#11a2f0ff>ACTUALISER</color></b>. Cozmo se connectera aux 3cubes qu'il considère comme les plus proches."
   },
   "button.replay" : {
     "translation" : "REJOUER"
@@ -115,19 +109,19 @@
     "translation" : "IGNORER"
   },
   "soundcheck.description.confirm" : {
-    "translation" : "As-tu entendu le son ?"
+    "translation" : "As-tu entendu le son?"
   },
   "error.badLight.Top" : {
-    "translation" : "Cozmo a du mal à voir !"
+    "translation" : "Cozmo a du mal à voir!"
   },
   "error.badLight.Bottom" : {
     "translation" : "Évite les lumières vives et les espaces faiblement éclairés."
   },
   "label.cozmo.serial" : {
-    "translation" : "ID de Cozmo : {0}"
+    "translation" : "ID de Cozmo: {0}"
   },
   "label.deviceid" : {
-    "translation" : "ID d'appareil : {0}"
+    "translation" : "ID d'appareil: {0}"
   },
   "label.privacyPolicy" : {
     "translation" : "Politique de confidentialité"
@@ -139,7 +133,7 @@
     "translation" : "Conditions d'utilisation"
   },
   "label.termsInstructions" : {
-    "translation" : "En appuyant sur<b> <color=#11a2f0ff>CONNECTER</color></b>, tu acceptes les conditions suivantes :"
+    "translation" : "En appuyant sur<b> <color=#11a2f0ff>CONNECTER</color></b>, vous acceptez les conditions suivantes:"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"

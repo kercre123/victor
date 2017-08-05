@@ -70,7 +70,7 @@
     "translation" : "Obtenir de l'aide"
   },
   "label.cubesNotWorking" : {
-    "translation" : "Les cubes ne fonctionnent pas ?"
+    "translation" : "Les cubes ne fonctionnent pas?"
   },
   "connectivity.connectionRejected.title" : {
     "translation" : "Un autre appareil est connecté à Cozmo.\u000aDéconnecte cet appareil et réessaye."
@@ -85,7 +85,7 @@
     "translation" : "ANNULER"
   },
   "label.liquidMetalCozmo" : {
-    "translation" : "Édition Collector : Métal liquide"
+    "translation" : "Édition Collector: Métal liquide"
   },
   "connectivity.sendGameplayDataPrompt" : {
     "translation" : "Aide-nous à améliorer Cozmo en nous envoyant des données et des statistiques concernant ta façon de jouer"

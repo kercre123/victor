@@ -100,10 +100,10 @@
     "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。"
   },
   "onboarding.NeedsIntroReturning" : {
-    "translation" : "<b> Cozmoには必要があります。 </b>彼を毎日気遣い、彼を幸せに保ちます。 Cozmoのアプリは少し違って見えるかもしれませんが、あなたはあなたが獲得したロックを保つでしょう。"
+    "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、Cozmoがいつも幸せな状態にしましょう。\u000a\u000aCozmoのアプリが少し違って見えるかもしれませんが、これまでのロック解除は反映されます。"
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>コズモはプレーする必要があります。 </b>をタップ<b><color=#f5ea12>遊びます</color></b>ボタンをクリックしてゲームやトリックをリクエストします。毎日黄色のバーを塗りつぶすと、プレイトークンを獲得できます。"
+    "translation" : "<b>Cozmoはプレイしたがっています。</b>\u000a\u000aゲームまたはトリックをリクエストするには、<b><color=#f5ea12>プレイ</color></b>ボタンをタップします。Cozmoの黄色いバーをいっぱいにするたびに、その日のプレイトークンを獲得できます。"
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "発見アクティビティは特別で、Cozmoのニーズメーターに影響しません。また、スパークも使いません。"
@@ -133,18 +133,18 @@
     "translation" : "Cozmoは遊び好きなロボットで、トリックが大好きです！Cozmoから見える場所にキューブがあることを確認し、Cozmoのドリブルを見守りましょう。"
   },
   "onboarding.RewardsIntro.Part1" : {
-    "translation" : "あなたはCozmo'sを埋めました<color=#f5ea12>必要なものを再生する。 </color>"
+    "translation" : "Cozmoの<color=#f5ea12>プレイメーターが満たされました。</color>"
   },
   "onboarding.RewardsIntro.Part2" : {
-    "translation" : "毎日あなたは彼を埋める<color=#f5ea12>必要なものを再生する</color>あなたは<color=#f5ea12>トークンを再生する。 </color>"
+    "translation" : "<color=#f5ea12>プレイメーター</color>を\u000a満たすたびに、その日の\u000a<color=#f5ea12>プレイトークン</color>を獲得できます。"
   },
   "onboarding.TokensIntro.Part1" : {
-    "translation" : "コズモを埋める<color=#f5ea12>必要なものを再生する</color>ロックを解除する3日間で<color=#f5ea12>ボーナスボックス。 </color>"
+    "translation" : "Cozmoの<color=#f5ea12>プレイメーター</color>を3日間満たすと、<color=#f5ea12>ボーナスボックス</color>のロックが解除されます。"
   },
   "onboarding.TokensIntro.Part2" : {
-    "translation" : "Cozmoは所有者としてあなたを持っていることは幸いです！一緒に探検する時間！"
+    "translation" : "Cozmoはあなたがオーナーでラッキーです！いっしょに探検しましょう！"
   },
   "onboarding.button.end" : {
-    "translation" : "コンプリート"
+    "translation" : "完了"
   }
 }

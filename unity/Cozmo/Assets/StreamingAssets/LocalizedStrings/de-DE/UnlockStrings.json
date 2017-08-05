@@ -16,7 +16,7 @@
     "translation" : "Noch nicht freigeschaltete Fähigkeit"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Games, Tricks, and more!"
+    "translation" : "Erfülle Cozmos Spielbedarf jeden Tag, um eine Spielmarke zu erhalten. Mit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks, Spiele und Tricks enthalten."
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Fauststoß"
@@ -88,7 +88,7 @@
     "translation" : "Cube rollen"
   },
   "unlockable.CubeRollAction.Description" : {
-    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen – insbesondere, wenn sie auf der Seite liegen."
+    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen– insbesondere, wenn sie auf der Seite liegen."
   },
   "unlockable.CubeRollAction.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo zu bitten, einen Cube zu rollen."
@@ -187,16 +187,16 @@
     "translation" : "Spark-Status für \"Cubes sammeln\" <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
-    "translation" : "Locked Ability"
+    "translation" : "Noch nicht freigeschaltete Fähigkeit"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "Fill Cozmo's Play Need daily and unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
+    "translation" : "Erfülle Cozmos Spielbedarf jeden Tag, und schalte Bonuskisten mit Belohnungen wie Sparks und Tricks frei."
   },
   "unlockable.GuardDog.Title" : {
-    "translation" : "Cube Guard"
+    "translation" : "Cube-Bewachen"
   },
   "unlockable.GuardDog.Description" : {
-    "translation" : "When Cozmo’s cubes are close together, he might take a nap while guarding them. Carefully turn his cubes upside-down without waking him."
+    "translation" : "Wenn Cozmos Cubes nah beeinander liegen, macht er unter Umständen ein Nickerchen, während er sie bewacht. Stelle die Cubes vorsichtig auf den Kopf, ohne in aufzuwecken."
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo besitzt Sparks:"
@@ -232,6 +232,6 @@
     "translation" : "Keine Sparks erforderlich"
   },
   "sparks.notSparkable" : {
-    "translation" : "Not Sparkable"
+    "translation" : "Keine Belohnung mit Sparks"
   }
 }

@@ -100,7 +100,7 @@
     "translation" : "完了"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "スパークスの在庫がいっぱいです。"
+    "translation" : "スパークインベントリがいっぱいです。"
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "さらにスパークを獲得しました！"
@@ -154,10 +154,10 @@
     "translation" : "Cozmoがエクササイズをして {0} スパークを生み出しました！"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmoがあなたに与えた{0}彼とキューブガードをプレイするためのスパーク！"
+    "translation" : "キューブガードをプレイするために、Cozmoが{0}スパークくれました！"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmoがあなたに与えた{0}彼とキューブガードをプレイするためのスパーク！"
+    "translation" : "キューブガードをプレイするために、Cozmoが{0}スパークくれました！"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmoはしゃっくりをしました"
@@ -166,15 +166,15 @@
     "translation" : "Cozmoはお腹がいっぱいになり、しゃっくりが出ます！"
   },
   "needs.severeAlert.energy.title" : {
-    "translation" : "Cozmoは本当に餌を必要とします"
+    "translation" : "Cozmoはチャージを必要としています"
   },
   "needs.severeAlert.energy.description" : {
-    "translation" : "あなたは継続する前にCozmoを供給する必要があります。"
+    "translation" : "続けるにはCozmoをチャージしてください。"
   },
   "needs.severeAlert.repair.title" : {
-    "translation" : "Cozmoは本当にチューンアップを必要とする"
+    "translation" : "Cozmoはチューンアップを必要としています"
   },
   "needs.severeAlert.repair.description" : {
-    "translation" : "続行する前にCozmoを調整する必要があります。"
+    "translation" : "続けるにはCozmoをチューンアップしてください。"
   }
 }

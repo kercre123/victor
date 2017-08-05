@@ -10,19 +10,19 @@
     "translation" : "Exigences non satisfaites"
   },
   "unlockable.OSNotSupported.Description" : {
-    "translation" : "Le Code Lab requiert Android {0} ou plus récent."
+    "translation" : "Code Lab requiert Android {0} ou plus récent."
   },
   "unlockable.Mystery.Title" : {
     "translation" : "Compétence verrouillée"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Games, Tricks, and more!"
+    "translation" : "Satisfais l'envie de jouer de Cozmo au quotidien pour gagner un token. Les tokens permettent de débloquer des boîtes à bonus qui abritent des étincelles, des jeux, des tours et plus encore!"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Check"
   },
   "unlockable.FistBump.Description" : {
-    "translation" : "Tu veux montrer à Cozmo que tu es fier de lui ? Fais un petit check avec lui ! Avec cette mise à niveau, Cozmo maintiendra son bras élévateur relevé et attendra que tu le tamponnes."
+    "translation" : "Tu veux montrer à Cozmo que tu es fier de lui? Fais un petit check avec lui! Avec cette mise à niveau, Cozmo maintiendra son bras élévateur relevé et attendra que tu le tamponnes."
   },
   "unlockable.FistBump.SparkButtonDescription" : {
     "translation" : "Appuie pour demander à Cozmo de faire un check."
@@ -34,19 +34,19 @@
     "translation" : "Coucou"
   },
   "unlockable.PeekABoo.Description" : {
-    "translation" : "Coucou, je te vois ! Avec ce tour, fais Coucou à Cozmo en cachant ton visage derrière tes mains, puis en le lui remontrant pour le surprendre."
+    "translation" : "Coucou, je te vois! Avec ce tour, fais Coucou à Cozmo en cachant ton visage derrière tes mains, puis en le lui remontrant pour le surprendre."
   },
   "unlockable.PeekABoo.SparkButtonDescription" : {
     "translation" : "Appuie pour demander à Cozmo de jouer à Coucou."
   },
   "unlockable.PeekABoo.SparkedStateDescription" : {
-    "translation" : "Cache ton visage, puis fais Coucou !"
+    "translation" : "Cache ton visage, puis fais Coucou!"
   },
   "unlockable.Workout.Title" : {
     "translation" : "Faire de la muscu avec des cubes"
   },
   "unlockable.Workout.Description" : {
-    "translation" : "Même les robots ont besoin d'exercice ! Avec ce tour, Cozmo apprend à faire de la muscu avec un cube pour rester en pleine forme."
+    "translation" : "Même les robots ont besoin d'exercice! Avec ce tour, Cozmo apprend à faire de la muscu avec un cube pour rester en pleine forme."
   },
   "unlockable.Workout.SparkButtonDescription" : {
     "translation" : "Appuie pour demander à Cozmo de faire de la muscu."
@@ -76,7 +76,7 @@
     "translation" : "Réflexe"
   },
   "unlockable.SpeedTap.Description" : {
-    "translation" : "Avec cette mise à niveau, Cozmo apprend à jouer au jeu Réflexe. Au fil du temps, ses compétences s'amélioreront !"
+    "translation" : "Avec cette mise à niveau, Cozmo apprend à jouer au jeu Réflexe. Au fil du temps, ses compétences s'amélioreront!"
   },
   "unlockable.CodeLab.Title" : {
     "translation" : "Code Lab"
@@ -118,7 +118,7 @@
     "translation" : "Prédateur"
   },
   "unlockable.PounceOnMotionAction.Description" : {
-    "translation" : "Avec ce tour, lorsque Cozmo voit des mouvements au sol devant lui, tels que celui d'un doigt, il joue à l'attaquer tel un prédateur !"
+    "translation" : "Avec ce tour, lorsque Cozmo voit des mouvements au sol devant lui, tels que celui d'un doigt, il joue à l'attaquer tel un prédateur!"
   },
   "unlockable.PounceOnMotionAction.SparkButtonDescription" : {
     "translation" : "Appuie pour demander à Cozmo d'attaquer tes doigts."
@@ -136,7 +136,7 @@
     "translation" : "Appuie pour demander à Cozmo de construire une pyramide."
   },
   "unlockable.BuildPyramid.SparkedStateDescription" : {
-    "translation" : "Regarde Cozmo construire une pyramide à l'aide de 3 cubes."
+    "translation" : "Regarde Cozmo construire une pyramide à l'aide de 3cubes."
   },
   "unlockable.PopAWheelieAction.Title" : {
     "translation" : "Roue arrière"
@@ -187,19 +187,19 @@
     "translation" : "État des étincelles Collecter des cubes <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
-    "translation" : "Locked Ability"
+    "translation" : "Compétence verrouillée"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "Fill Cozmo's Play Need daily and unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
+    "translation" : "Comble l'envie de jouer de Cozmo au quotidien pour débloquer des boîtes à bonus qui abritent des étincelles, des tours et plus encore!"
   },
   "unlockable.GuardDog.Title" : {
-    "translation" : "Cube Guard"
+    "translation" : "Retourne cubes"
   },
   "unlockable.GuardDog.Description" : {
-    "translation" : "When Cozmo’s cubes are close together, he might take a nap while guarding them. Carefully turn his cubes upside-down without waking him."
+    "translation" : "Lorsque ses cubes sont proches les uns des autres, Cozmo fait parfois une petite sieste tout en les surveillant. Essaie de les retourner sans le réveiller!"
   },
   "sparks.Sparked" : {
-    "translation" : "Cozmo a des étincelles :"
+    "translation" : "Cozmo a des étincelles:"
   },
   "sparks.SparkCozmo" : {
     "translation" : "Donner des étincelles à Cozmo"
@@ -211,7 +211,7 @@
     "translation" : "Étincelles"
   },
   "sparks.Spark.ConfirmQuit" : {
-    "translation" : "Cozmo a des étincelles !"
+    "translation" : "Cozmo a des étincelles!"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
     "translation" : "Si tu quittes avant que cela ne soit terminé, Cozmo n'aura plus d'étincelles."
@@ -232,6 +232,6 @@
     "translation" : "Gratuit"
   },
   "sparks.notSparkable" : {
-    "translation" : "Not Sparkable"
+    "translation" : "Ne donne aucune étincelle"
   }
 }

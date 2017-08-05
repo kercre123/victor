@@ -13,7 +13,7 @@
     "translation" : "Appuie sur <b><color=#d3d3d3>SUIVANT</color></b> si tu rencontres encore des problèmes"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "D'abord, accède à <b>PARAMÈTRES</b>.\u000aEnsuite, appuie sur <b>ACTUALISER LES CUBES</b>."
+    "translation" : "First, go to <b>SETTINGS</b>."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
     "translation" : "Ensuite, essaye de remplacer la pile de ton cube."
@@ -31,10 +31,10 @@
     "translation" : "Remets en place le couvercle et fixe-le délicatement."
   },
   "cubeHelpStrings.Instructions.Slide3altCopy" : {
-    "translation" : "Assure-toi que le couvercle s'adapte bien au cube. Il doit maintenant s'allumer !"
+    "translation" : "Assure-toi que le couvercle s'adapte bien au cube. Il doit maintenant s'allumer!"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
-    "translation" : "Cozmo a trop faim pour jouer ?"
+    "translation" : "Cozmo a trop faim pour jouer?"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
     "translation" : "Donne lui vite à manger pendant que tu reconnectes ses cubes."
@@ -47,5 +47,8 @@
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
     "translation" : "Pour qu'il soit bien nourri, suis les instructions pour l'aider à reconnaître ses cubes."
+  },
+  "cubeHelpStrings.Instructions.SlideA2Copy" : {
+    "translation" : "Then, tap <b>REFRESH CUBES</b>."
   }
 }

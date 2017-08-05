@@ -76,7 +76,7 @@
     "translation" : "Sicheres Spielen:"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "• Explore indoors in well lit spaces.\u000a\u000a• Drive on flat surfaces.\u000a\u000a• Be careful of falling off edges.\u000a\u000a• Stay close to Cozmo for the best experience."
+    "translation" : "• Erkunde gut beleuchtete Innenräume.\u000a\u000a•Fahre auf ebenen Oberflächen.\u000a\u000a• Pass auf, dass Cozmo nicht runterfällt.\u000a\u000a•Bleibe in der Nähe von Cozmo, um maximalen Spielspaß zu haben."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Grüßen"
@@ -184,7 +184,7 @@
     "translation" : "Super!"
   },
   "speedTap.roundsText" : {
-    "translation" : "ROUND {0:N0}"
+    "translation" : "RUNDE {0:N0}"
   },
   "speedTap.tapBlock" : {
     "translation" : "Tippe einen blinkenden Cube an,\u000amit dem du spielen möchtest."
@@ -280,13 +280,13 @@
     "translation" : "Zum Freischalten muss das Geschwindigkeitsspiel freigeschaltet werden."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "<b>TWO COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>ONE COLOR</b> mode."
+    "translation" : "Der Modus <b>2 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>1 FARBE</b> gewinnen."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "<b>THREE COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>TWO COLORS</b> mode."
+    "translation" : "Der Modus <b>3 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>2 FARBEN</b> gewinnen."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "<b>FOUR COLORS</b> mode is locked.\u000aUnlock by winning Quick Tap in <b>THREE COLORS</b> mode."
+    "translation" : "Der Modus <b>4 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>3 FARBEN</b> gewinnen."
   },
   "speedTap.text.getReady" : {
     "translation" : "Mach dich bereit!"
@@ -295,7 +295,7 @@
     "translation" : "<b>Sieger:</b> Der Beste aus {0} Runden"
   },
   "speedTap.text.displayWinnerSubtitle" : {
-    "translation" : "gewinnt Runde {0}!"
+    "translation" : "takes ROUND {0}!"
   },
   "speedTap.text.roundScore" : {
     "translation" : "Spieler: {0} – Cozmo: {1}"
@@ -361,21 +361,21 @@
     "translation" : "ÜBEREINSTIMMUNG!"
   },
   "label.dontSlap" : {
-    "translation" : "DON'T\u000aSLAP!"
+    "translation" : "NICHT\u000aSCHLAGEN!"
   },
   "label.noMatch" : {
-    "translation" : "NO\u000aMATCH"
+    "translation" : "KEINE\u000aÜBEREINSTIMMUNG"
   },
   "label.enterText" : {
     "translation" : "Text eingeben..."
   },
   "minigame.text.cozmoWinsFlat" : {
-    "translation" : "Cozmo Wins!"
+    "translation" : "Cozmo\u000agewinnt!"
   },
   "minigame.text.playerWinsFlat" : {
-    "translation" : "{0} Wins!"
+    "translation" : "{0}\u000agewinnt!"
   },
   "minigame.text.youWinFlat" : {
-    "translation" : "You Win!"
+    "translation" : "Du\u000agewinnst!"
   }
 }
