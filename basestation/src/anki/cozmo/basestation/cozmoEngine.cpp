@@ -237,7 +237,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
                                     _context->GetDataLoader()->GetStarRewardsConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsActionsConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsDecayConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsHandlersConfig());
+                                    _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
+                                    _context->GetDataLoader()->GetLocalNotificationConfig());
 
   _context->GetRobotManager()->Init(_config);
 

@@ -212,6 +212,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
+, _localNotifications()
 , _savedTimeLastWrittenToDevice()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
@@ -273,7 +274,8 @@ NeedsManager::~NeedsManager()
 
 void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                         const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson)
+                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+                        const Json::Value& inLocalNotificationJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
@@ -290,6 +292,8 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                   "Can't create needs handler for face glitches because there is no RNG in cozmo context") ) {
     _faceDistortionComponent->Init(inHandlersJson, _cozmoContext->GetRandom());
   }
+
+  _localNotifications.Init(inLocalNotificationJson);
 
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
