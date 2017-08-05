@@ -76,6 +76,7 @@ namespace Cozmo.Energy.UI {
       if (robot != null) {
         robot.CancelAllCallbacks();
         robot.CancelAction(RobotActionType.UNKNOWN);
+        robot.SetEnableFreeplayLightStates(true);
         robot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
       }
 
