@@ -36,8 +36,8 @@ bool ExpectsAdditionalData(EContentType type)
     {
       return false;
     }
-  
     case EContentType::Cliff:
+    case EContentType::ObstacleProx:
     {
       return true;
     }

@@ -48,7 +48,7 @@ CONSOLE_VAR(bool, kVieDrawDebugInfo, "BehaviorVisitInterestingEdge", false);
 namespace {
 
 // This is the configuration of memory map types that would invalidate goals because we would
-// need to cross an obstacle or edge to get there
+// need to cross an obstacle or edge to get there. If the obstacle is seen by the planner, we can likely path around it
 constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateGoals =
 {
   {NavMemoryMapTypes::EContentType::Unknown               , false},
@@ -58,8 +58,9 @@ constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateGoals =
   {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
   {NavMemoryMapTypes::EContentType::ObstacleCharger       , false}, // this could be ok, since we will walk around the charger
   {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
-  {NavMemoryMapTypes::EContentType::Cliff                 , true},
+  {NavMemoryMapTypes::EContentType::ObstacleProx          , false}, // this could be ok, since we will walk around
+  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+  {NavMemoryMapTypes::EContentType::Cliff                 , true },
   {NavMemoryMapTypes::EContentType::InterestingEdge       , false}, // the goal itself is the closest one, so we can afford not to do this (which simplifies goal point)
   {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true}
 };
@@ -77,6 +78,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateVantagePoints =
   {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
   {NavMemoryMapTypes::EContentType::ObstacleCharger       , true},
   {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {NavMemoryMapTypes::EContentType::ObstacleProx          , true},
   {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
   {NavMemoryMapTypes::EContentType::Cliff                 , true},
   {NavMemoryMapTypes::EContentType::InterestingEdge       , true},

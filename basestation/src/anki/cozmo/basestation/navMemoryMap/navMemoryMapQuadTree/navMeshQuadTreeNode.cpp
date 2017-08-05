@@ -48,6 +48,7 @@ ExternalInterface::ENodeContentTypeEnum ConvertContentType(ENodeContentType cont
     case ENodeContentType::ObstacleCubeRemoved:   { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
     case ENodeContentType::ObstacleCharger:       { externalContentType = ENodeContentTypeEnum::ObstacleCharger; break; }
     case ENodeContentType::ObstacleChargerRemoved:{ DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this
+    case ENodeContentType::ObstacleProx:          { externalContentType = ENodeContentTypeEnum::ObstacleProx;    break; } 
     case ENodeContentType::ObstacleUnrecognized:  { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentType"); break; } // Should never get this (unsupported)
     case ENodeContentType::Cliff:                 { externalContentType = ENodeContentTypeEnum::Cliff;           break; }
     case ENodeContentType::InterestingEdge:       { externalContentType = ENodeContentTypeEnum::VisionBorder;    break; }
@@ -74,6 +75,7 @@ ExternalInterface::ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(ENode
     case ENodeContentType::ObstacleCubeRemoved:   { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved;    break; }
     case ENodeContentType::ObstacleCharger:       { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCharger;        break; }
     case ENodeContentType::ObstacleChargerRemoved:{ internalContentType = ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved; break; }
+    case ENodeContentType::ObstacleProx:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleProx;           break; }
     case ENodeContentType::ObstacleUnrecognized:  { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleUnrecognized;   break; }
     case ENodeContentType::Cliff:                 { internalContentType = ENodeContentTypeDebugVizEnum::Cliff;                  break; }
     case ENodeContentType::InterestingEdge:       { internalContentType = ENodeContentTypeDebugVizEnum::InterestingEdge;        break; }

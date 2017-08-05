@@ -38,6 +38,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesToExploreInterestingBordersFr
   {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
   {NavMemoryMapTypes::EContentType::ObstacleCharger       , false},
   {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {NavMemoryMapTypes::EContentType::ObstacleProx          , false},
   {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
   {NavMemoryMapTypes::EContentType::Cliff                 , false},
   {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
@@ -55,7 +56,19 @@ void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyz
   
   // calculate regions
   INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToExploreInterestingBordersFrom, analyzer._interestingRegions);
+  INavMemoryMap::BorderRegionVector visionEdges, proxEdges;
+  
+  analyzer._interestingRegions.clear();
+  
+  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToExploreInterestingBordersFrom, visionEdges);
+  if (!visionEdges.empty()) {
+   analyzer._interestingRegions.insert(end(analyzer._interestingRegions), begin(visionEdges), end(visionEdges));
+  }
+                       
+  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleProx, typesToExploreInterestingBordersFrom, proxEdges);
+  if (!proxEdges.empty()) {
+    analyzer._interestingRegions.insert(end(analyzer._interestingRegions), begin(proxEdges), end(proxEdges));
+  }
 }
 
 

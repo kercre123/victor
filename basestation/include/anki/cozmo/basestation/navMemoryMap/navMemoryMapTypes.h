@@ -36,6 +36,7 @@ enum class EContentType : uint8_t {
   ObstacleCubeRemoved,   // an area that used to have a cube and now the cube has moved somewhere else
   ObstacleCharger,       // an area with obstacles we recognize as a charger
   ObstacleChargerRemoved,// an area that used to have a charger and now the charger has moved somewhere else
+  ObstacleProx,          // an area with an obstacle found with the prox sensor
   ObstacleUnrecognized,  // an area with obstacles we do not recognize
   Cliff,                 // an area with cliffs or holes
   InterestingEdge,       // a border/edge detected by the camera

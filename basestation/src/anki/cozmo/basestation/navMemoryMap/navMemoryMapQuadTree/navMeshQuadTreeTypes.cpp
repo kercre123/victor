@@ -61,6 +61,7 @@ const char* ENodeContentTypeToString(ENodeContentType nodeContentType)
     case ENodeContentType::ObstacleCubeRemoved: return "ObstacleCubeRemoved";
     case ENodeContentType::ObstacleCharger: return "ObstacleCharger";
     case ENodeContentType::ObstacleChargerRemoved: return "ObstacleChargerRemoved";
+    case ENodeContentType::ObstacleProx: return "ObstacleProx";
     case ENodeContentType::ObstacleUnrecognized: return "ObstacleUnrecognized";
     case ENodeContentType::Cliff: return "Cliff";
     case ENodeContentType::InterestingEdge: return "InterestingEdge";
@@ -113,6 +114,7 @@ bool IsRemovalType(ENodeContentType type)
     {ENodeContentType::ObstacleCubeRemoved   , true},
     {ENodeContentType::ObstacleCharger       , false},
     {ENodeContentType::ObstacleChargerRemoved, true},
+    {ENodeContentType::ObstacleProx          , false},
     {ENodeContentType::ObstacleUnrecognized  , false},
     {ENodeContentType::Cliff                 , false},
     {ENodeContentType::InterestingEdge       , false},

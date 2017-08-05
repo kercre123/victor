@@ -81,6 +81,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesToBlockDriving =
   {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
   {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
   {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
   {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
   {NavMemoryMapTypes::EContentType::Cliff                 , true },
   {NavMemoryMapTypes::EContentType::InterestingEdge       , true },

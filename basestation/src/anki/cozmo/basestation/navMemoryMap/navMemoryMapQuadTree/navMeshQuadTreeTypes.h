@@ -39,6 +39,7 @@ enum class ENodeContentType : uint8_t {
   ObstacleCubeRemoved,   // there used to be a cube in this area, but it has moved somewhere else
   ObstacleCharger,       // we have seen a charger in part of the node
   ObstacleChargerRemoved,// there used to be a charger in this area, but it has moved somewhere else
+  ObstacleProx,          // an area with an obstacle found with the prox sensor
   ObstacleUnrecognized,  // we have seen an obstacle in part of the node but we don't know what it is
   Cliff,                 // we have seen a cliff in part of the node
   InterestingEdge,       // we have seen a vision edge and it's interesting
