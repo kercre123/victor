@@ -98,7 +98,7 @@ namespace FaceEnrollment {
 
       if (_FaceEnrollmentInstructionsModalInstance != null && _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
         _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed -= HandleUserClosedInstructionsModal;
-
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.CancelQuitDialog();
       }
     }
 

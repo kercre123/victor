@@ -79,6 +79,8 @@ namespace FaceEnrollment {
         if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
           SharedMinigameView.HideQuitButton();
         }
+        // Onboarding trains people to look here so just let players hit done and move on.
+        ShowDoneShelf = true;
       }
     }
 
