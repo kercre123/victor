@@ -40,7 +40,7 @@ public:
   // Provide a callback lambda to get all event callbacks; Duration, Marker, Complete & Error.
   using MuxCallbackIdType = AudioEngine::Multiplexer::AudioMuxClient::CallbackIdType;
   virtual MuxCallbackIdType PostEvent( const AudioMetaData::GameEvent::GenericEvent event,
-                                       const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid,
+                                       const AudioMetaData::GameObjectType gameObject,
                                        const AudioEngine::Multiplexer::AudioMuxClient::CallbackFunc& callback = nullptr ) override;
   
   virtual void StopAllEvents( const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid ) override;
@@ -50,11 +50,11 @@ public:
   
   virtual  void PostSwitchState( const AudioMetaData::SwitchState::SwitchGroupType switchGroup,
                                  const AudioMetaData::SwitchState::GenericSwitch switchState,
-                                 const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid ) override;
+                                 const AudioMetaData::GameObjectType gameObject) override;
   
   virtual void PostParameter( const AudioMetaData::GameParameter::ParameterType parameter,
                               const float parameterValue,
-                              const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid,
+                              const AudioMetaData::GameObjectType gameObject,
                               const int32_t timeInMilliSeconds = 0,
                               const AudioEngine::Multiplexer::CurveType = AudioEngine::Multiplexer::CurveType::Linear ) const override;
   

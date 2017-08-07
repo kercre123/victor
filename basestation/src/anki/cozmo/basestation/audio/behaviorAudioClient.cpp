@@ -305,9 +305,9 @@ void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateE
     _isCubeInLift = stateEvent.isCubeInLift;
     
     if(_isCubeInLift){
-      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Play__Cue_World_Event__Lift_Cube);
+      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Lift_Cube, kMusicGameObject);
     }else{
-      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Stop__Cue_World_Event__Lift_Cube);
+      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Lift_Cube, kMusicGameObject);
     }
   }
   
@@ -315,9 +315,9 @@ void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateE
     _isRequestingGame = stateEvent.isRequestingGame;
 
     if(_isRequestingGame){
-      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Play__Cue_World_Event__Request_Game);
+      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Request_Game, kMusicGameObject);
     }else{
-      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Stop__Cue_World_Event__Request_Game);
+      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Request_Game, kMusicGameObject);
     }
   }
   
@@ -326,9 +326,9 @@ void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateE
     _stackExists = (stateEvent.tallestStackHeight > 1);
     
     if(_stackExists){
-      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Play__Cue_World_Event__Cubes_Stacked);
+      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Cubes_Stacked, kMusicGameObject);
     }else{
-      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Stop__Cue_World_Event__Cubes_Stacked);
+      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Cubes_Stacked, kMusicGameObject);
     }
   }
 }
@@ -440,22 +440,26 @@ void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPu
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleNeedsUpdates(const NeedsLevels& needsLevel)
 {
+  using AGO = AudioMetaData::GameObjectType;
   if(!FLT_NEAR(needsLevel.energy, _needsLevel.energy)){
     _needsLevel.energy = needsLevel.energy;
     _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
-                                                _needsLevel.energy);
+                                                _needsLevel.energy,
+                                                AGO::Invalid);
   }
   
   if(!FLT_NEAR(needsLevel.repair, _needsLevel.repair)){
     _needsLevel.repair = needsLevel.repair;
     _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Repair,
-                                                _needsLevel.repair);
+                                                _needsLevel.repair,
+                                                AGO::Invalid);
   }
   
   if(!FLT_NEAR(needsLevel.play, _needsLevel.play)){
     _needsLevel.play = needsLevel.play;
     _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Play,
-                                                _needsLevel.play);
+                                                _needsLevel.play,
+                                                AGO::Invalid);
   }
   
 }
@@ -484,15 +488,18 @@ void BehaviorAudioClient::SetActiveBehaviorStage(BehaviorStageTag stageTag)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleDimMusicForActivity(const RobotPublicState& stateEvent)
 {
+  using AE = AudioMetaData::GameEvent::GenericEvent;
   if(_prevActivity != stateEvent.currentActivity)
   {
     if(stateEvent.currentActivity == ActivityID::Singing)
     {
-      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::App::Music_Dim_On));
+      _robot.GetRobotAudioClient()->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_On),
+                                              kMusicGameObject);
     }
     else if(_prevActivity == ActivityID::Singing)
     {
-      _robot.GetRobotAudioClient()->PostCozmoEvent(static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::App::Music_Dim_Off));
+      _robot.GetRobotAudioClient()->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_Off),
+                                              kMusicGameObject);
     }
   }
 }
