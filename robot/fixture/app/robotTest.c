@@ -193,11 +193,19 @@ void PlaypenTest(void)
   
   //Repurpose Playpen test cmd for JRL testing
   uint8_t param;
-  if( g_fixtureType == FIXTURE_EMROBOT_TEST ) {
-    param = 0x80  //<7> 1 = JRL mode: SSID="JRL", alternate param bitfields
-      | (0 << 4)  //<5:4> modulation { 0=2=PHY_MODE_11G, 1=PHY_MODE_11B, 3=PHY_MODE_11N } [robot/espressif/app/factory/factoryTests.cpp]
-      | (11);     //<3:0> channel {0..15}
-  } else {
+  if( g_fixtureType == FIXTURE_EMROBOT_TEST )
+  {
+    const int mod = 0; //{0=2=PHY_MODE_11G, 1=PHY_MODE_11B, 3=PHY_MODE_11N} [robot/espressif/app/factory/factoryTests.cpp]
+    const int channel = 11; //{0..15}
+    
+    param = 0x80    //<7> 1 = JRL mode: continuous packet tx
+      | (mod << 4)  //<5:4> modulation
+      | (channel);  //<3:0> channel
+    
+    ConsolePrintf("playpen continuous tx: channel %u, modulation %s\r\n", channel, (mod==1 ? "11B" : mod==3 ? "11N" : "11G") );
+  } 
+  else
+  {
     param = 0x00  //<7> 0 = standard playpen mode
       | ((FIXTURE_SERIAL)&63); //<5:0> SSID -> "Afix##"
   }
@@ -867,7 +875,7 @@ void DtmTest(void)
   else
     ConsolePrintf("failed to enter DTM mode\r\n");
   
-  ConsolePrintf("SendCommand(TEST_DTM, freq=%uMHz) status=%u err=%u\r\n", 2400+freq, dtm_status, err);
+  ConsolePrintf("dtm status=%u err=%u\r\n", dtm_status, err);
   if( dtm_status == 255 ) {
     if (g_allowOutdated)
       return;
