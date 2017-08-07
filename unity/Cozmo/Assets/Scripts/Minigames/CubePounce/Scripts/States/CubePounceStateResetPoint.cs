@@ -15,7 +15,7 @@ namespace Cozmo.Challenge.CubePounce {
     private float _CubeCreepTimerStart_s = -1f;
     private bool _LookForCubeInProgress = false;
 
-    private const string kCubePounceResetPoint = "cube_pounce_satte_reset_point";
+    public const string kCubePounceResetPoint = "cube_pounce_satte_reset_point";
 
     public CubePounceStateResetPoint(bool overrideReadyAnimComplete = false) {
       _GetReadyAnimCompleted = overrideReadyAnimComplete;
