@@ -191,8 +191,19 @@ void PlaypenTest(void)
   EnableChargeComms();
   MicroWait(300*1000); // Let Espressif finish booting
   
+  //Repurpose Playpen test cmd for JRL testing
+  uint8_t param;
+  if( g_fixtureType == FIXTURE_EMROBOT_TEST ) {
+    param = 0x80  //<7> 1 = JRL mode: SSID="JRL", alternate param bitfields
+      | (0 << 4)  //<5:4> modulation { 0=2=PHY_MODE_11G, 1=PHY_MODE_11B, 3=PHY_MODE_11N } [robot/espressif/app/factory/factoryTests.cpp]
+      | (11);     //<3:0> channel {0..15}
+  } else {
+    param = 0x00  //<7> 0 = standard playpen mode
+      | ((FIXTURE_SERIAL)&63); //<5:0> SSID -> "Afix##"
+  }
+  
   // Try to put robot into playpen mode
-  SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);
+  SendCommand(FTM_PlayPenTest, param, 0, 0);
   
   // Do this last:  Try to put fixture radio in advertising mode
   if( g_fixtureType != FIXTURE_EMROBOT_TEST )
@@ -844,18 +855,19 @@ void EmPlaypenDelay(void)
 
 void DtmTest(void)
 {
+  int err = ERROR_OK;
   const int freq = 2; //2=2402MHz, 42=2442MHz, 81=2481MHz
   u8 dtm_status = 255;
   
   //EnableChargeComms();
   ConsolePrintf("Starting DTM: tone 0dBm %dMHz\r\n", 2400+freq );
-  try{ SendCommand(TEST_DTM, freq, sizeof(dtm_status), (u8*)&dtm_status); } catch(int e) {}
+  try{ SendCommand(TEST_DTM, freq, sizeof(dtm_status), (u8*)&dtm_status); } catch(int e) { err = e; }
   if( dtm_status == 0 )
     ConsolePrintf("test-body-radio,%08x\r\n", body_esn); //PC software is waiting for this line to take RF measurements
   else
     ConsolePrintf("failed to enter DTM mode\r\n");
   
-  ConsolePrintf("dtm status: %d\r\n", dtm_status);
+  ConsolePrintf("SendCommand(TEST_DTM, freq=%uMHz) status=%u err=%u\r\n", 2400+freq, dtm_status, err);
   if( dtm_status == 255 ) {
     if (g_allowOutdated)
       return;
