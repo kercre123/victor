@@ -193,8 +193,7 @@ namespace Cozmo.Needs.Sparks.UI {
       }
       else if (RobotEngineManager.Instance.CurrentRobot != null) {
         // Prevent the player from doing other things
-        _IsDisablingTouches = true;
-        UIManager.DisableTouchEvents(_DisableTouchKey);
+        DisableTouches();
 
         RobotEngineManager.Instance.CurrentRobot.DoRandomSpark();
       }
@@ -209,19 +208,24 @@ namespace Cozmo.Needs.Sparks.UI {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.RequestRandomGame();
 
-        // Prevent the player from doing other things
-        _IsDisablingTouches = true;
-        UIManager.DisableTouchEvents(_DisableTouchKey);
         ContextManager.Instance.ShowForeground();
 
-        // Make sure that we re-enable touches in case something goes wrong with robot comms
-        Invoke("ReenableTouches", _ReenableTouchTimeout_s);
+        // Prevent the player from doing other things
+        DisableTouches();
       }
     }
 
     private bool ShowEdgeCaseAlertIfNeeded() {
       // We can send in default values because we are not checking cubes or os
       return _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(null, 0, true, null);
+    }
+
+    private void DisableTouches() {
+      _IsDisablingTouches = true;
+      UIManager.DisableTouchEvents(_DisableTouchKey);
+
+      // Make sure that we re-enable touches i something goes wrongobot comms
+      Invoke("ReenableTouches", _ReenableTouchTimeout_s);
     }
 
     private void ReenableTouches() {

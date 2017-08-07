@@ -53,6 +53,8 @@ namespace Cozmo.Hub {
     private float _ConnectedTimeIntervalLastTimestamp = -1;
     private float _ConnectedTimeStartedTimestamp = -1;
 
+    private const string _kDisableTouchesDuringRequestAnim = "needs_hub_request_anim";
+
     public override void LoadHubWorld() {
       _ChallengeManager = new ChallengeManager(_ChallengeDataPrefabAssetBundle);
       _ChallengeManager.OnShowEndGameDialog += HandleEndGameDialog;
@@ -74,6 +76,8 @@ namespace Cozmo.Hub {
     }
 
     public override void DestroyHubWorld() {
+      UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
+
       _ChallengeManager.CleanUp();
       _ChallengeManager.OnShowEndGameDialog -= HandleEndGameDialog;
       _ChallengeManager.OnChallengeViewFinishedClosing -= HandleChallengeViewFinishedClosing;
@@ -216,6 +220,7 @@ namespace Cozmo.Hub {
     #region StartChallenge
 
     private void HandleStartChallengeRequest(string challengeRequested) {
+      UIManager.DisableTouchEvents(_kDisableTouchesDuringRequestAnim);
       PlayChallenge(challengeRequested, true);
     }
 
@@ -240,6 +245,7 @@ namespace Cozmo.Hub {
     }
 
     private void HandleRequestAnimationComplete(bool animSuccessful = false) {
+      UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
       // Close needs dialog if open
       if (_NeedsViewHubInstance != null) {
         DeregisterNeedsViewEvents();
