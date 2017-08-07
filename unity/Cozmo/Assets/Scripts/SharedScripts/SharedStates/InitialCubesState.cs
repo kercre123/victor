@@ -229,6 +229,13 @@ public class InitialCubesState : State {
   }
 
   protected virtual void HandleContinueButtonClicked() {
-    _StateMachine.SetNextState(_NextState);
+    // we should ONLY ever set a new state if we're still the current state
+    // tends to be a reoccuring bug worth logging since it's on sharedminigameview button and needs be reset per state.
+    if (_StateMachine.GetCurrState() == this) {
+      _StateMachine.SetNextState(_NextState);
+    }
+    else {
+      DAS.Error("InitialCubeState.SetNextState.AttemptingToSetStateWhenNotActive", "");
+    }
   }
 }
