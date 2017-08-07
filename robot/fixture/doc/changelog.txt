@@ -1,4 +1,15 @@
 ----------------
+Release v104.1
+----------------
+
+Firmware:
+-esp.factory.bin: FTM_PlayPenTest arg now supports "JRL" mode (continuous packet TX with selectable channel, modulation)
+
+EMROBOT:
+-updated parmeters for playpen test mode - kicks off specialized JRL configuration
+-added some debug printing; collect better error info from low-yeild line tests
+
+----------------
 Release v104
 ----------------
 
