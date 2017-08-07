@@ -73,6 +73,8 @@ public:
   void Init(const Json::Value& json);
   void InitDecay(const Json::Value& json);
 
+  float NeedLevelForNeedBracket(const NeedId needId, const NeedBracketId bracketId) const;
+
   float _minNeedLevel;
   float _maxNeedLevel;
   float _decayPeriod;

@@ -54,11 +54,15 @@ public:
   void Init(NeedsConfig& needsConfig, const u32 serialNumber,
             const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng);
 
-  // Set up decay multipliers (we do this prior to calling ApplyDecay)
-  void SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers);
+  // Set up decay multipliers (we do this prior to calling ApplyDecay or TimeForDecayToLevel)
+  void SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const;
   
   // Decay a need's level, according to how much time has passed since last decay, and config data
   void ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers);
+
+  // Calculate the time (in minutes) it will take to decay a need to a specified level
+  float TimeForDecayToLevel(const DecayConfig& decayConfig, const int needIndex,
+                            const float targetLevel, const NeedsMultipliers& multipliers) const;
 
   // Apply a given delta to a given need
   bool ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause);

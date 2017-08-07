@@ -212,7 +212,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
-, _localNotifications()
+, _localNotifications(new LocalNotifications(*this))
 , _savedTimeLastWrittenToDevice()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
@@ -293,7 +293,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     _faceDistortionComponent->Init(inHandlersJson, _cozmoContext->GetRandom());
   }
 
-  _localNotifications.Init(inLocalNotificationJson);
+  _localNotifications->Init(inLocalNotificationJson);
 
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
@@ -346,6 +346,8 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
 
 void NeedsManager::InitInternal(const float currentTime_s)
 {
+  _localNotifications->CancelAll();
+
   const u32 uninitializedSerialNumber = 0;
   InitReset(currentTime_s, uninitializedSerialNumber);
 
@@ -1405,10 +1407,14 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
     }
 
     SendNeedsLevelsDasEvent("app_background");
+
+    _localNotifications->Generate();
   }
   else
   {
     // When un-backgrounding, apply decay
+    _localNotifications->CancelAll();
+
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
 

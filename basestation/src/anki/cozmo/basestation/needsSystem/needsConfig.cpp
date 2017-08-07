@@ -293,6 +293,18 @@ void NeedsConfig::InitDecayModifiers(const Json::Value& json, const std::string&
 }
 
 
+float NeedsConfig::NeedLevelForNeedBracket(const NeedId needId, const NeedBracketId bracketId) const
+{
+  const auto& it = _needsBrackets.find(needId);
+  if (it != _needsBrackets.end())
+  {
+    const auto& brackets = it->second;
+    return brackets[Util::numeric_cast<int>(bracketId)];
+  }
+  return 0.0f;
+}
+
+
 ActionsConfig::ActionsConfig()
 : _actionDeltas()
 {

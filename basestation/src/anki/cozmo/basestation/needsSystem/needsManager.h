@@ -41,6 +41,7 @@ namespace RobotInterface {
 class Robot;
 class CozmoContext;
 class DesiredFaceDistortionComponent;
+class LocalNotifications;
 
 enum class RobotStorageState
 {
@@ -72,6 +73,8 @@ public:
 
   NeedsState& GetCurNeedsStateMutable();
   const NeedsState& GetCurNeedsState();
+
+  const NeedsConfig& GetNeedsConfig() const { return _needsConfig; };
 
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
   void PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState);
@@ -178,7 +181,7 @@ private:
   ActionsConfig _actionsConfig;
   std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
 
-  LocalNotifications _localNotifications;
+  std::shared_ptr<LocalNotifications> _localNotifications;
 
   Time          _savedTimeLastWrittenToDevice;
   Time          _timeLastWrittenToRobot;
