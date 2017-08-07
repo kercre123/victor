@@ -42,7 +42,10 @@ struct FTMenuItem
   u32 timeout;
 };
 
-extern "C" { int wifi_setup(const char*, const char*, int); }
+extern "C" {
+  int wifi_setup(const char*, const char*, int);
+  void os_put_hex(unsigned int i, unsigned short nibbles);
+}
 
 
 namespace Anki {
@@ -57,6 +60,7 @@ typedef enum {
   PP_postWipeDelay_DEPRECATED_,
   PP_setWifi,
   PP_running,
+  PP_JRL
 } PlayPenTestState;
 
 typedef enum {
@@ -520,6 +524,37 @@ static inline void RequestBodySN(void)
   RTIP::SendMessage(msg);
 }
 
+static void wifi_jrl(void)
+{
+  wifi_set_opmode_current(STATION_MODE);
+  wifi_set_channel(modeParam & 15);
+  wifi_promiscuous_enable(1);
+  switch((modeParam >> 4) & 3)
+  {
+    case 1:
+    {
+      wifi_set_phy_mode(PHY_MODE_11B);
+      break;
+    }
+    case 3:
+    {
+      wifi_set_phy_mode(PHY_MODE_11N);
+      break;
+    }
+    default:
+    {
+      wifi_set_phy_mode(PHY_MODE_11G);
+    }
+  }
+}
+
+#define JRL_PACKET_SIZE (1380) // SDK limit
+static void wifi_emit_jrl_packet() {
+  uint8_t packet[JRL_PACKET_SIZE]; 
+  os_memset(packet, 0xAA, JRL_PACKET_SIZE);
+  os_put_hex(wifi_send_pkt_freedom(packet, JRL_PACKET_SIZE, 0), 1);
+}
+
 static void PlayPenStateUpdate(void) {
   switch(testModePhase)
   {
@@ -534,33 +569,36 @@ static void PlayPenStateUpdate(void) {
     }
   case PP_setWifi:
     {
-#if 1
-      os_printf("AFIX wifi\r\n");
-      char ssid[16];
-      //      os_memset(ssid, 0, sizeof(ssid));
-      os_sprintf(ssid, "Afix%02d", modeParam & 63);
-      //Start AIFX wifi with no pwd.
-      //- Hardcoded channel 11 - EL (factory) has no traffic here
-          wifi_setup(ssid, NULL, 11);
-#else          
-
-            os_printf("AFIX wifi\r\n");
-            struct softap_config ap_config;
-            wifi_softap_get_config(&ap_config);
-            os_memset(ap_config.ssid, 0, sizeof(ap_config.ssid));
-            os_sprintf((char*)ap_config.ssid, "Afix%02d", modeParam & 63);
-            ap_config.authmode = AUTH_OPEN;
-            ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
-            ap_config.beacon_interval = 100;
-            wifi_softap_set_config_current(&ap_config);
-#endif            
-      testModePhase = PP_running;
-      os_printf("AFIX running\r\n");
+      if (modeParam & 128) // TOMY mode
+      {
+        os_printf("TOMY wifi\r\n");
+        wifi_jrl();
+        testModePhase = PP_JRL;
+        os_printf("JRL running\r\n");
+      }
+      else
+      {
+        os_printf("AFIX wifi\r\n");
+        char ssid[16];
+        os_sprintf(ssid, "Afix%02d", modeParam & 63);
+        //Start AIFX wifi with no pwd.
+        //- Hardcoded channel 11 - EL (factory) has no traffic here
+        wifi_setup(ssid, NULL, 11);
+        testModePhase = PP_running;
+        os_printf("AFIX running\r\n");
+      }
       break;
     }
   case PP_running:
-    ShowWiFiInfo(0);
-
+    {
+      ShowWiFiInfo(0);
+      break;
+    }
+  case PP_JRL:
+    {
+      wifi_emit_jrl_packet();
+      break;
+    }
   default:
     {
       
