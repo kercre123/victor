@@ -72,6 +72,7 @@ GameObject:
   - component: {fileID: 224833859377840732}
   - component: {fileID: 222379529207831594}
   - component: {fileID: 114727537228357842}
+  - component: {fileID: 225473858326158990}
   m_Layer: 5
   m_Name: SparkCountLabelText
   m_TagString: Untagged
@@ -423,7 +424,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1225,7 +1226,7 @@ MonoBehaviour:
         duration_sec: 0
         easing: 0
   _FadeTweenSettings:
-    staggerType: 2
+    staggerType: 0
     uniformStagger_sec: 0
     targets:
     - target: {fileID: 225100588600205570}
@@ -1235,9 +1236,20 @@ MonoBehaviour:
         duration_sec: 0
         easing: 0
       closeSetting:
-        startTime_sec: 0.3
+        startTime_sec: 0.05
         useCustom: 0
         duration_sec: 0
+        easing: 0
+    - target: {fileID: 225473858326158990}
+      openSetting:
+        startTime_sec: 1
+        useCustom: 1
+        duration_sec: 0.75
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 1
+        duration_sec: 0.05
         easing: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
@@ -2163,8 +2175,8 @@ RectTransform:
   m_Father: {fileID: 224125996114480576}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1370, y: 0}
   m_SizeDelta: {x: 0, y: 1160}
   m_Pivot: {x: 0, y: 1}
@@ -2174,6 +2186,17 @@ CanvasGroup:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1071880653109826}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!225 &225473858326158990
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1201514657198746}
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
