@@ -291,6 +291,9 @@
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse!"
   },
+  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText": {
+      "translation": "Intrus!"
+  },
   "codeLabChallenge_intruder.answerSlide.primaryText" : {
     "translation" : "Réponse32"
   },
