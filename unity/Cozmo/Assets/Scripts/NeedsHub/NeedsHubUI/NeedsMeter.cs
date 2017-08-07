@@ -277,6 +277,8 @@ namespace Cozmo {
             _FillTimer = 0f;
           }
 
+          bool targetWasAboveValue = (_TargetValue > CurrentValue);
+
           CurrentValue = EaseOutQuad(_FillTime_sec - _FillTimer, _AnimStartValue,
             _TargetValue - _AnimStartValue, _FillTime_sec);
 
@@ -299,7 +301,9 @@ namespace Cozmo {
           else {
             _ImageFillGlow.color = _NormalColor;
             _AnimStartValue = currentValue;
-            _BurstTimer = _BurstTime_sec;
+            if (targetWasAboveValue) {
+              _BurstTimer = _BurstTime_sec;
+            }
           }
         }
       }
