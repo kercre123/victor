@@ -35,7 +35,7 @@ namespace Audio {
 
 using namespace AudioMetaData::SwitchState;
   
-using FullStageTagArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<BehaviorStageTag, ActivityID, BehaviorStageTag::Count>;
+using StageTagMultiMap = std::multimap<BehaviorStageTag, ActivityID>;
 using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequentialArray to this namespace
 
 namespace {
@@ -86,15 +86,15 @@ const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
   { ActivityID::NothingToDo,             AudioMetaData::SwitchState::Freeplay_Mood::Bored }
 };
   
-constexpr FullStageTagArray activityAllowedStagesMap
+const StageTagMultiMap activityAllowedStagesMap
 {
   { BehaviorStageTag::Feeding, ActivityID::Feeding},
   { BehaviorStageTag::GuardDog, ActivityID::PlayAlone},
   { BehaviorStageTag::PyramidConstruction, ActivityID::BuildPyramid},
-  { BehaviorStageTag::Workout, ActivityID::PlayAlone}
+  { BehaviorStageTag::PyramidConstruction, ActivityID::SparksBuildPyramid},
+  { BehaviorStageTag::Workout, ActivityID::PlayAlone},
+  { BehaviorStageTag::Workout, ActivityID::SparksWorkout},
 };
-static_assert(IsSequentialArray(activityAllowedStagesMap),
-              "BehaviorAudioClient.Init.IncorrectActivityALlowedARray");
   
 } // end anonymous namespace
   
@@ -281,16 +281,20 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   // has changed
   if(ANKI_DEV_CHEATS){
     if(GetActiveBehaviorStage() != BehaviorStageTag::Count){
+      bool activityIsValid = false;
       for(const auto& entry: activityAllowedStagesMap){
-        if(entry.EnumValue() == GetActiveBehaviorStage()){
-          DEV_ASSERT_MSG(entry.Value() == currActivity,
-                         "BehaviorAudioClient.HandleRobotPublicStateChange.IncorrectBehaviorStage",
-                         "Behavior stage is %s but activity is %s",
-                         BehaviorStageTagToString(entry.EnumValue()),
-                         ActivityIDToString(currActivity));
-          break;
+        if(entry.first == GetActiveBehaviorStage()){
+          if(entry.second == currActivity){
+            activityIsValid = true;
+            break;
+          }
         }
       }
+      DEV_ASSERT_MSG(activityIsValid,
+                     "BehaviorAudioClient.HandleRobotPublicStateChange.IncorrectBehaviorStage",
+                     "Behavior stage is %s but activity is %s",
+                     BehaviorStageTagToString(GetActiveBehaviorStage()),
+                     ActivityIDToString(currActivity));
     }
   }
 }
