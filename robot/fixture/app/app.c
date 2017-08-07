@@ -22,10 +22,11 @@
 #include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 104;
+u8 g_fixtureReleaseRev = 1; //'ver.rev' e.g. 104.2
 #define BUILD_INFO "MP v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#define NOT_FOR_FACTORY 1
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -146,11 +147,24 @@ void SetFixtureText(void)
 #endif
   DisplayMoveCursor(55, 2);
   DisplayPutString(BUILD_INFO);
-  DisplayMoveCursor(55, fcc ? 108 : 105 );
+  
+#if NOT_FOR_FACTORY > 0
+  DisplayMoveCursor(55, fcc ? 108+7 : 105+7 );
+  DisplayPutChar('N');
+  DisplayPutChar('A');
+#else
+  u8 rev_space = (g_fixtureReleaseRev > 0 ? 14 : 0); //leave space for ".#" revision
+  DisplayMoveCursor(55, fcc ? 108-rev_space : 105-rev_space );
   DisplayPutChar(fcc ? 'c' : 'v');
-  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 100)));
-  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 10) % 10));
-  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + (g_fixtureReleaseVersion % 10));
+  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 100)));
+  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
+  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  if( g_fixtureReleaseRev > 0) {
+    DisplayPutChar('.');
+    DisplayPutChar('0' + (g_fixtureReleaseRev % 10));
+  }
+#endif
+  
   DisplayFlip();
 }
 
@@ -564,7 +578,7 @@ int main(void)
 
   STM_EVAL_LEDOn(LEDRED);
   
-  ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, ((NOT_FOR_FACTORY > 0) ? 0 : g_fixtureReleaseVersion) );
+  ConsolePrintf("\r\n----- Cozmo Test Fixture: %s%s v%d.%d -----\r\n", BUILD_INFO, (NOT_FOR_FACTORY > 0 ? " NOT-FOR-FACTORY" : ""), g_fixtureReleaseVersion, g_fixtureReleaseRev );
   ConsolePrintf("Build date-time: %s %s\r\n", __DATE__, __TIME__);
   ConsolePrintf("FIXTURE_SERIAL: %d (0x%04x)\r\n", FIXTURE_SERIAL, FIXTURE_SERIAL);
   ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
