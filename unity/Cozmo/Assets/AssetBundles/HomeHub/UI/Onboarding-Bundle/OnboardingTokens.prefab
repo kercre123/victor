@@ -402,14 +402,14 @@ MonoBehaviour:
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
   _LinkedComponentId: Onboarding_Description_Text
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 0
+  _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
-  _OverrideSkinFontSize: 0
+  _OverrideSkinFontSize: 1
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114043675915146996
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -426,10 +426,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 518
+    _EnumValue: 519
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 518
+    _EnumValue: 519
   _FreeplayEnabledOnExit: 1
   _DASPhaseID: 0
   _OverrideTickerKey: 
@@ -535,12 +535,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 65
+  m_fontSize: 75
   m_fontSizeBase: 100
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 55
-  m_fontSizeMax: 65
+  m_fontSizeMax: 75
   m_fontStyle: 0
   m_textAlignment: 257
   m_isAlignmentEnumConverted: 1
@@ -575,12 +575,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114203577354645830}
-    characterCount: 131
+    characterCount: 65
     spriteCount: 0
-    spaceCount: 22
-    wordCount: 23
+    spaceCount: 12
+    wordCount: 13
     linkCount: 0
-    lineCount: 5
+    lineCount: 3
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -603,14 +603,14 @@ MonoBehaviour:
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
   _LinkedComponentId: Onboarding_Description_Text
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 0
+  _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
-  _OverrideSkinFontStyle: 0
+  _OverrideSkinFontStyle: 1
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114278561521832190
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1101,8 +1101,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 1196, y: -231}
-  m_SizeDelta: {x: 905, y: 582}
+  m_AnchoredPosition: {x: 1196, y: -204}
+  m_SizeDelta: {x: 905, y: 527}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &224039517644097164
 RectTransform:
@@ -1119,7 +1119,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -485.9997, y: -37.375275}
+  m_AnchoredPosition: {x: 0, y: -8}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224056170818980468
@@ -1137,7 +1137,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -761.49976, y: -37.375275}
+  m_AnchoredPosition: {x: -275, y: -8}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224129194237871412
@@ -1155,8 +1155,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -222.99976, y: -37.375275}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 263, y: -8}
+  m_SizeDelta: {x: 193, y: 193}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224193526691064556
 RectTransform:
@@ -1195,8 +1195,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -2.5}
+  m_SizeDelta: {x: -80, y: -35}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224242353327874764
 RectTransform:
@@ -1239,8 +1239,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1245.9998, y: 351.375}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 793.4999, y: 255.69}
+  m_SizeDelta: {x: 905, y: 291}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224499034369740400
 RectTransform:
@@ -1275,7 +1275,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -661.49976, y: -37.375214}
+  m_AnchoredPosition: {x: -175, y: -8}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224658625903660030
@@ -1293,7 +1293,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -861.49976, y: -37.375214}
+  m_AnchoredPosition: {x: -375, y: -8}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224665533932610198
@@ -1311,8 +1311,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 1195.9999, y: 301.375}
-  m_SizeDelta: {x: 905, y: 582}
+  m_AnchoredPosition: {x: 1195.9999, y: 446}
+  m_SizeDelta: {x: 905, y: 293}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &224676856463213054
 RectTransform:
