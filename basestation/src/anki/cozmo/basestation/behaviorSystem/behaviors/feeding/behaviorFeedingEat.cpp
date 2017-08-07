@@ -194,8 +194,11 @@ void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementS
   // Cozmo is actively in the "eating" stage and has not drained the cube yet
   if(robot.IsPhysical()){
     if(movementScore > kCubeMovedTooFastInterrupt){
-      if((_currentState == State::Eating) &&
-         (_timeCubeIsSuccessfullyDrained_sec > currentTime_s)){
+      const bool currentlyEating = (_currentState == State::Eating) &&
+                       (_timeCubeIsSuccessfullyDrained_sec > currentTime_s);
+      
+      if(currentlyEating ||
+         (_currentState == State::PlacingLiftOnCube)){
         StopActing(false);
         TransitionToReactingToInterruption(robot);
         for(auto& listener: _feedingListeners){
@@ -203,13 +206,8 @@ void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementS
         }
       }else if(_currentState == State::DrivingToFood){
         StopActing(false);
-        //TransitionToWaitingForUserToMoveCube(robot);
       }
       
-    }else if((movementScore < kCubeMovedTooFastInterrupt) &&
-             (_currentState == State::WaitForUserToMoveCube)){
-      StopActing(false);
-      TransitionToDrivingToFood(robot);
     }
   }
 }
@@ -234,30 +232,15 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
   if(obj == nullptr){
     return;
   }
-  
-  
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy,
-                                                          NeedBracketId::Critical);
-  
-  AnimationTrigger bestAnim = isNeedSevere ?
-                      AnimationTrigger::FeedingPlaceLiftOnCube_Severe :
-                      AnimationTrigger::FeedingPlaceLiftOnCube_Normal;
-  
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
 
-  {
-    DriveToAlignWithObjectAction* driveAction = new DriveToAlignWithObjectAction(robot,
-                                                                                 _targetID,
-                                                                                 kDistanceFromMarker_mm);
-    driveAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kFeedingPreActionAngleTol_deg));
-    action->AddAction(driveAction);
-  }
+  DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
+                                                                          _targetID,
+                                                                          kDistanceFromMarker_mm);
+  action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kFeedingPreActionAngleTol_deg));
   
-  action->AddAction(new TriggerAnimationAction(robot, bestAnim));
   StartActing(action, [this, &robot](ActionResult result){
     if( result == ActionResult::SUCCESS ){
-      TransitionToEating(robot);
+      TransitionToPlacingLiftOnCube(robot);
     }
     else if( result == ActionResult::VISUAL_OBSERVATION_FAILED ) {
       // can't see the cube, maybe it's obstructed? give up on the cube until we see it again. Let the
@@ -277,7 +260,24 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
     }
     });
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFeedingEat::TransitionToPlacingLiftOnCube(Robot& robot)
+{
+  SET_STATE(PlacingLiftOnCube);
   
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy,
+                                                          NeedBracketId::Critical);
+  
+  AnimationTrigger bestAnim = isNeedSevere ?
+                               AnimationTrigger::FeedingPlaceLiftOnCube_Severe :
+                               AnimationTrigger::FeedingPlaceLiftOnCube_Normal;
+  
+  StartActing(new TriggerAnimationAction(robot, bestAnim),
+              &BehaviorFeedingEat::TransitionToEating);
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::TransitionToEating(Robot& robot)
@@ -341,19 +341,6 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
   StartActing(new TriggerLiftSafeAnimationAction(robot, trigger));
   
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::TransitionToWaitingForUserToMoveCube(Robot& robot)
-{
-  // The user is trying to help cozmo - wait for the movement score to
-  // fall below the movement threshold before trying to drive again
-  SET_STATE(WaitForUserToMoveCube);
-  StartActing(new WaitAction(robot, 1.f),
-              &BehaviorFeedingEat::TransitionToWaitingForUserToMoveCube);
-  
-}
-
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

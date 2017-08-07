@@ -54,9 +54,9 @@ protected:
 private:
   enum class State{
     DrivingToFood,
+    PlacingLiftOnCube,
     Eating,
-    ReactingToInterruption,
-    WaitForUserToMoveCube
+    ReactingToInterruption
   };
   
   mutable ObjectID _targetID;
@@ -75,9 +75,9 @@ private:
   std::map< ObjectID, TimeStamp_t > _badCubesMap;
   
   void TransitionToDrivingToFood(Robot& robot);
+  void TransitionToPlacingLiftOnCube(Robot& robot);
   void TransitionToEating(Robot& robot);
   void TransitionToReactingToInterruption(Robot& robot);
-  void TransitionToWaitingForUserToMoveCube(Robot& robot);
 
   void CubeMovementHandler(Robot& robot, const float movementScore);
   AnimationTrigger CheckNeedsStateAndCalculateAnimation(Robot& robot);

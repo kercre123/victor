@@ -81,6 +81,8 @@ public:
   
   const SparkToActivitiesTable& GetFreeplayActivities() const { return _activities; }
 
+  virtual const char* GetIDStr() const override { return _freeplayIDString.c_str();}
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -121,6 +123,9 @@ private:
   
   // just prints loaded activites to log
   void DebugPrintActivities() const;
+  
+  // Allows activities to pass up a display name from sub activities
+  void SetActivityIDFromSubActivity(ActivityID activityID);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -143,6 +148,10 @@ private:
   
   // this variable is set from debug console to cycle through activities in activity evaluators
   ActivityID _debugConsoleRequestedActivity;
+  
+  ActivityID _subID;
+  // Maintain the constructed freeplayIDString
+  std::string _freeplayIDString;
   
   Robot& _robot;
 };

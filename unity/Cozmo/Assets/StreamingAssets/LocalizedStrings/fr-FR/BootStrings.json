@@ -10,7 +10,7 @@
     "translation" : "Impossible de charger l'application Cozmo car le stockage de ton appareil est saturé. Supprime des fichiers multimédia ou des applications inutilisées de ton téléphone et essaye à nouveau."
   },
   "boot.errorReadingFiles" : {
-    "translation" : "L'application Cozmo n'a pas pu lire les fichiers. Erreur : {0}"
+    "translation" : "L'application Cozmo n'a pas pu lire les fichiers. Erreur: {0}"
   },
   "boot.needStoragePermission" : {
     "translation" : "L'application Cozmo doit accéder aux fichiers de jeu de ton téléphone pour s'exécuter."
@@ -25,9 +25,9 @@
     "translation" : "Paramètres"
   },
   "boot.appVersion" : {
-    "translation" : "VERSION : {0}"
+    "translation" : "VERSION: {0}"
   },
   "boot.deviceId" : {
-    "translation" : "ID D'APPAREIL : {0}"
+    "translation" : "ID D'APPAREIL: {0}"
   }
 }

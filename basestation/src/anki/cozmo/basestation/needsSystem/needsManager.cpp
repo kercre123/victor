@@ -212,6 +212,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
+, _localNotifications(new LocalNotifications(*this))
 , _savedTimeLastWrittenToDevice()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
@@ -273,7 +274,8 @@ NeedsManager::~NeedsManager()
 
 void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                         const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson)
+                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+                        const Json::Value& inLocalNotificationJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
@@ -290,6 +292,8 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                   "Can't create needs handler for face glitches because there is no RNG in cozmo context") ) {
     _faceDistortionComponent->Init(inHandlersJson, _cozmoContext->GetRandom());
   }
+
+  _localNotifications->Init(inLocalNotificationJson);
 
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
@@ -342,6 +346,8 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
 
 void NeedsManager::InitInternal(const float currentTime_s)
 {
+  _localNotifications->CancelAll();
+
   const u32 uninitializedSerialNumber = 0;
   InitReset(currentTime_s, uninitializedSerialNumber);
 
@@ -1401,10 +1407,14 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
     }
 
     SendNeedsLevelsDasEvent("app_background");
+
+    _localNotifications->Generate();
   }
   else
   {
     // When un-backgrounding, apply decay
+    _localNotifications->CancelAll();
+
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
 

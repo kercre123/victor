@@ -24,6 +24,9 @@ namespace Cozmo.Needs.Sparks.UI {
     [SerializeField]
     private SparksDetailModal _SparksDetailModalPrefab;
 
+    [SerializeField]
+    private Sprite _UnlockableAlertIcon;
+
     private UnlockableInfo _UnlockInfo;
     private CostLabel _CostLabelHelper;
 
@@ -58,7 +61,8 @@ namespace Cozmo.Needs.Sparks.UI {
       var cozmoNotReadyData = new AlertModalData("coming_soon_sparks_cell",
                                                  LocalizationKeys.kUnlockableComingSoonTitle,
                                                  LocalizationKeys.kUnlockableComingSoonDescription,
-                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                                icon: _UnlockableAlertIcon);
 
       ModalPriorityData comingSoonPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow,
                                          0,

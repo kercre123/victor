@@ -9,7 +9,6 @@ namespace Onboarding {
   public class OnboardingBaseStage : MonoBehaviour {
 
     public bool ActiveMenuContent { get { return _ActiveMenuContent; } }
-    public bool ReactionsEnabled { get { return _ReactionsEnabled; } }
     public bool DimBackground { get { return _DimBackground; } }
     public int DASPhaseID { get { return _DASPhaseID; } }
     public List<Anki.Cozmo.NeedId> DimNeedsMeters {
@@ -105,6 +104,16 @@ namespace Onboarding {
           NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
         }
       }
+      if (currentRobot != null) {
+        // During onboarding we really don't want pet reactions or hiccups anywhere
+        if (_ReactionsEnabled) {
+          currentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingBigReactionsOffId + name, ReactionaryBehaviorEnableGroups.kOnboardingBigReactionsOffTriggers);
+        }
+        else {
+          // early phases of onboarding, no reactions
+          currentRobot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId + name);
+        }
+      }
     }
 
     public virtual void OnDestroy() {
@@ -113,7 +122,15 @@ namespace Onboarding {
         instance.StartFreeplay();
       }
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
-
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      if (currentRobot != null) {
+        if (_ReactionsEnabled) {
+          currentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingBigReactionsOffId + name);
+        }
+        else {
+          currentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId + name);
+        }
+      }
       DAS.Info("DEV onboarding stage.ended", name);
     }
 
@@ -127,7 +144,7 @@ namespace Onboarding {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value, kOnboardingIdleAnimLock);
+          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value, kOnboardingIdleAnimLock + name);
         }
       }
 
@@ -151,7 +168,7 @@ namespace Onboarding {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          robot.RemoveIdleAnimation(kOnboardingIdleAnimLock);
+          robot.RemoveIdleAnimation(kOnboardingIdleAnimLock + name);
         }
         // since the animation is looped was looped, force kill it.
         if (_LoopedAnim.Value != Anki.Cozmo.AnimationTrigger.Count) {

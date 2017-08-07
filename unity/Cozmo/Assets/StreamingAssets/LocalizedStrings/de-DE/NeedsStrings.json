@@ -100,7 +100,7 @@
     "translation" : "FERTIG"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Your Sparks inventory is full."
+    "translation" : "Dein Sparks-Inventar ist voll."
   },
   "needs.RewardsDialog.SparksEarned" : {
     "translation" : "Du hast dir weitere Sparks verdient!"
@@ -154,10 +154,10 @@
     "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er trainiert hat!"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo hat dir {0} Sparks gegeben, weil du mit ihm Cube-Bewachen gespielt hast!"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo hat dir {0} Sparks gegeben, weil du mit ihm Cube-Bewachen gespielt hast!"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmo hat Schluckauf."
@@ -166,15 +166,15 @@
     "translation" : "Cozmo hat zu viel gegessen. Jetzt hat er Schluckauf!"
   },
   "needs.severeAlert.energy.title" : {
-    "translation" : "Cozmo Really Needs Feeding"
+    "translation" : "Cozmo muss dringend gefüttert werden."
   },
   "needs.severeAlert.energy.description" : {
-    "translation" : "You'll need to feed Cozmo before continuing."
+    "translation" : "Du musst Cozmo füttern, bevor du weitermachen kannst."
   },
   "needs.severeAlert.repair.title" : {
-    "translation" : "Cozmo Really Needs a Tune-Up"
+    "translation" : "Cozmo benötigt dringend ein Tuning."
   },
   "needs.severeAlert.repair.description" : {
-    "translation" : "You'll need to tune up Cozmo before continuing."
+    "translation" : "Du musst ein Tuning für Cozmo durchführen, bevor du weitermachen kannst."
   }
 }

@@ -426,10 +426,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 515
+    _EnumValue: 518
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 515
+    _EnumValue: 518
   _FreeplayEnabledOnExit: 1
   _DASPhaseID: 0
   _OverrideTickerKey: 
@@ -458,7 +458,7 @@ MonoBehaviour:
   _ButtonStatePlay: 3
   _ContinueButtonInstance: {fileID: 114296261723702756}
   _ShowAfterWait: {fileID: 1997215763499232}
-  _WaitTimeSec: 2
+  _WaitTimeSec: 2.75
 --- !u!114 &114137310380797714
 MonoBehaviour:
   m_ObjectHideFlags: 1

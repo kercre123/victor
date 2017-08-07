@@ -61,6 +61,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleInstructionsModalCreated(BaseModal newInstructionsModal) {
+      _FaceEnrollmentGame.SharedMinigameView.HideShelf();
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentGame.SharedMinigameView.HideQuitButton();
       _FaceEnrollmentInstructionsModalInstance = (FaceEnrollmentInstructionsModal)newInstructionsModal;
@@ -97,7 +98,7 @@ namespace FaceEnrollment {
 
       if (_FaceEnrollmentInstructionsModalInstance != null && _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
         _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed -= HandleUserClosedInstructionsModal;
-
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.CancelQuitDialog();
       }
     }
 

@@ -32,6 +32,8 @@ public:
 
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual ~BehaviorRequestGameSimple() {}
+  
+  void TriggeringAsInterrupt() { _wasTriggeredAsInterrupt = true;}
 
 protected:
   virtual Result RequestGame_InitInternal(Robot& robot) override;
@@ -102,6 +104,8 @@ private:
   int    _numRetriesDrivingToFace;
   int    _numRetriesPlacingBlock;
   
+  bool   _wasTriggeredAsInterrupt;
+  
   void SetState_internal(State state, const std::string& stateName);
   
   void TransitionToPlayingInitialAnimation(Robot& robot);
@@ -114,6 +118,7 @@ private:
   void TransitionToVerifyingFace(Robot& robot);
   void TransitionToPlayingRequstAnim(Robot& robot);
   void TransitionToIdle(Robot& robot);
+  void IdleLoop(Robot& robot);
   void TransitionToPlayingDenyAnim(Robot& robot);
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
   void ComputeFaceInteractionPose(Robot& robot);

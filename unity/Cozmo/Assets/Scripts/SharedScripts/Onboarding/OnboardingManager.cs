@@ -55,7 +55,6 @@ public class OnboardingManager : MonoBehaviour {
 
   private Transform _OnboardingTransform;
 
-  private bool _StageDisabledReactionaryBehaviors = false;
   private int _LastOnboardingPhaseCompletedRobot = 0;
 
   [SerializeField]
@@ -226,9 +225,6 @@ public class OnboardingManager : MonoBehaviour {
     }
     int startStage = 0;
     _CurrPhase = phase;
-    if (PhaseWantsReactionsDisabled(_CurrPhase)) {
-      currentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId, ReactionaryBehaviorEnableGroups.kOnboardingHomeTriggers);
-    }
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle, kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
@@ -258,7 +254,9 @@ public class OnboardingManager : MonoBehaviour {
     }
     // Because sparks are now saved on the robot they could have changed robots between these checkpoints.
     // Make sure they have a min number of sparks for places right before required to spend them.
-    if (_CurrPhase == OnboardingPhases.PlayIntro || _CurrPhase == OnboardingPhases.NurtureIntro) {
+    if (_CurrPhase == OnboardingPhases.InitialSetup ||
+        _CurrPhase == OnboardingPhases.PlayIntro ||
+        _CurrPhase == OnboardingPhases.NurtureIntro) {
       GiveStartingInventory();
     }
 #endif
@@ -286,9 +284,6 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
-    }
-    if (PhaseWantsReactionsDisabled(_CurrPhase)) {
-      currentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId);
     }
 
     RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
@@ -541,18 +536,7 @@ public class OnboardingManager : MonoBehaviour {
   }
   #endregion
 
-  private bool PhaseWantsReactionsDisabled(OnboardingPhases phase) {
-    switch (phase) {
-    case OnboardingPhases.InitialSetup:
-    case OnboardingPhases.NurtureIntro:
-    case OnboardingPhases.FeedIntro:
-    case OnboardingPhases.PlayIntro:
-      return true;
-    }
-    return false;
-  }
-
-  private void GiveStartingInventory() {
+  public void GiveStartingInventory() {
     PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
     Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(Cozmo.UI.GenericRewardsConfig.Instance.SparkID);
     int giveSparksAmount = itemData.StartingAmount;
@@ -601,7 +585,6 @@ public class OnboardingManager : MonoBehaviour {
     OnboardingBaseStage.OnboardingButtonStates showButtonFeed = OnboardingBaseStage.OnboardingButtonStates.Active;
     OnboardingBaseStage.OnboardingButtonStates showButtonPlay = OnboardingBaseStage.OnboardingButtonStates.Active;
     bool showContent = true;
-    bool reactionsEnabled = true;
     bool showDimmer = false;
     List<NeedId> dimmedMeters = new List<NeedId>();
     if (stage != null) {
@@ -610,7 +593,6 @@ public class OnboardingManager : MonoBehaviour {
       showButtonFeed = stage.ButtonStateFeed;
       showButtonPlay = stage.ButtonStatePlay;
       showContent = stage.ActiveMenuContent;
-      reactionsEnabled = stage.ReactionsEnabled;
       showDimmer = stage.DimBackground;
       dimmedMeters = stage.DimNeedsMeters;
     }
@@ -630,22 +612,6 @@ public class OnboardingManager : MonoBehaviour {
       if (_NeedsHubView.MetersWidget != null) {
         _NeedsHubView.MetersWidget.DimNeedMeters(dimmedMeters);
       }
-    }
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      if (reactionsEnabled) {
-        if (_StageDisabledReactionaryBehaviors) {
-          RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId);
-          _StageDisabledReactionaryBehaviors = false;
-        }
-
-      }
-      else {
-        if (!_StageDisabledReactionaryBehaviors) {
-          RobotEngineManager.Instance.CurrentRobot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId);
-          _StageDisabledReactionaryBehaviors = true;
-        }
-      }
-
     }
   }
 

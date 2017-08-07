@@ -13,7 +13,7 @@
     "translation" : "Tippe auf <b><color=#d3d3d3>WEITER</color></b>, falls das Problem weiterhin besteht."
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "Wähle <b>EINSTELLUNGEN</b> aus.\u000aTippe anschließend auf <b>CUBES AKTUALISIEREN</b>."
+    "translation" : "First, go to <b>SETTINGS</b>."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
     "translation" : "Wenn nötig solltest du die Batterie des Cube wechseln."
@@ -47,5 +47,8 @@
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
     "translation" : "Damit er nicht wieder Hunger bekommt, kannst du die folgenden Schritte ausführen, sodass er seine Cubes erkennt."
+  },
+  "cubeHelpStrings.Instructions.SlideA2Copy" : {
+    "translation" : "Then, tap <b>REFRESH CUBES</b>."
   }
 }

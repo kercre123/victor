@@ -18,11 +18,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2365"
+                "version": "2368"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "180"
+                "version": "182"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

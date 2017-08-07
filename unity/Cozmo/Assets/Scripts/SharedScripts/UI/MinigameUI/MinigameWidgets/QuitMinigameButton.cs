@@ -105,6 +105,13 @@ namespace Cozmo {
         _ConfimedQuit = false;
       }
 
+      // From code call if quitting is no longer relevant.
+      public void CancelQuitDialog() {
+        if (_QuitPopupInstance != null) {
+          _QuitPopupInstance.CloseDialogImmediately();
+        }
+      }
+
       private void HandleQuitViewClosed() {
         if (_ConfimedQuit) {
           if (QuitGameConfirmed != null) {

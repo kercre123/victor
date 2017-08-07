@@ -249,14 +249,18 @@ namespace Cozmo.ConnectionFlow {
     private void SetupForDemoMode() {
       // Set needing onboarding home, but not other phases
       DataPersistence.PlayerProfile profile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
-      profile.OnboardingStages[OnboardingManager.OnboardingPhases.InitialSetup] = 0;
       // reset the item inventory
       List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
       for (int i = 0; i < itemIDs.Count; ++i) {
         profile.Inventory.SetItemAmount(itemIDs[i], 0);
       }
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Loot);
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+      // Complete everything but first two phases.
+      int numStates = System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1;
+      for (int i = 0; i < numStates; ++i) {
+        OnboardingManager.Instance.CompletePhase((OnboardingManager.OnboardingPhases)i, false);
+      }
+      profile.OnboardingStages[OnboardingManager.OnboardingPhases.InitialSetup] = 0;
+      profile.OnboardingStages[OnboardingManager.OnboardingPhases.MeetCozmo] = 0;
       // Needs to set all difficulties unlocked ( don't just return in UI so that we don't have "new difficulty unlocked popups");
       Challenge.ChallengeData[] challengeList = Challenge.ChallengeDataList.Instance.ChallengeData;
       for (int i = 0; i < challengeList.Length; ++i) {

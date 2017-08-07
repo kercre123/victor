@@ -24,7 +24,7 @@ public class DevStartupManager : MonoBehaviour {
 #endif
 #if UNITY_EDITOR
     if(GetFlag("-smoke")) {
-      RobotEngineManager.Instance.RobotConnectionType = RobotEngineManager.ConnectionType.Mock;
+      RobotEngineManager.Instance.RobotConnectionType = RobotEngineManager.ConnectionType.Sim;
       _StartupManager.StartLoadAsync();
     }
 

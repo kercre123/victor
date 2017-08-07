@@ -73,7 +73,7 @@
     "translation" : "Sprachausgabe"
   },
   "cozmoSays.description" : {
-    "translation" : "Ask Cozmo to say a word or phrase!"
+    "translation" : "Fordere Cozmo auf, ein Wort oder einen Begriff zu sagen."
   },
   "codeLab.title" : {
     "translation" : "Code Lab"
@@ -88,9 +88,12 @@
     "translation" : "FALSCH"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for Games and do Tricks, and sometimes even earn Sparks."
+    "translation" : "Cozmo findet es toll, wenn er selbst entscheiden darf, wie er mit dir spielt.  Er wird dir automatisch anbieten, Spiele mit ihm zu spielen, dir Tricks vorführen und gelegentlich sogar Sparks verdienen."
   },
   "activityView.freeplayTitle" : {
     "translation" : "AKTUELLER MODUS: FREIES SPIEL"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "Cancel Face Scanning?"
   }
 }

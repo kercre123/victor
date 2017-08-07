@@ -1350,7 +1350,7 @@ Result Robot::Update()
   {
     _behaviorMgr->Update(*this);
 
-    currentActivityName = ActivityIDToString(_behaviorMgr->GetCurrentActivity()->GetID());
+    currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
 
     behaviorDebugStr = currentActivityName;
 

@@ -33,14 +33,8 @@
   "button.yes": {
     "translation": "YES"
   },
-  "button.yesPlease": {
-    "translation": "YES, PLEASE"
-  },
   "button.no": {
     "translation": "NO"
-  },
-  "button.noThankYou": {
-    "translation": "NO, THANK YOU"
   },
   "button.continue": {
     "translation": "CONTINUE"

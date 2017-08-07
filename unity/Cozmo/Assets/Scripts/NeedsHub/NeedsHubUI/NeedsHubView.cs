@@ -211,6 +211,10 @@ namespace Cozmo.Needs.UI {
     }
 
     private void PopLatestBracketAndUpdateButtons() {
+      // Wait until Needs meter animates up for first time
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        return;
+      }
       NeedsStateManager nsm = NeedsStateManager.Instance;
       NeedsValue repairValue, energyValue;
       repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
@@ -281,6 +285,13 @@ namespace Cozmo.Needs.UI {
       OnboardingManager.Instance.OnOnboardingAnimEvent.Invoke(param);
     }
     public void OnboardingSkipped() {
+
+      // They've completed everything really.
+      RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
+                 new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete(
+                      System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1, true);
+      RobotEngineManager.Instance.SendMessage();
+
       PopLatestBracketAndUpdateButtons();
       if (_MetersWidget != null) {
         _MetersWidget.OnboardingSkipped();

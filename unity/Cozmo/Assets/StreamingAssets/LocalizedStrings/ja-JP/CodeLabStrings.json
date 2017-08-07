@@ -291,6 +291,9 @@
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
   },
+  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText": {
+      "translation": "侵入者"
+  },
   "codeLabChallenge_intruder.answerSlide.primaryText" : {
     "translation" : "#32の答え"
   },

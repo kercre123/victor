@@ -144,6 +144,7 @@ ActivityFreeplay::ActivityFreeplay(Robot& robot, const Json::Value& config)
 , _currentActivityPtr(nullptr)
 , _requestedActivity(ActivityID::Invalid)
 , _debugConsoleRequestedActivity(ActivityID::Invalid)
+, _subID(ActivityID::Invalid)
 , _robot(robot)
 {
   CreateFromConfig(robot, config);
@@ -179,7 +180,15 @@ ActivityFreeplay::~ActivityFreeplay()
   }
   #endif
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFreeplay::SetActivityIDFromSubActivity(ActivityID activityID){
+  _subID = activityID;
+  _freeplayIDString = std::string(IActivity::GetIDStr()) + "_" + ActivityIDToString(_subID);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivityFreeplay::Update(Robot& robot)
 {
@@ -433,6 +442,7 @@ bool ActivityFreeplay::PickNewActivityForSpark(Robot& robot, UnlockId spark, boo
       }
       _currentActivityPtr = newActivity;
       if ( _currentActivityPtr ) {
+        SetActivityIDFromSubActivity(_currentActivityPtr->GetID());
         _currentActivityPtr->OnSelected(robot);
       }
     }
@@ -635,7 +645,6 @@ IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IB
       // we wanted to check if there was a better one, so do it now
       if ( _currentActivityPtr )
       {
-        SetActivityIDFromSubActivity(_currentActivityPtr->GetID());
         chosenBehavior = _currentActivityPtr->ChooseNextBehavior(robot, currentRunningBehavior);
         
         // if the first behavior chosen is null/None, the activity conditions to start didn't handle the current situation.

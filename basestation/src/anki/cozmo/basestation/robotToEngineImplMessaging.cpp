@@ -36,6 +36,7 @@
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/utils/cozmoExperiments.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -332,6 +333,9 @@ void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInter
   robot->SetBodySerialNumber(bodyID);
   robot->SetBodyHWVersion(hwVersion);
   robot->SetBodyColor(bodyColor);
+
+  // Activate A/B tests for robot now that we have its serial
+  robot->GetContext()->GetExperiments()->AutoActivateExperiments(std::to_string(bodyID));
 }
   
 void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

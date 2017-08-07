@@ -18,6 +18,7 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
+#include "anki/cozmo/basestation/needsSystem/localNotifications.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/global/globalDefinitions.h"
@@ -40,6 +41,7 @@ namespace RobotInterface {
 class Robot;
 class CozmoContext;
 class DesiredFaceDistortionComponent;
+class LocalNotifications;
 
 enum class RobotStorageState
 {
@@ -57,7 +59,8 @@ public:
 
   void Init(const float currentTime_s, const Json::Value& inJson,
             const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-            const Json::Value& inDecayJson, const Json::Value& inHandlersJson);
+            const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+            const Json::Value& inLocalNotificationJson);
   void InitAfterConnection();
   void InitAfterSerialNumberAcquired(u32 serialNumber);
 
@@ -70,6 +73,8 @@ public:
 
   NeedsState& GetCurNeedsStateMutable();
   const NeedsState& GetCurNeedsState();
+
+  const NeedsConfig& GetNeedsConfig() const { return _needsConfig; };
 
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
   void PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState);
@@ -175,6 +180,8 @@ private:
   NeedsConfig   _needsConfig;
   ActionsConfig _actionsConfig;
   std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
+
+  std::shared_ptr<LocalNotifications> _localNotifications;
 
   Time          _savedTimeLastWrittenToDevice;
   Time          _timeLastWrittenToRobot;

@@ -335,6 +335,10 @@ namespace Anki {
         prevHeadAngle_ = UNINIT_HEAD_ANGLE;
         
         ResetPickupVars();
+
+#ifdef COZMO_V2
+        timeOfLastImuTempSample_ms_ = 0;
+#endif
       }
       
       // Applies low-pass filtering to 3-element input, storing result to 3-element output assuming

@@ -303,6 +303,9 @@
   "codeLabChallenge_intruder.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
   },
+  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText": {
+      "translation": "Intruder!"
+  },
   "codeLabChallenge_intruder.answerSlide.primaryText": {
       "translation": "Answer #32"
   },

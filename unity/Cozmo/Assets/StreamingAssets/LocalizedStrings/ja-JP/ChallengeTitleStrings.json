@@ -73,7 +73,7 @@
     "translation" : "Cozmoトーク"
   },
   "cozmoSays.description" : {
-    "translation" : "単語やフレーズを言うようにCozmoに頼んでください！"
+    "translation" : "Cozmoに単語かフレーズを言わせてみましょう！"
   },
   "codeLab.title" : {
     "translation" : "コードラボ"
@@ -88,9 +88,12 @@
     "translation" : "間違い"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmoは、彼がどのようにプレーしたいかを選択することが大好きです。彼は自動的にGames and Tricksを求め、Sparkを獲得することさえある。"
+    "translation" : "Cozmoは自由に行動することが好きです。Cozmoはいつもゲームをリクエストしたり、トリックをしたり、たまにスパークを獲得したりもします。"
   },
   "activityView.freeplayTitle" : {
     "translation" : "Cozmoは現在フリープレイ中です"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "顔のスキャンをキャンセルしますか？"
   }
 }

@@ -128,6 +128,9 @@ namespace Cozmo.Repair.UI {
     private RectTransform _RevealProgressBar = null;
 
     [SerializeField]
+    private float _PreScanMinTime_sec = 0.25f; //gives the elements time to animate on screen
+
+    [SerializeField]
     private float _ScanDuration_sec = 3f;
 
     [SerializeField]
@@ -211,6 +214,9 @@ namespace Cozmo.Repair.UI {
 
     public void InitializeRepairModal() {
       HubWorldBase.Instance.StopFreeplay();
+
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         robot.CancelAllCallbacks();
@@ -218,8 +224,8 @@ namespace Cozmo.Repair.UI {
 
         HubWorldBase.Instance.StopFreeplay();
 
-        robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId,
-                                       ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
+        NeedsValue latestValue = nsm.PeekLatestEngineValue(NeedId.Repair);
+        SetDisableReactions(robot, latestValue.Bracket);
 
         if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
           _WaitForDropCube = true;
@@ -232,8 +238,6 @@ namespace Cozmo.Repair.UI {
           PlayRobotRepairIdleAnim();
         }
       }
-
-      NeedsStateManager nsm = NeedsStateManager.Instance;
 
       GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Nurture_Repair);
 
@@ -291,6 +295,13 @@ namespace Cozmo.Repair.UI {
           OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
         _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
       }
+    }
+
+    private void SetDisableReactions(IRobot robot, NeedBracketId bracket) {
+      robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId,
+                                     bracket == NeedBracketId.Critical ?
+                                     ReactionaryBehaviorEnableGroups.kRepairGameSevereTriggers :
+                                     ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
@@ -383,7 +394,6 @@ namespace Cozmo.Repair.UI {
 
     private void ClearModalStateInputs() {
       _OpeningTweenComplete = false;
-      _ScanRequested = false;
       _RepairRequested = false;
       _RepairCompleted = false;
       _RepairInterrupted = false;
@@ -398,10 +408,7 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.PRE_SCAN:
-        if (_TimeInModalState_sec < 0.2f && _NumberOfBrokenParts != _NumberOfBrokenPartsDisplayed) {
-          return ChangeModalState(RepairModalState.SCAN);
-        }
-        if (_ScanRequested) {
+        if (_TimeInModalState_sec > _PreScanMinTime_sec && _ScanRequested) {
           return ChangeModalState(RepairModalState.SCAN);
         }
         break;
@@ -424,12 +431,12 @@ namespace Cozmo.Repair.UI {
             return ChangeModalState(RepairModalState.REPAIRED);
           }
 
-          return ChangeModalState(RepairModalState.SCAN);
+          return ChangeModalState(RepairModalState.PRE_SCAN);
         }
         break;
       case RepairModalState.REPAIRED:
         if (_NumberOfBrokenParts != _NumberOfBrokenPartsDisplayed) {
-          return ChangeModalState(RepairModalState.SCAN);
+          return ChangeModalState(RepairModalState.PRE_SCAN);
         }
         break;
       }
@@ -458,8 +465,10 @@ namespace Cozmo.Repair.UI {
 
       switch (_CurrentModalState) {
       case RepairModalState.PRE_SCAN:
-        _ScanButton.gameObject.SetActive(true);
-        _ScanButton.interactable = true;
+        DisableAllRepairButtons();
+        //only show button if the user hasn't already pressed it, elsewise go straight to scan
+        _ScanButton.gameObject.SetActive(!_ScanRequested);
+        _ScanButton.interactable = !_ScanRequested;
         break;
       case RepairModalState.SCAN:
         DAS.Event("activity.repair.scan", DASEventDialogName);
@@ -1290,6 +1299,8 @@ namespace Cozmo.Repair.UI {
         if (severityChanged) {
           PlayGetOutAnim(_LastBracket);
           PlayGetInAnim(bracket);
+          robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
+          SetDisableReactions(robot, bracket);
         }
 
         AnimationTrigger idle = AnimationTrigger.RepairFixMildIdle;

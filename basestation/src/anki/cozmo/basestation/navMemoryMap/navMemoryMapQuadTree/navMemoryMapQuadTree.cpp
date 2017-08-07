@@ -45,6 +45,7 @@ NavMeshQuadTreeTypes::ENodeContentType ConvertContentType(NavMemoryMapTypes::ECo
     case EContentType::ObstacleCubeRemoved:   { nodeContentType = ENodeContentType::ObstacleCubeRemoved;   break; }
     case EContentType::ObstacleCharger:       { nodeContentType = ENodeContentType::ObstacleCharger;       break; }
     case EContentType::ObstacleChargerRemoved:{ nodeContentType = ENodeContentType::ObstacleChargerRemoved;break; }
+    case EContentType::ObstacleProx:          { nodeContentType = ENodeContentType::ObstacleProx;          break; }
     case EContentType::ObstacleUnrecognized:  { nodeContentType = ENodeContentType::ObstacleUnrecognized;  break; }
     case EContentType::Cliff:                 { nodeContentType = ENodeContentType::Cliff;                 break; }
     case EContentType::InterestingEdge:       { nodeContentType = ENodeContentType::InterestingEdge;       break; }

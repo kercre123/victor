@@ -54,11 +54,11 @@
     ],
     "style" : "Unprocessed"
   },
-	
+
   "Text" : {
     "durationTraits" : [
       {
-        "rangeMin" : 1.0
+        "rangeMin" : 0.75
       }
     ],
     "pitchTraits" : [
@@ -68,12 +68,12 @@
     ],
     "style" : "CozmoProcessing_Sentence"
   },
-	
+
   "Cozmo_Says" : {
     "durationTraits" : [
       {
-        "rangeMin" : 0.9,
-        "rangeMax" : 1.1,
+        "rangeMin" : 0.75,
+        "rangeMax" : 1.0,
         "stepSize" : 0.05
       }
     ],
@@ -86,7 +86,7 @@
     ],
     "style" : "CozmoProcessing_Sentence"
   },
-	
+
   "Name_Normal" : {
     "durationTraits" : [
       {
@@ -111,7 +111,7 @@
     ],
     "style" : "CozmoProcessing_Name"
   },
-	
+
   "Name_FirstIntroduction_1" : {
     "durationTraits" : [
       {
@@ -136,7 +136,7 @@
     ],
     "style" : "CozmoProcessing_Name_Question"
   },
-	
+
   "Name_FirstIntroduction_2" : {
     "durationTraits" : [
       {

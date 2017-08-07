@@ -43,13 +43,13 @@
     "translation" : "Pas touche"
   },
   "cubeSlap.description" : {
-    "translation" : "Incite Cozmo à se jeter sur un cube, puis éloigne-le avant qu'il ne l'atteigne !"
+    "translation" : "Incite Cozmo à se jeter sur un cube, puis éloigne-le avant qu'il ne l'atteigne!"
   },
   "droneMode.title" : {
     "translation" : "Mode Explorateur"
   },
   "droneMode.description" : {
-    "translation" : "Explore le monde à travers le regard de Cozmo."
+    "translation" : "Explore le monde à travers les yeux de Cozmo."
   },
   "faceEnrollment.title" : {
     "translation" : "Première rencontre"
@@ -61,7 +61,7 @@
     "translation" : "Jeu de mémoire"
   },
   "memoryMatchGame.description" : {
-    "translation" : "Un jeu de séquences qui permet de tester ta mémoire. Observe les cubes et écoute attentivement !"
+    "translation" : "Un jeu de séquences qui permet de tester ta mémoire. Observe les cubes et écoute attentivement!"
   },
   "speedTap.title" : {
     "translation" : "Réflexe"
@@ -73,13 +73,13 @@
     "translation" : "La parole à Cozmo"
   },
   "cozmoSays.description" : {
-    "translation" : "Ask Cozmo to say a word or phrase!"
+    "translation" : "Demande à Cozmo de dire un mot ou une phrase!"
   },
   "codeLab.title" : {
     "translation" : "Code Lab"
   },
   "codeLab.description" : {
-    "translation" : "Fais appel à ta créativité pour programmer Cozmo et explorer toutes ses amusantes capacités !"
+    "translation" : "Fais appel à ta créativité pour programmer Cozmo et explorer toutes ses capacités!"
   },
   "activityView.title" : {
     "translation" : "Découvrir"
@@ -88,9 +88,12 @@
     "translation" : "INCORRECT"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmo loves being left to choose how he wants to play.  He'll automatically ask for Games and do Tricks, and sometimes even earn Sparks."
+    "translation" : "Cozmo adore pouvoir choisir comment il veut jouer.  Il demandera de lui-même à faire des jeux, exécutera des tours et gagnera parfois même des étincelles."
   },
   "activityView.freeplayTitle" : {
     "translation" : "COZMO EST ACTUELLEMENT EN MODE DE JEU LIBRE"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "Cancel Face Scanning?"
   }
 }

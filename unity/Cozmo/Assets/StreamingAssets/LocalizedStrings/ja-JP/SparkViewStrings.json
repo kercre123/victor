@@ -23,5 +23,11 @@
   },
   "sparksView.sparkCount.label" : {
     "translation" : "利用可能なスパーク"
+  },
+  "sparksView.sparksRequired.label" : {
+    "translation" : "必要なスパーク"
+  },
+  "sparksDetailModal.sparkButton.label" : {
+    "translation" : "スパークス"
   }
 }

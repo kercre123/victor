@@ -40,7 +40,7 @@
     "translation" : "パスワードが表示されませんか？ここをタップ："
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "すべて大文字で入力してください。スペースは使用できません。"
+    "translation" : "空白のないすべてのCAPSを使用してください。ダッシュを含めます。"
   },
   "wifiStrings.Instructions.Slide3.5" : {
     "translation" : "Cozmoはインターネットアクセスを提供しません。"
@@ -64,7 +64,7 @@
     "translation" : "Cozmoのネットワーク情報を確認する必要がある場合は、Cozmoのリフトを上げ下げします。"
   },
   "wifi.gethelp.footer" : {
-    "translation" : "問題が解消しない場合は、別のデバイスで<b>support.anki.com</b>にアクセスしてください。"
+    "translation" : "別のデバイスでアクセスすることをおすすめします\u000a<b>http://www.takaratomy.co.jp/products/cozmo/support</b>"
   },
   "wifi.getHelp.linkText" : {
     "translation" : "ヘルプ"

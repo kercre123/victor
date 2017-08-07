@@ -89,7 +89,8 @@ public:
   
   // returns the activity name set from config
   ActivityID  GetID() const { return _id; }
-  const char* GetIDStr() const { return ActivityIDToString(_id); }
+  // Sub activities can override
+  virtual const char* GetIDStr() const { return ActivityIDToString(_id); }
   
   float GetLastTimeStartedSecs() const { return _lastTimeActivityStartedSecs; }
   float GetLastTimeStoppedSecs() const { return _lastTimeActivityStoppedSecs; }
@@ -102,9 +103,6 @@ protected:
 
   // can be overridden by derived classes to chose behaviors. Defaults to using the config defined behavior chooser
   virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior);
-  
-  // Allows activities to pass up a display name from sub activities
-  void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
   
   // Push an idle animation which will be removed when the activity is deselected
   void SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation);

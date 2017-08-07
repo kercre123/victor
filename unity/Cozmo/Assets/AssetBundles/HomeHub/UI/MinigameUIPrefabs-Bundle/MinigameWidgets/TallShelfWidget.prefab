@@ -119,6 +119,7 @@ MonoBehaviour:
   _ContentFadeTweenDurationSeconds: 0.2
   _ContentTweenXOffset: -100
   _ShelfText: {fileID: 114524463188117012}
+  _RoundText: {fileID: 0}
 --- !u!222 &22234518
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -206,10 +207,10 @@ RectTransform:
   m_Father: {fileID: 22449086}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000049591}
-  m_SizeDelta: {x: 2732, y: -0.000061035}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 4, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22466956
 RectTransform:

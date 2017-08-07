@@ -21,14 +21,8 @@
   "button.yes" : {
     "translation" : "JA"
   },
-  "button.yesPlease" : {
-    "translation" : "JA, BITTE"
-  },
   "button.no" : {
     "translation" : "NEIN"
-  },
-  "button.noThankYou" : {
-    "translation" : "NEIN, DANKE"
   },
   "button.continue" : {
     "translation" : "WEITER"

@@ -141,10 +141,6 @@ protected:
   void SendSupportInfo() const;
   void InitUnityLogger();
 
-  void InitExperiments() const;
-  void AutoActivateExperiments(const std::string& userId) const;
-  void HandleAssignmentsUpdated(const std::vector<Util::AnkiLab::AssignmentDef>& activeAssignments) const;
-  
   EngineState _engineState = EngineState::Stopped;
 
   std::unique_ptr<AnimationTransfer>                        _animationTransferHandler;

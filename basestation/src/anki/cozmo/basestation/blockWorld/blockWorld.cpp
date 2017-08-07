@@ -47,6 +47,7 @@
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapFactory.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapToPlanner/navMemoryMapToPlanner.h" // for Brad testing (remove me at some point)
 #include "anki/cozmo/basestation/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
+#include "anki/cozmo/basestation/navMemoryMap/quadData/navMemoryMapQuadData_ProxObstacle.h"
 #include "anki/cozmo/basestation/objectPoseConfirmer.h"
 #include "anki/cozmo/basestation/platform.h"
 #include "anki/cozmo/basestation/potentialObjectsForLocalizingTo.h"
@@ -2250,13 +2251,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         break;
       }
       case ObjectType::ProxObstacle:
-      {
+      {       
+        NavMemoryMapQuadData_ProxObstacle proxData;
+        const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToOrigin().GetRotation() * X_AXIS_3D();
+        proxData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
+        
         const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
         
         INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
         
-        currentNavMemoryMap->AddQuad(proxQuad, INavMemoryMap::EContentType::ObstacleUnrecognized);
+        currentNavMemoryMap->AddQuad(proxQuad, proxData);
         DEV_ASSERT(!kAddUnrecognizedMarkerlessObjectsToMemMap, 
                    "BlockWorld.AddMarkerlessObject.MemoryMapProxObstacleAddedTwice");
         break;
@@ -3216,6 +3221,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
         {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
         {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+        {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
         {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
         {NavMemoryMapTypes::EContentType::Cliff                 , false},
         {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
@@ -3411,6 +3417,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
               {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
               {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
               {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+              {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
               {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
               {NavMemoryMapTypes::EContentType::Cliff                 , true },
               {NavMemoryMapTypes::EContentType::InterestingEdge       , true },
@@ -3450,6 +3457,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
             {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
             {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+            {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
             {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
             {NavMemoryMapTypes::EContentType::Cliff                 , false},
             {NavMemoryMapTypes::EContentType::InterestingEdge       , false },

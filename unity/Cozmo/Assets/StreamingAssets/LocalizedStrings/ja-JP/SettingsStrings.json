@@ -91,7 +91,7 @@
     "translation" : "サポートに問い合わせる"
   },
   "settings.supportView.label.url" : {
-    "translation" : "support.anki.com"
+    "translation" : "http://www.takaratomy.co.jp/products/cozmo/support"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton" : {
     "translation" : "復元"

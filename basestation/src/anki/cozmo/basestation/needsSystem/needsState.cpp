@@ -102,7 +102,7 @@ void NeedsState::Reset()
 }
 
 
-void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers)
+void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const
 {
   PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.SetDecayMultipliers",
                 "Setting needs decay multipliers");
@@ -121,7 +121,7 @@ void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<
     const DecayModifiers& modifiers = decayConfig._decayModifiersByNeed[needIndex];
     if (!modifiers.empty()) // (It's OK for there to be no modifiers)
     {
-      const float curNeedLevel = _curNeedsLevels[static_cast<NeedId>(needIndex)];
+      const float curNeedLevel = GetNeedLevel(static_cast<NeedId>(needIndex));
 
       // Note that the modifiers are assumed to be in descending order by threshold
       int modifierIndex = 0;
@@ -214,6 +214,70 @@ void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex,
   {
     PossiblyDamageParts(NeedsActionId::Decay);
   }
+}
+
+
+float NeedsState::TimeForDecayToLevel(const DecayConfig& decayConfig, const int needIndex,
+                                      const float targetLevel, const NeedsMultipliers& multipliers) const
+{
+  float decayTimeMinutes = 0.0f;
+
+  const NeedId needId = static_cast<NeedId>(needIndex);
+  float curNeedLevel = GetNeedLevel(needId);
+  const DecayRates& rates = decayConfig._decayRatesByNeed[needIndex];
+
+  // Find the decay 'bracket' the level is currently in
+  // Note that the rates are assumed to be in descending order by threshold
+  int rateIndex = 0;
+  for ( ; rateIndex < rates.size(); rateIndex++)
+  {
+    if (curNeedLevel >= rates[rateIndex]._threshold)
+    {
+      break;
+    }
+  }
+  if (rateIndex >= rates.size())
+  {
+    // Can happen if bottom bracket is non-zero threshold, or there are
+    // no brackets at all; in those cases, there is no decay so return "infinite"
+    return std::numeric_limits<float>::max();
+  }
+
+  bool done = false;
+  while (rateIndex < rates.size())
+  {
+    const DecayRate& rate = rates[rateIndex];
+    const float bottomThreshold = rate._threshold;
+    const float decayRatePerMin = rate._decayPerMinute * multipliers[needIndex];
+    if (decayRatePerMin <= 0.0f)
+    {
+      // If no decay at this section, return 'infinite' (and avoid divide by zero)
+      decayTimeMinutes = std::numeric_limits<float>::max();
+      break;
+    }
+    float levelDelta;
+    if (targetLevel < bottomThreshold)
+    {
+      levelDelta = curNeedLevel - bottomThreshold;
+    }
+    else
+    {
+      // This is the 'decay rate bracket' the target level is in; add remaining time
+      levelDelta = curNeedLevel - targetLevel;
+      done = true;
+    }
+    const float timeThisSection = levelDelta / decayRatePerMin;
+    decayTimeMinutes += timeThisSection;
+    curNeedLevel -= levelDelta;
+    if (done)
+    {
+      break;
+    }
+
+    rateIndex++;
+  }
+
+  return decayTimeMinutes;
 }
 
 
