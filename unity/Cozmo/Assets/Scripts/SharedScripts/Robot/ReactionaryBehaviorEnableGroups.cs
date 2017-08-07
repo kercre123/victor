@@ -61,6 +61,31 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
+  // in repair we also disable reactions when robot on back, side, face (to be consistent with freeplay when in severe repair state)
+  public static Anki.Cozmo.AllTriggersConsidered kRepairGameSevereTriggers = new Anki.Cozmo.AllTriggersConsidered(
+    cliffDetected: false,
+    cubeMoved: true,
+    facePositionUpdated: true,
+    fistBump: true,
+    frustration: true,
+    hiccup: true,
+    motorCalibration: true,
+    noPreDockPoses: true,
+    objectPositionUpdated: true,
+    placedOnCharger: false,
+    petInitialDetection: true,
+    robotPickedUp: false,
+    robotPlacedOnSlope: true,
+    returnedToTreads: false,
+    robotOnBack: true,
+    robotOnFace: true,
+    robotOnSide: true,
+    robotShaken: false,
+    sparked: true,
+    unexpectedMovement: false,
+    vc: true
+  );
+
   // cube pounce overrides the default challenge trigger disables with this
   public static Anki.Cozmo.AllTriggersConsidered kCubePounceGameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,

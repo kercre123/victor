@@ -211,6 +211,9 @@ namespace Cozmo.Repair.UI {
 
     public void InitializeRepairModal() {
       HubWorldBase.Instance.StopFreeplay();
+
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         robot.CancelAllCallbacks();
@@ -218,8 +221,8 @@ namespace Cozmo.Repair.UI {
 
         HubWorldBase.Instance.StopFreeplay();
 
-        robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId,
-                                       ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
+        NeedsValue latestValue = nsm.PeekLatestEngineValue(NeedId.Repair);
+        SetDisableReactions(robot, latestValue.Bracket);
 
         if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
           _WaitForDropCube = true;
@@ -232,8 +235,6 @@ namespace Cozmo.Repair.UI {
           PlayRobotRepairIdleAnim();
         }
       }
-
-      NeedsStateManager nsm = NeedsStateManager.Instance;
 
       GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Nurture_Repair);
 
@@ -291,6 +292,13 @@ namespace Cozmo.Repair.UI {
           OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
         _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
       }
+    }
+
+    private void SetDisableReactions(IRobot robot, NeedBracketId bracket) {
+      robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId,
+                                     bracket == NeedBracketId.Critical ?
+                                     ReactionaryBehaviorEnableGroups.kRepairGameSevereTriggers :
+                                     ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
@@ -1290,6 +1298,8 @@ namespace Cozmo.Repair.UI {
         if (severityChanged) {
           PlayGetOutAnim(_LastBracket);
           PlayGetInAnim(bracket);
+          robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
+          SetDisableReactions(robot, bracket);
         }
 
         AnimationTrigger idle = AnimationTrigger.RepairFixMildIdle;
