@@ -317,7 +317,7 @@ static void RunTests()
   
   ConsolePrintf("fixtureSerial,%i\r\n", FIXTURE_SERIAL);
   ConsolePrintf("fixtureVersion,%i\r\n", FIXTURE_VERSION);
-  ConsolePrintf("fixtureRev,%s,v%d,%s\r\n", GetBoardRevStr(), g_fixtureReleaseVersion, NOT_FOR_FACTORY > 0 ? "debug" : "release");
+  ConsolePrintf("fixtureRev,%s,v%d.%d,%s\r\n", GetBoardRevStr(), g_fixtureReleaseVersion, g_fixtureReleaseRev, NOT_FOR_FACTORY > 0 ? "debug" : "release");
   
   error_t error = ERROR_OK;
   try
