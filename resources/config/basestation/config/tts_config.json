@@ -2,7 +2,7 @@
 // resources/config/basestation/config/tts_config.json
 //
 // Cozmo text-to-speech configuration params
-// 
+//
 // Top-level object contains a nested object for each supported platform.
 // Each platform object contains a nested object for each supported language.
 //
@@ -36,9 +36,9 @@
     "ja":
     {
       "voice": "Sakura22k_CO",
-      "speed": 75,
+      "speed": 20,
       "pitch": 75,
-      "shaping": 65
+      "shaping": 100
     }
   },
   "ios":
@@ -61,9 +61,9 @@
     "ja":
     {
       "voice": "ja_jp_sakura_22k_co.fl",
-      "speed": 75,
+      "speed": 20,
       "pitch": 75,
-      "shaping": 65
+      "shaping": 100
     }
   },
   "android":
@@ -86,9 +86,9 @@
     "ja":
     {
       "voice": "Sakura",
-      "speed": 75,
+      "speed": 20,
       "pitch": 75,
-      "shaping": 65
+      "shaping": 100
     }
   }
 }
