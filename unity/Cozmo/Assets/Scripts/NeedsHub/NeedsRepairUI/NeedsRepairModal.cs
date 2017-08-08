@@ -38,6 +38,8 @@ namespace Cozmo.Repair.UI {
       PATTERN_MISMATCH, //user submitted incorrect symbol
       PATTERN_MATCHED,  //full pattern entered successfully, increment round icons
       ROBOT_RESPONSE,   //tell robot to animate the pattern and wait with screen dulled
+      ROBOT_RESPONSE_INTERRUPTED, // the robot's response was interrupted by being picked up - 
+                                  // wait for the robot to be put back down and then re-play the response
       TUNE_UP_COMPLETE  //show any activity complete effects and robot anims
     }
 
@@ -168,7 +170,6 @@ namespace Cozmo.Repair.UI {
     private bool _RepairNeeded = false;
     private bool _RepairRequested = false;
     private bool _RepairCompleted = false;
-    private bool _RepairInterrupted = false;
 
     private TuneUpState _CurrentTuneUpState = TuneUpState.INTRO;
     private float _TimeInTuneUpState_sec = 0f;
@@ -177,6 +178,9 @@ namespace Cozmo.Repair.UI {
     private bool _FullPatternMatched = false;
     private bool _CalibrationRequested = false;
     private bool _RobotResponseDone = false;
+
+    private OffTreadsState _RobotOffTreadsState = OffTreadsState.OnTreads;
+    private bool _WaitingForAnimationsToBeRunnable = false;
 
     private RepairablePartId _PartToRepair = RepairablePartId.Head;
     private NeedsActionId _PartRepairAction = NeedsActionId.RepairHead;
@@ -396,7 +400,6 @@ namespace Cozmo.Repair.UI {
       _OpeningTweenComplete = false;
       _RepairRequested = false;
       _RepairCompleted = false;
-      _RepairInterrupted = false;
     }
 
     //transitions can ONLY happen within this method
@@ -426,7 +429,7 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.TUNE_UP:
-        if (_RepairCompleted || _RepairInterrupted) {
+        if (_RepairCompleted) {
           if (!_RepairNeeded) {
             return ChangeModalState(RepairModalState.REPAIRED);
           }
@@ -509,7 +512,7 @@ namespace Cozmo.Repair.UI {
 
         _CurrentTuneUpState = TuneUpState.INTRO;
 
-        RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
+        RobotEngineManager.Instance.AddCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
 
         EnterTuneUpState();
         break;
@@ -532,10 +535,7 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.TUNE_UP:
-        //pausing tune up activity when interrupt widget open
-        if (_InterruptedAlert == null) {
-          RefreshTuneUpStateLogic(deltaTime);
-        }
+        RefreshTuneUpStateLogic(deltaTime);
         break;
       case RepairModalState.REPAIRED: break;
       }
@@ -557,9 +557,9 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.TUNE_UP:
-        ExitTuneUpState();
+        ExitTuneUpState(TuneUpState.INTRO);
 
-        RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
+        RobotEngineManager.Instance.RemoveCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
 
         while (_UpDownArrows.Count > 0) {
           GameObject.Destroy(_UpDownArrows[0].gameObject);
@@ -602,11 +602,6 @@ namespace Cozmo.Repair.UI {
           _MismatchDetected = true;
           break;
         }
-      }
-
-      var robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null && ShowReactionAlert(robot.CurrentReactionTrigger)) {
-        _RepairInterrupted = true;
       }
     }
 
@@ -660,6 +655,16 @@ namespace Cozmo.Repair.UI {
           }
           return ChangeTuneUpState(TuneUpState.TUNE_UP_COMPLETE);
         }
+        if(_RobotOffTreadsState != OffTreadsState.OnTreads) {
+          RobotEngineManager.Instance.CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.UNKNOWN);
+          return ChangeTuneUpState(TuneUpState.ROBOT_RESPONSE_INTERRUPTED);
+        }
+        break;
+
+      case TuneUpState.ROBOT_RESPONSE_INTERRUPTED:
+        if(_RobotOffTreadsState == OffTreadsState.OnTreads) {
+          return ChangeTuneUpState(TuneUpState.ROBOT_RESPONSE);
+        }
         break;
       case TuneUpState.TUNE_UP_COMPLETE: break;
       }
@@ -671,7 +676,7 @@ namespace Cozmo.Repair.UI {
         return false;
       }
 
-      ExitTuneUpState();
+      ExitTuneUpState(newState);
       _CurrentTuneUpState = newState;
       EnterTuneUpState();
 
@@ -766,13 +771,14 @@ namespace Cozmo.Repair.UI {
         DAS.Event("activity.repair.pattern_matched", DASEventDialogName);
         break;
       case TuneUpState.ROBOT_RESPONSE:
+        // Proxy for "first time responding"
+        if(_CalibrateButton.Interactable) {
+          GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Calibrate);
+        }
         _CalibrateButton.gameObject.SetActive(true);
         _CalibrateButton.Interactable = false;
         _RobotRespondingDimmerPanel.SetActive(true);
 
-        for (int i = 0; i < _UpDownArrows.Count; i++) {
-          _UpDownArrows[i].HideAll();
-        }
         PlayRobotCalibrationResponseAnim();
         _RevealProgressBar.gameObject.SetActive(false);
         break;
@@ -830,11 +836,12 @@ namespace Cozmo.Repair.UI {
       case TuneUpState.PATTERN_MISMATCH: break;
       case TuneUpState.PATTERN_MATCHED: break;
       case TuneUpState.ROBOT_RESPONSE: break;
+      case TuneUpState.ROBOT_RESPONSE_INTERRUPTED: break;
       case TuneUpState.TUNE_UP_COMPLETE: break;
       }
     }
 
-    private void ExitTuneUpState() {
+    private void ExitTuneUpState(TuneUpState newTuneUpState) {
       switch (_CurrentTuneUpState) {
       case TuneUpState.INTRO: break;
       case TuneUpState.START_ROUND: break;
@@ -855,15 +862,17 @@ namespace Cozmo.Repair.UI {
         _CalibrateButton.gameObject.SetActive(false);
         break;
       case TuneUpState.ROBOT_RESPONSE:
-        _RoundIndex++;
-        _RobotRespondingDimmerPanel.SetActive(false);
-        _CalibrateButton.gameObject.SetActive(false);
-        var robot = RobotEngineManager.Instance.CurrentRobot;
-        if (robot != null) {
-          robot.CancelCallback(HandleCalibrateAnimMiddle);
-          robot.CancelCallback(HandleRobotResponseDone);
+        if (newTuneUpState != TuneUpState.ROBOT_RESPONSE_INTERRUPTED) {
+          _RoundIndex++;
+          _RobotRespondingDimmerPanel.SetActive(false);
+          _CalibrateButton.gameObject.SetActive(false);
+          var robot = RobotEngineManager.Instance.CurrentRobot;
+          if (robot != null) {
+            robot.CancelCallback(HandleCalibrateAnimMiddle);
+            robot.CancelCallback(HandleRobotResponseDone);
+          }
+          PlayRobotRepairIdleAnim();
         }
-        PlayRobotRepairIdleAnim();
         break;
       case TuneUpState.TUNE_UP_COMPLETE:
         break;
@@ -926,37 +935,47 @@ namespace Cozmo.Repair.UI {
 
     // light up the next arrow, note: this may be removed if deemed too distracting by design
     private void HandleCalibrateAnimMiddle(bool success) {
-      if (_RobotResponseIndex < _UpDownArrows.Count) {
-        _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch[_RobotResponseIndex]);
-      }
-
-      if (_RobotResponseIndex >= _UpDownArrows.Count && _RoundIndex >= _RoundData.Length - 1) {
-        NeedsStateManager nsm = NeedsStateManager.Instance;
-        bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
-        if (severe) {
-          HandleRobotResponseDone(true);
+      if (success) {
+        if (_RobotResponseIndex < _UpDownArrows.Count) {
+          _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch [_RobotResponseIndex]);
         }
+
+        if (_RobotResponseIndex >= _UpDownArrows.Count && _RoundIndex >= _RoundData.Length - 1) {
+          NeedsStateManager nsm = NeedsStateManager.Instance;
+          bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
+          if (severe) {
+            HandleRobotResponseDone(true);
+          }
+        }
+
+        _RobotResponseIndex++;
+      }else if(!_WaitingForAnimationsToBeRunnable) {
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        robot.CancelAction(RobotActionType.UNKNOWN);
+        robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
+        _WaitingForAnimationsToBeRunnable = true;
       }
-
-      _RobotResponseIndex++;
     }
-
+      
     private void HandleRobotResponseDone(bool success) {
-      _RobotResponseDone = true;
+      if (!_WaitingForAnimationsToBeRunnable) {
+        _RobotResponseDone = true;
+      }
     }
 
-    private void HandleRobotReactionaryBehavior(object messageObject) {
-      ReactionTriggerTransition behaviorTransition = messageObject as ReactionTriggerTransition;
-      if (behaviorTransition.newTrigger == ReactionTrigger.ReturnedToTreads) {
+    private void HandleRobotOffTreadsStateChanged(object messageObject) {
+      RobotOffTreadsStateChanged offTreadsState = messageObject as RobotOffTreadsStateChanged;
+      _RobotOffTreadsState = offTreadsState.treadsState;              
+      if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
         var robot = RobotEngineManager.Instance.CurrentRobot;
         if (robot != null) {
           robot.TryResetHeadAndLift(null);
         }
-      }
-
-      //only let certain reactions interrupt this modal
-      if (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger) {
-        ShowReactionAlert(behaviorTransition.newTrigger);
+        if(_InterruptedAlert != null) {
+          CloseInterruptionAlert();
+        }
+      }else{
+        ShowReactionAlert(_RobotOffTreadsState);
       }
     }
 
@@ -1122,10 +1141,13 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void PlayRobotCalibrationResponseAnim() {
-      _RobotResponseIndex = 0;
+    private void PlayRobotCalibrationResponseAnim(bool ignoreCallback = false) {
+      for (int i = 0; i < _UpDownArrows.Count; i++) {
+        _UpDownArrows[i].HideAll();
+      }
 
-      GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Calibrate);
+      _WaitingForAnimationsToBeRunnable = false;
+      _RobotResponseIndex = 0;
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
@@ -1372,18 +1394,11 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private bool ShowReactionAlert(ReactionTrigger trigger) {
+    private bool ShowReactionAlert(OffTreadsState offTreadsState) {
       if (_CozmoMovedReactionsInterrupt) {
-        switch (trigger) {
-        case ReactionTrigger.RobotPickedUp:
-        case ReactionTrigger.PlacedOnCharger:
-        case ReactionTrigger.RobotOnBack:
-        case ReactionTrigger.RobotOnFace:
-        case ReactionTrigger.RobotOnSide:
-          DAS.Event("robot.interrupt", DASEventDialogName, DASUtil.FormatExtraData(trigger.ToString()));
-          ShowDontMoveCozmoAlert();
-          return true;
-        }
+        DAS.Event("robot.interrupt", DASEventDialogName, DASUtil.FormatExtraData(offTreadsState.ToString()));
+        ShowDontMoveCozmoAlert();
+        return true;
       }
       return false;
     }
@@ -1401,9 +1416,7 @@ namespace Cozmo.Repair.UI {
 
     private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
       if (_InterruptedAlert == null) {
-        var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
-                                new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
-                                             clickCallback: CloseInterruptionAlert));
+        var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey);
 
         var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
                                      LowPriorityModalAction.Queue,
@@ -1429,7 +1442,6 @@ namespace Cozmo.Repair.UI {
         UIManager.CloseModal(_InterruptedAlert);
         _InterruptedAlert = null;
       }
-      _RepairInterrupted = true;
     }
 
     #endregion //Misc Helper Methods
