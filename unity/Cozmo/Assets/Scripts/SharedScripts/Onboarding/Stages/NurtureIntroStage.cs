@@ -41,6 +41,7 @@ namespace Onboarding {
         _AnimatorInst = needsHubView.gameObject.AddComponent<Animator>();
         _AnimatorInst.runtimeAnimatorController = _NurtureIntroAnimController;
       }
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Background_Appear_Onboarding);
 
       DimNav(false);
     }

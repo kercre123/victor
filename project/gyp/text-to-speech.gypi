@@ -12,9 +12,6 @@
   'acapela_base': [
     '<(externals_path)/anki-thirdparty/acapela',
   ],
-  'flite_base': [
-    '<(coretech_external_path)/flite-2.0.0',
-  ],
   # Base directory
   'text_to_speech_base': [
   ],
@@ -74,18 +71,15 @@
     }],
     
     ['OS=="android"', {
-      'text_to_speech_include_dirs': [
-        '<(flite_base)/include',
+      # BUCK linkage with acattsandroid-sdk-library.jar
+      # Dynamic linkage with libacattsandroid.so
+      'text_to_speech_base': [
+        '<(acapela_base)/AcapelaTTS_for_Android_V1.612',
       ],
-      # Use explicit path to each library because android
+      'text_to_speech_include_dirs': [
+      ],
       'text_to_speech_libraries': [
-        '<(flite_base)/build/armeabiv7a-android/lib/libflite_cmu_grapheme_lang.a',
-        '<(flite_base)/build/armeabiv7a-android/lib/libflite_cmu_grapheme_lex.a',
-        '<(flite_base)/build/armeabiv7a-android/lib/libflite_cmu_us_kal.a',
-        '<(flite_base)/build/armeabiv7a-android/lib/libflite_cmu_us_rms.a',
-        '<(flite_base)/build/armeabiv7a-android/lib/libflite_cmulex.a',
-        '<(flite_base)/build/armeabiv7a-android/lib/libflite_usenglish.a',
-        '<(flite_base)/build/armeabiv7a-android/lib/libflite.a',
+        '<(acapela_base)/AcapelaTTS_for_Android_V1.612/sdk/armeabi-v7a/libacattsandroid.so',
       ],
       'text_to_speech_resources_tts_voices': [
         '<(acapela_base)/Voices_for_Android_iOS',

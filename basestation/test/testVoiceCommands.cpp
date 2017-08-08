@@ -135,33 +135,49 @@ TEST(VoiceCommands, SpeechRecognizer_calculation_configs)
 //----------------------------------------------------------------------------------------------------------------------
 
 using VCSetType = std::set<VoiceCommandType>;
+
+std::string GetCommandSetString(const VCSetType& commandSet)
+{
+  if (commandSet.size() < 1)
+  {
+    return "";
+  }
+  
+  auto setIter = commandSet.begin();
+  
+  std::stringstream sstream;
+  sstream << "{ " << EnumToString(*(setIter++));
+  for (; setIter != commandSet.end(); ++setIter)
+  {
+    sstream << " " << EnumToString(*setIter);
+  }
+  
+  sstream << " }";
+  
+  return sstream.str();
+}
+
+
 static double GetScoreRatio(const CommandPhraseData& commandPhraseData, const Util::Locale& locale,
-                            const Util::Data::DataPlatform& dataPlatform, const VCSetType& commandSet,
-                            VoiceCommandType commandType)
+                            const Util::Data::DataPlatform& dataPlatform, const VCSetType& commandSet)
 {
   // Init the tuning class
   VoiceCommandTuning vcTuning{dataPlatform, commandPhraseData, locale};
   
-  const auto& phraseDataList = commandPhraseData.GetPhraseDataList(locale.GetLanguage(), {commandType} );
-  
-  // We currently only support testing params for commands that use a single phrase
-  assert(phraseDataList.size() == 1);
-  
-  PhraseDataSharedPtr phraseData = phraseDataList.front();
-  int paramA = phraseData->GetParamA();
-  int paramB = phraseData->GetParamB();
-  
   bool doAudioPlayback = false;
-  auto paramScoreData = vcTuning.ScoreParams(commandSet, commandType, paramA, paramB, doAudioPlayback);
+  auto paramScoreData = vcTuning.ScoreParams(commandSet, doAudioPlayback);
   double paramScore = paramScoreData.CalculateScore("", commandPhraseData.GetLanguagePhraseData(locale.GetLanguage()));
   double maxParamScore = paramScoreData.GetMaxScore();
   double scoreRatio = paramScore / (maxParamScore != 0.0 ? maxParamScore : 1.0);
   LOG_INFO("TestVoiceCommand",
-           "Locale:%s Command:%s paramA:%d paramB:%d score:%f maxScore:%f ratio:%f",
-           locale.GetLocaleString().c_str(), EnumToString(commandType), paramA, paramB, paramScore, maxParamScore, scoreRatio);
+           "Locale:%s CommandSet:%s score:%f maxScore:%f ratio:%f",
+           locale.GetLocaleString().c_str(), GetCommandSetString(commandSet).c_str(),
+           paramScore, maxParamScore, scoreRatio);
   
   return scoreRatio;
 }
+
+const static auto& _kYesNoCommandSet = VCSetType{VoiceCommandType::YesPlease, VoiceCommandType::NoThankYou};
 
 TEST(VoiceCommands, SpeechRecognizer_simple_en)
 {
@@ -172,9 +188,11 @@ TEST(VoiceCommands, SpeechRecognizer_simple_en)
   auto currentLocale = Anki::Util::Locale{"en", "US"};
   
   auto unitTest = std::bind(GetScoreRatio, commandPhraseData, currentLocale, *cozmoContext->GetDataPlatform(),
-                            std::placeholders::_1, std::placeholders::_2);
+                            std::placeholders::_1);
   
-  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::HeyCozmo}, VoiceCommandType::HeyCozmo), 0.929280, 0.01);
+  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::HeyCozmo}), 0.879210, 0.01);
+  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::Continue}), 0.684333, 0.01);
+  ASSERT_NEAR(unitTest(_kYesNoCommandSet), 0.405925, 0.01);
 }
 
 
@@ -188,11 +206,10 @@ TEST(VoiceCommands, SpeechRecognizer_simple_de)
   
   
   auto unitTest = std::bind(GetScoreRatio, commandPhraseData, currentLocale, *cozmoContext->GetDataPlatform(),
-                            std::placeholders::_1, std::placeholders::_2);
+                            std::placeholders::_1);
   
-  const auto& yesNoSet = VCSetType{VoiceCommandType::YesPlease, VoiceCommandType::NoThankYou};
-  ASSERT_NEAR(unitTest(yesNoSet, VoiceCommandType::YesPlease), 0.998900, 0.01);
-  ASSERT_NEAR(unitTest(yesNoSet, VoiceCommandType::NoThankYou), 0.998900, 0.01);
+  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::Continue}), 0.994974, 0.01);
+  ASSERT_NEAR(unitTest(_kYesNoCommandSet), 0.998900, 0.01);
 }
 
 
@@ -206,11 +223,10 @@ TEST(VoiceCommands, SpeechRecognizer_simple_fr)
   
   
   auto unitTest = std::bind(GetScoreRatio, commandPhraseData, currentLocale, *cozmoContext->GetDataPlatform(),
-                            std::placeholders::_1, std::placeholders::_2);
+                            std::placeholders::_1);
   
-  const auto& yesNoSet = VCSetType{VoiceCommandType::YesPlease, VoiceCommandType::NoThankYou};
-  ASSERT_NEAR(unitTest(yesNoSet, VoiceCommandType::YesPlease), 0.999194, 0.01);
-  ASSERT_NEAR(unitTest(yesNoSet, VoiceCommandType::NoThankYou), 0.999194, 0.01);
+  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::Continue}), 0.998990, 0.01);
+  ASSERT_NEAR(unitTest(_kYesNoCommandSet), 0.999194, 0.01);
 }
 
 
@@ -224,13 +240,11 @@ TEST(VoiceCommands, SpeechRecognizer_simple_ja)
   
   
   auto unitTest = std::bind(GetScoreRatio, commandPhraseData, currentLocale, *cozmoContext->GetDataPlatform(),
-                            std::placeholders::_1, std::placeholders::_2);
+                            std::placeholders::_1);
   
-  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::HeyCozmo}, VoiceCommandType::HeyCozmo), 0.996757, 0.01);
-  
-  const auto& yesNoSet = VCSetType{VoiceCommandType::YesPlease, VoiceCommandType::NoThankYou};
-  ASSERT_NEAR(unitTest(yesNoSet, VoiceCommandType::YesPlease), 0.999978, 0.01);
-  ASSERT_NEAR(unitTest(yesNoSet, VoiceCommandType::NoThankYou), 0.999978, 0.01);
+  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::HeyCozmo}), 0.996757, 0.01);
+  ASSERT_NEAR(unitTest(VCSetType{VoiceCommandType::Continue}), 0.999028, 0.01);
+  ASSERT_NEAR(unitTest(_kYesNoCommandSet), 0.999978, 0.01);
 }
 
 
@@ -270,6 +284,6 @@ TEST(VoiceCommands, SpeechRecognizer_complex_en)
              paramScore, maxParamScore, scoreRatio);
     
     // Verify that our historical observed score threshold for this test is maintained
-    ASSERT_NEAR(scoreRatio, 0.672162, 0.01);
+    ASSERT_NEAR(scoreRatio, 0.616636, 0.01);
   }
 }

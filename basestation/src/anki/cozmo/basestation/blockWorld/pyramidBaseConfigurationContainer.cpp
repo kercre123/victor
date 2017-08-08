@@ -100,6 +100,6 @@ void PyramidBaseConfigurationContainer::PruneFullPyramids(const std::vector<Pyra
 }
 
   
-} // namesapce BlockConfiguration
+} // namespace BlockConfiguration
 } // namespace Cozmo
 } // namespace Anki

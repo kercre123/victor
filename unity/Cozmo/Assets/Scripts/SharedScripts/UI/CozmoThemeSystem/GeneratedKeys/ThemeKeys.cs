@@ -1,8 +1,8 @@
 //Generated File made by GenerateThemeKeyConstFile, do not edit
 public static class ThemeKeys {
-  
+
   public static class Cozmo {
-    
+
     public static class Button {
       public const string kCozmoButtonBack = "CozmoButton_Back";
       public const string kCozmoButtonCalibrate = "CozmoButton_Calibrate";
@@ -22,7 +22,7 @@ public static class ThemeKeys {
       public const string kLEGACYCozmoButtonSecondary = "LEGACY_CozmoButton_Secondary";
       public const string kLEGACYCozmoButtonTertiary = "LEGACY_CozmoButton_Tertiary";
     }
-    
+
     public static class Image {
       public const string kAnnouncementBanner = "Announcement_Banner";
       public const string kAppBackground = "App_Background";
@@ -58,6 +58,9 @@ public static class ThemeKeys {
       public const string kFrameTextfield = "Frame_Textfield";
       public const string kIconCheckmarkLarge = "Icon_Checkmark_Large";
       public const string kIconXLarge = "Icon_X_Large";
+      public const string kImageArrowCurvedLeft = "Image_Arrow_CurvedLeft";
+      public const string kImageArrowCurvedRight = "Image_Arrow_CurvedRight";
+      public const string kImageArrowStraight = "Image_Arrow_Straight";
       public const string kLEGACYImageCozmoButtonPrimaryBackground = "LEGACY_Image_CozmoButton_PrimaryBackground";
       public const string kLEGACYImageCozmoButtonSecondaryBackground = "LEGACY_Image_CozmoButton_SecondaryBackground";
       public const string kLEGACYImageCozmoButtonTertiaryBackground = "LEGACY_Image_CozmoButton_TertiaryBackground";
@@ -74,7 +77,7 @@ public static class ThemeKeys {
       public const string kSpinnerMiddle = "Spinner_Middle";
       public const string kSpinnerOuter = "Spinner_Outer";
     }
-    
+
     public static class TextMeshPro {
       public const string kCardDescriptionText = "Card_Description_Text";
       public const string kCardDescriptionTextLarge = "Card_Description_Text_Large";
@@ -106,6 +109,8 @@ public static class ThemeKeys {
       public const string kMinigameStatusText = "Minigame_Status_Text";
       public const string kMinigameTitleText = "Minigame_Title_Text";
       public const string kMinigameWinnerText = "Minigame_Winner_Text";
+      public const string kOnboardingDescriptionText = "Onboarding_Description_Text";
+      public const string kOnboardingTextLarge = "Onboarding_Text_Large";
       public const string kPageIndicatorText = "Page_Indicator_Text";
       public const string kScreenHeaderText = "Screen_Header_Text";
       public const string kScreenSubtitileTextWhite = "Screen_Subtitile_Text_White";

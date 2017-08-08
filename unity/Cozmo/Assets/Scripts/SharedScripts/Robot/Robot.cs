@@ -420,8 +420,8 @@ public class Robot : IRobot {
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
 
-    if((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
-      DisableReactionsWithLock ("sim", ReactionaryBehaviorEnableGroups.kSimulatedRobotTriggers);
+    if ((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
+      DisableReactionsWithLock("sim", ReactionaryBehaviorEnableGroups.kSimulatedRobotTriggers);
     }
   }
 
@@ -459,7 +459,7 @@ public class Robot : IRobot {
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
 
-    if((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
+    if ((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
       RemoveDisableReactionsLock("sim");
     }
   }
@@ -1379,10 +1379,10 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false) {
+  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1) {
 
-    DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop " + useSafeLiftMotion);
-    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
+    DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + loops + " loop " + useSafeLiftMotion);
+    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, loops, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
   }
 
   public void PushIdleAnimation(AnimationTrigger default_anim, string lockName) {
@@ -1397,12 +1397,15 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
-
+  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues,
+                                             bool setUnspecifiedToDefault = false) {
     RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters =
       Singleton<SetLiveIdleAnimationParameters>.Instance.Initialize(paramNames, paramValues, ID, setUnspecifiedToDefault);
     RobotEngineManager.Instance.SendMessage();
+  }
 
+  public void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
+    SendQueueSingleAction(Singleton<PlayNeedsGetOutAnimIfNeeded>.Instance, callback);
   }
 
   public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName) {

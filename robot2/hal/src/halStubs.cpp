@@ -30,7 +30,7 @@
 // Debugging Defines
 #define FRAMES_PER_RESPONSE  1  //send response every N input frames
 
-#define REALTIME_CONSOLE_OUTPUT 1 //Print status to console
+#define REALTIME_CONSOLE_OUTPUT 0 //Print status to console
 #define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
 #define STR(s)  #s
 #define DEFNAME(s) STR(s)

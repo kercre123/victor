@@ -54,6 +54,14 @@ namespace Onboarding {
       base.HandleContinueClicked();
       // is skip available, Did they skip.
       DAS.Event("onboarding.skip_status", _OldRobotViewInstance.activeInHierarchy ? "1" : "0", DASUtil.FormatExtraData("0"));
+      // Make sure the robot is wiped if they've actively decided they want to go through onboarding again
+      if (_OldRobotViewInstance.activeInHierarchy) {
+        IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          robot.WipeRobotNeedsData();
+          robot.WipeDeviceNeedsData(false);
+        }
+      }
     }
 
     protected void HandleSkipClicked() {
@@ -82,12 +90,6 @@ namespace Onboarding {
       // Complete and shut down onboarding current phase.
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.InitialSetup);
       HubWorldBase.Instance.StartFreeplay();
-    }
-
-    protected override void HandleLoopedAnimationComplete(bool success = true) {
-      if (!_DidSkip) {
-        base.HandleLoopedAnimationComplete(success);
-      }
     }
 
   }

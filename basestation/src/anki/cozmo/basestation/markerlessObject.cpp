@@ -39,7 +39,7 @@ namespace Anki {
     const Point3f& MarkerlessObject::GetSizeByType(ObjectType type)
     {
       static const std::map<ObjectType, Point3f> Sizes = {
-        {ObjectType::ProxObstacle,      {20.f, 40.f, 50.f}},
+        {ObjectType::ProxObstacle,      {10.f, 10.f, 50.f}},
         {ObjectType::CliffDetection,    {20.f, 40.f, 50.f}}, // TODO: Update size?
         {ObjectType::CollisionObstacle, {20.f, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z}},
       };

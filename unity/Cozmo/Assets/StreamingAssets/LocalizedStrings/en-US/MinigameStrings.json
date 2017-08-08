@@ -88,7 +88,7 @@
     "translation": "Safe Play:"
   },
   "droneMode.safePlay.description": {
-    "translation": "Explore indoors in well lit spaces.\n\nDrive on flat surfaces.\n\nBe careful of falling off edges.\n\nStay close to Cozmo for the best experience."
+    "translation": "• Explore indoors in well lit spaces.\n\n•Drive on flat surfaces.\n\n• Be careful of falling off edges.\n\n•Stay close to Cozmo for the best experience."
   },
   "droneMode.button.action.reactToPet": {
     "translation": "Greet"
@@ -196,7 +196,7 @@
     "translation": "Well done!"
   },
   "speedTap.roundsText": {
-    "translation": "Round {0:N0}"
+    "translation": "ROUND {0:N0}"
   },
   "speedTap.tapBlock": {
     "translation": "Tap a flashing Cube you\nwant to play with."
@@ -233,12 +233,6 @@
   },
   "minigame.timeout.description": {
     "translation": "Cozmo is tired of waiting, and wants to do other things."
-  },
-  "cubePounce.info.playerWinPoint": {
-    "translation": "You were too fast for Cozmo!"
-  },
-  "cubePounce.info.cozmoWinPoint": {
-    "translation": "He was too fast for you!"
   },
   "cubePounce.info.setupText": {
     "translation": "Place a Cube in front of Cozmo and hold it still when it turns green."
@@ -298,13 +292,13 @@
     "translation": "Unlock by unlocking Quick Tap."
   },
   "speedTap.difficulty.mediumDescription.locked": {
-    "translation": "Two Color Mode is locked.\nUnlock by winning Quick Tap in <b>ONE COLOR MODE</b>."
+    "translation": "<b>TWO COLORS</b> mode is locked.\nUnlock by winning Quick Tap in <b>ONE COLOR</b> mode."
   },
   "speedTap.difficulty.hardDescription.locked": {
-    "translation": "Three Color Mode is locked.\nUnlock by winning Quick Tap in <b>TWO COLOR MODE</b>."
+    "translation": "<b>THREE COLORS</b> mode is locked.\nUnlock by winning Quick Tap in <b>TWO COLORS</b> mode."
   },
   "speedTap.difficulty.expertDescription.locked": {
-    "translation": "Four Color Mode is locked.\nUnlock by winning Quick Tap in <b>THREE COLOR MODE</b>."
+    "translation": "<b>FOUR COLORS</b> mode is locked.\nUnlock by winning Quick Tap in <b>THREE COLORS</b> mode."
   },
   "speedTap.text.getReady": {
     "translation": "Get Ready!"
@@ -313,7 +307,7 @@
     "translation": "<b>Winner:</b> Best of {0} Rounds"
   },
   "speedTap.text.displayWinnerSubtitle": {
-    "translation": "takes Round {0}!"
+    "translation": "takes ROUND {0}!"
   },
   "speedTap.text.roundScore": {
     "translation": "Player: {0} - Cozmo: {1}"
@@ -331,19 +325,19 @@
     "translation": "Locked!"
   },
   "speedTap.text.MP.Locked": {
-    "translation": "To unlock 3 player mode, play Human vs. Cozmo once on this difficulty."
+    "translation": "To unlock 3 player mode, play HUMAN VS. COZMO once on this difficulty."
   },
   "speedTapGame.label.vs": {
     "translation": "vs."
   },
   "speedTapGame.mode.HvC": {
-    "translation": "Human vs. Cozmo"
+    "translation": "HUMAN VS. COZMO"
   },
   "speedTapGame.mode.HvHvC": {
-    "translation": "Human vs. Human vs. Cozmo"
+    "translation": "HUMAN VS. HUMAN VS. COZMO"
   },
   "cozmoSays.instructions.label": {
-    "translation": "Type a word or phrase and hear Cozmo say it"
+    "translation": "Type a word or phrase and hear Cozmo say it:"
   },
   "sayCozmo.button.say": {
     "translation": "Say"
@@ -378,10 +372,22 @@
   "label.MATCH": {
     "translation": "MATCH!"
   },
-  "label.NO.MATCH": {
-    "translation": "NO \\nMATCH"
+  "label.dontSlap": {
+    "translation": "DON'T\nSLAP!"
   },
-  "label.DONT.SLAP": {
-    "translation": "DON'T \\nSLAP!"
+  "label.noMatch": {
+    "translation": "NO\nMATCH"
+  },
+  "label.enterText": {
+    "translation": "Enter text..."
+  },
+  "minigame.text.cozmoWinsFlat": {
+    "translation": "Cozmo Wins!"
+  },
+  "minigame.text.playerWinsFlat": {
+    "translation": "{0} Wins!"
+  },
+  "minigame.text.youWinFlat": {
+    "translation": "You Win!"
   }
 }

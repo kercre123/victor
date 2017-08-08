@@ -426,6 +426,8 @@ public:
   const PoseOriginList&  GetPoseOriginList() const { assert(_poseOriginList); return *_poseOriginList; }
   
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
+  const ObjectPoseConfirmer& GetObjectPoseConfirmer() const {
+    assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
   
   // These change the robot's internal (basestation) representation of its
   // head angle, and lift angle, but do NOT actually command the
@@ -497,9 +499,9 @@ public:
   */
   
   // sets distance detected by forward proximity sensor
-  void SetForwardSensorValue(u16 value_mm)       { _forwardSensorValue_mm = value_mm; }
-  u16  GetForwardSensorValue()             const { return _forwardSensorValue_mm; }
-  
+  void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
+  u16  GetForwardSensorValue() const       { return _forwardSensorValue_mm; }
+    
   // =========== IMU Data =============
   
   // Returns pointer to robot accelerometer readings in mm/s^2 with respect to head frame.
@@ -519,6 +521,10 @@ public:
   
   // Returns the current accelerometer magnitude, after being low-pass filtered.
   float GetHeadAccelMagnitudeFiltered() const {return _robotAccelMagnitudeFiltered; }
+  
+  // IMU temperature sent from the robot
+  void SetImuTemperature(const float temp) { _robotImuTemperature_degC = temp; }
+  float GetImuTemperature() const {return _robotImuTemperature_degC; }
   
   // send the request down to the robot
   Result RequestIMU(const u32 length_ms) const;
@@ -857,27 +863,26 @@ protected:
   ObjectID         _chargerID;
   
   // State
-  bool             _isOnCharger           = false;
-  bool             _isCharging            = false;
-  bool             _chargerOOS            = false;
-  f32              _battVoltage           = 5;
-  ImageSendMode    _imageSendMode         = ImageSendMode::Off;
-  u32              _lastSentImageID       = 0;
-  u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
-  bool             _isPickedUp            = false;
-  u16              _forwardSensorValue_mm = 0;
-  bool             _isOnChargerPlatform   = false;
-  bool             _isCliffReactionDisabled = false;
-  bool             _isBodyInAccessoryMode = true;
-  u8               _setBodyModeTicDelay   = 0;
+  bool             _isOnCharger              = false;
+  bool             _isCharging               = false;
+  bool             _chargerOOS               = false;
+  f32              _battVoltage              = 5;
+  ImageSendMode    _imageSendMode            = ImageSendMode::Off;
+  u32              _lastSentImageID          = 0;
+  u8               _enabledAnimTracks        = (u8)AnimTrackFlag::ALL_TRACKS;
+  bool             _isPickedUp               = false;
+  u16              _forwardSensorValue_mm    = 0;
+  bool             _isOnChargerPlatform      = false;
+  bool             _isCliffReactionDisabled  = false;
+  bool             _isBodyInAccessoryMode    = true;
+  u8               _setBodyModeTicDelay      = 0;
   bool             _gotStateMsgAfterTimeSync = false;
-  
-  u32              _lastStatusFlags       = 0;
+  u32              _lastStatusFlags          = 0;
 
-  OffTreadsState    _offTreadsState  = OffTreadsState::OnTreads;
-  OffTreadsState    _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
-  TimeStamp_t      _timeOffTreadStateChanged_ms = 0;
-  TimeStamp_t      _fallingStartedTime_ms = 0;
+  OffTreadsState   _offTreadsState                 = OffTreadsState::OnTreads;
+  OffTreadsState   _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
+  TimeStamp_t      _timeOffTreadStateChanged_ms    = 0;
+  TimeStamp_t      _fallingStartedTime_ms          = 0;
   
   // IMU data
   AccelData        _robotAccel;
@@ -885,6 +890,7 @@ protected:
   float            _robotAccelMagnitude = 0.0f; // current magnitude of accelerometer data (norm of all three axes)
   float            _robotAccelMagnitudeFiltered = 0.0f; // low-pass filtered accelerometer magnitude
   AccelData        _robotAccelFiltered; // low-pass filtered robot accelerometer data (for each axis)
+  float            _robotImuTemperature_degC = 0.f;
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use

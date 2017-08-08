@@ -134,10 +134,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: OnboardingPreBirth
-    _EnumValue: 307
+    _EnumValue: 313
   _CustomIdle:
     _EnumValueAsString: OnboardingPreBirth
-    _EnumValue: 307
+    _EnumValue: 313
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: 
@@ -145,8 +145,8 @@ MonoBehaviour:
   _EnableWhiteListOnly: 1
   _WhiteListedActions: []
   _ForceNeedValuesOnStart:
-  - 0.7
-  - 0.7
+  - 0.68
+  - 0.75
   - 0.7
   _ForceNeedValuesOnEnd:
   - -1
@@ -154,7 +154,7 @@ MonoBehaviour:
   - -1
   _ForceNeedValuesOnEventId:
     _EnumValueAsString: Count
-    _EnumValue: 45
+    _EnumValue: 48
   _ForceNeedValuesOnEvent:
   - -1
   - -1

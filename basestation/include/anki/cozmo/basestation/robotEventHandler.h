@@ -44,8 +44,6 @@ class RobotEventHandler : private Util::noncopyable
 public:
   RobotEventHandler(const CozmoContext* context);
   
-  void SetupGainsHandlers(IExternalInterface& externalInterface);
-  
   template<typename T>
   void HandleMessage(const T& msg);
   

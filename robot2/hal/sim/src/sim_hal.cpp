@@ -71,6 +71,9 @@
 // When this is on, HAL::SetLED() doesn't work.
 #define LIGHT_BACKPACK_DURING_SOUND 0
 
+// Whether or not to simulate gyro bias and drift due to temperature
+static const bool kSimulateGyroBias = false;
+
 #ifndef SIMULATOR
 #error SIMULATOR should be defined by any target using sim_hal.cpp
 #endif
@@ -503,6 +506,31 @@ namespace Anki {
       IMUData.acc_x = (f32)(vals[0] * 1000);  // convert to mm/s^2
       IMUData.acc_y = (f32)(vals[1] * 1000);
       IMUData.acc_z = (f32)(vals[2] * 1000);
+      
+      // Compute estimated IMU temperature based on measured data from Victor prototype
+
+      // Temperature dynamics approximated by:
+      // dT/dt = k * (T_final - T) , with T(0) = T_initial
+      // 1st order IVP. Solution:
+      // T(t) = T_final - (T_final - T_initial) * exp(-k * t)
+      const float T_initial = 20.f;
+      const float T_final = 70.f;    // measured on Victor prototype
+      const float k = .0032f;        // constant (measured), units sec^-1
+      const float t = HAL::GetTimeStamp() / 1000.f; // current time in seconds
+      
+      IMUData.temperature_degC = T_final - (T_final - T_initial) * exp(-k * t);
+      
+      // Apply gyro bias based on temperature:
+      if (kSimulateGyroBias) {
+        // All worst case values are given in Section 1.2 of BMI160 datasheet
+        const float initialBias_dps[3] = {0.f, 0.f, 0.f};     // inital zero-rate offset at startup. worst case is +/- 10 deg/sec
+        const float biasChangeDueToTemp_dps_per_degC = 0.08f; // zero-rate offset change as temperature changes. worst case 0.08 deg/sec per degC
+        const float biasDueToTemperature_dps = (IMUData.temperature_degC - T_initial) * biasChangeDueToTemp_dps_per_degC;
+        
+        IMUData.rate_x += DEG_TO_RAD(initialBias_dps[0] + biasDueToTemperature_dps);
+        IMUData.rate_y += DEG_TO_RAD(initialBias_dps[1] + biasDueToTemperature_dps);
+        IMUData.rate_z += DEG_TO_RAD(initialBias_dps[2] + biasDueToTemperature_dps);
+      }
       
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;

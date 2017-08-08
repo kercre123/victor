@@ -19,7 +19,8 @@ def strip_zero_width_spaces(args):
     for file in files:
       if file.endswith('.json'):
         with open(os.path.join(root, os.path.basename(file)), "r+", encoding='utf8') as inoutfile:
-          lines = [line.replace(u'\u200b', '') for line in inoutfile]
+          lines = [line.replace(u'\u200b', '') for line in inoutfile]   # ZERO-WIDTH SPACE
+          lines = [line.replace(u'\u00A0', '') for line in lines]       # NO-BREAK SPACE
           inoutfile.seek(0)
           inoutfile.truncate()
           inoutfile.writelines(lines)

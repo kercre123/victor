@@ -127,6 +127,7 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
 
 Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
 {
+  _humanInteracted = false;
   InitHelper(robot);
   TransitionToInitialPounce(robot);
   return Result::RESULT_OK;
@@ -165,6 +166,12 @@ void BehaviorPounceOnMotion::InitHelper(Robot& robot)
 void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 {
   Cleanup(robot);
+
+  if (_humanInteracted)
+  {
+    _humanInteracted = false;
+    NeedActionCompleted();
+  }
 }
   
   
@@ -443,7 +450,6 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
     // send this after we start the action, so if the activity tries to cancel us,
     // we will play the react first
     BehaviorObjectiveAchieved(BehaviorObjective::PouncedAndCaught);
-    NeedActionCompleted();
   }
 }
   
@@ -562,6 +568,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
             gotPose = true;
             _numValidPouncePoses++;
             _lastValidPouncePoseTime = currTime;
+            _humanInteracted = true;
             
             PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.GotPose", "got valid pose with dist = %f. Now have %d",
                           dist, _numValidPouncePoses);

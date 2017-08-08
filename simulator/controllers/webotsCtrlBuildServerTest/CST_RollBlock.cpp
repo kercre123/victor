@@ -33,6 +33,7 @@ namespace Anki {
       virtual s32 UpdateSimInternal() override;
       
       TestState _testState = TestState::Init;
+      s32       _cubeID = 0;
     };
     
     // Register class with factory
@@ -56,18 +57,22 @@ namespace Anki {
         }
         case TestState::RollObject:
         {
+          std::vector<s32> objIds = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                                GetNumObjects() == 1)
+                                                !objIds.empty())
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 11;
             m.numRetries = 3;
-            // Roll object 0
-            m.action.Set_rollObject(ExternalInterface::RollObject(0, _defaultTestMotionProfile, 0, false, false, true, false, true, false));
+            
+            // Roll first LightCube
+            _cubeID = objIds[0];
+            
+            m.action.Set_rollObject(ExternalInterface::RollObject(_cubeID, _defaultTestMotionProfile, 0, false, false, true, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -79,7 +84,7 @@ namespace Anki {
         {
           // Verify robot has rolled the block
           Pose3d pose;
-          GetObjectPose(0, pose);
+          GetObjectPose(_cubeID, pose);
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(25,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 GetCarryingObjectID() == -1,

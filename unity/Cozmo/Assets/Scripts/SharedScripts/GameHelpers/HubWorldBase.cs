@@ -16,5 +16,5 @@ public abstract class HubWorldBase : MonoBehaviour {
 
   public abstract void StartFreeplay();
   public abstract void StopFreeplay();
-  public abstract void StartLoadNeedsHubView();
+  public abstract void StartLoadNeedsHubView(bool transitionToFreeplay = true);
 }

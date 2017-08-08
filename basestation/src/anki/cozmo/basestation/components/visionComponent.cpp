@@ -64,6 +64,7 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Body_deg/s",   30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
   
+  CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
@@ -655,6 +656,11 @@ namespace Cozmo {
     
   } // LookupGroundPlaneHomography()
 
+  bool VisionComponent::IsDisplayingProcessedImagesOnly() const
+  {
+    return kDisplayProcessedImagesOnly;
+  }
+  
   void VisionComponent::UpdateVisionSystem(const VisionPoseData&  poseData,
                                            const EncodedImage&    encodedImg)
   {
@@ -795,6 +801,13 @@ namespace Cozmo {
       
       while(true == _visionSystem->CheckMailbox(result))
       {
+        if(IsDisplayingProcessedImagesOnly())
+        {
+          // The assumption is that all the chunks of this encoded image have already been sent to
+          // the viz manager (e.g. forwarded by the robot message handler)
+          _vizManager->DisplayCameraImage(result.timestamp);
+        }
+        
         using localHandlerType = Result(VisionComponent::*)(const VisionProcessingResult& procResult);
         auto tryAndReport = [this, &result, &anyFailures]( localHandlerType handler, VisionMode mode )
         {

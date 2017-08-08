@@ -126,6 +126,8 @@
   
     [_acaTTS setRate:speed];
     [_acaTTS setVoiceShaping:shaping];
+    [_acaTTS setTTSSetting:@"LEADINGSILENCE" settingvalue:0];
+    [_acaTTS setTTSSetting:@"TRAILINGSILENCE" settingvalue:0];
     
     //
     // Set SDK delegate for diagnostics.  At present, delegate methods don't do anything else,
@@ -148,7 +150,7 @@
     LOG_DEBUG("TextToSpeechProviderImpl.GenerateAudioFile", "Speak %s to file %s",
               Anki::Util::HidePersonallyIdentifiableInfo(str), path);
   
-    NSString* nsstr = [NSString stringWithCString:str encoding:NSASCIIStringEncoding];
+    NSString* nsstr = [NSString stringWithUTF8String:str];
     NSURL* nsurl = [NSURL fileURLWithFileSystemRepresentation:path isDirectory:NO relativeToURL:nil];
     NSString* nstype = @"pcm";
   
@@ -238,7 +240,8 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
     JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
     
-    LOG_INFO("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d",
+    LOG_INFO("TextToSpeechProvider.Initialize",
+             "language=%s voice=%s speed=%d shaping=%d",
              _tts_language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
     
     // Initialize SDK and load voice
@@ -246,7 +249,9 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
   
     Result result = [impl loadVoice:_tts_voice.c_str() speed:_tts_speed shaping:_tts_shaping];
     if (RESULT_OK != result) {
-      LOG_ERROR("TextToSpeechProvider.LoadVoice", "Unable to load voice=%s (result %d)", _tts_voice.c_str(), result);
+      LOG_ERROR("TextToSpeechProvider.LoadVoice",
+                "Unable to load voice=%s (result %d)",
+                _tts_voice.c_str(), result);
     }
   
     // Generate a path for temporary data
@@ -276,7 +281,8 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   
     Result result = [impl generateAudioFile:text.c_str() path:_path.c_str() speechRate:speechRate];
     if (RESULT_OK != result) {
-      LOG_ERROR("TextToSpeechProvider.CreateAudioData.GenerateAudioFile", "Unable to generate audio file (error %d)",
+      LOG_ERROR("TextToSpeechProvider.CreateAudioData.GenerateAudioFile",
+                "Unable to generate audio file (error %d)",
                 result);
       return result;
     }
@@ -287,7 +293,8 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     AudioUtil::AudioChunk& chunk = data.GetChunk();
     int fd = open(_path.c_str(), O_RDONLY);
     if (fd < 0) {
-      LOG_ERROR("TextToSpeechProvider.CreateAudioData.OpenFailed", "Unable to open %s (errno %d)",
+      LOG_ERROR("TextToSpeechProvider.CreateAudioData.OpenFailed",
+                "Unable to open %s (errno %d)",
                 _path.c_str(), errno);
       return RESULT_FAIL;
     }
@@ -296,16 +303,19 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
       short buf[TTS_BLOCKSIZE];
       const ssize_t nbytes = read(fd, buf, sizeof(buf));
       if (nbytes < 0) {
-        LOG_ERROR("TextToSpeechProvider.CreateAudioData.ReadError", "Unable to read %s (errno %d)",
+        LOG_ERROR("TextToSpeechProvider.CreateAudioData.ReadError",
+                  "Unable to read %s (errno %d)",
                   _path.c_str(), errno);
         break;
       }
       if (nbytes == 0) {
-        LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadEOF", "EOF", errno, _path.c_str());
+        LOG_DEBUG("TextToSpeechProvider.CreateAudioData.ReadEOF", "EOF");
         break;
       }
       const ssize_t nshorts = (nbytes/sizeof(short));
-      LOG_DEBUG("TextToSpeechProvider.CreateAudioData.Read", "%zd bytes, %zd shorts", nbytes, nshorts);
+      LOG_TRACE("TextToSpeechProvider.CreateAudioData.Read",
+                "%zd bytes, %zd shorts",
+                nbytes, nshorts);
       for (ssize_t n = 0; n < nshorts; ++n) {
         chunk.push_back(buf[n]);
       }
@@ -316,7 +326,8 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     const auto after = std::chrono::steady_clock::now();
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
     
-    LOG_DEBUG("TextToSpeechProvider.CreateAudioData.Result", "Returning %zu samples after %lld ms",
+    LOG_DEBUG("TextToSpeechProvider.CreateAudioData.Result",
+              "Returning %zu samples after %lld ms",
               data.GetNumSamples(), elapsed.count());
   
     return RESULT_OK;

@@ -123,6 +123,8 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 {
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+
   // Ensure the cube workout lights are not set
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
   

@@ -30,7 +30,6 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -56,6 +55,10 @@ static const std::string kCurNeedsUnlockLevelKey = "CurNeedsUnlockLevel";
 static const std::string kNumStarsAwardedKey = "NumStarsAwarded";
 static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
 static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
+static const std::string kTimeLastDisconnectKey = "TimeLastDisconnect";
+static const std::string kTimeLastAppBackgroundedKey = "TimeLastAppBackgrounded";
+static const std::string kOpenAppAfterDisconnectKey = "OpenAppAfterDisconnect";
+static const std::string kForceNextSongKey = "ForceNextSong";
 
 // This key is used as the base of the string for when sparks are sometimes rewarded
 // for freeplay activities, that tells how many sparks were awarded and what Cozmo
@@ -209,6 +212,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
+, _localNotifications(new LocalNotifications(*this))
 , _savedTimeLastWrittenToDevice()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
@@ -225,6 +229,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _timeWhenPaused_s()
 , _timeWhenCooldownStarted_s()
 , _timeWhenCooldownOver_s()
+, _timeWhenBracketChanged_s()
 , _queuedNeedDeltas()
 , _actionCooldown_s()
 , _onlyWhiteListedActionsEnabled(false)
@@ -235,6 +240,8 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , kPathToSavedStateFile((cozmoContext->GetDataPlatform() != nullptr ? cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
 , _robotStorageState(RobotStorageState::Inactive)
 , _faceDistortionComponent(new DesiredFaceDistortionComponent(*this))
+, _pendingSparksRewardMsg(false)
+, _sparksRewardMsg()
 {
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -245,6 +252,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
     _timeWhenPaused_s[i] = 0.0f;
     _timeWhenCooldownStarted_s[i] = 0.0f;
     _timeWhenCooldownOver_s[i] = 0.0f;
+    _timeWhenBracketChanged_s[i] = 0.0f;
 
     _queuedNeedDeltas[i].clear();
   }
@@ -266,7 +274,8 @@ NeedsManager::~NeedsManager()
 
 void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                         const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson)
+                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+                        const Json::Value& inLocalNotificationJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
@@ -284,6 +293,8 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     _faceDistortionComponent->Init(inHandlersJson, _cozmoContext->GetRandom());
   }
 
+  _localNotifications->Init(inLocalNotificationJson);
+
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
     auto helper = MakeAnkiEventUtil(*_cozmoContext->GetExternalInterface(), *this, _signalHandles);
@@ -299,7 +310,6 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeDeviceNeedsData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
@@ -321,6 +331,7 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
     _lastDecayUpdateTime_s[i] = _currentTime_s;
     _timeWhenCooldownStarted_s[i] = 0.0f;
     _timeWhenCooldownOver_s[i] = 0.0f;
+    _timeWhenBracketChanged_s[i] = _currentTime_s;
 
     _isDecayPausedForNeed[i] = false;
     _isActionsPausedForNeed[i] = false;
@@ -335,6 +346,8 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
 
 void NeedsManager::InitInternal(const float currentTime_s)
 {
+  _localNotifications->CancelAll();
+
   const u32 uninitializedSerialNumber = 0;
   InitReset(currentTime_s, uninitializedSerialNumber);
 
@@ -356,6 +369,10 @@ void NeedsManager::InitInternal(const float currentTime_s)
       ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
       appliedDecay = true;
+
+      _needsState._timesOpenedSinceLastDisconnect++;
+
+      SendTimeSinceBackgroundedDasEvent();
     }
   }
 
@@ -364,6 +381,8 @@ void NeedsManager::InitInternal(const float currentTime_s)
   // Save to device, because we've either applied a bunch of unconnected decay,
   // or we never had valid needs data on this device yet
   WriteToDevice();
+
+  SendNeedsLevelsDasEvent("app_start");
 
 #if ANKI_DEV_CHEATS
   g_DebugNeedsManager = this;
@@ -430,18 +449,25 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // (Use case:  Robot has been used with another device)
     needToWriteToDevice = true;
     useStateFromRobot = true;
+    // Reset the needs state's 'time of last disconnect', since that doesn't apply
+    // any more (and it's not stored on robot); look below to see where we preserve
+    // this field when overriding needs state with needs state from robot
+    _needsState._timeLastDisconnect = Time();
   }
   else if (!_robotHadValidNeedsData && _deviceHadValidNeedsData)
   {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Robot does NOT have needs data, but device does");
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
+                  "Robot does NOT have needs data, but device does");
     // Robot does NOT have needs data, but device does
     // So just go with device data, and write that to robot
     needToWriteToRobot = true;
   }
   else
   {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Both robot and device have needs data...");
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Serial numbers %x and %x", _previousRobotSerialNumber, _needsStateFromRobot._robotSerialNumber);
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
+                  "Both robot and device have needs data...Serial numbers %x and %x",
+                  _previousRobotSerialNumber, _needsStateFromRobot._robotSerialNumber);
+
     // Both robot and device have needs data
     if (_previousRobotSerialNumber == _needsStateFromRobot._robotSerialNumber)
     {
@@ -482,6 +508,12 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       // Use the robot's state; copy it to the device.
       needToWriteToDevice = true;
       useStateFromRobot = true;
+      // Reset the needs state's 'time of last disconnect', since that doesn't apply
+      // any more (and it's not stored on robot); look below to see where we preserve
+      // this field when overriding needs state with needs state from robot
+      _needsState._timeLastDisconnect = Time();
+      // Similar for time since last app backgrounded; let's not confuse things
+      _needsState._timeLastAppBackgrounded = Time();
 
       // Notify the game, so it can put up a dialog to notify the user
       ExternalInterface::ConnectedToDifferentRobot message;
@@ -492,17 +524,37 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
   if (useStateFromRobot)
   {
+    const Time savedTimeLastDisconnect = _needsState._timeLastDisconnect;
+    const Time savedTimeLastAppBackgrounded = _needsState._timeLastAppBackgrounded;
+
     // Copy the loaded robot needs state into our device needs state
     _needsState = _needsStateFromRobot;
+
+    _needsState._timeLastDisconnect = savedTimeLastDisconnect;
+    _needsState._timeLastAppBackgrounded = savedTimeLastAppBackgrounded;
 
     // Now apply decay for the unconnected time for THIS robot
     // (We did it earlier, in Init, but that was for a different robot)
     static const bool connected = false;
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
   }
-  
+
   // Update Game on Robot's last state
   SendNeedsOnboardingToGame();
+
+  if (_needsState._timeLastDisconnect != Time()) // (don't send if we've never disconnected)
+  {
+    // DAS Event: "needs.disconnect_time"
+    // s_val: The number of seconds since the last disconnection
+    // data: Unused
+    const Time now = system_clock::now();
+    const auto elapsed = now - _needsState._timeLastDisconnect;
+    const auto secsSinceLastDisconnect = duration_cast<seconds>(elapsed).count();
+    Anki::Util::sEvent("needs.disconnect_time", {},
+                       std::to_string(secsSinceLastDisconnect).c_str());
+  }
 
   const Time now = system_clock::now();
 
@@ -550,11 +602,28 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
 void NeedsManager::OnRobotDisconnected()
 {
-  WriteToDevice();
+  _needsState._timeLastDisconnect = system_clock::now();
+  _needsState._timesOpenedSinceLastDisconnect = 0;
+
+  // Write latest needs state to device, but not if needs system is paused.
+  // If we're paused, we've already written needs state to device when we
+  // paused.  And we don't want to write again, because if the robot gets
+  // disconnected while app is backgrounded (and thus paused), we don't
+  // want to update the 'time last written' because when we un-background,
+  // we use that time to apply accumulated decay.
+  if (!_isPausedOverall)
+  {
+    WriteToDevice();
+  }
 
   _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
 
   _robot = nullptr;
+
+  static const bool forceSend = true;
+  DetectBracketChangeForDas(forceSend);
+
+  SendNeedsLevelsDasEvent("disconnect");
 }
 
 
@@ -603,6 +672,8 @@ void NeedsManager::SetPaused(const bool paused)
 
   if (_isPausedOverall)
   {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.SetPaused.Pausing",
+                  "Pausing Needs system");
     // Calculate and record how much time was left until the next decay
     _pausedDurRemainingPeriodicDecay = _timeForNextPeriodicDecay_s - _currentTime_s;
 
@@ -618,6 +689,8 @@ void NeedsManager::SetPaused(const bool paused)
   }
   else
   {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.SetPaused.UnPausing",
+                  "Un-Pausing Needs system");
     // When unpausing, set the next 'time for periodic decay'
     _timeForNextPeriodicDecay_s = _currentTime_s + _pausedDurRemainingPeriodicDecay;
 
@@ -636,6 +709,8 @@ void NeedsManager::SetPaused(const bool paused)
         _timeWhenCooldownOver_s[needIndex] += durationOfPause;
         _timeWhenCooldownStarted_s[needIndex] += durationOfPause;
       }
+
+      _timeWhenBracketChanged_s[needIndex] += durationOfPause;
     }
   }
 
@@ -677,6 +752,11 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
     {
       return;
     }
+  }
+
+  if (actionCompleted == NeedsActionId::CozmoSings)
+  {
+    _needsState._forceNextSong = UnlockId::Invalid;
   }
 
   const int actionIndex = static_cast<int>(actionCompleted);
@@ -723,13 +803,19 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
       {
         const int sparksAwarded = RewardSparksForFreeplay();
 
-        // Tell game that sparks were awarded, and how many, and what cozmo was doing
-        ExternalInterface::FreeplaySparksAwarded msg;
-        msg.sparksAwarded = sparksAwarded;
-        msg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey + "." +
-                                      NeedsActionIdToString(actionCompleted);
-        const auto& extInt = _cozmoContext->GetExternalInterface();
-        extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+        if (_pendingSparksRewardMsg)
+        {
+          PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompleted",
+                        "About to create freeplay sparks reward message but there was a pending one, so sending that one now");
+
+          SparksRewardCommunicatedToUser();
+        }
+        _pendingSparksRewardMsg = true;
+
+        // Fill in the message that we will send later when the reward behavior completes
+        _sparksRewardMsg.sparksAwarded = sparksAwarded;
+        _sparksRewardMsg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey + "." +
+                                                   NeedsActionIdToString(actionCompleted);
 
         // DAS Event: "needs.freeplay_sparks_awarded"
         // s_val: The number of sparks awarded
@@ -910,6 +996,20 @@ int NeedsManager::AwardSparks(const int targetSparks, const float minPct, const 
 }
 
 
+void NeedsManager::SparksRewardCommunicatedToUser()
+{
+  DEV_ASSERT_MSG(_pendingSparksRewardMsg == true,
+                 "NeedsManager.OnSparksRewardAnimComplete",
+                 "About to send sparks reward message but it's already been sent");
+  _pendingSparksRewardMsg = false;
+
+  // Tell game that sparks were awarded, and how many, and what cozmo was doing
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame
+                    (std::move(_sparksRewardMsg)));
+}
+
+
 void NeedsManager::SendRepairDasEvent(const NeedsState& needsState,
                                       const NeedsActionId cause,
                                       const RepairablePartId part)
@@ -946,6 +1046,46 @@ void NeedsManager::FormatStringOldAndNewLevels(std::ostringstream& stream,
 }
 
 
+void NeedsManager::SendNeedsLevelsDasEvent(const char * whenTag)
+{
+  // DAS Event: "needs.needs_levels"
+  // s_val: The 'when' tag ("app_start", "app_background", "app_unbackground", "disconnect")
+  // data: The needs levels at that time, colon-separated
+  //       (e.g. "1.0000:0.6000:0.7242")
+  std::ostringstream stream;
+  stream.precision(5);
+  stream << std::fixed;
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    if (needIndex > 0)
+    {
+      stream << ":";
+    }
+    stream << _needsState.GetNeedLevelByIndex(needIndex);
+  }
+  Anki::Util::sEvent("needs.needs_levels", {{DDATA, whenTag}}, stream.str().c_str());
+}
+
+
+void NeedsManager::SendTimeSinceBackgroundedDasEvent()
+{
+  if (_needsState._timeLastAppBackgrounded != Time()) // (don't send if we've never backgrounded)
+  {
+    // DAS Event: "needs.app_backgrounded_time"
+    // s_val: The number of seconds since the last time the user backgrounded
+    //        the app
+    // data: The number of times the user has opened or unbackgrounded the app
+    //       since the last robot disconnection
+    const Time now = system_clock::now();
+    const auto elapsed = now - _needsState._timeLastAppBackgrounded;
+    const auto secsSinceLastBackgrounded = duration_cast<seconds>(elapsed).count();
+    Anki::Util::sEvent("needs.app_backgrounded_time",
+                       {{DDATA, std::to_string(_needsState._timesOpenedSinceLastDisconnect).c_str()}},
+                       std::to_string(secsSinceLastBackgrounded).c_str());
+  }
+}
+
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 {
@@ -975,7 +1115,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& m
 
   // DAS Event: "needs.force_set_needs_levels"
   // s_val: The needs levels before the completion, followed by the needs levels after
-  //       the completion, all colon-separated (e.g. "1.0000:0.6000:0.7242:0.6000:0.5990:0.7202"
+  //        the completion, all colon-separated (e.g. "1.0000:0.6000:0.7242:0.6000:0.5990:0.7202"
   // data: Unused
   std::ostringstream stream;
   FormatStringOldAndNewLevels(stream, prevNeedsLevels);
@@ -1193,8 +1333,12 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeDeviceNeedsData& m
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg)
 {
-  // When the debug 'erase everything' button is pressed, that means we also need
-  // to re-initialize the needs levels
+  // When the debug 'erase everything' button is pressed, or the user-facing
+  // "ERASE COZMO" button is pressed, that means we also need to re-initialize
+  // the needs system
+
+  Util::FileUtils::DeleteFile(kPathToSavedStateFile + kNeedsStateFile);
+
   InitInternal(_currentTime_s);
 }
 
@@ -1242,12 +1386,17 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
                 "Game being paused set to %s",
                 msg.isPaused ? "TRUE" : "FALSE");
 
+  if (msg.isPaused)
+  {
+    _needsState._timeLastAppBackgrounded = system_clock::now();
+  }
+
   // During app backgrounding, we want to pause the whole needs system
   SetPaused(msg.isPaused);
 
-  // When backgrounding, we'll also write to robot
   if (msg.isPaused)
   {
+    // When backgrounding, we'll also write to robot if connected
     if (_robotStorageState == RobotStorageState::Inactive)
     {
       if (_robot != nullptr)
@@ -1256,21 +1405,27 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
         StartWriteToRobot();
       }
     }
-  }
 
-  // When un-backgrounding, apply decay
-  if (!msg.isPaused)
+    SendNeedsLevelsDasEvent("app_background");
+
+    _localNotifications->Generate();
+  }
+  else
   {
+    // When un-backgrounding, apply decay
+    _localNotifications->CancelAll();
+
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
-  }
-}
 
-template<>
-void NeedsManager::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
-{
-  // Pause the needs system during explorer mode
-  SetPaused(msg.isStarted);
+    _needsState._timesOpenedSinceLastDisconnect++;
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
+
+    SendNeedsLevelsDasEvent("app_unbackground");
+
+    SendTimeSinceBackgroundedDasEvent();
+  }
 }
 
 
@@ -1409,9 +1564,21 @@ void NeedsManager::ApplyDecayForTimeSinceLastDeviceWrite(const bool connected)
 
   // Now apply decay according to appropriate config, and elapsed time
   // First, however, we set the timers as if that much time had elapsed:
-  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
   {
-    _lastDecayUpdateTime_s[i] = _currentTime_s - elasped_s;
+    _lastDecayUpdateTime_s[needIndex] = _currentTime_s - elasped_s;
+
+    if (_timeWhenCooldownOver_s[needIndex] != 0.0f)
+    {
+      // Note: There is a very small chance that the following subtraction
+      // could result in a value of exactly zero, which means 'no cooldown'.
+      // In that case ApplyDecayAllNeeds would not account for the remaining
+      // fullness cooldown period to not apply decay.  A real fix for this
+      // would be to have another array of bools for '_cooldownActive'
+      // (instead of double-use of this _timeWhenCooldownOver_s)
+      _timeWhenCooldownOver_s[needIndex] -= elasped_s;
+      _timeWhenCooldownStarted_s[needIndex] -= elasped_s;
+    }
   }
 
   ApplyDecayAllNeeds(connected);
@@ -1461,8 +1628,9 @@ bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
       starAwarded = true;
 
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
-                    "now: %d, lastsave: %d",
-                    nowLocalTime.tm_yday, lastLocalTime.tm_yday);
+                    "now day: %d, lastsave day: %d, level: %d",
+                    nowLocalTime.tm_yday, lastLocalTime.tm_yday,
+                    _needsState._curNeedsUnlockLevel);
       
       _needsState._timeLastStarAwarded = nowTime;
       _needsState._numStarsAwarded++;
@@ -1542,7 +1710,9 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
   // Issue rewards in inventory
   for (int rewardIndex = 0; rewardIndex < rewardsThisLevel.size(); ++rewardIndex)
   {
-    switch(rewardsThisLevel[rewardIndex].rewardType)
+    const auto& rewardType = rewardsThisLevel[rewardIndex].rewardType;
+
+    switch(rewardType)
     {
       case NeedsRewardType::Sparks:
       {
@@ -1551,7 +1721,8 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
           continue;
         }
 
-        const int sparksAdded = AwardSparks(_starRewardsConfig->GetTargetSparksTotalForLevel(level),
+        const int sparksSpaceRemaining = _robot->GetInventoryComponent().GetInventorySpaceRemaining(InventoryType::Sparks);
+        const int numAttemptedSparksAwarded = AwardSparks(_starRewardsConfig->GetTargetSparksTotalForLevel(level),
                                             _starRewardsConfig->GetMinSparksPctForLevel(level),
                                             _starRewardsConfig->GetMaxSparksPctForLevel(level),
                                             _starRewardsConfig->GetMinSparksForLevel(level),
@@ -1559,16 +1730,19 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
 
         rewards.push_back(rewardsThisLevel[rewardIndex]);
 
-        // Put the actual number of sparks awarded into the rewards data that we're about
-        // to send to the game, so game will know how many sparks were actually awarded
-        rewards.back().data = std::to_string(sparksAdded);
-
+        // Put the attempted number of sparks awarded into the rewards data that we're about
+        // to send to the game, so game will know how many sparks were attempted
+        rewards.back().data = std::to_string(numAttemptedSparksAwarded);
+        
+        rewards.back().inventoryIsFull = sparksSpaceRemaining != InventoryComponent::kInfinity
+                                         && sparksSpaceRemaining < numAttemptedSparksAwarded;
+        
         // DAS Event: "needs.level_sparks_awarded"
         // s_val: The number of sparks awarded
         // data: Which level was just unlocked
         Anki::Util::sEvent("needs.level_sparks_awarded",
                            {{DDATA, std::to_string(_needsState._curNeedsUnlockLevel).c_str()}},
-                           std::to_string(sparksAdded).c_str());
+                           std::to_string(numAttemptedSparksAwarded).c_str());
         break;
       }
       // Songs are treated exactly the same as any other unlock
@@ -1583,6 +1757,10 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
           {
             _robot->GetProgressionUnlockComponent().SetUnlock(id, true);
             rewards.push_back(rewardsThisLevel[rewardIndex]);
+            if (rewardType == NeedsRewardType::Song)
+            {
+              _needsState._forceNextSong = id;
+            }
             if (allowedPriorUnlocks != nullptr)
             {
               (*allowedPriorUnlocks)--;
@@ -1641,24 +1819,35 @@ void NeedsManager::SendNeedsOnboardingToGame()
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
-void NeedsManager::DetectBracketChangeForDas()
+void NeedsManager::DetectBracketChangeForDas(bool forceSend)
 {
   for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
   {
     const auto oldBracket = _needsState.GetPrevNeedBracketByIndex(needIndex);
     const auto newBracket = _needsState.GetNeedBracketByIndex(needIndex);
 
-    if (oldBracket != newBracket)
+    if (forceSend || (oldBracket != newBracket))
     {
       // DAS Event: "needs.bracket_changed"
       // s_val: The need whose bracket is changing (e.g. "Play")
-      // data: Old bracket name, followed by new bracket name, separated by
-      //       colon, e.g. "Normal:Full"
+      // data: Old bracket name, followed by new bracket name, followed by the
+      //       number of seconds we've been in the old bracket (while
+      //       connected), separated by colons, e.g. "Normal:Full:287"
+      //       (Note that when we send this on robot disconnect, the old and
+      //       new brackets will be the same)
+      const int elapsed_s = Util::numeric_cast<int>(_currentTime_s -
+                                                    _timeWhenBracketChanged_s[needIndex]);
       std::string data = std::string(NeedBracketIdToString(oldBracket)) + ":" +
-                         std::string(NeedBracketIdToString(newBracket));
+                         std::string(NeedBracketIdToString(newBracket)) + ":" +
+                         std::to_string(elapsed_s);
       Anki::Util::sEvent("needs.bracket_changed",
                          {{DDATA, data.c_str()}},
                          NeedIdToString(static_cast<NeedId>(needIndex)));
+
+      if (!forceSend)
+      {
+        _timeWhenBracketChanged_s[needIndex] = _currentTime_s;
+      }
     }
   }
 }
@@ -1687,7 +1876,7 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
 
   if (stampWithNowTime)
   {
-    _needsState._timeLastWritten = system_clock::now();
+    _needsState._timeLastWritten = startTime;
   }
 
   Json::Value state;
@@ -1696,6 +1885,14 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
 
   const auto time_s = duration_cast<seconds>(_needsState._timeLastWritten.time_since_epoch()).count();
   state[kDateTimeKey] = Util::numeric_cast<Json::LargestInt>(time_s);
+
+  const auto timeLastDisconnect_s = duration_cast<seconds>(_needsState._timeLastDisconnect.time_since_epoch()).count();
+  state[kTimeLastDisconnectKey] = Util::numeric_cast<Json::LargestInt>(timeLastDisconnect_s);
+
+  const auto timeLastAppBackgrounded_s = duration_cast<seconds>(_needsState._timeLastAppBackgrounded.time_since_epoch()).count();
+  state[kTimeLastAppBackgroundedKey] = Util::numeric_cast<Json::LargestInt>(timeLastAppBackgrounded_s);
+
+  state[kOpenAppAfterDisconnectKey] = _needsState._timesOpenedSinceLastDisconnect;
 
   state[kSerialNumberKey] = _needsState._robotSerialNumber;
 
@@ -1716,11 +1913,14 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
   const auto timeStarAwarded_s = duration_cast<seconds>(_needsState._timeLastStarAwarded.time_since_epoch()).count();
   state[kTimeLastStarAwardedKey] = Util::numeric_cast<Json::LargestInt>(timeStarAwarded_s);
 
+  state[kForceNextSongKey] = EnumToString(_needsState._forceNextSong);
+
   const auto midTime = system_clock::now();
   if (!_cozmoContext->GetDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.WriteToDevice.WriteStateFailed", "Failed to write needs state file");
   }
+
   const auto endTime = system_clock::now();
   const auto microsecsMid = duration_cast<microseconds>(endTime - midTime);
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
@@ -1752,6 +1952,24 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
   const seconds durationSinceEpoch_s(state[kDateTimeKey].asLargestInt());
   _needsState._timeLastWritten = time_point<system_clock>(durationSinceEpoch_s);
 
+  if (versionLoaded >= 3)
+  {
+    const seconds durationSinceEpochLastDisconnect_s(state[kTimeLastDisconnectKey].asLargestInt());
+    _needsState._timeLastDisconnect = time_point<system_clock>(durationSinceEpochLastDisconnect_s);
+
+    const seconds durationSinceEopchLastAppBackgrounded_s(state[kTimeLastAppBackgroundedKey].asLargestInt());
+    _needsState._timeLastAppBackgrounded = time_point<system_clock>(durationSinceEopchLastAppBackgrounded_s);
+
+    _needsState._timesOpenedSinceLastDisconnect = state[kOpenAppAfterDisconnectKey].asInt();
+  }
+  else
+  {
+    // For older versions, sensible defaults
+    _needsState._timeLastDisconnect = Time();
+    _needsState._timeLastAppBackgrounded = Time();
+    _needsState._timesOpenedSinceLastDisconnect = 0;
+  }
+
   _needsState._robotSerialNumber = state[kSerialNumberKey].asUInt();
 
   _needsState._curNeedsUnlockLevel = state[kCurNeedsUnlockLevelKey].asInt();
@@ -1776,6 +1994,15 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
   else
   {
     _needsState._timeLastStarAwarded = Time(); // For older versions, a sensible default
+  }
+
+  if (versionLoaded >= 4)
+  {
+    _needsState._forceNextSong = UnlockIdFromString(state[kForceNextSongKey].asString());
+  }
+  else
+  {
+    _needsState._forceNextSong = UnlockId::Invalid;
   }
 
   if (versionLoaded < NeedsState::kDeviceStorageVersion)
@@ -1848,7 +2075,8 @@ void NeedsManager::StartWriteToRobot()
 
   NeedsStateOnRobot stateForRobot(NeedsState::kRobotStorageVersion, timeLastWritten, curNeedLevels,
                                   _needsState._curNeedsUnlockLevel, _needsState._numStarsAwarded,
-                                  partIsDamaged, timeLastStarAwarded, _robotOnboardingStageCompleted);
+                                  partIsDamaged, timeLastStarAwarded, _robotOnboardingStageCompleted,
+                                  _needsState._forceNextSong);
 
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
@@ -1869,8 +2097,8 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
               "Robot storage state should be Writing but instead is %d", _robotStorageState);
   _robotStorageState = RobotStorageState::Inactive;
 
-  auto endTime = system_clock::now();
-  auto microsecs = duration_cast<microseconds>(endTime - startTime);
+  const auto endTime = system_clock::now();
+  const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
 
   if (res < NVStorage::NVResult::NV_OKAY)
@@ -1996,6 +2224,25 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
         stateOnRobot.onboardingStageCompleted = 0;
         break;
       }
+      case 3:
+      {
+        NeedsStateOnRobot_v03 stateOnRobot_v03;
+        stateOnRobot_v03.Unpack(data, size);
+
+        stateOnRobot.version = NeedsState::kRobotStorageVersion;
+        stateOnRobot.timeLastWritten = stateOnRobot_v03.timeLastWritten;
+        for (int i = 0; i < MAX_NEEDS; i++)
+          stateOnRobot.curNeedLevel[i] = stateOnRobot_v03.curNeedLevel[i];
+        stateOnRobot.curNeedsUnlockLevel = stateOnRobot_v03.curNeedsUnlockLevel;
+        stateOnRobot.numStarsAwarded = stateOnRobot_v03.numStarsAwarded;
+        for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
+          stateOnRobot.partIsDamaged[i] = stateOnRobot_v03.partIsDamaged[i];
+        stateOnRobot.timeLastStarAwarded = stateOnRobot_v03.timeLastStarAwarded;
+        stateOnRobot.onboardingStageCompleted = stateOnRobot_v03.onboardingStageCompleted;
+        // Version 4 added this variable
+        stateOnRobot.forceNextSong = UnlockId::Invalid;
+        break;
+      }
       default:
       {
         PRINT_CH_DEBUG(kLogChannelName, "NeedsManager.FinishReadFromRobot.UnsupportedOldRobotStorageVersion",
@@ -2028,6 +2275,8 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
 
   const seconds durationSinceEpochLastStar_s(stateOnRobot.timeLastStarAwarded);
   _needsStateFromRobot._timeLastStarAwarded = time_point<system_clock>(durationSinceEpochLastStar_s);
+
+  _needsStateFromRobot._forceNextSong = stateOnRobot.forceNextSong;
 
   // Other initialization for things that do not come from storage:
   _needsStateFromRobot._robotSerialNumber = _robot->GetBodySerialNumber();
@@ -2082,6 +2331,7 @@ void NeedsManager::DebugResetNeeds()
     _robotHadValidNeedsData = false;
     _deviceHadValidNeedsData = false;
     InitAfterReadFromRobotAttempt();
+    SendNeedsStateToGame();
   }
 }
 

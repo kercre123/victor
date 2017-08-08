@@ -24,14 +24,20 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
   [SerializeField]
   private CozmoText _WrongPasswordLabel;
 
-  public bool WrongPassword { set { _WrongPasswordLabel.gameObject.SetActive(value); } }
+  protected bool _WrongPassword = false;
+  public bool WrongPassword {
+    set {
+      _WrongPassword = value;
+      _WrongPasswordLabel.gameObject.SetActive(value);
+    }
+  }
 
   private void Start() {
     _PasswordField.onValueChanged.AddListener(HandlePasswordChanged);
     _PasswordField.onValidateInput = ValidateCharacter;
     _InstructionsLabel.FormattingArgs = new object[] { AndroidConnectionFlow.Instance.SelectedSSID };
     _ErrorLabel.gameObject.SetActive(false);
-    _WrongPasswordLabel.gameObject.SetActive(false);
+    _WrongPasswordLabel.gameObject.SetActive(_WrongPassword);
 
     _ContinueButton.Initialize(HandleContinueButton, "continue_button", "android_enter_password");
     _ContinueButton.Interactable = false;

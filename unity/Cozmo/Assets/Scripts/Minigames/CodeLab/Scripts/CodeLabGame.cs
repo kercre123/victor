@@ -288,6 +288,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         cubeDest.camPos = new Vector2(0.0f, 0.0f);
         cubeDest.isValid = false;
         cubeDest.isVisible = false;
+        cubeDest.pitch_d = 0.0f;
+        cubeDest.roll_d = 0.0f;
+        cubeDest.yaw_d = 0.0f;
       }
       else {
         cubeDest.pos = cubeSrc.WorldPosition;
@@ -295,6 +298,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         cubeDest.isValid = true;
         const int kMaxVisionFramesSinceSeeingCube = 30;
         cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
+        cubeDest.pitch_d = cubeSrc.PitchDegrees;
+        cubeDest.roll_d = cubeSrc.RollDegrees;
+        cubeDest.yaw_d = cubeSrc.YawDegrees;
       }
     }
 
@@ -366,6 +372,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           _LatestCozmoState.face.isVisible = false;
         }
 
+        // Set Device data
+        _LatestCozmoState.device.pitch_d = Input.gyro.attitude.eulerAngles.y;
+        _LatestCozmoState.device.roll_d = Input.gyro.attitude.eulerAngles.x;
+        _LatestCozmoState.device.yaw_d = Input.gyro.attitude.eulerAngles.z;
+
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
 
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
@@ -376,7 +387,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     protected override void Update() {
       base.Update();
 
-      SendWorldStateToWebView();
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical && IsDisplayingWorkspacePage()) {
+        SendWorldStateToWebView();
+      }
 
       // Error case exiting conditions:
       // WebView visibility is the same as being "loaded." Attaching is platform depended so for this edge case
@@ -625,7 +638,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
         CodeLabProject proj = new CodeLabProject();
         proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
-        proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName;
+        proj.ProjectName = EscapeProjectName(defaultProfile.CodeLabProjects[i].ProjectName);
+
         copyCodeLabProjectList.Add(proj);
       }
       string userProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabProjectList);
@@ -638,7 +652,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         CodeLabSampleProject proj = new CodeLabSampleProject();
         proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
         proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
-        proj.ProjectName = _CodeLabSampleProjects[i].ProjectName;
+        proj.ProjectName = EscapeProjectName(_CodeLabSampleProjects[i].ProjectName);
         copyCodeLabSampleProjectList.Add(proj);
       }
 
@@ -806,6 +820,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void WebViewCallback(string jsonStringFromJS) {
+      // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
       string logJSONStringFromJS = jsonStringFromJS;
       if (logJSONStringFromJS.Contains("cozmo_says") || logJSONStringFromJS.Contains("cozmoSays")) {
         // TODO Temporary solution for removing PII from logs.
@@ -818,6 +833,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       ScratchRequest scratchRequest = null;
       try {
         DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
       catch (Exception exception) {
@@ -974,8 +990,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       else if (scratchRequest.command == "cozmoPlayAnimation") {
         Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
         bool wasMystery = (scratchRequest.argUInt != 0);
+        bool shouldIgnoreBodyTrack = false;
+        bool shouldIgnoreHead = false;
+        bool shouldIgnoreLift = false;
+        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+          shouldIgnoreBodyTrack = scratchRequest.argBool;
+          shouldIgnoreHead = scratchRequest.argBool2;
+          shouldIgnoreLift = scratchRequest.argBool3;
+        }
         _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
         _RequiresResetToNeutralFace = true;
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
@@ -1054,6 +1078,28 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
         RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozmoSetCubeLightCorners") {
+        uint color1 = scratchRequest.argUInt;
+        uint color2 = scratchRequest.argUInt2;
+        uint color3 = scratchRequest.argUInt3;
+        uint color4 = scratchRequest.argUInt4;
+        uint cubeIndex = scratchRequest.argUInt5;
+        ObjectType lightCubeId = ObjectType.UnknownObject;
+        switch (cubeIndex) {
+        case 1:
+          lightCubeId = ObjectType.Block_LIGHTCUBE1;
+          break;
+        case 2:
+          lightCubeId = ObjectType.Block_LIGHTCUBE2;
+          break;
+        case 3:
+          lightCubeId = ObjectType.Block_LIGHTCUBE3;
+          break;
+        }
+        LightCube cubeToLight = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithObjectType(lightCubeId);
+        Color[] colorArray = new Color[] { color1.ToColor(), color2.ToColor(), color3.ToColor(), color4.ToColor() };
+        cubeToLight.SetLEDs(colorArray);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeFace") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
@@ -1267,12 +1313,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         if (_ProjectUUIDToOpen != null) {
           CodeLabProject projectToOpen = FindUserProjectWithUUID(_ProjectUUIDToOpen);
           if (projectToOpen != null) {
-            // Escape quotes in XML
-            // TODO need to do the same for project name and project uuid?
-            String projectXMLEscaped = projectToOpen.ProjectXML.Replace("\"", "\\\"");
+            // Escape quotes in user project name and project XML
+            // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
+            String projectNameEscaped = EscapeProjectName(projectToOpen.ProjectName);
+            String projectXMLEscaped = EscapeXML(projectToOpen.ProjectXML);
 
             // Open requested project in webview
-            this.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectToOpen.ProjectName + "',\"" + projectXMLEscaped + "\",'false');");
+            this.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
           }
         }
         else {
@@ -1288,13 +1335,15 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           Predicate<CodeLabSampleProject> findProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
           codeLabSampleProject = _CodeLabSampleProjects.Find(findProject);
 
-          // Escape quotes in XML
-          // TODO need to do the same for project name and project uuid?
-          String projectXMLEscaped = codeLabSampleProject.ProjectXML.Replace("\"", "\\\"");
+          String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
+
+          // Escape quotes in XML and project name
+          // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
+          String sampleProjectNameEscaped = EscapeProjectName(sampleProjectName);
+          String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
 
           // Open requested project in webview
-          String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
-          this.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectName + "',\"" + projectXMLEscaped + "\",'true');");
+          this.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
@@ -1321,6 +1370,15 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         StartVerticalHatBlockListeners();
       }
+    }
+
+    private String EscapeProjectName(String projectName) {
+      String tempProjectName = projectName.Replace("\"", "\\\"");
+      return tempProjectName.Replace("'", "\\'");
+    }
+
+    private String EscapeXML(String xml) {
+      return xml.Replace("\"", "\\\"");
     }
 
     private void StartVerticalHatBlockListeners() {
@@ -1372,7 +1430,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     public void CubeTappedVerticalHatBlock(int id, int tappedTimes, float timeStamp) {
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', null);");
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + id + "\"});");
     }
 
     void UnhideWebView() {

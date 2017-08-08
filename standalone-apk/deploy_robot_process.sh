@@ -58,6 +58,13 @@ if [ ! -f $ROBOT_EXEC ]; then
     echo "ERROR: " $ROBOT_EXEC " not found! Did you build it?"
     exit -2
 fi
+
+ISROOT=`$ADB root`
+if [[ ${#ISROOT} -lt 31 ]]; then
+    echo "Running userinit"
+    $ADB shell -x "./data/local/tmp/userinit.sh"
+fi
+
 $ADB push $ROBOT_EXEC /data/local/tmp
 
 # Upload C++ lib

@@ -25,6 +25,9 @@ namespace Cozmo {
 
 NeedsState::NeedsState()
 : _timeLastWritten(Time())
+, _timeLastDisconnect(Time())
+, _timeLastAppBackgrounded(Time())
+, _timesOpenedSinceLastDisconnect(0)
 , _robotSerialNumber(0)
 , _rng(nullptr)
 , _curNeedsLevels()
@@ -33,6 +36,7 @@ NeedsState::NeedsState()
 , _numStarsAwarded(0)
 , _numStarsForNextUnlock(1)
 , _timeLastStarAwarded(Time())
+, _forceNextSong(UnlockId::Invalid)
 , _needsConfig(nullptr)
 , _starRewardsConfig(nullptr)
 , _curNeedsBracketsCache()
@@ -52,7 +56,10 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
 {
   Reset();
 
-  _timeLastWritten = Time();  // ('never')
+  _timeLastWritten         = Time();  // ('never')
+  _timeLastDisconnect      = Time();  // ('never')
+  _timeLastAppBackgrounded = Time();  // ('never')
+  _timesOpenedSinceLastDisconnect = 0;
 
   _needsConfig = &needsConfig;
 
@@ -80,6 +87,7 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
   _curNeedsUnlockLevel = 0;
   _numStarsAwarded = 0;
   _numStarsForNextUnlock = _starRewardsConfig->GetMaxStarsForLevel(0);
+  _forceNextSong = UnlockId::Invalid;
 }
 
 
@@ -94,7 +102,7 @@ void NeedsState::Reset()
 }
 
 
-void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers)
+void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const
 {
   PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.SetDecayMultipliers",
                 "Setting needs decay multipliers");
@@ -113,7 +121,7 @@ void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<
     const DecayModifiers& modifiers = decayConfig._decayModifiersByNeed[needIndex];
     if (!modifiers.empty()) // (It's OK for there to be no modifiers)
     {
-      const float curNeedLevel = _curNeedsLevels[static_cast<NeedId>(needIndex)];
+      const float curNeedLevel = GetNeedLevel(static_cast<NeedId>(needIndex));
 
       // Note that the modifiers are assumed to be in descending order by threshold
       int modifierIndex = 0;
@@ -209,6 +217,70 @@ void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex,
 }
 
 
+float NeedsState::TimeForDecayToLevel(const DecayConfig& decayConfig, const int needIndex,
+                                      const float targetLevel, const NeedsMultipliers& multipliers) const
+{
+  float decayTimeMinutes = 0.0f;
+
+  const NeedId needId = static_cast<NeedId>(needIndex);
+  float curNeedLevel = GetNeedLevel(needId);
+  const DecayRates& rates = decayConfig._decayRatesByNeed[needIndex];
+
+  // Find the decay 'bracket' the level is currently in
+  // Note that the rates are assumed to be in descending order by threshold
+  int rateIndex = 0;
+  for ( ; rateIndex < rates.size(); rateIndex++)
+  {
+    if (curNeedLevel >= rates[rateIndex]._threshold)
+    {
+      break;
+    }
+  }
+  if (rateIndex >= rates.size())
+  {
+    // Can happen if bottom bracket is non-zero threshold, or there are
+    // no brackets at all; in those cases, there is no decay so return "infinite"
+    return std::numeric_limits<float>::max();
+  }
+
+  bool done = false;
+  while (rateIndex < rates.size())
+  {
+    const DecayRate& rate = rates[rateIndex];
+    const float bottomThreshold = rate._threshold;
+    const float decayRatePerMin = rate._decayPerMinute * multipliers[needIndex];
+    if (decayRatePerMin <= 0.0f)
+    {
+      // If no decay at this section, return 'infinite' (and avoid divide by zero)
+      decayTimeMinutes = std::numeric_limits<float>::max();
+      break;
+    }
+    float levelDelta;
+    if (targetLevel < bottomThreshold)
+    {
+      levelDelta = curNeedLevel - bottomThreshold;
+    }
+    else
+    {
+      // This is the 'decay rate bracket' the target level is in; add remaining time
+      levelDelta = curNeedLevel - targetLevel;
+      done = true;
+    }
+    const float timeThisSection = levelDelta / decayRatePerMin;
+    decayTimeMinutes += timeThisSection;
+    curNeedLevel -= levelDelta;
+    if (done)
+    {
+      break;
+    }
+
+    rateIndex++;
+  }
+
+  return decayTimeMinutes;
+}
+
+
 bool NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause)
 {
   bool startFullnessCooldown = false;
@@ -287,11 +359,11 @@ bool NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, con
 }
 
 
-NeedBracketId NeedsState::GetNeedBracketByIndex(size_t i)
+NeedBracketId NeedsState::GetNeedBracketByIndex(size_t needIndex)
 {
   UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
 
-  return _curNeedsBracketsCache[static_cast<NeedId>(i)];
+  return _curNeedsBracketsCache[static_cast<NeedId>(needIndex)];
 }
 
 bool NeedsState::AreNeedsMet()

@@ -7,25 +7,25 @@
     "source_key_paths" : ["/{*}"]
   },
   "settings.cubeStatusPanel.button.cubeRefresh" : {
-    "translation" : "REFRESH CUBES"
+    "translation" : "ACTUALISER LES CUBES"
   },
   "settings.cubeStatusPanel.button.title" : {
-    "translation" : "Cube Status"
+    "translation" : "État du cube"
   },
   "settings.cubeStatusPanel.locateText" : {
-    "translation" : "Tap to locate Cubes."
+    "translation" : "Appuie pour localiser les cubes."
   },
   "settings.sdkPanel.activateSDKalert.text" : {
     "translation" : "Activer le mode SDK?"
   },
   "settings.sdkPanel.disableButton.text" : {
-    "translation" : "DISABLE SDK"
+    "translation" : "DÉSACTIVER LE SDK"
   },
   "settings.sdkPanel.enableButton.text" : {
-    "translation" : "ENABLE SDK"
+    "translation" : "ACTIVER LE SDK"
   },
   "settings.sdkPanel.label.title" : {
-    "translation" : "COZMO SDK"
+    "translation" : "SDK COZMO"
   },
   "settings.sdkPanel.connectionCommandCount.text" : {
     "translation" : "Commandes: {0}"
@@ -34,16 +34,16 @@
     "translation" : "Connecté pour: {0}"
   },
   "settings.sdkPanel.lastCommandTimeIdle.text" : {
-    "translation" : "Dernière commande: {0:n1} il y a secondes (Idle?)"
+    "translation" : "Dernière commande: il y a {0:n1}secondes (Inactif?)"
   },
   "settings.sdkPanel.lastCommandTimePaused.text" : {
-    "translation" : "Dernière commande: {0:n1} il y a secondes (en pause?)"
+    "translation" : "Dernière commande: il y a {0:n1}secondes (En pause?)"
   },
   "settings.sdkPanel.lastCommandTime.text" : {
-    "translation" : "Dernière commande: {0:n1} il y a quelques instants"
+    "translation" : "Dernière commande: il y a {0:n1}secondes"
   },
   "settings.sdkPanel.lastMessageTime.text" : {
-    "translation" : "Temps depuis le dernier message: {0:n1} secondes"
+    "translation" : "Temps passé depuis le dernier message: {0:n1}secondes"
   },
   "settings.sdkPanel.noMessages.text" : {
     "translation" : "Aucun message reçu"
@@ -52,64 +52,64 @@
     "translation" : "En mode SDK pour: {0}"
   },
   "settings.sdkPanel.programsRun.text" : {
-    "translation" : "Exécuter des programmes: {0}"
+    "translation" : "Exécution de programmes: {0}"
   },
   "settings.sdkPanel.sdkConnected.text" : {
-    "translation" : "Exécution du programme SDK"
+    "translation" : "Programmes SDK en cours d'exécution"
   },
   "settings.sdkPanel.sdkNotConnected.text" : {
-    "translation" : "Aucun programme SDK en cours d'exécution"
+    "translation" : "Aucun programme SDK n'est actuellement en cours d'exécution"
   },
   "settings.sdkPanel.wrongVersion.text" : {
-    "translation" : "Incompatible SDK Version"
+    "translation" : "Version du SDK incompatible"
   },
   "settings.sdkPanel.hideScreenButton.text" : {
-    "translation" : "HIDE SCREEN"
+    "translation" : "MASQUER L'ÉCRAN"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo" : {
-    "translation" : "SLEEP COZMO"
+    "translation" : "FAIRE DORMIR COZMO"
   },
   "settings.sleepCozmoPanel.confirmationModal.title" : {
-    "translation" : "Cozmo sommeil?"
+    "translation" : "Faire dormir Cozmo?"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "Laissez Cozmo sur son chargeur pour augmenter sa batterie ou appuyez sur <b><color=#11a2f0ff> DORMIR </color></b> Pour se déconnecter."
+    "translation" : "Laisse Cozmo sur son chargeur pour recharger au maximum sa batterie ou appuie sur <b><color=#11a2f0ff>SOMMEIL</color></b> pour le déconnecter."
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
-    "translation" : "DORMIR"
+    "translation" : "SOMMEIL"
   },
   "settings.supportView.button.restoreCozmo" : {
-    "translation" : "RESTORE COZMO"
+    "translation" : "RESTAURER COZMO"
   },
   "settings.supportView.label.directions" : {
-    "translation" : "Soutien à la clientèle est disponible en ligne à"
+    "translation" : "L'assistance clientèle est accessible en ligne à l'adresse"
   },
   "settings.supportView.label.restoreCozmoClarification" : {
-    "translation" : "Réapplique des déverrouillages de ce profil à votre Cozmo."
+    "translation" : "Réapplique les déverrouillages de ce profil à ton Cozmo."
   },
   "settings.supportView.label.title" : {
-    "translation" : "Contactez le support"
+    "translation" : "Contacter l'assistance technique"
   },
   "settings.supportView.label.url" : {
     "translation" : "support.anki.com"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton" : {
-    "translation" : "RESTAURER"
+    "translation" : "RESTAURATION"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13>Failed to Restore Your Cozmo.</color>"
+    "translation" : "<color=#b52c13>La restauration de Cozmo a échoué</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
-    "translation" : "La restauration de votre Cozmo ..."
+    "translation" : "Restauration de Cozmo..."
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoTitle" : {
     "translation" : "Restaurer Cozmo?"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel" : {
-    "translation" : "AVERTISSEMENT: Cette option permet de restaurer Cozmo partir d'une sauvegarde et remplacer la progression du jeu sur le robot. Utilisez cette option si vous avez remplacé votre Cozmo par un nouveau."
+    "translation" : "AVERTISSEMENT: cette option restaurera Cozmo à partir d'une sauvegarde et remplacera tes progrès dans les jeux du robot. Utilise cette option si tu as remplacé ton Cozmo par un neuf."
   },
   "settings.versionPanel.title" : {
-    "translation" : "Sur"
+    "translation" : "À propos de"
   },
   "settings.versionPanel.acknowledgementsModal.title" : {
     "translation" : "Remerciements"
@@ -118,78 +118,78 @@
     "translation" : "Remerciements"
   },
   "settings.versionPanel.button.eraseCozmo" : {
-    "translation" : "ERASE COZMO"
+    "translation" : "EFFACER COZMO"
   },
   "settings.versionPanel.button.support" : {
-    "translation" : "Soutien"
+    "translation" : "Assistance"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton" : {
     "translation" : "EFFACER"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13>Failed to Erase Your Cozmo.</color>"
+    "translation" : "<color=#b52c13>Impossible d'effacer ton Cozmo</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
-    "translation" : "Effacement Cozmo ..."
+    "translation" : "Effacement de Cozmo en cours..."
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoTitle" : {
     "translation" : "Effacer Cozmo?"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel" : {
-    "translation" : "WARNING: This will clear Cozmo's data, and all unlocks. Use this only if you wish to start over with Cozmo!"
+    "translation" : "ATTENTION: les données de Cozmo seront effacées, ainsi que tous ses déverrouillages. N'utilise cette option que si tu souhaites repartir à zéro avec Cozmo!"
   },
   "settings.versionPanel.label.appRun" : {
-    "translation" : "App Run ID: {0}"
+    "translation" : "ID d'exécution de l'application: {0}"
   },
   "settings.versionPanel.label.appVersion" : {
     "translation" : "Version de l'application: {0}"
   },
   "settings.versionPanel.label.bodyHWVersion" : {
-    "translation" : "Corps HW Version: {0}"
+    "translation" : "Version matérielle du corps: {0}"
   },
   "settings.versionPanel.label.cozmoColor" : {
-    "translation" : "Cozmo Couleur: {0}"
+    "translation" : "Couleur de Cozmo: {0}"
   },
   "settings.versionPanel.label.cozmoColor.white" : {
-    "translation" : "Original"
+    "translation" : "Originale"
   },
   "settings.versionPanel.label.cozmoColor.liquidMetal" : {
     "translation" : "Métal liquide"
   },
   "settings.versionPanel.label.cozmoColor.unknown" : {
-    "translation" : "Inconnu"
+    "translation" : "Inconnue"
   },
   "settings.versionPanel.label.cozmoVersion" : {
-    "translation" : "Cozmo Version: {0}"
+    "translation" : "Version de Cozmo: {0}"
   },
   "settings.versionPanel.label.deviceId" : {
-    "translation" : "Reference de l'appareil: {0}"
+    "translation" : "ID d'appareil: {0}"
   },
   "settings.versionPanel.label.serialNumber" : {
-    "translation" : "Cozmo série: {0}"
+    "translation" : "Numéro de série de Cozmo: {0}"
   },
   "settings.volumePanel.title" : {
-    "translation" : "Volume & General"
+    "translation" : "Volume et généralités"
   },
   "settings.volumePanel.robotToggle.low" : {
     "translation" : "FAIBLE"
   },
   "settings.volumePanel.robotToggle.high" : {
-    "translation" : "HAUTE"
+    "translation" : "ÉLEVÉ"
   },
   "settings.volumePanel.robotToggle.medium" : {
-    "translation" : "MED"
+    "translation" : "MOYEN"
   },
   "settings.acknowledgementsPanel.title" : {
     "translation" : "Légal"
   },
   "settings.modalTitle" : {
-    "translation" : "réglages généraux"
+    "translation" : "Paramètres"
   },
   "settings.sdkPanel.sdkUrl.preface" : {
-    "translation" : "Pour en savoir plus sur la visite de Cozmo SDK:"
+    "translation" : "Pour en savoir plus sur le SDK Cozmo, visite le site:"
   },
   "settings.sdkPanel.sdkUrl.address" : {
-    "translation" : "Go.anki.com/cozmo-app-sdk"
+    "translation" : "go.anki.com/cozmo-app-sdk"
   }
 }

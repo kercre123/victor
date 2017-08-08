@@ -28,9 +28,11 @@
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/cozmo/basestation/animations/faceAnimationManager.h"
 #include "anki/cozmo/basestation/animations/proceduralFace.h"
+#include "anki/cozmo/basestation/utils/cozmoExperiments.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "cozmo_anim_generated.h"
 #include "threadedPrintStressTester.h"
+#include "util/ankiLab/ankiLab.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -580,9 +582,10 @@ void RobotDataLoader::LoadActivities()
 
 void RobotDataLoader::LoadVoiceCommandConfigs()
 {
+#if THF_FUNCTIONALITY
   // Configuration for voice command component 
   {
-    std::string jsonFilename = "config/basestation/config/voiceCommand_config.json";
+    std::string jsonFilename = "assets/voiceCommand/voiceCommand_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
     if (!success)
     {
@@ -592,6 +595,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
       _voiceCommandConfig.clear();
     }
   }
+#endif
   
   // Configuration for "lets play" game selection
   {
@@ -774,6 +778,18 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
     
+  // local notifications config
+  {
+    static const std::string jsonFilename = "config/basestation/config/local_notification_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _localNotificationConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.LocalNotificationConfigJsonNotFound",
+                        "Local notification Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
   // Text-to-speech config
   {
     static const std::string jsonFilename = "config/basestation/config/tts_config.json";
@@ -792,6 +808,25 @@ void RobotDataLoader::LoadRobotConfigs()
     const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/features.json")};
     const std::string fileContents{Util::FileUtils::ReadFile(filename)};
     _context->GetFeatureGate()->Init(fileContents);
+  }
+  
+  // A/B testing definition
+  {
+    const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/experiments.json")};
+    const std::string fileContents{Util::FileUtils::ReadFile(filename)};
+    _context->GetExperiments()->GetAnkiLab().Load(fileContents);
+  }
+
+  // Inventory config
+  {
+    static const std::string jsonFilename = "config/basestation/config/inventory_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _inventoryConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.InventoryConfigNotFound",
+                        "Inventory Config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
   }
 }
 

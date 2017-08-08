@@ -303,6 +303,9 @@
   "codeLabChallenge_intruder.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
   },
+  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText": {
+      "translation": "Intruder!"
+  },
   "codeLabChallenge_intruder.answerSlide.primaryText": {
       "translation": "Answer #32"
   },
@@ -401,6 +404,12 @@
   },
   "codeLabSampleProject_IntruderAlarm.projectName": {
       "translation": "Intruder Alarm!"
+  },
+  "codeLab.SaveProject.Autosaved": {
+      "translation": "Autosaved"
+  },
+  "codeLab.SaveProject.NotSaved": {
+      "translation": "Sample projects not saved"
   },
  "codeLabHorizontal.UserProject.MyProject": {
     "translation": "My Project {0}"

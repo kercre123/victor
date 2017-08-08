@@ -239,7 +239,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // Initialize progression
   _progressionUnlockComponent->Init();
   
-  _inventoryComponent->Init();
+  _inventoryComponent->Init(_context->GetDataLoader()->GetInventoryConfig());
 
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
@@ -685,6 +685,8 @@ void Robot::Delocalize(bool isCarryingObject)
   
   _behaviorMgr->OnRobotDelocalized();
   
+  _movementComponent->OnRobotDelocalized();
+  
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized(GetID())));
@@ -786,6 +788,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
+  
+  // Update forward distanceSensor_mm
+  SetForwardSensorValue(msg.distanceSensor_mm);
 
   // update current path segment in the path component
   _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);
@@ -1043,6 +1048,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
   }
   
+  // check for new obstacles from prox sensor
+  _blockWorld->UpdateProxObstaclePoses();
+  
   _gyroDriftDetector->DetectGyroDrift(msg);
   _gyroDriftDetector->DetectBias(msg);
   
@@ -1074,7 +1082,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     _enabledAnimTracks,
-    _animationTag);
+    _animationTag,
+    _robotImuTemperature_degC);
       
   return lastResult;
       
@@ -1343,7 +1352,7 @@ Result Robot::Update()
   {
     _behaviorMgr->Update(*this);
 
-    currentActivityName = ActivityIDToString(_behaviorMgr->GetCurrentActivity()->GetID());
+    currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
 
     behaviorDebugStr = currentActivityName;
 
@@ -1611,6 +1620,14 @@ Result Robot::SetNewPose(const Pose3d& newPose)
     
 void Robot::SetPose(const Pose3d &newPose)
 {
+  // The new pose should have our current world origin as its origin
+  if(!ANKI_VERIFY((&newPose.FindOrigin() == _worldOrigin),
+                  "Robot.SetPose.NewPoseOriginAndWorldOriginMismatch",
+                  ""))
+  {
+    return;
+  }
+
   // Update our current pose and keep the name consistent
   const std::string name = _pose.GetName();
   _pose = newPose;

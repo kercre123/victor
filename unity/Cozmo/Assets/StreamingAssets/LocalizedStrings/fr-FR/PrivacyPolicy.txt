@@ -1,231 +1,116 @@
-This Privacy Policy is effective as of September 23, 2016. Anki may change the Privacy Policy from time to time for any reason. You can view the most recent version of the Privacy Policy at https://anki.com/en-us/privacy.
+politique de confidentialité
+Chez Anki, Inc., nous (« Anki », « nous », « notre ») prenons la confidentialité très au sérieux. Veuillez lire la suite pour en savoir plus sur notre collecte et notre utilisation des informations sur nos sites Web, produits, services et applications (les « Services ») ainsi que les choix connexes qui s’offrent à vous. En utilisant ou en ayant accès aux Services, vous consentez à ce que nous recueillions, utilisions et partagions les informations de la manière décrite aux présentes. 
 
-For our policies regarding children users, please refer to section F below.
+Votre utilisation des Services est à tout moment soumise aux Conditions d’utilisation d'Anki qui intègrent la présente Politique de confidentialité. Tous les termes que nous utilisons dans cette Politique sans les définir ont les définitions qui leur sont données dans les Conditions d’utilisation. 
 
-We at Anki, Inc. ("Anki," "we", "our" or "us") know you care about how your personal information is used and take your privacy seriously. Please read on to learn more about our collection and use of information on and through our website(s), products, services and applications (the "Services").  By using or accessing the Services in any manner, you acknowledge that you accept the practices and policies outlined in this Privacy Policy, and you hereby consent that we will collect, use, and share your information as described herein.
+Nous pouvons de temps à autre mettre à jour la présente Politique de confidentialité. Nous vous informerons des modifications importantes en publiant un avis dans les Services, en vous envoyant un e-mail et/ou par d’autres moyens. Si nécessaire, nous pouvons également demander votre consentement ou celui de votre parent ou tuteur légal. Vous devez consulter régulièrement cette Politique de confidentialité pour vous informer des changements. Si vous utilisez les Services après la publication des modifications, cela signifie que vous les acceptez.
 
-Remember that your use of the Services is at all times subject to the Terms of Use (https://anki.com/en-us/terms-and-conditions), which incorporates this Privacy Policy.  Any terms we use in this Policy without defining them have the definitions given to them in the Terms of Use (https://anki.com/en-us/terms-and-conditions).
+A. TYPES D’INFORMATIONS RECUEILLIES 
+Nous et les Services recueillons différents types d'informations par l'intermédiaire des Services, avec certains champs requis et d'autres optionnels.
 
-This Privacy Policy may be updated from time to time for any reason. We will notify you of any material changes to our Privacy Policy by posting a notice on the Services, by sending you an email and/or by some other means. If required, we may also seek your prior consent or, as the case may be, the consent of a parent or legal guardian. You should consult this Privacy Policy regularly for any changes.  Please note that if you've opted not to receive legal notice emails from us (or you haven't provided us with your email address), those legal notices will still govern your use of the Services, and you are still responsible for reading and understanding them.  If you use the Services after any changes to the Privacy Policy have been posted, that means you agree to all of the changes.
+1.	INFORMATIONS D’ORDRE GÉNÉRAL
+Les Informations personnelles sont les informations vous concernant, qui peuvent être utilisées seules ou associées à d’autres informations, afin de vous identifier personnellement (les « Informations personnelles »). Nous collectons ces informations directement auprès de vous lorsque vous nous les fournissez, ainsi que par d’autres moyens. Par exemple, lorsque vous effectuez un achat sur notre site Web, vous nous fournissez votre nom, adresse électronique, numéro de téléphone, adresses d’expédition et de facturation, ainsi que d’autres renseignements que vous saisissez. Lorsque vous vous enregistrez pour recevoir les actualités d’Anki, nous collectons des informations sur votre âge et votre adresse électronique.  Nous ne collectons pas plus d’Informations personnelles qu’il n’est raisonnablement nécessaire afin de vous fournir les Services ou les améliorer.
 
-Anki, Inc. can be contacted at:
+2.	CONCERNANT SPÉCIFIQUEMENT LES SERVICES
+●	INFORMATIONS SUR LE COMPTE
+Lorsque vous vous inscrivez à un compte Anki (un « Compte »), nous pouvons collecter des informations telles que votre nom, nom de pilote, adresse électronique, date de naissance, mot de passe, adresse et détails de facturation (collectivement les « Informations sur le compte »). Si un enfant de moins de 13 ans crée un Compte, c’est l’adresse électronique de son parent/tuteur légal qui est collectée et non la sienne. 
 
-Address:
-Privacy Policy Administrator
-55 2nd St
-San Francisco, CA 94105
-USA
-Email: privacy@anki.com
+Nous utilisons les Informations sur les comptes pour créer, gérer et tenir les Comptes et fournir les Services. Par exemple, pour Anki OVERDRIVE, votre nom de pilote s’affichera pour les utilisateurs avec lesquels vous jouez. Nous utilisons aussi vos Informations personnelles pour sauvegarder les statistiques, suivre les progrès sur plusieurs appareils et réserver un nom de pilote unique. Nous collectons les informations sur les adresses et la facturation afin de faciliter vos achats actuels et à venir.
+●	DONNÉES ANALYTIQUES
+Nous collectons des données de jouabilité comme des scores, des réussites et l’utilisation des fonctionnalités. Les Services enregistrent également automatiquement des informations telles que des événements ou des défaillances au sein des Services. En outre, nous pouvons collecter la marque et le modèle de votre appareil, l’ID du périphérique aléatoire pour l’appareil mobile sur lequel vous exécutez nos applications, l’ID du robot/véhicule de votre appareil Anki, des données de géolocalisation (telles que définies ci-dessous), la version du système d’exploitation, ainsi que d’autres informations en relation avec l’appareil comme le niveau des batteries (collectivement les « Données analytiques »). Ces Données analytiques sont conservées sous un ID unique anonyme et non liées à votre nom. Ces informations peuvent inclure une adresse IP (Protocole Internet) et, pour notre site Web, le type de navigateur, le fournisseur d’accès Internet, les pages de renvoi/sortie, les pages ou les éléments consultés et/ou les données de parcours de navigation.  Nous utilisons les Données analytiques pour activer et améliorer les Services, et améliorer votre jouabilité. Par exemple, les Données analytiques nous permettent d’analyser les pannes, de réparer les bogues et de personnaliser ou développer de nouvelles fonctionnalités et de nouveaux services.
 
-A.  TYPES OF INFORMATION WE COLLECT AND HOW WE USE INFORMATION
-We collect several types of information through the Services:
+Nous pouvons aussi utiliser les Données analytiques, soit seules, soit associées à d’autres données, pour créer des données agrégées, anonymes (les « Données agrégées »), qui ne vous identifient pas personnellement.  Nous pouvons utiliser et partager les Données agrégées avec nos partenaires, par exemple, ceux qui effectuent des fonctions en notre nom ou nous aident à améliorer les Services. Si vous êtes un utilisateur en Allemagne, vous pouvez choisir de refuser la collecte des Données analytiques. Pour obtenir plus d’informations, veuillez consulter la Section E.
+●	DONNÉES COZMO
+Cozmo se connecte à son application via une connexion WI-Fi directe sur votre appareil mobile. Les images provenant de la caméra Cozmo sont traitées dans l’application Cozmo afin d’alimenter sa navigation ainsi que d’autres fonctionnalités. Elles ne sont pas conservées et ne quittent pas l’application Cozmo. Lorsque vous utilisez Cozmo, l’application Cozmo peut traduire des images de visage que Cozmo voit dans les caractéristiques faciales codées, un ensemble de chiffres qui ne sont pas reconnaissables par une personne (les « Données des caractéristiques faciales »). À moins que vous jouiez à Meet Cozmo (comme cela est décrit ci-dessous), les Données des caractéristiques faciales sont rejetées chaque fois que Cozmo se met en veille ou n’est plus connecté à votre appareil mobile.  
 
-1.  General information collection
-Personal information is information about you that can be used by itself, or combined with other information, to personally identify you ("Personal Information"). We collect this information directly from you when you provide it to us and by other means.
+Meet Cozmo 
 
-When you purchase an Anki product from our website, you provide us with your name, email, phone number, shipping and billing addresses, credit card information, and other information you affirmatively provide. When you register to receive Anki news we collect your age and email address. 
+Si vous utilisez la section Meet Cozmo de votre Appli Cozmo, Cozmo peut apprendre à associer un nom que vous fournissez avec les Données des caractéristiques faciales pour un visage particulier au sein des sections de jeu. Si vous vous êtes connecté par l'intermédiaire de Meet Cozmo, les Données des caractéristiques faciales sont détenues avec votre nom de joueur, et utilisées pour améliorer et personnaliser votre jeu et notamment pour vous accueillir par votre nom de joueur. Ces données résident localement sur le robot Cozmo et dans l’application Cozmo. Elles ne sont pas téléchargées en amont sur Anki ni partagées, et vous pouvez les supprimer à tout moment en vous rendant sur la section Meet Cozmo de votre application Cozmo. 
+●	AUTRES FONCTIONNALITÉS
+Les Services peuvent vous fournir la possibilité de partager vos informations, via des SMS, des e-mails ou des médiaux sociaux, ou de recevoir des notifications push de notre part. Par exemple, les Services peuvent demander si vous aimeriez partager vos résultats de jeu avec vos amis ou enregistrer les images de nos applications sur votre appareil. Si vous voulez utiliser ces fonctionnalités, vous recevrez une demande d’accès à vos photos que vous pouvez autoriser ou refuser. En cas d’autorisation, nous utiliserons cet accès pour enregistrer les images que vous créez au sein des Services. Concernant les notifications push, vous pouvez y mettre un terme en les désactivant des paramètres de votre téléphone. 
 
-If you choose to purchase an Anki product as a gift and send it to a third party, we will ask you for friend or family member's name and shipping information. We do not use the shipping information for any secondary purpose.
-We do not collect more Personal Information than is reasonably necessary to participate in the Services or improve the Services.
+Nos applications peuvent aussi demander la permission d’utiliser le Bluetooth sur votre appareil. Par exemple, les applications utilisent le Bluetooth pour communiquer avec les véhicules d’Anki et d’autres appareils pendant le jeu. Vous pouvez activer/désactiver le Bluetooth au niveau de l’appareil.
 
-2.  Specific to the Services
+Avec l’adresse IP de vos appareils, nous obtenons des informations géographiques au niveau des codes postaux, lesquelles sont ensuite conservées sous un ID unique anonyme (« Données de géo-localisation »). Si vous êtes un utilisateur situé en Allemagne, vous pouvez mettre un terme à notre collecte de Données de géo-localisation à partir des sections gérant les paramètres de nos applications (voir également la Section E ci-dessous).
 
-- Sign-up for an Account (Account Information)
-When you sign up for an Anki account (an "Account"), we may collect Personal Information and other information such as your name, driver name (please do not use your real name), email address, birthdate, password, address and billing information ("Account Information"). If a child under the age of 13 registers for an Account, the email address of his or her parent/legal guardian is collected instead.  When you create an Anki account, you can store your address and other billing information to make purchases.  
+3.	AUTOMATIQUEMENT LORSQUE VOUS NAVIGUEZ : FICHIERS, COOKIES ET AUTRES TECHNOLOGIES
+Lorsque vous utilisez ou visitez les Services, certaines informations sont ou peuvent être automatiquement enregistrées et conservées dans des fichiers. Généralement, nous utilisons ces informations de manière agrégée et anonyme. Si nous avons besoin d’associer ce type d’informations à des informations personnelles, nous les traitons comme des informations personnelles. Les informations collectées automatiquement incluent des informations d’ordre statistique ou technique, comme votre adresse IP, le système d’exploitation, l’heure et la date, ainsi que la manière dont vous naviguez dans les Services.
 
-What do we use this data for?
+Les informations peuvent aussi être automatiquement collectées via les « Cookies » ou des technologies de suivi semblables, c’est-à-dire des identifiants que nous transférons à votre navigateur et qui nous permettent de reconnaître votre navigateur ou votre appareil et de nous dire quand les pages et les fonctionnalités sont visitées et par combien de personnes. Par le biais de ces Cookies, nous pouvons collecter des informations sur votre activité en ligne une fois que vous avez quitté nos Services. Nous utilisons différents types de Cookies pour améliorer nos Services. Sur notre site, nos prestataires de services peuvent utiliser les cookies ou des technologies similaires pour analyser les tendances, administrer le site Web, suivre les mouvements des utilisateurs sur le site Web et rassembler des informations d’ordre démographiques sur notre base d’utilisateurs dans son ensemble.
 
-When you sign-up for an Account, we use your Account Information to create this Account and to maintain and manage it for you. For example, your driver name will be displayed to other Anki users you play with. We also use your Personal Information to backup stats, track progress on multiple devices and reserve a unique driver name. We collect your address and other billing information to facilitate current or future purchases.
+Vous pouvez modifier les préférences sur votre navigateur afin d’empêcher ou limiter l’acceptation des Cookies sur votre appareil, mais cela peut vous empêcher de profiter de certaines de nos fonctionnalités. Chaque navigateur étant différent, vous pouvez vérifier dans le menu « aide » de votre navigateur comment modifier vos préférences en matière de Cookies.  Par le biais de ces Cookies, nous pouvons collecter des informations sur votre activité en ligne une fois que vous avez quitté nos Services. Bien que votre navigateur puisse vous proposer une option « Do Not Track » (Ne pas me suivre), nos Services ne prennent pas en charge les requêtes « Do Not Track » en ce moment, ce qui signifie que nous pouvons collecter des informations sur votre activité en ligne lorsque vous utilisez les Services et après que vous ayez quitté les Services. En France, la durée des Cookies ne doit pas dépasser 13 mois.
+  
+Sur d’autres sites, nous travaillons avec un tiers pour gérer notre publicité. Nos prestataires externes peuvent utiliser des cookies ou technologies semblables sur nos sites et sur d'autres (mais pas dans nos applications mobiles), pour vous fournir des publicités sur la base de vos activités et intérêts de navigation, ou afficher des pubs qui comportent un lien vers notre site. Si vous souhaitez mettre un terme à la publicité ciblée par centres d’intérêt, cliquez ici [ou si vous vous trouvez dans l’Union européenne, cliquez ici].  
 
-- Analytics data
+4.	EMAIL, SONDAGES ET VOS CHOIX
+Si vous nous avez fourni vos coordonnées de contact, nous pouvons utiliser ces informations pour communiquer avec vous concernant votre commande, ou votre compte ou répondre à vos questions. Si vous nous avez donné votre consentement, ou, en ce qui concerne un enfant de moins de 13 ans, son parent/tuteur légal a donné son consentement pour nous fournir vos/ses coordonnées de contact, nous pouvons, en fonction de vos préférences marketing, vous envoyer des e-mails portant sur l’éducation, le marketing, le support produit et la recherche. Notre prestataire de services de courrier tiers nous fournit des informations agrégées et anonymes sur les répondants à nos e-mails. Vous pouvez vous désinscrire de nos e-mails portant sur le marketing et la recherche à tout moment en suivant les instructions qui y sont inclues. Nous suivons les taux d’ouverture concernant nos e-mails afin de pouvoir améliorer nos communications avec vous et nos services. Si vous participez à nos sondages facultatifs, les informations que vous nous fournissez, y compris les informations personnelles, seront liées à votre Compte. Nous ne partagerons pas les Informations personnelles que vous fournissez dans le cadre d’un concours ou d’une enquête organisé(e) avec des tiers, à moins que nous vous en informions préalablement et vous donnions le choix de ne pas y participer.
 
-We collect gameplay data such as game scores, game achievements, game performance, and your usage of various game features. We also automatically record information such as how often you use the Services, the events that occur within the Services and usage and performance data. 
+5.	MÉDIAS SOCIAUX ET CONCOURS
+Nous sommes présents sur diverses plateformes de médias sociaux, comme Facebook. Nous recevons des données démographiques anonymes et agrégées et utilisons des informations provenant de ces services lorsque vous êtes en contact avec nous sur ces plateformes. De plus, nous pouvons proposer de partager des fonctionnalités et d’autres outils intégrés (comme le bouton « Like » de Facebook). De telles fonctionnalités intégrées peuvent partager des données et sont régies par les politiques de confidentialité des tiers qui fournissent ces fonctionnalités. De temps à autre, nous pouvons organiser des concours et des loteries. Si vous participez, nous pouvons collecter des informations auprès de vous, comme cela est décrit dans les conditions générales du concours ou de la loterie.
 
-In addition, we may collect your device make and model, randomized device ID, vehicle ID, Geolocation Data (as defined below), operating system version and language your device is set to, as well as other device-related information like the battery level and the disk usage (collectively, "Analytics Data"). This Analytics Data is not connected to your name but stored under an anonymized unique ID.  
-This information may include Internet protocol (IP) addresses, browser type, Internet service provider (ISP), referring/exit pages, the files viewed on our site (e.g., HTML pages, graphics, etc.), operating system, date/time stamp, and/or clickstream data.
+B. COMMENT UTILISONS-NOUS CES INFORMATIONS
+Nous utilisons les informations que nous collectons à votre sujet ou que vous nous fournissez, y compris toute Information personnelle, de la manière décrite tout au long de la présente Politique de confidentialité, y compris pour :
+●	Fournir et apporter les produits et services que vous demandez
+●	Exploiter, maintenir et améliorer les Services 
+●	Vous permettre de participer à des fonctionnalités interactives 
+●	Personnaliser votre expérience, votre contenu, votre marketing et vos recommandations
+●	Répondre aux demandes que vous faites et vous fournir un service client, des annonces informatives générales et des informations promotionnelles à propos de nous ou de nos produits
+●	Apporter notre aide à ceux qui nous aident à concevoir, analyser et exploiter les Services
+●	Exécuter nos obligations et faire appliquer nos droits, et protéger contre la fraude, les activités non autorisées ou illégales, ou les violations de la politique ou dans le cadre de la facturation 
+●	Vous avertir des changements apportés aux Services 
+●	De toute autre façon que nous pouvons décrire lorsque vous fournissez les informations, avec votre consentement ou le consentement d’un parent ou d’un tuteur légal
+●	Respecter tout autre but pour lequel vous les fournissez
 
-What do we use this data for?
+C. PARTAGE DE VOS INFORMATIONS
+Nous pouvons partager vos Informations personnelles de la manière suivante :
+●	Avec des tiers qui soutiennent notre activité, comme le traitement des paiements, la fourniture des données comptables ou la conservation et/ou le traitement des informations, et qui sont tenus de garder les informations personnelles confidentielles et correctement protégées, et de les utiliser uniquement aux fins desquelles nous les leur divulguons. 
+●	Avec nos filiales, à condition que les données soient correctement protégées. Également, si nous faisons l’objet d’une acquisition, d’une dissolution ou d’un changement de contrôle, les Informations personnelles peuvent être l’un des actifs cédés, sous réserve de votre consentement, lorsque cela est requis par la loi.
+●	Afin de réaliser l’objectif pour lequel vous les fournissez (par exemple, lorsque vous voulez partager des éléments dans les médias sociaux, les poster sur le compte d’un tiers en votre nom), à toute autre fin divulguée par nous lorsque vous fournissez les informations, ou autrement avec votre consentement, ou, dans le cas d’un enfant, le consentement d’un parent ou d’un tuteur légal.
+●	Pour se conformer aux lois, règlements, demandes légales, ordonnances d’un tribunal et procédures judiciaires ; protéger et défendre nos droits ou nos biens, ou ceux des tiers, et enquêter sur, et empêcher la fraude ; et en cas d’urgence, y compris pour protéger la sécurité.
 
-Analytics Data is used by us to enable usage of the Services, enhance your gameplay experience, and help improve our products and services. For example, it enables us to develop new features, to analyze crashes or to fix bugs that occurred within the Services and to develop new products and services. 
-We may also use Analytics Data, either alone or combined with other data and information, to create aggregated, anonymized data ("Aggregate Data"), which does not identify you personally.  We may freely use and share this Aggregate Data, for example, by posting it on publicly-accessible web sites such as Facebook and sharing it with hardware manufacturers, developers, platform hosts and marketing partners.
+Nous pouvons également divulguer gratuitement des données agrégées à des tiers dans le cadre de la recherche et du développement, d’améliorations de produits et à d’autres fins commerciales connexes.
 
-If you are a user in Germany, you can opt-out at any time from the collection of Analytics Data. For further information on how to opt-out please see Section E below.
+D. TRANSFERT D’INFORMATIONS PERSONNELLES AUX ÉTATS-UNIS ; CERTIFICATION DE PROTECTION DE LA CONFIDENTIALITÉ
+Les Services sont hébergés et gérés aux États-Unis et ils sont soumis à la législation américaine. En utilisant les Services, vous reconnaissez et acceptez que toute Information personnelle que vous fournissez à Anki soit fournie à Anki uniquement aux États-Unis et qu’elle sera hébergée sur des serveurs américains.
 
-- Cozmo facial recognition data
+Anki, Inc. (et ses filiales Anki Canada Ltd, Anki UK Limited, Anki Germany GmbH et Anki France EURL) participe au Cadre du bouclier de protection de la confidentialité entre l’Union européenne et les États-Unis et a certifié sa conformité au programme. Anki, Inc s’engage à soumettre toutes les données personnelles reçues des pays membres de l’Union européenne (UE), en s’appuyant sur le Cadre du bouclier de protection de la confidentialité, aux principes applicables du cadre.  Pour plus d’informations sur le Cadre du bouclier de protection de la confidentialité, consultez la U.S. Department of Commerce’s Privacy Shield List (Liste de protection de la confidentialité du Département du Commerce des États-Unis.)[https://www.privacyshield.gov/list]
 
-If you use Cozmo, it may collect data that allows it to recognize certain users' facial features.  Cozmo does this by sending a picture of the faces it sees with its built-in camera to the Cozmo application via Wi-Fi which then translates the picture into binary encoded facial features that are not recognizable by a person ("Facial Recognition Data").  Once this translation occurs, the Facial Recognition Data is sent back to the Cozmo unit and stored there for comparison to other faces it sees in the future.  We also may collect a player name (e.g., first name) which can be associated with the faces that Cozmo recognizes ("Player Name Information").
+Anki, Inc. est responsable du traitement des données personnelles qu’elle reçoit, conformément au Cadre du bouclier de protection de la confidentialité, et des transferts ultérieurs à un tiers agissant en tant qu’agent en son nom. Anki, Inc. respecte les Principes du bouclier de protection de la confidentialité pour tous les transferts ultérieurs de données personnelles depuis l’UE, notamment les clauses de responsabilité sur les transferts ultérieurs.
 
-What do we use this data for?
+S’agissant des données personnelles reçues ou transférées en vertu du Cadre du bouclier de protection de la confidentialité, Anki, Inc. est soumise au pouvoir d’application réglementaire de la Commission fédérale du commerce des États-Unis.  Dans certaines circonstances, Anki, Inc. peut être contrainte de divulguer des données personnelles dans le cadre de demandes juridiques émises par les autorités publiques, notamment pour respecter les exigences en matière de sécurité nationale et de respect des lois. Si nous n’avons pas répondu à votre entière satisfaction à l’une de vos questions concernant la confidentialité ou l’utilisation de vos données, veuillez contacter (gratuitement) notre prestataire tiers en matière de résolution des litiges basé aux États-Unis via le lien https://feedback-form.truste.com/watchdog/request.   Sous certaines conditions, décrites plus en profondeur sur le site Internet du bouclier de protection de la confidentialité [https://www.privacyshield.gov/article?id=How-to-Submit-a-Complaint], vous pouvez invoquer l’arbitrage exécutoire lorsque les autres procédures de résolution des différends ont été épuisées.  
 
-Facial Recognition Data and Player Name Information are used by Anki to allow Cozmo to identify faces to enable personalized usage of Cozmo and enhance your gameplay experience, such as to greet you by your first name.  It is not shared with any third parties, and Facial Recognition Data and Player Name Information are stored only on the Cozmo unit. The information is not uploaded back to Anki's web servers.
+E. ACCÈS À VOS INFORMATION ; VOS DROITS DE REFUS
+Sur demande, nous vous fournirons des informations sur la conservation éventuelle de vos Informations personnelles, ou si vous êtes un parent, celle de vos enfants. Vous pouvez demander la suppression de certaines Informations personnelles ou de votre Compte, ou demander une copie des Informations personnelles que nous détenons à votre sujet en nous contactant. Nous mettrons en œuvre des efforts commercialement raisonnables pour répondre dans un délai de 30 jours, à moins que cette demande ne soit déraisonnable ou contraire à la loi en vigueur. Si vous demandez une suppression des Informations personnelles, vous ne pouvez plus être en mesure d’utiliser certaines fonctionnalités.
 
-- Other features of the Services
+Nous conserverons des informations tant que votre Compte sera actif ou si cela est nécessaire pour vous fournir des services. Nous pouvons aussi être tenus de conserver certaines de vos Informations personnelles pour des raisons légales, par exemple pour respecter les délais de conservation statutaires ou à des fins d’ordre fiscal.  De plus, nous continuerons à conserver et utiliser les Données agrégées.  
+DROIT DE REFUS
+Nous proposons certains choix sur la manière de communiquer avec vous et sur les informations que nous obtenons. Vous pouvez choisir de refuser de recevoir des e-mails à tout moment en cliquant sur « Se désinscrire ».  Vous pouvez refuser la collecte, le traitement et l’utilisation des Informations personnelles dans les Services à des fins analytiques et pour les Informations géographiques (voir la Section A ci-dessus) à tout moment, soit (A) en demandant la suppression de votre Compte, en envoyant un e-mail à l’adresse privacy@anki.com, soit (B) si vous êtes un utilisateur ayant acheté les Services ou avez créé votre Compte en Allemagne, en vous rendant dans la section des paramètres de nos applications. Si vous souhaitez refuser certaines parties de la collecte des données sur notre site Web et la boutique e-commerce, veuillez vous reporter à la Section A.
 
-Some features of the Services may provide you with options to share your information via text messaging, email, or social applications you have on your mobile device.  For example, the Services may allow you to share your race results with your friends. You may have the ability to save images to your device in our sharing of results feature. If you wish to do so, you will receive a notification indicating that the Services would like to access your photos which you may allow or deny. We only allow you to save the image you create within the Services to your device and we do not access other photos that you may have saved to your device.
+F. LES ENFANTS
+Sauf mention contraire de notre part (par exemple, sur l'emballage des produits), les Services sont destinés à des publics de tout âge. En conformité avec la loi en vigueur, lorsque nous recueillons des Informations personnelles par l'intermédiaire des Services, dans certaines régions, nous demandons aux utilisateurs de renseigner leur âge. Lorsqu’un enfant ouvre un Compte, nous envoyons un avis par e-mail au parent ou au tuteur de l’enfant, ou nous obtenons un consentement vérifiable via d’autres méthodes acceptables. Si aucun consentement n’est reçu dans les 14 jours suivant l’inscription, le Compte de l’enfant sera supprimé. Les informations collectées et conservées provenant de l’enfant peuvent inclure un nom d’utilisateur (par ex. le nom de pilote) et l’adresse électronique du parent. Nous pouvons aussi collecter et lier au Compte de l’enfant les Informations analytiques.
 
-With your devices' IP addresses we obtain zip-code level geographic information (which is not connected to your name but instead stored under an anonymized unique ID) ("Geolocation Data"). If you are a user in Germany, you may opt-out from us collecting Geolocation Data by visiting the setting sections of our application (see also Section E below).
+Les informations seront utilisées aux fins énoncées dans la présente Politique de confidentialité, tel que cela est autorisé par la loi. Les informations peuvent aussi être partagées de la manière décrite dans la Section C, y compris avec certains fournisseurs tiers qui nous aident à gérer les Services, comme l’envoi des communications par e-mail.
 
-If you opt-in to receive push notifications, we may send you notifications regarding service updates and other relevant messages.  You may opt-out of receiving these at any time by going to the phone settings and turning them off.
-Our applications may also request permission to use Bluetooth on your device. The applications use Bluetooth to communicate with Anki vehicles and other in-game devices during gameplay. You can turn on / off Bluetooth at the device level.
+Nous ne collecterons ces Informations personnelles provenant d’enfants que dans la mesure raisonnablement nécessaire afin de fournir les Services. Le cas échéant, les parents/tuteurs légaux ont le droit de consentir à la collecte par Anki et à son utilisation des Informations personnelles provenant de l’enfant, sans consentir également à sa divulgation à des tiers indépendants. Les parents peuvent révoquer leur consentement à tout moment en contactant privacy@anki.com, et ils peuvent demander la modification ou la suppression des comptes des enfants en suivant la procédure de la Section E. Nous informerons le parent lorsque des informations importantes changent, notamment lorsqu'un changement est apporté au mot de passe ou autres paramètres des Comptes de l'enfant.
 
-3.  Automatically as you navigate through the Site: log files, cookies and other technologies
+G. LA SÉCURITÉ
+Nous utilisons des pratiques sectorielles raisonnables. Les transactions relatives aux paiements sont cryptées en transit à l’aide de SSL. Bien que nous nous efforcions de mettre en place une sécurité raisonnable, aucun système ne peut empêcher toutes les infractions potentielles ou garantir une sécurité parfaite. Veuillez nous contacter si vous suspectez une vulnérabilité dans nos Services. 
 
-When you visit the Services, certain information is or can be automatically recorded and stored in log files. Generally, we use this information in an aggregated and anonymized way. If we need to combine this type of information with Personal 
+H. VOS DROITS À LA CONFIDENTIALITÉ EN CALIFORNIE
+Les résidents de Californie peuvent demander des informations sur les pratiques liées à la divulgation des informations personnelles à certains tiers et/ou refuser de partager des informations avec des tiers non affiliés, le cas échéant. Veuillez nous envoyer votre demande (ainsi que vos noms et prénoms, adresse électronique, adresse postale) à l’adresse donnée dans les coordonnées de contact à la Section J. 
 
-Information, we treat it as Personal Information. Automatically collected information includes:
+I. LIENS VERS DES TIERS
+Certains de nos Services incluent des liens vers des sites Internet ou des applis de tiers. Nous ne sommes pas responsables de ces sites Web. Ces sites peuvent avoir leurs propres pratiques et politiques en matière de confidentialité.
 
-(a) Statistical or technical information such as your computer or device's Internet Protocol address, operating system and browser type, time and date, and how you navigate through and interact with the Services.
+J. NOS COORDONNÉES DE CONTACT
+E-mail : privacy@anki.com
+Adresse : Anki Privacy Policy Administrator
+55 2nd Street, 15th Floor
+San Francisco, CA 94105 États Unis d’Amérique
+Tél. : États-Unis et Canada (877) 721-2654 ; autres régions du monde www.anki.com/contactus   
 
-(b)  Information collected via "Cookies" or similar tracking technologies, which are identifiers we transfer to your browser or device that allow us to recognize your browser or device and tell us how and when pages and features in our Services are visited and by how many people ("Cookie Information").  You may be able to change the preferences on your browser or device to prevent or limit your device's acceptance of cookies, but this may prevent you from taking advantage of some of our features.  Through these Cookies, we may collect information about your online activity after you leave our Services.   Your browser may offer you a "Do Not Track" option, which allows you to signal to operators of websites and web applications and services (including behavioral advertising services) that you do not wish such operators to track certain of your online activities over time and across different websites.  Our Services do not support DO Not Track requests at this time, which means that we collect information about your online activity both while you are using the Services and after you leave the Services.  Also, if you click on a link to a third party website or service, a third party may also transmit cookies to you.  Again, this Privacy Policy does not cover the use of cookies by any third parties, and we are not responsible for their privacy policies and practices.  Please be aware that cookies placed by third parties may continue to track your activities online even after you have left our Services, and those third parties may not honor "Do Not Track" requests you have set using your browser or device.  
+K. KIDSAFE
+Anki DRIVE, Anki OVERDRIVE, Cozmo, ainsi que leurs applications respectives sont certifiés par le programme kidSAFE Seal. Le programme kidSAFE Seal est un service de certification de sécurité indépendant et un programme de sceau d’approbation conçu exclusivement pour les sites Web et les technologies adaptés aux enfants. Cliquez sur le sceau ou rendez-vous sur www.kidsafeseal.com pour obtenir plus d’informations.
 
-Our partners use cookies or similar technologies to analyse trends, administer the website, track users' movements around the website, and to gather demographic information about our user base as a whole.
+L. TRUSTE
 
-We partner with a third party to manage our advertising on other sites. Our third party partner may use cookies or similar technologies in order to provide you advertising based upon your browsing activities and interests. If you wish to opt out of interest-based advertising visit http://preferences-mgr.truste.com/ [or if located in the European Union visit http://www.youronlinechoices.eu/]. Please note you will continue to receive generic ads. 
-
-4.  Emails and other communications and your choices
-
-If you have provided us with your contact information, we may use this information to communicate with you about your order or Account, or to address your questions.
-If you have, or, in case of a child under the age of 13, his or her parent/legal guardian has, given us consent by providing us your contact information, we may from time to time, subject to your marketing preferences, send you education, marketing, product support, and research emails. Our third-party mail service provider provides us with anonymized and aggregated demographic information about the respondents to our emails. You can unsubscribe from our marketing and research emails by following the instructions included in them. In addition, we may receive a confirmation when you open an email from us. This confirmation helps us make our communications with you more interesting and improve our services. 
-
-We may also ask you to participate in surveys. These surveys are purely optional and help us improve our products and provide aggregate information, which we think may interest our registered users and visitors. If you choose to participate in an Anki survey, any information you provide to us, including Personal Information, will be linked with your Account in our system and to any Personal Information contained therein. We will not share the personal information you provide through a contest or survey with other third parties unless we give you prior notice and choice.
-
-5.  Social media
-
-We have a presence on various social media platforms, such as Facebook, Twitter, and YouTube. We receive from them anonymized and aggregated demographic and use information related to our presence on the respective social media platform when you choose to visit us on those sites or to communicate with us.
-From time to time, we may conduct contests and sweepstakes on our social media channels or in cooperation with other partners. If you choose to participate in such contests and sweepstakes, we may collect information from you, as described in the terms of the respective contest or sweepstakes.
-In addition, we may, from time to time, offer social sharing features and other integrated tools (such as the Facebook "Like" button), which let you share actions you take on the Services with other media, and vice versa. The use of such features may enable the sharing of information with your friends or the public, depending on the settings you establish with the third party that provides these features. These features may also collect your IP address, which page you are visiting and may set a cookie to enable the features to function properly. For more information about the purpose and scope of data collection and processing in connection with social sharing features, please visit the privacy policies of the third parties that provide these features. 
-
-B.  HOW WE USE THIS INFORMATION
-
-We use information that we collect about you or that you provide to us, including any Personal Information as described throughout this Privacy Policy, including to:
-
-- Provide and deliver products and services you request
-
-- Allow us to internally operate and maintain the Services (such as for the purposes of fixing malfunctions, testing our security systems, etc.)
-
-- Allow you to participate in interactive features on the Services
-
-- Personalize your experience and customize content, marketing, and recommendations
-
-- Respond to requests that you make, provide you with customer service, send you press releases, general informative announcements, and promotional information about us or our products, and to fulfil any other purpose for which you provide it
-
-- Assist those who help us in designing and operating the Services or help us analyze collected data
-
-- Analyze, use and learn about the interests of our users in the aggregate to better understand your interests and needs, or to aid us in serving you better
-
-- Carry out our obligations and enforce our rights arising from any contracts entered into between you and us, including for billing and collection
-
-- Protect, investigate, and deter against fraudulent, unauthorized, illegal activity, or violations of our policies
-
-- Notify you about changes to the Services or any products or services we offer or provide though it
-
-- In any other way we may describe when you provide the information for any other purpose with your consent or the consent of a parent or legal guardian
-
-- We may use Cookie Information to customize content for you that we think you might like, based on your usage patterns.  We may also use it to improve the Services 
-
-– for example, this data can tell us how often users use a particular feature of the Services, and we can use that knowledge to make the Services interesting to as many users as possible.
-
-C.  SHARING YOUR INFORMATION
-
-We may share your Personal Information as follows:
-
-- With third parties that support our business, such as to process payments, to provide accounting services or to store and/or process information collected through the Services, and who are bound by contractual obligations to keep Personal Information confidential and adequately protected and use it only for the purposes for which we disclose it to them. Personal Information is shared with third parties only in the ways that are described in this privacy statement. You can opt-out from the transfer of data to selected third parties on our third party operator site (https://anki.com/en-gb/third-party-operators).
-
-- With a parent company, subsidiaries, joint ventures, or other companies under common control with us, provided the data is adequately protected.  Also, if we (or our assets) are acquired, or if we go out of business, enter bankruptcy, or go through some other change of control, Personal Information could be one of the assets transferred to or acquired by a third party (subject to your consent, where required by applicable law).
-
-- To fulfil the purpose for which you provide it (for example, if you consent to us posting to a third party account on your behalf), for any other purpose disclosed by us when you provide the information, or otherwise with your consent or, in case of a child, the consent of a parent or legal guardian.
-
-- (a) To comply with relevant laws, regulatory requirements and to respond to lawful requests, court orders, and legal process; (b) to protect and defend the rights or property of us or third parties, including enforcing agreements, policies, and terms of use; (c) in an emergency, including to protect the safety of our employees or any person, (d) to lawful requests by public authorities, including to meet national security or law enforcement requirements, or (e) in connection with investigating and preventing fraud.
-We may also freely disclose Aggregate Data to third parties. This may be done for a variety of reasons, such as for research and development, product improvements, and other related business purposes.
-
-D.  TRANSFER OF PERSONAL INFORMATION TO THE UNITED STATES; PRIVACY SHIELD CERTIFICATION
- 
-The Services are hosted and operated in the United States and are subject to United States law. By using the Services, you acknowledge and agree that any Personal Information that you provide to Anki is being provided to Anki solely in the United States and will be hosted on United States servers.
- 
-Anki, Inc (and its subsidiary companies Anki Canada Ltd, Anki UK Limited, Anki Germany GmbH) participates in and has certified its compliance with the EU-U.S. Privacy Shield Framework. Anki, Inc is committed to subjecting all personal data received from European Union (EU) member countries, in reliance on the Privacy Shield Framework, to the Framework's applicable Principles.  To learn more about the Privacy Shield Framework, visit the U.S. Department of Commerce's Privacy Shield List (https://www.privacyshield.gov/list).
-
-Anki, Inc is responsible for the processing of personal data it receives, under the Privacy Shield Framework, and subsequently transfers to a third party acting as an agent on its behalf. Anki, Inc complies with the Privacy Shield Principles for all onward transfers of personal data from the EU, including the onward transfer liability provisions.
-
-With respect to personal data received or transferred pursuant to the Privacy Shield Framework, Anki, Inc is subject to the regulatory enforcement powers of the U.S. Federal Trade Commission.  In certain situations, Anki, Inc. may be required to disclose personal data in response to lawful requests by public authorities, including to meet national security or law enforcement requirements.
-
-If you have an unresolved privacy or data use concern that we have not addressed satisfactorily, please contact our U.S.-based third party dispute resolution provider (free of charge) at https://feedback-form.truste.com/watchdog/request.  
-
-Under certain conditions, more fully described on the Privacy Shield website (https://www.privacyshield.gov/article?id=How-to-Submit-a-Complaint), you may invoke binding arbitration when other dispute resolution procedures have been exhausted.  
-
-Anki, Inc complies with the U.S. – Swiss Safe Harbor Framework as set forth by the U.S. Department of Commerce regarding the collection, use and retention of personal data from Switzerland. Anki, Inc has certified that it adheres to the Safe Harbor Privacy Principles of notice, choice, onward transfer, security, data integrity, access, and enforcement. To learn more about the Safe Harbor program, and to view Anki, Inc's certification, please visit https://safeharbor.export.gov/swisslist.aspx.
-
-E.  ACCESSING YOUR INFORMATION; YOUR OPT OUT RIGHTS
-
-- Accessing your information
-Upon request Anki, Inc will provide you with information about whether we hold any of your personal information. You may modify or update your Personal Information, request deletion of certain Personal Information or your Account or request a copy of the Personal Information that we hold about you by emailing us at privacy@anki.com or by contacting us as described in Section J. We will use commercially reasonable efforts to respond to all access requests within 30 days. We may not accommodate a request to access information where such a request is unreasonable under applicable law and we will not change information if we believe the change would violate any applicable law or legal requirement or cause the information to be incorrect.
-In case you request to delete Personal Information, you may no longer be able to use all features and functions of our services.
-
-- We will retain your information for as long as your Account is active or as necessary to provide you services. We may also be required to keep some of your Personal Information for legal reasons, for instance to comply with statutory retention periods or for tax purposes.  In addition, we will continue to retain and use Aggregate Data.  
-
-Right to opt-out
-
-We offer certain choices about how we communicate with you and what information we obtain about you and your child. You may opt-out of receiving any emails from Anki at any time. For example, you can click "unsubscribe" at the bottom of our marketing emails to stop receiving them.
- 
-You can opt-out from the collection, processing and using of Personal Information within the Services for analytics purposes and for Geographic Information (see Section A above) at any time by either (A) requesting deletion of your Account by contacting privacy@anki.com or (B) if you are a user who purchased the Services or registered your Account in Germany, by visiting the settings section of your Account. If you want to opt-out from any transfer of Personal Information to certain third parties, please visit our third party operator site. If you want to opt-out from certain data collection parts on our website and the e-commerce store please refer to Section A above and our Cookie Policy.
-
-F.  CHILDREN
-
-The Services are intended for audiences of all ages including children under 13 (referred to as "child" or "children" in this Privacy Policy). In compliance with the Children's Online Privacy Protection Act ("COPPA"), when we collect Personal Information, we will ask users of the Services to input their age.
-
-If a child signs up for an Account, his or her parent or legal guardian will be provided with notice via email and the parent/legal guardian must approve the Account before it is activated, or, we may choose to obtain verifiable consent of the parent/legal guardian via other acceptable methods. If no consent is received within 14 days after sign-up, the child's Account will be deleted.
-
-The Personal Information collected and stored from the child (with permission of the parents/legal guardians) may include a username (e.g., driver name), Account password, parent's/legal guardian's email address, and age/date of birth (as noted above). We may also collect and link to the child's Account the information we store within the analytics software.
-
-The child's Personal Information will be used for the purposes stated in this Privacy Policy, as permitted under COPPA. The child's Personal Information may also be shared as described in Section C, including sharing with certain third party vendors that help us operate the Services, such as send out email communications to users or process Account information for internal purposes.
- 
-We will only collect such Personal Information from children as is reasonably necessary to provide the features and services of the Services. When applicable, parents/legal guardians have the right to consent to Anki's collection and use of Personal Information from the child without also consenting to its disclosure to independent third parties. 
-
-If a parent or legal guardian becomes aware that his or her child has provided us with information without the parent's/legal guardian's consent or the parent/legal guardian wishes to revoke his/her prior consent, the parent/legal guardian should contact us at privacy@anki.com or as mentioned in Section J. We will delete such information from our files within a reasonable time. The parent/legal guardian may also contact us to review, modify, delete, or stop Anki's continued use or collection of their child's Personal Information.
-
-Alternatively, a parent or legal guardian may contact us by sending a letter to:
-
-Privacy Policy Administrator
-55 2nd St
-San Francisco, CA 94105
-USA
-
-If we change this privacy statement in a way that expands the collection, use or disclosure of children's Personal Information to which a parent/legal guardian has previously consented, the parent/legal guardian will be notified and we will be required to obtain the parent's/legal guardian's additional consent.
-
-We will notify the parent/legal guardian when important information changes, like e.g. when password changes, purchases or other settings changes are made to Accounts from children under the age of 13.
-
-We encourage parents to talk with their children about communicating with strangers and disclosing personal information online.
-
-G.  SECURITY
-
-We are concerned about safeguarding the confidentiality of your Personal Information. We use reasonable industry standard practices to protect the confidentiality, integrity, and availability of your data. All information you provide to us is secured using industry standard procedures. Any payment transactions will be encrypted in transit using SSL. Please be aware that, although we endeavour to provide reasonable security for information we process and maintain, no security system can prevent all potential security breaches. While Anki strives to protect your Personal Information and privacy, we cannot guarantee the security of any information you disclose online. If you have any questions about the security of your personal information, you can contact us at privacy@anki.com 
-
-H.  YOUR CALIFORNIA PRIVACY RIGHTS
-
-UNDER CALIFORNIA CIVIL CODE SECTIONS 1798.83-1798.84, CALIFORNIA RESIDENTS ARE ENTITLED TO ASK US FOR A NOTICE IDENTIFYING THE CATEGORIES OF PERSONAL INFORMATION WHICH WE SHARE WITH OUR AFFILIATES AND/OR THIRD PARTIES FOR MARKETING PURPOSES AND PROVIDING CONTACT INFORMATION FOR SUCH AFFILIATES AND/OR THIRD PARTIES.  IF YOU ARE A CALIFORNIA RESIDENT AND WOULD LIKE A COPY OF THIS NOTICE, PLEASE SUBMIT A WRITTEN REQUEST TO: privacy@anki.com OR Anki, Inc., 55 2nd St., San Francisco, CA 94105.
-
-I.  LINKS TO THIRD PARTIES
-
-For your convenience and to improve the Services we may insert links to third party websites. This Privacy Policy does not apply to such third party websites. These links take you outside our Service and are beyond our control, including links from partners that may use Anki's logos as part of a co-branding agreement. The sites those links can take you to may have their own separate privacy policy and Anki is not responsible for the activities of those sites. Please note that those other sites may send their own cookies to users, collect data, or solicit personal information.
-
-J.  HOW TO CONTACT US
-
-If you have any questions regarding privacy while using the Services, or if you have questions about our practices, please contact us via email at privacy@anki.com You can also send a letter to
-
-Privacy Policy Administrator
-55 2nd Street 
-San Francisco, CA 94105
-USA
-
-K.  KIDSAFE
-
-Anki.com, the Anki DRIVE mobile app, the Anki OVERDRIVE mobile app and Cozmo are certified by the kidSAFE Seal Program.  The kidSAFE Seal Program is an independent safety certification service and seal-of-approval program designed exclusively for children-friendly websites and technologies, including kid-targeted game sites, educational services, virtual worlds, social networks, mobile apps, tablet devices, and other similar interactive services and technologies. Go to www.kidsafeseal.com for more information.
-
-L.  TRUSTE
-
-Anki has received TRUSTe's Certified Privacy Seal signifying that this privacy statement and our practices have been reviewed for compliance with the TRUSTe program viewable on the validation page available by visiting:
-
-privacy.truste.com/privacy-seal/validation?rid=dd1f9af4-4afe-4b2d-ad5a-22c368251ce5
-
-If you have an unresolved privacy or data use concern that we have not addressed satisfactorily, please contact TRUSTe at https://feedback-form.truste.com/watchdog/request. The TRUSTe program covers only information that is collected through this website www.anki.com and the Anki DRIVE and Anki OVERDRIVE mobile applications.
-
-Copyright © 2016 Anki, Inc.  All rights reserved. 

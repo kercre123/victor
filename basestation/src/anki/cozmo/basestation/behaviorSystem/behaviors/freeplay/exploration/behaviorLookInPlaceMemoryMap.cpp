@@ -54,6 +54,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesWeWantToVisit =
   {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
   {NavMemoryMapTypes::EContentType::ObstacleCharger       , false},
   {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {NavMemoryMapTypes::EContentType::ObstacleProx          , false},
   {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
   {NavMemoryMapTypes::EContentType::Cliff                 , false},
   {NavMemoryMapTypes::EContentType::InterestingEdge       , false},

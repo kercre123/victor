@@ -1174,7 +1174,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 590, y: 308}
+  m_AnchoredPosition: {x: 590, y: 279}
   m_SizeDelta: {x: 1287, y: 764}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22404264
@@ -1233,7 +1233,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -673, y: 308}
+  m_AnchoredPosition: {x: -673, y: 279}
   m_SizeDelta: {x: 1080, y: 764}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22410244
@@ -1254,7 +1254,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -948, y: -1010}
+  m_AnchoredPosition: {x: -948, y: -1039}
   m_SizeDelta: {x: 783, y: 510}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22414200
@@ -1403,7 +1403,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 11.5, y: 1036}
+  m_AnchoredPosition: {x: 11.5, y: 1007}
   m_SizeDelta: {x: 2289, y: -1205}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!224 &22453980
@@ -2032,8 +2032,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#speedTapGame.mode.HvHvC'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
-  m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2057,12 +2057,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 95
+  m_fontSize: 75
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 35
-  m_fontSizeMax: 55
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 55
+  m_fontSizeMax: 75
   m_fontStyle: 0
   m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
@@ -2123,9 +2123,9 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: Card_Description_Text
+  _LinkedComponentId: Helpscreen_Text_Large
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 0
+  _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 1
@@ -2154,8 +2154,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#speedTapGame.mode.HvC'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
-  m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2179,12 +2179,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 95
+  m_fontSize: 75
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 35
-  m_fontSizeMax: 55
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 55
+  m_fontSizeMax: 75
   m_fontStyle: 0
   m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
@@ -2245,9 +2245,9 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: Card_Description_Text_Large
+  _LinkedComponentId: Helpscreen_Text_Large
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 0
+  _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 1
@@ -2428,15 +2428,15 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#speedTapGame.mode.HvHvC'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
-  m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4283585106
-  m_fontColor: {r: 0.32352942, g: 0.32352942, b: 0.32352942, a: 1}
+    rgba: 4283321934
+  m_fontColor: {r: 0.30588236, g: 0.30588236, b: 0.30588236, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -2453,12 +2453,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 85
+  m_fontSize: 75
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 85
-  m_fontSizeMax: 100
+  m_fontSizeMin: 55
+  m_fontSizeMax: 75
   m_fontStyle: 0
   m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
@@ -2493,10 +2493,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114345097694439560}
-    characterCount: 24
+    characterCount: 25
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 3
+    spaceCount: 4
+    wordCount: 5
     linkCount: 0
     lineCount: 2
     pageCount: 1
@@ -2519,16 +2519,16 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: Onboarding_Text_Large
+  _LinkedComponentId: Helpscreen_Text_Large
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
-  _OverrideSkinFontStyle: 0
+  _OverrideSkinFontStyle: 1
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114360225614642052
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3061,7 +3061,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -224}
-  m_SizeDelta: {x: -80, y: -433}
+  m_SizeDelta: {x: -80, y: -588}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224646737817873814
 RectTransform:
@@ -3078,8 +3078,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -225}
-  m_SizeDelta: {x: -80, y: -436}
+  m_AnchoredPosition: {x: -2, y: -225}
+  m_SizeDelta: {x: -113, y: -578}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224833033830686274
 RectTransform:
@@ -3097,7 +3097,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -0.000013113, y: -221}
-  m_SizeDelta: {x: 1180, y: 217}
+  m_SizeDelta: {x: 1180, y: 175}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224995147178062544
 RectTransform:

@@ -12,7 +12,7 @@ namespace Cozmo.UI {
     [SerializeField]
     private Button _RecordToggleButton;
     private Text _RecordToggleText;
-    
+
     [SerializeField]
     private Dropdown _RecordingDropdown;
     private const string _kFileSelectMessage = "Select File for Playback";
@@ -28,16 +28,16 @@ namespace Cozmo.UI {
     [SerializeField]
     private InputField _NumPlayTimes;
     private const string _kPlayTimesStartMessage = "Number of times to repeat playback";
-    
+
     //unity doesn't support tuples for some silly reason so this is a hack
-    private List<KeyValuePair<UnityEngine.Object, Type>> _ObjsOnScreen = 
+    private List<KeyValuePair<UnityEngine.Object, Type>> _ObjsOnScreen =
                     new List<KeyValuePair<UnityEngine.Object, Type>>();
     private List<string> _RecordingNames = new List<string>();
 
     protected void Awake() {
       _RecordToggleButton.onClick.AddListener(HandleRecordToggleClicked);
       _RecordingDropdown.onValueChanged.AddListener(HandleFileSelected);
-      _ObjOnScreenDropdown.onValueChanged.AddListener(HandleVerifySelected);     
+      _ObjOnScreenDropdown.onValueChanged.AddListener(HandleVerifySelected);
     }
 
     private void Start() {
@@ -61,15 +61,15 @@ namespace Cozmo.UI {
       //update dropdown of stuff to verify
       _ObjsOnScreen.Clear();
       _ObjOnScreenDropdown.options.Clear();
-      foreach (KeyValuePair<Type, Type> objStep in Anki.Core.UI.Automation.Automation.Instance.SupportedObjectTypes()) {
-        //get an objType and a stepType, in that order (showType = stepType)
-        Type objType = objStep.Key;
-        Type stepType = objStep.Value;
-        foreach (UnityEngine.Object obj in Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType)) {
-          Dropdown.OptionData ObjOptionData = new Dropdown.OptionData();
-          ObjOptionData.text = Anki.Core.UI.Automation.Automation.Instance.ShortString(obj, stepType);
-          _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.Object, Type>(obj, stepType));
-          _ObjOnScreenDropdown.options.Add(ObjOptionData);
+      foreach (Type stepType in Anki.Core.UI.Automation.Automation.Instance.SupportedObjectTypes()) {
+        var objects = Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType);
+        if (objects != null) {
+          foreach (UnityEngine.Object obj in Anki.Core.UI.Automation.Automation.Instance.GetObjects(stepType)) {
+            Dropdown.OptionData ObjOptionData = new Dropdown.OptionData();
+            ObjOptionData.text = Anki.Core.UI.Automation.Automation.Instance.ShortString(obj, stepType);
+            _ObjsOnScreen.Add(new KeyValuePair<UnityEngine.Object, Type>(obj, stepType));
+            _ObjOnScreenDropdown.options.Add(ObjOptionData);
+          }
         }
       }
       Dropdown.OptionData objMessage = new Dropdown.OptionData();
@@ -132,7 +132,7 @@ namespace Cozmo.UI {
         else {
           _RecordToggleText.text = "Stop Playing";
         }
-      } 
+      }
     }
 
   }

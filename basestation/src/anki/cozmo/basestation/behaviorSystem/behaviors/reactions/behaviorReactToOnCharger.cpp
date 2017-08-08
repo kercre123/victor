@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
-#include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {

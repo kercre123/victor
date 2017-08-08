@@ -32,7 +32,7 @@ protected:
 public:
   virtual ~BehaviorSinging();
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false; }
   
 protected:

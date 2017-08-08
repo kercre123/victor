@@ -240,15 +240,15 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#wifiStrings.Instructions.Slide3'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
-  m_sharedMaterial: {fileID: 2134148, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4292193565
-  m_fontColor: {r: 0.1137255, g: 0.6784314, b: 0.8352942, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -265,12 +265,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 108
+  m_fontSize: 98
   m_fontSizeBase: 110
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 108
-  m_fontSizeMax: 108
+  m_fontSizeMin: 80
+  m_fontSizeMax: 98
   m_fontStyle: 0
   m_textAlignment: 513
   m_isAlignmentEnumConverted: 1
@@ -305,7 +305,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114400863112213942}
-    characterCount: 38
+    characterCount: 39
     spriteCount: 0
     spaceCount: 6
     wordCount: 7
@@ -338,7 +338,7 @@ MonoBehaviour:
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
   _OverrideSkinFontStyle: 0
-  _OverrideSkinTextAlignment: 0
+  _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
 --- !u!114 &114488771843338748
@@ -427,9 +427,9 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114488771843338748}
-    characterCount: 32
+    characterCount: 31
     spriteCount: 0
-    spaceCount: 6
+    spaceCount: 5
     wordCount: 6
     linkCount: 0
     lineCount: 1
@@ -511,15 +511,15 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#wifiStrings.Instructions.Slide3altCopy2'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
-  m_sharedMaterial: {fileID: 2134148, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4292193565
-  m_fontColor: {r: 0.1137255, g: 0.6784314, b: 0.8352942, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -536,12 +536,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 108
+  m_fontSize: 98
   m_fontSizeBase: 110
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 108
-  m_fontSizeMax: 108
+  m_fontSizeMin: 80
+  m_fontSizeMax: 98
   m_fontStyle: 0
   m_textAlignment: 513
   m_isAlignmentEnumConverted: 1
@@ -576,12 +576,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114973702897458402}
-    characterCount: 27
+    characterCount: 48
     spriteCount: 0
-    spaceCount: 5
-    wordCount: 6
+    spaceCount: 8
+    wordCount: 9
     linkCount: 0
-    lineCount: 2
+    lineCount: 3
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -609,7 +609,7 @@ MonoBehaviour:
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
   _OverrideSkinFontStyle: 0
-  _OverrideSkinTextAlignment: 0
+  _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
 --- !u!222 &222165259300423700

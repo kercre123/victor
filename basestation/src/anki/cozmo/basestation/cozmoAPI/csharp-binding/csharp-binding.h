@@ -43,6 +43,9 @@ extern "C" {
   void cozmo_uninstall_google_breakpad();
 
   void cozmo_send_to_clipboard(const char* log);
+
+  uint32_t cozmo_activate_experiment(const uint8_t* requestBuffer, size_t requestSize,
+                                     uint8_t* responseBuffer, size_t responseSize);
   
   // Called from C# to locate device ID file. Android only.
   const char * cozmo_get_device_id_file_path(const char * persistentDataPath);

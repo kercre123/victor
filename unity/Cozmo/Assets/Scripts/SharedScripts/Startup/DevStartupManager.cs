@@ -24,7 +24,7 @@ public class DevStartupManager : MonoBehaviour {
 #endif
 #if UNITY_EDITOR
     if(GetFlag("-smoke")) {
-      RobotEngineManager.Instance.RobotConnectionType = RobotEngineManager.ConnectionType.Mock;
+      RobotEngineManager.Instance.RobotConnectionType = RobotEngineManager.ConnectionType.Sim;
       _StartupManager.StartLoadAsync();
     }
 
@@ -49,8 +49,9 @@ public class DevStartupManager : MonoBehaviour {
   }
 
   private static bool GetFlag(string name) {
+#if UNITY_EDITOR
       var args = System.Environment.GetCommandLineArgs();
-      if (args==null){
+      if (args==null || args.Length==0){
         return false;
       }
       foreach (String item in args) {
@@ -58,6 +59,7 @@ public class DevStartupManager : MonoBehaviour {
           return true;
         }
       }
+#endif
       return false;
   }
 

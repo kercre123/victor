@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Anki {
 
-  public static class Util {
+  public static class UnicodeUtil {
     // Reads text from a file, replacing \uXXXX or \UXXXX escapes with the appropriate
     // Unicode character.
     // based on: http://stackoverflow.com/a/9738409/217431

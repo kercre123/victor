@@ -708,6 +708,7 @@ void NavMeshQuadTreeProcessor::ClearDraw() const
 bool NavMeshQuadTreeProcessor::IsCached(ENodeContentType contentType)
 {
   const bool isCached = (contentType == ENodeContentType::ObstacleCube         ) ||
+                        (contentType == ENodeContentType::ObstacleProx         ) ||
                         (contentType == ENodeContentType::ObstacleUnrecognized ) ||
                         (contentType == ENodeContentType::InterestingEdge      ) ||
                         (contentType == ENodeContentType::NotInterestingEdge   ) ||
@@ -729,6 +730,7 @@ ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
     case ENodeContentType::ObstacleCubeRemoved:   { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 1.0f); break; };
     case ENodeContentType::ObstacleCharger:       { ret = ColorRGBA(1.0f, 1.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::ObstacleChargerRemoved:{ ret = ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f); break; };
+    case ENodeContentType::ObstacleProx:          { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
     case ENodeContentType::ObstacleUnrecognized:  { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::Cliff:                 { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::InterestingEdge:       { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };

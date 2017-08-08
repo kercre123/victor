@@ -136,8 +136,8 @@ namespace Embedded {
   
     if(closestIndex != -1)
     {
-      s32 closestLabel = _labels.at<s16>(closestIndex);
-      s32 secondLabel = _labels.at<s16>(secondClosestIndex);
+      const s32 closestLabel = _labels.at<s16>(closestIndex);
+      const s32 secondLabel = (secondClosestIndex >= 0 ? _labels.at<s16>(secondClosestIndex) : -1);
       
       s32 maskedDist = -1;
       if(secondClosestIndex == -1 || closestLabel == secondLabel) {
@@ -232,4 +232,4 @@ namespace Embedded {
   }
   
 } // namespace Embedded
-} // namesapce Anki
+} // namespace Anki

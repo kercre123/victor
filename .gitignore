@@ -346,6 +346,7 @@ resources/config/basestation/AnkiLogStringTables.json
 coretech/generated
 lib/anki/products-cozmo-assets/voiceCommand/exports/base/
 unity/Cozmo/Assets/Resources/ThemeSystem/ThemesScriptableObj.asset
+unity/metaReport*.txt
 
 # Buck
 **.buckd

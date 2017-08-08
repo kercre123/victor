@@ -40,6 +40,11 @@ namespace FaceEnrollment {
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete += HandleEnrolledFace;
       CreateInstructionsModal();
+      if (_FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed += HandleUserClosedInstructionsModal;
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.OverrideModalText(
+          LocalizationKeys.kFaceEnrollmentTitleCancelScanning);
+      }
     }
 
     private void CreateInstructionsModal() {
@@ -56,7 +61,9 @@ namespace FaceEnrollment {
     }
 
     private void HandleInstructionsModalCreated(BaseModal newInstructionsModal) {
+      _FaceEnrollmentGame.SharedMinigameView.HideShelf();
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
+      _FaceEnrollmentGame.SharedMinigameView.HideQuitButton();
       _FaceEnrollmentInstructionsModalInstance = (FaceEnrollmentInstructionsModal)newInstructionsModal;
       _FaceEnrollmentInstructionsModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleUserClosedInstructionsModal;
       _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished += HandleInstructionsModalForceClosed;
@@ -87,6 +94,11 @@ namespace FaceEnrollment {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete -= HandleEnrolledFace;
+      }
+
+      if (_FaceEnrollmentInstructionsModalInstance != null && _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed -= HandleUserClosedInstructionsModal;
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.CancelQuitDialog();
       }
     }
 

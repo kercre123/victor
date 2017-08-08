@@ -126,6 +126,7 @@ enum int_32 AnimationTrigger
   DroneModeIdle,
   DroneModeKeepAlive,
   DroneModeTurboDrivingStart,
+  EarnedSparks,
   FacePlantRoll,
   FacePlantRollArmUp,
   FailedToRightFromFace,
@@ -141,8 +142,11 @@ enum int_32 AnimationTrigger
   FeedingPlaceLiftOnCube_Severe,
   FeedingIdleSearch_Normal,
   FeedingIdleSearch_Severe,
+  FeedingIdleSearchForFaces_Normal,
+  FeedingIdleSearchForFaces_Severe,
   FeedingIdleWaitForFullCube_Normal,
   FeedingIdleWaitForFullCube_Severe,
+  FeedingIdleWaitForShakeNoHead_Severe,
   FeedingIdleWaitForShake_Normal,
   FeedingIdleWaitForShake_Severe,
   FeedingInterrupted,
@@ -375,6 +379,7 @@ enum int_32 AnimationTrigger
   ReactToBlockRetryPickup,
   ReactToCliff,
   ReactToCliffDetectorStop,
+  ReactToObstacle,
   ReactToMotorCalibration,
   ReactToNewBlockAsk,
   ReactToNewBlockBig,
@@ -417,6 +422,7 @@ enum int_32 AnimationTrigger
   RepairFixSevereWheelsBack,
   RepairFixSevereWheelsForward,
   RepairIdleFullyRepaired,
+  RequestGameInterrupt,
   RequestGameKeepAwayAccept0,
   RequestGameKeepAwayAccept1,
   RequestGameKeepAwayDeny0,
@@ -583,4 +589,3 @@ enum int_32 CubeAnimationTrigger
 
 } // end namespace Cozmo
 } // end namespace Anki
-

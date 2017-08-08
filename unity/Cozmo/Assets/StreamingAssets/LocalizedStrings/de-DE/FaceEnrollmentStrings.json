@@ -7,72 +7,72 @@
     "source_key_paths" : ["/{*}"]
   },
   "faceEnrollment.instructions" : {
-    "translation" : "Cozmo braucht Sie, um zu überprüfen! Schauen Sie geradeaus über Cozmo, und halten immer noch. Als er fertig ist, werden Sie ein Glockenspiel zu hören."
+    "translation" : "Cozmo muss sich dich genau ansehen. Schau gerade aus in die Richtung von Cozmo und bewege dich nicht.\u000a\u000aWenn er fertig ist, hörst du einen Ton."
   },
   "faceEnrollment.enterName.placeholderText" : {
-    "translation" : "Geben Sie Ihren Vornamen ein"
+    "translation" : "Gib deinen Vornamen ein:"
   },
   "faceEnrollment.faceEnrollmentList.description" : {
-    "translation" : "Teach Cozmo erkennen Sie, oder jemand anderes!"
+    "translation" : "Lehre Cozmo, dich oder eine andere Person zu erkennen."
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
-    "translation" : "Löschen {0} ?"
+    "translation" : "Soll \"{0}\" gelöscht werden?"
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmButton" : {
     "translation" : "Löschen"
   },
   "faceEnrollment.instructions.top" : {
-    "translation" : "Look at Cozmo straight on, and hold still."
+    "translation" : "Schau geradeaus in die Richtung von Cozmo und bewege dich nicht."
   },
   "faceEnrollment.instructions.bottom" : {
-    "translation" : "Wenn Cozmo fertig ist, wird er deinen Namen sagen."
+    "translation" : "Wenn Cozmo fertig ist, sagt er deinen Namen."
   },
   "faceEnrollment.errors.neverSawValidFace.title" : {
-    "translation" : "Cozmo bereits weiß, dass Sie!"
+    "translation" : "Cozmo kennt dich bereits!"
   },
   "faceEnrollment.errors.neverSawValidFace.description" : {
-    "translation" : "Cozmo erkennt man als {0}"
+    "translation" : "Cozmo erkennt dich als {0}."
   },
   "faceEnrollment.errors.timeOut.title" : {
-    "translation" : "Cozmo hat Mühe, Sie zu sehen,"
+    "translation" : "Cozmo kann dich nicht richtig sehen."
   },
   "faceEnrollment.errors.timeOut.description" : {
-    "translation" : "Stellen Sie sicher, dass Sie in einem gut beleuchteten Raum befinden und ausgerichtet sind, mit Cozmo Gesicht. Cozmo sollte auf einer ebenen, stabilen Fläche sein."
+    "translation" : "Stelle sicher, dass der Raum gut beleuchtet ist und du genau in die Richtung von Cozmo schaust. Cozmo sollte auf einer flachen und ebenen Oberfläche positioniert werden."
   },
   "faceEnrollment.condition.allChangesSaved" : {
     "translation" : "Alle Änderungen wurden gespeichert."
   },
   "faceEnrollment.firstTimeCompleteAlert.title" : {
-    "translation" : "Cozmo Ihren Namen kennt!"
+    "translation" : "Cozmo kennt deinen Namen!"
   },
   "faceEnrollment.firstTimeCompleteAlert.description" : {
-    "translation" : "Cozmo hat gelernt, Ihr Gesicht zu erkennen und kann Ihren Namen sagen, wenn er dich sieht. Verwenden Sie wieder treffen Cozmo ihn Freunde zu mehr vorstellen."
+    "translation" : "Cozmo kennt dein Gesicht und sagt unter Umständen deinen namen, wenn er dich sieht. Verwende die Funktion \"Kennenlernen\", um Cozmo weitere Freunde vorzustellen."
   },
   "faceEnrollment.button.addNewPerson" : {
-    "translation" : "HINZUFÜGEN NEUE PERSON"
+    "translation" : "NEUE PERSON"
   },
   "faceEnrollment.button.scanAgain" : {
-    "translation" : "Scan {0} Nochmals"
+    "translation" : "{0} erneut scannen"
   },
   "faceEnrollment.label.dayCount.singular" : {
-    "translation" : "{0} Vor einem Tag"
+    "translation" : "Vor {0} Tag"
   },
   "faceEnrollment.label.dayCount.plural" : {
-    "translation" : "{0} Vor Tagen"
+    "translation" : "Vor {0} Tagen"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
-    "translation" : "Hilfe Cozmo erkennen Sie leichter"
+    "translation" : "Hilf Cozmo, dich einfacher zu erkennen:"
   },
   "faceEnrollment.label.lastScanned" : {
-    "translation" : "Letzte Gescannte:"
+    "translation" : "Letzter Scan:"
   },
   "faceEnrollment.label.cozmoPrep" : {
-    "translation" : "Cozmo macht sich bereit ..."
+    "translation" : "Cozmo bereitet sich vor..."
   },
   "faceEnrollment.label.today" : {
     "translation" : "Heute"
   },
   "error.TooManyFaces" : {
-    "translation" : "Stellen Sie sicher, dass Cozmo nur sieht {0}"
+    "translation" : "Stelle sicher, dass Cozmo nur Folgendes sehen kann: {0}"
   }
 }

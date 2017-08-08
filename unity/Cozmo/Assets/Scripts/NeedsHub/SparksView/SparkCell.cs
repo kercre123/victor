@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Cozmo.UI;
 
 namespace Cozmo.Needs.Sparks.UI {
@@ -23,10 +22,10 @@ namespace Cozmo.Needs.Sparks.UI {
     private GameObject _SparkCostContainer;
 
     [SerializeField]
-    private CozmoImage _SparkMicIcon;
+    private SparksDetailModal _SparksDetailModalPrefab;
 
     [SerializeField]
-    private SparksDetailModal _SparksDetailModalPrefab;
+    private Sprite _UnlockableAlertIcon;
 
     private UnlockableInfo _UnlockInfo;
     private CostLabel _CostLabelHelper;
@@ -36,11 +35,12 @@ namespace Cozmo.Needs.Sparks.UI {
       if (unlockInfo.ComingSoon) {
         _SparksButton.onClick.AddListener(HandleTappedComingSoon);
         _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
-        _SparkCostContainer.gameObject.SetActive(false);
       }
       else {
         _SparksButton.onClick.AddListener(HandleTappedUnlocked);
       }
+
+      _SparkCostContainer.gameObject.SetActive(!(unlockInfo.ComingSoon || !unlockInfo.IsSparkable));
 
       _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
       _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
@@ -51,8 +51,6 @@ namespace Cozmo.Needs.Sparks.UI {
                                        unlockInfo.RequestTrickCostAmount,
                                        _SparkCountText,
                                        UIColorPalette.GeneralSparkTintColor);
-
-      _SparkMicIcon.gameObject.SetActive(unlockInfo.CanVoiceActivate);
     }
 
     private void OnDestroy() {
@@ -63,7 +61,8 @@ namespace Cozmo.Needs.Sparks.UI {
       var cozmoNotReadyData = new AlertModalData("coming_soon_sparks_cell",
                                                  LocalizationKeys.kUnlockableComingSoonTitle,
                                                  LocalizationKeys.kUnlockableComingSoonDescription,
-                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+                                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                                icon: _UnlockableAlertIcon);
 
       ModalPriorityData comingSoonPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow,
                                          0,

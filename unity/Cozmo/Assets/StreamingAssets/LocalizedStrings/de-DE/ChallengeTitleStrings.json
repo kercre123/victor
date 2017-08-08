@@ -7,84 +7,93 @@
     "source_key_paths" : ["/{*}"]
   },
   "challengeDetails.needsMoreCubesModal.title" : {
-    "translation" : "Nicht genug Würfel"
+    "translation" : "Nicht genügend Cubes"
   },
   "challengeDetails.needsMoreCubesModal.description" : {
-    "translation" : "Cozmo Bedürfnisse {0} Mehr {1} anfangen {2} ."
+    "translation" : "Cozmo benötigt {0} {1} mehr, um \"{2}\" zu starten."
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "Cozmo ist nicht bereit"
+    "translation" : "Cozmo ist nicht bereit."
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
-    "translation" : "Bitte helfen Cozmo aufrecht und bereit zu spielen."
+    "translation" : "Bitte hilf Cozmo, sich aufzurichten und sich auf das Spiel vorzubereiten."
   },
   "challengeDetails.cozmoDizzy.title" : {
-    "translation" : "Cozmo Is Dizzy"
+    "translation" : "Cozmo ist schwindelig."
   },
   "challengeDetails.cozmoDizzy.description" : {
-    "translation" : "Warten Sie, bis Cozmo sich von Schwindel erholt hat und bereit ist zu spielen."
+    "translation" : "Warte, bis Cozmo nicht mehr schwindelig ist und er spielen kann."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
-    "translation" : "Cozmo Is Waking Up"
+    "translation" : "Cozmo wacht auf."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.description" : {
-    "translation" : "Bitte warten Sie auf Cozmo aufwachen und losfahren seiner Ladegerät."
+    "translation" : "Bitte warte, bis Cozmo aufgewacht und von der Ladestation gefahren ist."
   },
   "challengeDetails.needsMoreCubesModal.button" : {
-    "translation" : "ZEIG MIR WIE"
+    "translation" : "ZEIG ES MIR"
   },
   "challengeDetails.cozmoHasHiccups.title" : {
-    "translation" : "Cozmo hat die Schluckauf"
+    "translation" : "Cozmo hat Schluckauf."
   },
   "challengeDetails.cozmoHasHiccups.description" : {
-    "translation" : "Versuchen Sie Cozmo zu helfen, indem sie ihm den Kopf nach unten setzen."
+    "translation" : "Hilf Cozmo, indem du ihn auf den Kopf stellst."
   },
   "cubeSlap.title" : {
     "translation" : "Fernhalten"
   },
   "cubeSlap.description" : {
-    "translation" : "Verführen Cozmo auf einem Cube zu stürzen, dann ziehen sie weg, bevor er kann!"
+    "translation" : "Bringe Cozmo dazu, nach einem Cube zu schnappen, und ziehe diesen weg, bevor Cozmo ihn erwischt!"
   },
   "droneMode.title" : {
     "translation" : "Erkundungsmodus"
   },
   "droneMode.description" : {
-    "translation" : "Entdecke die Welt durch Cozmos Augen!"
+    "translation" : "Entdecke die Welt mit Cozmos Augen!"
   },
   "faceEnrollment.title" : {
     "translation" : "Kennenlernen"
   },
   "faceEnrollment.description" : {
-    "translation" : "Hilf Cozmo, Leute zu erkennen und ihren Namen zu lernen."
+    "translation" : "Hilf Cozmo, neue Menschen zu erkennen und ihren Namen zu lernen."
   },
   "memoryMatchGame.title" : {
     "translation" : "Gedächtnisspiel"
   },
   "memoryMatchGame.description" : {
-    "translation" : "Ein Musterspiel, das dein Gedächtnis testet. Beobachte die Cubes und höre genau zu!"
+    "translation" : "Spiel, bei dem es um Muster geht und dein Gedächtnis getestet wird. Beobachte die Cubes und höre gut hin!"
   },
   "speedTap.title" : {
     "translation" : "Geschwindigkeitsspiel"
   },
   "speedTap.description" : {
-    "translation" : "Ein Farbabstimmung Spiel der schnellen Reflexe und scharfen Verstand."
+    "translation" : "Spiel, bei dem gleiche Farben gesucht werden müssen. Hier werden deine Reflexe und dein Verstand auf den Prüfstand gestellt."
   },
   "cozmoSays.title" : {
     "translation" : "Sprachausgabe"
   },
   "cozmoSays.description" : {
-    "translation" : "Im Austausch für Sparks wird Cozmo versuchen, ein Wort oder eine Phrase zu sagen!"
+    "translation" : "Fordere Cozmo auf, ein Wort oder einen Begriff zu sagen."
   },
   "codeLab.title" : {
     "translation" : "Code Lab"
   },
   "codeLab.description" : {
-    "translation" : "Nutzen Sie Ihre Kreativität, um Cozmo zu programmieren und Dinge zu erkunden, die Sie gemeinsam machen können!"
+    "translation" : "Lass deiner Kreativität freien Lauf und programmiere Aktivitäten für dich und Cozmo!"
   },
   "activityView.title" : {
     "translation" : "Entdecken"
   },
   "memoryMatchGame.label.incorrect" : {
     "translation" : "FALSCH"
+  },
+  "activityView.freeplayDescription" : {
+    "translation" : "Cozmo findet es toll, wenn er selbst entscheiden darf, wie er mit dir spielt.  Er wird dir automatisch anbieten, Spiele mit ihm zu spielen, dir Tricks vorführen und gelegentlich sogar Sparks verdienen."
+  },
+  "activityView.freeplayTitle" : {
+    "translation" : "AKTUELLER MODUS: FREIES SPIEL"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "Cancel Face Scanning?"
   }
 }

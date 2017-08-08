@@ -245,6 +245,6 @@ void BlockConfigurationManager::HandleMessage(const ExternalInterface::RobotDelo
   
 
   
-} // namesapce BlockConfiguration
+} // namespace BlockConfiguration
 } // namespace Cozmo
 } // namespace Anki

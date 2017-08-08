@@ -76,6 +76,6 @@ T BlockConfigurationContainer::AllConfigsWithID(const ObjectID& objectID, const 
   return outputVector;
 }
 
-} // namesapce BlockConfiguration
+} // namespace BlockConfiguration
 } // namespace Cozmo
 } // namespace Anki

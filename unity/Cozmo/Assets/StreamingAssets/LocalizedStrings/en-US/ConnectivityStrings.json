@@ -22,16 +22,16 @@
     "translation": "Connecting to your Cozmo..."
   },
   "connectivity.searchForCozmoFailedText": {
-    "translation": "You need to connect to Cozmo"
+    "translation": "You need to connect to Cozmo."
   },
   "connectivity.moreInfo": {
     "translation": "MORE INFO"
   },
   "connectivity.turnCozmoOn": {
-    "translation": "Turn Cozmo On"
+    "translation": "Turn Cozmo on."
   },
   "connectivity.connectInWifiSettings": {
-    "translation": "Connect in WiFi Settings"
+    "translation": "Connect in WiFi Settings."
   },
   "connectivity.searchingForCozmo": {
     "translation": "Searching for Cozmo..."
@@ -67,7 +67,7 @@
     "translation": "Cozmo is going to sleep and will disconnect soon..."
   },
   "connectivity.cozmoLowBatteryTitle": {
-    "translation": "Cozmo is Low On Battery"
+    "translation": "Cozmo Is Low On Battery"
   },
   "connectivity.cozmoLowBatteryDesc": {
     "translation": "Please place Cozmo on his charger."
@@ -77,9 +77,6 @@
   },
   "connectivity.placeCozmoOnCharger": {
     "translation": "Place Cozmo on his charger."
-  },
-  "connectivity.replaceCozmoOnCharger": {
-    "translation": "Remove and replace Cozmo on his charger."
   },
   "label.getHelp": {
     "translation": "Get Help"
@@ -104,9 +101,6 @@
   },
   "connectivity.sendGameplayDataPrompt": {
     "translation": "Help us make Cozmo better by sending us your gameplay data and statistics"
-  },
-  "needs.VoiceSettingsModal.Title": {
-    "translation": "Voice Commands"
   },
   "connectivity.behaviorDisplayDisconnected": {
     "translation": "Cozmo has been disconnected."

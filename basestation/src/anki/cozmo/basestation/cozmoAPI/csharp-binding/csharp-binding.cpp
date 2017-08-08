@@ -414,4 +414,11 @@ const char * cozmo_get_device_id_file_path(const char * persistentDataPath)
 }
 #endif
 
-
+uint32_t cozmo_activate_experiment(const uint8_t* requestBuffer, size_t requestSize,
+                                   uint8_t* responseBuffer, size_t responseSize)
+{
+  if (engineAPI == nullptr) {
+    return 0;
+  }
+  return engineAPI->ActivateExperiment(requestBuffer, requestSize, responseBuffer, responseSize);
+}

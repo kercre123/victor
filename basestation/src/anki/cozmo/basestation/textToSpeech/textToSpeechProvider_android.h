@@ -17,9 +17,8 @@
 #if defined(ANKI_PLATFORM_ANDROID)
 
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechProvider.h"
-
-// Forward declarations (flite)
-struct cst_voice_struct;
+#include "util/jni/jniUtils.h"
+#include <string>
 
 namespace Anki {
 namespace Cozmo {
@@ -38,8 +37,12 @@ public:
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
-  struct cst_voice_struct* _voice = nullptr;
-  
+  // TTS configuration
+  std::string _tts_path;
+  std::string _tts_voice;
+  jint _tts_speed;
+  jint _tts_shaping;
+
 }; // class TextToSpeechProviderImpl
 
 } // end namespace TextToSpeech

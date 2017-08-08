@@ -91,16 +91,23 @@ private:
   //  can properly handle AI goal transitions.
   ActivityID _prevActivity;
   
-  // True if the GuardDog behavior is active (uses its own music state)
-  bool _guardDogActive = false;
+  // Tracks the active behavior stage if custom music rounds are being set
+  // Use setter/getter function rather than accessing directly
+  BehaviorStageTag _activeBehaviorStage;
   
   // Keep track of the last GuardDog behavior stage so we can set the
   //  proper audio round when transitioning between stages.
-  GuardDogStage _prevGuardDogStage = GuardDogStage::Count;
+  GuardDogStage _prevGuardDogStage;
+  
+  // Keep track of the last feeding stage so we can identify music changes
+  FeedingStage _prevFeedingStage;
   
   // Keep track of the last needs levels so we can broadcast when they change
   NeedsLevels _needsLevel;
   
+  
+  BehaviorStageTag GetActiveBehaviorStage();
+  void SetActiveBehaviorStage(BehaviorStageTag stageTag);
   
   void HandleWorldEventUpdates(const RobotPublicState& stateEvent);
   void HandleSparkUpdates(const RobotPublicState& stateEvent);
@@ -108,6 +115,7 @@ private:
   void HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleNeedsUpdates(const NeedsLevels& needsLevel);
+  void HandleDimMusicForActivity(const RobotPublicState& stateEvent);
 
   
 };

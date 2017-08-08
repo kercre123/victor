@@ -57,46 +57,53 @@ namespace DataPersistence {
     private void CheckSaveVersionUpdates() {
       try {
         PlayerProfile profile = Data.DefaultProfile;
-        // In version 0 we let sessions grow infinitely in StartNewSession.
-        // This chunk of code converts that into just storing a series of ints so the size is manageable
-        if (profile != null && profile.Sessions != null &&
-            profile.SaveVersion == 0 && PlayerProfile.kSaveVersionCurrent > 0) {
-          // This likely only happens when we're first switching over to the creation of total sessions
-          if (profile.Sessions.Count > profile.TotalSessions) {
-            profile.TotalSessions = profile.Sessions.Count;
-          }
+        if (profile != null) {
+          // In version 0 we let sessions grow infinitely in StartNewSession.
+          // This chunk of code converts that into just storing a series of ints so the size is manageable
+          if (profile.Sessions != null &&
+              profile.SaveVersion == 0 && PlayerProfile.kSaveVersionCurrent > 0) {
+            // This likely only happens when we're first switching over to the creation of total sessions
+            if (profile.Sessions.Count > profile.TotalSessions) {
+              profile.TotalSessions = profile.Sessions.Count;
+            }
 
-          foreach (TimelineEntryData sessionEntry in profile.Sessions) {
-            if (sessionEntry.HasConnectedToCozmo) {
-              profile.DaysWithCozmo++;
+            foreach (TimelineEntryData sessionEntry in profile.Sessions) {
+              if (sessionEntry.HasConnectedToCozmo) {
+                profile.DaysWithCozmo++;
+              }
+            }
+
+            if (profile.Sessions.LastOrDefault() == null) {
+              profile.CurrentStreak = 0;
+            }
+            else if (profile.Sessions.Count < 2) {
+              profile.CurrentStreak = 1;
+            }
+            else {
+              int streakCount = 1;
+              int currentIndex = profile.Sessions.Count - 1;
+              int previousIndex = profile.Sessions.Count - 2;
+              while (previousIndex >= 0) {
+                Date currentDate = profile.Sessions[currentIndex].Date;
+                Date previousDate = profile.Sessions[previousIndex].Date;
+                if (previousDate.OffsetDays(1).Equals(currentDate)) {
+                  streakCount++;
+                }
+                else {
+                  break;
+                }
+                currentIndex--;
+                previousIndex--;
+              }
+              profile.CurrentStreak = streakCount;
             }
           }
-
-          if (profile.Sessions.LastOrDefault() == null) {
-            profile.CurrentStreak = 0;
+          // version 2: break out drone mode instructions seen from TotalGamesPlayed, err on the side of not showing again
+          if (profile.SaveVersion < 2 && PlayerProfile.kSaveVersionCurrent >= 2) {
+            int timesPlayedDroneMode;
+            profile.TotalGamesPlayed.TryGetValue("DroneModeGame", out timesPlayedDroneMode);
+            profile.DroneModeInstructionsSeen = timesPlayedDroneMode > 0;
           }
-          else if (profile.Sessions.Count < 2) {
-            profile.CurrentStreak = 1;
-          }
-          else {
-            int streakCount = 1;
-            int currentIndex = profile.Sessions.Count - 1;
-            int previousIndex = profile.Sessions.Count - 2;
-            while (previousIndex >= 0) {
-              Date currentDate = profile.Sessions[currentIndex].Date;
-              Date previousDate = profile.Sessions[previousIndex].Date;
-              if (previousDate.OffsetDays(1).Equals(currentDate)) {
-                streakCount++;
-              }
-              else {
-                break;
-              }
-              currentIndex--;
-              previousIndex--;
-            }
-            profile.CurrentStreak = streakCount;
-          }
-
           profile.SaveVersion = PlayerProfile.kSaveVersionCurrent;
         }
       }
@@ -153,6 +160,40 @@ namespace DataPersistence {
         }
         return null;
       }
+    }
+
+    public int DisplayedStars {
+      get {
+        return Data.DefaultProfile.DisplayedStars;
+      }
+      set {
+        Data.DefaultProfile.DisplayedStars = value;
+        Save();
+      }
+    }
+
+    public bool StarLevelToDisplay {
+      get {
+        return Data.DefaultProfile.NewStarLevels != null && Data.DefaultProfile.NewStarLevels.Count > 0;
+      }
+    }
+
+    public void ClearNewStarLevels() {
+      Data.DefaultProfile.NewStarLevels.Clear();
+      Save();
+    }
+
+    public void AddNewStarLevel(Anki.Cozmo.ExternalInterface.StarLevelCompleted message) {
+      Data.DefaultProfile.NewStarLevels.Add(message);
+      Save();
+    }
+
+    public NeedsReward[] GetNeedsRewardsFromNewStarLevels() {
+      List<NeedsReward> rewards = new List<NeedsReward>();
+      foreach (Anki.Cozmo.ExternalInterface.StarLevelCompleted lvl in Data.DefaultProfile.NewStarLevels) {
+        rewards.AddRange(lvl.rewards);
+      }
+      return rewards.ToArray();
     }
 
     public void SetHasConnectedWithCozmo(bool connected = true) {
@@ -241,6 +282,11 @@ namespace DataPersistence {
 
     public void HandleSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo info) {
       DeviceId = info.deviceId;
+    }
+
+    public void HandleUpdatedAssignments(Anki.Cozmo.ExternalInterface.UpdatedAssignments message) {
+      Data.DefaultProfile.LabAssignments = message.assignments;
+      Save();
     }
 
     #endregion

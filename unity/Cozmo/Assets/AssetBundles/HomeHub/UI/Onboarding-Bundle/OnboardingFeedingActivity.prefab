@@ -68,10 +68,10 @@ MonoBehaviour:
   _ReactionsEnabled: 1
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 499
+    _EnumValue: 515
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 499
+    _EnumValue: 515
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: 
@@ -87,14 +87,14 @@ MonoBehaviour:
   _ForceNeedValuesOnEnd:
   - 1
   - 1
-  - 0.6
+  - 0.7
   _ForceNeedValuesOnEventId:
     _EnumValueAsString: Feed
     _EnumValue: 5
   _ForceNeedValuesOnEvent:
   - 1
   - 1
-  - 0.6
+  - 0.7
   _UnPausedNeedMeter: 1
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3

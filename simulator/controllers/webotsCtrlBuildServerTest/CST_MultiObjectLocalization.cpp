@@ -86,6 +86,7 @@ namespace Cozmo {
     ObjectID _objectID_C;
     
     std::set<ObjectID> _objectsSeen;
+    std::map<ObjectID, u8> _objectIDToIdx;
     
     bool _turnInPlaceDone = false;
     bool _moveHeadDone = false;
@@ -146,7 +147,7 @@ namespace Cozmo {
                      "Initial localization failed.");
           
           // We should only know about one object now: Object A
-          CST_ASSERT(CheckObjectPoses({0}, "InitialLocalization"),
+          CST_ASSERT(CheckObjectPoses({_objectID_A}, "InitialLocalization"),
                      "InitialLocalization: Object pose checks failed");
           
           // Kidnap the robot (move actual robot and just tell it to delocalize
@@ -198,7 +199,7 @@ namespace Cozmo {
                      "Localization to second object failed.");
           
           // We should only know about one object now: Object B
-          CST_ASSERT(CheckObjectPoses({1}, "LocalizeToObjectB"),
+          CST_ASSERT(CheckObjectPoses({_objectID_B}, "LocalizeToObjectB"),
                      "LocalizeToObjectB: Object pose checks failed");
           
           SetActualRobotPose(_kidnappedPose2);
@@ -219,7 +220,7 @@ namespace Cozmo {
 //                     "Localization to third object failed.");
           
           // We should only know about one object now: Object C
-          CST_ASSERT(CheckObjectPoses({2}, "LocalizeToObjectC"),
+          CST_ASSERT(CheckObjectPoses({_objectID_C}, "LocalizeToObjectC"),
                      "LocalizeToObjectC: Object pose checks failed");
           
           // Look up
@@ -256,7 +257,7 @@ namespace Cozmo {
         IF_CONDITION_WITH_TIMEOUT_ASSERT(HasRelocalizedTo(_objectID_B), 3)
         {
           // We should know about A, B, and C now
-          CST_ASSERT(CheckObjectPoses({0,1,2}, "LocalizeToAll"),
+          CST_ASSERT(CheckObjectPoses({_objectID_A,_objectID_B,_objectID_C}, "LocalizeToAll"),
                      "LocalizeToAll: Object pose checks failed");
           
           _testState = TestState::TestDone;
@@ -277,7 +278,7 @@ namespace Cozmo {
   
   bool CST_MultiObjectLocalization::CheckObjectPoses(std::vector<int>&& IDs, const char* debugStr)
   {
-    if(_objectsSeen.size() != IDs.size())
+    if(_objectsSeen.size() < IDs.size())
     {
       PRINT_NAMED_WARNING("CST_MultiObjectLocalization.CheckObjectPoses",
                           "%s: Expecting to know about %zu objects, not %zu",
@@ -287,7 +288,7 @@ namespace Cozmo {
     
     for(auto & objectID : IDs)
     {
-      if(!IsObjectPoseWrtRobotCorrect(objectID, *_objectPosesActual[objectID],
+      if(!IsObjectPoseWrtRobotCorrect(objectID, *_objectPosesActual[_objectIDToIdx[objectID]],
                                       _poseDistThresh_mm, _poseAngleThresh, debugStr))
       {
         return false;
@@ -307,14 +308,17 @@ namespace Cozmo {
     {
       case TestState::InitialLocalization:
         _objectID_A = msg.objectID;
+        _objectIDToIdx[_objectID_A] = 0;
         break;
         
       case TestState::LocalizeToObjectB:
         _objectID_B = msg.objectID;
+        _objectIDToIdx[_objectID_B] = 1;
         break;
         
       case TestState::LocalizeToObjectC:
         _objectID_C = msg.objectID;
+        _objectIDToIdx[_objectID_C] = 2;
         break;
         
       default:

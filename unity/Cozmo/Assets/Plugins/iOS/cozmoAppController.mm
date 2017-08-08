@@ -13,6 +13,7 @@
 
 #import "UnityAppController.h"
 #include "anki/cozmo/basestation/cozmoAPI/csharp-binding/csharp-binding.h"
+#include "util/ankiLab/extLabInterface.h"
 #include "util/console/consoleInterface.h"
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
@@ -122,6 +123,21 @@ void tryExecuteBackgroundTransfers()
   return didHandleURL;
 }
 
+// Handle URLs launched while app is running; copied from OD
+- (BOOL)application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
+{
+  BOOL didHandleURL = YES;
+
+  if ( url ) {
+    didHandleURL = [self handleURL:url];
+  }
+
+  BOOL result = [super application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
+  didHandleURL = (didHandleURL & result);
+
+  return didHandleURL;
+}
+
 - (BOOL)canHandleURL:(NSURL *)URL {
   if ( [URL.scheme isEqualToString:@"cozmo"] ) {
     return YES;
@@ -151,6 +167,18 @@ void tryExecuteBackgroundTransfers()
           REMOTE_CONSOLE_ENABLED_ONLY( Anki::Util::kDemoMode = true );
           return YES;
         }
+      }
+      else if ( [ URL.path isEqualToString:@"/abtesting"] ) {
+        if ( [URL.query isEqualToString:@"enabled=true"] ) {
+          Anki::Util::AnkiLab::EnableABTesting(true);
+          return YES;
+        } else if ( [URL.query isEqualToString:@"enabled=false"] ) {
+          Anki::Util::AnkiLab::EnableABTesting(false);
+          return YES;
+        }
+      } else if ( [ URL.path hasPrefix:@"/abtesting/force"] ) {
+        Anki::Util::AnkiLab::HandleABTestingForceURL(std::string(URL.query.UTF8String));
+        return YES;
       }
     }
   }
@@ -203,7 +231,7 @@ void tryExecuteBackgroundTransfers()
 //Methods for Voice Command Settings
 extern "C"{
     void openAppSettings() {
-        if (&UIApplicationOpenSettingsURLString != NULL) {
+        if (UIApplicationOpenSettingsURLString != NULL) {
             NSURL *appSettings = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
             [[UIApplication sharedApplication] openURL:appSettings];
         }

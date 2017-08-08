@@ -204,7 +204,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 70
+  m_fontSizeMin: 60
   m_fontSizeMax: 70
   m_fontStyle: 0
   m_textAlignment: 516
@@ -394,7 +394,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 75
+  m_fontSizeMin: 55
   m_fontSizeMax: 75
   m_fontStyle: 0
   m_textAlignment: 514
@@ -458,12 +458,12 @@ MonoBehaviour:
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
   _LinkedComponentId: CozmoButton_Primary_Text
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 0
+  _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 1
   _OverrideSkinFontStyle: 0
-  _OverrideSkinTextAlignment: 0
+  _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 1
 --- !u!114 &114858979725896424
@@ -614,7 +614,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 3}
-  m_SizeDelta: {x: -140, y: -64}
+  m_SizeDelta: {x: -130, y: -64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224607119465100276
 RectTransform:
@@ -631,8 +631,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 6, y: 23.750015}
-  m_SizeDelta: {x: -1715, y: -48}
+  m_AnchoredPosition: {x: -71, y: 24}
+  m_SizeDelta: {x: -1560, y: -130}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224815487720022468
 RectTransform:

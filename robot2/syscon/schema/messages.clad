@@ -17,7 +17,6 @@
     BYTECOUNT = uint16: bytes  to follow (excluding checksum).
     PAYLOAD one of the message types below
     CHECKSUM is uint32 bytewise sum of payload.
-
 */
 
 namespace Anki {
@@ -61,7 +60,7 @@ enum uint_16 PayloadId {
 }
 
 enum int_32 Ack {
-  ACK_PAYLOAD       = 1,
+  ACK_PAYLOAD       =  1,
   NACK_CRC_FAILED   = -1,
   NACK_NOT_ERASED   = -2,
   NACK_FLASH_FAILED = -3,
@@ -69,7 +68,7 @@ enum int_32 Ack {
   NACK_BAD_ADDRESS  = -5,
   NACK_SIZE_ALIGN   = -6,
   NACK_BAD_COMMAND  = -7,
-  NACK_NOT_VALID    = -7
+  NACK_NOT_VALID    = -8
 }
 
 enum uint_32 BatteryFlags {
@@ -139,8 +138,8 @@ structure RangeData {      //raw values from sensor
   uint_8 rangeStatus,
   uint_8 spare1,
   uint_16 rangeMM,
-  uint_16 signalRate,      //fixed point 9.7 
-  uint_16 ambientRate,     //fixed point 9.7 
+  uint_16 signalRate,      //fixed point 9.7
+  uint_16 ambientRate,     //fixed point 9.7
   uint_32 calibrationResult,
 }
 
@@ -178,9 +177,9 @@ structure BodyToHead {
   MotorState motor[4],
   uint_16 cliffSense[4],
   BatteryState battery,
-  ButtonState buttons[4],
   RangeData proximity,
-  uint_8 audio[640]
+  uint_16 touchLevel[2],
+  int_16 audio[320]
 }
 
 structure HeadToBody {

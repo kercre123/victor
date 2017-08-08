@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import socket
 
 s = socket.socket(type=socket.SOCK_DGRAM)

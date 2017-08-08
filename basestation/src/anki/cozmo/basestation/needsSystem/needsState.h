@@ -16,7 +16,8 @@
 
 #include "anki/common/types.h"
 #include "clad/types/needsSystemTypes.h"
-#include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
+#include "clad/types/unlockTypes.h"
+#include "util/global/globalDefinitions.h"
 #include "util/random/randomGenerator.h"
 
 #include <assert.h>
@@ -53,11 +54,15 @@ public:
   void Init(NeedsConfig& needsConfig, const u32 serialNumber,
             const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng);
 
-  // Set up decay multipliers (we do this prior to calling ApplyDecay)
-  void SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers);
+  // Set up decay multipliers (we do this prior to calling ApplyDecay or TimeForDecayToLevel)
+  void SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const;
   
   // Decay a need's level, according to how much time has passed since last decay, and config data
   void ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers);
+
+  // Calculate the time (in minutes) it will take to decay a need to a specified level
+  float TimeForDecayToLevel(const DecayConfig& decayConfig, const int needIndex,
+                            const float targetLevel, const NeedsMultipliers& multipliers) const;
 
   // Apply a given delta to a given need
   bool ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause);
@@ -66,9 +71,9 @@ public:
   float         GetNeedLevel(NeedId need) const;
   NeedBracketId GetNeedBracket(NeedId need);
   
-  float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
-  NeedBracketId GetNeedBracketByIndex(size_t i);
-  bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };
+  float         GetNeedLevelByIndex(size_t needIndex)     { return _curNeedsLevels[static_cast<NeedId>(needIndex)]; }
+  NeedBracketId GetNeedBracketByIndex(size_t needIndex);
+  bool          GetPartIsDamagedByIndex(size_t needIndex) { return _partIsDamaged[static_cast<RepairablePartId>(needIndex)]; };
 
   // Return true if all needs are "met"
   bool AreNeedsMet();
@@ -97,10 +102,26 @@ public:
   // Note that changing format of robot storage serialization will be more difficult,
   // because it serializes a CLAD structure, so for backward compatibility we'd have
   // to preserve older versions of that CLAD structure.
-  static const int kDeviceStorageVersion = 2;
-  static const int kRobotStorageVersion = 3;
+  static const int kDeviceStorageVersion = 4;
+  static const int kRobotStorageVersion = 4;
 
   Time _timeLastWritten;
+
+  // Time of last disconnect:  This is for DAS purposes, to find out 'how long has
+  // the user left Cozmo disconnected.'  We can't really store this on the robot,
+  // because on disconnect it's too late to write to the robot.  Therefore this is
+  // device-storage-only, and consequently if the device connects to a different
+  // robot, this time will be reset.
+  Time _timeLastDisconnect;
+
+  // Time of last app backgrounding:  This is for DAS purposes, to find out 'how
+  // long has it been since the user exited (backgrounded) the app.  Similar to
+  // the above, we don't bother storing this on the robot.
+  Time _timeLastAppBackgrounded;
+
+  // Also for DAS purposes, this is the number of times the user has opened or
+  // unbackgrounded the app, since the last robot disconnect.
+  int  _timesOpenedSinceLastDisconnect;
 
   u32 _robotSerialNumber;
 
@@ -112,10 +133,11 @@ public:
   using PartIsDamagedMap = std::map<RepairablePartId, bool>;
   PartIsDamagedMap _partIsDamaged;
 
-  int _curNeedsUnlockLevel;
-  int _numStarsAwarded;
-  int _numStarsForNextUnlock;
-  Time _timeLastStarAwarded;
+  int      _curNeedsUnlockLevel;
+  int      _numStarsAwarded;
+  int      _numStarsForNextUnlock;
+  Time     _timeLastStarAwarded;
+  UnlockId _forceNextSong;
   
   void SetStarLevel(int newLevel);
 

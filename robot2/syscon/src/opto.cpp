@@ -5,7 +5,7 @@
 #include "power.h"
 
 #include "opto.h"
-#include "schema/messages.h"
+#include "messages.h"
 
 using namespace Anki::Cozmo::Spine;
 
@@ -713,7 +713,7 @@ void Opto::init(void) {
   // Enable the I2C perfs
   I2C2->CR1 |= I2C_CR1_PE;
 
-  NVIC_SetPriority(I2C2_IRQn, 3);
+  NVIC_SetPriority(I2C2_IRQn, PRIORITY_I2C_TRANSMIT);
   NVIC_EnableIRQ(I2C2_IRQn);
 
 

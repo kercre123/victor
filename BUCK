@@ -3,6 +3,12 @@ prebuilt_jar(
   binary_jar = 'project/android/cozmojava/lib/unity-classes.jar'
 )
 
+# Acapela Text-To-Speech SDK
+prebuilt_jar(
+  name = 'acattsandroid-sdk-library',
+  binary_jar = 'EXTERNALS/anki-thirdparty/acapela/AcapelaTTS_for_Android_V1.612/sdk/acattsandroid-sdk-library.jar'
+)
+
 android_library(
   name = 'cozmojava_lib',
   srcs = glob(['project/android/cozmojava/src/**/*.java']),
@@ -10,8 +16,8 @@ android_library(
   source = '1.6',
   target = '1.6',
   deps = [':unity_classes',
+          ':acattsandroid-sdk-library',
           '//lib/util/android:util',
-          '//lib/util/android:audioUtil',
           '//lib/crash-reporting-android/HockeyAppAndroid:hockey-app',
           '//lib/das-client/android/DASJavaLib:DASJavaLib'],
   visibility = ['PUBLIC'],

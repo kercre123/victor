@@ -272,12 +272,16 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 8;
-            // Face block 0
-            m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(0, M_PI_F, 0, 0, 0, 0, 0, 0, 1, true, false));
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_QueueSingleAction(m);
-            SendMessage(message);
-            SET_STATE(VisuallyVerifyNoObjectAtPose);
+            
+            // Face first matching light cube
+            std::vector<s32> lightCubeIDs = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+            if (!lightCubeIDs.empty()) {
+              m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, 1, true, false));
+              ExternalInterface::MessageGameToEngine message;
+              message.Set_QueueSingleAction(m);
+              SendMessage(message);
+              SET_STATE(VisuallyVerifyNoObjectAtPose);
+            }
           }
           break;
         }

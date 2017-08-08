@@ -21,26 +21,20 @@
   "button.yes" : {
     "translation" : "OUI"
   },
-  "button.yesPlease" : {
-    "translation" : "OUI S'IL VOUS PLAÎT"
-  },
   "button.no" : {
     "translation" : "NON"
-  },
-  "button.noThankYou" : {
-    "translation" : "NON, MERCI"
   },
   "button.continue" : {
     "translation" : "CONTINUER"
   },
   "button.okay" : {
-    "translation" : "D'ACCORD"
+    "translation" : "OK"
   },
   "button.again" : {
     "translation" : "REJOUER"
   },
   "button.refresh" : {
-    "translation" : "RAFRAÎCHIR"
+    "translation" : "ACTUALISER"
   },
   "button.close" : {
     "translation" : "FERMER"
@@ -49,112 +43,106 @@
     "translation" : "TERMINÉ"
   },
   "button.play" : {
-    "translation" : "Jouer"
+    "translation" : "JOUER"
   },
   "button.leave" : {
-    "translation" : "LAISSER"
+    "translation" : "QUITTER"
   },
   "button.back" : {
-    "translation" : "ARRIÈRE"
+    "translation" : "PRÉCÉDENT"
   },
   "button.next" : {
-    "translation" : "PROCHAIN"
+    "translation" : "SUIVANT"
   },
   "button.staySparked" : {
-    "translation" : "SEJOUR CHAUDÉ"
+    "translation" : "RESTER ÉTINCELÉ"
   },
   "button.soundsGood" : {
-    "translation" : "ÇA M'A L'AIR BIEN"
+    "translation" : "ÇA A L'AIR BIEN"
   },
   "label.plusCount" : {
-    "translation" : "+ {0}"
+    "translation" : "+{0}"
   },
   "label.dayCount" : {
-    "translation" : "journée {0}"
+    "translation" : "Jour {0}"
   },
   "label.waiting" : {
-    "translation" : "Attendre..."
+    "translation" : "En attente..."
   },
   "requestGame.title" : {
-    "translation" : "{0} !"
+    "translation" : "{0}!"
   },
   "requestGame.description" : {
     "translation" : "Cozmo veut jouer"
   },
   "label.connect" : {
-    "translation" : "RELIER"
-  },
-  "label.start" : {
-    "translation" : "START"
+    "translation" : "CONNECTER"
   },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
-    "translation" : "{0}{1} Champs obligatoires"
+    "translation" : "{0} {1} requis"
   },
   "label.emptyWithArg" : {
     "translation" : "{0}"
   },
   "title.soundCheck" : {
-    "translation" : "Sound check"
+    "translation" : "Vérification du son"
   },
   "button.GetACozmo" : {
     "translation" : "OBTENIR UN COZMO"
   },
   "button.start" : {
-    "translation" : "DÉBUT"
+    "translation" : "DÉMARRER"
   },
   "button.begin" : {
     "translation" : "COMMENÇONS"
   },
   "soundcheck.description" : {
-    "translation" : "Assurez-vous que le son de votre appareil est activé."
+    "translation" : "Assure-toi que le son de ton appareil est activé."
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Mettez l'un de chaque cube à côté de Cozmo et appuyez sur <b><color=#11a2f0ff> RAFRAÎCHIR </color></b> . Cozmo se connecte au 3 qu'il pense être le plus proche."
+    "translation" : "Place chacun des cubes près de Cozmo et appuie sur <b><color=#11a2f0ff>ACTUALISER</color></b>. Cozmo se connectera aux 3cubes qu'il considère comme les plus proches."
   },
   "button.replay" : {
-    "translation" : "Rejouer"
+    "translation" : "REJOUER"
   },
   "button.skip" : {
-    "translation" : "SAUTER"
+    "translation" : "IGNORER"
   },
   "soundcheck.description.confirm" : {
-    "translation" : "Avez-vous entendu le son?"
+    "translation" : "As-tu entendu le son?"
   },
   "error.badLight.Top" : {
     "translation" : "Cozmo a du mal à voir!"
   },
   "error.badLight.Bottom" : {
-    "translation" : "Évitez les lumières lumineuses et les espaces faiblement éclairés."
+    "translation" : "Évite les lumières vives et les espaces faiblement éclairés."
   },
   "label.cozmo.serial" : {
-    "translation" : "Cozmo ID: {0}"
+    "translation" : "ID de Cozmo: {0}"
   },
   "label.deviceid" : {
-    "translation" : "Reference de l'appareil: {0}"
+    "translation" : "ID d'appareil: {0}"
   },
   "label.privacyPolicy" : {
     "translation" : "Politique de confidentialité"
   },
   "label.pressAndHoldInstruction" : {
-    "translation" : "PRESSE ET HOLD {0} CONFIRMER"
+    "translation" : "Appuie sur <b><color=#fe5641>{0}</color></b> de manière prolongée pour confirmer."
   },
   "label.termsOfUse" : {
     "translation" : "Conditions d'utilisation"
   },
-  "label.totalSparks" : {
-    "translation" : "Total des Sparks: {0}"
-  },
   "label.termsInstructions" : {
-    "translation" : "By tapping <b><color=#11a2f0ff>CONNECT</color></b>, you agree to the following terms:"
+    "translation" : "En appuyant sur<b> <color=#11a2f0ff>CONNECTER</color></b>, vous acceptez les conditions suivantes:"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
   },
   "label.basicCozmo" : {
-    "translation" : "Gros cerveau. Personnalité plus grande."
+    "translation" : "Extraordinaire. Extraverti."
   },
   "label.currentPage" : {
-    "translation" : "{0} de {1}"
+    "translation" : "{0} sur {1}"
   },
   "label.RewardHeader" : {
     "translation" : "Récompenses"

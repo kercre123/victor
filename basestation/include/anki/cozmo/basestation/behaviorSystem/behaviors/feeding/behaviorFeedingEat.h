@@ -54,6 +54,7 @@ protected:
 private:
   enum class State{
     DrivingToFood,
+    PlacingLiftOnCube,
     Eating,
     ReactingToInterruption
   };
@@ -69,14 +70,22 @@ private:
   // Listen for the cube being pulled away from Cozmo
   std::shared_ptr<CubeAccelListeners::MovementListener> _cubeMovementListener; // CubeAccelComponent listener
 
+  // map of cubes to skip. Key is the object ID, value is the last pose updated timestamp where we want to
+  // ignore it. If the pose has updated after this timestamp, consider it valid again
+  std::map< ObjectID, TimeStamp_t > _badCubesMap;
   
   void TransitionToDrivingToFood(Robot& robot);
+  void TransitionToPlacingLiftOnCube(Robot& robot);
   void TransitionToEating(Robot& robot);
   void TransitionToReactingToInterruption(Robot& robot);
 
-  
   void CubeMovementHandler(Robot& robot, const float movementScore);
   AnimationTrigger CheckNeedsStateAndCalculateAnimation(Robot& robot);
+
+  // sets the target cube as invalid for future runs of the behavior (unless it is observed again);
+  void MarkCubeAsBad(const Robot& robot);
+  bool IsCubeBad(const Robot& robot, const ObjectID& objectID) const;
+  
   void SetState_internal(State state, const std::string& stateName);
   
 };

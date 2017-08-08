@@ -46,6 +46,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 
+#include <thread>
 
 //
 // Embedded implementation holdovers:
@@ -120,6 +121,9 @@ namespace Cozmo {
   
   // Sample rate for estimating the mean of an image (increment in both X and Y)
   CONSOLE_VAR_RANGED(s32, kImageMeanSampleInc, "VisionSystem.Statistics", 10, 1, 32);
+  
+  // For testing artificial slowdowns of the vision thread
+  CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
   
   namespace {
     // These are initialized from Json config:
@@ -2197,6 +2201,11 @@ namespace Cozmo {
     
     auto& visionModesProcessed = _currentResult.modesProcessed;
     visionModesProcessed.ClearFlags();
+    
+    if(kVisionSystemSimulatedDelay_ms > 0)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(kVisionSystemSimulatedDelay_ms));
+    }
     
     while(!_nextModes.empty())
     {

@@ -62,6 +62,6 @@ const bool BlockConfiguration::ContainsBlock(const ObjectID& objectID) const
 }
 
   
-} // namesapce BlockConfiguration
+} // namespace BlockConfiguration
 } // namespace Cozmo
 } // namespace Anki

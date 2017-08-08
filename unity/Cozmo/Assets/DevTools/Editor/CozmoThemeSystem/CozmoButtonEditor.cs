@@ -8,6 +8,9 @@ namespace Cozmo.UI {
   [CustomEditor(typeof(CozmoButton), true)]
   [CanEditMultipleObjects]
   public class CozmoButtonEditor : AnkiButtonEditor {
+
+    private string _localizedStringFile;
+
     public override void OnInspectorGUI() {
       serializedObject.UpdateIfRequiredOrScript();
 
@@ -22,7 +25,6 @@ namespace Cozmo.UI {
       if (_ScriptTarget.transform.childCount == 0) {
         createDefaultComponents = GUILayout.Button("Create Default Button");
       }
-
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextEnabledColor"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextPressedColor"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextDisabledColor"));
@@ -33,9 +35,8 @@ namespace Cozmo.UI {
       EditorGUILayout.PropertyField(serializedObject.FindProperty("_UISoundEvent"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("_ShowDisabledStateWhenInteractable"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("ButtonGraphics"), true);
+
       serializedObject.ApplyModifiedProperties();
-
-
 
       if (createDefaultComponents) {
         CreateDefaultComponents();

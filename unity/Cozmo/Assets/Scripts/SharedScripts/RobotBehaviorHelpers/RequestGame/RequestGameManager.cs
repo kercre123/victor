@@ -1,6 +1,5 @@
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
-using Anki.Cozmo.VoiceCommand;
 using Cozmo.Challenge;
 using Cozmo.UI;
 using System;
@@ -33,7 +32,6 @@ namespace Cozmo.RequestGame {
     private RequestGameManager() {
       RobotEngineManager.Instance.AddCallback<RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.AddCallback<DenyGameStart>(HandleExternalRejection);
-      VoiceCommandManager.Instance.OnUserPromptResponse += HandleUserResponseToPrompt;
     }
 
     public void EnableRequestGameBehaviorGroups() {
@@ -70,8 +68,8 @@ namespace Cozmo.RequestGame {
       _RequestGameAlertData = new AlertModalData("request_game_alert",
                 LocalizationKeys.kRequestGameTitle,
                 LocalizationKeys.kRequestGameDescription,
-                new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYesPlease, HandleMiniGameConfirm),
-                new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNoThankYou, HandleMiniGameRejection),
+                new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYes, HandleMiniGameConfirm),
+                new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNo, HandleMiniGameRejection),
                 icon: data.ChallengeIcon,
                 dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
                 titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });
@@ -105,20 +103,6 @@ namespace Cozmo.RequestGame {
       UIManager.OpenAlert(_RequestGameAlertData, requestGamePriority, requestGameCreated,
             creationCancelledCallback: requestGameCancelled,
             overrideCloseOnTouchOutside: false);
-    }
-
-    private void HandleUserResponseToPrompt(bool positiveResponse) {
-      if (_RequestGameAlertData != null) {
-        if (positiveResponse) {
-          HandleMiniGameConfirm();
-        }
-        else {
-          HandleMiniGameRejection();
-        }
-        if (_RequestDialog != null) {
-          _RequestDialog.CloseDialog();
-        }
-      }
     }
 
     private void HandleMiniGameRejection() {

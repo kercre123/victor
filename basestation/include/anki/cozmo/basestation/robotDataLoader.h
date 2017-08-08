@@ -93,8 +93,9 @@ public:
   const Json::Value& GetRobotNeedsActionsConfig() const  { return _needsActionConfig; }
   const Json::Value& GetRobotNeedsDecayConfig() const    { return _needsDecayConfig; }
   const Json::Value& GetRobotNeedsHandlersConfig() const { return _needsHandlersConfig; }
+  const Json::Value& GetLocalNotificationConfig() const  { return _localNotificationConfig; }
   const Json::Value& GetTextToSpeechConfig() const       { return _textToSpeechConfig; }
-
+  const Json::Value& GetInventoryConfig() const          { return _inventoryConfig; }
   
   // voice command configs
   const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
@@ -172,7 +173,9 @@ private:
   Json::Value _needsActionConfig;
   Json::Value _needsDecayConfig;
   Json::Value _needsHandlersConfig;
+  Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;
+  Json::Value _inventoryConfig;
   
   // voice command configs
   Json::Value _gameRequestWeights;

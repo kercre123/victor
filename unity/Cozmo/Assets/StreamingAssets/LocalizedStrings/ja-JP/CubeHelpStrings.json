@@ -7,30 +7,48 @@
     "source_key_paths" : ["/{*}"]
   },
   "cubeHelpStrings.Instructions.Slide0" : {
-    "translation" : "Cozmoはすべてのキューブを聞くことができません。それらを彼の近くに置きなさい。"
+    "translation" : "Cozmoがすべてのキューブを認識できません。キューブをCozmoの近くに置いてください。"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "タップ<b><color=#d3d3d3>次</color></b>あなたがまだ問題を抱えている場合"
+    "translation" : "まだ問題がある場合は「<b><color=#d3d3d3>次へ</color></b>」をタップします"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "まず、 <b>設定</b> 。次に、 <b>リフレッシュキューブ</b> 。"
+    "translation" : "まず、 <b>設定</b> 。"
   },
   "cubeHelpStrings.Instructions.Slide1" : {
-    "translation" : "次に、キューブのバッテリーを交換してみてください。"
+    "translation" : "次にキューブの電池を交換してみましょう。"
   },
   "cubeHelpStrings.Instructions.Slide1altCopy" : {
-    "translation" : "それを逆さにしてカバーを緩めます。"
+    "translation" : "逆さまにしてネジを緩めてカバーを外します。"
   },
   "cubeHelpStrings.Instructions.Slide2" : {
-    "translation" : "バッテリーを新しいNセルに交換します。"
+    "translation" : "電池を取り出して新品の単5電池に交換します。"
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
-    "translation" : "新しいバッテリをプラスに挿入します（ <b><color=#d3d3d3> + </color></b> ） 結局。"
+    "translation" : "新しい電池を、プラス（<b><color=#d3d3d3>+</color></b>）側を上にして入れます。"
   },
   "cubeHelpStrings.Instructions.Slide3" : {
-    "translation" : "カバーを元に戻し、静かに締めます。"
+    "translation" : "カバーを戻して静かにネジを締め付けます。"
   },
   "cubeHelpStrings.Instructions.Slide3altCopy" : {
-    "translation" : "カバーはキューブと一致していることを確認します。今では点灯します！"
+    "translation" : "カバーがキューブにはまっていることを確認します。これで点灯するはずです！"
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
+    "translation" : "Cozmoがお腹を空かせていますか？"
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
+    "translation" : "Cozmoのキューブに再接続している間に、おやつをあげてください。"
+  },
+  "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
+    "translation" : "おやつ"
+  },
+  "cubeHelpStrings.Instructions.FeedPopup.Title" : {
+    "translation" : "Cozmoは遊び続けることができます"
+  },
+  "cubeHelpStrings.Instructions.FeedPopup.Body" : {
+    "translation" : "Cozmoを十分にチャージするために、キューブを認識できるよう手順に従ってください。"
+  },
+  "cubeHelpStrings.Instructions.SlideA2Copy" : {
+    "translation" : "次に、 <b>リフレッシュキューブ</b> 。"
   }
 }

@@ -33,6 +33,7 @@
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
+#include "anki/cozmo/basestation/utils/cozmoExperiments.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
@@ -59,10 +60,6 @@
 #include <DAS/DASPlatform.h>
 #endif
 
-#if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
-#endif
-
 #include "anki/cozmo/basestation/animations/animationTransfer.h"
 
 #if ANKI_PROFILING_ENABLED
@@ -84,9 +81,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
   //, _bleSystem(new BLESystem())
-#if ANKI_DEV_CHEATS && !defined(ANDROID)
-  , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
-#endif
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
   DEV_ASSERT(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
@@ -128,11 +122,18 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::StoredLabAssignments>();
+
+  auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
+    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdatedAssignments>(assignments);
+  };
+  _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
+                              .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
 
   _debugConsoleManager.Init(_context->GetExternalInterface());
   _dasToSdkHandler.Init(_context->GetExternalInterface());
   InitUnityLogger();
-  
+
   #if VIZ_ON_DEVICE
   _context->GetVizManager()->SetMessagePort(vizMessagePort);
   #endif
@@ -228,13 +229,16 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _context->GetDataLoader()->LoadRobotConfigs();
 
+  _context->GetExperiments()->InitExperiments();
+
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _context->GetNeedsManager()->Init(currentTime,
                                     _context->GetDataLoader()->GetRobotNeedsConfig(),
                                     _context->GetDataLoader()->GetStarRewardsConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsActionsConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsDecayConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsHandlersConfig());
+                                    _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
+                                    _context->GetDataLoader()->GetLocalNotificationConfig());
 
   _context->GetRobotManager()->Init(_config);
 
@@ -324,6 +328,17 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
   {
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
     _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
+  }
+}
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::StoredLabAssignments& msg)
+{
+  using namespace Util::AnkiLab;
+  AnkiLab& lab = _context->GetExperiments()->GetAnkiLab();
+
+  for (const auto& assignment : msg.assignments) {
+    (void) lab.RestoreActiveExperiment(assignment.experiment_key, assignment.user_id, assignment.variation_key);
   }
 }
 
@@ -775,6 +790,12 @@ void CozmoEngine::HandleMessage(const ExternalInterface::RedirectViz& msg)
 void CozmoEngine::ExecuteBackgroundTransfers()
 {
   _context->GetTransferQueue()->ExecuteTransfers();
+}
+
+Util::AnkiLab::AssignmentStatus CozmoEngine::ActivateExperiment(
+  const Util::AnkiLab::ActivateExperimentRequest& request, std::string& outVariationKey)
+{
+  return _context->GetExperiments()->ActivateExperiment(request, outVariationKey);
 }
 
 } // namespace Cozmo

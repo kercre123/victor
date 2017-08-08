@@ -20,6 +20,8 @@ namespace Cozmo {
 class IFeedingListener{
 public:
   virtual void StartedEating(Robot& robot, const int duration_s) = 0;
+  virtual void EatingInterrupted(Robot& robot) = 0;
+
 };
 
 

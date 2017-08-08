@@ -49,4 +49,20 @@
     }],
   ], # conditions
 }, # variables
+
+'target_defaults': {
+  'conditions': [
+    ['OS=="mac"', {
+      'defines' : [ # begin if block
+        'THF_FUNCTIONALITY=1',
+        'VC_AUDIOCAPTURE_FUNCTIONALITY=1',
+      ], }, {
+      'defines' : [ # begin else block
+        'THF_FUNCTIONALITY=0',
+        'VC_AUDIOCAPTURE_FUNCTIONALITY=0',
+      ],
+    }],
+  ],
+} # target_defaults
+
 }

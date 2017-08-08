@@ -13,16 +13,22 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/oneShots/behaviorSinging.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeAccelComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
+
+#include "clad/audio/audioEventTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -139,11 +145,22 @@ BehaviorSinging::~BehaviorSinging()
   
 }
 
-bool BehaviorSinging::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorSinging::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // Always runnable, the higher level Singing goal/activity is responsible
   // for deciding when Cozmo should sing
-  return true;
+  // Except if the needs system has unlocked a song, we want that to be the
+  // next song played
+  const NeedsState& currNeedState = preReqData.GetRobot().GetContext()->GetNeedsManager()->GetCurNeedsState();
+  const auto& forcedSong = currNeedState._forceNextSong;
+  if (forcedSong == UnlockId::Invalid)
+  {
+    return true;
+  }
+  else
+  {
+    return (forcedSong == GetRequiredUnlockID());
+  }
 }
 
 Result BehaviorSinging::InitInternal(Robot& robot)

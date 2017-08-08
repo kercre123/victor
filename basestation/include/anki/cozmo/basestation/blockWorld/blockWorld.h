@@ -64,6 +64,9 @@ namespace Anki
       // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
       
+      // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
+      void UpdateProxObstaclePoses();
+      
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
       
@@ -113,6 +116,15 @@ namespace Anki
       // from connected objects, only the located instances are affected. The unlocated instances, that are stored
       // regardless of pose, are not affected by this. Passive objects don't have connected instances.
       void DeleteLocatedObjects(const BlockWorldFilter& filter);   // objects that pass the filter will be deleted
+      
+      // Delete all objects that intersect with the provided quad
+      void DeleteIntersectingObjects(const Quad2f& quad,
+                                     f32 padding_mm,
+                                     const BlockWorldFilter& filter = BlockWorldFilter());
+                                     
+      void DeleteIntersectingObjects(const std::shared_ptr<ObservableObject>& object,
+                                     f32 padding_mm,
+                                     const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
@@ -455,11 +467,6 @@ namespace Anki
       
       Result UpdateMarkerlessObjects(TimeStamp_t atTimestamp);
       
-      /*
-      // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
-      Result UpdateProxObstaclePoses();
-      */
-
       // Finds existing objects that overlap with and are of the same type as objectSeen,
       // where overlap is defined by the IsSameAs() function.
       // NOTE: these populate return vectors with non-const ObservableObject pointers

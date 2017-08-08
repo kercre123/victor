@@ -121,6 +121,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
 : IBehaviorRequestGame(robot, config)
 , _numRetriesDrivingToFace(0)
 , _numRetriesPlacingBlock(0)
+, _wasTriggeredAsInterrupt(false)
 {
   if( config.isNull() ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.Config.Error",
@@ -187,8 +188,12 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   SmartSetMotionProfile(_driveToPlaceProfile);
 
   SmartPushIdleAnimation(robot, AnimationTrigger::Count);
-
-  if( GetNumBlocks(robot) == 0 ) {
+  
+  if(_wasTriggeredAsInterrupt){
+    _activeConfig = &_zeroBlockConfig;
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGameInterrupt),
+                &BehaviorRequestGameSimple::TransitionToLookingAtFace);
+  }else if( GetNumBlocks(robot) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
     if( ! IsActing() ) {
       // skip the block stuff and go right to the face
@@ -227,7 +232,7 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
   
   if(CheckRequestTimeout()) {
     // timeout acts as a deny
-    StopActing();
+    StopActing(false);
     SendDeny(robot);
     TransitionToPlayingDenyAnim(robot);
   }
@@ -269,6 +274,7 @@ void BehaviorRequestGameSimple::RequestGame_StopInternal(Robot& robot)
 
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
+  _wasTriggeredAsInterrupt = false;
   StopActing(false);
 }
 
@@ -536,14 +542,20 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
               &BehaviorRequestGameSimple::TransitionToIdle);
   SET_STATE(PlayingRequestAnim);
 }
- 
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
   SET_STATE(Idle);
   SendRequest(robot);
-  
+  IdleLoop(robot);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRequestGameSimple::IdleLoop(Robot& robot){
+
   
   if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count
      && GetFaceID() != Vision::UnknownFaceID){
@@ -555,7 +567,8 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
   }else if(GetFaceID() != Vision::UnknownFaceID){
     StartActing(new TrackFaceAction(robot, GetFaceID()));
   }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
-    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 0));
+    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 1),
+                &BehaviorRequestGameSimple::IdleLoop);
   }else{
     StartActing( new HangAction(robot) );
   }
@@ -563,14 +576,14 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
   BehaviorObjectiveAchieved(BehaviorObjective::RequestedGame);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
   IActionRunner* denyAnimAction = new TriggerAnimationAction( robot, _activeConfig->denyAnimTrigger );
   StartActing(denyAnimAction);
   SET_STATE(PlayingDenyAnim);
-}
+} 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -677,7 +690,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
 {
-  StopActing();
+  StopActing(false);
 
   TransitionToPlayingDenyAnim(robot);
 }

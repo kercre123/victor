@@ -49,15 +49,19 @@ public class PerformancePane : MonoBehaviour {
   [SerializeField]
   private Text _BatteryVoltage;
 
+  [SerializeField]
+  private Dropdown _QualityDropDown;
+
   private void Start() {
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
+    InitQualityLevelDropdown();
+    _QualityDropDown.onValueChanged.AddListener(HandleQualityChanged);
     RaisePerformancePaneOpened(this);
-
-    RobotEngineManager.Instance.SendRequestDeviceData();
   }
 
   private void OnDestroy() {
     _ShowFPSCounterButton.onClick.RemoveListener(HandleShowCounterButtonClicked);
+    _QualityDropDown.onValueChanged.RemoveListener(HandleQualityChanged);
     RaisePerformancePaneClosed();
   }
 
@@ -76,6 +80,21 @@ public class PerformancePane : MonoBehaviour {
 
   private void HandleShowCounterButtonClicked() {
     RaisePerformanceCounterButtonClicked();
+  }
+
+  private void InitQualityLevelDropdown() {
+    string[] qualityNames = QualitySettings.names;
+    _QualityDropDown.options.Clear();
+    for (int i = 0; i < qualityNames.Length; ++i) {
+      _QualityDropDown.options.Add(new Dropdown.OptionData(i + " " + qualityNames[i]));
+    }
+    _QualityDropDown.value = Cozmo.PerformanceManager.Instance.GetQualitySetting();
+    _QualityDropDown.Select();
+    _QualityDropDown.RefreshShownValue();
+
+  }
+  private void HandleQualityChanged(int value_changed) {
+    Cozmo.PerformanceManager.Instance.ForceSetQuality(value_changed);
   }
 
 

@@ -36,6 +36,7 @@
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/utils/cozmoExperiments.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -212,6 +213,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageDataDump", "ID: %d, size: %zd, data: %s", robot->GetID(), payload.data.size(), buf);
                                                      }));
   
+  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuTemperature,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       ANKI_CPU_PROFILE("RobotTag::imuTemperature");
+                                                       robot->SetImuTemperature(message.GetData().Get_imuTemperature().temperature_degC);
+                                                     }));
+  
   if (robot->HasExternalInterface())
   {
     using namespace ExternalInterface;
@@ -326,6 +333,9 @@ void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInter
   robot->SetBodySerialNumber(bodyID);
   robot->SetBodyHWVersion(hwVersion);
   robot->SetBodyColor(bodyColor);
+
+  // Activate A/B tests for robot now that we have its serial
+  robot->GetContext()->GetExperiments()->AutoActivateExperiments(std::to_string(bodyID));
 }
   
 void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -923,6 +933,13 @@ void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface
      image.GetTimestamp(), message.GetCurrentTime(),
      BaseStationTimer::getInstance()->GetCurrentTimeStamp());
      */
+    
+    // If we _are_ displaying processed images only, VisionComponent is responsible for sending the DisplayCameraImage
+    // message instead of sending it here.
+    if(!robot->GetVisionComponent().IsDisplayingProcessedImagesOnly())
+    {
+      robot->GetContext()->GetVizManager()->DisplayCameraImage(payload.frameTimeStamp);
+    }
     
     const double currentMessageTime = message.GetCurrentTime();
 

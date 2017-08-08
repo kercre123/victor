@@ -412,7 +412,10 @@ namespace Cozmo {
       if (!packed[x]) {
         int count = 0;
 
-        for (; !packed[x] && x < IMAGE_WIDTH && count < 0x40; x++, count++) ;
+        for (; x < IMAGE_WIDTH && count < 0x40 && !packed[x] ; x++, count++) {
+          /* advance counters */
+        }
+
         rleData.push_back(count-1);
 
         continue ;
@@ -422,7 +425,10 @@ namespace Cozmo {
       if (x >= 1 && packed[x] == packed[x-1]) {
         int count = 0;
 
-        for (; packed[x] == packed[x-1] && x < IMAGE_WIDTH && count < 0x40; x++, count++) ;
+        for (; x < IMAGE_WIDTH && count < 0x40 && packed[x] == packed[x-1]; x++, count++) {
+          /* advance counters */
+        }
+        
         rleData.push_back((count-1) | 0x40);
 
         continue ;

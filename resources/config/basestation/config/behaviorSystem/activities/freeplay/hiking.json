@@ -15,6 +15,12 @@
     },
     
     "behaviors" : [
+      { "behaviorID" : "ReactToObstacle",
+        "scoring"      :
+        {
+          "flatScore": 30
+        }
+      },
       { "behaviorID" : "KnockOverCubes",
         "scoring"      :
         {
@@ -117,6 +123,7 @@
   "interludeBehaviorChooser": {
     "type": "StrictPriority",
     "behaviors": [
+      "EarnedSparks",
       "Needs_SevereLowPlayBored",
       "Needs_SevereLowPlayRequest",
       "Needs_MildLowRepairRequest",

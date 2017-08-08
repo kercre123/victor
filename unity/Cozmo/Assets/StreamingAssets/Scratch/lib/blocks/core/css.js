@@ -1139,7 +1139,6 @@ Blockly.Css.CONTENT = [
 
   // Used for vertical
   '.scratchCategoryMenu {',
-    'width: 295px;', // *** ANKI CHANGE ***
     'background-color: #ffffff;', // *** ANKI CHANGE ***
     //'background: $colour_toolbox;',
     'color: $colour_toolboxText;',

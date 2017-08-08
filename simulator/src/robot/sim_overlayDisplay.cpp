@@ -62,7 +62,7 @@ namespace Anki {
         
       } // namespace OverlayDisplay
     } // namespace Sim
-  } // namesapce Cozmo
+  } // namespace Cozmo
 } // namespace Anki
 
 

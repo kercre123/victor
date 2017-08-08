@@ -8,8 +8,14 @@ from Crypto import Random
 
 import argparse
 import random
+import time
 import math
 import os
+
+
+VICTOR_EPOCH = 1498237200 #2017-06-23 10:00a PST
+BUILD_TIME = int(time.time()-VICTOR_EPOCH)
+BUILD_TIMESTAMP = "{:07x}".format(BUILD_TIME)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--key", type=str,
@@ -18,7 +24,7 @@ parser.add_argument("-b", "--binary", type=str,
                     help="Output file to a binary")
 parser.add_argument("image", type=str,
                     help="AXF/ELF of image")
-parser.add_argument("-v", "--version", type=str, default="Development",
+parser.add_argument("-v", "--version", type=str, default="DevBuild"+BUILD_TIMESTAMP,
                     help="Version of build")
 
 
@@ -134,7 +140,8 @@ if __name__ == '__main__':
     commentBlock = None
 
     # Load our RSA key
-    cert_fn = args.key if args.key else os.environ['COZMO2_CERT']
+    cert_fn = args.key if args.key else os.environ['COZMO2_CERT'] if 'COZMO2_CERT' in os.environ else os.path.join(os.path.dirname(__file__), "development.pem")
+    print (cert_fn)
     with open(cert_fn, "r") as cert_fo:
         cert = RSA.importKey(cert_fo.read())
         print ("Signing data with a %i-bit certificate" % cert.size())

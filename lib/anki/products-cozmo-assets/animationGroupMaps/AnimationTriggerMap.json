@@ -453,6 +453,10 @@
       "AnimName": "ag_explorer_turbo"
     },
     {
+      "CladEvent": "EarnedSparks",
+      "AnimName": "ag_sparking_earnsparks"
+    },
+    {
       "CladEvent": "FacePlantRoll",
       "AnimName": "ag_reacttocliff_faceplantroll_01"
     },
@@ -508,7 +512,14 @@
       "CladEvent": "FeedingIdleSearch_Severe",
       "AnimName": "ag_energy_idle_l2_searchforcube"
     },
-
+    {
+      "CladEvent": "FeedingIdleSearchForFaces_Normal",
+      "AnimName": "ag_energy_idle_01"
+    },
+    {
+      "CladEvent": "FeedingIdleSearchForFaces_Severe",
+      "AnimName": "ag_energy_idle_02_nohead"
+    },
     {
       "CladEvent": "FeedingIdleWaitForFullCube_Normal",
       "AnimName": "ag_energy_idle_01"
@@ -526,12 +537,16 @@
       "AnimName": "ag_energy_idle_02"
     },
     {
+      "CladEvent": "FeedingIdleWaitForShakeNoHead_Severe",
+      "AnimName": "ag_energy_idle_02_nohead"
+    },
+    {
       "CladEvent": "FeedingInterrupted",
       "AnimName": "ag_energy_interruptions"
     },
     {
       "CladEvent": "FeedingInterrupted_Severe",
-      "AnimName": "ag_energy_interruptions"
+      "AnimName": "ag_energy_shortreact_lvl2"
     },
     {
       "CladEvent": "FeedingSearchRequest",
@@ -1434,6 +1449,10 @@
       "AnimName": "ag_reacttocliff_edge"
     },
     {
+      "CladEvent": "ReactToObstacle",
+      "AnimName": "ag_reacttocliff_huh_01"
+    },
+    {
       "CladEvent": "ReactToNewBlockAsk",
       "AnimName": "ag_askForBlock"
     },
@@ -1602,52 +1621,8 @@
       "AnimName": "ag_repair_fix_idle_fullyfull_01"
     },
     {
-      "CladEvent": "RequestGameSpeedTapDeny0",
-      "AnimName": "requestGame_speedTap_deny"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapDeny1",
-      "AnimName": "requestGame_speedTap_deny"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapInitial0",
-      "AnimName": "requestGame_speedTap_initial"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapInitial1",
-      "AnimName": "requestGame_speedTap_initial"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapPreDrive0",
-      "AnimName": "requestGame_speedTap_predrive"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapPreDrive1",
-      "AnimName": "requestGame_speedTap_predrive"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapRequest0",
-      "AnimName": "requestGame_speedTap_request"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapRequest1",
-      "AnimName": "requestGame_speedTap_request"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapIdle0",
-      "AnimName": "ag_speedTap_wait"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapIdle1",
-      "AnimName": "ag_speedTap_wait"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapAccept0",
-      "AnimName": "requestGame_Confirm"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapAccept1",
-      "AnimName": "requestGame_Confirm"
+      "CladEvent": "RequestGameInterrupt",
+      "AnimName": "ag_requesttoplay_huh_01"
     },
     {
       "CladEvent": "RequestGameKeepAwayInitial0",
@@ -1750,6 +1725,54 @@
       "AnimName": "ag_RequestGamePickupFail"
     },
     {
+      "CladEvent": "RequestGameSpeedTapDeny0",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapDeny1",
+      "AnimName": "requestGame_speedTap_deny"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapInitial0",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapInitial1",
+      "AnimName": "requestGame_speedTap_initial"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapPreDrive0",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapPreDrive1",
+      "AnimName": "requestGame_speedTap_predrive"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapRequest0",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapRequest1",
+      "AnimName": "requestGame_speedTap_request"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapIdle0",
+      "AnimName": "ag_speedTap_wait"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapIdle1",
+      "AnimName": "ag_speedTap_wait"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapAccept0",
+      "AnimName": "requestGame_Confirm"
+    },
+    {
+      "CladEvent": "RequestGameSpeedTapAccept1",
+      "AnimName": "requestGame_Confirm"
+    },
+    {
       "CladEvent": "RollBlockInitial",
       "AnimName": "rollCube_initial"
     },
@@ -1776,6 +1799,10 @@
     {
       "CladEvent": "RollBlockSuccess",
       "AnimName": "rollCube_success"
+    },
+    {
+      "CladEvent": "SdkTextToSpeech",
+      "AnimName": "ag_sdk_speak"
     },
     {
       "CladEvent": "Shiver",
@@ -2040,10 +2067,6 @@
     {
       "CladEvent": "WorkoutWeakLift_mediumEnergy",
       "AnimName": "ag_workout_mediumenergy_weak"
-    },
-    {
-      "CladEvent": "SdkTextToSpeech",
-      "AnimName": "ag_sdk_speak"
-    }    
+    }
   ]
 }

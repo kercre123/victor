@@ -18,8 +18,10 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
+#include "anki/cozmo/basestation/needsSystem/localNotifications.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
+#include "util/global/globalDefinitions.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <assert.h>
 #include <chrono>
@@ -39,6 +41,7 @@ namespace RobotInterface {
 class Robot;
 class CozmoContext;
 class DesiredFaceDistortionComponent;
+class LocalNotifications;
 
 enum class RobotStorageState
 {
@@ -56,7 +59,8 @@ public:
 
   void Init(const float currentTime_s, const Json::Value& inJson,
             const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-            const Json::Value& inDecayJson, const Json::Value& inHandlersJson);
+            const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+            const Json::Value& inLocalNotificationJson);
   void InitAfterConnection();
   void InitAfterSerialNumberAcquired(u32 serialNumber);
 
@@ -70,6 +74,8 @@ public:
   NeedsState& GetCurNeedsStateMutable();
   const NeedsState& GetCurNeedsState();
 
+  const NeedsConfig& GetNeedsConfig() const { return _needsConfig; };
+
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
   void PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState);
 
@@ -78,10 +84,13 @@ public:
     assert(_faceDistortionComponent);
     return *_faceDistortionComponent;
   }
-  const DesiredFaceDistortionComponent& GetDesiredFaceDistortionComponent() const  {
+  const DesiredFaceDistortionComponent& GetDesiredFaceDistortionComponent() const {
     assert(_faceDistortionComponent);
     return *_faceDistortionComponent;
   }
+
+  bool IsPendingSparksRewardMsg() const { return _pendingSparksRewardMsg; }
+  void SparksRewardCommunicatedToUser();
 
   static const char* kLogChannelName;
 
@@ -140,13 +149,16 @@ private:
 
   bool UpdateStarsState(bool cheatGiveStar = false);
 
-  void DetectBracketChangeForDas();
+  void DetectBracketChangeForDas(bool forceSend = false);
   void SendRepairDasEvent(const NeedsState& needsState,
                           const NeedsActionId cause,
                           const RepairablePartId part);
 
   void FormatStringOldAndNewLevels(std::ostringstream& stream,
                                    NeedsState::CurNeedsMap& prevNeedsLevels);
+
+  void SendNeedsLevelsDasEvent(const char * whenTag);
+  void SendTimeSinceBackgroundedDasEvent();
 
   void SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate = NeedsActionId::NoAction);
   void SendNeedsPauseStateToGame();
@@ -169,6 +181,8 @@ private:
   ActionsConfig _actionsConfig;
   std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
 
+  std::shared_ptr<LocalNotifications> _localNotifications;
+
   Time          _savedTimeLastWrittenToDevice;
   Time          _timeLastWrittenToRobot;
   bool          _robotHadValidNeedsData;
@@ -188,6 +202,7 @@ private:
   std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenPaused_s;
   std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenCooldownStarted_s;
   std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenCooldownOver_s;
+  std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenBracketChanged_s;
 
   std::array<std::vector<NeedDelta>, static_cast<size_t>(NeedId::Count)> _queuedNeedDeltas;
 
@@ -209,6 +224,9 @@ private:
   // component to figure out what the current face distortion level should be
   // This gets instantiated when Init is called
   std::unique_ptr<DesiredFaceDistortionComponent> _faceDistortionComponent;
+
+  bool          _pendingSparksRewardMsg;
+  ExternalInterface::FreeplaySparksAwarded _sparksRewardMsg;
 };
 
 

@@ -78,6 +78,13 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private Color _WarningTextColor;
+
+      public static Color WarningTextColor {
+        get { return Instance._WarningTextColor; }
+      }
+
+      [SerializeField]
       private Color _GameSetupColor;
 
       public static Color GameSetupColor {

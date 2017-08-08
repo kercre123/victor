@@ -28,7 +28,7 @@
     "translation": "Locked Ability"
   },
   "unlockable.Mystery.Description": {
-    "translation": "Opening Bonus Boxes sometimes unlocks new Abilities!"
+    "translation": "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
   },
   "unlockable.FistBump.Title": {
     "translation": "Fist Bump"
@@ -199,10 +199,16 @@
     "translation": "Gather Cubes Spark State <placeholder>"
   },
   "unlockable.ComingSoon.Title": {
-    "translation": "Coming Soon!"
+    "translation": "Locked Ability"
   },
   "unlockable.ComingSoon.Description": {
-    "translation": "Opening Bonus Boxes has a possibility of unlocking new Abilities!"
+    "translation": "Fill Cozmo's Play Need daily and unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
+  },
+  "unlockable.GuardDog.Title": {
+    "translation": "Cube Guard"
+  },
+  "unlockable.GuardDog.Description": {
+    "translation": "When Cozmo’s Cubes are close together, he might take a nap while guarding them. Carefully turn his Cubes upside-down without waking him."
   },
   "sparks.Sparked": {
     "translation": "Cozmo is sparked:"
@@ -226,7 +232,7 @@
     "translation": "Not Enough Sparks"
   },
   "sparks.NotEnoughSparks.Desc": {
-    "translation": "Earn more in Freeplay and Bonus Boxes"
+    "translation": "Earn more in Freeplay and Bonus Boxes."
   },
   "sparks.CubesNeedUpright.Title": {
     "translation": "Make Sure Cubes are Upright"
@@ -236,5 +242,8 @@
   },
   "sparks.free": {
     "translation": "Free"
+  },
+  "sparks.notSparkable": {
+    "translation": "Not Sparkable"
   }
 }

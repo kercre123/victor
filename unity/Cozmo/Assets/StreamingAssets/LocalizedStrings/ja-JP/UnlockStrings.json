@@ -7,76 +7,76 @@
     "source_key_paths" : ["/{*}"]
   },
   "unlockable.OSNotSupported.Title" : {
-    "translation" : "要件が満たされない"
+    "translation" : "要件を満たしていません"
   },
   "unlockable.OSNotSupported.Description" : {
-    "translation" : "コードラボにはAndroidが必要です{0}またはより新しい。"
+    "translation" : "コードラボはAndroid{0}以降が必要です。"
   },
   "unlockable.Mystery.Title" : {
-    "translation" : "ロックされた能力"
+    "translation" : "ロックされたモーション/能力"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "オープニングボーナスボックスは時々新しい能力を解放する！"
+    "translation" : "Cozmoのプレイメーターを満たすと、その日のプレイトークンを獲得できます。トークンを獲得すると、スパーク、ゲーム、トリックなどのご褒美が詰まったボーナスボックスのロックが解除されます！"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "グータッチ"
   },
   "unlockable.FistBump.Description" : {
-    "translation" : "あなたが彼を誇りに思っていることをコズモに伝えたいですか？彼にちょっとした拳のバンプをください！このトリックで、Cozmoは空気中で彼の持ち上げを保持し、あなたがそれをバンプするのを待つでしょう。"
+    "translation" : "グータッチをして、Cozmoをほめてあげましょう！Cozmoがリフトを持ち上げたら、あなたはCozmoのリフトにグータッチしてあげます。"
   },
   "unlockable.FistBump.SparkButtonDescription" : {
-    "translation" : "Cozmoに拳をぶつけて尋ねるためにタップします。"
+    "translation" : "タップしてCozmoとグータッチをします。"
   },
   "unlockable.FistBump.SparkedStateDescription" : {
-    "translation" : "彼が準備が整うと、拳はコズモにぶつかる。"
+    "translation" : "Cozmoが準備できたらグータッチをします。"
   },
   "unlockable.PeekABoo.Title" : {
     "translation" : "いないいないばあ"
   },
   "unlockable.PeekABoo.Description" : {
-    "translation" : "ピカブー、私はあなたを参照してください！このトリックで、PeekabooをCozmoでプレイしてください。あなたの顔は手の甲に隠れていて、顔を再現して彼を驚かせることができます。"
+    "translation" : "Cozmoと一緒に「いないいないばあ」で遊びましょう！両手で自分の顔を隠した後に、両手を外し顔を見せてCozmoをビックリさせます。"
   },
   "unlockable.PeekABoo.SparkButtonDescription" : {
-    "translation" : "をタップしてCozmoにPeekabooをプレイするよう依頼する。"
+    "translation" : "タップしてCozmoにいないいないばあをします。"
   },
   "unlockable.PeekABoo.SparkedStateDescription" : {
-    "translation" : "まずいないいないばあそして、あなたの顔を隠します！"
+    "translation" : "まずあなたの顔を隠して、いないいないばあ！"
   },
   "unlockable.Workout.Title" : {
     "translation" : "キューブでエクササイズ"
   },
   "unlockable.Workout.Description" : {
-    "translation" : "ロボットでさえ運動が必要です！このトリックで、Cozmoはキューブを使って一番上の形にとどまることを学びます。"
+    "translation" : "ロボットだってエクササイズが必要です！Cozmoは体調を万全に保つため、キューブでエクササイズできるようになります。"
   },
   "unlockable.Workout.SparkButtonDescription" : {
-    "translation" : "タップするとCozmoに働きかけます。"
+    "translation" : "タップしてCozmoにエクササイズをさせます。"
   },
   "unlockable.Workout.SparkedStateDescription" : {
-    "translation" : "Cozmoがキューブを見つけ、解決してください。"
+    "translation" : "Cozmoがキューブを見つけてエクササイズするのを見てください。"
   },
   "unlockable.CubePounce.Title" : {
     "translation" : "キープアウェー"
   },
   "unlockable.CubePounce.Description" : {
-    "translation" : "このトリックで、Cozmoは反射と反応時間のゲームであるKeepawayのプレイ方法を学びます。"
+    "translation" : "このトリックで、Cozmoはキープアウェーの遊び方を学習します。これは反射神経と反応時間を競うゲームです。"
   },
   "unlockable.FaceEnrollment.Title" : {
     "translation" : "顔認識"
   },
   "unlockable.FaceEnrollment.Description" : {
-    "translation" : "Cozmoは顔を覚えて名前を話すことを学びます。 Meet Cozmoの活動でこれを見つけてください。"
+    "translation" : "Cozmoは顔を覚えて名前を言えるようになります。\u000a\u000aこれは顔認識アクティビティで行います。"
   },
   "unlockable.MemoryMatch.Title" : {
     "translation" : "記憶ゲーム"
   },
   "unlockable.MemoryMatch.Description" : {
-    "translation" : "このトリックで、CozmoはMemory Matchゲームのプレイ方法を学びます。"
+    "translation" : "このトリックで、Cozmoは記憶ゲームの遊び方を学習します。"
   },
   "unlockable.SpeedTap.Title" : {
     "translation" : "クイックタップ"
   },
   "unlockable.SpeedTap.Description" : {
-    "translation" : "このトリックで、Cozmoはゲームクイックタップをプレイする方法を学びます。時間の経過とともに、彼のスキルは向上します！"
+    "translation" : "このトリックで、Cozmoはクイックタップの遊び方を学習します。時間の経過と共にCozmoのスキルは向上します！"
   },
   "unlockable.CodeLab.Title" : {
     "translation" : "コードラボ"
@@ -88,138 +88,150 @@
     "translation" : "ドリブル"
   },
   "unlockable.CubeRollAction.Description" : {
-    "translation" : "コズモは、キューブを右サイドにすることを好む。このトリックでは、キューブを転がすことができます。"
+    "translation" : "Cozmoはキューブを正しい側を上にしておくのが好きです。このトリックにより、特にキューブがCozmoの横にあるときにドリブルできるようになります。"
   },
   "unlockable.CubeRollAction.SparkButtonDescription" : {
-    "translation" : "Cozmoにキューブを巻くように頼むためにタップします。"
+    "translation" : "タップしてCozmoにドリブルをさせます。"
   },
   "unlockable.CubeRollAction.SparkedStateDescription" : {
-    "translation" : "Cozmoが見る最初のキューブを見る。"
+    "translation" : "Cozmoが最初に見たキューブをドリブルするのを見てください。"
   },
   "unlockable.DroneMode.Title" : {
     "translation" : "リモコンモード"
   },
   "unlockable.DroneMode.Description" : {
-    "translation" : "このトリックで、CozmoはExplorerモードで彼を操縦することができます。"
+    "translation" : "このトリックで、あなたはリモコンモードでCozmoを自由自在に動かせるようになります。"
   },
   "unlockable.CubeStackAction.Title" : {
     "translation" : "キューブを重ねる"
   },
   "unlockable.CubeStackAction.Description" : {
-    "translation" : "このトリックで、Cozmoは2つのキューブのスタックを作成できます。"
+    "translation" : "このトリックで、Cozmoは2つのキューブを使って山を作ることができるようになります。"
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
-    "translation" : "Cozmoがキューブのスタックを作成するのを見てください。"
+    "translation" : "Cozmoがキューブの山を作るのを見てください。"
   },
   "unlockable.CubeStackAction.SparkButtonDescription" : {
-    "translation" : "Cozmoに2つの立方体を積み重ねるよう依頼するにはタップします。"
+    "translation" : "タップしてCozmoに2つのキューブを重ねさせます。"
   },
   "unlockable.PounceOnMotionAction.Title" : {
     "translation" : "指にアタック"
   },
   "unlockable.PounceOnMotionAction.Description" : {
-    "translation" : "このトリックで、Cozmoが指のような彼の前の地面での動きを見たとき、彼はうっとりしてそれに拍車をかけます！"
+    "translation" : "このトリックにより、Cozmoが自分の前で指などが動くのを見ると、アタックしようとするようになります。"
   },
   "unlockable.PounceOnMotionAction.SparkButtonDescription" : {
-    "translation" : "Cozmoに指を叩くように頼むためにタップします。"
+    "translation" : "タップしてCozmoに指にアタックさせます。"
   },
   "unlockable.PounceOnMotionAction.SparkedStateDescription" : {
-    "translation" : "Cozmoは彼が見ているどんな動きにも拍車をかけます。"
+    "translation" : "Cozmoは目に入った動くものにアタックします。"
   },
   "unlockable.BuildPyramid.Title" : {
     "translation" : "ピラミッド作り"
   },
   "unlockable.BuildPyramid.Description" : {
-    "translation" : "このトリックで、Cozmoは3つの直立キューブからピラミッドを構築する能力を得ます。"
+    "translation" : "このトリックにより、Cozmoは3つの直立したキューブを使ってピラミッド作りができるようになります。"
   },
   "unlockable.BuildPyramid.SparkButtonDescription" : {
-    "translation" : "Cozmoにピラミッドを構築するよう依頼するにはタップします。"
+    "translation" : "タップしてCozmoにピラミッド作りをさせます。"
   },
   "unlockable.BuildPyramid.SparkedStateDescription" : {
-    "translation" : "Cozmoが3つのキューブからピラミッドを構築するのを見てください。"
+    "translation" : "Cozmoが3つのキューブを使ってピラミッド作りをするのを見てください。"
   },
   "unlockable.PopAWheelieAction.Title" : {
     "translation" : "ウィーリー"
   },
   "unlockable.PopAWheelieAction.Description" : {
-    "translation" : "このトリックで、Cozmoはキューブを使用して自分自身を浮き上がらせ、輪ゴムを叩くことができます。"
+    "translation" : "このトリックにより、Cozmoはキューブを使って自分を持ち上げ、ウィーリーをします。"
   },
   "unlockable.PopAWheelieAction.SparkButtonDescription" : {
-    "translation" : "タップするとコスモにホイールウィーを吹きかけてください。"
+    "translation" : "タップしてCozmoにウィーリーをさせます。"
   },
   "unlockable.PopAWheelieAction.SparkedStateDescription" : {
-    "translation" : "Cozmoがキューブから輪を飛ばすのを見てください。"
+    "translation" : "Cozmoがキューブから離れてウィーリーをするのを見てください。"
   },
   "unlockable.KnockOverThreeCubeStack.Title" : {
     "translation" : "キューブに突撃"
   },
   "unlockable.KnockOverThreeCubeStack.Description" : {
-    "translation" : "このトリックでは、いつでもCozmoがキューブのスタックを見て、彼はそれらをノックすることを決定するかもしれません。"
+    "translation" : "このトリックにより、Cozmoはキューブの山を見るたびにひっくり返そうとするかもしれません。"
   },
   "unlockable.KnockOverThreeCubeStack.SparkButtonDescription" : {
-    "translation" : "Cozmoにスタックをノックするよう頼むためにタップします。"
+    "translation" : "タップしてCozmoにキューブに突撃させます。"
   },
   "unlockable.KnockOverThreeCubeStack.SparkedStateDescription" : {
-    "translation" : "Cozmoのためのキューブのスタックを構築し、先に進む。"
+    "translation" : "Cozmoがひっくり返すためのキューブの山を作ってください。"
   },
   "unlockable.PickupCube.Title" : {
     "translation" : "キューブを拾う"
   },
   "unlockable.PickupCube.Description" : {
-    "translation" : "このトリックで、Cozmoはキューブを拾い上げて持ち運びできるようになります。"
+    "translation" : "このトリックにより、Cozmoはキューブを拾って持ち歩くことができるようになります。"
   },
   "unlockable.PickupCube.SparkButtonDescription" : {
-    "translation" : "Cozmoにキューブを拾うように頼むためにタップします。"
+    "translation" : "タップしてCozmoにキューブを拾わせます。"
   },
   "unlockable.PickupCube.SparkedStateDescription" : {
     "translation" : "Cozmoがキューブを拾うのを見てください。"
   },
   "unlockable.GatherCubes.Title" : {
-    "translation" : "キューブのタイトルを収集<placeholder>"
+    "translation" : "キューブのタイトル<placeholder>を収集します"
   },
   "unlockable.GatherCubes.Description" : {
-    "translation" : "キューブの説明を収集<placeholder>"
+    "translation" : "キューブの説明<placeholder>を収集します"
   },
   "unlockable.GatherCubes.SparkButtonDescription" : {
-    "translation" : "キューブスパークボタンを収集<placeholder>"
+    "translation" : "キューブのスパークボタン<placeholder>を収集します"
   },
   "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "キューブスパーク状態を収集<placeholder>"
+    "translation" : "キューブのスパーク状態<placeholder>を収集します"
   },
   "unlockable.ComingSoon.Title" : {
-    "translation" : "近日公開！"
+    "translation" : "ロックされたモーション/能力"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "オープニングボーナスボックスは、新しい能力を解き放つ可能性があります！"
+    "translation" : "Cozmoのプレイメーターを毎日満たすことで、スパークやトリックなどのご褒美が詰まったボーナスボックスを獲得できます！"
+  },
+  "unlockable.GuardDog.Title" : {
+    "translation" : "キューブガード"
+  },
+  "unlockable.GuardDog.Description" : {
+    "translation" : "Cozmoのキューブが近くにあると、Cozmoはキューブを守りながら寝てしまうことがあります。Cozmoを起こさないように注意して、キューブを裏返しましょう。"
   },
   "sparks.Sparked" : {
-    "translation" : "コズモがきっかけされています。"
+    "translation" : "Cozmoはスパークで指示されました："
   },
   "sparks.SparkCozmo" : {
-    "translation" : "コズモスパーク"
+    "translation" : "Cozmoにスパークする"
   },
   "sparks.Spark" : {
     "translation" : "スパーク"
   },
   "sparks.Spark.plural" : {
-    "translation" : "スパークス"
+    "translation" : "スパーク"
   },
   "sparks.Spark.ConfirmQuit" : {
-    "translation" : "コズモがきっかけです！"
+    "translation" : "Cozmoはスパークで指示されました！"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
-    "translation" : "彼が行われる前にあなたがままにしておくと、コズモはもはやきっかけません。"
+    "translation" : "Cozmoが完了する前に離れると、Cozmoはもうスパークで指示された状態でなくなります。"
   },
   "sparks.NotEnoughSparks.Title" : {
-    "translation" : "不十分なスパーク"
+    "translation" : "スパークが足りません"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "フリープレイとボーナスボックスでさらに獲得"
+    "translation" : "フリープレイやボーナスボックスからもっと獲得します。"
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "キューブが直立していることを確認します"
   },
   "sparks.CubesNeedUpright.Desc" : {
-    "translation" : "キューブがライトアップして立てば、Cozmoはより迅速に構築できます。"
+    "translation" : "キューブが正しい面を上にして直立していると、Cozmoはよりすばやく組み立てられます。"
+  },
+  "sparks.free" : {
+    "translation" : "無料"
+  },
+  "sparks.notSparkable" : {
+    "translation" : "スパークを獲得できません"
   }
 }

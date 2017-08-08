@@ -40,7 +40,7 @@
     "translation": "Cozmo has seen\nthis Cube."
   },
   "helpTipsStrings.Slide2.subtitle2": {
-    "translation": "Cozmo wants to\nuse this Cube"
+    "translation": "Cozmo wants to\nuse this Cube."
   },
   "helpTipsStrings.Slide2.subtitle3": {
     "translation": "This Cube is low\non batteries"
@@ -49,34 +49,19 @@
     "translation": "Cozmo gets better over time."
   },
   "helpTipsStrings.Slide3.body": {
-    "translation": "<b><color=#ff69b4>!FPO!</color></b>: Each day you fill Cozmo's yellow Play bar, you earn a Bonus Token. Bonus Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Abilities."
+    "translation": "Each day you fill Cozmo's Play Need, you earn a Play Token. Play Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Tricks."
   },
   "helpTipsStrings.Slide3.bodyUpgrade": {
-    "translation": "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
+    "translation": "<color=#FFFFFF>Earn </color><b><color=#F5BF2D>Play Tokens</color></b><color=#FFFFFF> each day.</color>"
   },
   "helpTipsStrings.Slide3.bodyApp": {
-    "translation": "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
-  },
-  "helpTipsStrings.Slide4.title": {
-    "translation": "Energy, Bits, and Sparks"
-  },
-  "helpTipsStrings.Slide4.body": {
-    "translation": "Earn <color=#00bd3dff>Energy</color> by completing your Daily Goals. Energy rewards you with <color=#fe8f00ff>Bits</color> and <color=#11a2f0ff>Sparks</color>: use these to unlock Cozmo's Upgrades & Apps!"
-  },
-  "helpTipsStrings.Slide4.bodyEnergy": {
-    "translation": "Energy"
-  },
-  "helpTipsStrings.Slide4.bodyBits": {
-    "translation": "Bits"
-  },
-  "helpTipsStrings.Slide4.bodySparks": {
-    "translation": "Sparks"
+    "translation": "<color=#FFFFFF>3 Tokens unlock a </color><b><color=#F5BF2D>Bonus Box.</color></b>"
   },
   "helpTipsStrings.Slide5.title": {
     "translation": "Check in on Cozmo."
   },
   "helpTipsStrings.Slide5.body": {
-    "translation": "Launch the Cozmo App to check in each day to keep Cozmo happy and help him learn and grow through unlocking more Abilities. Connect to Cozmo to wake him up and give him the attention he needs."
+    "translation": "Launch the Cozmo App to check in each day to keep Cozmo happy. When you fill his Play Need daily, you help him learn and grow by earning Bonus Boxes. Connect to Cozmo to wake him up and give him the attention he needs."
   },
   "helpTipsStrings.Slide6.title": {
     "translation": "Keep Cozmo safe."

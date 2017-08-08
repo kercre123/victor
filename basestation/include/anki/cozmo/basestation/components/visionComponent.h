@@ -83,6 +83,8 @@ struct DockingErrorSignal;
     // Calibration must be provided before Update() will run
     void SetCameraCalibration(Vision::CameraCalibration& camCalib);
     
+    bool IsDisplayingProcessedImagesOnly() const;
+    
     // Provide next image for processing, with corresponding robot state.
     // In synchronous mode, the image is processed immediately. In asynchronous
     // mode, it will be processed as soon as the current image is completed.

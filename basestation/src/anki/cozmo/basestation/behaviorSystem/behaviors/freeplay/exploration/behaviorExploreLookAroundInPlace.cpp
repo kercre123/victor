@@ -124,10 +124,6 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   } else {
     _configParams.behavior_NumberOfScansBeforeStop = 0;
   }
-  // turn speed
-  _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
-  _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec", debugName);
-  _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec", debugName);
   // chance that the main turn will be counter clockwise (vs ccw)
   _configParams.s0_MainTurnCWChance = ParseFloat(config, "s0_MainTurnCWChance", debugName);
   // [min,max] range for random turn angles for step 1
@@ -164,6 +160,28 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s6_BodyAngleRangeMax_deg = ParseFloat(config, "s6_BodyAngleRangeMax_deg", debugName);
   _configParams.s6_HeadAngleRangeMin_deg = ParseFloat(config, "s6_HeadAngleRangeMin_deg", debugName);
   _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg", debugName);
+
+  if( config.isMember("motionProfile") ) {
+    
+    _configParams.customMotionProfile = std::make_unique<PathMotionProfile>();
+    _configParams.customMotionProfile->SetFromJSON(config["motionProfile"]);
+
+    ANKI_VERIFY( !config.isMember("sx_BodyTurnSpeed_degPerSec"),
+                 debugName.c_str(),
+                 "Using motion profile, shouldn't set body turn speed in JSON" );
+    ANKI_VERIFY( !config.isMember("sxt_HeadTurnSpeed_degPerSec"),
+                 debugName.c_str(),
+                 "Using motion profile, shouldn't set sxt head turn speed in JSON" );
+    ANKI_VERIFY( !config.isMember("sxh_HeadTurnSpeed_degPerSec"),
+                 debugName.c_str(),
+                 "Using motion profile, shouldn't set sxh head turn speed in JSON" );
+  }
+  else {
+    // manual turn speeds
+    _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec", debugName);
+    _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec", debugName);
+    _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec", debugName);
+  }
   
 }
 
@@ -171,7 +189,11 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting first iteration");
-  
+
+  if( _configParams.customMotionProfile != nullptr ) {
+    SmartSetMotionProfile( *_configParams.customMotionProfile );
+  }
+
   // grab run values
   _behaviorBodyFacingDone_rad = 0;
   _coneSidesReached = 0;
@@ -550,8 +572,12 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(Robot& ro
   const Radians bodyTargetAngleAbs_rad( _iterationStartingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
-  turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
-  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
+
+  if( _configParams.customMotionProfile == nullptr ) {
+    // only set speeds if the motion profile won't be doing it for us
+    turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
+    turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
+  }
 
 // Code for debugging
 //  PRINT_NAMED_WARNING("RSAM", "STATE %s (bh) set BODY %.2f, HEAD %.2f (curB %.2f, curH %.2f)",
@@ -586,14 +612,25 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(Robot& robot,
   const Radians bodyTargetAngleAbs_rad( DEG_TO_RAD(bodyReference_deg + bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
-  turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
-  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
-  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".PanAndTilt").c_str(), "Body %.2f, Head %.2f, BSpeed %.2f, HSpeed %.2f",
-    bodyTargetAngleAbs_rad.getDegrees(),
-    headTargetAngleAbs_rad.getDegrees(),
-    bodyTurnSpeed_degPerSec,
-    headTurnSpeed_degPerSec);
+  if( _configParams.customMotionProfile == nullptr ) {
+    // only set speeds if the motion profile won't be doing it for us
+    turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
+    turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
+
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".PanAndTilt").c_str(), "Body %.2f, Head %.2f, BSpeed %.2f, HSpeed %.2f",
+                  bodyTargetAngleAbs_rad.getDegrees(),
+                  headTargetAngleAbs_rad.getDegrees(),
+                  bodyTurnSpeed_degPerSec,
+                  headTurnSpeed_degPerSec);
+  }
+  else {
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".PanAndTilt").c_str(), "Body %.2f, Head %.2f, Speed from profile",
+                  bodyTargetAngleAbs_rad.getDegrees(),
+                  headTargetAngleAbs_rad.getDegrees());
+  }
+
+
   
 // code for debugging
 //  PRINT_NAMED_WARNING("RSAM", "STATE %s (ho) set BODY %.2f, HEAD %.2f (curB %.2f, curH %.2f)",

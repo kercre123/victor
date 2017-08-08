@@ -12,6 +12,8 @@
 #ifndef __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypes_H_
 #define __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypes_H_
 
+#if THF_FUNCTIONALITY
+
 extern "C" {
 #ifndef bool
 #define bool_needsreset
@@ -70,5 +72,7 @@ static RecogDataSP MakeRecogDataSP(Args&& ...args)
 
 } // end namespace Cozmo
 } // end namespace Anki
+
+#endif // THF_FUNCTIONALITY
 
 #endif // __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypes_H_

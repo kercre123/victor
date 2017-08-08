@@ -75,8 +75,8 @@ __VectorTable   DCD     0                              ; Top of Stack
                 DCD     TIM1_CC_IRQHandler             ; TIM1 Capture Compare
                 DCD     0                              ; Reserved
                 DCD     TIM3_IRQHandler                ; TIM3
-                DCD     TIM6_IRQHandler                ; TIM6
-                DCD     TIM7_IRQHandler                ; TIM7
+                DCD     0                              ; Reserved
+                DCD     0                              ; Reserved
                 DCD     TIM14_IRQHandler               ; TIM14
                 DCD     TIM15_IRQHandler               ; TIM15
                 DCD     TIM16_IRQHandler               ; TIM16
@@ -87,7 +87,6 @@ __VectorTable   DCD     0                              ; Top of Stack
                 DCD     SPI2_IRQHandler                ; SPI2
                 DCD     USART1_IRQHandler              ; USART1
                 DCD     USART2_IRQHandler              ; USART2
-                DCD     USART3_6_IRQHandler            ; USART3, USART4, USART5, USART6
 
                 AREA    |.text|, CODE, READONLY
 

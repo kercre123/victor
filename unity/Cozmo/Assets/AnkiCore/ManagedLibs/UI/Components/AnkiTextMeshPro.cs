@@ -415,9 +415,23 @@ namespace Anki.Core.UI.Components {
     protected override void Start() {
       base.Start();
 
-      if (Application.isPlaying && !string.IsNullOrEmpty(ThemeSystemUtils.sInstance.GetCurrentThemeId()) &&
+      if (Application.isPlaying && ThemeSystemUtils.sInstance != null &&
+          !string.IsNullOrEmpty(ThemeSystemUtils.sInstance.GetCurrentThemeId()) &&
           !string.IsNullOrEmpty(ThemeSystemUtils.sInstance.GetCurrentSkinId())) {
-        UpdateSkinnableElements(ThemesJson.GetCurrentTheme().Id, ThemesJson.GetCurrentThemeSkin().Id);
+        UpdateSkinnableElements(ThemeSystemUtils.sInstance.GetCurrentThemeId(),
+                                ThemeSystemUtils.sInstance.GetCurrentSkinId());
+      }
+      else if (Application.isPlaying) {
+        string errorMessage = string.Format("Failed to skin text '{0}' because ", name);
+        if (ThemeSystemUtils.sInstance == null) {
+          errorMessage += "ThemeSystemUtils.sInstance is null.";
+        }
+        else {
+          errorMessage += string.Format("Theme is '{0}', Skin is '{1}'",
+                                        ThemeSystemUtils.sInstance.GetCurrentThemeId(),
+                                        ThemeSystemUtils.sInstance.GetCurrentSkinId());
+        }
+        DAS.Error(this, errorMessage);
       }
 
     }

@@ -46,9 +46,9 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
-#include "clad/types/voiceCommandTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/memoryMap.clad"
+#include "util/ankiLab/ankiLabDef.clad"
 
 namespace Anki {
 namespace Cozmo {

@@ -7,69 +7,69 @@
     "source_key_paths" : ["/{*}"]
   },
   "song.title.camptown" : {
-    "translation" : "Camptown-Rennen"
+    "translation" : "Camptown Races"
   },
   "song.title.itsyBitsySpider" : {
-    "translation" : "winzigkleine Spinne"
+    "translation" : "Itsy Bitsy Spider"
   },
   "song.title.beethoven" : {
-    "translation" : "Beethovens 5. Symphonie"
+    "translation" : "Beethovens 5. Sinfonie"
   },
   "song.title.popGoesTheWeasel" : {
-    "translation" : "Pop geht das Wiesel"
+    "translation" : "Pop! Goes The Weasel"
   },
   "song.title.rowYourBoat" : {
-    "translation" : "Ruder dein Boot"
+    "translation" : "Row Your Boat"
   },
   "song.title.pachebelCanon" : {
-    "translation" : "Pachelbels Canon"
+    "translation" : "Pachelbel-Kanon"
   },
   "song.title.odeToJoy" : {
-    "translation" : "Beethovens 9. Symphonie"
+    "translation" : "Beethovens 9. Sinfonie"
   },
   "song.title.twinkleTwinkle" : {
-    "translation" : "Funkel, funkel kleiner Stern"
+    "translation" : "Twinkle, Twinkle, Little Star"
   },
   "song.title.frereJaqcues" : {
-    "translation" : "Frère Jacques"
+    "translation" : "Bruder Jakob"
   },
   "song.title.maryHadALittleLamb" : {
-    "translation" : "Mary hatte ein kleines Lamm"
+    "translation" : "Mary Had a Little Lamb"
   },
   "song.title.takeMeOutToTheBallgame" : {
-    "translation" : "Hol mich raus zum Ballspiel"
+    "translation" : "Take Me Out to the Ball Game"
   },
   "song.title.williamTell" : {
-    "translation" : "William Tell Ouvertüre"
+    "translation" : "Ouvertüre von \"Wilhelm Tell\""
   },
   "song.title.yankeeDoodle" : {
     "translation" : "Yankee Doodle"
   },
   "song.title.beautifulDreamer" : {
-    "translation" : "Wunderschöner Träumer"
+    "translation" : "Beautiful Dreamer"
   },
   "song.title.mountainKing" : {
-    "translation" : "Hall des Bergkönigs"
+    "translation" : "In der Halle des Bergkönigs"
   },
   "song.title.taRaRaBoom" : {
-    "translation" : "Ta Ra Ra Boom De Ay"
+    "translation" : "Ta-ra-ra Boom-de-ay"
   },
   "song.title.entryOfTheGladiators" : {
-    "translation" : "Eintragung der Gladiatoren"
+    "translation" : "Einzug der Gladiatoren"
   },
   "song.title.helloMyBaby" : {
-    "translation" : "Hallo mein Schatz"
+    "translation" : "Hello! Ma Baby"
   },
   "song.title.turkeyInTheStraw" : {
-    "translation" : "Die Türkei im Stroh"
+    "translation" : "Turkey in the Straw"
   },
   "song.title.londonBridge" : {
-    "translation" : "London Bridge fällt hinunter"
+    "translation" : "London Bridge Is Falling Down"
   },
   "song.title.sakura" : {
-    "translation" : "Sakura"
+    "translation" : "Sakura-Lied"
   },
   "song.title.mussIDenn" : {
-    "translation" : "Muss I Denn"
+    "translation" : "Muss i denn, muss i denn zum Städtele hinaus"
   }
 }

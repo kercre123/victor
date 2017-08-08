@@ -32,6 +32,7 @@ namespace ExternalInterface {
 struct RobotObservedObject;
 }
 class IAction;
+struct PathMotionProfile;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorExploreLookAroundInPlace
@@ -133,10 +134,16 @@ protected:
     bool    behavior_ShouldLowerLift;
     float   behavior_AngleOfFocus_deg;
     uint8_t behavior_NumberOfScansBeforeStop; // if 0 it will loop as long as it's not kicked out
-    // turn speed
-    float sx_BodyTurnSpeed_degPerSec;
-    float sxt_HeadTurnSpeed_degPerSec; // for turn states
-    float sxh_HeadTurnSpeed_degPerSec; // for head move states
+
+    // turn speed (optional, specify this XOR the motion profile)
+    float sx_BodyTurnSpeed_degPerSec = 0.0f;
+    float sxt_HeadTurnSpeed_degPerSec = 0.0f; // for turn states
+    float sxh_HeadTurnSpeed_degPerSec = 0.0f; // for head move states
+
+    // instead of turn speeds, the user can optionally specify a motion profile (must specify this XOR turn
+    // speeds above)
+    std::unique_ptr<PathMotionProfile> customMotionProfile;
+    
     // chance that the main turn will be counter clockwise (vs ccw)
     float s0_MainTurnCWChance;
     // [min,max] range for random turn angles for step 1

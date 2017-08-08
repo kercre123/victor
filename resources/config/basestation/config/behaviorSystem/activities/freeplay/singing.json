@@ -23,12 +23,6 @@
           "flatScore": 10
         }
       },
-      { "behaviorID" : "Singing_CozMambo",
-        "scoring" :
-        {
-          "flatScore": 10
-        }
-      },
       { "behaviorID" : "Singing_EntryOfTheGladiators",
         "scoring" :
         {
@@ -143,6 +137,12 @@
           "flatScore": 10
         }
       }
+    ]
+  },
+  "interludeBehaviorChooser": {
+    "type": "StrictPriority",
+    "behaviors": [
+      "EarnedSparks"
     ]
   },
   "activityStrategy":

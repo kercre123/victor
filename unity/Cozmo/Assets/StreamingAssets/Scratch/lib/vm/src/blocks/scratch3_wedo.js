@@ -19,10 +19,12 @@ var Scratch3CozmoBlocks = function (runtime) {
 Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
+        cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         cozmo_drive_forward: this.driveForward,
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
         cozmo_drive_backward_fast: this.driveBackwardFast,
+        cozmo_play_animation_from_dropdown: this.playAnimationFromDropdown,
         cozmo_happy_animation: this.playHappyAnimation,
         cozmo_victory_animation: this.playVictoryAnimation,
         cozmo_unhappy_animation: this.playUnhappyAnimation,
@@ -72,7 +74,14 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         // Cubes
         cozmo_vert_cube_get_is_visible: this.verticalCubeGetIsVisible,
         cozmo_vert_cube_get_position_2d: this.verticalCubeGetPosition2d,
-        cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d
+        cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d,
+        cozmo_vert_cube_get_pitch: this.verticalCubeGetPitch,
+        cozmo_vert_cube_get_roll: this.verticalCubeGetRoll,
+        cozmo_vert_cube_get_yaw: this.verticalCubeGetYaw,
+        // Devices
+        cozmo_vert_device_get_pitch: this.verticalDeviceGetPitch,
+        cozmo_vert_device_get_roll: this.verticalDeviceGetRoll,
+        cozmo_vert_device_get_yaw: this.verticalDeviceGetYaw
     };
 };
 
@@ -160,6 +169,29 @@ Scratch3CozmoBlocks.prototype.playAnimationHelper = function(args, util, animNam
     return this._promiseForCommand(requestId);
 };
 
+Scratch3CozmoBlocks.prototype.playAnimationHelperVertical = function(args, util, animName, isMystery) {
+    isMystery = isMystery || 0;  // if undefined force to 0 as a default value
+    var requestId = this._getRequestId();
+    var shouldIgnoreBodyTrack = Cast.toBoolean(args.IGNORE_WHEELS);
+    var shouldIgnoreHead = Cast.toBoolean(args.IGNORE_HEAD);
+    var shouldIgnoreLift = Cast.toBoolean(args.IGNORE_LIFT);
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery, argBool: shouldIgnoreBodyTrack, argBool2: shouldIgnoreHead, argBool3: shouldIgnoreLift});
+
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function(args, util) {
+    var animName = Cast.toString(args.ANIMATION);
+    if (animName == 'mystery'){
+        var randomAnim = this._getAnimation(animName);
+        return this.playAnimationHelperVertical(args, util, randomAnim, 1);
+    }
+    else{
+        return this.playAnimationHelperVertical(args, util, animName);
+    }
+};
+
 Scratch3CozmoBlocks.prototype.playHappyAnimation = function(args, util) {
     return this.playAnimationHelper(args, util, "happy");
 };
@@ -227,7 +259,7 @@ Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
     window.Unity.call({requestId: requestId, command: "cozmoForklift", argString: liftHeight});
 
     return this._promiseForCommand(requestId);
-};    
+};
 
 Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
     var headAngle = Cast.toString(args.CHOICE);
@@ -486,6 +518,14 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function(args, util) {
     return commandPromise;
 };      
 
+Scratch3CozmoBlocks.prototype.setCubeLightCorners = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var color1 = this._getColor(Cast.toString(args.CORNER_1_COLOR));
+    var color2 = this._getColor(Cast.toString(args.CORNER_2_COLOR));
+    var color3 = this._getColor(Cast.toString(args.CORNER_3_COLOR));
+    var color4 = this._getColor(Cast.toString(args.CORNER_4_COLOR));
+    window.Unity.call({requestId: -1, command: "cozmoSetCubeLightCorners", argUInt: color1, argUInt2: color2, argUInt3: color3, argUInt4: color4, argUInt5: cubeIndex});
+}
 // =================
 // Sensors / Inputs:
 // =================
@@ -597,5 +637,36 @@ Scratch3CozmoBlocks.prototype.verticalCubeGetPosition3d = function(args, util) {
     return getVector3Axis(srcCube.pos, axis);
 };
 
+Scratch3CozmoBlocks.prototype.verticalCubeGetPitch = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.pitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetRoll = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.roll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetYaw = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    return Cast.toNumber(srcCube.yaw_d);
+};
+
+// Devices
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetPitch = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.pitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetRoll = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.roll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalDeviceGetYaw = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.device.yaw_d);
+};
 
 module.exports = Scratch3CozmoBlocks;

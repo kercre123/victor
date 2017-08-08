@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "FeedingReactSeeCharged",
+  
+  "animTriggers": ["FeedingReactToSeeCube_Normal"]
+}

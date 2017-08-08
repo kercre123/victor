@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # Based off answer at http://stackoverflow.com/questions/2412816/how-can-i-get-the-source-lines-inline-with-the-assembly-output-using-gcc
 

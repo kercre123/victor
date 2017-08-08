@@ -7,8 +7,11 @@
 #include "motors.h"
 #include "power.h"
 #include "opto.h"
+#include "lights.h"
+#include "mics.h"
+#include "touch.h"
 
-#include "schema/messages.h"
+#include "messages.h"
 
 using namespace Anki::Cozmo::Spine;
 
@@ -72,20 +75,21 @@ void Comms::init(void) {
   // Setup our constants for outbound data
   outboundPacket.header.sync_bytes = SYNC_BODY_TO_HEAD;
   outboundPacket.header.payload_type = PAYLOAD_DATA_FRAME;
-  outboundPacket.header.bytes_to_follow = sizeof(outboundPacket.payload);
 
   // Configure our interrupts
-  NVIC_SetPriority(USART1_IRQn, 2);
+  NVIC_SetPriority(USART1_IRQn, PRIORITY_SPINE_COMMS);
   NVIC_EnableIRQ(USART1_IRQn);
-  NVIC_SetPriority(DMA1_Channel4_5_IRQn, 2);
+  NVIC_SetPriority(DMA1_Channel4_5_IRQn, PRIORITY_SPINE_COMMS);
   NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
-  
+
   missed_frames = 0;
 }
 
 void Comms::tick(void) {
   Motors::transmit(&outboundPacket.payload);
   Opto::transmit(&outboundPacket.payload);
+  Mics::transmit(outboundPacket.payload.audio);
+  Touch::transmit(outboundPacket.payload.touchLevel);
 
   if (missed_frames++ >= MAX_MISSED_FRAMES) {
     // Reset but don't pull power
@@ -93,7 +97,9 @@ void Comms::tick(void) {
   }
 
   // Finalize the packet
-  outboundPacket.payload.framecounter++; 
+  outboundPacket.header.bytes_to_follow = sizeof(outboundPacket.payload);
+  outboundPacket.payload.framecounter++;
+
   outboundPacket.footer.checksum = crc(&outboundPacket.payload, sizeof(outboundPacket.payload) / sizeof(uint32_t));
 
   // Fire out ourbound data
@@ -101,7 +107,7 @@ void Comms::tick(void) {
   DMA1_Channel3->CPAR = (uint32_t)&USART1->TDR;
   DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
   DMA1_Channel3->CNDTR = sizeof(outboundPacket);
-  
+
   DMA1_Channel3->CCR = DMA_CCR_MINC
                      | DMA_CCR_DIR
                      | DMA_CCR_EN;
@@ -145,6 +151,7 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
     case PAYLOAD_DATA_FRAME:
       missed_frames = 0;
       Motors::receive(&inboundPacket.payload);
+      Lights::receive(inboundPacket.payload.ledColors);
       break ;
     default:
       break ;

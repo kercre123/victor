@@ -24,14 +24,18 @@
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/languagePhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/phraseData.h"
-#include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "audioUtil/audioRecognizerProcessor.h"
+#include "audioUtil/speechRecognizer.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
+
+#if THF_FUNCTIONALITY
+  #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
+#endif // THF_FUNCTIONALITY
 
 #include <functional>
 
@@ -65,7 +69,7 @@ void HearVoiceCommand(ConsoleFunctionContextRef context)
 CONSOLE_FUNC(HearVoiceCommand, "VoiceCommand", int command);
 
 }
-#endif
+#endif // REMOTE_CONSOLE_ENABLED
   
   
 VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
@@ -74,9 +78,13 @@ VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
   DevLoggingSystem::GetInstance() ?
   Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), "capturedAudio"} ):
   "" })
-, _captureSystem(new AudioUtil::AudioCaptureSystem{})
 , _phraseData(new CommandPhraseData())
 {
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
+  _captureSystem.reset(new AudioUtil::AudioCaptureSystem{});
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
+  
+#if VC_BROADCASTING_FUNCTIONALITY
   auto* extInterface = _context.GetExternalInterface();
   if (nullptr != extInterface)
   {
@@ -84,7 +92,11 @@ VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
     
     helper.SubscribeGameToEngine<MessageGameToEngineTag::VoiceCommandEvent>();
   }
+#endif // VC_BROADCASTING_FUNCTIONALITY
+  
+#if REMOTE_CONSOLE_ENABLED
   sThis = this;
+#endif // REMOTE_CONSOLE_ENABLED
 }
   
 VoiceCommandComponent::~VoiceCommandComponent()
@@ -95,6 +107,7 @@ VoiceCommandComponent::~VoiceCommandComponent()
 bool VoiceCommandComponent::Init()
 {
   // Set up the AudioCaptureSystem
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
   {
     _captureSystem->Init();
     if (!ANKI_VERIFY(_captureSystem->IsValid(), "VoiceCommandComponent.Init", "CaptureSystem Init failed"))
@@ -103,8 +116,10 @@ bool VoiceCommandComponent::Init()
     }
     _captureSystem->StartRecording();
   }
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
   
   // Set up the SpeechRecognizer
+#if THF_FUNCTIONALITY
   {
     const auto* dataLoader = _context.GetDataLoader();
     if (!ANKI_VERIFY(dataLoader != nullptr, "VoiceCommandComponent.Init", "DataLoader missing"))
@@ -160,6 +175,7 @@ bool VoiceCommandComponent::Init()
     UpdateContextForRecognizer();
     _recognizer->Start();
   }
+#endif // THF_FUNCTIONALITY
   
   // Set up the RecognizerProcessor
   {
@@ -170,7 +186,9 @@ bool VoiceCommandComponent::Init()
     }
     
     _recogProcessor->SetSpeechRecognizer(_recognizer.get());
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
     _recogProcessor->SetAudioInputSource(_captureSystem.get());
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
     _recogProcessor->Start();
   }
   
@@ -217,6 +235,7 @@ void VoiceCommandComponent::UpdateContextForRecognizer()
   }
 }
 
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
 // NOTE: This will be called by this or another thread via the callback that is referenced within.
 bool VoiceCommandComponent::RequestEnableVoiceCommand(AudioCaptureSystem::PermissionState permissionState)
 {
@@ -291,6 +310,7 @@ bool VoiceCommandComponent::StateRequiresCallback(AudioCaptureSystem::Permission
     }
   }
 }
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
   
 void VoiceCommandComponent::Update()
 {
@@ -477,17 +497,21 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
   
   if (heardTriggerPhrase && robot && _commandLightTimeRemaining_s < 0.f)
   {
+    static const ColorRGBA kGrey0 = ColorRGBA(0.3f, 0.3f, 0.3f);
+    static const ColorRGBA kGrey1 = ColorRGBA(0.5f, 0.5f, 0.5f);
+    static const ColorRGBA kGrey2 = ColorRGBA(0.9f, 0.9f, 0.9f);
+    
     static const BackpackLights kHeardCommandLights = {
-      .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLUE}},
+      .onColors               = {{NamedColors::BLACK, kGrey0, kGrey2, kGrey1}},
       .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-      .onPeriod_ms            = {{0,0,0,1450}},
-      .offPeriod_ms           = {{0,0,0,1000}},
-      .transitionOnPeriod_ms  = {{0,0,0,50}},
-      .transitionOffPeriod_ms = {{0,0,0,500}},
+      .onPeriod_ms            = {{0,120,475,270}},
+      .offPeriod_ms           = {{0,3000,3000,3000}},
+      .transitionOnPeriod_ms  = {{0,150,25,90}},
+      .transitionOffPeriod_ms = {{0,330,100,240}},
       .offset                 = {{0,0,0,0}}
     };
     
-    static constexpr auto kIndexOfVoiceLight = Util::EnumToUnderlying(LEDId::LED_BACKPACK_3);
+    static constexpr auto kIndexOfVoiceLight = Util::EnumToUnderlying(LEDId::LED_BACKPACK_2);
     
     // Add up the time we transition on, stay on, and transition off to figure out how long we should display.
     static const float kTimeForCommandLight_s = Util::numeric_cast<float>(0.001f * (100 + // Add in a little time for the light to be off
@@ -500,6 +524,7 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
   }
 }
 
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
 // NOTE: The duplication (and thus conversion) of permission state types is due to not wanting to require a CLAD definition type
 // for AudioUtil (so it can stand alone and be shared), but still wanting to use CLAD types when communicating in Cozmo code.
 AudioCapturePermissionState VoiceCommandComponent::ConvertAudioCapturePermission(AudioUtil::AudioCaptureSystem::PermissionState state)
@@ -512,6 +537,7 @@ AudioCapturePermissionState VoiceCommandComponent::ConvertAudioCapturePermission
     case AudioCaptureSystem::PermissionState::DeniedNoRetry:    return AudioCapturePermissionState::DeniedNoRetry;
   }
 }
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
 
 template<>
 void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
@@ -521,8 +547,10 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
   {
     case VoiceCommandEventUnionTag::requestStatusUpdate:
     {
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
       BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled,
                                                   ConvertAudioCapturePermission(_captureSystem->GetPermissionState(_permRequestAlreadyDenied))));
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
       break;
     }
     case VoiceCommandEventUnionTag::changeEnabledStatus:
@@ -532,6 +560,7 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
       
       if (desiredEnabledState)
       {
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
         // First request enabling based on current permission state
         _commandRecogEnabled = RequestEnableVoiceCommand(_captureSystem->GetPermissionState(_permRequestAlreadyDenied));
         
@@ -542,13 +571,17 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
         {
           BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled, ConvertAudioCapturePermission(resultingPermState)));
         }
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
       }
       else
       {
         _commandRecogEnabled = false;
         UpdateContextForRecognizer();
+        
+#if VC_AUDIOCAPTURE_FUNCTIONALITY
         BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled,
                                                     ConvertAudioCapturePermission(_captureSystem->GetPermissionState(_permRequestAlreadyDenied))));
+#endif // VC_AUDIOCAPTURE_FUNCTIONALITY
       }
       break;
     }
@@ -614,6 +647,7 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
     return;
   }
   
+#if THF_FUNCTIONALITY
   // We only support forcing commands on our special kind of recognizer
   auto* recogTHF = dynamic_cast<SpeechRecognizerTHF*>(_recognizer.get());
   if (recogTHF == nullptr)
@@ -622,6 +656,7 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
   }
     
   recogTHF->SetForceHeardPhrase(phrase);
+#endif // THF_FUNCTIONALITY
 }
 
 

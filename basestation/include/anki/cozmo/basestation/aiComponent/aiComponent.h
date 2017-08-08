@@ -77,7 +77,7 @@ public:
   inline RequestGameComponent& GetNonConstRequestGameComponent() const { assert(_requestGameComponent); return *_requestGameComponent;}
 
   inline DoATrickSelector& GetDoATrickSelector()  { assert(_doATrickSelector); return *_doATrickSelector; }
-
+  
   
   ////////////////////////////////////////////////////////////////////////////////
   // Update and init
@@ -92,10 +92,19 @@ public:
 
   void OnRobotDelocalized();
   void OnRobotRelocalized();
+  
+  ////////////////////////////////////////////////////////////////////////////////
+  // Accessors
+  ////////////////////////////////////////////////////////////////////////////////
+  
+  inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
 
 private:
 
   Robot& _robot;
+  bool   _suddenObstacleDetected;
+  
+  void CheckForSuddenObstacle();
   
   // module to analyze information for the AI in processes common to more than one behavior, for example
   // border calculation
@@ -123,6 +132,7 @@ private:
   
   // component which behaviors can delegate to for selecting a random Trick / Spark
   std::unique_ptr<DoATrickSelector>    _doATrickSelector;
+  
 
 };
 

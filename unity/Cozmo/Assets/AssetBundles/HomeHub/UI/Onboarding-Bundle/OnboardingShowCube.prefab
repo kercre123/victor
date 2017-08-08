@@ -213,10 +213,12 @@ MonoBehaviour:
   _DimBackground: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 1
-  _PlayIdle: 0
+  _LoopedAnim:
+    _EnumValueAsString: Count
+    _EnumValue: 515
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 490
+    _EnumValue: 515
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 3
   _OverrideTickerKey: 
@@ -228,6 +230,13 @@ MonoBehaviour:
   - -1
   - -1
   _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 48
+  _ForceNeedValuesOnEvent:
   - -1
   - -1
   - -1
@@ -1250,8 +1259,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
-  m_sharedMaterial: {fileID: 2134148, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
+  m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1275,12 +1284,12 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 108
+  m_fontSize: 90
   m_fontSizeBase: 100
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 98
-  m_fontSizeMax: 108
+  m_fontSizeMin: 65
+  m_fontSizeMax: 90
   m_fontStyle: 0
   m_textAlignment: 513
   m_isAlignmentEnumConverted: 1
@@ -1341,16 +1350,16 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: Helpscreen_Text_Large
+  _LinkedComponentId: Onboarding_Text_Large
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
-  _OverrideSkinFontSize: 0
+  _OverrideSkinFontSize: 1
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114478571482439894
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1425,6 +1434,7 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
+  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114367159531998498}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}

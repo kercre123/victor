@@ -7,61 +7,61 @@
     "source_key_paths" : ["/{*}"]
   },
   "reward.description.Freeplay.Spark" : {
-    "translation" : "アップグレードのスパーク"
+    "translation" : "アップグレードをスパークする"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack" : {
-    "translation" : "成功した「スタックキューブの行動を完了"
+    "translation" : "「キューブを重ねる」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.Pounce" : {
-    "translation" : "正常に動作 \"指に襲い掛かる」完成"
+    "translation" : "「指にアタック」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid" : {
-    "translation" : "正常に動作「ピラミッドのビルド」を完成"
+    "translation" : "「ピラミッド作り」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.PopWheelie" : {
-    "translation" : "正常に動作「ウイリーポップ」を完成"
+    "translation" : "「ウィーリー」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.FistBump" : {
-    "translation" : "成功した「拳バンプの行動を完了"
+    "translation" : "「グータッチ」の動作が正常に完了"
   },
   "reward.description.MemoryMatch.Played.Solo" : {
-    "translation" : "ソロモードでメモリマッチのゲームをプレイしました"
+    "translation" : "ソロモードで記憶ゲームをプレイしました"
   },
   "reward.description.MemoryMatch.Played.Vs" : {
-    "translation" : "対にメモリマッチのゲームをプレイしましたモード"
+    "translation" : "対戦モードで記憶ゲームをプレイしました"
   },
   "reward.description.MemoryMatch.WinGame.Vs" : {
-    "translation" : "対にメモリマッチの試合に勝ちましたモード"
+    "translation" : "対戦モードで記憶ゲームに勝ちました"
   },
   "reward.description.MemoryMatch.Lives.OneLeft" : {
-    "translation" : "ウォンメモリマッチ対。あなたの最後の生活上のモード"
+    "translation" : "最後のライフで、対戦モードで記憶ゲームに勝ちました"
   },
   "reward.description.MemoryMatch.Lives.TwoLeft" : {
-    "translation" : "ウォンメモリマッチ対。左の2命とモード"
+    "translation" : "ライフを2つ残して、対戦モードで記憶ゲームに勝ちました"
   },
   "reward.description.MemoryMatch.Lives.ThreeLeft" : {
-    "translation" : "ウォンメモリマッチ対。命を失うことなくモード"
+    "translation" : "ライフを１つも失わずに対戦モードで記憶ゲームに勝ちました"
   },
   "reward.description.MemoryMatch.PatternLength.Five" : {
-    "translation" : "> 5灯の長メモリマッチパターンを完了しました。"
+    "translation" : "6以上のライトのパターンで記憶ゲームを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Ten" : {
-    "translation" : "> 10灯ロングメモリマッチパターンを完了しました。"
+    "translation" : "11以上のライトのパターンで記憶ゲームを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Fifteen" : {
-    "translation" : "> 15灯ロングメモリマッチパターンを完了しました。"
+    "translation" : "16以上のライトのパターンで記憶ゲームを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
-    "translation" : "> 20灯ロングメモリマッチパターンを完了しました。"
+    "translation" : "21以上のライトのパターンで記憶ゲームを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
-    "translation" : "> 25灯ロングメモリマッチパターンを完了しました。"
+    "translation" : "26以上のライトのパターンで記憶ゲームを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Thirty" : {
-    "translation" : "> 30灯ロングメモリマッチパターンを完了しました。"
+    "translation" : "31以上のライトのパターンで記憶ゲームを完了しました。"
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
-    "translation" : "メモリーマッチソロのための新しいパターンの記録を樹立"
+    "translation" : "ソロモードの記憶ゲームでパターンの新記録を達成しました"
   },
   "reward.description.QuickTap.Played" : {
     "translation" : "クイックタップのゲームをプレイしました"
@@ -70,69 +70,66 @@
     "translation" : "「1色」モードのクイックタップのゲームに勝ちました"
   },
   "reward.description.QuickTap.WinGame.TwoColor" : {
-    "translation" : "「2色」モードでクイックタップの試合に勝ちました"
+    "translation" : "「2色」モードのクイックタップのゲームに勝ちました"
   },
   "reward.description.QuickTap.WinGame.ThreeColor" : {
-    "translation" : "「三色」モードでクイックタップの試合に勝ちました"
+    "translation" : "「3色」モードのクイックタップのゲームに勝ちました"
   },
   "reward.description.QuickTap.WinGame.FourColor" : {
-    "translation" : "「四色」モードでクイックタップの試合に勝ちました"
+    "translation" : "「4色」モードのクイックタップのゲームに勝ちました"
   },
   "reward.description.QuickTap.Accuracy.50" : {
-    "translation" : "タップ精度> 50％でクイックタップの試合を終えました"
+    "translation" : "クイックタップのゲームを50％を超える正確なタップで終了しました"
   },
   "reward.description.QuickTap.Accuracy.75" : {
-    "translation" : "タップ精度> 75パーセントでクイックタップの試合を終えました"
+    "translation" : "クイックタップのゲームを75％を超える正確なタップで終了しました"
   },
   "reward.description.QuickTap.Accuracy.100" : {
-    "translation" : "100％のタップ精度でクイックタップのゲームを終えました！"
+    "translation" : "クイックタップのゲームを100％の正確なタップで終了しました"
   },
   "reward.description.QuickTap.Shutout.SingleRound" : {
-    "translation" : "0にクイックタップ5のラウンドを獲得しました"
+    "translation" : "クイックタップの1ラウンドを5対0で勝ちました"
   },
   "reward.description.QuickTap.TieBreaker.OneRound" : {
-    "translation" : "4-4を結ばされた後にクイックタップのラウンドを獲得しました"
+    "translation" : "4対4の同点の後、クリックタップの1ラウンドを勝ちました"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "コズモ対人間対再生クイックタップ人間"
+    "translation" : "クイックタップを人間対人間対Cozmoでプレイしました"
   },
   "reward.description.Keepaway.Played" : {
-    "translation" : "キープアウエーの試合をしました"
+    "translation" : "キープアウェーのゲームをプレイしました"
   },
   "reward.description.Keepaway.Won" : {
-    "translation" : "キープアウエーの試合に勝ちました"
+    "translation" : "キープアウェーのゲームに勝ちました"
   },
   "reward.description.Keepaway.Shutout" : {
-    "translation" : "0にキープアウエー5のゲームに勝ちました"
+    "translation" : "キープアウェーのゲームに5対0で勝ちました"
   },
   "reward.description.Keepaway.TieBreaker" : {
-    "translation" : "4-4を拘束された後、キープアウエーを受賞"
+    "translation" : "キープアウェーのゲームで4対4にしてから勝ちました"
   },
   "reward.description.Explorer.Time.5" : {
-    "translation" : "より長い5分間エクスプローラモードをプレイしました"
+    "translation" : "リモコンモードを5分を超えてプレイしました"
   },
   "reward.description.Explorer.Time.10" : {
-    "translation" : "10分以上エクスプローラーモードをプレイしました"
+    "translation" : "リモコンモードを10分を超えてプレイしました"
   },
   "reward.description.Explorer.Time.15" : {
-    "translation" : "より長い15分間エクスプローラモードをプレイしました"
+    "translation" : "リモコンモードを15分を超えてプレイしました"
   },
   "reward.description.Explorer.Time.20" : {
-    "translation" : "20分以上エクスプローラーモードをプレイしました"
+    "translation" : "リモコンモードを20分を超えてプレイしました"
   },
   "reward.collect.CollectEnergyButton" : {
-    "translation" : "エネルギーを集めます"
+    "translation" : "エネルギーを集める"
   },
   "reward.description.NewDifficulty" : {
-    "translation" : "{0}モードロック解除！"
+    "translation" : "{0}モードがロック解除されました！"
   },
   "reward.description.StartNewDay" : {
-    "translation" : "ストリーク報酬でチェック"
+    "translation" : "連続チェックインのご褒美"
   },
   "reward.description.SkillUp" : {
-    "translation" : "コズモの{0}スキルが増加しています！"
-  },
-  "reward.freeplay.BehaviorDisplay" : {
-    "translation" : "コズモは持っ+ {0}からのエネルギー{1} ！"
+    "translation" : "Cozmoの{0}スキルが増えました！"
   }
 }

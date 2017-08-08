@@ -33,6 +33,8 @@
 #include <cmath>
 #include <thread>
 
+#if THF_FUNCTIONALITY
+
 namespace Anki {
 namespace Cozmo {
 namespace VoiceCommand {
@@ -234,7 +236,28 @@ TestResultScoreData VoiceCommandTuning::ScoreParams(const std::set<VoiceCommandT
   
   return scoreData;
 }
+
+TestResultScoreData VoiceCommandTuning::ScoreParams(const std::set<VoiceCommandType>& testCommandSet, bool playAudio) const
+{
+  const AudioUtil::SpeechRecognizer::IndexType recogIndex = 0;
+  VoiceCommand::RecognitionSetupData setupData;
+  setupData._isPhraseSpotted = true;
+  setupData._allowsFollowup = false;
+  setupData._phraseList = _languagePhraseData->GetPhraseDataList(testCommandSet);
   
+  _recognizer->AddRecognitionDataAutoGen(recogIndex, _generalNNPath, setupData);
+  _recognizer->SetRecognizerIndex(recogIndex);
+  
+  // Get the results for this configuration
+  TestResultScoreData scoreData = CollectResults(testCommandSet, playAudio);
+  
+  // Remove the recognizer now that we're done with it
+  _recognizer->RemoveRecognitionData(recogIndex);
+  _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+  
+  return scoreData;
+}
+
 TestResultScoreData VoiceCommandTuning::ScoreTriggerAndCommand(const ContextConfig& commandListConfig,
                                                                bool playAudio,
                                                                ContextConfigSharedPtr& out_CombinedConfig) const
@@ -512,3 +535,5 @@ double VoiceCommandTuning::FindBestBruteForce(std::function<double(double)> func
 } // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
+
+#endif // THF_FUNCTIONALITY

@@ -88,9 +88,12 @@ namespace SpeedTap {
           AlertModalData notEnoughCubesData = new AlertModalData("speedtap_mp_not_enough_cubes_alert",
                                                                  LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle,
                                                                   LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription,
-                                                                 new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                                                 new AlertModalButtonData("text_close_button",
+                                                                                          LocalizationKeys.kButtonClose),
                                                                  descLocArgs: descLocArgs);
-          UIManager.OpenAlert(notEnoughCubesData, new ModalPriorityData(ModalPriorityLayer.Low, 0, LowPriorityModalAction.Queue, HighPriorityModalAction.Queue));
+          UIManager.OpenAlert(notEnoughCubesData, new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                        LowPriorityModalAction.Queue,
+                                                                        HighPriorityModalAction.Queue));
         }
       }
       else {
@@ -98,8 +101,11 @@ namespace SpeedTap {
         AlertModalData lockedData = new AlertModalData("speedtap_mp_locked_alert",
                                                        LocalizationKeys.kSpeedTapTitleMPLocked,
                                                        LocalizationKeys.kSpeedTapTextMPLocked,
-                                                       new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
-        ModalPriorityData lockedPriority = new ModalPriorityData(ModalPriorityLayer.Low, 0, LowPriorityModalAction.Queue, HighPriorityModalAction.Queue);
+                                                       new AlertModalButtonData("text_close_button",
+                                                                                LocalizationKeys.kButtonClose));
+        ModalPriorityData lockedPriority = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+                                                                 LowPriorityModalAction.Queue,
+                                                                 HighPriorityModalAction.Queue);
         UIManager.OpenAlert(lockedData, lockedPriority);
       }
     }

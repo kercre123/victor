@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHFTypes.h"
 
+#if THF_FUNCTIONALITY
 namespace Anki {
 namespace Cozmo {
 
@@ -65,3 +66,5 @@ void RecogData::DestroyData(recog_t*& recognizer, searchs_t*& search)
   
 } // end namespace Cozmo
 } // end namespace Anki
+
+#endif // THF_FUNCTIONALITY

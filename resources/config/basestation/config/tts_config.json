@@ -2,9 +2,18 @@
 // resources/config/basestation/config/tts_config.json
 //
 // Cozmo text-to-speech configuration params
-// 
+//
 // Top-level object contains a nested object for each supported platform.
 // Each platform object contains a nested object for each supported language.
+//
+// Note that Acapala TTS SDK does not support pitch setting on all platforms.
+// Pitch values are included here for documentation but pitch adjustment
+// is actually performed by audio layer.
+//
+// These parameters determine the "base voice" used for each locale,
+// regardless of how a specific utterance will be used.  See
+//   resources/config/basestation/config/sayTextintentConfig.json
+// for additional parameters that may be applied to a specific utterance.
 //
 {
   "osx":
@@ -27,9 +36,9 @@
     "ja":
     {
       "voice": "Sakura22k_CO",
-      "speed": 75,
+      "speed": 20,
       "pitch": 75,
-      "shaping": 65
+      "shaping": 100
     }
   },
   "ios":
@@ -52,34 +61,34 @@
     "ja":
     {
       "voice": "ja_jp_sakura_22k_co.fl",
-      "speed": 75,
+      "speed": 20,
       "pitch": 75,
-      "shaping": 65
+      "shaping": 100
     }
   },
   "android":
   {
     "en":
     {
-      "voice": "enu_ryan_22k_co.fl",
+      "voice": "Ryan",
       "speed": 80
     },
     "fr":
     {
-      "voice": "frf_bruno_22k_co.fl",
+      "voice": "Bruno",
       "speed": 75
     },
     "de":
     {
-      "voice": "ged_klaus_22k_co.fl",
+      "voice": "Klaus",
       "speed": 75
     },
     "ja":
     {
-      "voice": "ja_jp_sakura_22k_co.fl",
-      "speed": 75,
+      "voice": "Sakura",
+      "speed": 20,
       "pitch": 75,
-      "shaping": 65
+      "shaping": 100
     }
   }
 }

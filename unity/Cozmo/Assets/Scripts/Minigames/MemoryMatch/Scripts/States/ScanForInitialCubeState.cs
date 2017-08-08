@@ -17,7 +17,6 @@ namespace MemoryMatch {
       ScanLeft,
       ScanRight,
       ScanCenter,
-      Stopped,
       Error,
       ScanCompleteSuccess
     }
@@ -34,13 +33,15 @@ namespace MemoryMatch {
 
     private int _FirstBlockSeenID = -1;
 
-    public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan, float ScanTimeoutSecMax) : base(nextState, cubesRequired) {
+    public ScanForInitialCubeState(State nextState, int cubesRequired, float MinDistBetweenCubesMM, float RotateSecScan,
+                                   float ScanTimeoutSecMax, bool showTransparentCube = true) : base(nextState, cubesRequired) {
       _SetupCubeState = new Dictionary<int, ScannedSetupCubeState>();
       _CubesStateUpdated = false;
       _BlockPosComparer = new BlockToCozmoPositionComparerByID(_CurrentRobot);
       _MinDistBetweenCubesMM = MinDistBetweenCubesMM;
       _RotateSecScan = RotateSecScan;
       _ScanTimeoutSecMax = ScanTimeoutSecMax;
+      _ShowTransparentCube = showTransparentCube;
     }
 
     public override void Enter() {
@@ -53,6 +54,14 @@ namespace MemoryMatch {
       SetScanPhase(ScanPhase.NoCubesSeen);
       InitShowCubesSlide();
       GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Game_Start);
+    }
+
+    public override void Exit() {
+      base.Exit();
+      if (_CurrentRobot != null) {
+        _CurrentRobot.CancelCallback(HandleReactionAnimationFinished);
+        _CurrentRobot.CancelCallback(HandleSetupFinishedReactionFinished);
+      }
     }
 
     // ignore base class events
@@ -85,7 +94,7 @@ namespace MemoryMatch {
           }
         }
       }
-      else if (_ScanPhase != ScanPhase.Error) {
+      else if (_ScanPhase != ScanPhase.Error && _ScanPhase != ScanPhase.ScanCompleteSuccess) {
         UpdateScannedCubes();
         if (_CubesStateUpdated) {
           if (_Game.CubeIdsForGame.Count == _CubesRequired) {
@@ -100,7 +109,7 @@ namespace MemoryMatch {
               }
             }
             if (readyCubes == _CubesRequired) {
-              SetScanPhase(ScanPhase.Stopped);
+              SetScanPhase(ScanPhase.ScanCompleteSuccess);
             }
             else if (closeCubes != 0) {
               SetScanPhase(ScanPhase.Error);
@@ -244,14 +253,10 @@ namespace MemoryMatch {
       }
     }
 
-    private void HandleSetupFinishedReactionFinished(bool success) {
-      base.HandleContinueButtonClicked();
-    }
-
     private void InitShowCubesSlide() {
       if (_ShowCozmoCubesSlide == null) {
         GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Window_Open);
-        _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+        _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired, _ShowTransparentCube);
       }
       _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelPlaceCenter));
       _ShowCozmoCubesSlide.SetCubeSpacing(100);
@@ -311,19 +316,6 @@ namespace MemoryMatch {
             _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanUIDeg, _RotateSecScan);
           }
         }
-        else if (nextState == ScanPhase.Stopped) {
-          // Rotate towards center
-          if (_ShowCozmoCubesSlide != null) {
-            _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
-          }
-          LightCube centerCube = (_Game as MemoryMatchGame).GetCubeBySortedIndex(1);
-          if (centerCube != null) {
-            _CurrentRobot.TurnTowardsObject(centerCube, false);
-          }
-          // Force an autocontinue now...
-          SetScanPhase(ScanPhase.ScanCompleteSuccess);
-          //_Game.SharedMinigameView.EnableContinueButton(true);
-        }
         else if (nextState == ScanPhase.Error) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupGetOut);
           _ShowCozmoCubesSlide = null;
@@ -356,6 +348,15 @@ namespace MemoryMatch {
                                                      MemoryMatchGameInstance.MemoryMatchSetupErrorPrefab.gameObject, "MemoryMatch_error_slide");
         }
         else if (nextState == ScanPhase.ScanCompleteSuccess) {
+          // Rotate towards center
+          if (_ShowCozmoCubesSlide != null) {
+            _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
+          }
+          LightCube centerCube = (_Game as MemoryMatchGame).GetCubeBySortedIndex(1);
+          if (centerCube != null) {
+            _CurrentRobot.TurnTowardsObject(centerCube, false);
+          }
+
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupReaction, HandleSetupFinishedReactionFinished);
           _Game.SharedMinigameView.EnableContinueButton(false);
         }
@@ -366,7 +367,15 @@ namespace MemoryMatch {
     }
 
     private void HandleReactionAnimationFinished(bool success) {
-      _Game.SharedMinigameView.EnableContinueButton(true);
+      // Only re-enable if we're still waiting for a press.
+      // It's possible to set cubes up perfectly and move onto the next state and get this callback when we're waiting for a load.
+      if (_ScanPhase == ScanPhase.WaitForContinue) {
+        _Game.SharedMinigameView.EnableContinueButton(true);
+      }
+    }
+
+    private void HandleSetupFinishedReactionFinished(bool success) {
+      base.HandleContinueButtonClicked();
     }
 
     private void HandleTurnFinished(bool success) {

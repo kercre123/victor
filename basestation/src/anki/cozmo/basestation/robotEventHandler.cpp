@@ -1039,7 +1039,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       // If the order or number is not done correctly, you will get a compilation error!
       //
       // Usage:
-      //   DEFINE_HANDLER(actionUnionTag, msgGameToEngineTag, defaultNumRetriesa)
+      //   DEFINE_HANDLER(actionUnionTag, msgGameToEngineTag, defaultNumRetries)
       //
       // NOTE: numRetries is only used when action is requested via MessageGameToEngine.
       //       (Otherwise, the numRetries in the action queueing message is used.)
@@ -1123,6 +1123,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelActionByIdTag>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearCalibrationImages>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ControllerGains>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableStopOnCliff>();
@@ -1134,8 +1135,10 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RollActionParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StreamObjectAccel>();
@@ -1599,6 +1602,20 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::CancelActionByIdT
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::ControllerGains& msg)
+{
+  // We need a robot
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleControllerGains.InvalidRobotID", "Failed to find robot");
+  } else {
+    // Forward to robot
+    robot->SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError, msg.controller);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& msg)
 {
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
@@ -1671,6 +1688,38 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& 
   else
   {
     robot->GetPathComponent().ExecuteTestPath(msg.motionProf);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::RollActionParams& msg)
+{
+  // We need a robot
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleRollActionParams.InvalidRobotID", "Failed to find robot");
+  } else {
+    // Forward to robot
+    robot->SendRobotMessage<RobotInterface::RollActionParams>(msg.liftHeight_mm,
+                                                              msg.driveSpeed_mmps,
+                                                              msg.driveAccel_mmps2,
+                                                              msg.driveDuration_ms,
+                                                              msg.backupDist_mm);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::SetMotionModelParams& msg)
+{
+  // We need a robot
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetMotionModelParams.InvalidRobotID", "Failed to find robot");
+  } else {
+    // Forward to robot
+    robot->SendRobotMessage<RobotInterface::SetMotionModelParams>(msg.slipFactor);
   }
 }
 
@@ -1791,50 +1840,5 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockData
 # endif
 }
 
-void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface)
-{
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.SetupGainsHandlers.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    // SetControllerGains
-    _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ControllerGains,
-                                                         [robot] (const GameToEngineEvent& event)
-                                                         {
-                                                           const ExternalInterface::ControllerGains& msg = event.GetData().Get_ControllerGains();
-                                                           
-                                                           robot->SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError, msg.controller);
-                                                         }));
-    
-    // SetMotionModelParams
-    _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMotionModelParams,
-                                                         [robot] (const GameToEngineEvent& event)
-                                                         {
-                                                           const ExternalInterface::SetMotionModelParams& msg = event.GetData().Get_SetMotionModelParams();
-                                                           
-                                                           robot->SendRobotMessage<RobotInterface::SetMotionModelParams>(msg.slipFactor);
-                                                         }));
-    
-    // RollActionParams
-    _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::RollActionParams,
-                                                         [robot] (const GameToEngineEvent& event)
-                                                         {
-                                                           const ExternalInterface::RollActionParams& msg = event.GetData().Get_RollActionParams();
-                                                           
-                                                           robot->SendRobotMessage<RobotInterface::RollActionParams>(msg.liftHeight_mm,
-                                                                                                                     msg.driveSpeed_mmps,
-                                                                                                                     msg.driveAccel_mmps2,
-                                                                                                                     msg.driveDuration_ms,
-                                                                                                                     msg.backupDist_mm);
-                                                         }));
-    
-  }
-}
-  
 } // namespace Cozmo
 } // namespace Anki

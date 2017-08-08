@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using DataPersistence;
 
 namespace Cozmo.UI {
   public class CozmoButton : AnkiButton, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler {
@@ -24,7 +25,11 @@ namespace Cozmo.UI {
         }
       }
     }
-      
+
+    [Serializable]
+    public new class ButtonClickedEvent : UnityEvent {
+    }
+
     [Serializable]
     public class ButtonDownEvent : UnityEvent {
     }
@@ -32,12 +37,14 @@ namespace Cozmo.UI {
     [Serializable]
     public class ButtonUpEvent : UnityEvent {
     }
-      
+
     private ButtonDownEvent _OnPress = new ButtonDownEvent();
 
     private ButtonUpEvent _OnRelease = new ButtonUpEvent();
 
     private string _DASEventButtonName = "";
+
+    private string _DASSuffix = "";
 
     private string _DASEventViewController = "";
 
@@ -84,7 +91,7 @@ namespace Cozmo.UI {
         }
       }
     }
-      
+
     public ButtonDownEvent onPress {
       get { return _OnPress; }
       set { _OnPress = value; }
@@ -103,6 +110,11 @@ namespace Cozmo.UI {
         return _DASEventButtonName;
       }
       set { _DASEventButtonName = value; }
+    }
+
+    public string DASSuffix {
+      get { return _DASSuffix; }
+      set { _DASSuffix = value; }
     }
 
     public string DASEventViewController {
@@ -254,19 +266,23 @@ namespace Cozmo.UI {
       }
       _DASEventButtonName = dasEventButtonName;
       _DASEventViewController = dasEventViewController;
-      Anki.Core.UI.Automation.AutomationIdComponent automationIdComponent = 
+      Anki.Core.UI.Automation.AutomationIdComponent automationIdComponent =
             gameObject.GetComponent<Anki.Core.UI.Automation.AutomationIdComponent>();
       if (automationIdComponent == null) {
         automationIdComponent = gameObject.AddComponent<Anki.Core.UI.Automation.AutomationIdComponent>();
       }
 
+      automationIdComponent.InteractableObj = this;
       if (string.IsNullOrEmpty(_DASEventButtonName)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.",
           this.gameObject.name));
         automationIdComponent.Id = this.gameObject.name;
       }
-      else {
+      else if (string.IsNullOrEmpty(_DASSuffix)) {
         automationIdComponent.Id = _DASEventButtonName;
+      }
+      else {
+        automationIdComponent.Id = _DASEventButtonName + _DASSuffix;
       }
       if (string.IsNullOrEmpty(_DASEventViewController)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASViewController! Falling back to parent's names.",
@@ -515,7 +531,7 @@ namespace Cozmo.UI {
     [Serializable]
     public class AnkiButtonImage {
       public CozmoImage targetImage;
-      
+
       // we will just grab it from targetImage;
       [NonSerialized]
       public Sprite enabledSprite;

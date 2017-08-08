@@ -52,7 +52,7 @@
     "translation": "Don't see a password? Tap Here:"
   },
   "wifiStrings.Instructions.Slide3altCopy2": {
-    "translation": "Use ALL CAPS with no spaces."
+    "translation": "Use ALL CAPS with no spaces. Include any dashes."
   },
   "wifiStrings.Instructions.Slide3.5": {
     "translation": "Cozmo does not provide an Internet connection."
@@ -65,12 +65,6 @@
   },
   "wifiStrings.Instructions.Slide4altCopy": {
     "translation": "The App will know when Cozmo is connected."
-  },
-  "wifiStrings.nextButton": {
-    "translation": "NEXT"
-  },
-  "wifiStrings.backButton": {
-    "translation": "BACK"
   },
   "wifi.gethelp.title": {
     "translation": "Having trouble connecting to Cozmo's WiFi?"

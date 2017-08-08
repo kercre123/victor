@@ -44,6 +44,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorCubeLiftWorkout.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveInDesperation.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveToFace.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorEarnedSparks.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorOnConfigSeen.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorPickUpAndPutDownCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
@@ -466,6 +467,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::DriveToFace:
     {
       newBehavior = IBehaviorPtr(new BehaviorDriveToFace(robot, config));
+      break;
+    }
+    case BehaviorClass::EarnedSparks:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorEarnedSparks(robot, config));
       break;
     }
     case BehaviorClass::TurnToFace:

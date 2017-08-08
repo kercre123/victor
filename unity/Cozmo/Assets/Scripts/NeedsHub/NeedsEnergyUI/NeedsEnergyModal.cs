@@ -76,9 +76,9 @@ namespace Cozmo.Energy.UI {
       if (robot != null) {
         robot.CancelAllCallbacks();
         robot.CancelAction(RobotActionType.UNKNOWN);
-        robot.SetEnableFreeplayLightStates(true);
+        robot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
       }
-        
+
       _WasCozmoOverfed = false;
 
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
@@ -111,18 +111,15 @@ namespace Cozmo.Energy.UI {
 
       RefreshForCurrentBracket(nsm);
 
-      bool isFeedCritical = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Bracket == NeedBracketId.Critical;
       bool isInFeedOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro);
-
       if (_OptionalCloseDialogCozmoButton != null && isInFeedOnboarding) {
         _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
       }
 
       // if no cubes are connected help them get around it.
-      if ((robot != null && robot.LightCubes.Count == 0) && (isFeedCritical || isInFeedOnboarding)) {
-        _CubeHelpGroup.SetActive(true);
+      if ((robot != null && robot.LightCubes.Count == 0)) {
+        HandleBlockConnectivityChanged(robot.LightCubes.Count);
       }
-
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
@@ -136,7 +133,7 @@ namespace Cozmo.Energy.UI {
       if (_InactivityTimer > 0f) {
         _InactivityTimer -= Time.deltaTime;
 
-        if (_InactivityTimer <= 0f) {
+        if (_InactivityTimer <= 0f && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
           HandleUserClose();
         }
       }
@@ -164,6 +161,7 @@ namespace Cozmo.Energy.UI {
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.OnNumBlocksConnectedChanged -= HandleBlockConnectivityChanged;
         if (OnboardingManager.Instance.AllowFreeplayOnHubEnter()) {
           robot.SetEnableFreeplayActivity(true);
         }
@@ -182,8 +180,19 @@ namespace Cozmo.Energy.UI {
 
     #region ROBOT CALLBACK HANDLERS
 
-    private void HandleLatestNeedsLevelChanged(NeedsActionId actionID){
-      NeedsLevelChangedInternal (actionID, true);
+    private void HandleBlockConnectivityChanged(int blocksConnected) {
+      bool isFeedCritical = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Bracket == NeedBracketId.Critical;
+      bool isInFeedOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro);
+      if ((blocksConnected == 0) && (isFeedCritical || isInFeedOnboarding)) {
+        _CubeHelpGroup.SetActive(true);
+      }
+      else {
+        _CubeHelpGroup.SetActive(false);
+      }
+    }
+
+    private void HandleLatestNeedsLevelChanged(NeedsActionId actionID) {
+      NeedsLevelChangedInternal(actionID, true);
     }
 
     private void NeedsLevelChangedInternal(NeedsActionId actionId, bool triggeredFromMessage) {
@@ -199,13 +208,13 @@ namespace Cozmo.Energy.UI {
         }
 
         // If Cozmo was full and the user fed him again, there's a chance he gets the hiccups
-        if(triggeredFromMessage && 
-          (_WasFull != null) && 
+        if (triggeredFromMessage &&
+          (_WasFull != null) &&
           (_WasFull == true) &&
           !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
           System.Random rand = new System.Random();
           float shouldTriggerFloat = (float)rand.NextDouble();
-          if(shouldTriggerFloat < _AlreadyFullTriggerHiccupOdds) {
+          if (shouldTriggerFloat < _AlreadyFullTriggerHiccupOdds) {
             _WasCozmoOverfed = true;
 
             // Exit feeding - can't have hiccups during the activity
@@ -222,7 +231,7 @@ namespace Cozmo.Energy.UI {
         RobotEngineManager.Instance.Message.NotifyOverfeedingShouldTriggerHiccups = new Anki.Cozmo.ExternalInterface.NotifyOverfeedingShouldTriggerHiccups();
         RobotEngineManager.Instance.SendMessage();
         if (CozmoOverfed != null) {
-          CozmoOverfed ();
+          CozmoOverfed();
         }
       }
     }

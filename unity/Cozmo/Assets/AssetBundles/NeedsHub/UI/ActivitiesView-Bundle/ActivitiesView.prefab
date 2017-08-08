@@ -659,8 +659,8 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -782,10 +782,8 @@ MonoBehaviour:
   _ActivityCardContainer: {fileID: 114905087169597034}
   _ActivityCardPrefab: {fileID: 114712853026632080, guid: de1e2cff12d0042cba28bd0540195e3a,
     type: 2}
-  _FreeplayCardPrefab: {fileID: 114938725581726892, guid: e21ad27fb123c4bb8bad4011b6d8e4af,
-    type: 2}
+  _MaxNumCardsOnScreen: 3
   _ScrollRect: {fileID: 114213708779950632}
-  _FreeplayPanelArrowToggleWidth: 0.2
 --- !u!114 &114646942448145258
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -899,14 +897,14 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114277644797688764}
-    pressedSprite: {fileID: 21300000, guid: 861c1a327a4af455bb2989d5764ec941, type: 3}
+    pressedSprite: {fileID: 21300000, guid: f96b4b4d3bc4d4d3db6d2d86a0bc794c, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: f96b4b4d3bc4d4d3db6d2d86a0bc794c, type: 3}
-    disabledColor: {r: 0.9338235, g: 0.9544226, b: 0.9544226, a: 1}
+    disabledColor: {r: 0.63235295, g: 0.63235295, b: 0.63235295, a: 0.7058824}
   - targetImage: {fileID: 114588561973426534}
-    pressedSprite: {fileID: 21300000, guid: 861c1a327a4af455bb2989d5764ec941, type: 3}
+    pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     pressedColor: {r: 0, g: 0, b: 0, a: 0}
-    disabledSprite: {fileID: 21300000, guid: 861c1a327a4af455bb2989d5764ec941, type: 3}
+    disabledSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     disabledColor: {r: 0, g: 0, b: 0, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
@@ -1063,8 +1061,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -446, y: -110.87988}
-  m_SizeDelta: {x: 767, y: 123}
+  m_AnchoredPosition: {x: -985, y: -110.87988}
+  m_SizeDelta: {x: 1844, y: 123}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224054368849864598
 RectTransform:
@@ -1100,7 +1098,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 116, y: 112}
+  m_SizeDelta: {x: 112, y: 112}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224213127847768748
 RectTransform:
@@ -1194,7 +1192,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 112.19922, y: -115.90039}
-  m_SizeDelta: {x: 200, y: 200}
+  m_SizeDelta: {x: 220, y: 220}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224395000100768988
 RectTransform:
@@ -1329,7 +1327,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.11328125, y: -29.5}
+  m_AnchoredPosition: {x: 0.09814453, y: -29.5}
   m_SizeDelta: {x: 0, y: 47}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!225 &225659591566240356

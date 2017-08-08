@@ -8,6 +8,7 @@ public class InitialCubesState : State {
   protected int _CubesRequired;
   protected ShowCozmoCubeSlide _ShowCozmoCubesSlide;
   protected GameBase _Game;
+  protected bool _ShowTransparentCube = true;
 
   private const float _kCubeSqrDistanceWithoutInLift_mm = 360.0f;
   private bool _PushedIdleAnimation = false;
@@ -27,7 +28,7 @@ public class InitialCubesState : State {
 
     _Game = _StateMachine.GetGame();
 
-    _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
+    _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired, _ShowTransparentCube);
     _Game.SharedMinigameView.ShowContinueButtonOffset(HandleContinueButtonClicked,
       Localization.Get(LocalizationKeys.kButtonContinue),
       GetWaitingForCubesText(_CubesRequired),
@@ -228,6 +229,13 @@ public class InitialCubesState : State {
   }
 
   protected virtual void HandleContinueButtonClicked() {
-    _StateMachine.SetNextState(_NextState);
+    // we should ONLY ever set a new state if we're still the current state
+    // tends to be a reoccuring bug worth logging since it's on sharedminigameview button and needs be reset per state.
+    if (_StateMachine.GetCurrState() == this) {
+      _StateMachine.SetNextState(_NextState);
+    }
+    else {
+      DAS.Error("InitialCubeState.SetNextState.AttemptingToSetStateWhenNotActive", "");
+    }
   }
 }

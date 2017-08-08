@@ -115,7 +115,7 @@ namespace Cozmo {
   }; // class GameMessageHandlerStub
 
   
-} // namesapce Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 

@@ -10,6 +10,7 @@
 #include "anki/cozmo/basestation/util/transferQueue/dasTransferTask.h"
 #include "anki/cozmo/basestation/util/transferQueue/gameLogTransferTask.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
+#include "anki/cozmo/basestation/utils/cozmoExperiments.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
@@ -45,6 +46,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   #endif
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
   , _needsManager(new NeedsManager(this))
+  , _cozmoExperiments(new CozmoExperiments(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
 

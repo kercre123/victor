@@ -404,11 +404,7 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
     return;
   }
   
-  // Clear the audio buffers now that we are preparing to get new audio data
-  _audioBuffer->ClearBufferStreams();
-  
-  
- // Begin Loading robot audio buffer by posting animation audio events
+  // Begin Loading robot audio buffer by posting animation audio events
   SetAnimationState( AnimationState::LoadingStream );
   
   const uint32_t firstAudioEventOffset = _animationEvents.front().time_ms;

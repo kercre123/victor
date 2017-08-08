@@ -25,7 +25,14 @@
  
     // Starting point for one script to appear on phones and tablets.
     window.getScriptStartingPoint = function() {
-        var point = new CLPoint(120, 200);
+        var point = null;
+        if (window.isVertical) {
+            point = new CLPoint(480, 200);
+        }
+        else {
+            point = new CLPoint(120, 200);
+        }
+
         if (window.innerWidth <= 799) {
             point.x = 100;
             point.y = 110;
@@ -126,7 +133,7 @@
 
         window.isSavingProject = true;
 
-        if (window.isSampleProject) {
+        if (window.isCozmoSampleProject) {
             window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
@@ -159,6 +166,11 @@
     window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
 
+        // TODO: Special case to fix localized text for intruder sample project. Rip out and revisit post-2.0.0.
+        if (isCozmoSampleProject && projectUUID == "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62") {
+            projectXML = window.replaceSampleProjectTextForIntruder(projectXML);
+        }
+
         // Remove all existing scripts from workspace
         Scratch.workspace.clear();
 
@@ -187,9 +199,9 @@
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
         setText('#app-title', $t(projectName));
 
-        var autosavedText = 'Autosaved';
+        var autosavedText = window.$t('codeLab.SaveProject.Autosaved');
         if (isSampleProject) {
-            autosavedText = 'Sample projects not saved';
+            autosavedText = window.$t('codeLab.SaveProject.NotSaved');
         }
         else if (projectName == '' || projectName == null) {
             // When user selects 'Create New Project' from save/load UI, at first project has no name and is not yet autosaved.
@@ -219,5 +231,11 @@
     window.openBlocklyXML = function(xml) {
         var domXML = Blockly.Xml.textToDom(xml);
         Blockly.Xml.domToWorkspace(domXML, Scratch.workspace);
+    }
+
+    // TODO Replace this method used for the very particular case of replacing intruder localized text in sample project.
+    window.replaceSampleProjectTextForIntruder = function(projectXML) {
+        var intruderTranslation = window.$t('codeLabChallenge_intruder.CozmoSaysBlock.DefaultText');
+        return projectXML.replace("Intruder!", intruderTranslation);
     }
 })();

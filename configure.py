@@ -334,7 +334,18 @@ def parse_game_arguments():
 # PLATFORM-DEPENDENT COMMANDS #
 ###############################
 
+# Path to opencv library dir
+def android_opencv_target():
+  return os.path.join(CTE_ROOT, 'build', 'opencv-android', 
+    'OpenCV-android-sdk', 'sdk', 'native', 'libs')
+
+# Path to tts library dir
+def android_tts_target():
+  return os.path.join(EXTERNALS_ROOT, 'anki-thirdparty', 'acapela', 
+    'AcapelaTTS_for_Android_V1.612', 'sdk')
+
 class GamePlatformConfiguration(object):
+
     def __init__(self, platform, options):
         if options.verbose:
             print_status('Initializing paths for platform {0}...'.format(platform))
@@ -406,8 +417,8 @@ class GamePlatformConfiguration(object):
                 sys.exit(
                     "Cannot find ANDROID_NDK_ROOT env var, script should have installed it. Perhaps internet is not available?")
 
-            self.android_opencv_target = os.path.join(CTE_ROOT, 'build', 'opencv-android',
-                                                      'OpenCV-android-sdk', 'sdk', 'native', 'libs')
+            self.android_opencv_target = android_opencv_target()
+            self.android_tts_target = android_tts_target()
 
         if platform == 'ios':
             if not options.cmake_bin:
@@ -609,6 +620,8 @@ class GamePlatformConfiguration(object):
                 libfolder = os.path.join(self.android_prestrip_lib_dir, chipset)
                 # TODO: change cp -r steps to linking steps for android assets
                 copytree(os.path.join(self.android_opencv_target, chipset), libfolder)
+                # TODO: change cp -r steps to linking steps for android assets
+                copytree(os.path.join(self.android_tts_target, chipset), libfolder)
         else:
             sys.exit('Cannot generate for platform "{0}"'.format(self.platform))
 
@@ -808,6 +821,8 @@ class GamePlatformConfiguration(object):
         args += ['--platform', self.platform]
         args += ['--config', self.options.configuration]
         args += ['--script-engine', self.options.selected_script_engine]
+        if self.options.configuration.lower() == 'shipping':
+            args += ['--useReleaseWwise']
 
         engine_target = 'cozmoEngine2' if self.options.engine_v2 else 'cozmoEngine'
         args += ['--cozmo-engine-target', engine_target]

@@ -105,6 +105,12 @@ public class ObservableObject : IVisibleInCamera {
 
   public float TopFaceNorthAngle { get; private set; }
 
+  public float PitchDegrees { get; private set; }
+
+  public float RollDegrees { get; private set; }
+
+  public float YawDegrees { get; private set; }
+
   public Vector3 Size { get; private set; }
 
   public uint LastSeenEngineTimestamp { get; private set; }
@@ -276,6 +282,11 @@ public class ObservableObject : IVisibleInCamera {
     Size = Vector3.one * CozmoUtil.kBlockLengthMM;
 
     TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
+
+    var eulerAngles = message.GetRotation().eulerAngles;
+    PitchDegrees = eulerAngles.y;
+    RollDegrees = eulerAngles.x;
+    YawDegrees = eulerAngles.z;
 
     // Andrew Stein / Ivy Ngo:
     // isActive corresponds to whether or not the object has lights

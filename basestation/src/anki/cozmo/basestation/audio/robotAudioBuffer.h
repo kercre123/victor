@@ -58,7 +58,7 @@ public:
    */
 
   // Check if the buffer is currently active
-  bool IsActive() const { return _isActive; }
+  bool IsActive() const;
 
   // Check if the buffer is in the reset audio buffer state
   // Note: Will update state if the internal timeout period has expired
@@ -73,35 +73,24 @@ public:
   // Pop the front / top Audio buffer stream in the queue
   void PopAudioBufferStream();
   
-  // Clear the Audio buffer stream queue
-  void ClearBufferStreams();
-  
   // Begin reseting the audio buffer. The buffer will ignore update buffer calls and wait for the audio controller
   // to clear cache
-  void ResetAudioBufferAnimationCompleted( bool completed );
+  void ResetAudioBufferAnimationCompleted();
   
 
 protected:
-  
-  // FIXME: Think there is a bug by not locking the _streamQueue. Both Audio thread and Engine thread use the queue
-  // Maybe we should use producer consumer queue here!?
   
   // A queue of robot audio frames (continuous audio data)
   std::queue< RobotAudioFrameStream > _streamQueue;
   
   // Stream queue mutex
-  mutable std::mutex _lock;
-  
-  // Track if the Audio Engine is providing data to stream
-  bool _isActive = false;
+  mutable std::recursive_mutex _lock;
   
   // Flag to identify we are waiting for current update buffer session to complete
-  mutable bool _isWaitingForReset = false;
+  bool _isWaitingForReset = false;
   
-  // When _isWaitingForReset flag is set true begin timeout
-  // Note: If data is received from audio engine after reset flag is set clear timeout
-  enum { kInvalidResetTimeVal = 0 };
-  mutable unsigned long long int _beginResetTimeVal = kInvalidResetTimeVal;
+  // Clear the Audio buffer stream queue
+  void ClearBufferStreams();
 };
 
 

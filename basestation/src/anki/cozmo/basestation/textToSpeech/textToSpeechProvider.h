@@ -61,6 +61,11 @@ public:
     _numChannels = numChannels;
     _chunk.clear();
   }
+
+  void Append(int numSamples, short sample)
+  {
+    _chunk.insert(_chunk.end(), numSamples, sample);
+  }
   
 private:
   int _sampleRate;

@@ -1,3 +1,4 @@
+using System;
 using Anki.Cozmo;
 using Cozmo.Challenge;
 using Cozmo.RequestGame;
@@ -10,6 +11,13 @@ namespace Cozmo.Needs.Sparks.UI {
     public delegate void SparkGameClickedHandler(string challengeId);
     public static event SparkGameClickedHandler OnSparkGameClicked;
 
+    public delegate void SparkTrickHandler();
+    public static event SparkTrickHandler OnSparkTrickStarted;
+    public static event SparkTrickHandler OnSparkTrickEnded;
+    public static event SparkTrickHandler OnSparkTrickQuit;
+
+    public Action OnSparkCompleteToReturn;
+
     [SerializeField]
     private CozmoImage _Icon;
 
@@ -18,6 +26,12 @@ namespace Cozmo.Needs.Sparks.UI {
 
     [SerializeField]
     private CozmoText _Title;
+
+    [SerializeField]
+    private CozmoText _NotSparkableLabel;
+
+    [SerializeField]
+    private GameObject[] _SparkableInfoContainers;
 
     [SerializeField]
     private CozmoButton _SparkButton;
@@ -141,6 +155,7 @@ namespace Cozmo.Needs.Sparks.UI {
         SparkCozmo(challengePacket);
       }, "spark_specific_game_button", this.DASEventDialogName);
       InitializeButtonState();
+      _NotSparkableLabel.gameObject.SetActive(false);
 
       // Handle edge cases      
       ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy | ChallengeEdgeCases.CheckForCubes
@@ -181,10 +196,19 @@ namespace Cozmo.Needs.Sparks.UI {
       InitializeDescription(unlockInfo.CoreUpgradeIcon, unlockInfo.TitleKey, unlockInfo.DescriptionKey);
       InitializeUnlockInfo();
 
+      // Initialize the button to avoid an error
       _SparkButton.Initialize(() => {
         SparkCozmo(unlockInfo);
       }, "spark_specific_trick_button", this.DASEventDialogName);
-      InitializeButtonState();
+
+      if (unlockInfo.IsSparkable) {
+        InitializeButtonState();
+      }
+
+      for (int i = 0; i < _SparkableInfoContainers.Length; i++) {
+        _SparkableInfoContainers[i].gameObject.SetActive(unlockInfo.IsSparkable);
+      }
+      _NotSparkableLabel.gameObject.SetActive(!unlockInfo.IsSparkable);
 
       // Handle edge cases; don't check for cubes
       ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy
@@ -200,6 +224,10 @@ namespace Cozmo.Needs.Sparks.UI {
       if (isEngineDriven) {
         PlaySparkedSounds();
         // Button state already updated by InitializeButtonState above
+
+        if (OnSparkTrickStarted != null) {
+          OnSparkTrickStarted();
+        }
       }
     }
 
@@ -219,6 +247,10 @@ namespace Cozmo.Needs.Sparks.UI {
 
       PlaySparkedSounds();
       UpdateButtonState();
+
+      if (OnSparkTrickStarted != null) {
+        OnSparkTrickStarted();
+      }
     }
 
     private void PlaySparkedSounds() {
@@ -235,6 +267,8 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void HandleSparkEnded(Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine message) {
+      bool returnToHub = true;
+
       // Update inventory and spark cost appropriately
       if (message.success) {
         // cozmo performed the spark
@@ -254,9 +288,13 @@ namespace Cozmo.Needs.Sparks.UI {
           Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
           playerInventory.AddItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount);
         }
+        returnToHub = false;
       }
 
       StopSparkTrick(isDialogCleanup: false, doEngineCleanup: true);
+      if (OnSparkTrickEnded != null) {
+        OnSparkTrickEnded();
+      }
 
       if (_QuitConfirmAlertModal != null) {
         UIManager.CloseModal(_QuitConfirmAlertModal);
@@ -264,7 +302,13 @@ namespace Cozmo.Needs.Sparks.UI {
 
       DataPersistenceManager.Instance.Save();
 
-      if (_IsEngineDrivenTrick) {
+      if (returnToHub) {
+        CloseDialog();
+        if (OnSparkCompleteToReturn != null) {
+          OnSparkCompleteToReturn();
+        }
+      }
+      else if (_IsEngineDrivenTrick) {
         CloseDialog();
       }
     }
@@ -312,9 +356,11 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void CreateConfirmQuitTrickAlert() {
       // Hook up callbacks
-      var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked, HandleStaySparked,
+      var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked,
+                                                           HandleStaySparked,
                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
-      var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave, HandleLeaveSpark);
+      var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave,
+                                                          HandleLeaveSpark);
 
       var confirmQuitSparkData = new AlertModalData("confirm_quit_spark_alert",
             LocalizationKeys.kSparksSparkConfirmQuit,
@@ -336,6 +382,9 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void HandleQuitTrickAlertClosed() {
       if (_ConfirmedQuitTrick) {
+        if (OnSparkTrickQuit != null) {
+          OnSparkTrickQuit();
+        }
         CloseDialog();
       }
       _ConfirmedQuitTrick = false;
@@ -381,6 +430,7 @@ namespace Cozmo.Needs.Sparks.UI {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
         _SparkButton.Interactable = false;
+        _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
         _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
         _ButtonPromptDescription.text = Localization.Get(_UnlockInfo.SparkedStateDescription);
         _SparkSpinnerContainer.gameObject.SetActive(true);

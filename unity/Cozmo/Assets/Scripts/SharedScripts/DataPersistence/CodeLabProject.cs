@@ -14,8 +14,14 @@ namespace DataPersistence {
       ProjectUUID = Guid.NewGuid();
       DateTimeCreatedUTC = DateTime.UtcNow; ;
       DateTimeLastModifiedUTC = DateTime.UtcNow;
-      VersionNum = 1;
       IsVertical = false; // TODO Modify how this gets set when implement vertical
+
+      // History:
+      // App version     VersionNum
+      // 1.6             1 
+      // 1.7             1
+      // 2.0             2
+      VersionNum = 2;
     }
 
     public CodeLabProject(string projectName, string projectXML) : this() {
