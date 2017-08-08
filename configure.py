@@ -22,7 +22,7 @@ CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
 sys.path.insert(0, ENGINE_ROOT)
 PRODUCT_NAME = 'Cozmo'
 
-PY_SETUP_SCRIPT = os.path.join('project', 'buildScripts', 'cozmo_basestation_setup.py')
+PY_SETUP_SCRIPT = os.path.join('project', 'buildScripts', 'cozmo_engine_setup.py')
 BUILD_PY_EXT_CMD = 'python %s build_ext' % PY_SETUP_SCRIPT
 
 from configure_engine import BUILD_TOOLS_ROOT, print_header, print_status
@@ -821,6 +821,8 @@ class GamePlatformConfiguration(object):
         args += ['--platform', self.platform]
         args += ['--config', self.options.configuration]
         args += ['--script-engine', self.options.selected_script_engine]
+        if self.options.configuration.lower() == 'shipping':
+            args += ['--useReleaseWwise']
 
         engine_target = 'cozmoEngine2' if self.options.engine_v2 else 'cozmoEngine'
         args += ['--cozmo-engine-target', engine_target]

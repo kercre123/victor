@@ -1,0 +1,5 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "FeedingReactCubeShake",  
+  "animTriggers": ["FeedingReactToShake_Normal"]
+}

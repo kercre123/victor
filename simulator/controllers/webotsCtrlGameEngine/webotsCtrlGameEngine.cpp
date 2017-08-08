@@ -15,8 +15,8 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "util/console/consoleInterface.h"
-#include "anki/cozmo/basestation/cozmoAPI/cozmoAPI.h"
-#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "engine/cozmoAPI/cozmoAPI.h"
+#include "engine/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
@@ -27,9 +27,9 @@
 #include <fstream>
 
 #if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
-#include "anki/cozmo/basestation/debug/devLoggerProvider.h"
-#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "engine/debug/cladLoggerProvider.h"
+#include "engine/debug/devLoggerProvider.h"
+#include "engine/debug/devLoggingSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
 #endif
@@ -65,8 +65,8 @@ BSTimer basestationController;
 // Set to 0 if you want to use TCP to communicate with robot.
 #define USE_BLE_ROBOT_COMMS 0
 #if (USE_BLE_ROBOT_COMMS)
-#include "anki/cozmo/basestation/bleRobotManager.h"
-#include "anki/cozmo/basestation/bleComms.h"
+#include "engine/bleRobotManager.h"
+#include "engine/bleComms.h"
 
 // Set this UUID to the desired robot you want to connect to
 #define COZMO_BLE_UUID (0xbeefffff00010001)

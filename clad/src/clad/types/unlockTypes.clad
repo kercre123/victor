@@ -79,9 +79,11 @@ enum int_32 UnlockId
   Singing_TurkeyInTheStraw       = 57,
   //Singing_Habanera               = 58,
   Singing_LondonBridge           = 59,
-  Singing_CozMambo               = 60,
+  //Singing_CozMambo               = 60,
   Singing_Sakura                 = 61,
   Singing_MussIDenn              = 62,
+
+  GuardDog                       = 63,
 
   // ADD NEW UNLOCKS HERE
 

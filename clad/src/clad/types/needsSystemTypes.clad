@@ -1,6 +1,7 @@
 /** Clad message definitions for Needs system
 */
 
+#include "clad/types/unlockTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -116,7 +117,7 @@ structure NeedsReward
 {
   NeedsRewardType rewardType,
   string          data,
-  bool inventoryIsFull = 0
+  bool            inventoryIsFull = 0
 }
 
 
@@ -129,6 +130,20 @@ structure NeedsReward
 
 structure NeedsStateOnRobot
 {
+  int_32   version,
+  uint_64  timeLastWritten,
+  int_32   curNeedLevel[10],   // MAX_NEEDS
+  int_32   curNeedsUnlockLevel,
+  int_32   numStarsAwarded,
+  bool     partIsDamaged[32],  // MAX_REPAIRABLE_PARTS
+  uint_64  timeLastStarAwarded,
+  int_32   onboardingStageCompleted,
+  UnlockId forceNextSong
+}
+
+// Prior versions here:
+structure NeedsStateOnRobot_v03
+{
   int_32  version,
   uint_64 timeLastWritten,
   int_32  curNeedLevel[10],   // MAX_NEEDS
@@ -139,7 +154,6 @@ structure NeedsStateOnRobot
   int_32  onboardingStageCompleted
 }
 
-// Prior versions here:
 structure NeedsStateOnRobot_v02
 {
   int_32  version,
@@ -178,6 +192,76 @@ structure UnlockLevel
   float_32    freeplayMaxSparksPct,
   int_32      freeplayMinSparks,
   int_32      freeplayMinMaxSparks,
+}
+
+
+enum int_32 NotificationType
+{
+  General         = 0,
+  NeedLevel       = 1,
+  NeedBracket     = 2,
+  DailyTokensToGo = 3,
+}
+
+enum int_32 Connection
+{
+  Either        = 0,
+  DidConnect    = 1,
+  DidNotConnect = 2,
+}
+
+enum int_32 WhenType
+{
+  NotApplicable = 0,
+  AfterAppOpen  = 1,
+  AfterAppClose = 2,
+  ClockTime     = 3,
+}
+
+structure NotificationGeneral
+{
+}
+
+structure NotificationNeedLevel
+{
+  NeedId   needId,
+  float_32 level,
+}
+
+structure NotificationNeedBracket
+{
+  NeedId        needId,
+  NeedBracketId needBracketId,
+}
+
+structure NotificationDailyTokensToGo
+{
+  int_32 numTokensToGo,
+}
+
+union NotificationUnion
+{
+  NotificationGeneral         notificationGeneral,
+  NotificationNeedLevel       notificationNeedLevel,
+  NotificationNeedBracket     notificationNeedBracket,
+  NotificationDailyTokensToGo notificationDailyTokensToGo,
+}
+
+structure LocalNotificationItem
+{
+  NotificationUnion notificationMainUnion,
+  Connection       connection,
+  string           textKeys[uint_8],
+  WhenType         whenType,
+  float_32         whenParam,
+  float_32         rangeEarly,
+  float_32         rangeLate,
+  float_32         minimumDuration,
+}
+
+structure LocalNotificationConfig
+{
+  LocalNotificationItem items[uint_16],
 }
 
 } // namespace Cozmo

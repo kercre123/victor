@@ -23,9 +23,11 @@ namespace Cozmo.Energy.UI {
       NeedsStateManager.Instance.RegisterNeedActionCompleted(Anki.Cozmo.NeedsActionId.Feed);
       _FeedButton.Interactable = false;
 
-      var quickSnackCompleteData = new AlertModalData("quick_snack_alert", LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupTitle,
+      var quickSnackCompleteData = new AlertModalData("quick_snack_alert",
+                                                      LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupTitle,
                                                     LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupBody,
-                                                    new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay, true));
+                                                      new AlertModalButtonData("okay_button",
+                                                                               LocalizationKeys.kButtonOkay));
 
       var quickSnackCompletePriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
                                                                LowPriorityModalAction.Queue,

@@ -90,11 +90,9 @@ namespace Anki {
 
         //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
 
-        m.frameTimeStamp = captureTime;
         m.imageId = ++imgID;
         m.chunkId = 0;
         m.data_length = IMAGE_CHUNK_SIZE;
-        m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
         m.imageEncoding = JPEGColor;
 
         u32 totalByteCnt = 0;
@@ -115,6 +113,8 @@ namespace Anki {
           } else if (totalByteCnt == numTotalBytes) {
             // This should be the last message!
             //PRINT("Sending LAST image chunk %d\n", m.chunkId);
+            m.frameTimeStamp = captureTime;
+            m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
             m.data_length = chunkByteCnt;
             RobotInterface::SendMessage(m);
           }

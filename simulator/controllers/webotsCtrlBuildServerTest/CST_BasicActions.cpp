@@ -12,8 +12,8 @@
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 #define SET_STATE(s) {                                          \
   PRINT_NAMED_INFO("CST_BasicActions.TransitionTestState",      \
@@ -272,12 +272,16 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 8;
-            // Face block 0
-            m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(0, M_PI_F, 0, 0, 0, 0, 0, 0, 1, true, false));
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_QueueSingleAction(m);
-            SendMessage(message);
-            SET_STATE(VisuallyVerifyNoObjectAtPose);
+            
+            // Face first matching light cube
+            std::vector<s32> lightCubeIDs = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+            if (!lightCubeIDs.empty()) {
+              m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, 1, true, false));
+              ExternalInterface::MessageGameToEngine message;
+              message.Set_QueueSingleAction(m);
+              SendMessage(message);
+              SET_STATE(VisuallyVerifyNoObjectAtPose);
+            }
           }
           break;
         }

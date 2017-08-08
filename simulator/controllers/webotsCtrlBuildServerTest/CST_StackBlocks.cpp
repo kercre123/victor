@@ -12,8 +12,8 @@
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 
 namespace Anki {
@@ -44,6 +44,9 @@ namespace Anki {
       TestState _testState = TestState::Init;
       
       bool _lastActionSucceeded = false;
+      s32  _topCube    = -1;
+      s32  _bottomCube = -1;
+      
       
       // Message handlers
       virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
@@ -73,14 +76,18 @@ namespace Anki {
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                                GetNumObjects() == 1)
+                                                GetNumObjectsInFamily(ObjectFamily::LightCube) == 1)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 1;
-            // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, _defaultTestMotionProfile, 0, false, true, false, true));
+            
+            // Pickup first LightCube
+            std::vector<s32> objIds = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+            _topCube = objIds[0];
+            
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(_topCube, _defaultTestMotionProfile, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -95,7 +102,7 @@ namespace Anki {
                                                 NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG),
                                                 NEAR(GetRobotPose().GetTranslation().x(), 36, ROBOT_POSITION_TOL_MM),
                                                 NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM),
-                                                GetCarryingObjectID() == 0)
+                                                GetCarryingObjectID() == _topCube)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;
@@ -105,8 +112,13 @@ namespace Anki {
             m.numRetries = 3;
             // Wait a few seconds to see the block behind the one we just picked up
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::Wait(1));
-            // Place object 0 on object 1
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(1, _defaultTestMotionProfile, 0, false, true, false, true));
+            
+            // Place carrying object on second cube
+            std::vector<s32> objIds = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE2);
+            CST_ASSERT(objIds.size() == 1, "Did not see second cube!");
+            _bottomCube = objIds[0];
+            
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(_bottomCube, _defaultTestMotionProfile, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             
             message.Set_QueueCompoundAction(m);
@@ -120,9 +132,9 @@ namespace Anki {
         {
           // Verify robot has stacked the blocks
           Pose3d pose0;
-          GetObjectPose(0, pose0);
+          GetObjectPose(_topCube, pose0);
           Pose3d pose1;
-          GetObjectPose(1, pose1);
+          GetObjectPose(_bottomCube, pose1);
           
           PRINT_NAMED_INFO("BAASDF", "BlockZ: %f %f, Robot (xy) %f %f",
                            pose0.GetTranslation().z(),

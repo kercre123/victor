@@ -29,6 +29,11 @@ public class CreateNeededSDFFont {
   private const int _kFontMod = 2;
   private const string _kShaderName = "TextMeshPro/Mobile/Distance Field";
 
+  // Tweaks to make to the font while creating it
+  private const float _kLineHeight = 48;
+  // underlined text requires the underline glyph, TMP can't pull it from fallback yet
+  private static char[] _sAdditionalCharacters = { '_' };
+
   // Should only ever be DistanceField16 or DistanceField32
   private static RenderModes _sRenderMode = RenderModes.DistanceField16;
 
@@ -113,6 +118,12 @@ public class CreateNeededSDFFont {
     errorCode = GetCharacterSequenceFromFile(characterListAssetPath, out characterList, ref ref_errorMsg);
     if (errorCode != (int)GenerationResult.Success) {
       return ref_errorMsg;
+    }
+    // add extra characters
+    for( int i=0; i<_sAdditionalCharacters.Length; i++ ) {
+      if( !characterList.Contains( _sAdditionalCharacters[i] ) ) {
+        characterList.Add( _sAdditionalCharacters[i] );
+      }
     }
 
     for (int i = 0; i < _sFontAssetNames.Length; i++) {
@@ -267,6 +278,9 @@ public class CreateNeededSDFFont {
 
       // Add FaceInfo to Font Asset
       FaceInfo face = GetFaceInfo(fontFaceInfo);
+      // override line height with hardcoded value:
+      face.LineHeight = _kLineHeight;
+
       fontAsset.AddFaceInfo(face);
 
       // Add GlyphInfo[] to Font Asset
@@ -351,6 +365,9 @@ public class CreateNeededSDFFont {
 
       // Add FaceInfo to Font Asset  
       FaceInfo face = GetFaceInfo(fontFaceInfo);
+      // override line height with hardcoded value:
+      face.LineHeight = _kLineHeight;
+
       fontAsset.AddFaceInfo(face);
 
       // Add GlyphInfo[] to Font Asset

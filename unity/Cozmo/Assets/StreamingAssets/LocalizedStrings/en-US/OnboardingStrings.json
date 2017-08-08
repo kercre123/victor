@@ -75,9 +75,6 @@
   "onboarding.Phase3.Body3": {
     "translation": "Let Cozmo inspect the Cube on his own."
   },
-  "onboarding.Phase3.Body4": {
-    "translation": "Well done!"
-  },
   "onboarding.Phase3.ErrorCube": {
     "translation": "The Cube has moved!"
   },
@@ -115,16 +112,10 @@
     "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy."
   },
   "onboarding.NeedsIntroReturning": {
-    "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy.\n\nCozmo's App may look a little different but you'll keep any unlocked Games, Upgrades, or Sparks you've earned."
+    "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy.\n\nCozmo's App may look a little different but you'll keep any unlocks you've earned."
   },
   "onboarding.PlayIntro": {
-    "translation": "<b>Cozmo needs to play.</b>\n\nTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Bonus Token."
-  },
-  "onboarding.RewardsIntro": {
-    "translation": "<b>You’ve earned a Bonus Token.</b>\n\nTokens unlock Bonus Boxes, filled with rewards like Sparks and new abilities."
-  },
-  "onboarding.End": {
-    "translation": "<b>You've learned the basics of being a great owner!</b>\n\nFeel free to explore all Cozmo can do, or leave Cozmo alone and he will automatically play Tricks and Games in Freeplay."
+    "translation": "<b>Cozmo needs to play.</b>\n\nTap the <b><color=#f5ea12>PLAY</color></b> button to request Games or Tricks. Each day you fill his yellow bar you'll earn a Play Token."
   },
   "onboarding.ActivitiesIntro": {
     "translation": "Discover Activities are special and don't affect Cozmo’s Needs or cost Sparks."
@@ -151,6 +142,21 @@
     "translation": "<b>Cozmo needs to be fed.</b>\n\nWhen the blue bar is low, it means Cozmo is hungry. Tap the <b><color=#31EBFF>FEED</color></b> button."
   },
   "onboarding.DoATrickDesc": {
-    "translation": "Cozmo is a playful robot and loves doing Tricks!\n\nWith the Roll a Cube Trick, Cozmo can discover a cube and roll it. Make sure there’s a cube he can see."
+    "translation": "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a Cube he can see, and then watch him roll it."
+  },
+  "onboarding.RewardsIntro.Part1": {
+    "translation": "You’ve filled Cozmo’s <color=#f5ea12>Play Need.</color>"
+  },
+  "onboarding.RewardsIntro.Part2": {
+    "translation": "Each day you fill his \n<color=#f5ea12>Play Need</color> you’ll earn a \n<color=#f5ea12>Play Token.</color>"
+  },
+  "onboarding.TokensIntro.Part1": {
+    "translation": "Fill Cozmo’s <color=#f5ea12>Play Need</color> on three days to unlock a <color=#f5ea12>Bonus Box.</color>"
+  },
+  "onboarding.TokensIntro.Part2": {
+    "translation": "Cozmo is lucky to have you as an owner! Time to explore together!"
+  },
+  "onboarding.button.end": {
+    "translation": "COMPLETE"
   }
 }

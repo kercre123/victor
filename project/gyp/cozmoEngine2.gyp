@@ -28,6 +28,7 @@
     'clad_source': 'clad.lst',
     'pluginPhysics_source': 'pluginPhysics.lst',
     'robot_generated_clad_source': 'robotGeneratedClad.lst',
+    'audio_path_root_android': '<(ce-audio_path)/wwise/versions/current/libs/android/<(audio_library_build)',
 
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -1135,7 +1136,7 @@
             'target_name': 'cozmoEngineUnitTest',
             'type': 'executable',
             'include_dirs': [
-              '../../basestation/test',
+              '../../test/engine',
               '../../robot/include',
               '<@(opencv_includes)',
               '<@(flatbuffers_include)',
@@ -1274,8 +1275,7 @@
         '<!@(cat <(androidHAL_source))'
       ],
       'include_dirs': [
-        '../../androidHAL/include',
-        '../../androidHAL/src',
+        '../..',
         '../../robot/include',
         '../../generated/clad/engine',
       ],
@@ -1318,7 +1318,7 @@
               ['exclude', '_mac\\.'],
             ],
             'include_dirs': [
-              '../../androidHAL/src/anki/cozmo/basestation/androidHAL/android/camera',
+              '../../androidHAL/android/camera',
             ],
             'libraries': [
               '-llog',
@@ -1348,12 +1348,7 @@
         ['exclude', 'bleComms.mm'],
       ],
       'include_dirs': [
-        '../../basestation/src',
-        '../../basestation/include',
-        '../../basestation/include/anki/cozmo/basestation',
-        '../../basestation/include/anki/cozmo/basestation/actions',
-        '../../androidHAL/include',
-        '../../include',
+        '../..',
         '../../robot/include',
         '../../generated/clad/engine',
         '../../coretech/generated/clad/vision',
@@ -1368,12 +1363,11 @@
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          '../../basestation/include',
-          '../../androidHAL/include',
+          '../..',
+          '../../androidHAL',
           '../../include',
           '../../robot/include',
           '../../generated/clad/engine',
-          '../../basestation/src',
           '../../generated/clad/game',
         ],
         'defines': [
@@ -1416,7 +1410,7 @@
               ['exclude', '.androidHAL/src/anki/cozmo/.'],
               ['exclude', '_android\\.'],
               ['exclude', '(linux)'],
-              ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios']
+              ['exclude', '../../engine/cozmoAPI/csharp-binding/ios']
             ],
             'include_dirs' : [
               '<@(webots_includes)', # After opencv!
@@ -1492,39 +1486,48 @@
               '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videoio.so',
               '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videostab.so',
 
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libCommunicationCentral.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkStreamMgr.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMusicEngine.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSoundEngine.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMemoryMgr.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkConvolutionReverbFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkDelayFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkRoomVerbFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSilenceSource.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSoundSeedImpactFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSoundSeedWind.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSoundSeedWoosh.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkCompressorFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkPeakLimiterFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkParametricEQFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkHarmonizerFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMeterFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkFlangerFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkGainFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkToneSource.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkVorbisDecoder.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkTimeStretchFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSineSource.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkExpanderFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkGuitarDistortionFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libMcDSPFutzBoxFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libMcDSPLimiterFX.a',
-              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libCrankcaseAudioREVModelPlayerFX.a',
+              '<(audio_path_root_android)/libCommunicationCentral.a',
+              '<(audio_path_root_android)/libAkStreamMgr.a',
+              '<(audio_path_root_android)/libAkMusicEngine.a',
+              '<(audio_path_root_android)/libAkSoundEngine.a',
+              '<(audio_path_root_android)/libAkMemoryMgr.a',
+              '<(audio_path_root_android)/libAkConvolutionReverbFX.a',
+              '<(audio_path_root_android)/libAkDelayFX.a',
+              '<(audio_path_root_android)/libAkRoomVerbFX.a',
+              '<(audio_path_root_android)/libAkSilenceSource.a',
+              '<(audio_path_root_android)/libAkSoundSeedImpactFX.a',
+              '<(audio_path_root_android)/libAkSoundSeedWind.a',
+              '<(audio_path_root_android)/libAkSoundSeedWoosh.a',
+              '<(audio_path_root_android)/libAkCompressorFX.a',
+              '<(audio_path_root_android)/libAkPeakLimiterFX.a',
+              '<(audio_path_root_android)/libAkParametricEQFX.a',
+              '<(audio_path_root_android)/libAkHarmonizerFX.a',
+              '<(audio_path_root_android)/libAkMeterFX.a',
+              '<(audio_path_root_android)/libAkFlangerFX.a',
+              '<(audio_path_root_android)/libAkGainFX.a',
+              '<(audio_path_root_android)/libAkToneSource.a',
+              '<(audio_path_root_android)/libAkVorbisDecoder.a',
+              '<(audio_path_root_android)/libAkTimeStretchFX.a',
+              '<(audio_path_root_android)/libAkSineSource.a',
+              '<(audio_path_root_android)/libAkExpanderFX.a',
+              '<(audio_path_root_android)/libAkGuitarDistortionFX.a',
+              '<(audio_path_root_android)/libMcDSPFutzBoxFX.a',
+              '<(audio_path_root_android)/libMcDSPLimiterFX.a',
+              '<(audio_path_root_android)/libCrankcaseAudioREVModelPlayerFX.a',
               '-llog',
               '-lOpenSLES',
               '-landroid',
               '-lcamera2ndk',
               '-lmediandk',
+            ],
+            # The android build doesn't link if this lib is appended to the list above, so rather than add it when needed
+            # we remove it when it _isn't_ needed. Note the ! after 'libraries' below.
+            'conditions': [
+              ['"<(audio_library_build)"=="release"', {
+                'libraries!': [
+                  '<(audio_path_root_android)/libCommunicationCentral.a'
+                ]
+              }]
             ],
             'sources/': [
               ['exclude', '.androidHAL/sim/src/.'],

@@ -39,8 +39,10 @@ namespace MemoryMatch {
       _GameInstance.SharedMinigameView.HideMiddleBackground();
       _GameInstance.SharedMinigameView.HideShelf();
       _GameInstance.SharedMinigameView.HideInstructionsVideoButton();
+      // First time corrections.
       if (_ShowLabel) {
-        _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kMinigameTextWaitForCozmo);
+        _GameInstance.SharedMinigameView.ShowWideGameStateSlide(_GameInstance.WaitForCozmoSlidePrefab, "WaitForCozmoSlide");
+        _GameInstance.SharedMinigameView.ShowSpinnerWidget();
       }
       PlayerInfo cozmoPlayer = _GameInstance.GetFirstPlayerByType(PlayerType.Cozmo);
       if (cozmoPlayer != null) {
@@ -52,7 +54,7 @@ namespace MemoryMatch {
     public override void Exit() {
       base.Exit();
       if (_ShowLabel) {
-        _GameInstance.SharedMinigameView.InfoTitleText = "";
+        _GameInstance.SharedMinigameView.HideSpinnerWidget();
       }
       if (_CurrentRobot != null) {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);

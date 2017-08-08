@@ -28,7 +28,7 @@
     "translation" : "Nach dem Aufladen kannst du Cozmo zum Leben erwecken und ihn sein neues Zuhause erkunden lassen."
   },
   "onboarding.CozmoNeedsCharge.message3" : {
-    "translation" : "Cozmo musst gehegt und gepflegt werden. Wenn du dich jeden Tag um ihn kümmerst, werden neue Spiele und Tricks freigeschaltet."
+    "translation" : "Cozmo muss gehegt und gepflegt werden. Wenn du dich jeden Tag um ihn kümmerst, werden neue Spiele und Tricks freigeschaltet."
   },
   "onboarding.CozmoNeedsCharge.message4" : {
     "translation" : "Du kannst Cozmo hochheben, wenn es notwendig ist, aber am glücklichsten ist er, wenn er alleine fahren kann."
@@ -52,7 +52,7 @@
     "translation" : "Stelle einen Cube vor Cozmo auf."
   },
   "onboarding.Phase3.Body1" : {
-    "translation" : "Sobald Cozmo ihn sehen kann, wird der Cube &lt;color=#00FFFF&gt;blau</color>."
+    "translation" : "Sobald Cozmo ihn sehen kann, wird der Cube <color=#00FFFF>blau</color>."
   },
   "onboarding.Phase3.Body2" : {
     "translation" : "<b>Toll!</b>\u000aWenn der Cube zu nah ist, ist er für Cozmo schwer zu sehen."
@@ -62,9 +62,6 @@
   },
   "onboarding.Phase3.Body3" : {
     "translation" : "Lass Cozmo den Cube alleine untersuchen."
-  },
-  "onboarding.Phase3.Body4" : {
-    "translation" : "Super!"
   },
   "onboarding.Phase3.ErrorCube" : {
     "translation" : "Der Cube hat sich bewegt!"
@@ -94,19 +91,19 @@
     "translation" : "Cozmo wird zum Leben erweckt."
   },
   "onboarding.MeetCozmoIntro" : {
-    "translation" : "Well done!\u000a\u000aCozmo would like to meet you."
+    "translation" : "Super!\u000a\u000aCozmo würde dich gerne kennenlernen."
+  },
+  "onboarding.MeetCozmo.Button" : {
+    "translation" : "Kennenlernen"
   },
   "onboarding.NeedsIntro" : {
     "translation" : "<b>Cozmo hat Bedürfnisse.</b>\u000a\u000aKümmere dich jeden Tag um ihn, damit er bei guter Laune bleibt."
   },
   "onboarding.NeedsIntroReturning" : {
-    "translation" : "<b>Cozmo hat Bedürfnisse.</b>\u000a\u000aKümmere dich jeden Tag um ihn, damit er bei guter Laune bleibt.\u000a\u000aDie Cozmo-App sieht möglicherweise etwas anders aus, aber alle freigeschalteten Spiele und Upgrades sowie alle Sparks, die du dir verdient hast, bleiben erhalten."
+    "translation" : "<b>Cozmo hat Bedürfnisse.</b>\u000a\u000aKümmere dich jeden Tag um ihn, damit er bei guter Laune bleibt.\u000a\u000aDie Cozmo-App sieht möglicherweise etwas anders aus, aber alle freigeschalteten Elemente bleiben erhalten."
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>Cozmo muss spielen.</b>\u000a\u000aTippe auf <b>&lt;color=#f5ea12&gt;SPIELEN</color></b>, damit Cozmo dir Spiele oder Tricks zeigt. Für jeden Tag, an dem du seine gelbe Leiste füllst, erhältst du eine Bonusmarke."
-  },
-  "onboarding.RewardsIntro" : {
-    "translation" : "<b>Du hast dir eine Bonusmarke verdient.</b>\u000a\u000aMit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks und neue Fähigkeiten enthalten."
+    "translation" : "<b>Cozmo muss spielen.</b>\u000a\u000aTippe auf <b><color=#f5ea12>SPIELEN</color></b>, damit Cozmo dir Spiele oder Tricks zeigt. Für jeden Tag, an dem du seine gelbe Leiste füllst, erhältst du eine Spielmarke."
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "Entdecken-Aktivitäten sind besonders. Sie wirken sich nicht auf den Bedarf von Cozmo aus und kosten auch keine Sparks."
@@ -127,12 +124,27 @@
     "translation" : "Cozmo rollt einen Cube..."
   },
   "onboarding.RepairIntro" : {
-    "translation" : "<b>Cozmo benötigt ein Tuning.</b>\u000a\u000aWenn die rote Leiste fast leer ist, tippe auf <b>&lt;color=#fe5641&gt;TUNING</color></b>, um Cozmo zu scannen."
+    "translation" : "<b>Cozmo benötigt ein Tuning.</b>\u000a\u000aWenn die rote Leiste fast leer ist, tippe auf <b><color=#fe5641>TUNING</color></b>, um Cozmo zu scannen."
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b>Cozmo muss gefüttert werden.</b>\u000a\u000aWenn die blaue Leiste fast leer ist, hat Cozmo Hunger. Tippe auf <b>&lt;color=#31EBFF&gt;FÜTTERN</color></b>."
+    "translation" : "<b>Cozmo muss gefüttert werden.</b>\u000a\u000aWenn die blaue Leiste fast leer ist, hat Cozmo Hunger. Tippe auf <b><color=#31EBFF>FÜTTERN</color></b>."
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmo ist ein verspielter Roboter, der auch einige Tricks auf Lager hat!\u000a\u000aBeim Trick \"Cube rollen\" sucht Cozmo einen Cube und rollt ihn dann. Achte darauf, dass Cozmo einen Cube sehen kann."
+    "translation" : "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a Cube he can see, and then watch him roll it."
+  },
+  "onboarding.RewardsIntro.Part1" : {
+    "translation" : "Du hast Cozmos <color=#f5ea12>Spielbedarf</color> erfüllt."
+  },
+  "onboarding.RewardsIntro.Part2" : {
+    "translation" : "Für jeden Tag, an dem du seinen \u000a<color=#f5ea12>Spielbedarf</color> erfüllst, erhältst du eine \u000a<color=#f5ea12>Spielmarke</color>."
+  },
+  "onboarding.TokensIntro.Part1" : {
+    "translation" : "Wenn du Cozmos <color=#f5ea12>Spielbedarf</color> an drei Tagen erfüllst, wird eine <color=#f5ea12>Bonuskiste</color> freigeschaltet."
+  },
+  "onboarding.TokensIntro.Part2" : {
+    "translation" : "Cozmo kann sich glücklich schätzen, dass du sein Besitzer bist! Entdecke zusammen mit ihm eure Umgebung!"
+  },
+  "onboarding.button.end" : {
+    "translation" : "FERTIG"
   }
 }

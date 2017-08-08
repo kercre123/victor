@@ -11,8 +11,8 @@
 */
 
 #include "physVizController.h"
-#include "anki/cozmo/basestation/namedColors/namedColors.h"
-#include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
+#include "engine/namedColors/namedColors.h"
+#include "engine/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/exceptions.h"
 #include "util/math/math.h"
@@ -979,6 +979,7 @@ bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalIn
       case ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved    : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCube
       case ENodeContentTypeDebugVizEnum::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
       case ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCharger
+      case ENodeContentTypeDebugVizEnum::ObstacleProx           : { color = Anki::NamedColors::CYAN;     color.SetAlpha(0.5f); break; }
       case ENodeContentTypeDebugVizEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
       case ENodeContentTypeDebugVizEnum::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
       case ENodeContentTypeDebugVizEnum::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }

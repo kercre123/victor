@@ -12,7 +12,7 @@
 #ifndef __Simulator_Controllers_WebotsCtrlDevLog_H_
 #define __Simulator_Controllers_WebotsCtrlDevLog_H_
 
-#include "anki/cozmo/basestation/debug/devLogReader.h"
+#include "engine/debug/devLogReader.h"
 
 #include <cstdint>
 #include <memory>

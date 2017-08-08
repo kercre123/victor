@@ -86,6 +86,14 @@ namespace Cozmo {
         ResetTween(_CaratTween);
       }
 
+      public void HideBackground() {
+        _BackgroundContainer.gameObject.SetActive(false);
+      }
+
+      public void ShowBackground() {
+        _BackgroundContainer.gameObject.SetActive(true);
+      }
+
       public void SetWidgetText(string widgetText) {
         if (_RoundText != null) {
           _RoundText.gameObject.SetActive(false);

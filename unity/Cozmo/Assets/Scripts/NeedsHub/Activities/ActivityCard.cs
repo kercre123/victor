@@ -38,7 +38,7 @@ namespace Cozmo.Needs.Activities.UI {
       _ActivityTintedFrame.color = activityData.ActivityData.ActivityFrameColor;
 
       _ActivityIcon.sprite = activityData.ActivityData.ActivityIcon;
-
+      _StartActivityButton.DASSuffix = activityData.ChallengeTitleLocKey;
       _StartActivityButton.Initialize(HandleStartActivityButtonPressed, "large_start_activity_button", parentDialogName);
     }
 

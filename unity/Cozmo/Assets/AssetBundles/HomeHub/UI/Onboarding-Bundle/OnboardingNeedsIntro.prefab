@@ -539,10 +539,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 509
+    _EnumValue: 515
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 509
+    _EnumValue: 515
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: onboarding.needs.ticker
@@ -550,9 +550,9 @@ MonoBehaviour:
   _EnableWhiteListOnly: 1
   _WhiteListedActions: []
   _ForceNeedValuesOnStart:
-  - 0.6
-  - 0.63
-  - 0.66
+  - 0.68
+  - 0.75
+  - 0.7
   _ForceNeedValuesOnEnd:
   - -1
   - -1

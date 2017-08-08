@@ -65,8 +65,11 @@ namespace Anki {
         const f32 RATE_FILT_COEFF       = 1.f;    // IIR low-pass filter coefficient (1 == disable filter)
         
         f32 gyro_bias_filt[3]           = {0};     // Filtered gyro bias
-        const f32 GYRO_BIAS_FILT_COEFF  = 0.0005f; // IIR low-pass filter coefficient (1 == disable filter).
-                                                   // Relatively slow once we're sure calibration is reasonably good since it shouldn't be changing that fast.
+        const f32 GYRO_BIAS_FILT_COEFF_NORMAL  = 0.0005f; // IIR low-pass filter coefficient (1 == disable filter).
+                                                          // Relatively slow once we're sure calibration is reasonably good since it shouldn't be changing that fast.
+#ifdef COZMO_V2
+        const f32 GYRO_BIAS_FILT_COEFF_TEMP_CHANGING = 0.0025f; // Gyro bias filter coefficient used while the IMU temperature is changing (due to initial warming up)
+#endif
         const f32 GYRO_BIAS_FILT_COEFF_PRECALIB = 0.2f;   // Gyro bias filter coefficient. Relatively fast before calibration.
         f32 gyroBiasCoeff_              = GYRO_BIAS_FILT_COEFF_PRECALIB;
         u16 biasFiltCnt_                = 0;
@@ -84,6 +87,12 @@ namespace Anki {
 
         const f32 HP_ACCEL_FILT_COEFF   = 0.5f;     // IIR high-pass filter coefficient (0 == no-pass)
         f32 accel_robot_frame_high_pass[3] = {0};
+        
+#ifdef COZMO_V2
+        // These values used to check if IMU temperature is changing (see usage in IMUFilter::Update())
+        u32 timeOfLastImuTempSample_ms_ = 0;
+        f32 lastImuTempSample_degC_ = 0.f;
+#endif
         
         // ==== Pickup detection ===
         bool pickupDetectEnabled_       = true;
@@ -326,6 +335,10 @@ namespace Anki {
         prevHeadAngle_ = UNINIT_HEAD_ANGLE;
         
         ResetPickupVars();
+
+#ifdef COZMO_V2
+        timeOfLastImuTempSample_ms_ = 0;
+#endif
       }
       
       // Applies low-pass filtering to 3-element input, storing result to 3-element output assuming
@@ -766,6 +779,30 @@ namespace Anki {
         // NB: Only call IMUReadData once per mainExecution tic!
         while (HAL::IMUReadData(imu_data_)) {
 
+#ifdef COZMO_V2
+        // IMU temperature-induced bias correction
+        //
+        // Gyro zero-rate bias changes with IMU temperature, so a more aggressive gyro bias filter coefficient
+        // is required for times when IMU temperature is changing 'rapidly'. If IMU temperature has changed
+        // a lot in the past x seconds, apply a more aggressive gyro bias filter coef.
+        const u32 imuTempReadingRate_ms = 10*1000;
+        const f32 temperatureDiffThresh_degC = 0.5f;
+
+        if (HAL::GetTimeStamp() > timeOfLastImuTempSample_ms_ + imuTempReadingRate_ms) {
+          const bool temperatureChanging = fabsf(lastImuTempSample_degC_ - imu_data_.temperature_degC) > temperatureDiffThresh_degC;
+          gyroBiasCoeff_ = temperatureChanging ?
+            GYRO_BIAS_FILT_COEFF_TEMP_CHANGING :
+            GYRO_BIAS_FILT_COEFF_NORMAL;
+          
+          lastImuTempSample_degC_ = imu_data_.temperature_degC;
+          timeOfLastImuTempSample_ms_ = HAL::GetTimeStamp();
+          
+          // Also send an IMUTemperature message to engine
+          RobotInterface::IMUTemperature m;
+          m.temperature_degC = imu_data_.temperature_degC;
+          RobotInterface::SendMessage(m);
+        }
+#endif
         ////// Gyro Update //////
         
 
@@ -809,7 +846,7 @@ namespace Anki {
                        RAD_TO_DEG_F32(gyro_bias_filt[0]),
                        RAD_TO_DEG_F32(gyro_bias_filt[1]),
                        RAD_TO_DEG_F32(gyro_bias_filt[2]));
-              gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF;
+              gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF_NORMAL;
               gyroMotionThresh_ = GYRO_MOTION_THRESHOLD;
             }
             else if ( ProxSensors::IsAnyCliffDetected() ||

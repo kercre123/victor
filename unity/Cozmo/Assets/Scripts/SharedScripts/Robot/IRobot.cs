@@ -230,7 +230,7 @@ public interface IRobot : IDisposable {
 
   void CancelFaceEnrollment();
 
-  void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false);
+  void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1);
 
   void PushIdleAnimation(AnimationTrigger default_anim, string lockName);
 
@@ -241,6 +241,8 @@ public interface IRobot : IDisposable {
   void RemoveDrivingAnimations(string lockName);
 
   void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false);
+
+  void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null);
 
   float GetHeadAngleFactor();
 

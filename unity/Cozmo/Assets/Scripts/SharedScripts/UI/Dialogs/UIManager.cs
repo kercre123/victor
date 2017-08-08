@@ -68,7 +68,7 @@ public class UIManager : MonoBehaviour {
 
   private bool _IsForceCloseAndOpenInProgress = false;
   private List<BaseModal> _OpenModals;
-  private bool AreAnyModalsOpen { get { return _OpenModals.Count > 0; } }
+  public bool AreAnyModalsOpen { get { return _OpenModals.Count > 0; } }
   private BaseModal CurrentModal {
     get {
       BaseModal currentModal = null;

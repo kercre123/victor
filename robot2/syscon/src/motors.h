@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "hardware.h"
-#include "schema/messages.h"
+#include "messages.h"
 
 namespace Motors {
   void receive(Anki::Cozmo::Spine::HeadToBody *payload);

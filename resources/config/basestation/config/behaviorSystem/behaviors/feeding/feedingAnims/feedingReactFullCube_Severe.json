@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "FeedingReactFullCube_Severe",
+  
+  "animTriggers": ["FeedingReactToFullCube_Severe"]
+}

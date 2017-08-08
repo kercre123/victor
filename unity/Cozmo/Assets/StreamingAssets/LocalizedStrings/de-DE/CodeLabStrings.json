@@ -43,7 +43,7 @@
     "translation" : "Antwort 4"
   },
   "codeLabChallenge_sayHi.questionSlide.primaryText" : {
-    "translation" : "#5: &quot;Hallo&quot; <span class='purple'>SAGEN</span>."
+    "translation" : "#5: \"Hallo\" <span class='purple'>SAGEN</span>."
   },
   "codeLabChallenge_sayHi.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -70,7 +70,7 @@
     "translation" : "Antwort 7"
   },
   "codeLabChallenge_whenFaceSay.questionSlide.primaryText" : {
-    "translation" : "#8: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, &quot;Ich sehe dich&quot; <span class='purple'>SAGEN</span>."
+    "translation" : "#8: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, \"Ich sehe dich\" <span class='purple'>SAGEN</span>."
   },
   "codeLabChallenge_whenFaceSay.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -142,7 +142,7 @@
     "translation" : "Antwort 15"
   },
   "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText" : {
-    "translation" : "#16: <span class='purple'>KRANGABEL BEWEGEN</span> – 3 <span class='orange'>MAL</span> nach oben und unten."
+    "translation" : "#16: <span class='purple'>KRANGABEL BEWEGEN</span>– 3 <span class='orange'>MAL</span> nach oben und unten."
   },
   "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -214,7 +214,7 @@
     "translation" : "Antwort 23"
   },
   "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText" : {
-    "translation" : "#24: &quot;Lächle!&quot; <span class='purple'>SAGEN</span>. <span class='yellow'>WENN EIN LÄCHELN ERKANNT WIRD</span>, <span class='violet'>WIE EIN GEWINNER BENEHMEN</span>."
+    "translation" : "#24: \"Lächle!\" <span class='purple'>SAGEN</span>. <span class='yellow'>WENN EIN LÄCHELN ERKANNT WIRD</span>, <span class='violet'>WIE EIN GEWINNER BENEHMEN</span>."
   },
   "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -286,7 +286,7 @@
     "translation" : "Antwort 31"
   },
   "codeLabChallenge_intruder.questionSlide.primaryText" : {
-    "translation" : "#32: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, <span class='violet'>ÜBERRASCHT SEIN</span>, dann <span class='orange'>FÜR IMMER:</span> <span class='purple'>RUCKSACK LEUCHTEN LASSEN</span> in Rot, &quot;Eindringling!&quot; <span class='purple'>SAGEN</span> und Beleuchtung des <span class='purple'>RUCKSACKS</span> ausschalten."
+    "translation" : "#32: <span class='yellow'>WENN EIN GESICHT ERKANNT WIRD</span>, <span class='violet'>ÜBERRASCHT SEIN</span>, dann <span class='orange'>FÜR IMMER:</span> <span class='purple'>RUCKSACK LEUCHTEN LASSEN</span> in Rot, \"Eindringling!\" <span class='purple'>SAGEN</span> und Beleuchtung des <span class='purple'>RUCKSACKS</span> ausschalten."
   },
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -319,7 +319,7 @@
     "translation" : "Du hast die Möglichkeit, auf einen Codeblock zu tippen, um zu sehen, was dieser bewirkt."
   },
   "codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft" : {
-    "translation" : "Nach links drehen"
+    "translation" : "Links abbiegen"
   },
   "codeLab.tutorial.slide_dragBlocksToMakePrograms" : {
     "translation" : "Um ein Programm zu erstellen, musst du einfach nur verschiedene Codeblöcke zusammenziehen."
@@ -390,6 +390,12 @@
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "Warnung vor Eindringlingen!"
   },
+  "codeLab.SaveProject.Autosaved" : {
+    "translation" : "Automatisch gespeichert"
+  },
+  "codeLab.SaveProject.NotSaved" : {
+    "translation" : "Beispielprojekte wurden nicht gespeichert."
+  },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "Mein Projekt \"{0}\""
   },
@@ -421,49 +427,49 @@
     "translation" : "Schnell rückwärts fahren"
   },
   "codeLabHorizontal.Tooltip.ActHappy" : {
-    "translation" : "So tun, als wäre er glücklich"
+    "translation" : "Fröhlich sein"
   },
   "codeLabHorizontal.Tooltip.ActLikeWinner" : {
-    "translation" : "So tun, als hätte er gewonnen"
+    "translation" : "Wie ein Gewinner benehmen"
   },
   "codeLabHorizontal.Tooltip.ActSad" : {
-    "translation" : "So tun, als wäre er traurig"
+    "translation" : "Traurig sein"
   },
   "codeLabHorizontal.Tooltip.ActSurprised" : {
-    "translation" : "So tun, als wäre er überrascht"
+    "translation" : "Überrascht sein"
   },
   "codeLabHorizontal.Tooltip.ActLikeDog" : {
-    "translation" : "So tun, als wäre er ein Hund"
+    "translation" : "Einen Hund nachahmen"
   },
   "codeLabHorizontal.Tooltip.ActLikeCat" : {
-    "translation" : "So tun, als wäre er eine Katze"
+    "translation" : "Eine Katze nachmachen"
   },
   "codeLabHorizontal.Tooltip.Sneeze" : {
     "translation" : "Niesen"
   },
   "codeLabHorizontal.Tooltip.ActExcited" : {
-    "translation" : "So tun, als wäre er aufgeregt"
+    "translation" : "Aufgeregt sein"
   },
   "codeLabHorizontal.Tooltip.ThinkHard" : {
     "translation" : "Gut nachdenken"
   },
   "codeLabHorizontal.Tooltip.ActBored" : {
-    "translation" : "So tun, als wäre er gelangweilt"
+    "translation" : "Gelangweilt sein"
   },
   "codeLabHorizontal.Tooltip.ActFrustrated" : {
-    "translation" : "So tun, als wäre er frustriert"
+    "translation" : "Frustriert sein"
   },
   "codeLabHorizontal.Tooltip.ActChatty" : {
-    "translation" : "So tun, als wäre er gesprächig"
+    "translation" : "Gesprächig sein"
   },
   "codeLabHorizontal.Tooltip.ActDisappointed" : {
-    "translation" : "So tun, als wäre er enttäuscht"
+    "translation" : "Enttäuscht sein"
   },
   "codeLabHorizontal.Tooltip.Snore" : {
     "translation" : "Schnarchen"
   },
   "codeLabHorizontal.Tooltip.MysteryAnimation" : {
-    "translation" : "Mysteriöse Animation"
+    "translation" : "Unbestimmte Animation"
   },
   "codeLabHorizontal.Tooltip.MoveLift" : {
     "translation" : "Krangabel bewegen"

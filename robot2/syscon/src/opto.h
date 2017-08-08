@@ -1,7 +1,7 @@
 #ifndef __OPTO_H
 #define __OPTO_H
 
-#include "schema/messages.h"
+#include "messages.h"
 
 namespace Opto {
   void init(void);

@@ -115,6 +115,7 @@ namespace Anki {
         imuData.rate_x = rawData.gyro[0] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
         imuData.rate_y = rawData.gyro[1] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
         imuData.rate_z = rawData.gyro[2] * IMU_GYRO_SCALE_DPS * RADIANS_PER_DEGREE;
+        imuData.temperature_degC = IMU_TEMP_RAW_TO_C(rawData.temperature);
         lastAccTime = lastGyroTime = rawData.timestamp * NS_PER_IMU_TICK;
         PushIMU(imuData);
       }
@@ -169,9 +170,6 @@ namespace Anki {
 
     bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
-      //return PopIMU(IMUData);
-
-      // TEMP HACK: Send 0s because on my Nexus 5x, the gyro values are kinda crazy.
       while (PopIMU(IMUData)) {}; // Just to pop queue
       static TimeStamp_t lastIMURead = 0;
       TimeStamp_t now = HAL::GetTimeStamp();

@@ -16,7 +16,7 @@
     "translation" : "Noch nicht freigeschaltete Fähigkeit"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Beim Öffnen von Bonuskisten werden manchmal neue Fähigkeiten freigeschaltet!"
+    "translation" : "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Fauststoß"
@@ -88,7 +88,7 @@
     "translation" : "Cube rollen"
   },
   "unlockable.CubeRollAction.Description" : {
-    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen – insbesondere, wenn sie auf der Seite liegen."
+    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen– insbesondere, wenn sie auf der Seite liegen."
   },
   "unlockable.CubeRollAction.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo zu bitten, einen Cube zu rollen."
@@ -175,22 +175,28 @@
     "translation" : "Sieh Cozmo zu, wie er einen Cube aufnimmt."
   },
   "unlockable.GatherCubes.Title" : {
-    "translation" : "Titel für &quot;Cubes sammeln&quot; <placeholder>"
+    "translation" : "Titel für \"Cubes sammeln\" <placeholder>"
   },
   "unlockable.GatherCubes.Description" : {
-    "translation" : "Beschreibung für &quot;Cubes sammeln&quot; <placeholder>"
+    "translation" : "Beschreibung für \"Cubes sammeln\" <placeholder>"
   },
   "unlockable.GatherCubes.SparkButtonDescription" : {
-    "translation" : "Spark-Schaltfläche für &quot;Cubes sammeln&quot; <placeholder>"
+    "translation" : "Spark-Schaltfläche für \"Cubes sammeln\" <placeholder>"
   },
   "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "Spark-Status für &quot;Cubes sammeln&quot; <placeholder>"
+    "translation" : "Spark-Status für \"Cubes sammeln\" <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
-    "translation" : "Demnächst verfügbar!"
+    "translation" : "Noch nicht freigeschaltete Fähigkeit"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "Beim Öffnen von Bonuskisten kann es vorkommen, dass neue Fähigkeiten freigeschaltet werden!"
+    "translation" : "Erfülle Cozmos Spielbedarf jeden Tag, und schalte Bonuskisten mit Belohnungen wie Sparks und Tricks frei."
+  },
+  "unlockable.GuardDog.Title" : {
+    "translation" : "Cube-Bewachen"
+  },
+  "unlockable.GuardDog.Description" : {
+    "translation" : "When Cozmo’s Cubes are close together, he might take a nap while guarding them. Carefully turn his Cubes upside-down without waking him."
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo besitzt Sparks:"
@@ -214,12 +220,18 @@
     "translation" : "Nicht genügend Sparks"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "In den Modi \"Freies Spiel\" und \"Bonuskisten\" verdienst du mehr."
+    "translation" : "In den Modi \"Freies Spiel\" und \"Bonuskisten\" kannst du mehr verdienen."
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "Stelle sicher, dass die Cubes aufrecht sind."
   },
   "sparks.CubesNeedUpright.Desc" : {
     "translation" : "Wenn die Cubes aufrecht sind (Lichter sind oben), kann Cozmo schneller bauen."
+  },
+  "sparks.free" : {
+    "translation" : "Keine Sparks erforderlich"
+  },
+  "sparks.notSparkable" : {
+    "translation" : "Keine Belohnung mit Sparks"
   }
 }

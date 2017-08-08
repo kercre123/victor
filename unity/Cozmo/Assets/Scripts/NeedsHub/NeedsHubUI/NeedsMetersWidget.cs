@@ -279,9 +279,30 @@ namespace Cozmo.Needs.UI {
     #region Onboarding
 
     public void DimNeedMeters(List<NeedId> dimmedMeters) {
-      _EnergyMeter.Dim = dimmedMeters.Contains(NeedId.Energy);
-      _RepairMeter.Dim = dimmedMeters.Contains(NeedId.Repair);
-      _PlayMeter.Dim = dimmedMeters.Contains(NeedId.Play);
+      bool dimming = (dimmedMeters != null && dimmedMeters.Count > 0);
+      _DimmedImage.gameObject.SetActive(dimming);
+
+      if (dimming) {
+        _DimmedImage.transform.SetAsLastSibling();
+
+        if (!dimmedMeters.Contains(NeedId.Energy)) {
+          _EnergyMeter.transform.SetAsLastSibling();
+        }
+
+        if (!dimmedMeters.Contains(NeedId.Repair)) {
+          _RepairMeter.transform.SetAsLastSibling();
+        }
+
+        if (!dimmedMeters.Contains(NeedId.Play)) {
+          _PlayMeter.transform.SetAsLastSibling();
+        }
+      }
+      else {
+        //reassert standard meter ordering
+        _EnergyMeter.transform.SetAsLastSibling();
+        _RepairMeter.transform.SetAsLastSibling();
+        _PlayMeter.transform.SetAsLastSibling();
+      }
     }
 
     public void OnboardingSkipped() {

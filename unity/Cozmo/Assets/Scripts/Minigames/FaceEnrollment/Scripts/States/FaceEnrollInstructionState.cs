@@ -40,6 +40,11 @@ namespace FaceEnrollment {
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete += HandleEnrolledFace;
       CreateInstructionsModal();
+      if (_FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed += HandleUserClosedInstructionsModal;
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.OverrideModalText(
+          LocalizationKeys.kFaceEnrollmentTitleCancelScanning);
+      }
     }
 
     private void CreateInstructionsModal() {
@@ -56,7 +61,9 @@ namespace FaceEnrollment {
     }
 
     private void HandleInstructionsModalCreated(BaseModal newInstructionsModal) {
+      _FaceEnrollmentGame.SharedMinigameView.HideShelf();
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
+      _FaceEnrollmentGame.SharedMinigameView.HideQuitButton();
       _FaceEnrollmentInstructionsModalInstance = (FaceEnrollmentInstructionsModal)newInstructionsModal;
       _FaceEnrollmentInstructionsModalInstance.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleUserClosedInstructionsModal;
       _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished += HandleInstructionsModalForceClosed;
@@ -87,6 +94,11 @@ namespace FaceEnrollment {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete -= HandleEnrolledFace;
+      }
+
+      if (_FaceEnrollmentInstructionsModalInstance != null && _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed -= HandleUserClosedInstructionsModal;
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.CancelQuitDialog();
       }
     }
 
@@ -149,7 +161,7 @@ namespace FaceEnrollment {
         errorAlertData = new AlertModalData("enroll_never_saw_valid_face_alert",
                                             LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceTitle,
                                             LocalizationKeys.kFaceEnrollmentErrorsNeverSawValidFaceDescription,
-                                            new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, true, ReturnToFaceSlide),
+                                            new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, ReturnToFaceSlide),
                                             descLocArgs: new object[] { faceEnrollmentCompleted.name });
         break;
 
@@ -159,8 +171,8 @@ namespace FaceEnrollment {
         errorAlertData = new AlertModalData("enroll_time_out_alert",
                                             LocalizationKeys.kFaceEnrollmentErrorsTimeOutTitle,
                                             LocalizationKeys.kFaceEnrollmentErrorsTimeOutDescription,
-                                            new AlertModalButtonData("retry_button", LocalizationKeys.kButtonRetry, false, SendEnrollFace),
-                                            new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, false, ReturnToFaceSlide));
+                                            new AlertModalButtonData("retry_button", LocalizationKeys.kButtonRetry, SendEnrollFace),
+                                            new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, ReturnToFaceSlide));
         break;
       }
 
@@ -197,7 +209,7 @@ namespace FaceEnrollment {
       var doneAlertData = new AlertModalData("enroll_first_time_finished_alert",
                                              LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle,
                                              LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertDescription,
-                                             new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, false, ReturnToFaceSlide));
+                                             new AlertModalButtonData("continue_button", LocalizationKeys.kButtonContinue, ReturnToFaceSlide));
 
       var doneAlertPriorityData = ModalPriorityData.CreateSlightlyHigherData(_FaceEnrollmentInstructionsModalInstance.PriorityData);
 

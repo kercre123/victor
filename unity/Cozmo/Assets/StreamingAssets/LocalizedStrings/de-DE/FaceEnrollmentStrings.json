@@ -10,10 +10,10 @@
     "translation" : "Cozmo muss sich dich genau ansehen. Schau gerade aus in die Richtung von Cozmo und bewege dich nicht.\u000a\u000aWenn er fertig ist, hörst du einen Ton."
   },
   "faceEnrollment.enterName.placeholderText" : {
-    "translation" : "Vornamen eingeben"
+    "translation" : "Gib deinen Vornamen ein:"
   },
   "faceEnrollment.faceEnrollmentList.description" : {
-    "translation" : "Bring Cozmo bei, dich oder eine andere Person zu erkennen."
+    "translation" : "Lehre Cozmo, dich oder eine andere Person zu erkennen."
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
     "translation" : "Soll \"{0}\" gelöscht werden?"
@@ -22,7 +22,7 @@
     "translation" : "Löschen"
   },
   "faceEnrollment.instructions.top" : {
-    "translation" : "Schau gerade aus in die Richtung von Cozmo und bewege dich nicht."
+    "translation" : "Schau geradeaus in die Richtung von Cozmo und bewege dich nicht."
   },
   "faceEnrollment.instructions.bottom" : {
     "translation" : "Wenn Cozmo fertig ist, sagt er deinen Namen."
@@ -49,7 +49,7 @@
     "translation" : "Cozmo kennt dein Gesicht und sagt unter Umständen deinen namen, wenn er dich sieht. Verwende die Funktion \"Kennenlernen\", um Cozmo weitere Freunde vorzustellen."
   },
   "faceEnrollment.button.addNewPerson" : {
-    "translation" : "NEUE PERSON HINZUFÜGEN"
+    "translation" : "NEUE PERSON"
   },
   "faceEnrollment.button.scanAgain" : {
     "translation" : "{0} erneut scannen"
@@ -61,7 +61,7 @@
     "translation" : "Vor {0} Tagen"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
-    "translation" : "Hilf Cozmo, dich einfacher zu erkennen."
+    "translation" : "Hilf Cozmo, dich einfacher zu erkennen:"
   },
   "faceEnrollment.label.lastScanned" : {
     "translation" : "Letzter Scan:"

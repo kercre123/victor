@@ -54,9 +54,6 @@ namespace Onboarding {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(BehaviorID.OnboardingShowCube);
-        // In this behavior we allow some interuptions, but ReactToPet can interrupt from those reactions. Repress it here, instead of the C++ behavior
-        // so it will be off throughout the whole thing.
-        RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingCubeStageId, ReactionaryBehaviorEnableGroups.kOnboardingShowCubeStageTriggers);
       }
       // So there is no UI pop just start us at the right stage.
       // Next tick engine will set up at this state too.
@@ -71,9 +68,6 @@ namespace Onboarding {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(BehaviorID.Wait);
-        // re-enable reactionary behaviors.
-        RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingCubeStageId);
-
         // Start prepping for Meet Cozmo so it has time to invisibly load as we'll show it in two stages.
         OnboardingManager.Instance.PrepMeetsCozmoPhase();
       }

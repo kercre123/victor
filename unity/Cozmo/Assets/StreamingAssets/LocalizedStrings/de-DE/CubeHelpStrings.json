@@ -10,13 +10,13 @@
     "translation" : "Cozmo kann nicht alle Cubes hören. Positioniere sie in seiner Nähe."
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "Tippe auf <b>&lt;color=#d3d3d3&gt;WEITER</color></b>, falls das Problem weiterhin besteht."
+    "translation" : "Tippe auf <b><color=#d3d3d3>WEITER</color></b>, falls das Problem weiterhin besteht."
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "Wähle <b>EINSTELLUNGEN</b> aus.\u000aTippe anschließend auf <b>CUBES AKTUALISIEREN</b>."
+    "translation" : "Wähle <b>EINSTELLUNGEN</b> aus."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
-    "translation" : "Nun solltest du die Batterie des Cube wechseln."
+    "translation" : "Wenn nötig solltest du die Batterie des Cube wechseln."
   },
   "cubeHelpStrings.Instructions.Slide1altCopy" : {
     "translation" : "Lege ihn so vor dich, dass die Unterseite oben ist, und schraube die Abdeckung ab."
@@ -25,7 +25,7 @@
     "translation" : "Ersetze die Batterie durch eine neue vom Typ \"Lady\"."
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
-    "translation" : "Achte beim Einsetzen der Batterie darauf, dass der Plus-Pol (<b>&lt;color=#d3d3d3&gt;+</color></b>) oben ist."
+    "translation" : "Achte beim Einsetzen der Batterie darauf, dass der Plus-Pol (<b><color=#d3d3d3>+</color></b>) oben ist."
   },
   "cubeHelpStrings.Instructions.Slide3" : {
     "translation" : "Bringe die Abdeckung wieder an und zieh sie vorsichtig fest."
@@ -34,18 +34,21 @@
     "translation" : "Achte darauf, dass die Abdeckung zum Cube passt. Der Cube sollte jetzt leuchten."
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
-    "translation" : "Cozmo too hungry to play?"
+    "translation" : "Ist Cozmo zu hungrig, um zu spielen?"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
-    "translation" : "Give him a quick snack while you reconnect his Cubes."
+    "translation" : "Gib ihm einen Snack, während du die Verbindung mit seinen Cubes wiederherstellst."
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
-    "translation" : "QUICK SNACK"
+    "translation" : "SNACK"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmo can now keep playing"
+    "translation" : "Cozmo kann jetzt weiterspielen."
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
-    "translation" : "To keep him fully fed, follow the instructions to help him recognize his cubes."
+    "translation" : "Damit er nicht wieder Hunger bekommt, kannst du die folgenden Schritte ausführen, sodass er seine Cubes erkennt."
+  },
+  "cubeHelpStrings.Instructions.SlideA2Copy" : {
+    "translation" : "Tippe anschließend auf <b>CUBES AKTUALISIEREN</b>."
   }
 }

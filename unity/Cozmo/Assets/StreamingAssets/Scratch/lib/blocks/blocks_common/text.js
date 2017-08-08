@@ -32,9 +32,6 @@ goog.require('Blockly.Colours');
 
 goog.require('Blockly.constants');
 
-// *** ANKI Change ***
-var MAX_TEXT_LENGTH = 32;
-
 Blockly.Blocks['text'] = {
   /**
    * Block for text value.
@@ -56,8 +53,10 @@ Blockly.Blocks['text'] = {
   }
 };
 
-// *** ANKI Change ***
-// Same as text block above, with a validator added
+// *** ANKI Change ***   
+// Same as text block above. This was in releases Cozmo 1.6 and 1.7 for horizontal grammar only.
+// We can't remove it because it is already in people's projects. Now it is just a copy of the
+// 'text' block above.
 Blockly.Blocks['text_with_validator'] = {
   /**
    * Block for text value.
@@ -75,16 +74,6 @@ Blockly.Blocks['text_with_validator'] = {
       "output": "String",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "colour": Blockly.Colours.textField
-    });
-
-    // Add validator for cozmo_says block to limit the length of the string to
-    // MAX_TEXT_LENGTH characters.
-    this.getField("TEXT").setValidator(function(inputText) {
-      if (inputText.length > MAX_TEXT_LENGTH) {
-        inputText = inputText.slice(0, MAX_TEXT_LENGTH);
-      }
-
-      return inputText;
     });
   }
 };

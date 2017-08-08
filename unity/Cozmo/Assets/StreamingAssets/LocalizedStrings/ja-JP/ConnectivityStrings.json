@@ -10,16 +10,16 @@
     "translation" : "Cozmoに接続しています..."
   },
   "connectivity.searchForCozmoFailedText" : {
-    "translation" : "Cozmoに接続してください"
+    "translation" : "Cozmoに接続してください。"
   },
   "connectivity.moreInfo" : {
     "translation" : "詳細情報"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "Cozmoをオンにする"
+    "translation" : "Cozmoをオンにしてください。"
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "WiFi設定で接続する"
+    "translation" : "WiFi設定で接続してください。"
   },
   "connectivity.searchingForCozmo" : {
     "translation" : "Cozmoを探しています..."
@@ -66,14 +66,11 @@
   "connectivity.placeCozmoOnCharger" : {
     "translation" : "Cozmoをチャージャーに置きます。"
   },
-  "connectivity.replaceCozmoOnCharger" : {
-    "translation" : "Cozmoをチャージャーから外してもう一度置きます。"
-  },
   "label.getHelp" : {
-    "translation" : "ヘルプを見る"
+    "translation" : "ヘルプ"
   },
   "label.cubesNotWorking" : {
-    "translation" : "キューブが動作していませんか？"
+    "translation" : "キューブが作動していませんか？"
   },
   "connectivity.connectionRejected.title" : {
     "translation" : "Cozmoに別のデバイスが接続されています。\u000aデバイスの接続を外してからもう一度試してください。"
@@ -91,12 +88,9 @@
     "translation" : "コレクター版：液体金属"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "あなたのゲームプレイのデータと統計情報をお送りください。"
-  },
-  "needs.VoiceSettingsModal.Title" : {
-    "translation" : "音声コマンド"
+    "translation" : "Cozmoの改善のため、ゲームプレイのデータと統計を送信してください。"
   },
   "connectivity.behaviorDisplayDisconnected" : {
-    "translation" : "Cozmoが切断されました。"
+    "translation" : "Cozmoの接続が解除されました。"
   }
 }

@@ -9,7 +9,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "engine/events/ankiEventMgr.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "clad/physicsInterface/messageSimPhysics.h"

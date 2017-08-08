@@ -213,7 +213,7 @@ public final class WifiUtil {
     final AnkitivityDispatcher.PermissionListener listener = new AnkitivityDispatcher.PermissionListener() {
       @Override public void onRequestPermissionsResult(final String[] permissions, final int[] grantResults) {
         MessageSender.sendMessage("permissionResult",
-          new String[] { grantResults[0] == PackageManager.PERMISSION_GRANTED ? "true" : "false" });
+          new String[] { grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED ? "true" : "false" });
       }
     };
     PermissionUtil.askForPermission(Manifest.permission.ACCESS_COARSE_LOCATION, listener);
@@ -555,14 +555,18 @@ public final class WifiUtil {
 
   private static Network findNetworkForInfo(final NetworkInfo info) {
     // why does this method have to be a thing? am I just an idiot and missing something?
+    final String tag = TAG + ".WifiUtil.findNetworkForInfo";
     String infoString = info.toString();
     Network foundNetwork = null;
     Network lessStrictNetwork = null;
     for (Network network : mConnectivityManager.getAllNetworks()) {
       final NetworkInfo tempInfo = mConnectivityManager.getNetworkInfo(network);
-      if (infoString.equals(tempInfo.toString())) {
+      if (tempInfo == null) {
+        Log.v(tag, "Skip invalid network " + network);
+      }
+      else if (infoString.equals(tempInfo.toString())) {
         if (foundNetwork != null) {
-          Log.v(TAG, "found duplicate info!!");
+          Log.v(tag, "found duplicate info!!");
         }
         foundNetwork = network;
       }
@@ -572,7 +576,7 @@ public final class WifiUtil {
       }
     }
     if (foundNetwork == null && lessStrictNetwork == null) {
-      Log.v(TAG, "AAAHHH COULDN'T FIND NETWORK");
+      Log.v(tag, "AAAHHH COULDN'T FIND NETWORK");
     }
     return foundNetwork != null ? foundNetwork : lessStrictNetwork;
   }

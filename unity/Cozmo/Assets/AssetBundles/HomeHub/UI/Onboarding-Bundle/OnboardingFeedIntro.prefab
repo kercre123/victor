@@ -86,10 +86,10 @@ MonoBehaviour:
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 509
+    _EnumValue: 515
   _CustomIdle:
     _EnumValueAsString: OnboardingIdleEnergy
-    _EnumValue: 304
+    _EnumValue: 309
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.feed.ticker
@@ -98,8 +98,8 @@ MonoBehaviour:
   _WhiteListedActions: []
   _ForceNeedValuesOnStart:
   - 1
-  - 0.6
-  - 0.6
+  - 0.75
+  - 0.7
   _ForceNeedValuesOnEnd:
   - -1
   - -1

@@ -1,15 +1,32 @@
+
 #ifndef __TIMER_H
 #define __TIMER_H
 
 #include <stdint.h>
 
 #include "hardware.h"
+#include "messages.h"
 
-static const uint32_t MAIN_EXEC_TICK  = 1000000; // Microseconds
+static const uint32_t TARGET_EXEC_PERIOD = 200;
 static const uint32_t MICROSEC_TO_SYSTICK = (SYSTEM_CLOCK / 1000000) << 8;
+
+// Audio timing is the primary clock definition
+static const int AUDIO_SHIFT      = 3; // 3 = 3000000hz
+static const int AUDIO_PRESCALE   = 2 << AUDIO_SHIFT;
+static const int AUDIO_DATA_CLOCK = SYSTEM_CLOCK / (2 << AUDIO_SHIFT);
+
+static const int AUDIO_DECIMATION = 96;
+static const int AUDIO_SAMPLES_PER_FRAME  = 80;
+
+// This calculates the main execution timing to fit audio into even chunks
+static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
+static const uint16_t MAIN_EXEC_OVERFLOW = AUDIO_SAMPLES_PER_FRAME * AUDIO_DECIMATION * 2 * AUDIO_PRESCALE / MAIN_EXEC_PRESCALE;
+
+typedef void (*void_funct)(void);
 
 namespace Timer {
   extern uint32_t clock;
+  extern void_funct LightHandler;
   void init();
 
   static uint32_t getTime(void) {

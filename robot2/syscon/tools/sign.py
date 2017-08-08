@@ -140,7 +140,8 @@ if __name__ == '__main__':
     commentBlock = None
 
     # Load our RSA key
-    cert_fn = args.key if args.key else os.environ['COZMO2_CERT']
+    cert_fn = args.key if args.key else os.environ['COZMO2_CERT'] if 'COZMO2_CERT' in os.environ else os.path.join(os.path.dirname(__file__), "development.pem")
+    print (cert_fn)
     with open(cert_fn, "r") as cert_fo:
         cert = RSA.importKey(cert_fo.read())
         print ("Signing data with a %i-bit certificate" % cert.size())

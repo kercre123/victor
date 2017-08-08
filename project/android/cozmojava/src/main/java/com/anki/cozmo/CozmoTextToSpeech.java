@@ -169,6 +169,16 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
       return RESULT_FAIL_INVALID_PARAMETER;
     }
 
+    err = _tts.setTTSSettings("LEADINGSILENCE", 0);
+    if (0 != err) {
+      error(EVT, "Unable to set leading silence, err="+err);
+    }
+
+    err = _tts.setTTSSettings("TRAILINGSILENCE", 0);
+    if (0 != err) {
+      error(EVT, "Unable to set trailing silence, err="+err);
+    }
+
     return RESULT_OK;
   }
 

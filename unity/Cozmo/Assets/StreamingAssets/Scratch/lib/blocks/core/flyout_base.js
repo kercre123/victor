@@ -126,7 +126,7 @@ Blockly.Flyout = function(workspaceOptions) {
  * Does the flyout automatically close when a block is created?
  * @type {boolean}
  */
-Blockly.Flyout.prototype.autoClose = false; // ANKI TODO: Set back to true after createBlockFunc_ available from this file. See https://github.com/LLK/scratch-blocks/issues/905
+Blockly.Flyout.prototype.autoClose = false;
 
 /**
  * Whether the flyout is visible.
@@ -320,8 +320,17 @@ Blockly.Flyout.prototype.setParentToolbox = function(toolbox) {
  * @return {number} The width of the flyout.
  */
 Blockly.Flyout.prototype.getWidth = function() {
-  return this.parentToolbox_ ? this.parentToolbox_.getWidth() :
-      this.DEFAULT_WIDTH;
+  // *** ANKI CHANGE ***
+  // For vertical, we want the width of the flyout to be wide enough for the blocks.
+  // The toolbox is the dimensions of blocklyToolboxDiv, which encompasses the category
+  // menu and is slimmer than the flyout.
+  if (window.isVertical) {
+    return this.DEFAULT_WIDTH;
+  }
+  else {
+    return this.parentToolbox_ ? this.parentToolbox_.getWidth() :
+        this.DEFAULT_WIDTH;
+  }
 };
 
 /**
@@ -538,17 +547,22 @@ Blockly.Flyout.prototype.clearOldBlocks_ = function() {
  * @private
  */
 Blockly.Flyout.prototype.addBlockListeners_ = function(root, block, rect) {
-  if (this.autoClose) {
+  // *** ANKI CHANGE ***
+  // Blockly doesn't have this block of code, and createBlockFunc_ doesn't exist
+  // (see https://github.com/LLK/scratch-blocks/issues/905) Turning this off
+  // so vertical can use autoclose.
+  //
+  /*if (this.autoClose) {
     this.listeners_.push(Blockly.bindEventWithChecks_(root, 'mousedown', null,
         this.createBlockFunc_(block)));
     this.listeners_.push(Blockly.bindEventWithChecks_(rect, 'mousedown', null,
         this.createBlockFunc_(block)));
-  } else {
+  } else {*/
     this.listeners_.push(Blockly.bindEventWithChecks_(root, 'mousedown', null,
         this.blockMouseDown_(block)));
     this.listeners_.push(Blockly.bindEventWithChecks_(rect, 'mousedown', null,
         this.blockMouseDown_(block)));
-  }
+  //}
   this.listeners_.push(Blockly.bindEvent_(root, 'mouseover', block,
       block.addSelect));
   this.listeners_.push(Blockly.bindEvent_(root, 'mouseout', block,

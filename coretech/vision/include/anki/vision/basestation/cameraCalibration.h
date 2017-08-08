@@ -158,7 +158,7 @@ namespace Anki {
       std::copy(distCoeffs.begin(), distCoeffs.end(), std::back_inserter(_distortionCoeffs));
     }
     
-  } // namesapce Vision
+  } // namespace Vision
 } // namespace Anki
 
 #endif // ANKI_CORETECH_VISION_BASESTATION_CAMERA_CALIBRATION_H_

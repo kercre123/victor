@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_CozMambo",
-  "displayNameKey":"behavior.singing.CozMambo",
-  "requiredUnlockId":"Singing_CozMambo",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Cozmambo"
-}

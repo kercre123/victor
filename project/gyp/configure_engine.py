@@ -35,6 +35,8 @@ def main(scriptArgs):
                       help='cleans all output folders')
   parser.add_argument('--mex', '-m', dest='mex', action='store_true',
                       help='builds mathlab\'s mex project')
+  parser.add_argument('--useReleaseWwise', dest='useReleaseWwise', action='store_true',
+                      help="Use Release (not Profile) Wwise libs")
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
   parser.add_argument('--with-clad', metavar='CLAD_PATH', dest='cladPath', action='store', default=None,
@@ -225,16 +227,13 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'resources'],
+  generator.processFolder(['engine', 'include', 'resources'],
    ['project/gyp/cozmoEngine.lst'])
-  generator.processFolder(['basestation/src/anki/cozmo',
-                           'basestation/include/anki/cozmo',
-                           'include', 'resources'],
+  generator.processFolder(['engine', 'include', 'resources'],
                           ['project/gyp/cozmoEngine2.lst'])
-  generator.processFolder(['androidHAL/include/anki/cozmo',
-                           'androidHAL/src/anki/cozmo'],
+  generator.processFolder(['androidHAL'],
                           ['project/gyp/androidHAL.lst'])
-  generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
+  generator.processFolder(['test/engine', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c'])
@@ -296,11 +295,15 @@ def main(scriptArgs):
   dasProjectPath = os.path.relpath(dasProjectPath, configurePath)
   # paths relative to gyp file
   clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))
+  
+  audio_library_build = 'profile'
+  if options.useReleaseWwise:
+    audio_library_build = 'release'
 
   default_defines = {
     'arch_group': options.arch,
     'audio_library_type': 'static_library',
-    'audio_library_build': 'profile',
+    'audio_library_build': audio_library_build,
     'kazmath_library_type': 'static_library',
     'jsoncpp_library_type': 'static_library',
     'util_library_type': 'static_library',

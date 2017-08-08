@@ -19,16 +19,16 @@
     "translation" : "Cozmoのキューブ"
   },
   "helpTipsStrings.Slide1.body" : {
-    "translation" : "Cozmoはキューブの近くにいるのが好きです。キューブはCozmoからシンボルがはっきり見え、正しい面を上にしているときに最もよく機能します。キューブのメンテナンスの<b>&lt;color=#d3d3d3&gt;設定</color></b>を確認してください。"
+    "translation" : "Cozmoはキューブの近くにいるのが好きです。キューブはCozmoからシンボルがはっきり見え、正しい面を上にしているときに最もよく機能します。キューブのメンテナンスの<b><color=#d3d3d3>設定</color></b>を確認してください。"
   },
   "helpTipsStrings.Slide2.title" : {
     "translation" : "ゲームをしていない場合、\u000aキューブのライトは次のことを示します。"
   },
   "helpTipsStrings.Slide2.subtitle1" : {
-    "translation" : "Cozmoが\u000aこのキューブを見た。"
+    "translation" : "Cozmoが\u000a見ているキューブ"
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmoは\u000aこのキューブを使いたい"
+    "translation" : "Cozmoは\u000aこのキューブを使いたがっています。"
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "このキューブは\u000a電池の残りが少ない"
@@ -37,34 +37,19 @@
     "translation" : "Cozmoは時間とともに成長します。"
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "<b><color=#ff69b4> ！FPO！ </color></b> ：毎日Cozmoの黄色のプレイバーを埋めると、ボーナストークンを獲得します。ボーナストークンは、Sparks、Games、Abilitiesのような報酬で満たされたBonus Boxesのロックを解除します。"
+    "translation" : "Cozmoのプレイメーターを満たすと、その日のプレイトークンを獲得できます。プレイトークンによって、スパーク、ゲーム、トリックなどのご褒美が詰まったボーナスボックスのロックを解除できます。"
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Token"
+    "translation" : "<color=#FFFFFF>毎日</color><b><color=#F5BF2D>プレイトークン</color></b><color=#FFFFFF>を獲得しましょう。</color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<b><color=#ff69b4>!FPO!</color></b>: Bonus Box"
-  },
-  "helpTipsStrings.Slide4.title" : {
-    "translation" : "エネルギー、ビット、スパーク"
-  },
-  "helpTipsStrings.Slide4.body" : {
-    "translation" : "毎日の目標を達成して、&lt;color=#00bd3dff&gt;エネルギー</color>を獲得しましょう。エネルギーは&lt;color=#fe8f00ff&gt;ビット</color>と&lt;color=#11a2f0ff&gt;スパーク</color>で与えられます。これらを使用して、Cozmoのアップグレードやアプリをロック解除しましょう！"
-  },
-  "helpTipsStrings.Slide4.bodyEnergy" : {
-    "translation" : "エネルギー"
-  },
-  "helpTipsStrings.Slide4.bodyBits" : {
-    "translation" : "ビット"
-  },
-  "helpTipsStrings.Slide4.bodySparks" : {
-    "translation" : "スパーク"
+    "translation" : "<color=#FFFFFF>トークン3つで</color><b><color=#F5BF2D>ボーナスボックスが解除されます。</color></b>"
   },
   "helpTipsStrings.Slide5.title" : {
-    "translation" : "Cozmoにチェックインします。"
+    "translation" : "Cozmoをお世話しましょう。"
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Cozmoアプリを毎日起動してチェックインし、Cozmoを幸せな状態に保ち、新しいモーション/能力をロック解除してCozmoが学び、成長するのを助けます。Cozmoに接続して目覚めさせ、ニーズメーターを確認します。"
+    "translation" : "Cozmoアプリを毎日起動して、Cozmoをいつもハッピーにしましょう。Cozmoのプレイメーターを日々満たしてボーナスボックスを獲得すると、Cozmoは学び、成長していきます。Cozmoに接続すると目を覚まします。必要な世話をしてあげてください。"
   },
   "helpTipsStrings.Slide6.title" : {
     "translation" : "Cozmoを守る。"
@@ -76,13 +61,13 @@
     "translation" : "Cozmoのバックライトは、次のことを示します。"
   },
   "helpTipsStrings.Slide7.subtitle1" : {
-    "translation" : "Cozmoは\u000aチャージされた。"
+    "translation" : "フルチャージ"
   },
   "helpTipsStrings.Slide7.subtitle2" : {
-    "translation" : "Cozmoは\u000aチャージ中。"
+    "translation" : "チャージ中"
   },
   "helpTipsStrings.Slide7.subtitle3" : {
-    "translation" : "Cozmoは\u000a電池の残量が少ない。"
+    "translation" : "電池の残量不足"
   },
   "helpTipsStrings.Slide8.title" : {
     "translation" : "Cozmoは安全。"

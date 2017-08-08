@@ -73,7 +73,7 @@
     "translation" : "Cozmoトーク"
   },
   "cozmoSays.description" : {
-    "translation" : "スパークを与えると、Cozmoは単語かフレーズで喋ります！"
+    "translation" : "Cozmoに単語かフレーズを言わせてみましょう！"
   },
   "codeLab.title" : {
     "translation" : "コードラボ"
@@ -86,5 +86,14 @@
   },
   "memoryMatchGame.label.incorrect" : {
     "translation" : "間違い"
+  },
+  "activityView.freeplayDescription" : {
+    "translation" : "Cozmoは自由に行動することが好きです。Cozmoはいつもゲームをリクエストしたり、トリックをしたり、たまにスパークを獲得したりもします。"
+  },
+  "activityView.freeplayTitle" : {
+    "translation" : "Cozmoは現在フリープレイ中です"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "顔のスキャンを終了しますか？"
   }
 }

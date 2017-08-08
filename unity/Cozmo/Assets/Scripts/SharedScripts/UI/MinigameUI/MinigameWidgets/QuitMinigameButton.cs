@@ -59,16 +59,35 @@ namespace Cozmo {
       }
 
       private void HandleQuitButtonTap() {
-        string titleKey = _IsMinigame ? LocalizationKeys.kMinigameQuitViewTitle : LocalizationKeys.kMinigameQuitViewTitleActivity;
+        string titleKey;
+        if (_OverrideTitleKey != null)
+          titleKey = _OverrideTitleKey;
+        else {
+          titleKey = _IsMinigame ? LocalizationKeys.kMinigameQuitViewTitle : LocalizationKeys.kMinigameQuitViewTitleActivity;
+        }
 
-        var confirmQuitButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonQuit, false, HandleQuitConfirmed,
+        string confirmKey;
+        if (_OverrideComfirmKey != null) {
+          confirmKey = _OverrideComfirmKey;
+        }
+        else {
+          confirmKey = LocalizationKeys.kButtonQuit;
+        }
+        var confirmQuitButtonData = new AlertModalButtonData("confirm_button", confirmKey, HandleQuitConfirmed,
                                                              Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
 
-        var cancelQuitButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel, false, HandleQuitCancelled);
+        string cancelKey;
+        if (_OverrideCancelKey != null) {
+          cancelKey = _OverrideCancelKey;
+        }
+        else {
+          cancelKey = LocalizationKeys.kButtonCancel;
+        }
+        var cancelQuitButtonData = new AlertModalButtonData("cancel_button", cancelKey, HandleQuitCancelled);
 
         var quitGameAlertData = new AlertModalData("quit_minigame_alert",
                                                    titleKey,
-                                                   descLocKey: null,
+                                                   descLocKey: _OverrideDescriptionKey,
                                                    primaryButtonData: confirmQuitButtonData,
                                                    secondaryButtonData: cancelQuitButtonData,
                                                    dialogCloseAnimationFinishedCallback: HandleQuitViewClosed);
@@ -86,6 +105,13 @@ namespace Cozmo {
         _ConfimedQuit = false;
       }
 
+      // From code call if quitting is no longer relevant.
+      public void CancelQuitDialog() {
+        if (_QuitPopupInstance != null) {
+          _QuitPopupInstance.CloseDialogImmediately();
+        }
+      }
+
       private void HandleQuitViewClosed() {
         if (_ConfimedQuit) {
           if (QuitGameConfirmed != null) {
@@ -101,6 +127,26 @@ namespace Cozmo {
 
       private void HandleQuitConfirmed() {
         _ConfimedQuit = true;
+      }
+
+      private string _OverrideTitleKey = null;
+      private string _OverrideDescriptionKey = null;
+      private string _OverrideComfirmKey = null;
+      private string _OverrideCancelKey = null;
+
+      public void OverrideModalText(string titleKey = null, string descriptionKey = null, string confirmKey = null, string cancelKey = null) {
+        if (titleKey != null) {
+          _OverrideTitleKey = titleKey;
+        }
+        if (descriptionKey != null) {
+          _OverrideDescriptionKey = descriptionKey;
+        }
+        if (confirmKey != null) {
+          _OverrideComfirmKey = confirmKey;
+        }
+        if (cancelKey != null) {
+          _OverrideCancelKey = cancelKey;
+        }
       }
 
       public void SetButtonGraphic(Sprite sprite) {

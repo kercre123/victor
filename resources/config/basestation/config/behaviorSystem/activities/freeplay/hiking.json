@@ -15,6 +15,12 @@
     },
     
     "behaviors" : [
+      { "behaviorID" : "ReactToObstacle",
+        "scoring"      :
+        {
+          "flatScore": 30
+        }
+      },
       { "behaviorID" : "KnockOverCubes",
         "scoring"      :
         {

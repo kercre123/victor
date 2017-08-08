@@ -24,11 +24,10 @@
   align-content: center;
   padding: 1em 1em 1.5em 1em;
   border-radius: 10px;
-  border: 1px solid #2baacf;
 }
 .modal-confirm .modal-confirm-title {
   margin: .5em;
-  color: #64a3da;
+  color: #1DAAD1;
 }
 .modal-confirm .bd {
   font-family: 'Avenir Next';
@@ -46,7 +45,7 @@
   padding: .7em 2em .5em 2em;
   margin: 0 1em;
   text-transform: uppercase;
-  border: 2px solid #fefefc;
+  min-width: 200px;
 }
 .modal-confirm .button-pill:active {
   opacity: 1;
@@ -58,7 +57,7 @@
   background-image: linear-gradient(to bottom, #2c8da8, #1d6d93);
 }
 .modal-confirm .button-red-pill {
-  background-image: linear-gradient(to bottom, #c73719, #ed5023);
+  background-image: linear-gradient(to bottom, #ed5023, #c73719);
 }
 .modal-confirm .button-red-pill:active {
   background-image: linear-gradient(to bottom, #c74921, #9d2d13);

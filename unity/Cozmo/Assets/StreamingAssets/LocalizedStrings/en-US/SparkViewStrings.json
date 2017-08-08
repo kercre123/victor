@@ -36,7 +36,10 @@
   "sparksView.sparkCount.label": {
     "translation": "Sparks Available"
   },
-  "sparksView.sparksRewarded.label": {
+  "sparksView.sparksRequired.label": {
+    "translation": "Sparks Required"
+  },
+  "sparksDetailModal.sparkButton.label": {
     "translation": "SPARKS"
   }
 }

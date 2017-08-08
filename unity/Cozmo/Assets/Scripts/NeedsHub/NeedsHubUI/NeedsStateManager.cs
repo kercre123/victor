@@ -1,6 +1,5 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -52,6 +51,8 @@ namespace Cozmo.Needs {
     private void Awake() {
       RobotEngineManager.Instance.ConnectedToClient += (s) => RequestNeedsState();
       RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
+      RobotEngineManager.Instance.AddCallback<StarLevelCompleted>(HandleStarLevelCompleted);
+      RobotEngineManager.Instance.AddCallback<StarUnlocked>(HandleStarUnlocked);
       _LatestStateFromEngine = CreateNewNeedsState();
       _CurrentDisplayState = CreateNewNeedsState();
 
@@ -62,6 +63,8 @@ namespace Cozmo.Needs {
     private void OnDestroy() {
       if (RobotEngineManager.Instance != null) {
         RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
+        RobotEngineManager.Instance.RemoveCallback<StarLevelCompleted>(HandleStarLevelCompleted);
+        RobotEngineManager.Instance.RemoveCallback<StarUnlocked>(HandleStarUnlocked);
       }
     }
 
@@ -85,6 +88,20 @@ namespace Cozmo.Needs {
       latestValue.Bracket = _LatestStateFromEngine.curNeedBracket[needIndex];
       _CurrentDisplayState.curNeedLevel[needIndex] = latestValue.Value;
       _CurrentDisplayState.curNeedBracket[needIndex] = latestValue.Bracket;
+      return latestValue;
+    }
+
+    public NeedsValue PeekLatestEngineValue(NeedId needId) {
+      int needIndex = (int)needId;
+      NeedsValue latestValue;
+      latestValue.Value = _LatestStateFromEngine.curNeedLevel[needIndex];
+      latestValue.Bracket = _LatestStateFromEngine.curNeedBracket[needIndex];
+      return latestValue;
+    }
+
+    public bool PeekLatestEnginePartIsBroken(RepairablePartId partId) {
+      int partIndex = (int)partId;
+      bool latestValue = _LatestStateFromEngine.partIsDamaged[partIndex];
       return latestValue;
     }
 
@@ -171,6 +188,14 @@ namespace Cozmo.Needs {
           OnNeedsBracketChanged(newNeedsState.actionCausingTheUpdate, (NeedId)need);
         }
       }
+    }
+
+    private void HandleStarLevelCompleted(StarLevelCompleted message) {
+      DataPersistence.DataPersistenceManager.Instance.AddNewStarLevel(message);
+    }
+
+    private void HandleStarUnlocked(StarUnlocked message) {
+      _LatestStateFromEngine.numStarsAwarded = message.currentStars;
     }
 
     private NeedsState CreateNewNeedsState() {

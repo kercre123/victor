@@ -53,6 +53,8 @@ namespace Cozmo.Hub {
     private float _ConnectedTimeIntervalLastTimestamp = -1;
     private float _ConnectedTimeStartedTimestamp = -1;
 
+    private const string _kDisableTouchesDuringRequestAnim = "needs_hub_request_anim";
+
     public override void LoadHubWorld() {
       _ChallengeManager = new ChallengeManager(_ChallengeDataPrefabAssetBundle);
       _ChallengeManager.OnShowEndGameDialog += HandleEndGameDialog;
@@ -74,6 +76,8 @@ namespace Cozmo.Hub {
     }
 
     public override void DestroyHubWorld() {
+      UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
+
       _ChallengeManager.CleanUp();
       _ChallengeManager.OnShowEndGameDialog -= HandleEndGameDialog;
       _ChallengeManager.OnChallengeViewFinishedClosing -= HandleChallengeViewFinishedClosing;
@@ -216,6 +220,7 @@ namespace Cozmo.Hub {
     #region StartChallenge
 
     private void HandleStartChallengeRequest(string challengeRequested) {
+      UIManager.DisableTouchEvents(_kDisableTouchesDuringRequestAnim);
       PlayChallenge(challengeRequested, true);
     }
 
@@ -226,14 +231,21 @@ namespace Cozmo.Hub {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
         AllowFreeplayUI(false);
+
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
         RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig();
         if (rc != null) {
-          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger.Value);
+          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger.Value, HandleRequestAnimationComplete);
+        }
+        else {
+          RobotEngineManager.Instance.CurrentRobot.PlayNeedsGetOutAnimIfNeeded(HandleRequestAnimationComplete);
         }
       }
+    }
 
+    private void HandleRequestAnimationComplete(bool animSuccessful = false) {
+      UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
       // Close needs dialog if open
       if (_NeedsViewHubInstance != null) {
         DeregisterNeedsViewEvents();
@@ -384,8 +396,10 @@ namespace Cozmo.Hub {
     }
 
     private void DeregisterSparksViewEvents() {
-      _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
-      _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+      if (_SparksViewInstance != null) {
+        _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
+        _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+      }
       if (_SparksDetailModalInstance != null) {
         _SparksDetailModalInstance.OnSparkCompleteToReturn -= HandleSparkEnded;
       }
@@ -398,17 +412,17 @@ namespace Cozmo.Hub {
 
     #endregion
 
-    #region Open Sparks Detail View from VC/Random
+    #region Open Sparks Detail View from Random
 
     private void HandleRandomTrickStarted(HardSparkStartedByEngine sparkStartedMsg) {
-      // Open the SparksDetailView if it was from VC or random "Do A Trick", not from specific UI interaction
+      // Open the SparksDetailView if it was from random "Do A Trick", not from specific UI interaction
       bool playerSparksModalNotOpen = (_SparksDetailModalInstance == null);
       // Onboarding is using it's own screen that removes all this functionality.
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
         return;
       }
 
-      // When sparks are started by engine via VC or offer flow, HardSparkStartedByEngine is sent
+      // When sparks are started by engine offer flow, HardSparkStartedByEngine is sent
       // before robot.IsSparked is updated. However, in the player driven "specific spark" flow, 
       // robot.IsSparked is updated before this message is recieved. 
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;

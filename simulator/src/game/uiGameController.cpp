@@ -8,12 +8,12 @@
 
 #include "anki/cozmo/simulator/game/uiGameController.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/basestation/cozmoAPI/comms/gameComms.h"
-#include "anki/cozmo/basestation/cozmoAPI/comms/gameMessageHandler.h"
+#include "engine/cozmoAPI/comms/gameComms.h"
+#include "engine/cozmoAPI/comms/gameMessageHandler.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
 #include "anki/messaging/shared/UdpClient.h"
@@ -476,6 +476,7 @@ namespace Anki {
     {
       _stepTimeMS = step_time_ms;
       _robotNode = nullptr;
+      _robotEngineNode = nullptr;
       _robotPose.SetTranslation({0.f, 0.f, 0.f});
       _robotPose.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
@@ -829,8 +830,6 @@ namespace Anki {
                              "Found robot with name %s", nodeName.c_str());
             
             _robotNode = nd;
-            
-            break;
           }
           else if(nodeName.find("LightCube") != std::string::npos) {
             _lightCubes.emplace_back(nd);
@@ -840,27 +839,18 @@ namespace Anki {
                              "Found LightCube with name %s", nodeName.c_str());
 
           }
-          
+          else if(nodeType == static_cast<int>(webots::Node::SUPERVISOR) &&
+                  nodeName.find("CozmoEngine") != std::string::npos) {
+
+            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
+                             "Found engine with name %s", nodeName.c_str());
+            
+            _robotEngineNode = nd;
+          }
         }
       }
       
-      
-      
-      const double* transActual = _robotNode->getPosition();
-      _robotPoseActual.SetTranslation( {static_cast<f32>(M_TO_MM(transActual[0])),
-                                        static_cast<f32>(M_TO_MM(transActual[1])),
-                                        static_cast<f32>(M_TO_MM(transActual[2]))} );
-      
-      const double *orientationActual = _robotNode->getOrientation();
-      _robotPoseActual.SetRotation({static_cast<f32>(orientationActual[0]),
-                                    static_cast<f32>(orientationActual[1]),
-                                    static_cast<f32>(orientationActual[2]),
-                                    static_cast<f32>(orientationActual[3]),
-                                    static_cast<f32>(orientationActual[4]),
-                                    static_cast<f32>(orientationActual[5]),
-                                    static_cast<f32>(orientationActual[6]),
-                                    static_cast<f32>(orientationActual[7]),
-                                    static_cast<f32>(orientationActual[8])} );
+      _robotPoseActual = GetPose3dOfNode(_robotNode);
       
       // if it's the first time that we set the proper pose for the robot, update the visualization origin to
       // the robot, since debug render expects to be centered around the robot
@@ -2083,26 +2073,24 @@ namespace Anki {
     
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
     {
-      webots::Field* rotField = _robotNode->getField("rotation");
-      assert(rotField != nullptr);
+      #ifdef COZMO_V2
+        Pose3d origin;
+        Pose3d enginePose = GetPose3dOfNode(_robotEngineNode);
+        Pose3d newEnginePose = newPose;
+        Pose3d cpyRobotPose = _robotPoseActual;
+        
+        enginePose.SetParent(&origin);
+        newEnginePose.SetParent(&origin);
+        cpyRobotPose.SetParent(&origin);
+        
+        if (enginePose.GetWithRespectTo(cpyRobotPose, newEnginePose)) {
+          SetNodePose(_robotEngineNode, newPose*newEnginePose);
+        } else {
+          PRINT_NAMED_WARNING("UiGameController.SetActualRobotPose.SetEnginePose", "Could not set engine pose");
+        }        
+      #endif
       
-      webots::Field* transField = _robotNode->getField("translation");
-      assert(transField != nullptr);
-      
-      const RotationVector3d Rvec = newPose.GetRotationVector();
-      const double rotation[4] = {
-        Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
-        Rvec.GetAngle().ToFloat()
-      };
-      rotField->setSFRotation(rotation);
-      
-      const double translation[3] = {
-        MM_TO_M(newPose.GetTranslation().x()),
-        MM_TO_M(newPose.GetTranslation().y()),
-        MM_TO_M(newPose.GetTranslation().z())
-      };
-      transField->setSFVec3f(translation);
-      
+      SetNodePose(_robotNode, newPose);
     }
     
     void SetActualObjectPose(const std::string& name, const Pose3d& newPose)
@@ -2112,25 +2100,27 @@ namespace Anki {
     
     void UiGameController::SetNodePose(webots::Node* node, const Pose3d& newPose)
     {
-      webots::Field* rotField = node->getField("rotation");
-      assert(rotField != nullptr);
-      
-      webots::Field* transField = node->getField("translation");
-      assert(transField != nullptr);
-      
-      const RotationVector3d& Rvec = newPose.GetRotationVector();
-      const double rotation[4] = {
-        Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
-        Rvec.GetAngle().ToFloat()
-      };
-      rotField->setSFRotation(rotation);
-      
-      const double translation[3] = {
-        MM_TO_M(newPose.GetTranslation().x()),
-        MM_TO_M(newPose.GetTranslation().y()),
-        MM_TO_M(newPose.GetTranslation().z())
-      };
-      transField->setSFVec3f(translation);
+      if(node != nullptr) {
+        webots::Field* rotField = node->getField("rotation");
+        assert(rotField != nullptr);
+        
+        webots::Field* transField = node->getField("translation");
+        assert(transField != nullptr);
+        
+        const RotationVector3d& Rvec = newPose.GetRotationVector();
+        const double rotation[4] = {
+          Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
+          Rvec.GetAngle().ToFloat()
+        };
+        rotField->setSFRotation(rotation);
+        
+        const double translation[3] = {
+          MM_TO_M(newPose.GetTranslation().x()),
+          MM_TO_M(newPose.GetTranslation().y()),
+          MM_TO_M(newPose.GetTranslation().z())
+        };
+        transField->setSFVec3f(translation);
+      }
     }
     
     void UiGameController::SetLightCubePose(ObjectType lightCubeType, const Pose3d& newPose)

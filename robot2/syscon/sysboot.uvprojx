@@ -10,6 +10,7 @@
       <TargetName>syscon</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F030C8</Device>
@@ -70,10 +71,10 @@
           <BeforeMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>python ./tools/export.py build/publickeys.h</UserProg1Name>
-            <UserProg2Name>python ./tools/message-buffers/emitters/CPPLite_emitter.py  ./schema/messages.clad -r build -o build</UserProg2Name>
-            <UserProg1Dos16Mode>1</UserProg1Dos16Mode>
-            <UserProg2Dos16Mode>1</UserProg2Dos16Mode>
+            <UserProg1Name>c:\cygwin\bin\bash -c "python3 ./tools/export.py build/publickeys.h"</UserProg1Name>
+            <UserProg2Name></UserProg2Name>
+            <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
+            <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopB1X>0</nStopB1X>
             <nStopB2X>0</nStopB2X>
           </BeforeMake>
@@ -84,6 +85,8 @@
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopA1X>0</nStopA1X>
+            <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
@@ -190,7 +193,7 @@
             <RoSelD>3</RoSelD>
             <RwSelD>3</RwSelD>
             <CodeSel>0</CodeSel>
-            <OptFeed>1</OptFeed>
+            <OptFeed>0</OptFeed>
             <NoZi1>0</NoZi1>
             <NoZi2>0</NoZi2>
             <NoZi3>0</NoZi3>
@@ -295,7 +298,7 @@
               <OCR_RVCT9>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x2000</Size>
+                <Size>0x1f00</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -321,11 +324,17 @@
             <uSurpInc>0</uSurpInc>
             <uC99>0</uC99>
             <useXO>0</useXO>
+            <v6Lang>1</v6Lang>
+            <v6LangP>1</v6LangP>
+            <vShortEn>1</vShortEn>
+            <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
             <VariousControls>
-              <MiscControls>--cpp11 --gnu</MiscControls>
+              <MiscControls>--gnu</MiscControls>
               <Define>STM32F030X8</Define>
               <Undefine></Undefine>
-              <IncludePath>.\common;build;crypto</IncludePath>
+              <IncludePath>common;schema;crypto;build</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -379,11 +388,6 @@
               <FilePath>.\boot\system_stm32f0xx.c</FilePath>
             </File>
             <File>
-              <FileName>startup_stm32f030xc.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\boot\startup_stm32f030xc.s</FilePath>
-            </File>
-            <File>
               <FileName>bignum.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\crypto\bignum.cpp</FilePath>
@@ -407,6 +411,11 @@
               <FileName>flash.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\common\flash.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>startup_stm32f030x8.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\boot\startup_stm32f030x8.s</FilePath>
             </File>
           </Files>
         </Group>

@@ -70,6 +70,7 @@ _GENERATE_SDF_SCRIPT=${_TOPLEVEL}/tools/smartling/generateSDFfromTranslations.py
 _STRIP_ZERO_WIDTH_SPACES_SCRIPT=${_TOPLEVEL}/tools/smartling/strip-zero-width-spaces.py
 _UNITY_PROJECT_DIR=${_TOPLEVEL}/unity/Cozmo/
 _TRANSLATED_ASSETS_DIR=Assets/StreamingAssets/LocalizedStrings/ja-JP
+_ASSET_BUNDLES_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/AssetBundles
 _TRANSALATED_OUTPUT_FILE=Assets/DevTools/Editor/LanguageHelpers/japaneseTranslations.txt
 _LOCALIZED_STRINGS_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings
 _GIT_COZMO_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@github.com/anki/cozmo-one.git
@@ -112,6 +113,8 @@ if [ "$_status" ]; then
     $GIT config user.email "anki-smartling@anki.com"
     $GIT config user.name "anki-smartling"
     $GIT checkout -b update-localized-strings-json
+    $GIT add $_LOCALIZED_STRINGS_DIR/*
+    $GIT add $_ASSET_BUNDLES_DIR/*
     $GIT commit -am "Updating localized *.json from Smartling download."
     $GIT push origin update-localized-strings-json
 

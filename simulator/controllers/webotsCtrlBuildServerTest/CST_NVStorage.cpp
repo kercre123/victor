@@ -11,7 +11,7 @@
  */
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/robot.h"
 #include "util/random/randomGenerator.h"
 
 

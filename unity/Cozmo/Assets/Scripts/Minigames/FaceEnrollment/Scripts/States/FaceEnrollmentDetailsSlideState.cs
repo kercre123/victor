@@ -41,6 +41,7 @@ namespace FaceEnrollment {
     public override void Exit() {
       base.Exit();
 
+
       if (_CurrentRobot != null) {
         _CurrentRobot.OnEnrolledFaceRemoved -= HandleEraseEnrolledFace;
       }
@@ -53,6 +54,7 @@ namespace FaceEnrollment {
 
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentGame.SharedMinigameView.HideShelf();
+      _FaceEnrollmentGame.SharedMinigameView.HideBackButton();
     }
 
     private void ReturnToFaceSlide() {
@@ -71,10 +73,10 @@ namespace FaceEnrollment {
     private void RequestDeleteEnrolledFace(int faceID) {
 
       AlertModalButtonData primaryButtonData = new AlertModalButtonData("confirm_delete_button",
-                                                                        LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, false,
+                                                                        LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton,
                                                                         () => HandleDeleteEnrolledFaceConfirmButton(faceID));
       AlertModalButtonData cancelButtonData = new AlertModalButtonData("cancel_button",
-                                                                       LocalizationKeys.kButtonCancel, false);
+                                                                       LocalizationKeys.kButtonCancel);
       AlertModalData requestDeleteEnrolledData = new AlertModalData("delete_enrolled_face_alert",
                                                                     LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle,
                                                                     primaryButtonData: primaryButtonData,

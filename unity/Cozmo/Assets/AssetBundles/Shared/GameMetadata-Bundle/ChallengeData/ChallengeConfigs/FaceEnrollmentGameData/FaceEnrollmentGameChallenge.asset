@@ -31,7 +31,7 @@ MonoBehaviour:
     ActivityPriority: 0
     HideInActivityView: 0
     ActivityTitleColor: {r: 0.8745098, g: 0.68235296, b: 0.02745098, a: 1}
-    ActivityFrameColor: {r: 1, g: 0.8784314, b: 0.07058824, a: 1}
+    ActivityFrameColor: {r: 0.113725, g: 0.678431, b: 0.835294, a: 1}
     ActivityIcon: {fileID: 21300000, guid: b90d1554db3e240c388e5a4ecd7b7527, type: 3}
   InstructionVideoPath: 
   ChallengeVideoSubtitles: {fileID: 0}

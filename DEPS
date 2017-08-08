@@ -5,7 +5,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/cozmo",
-                "version": "22"
+                "version": "23"
             },
             "cozmo-assets": {
                 "allow_extra_files": "True",
@@ -18,11 +18,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2330"
+                "version": "2371"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "174"
+                "version": "183"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
@@ -33,13 +33,13 @@
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
-                "version": "168"
+                "version": "172"
             },
             "firmware": {
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
-                "version": "2201"
+                "version": "2208"
             },
             "old_firmware": {
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",

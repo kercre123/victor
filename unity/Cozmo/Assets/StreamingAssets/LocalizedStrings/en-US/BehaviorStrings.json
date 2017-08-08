@@ -210,17 +210,11 @@
   "behavior.singing.LondonBridge": {
     "translation": "Cozmo is singing London Bridge Is Falling Down..."
   },
-  "behavior.singing.CozMambo": {
-    "translation": "Cozmo is singing the Cozmo Mambo..."
-  },
   "behavior.singing.Sakura": {
     "translation": "Cozmo is singing Sakura..."
   },
   "behavior.singing.MussIDenn": {
     "translation": "Cozmo is singing Muss I Denn..."
-  },
-  "behavior.ReactToVoiceCommand": {
-    "translation": "Cozmo is listening to you..."
   },
   "behavior.VC_Refuse_Energy": {
     "translation": "Cozmo needs to be Fed..."

@@ -252,7 +252,7 @@ namespace Anki {
       _occluderList.GetAllOccluders(occluders);
     }
     
-  } // namesapce Vision
+  } // namespace Vision
 } // namespace Anki
 
 #endif // __CoreTech_Vision__camera__

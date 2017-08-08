@@ -67,6 +67,10 @@ Blockly.FieldTextInput.ANIMATION_TIME = 0.25;
  */
 Blockly.FieldTextInput.TEXT_MEASURE_PADDING_MAGIC = 45;
 
+// *** ANKI CHANGE ***
+var MAX_TEXT_LENGTH_HORIZONTAL = 32;
+var MAX_TEXT_LENGTH_VERTICAL = 255;
+
 /**
  * Mouse cursor style when over the hotspot that initiates the editor.
  */
@@ -142,6 +146,18 @@ Blockly.FieldTextInput.prototype.setText = function(newText) {
     // No change.
     return;
   }
+
+  // *** ANKI CHANGE ***
+  // Check length of text and truncate if it exceeds our limit.
+  var maxTextLength = MAX_TEXT_LENGTH_HORIZONTAL;
+  if (window.isVertical) {
+    maxTextLength = MAX_TEXT_LENGTH_VERTICAL;
+  }
+
+  if (newText.length > maxTextLength) {
+    newText = newText.slice(0, maxTextLength);
+  }
+
   if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
     Blockly.Events.fire(new Blockly.Events.Change(
         this.sourceBlock_, 'field', this.name, this.text_, newText));

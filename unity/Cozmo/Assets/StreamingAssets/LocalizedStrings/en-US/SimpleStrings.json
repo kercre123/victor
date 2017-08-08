@@ -33,14 +33,8 @@
   "button.yes": {
     "translation": "YES"
   },
-  "button.yesPlease": {
-    "translation": "YES, PLEASE"
-  },
   "button.no": {
     "translation": "NO"
-  },
-  "button.noThankYou": {
-    "translation": "NO, THANK YOU"
   },
   "button.continue": {
     "translation": "CONTINUE"
@@ -96,9 +90,6 @@
   "label.connect": {
     "translation": "CONNECT"
   },
-  "label.start": {
-    "translation": "START"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded": {
     "translation": "{0} {1} Required"
   },
@@ -148,13 +139,10 @@
     "translation": "Privacy Policy"
   },
   "label.pressAndHoldInstruction": {
-    "translation": "PRESS AND HOLD {0} TO CONFIRM"
+    "translation": "Press and hold <b><color=#fe5641>{0}</color></b> to confirm."
   },
   "label.termsOfUse": {
     "translation": "Terms of Use"
-  },
-  "label.totalSparks": {
-    "translation": "Total Sparks: {0}"
   },
   "label.termsInstructions": {
     "translation": "By tapping <b><color=#11a2f0ff>CONNECT</color></b>, you agree to the following terms:"

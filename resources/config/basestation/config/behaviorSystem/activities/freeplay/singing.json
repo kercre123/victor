@@ -23,12 +23,6 @@
           "flatScore": 10
         }
       },
-      { "behaviorID" : "Singing_CozMambo",
-        "scoring" :
-        {
-          "flatScore": 10
-        }
-      },
       { "behaviorID" : "Singing_EntryOfTheGladiators",
         "scoring" :
         {

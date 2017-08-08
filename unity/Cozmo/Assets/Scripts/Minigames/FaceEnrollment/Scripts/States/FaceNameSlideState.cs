@@ -45,6 +45,7 @@
 
     public override void Exit() {
       base.Exit();
+      _FaceEnrollmentGame.SharedMinigameView.HideBackButton();
     }
 
     private void NewNameInputSlideInDone() {

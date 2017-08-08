@@ -21,19 +21,17 @@ namespace Cozmo {
       private CozmoImage _ImageBurst = null;
 
       [SerializeField]
-      private CozmoImage _DimmedImage;
-
-      [SerializeField]
       private ParticleSystem _ConstantParticles = null;
 
       [SerializeField]
       private ParticleSystem _StartBurstParticles = null;
 
+      // 0 - 6 based on our quality level
       [SerializeField]
-      private int _MinParticles = 0;
+      private int[] _MinParticles = { 2, 5, 10, 15, 20, 20 };
 
       [SerializeField]
-      private int _MaxParticles = 100;
+      private int[] _MaxParticles = { 10, 50, 80, 200, 300, 500 };
 
       [SerializeField]
       private float _MaskFillMin = 0f;
@@ -79,9 +77,6 @@ namespace Cozmo {
 
       [SerializeField]
       private Color _IncreasingColor = Color.white;
-
-      [SerializeField]
-      private Animator _FilledEffectAnimator = null;
 
       #endregion //Serialized Fields
 
@@ -133,15 +128,6 @@ namespace Cozmo {
       private float _BurstTimer = 0f;
 
       private bool _Initialized = false;
-
-      public bool Dim {
-        get {
-          return _DimmedImage.gameObject.activeInHierarchy;
-        }
-        set {
-          _DimmedImage.gameObject.SetActive(value);
-        }
-      }
 
       #endregion // Non-serialized Fields
 
@@ -291,6 +277,8 @@ namespace Cozmo {
             _FillTimer = 0f;
           }
 
+          bool targetWasAboveValue = (_TargetValue > CurrentValue);
+
           CurrentValue = EaseOutQuad(_FillTime_sec - _FillTimer, _AnimStartValue,
             _TargetValue - _AnimStartValue, _FillTime_sec);
 
@@ -301,7 +289,8 @@ namespace Cozmo {
           SetBurstColor(_OffColor);
 
           var emissionMod = _ConstantParticles.emission;
-          emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles, _MaxParticles, currentValue));
+          int lvl = PerformanceManager.Instance.GetQualitySetting();
+          emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles[lvl], _MaxParticles[lvl], currentValue));
 
           if (_TargetValue > currentValue) {
             _ImageFillGlow.color = _IncreasingColor;
@@ -312,10 +301,8 @@ namespace Cozmo {
           else {
             _ImageFillGlow.color = _NormalColor;
             _AnimStartValue = currentValue;
-            _BurstTimer = _BurstTime_sec;
-
-            if (_FilledEffectAnimator != null && currentValue >= 1f) {
-              _FilledEffectAnimator.SetTrigger("play");
+            if (targetWasAboveValue) {
+              _BurstTimer = _BurstTime_sec;
             }
           }
         }

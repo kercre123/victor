@@ -8,6 +8,9 @@ namespace CodeLab {
     public Vector2 camPos;
     public bool isValid;
     public bool isVisible;
+    public float pitch_d;
+    public float roll_d;
+    public float yaw_d;
   }
 
   public class FaceStateForCodeLab {
@@ -15,6 +18,12 @@ namespace CodeLab {
     public Vector2 camPos;
     public string name;
     public bool isVisible;
+  }
+
+  public class DeviceStateForCodeLab {
+    public float pitch_d;
+    public float roll_d;
+    public float yaw_d;
   }
 
   public class CozmoStateForCodeLab {
@@ -27,6 +36,7 @@ namespace CodeLab {
     public CubeStateForCodeLab cube2 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube3 = new CubeStateForCodeLab();
     public FaceStateForCodeLab face = new FaceStateForCodeLab();
+    public DeviceStateForCodeLab device = new DeviceStateForCodeLab();
   }
 
   public class ScratchRequest {
@@ -36,9 +46,16 @@ namespace CodeLab {
     public string argUUID { get; set; }
     public int argInt { get; set; }
     public uint argUInt { get; set; }
+    public uint argUInt2 { get; set; }
+    public uint argUInt3 { get; set; }
+    public uint argUInt4 { get; set; }
+    public uint argUInt5 { get; set; }
     public float argFloat { get; set; }
     public float argFloat2 { get; set; }
     public float argFloat3 { get; set; }
+    public bool argBool { get; set; }
+    public bool argBool2 { get; set; }
+    public bool argBool3 { get; set; }
   }
 
   public class InProgressScratchBlock {

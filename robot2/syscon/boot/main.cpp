@@ -9,6 +9,8 @@
 #include "common.h"
 #include "hardware.h"
 
+//#define DISABLE_WDOG
+
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
 bool validate(void) {
@@ -37,12 +39,12 @@ static bool boot_test(void) {
   return validate();
 }
 
-static const uint32_t MAIN_EXEC_TICK  = 1000000; // Microseconds
-static const uint16_t MAIN_EXEC_PRESCALE = SYSTEM_CLOCK / MAIN_EXEC_TICK; // Timer prescale
-static const uint16_t MAIN_EXEC_PERIOD = MAIN_EXEC_TICK / 200;        // 200hz (5ms period)
+static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
+static const uint16_t MAIN_EXEC_PERIOD = SYSTEM_CLOCK / MAIN_EXEC_PRESCALE / 200;        // 200hz (5ms period)
 
 void timer_init(void) {
   // Start our cheese watchdog
+  #ifndef DISABLE_WDOG
   WWDG->SR = WWDG_SR_EWIF | 0x7F;
   WWDG->CR = 0xFF;
 
@@ -53,6 +55,7 @@ void timer_init(void) {
   IWDG->RLR = WATCHDOG_LIMIT;
   while (IWDG->SR) ;
   IWDG->WINR = WATCHDOG_WINDOW;
+  #endif
 
   TIM14->PSC = MAIN_EXEC_PRESCALE - 1;
   TIM14->ARR = MAIN_EXEC_PERIOD - 1;
@@ -64,8 +67,10 @@ void timer_init(void) {
 }
 
 extern "C" void TIM14_IRQHandler(void) {
+  #ifndef DISABLE_WDOG
   IWDG->KR = 0xAAAA;
   WWDG->CR = 0xFF;
+  #endif
   TIM14->SR = 0;
 }
 
@@ -90,7 +95,6 @@ int main(void) {
   timer_init();
 
   // Turn power on to the board
-  POWER_EN::set();
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
 

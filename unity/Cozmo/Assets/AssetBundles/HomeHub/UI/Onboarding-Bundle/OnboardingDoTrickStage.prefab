@@ -492,20 +492,16 @@ MonoBehaviour:
   _ReactionsEnabled: 1
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 513
+    _EnumValue: 518
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 513
+    _EnumValue: 518
   _FreeplayEnabledOnExit: 1
   _DASPhaseID: 0
   _OverrideTickerKey: 
   _DimNeedsMeters: 
   _EnableWhiteListOnly: 1
-  _WhiteListedActions:
-  - _EnumValueAsString: RollACube
-    _EnumValue: 38
-  - _EnumValueAsString: RollACube_Sparked
-    _EnumValue: 39
+  _WhiteListedActions: []
   _ForceNeedValuesOnStart:
   - -1
   - -1
@@ -518,9 +514,9 @@ MonoBehaviour:
     _EnumValueAsString: RollACube_Sparked
     _EnumValue: 39
   _ForceNeedValuesOnEvent:
-  - -1
-  - -1
-  - -1
+  - 1
+  - 1
+  - 1
   _UnPausedNeedMeter: 2
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3
@@ -573,7 +569,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 64.7
+  m_fontSize: 80
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -613,12 +609,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114435696110708606}
-    characterCount: 153
+    characterCount: 113
     spriteCount: 0
-    spaceCount: 31
-    wordCount: 31
+    spaceCount: 22
+    wordCount: 23
     linkCount: 0
-    lineCount: 6
+    lineCount: 3
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -954,8 +950,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -140, y: -150}
+  m_AnchoredPosition: {x: 7, y: -10}
+  m_SizeDelta: {x: -126, y: -130}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224085495891018538
 RectTransform:

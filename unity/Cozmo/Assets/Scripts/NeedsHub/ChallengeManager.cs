@@ -141,7 +141,6 @@ namespace Cozmo.Challenge {
       AssetBundleManager.Instance.LoadAssetBundleAsync(
         _ChallengeDataPrefabAssetBundle.Value.ToString(), (bool prefabsSuccess) => {
           if (prefabsSuccess) {
-
             LoadChallengeInternal(_ChallengeStatesById[_CurrentChallengePlaying.ChallengeId].Data);
           }
           else {

@@ -235,7 +235,7 @@ return;\
   
   
 } // namespace Embedded
-} // namesapce Anki
+} // namespace Anki
 
 #endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB
 

@@ -73,7 +73,7 @@
     "translation" : "Sprachausgabe"
   },
   "cozmoSays.description" : {
-    "translation" : "Cozmo versucht, ein Wort oder einen Begriff zu sagen, und erhält Sparks dafür!"
+    "translation" : "Fordere Cozmo auf, ein Wort oder einen Begriff zu sagen."
   },
   "codeLab.title" : {
     "translation" : "Code Lab"
@@ -86,5 +86,14 @@
   },
   "memoryMatchGame.label.incorrect" : {
     "translation" : "FALSCH"
+  },
+  "activityView.freeplayDescription" : {
+    "translation" : "Cozmo findet es toll, wenn er selbst entscheiden darf, wie er mit dir spielt.  Er wird dir automatisch anbieten, Spiele mit ihm zu spielen, dir Tricks vorführen und gelegentlich sogar Sparks verdienen."
+  },
+  "activityView.freeplayTitle" : {
+    "translation" : "AKTUELLER MODUS: FREIES SPIEL"
+  },
+  "faceEnrollment.title.cancelScanning" : {
+    "translation" : "Do you want to quit face scanning?"
   }
 }

@@ -137,6 +137,11 @@ bool Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0]);
   imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0]);
 
+  // We're not actually reading temperature from the IMU, so simply
+  // report 0 degC. See https://github.com/anki/cozmo-one/pull/5112/
+  // for code that actually grabs the IMU temperature over I2C bus.
+  imuData.temperature_degC = 0.f;
+
   return true;
 }
 

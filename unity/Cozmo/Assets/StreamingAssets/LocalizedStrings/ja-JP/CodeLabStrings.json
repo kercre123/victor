@@ -325,7 +325,7 @@
     "translation" : "コードブロックをまとめてドラッグしてプログラムを作ります。"
   },
   "codeLab.tutorial.slide_greenBlockFirst" : {
-    "translation" : "必ず緑のフラグのブロックを最初に置きます。こうすることで緑のフラグのボタンがあなたのプログラムを開始します！"
+    "translation" : "必ず緑のフラグのブロックを最初に置きます。\u000a緑のフラグのボタンでプログラムを開始します！"
   },
   "codeLab.projects.modalTitle" : {
     "translation" : "Cozmoコードラボ"
@@ -373,7 +373,7 @@
     "translation" : "運転とくしゃみ"
   },
   "codeLabSampleProject_TapCubeForMysteryAnimation.projectName" : {
-    "translation" : "キューブをタップしてランダムアニメーションを表示する"
+    "translation" : "キューブをタップしてアニメーション"
   },
   "codeLabSampleProject_DriveInSquareAdvanced.projectName" : {
     "translation" : "正方形に進む：上級"
@@ -385,10 +385,16 @@
     "translation" : "いないいないばあ"
   },
   "codeLabSampleProject_WorkoutwithCube.projectName" : {
-    "translation" : "キューブでエクササイズ"
+    "translation" : "キューブで\u000aエクササイズ"
   },
   "codeLabSampleProject_IntruderAlarm.projectName" : {
     "translation" : "侵入者警報！"
+  },
+  "codeLab.SaveProject.Autosaved" : {
+    "translation" : "自動保存されました"
+  },
+  "codeLab.SaveProject.NotSaved" : {
+    "translation" : "サンプルプロジェクトが保存されていません"
   },
   "codeLabHorizontal.UserProject.MyProject" : {
     "translation" : "マイプロジェクト{0}"
@@ -463,7 +469,7 @@
     "translation" : "いびき"
   },
   "codeLabHorizontal.Tooltip.MysteryAnimation" : {
-    "translation" : "謎のアニメーション"
+    "translation" : "ランダムアニメーション"
   },
   "codeLabHorizontal.Tooltip.MoveLift" : {
     "translation" : "リフトを動かす"

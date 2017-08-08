@@ -20,7 +20,7 @@ public class AndroidFindNetworks : AndroidConnectionFlowStage {
 
   private void HandleScanResults(string[] ssids) {
     var cozmoNetworks = AndroidConnectionFlow.GetCozmoSSIDs(ssids);
-    if (cozmoNetworks.Length > 0) {
+    if (cozmoNetworks != null && cozmoNetworks.Length > 0) {
       AndroidConnectionFlow.Instance.CozmoSSIDs = cozmoNetworks;
       OnStageComplete();
     }

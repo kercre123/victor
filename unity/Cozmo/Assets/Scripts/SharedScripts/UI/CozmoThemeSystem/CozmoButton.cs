@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
-using Anki.Cozmo.VoiceCommand;
 using DataPersistence;
 
 namespace Cozmo.UI {
@@ -27,11 +26,6 @@ namespace Cozmo.UI {
       }
     }
 
-    [SerializeField]
-    private GameObject _VoiceCommandIcon = null;
-
-    public GameObject VoiceCommandIcon { get { return _VoiceCommandIcon; } }
-
     [Serializable]
     public new class ButtonClickedEvent : UnityEvent {
     }
@@ -49,6 +43,8 @@ namespace Cozmo.UI {
     private ButtonUpEvent _OnRelease = new ButtonUpEvent();
 
     private string _DASEventButtonName = "";
+
+    private string _DASSuffix = "";
 
     private string _DASEventViewController = "";
 
@@ -114,6 +110,11 @@ namespace Cozmo.UI {
         return _DASEventButtonName;
       }
       set { _DASEventButtonName = value; }
+    }
+
+    public string DASSuffix {
+      get { return _DASSuffix; }
+      set { _DASSuffix = value; }
     }
 
     public string DASEventViewController {
@@ -271,13 +272,17 @@ namespace Cozmo.UI {
         automationIdComponent = gameObject.AddComponent<Anki.Core.UI.Automation.AutomationIdComponent>();
       }
 
+      automationIdComponent.InteractableObj = this;
       if (string.IsNullOrEmpty(_DASEventButtonName)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.",
           this.gameObject.name));
         automationIdComponent.Id = this.gameObject.name;
       }
-      else {
+      else if (string.IsNullOrEmpty(_DASSuffix)) {
         automationIdComponent.Id = _DASEventButtonName;
+      }
+      else {
+        automationIdComponent.Id = _DASEventButtonName + _DASSuffix;
       }
       if (string.IsNullOrEmpty(_DASEventViewController)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASViewController! Falling back to parent's names.",
@@ -307,34 +312,6 @@ namespace Cozmo.UI {
 
     protected override void OnEnable() {
       base.OnEnable();
-    }
-
-    private bool _SupportsVoiceCommand = true;
-
-    public void UpdateVoiceCommandSupport(bool supportsVoiceCommand) {
-      if (_VoiceCommandIcon == null || _VoiceCommandIcon.activeSelf == supportsVoiceCommand) {
-        return;
-      }
-      _SupportsVoiceCommand = supportsVoiceCommand;
-      VoiceCommandSetup();
-    }
-
-    private void VoiceCommandSetup() {
-      if (!Application.isPlaying) {
-        return;
-      }
-
-      if (_SupportsVoiceCommand && IsInteractable() && _VoiceCommandIcon != null) {
-        if (VoiceCommandManager.Instance.IsAudioRecordingAllowed &&
-          DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState == VoiceCommandEnabledState.Enabled) {
-          _VoiceCommandIcon.SetActive(true);
-          _TextLabel.UpdateSkinnableElements(CozmoThemeSystemUtils.sInstance.GetCurrentThemeId(),
-                                             CozmoThemeSystemUtils.sInstance.GetCurrentSkinId());
-        }
-        else {
-          _VoiceCommandIcon.SetActive(false);
-        }
-      }
     }
 
     private bool DisableInteraction() {
@@ -411,7 +388,6 @@ namespace Cozmo.UI {
       else {
         if (IsInteractable()) {
           ShowEnabledState();
-          VoiceCommandSetup();
         }
         else {
           ShowDisabledState();
@@ -471,10 +447,6 @@ namespace Cozmo.UI {
     }
 
     protected virtual void ShowDisabledState() {
-      if (_VoiceCommandIcon != null) {
-        _VoiceCommandIcon.SetActive(false);
-      }
-
       if (ButtonGraphics != null) {
         foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (IsInitialized(graphic)) {

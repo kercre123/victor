@@ -10,7 +10,7 @@
     "translation" : "{0}\u000aの勝ち！"
   },
   "minigame.text.cozmoWins" : {
-    "translation" : "Cozmoの\u000a勝ち！"
+    "translation" : "Cozmoの勝ち！"
   },
   "minigame.text.Tie" : {
     "translation" : "引き分け！"
@@ -28,10 +28,10 @@
     "translation" : "スコア"
   },
   "minigame.text.score.player" : {
-    "translation" : "プレーヤーのスコア"
+    "translation" : "プレイヤーの\u000aスコア"
   },
   "minigame.text.score.cozmo" : {
-    "translation" : "Cozmoのスコア"
+    "translation" : "Cozmoの\u000aスコア"
   },
   "minigame.label.showCubes.singular" : {
     "translation" : "Cozmoの前に{0}個のキューブを置いてください。Cozmoから見えるキューブは緑色に変わります。"
@@ -76,7 +76,7 @@
     "translation" : "安全な遊び方："
   },
   "droneMode.safePlay.description" : {
-    "translation" : "照明が十分な室内で探索してください。\u000a\u000a平らな場所で動かしてください。\u000a\u000aテーブルなどの端から落ちないように注意してください\u000a\u000aCozmoの近くにいるようにしてください。"
+    "translation" : "•明るい場所で室内を探索する。 •平らな場所で運転する。 •端から脱落しないように注意してください。 •最高の経験を得るために、Cozmoの近くに滞在してください。"
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "あいさつ"
@@ -157,7 +157,7 @@
     "translation" : "パターンの長さ：{0}"
   },
   "memoryMatchGame.mode.vs" : {
-    "translation" : "あなた対Cozmo"
+    "translation" : "あなた VS. Cozmo"
   },
   "memoryMatchGame.mode.solo" : {
     "translation" : "ソロ"
@@ -184,7 +184,7 @@
     "translation" : "やった！"
   },
   "speedTap.roundsText" : {
-    "translation" : "ラウンド {0:N0}"
+    "translation" : "{0:N0}ラウンド"
   },
   "speedTap.tapBlock" : {
     "translation" : "あなたがプレイしたい\u000a光るキューブをタップします。"
@@ -221,12 +221,6 @@
   },
   "minigame.timeout.description" : {
     "translation" : "Cozmoは待ちくたびれて、別のことをしたがっています。"
-  },
-  "cubePounce.info.playerWinPoint" : {
-    "translation" : "あなたが速かった！"
-  },
-  "cubePounce.info.cozmoWinPoint" : {
-    "translation" : "Cozmoが速かった！"
   },
   "cubePounce.info.setupText" : {
     "translation" : "1個のキューブをCozmoの前に置いて、緑色になるのを静かに待ちます。"
@@ -277,7 +271,7 @@
     "translation" : "エキスパート限定！キューブは4色になることもあります。トッププレーヤーでも難しいでしょう。"
   },
   "button.retry" : {
-    "translation" : "もう一度やり直してください"
+    "translation" : "もう一度やり直す"
   },
   "speedTap.text.waitForCozmo" : {
     "translation" : "Cozmoは準備中です..."
@@ -286,13 +280,13 @@
     "translation" : "クイックタップをロック解除してロックを外します"
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "2色モードはロックされています。\u000a<b>1色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b>2色</b>モードはロックされています。\u000a<b>1色</b>モードでクイックタップに勝つとロックが解除されます。"
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "3色モードはロックされています。\u000a<b>2色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b>3色</b>モードはロックされています。\u000a<b>2色</b>モードでクイックタップに勝つとロックが解除されます。"
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "4色モードはロックされています。\u000a<b>3色モード</b>のクイックタップに勝ってロックを解除してください。"
+    "translation" : "<b>4色</b>モードはロックされています。\u000a<b>3色</b>モードでクイックタップに勝つとロックが解除されます。"
   },
   "speedTap.text.getReady" : {
     "translation" : "準備してください！"
@@ -325,13 +319,13 @@
     "translation" : "対戦"
   },
   "speedTapGame.mode.HvC" : {
-    "translation" : "人間対Cozmo"
+    "translation" : "人間 VS. Cozmo"
   },
   "speedTapGame.mode.HvHvC" : {
-    "translation" : "人間対人間対Cozmo"
+    "translation" : "人間 VS. 人間 VS. Cozmo"
   },
   "cozmoSays.instructions.label" : {
-    "translation" : "単語またはフレーズを入力して、Cozmoがそれを話すのを聞きます"
+    "translation" : "単語やフレーズを入力して、Cozmoに言葉をしゃべらせましょう："
   },
   "sayCozmo.button.say" : {
     "translation" : "話す"
@@ -340,7 +334,7 @@
     "translation" : "プレイヤー2："
   },
   "speedTap.SelectGameType" : {
-    "translation" : "ゲームの種類を選択してください"
+    "translation" : "ゲームの種類を選択"
   },
   "speedTap.playerOne" : {
     "translation" : "プレイヤー1："
@@ -361,6 +355,27 @@
     "translation" : "Cozmoは自分のキューブを見つけるのに苦労しています。Cozmoからキューブが見えるようにしてください。"
   },
   "minigame.text.youWin" : {
-    "translation" : "あなたの\u000a勝ち！"
+    "translation" : "あなたの勝ち！"
+  },
+  "label.MATCH" : {
+    "translation" : "勝負！"
+  },
+  "label.dontSlap" : {
+    "translation" : "叩かないで\u000aください！"
+  },
+  "label.noMatch" : {
+    "translation" : "一致なし"
+  },
+  "label.enterText" : {
+    "translation" : "テキストを入力してください..."
+  },
+  "minigame.text.cozmoWinsFlat" : {
+    "translation" : "Cozmoの勝ち！"
+  },
+  "minigame.text.playerWinsFlat" : {
+    "translation" : "{0}の勝ち！"
+  },
+  "minigame.text.youWinFlat" : {
+    "translation" : "あなたの勝ち！"
   }
 }

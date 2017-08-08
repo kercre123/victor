@@ -14,9 +14,9 @@
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/emotionTypes.h"
-#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "engine/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
-#include "anki/cozmo/basestation/encodedImage.h"
+#include "engine/encodedImage.h"
 #include "util/container/circularBuffer.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
@@ -65,7 +65,7 @@ class VizControllerImpl
 public:
   VizControllerImpl(webots::Supervisor& vs);
 
-  void Init(u32 blankImageFrequency_ms);
+  void Init();
   
   void ProcessMessage(VizInterface::MessageViz&& message);
 
@@ -87,6 +87,7 @@ private:
   void ProcessVizCameraLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraOvalMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCameraTextMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizDisplayImageMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -173,10 +174,12 @@ private:
   std::map<uint8_t, uint8_t> robotIDToVizBotIdxMap_;
 
   // Image message processing
-  EncodedImage  _encodedImage;
-  TimeStamp_t   _curImageTimestamp;
-  TimeStamp_t   _lastStateTimeStamp;
-  TimeStamp_t   _blankImageFreqency_ms = 0; // how often to blank the camera display, 0 to disable
+  static const size_t kNumBufferedImages = 10;
+  std::array<EncodedImage, kNumBufferedImages> _bufferedImages;
+  size_t                                       _imageBufferIndex = 0;
+  std::map<TimeStamp_t, size_t>                _encodedImages;
+  std::map<TimeStamp_t, u32>                   _bufferedSaveCtrs;
+  TimeStamp_t   _curImageTimestamp = 0;
   ImageSendMode _saveImageMode = ImageSendMode::Off;
   std::string   _savedImagesFolder = "";
   u32           _saveCtr = 0;

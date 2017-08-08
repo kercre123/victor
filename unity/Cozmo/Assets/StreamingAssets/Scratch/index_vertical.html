@@ -17,7 +17,7 @@
         <!-- NOTE: When updating lib/blocks/*, use these files instead of the above compressed files -->
         <!-- to see your changes immediately. When using these uncompressed files (either in browser -->
         <!-- or in app), must also copy tools/scratch/closure-library to Scratch/lib/closure-library -->
-        <!-- 
+        <!--
         <script src="./lib/blocks/blockly_uncompressed_vertical.js"></script>
         <script src="./lib/blocks/blocks_common/math.js"></script>
         <script src="./lib/blocks/blocks_common/text.js"></script>
@@ -26,6 +26,7 @@
         <script src="./lib/blocks/blocks_vertical/event.js"></script>
         <script src="./lib/blocks/blocks_vertical/operators.js"></script>
         <script src="./lib/blocks/blocks_vertical/cozmo.js"></script>
+        <script src="./lib/blocks/blocks_vertical/sensing.js"></script>
         -->
         <!-- BOTTOM UNCOMPRESSED FILES -->
 
@@ -37,8 +38,11 @@
         <script src="./js/CozmoSaveLoadAPI.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
+
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
-        <script src="./extra/challenges-frame.js"></script>
+        <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
+        <!-- <script src="./lib/vm/dist/web/scratch-vm.js"></script> -->
+
         <script src="./extra/extra-common.js"></script>
         <script src="./LocalizedStrings/en-US/CodeLabStrings.js"></script>
 
@@ -153,28 +157,15 @@
               </block>
               <block type="cozmo_says">
                   <value name="STRING">
-                      <shadow type="text_with_validator">
+                      <shadow type="text">
                           <field name="TEXT">Hi</field>
                       </shadow>
                   </value>
               </block>
+              <block type="cozmo_vert_set_cube_light_corners"></block>
             </category>
             <category name="Animations" colour="#a03c87" secondaryColour="0">
-              <block type="cozmo_happy_animation"></block>
-              <block type="cozmo_victory_animation"></block>
-              <block type="cozmo_unhappy_animation"></block>
-              <block type="cozmo_surprise_animation"></block>
-              <block type="cozmo_dog_animation"></block>
-              <block type="cozmo_cat_animation"></block>
-              <block type="cozmo_sneeze_animation"></block>
-              <block type="cozmo_excited_animation"></block>
-              <block type="cozmo_thinking_animation"></block>
-              <block type="cozmo_bored_animation"></block>
-              <block type="cozmo_frustrated_animation"></block>
-              <block type="cozmo_chatty_animation"></block>
-              <block type="cozmo_dejected_animation"></block>
-              <block type="cozmo_sleep_animation"></block>
-              <block type="cozmo_mystery_animation"></block>
+              <block type="cozmo_play_animation_from_dropdown"></block>
             </category>
             <category name="Events" colour="#f4b606" secondaryColour="0">
               <block type="event_whenflagclicked"></block>
@@ -251,6 +242,19 @@
               <block type="cozmo_vert_cube_get_is_visible"></block>
               <block type="cozmo_vert_cube_get_position_2d"></block>
               <block type="cozmo_vert_cube_get_position_3d"></block>
+              <block type="cozmo_vert_cube_get_pitch"></block>
+              <block type="cozmo_vert_cube_get_roll"></block>
+              <block type="cozmo_vert_cube_get_yaw"></block>
+              <!-- Device -->
+              <block type="cozmo_vert_device_get_pitch"></block>
+              <block type="cozmo_vert_device_get_roll"></block>
+              <block type="cozmo_vert_device_get_yaw"></block>
+              <!--Other-->
+              <block type="sensing_current" id="sensing_current">
+                <value name="CURRENTMENU">
+                  <shadow type="sensing_currentmenu"></shadow>
+                </value>
+              </block>
             </category>
 
             <category name="Operators" colour="#40BF4A" secondaryColour="0">
@@ -485,13 +489,6 @@
         <div id="close">
             <div class="primary">
                 <button id="closebutton" />
-            </div>
-        </div>
-
-        <!-- Challenges button -->
-        <div id="challenges">
-            <div class="primary">
-                <button id="challengesbutton" />
             </div>
         </div>
 

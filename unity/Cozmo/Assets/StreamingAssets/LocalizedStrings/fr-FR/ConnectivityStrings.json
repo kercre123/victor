@@ -16,10 +16,10 @@
     "translation" : "PLUS D'INFORMATIONS"
   },
   "connectivity.turnCozmoOn" : {
-    "translation" : "Active Cozmo"
+    "translation" : "Active Cozmo."
   },
   "connectivity.connectInWifiSettings" : {
-    "translation" : "Connecte-toi dans les paramètres Wi-Fi"
+    "translation" : "Connecte-toi dans les paramètres Wi-Fi."
   },
   "connectivity.searchingForCozmo" : {
     "translation" : "Recherche de Cozmo"
@@ -58,7 +58,7 @@
     "translation" : "La batterie de Cozmo est faible"
   },
   "connectivity.cozmoLowBatteryDesc" : {
-    "translation" : "Place Cozmo sur son chargeur."
+    "translation" : "Tu devrais placer Cozmo sur son chargeur."
   },
   "connectivity.keepCozmoOnCharger" : {
     "translation" : "Laisse Cozmo sur son chargeur pendant la configuration."
@@ -66,14 +66,11 @@
   "connectivity.placeCozmoOnCharger" : {
     "translation" : "Place Cozmo sur son chargeur."
   },
-  "connectivity.replaceCozmoOnCharger" : {
-    "translation" : "Retire Cozmo et replace-le sur son chargeur."
-  },
   "label.getHelp" : {
     "translation" : "Obtenir de l'aide"
   },
   "label.cubesNotWorking" : {
-    "translation" : "Les cubes ne fonctionnent pas ?"
+    "translation" : "Les cubes ne fonctionnent pas?"
   },
   "connectivity.connectionRejected.title" : {
     "translation" : "Un autre appareil est connecté à Cozmo.\u000aDéconnecte cet appareil et réessaye."
@@ -88,15 +85,12 @@
     "translation" : "ANNULER"
   },
   "label.liquidMetalCozmo" : {
-    "translation" : "Édition Collector : Métal liquide"
+    "translation" : "Édition Collector: Métal liquide"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "Aidez-nous à améliorer Cozmo en nous envoyant vos données de jeu et vos statistiques"
-  },
-  "needs.VoiceSettingsModal.Title" : {
-    "translation" : "Voice Commands"
+    "translation" : "Aide-nous à améliorer Cozmo en nous envoyant des données et des statistiques concernant ta façon de jouer"
   },
   "connectivity.behaviorDisplayDisconnected" : {
-    "translation" : "Cozmo has been disconnected."
+    "translation" : "Cozmo a été déconnecté."
   }
 }

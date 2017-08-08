@@ -143,6 +143,8 @@ def main(scriptArgs):
                       help='cleans all output folders')
   parser.add_argument('--mex', '-m', dest='mex', action='store_true',
                       help='builds mathlab\'s mex project')
+  parser.add_argument('--useReleaseWwise', dest='useReleaseWwise', action='store_true',
+                      help="Use Release (not Profile) Wwise libs")
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
   parser.add_argument('--with-clad', metavar='CLAD_PATH', dest='cladPath', action='store', default=None,
@@ -323,6 +325,12 @@ def main(scriptArgs):
     UtilLog.error("error compiling clad files")
     return False
 
+  #run clad's make for util
+  if (subprocess.call(['make', '--silent', 'OUTPUT_DIR=' + unityGeneratedPath, 'CLAD_EMITTER_DIR=' + os.path.join(options.cladPath, 'emitters'), 'csharp'],
+    cwd=os.path.join(options.ankiUtilPath, 'source', 'anki', 'clad')) != 0):
+    UtilLog.error("error compiling clad files")
+    return False
+
   #generate unity's metafiles
   if (generateUnityMeta.generateMetaFiles(unityGeneratedPath, options.verbose)):
     UtilLog.error("error generating unity meta files")
@@ -399,9 +407,13 @@ def main(scriptArgs):
   # paths relative to gyp file
   clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))
 
+  audio_library_build = 'profile'
+  if options.useReleaseWwise:
+    audio_library_build = 'release'
+ 
   default_defines = {
     'audio_library_type': 'static_library',
-    'audio_library_build': 'profile',
+    'audio_library_build': audio_library_build,
     'kazmath_library_type': 'static_library',
     'jsoncpp_library_type': 'static_library',
     'util_library_type': 'static_library',

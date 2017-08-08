@@ -133,7 +133,7 @@
     "translation" : "Cozmo a le hoquet..."
   },
   "button.clearThisSlot" : {
-    "translation" : "EFFACER CET EMPLACEMENT"
+    "translation" : "Effacer cet emplacement"
   },
   "behavior.singing.Camptown" : {
     "translation" : "Cozmo chante Le port de Tacoma..."
@@ -198,17 +198,11 @@
   "behavior.singing.LondonBridge" : {
     "translation" : "Cozmo chante London Bridge Is Falling Down..."
   },
-  "behavior.singing.CozMambo" : {
-    "translation" : "Cozmo chante le mambo de Cozmo..."
-  },
   "behavior.singing.Sakura" : {
     "translation" : "Cozmo chante Sakura..."
   },
   "behavior.singing.MussIDenn" : {
     "translation" : "Cozmo chante Muss I Denn..."
-  },
-  "behavior.ReactToVoiceCommand" : {
-    "translation" : "Cozmo t'écoute..."
   },
   "behavior.VC_Refuse_Energy" : {
     "translation" : "Cozmo doit être nourri..."
@@ -235,30 +229,33 @@
     "translation" : "Cozmo a besoin d'un réglage..."
   },
   "behavior.Needs_SevereLowEnergyGetIn" : {
-    "translation" : "Cozmo a très faim : il a vraiment besoin d'énergie !"
+    "translation" : "Cozmo a très faim: il a vraiment besoin d'énergie!"
   },
   "behavior.Needs_SevereLowEnergyRequest" : {
-    "translation" : "Cozmo a très faim : il a vraiment besoin d'énergie !"
+    "translation" : "Cozmo a très faim: il a vraiment besoin d'énergie!"
   },
   "behavior.Needs_SevereLowPlayGetIn" : {
-    "translation" : "Cozmo s'ennuie ferme et se sent frustré : il voudrait vraiment jouer !"
+    "translation" : "Cozmo s'ennuie ferme et se sent frustré: il voudrait vraiment jouer!"
   },
   "behavior.Needs_SevereLowPlayBored" : {
-    "translation" : "Cozmo s'ennuie ferme et se sent frustré : il voudrait vraiment jouer !"
+    "translation" : "Cozmo s'ennuie ferme et se sent frustré: il voudrait vraiment jouer!"
   },
   "behavior.Needs_SevereLowPlayRequest" : {
-    "translation" : "Cozmo s'ennuie ferme et se sent frustré : il voudrait vraiment jouer !"
+    "translation" : "Cozmo s'ennuie ferme et se sent frustré: il voudrait vraiment jouer!"
   },
   "behavior.Needs_SevereLowRepairGetIn" : {
-    "translation" : "Cozmo ne se sent pas bien : il faut absolument le régler !"
+    "translation" : "Cozmo ne se sent pas bien: il faut absolument le régler!"
   },
   "behavior.Needs_SevereLowRepairRequest" : {
-    "translation" : "Cozmo ne se sent pas bien : il faut absolument le régler !"
+    "translation" : "Cozmo ne se sent pas bien: il faut absolument le régler!"
   },
   "behavior.VC_TrackLaser" : {
     "translation" : "Cozmo recherche un laser"
   },
   "button.CONTINUE.caps" : {
     "translation" : "CONTINUER"
+  },
+  "button.hide" : {
+    "translation" : "MASQUER"
   }
 }

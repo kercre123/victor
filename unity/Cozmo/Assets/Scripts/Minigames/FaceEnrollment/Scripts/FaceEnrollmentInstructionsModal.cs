@@ -1,10 +1,20 @@
 ﻿using UnityEngine;
+using Cozmo.MinigameWidgets;
 
 namespace FaceEnrollment {
   public class FaceEnrollmentInstructionsModal : Cozmo.UI.BaseModal {
 
     [SerializeField]
     private CozmoText _NameForFaceLabel;
+
+    [SerializeField]
+    private QuitMinigameButton _QuitMinigameButton;
+
+    public QuitMinigameButton QuitMinigameButton {
+      get {
+        return _QuitMinigameButton;
+      }
+    }
 
     protected override void RaiseDialogOpened() {
       base.RaiseDialogOpened();
