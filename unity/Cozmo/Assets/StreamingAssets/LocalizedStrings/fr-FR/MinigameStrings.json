@@ -76,7 +76,7 @@
     "translation" : "Jouer en sécurité :"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "• Explore indoors in well lit spaces.\u000a\u000a•Drive on flat surfaces.\u000a\u000a• Be careful of falling off edges.\u000a\u000a•Stay close to Cozmo for the best experience."
+    "translation" : "• Lance l'exploration dans un espace intérieur bien éclairé.\u000a\u000a• Pilote-le sur des surfaces planes.\u000a\u000a• Fais attention aux bords pour éviter toute chute.\u000a\u000a• Reste à proximité de Cozmo pour vivre la meilleure expérience possible."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Saluer"
@@ -133,7 +133,7 @@
     "translation" : "Pour débloquer, tu dois gagner en mode TOI contre COZMO."
   },
   "memoryMatchGame.label.yourTurn" : {
-    "translation" : "C'est ton tour"
+    "translation" : "À toi de jouer"
   },
   "memoryMatchGame.label.cozmoTurn" : {
     "translation" : "Au tour de Cozmo"

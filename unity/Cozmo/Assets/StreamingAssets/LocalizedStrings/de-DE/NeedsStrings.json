@@ -40,7 +40,7 @@
     "translation" : "Cozmo kann nicht gefüttert werden, da er seine Cubes nicht hören kann."
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt.Button" : {
-    "translation" : "VERBINDUNG MIT CUBES WIEDERHERSTELLEN"
+    "translation" : "CUBES WIEDER VERBINDEN"
   },
   "needs.NeedsRepairModal.Title" : {
     "translation" : "Cozmo-Tuning"

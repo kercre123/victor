@@ -130,7 +130,7 @@
     "translation" : "<b>Cozmo doit être nourri.</b>\u000a\u000aLorsque le niveau de la barre bleue est faible, c'est que Cozmo a faim. Appuie sur le bouton <b><color=#31EBFF>ALIMENTER</color></b>."
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a Cube he can see, and then watch him roll it."
+    "translation" : "Cozmo est un robot joueur qui adore faire des tours ! Assure-toi qu'un cube visible soit placé à côté de lui et regarde-le le faire rouler."
   },
   "onboarding.RewardsIntro.Part1" : {
     "translation" : "Tu as satisfait l'<color=#f5ea12>envie de jouer</color> de Cozmo."

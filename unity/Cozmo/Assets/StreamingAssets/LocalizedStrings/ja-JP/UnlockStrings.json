@@ -196,7 +196,7 @@
     "translation" : "キューブガード"
   },
   "unlockable.GuardDog.Description" : {
-    "translation" : "Cozmoのキューブが近くにあると、Cozmoはキューブを守りながら寝てしまうことがあります。Cozmoを起こさないように注意して、キューブを裏返しましょう。"
+    "translation" : "Cozmoの3つのキューブが近くにあると、Cozmoはキューブを守りながら寝てしまうことがあります。Cozmoを起こさないように注意して、キューブを裏返しましょう。"
   },
   "sparks.Sparked" : {
     "translation" : "Cozmoはスパークで指示されました："

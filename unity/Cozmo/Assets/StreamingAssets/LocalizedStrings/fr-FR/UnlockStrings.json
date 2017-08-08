@@ -16,7 +16,7 @@
     "translation" : "Compétence verrouillée"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
+    "translation" : "Satisfais l'envie de jouer de Cozmo au quotidien pour gagner des tokens. Ces derniers permettent de débloquer des boîtes à bonus qui contiennent des étincelles, des tours et plus encore !"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Check"
@@ -196,7 +196,7 @@
     "translation" : "Retourne cubes"
   },
   "unlockable.GuardDog.Description" : {
-    "translation" : "When Cozmo’s Cubes are close together, he might take a nap while guarding them. Carefully turn his Cubes upside-down without waking him."
+    "translation" : "Lorsque ses cubes sont proches les uns des autres, Cozmo fait parfois une petite sieste tout en les surveillant. Essaie de les retourner sans le réveiller !"
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo a des étincelles :"

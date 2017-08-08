@@ -13,7 +13,7 @@
     "translation" : "Appuie sur <b><color=#d3d3d3>SUIVANT</color></b> si tu rencontres encore des problèmes"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "First, go to <b>SETTINGS</b>."
+    "translation" : "Tout d'abord, accède à <b>PARAMÈTRES</b>."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
     "translation" : "Ensuite, essaye de remplacer la pile de ton cube."
@@ -49,6 +49,6 @@
     "translation" : "Pour qu'il soit bien nourri, suis les instructions pour l'aider à reconnaître ses cubes."
   },
   "cubeHelpStrings.Instructions.SlideA2Copy" : {
-    "translation" : "Then, tap <b>REFRESH CUBES</b>."
+    "translation" : "Ensuite, appuie sur <b>ACTUALISER LES CUBES</b>."
   }
 }
