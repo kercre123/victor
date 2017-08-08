@@ -97,6 +97,7 @@ class PathComponent;
 class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
+class AnimationComponent;
 
 namespace Audio {
 class RobotAudioClient;
@@ -308,6 +309,9 @@ public:
   
   inline const CliffSensorComponent& GetCliffSensorComponent() const { return *_cliffSensorComponent; }
   inline       CliffSensorComponent& GetCliffSensorComponent()       { return *_cliffSensorComponent; }
+  
+  inline const AnimationComponent& GetAnimationComponent() const { return *_animationComponent; }
+  inline       AnimationComponent& GetAnimationComponent()       { return *_animationComponent; }
   
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
@@ -790,6 +794,7 @@ protected:
   std::unique_ptr<DockingComponent>       _dockingComponent;
   std::unique_ptr<CarryingComponent>      _carryingComponent;
   std::unique_ptr<CliffSensorComponent>   _cliffSensorComponent;
+  std::unique_ptr<AnimationComponent>     _animationComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;

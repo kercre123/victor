@@ -15,12 +15,14 @@
 #include "cozmoAnim/cozmoAnimComms.h"
 
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendToRobot_helper.h"
+#include "clad/robotInterface/messageFromAnimProcess.h"
 
 // For animProcess<->Engine communications
 #include "anki/cozmo/transport/IUnreliableTransport.h"
@@ -54,6 +56,14 @@ namespace Messages {
     
     AnimationStreamer* _animStreamer = nullptr;
     
+    // TODO: Seems like there's some reliable transport setting we could adjust to make this bigger.
+    const u32 kMaxNumAvailableAnimsToReportPerTic = 10;
+    
+    // The last AnimID that was sent to engine in response to RequestAvailableAnimations.
+    // If negative, it means we're not currently doling.
+    bool _isDolingAnims = false;
+    u32 _nextAnimIDToDole;
+    
   } // private namespace
 
 
@@ -79,7 +89,40 @@ namespace Messages {
     
     return RESULT_OK;
   }
+  
+  
+  void DoleAvailableAnimations()
+  {
+    // If not already doling, dole animations
+    if (_isDolingAnims) {
+      u32 numAnimsDoledThisTic = 0;
+      auto animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
+      auto it = animIDToNameMap.find(_nextAnimIDToDole);
+      for (; it != animIDToNameMap.end() && numAnimsDoledThisTic < kMaxNumAvailableAnimsToReportPerTic; ++it) {
+        
+        RobotInterface::AnimationAvailable msg;
+        msg.id = it->first;
+        msg.name_length = it->second.length();
+        snprintf(msg.name, sizeof(msg.name), "%s", it->second.c_str());
+        SendMessageToEngine(msg);
+        
+        PRINT_NAMED_INFO("AvailableAnim", "[%d]: %s", msg.id, msg.name);
 
+        ++numAnimsDoledThisTic;
+      }
+      if (it == animIDToNameMap.end()) {
+        PRINT_NAMED_INFO("EngineMessages.DoleAvailableAnimations.Done", "");
+        _isDolingAnims = false;
+        
+        EndOfMessage msg;
+        msg.messageType = MessageType::AnimationAvailable;
+        RobotInterface::SendMessageToEngine(msg);
+      } else {
+        _nextAnimIDToDole = it->first;
+      }
+    }
+  }
+  
   void ProcessMessage(RobotInterface::EngineToRobot& msg)
   {
     //PRINT_NAMED_WARNING("ProcessMessage.EngineToRobot", "%d", msg.tag);
@@ -99,9 +142,8 @@ namespace Messages {
         
       case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
       {
-        std::string animName((char*)msg.playAnim.animName);
-        PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim", "%s", animName.c_str());
-        _animStreamer->SetStreamingAnimation(animName);
+        PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim", "%d", msg.playAnim.animID);
+        _animStreamer->SetStreamingAnimation(msg.playAnim.animID);
 
         break;
       }
@@ -110,6 +152,24 @@ namespace Messages {
       {
         PRINT_NAMED_INFO("EngineMessages.ProcessMessage.EnableLiveTwitching", "%d", msg.enableLiveTwitching.enable);
         _animStreamer->EnableLiveTwitching(msg.enableLiveTwitching.enable);
+        break;
+      }
+        
+      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
+      {
+        PRINT_NAMED_INFO("EngineMessages.RequestAvailableAnimations", "");
+        if (!_isDolingAnims) {
+          auto animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
+          if (animIDToNameMap.begin() != animIDToNameMap.end()) {
+            _nextAnimIDToDole =  animIDToNameMap.begin()->first;
+            _isDolingAnims = true;
+          } else {
+            PRINT_NAMED_WARNING("EngineMessages.RequestAvailableAnimations.NoAnimsAvailable", "");
+          }
+        } else {
+          PRINT_NAMED_WARNING("EngineMessages.RequestAvailableAnimations.AlreadyDoling", "");
+        }
+        break;
       }
 
     }
@@ -159,6 +219,9 @@ namespace Messages {
   {
     MonitorConnectionState();
 
+    // Dole out availble animations
+    DoleAvailableAnimations();
+    
     // Process incoming messages from engine
     u32 dataLen;
 

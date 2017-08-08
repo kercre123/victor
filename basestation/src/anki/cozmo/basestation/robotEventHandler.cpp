@@ -42,6 +42,7 @@
 #include "anki/cozmo/basestation/actions/trackPetFaceAction.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
+#include "anki/cozmo/basestation/components/animationComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -1556,6 +1557,8 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
     {
       robot->SyncTime();
       PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncTime", "");
+      
+      robot->GetAnimationComponent().Init();
     }
   }
 }

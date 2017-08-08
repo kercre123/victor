@@ -101,6 +101,8 @@ namespace Cozmo {
     Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
     Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) override;
     
+    Tag SetStreamingAnimation(u32 animID, u32 numLoops = 1, bool interruptRunning = true);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update() override;
      
@@ -111,6 +113,7 @@ namespace Cozmo {
     const Animation* GetStreamingAnimation() const override { return _streamingAnimation; }
     
     const Animation* GetCannedAnimation(const std::string& name) const;
+    const CannedAnimationContainer& GetCannedAnimationContainer() const { return _animationContainer; }
 
     // Required by HasSettableParameters:
 //    virtual void SetDefaultParams() override;
@@ -175,6 +178,8 @@ namespace Cozmo {
 
     std::string _lastPlayedAnimationId;
 
+    u32 _streamingAnimID;
+    
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
     void BufferFaceToSend(const ProceduralFace& procFace);

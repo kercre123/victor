@@ -37,6 +37,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/components/animationComponent.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
@@ -186,6 +187,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _dockingComponent(new DockingComponent(*this))
   , _carryingComponent(new CarryingComponent(*this))
   , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
+  , _animationComponent(std::make_unique<AnimationComponent>(*this, _context))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -1437,6 +1439,9 @@ Result Robot::Update()
   
   // Send nav memory map data
   _blockWorld->BroadcastNavMemoryMap();
+  
+  /////////// Update AnimationComponent /////////
+  _animationComponent->Update();
       
   /////////// Update visualization ////////////
       

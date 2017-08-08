@@ -116,10 +116,7 @@ public:
 
   // Read the face animations in a dir
   void ReadFaceAnimationDir();
-
-  // Iterate through the loaded animations and broadcast their names
-  void BroadcastAvailableAnimations();
-    
+  
   // Iterate through the loaded animation groups and broadcast their names
   void BroadcastAvailableAnimationGroups();
   
@@ -154,13 +151,6 @@ private:
   void ParseFirmwareHeader(const Json::Value& header);
   bool MakeRobotFirmwareUntrusted(RobotID_t robotId);
  
-  // Doles out limited number of animations to game per engine tic
-  void BroadcastAvailableAnimations_internal();
-  
-  // Index of next animation index to broadcast.
-  // If < 0, not currently broadcasting animations
-  s32 _nextAnimationIndexToBroadcast = -1;
-
 }; // class RobotManager
   
 } // namespace Cozmo

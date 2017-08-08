@@ -13,6 +13,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
+#include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
@@ -50,14 +51,21 @@ message PathFollowingEvent
   PathEventType  eventType
 }
 
+message AnimationAvailable {
+  uint_32 id,
+  string name
+}
+
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
 {
-  uint_8 tag
+  uint_32 id,
+  uint_8  tag
 }
 
 message AnimationEnded
 {
+  uint_32 id,
   uint_8 tag
 }
 
@@ -120,8 +128,9 @@ union RobotToEngine {
   IMURawDataChunk            imuRawDataChunk        = 0xC7,
   DefaultCameraParams        defaultCameraParams    = 0xC8,
   RobotAvailable             robotAvailable         = 0xC9,
-  AnimationStarted           animStarted            = 0xCA,
-  AnimationEnded             animEnded              = 0xCB,
+  AnimationStarted           animStarted            = 0xCA,   // V2: sent from anim process
+  AnimationEnded             animEnded              = 0xCB,   // V2: sent from anim process
+  AnimationAvailable         animationAvailable     = 0xCC,   // V2: sent from anim process
   NVStorage::NVOpResult      nvOpResult             = 0xCD,
   ObjectPowerLevel           objectPowerLevel       = 0xCE,
   CrashReport                crashReport            = 0xCF,
@@ -137,6 +146,7 @@ union RobotToEngine {
   RobotErrorReport           robotError             = 0xD9,
   LiftLoad                   liftLoad               = 0xDA,
   BackpackButton             backpackButton         = 0xDB,
+  EndOfMessage               endOfMessage           = 0xDC,
 
   WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,

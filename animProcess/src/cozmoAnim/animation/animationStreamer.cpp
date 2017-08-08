@@ -125,6 +125,16 @@ namespace Cozmo {
   {
   }
 
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(u32 animID, u32 numLoops, bool interruptRunning)
+  {
+    std::string animName = "";
+    if (!_animationContainer.GetAnimNameByID(animID, animName)) {
+      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.InvalidAnimID", "%d", animID);
+      return 0;
+    }
+    return SetStreamingAnimation(animName, numLoops, interruptRunning);
+  }
+  
   
   AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops, bool interruptRunning)
   {
@@ -170,6 +180,11 @@ namespace Cozmo {
     }
     
     _streamingAnimation = anim;
+    
+    if (!GetCannedAnimationContainer().GetAnimIDByName(_streamingAnimation->GetName(), _streamingAnimID)) {
+      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.AnimIDNotFound", "%s", _streamingAnimation->GetName().c_str());
+      _streamingAnimID = 0;
+    }
     
     if(_streamingAnimation == nullptr) {
       // Set flag if we are interrupting a streaming animation with nothing.
@@ -392,7 +407,9 @@ namespace Cozmo {
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d", _tag);
     }
+    
     RobotInterface::AnimationStarted startMsg;
+    startMsg.id = _streamingAnimID;
     startMsg.tag = _tag;
     if (!RobotInterface::SendMessageToEngine(startMsg)) {
       return RESULT_FAIL;
@@ -418,6 +435,7 @@ namespace Cozmo {
     }
     
     RobotInterface::AnimationEnded endMsg;
+    endMsg.id = _streamingAnimID;
     endMsg.tag = _tag;
     if (!RobotInterface::SendMessageToEngine(endMsg)) {
       return RESULT_FAIL;
@@ -461,13 +479,13 @@ namespace Cozmo {
 //        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
 //      }
       
-      // If we haven't sent the start of animation yet do so now (after audio)
-      if(!_startOfAnimationSent)
-      {
-        IncrementTagCtr();
-        _tag = _tagCtr;
-        SendStartOfAnimation();
-      }  
+//      // If we haven't sent the start of animation yet do so now (after audio)
+//      if(!_startOfAnimationSent)
+//      {
+//        IncrementTagCtr();
+//        _tag = _tagCtr;
+//        SendStartOfAnimation();
+//      }  
       
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
@@ -489,12 +507,12 @@ namespace Cozmo {
       _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
     }
     
-    // If we just finished buffering all the layers, send an end of animation message
-    if(_startOfAnimationSent &&
-       !_trackLayerComponent->HaveLayersToSend() &&
-       !_endOfAnimationSent) {
-      lastResult = SendEndOfAnimation();
-    }
+//    // If we just finished buffering all the layers, send an end of animation message
+//    if(_startOfAnimationSent &&
+//       !_trackLayerComponent->HaveLayersToSend() &&
+//       !_endOfAnimationSent) {
+//      lastResult = SendEndOfAnimation();
+//    }
     
     return lastResult;
   }// StreamLayers()

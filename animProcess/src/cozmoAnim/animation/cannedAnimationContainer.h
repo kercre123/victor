@@ -30,6 +30,9 @@ namespace Cozmo {
   class CannedAnimationContainer
   {
   public:
+    using AnimIDToNameMap_t = std::unordered_map<u32, std::string>;
+    using AnimNameToIDMap_t = std::unordered_map<std::string, u32>;
+    
     CannedAnimationContainer();
     
     Result DefineHardCoded(); // called at construction
@@ -50,11 +53,24 @@ namespace Cozmo {
     
     std::vector<std::string> GetAnimationNames();
     
+    bool GetAnimNameByID(u32 animID, std::string& animName)        const;
+    bool GetAnimIDByName(const std::string& animName, u32& animID) const;
+    
+    const AnimIDToNameMap_t& GetAnimationIDToNameMap() const { return _animIDToNameMap; }
+    const AnimNameToIDMap_t& GetAnimationNameToIDMap() const { return _animNameToIDMap; }
+    
     void Clear();
     
   private:
     
     std::unordered_map<std::string, Animation> _animations;
+    
+    // Map of unique ID to animation string name and vice versa
+    AnimIDToNameMap_t _animIDToNameMap;
+    AnimNameToIDMap_t _animNameToIDMap;
+    
+    // AnimID counter
+    u32 _animIDCtr;
     
   }; // class CannedAnimationContainer
   

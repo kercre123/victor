@@ -932,6 +932,11 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      
+      void Process_requestAvailableAnimations(RobotInterface::RequestAvailableAnimations const& msg)
+      {
+        // Nothing to do here
+      }
       // =========== end V2 animation ==============
       
       

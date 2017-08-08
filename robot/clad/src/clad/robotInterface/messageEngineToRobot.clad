@@ -398,12 +398,15 @@ message ShutdownRobot
 }
 
 // ========== V2 Animation process messages ===========
+
 // TODO: Make animation files referencable by integer tag so we don't have to send a string.
+message RequestAvailableAnimations
+{
+}
 
 message PlayAnim
 {
-  uint_32 tag,
-  uint_8 animName[64]
+  uint_32 animID,
 }
 
 message LockAnimTracks
@@ -572,7 +575,7 @@ union EngineToRobot
   DebugSetRTTO                  setRTTO                     = 0x89,
   SetBackpackLights             setBackpackLights           = 0x8A,   // V2
   EnableLiveTwitching           enableLiveTwitching         = 0x8B,   // V2
-  //          FREE SLOT!!!                                  = 0x8C,
+  RequestAvailableAnimations    requestAvailableAnimations  = 0x8C,   // V2
   AbortAnimation                abortAnimation              = 0x8D,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x8E,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x8F,

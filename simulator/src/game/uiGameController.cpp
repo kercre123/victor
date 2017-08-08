@@ -403,7 +403,7 @@ namespace Anki {
     }
 
 
-    void UiGameController::HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg)
+    void UiGameController::HandleEndOfMessageBase(EndOfMessage const& msg)
     {
       PRINT_NAMED_INFO("HandleEndOfMessage",
                        "messageType: %s", EnumToString(msg.messageType));

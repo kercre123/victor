@@ -39,10 +39,6 @@
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
 
-// Maximum number of animations that may be broadcast per Update() call
-// so as not to overwhelm the socket.
-#define MAX_ANIM_BROADCASTS_PER_TIC 50
-
 namespace Anki {
 namespace Cozmo {
 
@@ -62,10 +58,6 @@ RobotManager::RobotManager(const CozmoContext* context)
 {
   using namespace ExternalInterface;
   
-  auto broadcastAvailableAnimationsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
-  {
-    this->BroadcastAvailableAnimations();
-  };
   auto broadcastAvailableAnimationGroupsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
   {
     this->BroadcastAvailableAnimationGroups();
@@ -73,12 +65,10 @@ RobotManager::RobotManager(const CozmoContext* context)
     
   IExternalInterface* externalInterface = context->GetExternalInterface();
 
-  MessageGameToEngineTag tagAnims = MessageGameToEngineTag::RequestAvailableAnimations;
   MessageGameToEngineTag tagGroups = MessageGameToEngineTag::RequestAvailableAnimationGroups;
     
   if (externalInterface != nullptr){
     _signalHandles.push_back( externalInterface->Subscribe(tagGroups, broadcastAvailableAnimationGroupsCallback) );
-    _signalHandles.push_back( externalInterface->Subscribe(tagAnims, broadcastAvailableAnimationsCallback) );
   }
 }
 
@@ -100,8 +90,6 @@ void RobotManager::Init(const Json::Value& config)
   Anki::Util::Time::PrintTimedSteps();
   Anki::Util::Time::ClearSteps();
 
-  BroadcastAvailableAnimations();
-  
   auto endTime = std::chrono::steady_clock::now();
   auto timeSpent_millis = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
   
@@ -258,10 +246,6 @@ bool RobotManager::UpdateFirmware()
 void RobotManager::UpdateAllRobots()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
-
-  // If broadcasting animations, continue
-  BroadcastAvailableAnimations_internal();
-
   
   //for (auto &r : _robots) {
   for(auto r = _robots.begin(); r != _robots.end(); ) {
@@ -311,41 +295,11 @@ void RobotManager::UpdateRobotConnection()
 void RobotManager::ReadAnimationDir()
 {
   _context->GetDataLoader()->LoadAnimations();
-  BroadcastAvailableAnimations();
 }
 
 void RobotManager::ReadFaceAnimationDir()
 {
   _context->GetDataLoader()->LoadFaceAnimations();
-}
-
-void RobotManager::BroadcastAvailableAnimations()
-{
-  // Tell UI about available animations
-  _nextAnimationIndexToBroadcast = 0;
-}
-  
-void RobotManager::BroadcastAvailableAnimations_internal()
-{
-  // Tell UI about available animations, MAX_ANIM_BROADCASTS_PER_TIC at a time.
-  if (_nextAnimationIndexToBroadcast >= 0) {
-    Anki::Util::Time::ScopedStep scopeTimer("BroadcastAvailableAnimations_internal");
-
-    if (nullptr != _context->GetExternalInterface()) {
-      std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
-      u32 lastIndexToBroadcast = std::min((s32)animNames.size(), _nextAnimationIndexToBroadcast + MAX_ANIM_BROADCASTS_PER_TIC);
-      while (_nextAnimationIndexToBroadcast < lastIndexToBroadcast) {
-        _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(animNames[_nextAnimationIndexToBroadcast]);
-        ++_nextAnimationIndexToBroadcast;
-      }
-      
-      if (_nextAnimationIndexToBroadcast == animNames.size()) {
-        _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EndOfMessage>(ExternalInterface::MessageType::AnimationAvailable);
-        PRINT_NAMED_DEBUG("RobotManager.BroadcastAvailableAnimations", "Supposedly sent EndOfMessage");
-        _nextAnimationIndexToBroadcast = -1;
-      }
-    }
-  }
 }
 
 void RobotManager::BroadcastAvailableAnimationGroups()

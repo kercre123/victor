@@ -20,6 +20,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageFromAnimProcess.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/nvStorageTypes.h"
 #include "clad/types/objectFamilies.h"
@@ -123,7 +124,7 @@ protected:
   virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) {};
   
   virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
-  virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
+  virtual void HandleEndOfMessage(const EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
   virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) {};
@@ -504,7 +505,7 @@ private:
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
   void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   void HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg);
-  void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
+  void HandleEndOfMessageBase(EndOfMessage const& msg);
   void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
   void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
   void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
