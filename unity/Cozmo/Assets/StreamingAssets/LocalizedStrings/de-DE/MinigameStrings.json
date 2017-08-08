@@ -133,10 +133,10 @@
     "translation" : "Zum Freischalten musst du ein Gedächtnisspiel im Modus DU GEGEN COZMO gewinnen."
   },
   "memoryMatchGame.label.yourTurn" : {
-    "translation" : "Du bist dran."
+    "translation" : "Du bist dran"
   },
   "memoryMatchGame.label.cozmoTurn" : {
-    "translation" : "Cozmo ist dran."
+    "translation" : "Cozmo ist dran"
   },
   "memoryMatchGame.label.listen" : {
     "translation" : "Hör zu..."

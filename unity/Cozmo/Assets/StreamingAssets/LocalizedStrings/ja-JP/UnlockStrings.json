@@ -16,7 +16,7 @@
     "translation" : "ロックされたモーション/能力"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Cozmo's Playをプレーする必要があります。毎日プレイトークンを獲得する必要があります。これらは、スパーク、トリックなどの報酬でボーナスボックスのロックを解除します！"
+    "translation" : "Cozmoのプレイメーターを満たすと、その日のプレイトークンを獲得できます。トークンを獲得すると、スパークやトリックなどのご褒美が詰まったボーナスボックスのロックが解除されます！"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "グータッチ"
@@ -196,7 +196,7 @@
     "translation" : "キューブガード"
   },
   "unlockable.GuardDog.Description" : {
-    "translation" : "Cozmoのキューブが近くにいるとき、彼はそれらを守っている間、昼寝を取るかもしれない。慎重に彼の目を覚ますことなく、キューブを裏返しにしてください。"
+    "translation" : "Cozmoのキューブが近くにあると、Cozmoはキューブを守りながら寝てしまうことがあります。Cozmoを起こさないように注意して、キューブを裏返しましょう。"
   },
   "sparks.Sparked" : {
     "translation" : "Cozmoはスパークで指示されました："

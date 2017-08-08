@@ -19,7 +19,7 @@
     "translation" : "Replace Cozmo sur le chargeur."
   },
   "onboarding.CozmoNeedsCharge.CozmoIsReady" : {
-    "translation" : "Cozmo est prêt!"
+    "translation" : "Cozmo est prêt !"
   },
   "onboarding.CozmoNeedsCharge.message1" : {
     "translation" : "Tu es connecté à Cozmo et il est presque prêt. Il a seulement besoin d'un moment pour se charger."
@@ -37,16 +37,16 @@
     "translation" : "Lorsque tu laisses Cozmo se débrouiller, il adore explorer le monde par lui-même en mode de jeu libre. Il demandera automatiquement à faire des jeux, exécutera des tours et gagnera parfois des étincelles."
   },
   "onboarding.CozmoNeedsCharge.finalMessage" : {
-    "translation" : "Cozmo est prêt à jouer. Pour charger complètement sa batterie, tu peux le laisser sur le chargeur pendant encore 7minutes."
+    "translation" : "Cozmo est prêt à jouer. Pour charger complètement sa batterie, tu peux le laisser sur le chargeur pendant encore 7 minutes."
   },
   "onboarding.Slide0" : {
     "translation" : "Crée un <b>superbe </b>espace de jeu."
   },
   "onboarding.Slide2Header" : {
-    "translation" : "<b>Bienvenue!</b>"
+    "translation" : "<b>Bienvenue !</b>"
   },
   "onboarding.Slide2" : {
-    "translation" : "Cozmo est un robot très spécial dont le propriétaire doit être soigneux.\u000a\u000a Suis attentivement les instructions!"
+    "translation" : "Cozmo est un robot très spécial dont le propriétaire doit être soigneux.\u000a\u000a Suis attentivement les instructions !"
   },
   "onboarding.Phase3.Header1" : {
     "translation" : "Place un cube devant Cozmo."
@@ -55,7 +55,7 @@
     "translation" : "Celui-ci deviendra <color=#00FFFF>bleu</color> lorsque Cozmo le verra."
   },
   "onboarding.Phase3.Body2" : {
-    "translation" : "<b>Parfait!</b>\u000aCozmo a du mal à voir le cube s'il est trop près."
+    "translation" : "<b>Parfait !</b>\u000aCozmo a du mal à voir le cube s'il est trop près."
   },
   "onboarding.Phase3.Header3" : {
     "translation" : "Il t'indiquera quand il sera prêt à continuer..."
@@ -64,16 +64,16 @@
     "translation" : "Laisse Cozmo inspecter le cube par lui-même."
   },
   "onboarding.Phase3.ErrorCube" : {
-    "translation" : "Le cube a bougé!"
+    "translation" : "Le cube a bougé !"
   },
   "onboarding.Phase3.ErrorCubeRightSideUp" : {
-    "translation" : "Les voyants vers le haut!"
+    "translation" : "Les voyants vers le haut !"
   },
   "onboarding.Phase3.ErrorCozmo" : {
     "translation" : "<b>Tutoriel en pause</b>\u000aCozmo doit se trouver sur une surface stable et plane, et doit explorer par lui-même."
   },
   "onboarding.Phase3.ErrorFinal" : {
-    "translation" : "<b>Tu rencontres des problèmes?</b>\u000aAssure-toi que Cozmo se trouve sur une table plane et propre. Cozmo peut éprouver des difficultés sur les surfaces vitrées.\u000a\u000aSi tu rencontres toujours des problèmes, visite <b>support.anki.com</b> sur un autre appareil."
+    "translation" : "<b>Tu rencontres des problèmes ?</b>\u000aAssure-toi que Cozmo se trouve sur une table plane et propre. Cozmo peut éprouver des difficultés sur les surfaces vitrées.\u000a\u000aSi tu rencontres toujours des problèmes, visite <b>support.anki.com</b> sur un autre appareil."
   },
   "onboarding.Slide0a" : {
     "translation" : "Place Cozmo sur une table propre et dégagée dans une pièce bien éclairée."
@@ -85,13 +85,13 @@
     "translation" : "Cozmo va essayer d'éviter de tomber, mais tout comme un animal de compagnie, il peut avoir besoin de ton aide."
   },
   "onboarding.OldRobotSkip" : {
-    "translation" : "Ce Cozmo a déjà effectué le tutoriel. Veux-tu l'ignorer ou le recommencer?"
+    "translation" : "Ce Cozmo a déjà effectué le tutoriel. Veux-tu l'ignorer ou le recommencer ?"
   },
   "onboarding.BirthWait" : {
     "translation" : "Regarde Cozmo prendre vie."
   },
   "onboarding.MeetCozmoIntro" : {
-    "translation" : "Bien joué!\u000a\u000aCozmo souhaite faire connaissance avec toi."
+    "translation" : "Bien joué !\u000a\u000aCozmo souhaite faire connaissance avec toi."
   },
   "onboarding.MeetCozmo.Button" : {
     "translation" : "Première rencontre"
@@ -106,7 +106,7 @@
     "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un token."
   },
   "onboarding.ActivitiesIntro" : {
-    "translation" : "Les activités de découverte sont particulières; elles n'affectent pas les besoins de Cozmo et ne coûtent pas d'étincelles."
+    "translation" : "Les activités de découverte sont particulières ; elles n'affectent pas les besoins de Cozmo et ne coûtent pas d'étincelles."
   },
   "onboarding.needs.ticker" : {
     "translation" : "Analyse des besoins de Cozmo en cours..."
@@ -142,7 +142,7 @@
     "translation" : "Comble l'<color=#f5ea12>envie de jouer</color> de Cozmo pendant trois jours pour débloquer une <color=#f5ea12>boîte à bonus.</color>"
   },
   "onboarding.TokensIntro.Part2" : {
-    "translation" : "Cozmo a de la chance de t'avoir comme propriétaire! Il est temps de partir en exploration!"
+    "translation" : "Cozmo a de la chance de t'avoir comme propriétaire ! Il est temps de partir en exploration !"
   },
   "onboarding.button.end" : {
     "translation" : "TERMINÉ"
