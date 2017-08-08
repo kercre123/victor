@@ -502,8 +502,7 @@ void ActivityFeeding::UpdateCurrentStage(Robot& robot)
       break;
 
     case FeedingActivityStage::EatFood:
-      if( ANKI_VERIFY(_cubeIDToEat.IsSet(), "FeedingActivity.Update.EatFood.NoCubeToEat",
-                      "We should be eating, but cubeIDToEat isn't set") ) {
+      if(_cubeIDToEat.IsSet()) {
         
         if( HasSingleBehaviorStageStarted(_eatFoodBehavior) &&
             !_eatFoodBehavior->IsRunning() ){

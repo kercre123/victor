@@ -49,11 +49,11 @@ namespace{
 CONSOLE_VAR(f32, kDistanceFromMarker_mm, CONSOLE_GROUP,  45.0f);
   
 // Constants for the CubeAccelComponent MovementListener:
-const float kHighPassFiltCoef = 0.8f;
-const float kMaxMovementScoreToAdd = 10.f;
-const float kMovementScoreDecay = 3.f;
-const float kFeedingMovementScoreMax = 50.f;
-CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, CONSOLE_GROUP,  45.0f);
+CONSOLE_VAR(f32, kHighPassFiltCoef,          CONSOLE_GROUP,  0.95f);
+CONSOLE_VAR(f32, kMaxMovementScoreToAdd,     CONSOLE_GROUP,  4.f);
+CONSOLE_VAR(f32, kMovementScoreDecay,        CONSOLE_GROUP,  3.f);
+CONSOLE_VAR(f32, kFeedingMovementScoreMax,   CONSOLE_GROUP,  6.f);
+CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, CONSOLE_GROUP,  5.0f);
 
 CONSOLE_VAR(f32, kFeedingPreActionAngleTol_deg, CONSOLE_GROUP, 15.0f);
 
@@ -219,8 +219,12 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
   
-  robot.GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
+  const bool removeSuccessfull = robot.GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
+  ANKI_VERIFY(removeSuccessfull,
+             "BehaviorFeedingEat.StopInternal.FailedToRemoveAccellComponent",
+              "");
   _cubeMovementListener.reset();
+  _targetID.UnSet();
 }
 
 
@@ -396,7 +400,6 @@ void BehaviorFeedingEat::MarkCubeAsBad(const Robot& robot)
 
   const TimeStamp_t lastPoseUpdateTime_ms = robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(_targetID);
   _badCubesMap[_targetID] = lastPoseUpdateTime_ms;
-  _targetID.UnSet();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
