@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/robot.h"
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 
 #define SET_STATE(s) {                                                  \

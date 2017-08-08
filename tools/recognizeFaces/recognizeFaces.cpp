@@ -5,7 +5,7 @@
 
 #include "json/json.h"
 
-#include "anki/cozmo/basestation/cozmoContext.h"
+#include "engine/cozmoContext.h"
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"

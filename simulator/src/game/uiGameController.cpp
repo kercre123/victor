@@ -8,12 +8,12 @@
 
 #include "anki/cozmo/simulator/game/uiGameController.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/basestation/cozmoAPI/comms/gameComms.h"
-#include "anki/cozmo/basestation/cozmoAPI/comms/gameMessageHandler.h"
+#include "engine/cozmoAPI/comms/gameComms.h"
+#include "engine/cozmoAPI/comms/gameMessageHandler.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "engine/events/animationTriggerHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
 #include "anki/messaging/shared/UdpClient.h"

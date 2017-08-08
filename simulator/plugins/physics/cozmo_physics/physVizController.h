@@ -15,7 +15,7 @@
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "engine/events/ankiEventMgr.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/vizInterface/messageViz.h"
 #include <vector>
