@@ -34,6 +34,8 @@ protected:
   
   virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
   
+  virtual bool ShouldRunWhileOnCharger() const override { return true; }
+  
   virtual void GetResultsInternal() override;
   
 private:

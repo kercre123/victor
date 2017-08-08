@@ -55,6 +55,7 @@ enum uint_8 BehaviorClass {
 
   PlaypenCameraCalibration,
   PlaypenDriftCheck,
+  PlaypenDriveForwards,
   PlaypenMotorCalibration,
 
   PopAWheelie,
@@ -166,6 +167,7 @@ enum uint_8 BehaviorID {
 
   PlaypenCameraCalibration,
   PlaypenDriftCheck,
+  PlaypenDriveForwards,
   PlaypenMotorCalibration,
 
   PopAWheelie,

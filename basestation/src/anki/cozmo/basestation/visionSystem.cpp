@@ -3197,7 +3197,7 @@ namespace Cozmo {
     
     // Check that there are enough markers
     // TODO Figure out min number of markers (what if top row is cut off thats like 12 markers)
-    const u32 kNumMarkersNeededForCalibration = 20;
+    const u32 kNumMarkersNeededForCalibration = 10;
     if(_currentResult.observedMarkers.size() < kNumMarkersNeededForCalibration)
     {
       PRINT_NAMED_WARNING("VisionSystem.ComputeCalibration.NotEnoughMarkers",
@@ -3423,7 +3423,7 @@ namespace Cozmo {
     std::array<f32,NUM_RADIAL_DISTORTION_COEFFS> distCoeffsVec;
     std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
     
-    calibration = Vision::CameraCalibration(img.GetNumCols(), img.GetNumRows(),
+    calibration = Vision::CameraCalibration(img.GetNumRows(), img.GetNumCols(),
                                             cameraMatrix(0,0), cameraMatrix(1,1),
                                             cameraMatrix(0,2), cameraMatrix(1,2),
                                             0.f, // skew

@@ -22,9 +22,9 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  static const f32 kHeadAngleToPlaySound = DEG_TO_RAD(2.f);
-  static const u32 kIMUDriftDetectPeriod_ms = 2000;
-  static const f32 kIMUDriftAngleThreshDeg = 0.2f;
+static const f32 kHeadAngleToPlaySound = DEG_TO_RAD(2.f);
+static const u32 kIMUDriftDetectPeriod_ms = 2000;
+static const f32 kIMUDriftAngleThreshDeg = 0.2f;
 }
 
 BehaviorPlaypenDriftCheck::BehaviorPlaypenDriftCheck(Robot& robot, const Json::Value& config)

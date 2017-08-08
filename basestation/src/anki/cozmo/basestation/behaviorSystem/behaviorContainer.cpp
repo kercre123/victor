@@ -40,6 +40,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriveForwards.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
@@ -505,6 +506,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::PlaypenDriftCheck:
     {
       newBehavior = IBehaviorPtr(new BehaviorPlaypenDriftCheck(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenDriveForwards:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenDriveForwards(robot, config));
       break;
     }
     

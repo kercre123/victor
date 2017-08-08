@@ -34,12 +34,18 @@ protected:
   
   virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
   
+  virtual bool ShouldRunWhileOnCharger() const override { return true; }
+  
   virtual void GetResultsInternal() override;
   
 private:
-  
-  void TransitionToWaitingForFrontCliffs(Robot& robot);
+
   void TransitionToWaitingForBackCliffs(Robot& robot);
+  
+  bool _waitingForFrontCliffs = false; // True if waiting for front cliffs, false if waiting for back cliffs
+  bool _frontCliffsDetected = false;
+  bool _backCliffsDetected = false;
+  
 };
 
 }
