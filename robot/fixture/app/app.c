@@ -22,7 +22,7 @@
 #include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 104;
-u8 g_fixtureReleaseRev = 1; //'ver.rev' e.g. 104.2
+u8 g_fixtureReleaseRev = 2; //'ver.rev' e.g. 104.2
 #define BUILD_INFO "MP v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build

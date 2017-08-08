@@ -1,4 +1,11 @@
 ----------------
+Release v104.2
+----------------
+
+Firmware:
+-esp.factory.bin: change version string back to 10501 for compatibility. preserve updated build date.
+
+----------------
 Release v104.1
 ----------------
 
