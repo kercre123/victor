@@ -638,7 +638,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
         CodeLabProject proj = new CodeLabProject();
         proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
-        proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName.Replace("\"", "\\\"");
+        proj.ProjectName = EscapeProjectName(defaultProfile.CodeLabProjects[i].ProjectName);
 
         copyCodeLabProjectList.Add(proj);
       }
@@ -652,7 +652,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         CodeLabSampleProject proj = new CodeLabSampleProject();
         proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
         proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
-        proj.ProjectName = _CodeLabSampleProjects[i].ProjectName.Replace("\"", "\\\"");
+        proj.ProjectName = EscapeProjectName(_CodeLabSampleProjects[i].ProjectName);
         copyCodeLabSampleProjectList.Add(proj);
       }
 
@@ -1315,8 +1315,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           if (projectToOpen != null) {
             // Escape quotes in user project name and project XML
             // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
-            String projectNameEscaped = projectToOpen.ProjectName.Replace("\"", "\\\"");
-            String projectXMLEscaped = projectToOpen.ProjectXML.Replace("\"", "\\\"");
+            String projectNameEscaped = EscapeProjectName(projectToOpen.ProjectName);
+            String projectXMLEscaped = EscapeXML(projectToOpen.ProjectXML);
 
             // Open requested project in webview
             this.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
@@ -1339,8 +1339,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
           // Escape quotes in XML and project name
           // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
-          String projectXMLEscaped = codeLabSampleProject.ProjectXML.Replace("\"", "\\\"");
-          String sampleProjectNameEscaped = sampleProjectName.Replace("\"", "\\\"");
+          String sampleProjectNameEscaped = EscapeProjectName(sampleProjectName);
+          String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
 
           // Open requested project in webview
           this.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
@@ -1370,6 +1370,15 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         StartVerticalHatBlockListeners();
       }
+    }
+
+    private String EscapeProjectName(String projectName) {
+      String tempProjectName = projectName.Replace("\"", "\\\"");
+      return tempProjectName.Replace("'", "\\'");
+    }
+
+    private String EscapeXML(String xml) {
+      return xml.Replace("\"", "\\\"");
     }
 
     private void StartVerticalHatBlockListeners() {
