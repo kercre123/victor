@@ -95,9 +95,30 @@ void Mics::init(void) {
   NVIC_SetPriority(DMA1_Channel2_3_IRQn, PRIORITY_MICS);
 
   // NEED TO SLOP TIMING HERE
-  TIM15->CR1 = TIM_CR1_CEN;
-  SPI1->CR1 = SPI_CR1;
-  SPI2->CR1 = SPI_CR1;
+  __asm {
+    MOV r0, TIM_CR1_CEN
+    MOV r1, SPI_CR1
+    MOV r2, &TIM15->CR1
+    MOV r3, &SPI1->CR1
+    MOV r4, &SPI2->CR1
+    
+    str r0, [r2, #0]
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    str r1, [r3, #0]
+    str r1, [r4, #0]
+  }
 }
 
 void Mics::transmit(int16_t* payload) {
