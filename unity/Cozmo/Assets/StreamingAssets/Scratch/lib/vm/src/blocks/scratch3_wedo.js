@@ -19,7 +19,6 @@ var Scratch3CozmoBlocks = function (runtime) {
 Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
-        cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         cozmo_drive_forward: this.driveForward,
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
@@ -59,6 +58,8 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_path_to: this.verticalPathTo,
         cozmo_vert_set_headangle: this.verticalSetHeadAngle,
         cozmo_vert_set_liftheight: this.verticalSetLiftHeight,
+        cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
+        cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         // Sensors / Inputs
         // Cozmo
         cozmo_vert_get_position_3d: this.verticalCozmoGetPosition,
@@ -526,6 +527,14 @@ Scratch3CozmoBlocks.prototype.setCubeLightCorners = function(args, util) {
     var color4 = this._getColor(Cast.toString(args.CORNER_4_COLOR));
     window.Unity.call({requestId: -1, command: "cozmoSetCubeLightCorners", argUInt: color1, argUInt2: color2, argUInt3: color3, argUInt4: color4, argUInt5: cubeIndex});
 }
+
+Scratch3CozmoBlocks.prototype.verticalDockWithCubeById = function(args, util) {
+    var requestId = this._getRequestId();
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozVertDockWithCubeById", argUInt: cubeIndex});
+    return commandPromise;
+};
 // =================
 // Sensors / Inputs:
 // =================
