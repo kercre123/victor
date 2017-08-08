@@ -99,8 +99,8 @@ var ModalConfirm = (function(){
                '    <h2 class="hd modal-confirm-title"></h2>' +
                '    <p class="bd modal-confirm-prompt"></p>' +
                '    <div class="ft">' +
-               '      <button class="btn-cancel button-pill button-blue-pill"></button>' +
                '      <button class="btn-confirm button-pill button-red-pill"></button>' +
+               '      <button class="btn-cancel button-pill button-blue-pill"></button>' +
                '    </div>' +
                '  </div>' +
                '</div>';
