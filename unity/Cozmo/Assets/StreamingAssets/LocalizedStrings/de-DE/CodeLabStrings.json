@@ -291,9 +291,6 @@
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
   },
-  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText": {
-      "translation": "Eindringling!"
-  },
   "codeLabChallenge_intruder.answerSlide.primaryText" : {
     "translation" : "Antwort 32"
   },

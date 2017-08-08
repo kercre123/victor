@@ -76,7 +76,7 @@
     "translation" : "Jouer en sécurité:"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "• Lance l'exploration dans un espace intérieur bien éclairé.\u000a\u000a•Pilote-le sur des surfaces planes.\u000a\u000a• Fais attention aux bords pour éviter toute chute.\u000a\u000a•Reste à proximité de Cozmo pour vivre la meilleure expérience possible."
+    "translation" : "• Explore indoors in well lit spaces.\u000a\u000a•Drive on flat surfaces.\u000a\u000a• Be careful of falling off edges.\u000a\u000a•Stay close to Cozmo for the best experience."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Saluer"
@@ -295,7 +295,7 @@
     "translation" : "<b>Gagnant:</b> Le meilleur sur {0} parties"
   },
   "speedTap.text.displayWinnerSubtitle" : {
-    "translation" : "takes ROUND {0}!"
+    "translation" : "gagne la partie {0}!"
   },
   "speedTap.text.roundScore" : {
     "translation" : "Joueur: {0} - Cozmo: {1}"

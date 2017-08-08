@@ -25,7 +25,7 @@
     "translation" : "ACTIVER LE SDK"
   },
   "settings.sdkPanel.label.title" : {
-    "translation" : "SDK COZMO"
+    "translation" : "SDK Cozmo"
   },
   "settings.sdkPanel.connectionCommandCount.text" : {
     "translation" : "Commandes: {0}"
