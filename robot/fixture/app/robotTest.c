@@ -195,8 +195,8 @@ void PlaypenTest(void)
   uint8_t param;
   if( g_fixtureType == FIXTURE_EMROBOT_TEST )
   {
-    const int mod = 0; //{0=2=PHY_MODE_11G, 1=PHY_MODE_11B, 3=PHY_MODE_11N} [robot/espressif/app/factory/factoryTests.cpp]
-    const int channel = 11; //{0..15}
+    const int mod = 1; //{0=2=PHY_MODE_11G, 1=PHY_MODE_11B, 3=PHY_MODE_11N} [robot/espressif/app/factory/factoryTests.cpp]
+    const int channel = 6; //{0..15}
     
     param = 0x80    //<7> 1 = JRL mode: continuous packet tx
       | (mod << 4)  //<5:4> modulation
