@@ -11,7 +11,7 @@
 */
 
 #include "webotsCtrlDevLog.h"
-#include "anki/cozmo/basestation/debug/devLogProcessor.h"
+#include "engine/debug/devLogProcessor.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"

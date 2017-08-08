@@ -94,6 +94,6 @@
     "translation" : "AKTUELLER MODUS: FREIES SPIEL"
   },
   "faceEnrollment.title.cancelScanning" : {
-    "translation" : "Cancel Face Scanning?"
+    "translation" : "Do you want to quit face scanning?"
   }
 }

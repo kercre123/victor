@@ -458,7 +458,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: CozmoButton_Close_Background
+  _LinkedComponentId: CozmoButton_InvisibleHitZone
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114650802961415034
@@ -627,7 +627,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114702082406619164}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -850,24 +849,23 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Close
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114650802961415034}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
-  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextPressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+  TextDisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114547917351231200}
-    pressedSprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+    pressedSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
     disabledColor: {r: 0.86764705, g: 0.86764705, b: 0.86764705, a: 1}
   - targetImage: {fileID: 114555567388594626}
     pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
-    pressedColor: {r: 0, g: 0, b: 0, a: 0}
+    pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
-    disabledColor: {r: 0, g: 0, b: 0, a: 0}
+    disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114778748223384416}
   _AlwaysShowGlintWhenEnabled: 0

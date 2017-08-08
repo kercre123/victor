@@ -76,7 +76,7 @@
     "translation" : "Sicheres Spielen:"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "• Erkunde gut beleuchtete Innenräume.\u000a\u000a•Fahre auf ebenen Oberflächen.\u000a\u000a• Pass auf, dass Cozmo nicht runterfällt.\u000a\u000a•Bleibe in der Nähe von Cozmo, um maximalen Spielspaß zu haben."
+    "translation" : "• Explore indoors in well lit spaces.\u000a\u000a•Drive on flat surfaces.\u000a\u000a• Be careful of falling off edges.\u000a\u000a•Stay close to Cozmo for the best experience."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Grüßen"
@@ -133,10 +133,10 @@
     "translation" : "Zum Freischalten musst du ein Gedächtnisspiel im Modus DU GEGEN COZMO gewinnen."
   },
   "memoryMatchGame.label.yourTurn" : {
-    "translation" : "Du bist dran."
+    "translation" : "Du bist dran"
   },
   "memoryMatchGame.label.cozmoTurn" : {
-    "translation" : "Cozmo ist dran."
+    "translation" : "Cozmo ist dran"
   },
   "memoryMatchGame.label.listen" : {
     "translation" : "Hör zu..."

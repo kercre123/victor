@@ -16,7 +16,7 @@
     "translation" : "Appuie pour sélectionner ton cube."
   },
   "videoSubtitles.speedTap.fourth" : {
-    "translation" : "Soit prêt!"
+    "translation" : "Soit prêt !"
   },
   "videoSubtitles.speedTap.fifth" : {
     "translation" : "Touche si les couleurs correspondent."
@@ -28,7 +28,7 @@
     "translation" : "Ne touche jamais le rouge."
   },
   "videoSubtitles.speedTap.eighth" : {
-    "translation" : "Le premier à obtenir 5points gagne."
+    "translation" : "Le premier à obtenir 5 points gagne."
   },
   "videoSubtitles.cubePounce.first" : {
     "translation" : "Utilise un cube."
@@ -76,6 +76,6 @@
     "translation" : "Essaye d'aller le plus loin possible."
   },
   "videoSubtitles.memoryMatch.tenth" : {
-    "translation" : "Bonne chance!"
+    "translation" : "Bonne chance !"
   }
 }

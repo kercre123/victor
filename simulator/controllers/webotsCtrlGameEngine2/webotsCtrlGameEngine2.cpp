@@ -15,9 +15,9 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "util/console/consoleInterface.h"
-#include "anki/cozmo/basestation/androidHAL/androidHAL.h"
-#include "anki/cozmo/basestation/cozmoAPI/cozmoAPI.h"
-#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "androidHAL/androidHAL.h"
+#include "engine/cozmoAPI/cozmoAPI.h"
+#include "engine/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
@@ -28,9 +28,9 @@
 #include <fstream>
 
 #if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/cladLoggerProvider.h"
-#include "anki/cozmo/basestation/debug/devLoggerProvider.h"
-#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "engine/debug/cladLoggerProvider.h"
+#include "engine/debug/devLoggerProvider.h"
+#include "engine/debug/devLoggingSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
 #endif

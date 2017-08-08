@@ -60,6 +60,12 @@
   "cubeHelpStrings.Instructions.FeedPopup.Body": {
     "translation": "To keep him fully fed, follow the instructions to help him recognize his cubes."
   },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title": {
+    "translation": ""
+  },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body": {
+    "translation": "Cozmo doesn’t need a Quick Snack since he has enough Energy to play.\n\nTo keep him fully fed, follow the instructions to help him recognize his Cubes."
+  },  
   "cubeHelpStrings.Instructions.SlideA2Copy": {
     "translation": "Then, tap <b>REFRESH CUBES</b>."
   }

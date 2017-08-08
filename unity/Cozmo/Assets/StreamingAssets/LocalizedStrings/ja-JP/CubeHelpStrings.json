@@ -13,7 +13,7 @@
     "translation" : "まだ問題がある場合は「<b><color=#d3d3d3>次へ</color></b>」をタップします"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "まず、 <b>設定</b> 。"
+    "translation" : "まず<b>設定</b>に移動します。"
   },
   "cubeHelpStrings.Instructions.Slide1" : {
     "translation" : "次にキューブの電池を交換してみましょう。"
@@ -49,6 +49,6 @@
     "translation" : "Cozmoを十分にチャージするために、キューブを認識できるよう手順に従ってください。"
   },
   "cubeHelpStrings.Instructions.SlideA2Copy" : {
-    "translation" : "次に、 <b>リフレッシュキューブ</b> 。"
+    "translation" : "それから<b>キューブの更新</b>をタップします。"
   }
 }

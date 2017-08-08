@@ -7,7 +7,7 @@
  */
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include <sys/stat.h>
 

@@ -11,8 +11,8 @@
 */
 
 #include "physVizController.h"
-#include "anki/cozmo/basestation/namedColors/namedColors.h"
-#include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
+#include "engine/namedColors/namedColors.h"
+#include "engine/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/exceptions.h"
 #include "util/math/math.h"

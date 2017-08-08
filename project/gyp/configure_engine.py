@@ -227,21 +227,18 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'resources'],
+  generator.processFolder(['engine', 'include', 'resources'],
    ['project/gyp/cozmoEngine.lst'])
-  generator.processFolder(['basestation/src/anki/cozmo',
-                           'basestation/include/anki/cozmo',
-                           'include', 'resources'],
+  generator.processFolder(['engine', 'include', 'resources'],
                           ['project/gyp/cozmoEngine2.lst'])
   generator.processFolder(['animProcess/src/cozmoAnim', 
                            'robot/transport',
                            'include', 'resources'],
                           ['project/gyp/cozmoAnim.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c']),
-  generator.processFolder(['androidHAL/include/anki/cozmo',
-                           'androidHAL/src/anki/cozmo'],
+  generator.processFolder(['androidHAL'],
                           ['project/gyp/androidHAL.lst'])
-  generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
+  generator.processFolder(['test/engine', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c'])

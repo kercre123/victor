@@ -14,9 +14,9 @@
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/emotionTypes.h"
-#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "engine/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
-#include "anki/cozmo/basestation/encodedImage.h"
+#include "engine/encodedImage.h"
 #include "util/container/circularBuffer.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>

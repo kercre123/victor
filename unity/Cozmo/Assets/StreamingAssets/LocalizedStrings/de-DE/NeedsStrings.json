@@ -7,22 +7,22 @@
     "source_key_paths" : ["/{*}"]
   },
   "needs.NeedsHubView.Button.Activities" : {
-    "translation" : "Entdecken"
+    "translation" : "ENTDECKEN"
   },
   "needs.NeedsHubView.Button.Feed" : {
-    "translation" : "Füttern"
+    "translation" : "FÜTTERN"
   },
   "needs.NeedsHubView.Button.Repair" : {
-    "translation" : "Tuning"
+    "translation" : "TUNING"
   },
   "needs.NeedsHubView.Button.Play" : {
-    "translation" : "Spielen"
+    "translation" : "SPIELEN"
   },
   "needs.NeedsEnergyModal.Title" : {
     "translation" : "Cozmo füttern"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
-    "translation" : "Cozmo musst gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
+    "translation" : "Cozmo muss gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
   },
   "needs.NeedsEnergyModal.Instruction1" : {
     "translation" : "Nimm einen blau blinkenden Cube."

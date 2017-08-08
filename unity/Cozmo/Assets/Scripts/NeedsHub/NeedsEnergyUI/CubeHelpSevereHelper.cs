@@ -9,6 +9,8 @@ namespace Cozmo.Energy.UI {
     [SerializeField]
     private CozmoButton _FeedButton;
 
+    private bool _QuickSnackAvailable;
+
     protected void Awake() {
       _FeedButton.Initialize(HandleFeedClicked, "quick_snack_button", "cube_help_view");
       // if no cubes are connected we want people to be able to keep playing.
@@ -16,16 +18,30 @@ namespace Cozmo.Energy.UI {
       bool isFeedCritical = NeedsStateManager.Instance.GetCurrentDisplayValue(Anki.Cozmo.NeedId.Energy).Bracket ==
                                                       Anki.Cozmo.NeedBracketId.Critical;
       bool isInFeedOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro);
-      _FeedButton.Interactable = (isFeedCritical || isInFeedOnboarding);
+
+      _QuickSnackAvailable = isFeedCritical || isInFeedOnboarding;
+      _FeedButton.ShowDisabledStateWhenInteractable = !_QuickSnackAvailable;
     }
 
     private void HandleFeedClicked() {
-      NeedsStateManager.Instance.RegisterNeedActionCompleted(Anki.Cozmo.NeedsActionId.Feed);
-      _FeedButton.Interactable = false;
+      string alertTitleKey = "";
+      string alertBodyKey = "";
+
+      if (_QuickSnackAvailable) {
+        NeedsStateManager.Instance.RegisterNeedActionCompleted(Anki.Cozmo.NeedsActionId.Feed);
+        _QuickSnackAvailable = false;
+        _FeedButton.ShowDisabledStateWhenInteractable = !_QuickSnackAvailable;
+        alertTitleKey = LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupTitle;
+        alertBodyKey = LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupBody;
+      }
+      else {
+        alertTitleKey = LocalizationKeys.kCubeHelpStringsInstructionsDontNeedToFeedPopupTitle;
+        alertBodyKey = LocalizationKeys.kCubeHelpStringsInstructionsDontNeedToFeedPopupBody;
+      }
 
       var quickSnackCompleteData = new AlertModalData("quick_snack_alert",
-                                                      LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupTitle,
-                                                    LocalizationKeys.kCubeHelpStringsInstructionsFeedPopupBody,
+                                                      alertTitleKey,
+                                                      alertBodyKey,
                                                       new AlertModalButtonData("okay_button",
                                                                                LocalizationKeys.kButtonOkay));
 

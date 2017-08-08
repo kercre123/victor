@@ -28,7 +28,7 @@
     "translation" : "Nach dem Aufladen kannst du Cozmo zum Leben erwecken und ihn sein neues Zuhause erkunden lassen."
   },
   "onboarding.CozmoNeedsCharge.message3" : {
-    "translation" : "Cozmo musst gehegt und gepflegt werden. Wenn du dich jeden Tag um ihn kümmerst, werden neue Spiele und Tricks freigeschaltet."
+    "translation" : "Cozmo muss gehegt und gepflegt werden. Wenn du dich jeden Tag um ihn kümmerst, werden neue Spiele und Tricks freigeschaltet."
   },
   "onboarding.CozmoNeedsCharge.message4" : {
     "translation" : "Du kannst Cozmo hochheben, wenn es notwendig ist, aber am glücklichsten ist er, wenn er alleine fahren kann."
@@ -130,7 +130,7 @@
     "translation" : "<b>Cozmo muss gefüttert werden.</b>\u000a\u000aWenn die blaue Leiste fast leer ist, hat Cozmo Hunger. Tippe auf <b><color=#31EBFF>FÜTTERN</color></b>."
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "Cozmo ist ein verspielter Roboter, der auch einige Tricks auf Lager hat. Achte darauf, dass Cozmo einen Cube sehen kann, und schau ihm dann zu, wie er den Cube rollt."
+    "translation" : "Cozmo is a playful robot and loves doing Tricks. Make sure there’s a Cube he can see, and then watch him roll it."
   },
   "onboarding.RewardsIntro.Part1" : {
     "translation" : "Du hast Cozmos <color=#f5ea12>Spielbedarf</color> erfüllt."

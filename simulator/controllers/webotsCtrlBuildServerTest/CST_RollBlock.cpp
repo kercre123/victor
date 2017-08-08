@@ -12,8 +12,8 @@
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 
 namespace Anki {

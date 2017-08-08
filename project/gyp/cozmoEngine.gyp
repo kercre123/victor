@@ -1121,8 +1121,8 @@
             'target_name': 'cozmoEngineUnitTest',
             'type': 'executable',
             'include_dirs': [
-              '../../basestation/test',
-              '../../basestation/src',
+              '../../test/engine',
+              '../..',
               '../../robot/include',
               '<@(opencv_includes)',
               '<@(flatbuffers_include)',
@@ -1334,10 +1334,7 @@
         ['exclude', 'bleComms.mm'],
       ],
       'include_dirs': [
-        '../../basestation/src',
-        '../../basestation/include',
-        '../../basestation/include/anki/cozmo/basestation',
-        '../../basestation/include/anki/cozmo/basestation/actions',
+        '../..',
         '../../include',
         '../../robot/include',
         '../../generated/clad/engine',
@@ -1352,11 +1349,10 @@
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          '../../basestation/include',
+          '../..',
           '../../include',
           '../../robot/include',
           '../../generated/clad/engine',
-          '../../basestation/src',
           '../../generated/clad/game',
         ],
         'defines': [
@@ -1533,7 +1529,7 @@
         ['OS=="mac"',{
           'sources/': [
             ['exclude', '(android|linux)'],
-            ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios']
+            ['exclude', '../../engine/cozmoAPI/csharp-binding/ios']
           ]
         }],
         ['OS=="android"',{

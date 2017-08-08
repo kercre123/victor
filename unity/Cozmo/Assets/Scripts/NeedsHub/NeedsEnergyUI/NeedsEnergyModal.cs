@@ -83,6 +83,7 @@ namespace Cozmo.Energy.UI {
 
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.AddCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
+      RobotEngineManager.Instance.AddCallback<BehaviorTransition>(HandleBehaviorTransition);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
@@ -157,6 +158,8 @@ namespace Cozmo.Energy.UI {
       NeedsStateManager.Instance.OnNeedsActionReceived -= HandleLatestNeedsLevelChanged;
       RobotEngineManager.Instance.RemoveCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
+      RobotEngineManager.Instance.RemoveCallback<BehaviorTransition>(HandleBehaviorTransition);
+
 
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -215,10 +218,10 @@ namespace Cozmo.Energy.UI {
           System.Random rand = new System.Random();
           float shouldTriggerFloat = (float)rand.NextDouble();
           if (shouldTriggerFloat < _AlreadyFullTriggerHiccupOdds) {
+            // Set the overfed bool here, but don't do anything until
+            // the next behavior transition so that the current feeding animation
+            // can finish
             _WasCozmoOverfed = true;
-
-            // Exit feeding - can't have hiccups during the activity
-            CloseDialog();
           }
         }
       }
@@ -271,6 +274,14 @@ namespace Cozmo.Energy.UI {
         }
       }
     }
+
+    private void HandleBehaviorTransition(BehaviorTransition message){
+      if(_WasCozmoOverfed){
+        // Exit feeding so that hiccups can take over
+        CloseDialog();
+      }
+    }
+
 
     #endregion
 

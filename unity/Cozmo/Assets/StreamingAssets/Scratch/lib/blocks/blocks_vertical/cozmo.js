@@ -161,6 +161,37 @@ Blockly.Blocks['cozmo_dock_with_cube'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_dock_with_cube_by_id'] = {
+  /**
+   * Block to tell Cozmo to dock with a cube that he can see, if any.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_vert_dock_with_cube_by_id",
+      "message0": "Dock with cube %1",
+      "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_says'] = {
   /**
     * Block to make Cozmo speak text

@@ -415,7 +415,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1408180554951214
 GameObject:
   m_ObjectHideFlags: 1
@@ -673,7 +673,7 @@ MonoBehaviour:
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
     disabledColor: {r: 0.86764705, g: 0.86764705, b: 0.86764705, a: 1}
-  - targetImage: {fileID: 114278896798457910}
+  - targetImage: {fileID: 114565317513721472}
     pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
@@ -742,7 +742,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: CozmoButton_Close_Background
+  _LinkedComponentId: CozmoButton_InvisibleHitZone
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114614433935221538

@@ -902,13 +902,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, this);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
 
       if (scratchRequest.command == "cozVertPathOffset") {
         float offsetX = scratchRequest.argFloat;
         float offsetY = scratchRequest.argFloat2;
         float offsetAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(offsetX.ToString() + " , " + offsetY.ToString() + " , " + offsetAngle.ToString()));
-        var robot = RobotEngineManager.Instance.CurrentRobot;
         // Offset is in current robot space, so rotate        
         float currentAngle = robot.PoseAngle;
         float cosAngle = Mathf.Cos(currentAngle);
@@ -925,7 +925,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float newY = scratchRequest.argFloat2;
         float newAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(newX.ToString() + " , " + newY.ToString() + " , " + newAngle.ToString()));
-        var robot = RobotEngineManager.Instance.CurrentRobot;
         bool level = false;
         bool useManualSpeed = false;
         robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
@@ -935,7 +934,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
-        var robot = RobotEngineManager.Instance.CurrentRobot;
         if (!SetHeadAngleLazy(angle, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
           inProgressScratchBlock.AdvanceToNextBlock(true);
         }
@@ -945,7 +943,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString() + " , " + speed.ToString()));
-        var robot = RobotEngineManager.Instance.CurrentRobot;
 
         if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
           inProgressScratchBlock.AdvanceToNextBlock(true);
@@ -961,31 +958,31 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float dist_mm = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
-        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+        robot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
       }
       else if (scratchRequest.command == "cozmoDriveForward") {
         // argFloat represents the number selected from the dropdown under the "drive forward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kNormalDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        robot.DriveStraightAction(kNormalDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoDriveForwardFast") {
         // argFloat represents the number selected from the dropdown under the "drive forward fast" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kFastDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        robot.DriveStraightAction(kFastDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoDriveBackward") {
         // argFloat represents the number selected from the dropdown under the "drive backward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kNormalDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        robot.DriveStraightAction(kNormalDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoDriveBackwardFast") {
         // argFloat represents the number selected from the dropdown under the "drive backward fast" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kFastDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        robot.DriveStraightAction(kFastDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoPlayAnimation") {
         Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
@@ -999,7 +996,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           shouldIgnoreLift = scratchRequest.argBool3;
         }
         _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
+        robot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
         _RequiresResetToNeutralFace = true;
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
@@ -1027,10 +1024,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(cozmoSaysTextCleaned);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(hasBadWords.ToString()));  // deliberately don't send string as it's PII
         if (hasBadWords) {
-          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock);
+          robot.SendAnimationTrigger(AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock);
         }
         else {
-          RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(cozmoSaysTextCleaned, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock);
+          robot.SayTextWithEvent(cozmoSaysTextCleaned, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock);
         }
       }
       else if (scratchRequest.command == "cozmoHeadAngle") {
@@ -1048,7 +1045,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
         if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.AdvanceToNextBlock)) {
           // Trigger a short wait action to ensure that our promise is met after this method exits
-          RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
+          robot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
         }
       }
       else if (scratchRequest.command == "cozmoDockWithCube") {
@@ -1056,7 +1053,19 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float desiredHeadAngle = CozmoUtil.HeadAngleFactorToRadians(CozmoUtil.kIdealBlockViewHeadValue, false);
         if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.DockWithCube)) {
           // Trigger a very short wait action first instead to ensure callbacks happen after this method exits
-          RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, callback: inProgressScratchBlock.DockWithCube);
+          robot.WaitAction(0.01f, callback: inProgressScratchBlock.DockWithCube);
+        }
+      }
+      else if (scratchRequest.command == "cozVertDockWithCubeById") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
+        uint cubeIndex = scratchRequest.argUInt;
+        LightCube cubeToDockWith = robot.GetLightCubeWithObjectType(GetLightCubeIdFromIndex(cubeIndex));
+        if ((cubeToDockWith != null)) {
+          robot.AlignWithObject(cubeToDockWith, 0.0f, callback: inProgressScratchBlock.AdvanceToNextBlock, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, queueActionPosition: QueueActionPosition.IN_PARALLEL, numRetries: 2);
+        }
+        else {
+          DAS.Warn("DockWithCube.NoCube", "CubeId: " + cubeIndex);
+          inProgressScratchBlock.AdvanceToNextBlock(true);
         }
       }
       else if (scratchRequest.command == "cozmoForklift") {
@@ -1071,12 +1080,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString()));
         if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock)) {
           // Trigger a short wait action to ensure that our promise is met after this method exits
-          RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
+          robot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
         }
       }
       else if (scratchRequest.command == "cozmoSetBackpackColor") {
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
-        RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
+        robot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozmoSetCubeLightCorners") {
@@ -1085,19 +1094,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         uint color3 = scratchRequest.argUInt3;
         uint color4 = scratchRequest.argUInt4;
         uint cubeIndex = scratchRequest.argUInt5;
-        ObjectType lightCubeId = ObjectType.UnknownObject;
-        switch (cubeIndex) {
-        case 1:
-          lightCubeId = ObjectType.Block_LIGHTCUBE1;
-          break;
-        case 2:
-          lightCubeId = ObjectType.Block_LIGHTCUBE2;
-          break;
-        case 3:
-          lightCubeId = ObjectType.Block_LIGHTCUBE3;
-          break;
-        }
-        LightCube cubeToLight = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithObjectType(lightCubeId);
+        LightCube cubeToLight = robot.GetLightCubeWithObjectType(GetLightCubeIdFromIndex(cubeIndex));
         Color[] colorArray = new Color[] { color1.ToColor(), color2.ToColor(), color3.ToColor(), color4.ToColor() };
         cubeToLight.SetLEDs(colorArray);
       }
@@ -1107,12 +1104,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeHappyFace") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
-        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
         RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedHappyFace);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeSadFace") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
-        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
         RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedSadFace);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeCube") {
@@ -1129,6 +1126,20 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
 
       return;
+    }
+
+    private ObjectType GetLightCubeIdFromIndex(uint cubeIndex) {
+      switch (cubeIndex) {
+      case 1:
+        return ObjectType.Block_LIGHTCUBE1;
+      case 2:
+        return ObjectType.Block_LIGHTCUBE2;
+      case 3:
+        return ObjectType.Block_LIGHTCUBE3;
+      default:
+        DAS.Error("CodeLab.BadCubeIndex", "cubeIndex " + cubeIndex.ToString());
+        return ObjectType.UnknownObject;
+      }
     }
 
     // Less forgiving than char.IsPunctuation()
