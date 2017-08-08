@@ -619,7 +619,7 @@ namespace Anki {
       
       virtual ActionResult Verify() override;
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
       // Give the robot a little longer to start ascending/descending before
       // checking if it is done

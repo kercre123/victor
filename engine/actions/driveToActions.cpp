@@ -1604,7 +1604,7 @@ namespace Anki {
                                                                const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
-                                 PreActionPose::ENTRY,
+                                 PreActionPose::DOCKING,
                                  0,
                                  false,
                                  0,

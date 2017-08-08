@@ -26,6 +26,13 @@ namespace Anki {
   
   namespace Cozmo {
     
+    // === Charger predock pose params ===
+    // {angle, x, y}
+    // angle: angle about z-axis (which runs vertically along marker)
+    //     x: distance along marker horizontal
+    //     y: distance along marker normal
+    const Pose2d kChargerPreDockPoseOffset = {0, 0, 200.f};
+    
     const std::vector<Point3f>& Charger::GetCanonicalCorners() const {
     
       static const std::vector<Point3f> CanonicalCorners = {{
@@ -83,14 +90,16 @@ namespace Anki {
       {
         case PreActionPose::ActionType::DOCKING:
         {
-          Pose3d poseWrtMarker(0,
+          const float halfHeight = 0.5f * GetHeight();
+          
+          Pose3d poseWrtMarker(M_PI_2_F + kChargerPreDockPoseOffset.GetAngle().ToFloat(),
                                Z_AXIS_3D(),
-                               {0.f, 0.f, -(PreAscentDistance + SlopeLength + PlatformWidth)},
+                               {kChargerPreDockPoseOffset.GetX() , -kChargerPreDockPoseOffset.GetY(), -halfHeight},
                                &_marker->GetPose());
           
           poseWrtMarker.SetName("Charger" + std::to_string(GetID().GetValue()) + "PreActionPose");
           
-          preActionPoses.emplace_back(PreActionPose::ENTRY, _marker, poseWrtMarker, 0);
+          preActionPoses.emplace_back(PreActionPose::DOCKING, _marker, poseWrtMarker, 0);
           break;
         }
         case PreActionPose::ActionType::ENTRY:
