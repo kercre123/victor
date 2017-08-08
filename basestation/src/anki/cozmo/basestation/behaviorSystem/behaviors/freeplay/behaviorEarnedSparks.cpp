@@ -63,7 +63,10 @@ Result BehaviorEarnedSparks::ResumeInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEarnedSparks::StopInternal(Robot& robot)
 {
-  robot.GetContext()->GetNeedsManager()->SparksRewardCommunicatedToUser();
+  if (robot.GetContext()->GetNeedsManager()->IsPendingSparksRewardMsg())
+  {
+    robot.GetContext()->GetNeedsManager()->SparksRewardCommunicatedToUser();
+  }
 }
 
 
