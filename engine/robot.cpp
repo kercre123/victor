@@ -37,6 +37,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blocks/blockFilter.h"
 #include "engine/charger.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"

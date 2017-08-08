@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_Components_AnimationComponent_H__
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "engine/events/ankiEvent.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"

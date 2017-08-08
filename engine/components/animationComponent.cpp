@@ -11,12 +11,12 @@
  *
  **/
 
-#include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/components/animationComponent.h"
-#include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "engine/ankiEventUtil.h"
+#include "engine/components/animationComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/robot.h"
+#include "engine/robotManager.h"
+#include "engine/robotInterface/messageHandler.h"
 
 
 namespace Anki {
