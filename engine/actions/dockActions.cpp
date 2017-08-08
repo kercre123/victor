@@ -398,6 +398,7 @@ namespace Anki {
           {
             PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.PreActionPoseOriginProblem",
                                 "Could not get pre-action pose w.r.t. world origin.");
+            iter = preActionPoses.erase(iter);
             continue;
           }
           
