@@ -162,6 +162,16 @@ namespace DataPersistence {
       }
     }
 
+    public int DisplayedSparks {
+      get {
+        return Data.DefaultProfile.DisplayedSparks;
+      }
+      set {
+        Data.DefaultProfile.DisplayedSparks = value;
+        Save();
+      }
+    }
+
     public int DisplayedStars {
       get {
         return Data.DefaultProfile.DisplayedStars;

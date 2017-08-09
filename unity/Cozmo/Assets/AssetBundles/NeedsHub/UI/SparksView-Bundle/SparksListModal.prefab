@@ -37,7 +37,7 @@ GameObject:
   - component: {fileID: 224699196781052812}
   - component: {fileID: 225965415729563214}
   - component: {fileID: 114685069775253958}
-  - component: {fileID: 114222757550883576}
+  - component: {fileID: 114064846955624772}
   m_Layer: 5
   m_Name: SparksListModal
   m_TagString: Untagged
@@ -506,6 +506,24 @@ MonoBehaviour:
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
+--- !u!114 &114064846955624772
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1136851350824816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de82e9bc70396489881b13dba93654a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _CountLabel: {fileID: 114550700341961088}
+  _ItemIcon: {fileID: 0}
+  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
+    type: 2}
+  _ItemIconAnimatorContainer: {fileID: 224480608325929506}
+  _ItemIconAnimatorLocalScale: 1.2
+  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114097202499692002
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -726,25 +744,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
---- !u!114 &114222757550883576
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1136851350824816}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1dc55167ef35949318682a0a14e46fdc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ItemId: spark
-  _CountLabel: {fileID: 114550700341961088}
-  _ItemIcon: {fileID: 0}
-  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
-    type: 2}
-  _ItemIconAnimatorContainer: {fileID: 224480608325929506}
-  _ItemIconAnimatorLocalScale: 1.2
-  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114310516785843792
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2175,9 +2174,9 @@ RectTransform:
   m_Father: {fileID: 224125996114480576}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1370, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 1160}
   m_Pivot: {x: 0, y: 1}
 --- !u!225 &225100588600205570

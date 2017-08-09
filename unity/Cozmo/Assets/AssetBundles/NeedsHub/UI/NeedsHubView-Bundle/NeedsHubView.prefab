@@ -778,7 +778,7 @@ GameObject:
   - component: {fileID: 224039583023915882}
   - component: {fileID: 114471098088570178}
   - component: {fileID: 225584830591259054}
-  - component: {fileID: 114741899832926054}
+  - component: {fileID: 114999987838964432}
   m_Layer: 5
   m_Name: NeedsHubView
   m_TagString: Untagged
@@ -3119,25 +3119,6 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &114741899832926054
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1715304759342780}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1dc55167ef35949318682a0a14e46fdc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ItemId: spark
-  _CountLabel: {fileID: 114880814084252638}
-  _ItemIcon: {fileID: 0}
-  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
-    type: 2}
-  _ItemIconAnimatorContainer: {fileID: 224884124942746320}
-  _ItemIconAnimatorLocalScale: 1
-  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114743978935695850
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3820,6 +3801,25 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
+--- !u!114 &114999987838964432
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1715304759342780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de82e9bc70396489881b13dba93654a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _SparkItemId: spark
+  _CountLabel: {fileID: 114880814084252638}
+  _ItemIcon: {fileID: 0}
+  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
+    type: 2}
+  _ItemIconAnimatorContainer: {fileID: 224884124942746320}
+  _ItemIconAnimatorLocalScale: 1
+  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!222 &222002199649513328
 CanvasRenderer:
   m_ObjectHideFlags: 1
