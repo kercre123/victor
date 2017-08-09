@@ -401,8 +401,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -1}
+  m_SizeDelta: {x: -94, y: -91}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22458846
 RectTransform:
@@ -735,7 +735,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_CloseLiteBackground
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1037,8 +1036,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 772, y: -140}
-  m_SizeDelta: {x: 1281, y: 595.9}
+  m_AnchoredPosition: {x: 720, y: -140}
+  m_SizeDelta: {x: 1177, y: 596}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224883755453446774
 RectTransform:
