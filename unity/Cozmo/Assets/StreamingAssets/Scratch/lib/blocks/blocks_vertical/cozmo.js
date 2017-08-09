@@ -74,6 +74,32 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_setbackpackcolor'] = {
+  /**
+   * Block to set color of LED
+   * @this Blockly.Block
+   */
+
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_vert_setbackpackcolor",
+      "message0": "set backpack color to %1",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "COLOR"
+        }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_play_animation_from_dropdown'] = {
   /**
     * Block to make Cozmo play an animation

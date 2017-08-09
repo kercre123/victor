@@ -1088,6 +1088,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
+      else if (scratchRequest.command == "cozmoVerticalSetBackpackColor") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
+        robot.SetAllBackpackBarLED(scratchRequest.argUInt);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
       else if (scratchRequest.command == "cozmoSetCubeLightCorners") {
         uint color1 = scratchRequest.argUInt;
         uint color2 = scratchRequest.argUInt2;

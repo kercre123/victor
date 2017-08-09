@@ -1,4 +1,5 @@
 var Cast = require('../util/cast');
+const Color = require('../util/color');
 var MathUtil = require('../util/math-util');
 var Timer = require('../util/timer');
 
@@ -19,6 +20,7 @@ var Scratch3CozmoBlocks = function (runtime) {
 Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
+        cozmo_vert_setbackpackcolor: this.verticalSetBackpackColor,
         cozmo_drive_forward: this.driveForward,
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
@@ -130,6 +132,30 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
             util.yield();
         }
     }
+};
+
+
+Scratch3CozmoBlocks.prototype.verticalSetBackpackColor = function(args, util) {
+    const rgb = Cast.toRgbColorObject(args.COLOR);
+
+    // Color from rgb to hex value (like 0xffffffff).
+    var colorHexValue = Color.rgbToHex(rgb);
+
+    // Strip leading '#' char
+    colorHexValue = colorHexValue.substring(1, colorHexValue.length);
+
+    // Prepend "0x".
+    colorHexValue = "0x" + colorHexValue;
+
+    if (colorHexValue != "0x000000") {
+        // Append alpha channel to all but black
+        colorHexValue = colorHexValue + "ff";
+    }
+
+    // Convert from string to number
+    colorHexValue = parseInt(colorHexValue);
+
+    window.Unity.call({requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHexValue});
 };
 
 Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {

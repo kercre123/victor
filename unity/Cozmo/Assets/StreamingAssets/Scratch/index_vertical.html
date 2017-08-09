@@ -19,6 +19,7 @@
         <!-- or in app), must also copy tools/scratch/closure-library to Scratch/lib/closure-library -->
         <!--
         <script src="./lib/blocks/blockly_uncompressed_vertical.js"></script>
+        <script src="./lib/blocks/blocks_common/colour.js"></script>
         <script src="./lib/blocks/blocks_common/math.js"></script>
         <script src="./lib/blocks/blocks_common/text.js"></script>
         <script src="./lib/blocks/blocks_vertical/control.js"></script>
@@ -148,11 +149,9 @@
                   </value>
               </block>
 
-              <block type="cozmo_setbackpackcolor">
-                  <value name="CHOICE">
-                      <shadow type="dropdown_cozmo_setcolor">
-                          <field name="CHOICE">coral</field>
-                      </shadow>
+              <block type="cozmo_vert_setbackpackcolor">
+                  <value name="COLOR">
+                      <shadow type="colour_picker"></shadow>
                   </value>
               </block>
               <block type="cozmo_says">
