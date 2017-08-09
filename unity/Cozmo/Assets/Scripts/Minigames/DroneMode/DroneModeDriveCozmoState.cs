@@ -152,8 +152,6 @@ namespace Cozmo {
           // Show how to play when the player plays drone mode for the first time
           if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen) {
             _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
-            DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen = true;
-            DataPersistence.DataPersistenceManager.Instance.Save();
           }
 
           // Send get in animation; do not accept input while animation is playing
