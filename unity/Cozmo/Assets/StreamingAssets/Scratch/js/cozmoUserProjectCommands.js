@@ -112,7 +112,7 @@
         }
 
         if (unityIsWaitingForCallback) {
-            window.Unity.call('{"requestId": "-1", "command": "cozmoSaveOnQuitCompleted"}');
+            window.Unity.call({requestId: -1, command: "cozmoSaveOnQuitCompleted"});
         }
     }
 
