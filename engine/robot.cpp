@@ -1049,7 +1049,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // check for new obstacles from prox sensor
   _blockWorld->UpdateProxObstaclePoses();
   
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wdeprecated-declarations" 
   _gyroDriftDetector->DetectGyroDrift(msg);
+# pragma clang diagnostic pop
   _gyroDriftDetector->DetectBias(msg);
   
   _cliffSensorComponent->UpdateCliffRunningStats(msg);
@@ -1538,9 +1541,11 @@ Result Robot::Update()
     std::vector<ObservableObject*> matchingObjects;
     GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {
-        const ObservableObject* topObj = GetBlockWorld().FindLocatedObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
+        const ObservableObject* topObj __attribute__((unused)) =
+            GetBlockWorld().FindLocatedObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
-        bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
+        bool gotRelPose __attribute__((unused)) =
+            obj->GetPose().GetWithRespectTo(GetPose(), relPose);
 
         const char* axisStr = "";
         switch( obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() ) {

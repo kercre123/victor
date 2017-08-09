@@ -1124,7 +1124,7 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   ANKI_CPU_PROFILE("Robot::HandleObjectPowerLevel");
   
   const auto & payload = message.GetData().Get_objectPowerLevel();
-  const auto robotID = robot->GetID();
+  const auto robotID __attribute__((unused)) = robot->GetID();
   const auto activeID = payload.objectID;
   const auto missedPackets = payload.missedPackets;
   const auto batteryLevel = payload.batteryLevel;

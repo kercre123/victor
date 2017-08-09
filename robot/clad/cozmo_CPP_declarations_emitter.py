@@ -14,6 +14,9 @@ def _modify_path():
     searchpath = os.path.normpath(os.path.abspath(os.path.realpath(searchpath)))
     if searchpath not in sys.path:
         sys.path.insert(0, searchpath)
+    message_buffers_path = os.path.join(os.path.dirname(__file__), '..', '..', 'tools', 'message-buffers')
+    if message_buffers_path not in sys.path:
+        sys.path.insert(0, message_buffers_path)
     sys.path.insert(0, os.path.join('..', 'tools', 'message-buffers'))
     sys.path.insert(0, os.path.join('..', '..', 'tools', 'message-buffers'))
 _modify_path()

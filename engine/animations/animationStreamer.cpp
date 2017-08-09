@@ -637,8 +637,7 @@ namespace Cozmo {
     // Call base class SetParam()
     HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>::SetParam(whichParam, newValue);
   }
-  
-  
+
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
     AnimKeyFrame::FaceImage faceImageMsg;

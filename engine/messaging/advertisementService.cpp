@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "anki/messaging/basestation/advertisementService.h"
+#include "engine/messaging/advertisementService.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "util/debug/messageDebugging.h"
