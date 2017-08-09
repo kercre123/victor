@@ -14037,7 +14037,7 @@
                             "FontResourceKey": "",
                             "SkinFontSize": false,
                             "FontSizeOffset": 0,
-                            "SkinButtonTransition": true,
+                            "SkinButtonTransition": false,
                             "SkinRectTF": false,
                             "SkinShrinkOnClick": false,
                             "ShrinkOnClick": false,
@@ -14069,7 +14069,40 @@
                             "SkinTMPOutlineThickness": false,
                             "TMPOutlineThickness": 0.0,
                             "SkinButtonImageArray": false,
-                            "ButtonImageArray": [],
+                            "ButtonImageArray": [
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
+                                    "PressedSpriteColor": {
+                                        "r": 0.6323529481887817,
+                                        "g": 0.6323529481887817,
+                                        "b": 0.6323529481887817,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.44117647409439089,
+                                        "g": 0.44117647409439089,
+                                        "b": 0.44117647409439089,
+                                        "a": 0.0784313753247261
+                                    }
+                                },
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
+                                    "PressedSpriteColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    }
+                                }
+                            ],
                             "SkinAutoSizing": false,
                             "EnableAutoSizing": false,
                             "AutoSizingMin": 0.0,
