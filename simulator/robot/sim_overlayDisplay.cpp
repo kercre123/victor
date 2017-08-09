@@ -1,4 +1,4 @@
-#include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
+#include "simulator/robot/sim_overlayDisplay.h"
 
 // Webots Includes
 #include <webots/Display.hpp>

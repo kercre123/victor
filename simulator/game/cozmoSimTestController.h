@@ -10,7 +10,7 @@
 #define __COZMO_SIM_TEST_CONTROLLER__H__
 
 
-#include "anki/cozmo/simulator/game/uiGameController.h"
+#include "simulator/game/uiGameController.h"
 
 namespace Anki {
 namespace Cozmo {

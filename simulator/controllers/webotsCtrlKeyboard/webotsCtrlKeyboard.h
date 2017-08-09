@@ -9,7 +9,7 @@
 #ifndef __webotsCtrlKeyboard_H_
 #define __webotsCtrlKeyboard_H_
 
-#include "anki/cozmo/simulator/game/uiGameController.h"
+#include "simulator/game/uiGameController.h"
 
 namespace Anki {
 namespace Cozmo {

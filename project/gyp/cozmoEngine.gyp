@@ -564,7 +564,7 @@
             'include_dirs': [
               '../../robot/include',
               '../../include',
-              '../../simulator/include',
+              '../..',
               '<@(webots_includes)',
             ],
             'dependencies': [
@@ -658,7 +658,7 @@
               '../../robot/include',
               '../../robot/generated',
               '../../include',
-              '../../simulator/include',
+              '../..',
             ],
             'dependencies': [
               '<(ce-cti_gyp_path):ctiCommon',

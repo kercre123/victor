@@ -23,7 +23,7 @@
 
 #if(USE_OVERLAY_DISPLAY)
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
+#include "simulator/robot/sim_overlayDisplay.h"
 #endif
 
 // Slip modelling

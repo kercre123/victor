@@ -6,7 +6,7 @@
  * Modifications: 
  */
 
-#include "anki/cozmo/simulator/game/uiGameController.h"
+#include "simulator/game/uiGameController.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
