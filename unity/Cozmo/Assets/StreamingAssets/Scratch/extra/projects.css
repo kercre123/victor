@@ -91,13 +91,15 @@ button:focus {
 .project .project-title {
   position: absolute;
   bottom: 0;
-  display: flex;
-  align-items: flex-end;
   width: 100%;
   padding: 0 7% 4% 7%;
   color: #fff;
   line-height: 1.2em;
 }
+.project .project-title.long-title {
+  font-size: .8em;
+}
+
 .project .project-type {
   position: absolute;
   top: 0;
