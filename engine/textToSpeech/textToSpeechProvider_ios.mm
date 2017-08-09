@@ -46,6 +46,8 @@
 #import "acattsioslicense.h"
 #import "acattsioslicense.m"
 
+#if REMOTE_CONSOLE_ENABLED
+
 // Debug sliders
 #define CONSOLE_GROUP "TextToSpeech.VoiceParameters"
 
@@ -54,6 +56,8 @@ namespace {
   CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, 100, 70, 140);
   CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, 100, 70, 160);
 }
+
+#endif
 
 // Max samples per read
 #define TTS_BLOCKSIZE (16*1024)

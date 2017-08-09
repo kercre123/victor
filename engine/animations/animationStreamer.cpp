@@ -45,7 +45,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  namespace{
+  namespace {
   const char* kDefaultIdleAnimLock = "default_anim_lock";
   const char* kSDKIdleAnimLock = "sdk";
   const int kBoundedWhileRemoveIdleMax = 1000;
@@ -53,9 +53,7 @@ namespace Cozmo {
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
   // idle animation
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
-  
-  CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
-  CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
+
   } // namespace
   
   const AnimationTrigger AnimationStreamer::NeutralFaceTrigger = AnimationTrigger::NeutralFace;
