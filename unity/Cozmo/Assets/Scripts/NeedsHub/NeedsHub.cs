@@ -140,7 +140,11 @@ namespace Cozmo.Hub {
       while (_ChallengeManager.IsChallengePlaying || !UnlockablesManager.Instance.UnlocksLoaded) {
         yield return 0;
       }
-
+      if (_ShouldShowActivitiesView) {
+        _ShouldShowActivitiesView = false;
+        HandleActivitiesButtonClicked();
+        yield break;
+      }
       UIManager.OpenView(needsHubViewPrefab.GetComponent<NeedsHubView>(), (newNeedsHubView) => {
         _NeedsViewHubInstance = (NeedsHubView)newNeedsHubView;
         _NeedsViewHubInstance.OnActivitiesButtonClicked += HandleActivitiesButtonClicked;
@@ -175,7 +179,6 @@ namespace Cozmo.Hub {
             });
           }
         }
-
       });
     }
 
@@ -341,6 +344,13 @@ namespace Cozmo.Hub {
     #endregion
 
     #region OpenActivitiesView
+
+    private bool _ShouldShowActivitiesView = false;
+
+    //Silently redirects the user to the activities view next time they go to the needs hub.
+    public void ShowActivitiesView() {
+      _ShouldShowActivitiesView = true;
+    }
 
     private void HandleActivitiesButtonClicked() {
       DeregisterNeedsViewEvents();

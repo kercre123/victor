@@ -925,6 +925,9 @@ public abstract class GameBase : MonoBehaviour {
 
     if (_ChallengeData.IsActivity) {
       Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
+      if (!OnboardingManager.Instance.IsAnyOnboardingActive()) {
+        ((Cozmo.Hub.NeedsHub)Cozmo.Hub.NeedsHub.Instance).ShowActivitiesView();
+      }
     }
   }
 
