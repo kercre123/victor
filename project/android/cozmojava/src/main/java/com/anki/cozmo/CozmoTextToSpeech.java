@@ -58,6 +58,10 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
     + "RG5dt6vLuFzK5a$fKbcaxcbUrc7!zUIiHPdrVm3nu!dJvyyb\n"
     + "WWGfgh4ZR9pnqgv9mrlCAS##\n";
 
+  // Fixed parameters
+  private static final int TTS_LEADINGSILENCE_MS = 50;  // Minimum allowed by Acapela TTS SDK
+  private static final int TTS_TRAILINGSILENCE_MS = 50; // Minimum allowed by Acapela TTS SDK
+  
   //
   // JNI declaration of C++ function to be invoked as callback.
   // Note that method name and signature must match definition in TextToSpeechProvider_android.cpp
@@ -169,12 +173,12 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
       return RESULT_FAIL_INVALID_PARAMETER;
     }
 
-    err = _tts.setTTSSettings("LEADINGSILENCE", 0);
+    err = _tts.setTTSSettings("LEADINGSILENCE", TTS_LEADINGSILENCE_MS);
     if (0 != err) {
       error(EVT, "Unable to set leading silence, err="+err);
     }
 
-    err = _tts.setTTSSettings("TRAILINGSILENCE", 0);
+    err = _tts.setTTSSettings("TRAILINGSILENCE", TTS_TRAILINGSILENCE_MS);
     if (0 != err) {
       error(EVT, "Unable to set trailing silence, err="+err);
     }

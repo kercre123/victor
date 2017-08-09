@@ -62,6 +62,10 @@ namespace {
 // Max samples per read
 #define TTS_BLOCKSIZE (16*1024)
 
+// Fixed parameters
+#define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
+#define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
+
 //
 // This interface is used to provide a pure-C interface on top of Acapela's Objective-C SDK.
 //
@@ -141,8 +145,8 @@ namespace {
       return Anki::RESULT_FAIL;
     }
   
-    [_acaTTS setTTSSetting:@"LEADINGSILENCE" settingvalue:0];
-    [_acaTTS setTTSSetting:@"TRAILINGSILENCE" settingvalue:0];
+    [_acaTTS setTTSSetting:@"LEADINGSILENCE" settingvalue:TTS_LEADINGSILENCE_MS];
+    [_acaTTS setTTSSetting:@"TRAILINGSILENCE" settingvalue:TTS_TRAILINGSILENCE_MS];
     
     //
     // Set SDK delegate for diagnostics.  At present, delegate methods don't do anything else,
