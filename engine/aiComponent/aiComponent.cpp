@@ -13,11 +13,12 @@
 #include "engine/aiComponent/aiComponent.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/doATrickSelector.h"
+#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
@@ -25,7 +26,6 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotStateHistory.h"
-#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace {
 static const int kObsSampleWindow_ms          = 300;   // sample all measurements over this period
@@ -50,6 +50,7 @@ AIComponent::AIComponent(Robot& robot)
 , _workoutComponent( new WorkoutComponent(robot) )
 , _requestGameComponent(new RequestGameComponent(robot))
 , _doATrickSelector(new DoATrickSelector(robot))
+, _freeplayDataTracker( new FreeplayDataTracker() )
 {
 }
 
@@ -96,6 +97,8 @@ Result AIComponent::Update()
   _whiteboard->Update();
   
   _behaviorHelperComponent->Update(_robot);
+
+  _freeplayDataTracker->Update();
   
   CheckForSuddenObstacle();
    

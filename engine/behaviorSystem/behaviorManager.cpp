@@ -21,6 +21,7 @@
 #include "engine/behaviorSystem/activities/activities/activityFactory.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "engine/behaviorSystem/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
@@ -311,6 +312,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
     
     // start with selection that defaults to Wait
     SetCurrentActivity(HighLevelActivity::Selection, true);
+  }
+  else {
+    // no activities config (e.g. unit test), so we aren't in freeplay
+    _robot.GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(true, FreeplayPauseFlag::GameControl);
   }
   
   if (_robot.HasExternalInterface())
@@ -1016,6 +1021,12 @@ void BehaviorManager::SetCurrentActivity(HighLevelActivity newActivity, const bo
   
   // mark the time at which the change happened (this is checked by behaviors)
   _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // tell data tracker what happened
+  {
+    const bool isPaused = (newActivity != HighLevelActivity::Freeplay);
+    _robot.GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::GameControl);
+  }
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   if(!currentIsReactionary){

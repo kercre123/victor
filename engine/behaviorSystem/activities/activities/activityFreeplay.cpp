@@ -16,9 +16,10 @@
 #include "engine/behaviorSystem/activities/activities/activityFactory.h"
 #include "engine/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
 
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
@@ -638,6 +639,13 @@ IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IB
             "The selected activity's required spark '%s' does not match the desired '%s'",
             EnumToString(_currentActivityPtr->GetRequiredSpark()),
             EnumToString(desiredSpark));
+        }
+
+        {
+          // if this is a spark, then we are paused
+          // NOTE: this may be invalid for voice commands, but not sure how we want to count those yet anyway
+          const bool isPaused = (desiredSpark != UnlockId::Count);
+          robot.GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::Spark);
         }
       }
     
