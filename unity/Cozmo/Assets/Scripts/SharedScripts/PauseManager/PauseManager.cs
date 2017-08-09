@@ -212,6 +212,13 @@ namespace Cozmo {
               shouldPlayWakeup = true;
             }
           }
+          else {
+            // Normally StopIdleTimeout() is responsible for removing the reaction lock, however, if idle timeout is not enabled
+            // we still need to make sure to remove the lock
+            if (robot != null) {
+              robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
+            }
+          }
 
           if (shouldPlayWakeup) {
             if (null != robot) {
