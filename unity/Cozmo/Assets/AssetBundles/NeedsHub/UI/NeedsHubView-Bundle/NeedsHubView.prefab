@@ -525,7 +525,6 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224561424295851892}
-  - component: {fileID: 225928643906352730}
   m_Layer: 5
   m_Name: RewardsEffectAnchor
   m_TagString: Untagged
@@ -2799,6 +2798,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f97d99ab930064122a762c9b39a93466, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _DelayEffectStart_sec: 1.75
   _BlingAnchor: {fileID: 224561424295851892}
   _BlingPrefab: {fileID: 1404152446195122, guid: f7169fbed09d348a48b7f89e056977bb,
     type: 2}
@@ -4144,8 +4144,8 @@ RectTransform:
   - {fileID: 224761106986502990}
   - {fileID: 224660601535063088}
   - {fileID: 224282468266441368}
-  - {fileID: 224561424295851892}
   - {fileID: 224806678506971396}
+  - {fileID: 224561424295851892}
   - {fileID: 224017556785568954}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -4670,7 +4670,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 224039583023915882}
-  m_RootOrder: 8
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -4959,7 +4959,7 @@ RectTransform:
   - {fileID: 224952305956987926}
   - {fileID: 224685039714158826}
   m_Father: {fileID: 224039583023915882}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
@@ -5310,17 +5310,6 @@ CanvasGroup:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1715304759342780}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
---- !u!225 &225928643906352730
-CanvasGroup:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1480335096909748}
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
