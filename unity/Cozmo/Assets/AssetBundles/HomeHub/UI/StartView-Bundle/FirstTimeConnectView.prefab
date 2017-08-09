@@ -44,6 +44,7 @@ GameObject:
   m_Component:
   - component: {fileID: 22463296}
   - component: {fileID: 11438782}
+  - component: {fileID: 114622326426340064}
   m_Layer: 5
   m_Name: FirstTimeConnectView
   m_TagString: Untagged
@@ -199,9 +200,6 @@ MonoBehaviour:
   _TermsOfUseButton: {fileID: 114071333822048906}
   _TermsOfUseFileName: TermsOfUse.txt
   _BuyCozmoButton: {fileID: 114471259559339450}
-  _DataCollectionPanel: {fileID: 1930688035273358}
-  _DataCollectionToggleButton: {fileID: 114851533026231080}
-  _DataCollectionIndicator: {fileID: 1830461520149094}
 --- !u!114 &11464046
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2844,6 +2842,21 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
+--- !u!114 &114622326426340064
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 154098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a40b78e5924d4439aaa9b71ada7631dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _DataCollectionPanel: {fileID: 1930688035273358}
+  _DataCollectionToggleButton: {fileID: 114851533026231080}
+  _DataCollectionIndicator: {fileID: 1830461520149094}
+  _DASEventViewName: first_time_connect_dialog
 --- !u!114 &114679728053652640
 MonoBehaviour:
   m_ObjectHideFlags: 1

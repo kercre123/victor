@@ -41,15 +41,6 @@ public class FirstTimeConnectView : BaseView {
   [SerializeField]
   private CozmoButton _BuyCozmoButton;
 
-  [SerializeField]
-  private GameObject _DataCollectionPanel;
-
-  [SerializeField]
-  private CozmoButton _DataCollectionToggleButton;
-
-  [SerializeField]
-  private GameObject _DataCollectionIndicator;
-
   private void Awake() {
 
     DasTracker.Instance.TrackFirstTimeConnectStarted();
@@ -65,31 +56,6 @@ public class FirstTimeConnectView : BaseView {
     InitializeTermsOfUseButton();
 
     _BuyCozmoButton.Initialize(HandleBuyCozmoButton, "buy_cozmo_button", "first_time_connect_dialog");
-
-    // hide data collection panel, unhide it later if locale wants it
-    _DataCollectionPanel.gameObject.SetActive(false);
-
-    // Request Locale gives us ability to get real platform dependent locale
-    // whereas unity just gives us the language
-    bool dataCollectionEnabled = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled;
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled = true;
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ResponseLocale>(HandleLocaleResponse);
-      RobotEngineManager.Instance.Message.RequestLocale = Singleton<Anki.Cozmo.ExternalInterface.RequestLocale>.Instance;
-      RobotEngineManager.Instance.SendMessage();
-    }
-    if (!dataCollectionEnabled) {
-      // by default on so only needs to get set if false.
-      SetDataCollection(dataCollectionEnabled);
-    }
-    // test code for fake german locale
-#if UNITY_EDITOR
-    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.FakeGermanLocale) {
-        Invoke("ShowDataCollectionPanel", 0.3f);
-      }
-    }
-#endif
   }
 
   private void InitializePrivacyPolicyButton() {
@@ -129,7 +95,6 @@ public class FirstTimeConnectView : BaseView {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleRobotDisconnect);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ResponseLocale>(HandleLocaleResponse);
     DasTracker.Instance.TrackFirstTimeConnectEnded();
   }
 
@@ -239,33 +204,6 @@ public class FirstTimeConnectView : BaseView {
     if (ConnectionFlowQuit != null) {
       ConnectionFlowQuit();
     }
-  }
-
-  public void HandleLocaleResponse(Anki.Cozmo.ExternalInterface.ResponseLocale message) {
-    string[] splitString = message.locale.Split(new char[] { '-', '_' });
-    // Only german displays the option to opt out.
-    if (splitString.Length >= 2) {
-      if (splitString[1].ToLower().Equals("de")) {
-        ShowDataCollectionPanel();
-      }
-    }
-  }
-
-  private void ShowDataCollectionPanel() {
-    _DataCollectionPanel.gameObject.SetActive(true);
-    _DataCollectionToggleButton.Initialize(HandleDataCollectionToggle, "data_collection_toggle", "first_time_connect_dialog");
-  }
-
-  private void HandleDataCollectionToggle() {
-    SetDataCollection(!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled);
-  }
-
-  private void SetDataCollection(bool val) {
-    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled = val;
-    RobotEngineManager.Instance.Message.RequestDataCollectionOption =
-                      Singleton<Anki.Cozmo.ExternalInterface.RequestDataCollectionOption>.Instance.Initialize(val);
-    RobotEngineManager.Instance.SendMessage();
-    _DataCollectionIndicator.gameObject.SetActive(val);
   }
 
   private void HandleBuyCozmoButton() {
