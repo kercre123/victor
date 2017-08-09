@@ -659,14 +659,14 @@ namespace Cozmo.Repair.UI {
           }
           return ChangeTuneUpState(TuneUpState.TUNE_UP_COMPLETE);
         }
-        if(_RobotOffTreadsState != OffTreadsState.OnTreads) {
+        if (_RobotOffTreadsState != OffTreadsState.OnTreads) {
           RobotEngineManager.Instance.CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.UNKNOWN);
           return ChangeTuneUpState(TuneUpState.ROBOT_RESPONSE_INTERRUPTED);
         }
         break;
 
       case TuneUpState.ROBOT_RESPONSE_INTERRUPTED:
-        if(_RobotOffTreadsState == OffTreadsState.OnTreads) {
+        if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
           return ChangeTuneUpState(TuneUpState.ROBOT_RESPONSE);
         }
         break;
@@ -776,7 +776,7 @@ namespace Cozmo.Repair.UI {
         break;
       case TuneUpState.ROBOT_RESPONSE:
         // Proxy for "first time responding"
-        if(_CalibrateButton.Interactable) {
+        if (_CalibrateButton.Interactable) {
           GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Calibrate);
         }
         _CalibrateButton.gameObject.SetActive(true);
@@ -941,7 +941,7 @@ namespace Cozmo.Repair.UI {
     private void HandleCalibrateAnimMiddle(bool success) {
       if (success) {
         if (_RobotResponseIndex < _UpDownArrows.Count) {
-          _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch [_RobotResponseIndex]);
+          _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch[_RobotResponseIndex]);
         }
 
         if (_RobotResponseIndex >= _UpDownArrows.Count && _RoundIndex >= _RoundData.Length - 1) {
@@ -953,14 +953,15 @@ namespace Cozmo.Repair.UI {
         }
 
         _RobotResponseIndex++;
-      }else if(!_WaitingForAnimationsToBeRunnable) {
+      }
+      else if (!_WaitingForAnimationsToBeRunnable) {
         var robot = RobotEngineManager.Instance.CurrentRobot;
         robot.CancelAction(RobotActionType.UNKNOWN);
         robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
         _WaitingForAnimationsToBeRunnable = true;
       }
     }
-      
+
     private void HandleRobotResponseDone(bool success) {
       if (!_WaitingForAnimationsToBeRunnable) {
         _RobotResponseDone = true;
@@ -969,16 +970,17 @@ namespace Cozmo.Repair.UI {
 
     private void HandleRobotOffTreadsStateChanged(object messageObject) {
       RobotOffTreadsStateChanged offTreadsState = messageObject as RobotOffTreadsStateChanged;
-      _RobotOffTreadsState = offTreadsState.treadsState;              
+      _RobotOffTreadsState = offTreadsState.treadsState;
       if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
         var robot = RobotEngineManager.Instance.CurrentRobot;
         if (robot != null) {
           robot.TryResetHeadAndLift(null);
         }
-        if(_InterruptedAlert != null) {
+        if (_InterruptedAlert != null) {
           CloseInterruptionAlert();
         }
-      }else{
+      }
+      else {
         ShowReactionAlert(_RobotOffTreadsState);
       }
     }
@@ -1155,7 +1157,7 @@ namespace Cozmo.Repair.UI {
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-
+        robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
         robot.CancelAction(RobotActionType.PLAY_ANIMATION);
 
         //start with intro anims
