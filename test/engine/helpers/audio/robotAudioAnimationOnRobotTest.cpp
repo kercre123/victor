@@ -7,6 +7,7 @@
 //
 
 #include "engine/audio/robotAudioFrameStream.h"
+#include "engine/audio/robotAudioBuffer.h"
 #include "helpers/audio/robotAudioAnimationOnRobotTest.h"
 
 
@@ -23,8 +24,8 @@ RobotAudioAnimationOnRobotTest::RobotAudioAnimationOnRobotTest( Animation* anAni
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 size_t RobotAudioAnimationOnRobotTest::GetCurrentStreamFrameCount()
 {
-  if ( nullptr != _currentBufferStream ) {
-    return _currentBufferStream->AudioFrameCount();
+  if ( _audioBuffer->HasAudioBufferStream() && _audioBuffer->AudioStreamHasData() ) {
+    return _audioBuffer->GetAudioStreamFrameCount();
   }
   return 0;
 }

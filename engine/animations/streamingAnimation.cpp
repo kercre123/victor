@@ -593,8 +593,11 @@ void StreamingAnimation::AddAudioSilenceFrames()
     uint32_t frameEndTime_ms = frameStartTime_ms + IKeyFrame::SAMPLE_LENGTH_MS - 1;
     
     const AnimationEvent* nextEvent = GetNextAudioEvent();
-    Audio::RobotAudioFrameStream* nextStream = _audioBuffer->HasAudioBufferStream() ?
-    _audioBuffer->GetFrontAudioBufferStream() : nullptr;
+    Audio::RobotAudioFrameStream* nextStream = nullptr;
+    
+    // TODO Needs fixing to switch over to new system look for BUILD_NEW_ANIMATION_CODE in robot.h
+//    Audio::RobotAudioFrameStream* nextStream = _audioBuffer->HasAudioBufferStream() ?
+//    _audioBuffer->GetFrontAudioBufferStream() : nullptr;
     
     
     // Check Initial case
@@ -712,7 +715,10 @@ bool StreamingAnimation::IsAnimationDone() const
   // Compare completed event count with number of events && there are no more audio streams
   const bool isDone = ((GetCompletedEventCount() >= _animationAudioEvents.size())
                        && !_audioBuffer->HasAudioBufferStream()
-                       && !_audioBuffer->IsActive()
+                       // Commenting this out for now since we don't use this alternate audio system and it will be
+                       // deleted. I'm making IsActive private. Look for BUILD_NEW_ANIMATION_CODE in robot.h for the new
+                       // system.
+//                       && !_audioBuffer->IsActive()
                        && ((_audioBufferedFrameCount * IKeyFrame::SAMPLE_LENGTH_MS) > _lastKeyframeTime_ms));
   
   if (DEBUG_ROBOT_ANIMATION_AUDIO) {

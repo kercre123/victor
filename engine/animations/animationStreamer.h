@@ -242,9 +242,6 @@ namespace Cozmo {
     // clock)
     TimeStamp_t _streamingTime_ms;
     
-    // When animation is waiting for audio, track how much time has passed so we can abort in needed
-    TimeStamp_t _audioBufferingTime_ms = 0;
-    
     // Last time we streamed anything
     f32 _lastStreamTime = std::numeric_limits<f32>::lowest();
 

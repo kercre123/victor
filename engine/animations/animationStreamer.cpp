@@ -456,7 +456,6 @@ namespace Cozmo {
       
       // Prep sound
       _audioClient.CreateAudioAnimation( anim );
-      _audioBufferingTime_ms = 0;
       
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
@@ -987,45 +986,6 @@ namespace Cozmo {
           if ( state == Audio::RobotAudioAnimation::AnimationState::Preparing ) {
             // Don't start timer until the Audio Animation has started posting audio events
             return false;
-          }
-          
-          if ( _audioBufferingTime_ms == 0 ) {
-            _audioBufferingTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-          }
-          else {
-            if ( (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms) > kAnimationAudioAllowedBufferTime_ms ) {
-              PRINT_NAMED_WARNING("AnimationStreamer.ShouldProcessAnimationFrame",
-                                  "Abort animation '%s' timed out after %d ms, audio event @ %d, buffer State %s",
-                                  anim->GetName().c_str(),
-                                  (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms),
-                                  (streamingTime_ms - startTime_ms),
-                                  Audio::RobotAudioAnimation::GetStringForAnimationState( _audioClient.GetCurrentAnimation()->GetAnimationState() ).c_str() );
-              
-              if (kFullAnimationAbortOnAudioTimeout) {
-                // Abort the entire animation
-                Abort();
-              }
-              else {
-                // Abort only the animation audio
-                _audioClient.GetCurrentAnimation()->AbortAnimation();
-                _audioClient.ClearCurrentAnimation();
-              }
-            }
-          }
-          
-          if (DEBUG_ANIMATION_STREAMING_AUDIO) {
-            PRINT_NAMED_INFO("AnimationStreamer.ShouldProcessAnimationFrame",
-                             "Audio Animation Is NOT Ready | buffering time: %d ms",
-                             (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms));
-          }
-        }
-        else {
-          // Audio is streaming
-          _audioBufferingTime_ms = 0;
-
-          if (DEBUG_ANIMATION_STREAMING_AUDIO) {
-            PRINT_NAMED_INFO("AnimationStreamer.ShouldProcessAnimationFrame",
-                             "Audio Animation IS Ready");
           }
         }
       }

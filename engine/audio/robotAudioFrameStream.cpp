@@ -30,6 +30,7 @@ RobotAudioFrameStream::RobotAudioFrameStream( double createdTime_ms )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioFrameStream::~RobotAudioFrameStream()
 {
+  std::lock_guard<std::mutex> lock( _lock );
   // Delete all key frames
   while ( !_audioFrameQueue.empty() ) {
     Util::SafeDelete( _audioFrameQueue.front() );
