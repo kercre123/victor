@@ -204,6 +204,14 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
+  public void RestartPhaseAtStage(int stage = 0) {
+    if (_CurrStageInst != null) {
+      OnboardingBaseStage onboardingInfo = _CurrStageInst.GetComponent<OnboardingBaseStage>();
+      onboardingInfo.StageForceClosed = true;
+    }
+    SetSpecificStage(stage);
+  }
+
   public void StartPhase(OnboardingPhases phase) {
 #if SDK_ONLY
     return;

@@ -176,6 +176,10 @@ namespace Cozmo.Energy.UI {
     }
 
     private void OnApplicationPause(bool pauseStatus) {
+      // Since the window closes back they need instructions from start again
+      if (pauseStatus && OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
+        OnboardingManager.Instance.RestartPhaseAtStage(0);
+      }
       DAS.Debug("NeedsEnergyModal.OnApplicationPause", "Application pause: " + pauseStatus);
       HandleUserClose();
     }
