@@ -16,6 +16,8 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -804,7 +806,7 @@ namespace Anki {
         // know the robot got the DockWithObject command sent in Init().
         _wasPickingOrPlacing = _dockingComponentRef.IsPickingOrPlacing();
         
-        if(_wasPickingOrPlacing) {
+        if(_wasPickingOrPlacing && ShouldApplyDockingSquint()) {
           // Apply continuous eye squint if we have just now started picking and placing
           const f32 DockSquintScaleX = 1.05f;
           const f32 DockSquintScaleY = 0.35f;
@@ -892,6 +894,12 @@ namespace Anki {
         _faceAndVerifyAction->AddAction(turnTowardsDockObjectAction);
       }
     }
+    
+    bool IDockAction::ShouldApplyDockingSquint()
+    {
+      return !(NeedId::Energy == _robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression());
+    }
+
     
     template<>
     void IDockAction::HandleMessage(const ExternalInterface::RobotDeletedLocatedObject& msg)

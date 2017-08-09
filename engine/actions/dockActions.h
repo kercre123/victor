@@ -262,6 +262,9 @@ namespace Anki {
       // block we are docking with" action
       void SetupTurnAndVerifyAction(const ObservableObject* dockObject);
       
+      // Identify cases where cozmo should squint while docking
+      bool ShouldApplyDockingSquint();
+      
       // Handler for when lift begins to move so that we can play an accompanying sound
       Signal::SmartHandle        _liftMovingSignalHandle;
       
