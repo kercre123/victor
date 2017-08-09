@@ -22,7 +22,7 @@
         this.x = x;
         this.y = y;
     }
- 
+
     // Starting point for one script to appear on phones and tablets.
     window.getScriptStartingPoint = function() {
         var point = null;
@@ -144,7 +144,7 @@
         if (window.cozmoProjectUUID == null) {
             window.cozmoProjectUUID = '';
         }
-        
+
         if (window.cozmoProjectUUID != '' && window.previouslySavedProjectXML == xmlText) {
             // No changes to save
             window.saveProjectCompleted(unityIsWaitingForCallback);
@@ -198,6 +198,12 @@
 
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
         setText('#app-title', $t(projectName));
+
+        // if the title overflows the container, reduce the font size to make it fit
+        var title = document.querySelector('#app-title');
+        if (title.scrollWidth > title.clientWidth) {
+          title.classList.add('long-title');
+        }
 
         var autosavedText = window.$t('codeLab.SaveProject.Autosaved');
         if (isSampleProject) {
