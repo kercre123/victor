@@ -180,7 +180,7 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   //  const f32 kTangentialDistCoeff1 = 0.005f;
   //  const f32 kTangentialDistCoeff2 = 0.0025f;
   
-  Anki::Vision::CameraCalibration calib(240,320,290,290,160,120,0.f);
+  Anki::Vision::CameraCalibration calib(360,640,290,290,320,180,0.f);
 //    Anki::Vision::CameraCalibration calib(720,1280,507.8f,507.8f,639.5f,359.5f,0.f);
   result = visionSystem->UpdateCameraCalibration(calib);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
@@ -200,7 +200,8 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
   Anki::Vision::ImageRGB img;
   
-  result = img.Load("/Users/alchaussee/Desktop/images_26435_2.jpg");
+  result = img.Load("/Users/alchaussee/Desktop/robot-1-calibrate/alcal3.png");
+//  result = img.Load("/Users/alchaussee/Desktop/images_26435_2.jpg");
   
   
 //    result = img.Load("/Users/alchaussee/Desktop/Camera Calibration/images_14900_0.jpg");
@@ -274,8 +275,8 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
   //  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
   cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
-                         290, 0, 160,
-                         0, 290, 120,
+                         362, 0, 296,
+                         0, 364, 189,
                          0, 0, 1);
   
 //    cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
@@ -302,11 +303,11 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   PRINT_NAMED_WARNING("", "%f", rms);
   
   Anki::Vision::ImageRGB i;
-  i.Load("/Users/alchaussee/Desktop/images_44060_2.jpg");
+  i.Load("/Users/alchaussee/Desktop/robot-1-calibrate/calibresult.png");
   Anki::Vision::ImageRGB imgUndistorted(240,320);
   cv::undistort(i.get_CvMat_(), imgUndistorted.get_CvMat_(), K2, D);
 //  imgUndistorted.Display("");
-  imgUndistorted.Save("/Users/alchaussee/Desktop/undistort2.jpg");
+  imgUndistorted.Save("/Users/alchaussee/Desktop/t.jpg");
 //  cv::waitKey();
 }
 

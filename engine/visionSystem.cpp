@@ -353,10 +353,10 @@ namespace Cozmo {
     bool calibSizeValid = false;
     switch(camCalib.GetNcols())
     {
-      case 640:
-        calibSizeValid = camCalib.GetNrows() == 480;
-        _captureResolution = ImageResolution::VGA;
-        break;
+//      case 640:
+//        calibSizeValid = camCalib.GetNrows() == 480;
+//        _captureResolution = ImageResolution::VGA;
+//        break;
       case 400:
         calibSizeValid = camCalib.GetNrows() == 296;
         _captureResolution = ImageResolution::CVGA;
@@ -368,6 +368,10 @@ namespace Cozmo {
       case 1280:
         calibSizeValid = camCalib.GetNrows() == 720;
         _captureResolution = ImageResolution::HD720;
+        break;
+      case 640:
+        calibSizeValid = camCalib.GetNrows() == 360;
+        _captureResolution = ImageResolution::TEST;
         break;
     }
     

@@ -21,13 +21,22 @@ namespace Anki {
 namespace Cozmo {
 
 #define PLAYPEN_SET_RESULT(result)  { \
-                                      if(!ShouldIgnoreFailures() || result == FactoryTestResultCode::SUCCESS) { \
-                                        SetResult(result); \
-                                        return; \
-                                      } else { \
-                                        PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", "Ignoring %s failure in behavior %s", EnumToString(result), GetIDStr().c_str()); \
-                                      } \
-                                    }
+  if(!ShouldIgnoreFailures() || result == FactoryTestResultCode::SUCCESS) { \
+    SetResult(result); \
+    return; \
+  } else { \
+    PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", "Ignoring %s failure in behavior %s", EnumToString(result), GetIDStr().c_str()); \
+  } \
+}
+  
+#define PLAYPEN_SET_RESULT_WITH_RETURN_VAL(result, retval)  { \
+  if(!ShouldIgnoreFailures() || result == FactoryTestResultCode::SUCCESS) { \
+    SetResult(result); \
+    return retval; \
+  } else { \
+    PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", "Ignoring %s failure in behavior %s", EnumToString(result), GetIDStr().c_str()); \
+  } \
+}
   
 #define PLAYPEN_TRY(expr, result) { \
                                     if(!(expr)) {PLAYPEN_SET_RESULT(result);}\
@@ -64,6 +73,7 @@ protected:
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override final;
   void SubscribeToTags(std::set<EngineToGameTag>&& tags); // Hide base class function
   bool StartActing(IActionRunner* action, SimpleCallback callback); // Hide base class function
+  bool StartActing(IActionRunner* action, ActionResultCallback callback, bool expectFailure = false); // Hide base class function
   
 
   // Virtual functions for subclasses to override

@@ -41,8 +41,16 @@ protected:
 private:
 
   void TransitionToWaitingForBackCliffs(Robot& robot);
+  void TransitionToWaitingForBackCliffUndetected(Robot& robot);
   
-  bool _waitingForFrontCliffs = false; // True if waiting for front cliffs, false if waiting for back cliffs
+  enum State {
+    NONE,
+    WAITING_FOR_FRONT_CLIFFS,
+    WAITING_FOR_FRONT_CLIFFS_UNDETCTED,
+    WAITING_FOR_BACK_CLIFFS,
+    WAITING_FOR_BACK_CLIFFS_UNDETECTED
+  };
+  State _waitingForCliffsState = NONE;
   bool _frontCliffsDetected = false;
   bool _backCliffsDetected = false;
   

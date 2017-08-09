@@ -22,6 +22,19 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace {
+static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = {
+  ExternalInterface::MessageEngineToGameTag::RobotState,
+  ExternalInterface::MessageEngineToGameTag::CliffEvent,
+  ExternalInterface::MessageEngineToGameTag::RobotStopped,
+  ExternalInterface::MessageEngineToGameTag::ChargerEvent,
+  ExternalInterface::MessageEngineToGameTag::MotorCalibration,
+  ExternalInterface::MessageEngineToGameTag::MotorAutoEnabled,
+  ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged,
+  ExternalInterface::MessageEngineToGameTag::UnexpectedMovement
+};
+}
+
 CONSOLE_VAR(bool, kIgnoreFailures,    "Playpen", true);
 CONSOLE_VAR(bool, kWriteToStorage,    "Playpen", false);
 CONSOLE_VAR(f32,  kDefaultTimeout_ms, "Playpen", 20000);
@@ -29,14 +42,9 @@ CONSOLE_VAR(f32,  kDefaultTimeout_ms, "Playpen", 20000);
 IBehaviorPlaypen::IBehaviorPlaypen(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  IBehavior::SubscribeToTags({{EngineToGameTag::RobotState,
-                               EngineToGameTag::CliffEvent,
-                               EngineToGameTag::RobotStopped,
-                               EngineToGameTag::ChargerEvent,
-                               EngineToGameTag::MotorCalibration,
-                               EngineToGameTag::MotorAutoEnabled,
-                               EngineToGameTag::RobotOffTreadsStateChanged,
-                               EngineToGameTag::UnexpectedMovement}});
+  // Don't want to invailidate kFailureTags by std::move-ing it so make a copy and move that
+  auto failureTagCopy = kFailureTags;
+  IBehavior::SubscribeToTags(std::move(failureTagCopy));
 }
 
 bool IBehaviorPlaypen::IsRunnableInternal(const BehaviorPreReqPlaypen& preReq) const
@@ -168,6 +176,20 @@ void IBehaviorPlaypen::SubscribeToTags(std::set<EngineToGameTag>&& tags)
 {
   _tagsSubclassSubscribeTo.insert(tags.begin(), tags.end());
   
+  // If the caller wants to subscribe to one of the failure type tags then don't let them subscribe
+  // since we already are subscribed to it and it will already call HandleWhileRunningInternal()
+  for(auto iter = tags.begin(); iter != tags.end();)
+  {
+    if(kFailureTags.count(*iter) > 0)
+    {
+      iter = tags.erase(iter);
+    }
+    else
+    {
+      ++iter;
+    }
+  }
+  
   IBehavior::SubscribeToTags(std::move(tags));
 }
 
@@ -180,6 +202,19 @@ bool IBehaviorPlaypen::StartActing(IActionRunner* action, SimpleCallback callbac
     }
 
     callback();
+  };
+  return IBehavior::StartActing(action, callbackWrapper);
+}
+
+bool IBehaviorPlaypen::StartActing(IActionRunner* action, ActionResultCallback callback, bool expectFailure)
+{
+  auto callbackWrapper = [this, callback, expectFailure](ActionResult result){
+    if(!expectFailure && result != ActionResult::SUCCESS)
+    {
+      PLAYPEN_SET_RESULT(FactoryTestResultCode::ACTION_FAILED);
+    }
+    
+    callback(result);
   };
   return IBehavior::StartActing(action, callbackWrapper);
 }

@@ -22,6 +22,7 @@ enum int_8 ImageResolution
   QXGA,      // 2048 x 1536
   QUXGA,     // 3200 x 2400
   HD720,     // 1280 x 720
+  TEST,
   ImageResolutionCount,
   ImageResolutionNone
 }

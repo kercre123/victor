@@ -26,19 +26,36 @@ namespace Cozmo {
 namespace {
 
 #ifdef COZMO_V2
+#ifdef SIMULATOR
+// V2 Simulated camera calibration
 static const Vision::CameraCalibration kApproxCalib(720, 1280,
                                                     507, 507,
-                                                    639, 359);
+                                                    639, 359,
+                                                    0.f,
+                                                    std::vector<f32>({-0.02f, -0.01f, 0.005f, 0.0025f, -0.005f}));
 #else
+// V2 Physical camera calibration
+static const Vision::CameraCalibration kApproxCalib(720, 1280,
+                                                    507, 507,
+                                                    639, 359,
+                                                    0.f,
+                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f}));
+#endif
+#else
+// 1.5/1.0 Physical camera calibration
 static const Vision::CameraCalibration kApproxCalib(240, 320,
                                                     290, 290,
-                                                    160, 120);
+                                                    160, 120,
+                                                    0.f,
+                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f}));
 #endif
 
-static const u32 kFocalLengthTolerance       = 30;
-static const u32 kCenterTolerance            = 30;
-static const f32 kHeadAngleToSeeTarget       = MAX_HEAD_ANGLE;
-static const u32 kTimeoutWaitingForTarget_ms = 10000;
+static const u32 kFocalLengthTolerance              = 30;
+static const u32 kCenterTolerance                   = 30;
+static const f32 kRadialDistortionTolerance         = 0.05f;
+static const f32 kTangentialDistortionTolerance     = 0.05f;
+static const f32 kHeadAngleToSeeTarget              = MAX_HEAD_ANGLE;
+static const u32 kTimeoutWaitingForTarget_ms        = 10000;
 static const u32 kTimeoutForComputingCalibration_ms = 2000;
 
 static const CustomObjectMarker kMarkerToTriggerCalibration = CustomObjectMarker::Triangles2;
@@ -210,8 +227,38 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
                         "focalLength (%f, %f), center (%f, %f)",
                         calibMsg.focalLength_x, calibMsg.focalLength_y, calibMsg.center_x, calibMsg.center_y);
     
-    // TODO: Specific failures for each check?
     PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_VALUES_OOR);
+  }
+  
+  if(CHECK_OOR(calibMsg.distCoeffs[0],
+               kApproxCalib.GetDistortionCoeffs()[0] - kRadialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[0] + kRadialDistortionTolerance) ||
+     CHECK_OOR(calibMsg.distCoeffs[1],
+               kApproxCalib.GetDistortionCoeffs()[1] - kRadialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[1] + kRadialDistortionTolerance) ||
+     CHECK_OOR(calibMsg.distCoeffs[2],
+               kApproxCalib.GetDistortionCoeffs()[2] - kTangentialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[2] + kTangentialDistortionTolerance) ||
+     CHECK_OOR(calibMsg.distCoeffs[3],
+               kApproxCalib.GetDistortionCoeffs()[3] - kTangentialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[3] + kTangentialDistortionTolerance) ||
+     CHECK_OOR(calibMsg.distCoeffs[4],
+               kApproxCalib.GetDistortionCoeffs()[4] - kRadialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[4] + kRadialDistortionTolerance) ||
+     calibMsg.distCoeffs[5] != 0.f ||
+     calibMsg.distCoeffs[6] != 0.f ||
+     calibMsg.distCoeffs[7] != 0.f)
+  {
+    std::stringstream ss;
+    for(const auto& coeff : calibMsg.distCoeffs)
+    {
+      ss << coeff << ", ";
+    }
+    PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.OOR",
+                        "%s",
+                        ss.str().c_str());
+    
+    PLAYPEN_SET_RESULT(FactoryTestResultCode::DISTORTION_CALUES_OOR);
   }
   
   // Calibration completed so move head to zero and and complete

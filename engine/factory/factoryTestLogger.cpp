@@ -283,6 +283,18 @@ namespace Cozmo {
     return AppendCliffSensorValue("CliffOnGround", data);
   }
   
+  bool FactoryTestLogger::AppendCliffValuesOnFrontDrop(const CliffSensorValues& data) {
+    return AppendCliffSensorValues("CliffsOnFrontDrop", data);
+  }
+  
+  bool FactoryTestLogger::AppendCliffValuesOnBackDrop(const CliffSensorValues& data) {
+    return AppendCliffSensorValues("CliffsOnBackDrop", data);
+  }
+  
+  bool FactoryTestLogger::AppendCliffValuesOnGround(const CliffSensorValues& data) {
+    return AppendCliffSensorValues("CliffsOnGround", data);
+  }
+  
   bool FactoryTestLogger::AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data)
   {
     std::stringstream ss;
@@ -295,6 +307,27 @@ namespace Cozmo {
       << "\nval: " << data.val;
     }
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CliffSensorValue", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
+  bool FactoryTestLogger::AppendCliffSensorValues(const std::string& readingName, const CliffSensorValues& data)
+  {
+    std::stringstream ss;
+    if (_exportJson) {
+      Json::Value& node = _json[readingName];
+      node["FR"] = data.FR;
+      node["FL"] = data.FL;
+      node["BR"] = data.BR;
+      node["BL"] = data.BL;
+      ss << "[" << readingName<< "]\n" << node;
+    } else {
+      ss << "\n[" << readingName << "]"
+      << "\nFR: " << data.FR
+      << "\nFL: " << data.FL
+      << "\nBR: " << data.BR
+      << "\nBL: " << data.BL;
+    }
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.CliffSensorValues", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
       
