@@ -186,8 +186,6 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 
   // use the driving motion profile by default
   SmartSetMotionProfile(_driveToPlaceProfile);
-
-  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   
   if(_wasTriggeredAsInterrupt){
     _activeConfig = &_zeroBlockConfig;
@@ -555,20 +553,14 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::IdleLoop(Robot& robot){
+  if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
+    SmartPushIdleAnimation(robot, _activeConfig->idleAnimTrigger);
+  }else{
+    SmartPushIdleAnimation(robot, AnimationTrigger::Count);
+  }
 
-  
-  if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count
-     && GetFaceID() != Vision::UnknownFaceID){
-    // no callback here, behavior is over once this is done
-    StartActing(new CompoundActionParallel(robot, {
-      new TrackFaceAction(robot, GetFaceID()),
-      new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 0),
-    }));
-  }else if(GetFaceID() != Vision::UnknownFaceID){
+  if(GetFaceID() != Vision::UnknownFaceID){
     StartActing(new TrackFaceAction(robot, GetFaceID()));
-  }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
-    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 1),
-                &BehaviorRequestGameSimple::IdleLoop);
   }else{
     StartActing( new HangAction(robot) );
   }
