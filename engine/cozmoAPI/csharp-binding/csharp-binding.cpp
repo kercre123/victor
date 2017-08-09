@@ -8,6 +8,7 @@
 
 #include "engine/cozmoAPI/csharp-binding/csharp-binding.h"
 
+#include "engine/util/file/archiveUtil.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/cozmoAPI/csharp-binding/dasLoggerProvider.h"
 #include "engine/cozmoAPI/cozmoAPI.h"
@@ -146,12 +147,65 @@ void configure_engine(Json::Value& config)
   
 }
 
+#if USE_DAS
+static const std::string kDASArchiveFileExtension = ".tar.gz";
+static bool das_archive_function(const std::string& inputFilePath)
+{
+  const std::string filename = Anki::Util::FileUtils::GetFileName(inputFilePath);
+  const std::string baseDirectory = inputFilePath.substr(0, inputFilePath.size() - filename.size());
+  const std::string outputFilePath = baseDirectory + filename + kDASArchiveFileExtension;
+  
+  bool success =
+  ANKI_VERIFY(Anki::Cozmo::ArchiveUtil::CreateArchiveFromFiles(outputFilePath, baseDirectory, {inputFilePath}),
+              "csharp-binding.das_archive_function.CreateArchiveFromFiles.Fail",
+              "Unable to create archive at path %s", outputFilePath.c_str());
+  if (!success)
+  {
+    return false;
+  }
+  
+  Anki::Util::FileUtils::DeleteFile(inputFilePath);
+  return true;
+}
+
+static std::string das_unarchive_function(const std::string& inputFilePath)
+{
+  const std::string filename = Anki::Util::FileUtils::GetFileName(inputFilePath);
+  const std::string baseDirectory = inputFilePath.substr(0, inputFilePath.size() - filename.size());
+  
+  const auto expectedIndexOfExtension = filename.size() - kDASArchiveFileExtension.size();
+  const auto actualIndexOfExtension = filename.rfind(kDASArchiveFileExtension);
+  ANKI_VERIFY(expectedIndexOfExtension == actualIndexOfExtension,
+              "csharp-binding.das_unarchive_function.unexpectedFileExtension",
+              "Filename %s missing extension %s", filename.c_str(), kDASArchiveFileExtension.c_str());
+  
+  const std::string outputFilename = filename.substr(0, expectedIndexOfExtension);
+  
+  
+  bool success =
+  ANKI_VERIFY(Anki::Cozmo::ArchiveUtil::CreateFilesFromArchive(inputFilePath, baseDirectory),
+              "csharp-binding.das_unarchive_function.CreateFilesFromArchive.Fail",
+              "Unable to create files at path %s from archive %s",
+              baseDirectory.c_str(), inputFilePath.c_str());
+  if(!success)
+  {
+    return "";
+  }
+  
+  Anki::Util::FileUtils::DeleteFile(inputFilePath);
+  return outputFilename;
+}
+#endif
+
 static void cozmo_configure_das(const std::string& resourcesBasePath, const Anki::Util::Data::DataPlatform* platform)
 {
 #if USE_DAS
   std::string dasConfigPath = resourcesBasePath + "/DASConfig.json";
   std::string dasLogPath = platform->pathToResource(Anki::Util::Data::Scope::Cache, "DASLogs");
   std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
+  DASSetArchiveLogConfig(std::bind(das_archive_function, std::placeholders::_1),
+                         std::bind(das_unarchive_function, std::placeholders::_1),
+                         kDASArchiveFileExtension);
   DASConfigure(dasConfigPath.c_str(), dasLogPath.c_str(), gameLogPath.c_str());
 #endif
 }

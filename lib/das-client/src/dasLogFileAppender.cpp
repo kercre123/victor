@@ -38,13 +38,22 @@ static bool stringEndsWith(const std::string &str, const std::string &suffix)
   return str.size() >= suffix.size() && 0 == str.compare(str.size() - suffix.size(), suffix.size(), suffix);
 }
 
-DasLogFileAppender::DasLogFileAppender(const std::string& logDirPath)
+DasLogFileAppender::DasLogFileAppender(const std::string& logDirPath,
+                                       size_t maxLogLength,
+                                       size_t maxLogFiles,
+                                       const DASArchiveFunction& archiveCallback,
+                                       const DASUnarchiveFunction& unarchiveCallback,
+                                       const std::string& archiveFileExtension)
 : _logDirPath(logDirPath)
-, _maxLogLength(DasLogFileAppender::kDefaultMaxLogLength)
+, _maxLogLength(maxLogLength)
+, _maxLogFiles(maxLogFiles)
 , _bytesLoggedToCurrentFile(0)
 , _currentLogFileName()
 , _currentLogFileHandle()
 , _currentLogFileNumber(0)
+, _archiveCallback(archiveCallback)
+, _unarchiveCallback(unarchiveCallback)
+, _archiveFileExtension(archiveFileExtension)
 {
   _currentLogFileNumber = NextAvailableLogFileNumber();
   UpdateLogFilePath();
@@ -129,7 +138,7 @@ std::string DasLogFileAppender::MakeLogFilePath(const std::string &logDir,
     pathStream << logDir << '/';
   }
 
-  pathStream << std::setfill('0') << std::setw(2) << logNumber << "." << extension;
+  pathStream << std::setfill('0') << std::setw(4) << logNumber << "." << extension;
   std::string path = pathStream.str();
 
   return path;
@@ -138,7 +147,7 @@ std::string DasLogFileAppender::MakeLogFilePath(const std::string &logDir,
 uint32_t DasLogFileAppender::NextLogFileNumber()
 {
   _currentLogFileNumber++;
-  if (_currentLogFileNumber >= DasLogFileAppender::kDasMaxLogFiles) {
+  if (_currentLogFileNumber >= _maxLogFiles) {
     _currentLogFileNumber = 0;
   }
   return _currentLogFileNumber;
@@ -156,7 +165,7 @@ uint32_t DasLogFileAppender::NextAvailableLogFileNumber() const
       fileNumber++;
     }
 
-    if (fileNumber >= DasLogFileAppender::kDasMaxLogFiles) {
+    if (fileNumber >= _maxLogFiles) {
       // we'll blow away the first log..
       // FIXME: we should log the fact that we've rolled over, since it means we're losing data.
       fileNumber = 0;
@@ -244,25 +253,33 @@ void DasLogFileAppender::RolloverLogFileAtPath(std::string path) const
   size_t pos = path.find_last_of('.');
   std::string completedLogPath = path.substr(0, pos + 1) + kDasLogFileExtension;
   (void) rename(path.c_str(), completedLogPath.c_str());
+  
+  // If we have a callback for archiving the log, call it here:
+  if (_archiveCallback)
+  {
+    (void) _archiveCallback(completedLogPath);
+  }
 }
 
 void DasLogFileAppender::RolloverAllLogFiles()
 {
   _loggingQueue.Wake([this] {
-      std::vector<uint32_t> toRollOverNumbers = InProgressLogNumbers();
-      for (uint32_t i : toRollOverNumbers) {
-        if (i != _currentLogFileNumber) {
-          std::string path = MakeLogFilePath(_logDirPath, i, kDasInProgressExtension);
+      std::vector<std::string> toRollOverFiles = InProgressLogFiles();
+      for (const auto& filename : toRollOverFiles) {
+        size_t pos = filename.find_last_of('.');
+        std::string logFileBaseName = filename.substr(0, pos);
+        uint32_t logFileNumber = (uint32_t) std::stoul(logFileBaseName);
+        if (logFileNumber != _currentLogFileNumber) {
+          std::string path = _logDirPath + "/" + filename;
           RolloverLogFileAtPath(std::move(path));
-
         }
       }
     });
 }
 
-std::vector<uint32_t> DasLogFileAppender::InProgressLogNumbers() const
+std::vector<std::string> DasLogFileAppender::InProgressLogFiles() const
 {
-  std::vector<uint32_t> result;
+  std::vector<std::string> result;
   DIR* logDir = opendir(_logDirPath.c_str());
 
   if (logDir) {
@@ -270,10 +287,7 @@ std::vector<uint32_t> DasLogFileAppender::InProgressLogNumbers() const
     while ((dirent = readdir(logDir)) != nullptr) {
       std::string filename(dirent->d_name);
       if (DT_REG == dirent->d_type && stringEndsWith(filename, kDasInProgressExtension)) {
-        size_t pos = filename.find_last_of('.');
-        std::string logFileBaseName = filename.substr(0, pos);
-        uint32_t logFileNumber = (uint32_t) std::stoul(logFileBaseName);
-        result.push_back(logFileNumber);
+        result.push_back(filename);
       }
     }
     (void) closedir(logDir);
@@ -300,14 +314,22 @@ void DasLogFileAppender::ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionB
         bool shouldStop = false;
         bool success = true;
         while (!shouldStop && ((dirent = readdir(logDir)) != nullptr)) {
-          std::string filename(dirent->d_name);
-          if (DT_REG == dirent->d_type && stringEndsWith(filename, kDasLogFileExtension)) {
-            std::string fullPath = _logDirPath + "/" + filename;
-            bool shouldDelete = ConsumptionBlock(fullPath, &shouldStop);
-            if (shouldDelete) {
-              success = (0 == unlink(fullPath.c_str()));
-              if (!success) {
-                LOGD("Error removing file '%s': %s", fullPath.c_str(), strerror(errno));
+          if (DT_REG == dirent->d_type) {
+            std::string filename(dirent->d_name);
+            // If we have a callback set for unarchving and this file matches, unarchive it
+            if (_unarchiveCallback && stringEndsWith(filename, _archiveFileExtension))
+            {
+              filename = _unarchiveCallback(_logDirPath + "/" + filename);
+            }
+            
+            if (stringEndsWith(filename, kDasLogFileExtension)) {
+              std::string fullPath = _logDirPath + "/" + filename;
+              bool shouldDelete = ConsumptionBlock(fullPath, &shouldStop);
+              if (shouldDelete) {
+                success = (0 == unlink(fullPath.c_str()));
+                if (!success) {
+                  LOGD("Error removing file '%s': %s", fullPath.c_str(), strerror(errno));
+                }
               }
             }
           }

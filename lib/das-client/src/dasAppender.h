@@ -29,7 +29,14 @@ class DasAppender {
 public:
   static const uint32_t kDefaultFlushIntervalSeconds = 5;
   
-  DasAppender(const std::string& dasLogDir, const std::string& url, uint32_t flush_interval = kDefaultFlushIntervalSeconds);
+  DasAppender(const std::string& dasLogDir,
+              const std::string& url,
+              uint32_t flush_interval,
+              size_t maxLogLength,
+              size_t maxLogFiles,
+              const DASArchiveFunction& archiveFunction,
+              const DASUnarchiveFunction& unarchiveFunction,
+              const std::string& archiveFileExtension);
   ~DasAppender();
   void SetMaxLogLength(size_t maxLogLength);
 
