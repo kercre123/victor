@@ -7,16 +7,16 @@
     "source_key_paths" : ["/{*}"]
   },
   "needs.NeedsHubView.Button.Activities" : {
-    "translation" : "Découvrir"
+    "translation" : "DÉCOUVRIR"
   },
   "needs.NeedsHubView.Button.Feed" : {
-    "translation" : "Alimenter"
+    "translation" : "ALIMENTER"
   },
   "needs.NeedsHubView.Button.Repair" : {
-    "translation" : "Réglage"
+    "translation" : "RÉGLAGE"
   },
   "needs.NeedsHubView.Button.Play" : {
-    "translation" : "Jouer"
+    "translation" : "JOUER"
   },
   "needs.NeedsEnergyModal.Title" : {
     "translation" : "Nourrir Cozmo"
@@ -76,7 +76,7 @@
     "translation" : "Cozmo est totalement réglé !"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "Envoyer"
+    "translation" : "ENVOYER"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
     "translation" : "SCANNER COZMO"

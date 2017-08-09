@@ -55,7 +55,7 @@
     "translation" : "Die App weiß, wenn eine Verbindung zu Cozmo besteht."
   },
   "wifi.gethelp.title" : {
-    "translation" : "Hast du Probleme beim Herstellen der Verbindung mit dem WLAN von Cozmo?"
+    "translation" : "Hast du Probleme mit dem WLAN von Cozmo?"
   },
   "wifi.gethelp.description" : {
     "translation" : "Führe diese Schritte durch:\u000a\u000a1. Nimm Cozmo von der Ladestation und setze ihn dann wieder darauf.\u000a2. <b>Deaktiviere</b> das WLAN auf deinem Gerät und <b>aktiviere</b> es dann wieder."

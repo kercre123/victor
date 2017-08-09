@@ -88,7 +88,7 @@
     "translation" : "Cube rollen"
   },
   "unlockable.CubeRollAction.Description" : {
-    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen – insbesondere, wenn sie auf der Seite liegen."
+    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen – insbesondere, wenn sie auf der Seite liegen."
   },
   "unlockable.CubeRollAction.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo zu bitten, einen Cube zu rollen."
@@ -109,7 +109,7 @@
     "translation" : "Bei diesem Trick lernt Cozmo, zwei Cubes zu stapeln."
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
-    "translation" : "Sieh Cozmo zu, wie Cozmo Cubes stapelt."
+    "translation" : "Sieh Cozmo zu, wie er Cubes stapelt."
   },
   "unlockable.CubeStackAction.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo zu bitten, zwei Cubes zu stapeln."

@@ -94,7 +94,7 @@
     "translation" : "Bien joué !\u000a\u000aCozmo souhaite faire connaissance avec toi."
   },
   "onboarding.MeetCozmo.Button" : {
-    "translation" : "Première rencontre"
+    "translation" : "PREMIÈRE RENCONTRE"
   },
   "onboarding.NeedsIntro" : {
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux."
@@ -103,7 +103,7 @@
     "translation" : "<b>Cozmo a des besoins.</b>\u000a\u000aPrends soin de lui chaque jour pour qu'il soit heureux.\u000a\u000aIl se peut que l'application Cozmo soit légèrement différente, mais tu conserveras tous les éléments débloqués."
   },
   "onboarding.PlayIntro" : {
-    "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un token."
+    "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un jeton."
   },
   "onboarding.ActivitiesIntro" : {
     "translation" : "Les activités de découverte sont particulières ; elles n'affectent pas les besoins de Cozmo et ne coûtent pas d'étincelles."
@@ -136,7 +136,7 @@
     "translation" : "Tu as satisfait l'<color=#f5ea12>envie de jouer</color> de Cozmo."
   },
   "onboarding.RewardsIntro.Part2" : {
-    "translation" : "Chaque jour où tu satisfais son \u000a<color=#f5ea12>envie de jouer</color>, tu gagnes un \u000a<color=#f5ea12>token.</color>"
+    "translation" : "Chaque jour où tu satisfais son <color=#f5ea12>envie de jouer</color>, tu gagnes un <color=#f5ea12>jeton.</color>"
   },
   "onboarding.TokensIntro.Part1" : {
     "translation" : "Comble l'<color=#f5ea12>envie de jouer</color> de Cozmo pendant trois jours pour débloquer une <color=#f5ea12>boîte à bonus.</color>"

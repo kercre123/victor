@@ -325,7 +325,7 @@
     "translation" : "Um ein Programm zu erstellen, musst du einfach nur verschiedene Codeblöcke zusammenziehen."
   },
   "codeLab.tutorial.slide_greenBlockFirst" : {
-    "translation" : "Platziere immer zuerst einen BLOCK mit grüner Kennzeichnung. So kann das Programm dann mithilfe der TASTE mit grüner Kennzeichnung gestartet werden."
+    "translation" : "Platziere immer zuerst einen BLOCK mit grüner Kennzeichnung. So kann das Programm mithilfe dieser TASTE gestartet werden."
   },
   "codeLab.projects.modalTitle" : {
     "translation" : "Cozmo Code Lab"

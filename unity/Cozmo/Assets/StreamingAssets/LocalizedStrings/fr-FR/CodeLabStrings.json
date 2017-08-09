@@ -352,7 +352,7 @@
     "translation" : "Annuler"
   },
   "codeLab.projects.confirmDeleteProject.confirmPromptTitle" : {
-    "translation" : "Supprimer « \"{0} » ?"
+    "translation" : "Supprimer « {0} » ?"
   },
   "codeLab.projects.confirmDeleteProject.confirmButton.labelText" : {
     "translation" : "Oui, supprimer"
@@ -454,13 +454,13 @@
     "translation" : "Réfléchir profondément"
   },
   "codeLabHorizontal.Tooltip.ActBored" : {
-    "translation" : "Paraître s'ennuyer"
+    "translation" : "Avoir l'air de s'ennuyer"
   },
   "codeLabHorizontal.Tooltip.ActFrustrated" : {
     "translation" : "Paraître frustré"
   },
   "codeLabHorizontal.Tooltip.ActChatty" : {
-    "translation" : "Paraître bavard"
+    "translation" : "Bavarder"
   },
   "codeLabHorizontal.Tooltip.ActDisappointed" : {
     "translation" : "Paraître déçu"
