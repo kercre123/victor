@@ -11,6 +11,7 @@ import shutil
 import logging
 import json
 import errno
+from os import listdir
 
 ASSET_REPO = 'cozmo-assets'
 ASSET_REPO_SUBDIRS = ['animations', 'animationGroups', 'faceAnimations']
@@ -397,7 +398,8 @@ def main(scriptArgs):
     UtilLog.error("error creating generated/resources")
     return False
 
-  for fwFolder in ['firmware', 'old_firmware']:
+  fwFolders = [folder for folder in listdir(externalsPath) if "firmware" in folder]
+  for fwFolder in fwFolders:
     if subprocess.call(['ln', '-s', '-f', '-n',
       os.path.join(externalsPath, fwFolder, 'release'),
       os.path.join(projectRoot, 'resources/config/basestation', fwFolder)]) != 0 :

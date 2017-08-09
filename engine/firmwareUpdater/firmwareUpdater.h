@@ -90,7 +90,7 @@ public:
   bool Update(const RobotMap& robots);
 
   using JsonCallback = std::function<void(const Json::Value&)>;
-  void LoadHeader(FirmwareType type, const JsonCallback& callback);
+  void LoadHeader(FirmwareType type, int verison, const JsonCallback& callback);
   
   void HandleFlashWriteAck(RobotID_t robotId, const RobotInterface::OTA::Ack& flashWriteAck);
   

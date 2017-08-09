@@ -39,6 +39,9 @@
 namespace Anki {
 namespace Cozmo {
 
+
+const int kHighestVersion = 0;
+
 RobotManager::RobotManager(const CozmoContext* context)
 : _context(context)
 , _robotEventHandler(context)
@@ -112,7 +115,7 @@ void RobotManager::Init(const Json::Value& config)
   
   LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
 
-  _firmwareUpdater->LoadHeader(FirmwareType::Current, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
+  _firmwareUpdater->LoadHeader(FirmwareType::Current, kHighestVersion, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
 }
 
 void RobotManager::AddRobot(const RobotID_t withID)
