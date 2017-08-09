@@ -1016,7 +1016,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
         for (int i = 0; i < cozmoSaysText.Length; i++) {
           char currentChar = cozmoSaysText[i];
-          if (char.IsLetterOrDigit(currentChar) || char.IsWhiteSpace(currentChar) || IsPunctuation(currentChar)) {
+          if (CozmoInputFilter.IsValidInput(currentChar, allowPunctuation: true, allowDigits: true)) {
             cozmoSaysTextCleaned += currentChar;
           }
         }
@@ -1140,11 +1140,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         DAS.Error("CodeLab.BadCubeIndex", "cubeIndex " + cubeIndex.ToString());
         return ObjectType.UnknownObject;
       }
-    }
-
-    // Less forgiving than char.IsPunctuation()
-    private bool IsPunctuation(char c) {
-      return c == '.' || c == ';' || c == '\'' || c == ',' || c == '?' || c == '!' || c == ':';
     }
 
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
