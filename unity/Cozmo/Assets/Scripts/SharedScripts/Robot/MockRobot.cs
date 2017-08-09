@@ -756,6 +756,10 @@ public class MockRobot : IRobot {
     get { return Rotation.eulerAngles.y * Mathf.Deg2Rad; }
   }
 
+  public float RollAngle {
+    get { return Rotation.eulerAngles.x * Mathf.Deg2Rad; }
+  }
+
   public float LeftWheelSpeed {
     get;
     private set;

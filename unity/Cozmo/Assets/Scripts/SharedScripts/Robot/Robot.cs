@@ -140,6 +140,7 @@ public class Robot : IRobot {
 
   public float PitchAngle { get; private set; }
 
+  public float RollAngle { get; private set; }
   // in mm/s
   public float LeftWheelSpeed { get; private set; }
 
@@ -689,6 +690,7 @@ public class Robot : IRobot {
       HeadAngle = message.headAngle_rad;
       PoseAngle = message.poseAngle_rad;
       PitchAngle = message.posePitch_rad;
+      RollAngle = (float)Math.Atan2(message.accel.y, message.accel.z);
       LeftWheelSpeed = message.leftWheelSpeed_mmps;
       RightWheelSpeed = message.rightWheelSpeed_mmps;
       LiftHeight = message.liftHeight_mm;

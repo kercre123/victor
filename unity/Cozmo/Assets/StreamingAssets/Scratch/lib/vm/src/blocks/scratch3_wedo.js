@@ -65,8 +65,9 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         // Sensors / Inputs
         // Cozmo
         cozmo_vert_get_position_3d: this.verticalCozmoGetPosition,
-        cozmo_vert_get_angle: this.verticalCozmoGetAngle,
         cozmo_vert_get_pitch: this.verticalCozmoGetPitch,
+        cozmo_vert_get_roll: this.verticalCozmoGetRoll,
+        cozmo_vert_get_yaw: this.verticalCozmoGetYaw,
         cozmo_vert_get_lift_height: this.verticalCozmoGetLiftHeight,
         cozmo_vert_get_head_angle: this.verticalCozmoGetHeadAngle,
         // Faces
@@ -600,12 +601,16 @@ Scratch3CozmoBlocks.prototype.verticalCozmoGetPosition = function(args, util) {
     return getVector3Axis(gCozmoWorldState.pos, axis);
 };
 
-Scratch3CozmoBlocks.prototype.verticalCozmoGetAngle = function(args, util) {
-    return Cast.toNumber(gCozmoWorldState.poseAngle_d);
-};
-
 Scratch3CozmoBlocks.prototype.verticalCozmoGetPitch = function(args, util) {
     return Cast.toNumber(gCozmoWorldState.posePitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetRoll = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.poseRoll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetYaw = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.poseYaw_d);
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoGetLiftHeight = function(args, util) {

@@ -340,8 +340,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Set Cozmo data
 
         _LatestCozmoState.pos = robot.WorldPosition;
-        _LatestCozmoState.poseAngle_d = robot.PoseAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.poseYaw_d = robot.PoseAngle * Mathf.Rad2Deg;
         _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.poseRoll_d = robot.RollAngle * Mathf.Rad2Deg;
         _LatestCozmoState.liftHeightFactor = robot.LiftHeightFactor;
         _LatestCozmoState.headAngle_d = robot.HeadAngle * Mathf.Rad2Deg;
 
@@ -378,7 +379,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _LatestCozmoState.device.yaw_d = Input.gyro.attitude.eulerAngles.z;
 
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
-
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
         this.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
       }

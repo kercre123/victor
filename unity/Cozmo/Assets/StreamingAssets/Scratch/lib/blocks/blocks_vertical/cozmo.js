@@ -389,14 +389,15 @@ Blockly.Blocks['cozmo_vert_get_position_3d'] = {
   }
 };
 
-Blockly.Blocks['cozmo_vert_get_angle'] = {
+Blockly.Blocks['cozmo_vert_get_pitch'] = {
   /**
-   * Block to read Cozmo's angle (left/right rotation)
+   * Block to read Cozmo's pitch (angle about y-axis)
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Cozmo angle",
+      "id": "cozmo_vert_get_pitch",
+      "message0": "Cozmo pitch",
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -407,14 +408,34 @@ Blockly.Blocks['cozmo_vert_get_angle'] = {
   }
 };
 
-Blockly.Blocks['cozmo_vert_get_pitch'] = {
+Blockly.Blocks['cozmo_vert_get_roll'] = {
   /**
-   * Block to read Cozmo's pitch (up/down rotation)
+   * Block to read Cozmo's roll (angle about x-axis)
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Cozmo pitch",
+      "id": "cozmo_vert_get_roll",
+      "message0": "Cozmo roll",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_get_yaw'] = {
+  /**
+   * Block to read Cozmo's yaw (angle about z-axis)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_vert_get_yaw",
+      "message0": "Cozmo yaw",
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,

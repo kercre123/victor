@@ -51,6 +51,8 @@ public interface IRobot : IDisposable {
 
   float PitchAngle { get; }
 
+  float RollAngle { get; }
+
   float LeftWheelSpeed { get; }
 
   float RightWheelSpeed { get; }
