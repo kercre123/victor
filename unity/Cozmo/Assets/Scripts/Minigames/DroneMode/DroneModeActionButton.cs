@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace Cozmo.Challenge.DroneMode {
   public class DroneModeActionButton : MonoBehaviour {
     [SerializeField]
-    private CozmoButtonLegacy _ActionButton;
+    private CozmoButton _ActionButton;
     public bool Interactable {
       get { return _ActionButton.Interactable; }
       set { _ActionButton.Interactable = value; }

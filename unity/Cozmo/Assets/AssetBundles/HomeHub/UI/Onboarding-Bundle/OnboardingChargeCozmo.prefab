@@ -569,7 +569,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: -166, y: 640}
-  m_SizeDelta: {x: 833, y: 230}
+  m_SizeDelta: {x: 833, y: 200}
   m_Pivot: {x: 0, y: 1}
 --- !u!224 &22442476
 RectTransform:
@@ -798,8 +798,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -166, y: 430}
-  m_SizeDelta: {x: 1276, y: 113}
+  m_AnchoredPosition: {x: -166, y: 420}
+  m_SizeDelta: {x: 1276, y: 90}
   m_Pivot: {x: 0, y: 1}
 --- !u!1001 &100100000
 Prefab:
@@ -1735,9 +1735,9 @@ MonoBehaviour:
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMax: 250
   m_fontStyle: 0
-  m_textAlignment: 257
+  m_textAlignment: 8193
   m_isAlignmentEnumConverted: 1
   m_characterSpacing: 0
   m_wordSpacing: 0
