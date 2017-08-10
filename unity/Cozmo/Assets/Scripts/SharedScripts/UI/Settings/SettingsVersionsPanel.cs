@@ -200,6 +200,7 @@ namespace Cozmo.Settings {
 
           // In the event after this disconnect you connect to yet another device, we still want you to have default sparks
           OnboardingManager.Instance.GiveStartingInventory();
+          OnboardingManager.Instance.FirstTime = true;
 
           _EraseCozmoModalInstance.CloseDialog();
           PauseManager.Instance.StartPlayerInducedSleep(false);

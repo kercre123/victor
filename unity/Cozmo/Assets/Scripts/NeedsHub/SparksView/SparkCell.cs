@@ -96,18 +96,17 @@ namespace Cozmo.Needs.Sparks.UI {
       _CostLabel.text = Localization.GetNumber(_CostAmount);
 
       Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded += HandleItemValueChanged;
-      playerInventory.ItemRemoved += HandleItemValueChanged;
-      playerInventory.ItemCountSet += HandleItemValueChanged;
+      Inventory.ItemAdded += HandleItemValueChanged;
+      Inventory.ItemRemoved += HandleItemValueChanged;
+      Inventory.ItemCountSet += HandleItemValueChanged;
 
       SetSparkTextColor(playerInventory.GetItemAmount(_CostItemId));
     }
 
     public void DeregisterEvents() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded -= HandleItemValueChanged;
-      playerInventory.ItemRemoved -= HandleItemValueChanged;
-      playerInventory.ItemCountSet -= HandleItemValueChanged;
+      Inventory.ItemAdded -= HandleItemValueChanged;
+      Inventory.ItemRemoved -= HandleItemValueChanged;
+      Inventory.ItemCountSet -= HandleItemValueChanged;
     }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {

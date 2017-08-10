@@ -403,21 +403,19 @@ namespace Cozmo.Needs.Sparks.UI {
     #region UI Updates
 
     private void InitializeButtonState() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded += HandleItemValueChanged;
-      playerInventory.ItemRemoved += HandleItemValueChanged;
-      playerInventory.ItemCountSet += HandleItemValueChanged;
-      playerInventory.ItemCountUpdated += HandleItemValueChanged;
+      Inventory.ItemAdded += HandleItemValueChanged;
+      Inventory.ItemRemoved += HandleItemValueChanged;
+      Inventory.ItemCountSet += HandleItemValueChanged;
+      Inventory.ItemCountUpdated += HandleItemValueChanged;
 
       UpdateButtonState();
     }
 
     private void CleanUpButtonState() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded -= HandleItemValueChanged;
-      playerInventory.ItemRemoved -= HandleItemValueChanged;
-      playerInventory.ItemCountSet -= HandleItemValueChanged;
-      playerInventory.ItemCountUpdated -= HandleItemValueChanged;
+      Inventory.ItemAdded -= HandleItemValueChanged;
+      Inventory.ItemRemoved -= HandleItemValueChanged;
+      Inventory.ItemCountSet -= HandleItemValueChanged;
+      Inventory.ItemCountUpdated -= HandleItemValueChanged;
     }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {

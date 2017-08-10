@@ -85,11 +85,10 @@ namespace Cozmo.Needs.Sparks.UI {
       _AllUnlockData = UnlockablesManager.Instance.GetUnlockablesByType(UnlockableType.Action);
       _AllUnlockData.Sort();
 
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded += HandleItemValueChanged;
-      playerInventory.ItemRemoved += HandleItemValueChanged;
-      playerInventory.ItemCountSet += HandleItemValueChanged;
-      playerInventory.ItemCountUpdated += HandleItemValueChanged;
+      Inventory.ItemAdded += HandleItemValueChanged;
+      Inventory.ItemRemoved += HandleItemValueChanged;
+      Inventory.ItemCountSet += HandleItemValueChanged;
+      Inventory.ItemCountUpdated += HandleItemValueChanged;
 
       RequestGameManager.Instance.OnRequestGameAlertCreated += ReenableTouches;
 
@@ -141,11 +140,10 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     protected override void CleanUp() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded -= HandleItemValueChanged;
-      playerInventory.ItemRemoved -= HandleItemValueChanged;
-      playerInventory.ItemCountSet -= HandleItemValueChanged;
-      playerInventory.ItemCountUpdated -= HandleItemValueChanged;
+      Inventory.ItemAdded -= HandleItemValueChanged;
+      Inventory.ItemRemoved -= HandleItemValueChanged;
+      Inventory.ItemCountSet -= HandleItemValueChanged;
+      Inventory.ItemCountUpdated -= HandleItemValueChanged;
 
       RequestGameManager.Instance.OnRequestGameAlertCreated -= ReenableTouches;
 

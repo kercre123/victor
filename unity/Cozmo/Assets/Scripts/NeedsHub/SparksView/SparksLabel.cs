@@ -43,11 +43,10 @@ namespace Cozmo {
       }
 
       private void Start() {
-        Inventory inventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-        inventory.ItemCountUpdated += HandleItemValueChanged;
-        inventory.ItemAdded += HandleItemValueChanged;
-        inventory.ItemRemoved += HandleItemValueChanged;
-        inventory.ItemCountSet += HandleItemValueChanged;
+        Inventory.ItemCountUpdated += HandleItemValueChanged;
+        Inventory.ItemAdded += HandleItemValueChanged;
+        Inventory.ItemRemoved += HandleItemValueChanged;
+        Inventory.ItemCountSet += HandleItemValueChanged;
 
         RobotEngineManager.Instance.AddCallback<FreeplaySparksAwarded>(AddFreeplaySparks);
 
@@ -95,13 +94,10 @@ namespace Cozmo {
       }
 
       private void OnDestroy() {
-        if (DataPersistenceManager.Instance != null) {
-          Inventory inventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-          inventory.ItemCountUpdated -= HandleItemValueChanged;
-          inventory.ItemAdded -= HandleItemValueChanged;
-          inventory.ItemRemoved -= HandleItemValueChanged;
-          inventory.ItemCountSet -= HandleItemValueChanged;
-        }
+        Inventory.ItemCountUpdated -= HandleItemValueChanged;
+        Inventory.ItemAdded -= HandleItemValueChanged;
+        Inventory.ItemRemoved -= HandleItemValueChanged;
+        Inventory.ItemCountSet -= HandleItemValueChanged;
         if (RobotEngineManager.Instance != null) {
           RobotEngineManager.Instance.RemoveCallback<FreeplaySparksAwarded>(AddFreeplaySparks);
         }
@@ -116,7 +112,7 @@ namespace Cozmo {
                 _ItemIconAnimatorInstance.Play(_ItemIconBurstAnimHash);
               }
               else {
-                DAS.Error(this, string.Format("Missing animator for {0}, item id: {1}, count: {2}, animName: {3}",
+                DAS.Error("SparksLabel.HandleItemValueChanged.NoAnimator", string.Format("Missing animator for {0}, item id: {1}, count: {2}, animName: {3}",
                                 name, itemId, newCount, _ItemIconBurstAnimStateName));
               }
             }
