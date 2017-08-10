@@ -49,11 +49,11 @@ namespace{
 CONSOLE_VAR(f32, kDistanceFromMarker_mm, CONSOLE_GROUP,  45.0f);
   
 // Constants for the CubeAccelComponent MovementListener:
-CONSOLE_VAR(f32, kHighPassFiltCoef,          CONSOLE_GROUP,  0.95f);
-CONSOLE_VAR(f32, kMaxMovementScoreToAdd,     CONSOLE_GROUP,  4.f);
-CONSOLE_VAR(f32, kMovementScoreDecay,        CONSOLE_GROUP,  3.f);
-CONSOLE_VAR(f32, kFeedingMovementScoreMax,   CONSOLE_GROUP,  6.f);
-CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, CONSOLE_GROUP,  5.0f);
+CONSOLE_VAR(f32, kHighPassFiltCoef,          CONSOLE_GROUP,  0.4f);
+CONSOLE_VAR(f32, kMaxMovementScoreToAdd,     CONSOLE_GROUP,  3.f);
+CONSOLE_VAR(f32, kMovementScoreDecay,        CONSOLE_GROUP,  2.f);
+CONSOLE_VAR(f32, kFeedingMovementScoreMax,   CONSOLE_GROUP,  100.f);
+CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, CONSOLE_GROUP,  8.f);
 
 CONSOLE_VAR(f32, kFeedingPreActionAngleTol_deg, CONSOLE_GROUP, 15.0f);
 
