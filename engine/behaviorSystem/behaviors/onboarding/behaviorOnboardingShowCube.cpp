@@ -15,7 +15,8 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/actions/retryWrapperAction.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/onboarding/behaviorOnboardingShowCube.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -115,6 +116,7 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   if( _state != State::ErrorCozmo && _state != State::ErrorFinal )
   {
     _numErrors = 0;
+    _numErrorsPickup = 0;
     _timesPickedUpCube = 0;
     SET_STATE(WaitForShowCube,robot);
   }
@@ -349,38 +351,45 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
   // Manually set lights to Interacting (green) lights
   robot.GetCubeLightComponent().PlayLightAnim(_targetBlock, CubeAnimationTrigger::Onboarding);
   
-  DriveToPickupObjectAction* driveAndPickupAction = new DriveToPickupObjectAction(robot, _targetBlock);
-  driveAndPickupAction->SetPostDockLiftMovingAnimation(AnimationTrigger::OnboardingSoundOnlyLiftEffortPickup);
-  RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
+  auto onPickupSuccess = [this](Robot& robot)
   {
-    animTrigger = AnimationTrigger::Count;
-    
-    const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(completion.result);
-    if(resCat == ActionResultCategory::ABORT ||
-       resCat == ActionResultCategory::RETRY)
-    {
-      animTrigger = AnimationTrigger::OnboardingCubeDockFail;
-      return true;
-    }
-    return false;
+    _timesPickedUpCube++;
+    StartSubStateCelebratePickup(robot);
   };
   
-  RetryWrapperAction* retryWrapperAction = new RetryWrapperAction(robot, driveAndPickupAction, retryCallback, _maxErrorsPickup);
-  StartActing(retryWrapperAction,
-              [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
-              {
-                if(msg.result == ActionResult::SUCCESS)
-                {
-                  _timesPickedUpCube++;
-                  StartSubStateCelebratePickup(robot);
-                }
-                else
-                {
-                  // We've either unsuccessfully retried pickup _maxErrorsPickup times or
-                  // pickup failed with a non-abort or retry failure. In both cases, something went really wrong.
-                  SET_STATE(ErrorFinal,robot);
-                }
-              });
+  auto onPickupFailure = [this](Robot& robot)
+  {
+    _numErrorsPickup++;
+    BlockWorldFilter filter;
+    filter.OnlyConsiderLatestUpdate(true);
+    filter.AddAllowedFamily(Anki::Cozmo::ObjectFamily::LightCube);
+    ObservableObject* lastSeenObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    // couldn't pick up this block. If we have another, try that. Otherwise, fail
+    if( _numErrorsPickup <= _maxErrorsPickup && lastSeenObject != nullptr )
+    {
+      if( _targetBlock != lastSeenObject->GetID() )
+      {
+        robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
+        _targetBlock = lastSeenObject->GetID();
+      }
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail),
+                  &BehaviorOnboardingShowCube::StartSubStatePickUpBlock);
+    }
+    else
+    {
+      // We've either unsuccessfully retried pickup _maxErrorsPickup times or
+      // pickup failed with a non-abort or retry failure. In both cases, something went really wrong.
+      SET_STATE(ErrorFinal,robot);
+    }
+  };
+  
+  auto& helperComp = robot.GetAIComponent().GetBehaviorHelperComponent();
+  
+  auto& factory = helperComp.GetBehaviorHelperFactory();
+  PickupBlockParamaters params;
+  params.allowedToRetryFromDifferentPose = true;
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this, _targetBlock, params);
+  SmartDelegateToHelper(robot, pickupHelper,onPickupSuccess,onPickupFailure);
 }
 
   

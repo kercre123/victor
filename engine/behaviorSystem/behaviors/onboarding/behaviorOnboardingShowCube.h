@@ -62,6 +62,7 @@ private:
   using State = ExternalInterface::OnboardingStateEnum;
   State _state = State::Inactive;
   uint8_t     _numErrors = 0;
+  uint8_t     _numErrorsPickup = 0;
   uint8_t     _timesPickedUpCube = 0;
   ObjectID    _targetBlock;
     
