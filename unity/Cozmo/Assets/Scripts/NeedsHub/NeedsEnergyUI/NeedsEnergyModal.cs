@@ -189,9 +189,7 @@ namespace Cozmo.Energy.UI {
     #region ROBOT CALLBACK HANDLERS
 
     private void HandleBlockConnectivityChanged(int blocksConnected) {
-      bool isFeedCritical = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Bracket == NeedBracketId.Critical;
-      bool isInFeedOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro);
-      if ((blocksConnected == 0) && (isFeedCritical || isInFeedOnboarding)) {
+      if (blocksConnected == 0) {
         _CubeHelpGroup.SetActive(true);
       }
       else {
@@ -280,8 +278,8 @@ namespace Cozmo.Energy.UI {
       }
     }
 
-    private void HandleBehaviorTransition(BehaviorTransition message){
-      if(_WasCozmoOverfed){
+    private void HandleBehaviorTransition(BehaviorTransition message) {
+      if (_WasCozmoOverfed) {
         // Exit feeding so that hiccups can take over
         CloseDialog();
       }
