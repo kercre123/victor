@@ -130,7 +130,7 @@ namespace Cozmo {
           _CountLabel.gameObject.SetActive(true);
         }
         else {
-          DAS.Error(this, string.Format("Missing Count Label for {0}, item id: {1}, count: {2}, animName: {3}",
+          DAS.Error("SparksLabel.SetCountText", string.Format("Missing Count Label for {0}, item id: {1}, count: {2}, animName: {3}",
                           name, _SparkItemId, newCount, _ItemIconBurstAnimStateName));
         }
 
