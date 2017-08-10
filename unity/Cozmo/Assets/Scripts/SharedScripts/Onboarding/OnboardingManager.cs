@@ -254,7 +254,7 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseStarted != null) {
       OnOnboardingPhaseStarted.Invoke(_CurrPhase);
     }
-
+    DAS.Event("onboarding.checkpoint.started", _CurrPhase.ToString());
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
     if (PreloadOnboarding()) {
@@ -285,6 +285,7 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseCompleted != null) {
       OnOnboardingPhaseCompleted.Invoke(_CurrPhase);
     }
+    DAS.Event("onboarding.checkpoint.completed", _CurrPhase.ToString());
     IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
     if (currentRobot == null) {
       return;
