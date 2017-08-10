@@ -316,6 +316,10 @@ namespace Cozmo.Repair.UI {
       }
       HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
       _OpeningTweenComplete = true;
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.SetDefaultHeadAndLiftState(true, robot.GetHeadAngleFactor(), 0.0f);
+      }
     }
 
     private void Update() {
@@ -356,6 +360,7 @@ namespace Cozmo.Repair.UI {
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
         robot.CancelAction(RobotActionType.PLAY_ANIMATION);
         PlayGetOutAnim(_LastBracket);
         robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
@@ -976,11 +981,7 @@ namespace Cozmo.Repair.UI {
       RobotOffTreadsStateChanged offTreadsState = messageObject as RobotOffTreadsStateChanged;
       _RobotOffTreadsState = offTreadsState.treadsState;
       if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
-        var robot = RobotEngineManager.Instance.CurrentRobot;
-        if (robot != null) {
-          robot.TryResetHeadAndLift(null);
-        }
-        if (_InterruptedAlert != null) {
+        if(_InterruptedAlert != null) {
           CloseInterruptionAlert();
         }
       }
