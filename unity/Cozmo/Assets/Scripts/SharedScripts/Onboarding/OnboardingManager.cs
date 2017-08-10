@@ -148,6 +148,10 @@ public class OnboardingManager : MonoBehaviour {
   public bool IsOnboardingRequired(OnboardingPhases phase) {
     return GetCurrStageInPhase(phase) < GetMaxStageInPhase(phase);
   }
+  public bool IsAnyOnboardingRequired() {
+    //Test is the final stage has been finished
+    return IsOnboardingRequired(OnboardingPhases.PlayIntro);
+  }
   public bool IsAnyOnboardingActive() {
     return _CurrPhase != OnboardingPhases.None;
   }
