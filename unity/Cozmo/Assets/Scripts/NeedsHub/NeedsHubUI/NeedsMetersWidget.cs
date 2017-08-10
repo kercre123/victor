@@ -135,7 +135,8 @@ namespace Cozmo.Needs.UI {
       }
     }
 
-    private void PlayMeterMoveSound(float oldVal, float newVal) {
+    //Returns true if it plays the sound, false if not because values are similar.
+    private bool PlayMeterMoveSound(float oldVal, float newVal) {
       bool isConnectedToRobot = (RobotEngineManager.Instance.CurrentRobot != null);
       if (newVal - oldVal > float.Epsilon) {
         if (isConnectedToRobot) {
@@ -153,6 +154,11 @@ namespace Cozmo.Needs.UI {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Down);
         }
       }
+      else {
+        //Difference in values too small, not playing sound.
+        return false;
+      }
+      return true;
     }
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
@@ -242,27 +248,28 @@ namespace Cozmo.Needs.UI {
       }
       float oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Repair).Value;
       float newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Repair).Value;
-      PlayMeterMoveSound(oldValue, newValue);
+      bool isPlayingSound = PlayMeterMoveSound(oldValue, newValue);
       _RepairMeter.SetTargetAndAnimate(newValue);
       float staggerTime = isOnboarding ? _InitialFillOnboardingStaggerTime : _InitialFillStaggerTime;
-      yield return new WaitForSeconds(staggerTime);
-
+      if (isPlayingSound) {
+        yield return new WaitForSeconds(staggerTime);
+      }
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Energy).Value;
       if (isOnboarding) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear_Onboarding);
       }
-      PlayMeterMoveSound(oldValue, newValue);
+      isPlayingSound = PlayMeterMoveSound(oldValue, newValue);
       _EnergyMeter.SetTargetAndAnimate(newValue);
-
-      yield return new WaitForSeconds(staggerTime);
-
+      if (isPlayingSound) {
+        yield return new WaitForSeconds(staggerTime);
+      }
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Play).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Play).Value;
       if (isOnboarding) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear_Onboarding);
       }
-      PlayMeterMoveSound(oldValue, newValue);
+      isPlayingSound = PlayMeterMoveSound(oldValue, newValue);
       _PlayMeter.SetTargetAndAnimate(newValue);
 
       yield return new WaitForSeconds(_InitialFillStaggerTime);
