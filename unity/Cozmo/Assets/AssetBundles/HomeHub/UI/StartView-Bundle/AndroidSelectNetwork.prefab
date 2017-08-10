@@ -150,6 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _InstructionsLabel: {fileID: 114974740370318896}
   _ContinueButton: {fileID: 114625995293330556}
+  _ContinueButtonFadeInTime: 1
   _CancelButton: {fileID: 114397962856670002}
   _NetworkCellPrefab: {fileID: 11491236, guid: 0790c1b5fe41b4674a86ad529e5d4901, type: 2}
   _ScrollViewContent: {fileID: 22487264}
@@ -492,6 +493,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224224167585417592}
   - component: {fileID: 114625995293330556}
+  - component: {fileID: 225768283681460324}
   m_Layer: 5
   m_Name: ContinueButton
   m_TagString: Untagged
@@ -1450,3 +1452,14 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -2.5}
   m_SizeDelta: {x: -80, y: -35}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &225768283681460324
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1849562272999722}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

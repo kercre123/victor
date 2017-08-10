@@ -353,7 +353,11 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     return GetCozmoSSIDs(CallJava<string[]>("getSSIDs"));
   }
   public static string[] GetCozmoSSIDs(string[] allSSIDs) {
+#if UNITY_EDITOR
+    return new string[] { "Cozmo_123456", "Cozmo_234567", "Cozmo_345667" };
+#else
     return allSSIDs.Where(s => s.StartsWith("Cozmo_")).ToArray();
+#endif
   }
 
   public bool Connect(string SSID, string password) {

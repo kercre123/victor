@@ -121,6 +121,8 @@ public class FirstTimeConnectView : BaseView {
     _SoundCheckModalInstance.OnSoundCheckComplete -= HandleSoundCheckComplete;
     _SoundCheckModalInstance.DialogClosed += ShowProfileCreationScreen;
     UIManager.CloseModal(_SoundCheckModalInstance);
+    // our screen will be visible underneath subsequent transitions unless disabled
+    gameObject.SetActive(false);
   }
 
   private void ShowProfileCreationScreen() {
@@ -159,6 +161,12 @@ public class FirstTimeConnectView : BaseView {
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       DataPersistence.DataPersistenceManager.Instance.StartNewSession();
     }
+#if UNITY_EDITOR
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseConnectFlowInMock) {
+      UIManager.OpenModal(_SoundCheckModalPrefab, new ModalPriorityData(), HandleSoundCheckViewCreated);
+      return;
+    }
+#endif
     if (ConnectionFlowComplete != null) {
       ConnectionFlowComplete();
     }

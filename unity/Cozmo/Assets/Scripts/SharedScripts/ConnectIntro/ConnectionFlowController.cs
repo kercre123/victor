@@ -223,13 +223,16 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private bool StartAndroidFlowIfApplicable() {
-    if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.AndroidConnectionFlow)) {
-#if UNITY_ANDROID && !UNITY_EDITOR
-      if (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyOnCozmoWifi()) {
-        ShowSearchForCozmoAndroid();
-        return true;
-      }
+    bool useAndroidFlow = false;
+#if UNITY_ANDROID
+    useAndroidFlow = (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyOnCozmoWifi());
 #endif
+#if UNITY_EDITOR
+    useAndroidFlow = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseAndroidFlowInMock;
+#endif
+    if (useAndroidFlow) {
+      ShowSearchForCozmoAndroid();
+      return true;
     }
     return false;
   }
@@ -344,7 +347,8 @@ public class ConnectionFlowController : MonoBehaviour {
       ShowConnectingToCozmoScreen();
     }
     else {
-      _SearchForCozmoFailedScreenInstance = UIManager.CreateUIElement(_SearchForCozmoFailedScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoFailedScreen>();
+      // spawn detached so it doesn't inherit this screen's alpha (COZMO-13402)
+      _SearchForCozmoFailedScreenInstance = UIManager.CreateUIElement(_SearchForCozmoFailedScreenPrefab.gameObject).GetComponent<SearchForCozmoFailedScreen>();
       _SearchForCozmoFailedScreenInstance.OnEndpointFound += HandleEndpointFound;
       _SearchForCozmoFailedScreenInstance.OnQuitFlow += HandleOnQuitFlowFromFailedSearch;
       _SearchForCozmoFailedScreenInstance.Initialize(_PingStatus);
@@ -665,7 +669,7 @@ public class ConnectionFlowController : MonoBehaviour {
 #endif
     }
   }
-  
+
   public bool ShouldIgnoreRobotDisconnect() {
     // If we're showing the update app view, the user will need to get a new version, so don't do anything when
     // the robot disconnects
@@ -678,7 +682,7 @@ public class ConnectionFlowController : MonoBehaviour {
       // delay.
       return true;
     }
-    
+
     return false;
   }
 
