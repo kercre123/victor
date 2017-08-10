@@ -28,6 +28,9 @@ namespace Cozmo.Energy.UI {
       string alertBodyKey = "";
 
       if (_QuickSnackAvailable) {
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.PlayNeedsGetOutAnimIfNeeded();
+        }
         NeedsStateManager.Instance.RegisterNeedActionCompleted(Anki.Cozmo.NeedsActionId.Feed);
         _QuickSnackAvailable = false;
         _FeedButton.ShowDisabledStateWhenInteractable = !_QuickSnackAvailable;

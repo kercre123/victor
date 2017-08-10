@@ -123,7 +123,7 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
 , _lastStageChangeTime_s(0)
 , _timeFaceSearchShouldEnd_s(FLT_MAX)
 , _eatingComplete(false)
-, _severeAnimsSet(false)
+, _severeBehaviorLocksSet(false)
 , _currIdle(AnimationTrigger::Count)
 , _hasSetIdle(false)
 , _universalResponseChooser(nullptr)
@@ -323,7 +323,7 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 {
-  if(_severeAnimsSet){
+  if(_severeBehaviorLocksSet){
     ClearSevereAnims(robot);
   }
 
@@ -392,10 +392,10 @@ Result ActivityFeeding::Update(Robot& robot)
 {
   // Maintain appropriate music state and disables
   const NeedId currentSevereExpression = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
-  if(!_severeAnimsSet &&
+  if(!_severeBehaviorLocksSet &&
      (currentSevereExpression == NeedId::Energy)){
     SetupSevereAnims(robot);
-  }else if(_severeAnimsSet &&
+  }else if(_severeBehaviorLocksSet &&
            (currentSevereExpression != NeedId::Energy)){
     ClearSevereAnims(robot);
   }
@@ -865,8 +865,8 @@ void ActivityFeeding::SetActivityStage(Robot& robot,
 void ActivityFeeding::SetIdleForCurrentStage(Robot& robot)
 {
   // Set the appropriate idle
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
+  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+  const bool isNeedSevere = (NeedId::Energy == whiteboard.GetSevereNeedExpression());
 
   AnimationTrigger desiredIdle = AnimationTrigger::Count;
 
@@ -971,7 +971,8 @@ void ActivityFeeding::SetupSevereAnims(Robot& robot)
   robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
        BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::SevereEnergy));
   SmartDisableReactionsWithLock(robot, kSevereFeedingDisableLock, kSevereFeedingDisables);
-  _severeAnimsSet = true;
+  _severeBehaviorLocksSet = true;
+  SetIdleForCurrentStage(robot);
 }
 
 
@@ -981,7 +982,8 @@ void ActivityFeeding::ClearSevereAnims(Robot& robot)
   robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
        BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
   SmartRemoveDisableReactionsLock(robot, kSevereFeedingDisableLock);
-  _severeAnimsSet = false;
+  _severeBehaviorLocksSet = false;
+  SetIdleForCurrentStage(robot);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

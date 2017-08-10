@@ -84,7 +84,7 @@ private:
   // Bool that will be set by a behavior listener callback when the behavior has
   bool _eatingComplete;
   
-  bool _severeAnimsSet;
+  bool _severeBehaviorLocksSet;
 
   AnimationTrigger _currIdle;
   bool _hasSetIdle;
