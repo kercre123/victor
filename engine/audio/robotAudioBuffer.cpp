@@ -71,7 +71,7 @@ void RobotAudioBuffer::UpdateBuffer( const AudioEngine::AudioSample* samples, co
   }
   
   // Copy audio samples into frame & push it into the queue
-  AudioEngine::AudioFrameData *audioFrame = new AudioEngine::AudioFrameData( sampleCount );
+  AudioEngine::AudioFrameData *audioFrame = new AudioEngine::AudioFrameData;
   audioFrame->CopySamples( samples, sampleCount );
   _streamQueue.back().PushRobotAudioFrame( audioFrame );
 }

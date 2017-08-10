@@ -490,14 +490,14 @@ RobotInterface::EngineToRobot* StreamingAnimation::CreateRobotMessage(const Audi
     DEV_ASSERT(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
                  "Block size must be less or equal to audioSameple size");
     // Convert audio format to robot format
-    for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
+    for ( size_t idx = 0; idx < audioFrame->samples.size(); ++idx ) {
       keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] );
     }
     
     // Pad the back of the buffer with 0s
     // This should only apply to the last frame
-    if (audioFrame->sampleCount < static_cast<int32_t>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
-      std::fill(keyFrame.sample.begin() + audioFrame->sampleCount, keyFrame.sample.end(), 0);
+    if (audioFrame->samples.size() < static_cast<int32_t>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
+      std::fill(keyFrame.sample.begin() + audioFrame->samples.size(), keyFrame.sample.end(), 0);
     }
     audioMsg = new RobotInterface::EngineToRobot( std::move(keyFrame) );
   }

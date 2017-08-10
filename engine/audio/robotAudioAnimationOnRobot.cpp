@@ -22,6 +22,7 @@
 #include "util/math/numericCast.h"
 #include "util/math/math.h"
 
+#include <cmath>
 
 namespace Anki {
 namespace Cozmo {
@@ -44,6 +45,13 @@ uint8_t encodeMuLaw(float in_val)
     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
   };
+  
+  // protect against the occasional NaN sample
+  if (std::isnan(in_val))
+  {
+    PRINT_NAMED_WARNING("RobotAudioAnimationOnRobot.encodeMuLaw.sampleNaN", "Audio sample from current stream is NaN");
+    return 0;
+  }
   
   // Convert float (-1.0, 1.0) to int16
 
@@ -218,20 +226,19 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
     const AudioEngine::AudioFrameData* audioFrame = _audioBuffer->PopNextAudioFrameData();
     if (nullptr != audioFrame)
     {
-      // TEMP: Convert audio frame into correct robot output, this will be done in the Mixing Console at some point
-      // Create Audio Frame
+      // Convert audio frame into correct robot keyframe type
       AnimKeyFrame::AudioSample keyFrame;
-      DEV_ASSERT(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
+      DEV_ASSERT(audioFrame->samples.size() <= keyFrame.sample.size(),
                  "Block size must be less or equal to audioSample size");
       // Convert audio format to robot format
-      for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
+      for ( size_t idx = 0; idx < audioFrame->samples.size(); ++idx ) {
         keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] );
       }
       
-      // Pad the back of the buffer with 0s
+      // Pad the back of the keyframe with 0s
       // This should only apply to the last frame
-      if (audioFrame->sampleCount < static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE )) {
-        std::fill( keyFrame.sample.begin() + audioFrame->sampleCount, keyFrame.sample.end(), 0 );
+      if (audioFrame->samples.size() < keyFrame.sample.size()) {
+        std::fill( keyFrame.sample.begin() + audioFrame->samples.size(), keyFrame.sample.end(), 0 );
       }
       
       // After adding audio data to robot audio keyframe delete frame
