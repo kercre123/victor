@@ -151,7 +151,7 @@ namespace Cozmo.Repair.UI {
     private float _InactivityTimeOut_sec = 300f;
 
     [SerializeField]
-    private bool _CozmoMovedReactionsInterrupt = false;
+    private bool _CozmoMovedReactionsInterrupt = true;
 
     #endregion //Serialized Fields
 

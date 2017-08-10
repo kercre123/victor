@@ -4400,13 +4400,14 @@ MonoBehaviour:
   _RobotRespondingDimmerPanel: {fileID: 1593348784764202}
   _ContinueButton: {fileID: 114954418950594912}
   _RevealProgressBar: {fileID: 224842083253456264}
+  _PreScanMinTime_sec: 0.25
   _ScanDuration_sec: 3
   _TuneUpIntroTime_sec: 0.5
   _StartRoundTime_sec: 1
   _MismatchDisplayDuration_sec: 2
   _RobotResponseMaxTime_sec: 30
   _InactivityTimeOut_sec: 300
-  _CozmoMovedReactionsInterrupt: 0
+  _CozmoMovedReactionsInterrupt: 1
 --- !u!114 &114418333717953272
 MonoBehaviour:
   m_ObjectHideFlags: 1
