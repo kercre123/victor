@@ -15,11 +15,20 @@ if [ -z ${UNITY_TIMEOUT+x} ]; then
 fi
 
 
+
+if [ $# -eq 0 ]
+  then
+    LANGUAGE=""
+  else
+  	LANGUAGE="/$1"
+fi
+
+
 echo "**********INFO: Installing Scripts and Profile..."
 rm -rf ~/Library/Application\ Support/Anki/Cozmo/*_Results.log
 rm -rf ~/Library/Application\ Support/Anki/Cozmo/SaveData.json
 rm -rf ~/Library/Application\ Support/Anki/Cozmo/SaveData.json.bak
-cp -rf ${ANKI_REPO_ROOT}/project/build-server/automation-scripts/* ~/Library/Application\ Support/Anki/Cozmo/
+cp -rf ${ANKI_REPO_ROOT}/project/build-server/automation-scripts${LANGUAGE}/* ~/Library/Application\ Support/Anki/Cozmo/
 
 
 echo "**********INFO: Running command line SmokeTest..."

@@ -1,0 +1,12 @@
+1.313799:click:energy_need_meter_button:0.1524811
+0.93183:text:Cozmo ist satt!
+0.236093:text:FERTIG
+0.268179:text:Platziere den Cube hier, wo Cozmo ihn sehen kann, sodass er sich selbst füttern kann.
+0.307785:text:3
+0.080639:text:Schüttle den Cube, bis alle Lichter hell leuchten.
+0.191497:text:2
+0.499954:text:Nimm einen blau blinkenden Cube.
+0.184773:text:1
+0.667215:text:Cozmo muss gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt.
+0.903768:text:Cozmo füttern
+0.596282:click:defualt_close_view_button:0.1112061
