@@ -32,7 +32,7 @@
       CozmoAPI.getProjects('window.renderProjects');
 
       // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
-      // _devLoadProjects();
+      //_devLoadProjects();
     });
 
     // register main click handler for the document
@@ -348,19 +348,22 @@
     var projectName = projectElem.getAttribute('data-project-name');
 
 
+    // @NOTE: translation tags for confirm/cancel button strings are intentionally switched.
+    //        the keys should have been chosen based on their content, and not whether they
+    //        were confirms or cancels.
     ModalConfirm.open({
       title: $t('codeLab.projects.confirmDeleteProject.confirmPromptTitle', projectName),
-      confirmButtonLabel: $t('codeLab.projects.confirmDeleteProject.confirmButton.labelText'),
-      cancelButtonLabel: $t('codeLab.projects.confirmDeleteProject.cancelButton.labelText'),
+      confirmButtonLabel: $t('codeLab.projects.confirmDeleteProject.cancelButton.labelText'),
+      cancelButtonLabel: $t('codeLab.projects.confirmDeleteProject.confirmButton.labelText'),
       prompt: $t('codeLab.projects.confirmDeleteProject.confirmPrompt'),
       confirmCallback: function(result) {
         if (result) {
+          window.player.play('click');
+        } else {
           if (window.player) {
             window.player.play('delete');
           }
           CozmoAPI.deleteProject(uuid);
-        } else {
-          window.player.play('click');
         }
       }
     });
