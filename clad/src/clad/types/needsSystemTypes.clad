@@ -250,13 +250,13 @@ union NotificationUnion
 structure LocalNotificationItem
 {
   NotificationUnion notificationMainUnion,
-  Connection       connection,
-  string           textKeys[uint_8],
-  WhenType         whenType,
-  float_32         whenParam,
-  float_32         rangeEarly,
-  float_32         rangeLate,
-  float_32         minimumDuration,
+  Connection        connection,
+  string            textKeys[uint_8],
+  WhenType          whenType,
+  float_32          whenParam,
+  float_32          rangeEarly,
+  float_32          rangeLate,
+  float_32          minimumDuration,
 }
 
 structure LocalNotificationConfig

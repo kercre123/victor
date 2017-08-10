@@ -293,7 +293,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     _faceDistortionComponent->Init(inHandlersJson, _cozmoContext->GetRandom());
   }
 
-  _localNotifications->Init(inLocalNotificationJson);
+  _localNotifications->Init(inLocalNotificationJson, _cozmoContext->GetRandom());
 
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
@@ -1259,7 +1259,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
             // Set the multipliers only once even if we're applying decay to mulitiple needs at
             // once.  This is to make it "fair", as multipliers are set according to need levels
             multipliersSet = true;
-            _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
+            _needsState.GetDecayMultipliers(_needsConfig._decayConnected, multipliers);
           }
           const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
           _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
@@ -1425,6 +1425,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
     SendNeedsLevelsDasEvent("app_unbackground");
 
     SendTimeSinceBackgroundedDasEvent();
+
+    _needsState._timeLastAppUnBackgrounded = system_clock::now();
   }
 }
 
@@ -1524,7 +1526,7 @@ void NeedsManager::ApplyDecayAllNeeds(const bool connected)
   _needsState.SetPrevNeedsBrackets();
 
   NeedsMultipliers multipliers;
-  _needsState.SetDecayMultipliers(config, multipliers);
+  _needsState.GetDecayMultipliers(config, multipliers);
 
   for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
   {
