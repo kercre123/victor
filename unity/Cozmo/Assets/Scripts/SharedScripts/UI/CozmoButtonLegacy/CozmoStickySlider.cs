@@ -52,6 +52,13 @@ namespace Cozmo {
       public void SetToRest() {
         this.value = _RestingSliderValue;
       }
+
+      //Triggers an OnValueChanged event with the current value;
+      public void ForceTrigger() {
+        if (onValueChanged != null) {
+          onValueChanged.Invoke(value);
+        }
+      }
     }
   }
 }

@@ -260,6 +260,9 @@ namespace Cozmo {
 
           // Re-enable input so that players can drive Cozmo again
           EnableInput();
+          //Reset tread movement in case they're holding down the slider
+          _CurrentDriveSpeed_mmps = 0;
+          _DroneModeControlsSlide.ForceSpeedThrottleUpdate();
         }
 
         private void SetSlidersToCurrentPosition() {
