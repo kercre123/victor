@@ -783,6 +783,11 @@ namespace Cozmo.Repair.UI {
         _CalibrateButton.Interactable = false;
         _RobotRespondingDimmerPanel.SetActive(true);
 
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if(robot != null) {
+          robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
+          robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+        }
         PlayRobotCalibrationResponseAnim();
         _RevealProgressBar.gameObject.SetActive(false);
         break;
@@ -956,7 +961,6 @@ namespace Cozmo.Repair.UI {
       }
       else if (!_WaitingForAnimationsToBeRunnable) {
         var robot = RobotEngineManager.Instance.CurrentRobot;
-        robot.CancelAction(RobotActionType.UNKNOWN);
         robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
         _WaitingForAnimationsToBeRunnable = true;
       }
@@ -1157,9 +1161,13 @@ namespace Cozmo.Repair.UI {
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
-        robot.CancelAction(RobotActionType.PLAY_ANIMATION);
-
+        // Ensure that Cozmo is upright before playing calibration response animations
+        if(_RobotOffTreadsState != OffTreadsState.OnTreads) {
+          robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
+          _WaitingForAnimationsToBeRunnable = true;
+          return;
+        }
+          
         //start with intro anims
         NeedsStateManager nsm = NeedsStateManager.Instance;
         bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
