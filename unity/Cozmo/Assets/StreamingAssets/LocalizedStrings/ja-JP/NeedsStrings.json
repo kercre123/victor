@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "needs.NeedsHubView.Button.Activities" : {
-    "translation" : "発見"
+    "translation" : "メニュー"
   },
   "needs.NeedsHubView.Button.Feed" : {
     "translation" : "チャージ"
@@ -37,7 +37,7 @@
     "translation" : "Cozmoは満タンにチャージされました！"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt" : {
-    "translation" : "Cozmoはキューブを認識できないので、チャージできません。"
+    "translation" : "COZMOはキューブを認識できないので、チャージできません。"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt.Button" : {
     "translation" : "キューブの再接続"
@@ -46,7 +46,7 @@
     "translation" : "Cozmoをチューンアップする"
   },
   "needs.NeedsRepairModal.RepairSummary" : {
-    "translation" : "Cozmoを最適で活動的な状態に保つには、チューンアップが必要です。"
+    "translation" : "COZMOを最適で活動的な状態に保つには、チューンアップが必要です。"
   },
   "needs.NeedsRepairModal.HeadDamageNotice" : {
     "translation" : "ヘッドを調整する必要があります"
@@ -58,7 +58,7 @@
     "translation" : "トレッドを調整する必要があります"
   },
   "needs.NeedsRepairModal.TreadsRepairedNotice" : {
-    "translation" : "トレッドを調整しました"
+    "translation" : "タイヤを調整しました"
   },
   "needs.NeedsRepairModal.LiftDamageNotice" : {
     "translation" : "リフトを校正する必要があります"
@@ -76,7 +76,7 @@
     "translation" : "Cozmoは満タンにチューンアップされました！"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "送る"
+    "translation" : "送信"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
     "translation" : "Cozmoをスキャン"
@@ -100,10 +100,10 @@
     "translation" : "完了"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "スパークインベントリがいっぱいです。"
+    "translation" : "エナジースパークインベントリがいっぱいです。"
   },
   "needs.RewardsDialog.SparksEarned" : {
-    "translation" : "さらにスパークを獲得しました！"
+    "translation" : "さらにエナジースパークを獲得しました！"
   },
   "needs.RewardsDialog.TrickUnlocked" : {
     "translation" : "{0}をロック解除しました！"
@@ -112,69 +112,69 @@
     "translation" : "{0}をロック解除しました！"
   },
   "needs.FreeplaySparksReward.CozmoSings" : {
-    "translation" : "Cozmoが歌をうたって {0} スパークを生み出しました！"
+    "translation" : "Cozmoが歌をうたって {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.FistBump" : {
-    "translation" : "Cozmoがグータッチをして {0} スパークを生み出しました！"
+    "translation" : "COZMOがグータッチをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.GatherCubes" : {
-    "translation" : "Cozmoがキューブを集めて {0} スパークを生み出しました！"
+    "translation" : "COZMOがキューブを集めて {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.HiccupsEndBad" : {
-    "translation" : "Cozmoがしゃっくりを治して {0} スパークを生み出しました！"
+    "translation" : "COZMOがしゃっくりを治して {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.HiccupsEndGood" : {
-    "translation" : "Cozmoがしゃっくりを治して {0} スパークを生み出しました！"
+    "translation" : "COZMOがしゃっくりを治して {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.KnockDownCubes" : {
-    "translation" : "Cozmoがキューブに突撃して {0} スパークを生み出しました！"
+    "translation" : "Cozmoがキューブをたおして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PeekAboo" : {
-    "translation" : "Cozmoがいないいないばあをして {0} スパークを生み出しました！"
+    "translation" : "COZMOがいないいないばあをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PickupCube" : {
-    "translation" : "Cozmoがキューブをひろって {0} スパークを生み出しました！"
+    "translation" : "COZMOがキューブをひろって {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
-    "translation" : "Cozmoがウィーリーをして {0} スパークを生み出しました！"
+    "translation" : "COZMOがウィーリーをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.Pounce" : {
-    "translation" : "Cozmoがアタックして {0} スパークを生み出しました！"
+    "translation" : "COZMOがアタックして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PyramidCompleted" : {
-    "translation" : "Cozmoがピラミッド作りをして {0} スパークを生み出しました！"
+    "translation" : "COZMOがピラミッド作りをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.RollACube" : {
-    "translation" : "Cozmoがドリブルして {0} スパークを生み出しました！"
+    "translation" : "Cozmoがころがして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.StackCube" : {
-    "translation" : "Cozmoがキューブを重ねて {0} スパークを生み出しました！"
+    "translation" : "COZMOがキューブを重ねて {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.Workout" : {
-    "translation" : "Cozmoがエクササイズをして {0} スパークを生み出しました！"
+    "translation" : "COZMOがエクササイズをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "キューブガードをプレイするために、Cozmoが{0}スパークくれました！"
+    "translation" : "キューブガードをプレイするために、COZMOが{0}エナジーボールをくれました！"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "キューブガードをプレイするために、Cozmoが{0}スパークくれました！"
+    "translation" : "キューブガードをプレイするために、COZMOが{0}エナジーボールをくれました！"
   },
   "needs.FeedingOverfedHiccups.Title" : {
-    "translation" : "Cozmoはしゃっくりをしました"
+    "translation" : "COZMOはしゃっくりをしました"
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "Cozmoはお腹がいっぱいになり、しゃっくりが出ます！"
+    "translation" : "COZMOはお腹がいっぱいになり、しゃっくりが出ます！"
   },
   "needs.severeAlert.energy.title" : {
-    "translation" : "Cozmoはチャージを必要としています"
+    "translation" : "COZMOはチャージを必要としています"
   },
   "needs.severeAlert.energy.description" : {
-    "translation" : "続けるにはCozmoをチャージしてください。"
+    "translation" : "続けるにはCOZMOをチャージしてください。"
   },
   "needs.severeAlert.repair.title" : {
-    "translation" : "Cozmoはチューンアップを必要としています"
+    "translation" : "COZMOはチューンアップを必要としています"
   },
   "needs.severeAlert.repair.description" : {
-    "translation" : "続けるにはCozmoをチューンアップしてください。"
+    "translation" : "続けるにはCOZMOをチューンアップしてください。"
   }
 }

@@ -106,13 +106,13 @@
     "translation" : "Ziehe und halte hier, um Cozmo vorwärts oder rückwärts fahren zu lassen.\u000aWenn du loslässt, hält Cozmo an."
   },
   "droneMode.text.toggleNightVision" : {
-    "translation" : "Antippen, um die Nachtsichtfunktion ein- oder auszuschalten"
+    "translation" : "Antippen, um die Nachtsichtfunktion ein- oder auszuschalten."
   },
   "droneMode.text.raiseLowerHead" : {
-    "translation" : "Ziehen, um den Kopf oder die Krangabel von Cozmo nach oben oder unten zu bewegen"
+    "translation" : "Ziehen, um den Kopf oder die Krangabel von Cozmo nach oben oder unten zu bewegen."
   },
   "droneMode.text.switchHeadOrLift" : {
-    "translation" : "Antippen, um zwischen der Steuerung des Kopfs und der Krangabel zu wechseln"
+    "translation" : "Antippen, um zwischen der Steuerung des Kopfs und der Krangabel zu wechseln."
   },
   "droneMode.text.cozmoReticleHeader" : {
     "translation" : "Wenn Cozmo ein Objekt auswählt, siehst du es hier."
@@ -163,7 +163,7 @@
     "translation" : "SOLO"
   },
   "memoryMatchGame.label.placeCenter" : {
-    "translation" : "Stelle einen Cube vor Cozmo auf, und platziere jeweils links und rechts von ihm einen weiteren Cube.\u000a\u000aLasse Platz zwischen den Cubes."
+    "translation" : "Stelle einen Cube vor Cozmo auf, und platziere jeweils links und rechts von ihm einen weiteren Cube.\u000a\u000aLass Platz zwischen den Cubes."
   },
   "memoryMatchGame.label.waitingForCubes.placeCenter" : {
     "translation" : "Mittlerer Cube wird gesucht..."
@@ -313,7 +313,7 @@
     "translation" : "Gesperrt!"
   },
   "speedTap.text.MP.Locked" : {
-    "translation" : "Um den 3-Spieler-Modus freizuschalten, musst du \"Mensch gegen Cozmo\" ein Mal in diesem Schwierigkeitsgrad spielen."
+    "translation" : "To unlock 3 player mode, play HUMAN VS. COZMO once on this difficulty."
   },
   "speedTapGame.label.vs" : {
     "translation" : "vs."

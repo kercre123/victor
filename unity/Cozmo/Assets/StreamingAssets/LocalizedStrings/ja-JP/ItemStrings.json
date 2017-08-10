@@ -7,10 +7,10 @@
     "source_key_paths" : ["/{*}"]
   },
   "item.treat.singular" : {
-    "translation" : "スパーク"
+    "translation" : "エナジーボール"
   },
   "item.treat.plural" : {
-    "translation" : "スパーク"
+    "translation" : "エナジーボール"
   },
   "item.cube.singular" : {
     "translation" : "キューブ"

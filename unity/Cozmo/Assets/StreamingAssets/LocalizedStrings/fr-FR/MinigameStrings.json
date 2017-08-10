@@ -103,7 +103,7 @@
     "translation" : "Incline ton appareil pour diriger Cozmo à gauche et à droite."
   },
   "droneMode.text.howToPlaySpeed" : {
-    "translation" : "Fais glisser et maintiens pour déplacer Cozmo vers l'avant ou l'arrière\u000aLâche prise pour arrêter."
+    "translation" : "Fais glisser et maintiens pour déplacer Cozmo vers l'avant ou l'arrière.\u000aRelâche pour l'arrêter."
   },
   "droneMode.text.toggleNightVision" : {
     "translation" : "Appuie pour activer ou désactiver la vision de nuit."
@@ -313,16 +313,16 @@
     "translation" : "Verrouillé !"
   },
   "speedTap.text.MP.Locked" : {
-    "translation" : "Pour débloquer le mode 3 joueurs, joue à Humain contre Cozmo une fois sur ce niveau de difficulté."
+    "translation" : "To unlock 3 player mode, play HUMAN VS. COZMO once on this difficulty."
   },
   "speedTapGame.label.vs" : {
     "translation" : "vs"
   },
   "speedTapGame.mode.HvC" : {
-    "translation" : "Humain contre Cozmo"
+    "translation" : "HUMAN VS. COZMO"
   },
   "speedTapGame.mode.HvHvC" : {
-    "translation" : "Humain contre Humain contre Cozmo"
+    "translation" : "HUMAN VS. HUMAN VS. COZMO"
   },
   "cozmoSays.instructions.label" : {
     "translation" : "Saisis un mot ou une phrase et écoute Cozmo le prononcer :"

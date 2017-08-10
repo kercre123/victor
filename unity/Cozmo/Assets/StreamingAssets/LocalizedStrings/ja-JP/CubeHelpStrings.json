@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "cubeHelpStrings.Instructions.Slide0" : {
-    "translation" : "Cozmoがすべてのキューブを認識できません。キューブをCozmoの近くに置いてください。"
+    "translation" : "COZMOがすべてのキューブを認識できません。キューブをCOZMOの近くに置いてください。"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
     "translation" : "まだ問題がある場合は「<b><color=#d3d3d3>次へ</color></b>」をタップします"
@@ -34,19 +34,25 @@
     "translation" : "カバーがキューブにはまっていることを確認します。これで点灯するはずです！"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
-    "translation" : "Cozmoがお腹を空かせていますか？"
+    "translation" : "COZMOがお腹を空かせていますか？"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
-    "translation" : "Cozmoのキューブに再接続している間に、おやつをあげてください。"
+    "translation" : "COZMOのキューブに再接続している間に、おやつをあげてください。"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
     "translation" : "おやつ"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
-    "translation" : "Cozmoは遊び続けることができます"
+    "translation" : "COZMOは遊び続けることができます。"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
-    "translation" : "Cozmoを十分にチャージするために、キューブを認識できるよう手順に従ってください。"
+    "translation" : "COZMOを十分にチャージするために、キューブを認識できるよう手順に従ってください。"
+  },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title" : {
+    "translation" : ""
+  },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body" : {
+    "translation" : "Cozmoはエネルギーを十分に持っているので、Quick Snackは必要ありません。彼に十分な餌を与え続けるには、指示に従って彼がキューブを認識できるようにしてください。"
   },
   "cubeHelpStrings.Instructions.SlideA2Copy" : {
     "translation" : "それから<b>キューブの更新</b>をタップします。"

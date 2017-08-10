@@ -151,7 +151,7 @@
     "translation" : "#16の答え"
   },
   "codeLabChallenge_LiftCube.questionSlide.primaryText" : {
-    "translation" : "#17：キューブを<span class='purple'>リフティング</span>します。"
+    "translation" : "#17：キューブを<span class='purple'>リフト</span>します。"
   },
   "codeLabChallenge_LiftCube.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
@@ -160,7 +160,7 @@
     "translation" : "#17の答え"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText" : {
-    "translation" : "#18：キューブでエクササイズ：<span class='blue'>キューブに近づいて、</span>キューブを途中まで<span class='purple'>リフティング</span>して降ろすのを3<span class='orange'>回</span>繰り返し、終わったら<span class='purple'>下に置きます。</span>"
+    "translation" : "#18：エクササイズ：<span class='blue'>キューブに近づいて、</span>キューブを途中まで<span class='purple'>リフト</span>して降ろすのを3<span class='orange'>回</span>繰り返し、終わったら<span class='purple'>下に置きます。</span>"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
@@ -268,7 +268,7 @@
     "translation" : "#29の答え"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText" : {
-    "translation" : "#30：キューブを取ってくる: Cozmoの数フィート後ろのキューブから始めます。<span class='yellow'>顔が見えたら、</span>キューブを取ってきて元に戻します。<span class='orange'>無制限に繰り返します。</span>"
+    "translation" : "#30：キューブを取ってくる: COZMOの数フィート後ろのキューブから始めます。<span class='yellow'>顔が見えたら、</span>キューブを取ってきて元に戻します。<span class='orange'>無制限に繰り返します。</span>"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
@@ -277,7 +277,7 @@
     "translation" : "#30の答え"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText" : {
-    "translation" : "#31：キューブを元の場所に戻す：<span class='yellow'>キューブが見えたら、</span>Cozmoを<span class='blue'>後ろを向かせ、</span>キューブをCozmoの数フィート後ろに置いて戻ります。<span class='orange'>無制限に繰り返します。</span>"
+    "translation" : "#31：キューブを元の場所に戻す：<span class='yellow'>キューブが見えたら、</span>COZMOを<span class='blue'>後ろを向かせ、</span>キューブをCOZMOの数フィート後ろに置いて戻ります。<span class='orange'>無制限に繰り返します。</span>"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
@@ -290,6 +290,9 @@
   },
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
+  },
+  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText" : {
+    "translation" : "侵入者"
   },
   "codeLabChallenge_intruder.answerSlide.primaryText" : {
     "translation" : "#32の答え"
@@ -313,7 +316,7 @@
     "translation" : "コードラボのチュートリアル"
   },
   "codeLab.tutorial.slide_letsYouProgramCozmo" : {
-    "translation" : "コードラボではCozmoをプログラムできます。"
+    "translation" : "コードラボではCOZMOをプログラムできます。"
   },
   "codeLab.tutorial.slide_tapBlockToSeeFunction" : {
     "translation" : "コードブロックをタップすると、それが何をするのか確認できます。"
@@ -328,7 +331,7 @@
     "translation" : "必ず緑のフラグのブロックを最初に置きます。\u000a緑のフラグのボタンでプログラムを開始します！"
   },
   "codeLab.projects.modalTitle" : {
-    "translation" : "Cozmoコードラボ"
+    "translation" : "コードラボ"
   },
   "codeLab.projects.tutorialLabel" : {
     "translation" : "チュートリアル"

@@ -7,85 +7,85 @@
     "source_key_paths" : ["/{*}"]
   },
   "behavior.BringCubeToBeacon" : {
-    "translation" : "Cozmoはキューブを集めています..."
+    "translation" : "COZMOはキューブを集めています..."
   },
   "behavior.LookInPlaceMemoryMap" : {
-    "translation" : "Cozmoは周りを探索しています..."
+    "translation" : "COZMOは周りを探索しています..."
   },
   "behavior.ExploreLookAroundInPlace" : {
-    "translation" : "Cozmoは周りを探索しています..."
+    "translation" : "COZMOは周りを探索しています..."
   },
   "behavior.ThinkAboutBeacons" : {
-    "translation" : "Cozmoは周りを探索しています..."
+    "translation" : "COZMOは周りを探索しています..."
   },
   "behavior.VisitInterestingEdge" : {
-    "translation" : "Cozmoは周りを探索しています..."
+    "translation" : "COZMOは周りを探索しています..."
   },
   "behavior.KnockOverCubes" : {
-    "translation" : "Cozmoはキューブの山に突撃しています..."
+    "translation" : "COZMOはキューブの山に突撃しています..."
   },
   "behavior.TrackLaser" : {
-    "translation" : "Cozmoはレーザーを追いかけています..."
+    "translation" : "COZMOはレーザーを追いかけています..."
   },
   "behavior.PopAWheelie" : {
-    "translation" : "Cozmoはウィーリーをしています..."
+    "translation" : "COZMOはウィリーをしています..."
   },
   "behavior.PounceOnMotion" : {
-    "translation" : "Cozmoはあなたの指を狙っています..."
+    "translation" : "COZMOはあなたの指を狙っています..."
   },
   "behavior.FistBump" : {
-    "translation" : "Cozmoはグータッチをしたがっています..."
+    "translation" : "COZMOはグータッチをしたがっています..."
   },
   "behavior.GuardDog" : {
-    "translation" : "Cozmoは自分のキューブを守っています..."
+    "translation" : "COZMOは自分のキューブを守っています..."
   },
   "behavior.RollBlock" : {
-    "translation" : "Cozmoはドリブルしています..."
+    "translation" : "COZMOはドリブルしています..."
   },
   "behavior.StackCube" : {
     "translation" : "Cozmoはキューブの山を作っています..."
   },
   "behavior.LookingForFaces" : {
-    "translation" : "Cozmoは周りを見ています..."
+    "translation" : "COZMOは周りを見ています..."
   },
   "behavior.InteractWithFaces" : {
-    "translation" : "Cozmoは周りを見ています..."
+    "translation" : "COZMOは周りを見ています..."
   },
   "behavior.Bored" : {
-    "translation" : "Cozmoは退屈です..."
+    "translation" : "COZMOは退屈です..."
   },
   "behavior.ReactToCliff" : {
     "translation" : ""
   },
   "behavior.ReactToFrustration" : {
-    "translation" : "Cozmoはご機嫌ななめです..."
+    "translation" : "COZMOはご機嫌ななめです..."
   },
   "behavior.ReactToOnCharger" : {
-    "translation" : "Cozmoは眠そうです..."
+    "translation" : "COZMOは眠そうです..."
   },
   "behavior.ReactToPickup" : {
-    "translation" : "Cozmoは横になりたいです..."
+    "translation" : "COZMOは横になりたいです..."
   },
   "behavior.ReactToOnSide" : {
-    "translation" : "Cozmoはまっすぐ立ちたいです..."
+    "translation" : "COZMOはまっすぐ立ちたいです..."
   },
   "behavior.ReactToPet" : {
-    "translation" : "Cozmoはペットを見ています..."
+    "translation" : "COZMOはペットを見ています..."
   },
   "behavior.ReactToPlacedOnSlope" : {
     "translation" : ""
   },
   "behavior.ReactToShaken" : {
-    "translation" : "Cozmoはめまいがしています..."
+    "translation" : "COZMOはめまいがしています..."
   },
   "behavior.RequestToPlay" : {
-    "translation" : "Cozmoはゲームの準備をしています..."
+    "translation" : "COZMOはゲームの準備をしています..."
   },
   "behavior.AcknowledgeObject" : {
     "translation" : ""
   },
   "behavior.AcknowledgeFace" : {
-    "translation" : "Cozmoは顔を見ています..."
+    "translation" : "COZMOは顔を見ています..."
   },
   "behavior.ReactToOnBack" : {
     "translation" : ""
@@ -100,16 +100,16 @@
     "translation" : ""
   },
   "behavior.DriveOffCharger" : {
-    "translation" : "Cozmoが目覚めます..."
+    "translation" : "COZMOが目覚めます..."
   },
   "behavior.PickupCube" : {
-    "translation" : "Cozmoはキューブを拾っています..."
+    "translation" : "COZMOはキューブを拾っています..."
   },
   "behavior.Workout" : {
-    "translation" : "Cozmoはエクササイズをしています..."
+    "translation" : "COZMOはエクササイズをしています..."
   },
   "behavior.CheckForStackAtInterval" : {
-    "translation" : "Cozmoはキューブの山を探しています..."
+    "translation" : "COZMOはキューブの山を探しています..."
   },
   "behavior.LookForFaceAndCube" : {
     "translation" : " "
@@ -118,115 +118,115 @@
     "translation" : " "
   },
   "behavior.BuildPyramid" : {
-    "translation" : "Cozmoはピラミッドを作っています..."
+    "translation" : "COZMOはピラミッドを作っています..."
   },
   "behavior.PrepareCubes" : {
-    "translation" : "Cozmoはキューブを準備しています..."
+    "translation" : "COZMOはキューブを準備しています..."
   },
   "behavior.PeekAboo" : {
-    "translation" : "Cozmoは、いないいないばあをしたがっています..."
+    "translation" : "COZMOは、いないいないばあをしたがっています..."
   },
   "behavior.LookInPlaceForCube" : {
-    "translation" : "Cozmoはキューブを探しています..."
+    "translation" : "COZMOはキューブを探しています..."
   },
   "behavior.Hiccup" : {
-    "translation" : "Cozmoはしゃっくりをしています..."
+    "translation" : "COZMOはしゃっくりをしています..."
   },
   "button.clearThisSlot" : {
     "translation" : "このスロットをクリア"
   },
   "behavior.singing.Camptown" : {
-    "translation" : "Cozmoは「草競馬」を歌っています..."
+    "translation" : "COZMOは「草競馬」を歌っています..."
   },
   "behavior.singing.ItsyBitsySpider" : {
-    "translation" : "Cozmoは「ちっちゃなクモさん」を歌っています..."
+    "translation" : "COZMOは「ちっちゃなクモさん」を歌っています..."
   },
   "behavior.singing.Beethovens5th" : {
-    "translation" : "Cozmoはベートーベンの「交響曲第5番」を歌っています..."
+    "translation" : "COZMOはベートーベンの「交響曲第5番」を歌っています..."
   },
   "behavior.singing.PopGoesTheWeasel" : {
-    "translation" : "Cozmoは「いいやつみつけた」を歌っています..."
+    "translation" : "COZMOは「いいやつみつけた」を歌っています..."
   },
   "behavior.singing.RowYourBoat" : {
-    "translation" : "Cozmoは「こげこげボート」を歌っています..."
+    "translation" : "COZMOは「こげこげボート」を歌っています..."
   },
   "behavior.singing.PachebelCanon" : {
-    "translation" : "Cozmoはパッヘルベルの「カノン」を歌っています..."
+    "translation" : "COZMOはパッヘルベルの「カノン」を歌っています..."
   },
   "behavior.singing.OdeToJoy" : {
-    "translation" : "Cozmoはベートーベンの「第九交響曲」を歌っています..."
+    "translation" : "COZMOはベートーベンの「第九交響曲」を歌っています..."
   },
   "behavior.singing.TwinkleTwinkle" : {
-    "translation" : "Cozmoは「きらきら星」を歌っています..."
+    "translation" : "COZMOは「きらきら星」を歌っています..."
   },
   "behavior.singing.FrereJacques" : {
-    "translation" : "Cozmoは「フレールジャック」を歌っています..."
+    "translation" : "COZMOは「フレールジャック」を歌っています..."
   },
   "behavior.singing.MaryHadALittleLamb" : {
-    "translation" : "Cozmoは「メリーさんのひつじ」を歌っています..."
+    "translation" : "COZMOは「メリーさんのひつじ」を歌っています..."
   },
   "behavior.singing.TakeMeOutToTheBallgame" : {
-    "translation" : "Cozmoは「私を野球に連れてって」を歌っています..."
+    "translation" : "COZMOは「私を野球に連れてって」を歌っています..."
   },
   "behavior.singing.WilliamTell" : {
-    "translation" : "Cozmoは「ウィリアム・テル序曲」を歌っています..."
+    "translation" : "COZMOは「ウィリアム・テル序曲」を歌っています..."
   },
   "behavior.singing.YankeeDoodle" : {
     "translation" : "Cozmoは「アルプス一万尺」を歌っています..."
   },
   "behavior.singing.BeautifulDreamer" : {
-    "translation" : "Cozmoは「夢路より」を歌っています..."
+    "translation" : "COZMOは「夢路より」を歌っています..."
   },
   "behavior.singing.MountainKing" : {
     "translation" : "Cozmoは「山の魔王の宮殿にて」を歌っています..."
   },
   "behavior.singing.TaRaRaBoom" : {
-    "translation" : "Cozmoは「タララタンタカターン」を歌っています..."
+    "translation" : "COZMOは「タララタンタカターン」を歌っています..."
   },
   "behavior.singing.EntryOfTheGladiators" : {
-    "translation" : "Cozmoは「剣闘士の入場」を歌っています..."
+    "translation" : "COZMOは「剣闘士の入場」を歌っています..."
   },
   "behavior.singing.HelloMyBaby" : {
     "translation" : "Cozmoは「ハローマイベイビー」を歌っています..."
   },
   "behavior.singing.TurkeyInTheStraw" : {
-    "translation" : "Cozmoは「オクラホマミキサー」を歌っています..."
+    "translation" : "COZMOは「オクラホマミキサー」を歌っています..."
   },
   "behavior.Dance" : {
     "translation" : "Cozmoは踊っています..."
   },
   "behavior.singing.LondonBridge" : {
-    "translation" : "Cozmoは「ロンドン橋」を歌っています..."
+    "translation" : "COZMOは「ロンドン橋」を歌っています..."
   },
   "behavior.singing.Sakura" : {
     "translation" : "Cozmoは「さくらさくら」を歌っています..."
   },
   "behavior.singing.MussIDenn" : {
-    "translation" : "Cozmoは「別れ」を歌っています..."
+    "translation" : "COZMOは「別れ」を歌っています..."
   },
   "behavior.VC_Refuse_Energy" : {
-    "translation" : "Cozmoはチャージが必要です..."
+    "translation" : "COZMOはチャージが必要です..."
   },
   "behavior.VC_Refuse_Repair" : {
-    "translation" : "Cozmoはチューンアップが必要です..."
+    "translation" : "COZMOはチューンアップが必要です..."
   },
   "behavior.VC_Refuse_Sparks" : {
-    "translation" : "スパークが足りません..."
+    "translation" : "エナジーボールが足りません..."
   },
   "behavior.VC_HowAreYouDoing_AllGood" : {
-    "translation" : "Cozmoはいい気分です..."
+    "translation" : "COZMOはいい気分です..."
   },
   "behavior.SearchForFace" : {
-    "translation" : "Cozmoは顔を探しています..."
+    "translation" : "COZMOは顔を探しています..."
   },
   "behavior.Needs_MildLowEnergyRequest" : {
-    "translation" : "Cozmoはお腹が空いています..."
+    "translation" : "COZMOはお腹が空いています..."
   },
   "behavior.Needs_MildLowPlayRequest" : {
     "translation" : "Cozmoは退屈していて、遊びたがっています..."
   },
   "behavior.Needs_MildLowRepairRequest" : {
-    "translation" : "Cozmoはチューンアップが必要です..."
+    "translation" : "COZMOはチューンアップが必要です..."
   },
   "behavior.Needs_SevereLowEnergyGetIn" : {
     "translation" : "Cozmoはとてもお腹が空いています。どうしてもエネルギーが必要です！"
@@ -235,22 +235,22 @@
     "translation" : "Cozmoはとてもお腹が空いています。どうしてもエネルギーが必要です！"
   },
   "behavior.Needs_SevereLowPlayGetIn" : {
-    "translation" : "Cozmoはとても退屈していてイライラしています。とても遊びたがっています！"
+    "translation" : "COZMOはとても退屈していてイライラしています。とても遊びたがっています！"
   },
   "behavior.Needs_SevereLowPlayBored" : {
-    "translation" : "Cozmoはとても退屈していてイライラしています。とても遊びたがっています！"
+    "translation" : "COZMOはとても退屈していてイライラしています。とても遊びたがっています！"
   },
   "behavior.Needs_SevereLowPlayRequest" : {
-    "translation" : "Cozmoはとても退屈していてイライラしています。とても遊びたがっています！"
+    "translation" : "COZMOはとても退屈していてイライラしています。とても遊びたがっています！"
   },
   "behavior.Needs_SevereLowRepairGetIn" : {
-    "translation" : "Cozmoは気分がよくありません。どうしてもチューンアップが必要です！"
+    "translation" : "COZMOは気分がよくありません。どうしてもチューンアップが必要です！"
   },
   "behavior.Needs_SevereLowRepairRequest" : {
-    "translation" : "Cozmoは気分がよくありません。どうしてもチューンアップが必要です！"
+    "translation" : "COZMOは気分がよくありません。どうしてもチューンアップが必要です！"
   },
   "behavior.VC_TrackLaser" : {
-    "translation" : "Cozmoはレーザーを探しています"
+    "translation" : "COZMOはレーザーを探しています"
   },
   "button.CONTINUE.caps" : {
     "translation" : "続ける"

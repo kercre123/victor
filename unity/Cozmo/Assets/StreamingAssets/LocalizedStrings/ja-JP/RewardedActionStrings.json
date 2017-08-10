@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "reward.description.Freeplay.Spark" : {
-    "translation" : "アップグレードをスパークする"
+    "translation" : "アップグレードをエナジーボールする"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack" : {
     "translation" : "「キューブを重ねる」の動作が正常に完了"
@@ -25,43 +25,43 @@
     "translation" : "「グータッチ」の動作が正常に完了"
   },
   "reward.description.MemoryMatch.Played.Solo" : {
-    "translation" : "ソロモードで記憶ゲームをプレイしました"
+    "translation" : "ソロモードでメモリーマッチをプレイしました"
   },
   "reward.description.MemoryMatch.Played.Vs" : {
-    "translation" : "対戦モードで記憶ゲームをプレイしました"
+    "translation" : "対戦モードでメモリーマッチをプレイしました"
   },
   "reward.description.MemoryMatch.WinGame.Vs" : {
-    "translation" : "対戦モードで記憶ゲームに勝ちました"
+    "translation" : "対戦モードでメモリーマッチに勝ちました"
   },
   "reward.description.MemoryMatch.Lives.OneLeft" : {
-    "translation" : "最後のライフで、対戦モードで記憶ゲームに勝ちました"
+    "translation" : "最後のライフで、対戦モードでメモリーマッチに勝ちました"
   },
   "reward.description.MemoryMatch.Lives.TwoLeft" : {
-    "translation" : "ライフを2つ残して、対戦モードで記憶ゲームに勝ちました"
+    "translation" : "ライフを2つ残して、対戦モードでメモリーマッチに勝ちました"
   },
   "reward.description.MemoryMatch.Lives.ThreeLeft" : {
-    "translation" : "ライフを１つも失わずに対戦モードで記憶ゲームに勝ちました"
+    "translation" : "ライフを１つも失わずに対戦モードでメモリーマッチに勝ちました"
   },
   "reward.description.MemoryMatch.PatternLength.Five" : {
-    "translation" : "6以上のライトのパターンで記憶ゲームを完了しました。"
+    "translation" : "6以上のライトのパターンでメモリーマッチを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Ten" : {
-    "translation" : "11以上のライトのパターンで記憶ゲームを完了しました。"
+    "translation" : "11以上のライトのパターンでメモリーマッチを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Fifteen" : {
-    "translation" : "16以上のライトのパターンで記憶ゲームを完了しました。"
+    "translation" : "16以上のライトのパターンでメモリーマッチを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
-    "translation" : "21以上のライトのパターンで記憶ゲームを完了しました。"
+    "translation" : "21以上のライトのパターンでメモリーマッチを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
-    "translation" : "26以上のライトのパターンで記憶ゲームを完了しました。"
+    "translation" : "26以上のライトのパターンでメモリーマッチを完了しました。"
   },
   "reward.description.MemoryMatch.PatternLength.Thirty" : {
-    "translation" : "31以上のライトのパターンで記憶ゲームを完了しました。"
+    "translation" : "31以上のライトのパターンでメモリーマッチを完了しました。"
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
-    "translation" : "ソロモードの記憶ゲームでパターンの新記録を達成しました"
+    "translation" : "ソロモードのメモリーマッチでパターンの新記録を達成しました"
   },
   "reward.description.QuickTap.Played" : {
     "translation" : "クイックタップのゲームをプレイしました"
@@ -130,6 +130,6 @@
     "translation" : "連続チェックインのご褒美"
   },
   "reward.description.SkillUp" : {
-    "translation" : "Cozmoの{0}スキルが増えました！"
+    "translation" : "COZMOの{0}スキルが増えました！"
   }
 }
