@@ -17,6 +17,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
+#include "util/fileUtils/fileUtils.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/ankiDefines.h"
@@ -197,15 +198,29 @@ static std::string das_unarchive_function(const std::string& inputFilePath)
 }
 #endif
 
-static void cozmo_configure_das(const std::string& resourcesBasePath, const Anki::Util::Data::DataPlatform* platform)
+static void cozmo_configure_das(const std::string& resourcesBasePath,
+                                const Anki::Util::Data::DataPlatform* platform,
+                                bool dataCollectionEnabled)
 {
 #if USE_DAS
-  std::string dasConfigPath = resourcesBasePath + "/DASConfig.json";
-  std::string dasLogPath = platform->pathToResource(Anki::Util::Data::Scope::Cache, "DASLogs");
-  std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
   DASSetArchiveLogConfig(std::bind(das_archive_function, std::placeholders::_1),
                          std::bind(das_unarchive_function, std::placeholders::_1),
                          kDASArchiveFileExtension);
+  
+  if(dataCollectionEnabled)
+  {
+    DASEnableNetwork(DASDisableNetworkReason_UserOptOut);
+  }
+  else
+  {
+    DASDisableNetwork(DASDisableNetworkReason_UserOptOut);
+  }
+  
+  std::string dasConfigPath = resourcesBasePath + "/DASConfig.json";
+  std::string dasLogPath = platform->pathToResource(Anki::Util::Data::Scope::Cache, "DASLogs");
+  std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
+  
+  // Does the actual init of the system
   DASConfigure(dasConfigPath.c_str(), dasLogPath.c_str(), gameLogPath.c_str());
 #endif
 }
@@ -259,8 +274,9 @@ int cozmo_startup(const char *configuration_data)
   std::string appRunId = config["appRunId"].asCString();
 
   dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
-
-  cozmo_configure_das(resourcesBasePath, dataPlatform);
+  
+  bool dataCollectionEnabled = config["DataCollectionEnabled"].asBool();
+  cozmo_configure_das(resourcesBasePath, dataPlatform, dataCollectionEnabled);
 
   // Initialize logging
   #if ANKI_DEV_CHEATS
