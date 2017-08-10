@@ -221,6 +221,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _deviceNeedsVersionUpdate(false)
 , _previousRobotSerialNumber(0)
 , _robotOnboardingStageCompleted(0)
+, _connectionOccurredThisAppRun(false)
 , _isPausedOverall(false)
 , _timeWhenPausedOverall_s(0.0f)
 , _isDecayPausedForNeed()
@@ -294,6 +295,8 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
   }
 
   _localNotifications->Init(inLocalNotificationJson, _cozmoContext->GetRandom());
+
+  _connectionOccurredThisAppRun = false;
 
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
@@ -393,6 +396,8 @@ void NeedsManager::InitInternal(const float currentTime_s)
 void NeedsManager::InitAfterConnection()
 {
   _robot = _cozmoContext->GetRobotManager()->GetFirstRobot();
+
+  _connectionOccurredThisAppRun = true;
 }
 
 

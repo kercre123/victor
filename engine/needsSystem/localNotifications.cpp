@@ -24,6 +24,7 @@ static const std::string kLocalNotificationConfigsKey = "localNotificationConfig
 using namespace std::chrono;
 
 
+
 LocalNotifications::LocalNotifications(NeedsManager& needsManager)
 : _needsManager(needsManager)
 , _localNotificationConfig()
@@ -60,6 +61,8 @@ void LocalNotifications::CancelAll()
 
 void LocalNotifications::Generate()
 {
+  using namespace std::chrono;
+
   CancelAll();
 
   const auto& needsState = _needsManager.GetCurNeedsState();
@@ -69,9 +72,10 @@ void LocalNotifications::Generate()
   needsState.GetDecayMultipliers(needsConfig._decayUnconnected, multipliers);
 
   const Time now = system_clock::now();
+  static const float secondsPerMinute = 60.0f;
   const float timeSinceAppOpen_m = (duration_cast<seconds>(now -
                                     needsState._timeLastAppUnBackgrounded).count()) /
-                                    60.0f;
+                                    secondsPerMinute;
 
   for (const auto& config : _localNotificationConfig.items)
   {
@@ -80,10 +84,23 @@ void LocalNotifications::Generate()
       const float duration_m = DetermineTimeToNotify(config, multipliers,
                                                      timeSinceAppOpen_m, now);
 
+      // Pick random string key among variants
+      const int textKeyIndex = _rng->RandInt(static_cast<int>(config.textKeys.size()));
+
+      // Show pertinent info in the log
+      const float duration_h = duration_m / secondsPerMinute;
+      const float duration_d = duration_h / 24.0f;
+      const int secondsInFuture = static_cast<int>(duration_m * secondsPerMinute);
+      const Time futureDateTime = now + seconds(secondsInFuture);
+      const std::time_t futureTimeT = system_clock::to_time_t(futureDateTime);
+      const size_t bufLen = 255;
+      char whenStringBuf[bufLen];
+      strftime(whenStringBuf, bufLen, "%a %F %T", localtime(&futureTimeT));
       PRINT_CH_INFO(NeedsManager::kLogChannelName,
                     "LocalNotifications.Generate",
-                    "Registering: %10.1f minutes; key: \"%s\"",
-                    duration_m, config.textKeys[0].c_str());
+                    "From now:%8.1f minutes (%6.1f hours, or%7.2f days); at %s; key: \"%s\"",
+                    duration_m, duration_h, duration_d, whenStringBuf,
+                    config.textKeys[textKeyIndex].c_str());
 
       // TODO:  Send ETG message that Scott's wrapper will handle, to register this notification with OS
     }
@@ -93,9 +110,15 @@ void LocalNotifications::Generate()
 
 bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config) const
 {
-  bool shouldBeRegistered = true;
+  // Filter on connection
+  const bool didConnect =_needsManager.GetConnectionOccurredThisAppRun();
+  if (((config.connection == Connection::DidConnect)    && !didConnect) ||
+      ((config.connection == Connection::DidNotConnect) &&  didConnect))
+  {
+    return false;
+  }
 
-  // TODO:  Filter on Connection
+  bool shouldBeRegistered = true;
 
   switch (config.notificationMainUnion.GetTag())
   {
@@ -138,9 +161,10 @@ bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config)
     case NotificationUnionTag::notificationDailyTokensToGo:
     {
       const NeedsState state = _needsManager.GetCurNeedsState();
-      const int tokensToGo = state._numStarsForNextUnlock - state._numStarsAwarded;
-      const auto& needTokensToGoConfig = config.notificationMainUnion.Get_notificationDailyTokensToGo();
-      if (tokensToGo != needTokensToGoConfig.numTokensToGo)
+      // Note that stars are now called tokens (externally, including in the data pipeline)
+      const int starsToGo = state._numStarsForNextUnlock - state._numStarsAwarded;
+      const auto& starsToGoConfig = config.notificationMainUnion.Get_notificationDailyTokensToGo();
+      if (starsToGo != starsToGoConfig.numTokensToGo)
       {
         shouldBeRegistered = false;
       }
@@ -218,9 +242,7 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
   }
   
   // Allow for a random uniform distribution if desired
-  const float range = config.rangeEarly + config.rangeLate;
-  const float randDist = _rng->RandDbl(range) - config.rangeEarly;
-  minutesInFuture += randDist;
+  minutesInFuture += static_cast<float>(_rng->RandDblInRange(-config.rangeEarly, config.rangeLate));
 
   // Enforce minimum duration
   if (minutesInFuture < config.minimumDuration)
@@ -274,6 +296,7 @@ float LocalNotifications::CalculateMinutesInFuture(const LocalNotificationItem& 
     case WhenType::ClockTime:
     {
       // First, create a Time for today, at the config's clock time:
+      using namespace std::chrono;
       const std::time_t nowTimeT = system_clock::to_time_t(now);
       std::tm targetLocalTime;
       localtime_r(&nowTimeT, &targetLocalTime);
