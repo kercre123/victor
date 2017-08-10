@@ -574,6 +574,7 @@ namespace Cozmo {
       if(nullptr != audioMsg)
       {
         rawAudio_out = std::move(audioMsg->Get_animAudioSample());
+        delete audioMsg;
         haveAudio = true;
 
         if(DEBUG_ANIMATION_STREAMING_AUDIO)
