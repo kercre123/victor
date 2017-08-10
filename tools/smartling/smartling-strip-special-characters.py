@@ -7,25 +7,24 @@ import sys
 import textwrap
 
 #set up default logger
-Logger = logging.getLogger('polly.synthesizeSpeech')
+Logger = logging.getLogger('smartling.strip-special-characters')
 stdout_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(name)s - %(message)s')
 stdout_handler.setFormatter(formatter)
 Logger.addHandler(stdout_handler)
 
 
-def strip_zero_width_spaces(args):
+def strip_special_characters(args):
   for root, dirs, files in os.walk(args.localized_strings_dir):
-    for dir in dirs:
-      if dir == 'ja-JP':
-        for file in files:
-          if file.endswith('.json'):
-            with open(os.path.join(root, os.path.basename(file)), "r+", encoding='utf8') as inoutfile:
-              lines = [line.replace(u'\u200b', '') for line in inoutfile]   # ZERO-WIDTH SPACE
-              lines = [line.replace(u'\u00A0', '') for line in lines]       # NO-BREAK SPACE
-              inoutfile.seek(0)
-              inoutfile.truncate()
-              inoutfile.writelines(lines)
+    if 'ja-JP' in root:
+      for file in files:
+        if file.endswith('.json'):
+          with open(os.path.join(root, os.path.basename(file)), "r+", encoding='utf8') as inoutfile:
+            lines = [line.replace(u'\u200b', '') for line in inoutfile]   # ZERO-WIDTH SPACE
+            lines = [line.replace(u'\u00A0', '') for line in lines]       # NO-BREAK SPACE
+            inoutfile.seek(0)
+            inoutfile.truncate()
+            inoutfile.writelines(lines)
 
 ####################################
 ############### MAIN ###############
@@ -35,7 +34,7 @@ def parse_args(argv=[], print_usage=False):
 
   parser = argparse.ArgumentParser(
   formatter_class=argparse.RawDescriptionHelpFormatter,
-  description='Strips zero width space characters from Smartling files.',
+  description='Strips special characters from Smartling files.',
   epilog=textwrap.dedent('''
     options description:
       [localized strings directory]
@@ -56,7 +55,7 @@ def parse_args(argv=[], print_usage=False):
 
 
 def run(args):
-  return strip_zero_width_spaces(args)
+  return strip_special_characters(args)
 
 
 if __name__ == '__main__':
