@@ -5,6 +5,7 @@ using Cozmo.RequestGame;
 using Cozmo.UI;
 using DataPersistence;
 using UnityEngine;
+using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparksDetailModal : BaseModal {
@@ -224,6 +225,11 @@ namespace Cozmo.Needs.Sparks.UI {
       if (isEngineDriven) {
         PlaySparkedSounds();
         // Button state already updated by InitializeButtonState above
+
+        // If engine started pyramid we may have missed the pyramid pre-req information, so ask that
+        // it be re-sent
+        RobotEngineManager.Instance.Message.RequestPyramidPreReqState = Singleton<RequestPyramidPreReqState>.Instance;
+        RobotEngineManager.Instance.SendMessage();
 
         if (OnSparkTrickStarted != null) {
           OnSparkTrickStarted();
