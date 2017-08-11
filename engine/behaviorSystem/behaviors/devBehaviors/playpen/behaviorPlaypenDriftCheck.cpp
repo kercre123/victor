@@ -21,12 +21,6 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace {
-static const f32 kHeadAngleToPlaySound = DEG_TO_RAD(2.f);
-static const u32 kIMUDriftDetectPeriod_ms = 2000;
-static const f32 kIMUDriftAngleThreshDeg = 0.2f;
-}
-
 BehaviorPlaypenDriftCheck::BehaviorPlaypenDriftCheck(Robot& robot, const Json::Value& config)
 : IBehaviorPlaypen(robot, config)
 {
@@ -42,7 +36,8 @@ Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 {
   // Move head and lift to extremes then move to sound playing angle
   MoveHeadToAngleAction* moveHeadUp = new MoveHeadToAngleAction(robot, MAX_HEAD_ANGLE);
-  MoveHeadToAngleAction* moveHeadToSoundAngle = new MoveHeadToAngleAction(robot, kHeadAngleToPlaySound);
+  MoveHeadToAngleAction* moveHeadToSoundAngle = new MoveHeadToAngleAction(robot,
+                                                                          PlaypenConfig::kHeadAngleToPlaySound);
   MoveLiftToHeightAction* moveLiftUp = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY);
   
   CompoundActionSequential* headUpDown = new CompoundActionSequential(robot, {moveHeadUp, moveHeadToSoundAngle});
@@ -57,7 +52,7 @@ void BehaviorPlaypenDriftCheck::TransitionToPlayingSound(Robot& robot)
 {
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
-  AddTimer(kIMUDriftDetectPeriod_ms, [this, &robot](){ CheckDrift(robot); });
+  AddTimer(PlaypenConfig::kIMUDriftDetectPeriod_ms, [this, &robot](){ CheckDrift(robot); });
   
   // TODO: Don't play sound while checking drift because of speaker to IMU coupling????
   PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
@@ -70,17 +65,18 @@ void BehaviorPlaypenDriftCheck::CheckDrift(Robot& robot)
   
   // Write drift rate to robot
   IMUInfo imuInfo;
-  imuInfo.driftRate_degPerSec = angleChange / (kIMUDriftDetectPeriod_ms / 1000.f);
-  WriteToStorage(robot, NVStorage::NVEntryTag::NVEntry_IMUInfo, (u8*)&imuInfo, sizeof(imuInfo));
+  imuInfo.driftRate_degPerSec = angleChange / (PlaypenConfig::kIMUDriftDetectPeriod_ms / 1000.f);
+  WriteToStorage(robot, NVStorage::NVEntryTag::NVEntry_IMUInfo, (u8*)&imuInfo, sizeof(imuInfo),
+                 FactoryTestResultCode::IMU_INFO_WRITE_FAILED);
   
   // Write drift rate to log
   PLAYPEN_TRY(GetLogger().Append(imuInfo), FactoryTestResultCode::WRITE_TO_LOG_FAILED);
   
-  if(angleChange > kIMUDriftAngleThreshDeg)
+  if(angleChange > PlaypenConfig::kIMUDriftAngleThreshDeg)
   {
     PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
                         "Angle change of %f deg detected in %f seconds",
-                        angleChange, (kIMUDriftDetectPeriod_ms / 1000.f));
+                        angleChange, (PlaypenConfig::kIMUDriftDetectPeriod_ms / 1000.f));
     PLAYPEN_SET_RESULT(FactoryTestResultCode::IMU_DRIFTING);
   }
   

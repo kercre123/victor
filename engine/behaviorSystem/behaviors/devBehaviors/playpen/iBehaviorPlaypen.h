@@ -15,6 +15,8 @@
 
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/playpenConfig.h"
+
 #include "anki/common/basestation/utils/timer.h"
 
 namespace Anki {
@@ -83,7 +85,8 @@ protected:
   virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) { }
   
   FactoryTestLogger& GetLogger() { return *_factoryTestLogger; }
-  void WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,const u8* data, size_t size);
+  void WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,const u8* data, size_t size,
+                      FactoryTestResultCode failureCode);
   
   // Use the macro PLAYPEN_SET_RESULT if you can instead of directly calling this function
   void SetResult(FactoryTestResultCode result) { _result = result; _timers.clear(); }

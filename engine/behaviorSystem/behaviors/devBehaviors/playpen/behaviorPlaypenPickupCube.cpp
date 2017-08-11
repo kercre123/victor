@@ -32,11 +32,6 @@ static const RotationAmbiguities kBlockRotationAmbiguities(true, {
   RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
   RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
 });
-static const f32 kExpectedCubePoseDistThresh_mm = 30;
-static const f32 kExpectedCubePoseHeightThresh_mm = 10;
-static const f32 kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
-
-static const f32 kMaxRobotAngleChangeDuringBackup_rad = DEG_TO_RAD(10.f);
 }
 
 BehaviorPlaypenPickupCube::BehaviorPlaypenPickupCube(Robot& robot, const Json::Value& config)
@@ -83,19 +78,24 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
   PoseData poseData = ConvertToPoseData(cubePose);
   
   // Store to robot
-  WriteToStorage(robot, NVStorage::NVEntryTag::NVEntry_ObservedCubePose, (u8*)&poseData, sizeof(poseData));
+  WriteToStorage(robot, NVStorage::NVEntryTag::NVEntry_ObservedCubePose, (u8*)&poseData, sizeof(poseData),
+                 FactoryTestResultCode::CUBE_POSE_WRITE_FAILED);
   
   // Write pose data to log on device
-  GetLogger().AppendObservedCubePose(poseData);
+  if(!GetLogger().AppendObservedCubePose(poseData))
+  {
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED,
+                                       RESULT_FAIL);
+  }
   
   // Verify that block is approximately where expected
   Vec3f Tdiff;
   Radians angleDiff;
   if (!object->GetPose().IsSameAs_WithAmbiguity(_expectedCubePose,
-                                                 kBlockRotationAmbiguities,
-                                                 kExpectedCubePoseDistThresh_mm,
-                                                 kExpectedCubePoseAngleThresh_rad,
-                                                 Tdiff, angleDiff))
+                                                kBlockRotationAmbiguities,
+                                                PlaypenConfig::kExpectedCubePoseDistThresh_mm,
+                                                PlaypenConfig::kExpectedCubePoseAngleThresh_rad,
+                                                Tdiff, angleDiff))
   {
     PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
                         "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f; tdiff: %f %f %f; angleDiff (deg): %f",
@@ -112,7 +112,7 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
   }
   
   const f32 kObservedCubePoseHeightDiff_mm = object->GetPose().GetTranslation().z() - (0.5f*object->GetSize().z());
-  if(std::fabsf(kObservedCubePoseHeightDiff_mm) > kExpectedCubePoseHeightThresh_mm)
+  if(std::fabsf(kObservedCubePoseHeightDiff_mm) >PlaypenConfig:: kExpectedCubePoseHeightThresh_mm)
   {
     const f32 kObservedCubePoseHeight_mm = object->GetPose().GetTranslation().z();
     
@@ -159,7 +159,7 @@ void BehaviorPlaypenPickupCube::TransitionToPlaceCube(Robot& robot)
   PRINT_NAMED_INFO("BehaviorFactoryTest.Update.AngleChangeDuringBackup",
                    "%f deg", RAD_TO_DEG(angleChange_rad));
   
-  if (angleChange_rad > kMaxRobotAngleChangeDuringBackup_rad)
+  if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)
   {
     PLAYPEN_SET_RESULT(FactoryTestResultCode::BACKUP_NOT_STRAIGHT);
   }
@@ -191,7 +191,7 @@ void BehaviorPlaypenPickupCube::TransitionToBackup(Robot& robot)
     PRINT_NAMED_INFO("BehaviorFactoryTest.Update.AngleChangeDuringBackAndForth",
                      "%f deg", RAD_TO_DEG(angleChange_rad));
     
-    if (angleChange_rad > kMaxRobotAngleChangeDuringBackup_rad)
+    if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)
     {
       PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_AND_FORTH_NOT_STRAIGHT);
     }

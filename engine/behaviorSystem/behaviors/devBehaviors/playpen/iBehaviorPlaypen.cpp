@@ -17,8 +17,6 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
-#include "util/console/consoleInterface.h"
-
 namespace Anki {
 namespace Cozmo {
 
@@ -34,10 +32,6 @@ static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = 
   ExternalInterface::MessageEngineToGameTag::UnexpectedMovement
 };
 }
-
-CONSOLE_VAR(bool, kIgnoreFailures,    "Playpen", true);
-CONSOLE_VAR(bool, kWriteToStorage,    "Playpen", false);
-CONSOLE_VAR(f32,  kDefaultTimeout_ms, "Playpen", 20000);
  
 IBehaviorPlaypen::IBehaviorPlaypen(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -55,7 +49,7 @@ bool IBehaviorPlaypen::IsRunnableInternal(const BehaviorPreReqPlaypen& preReq) c
 
 Result IBehaviorPlaypen::InitInternal(Robot& robot)
 {
-  AddTimer(kDefaultTimeout_ms, [this](){
+  AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
     if(!ShouldIgnoreFailures())
     {
       SetResult(FactoryTestResultCode::TEST_TIMED_OUT);
@@ -219,12 +213,13 @@ bool IBehaviorPlaypen::StartActing(IActionRunner* action, ActionResultCallback c
   return IBehavior::StartActing(action, callbackWrapper);
 }
 
-void IBehaviorPlaypen::WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,const u8* data, size_t size)
+void IBehaviorPlaypen::WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,const u8* data, size_t size,
+                                      FactoryTestResultCode failureCode)
 {
-  if(kWriteToStorage)
+  if(PlaypenConfig::kWriteToStorage)
   {
     PLAYPEN_TRY(robot.GetNVStorageComponent().Write(tag, data, size),
-                FactoryTestResultCode::NVSTORAGE_WRITE_FAILED);
+                failureCode);
   }
   else
   {
@@ -233,7 +228,7 @@ void IBehaviorPlaypen::WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,co
 }
   
 bool IBehaviorPlaypen::ShouldIgnoreFailures() const {
-  return kIgnoreFailures;
+  return PlaypenConfig::kIgnoreFailures;
 }
   
 }

@@ -3390,20 +3390,32 @@ namespace Cozmo {
     
     //  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
 #ifdef COZMO_V2
+#ifdef SIMULATOR
     cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
                                   507, 0, 639,
                                   0, 507, 359,
                                   0, 0, 1);
+    
+    cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(8,1) << -0.07f, -0.2f, 0.001f, 0.001f, 0.1f,
+                                                0.f, 0.f, 0.f);
+#else
+    cv::Mat_<f64> cameraMatrix = (cv::Mat_<double>(3,3) <<
+                           362, 0, 303,
+                           0, 364, 196,
+                           0, 0, 1);
+    
+    cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(8,1) << -0.1, -0.1, 0.00005, -0.0001, 0.05, 0, 0, 0);
+#endif
 #else
     cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
                                   290, 0, 160,
                                   0, 290, 120,
                                   0, 0, 1);
+    
+    cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
 #endif
     
     std::vector<cv::Vec3d> rvecs, tvecs;
-    cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
-    
     std::vector<std::vector<cv::Vec2f>> imgPts2;
     std::vector<std::vector<cv::Vec3f>> worldPts2;
     imgPts2.push_back(imgPts);

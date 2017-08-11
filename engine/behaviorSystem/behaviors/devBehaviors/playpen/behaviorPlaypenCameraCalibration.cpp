@@ -32,14 +32,16 @@ static const Vision::CameraCalibration kApproxCalib(720, 1280,
                                                     507, 507,
                                                     639, 359,
                                                     0.f,
-                                                    std::vector<f32>({-0.02f, -0.01f, 0.005f, 0.0025f, -0.005f}));
+                                                    std::vector<f32>({-0.07f, -0.2f, 0.001f, 0.001f, 0.1f,
+                                                                      0.f, 0.f, 0.f}));
 #else
 // V2 Physical camera calibration
-static const Vision::CameraCalibration kApproxCalib(720, 1280,
-                                                    507, 507,
-                                                    639, 359,
+static const Vision::CameraCalibration kApproxCalib(360, 640,
+                                                    362, 364,
+                                                    303, 196,
                                                     0.f,
-                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f}));
+                                                    std::vector<f32>({-0.1, -0.1, 0.00005, -0.0001, 0.05,
+                                                                      0.f, 0.f, 0.f}));
 #endif
 #else
 // 1.5/1.0 Physical camera calibration
@@ -47,20 +49,9 @@ static const Vision::CameraCalibration kApproxCalib(240, 320,
                                                     290, 290,
                                                     160, 120,
                                                     0.f,
-                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f}));
+                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f,
+                                                                      0.f, 0.f, 0.f}));
 #endif
-
-static const u32 kFocalLengthTolerance              = 30;
-static const u32 kCenterTolerance                   = 30;
-static const f32 kRadialDistortionTolerance         = 0.05f;
-static const f32 kTangentialDistortionTolerance     = 0.05f;
-static const f32 kHeadAngleToSeeTarget              = MAX_HEAD_ANGLE;
-static const u32 kTimeoutWaitingForTarget_ms        = 10000;
-static const u32 kTimeoutForComputingCalibration_ms = 2000;
-
-static const CustomObjectMarker kMarkerToTriggerCalibration = CustomObjectMarker::Triangles2;
-static const f32 kCalibMarkerSize_mm = 15;
-static const f32 kCalibMarkerCubeSize_mm = 30;
 }
 
 BehaviorPlaypenCameraCalibration::BehaviorPlaypenCameraCalibration(Robot& robot, const Json::Value& config)
@@ -80,9 +71,10 @@ Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
   // Define a custom object with marker Diamonds3 so we can know when we are seeing the
   // calibration target via a RobotObservedObject message
   CustomObject* customCube = CustomObject::CreateCube(ObjectType::CustomType00,
-                                                      kMarkerToTriggerCalibration,
-                                                      kCalibMarkerCubeSize_mm,
-                                                      kCalibMarkerSize_mm, kCalibMarkerSize_mm,
+                                                      PlaypenConfig::kMarkerToTriggerCalibration,
+                                                      PlaypenConfig::kCalibMarkerCubeSize_mm,
+                                                      PlaypenConfig::kCalibMarkerSize_mm,
+                                                      PlaypenConfig::kCalibMarkerSize_mm,
                                                       true);
   robot.GetBlockWorld().DefineObject(std::unique_ptr<CustomObject>(customCube));
 
@@ -96,11 +88,11 @@ Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
   
   robot.GetVisionComponent().ClearCalibrationImages();
   
-  CompoundActionParallel* action = new CompoundActionParallel(robot, {new MoveHeadToAngleAction(robot, kHeadAngleToSeeTarget),
+  CompoundActionParallel* action = new CompoundActionParallel(robot, {new MoveHeadToAngleAction(robot, PlaypenConfig::kHeadAngleToSeeTarget),
                                                                       new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK)});
   
   StartActing(action, [this]() {
-    AddTimer(kTimeoutWaitingForTarget_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::NOT_SEEING_CALIB_TARGET_TIMEOUT); });
+    AddTimer(PlaypenConfig::kTimeoutWaitingForTarget_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::NOT_SEEING_CALIB_TARGET_TIMEOUT); });
   });
   
   return RESULT_OK;
@@ -124,7 +116,7 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(Robot& r
     {
       robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
       _computingCalibration = true;
-      AddTimer(kTimeoutForComputingCalibration_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_TIMED_OUT); });
+      AddTimer(PlaypenConfig::kTimeoutForComputingCalibration_ms, [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATION_TIMED_OUT); });
     }
   }
   
@@ -178,8 +170,8 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
   // Write camera calibration to robot
   u8 buf[calibMsg.Size()];
   size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
-  PLAYPEN_TRY(robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes),
-              FactoryTestResultCode::NVSTORAGE_WRITE_FAILED);
+  WriteToStorage(robot, NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes,
+                 FactoryTestResultCode::CAMERA_CALIB_WRITE_FAILED);
   
   
   // Get calibration image data
@@ -201,25 +193,25 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
               FactoryTestResultCode::WRITE_TO_LOG_FAILED);
   
   // Write calibration image to robot
-  PLAYPEN_TRY(robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibImage1,
-                                                  rawJpegData.begin()->data(),
-                                                  rawJpegData.begin()->size()),
-              FactoryTestResultCode::NVSTORAGE_WRITE_FAILED);
+  WriteToStorage(robot, NVStorage::NVEntryTag::NVEntry_CalibImage1,
+                 rawJpegData.begin()->data(),
+                 rawJpegData.begin()->size(),
+                 FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED);
   
   // Check if calibration values are sane
   #define CHECK_OOR(value, min, max) (value < min || value > max)
   if (CHECK_OOR(calibMsg.focalLength_x,
-                kApproxCalib.GetFocalLength_x() - kFocalLengthTolerance,
-                kApproxCalib.GetFocalLength_x() + kFocalLengthTolerance) ||
+                kApproxCalib.GetFocalLength_x() - PlaypenConfig::kFocalLengthTolerance,
+                kApproxCalib.GetFocalLength_x() + PlaypenConfig::kFocalLengthTolerance) ||
       CHECK_OOR(calibMsg.focalLength_y,
-                kApproxCalib.GetFocalLength_y() - kFocalLengthTolerance,
-                kApproxCalib.GetFocalLength_y() + kFocalLengthTolerance) ||
+                kApproxCalib.GetFocalLength_y() - PlaypenConfig::kFocalLengthTolerance,
+                kApproxCalib.GetFocalLength_y() + PlaypenConfig::kFocalLengthTolerance) ||
       CHECK_OOR(calibMsg.center_x,
-                kApproxCalib.GetCenter_x() - kCenterTolerance,
-                kApproxCalib.GetCenter_x() + kCenterTolerance) ||
+                kApproxCalib.GetCenter_x() - PlaypenConfig::kCenterTolerance,
+                kApproxCalib.GetCenter_x() + PlaypenConfig::kCenterTolerance) ||
       CHECK_OOR(calibMsg.center_y,
-                kApproxCalib.GetCenter_y() - kCenterTolerance,
-                kApproxCalib.GetCenter_y() + kCenterTolerance) ||
+                kApproxCalib.GetCenter_y() - PlaypenConfig::kCenterTolerance,
+                kApproxCalib.GetCenter_y() + PlaypenConfig::kCenterTolerance) ||
       calibMsg.nrows != kApproxCalib.GetNrows() ||
       calibMsg.ncols != kApproxCalib.GetNcols())
   {
@@ -231,20 +223,20 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
   }
   
   if(CHECK_OOR(calibMsg.distCoeffs[0],
-               kApproxCalib.GetDistortionCoeffs()[0] - kRadialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[0] + kRadialDistortionTolerance) ||
+               kApproxCalib.GetDistortionCoeffs()[0] - PlaypenConfig::kRadialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[0] + PlaypenConfig::kRadialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[1],
-               kApproxCalib.GetDistortionCoeffs()[1] - kRadialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[1] + kRadialDistortionTolerance) ||
+               kApproxCalib.GetDistortionCoeffs()[1] - PlaypenConfig::kRadialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[1] + PlaypenConfig::kRadialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[2],
-               kApproxCalib.GetDistortionCoeffs()[2] - kTangentialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[2] + kTangentialDistortionTolerance) ||
+               kApproxCalib.GetDistortionCoeffs()[2] - PlaypenConfig::kTangentialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[2] + PlaypenConfig::kTangentialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[3],
-               kApproxCalib.GetDistortionCoeffs()[3] - kTangentialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[3] + kTangentialDistortionTolerance) ||
+               kApproxCalib.GetDistortionCoeffs()[3] - PlaypenConfig::kTangentialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[3] + PlaypenConfig::kTangentialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[4],
-               kApproxCalib.GetDistortionCoeffs()[4] - kRadialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[4] + kRadialDistortionTolerance) ||
+               kApproxCalib.GetDistortionCoeffs()[4] - PlaypenConfig::kRadialDistortionTolerance,
+               kApproxCalib.GetDistortionCoeffs()[4] + PlaypenConfig::kRadialDistortionTolerance) ||
      calibMsg.distCoeffs[5] != 0.f ||
      calibMsg.distCoeffs[6] != 0.f ||
      calibMsg.distCoeffs[7] != 0.f)
@@ -258,7 +250,7 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
                         "%s",
                         ss.str().c_str());
     
-    PLAYPEN_SET_RESULT(FactoryTestResultCode::DISTORTION_CALUES_OOR);
+    PLAYPEN_SET_RESULT(FactoryTestResultCode::DISTORTION_VALUES_OOR);
   }
   
   // Calibration completed so move head to zero and and complete

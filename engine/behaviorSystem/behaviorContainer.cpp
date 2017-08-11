@@ -41,6 +41,7 @@
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriveForwards.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenInitChecks.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenMotorCalibration.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenPickupCube.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
@@ -517,6 +518,16 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::PlaypenPickupCube:
     {
       newBehavior = IBehaviorPtr(new BehaviorPlaypenPickupCube(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenInitChecks:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenInitChecks(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenReadToolCode:
+    {
+      newBehavior = nullptr;
       break;
     }
     

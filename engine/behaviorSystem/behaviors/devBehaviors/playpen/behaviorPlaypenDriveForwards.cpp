@@ -22,13 +22,6 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace {
-static const f32 kDistanceToTriggerFrontCliffs_mm = 90;
-static const f32 kDistanceToTriggerBackCliffs_mm = 60;
-static const f32 kDistanceToDriveOverCliff_mm = 30;
-static const f32 kTimeToWaitForCliffEvent_ms = CLIFF_EVENT_DELAY_MS + 100;
-}
-
 BehaviorPlaypenDriveForwards::BehaviorPlaypenDriveForwards(Robot& robot, const Json::Value& config)
 : IBehaviorPlaypen(robot, config)
 {
@@ -45,7 +38,8 @@ Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
 {
   MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(robot, 0);
   MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
-  DriveStraightAction* driveForwards = new DriveStraightAction(robot, kDistanceToTriggerFrontCliffs_mm);
+  DriveStraightAction* driveForwards = new DriveStraightAction(robot,
+                                                               PlaypenConfig::kDistanceToTriggerFrontCliffs_mm);
   driveForwards->SetShouldPlayAnimation(false);
   CompoundActionParallel* action = new CompoundActionParallel(robot, {headToZero, liftDown, driveForwards});
   
@@ -58,7 +52,7 @@ Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
       // We have a delay between the action being cancelled from the RobotStopped event and
       // when the cliff event will be confirmed and sent from the robot so we need to wait a little bit
       // to receive it
-      AddTimer(kTimeToWaitForCliffEvent_ms, [this, &robot]() {
+      AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &robot]() {
         if(_frontCliffsDetected)
         {
           _waitingForCliffsState = WAITING_FOR_FRONT_CLIFFS_UNDETCTED;
@@ -96,7 +90,7 @@ void BehaviorPlaypenDriveForwards::StopInternal(Robot& robot)
 
 void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(Robot& robot)
 {
-  DriveStraightAction* action = new DriveStraightAction(robot, kDistanceToTriggerBackCliffs_mm);
+  DriveStraightAction* action = new DriveStraightAction(robot, PlaypenConfig::kDistanceToTriggerBackCliffs_mm);
   action->SetShouldPlayAnimation(false);
   
   StartActing(action, [this, &robot](ActionResult result) {
@@ -106,7 +100,7 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(Robot& robot
       // We have a delay between the action being cancelled from the RobotStopped event and
       // when the cliff event will be confirmed and sent from the robot so we need to wait a little bit
       // to receive it
-      AddTimer(kTimeToWaitForCliffEvent_ms, [this, &robot]() {
+      AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &robot]() {
         if(_backCliffsDetected)
         {
           DEV_ASSERT(_frontCliffsDetected, "BehaviorPlaypenDriveForwards.FrontCliffsNotDetcted");
@@ -131,19 +125,19 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(Robot& robot
 
 void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected(Robot& robot)
 {
-  DriveStraightAction* action = new DriveStraightAction(robot, kDistanceToDriveOverCliff_mm);
+  DriveStraightAction* action = new DriveStraightAction(robot, PlaypenConfig::kDistanceToDriveOverCliff_mm);
   action->SetShouldPlayAnimation(false);
   action->SetMotionProfile(DEFAULT_PATH_MOTION_PROFILE);
   
   StartActing(action, [this, &robot]() {
-    AddTimer(kTimeToWaitForCliffEvent_ms, [this, &robot]() {
+    AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &robot]() {
       if(_waitingForCliffsState == NONE)
       {
         const CliffSensorValues cliffVals(robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FR),
                                           robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
                                           robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
                                           robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
-        GetLogger().AppendCliffValuesOnGround(cliffVals);
+        PLAYPEN_TRY(GetLogger().AppendCliffValuesOnGround(cliffVals), FactoryTestResultCode::WRITE_TO_LOG_FAILED);
         
         PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS);
       }
@@ -192,7 +186,8 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
                                               robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
                                               robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
                                               robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
-            GetLogger().AppendCliffValuesOnFrontDrop(cliffVals);
+            PLAYPEN_TRY(GetLogger().AppendCliffValuesOnFrontDrop(cliffVals),
+                        FactoryTestResultCode::WRITE_TO_LOG_FAILED);
             
             _frontCliffsDetected = true;
           }
@@ -234,7 +229,8 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
                                               robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
                                               robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
                                               robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
-            GetLogger().AppendCliffValuesOnBackDrop(cliffVals);
+            PLAYPEN_TRY(GetLogger().AppendCliffValuesOnBackDrop(cliffVals),
+                        FactoryTestResultCode::WRITE_TO_LOG_FAILED);
             
             _backCliffsDetected = true;
           }

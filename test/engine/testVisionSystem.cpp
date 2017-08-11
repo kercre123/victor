@@ -200,7 +200,7 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
   Anki::Vision::ImageRGB img;
   
-  result = img.Load("/Users/alchaussee/Desktop/robot-1-calibrate/alcal3.png");
+  result = img.Load("/Users/alchaussee/Desktop/images/000000000000.png");
 //  result = img.Load("/Users/alchaussee/Desktop/images_26435_2.jpg");
   
   
@@ -267,7 +267,7 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   img.Display("");
   cv::waitKey();
   
-  cv::Mat_<double> D = cv::Mat::zeros(8, 1, CV_64F);
+//  cv::Mat_<double> D = cv::Mat::zeros(8, 1, CV_64F);
   std::vector<cv::Mat_<double>> R2;
   R2.push_back(cv::Mat::zeros(3, 3, CV_64F));
   std::vector<cv::Mat_<double>> T2;
@@ -275,9 +275,11 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   
   //  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
   cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
-                         362, 0, 296,
-                         0, 364, 189,
+                         362, 0, 303,
+                         0, 364, 196,
                          0, 0, 1);
+  
+  cv::Mat_<double> D = (cv::Mat_<double>(8,1) << -0.1, -0.1, 0.00005, -0.0001, 0.05, 0, 0, 0);
   
 //    cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
 //                           507, 0, 639,
@@ -303,11 +305,11 @@ TEST(VisionSystem, MarkerDetectionCameraCalibrationTests)
   PRINT_NAMED_WARNING("", "%f", rms);
   
   Anki::Vision::ImageRGB i;
-  i.Load("/Users/alchaussee/Desktop/robot-1-calibrate/calibresult.png");
-  Anki::Vision::ImageRGB imgUndistorted(240,320);
+  i.Load("/Users/alchaussee/Desktop/images/0.png");
+  Anki::Vision::ImageRGB imgUndistorted(360,640);
   cv::undistort(i.get_CvMat_(), imgUndistorted.get_CvMat_(), K2, D);
 //  imgUndistorted.Display("");
-  imgUndistorted.Save("/Users/alchaussee/Desktop/t.jpg");
+  imgUndistorted.Save("/Users/alchaussee/Desktop/t1.jpg");
 //  cv::waitKey();
 }
 

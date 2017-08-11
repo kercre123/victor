@@ -1,8 +1,8 @@
 /**
- * File: behaviorPlaypenMotorCalibration.h
+ * File: behaviorPlaypenInitChecks.h
  *
  * Author: Al Chaussee
- * Created: 07/26/17
+ * Created: 08/09/17
  *
  * Description:
  *
@@ -10,21 +10,21 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorPlaypenMotorCalibration_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorPlaypenMotorCalibration_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorPlaypenInitChecks_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorPlaypenInitChecks_H__
 
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorPlaypenMotorCalibration : public IBehaviorPlaypen
+class BehaviorPlaypenInitChecks : public IBehaviorPlaypen
 {
 protected:
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
-  BehaviorPlaypenMotorCalibration(Robot& robot, const Json::Value& config);
+  BehaviorPlaypenInitChecks(Robot& robot, const Json::Value& config);
   
 protected:
   
@@ -33,6 +33,7 @@ protected:
   virtual void           StopInternal(Robot& robot)   override;
   
   virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot) override;
   
   virtual bool ShouldRunWhileOnCharger() const override { return true; }
   
@@ -40,12 +41,17 @@ protected:
   
 private:
   
-  bool _liftCalibrated = false;
-  bool _headCalibrated = false;
+  std::string _fwBuildType                = "";
+  u32         _fwVersion                  = 0;
+  bool        _failedToParseVersionHeader = false;
   
+  int32_t     _hwVersion = -1;
+  bool        _gotMfgID  = false;
+  
+  bool        _eraseComplete = false;
 };
 
 }
 }
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenMotorCalibration_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenInitChecks_H__

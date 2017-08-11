@@ -17,10 +17,6 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace {
-static const TimeStamp_t kMotorCalibrationTimeout_ms = 4000;
-}
-
 BehaviorPlaypenMotorCalibration::BehaviorPlaypenMotorCalibration(Robot& robot, const Json::Value& config)
 : IBehaviorPlaypen(robot, config)
 {
@@ -36,7 +32,7 @@ void BehaviorPlaypenMotorCalibration::GetResultsInternal()
 Result BehaviorPlaypenMotorCalibration::InternalInitInternal(Robot& robot)
 {
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));
-  AddTimer(kMotorCalibrationTimeout_ms,
+  AddTimer(PlaypenConfig::kMotorCalibrationTimeout_ms,
            [this](){ PLAYPEN_SET_RESULT(FactoryTestResultCode::MOTORS_UNCALIBRATED) });
   
   return RESULT_OK;
