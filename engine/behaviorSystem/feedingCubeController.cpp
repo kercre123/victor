@@ -37,8 +37,7 @@ enum class ChargeState{
   NoCharge,
   Charging,
   LoosingCharge,
-  FullyCharged,
-  Drained
+  FullyCharged
 };
 
 #define CONSOLE_GROUP "Activity.Feeding"
@@ -62,7 +61,6 @@ const char* ChargeStateToString(ChargeState state){
     case ChargeState::Charging:     {return "Charging"; break;}
     case ChargeState::LoosingCharge:{return "LoosingCharge"; break;}
     case ChargeState::FullyCharged: {return "FullyCharged"; break;}
-    case ChargeState::Drained:      {return "Drained"; break;}
   }
 }
   
@@ -103,7 +101,9 @@ struct CubeStateTracker{
 private:
   ChargeState _chargeState = ChargeState::NoCharge;
 };
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CubeStateTracker::SetChargeState(ChargeState newChargeState)
 {
   if( _chargeState != newChargeState ) {
@@ -330,10 +330,7 @@ void FeedingCubeController::UpdateCubeDrain(Robot& robot)
     _cubeStateTracker->_desiredModifier = modifiableLights;
     _cubeStateTracker->_desiredModifierChanged = true;
   }else if(_cubeStateTracker->_timeStartedDraining_s + _cubeStateTracker->_timeToDrainCube < currentTime_s){
-    if(_cubeStateTracker->GetChargeState() != ChargeState::Drained){
-      // If the cube has been fully drained re-set the state and de-activate the cube
-      _cubeStateTracker->SetChargeState(ChargeState::Drained);
-    }
+    ReInitializeController(robot);
   }
 }
 
@@ -423,8 +420,7 @@ void FeedingCubeController::ShakeDetected(Robot& robot, const float shakeScore)
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool cubeCanCharge =
               (_currentState == ControllerState::Activated) &&
-              (_cubeStateTracker->GetChargeState() != ChargeState::FullyCharged) &&
-              (_cubeStateTracker->GetChargeState() != ChargeState::Drained);
+              (_cubeStateTracker->GetChargeState() != ChargeState::FullyCharged);
   
   if(cubeCanCharge &&
      (shakeScore > kShakeMinThresh) &&
@@ -534,14 +530,7 @@ bool FeedingCubeController::IsCubeCharged() const
   return _cubeStateTracker->GetChargeState() == ChargeState::FullyCharged;
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool FeedingCubeController::IsCubeDrained() const
-{
-  return _cubeStateTracker->GetChargeState() == ChargeState::Drained;
-}
-  
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* FeedingCubeController::ChargeStateChangeToString(ChargeStateChange state){
   switch(state){
