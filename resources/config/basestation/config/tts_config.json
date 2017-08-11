@@ -21,24 +21,24 @@
     "en":
     {
       "voice": "Ryan22k_CO",
-      "speed": 80
+      "speed": 85
     },
     "fr":
     {
       "voice": "Bruno22k_CO",
-      "speed": 75
+      "speed": 82
     },
     "de":
     {
       "voice": "Klaus22k_CO",
-      "speed": 75
+      "speed": 79
     },
     "ja":
     {
       "voice": "Sakura22k_CO",
-      "speed": 20,
-      "pitch": 75,
-      "shaping": 100
+      "speed": 30,
+      "pitch": 100,
+      "shaping": 115
     }
   },
   "ios":
@@ -46,24 +46,24 @@
     "en":
     {
       "voice": "enu_ryan_22k_co.fl",
-      "speed": 80
+      "speed": 85
     },
     "fr":
     {
       "voice": "frf_bruno_22k_co.fl",
-      "speed": 75
+      "speed": 82
     },
     "de":
     {
       "voice": "ged_klaus_22k_co.fl",
-      "speed": 75
+      "speed": 79
     },
     "ja":
     {
       "voice": "ja_jp_sakura_22k_co.fl",
-      "speed": 20,
-      "pitch": 75,
-      "shaping": 100
+      "speed": 30,
+      "pitch": 100,
+      "shaping": 115
     }
   },
   "android":
@@ -71,24 +71,24 @@
     "en":
     {
       "voice": "Ryan",
-      "speed": 80
+      "speed": 85
     },
     "fr":
     {
       "voice": "Bruno",
-      "speed": 75
+      "speed": 82
     },
     "de":
     {
       "voice": "Klaus",
-      "speed": 75
+      "speed": 79
     },
     "ja":
     {
       "voice": "Sakura",
-      "speed": 20,
-      "pitch": 75,
-      "shaping": 100
+      "speed": 30,
+      "pitch": 100,
+      "shaping": 115
     }
   }
 }
