@@ -92,6 +92,8 @@ namespace Onboarding {
         robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
         robot.ExecuteBehaviorByID(Anki.Cozmo.BehaviorID.Wait);
       }
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
       // we don't want to stop them in the event they got a broken cozmo and it cant work.
       // so success or fail just move on.
       OnboardingManager.Instance.GoToNextStage();
