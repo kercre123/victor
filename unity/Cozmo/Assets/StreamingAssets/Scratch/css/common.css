@@ -190,10 +190,11 @@ button:focus {
     font-size: 32px;
     background-color: #525253;
     color: #1fadda;
-    width: calc(100vw - 200px);
+    max-width: calc(100vw - 210px);
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: hidden;
+    padding: 0 5px;
 }
 #projecttext .primary #app-title.long-title {
   font-size: 24px;
@@ -204,6 +205,7 @@ button:focus {
     color: #c0bfbf;
     font-size: 20px;
     background-color: #525253;
+    padding: 0 5px;
 }
 
 /**
@@ -388,10 +390,10 @@ button:focus {
     #projecttext .primary #app-title {
         margin-top: 3px;
         font-size: 20px;
-        width: calc(100vw - 110px);
+        max-width: calc(100vw - 120px);
     }
     #projecttext .primary #app-title.long-title {
-      font-size: 17px;
+      font-size: 16px;
     }
 
     #projecttext .primary #app-title-subtext {
