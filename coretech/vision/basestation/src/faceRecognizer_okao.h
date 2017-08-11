@@ -53,6 +53,7 @@ namespace Vision {
     ~FaceRecognizer();
     
     Result Init(HCOMMON okaoCommonHandle);
+    Result Shutdown();
 
     void SetIsSynchronous(bool isSynchronous);
     
