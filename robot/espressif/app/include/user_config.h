@@ -47,7 +47,7 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 // TPW is in 0.25dB units
 #define MAX_TPW (82)
 #define TPW_MODIFICATION_V1_0 (-24)  /// Must drop 6dBm below max for FCC
-#define TPW_MODIFICATION_V1_5 (0)  /// No reduction for V1.5 antenna
+#define TPW_MODIFICATION_V1_5 (-8)  /// Must drop 2dBm below max for JRL
 
 
 #define AP_MAX_CONNECTIONS 4
