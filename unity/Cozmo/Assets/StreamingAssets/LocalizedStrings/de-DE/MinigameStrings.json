@@ -313,10 +313,10 @@
     "translation" : "Gesperrt!"
   },
   "speedTap.text.MP.Locked" : {
-    "translation" : "To unlock 3 player mode, play HUMAN VS. COZMO once on this difficulty."
+    "translation" : "Um den 3-Spieler-Modus freizuschalten, musst du \"Mensch gegen Cozmo\" ein Mal in diesem Schwierigkeitsgrad spielen."
   },
   "speedTapGame.label.vs" : {
-    "translation" : "vs."
+    "translation" : "gegen"
   },
   "speedTapGame.mode.HvC" : {
     "translation" : "Mensch gegen Cozmo"
@@ -370,12 +370,12 @@
     "translation" : "Text eingeben..."
   },
   "minigame.text.cozmoWinsFlat" : {
-    "translation" : "Cozmo\u000agewinnt!"
+    "translation" : "Cozmo gewinnt!"
   },
   "minigame.text.playerWinsFlat" : {
-    "translation" : "{0}\u000agewinnt!"
+    "translation" : "{0} gewinnt!"
   },
   "minigame.text.youWinFlat" : {
-    "translation" : "Du\u000agewinnst!"
+    "translation" : "Du gewinnst!"
   }
 }

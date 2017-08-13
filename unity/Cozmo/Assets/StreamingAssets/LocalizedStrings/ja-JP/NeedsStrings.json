@@ -22,7 +22,7 @@
     "translation" : "Cozmoに\u000aチャージする"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
-    "translation" : "Cozmoを元気いっぱいの状態に保つには、チャージが必要です。"
+    "translation" : "COZMOを元気いっぱいの状態に保つには、チャージが必要です。"
   },
   "needs.NeedsEnergyModal.Instruction1" : {
     "translation" : "青く点滅しているキューブをつかんでください。"
@@ -31,10 +31,10 @@
     "translation" : "すべてのライトが明るく輝くまでそのキューブを振ります。"
   },
   "needs.NeedsEnergyModal.Instruction3" : {
-    "translation" : "Cozmoが見える位置にキューブを置きチャージできるようにします。"
+    "translation" : "COZMOが見える位置にキューブを置きチャージできるようにします。"
   },
   "needs.NeedsEnergyModal.FeedingComplete" : {
-    "translation" : "Cozmoは満タンにチャージされました！"
+    "translation" : "COZMOは満タンにチャージされました！"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt" : {
     "translation" : "COZMOはキューブを認識できないので、チャージできません。"
@@ -43,7 +43,7 @@
     "translation" : "キューブの再接続"
   },
   "needs.NeedsRepairModal.Title" : {
-    "translation" : "Cozmoをチューンアップする"
+    "translation" : "COZMOをチューンアップする。"
   },
   "needs.NeedsRepairModal.RepairSummary" : {
     "translation" : "COZMOを最適で活動的な状態に保つには、チューンアップが必要です。"
@@ -55,7 +55,7 @@
     "translation" : "ヘッドを調整しました"
   },
   "needs.NeedsRepairModal.TreadsDamageNotice" : {
-    "translation" : "トレッドを調整する必要があります"
+    "translation" : "タイヤを調整する必要があります"
   },
   "needs.NeedsRepairModal.TreadsRepairedNotice" : {
     "translation" : "タイヤを調整しました"
@@ -73,13 +73,13 @@
     "translation" : "矢印のパターン通りに、右のボタンをタップします。パターンがつくれたら<b>送信</b>をタップしましょう。"
   },
   "needs.NeedsRepairModal.NoRepairsNeeded" : {
-    "translation" : "Cozmoは満タンにチューンアップされました！"
+    "translation" : "COZMOは満タンにチューンアップされました！"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
     "translation" : "送信"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
-    "translation" : "Cozmoをスキャン"
+    "translation" : "COZMOをスキャン"
   },
   "needs.NeedsRepairModal.AlligningHead" : {
     "translation" : "ヘッドを調整しています..."
@@ -88,13 +88,13 @@
     "translation" : "リフトを校正しています..."
   },
   "needs.NeedsRepairModal.AligningTreads" : {
-    "translation" : "トレッドを合わせています..."
+    "translation" : "タイヤを合わせています..."
   },
   "needs.ContinueButtonText" : {
     "translation" : "続ける"
   },
   "needs.NeedsRepairModal.TuneUpComplete" : {
-    "translation" : "Cozmoは満タンにチューンアップされました！"
+    "translation" : "COZMOは満タンにチューンアップされました！"
   },
   "needs.Done" : {
     "translation" : "完了"
@@ -133,22 +133,22 @@
     "translation" : "COZMOがいないいないばあをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PickupCube" : {
-    "translation" : "COZMOがキューブをひろって {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがキューブをもちあげて {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
-    "translation" : "COZMOがウィーリーをして {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがウィリーをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.Pounce" : {
     "translation" : "COZMOがアタックして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.PyramidCompleted" : {
-    "translation" : "COZMOがピラミッド作りをして {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがピラミッドをして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.RollACube" : {
     "translation" : "Cozmoがころがして {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.StackCube" : {
-    "translation" : "COZMOがキューブを重ねて {0} エナジーボールを生み出しました！"
+    "translation" : "COZMOがキューブをつんで {0} エナジーボールを生み出しました！"
   },
   "needs.FreeplaySparksReward.Workout" : {
     "translation" : "COZMOがエクササイズをして {0} エナジーボールを生み出しました！"

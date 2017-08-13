@@ -16,7 +16,7 @@
     "translation" : "COZMOは準備ができていません"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
-    "translation" : "Cozmoを立たせてプレイできるようにしてください。"
+    "translation" : "COZMOを立たせてプレイできるようにしてください。"
   },
   "challengeDetails.cozmoDizzy.title" : {
     "translation" : "COZMOはめまいがしています"
@@ -28,7 +28,7 @@
     "translation" : "COZMOが目覚めます"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.description" : {
-    "translation" : "Cozmoが目を覚ましてチャージャーから離れるまでお待ちください。"
+    "translation" : "COZMOが目を覚まして充電ドックから離れるまでお待ちください。"
   },
   "challengeDetails.needsMoreCubesModal.button" : {
     "translation" : "方法を見る"
@@ -37,7 +37,7 @@
     "translation" : "COZMOはしゃっくりをしています"
   },
   "challengeDetails.cozmoHasHiccups.description" : {
-    "translation" : "Cozmoを逆さまにして助けてください。"
+    "translation" : "COZMOを逆さまにして助けてください。"
   },
   "cubeSlap.title" : {
     "translation" : "キープアウェイ"

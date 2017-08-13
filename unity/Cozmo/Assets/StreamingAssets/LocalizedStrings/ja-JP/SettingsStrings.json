@@ -67,10 +67,10 @@
     "translation" : "画面を隠す"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo" : {
-    "translation" : "Cozmoをスリープ"
+    "translation" : "COZMOをスリープ"
   },
   "settings.sleepCozmoPanel.confirmationModal.title" : {
-    "translation" : "Cozmoをスリープさせますか？"
+    "translation" : "COZMOをスリープさせますか？"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
     "translation" : "COZMOを充電ドックに置いて充電させるか、<b><color=#11a2f0ff>スリープ</color></b>をタップして接続を解除します。"
@@ -100,13 +100,13 @@
     "translation" : "<color=#b52c13>COZMOの復元に失敗しました。</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
-    "translation" : "Cozmoを復元しています..."
+    "translation" : "COZMOを復元しています..."
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoTitle" : {
-    "translation" : "Cozmoを復元しますか？"
+    "translation" : "COZMOを復元しますか？"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel" : {
-    "translation" : "警告：このオプションはCozmoをバックアップから復元し、ロボットのゲームの進捗状況を置き換えます。このボタンは、Cozmoを新しいものに置き換えた場合に使用します。"
+    "translation" : "警告：このオプションはCOZMOをバックアップから復元し、ロボットのゲームの進捗状況を置き換えます。このボタンは、COZMOを新しいものに置き換えた場合に使用します。"
   },
   "settings.versionPanel.title" : {
     "translation" : "情報"
@@ -130,10 +130,10 @@
     "translation" : "<color=#b52c13>COZMOの消去に失敗しました。</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
-    "translation" : "Cozmoを消去しています..."
+    "translation" : "COZMOを消去しています..."
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoTitle" : {
-    "translation" : "Cozmoを消去しますか？"
+    "translation" : "COZMOを消去しますか？"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel" : {
     "translation" : "警告：これによりCOZMOのデータとすべてのロック解除が消去されます。これは、COZMOを最初からやり直したい場合にのみ使用します。"
@@ -193,6 +193,6 @@
     "translation" : "go.anki.com/cozmo-app-sdk"
   },
   "settings.acknowledgementsPanel.dataCollectionTitle" : {
-    "translation" : "データ収集"
+    "translation" : "データコレクション"
   }
 }

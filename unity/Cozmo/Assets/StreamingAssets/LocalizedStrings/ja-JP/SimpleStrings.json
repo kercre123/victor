@@ -88,7 +88,7 @@
     "translation" : "サウンドチェック"
   },
   "button.GetACozmo" : {
-    "translation" : "Cozmoをゲット"
+    "translation" : "COZMOをゲット"
   },
   "button.start" : {
     "translation" : "スタート"
@@ -148,6 +148,6 @@
     "translation" : "ごほうび"
   },
   "button.buyACozmo" : {
-    "translation" : "Cozmoを購入する"
+    "translation" : "COZMOを購入する"
   }
 }

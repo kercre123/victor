@@ -187,7 +187,7 @@
     "translation" : "#20の答え"
   },
   "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText" : {
-    "translation" : "#21：<span class='yellow'>キューブがをタップされたら、</span>正方形の一辺を<span class='blue'>進んで</span>、<span class='blue'>振り返ります。</span>"
+    "translation" : "#21：<span class='yellow'>キューブがタップされたら、</span>正方形の一辺を<span class='blue'>進んで</span>、<span class='blue'>振り返ります。</span>"
   },
   "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
@@ -232,7 +232,7 @@
     "translation" : "#25の答え"
   },
   "codeLabChallenge_stackCubes.questionSlide.primaryText" : {
-    "translation" : "#26：2つのキューブを重ねます。"
+    "translation" : "#26：2つのキューブをつみます。"
   },
   "codeLabChallenge_stackCubes.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
@@ -241,7 +241,7 @@
     "translation" : "#26の答え"
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText" : {
-    "translation" : "#27：2つのキューブを重ねて、それをひっくり返します。"
+    "translation" : "#27：2つのキューブをつみ、それをひっくり返します。"
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"

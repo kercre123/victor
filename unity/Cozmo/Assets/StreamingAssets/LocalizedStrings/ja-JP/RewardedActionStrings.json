@@ -10,16 +10,16 @@
     "translation" : "アップグレードをエナジーボールする"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack" : {
-    "translation" : "「キューブを重ねる」の動作が正常に完了"
+    "translation" : "「つむ」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.Pounce" : {
-    "translation" : "「指にアタック」の動作が正常に完了"
+    "translation" : "「じゃれる」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid" : {
-    "translation" : "「ピラミッド作り」の動作が正常に完了"
+    "translation" : "「ピラミッド」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.PopWheelie" : {
-    "translation" : "「ウィーリー」の動作が正常に完了"
+    "translation" : "「ウィリー」の動作が正常に完了"
   },
   "reward.description.Freeplay.CompleteBehavior.FistBump" : {
     "translation" : "「グータッチ」の動作が正常に完了"
@@ -97,16 +97,16 @@
     "translation" : "クイックタップを人間対人間対Cozmoでプレイしました"
   },
   "reward.description.Keepaway.Played" : {
-    "translation" : "キープアウェーのゲームをプレイしました"
+    "translation" : "キープアウェイのゲームをプレイしました"
   },
   "reward.description.Keepaway.Won" : {
-    "translation" : "キープアウェーのゲームに勝ちました"
+    "translation" : "キープアウェイのゲームに勝ちました"
   },
   "reward.description.Keepaway.Shutout" : {
-    "translation" : "キープアウェーのゲームに5対0で勝ちました"
+    "translation" : "キープアウェイのゲームに5対0で勝ちました"
   },
   "reward.description.Keepaway.TieBreaker" : {
-    "translation" : "キープアウェーのゲームで4対4にしてから勝ちました"
+    "translation" : "キープアウェイのゲームで4対4にしてから勝ちました"
   },
   "reward.description.Explorer.Time.5" : {
     "translation" : "リモコンモードを5分を超えてプレイしました"

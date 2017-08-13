@@ -16,7 +16,7 @@
     "translation" : "Compétence verrouillée"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Satisfais l'envie de jouer de Cozmo au quotidien pour gagner des jetons. Ces derniers permettent de débloquer des boîtes à bonus qui contiennent des étincelles, des tours et plus encore !"
+    "translation" : "Satisfais l'envie de jouer de Cozmo au quotidien pour gagner des jetons. Ces derniers permettent de débloquer des boîtes à bonus qui contiennent des éclats, des tours et plus encore !"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Check"
@@ -55,10 +55,10 @@
     "translation" : "Observe Cozmo qui recherche un cube et fait de la muscu."
   },
   "unlockable.CubePounce.Title" : {
-    "translation" : "Pas touche"
+    "translation" : "Esquive"
   },
   "unlockable.CubePounce.Description" : {
-    "translation" : "Avec ce tour, Cozmo apprend à jouer à Pas touche, un jeu de réflexes et de réactivité."
+    "translation" : "Avec ce tour, Cozmo apprend à jouer à Esquive, un jeu de réflexes et de réactivité."
   },
   "unlockable.FaceEnrollment.Title" : {
     "translation" : "Première rencontre"
@@ -67,16 +67,16 @@
     "translation" : "Cozmo apprend à mémoriser les visages et à prononcer les noms.\u000a\u000aTu trouveras ce tour dans l'activité Première rencontre."
   },
   "unlockable.MemoryMatch.Title" : {
-    "translation" : "Jeu de mémoire"
+    "translation" : "Mémoire Flash"
   },
   "unlockable.MemoryMatch.Description" : {
-    "translation" : "Avec ce tour, Cozmo apprend à jouer au Jeu de mémoire."
+    "translation" : "Avec ce tour, Cozmo apprend à jouer à Mémoire Flash."
   },
   "unlockable.SpeedTap.Title" : {
-    "translation" : "Réflexe"
+    "translation" : "Réflexe Flash"
   },
   "unlockable.SpeedTap.Description" : {
-    "translation" : "Avec cette mise à niveau, Cozmo apprend à jouer au jeu Réflexe. Au fil du temps, ses compétences s'amélioreront !"
+    "translation" : "Avec cette mise à niveau, Cozmo apprend à jouer au jeu Réflexe Flash. Au fil du temps, ses compétences s'amélioreront !"
   },
   "unlockable.CodeLab.Title" : {
     "translation" : "Code Lab"
@@ -181,16 +181,16 @@
     "translation" : "Description de Collecter des cubes <placeholder>"
   },
   "unlockable.GatherCubes.SparkButtonDescription" : {
-    "translation" : "Bouton d'étincelle Collecter des cubes <placeholder>"
+    "translation" : "Bouton Collecter des éclats de cubes <placeholder>"
   },
   "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "État des étincelles Collecter des cubes <placeholder>"
+    "translation" : "État de Collecter des éclats de cubes <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
     "translation" : "Compétence verrouillée"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "Comble l'envie de jouer de Cozmo au quotidien pour débloquer des boîtes à bonus qui abritent des étincelles, des tours et plus encore !"
+    "translation" : "Comble l'envie de jouer de Cozmo au quotidien pour débloquer des boîtes à bonus qui abritent des éclats, des tours et plus encore !"
   },
   "unlockable.GuardDog.Title" : {
     "translation" : "Surveiller les cubes"
@@ -199,25 +199,25 @@
     "translation" : "Lorsque ses cubes sont proches les uns des autres, Cozmo fait parfois une petite sieste tout en les surveillant. Essaie de les retourner sans le réveiller !"
   },
   "sparks.Sparked" : {
-    "translation" : "Cozmo a des étincelles :"
+    "translation" : "Cozmo est chargé d'éclats :"
   },
   "sparks.SparkCozmo" : {
-    "translation" : "Donner des étincelles à Cozmo"
+    "translation" : "Charger Cozmo d'éclats"
   },
   "sparks.Spark" : {
-    "translation" : "Étincelle"
+    "translation" : "Éclat"
   },
   "sparks.Spark.plural" : {
-    "translation" : "Étincelles"
+    "translation" : "Éclats"
   },
   "sparks.Spark.ConfirmQuit" : {
-    "translation" : "Cozmo a des étincelles !"
+    "translation" : "Cozmo est chargé d'éclats !"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
-    "translation" : "Si tu quittes avant que cela ne soit terminé, Cozmo n'aura plus d'étincelles."
+    "translation" : "Si tu quittes avant que cela ne soit terminé, Cozmo ne sera plus chargé d'éclats."
   },
   "sparks.NotEnoughSparks.Title" : {
-    "translation" : "Pas assez d'étincelles"
+    "translation" : "Pas assez d'éclats"
   },
   "sparks.NotEnoughSparks.Desc" : {
     "translation" : "Gagne plus en laissant Cozmo jouer en mode de jeu libre ou dans les boîtes à bonus"
@@ -232,6 +232,6 @@
     "translation" : "Gratuit"
   },
   "sparks.notSparkable" : {
-    "translation" : "Ne donne aucune étincelle"
+    "translation" : "Ne donne aucun éclat"
   }
 }

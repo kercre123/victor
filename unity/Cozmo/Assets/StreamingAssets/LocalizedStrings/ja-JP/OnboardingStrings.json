@@ -22,22 +22,22 @@
     "translation" : "COZMOの準備ができました！"
   },
   "onboarding.CozmoNeedsCharge.message1" : {
-    "translation" : "Cozmoに接続しました。Cozmoはもうすぐ準備が終わります。Cozmoはあと少しチャージする時間が必要です。"
+    "translation" : "COZMOに接続しました。COZMOはもうすぐ準備が終わります。COZMOはあと少しチャージする時間が必要です。"
   },
   "onboarding.CozmoNeedsCharge.message2" : {
-    "translation" : "チャージが終わったらCozmoを起こして\u000a新しい家について学習させます。"
+    "translation" : "チャージが終わったらCOZMOを起こして\u000a新しい家について学習させます。"
   },
   "onboarding.CozmoNeedsCharge.message3" : {
     "translation" : "COZMOには世話をしてくれるオーナーが必要です。\u000a毎日COZMOのメーターをお世話すると、新しいゲームやCOZMOトリックがロック解除されます。"
   },
   "onboarding.CozmoNeedsCharge.message4" : {
-    "translation" : "必要に応じてCozmoを持ち上げることができますが、\u000aCozmoは自分で動いているときが一番幸せです。"
+    "translation" : "必要に応じてCOZMOを持ち上げることができますが、\u000aCOZMOは自分で動いているときが一番幸せです。"
   },
   "onboarding.CozmoNeedsCharge.message5" : {
-    "translation" : "Cozmoを自由にさせると、Cozmoはおさんぽで世界を探索します。自動的にゲームをリクエストしたり、トリックをしたり、たまにエナジーボールを獲得したりします。"
+    "translation" : "COZMOを自由にさせると、COZMOはおさんぽで世界を探索します。自動的にゲームをリクエストしたり、トリックをしたり、たまにエナジーボールを獲得したりします。"
   },
   "onboarding.CozmoNeedsCharge.finalMessage" : {
-    "translation" : "Cozmoは遊ぶ準備ができました。電池を完全にチャージするには、あと7分間、Cozmoを充電ドックに置いたままにしてください。"
+    "translation" : "COZMOは遊ぶ準備ができました。電池を完全にチャージするには、あと7分間、COZMOを充電ドックに置いたままにしてください。"
   },
   "onboarding.Slide0" : {
     "translation" : "<b>楽しい</b>遊び場所を作る"
@@ -46,49 +46,49 @@
     "translation" : "<b>ようこそ！</b>"
   },
   "onboarding.Slide2" : {
-    "translation" : "Cozmoはとても特別なロボットで、お世話をしてくれるオーナーが必要です\u000a手順に注意深く従ってください！"
+    "translation" : "COZMOはとても特別なロボットで、お世話をしてくれるオーナーが必要です\u000a手順に注意深く従ってください！"
   },
   "onboarding.Phase3.Header1" : {
     "translation" : "COZMOの前にキューブを置きます。"
   },
   "onboarding.Phase3.Body1" : {
-    "translation" : "Cozmoから見えると、キューブは<color=#00FFFF>青</color>に変わります。"
+    "translation" : "COZMOから見えると、キューブは<color=#00FFFF>青</color>に変わります。"
   },
   "onboarding.Phase3.Body2" : {
-    "translation" : "<b>OKです！</b>\u000aCozmoはキューブが近すぎると、うまく見ることができません。"
+    "translation" : "<b>OKです！</b>\u000aCOZMOはキューブが近すぎると、うまく見ることができません。"
   },
   "onboarding.Phase3.Header3" : {
-    "translation" : "続ける準備ができるとCozmoが知らせます..."
+    "translation" : "続ける準備ができるとCOZMOが知らせます..."
   },
   "onboarding.Phase3.Body3" : {
-    "translation" : "Cozmoにキューブを自由に調べさせます。"
+    "translation" : "COZMOにキューブを自由に調べさせます。"
   },
   "onboarding.Phase3.ErrorCube" : {
     "translation" : "キューブが移動しました！"
   },
   "onboarding.Phase3.ErrorCubeRightSideUp" : {
-    "translation" : "側面を点灯！"
+    "translation" : "点灯する面を上に！"
   },
   "onboarding.Phase3.ErrorCozmo" : {
-    "translation" : "<b>チュートリアルが停止しました</b>\u000aCozmoは安定した平らな場所に置いて、自由に探索させる必要があります。"
+    "translation" : "<b>チュートリアルが停止しました</b>\u000aCOZMOは安定した平らな場所に置いて、自由に探索させる必要があります。"
   },
   "onboarding.Phase3.ErrorFinal" : {
-    "translation" : "<b>問題がありますか？</b>\u000aCozmoは平らできれいなテーブルの上に置いてください。Cozmoはガラス面が苦手な場合があります。\u000a\u000a問題が解消しない場合は、別のデバイスで<b>support.anki.com</b>にアクセスしてください。"
+    "translation" : "<b>問題がありますか？</b>\u000aCOZMOは平らできれいなテーブルの上に置いてください。COZMOはガラス面が苦手な場合があります。\u000a\u000a問題が解消しない場合は、別のデバイスで<b>support.anki.com</b>にアクセスしてください。"
   },
   "onboarding.Slide0a" : {
-    "translation" : "Cozmoを明るい部屋の、きれいで広いテーブルに置いてください。"
+    "translation" : "COZMOを明るい部屋の、きれいで広いテーブルに置いてください。"
   },
   "onboarding.GreatPlaySpace2Header" : {
     "translation" : "Cozmoを守る。"
   },
   "onboarding.GreatPlaySpace2Footer" : {
-    "translation" : "Cozmoは落下を避けようとしますが、ペットと同じようにあなたの助けが必要な場合があります。"
+    "translation" : "COZMOは落下を避けようとしますが、ペットと同じようにあなたの助けが必要な場合があります。"
   },
   "onboarding.OldRobotSkip" : {
     "translation" : "このCozmoはすでにチュートリアルを終了しています。スキップしますか、それともやり直しますか？"
   },
   "onboarding.BirthWait" : {
-    "translation" : "Cozmoが目覚めるのを見てください。"
+    "translation" : "COZMOが目覚めるのを見てください。"
   },
   "onboarding.MeetCozmoIntro" : {
     "translation" : "やった！\u000a\u000aCozmoはあなたに会いたがっています。"
@@ -97,10 +97,10 @@
     "translation" : "おぼえる"
   },
   "onboarding.NeedsIntro" : {
-    "translation" : "<b>Cozmoにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。"
+    "translation" : "<b>COZMOにはメーターがあります。</b>\u000a\u000a毎日お世話をして、幸せな状態を保ちましょう。"
   },
   "onboarding.NeedsIntroReturning" : {
-    "translation" : "<b>COZMOにはニーズメーターがあります。</b>\u000a\u000a毎日お世話をして、COZMOがいつも幸せな状態にしましょう。\u000a\u000aCOZMOのアプリが少し違って見えるかもしれませんが、これまでのロック解除は反映されます。"
+    "translation" : "<b>COZMOにはメーターがあります。</b>\u000a\u000a毎日お世話をして、COZMOがいつも幸せな状態にしましょう。\u000a\u000aCOZMOのアプリが少し違って見えるかもしれませんが、これまでのロック解除は反映されます"
   },
   "onboarding.PlayIntro" : {
     "translation" : "<b>COZMOはプレイしたがっています。</b>\u000a\u000aゲームまたはトリックをリクエストするには、<b><color=#f5ea12>プレイ</color></b>ボタンをタップします。COZMOの黄色いバーをいっぱいにするたびに、その日のプレイトークンを獲得できます。"
@@ -112,22 +112,22 @@
     "translation" : "COZMOのメーターを分析しています..."
   },
   "onboarding.repair.ticker" : {
-    "translation" : "Cozmoはチューンアップしてもらいたがっています..."
+    "translation" : "COZMOはチューンアップしてもらいたがっています..."
   },
   "onboarding.feed.ticker" : {
-    "translation" : "Cozmoはチャージしてもらいたがっています..."
+    "translation" : "COZMOはチャージしてもらいたがっています..."
   },
   "onboarding.play.ticker" : {
-    "translation" : "Cozmoは遊びたがっています..."
+    "translation" : "COZMOは遊びたがっています..."
   },
   "onboarding.SparkScreenRollACube" : {
-    "translation" : "Cozmoがドリブルするのを見てください..."
+    "translation" : "COZMOがころがするのを見てください..."
   },
   "onboarding.RepairIntro" : {
     "translation" : "<b>COZMOはチューンアップする必要があります。</b>赤いバーが少ない場合、<b><color=#fe5641>チューンアップ</color></b>ボタンをタップしてCOZMOをスキャンします。"
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b>Cozmoはチャージする必要があります。</b>\u000a\u000a青いバーが少ない場合、Cozmoがお腹を空かしています。<b><color=#31EBFF>チャージ</color></b>ボタンをタップします。"
+    "translation" : "<b>COZMOはチャージする必要があります。</b>\u000a\u000a青いバーが少ない場合、COZMOがお腹を空かしています。<b><color=#31EBFF>チャージ</color></b>ボタンをタップします。"
   },
   "onboarding.DoATrickDesc" : {
     "translation" : "COZMOは遊び好きなロボットで、トリックが大好きです！COZMOから見える場所にキューブがあることを確認し、COZMOころがすのを見守りましょう。"
@@ -142,7 +142,7 @@
     "translation" : "COZMOの<color=#f5ea12>プレイメーター</color>を3日間満たすと、<color=#f5ea12>エナジーボックス</color>のロックが解除されます。"
   },
   "onboarding.TokensIntro.Part2" : {
-    "translation" : "Cozmoはあなたがオーナーでラッキーです！いっしょに探検しましょう！"
+    "translation" : "COZMOはあなたがオーナーでラッキーです！いっしょに探検しましょう！"
   },
   "onboarding.button.end" : {
     "translation" : "完了"

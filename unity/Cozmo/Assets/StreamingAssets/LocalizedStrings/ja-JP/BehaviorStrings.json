@@ -40,7 +40,7 @@
     "translation" : "COZMOは自分のキューブを守っています..."
   },
   "behavior.RollBlock" : {
-    "translation" : "COZMOはドリブルしています..."
+    "translation" : "COZMOはころがしています..."
   },
   "behavior.StackCube" : {
     "translation" : "Cozmoはキューブの山を作っています..."
@@ -229,10 +229,10 @@
     "translation" : "COZMOはチューンアップが必要です..."
   },
   "behavior.Needs_SevereLowEnergyGetIn" : {
-    "translation" : "Cozmoはとてもお腹が空いています。どうしてもエネルギーが必要です！"
+    "translation" : "COZMOはとてもお腹が空いています。どうしてもエネルギーが必要です！"
   },
   "behavior.Needs_SevereLowEnergyRequest" : {
-    "translation" : "Cozmoはとてもお腹が空いています。どうしてもエネルギーが必要です！"
+    "translation" : "COZMOはとてもお腹が空いています。どうしてもエネルギーが必要です！"
   },
   "behavior.Needs_SevereLowPlayGetIn" : {
     "translation" : "COZMOはとても退屈していてイライラしています。とても遊びたがっています！"

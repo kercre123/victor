@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "connectivity.connectingToCozmoText" : {
-    "translation" : "Cozmoに接続しています..."
+    "translation" : "COZMOに接続しています..."
   },
   "connectivity.searchForCozmoFailedText" : {
     "translation" : "COZMOに接続してください。"
@@ -22,7 +22,7 @@
     "translation" : "WiFi設定で接続してください。"
   },
   "connectivity.searchingForCozmo" : {
-    "translation" : "Cozmoを探しています..."
+    "translation" : "COZMOを探しています..."
   },
   "connectivity.securingConnection" : {
     "translation" : "接続しています..."
@@ -31,7 +31,7 @@
     "translation" : "COZMOを起こしています..."
   },
   "connectivity.updatingFirmware" : {
-    "translation" : "Cozmoを更新しています..."
+    "translation" : "COZMOを更新しています..."
   },
   "connectivity.updatingFirmwareSubTitle" : {
     "translation" : "COZMOを充電ドックに置いたままにしてください。"
@@ -61,7 +61,7 @@
     "translation" : "COZMOを充電ドックに置いてください。"
   },
   "connectivity.keepCozmoOnCharger" : {
-    "translation" : "設定中はCOZMOをチャージャーに置いたままにしてください。"
+    "translation" : "設定中はCOZMOを充電ドックに置いたままにしてください。"
   },
   "connectivity.placeCozmoOnCharger" : {
     "translation" : "COZMOを充電ドックに置きます。"
@@ -76,7 +76,7 @@
     "translation" : "COZMOに別のデバイスが接続されています。\u000aデバイスの接続を外してからもう一度試してください。"
   },
   "needs.unconnected.needToConnect.title" : {
-    "translation" : "Cozmoは接続されていません"
+    "translation" : "COZMOは接続されていません"
   },
   "needs.unconnected.needToConnect.description" : {
     "translation" : "COZMOをお世話してメーターをチェックするには、まずCozmoに接続する必要があります。"

@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "faceEnrollment.instructions" : {
-    "translation" : "Cozmoがあなたを調べます。まっすぐCozmoを見て動かないでください。\u000a\u000a終わるとチャイムが鳴ります。"
+    "translation" : "COZMOがあなたを調べます。まっすぐCOZMOを見て動かないでください。\u000a\u000a終わるとチャイムが鳴ります。"
   },
   "faceEnrollment.enterName.placeholderText" : {
     "translation" : "名前を入力（カナ）："
@@ -37,7 +37,7 @@
     "translation" : "COZMOにはあなたが見えていません"
   },
   "faceEnrollment.errors.timeOut.description" : {
-    "translation" : "室内を明るくして、Cozmoをまっすぐ見てください。Cozmoを平らで安定した場所に置いてください。"
+    "translation" : "室内を明るくして、COZMOをまっすぐ見てください。COZMOを平らで安定した場所に置いてください。"
   },
   "faceEnrollment.condition.allChangesSaved" : {
     "translation" : "すべての変更が保存されました。"
@@ -67,7 +67,7 @@
     "translation" : "前回スキャンした日："
   },
   "faceEnrollment.label.cozmoPrep" : {
-    "translation" : "Cozmoは準備中です..."
+    "translation" : "COZMOは準備中です..."
   },
   "faceEnrollment.label.today" : {
     "translation" : "今日"

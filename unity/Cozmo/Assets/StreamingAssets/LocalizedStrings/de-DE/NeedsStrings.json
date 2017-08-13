@@ -76,7 +76,7 @@
     "translation" : "Das Cozmo-Tuning ist abgeschlossen!"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "Senden"
+    "translation" : "SENDEN"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
     "translation" : "COZMO SCANNEN"

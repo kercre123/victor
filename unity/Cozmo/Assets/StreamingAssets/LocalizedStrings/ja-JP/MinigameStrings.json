@@ -52,13 +52,13 @@
     "translation" : "{0}個のキューブの準備ができました！"
   },
   "minigame.label.cozmoPrep" : {
-    "translation" : "Cozmoはプレイの準備中です..."
+    "translation" : "COZMOはプレイの準備中です..."
   },
   "minigame.label.gameOver" : {
     "translation" : "ゲームオーバー"
   },
   "minigame.text.waitForCozmo" : {
-    "translation" : "Cozmoは準備中です..."
+    "translation" : "COZMOは準備中です..."
   },
   "droneMode.unknownFaceReticleLabel" : {
     "translation" : "人間"
@@ -91,13 +91,13 @@
     "translation" : "キューブを持ち上げる"
   },
   "droneMode.button.action.dropCube" : {
-    "translation" : "キューブを落とす"
+    "translation" : "キューブを下ろす"
   },
   "droneMode.button.action.stackCube" : {
     "translation" : "つむ"
   },
   "droneMode.button.action.rollCube" : {
-    "translation" : "ドリブルする"
+    "translation" : "ころがす"
   },
   "droneMode.text.howToPlaySteering" : {
     "translation" : "デバイスを傾けるとCOZMOは左または右に進みます。"
@@ -124,10 +124,10 @@
     "translation" : "表示されたオプションをタップしてCOZMOにやり取りさせます。"
   },
   "memoryMatchGame.howToPlay" : {
-    "translation" : "あなたとCozmoが順番にプレイします。\u000a光るキューブのパターンを覚えます。覚えた順番でキューブをタップします。"
+    "translation" : "あなたとCOZMOが順番にプレイします。\u000a光るキューブのパターンを覚えます。覚えた順番でキューブをタップします。"
   },
   "memoryMatchGame.solo.howToPlay" : {
-    "translation" : "あなたがプレイする間Cozmoは見ています。\u000a光るキューブのパターンを覚えて、それを再現します。"
+    "translation" : "あなたがプレイする間COZMOは見ています。\u000a光るキューブのパターンを覚えて、それを繰り返します。"
   },
   "memoryMatchGame.difficulty.hardDescription.locked" : {
     "translation" : "あなた対COZMOの対戦モードでメモリーマッチに勝ってロック解除します。"
@@ -157,7 +157,7 @@
     "translation" : "パターンの長さ：{0}"
   },
   "memoryMatchGame.mode.vs" : {
-    "translation" : "あなた VS. Cozmo"
+    "translation" : "あなた 対 COZMO"
   },
   "memoryMatchGame.mode.solo" : {
     "translation" : "ソロ"
@@ -175,7 +175,7 @@
     "translation" : "キューブをもっと離してください。"
   },
   "memoryMatchGame.label.waitingForCubes.scanning" : {
-    "translation" : "Cozmoはキューブをチェックしています..."
+    "translation" : "COZMOはキューブをチェックしています..."
   },
   "memoryMatchGame.solo.NewHighScore" : {
     "translation" : "新記録です！"
@@ -205,10 +205,10 @@
     "translation" : "プレイヤー2"
   },
   "minigame.dontMoveCozmo.title" : {
-    "translation" : "Cozmoが動きました！"
+    "translation" : "COZMOが動きました！"
   },
   "minigame.dontMoveCozmo.description" : {
-    "translation" : "Cozmoが動いたのでゲームを続けられません。"
+    "translation" : "COZMOが動いたのでゲームを続けられません。"
   },
   "minigame.lostTrackOfBlock.title" : {
     "translation" : "キューブの接続が解除されました"
@@ -235,10 +235,10 @@
     "translation" : "キューブをゆっくりCOZMOの方に押します。でも近づけすぎないように！"
   },
   "cubePounce.header.cozmoWinPoint" : {
-    "translation" : "Cozmoが得点しました！"
+    "translation" : "COZMOが得点しました！"
   },
   "cubePounce.header.setupText" : {
-    "translation" : "ゲーム設定："
+    "translation" : "ゲームセットアップ："
   },
   "minigame.text.howToPlay" : {
     "translation" : "遊び方"
@@ -268,13 +268,13 @@
     "translation" : "集中して！キューブのパターンは複雑になり、同時に3色まであり得ます。"
   },
   "speedTap.difficulty.expertDescription" : {
-    "translation" : "エキスパート限定！キューブは4色になることもあります。トッププレーヤーでも難しいでしょう。"
+    "translation" : "エキスパート限定！キューブは4色になることもあります。トッププイレヤーでも難しいでしょう。"
   },
   "button.retry" : {
     "translation" : "もう一度やり直す"
   },
   "speedTap.text.waitForCozmo" : {
-    "translation" : "Cozmoは準備中です..."
+    "translation" : "COZMOは準備中です..."
   },
   "speedTap.difficulty.easyDescription.locked" : {
     "translation" : "クイックタップをロック解除してロックを外します"
@@ -313,16 +313,16 @@
     "translation" : "ロックされています！"
   },
   "speedTap.text.MP.Locked" : {
-    "translation" : "3つのプレイヤーモードのロックを解除するには、HUMAN VSをプレイします。この難しさで一度COZMO。"
+    "translation" : "3人プレーヤーモードのロックを解除するには、この難易度で人間対COZMOを1回プレイしてください。"
   },
   "speedTapGame.label.vs" : {
     "translation" : "対戦"
   },
   "speedTapGame.mode.HvC" : {
-    "translation" : "人間 VS. Cozmo"
+    "translation" : "人間 対 COZMO"
   },
   "speedTapGame.mode.HvHvC" : {
-    "translation" : "人間 VS. 人間 VS. Cozmo"
+    "translation" : "人間 対 人間 対 COZMO"
   },
   "cozmoSays.instructions.label" : {
     "translation" : "単語やフレーズを入力して、COZMOに言葉をしゃべらせましょう："
@@ -343,16 +343,16 @@
     "translation" : "光るキューブをタップします。"
   },
   "minigame.GuardDog.Title" : {
-    "translation" : "Cozmoは自分のキューブを守っています"
+    "translation" : "COZMOは自分のキューブを守っています"
   },
   "minigame.GuardDog.Desc" : {
     "translation" : "COZMOを起こさないように、ゆっくりと慎重にCOZMOのキューブをすべて逆さまにします。\u000a\u000a慎重に...COZMOはキューブが動くのに気づくかもしれません。"
   },
   "speedTap.driveToCubeFail.title" : {
-    "translation" : "Cozmoは自分のキューブを見つけられません！"
+    "translation" : "COZMOは自分のキューブを見つけられません！"
   },
   "speedTap.driveToCubeFail.description" : {
-    "translation" : "Cozmoは自分のキューブを見つけるのに苦労しています。Cozmoからキューブが見えるようにしてください。"
+    "translation" : "COZMOは自分のキューブを見つけるのに苦労しています。COZMOからキューブが見えるようにしてください。"
   },
   "minigame.text.youWin" : {
     "translation" : "あなたの勝ち！"

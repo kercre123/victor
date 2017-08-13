@@ -46,13 +46,13 @@
     "translation" : "COZMOは遊び続けることができます。"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
-    "translation" : "COZMOを十分にチャージするために、キューブを認識できるよう手順に従ってください。"
+    "translation" : "COZMOを満足にチャージさせるために、キューブを認識できるよう手順に従ってください。"
   },
   "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title" : {
     "translation" : ""
   },
   "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body" : {
-    "translation" : "Cozmoはエネルギーを十分に持っているので、Quick Snackは必要ありません。彼に十分な餌を与え続けるには、指示に従って彼がキューブを認識できるようにしてください。"
+    "translation" : "COZMOは満足にチャージされているので、クイックスナックは必要ありません。COZMOを満腹にするには、指示に従ってCOZMOがキューブを認識できるようにしてください。"
   },
   "cubeHelpStrings.Instructions.SlideA2Copy" : {
     "translation" : "それから<b>キューブの更新</b>をタップします。"

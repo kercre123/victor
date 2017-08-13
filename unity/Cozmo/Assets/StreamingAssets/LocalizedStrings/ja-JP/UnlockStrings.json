@@ -46,7 +46,7 @@
     "translation" : "エクササイズ"
   },
   "unlockable.Workout.Description" : {
-    "translation" : "ロボットだってエクササイズが必要です！Cozmoは体調を万全に保つため、エクササイズできるようになります。"
+    "translation" : "ロボットだってエクササイズが必要です！COZMOは体調を万全に保つため、エクササイズできるようになります。"
   },
   "unlockable.Workout.SparkButtonDescription" : {
     "translation" : "タップしてCOZMOにエクササイズをさせます。"
@@ -85,7 +85,7 @@
     "translation" : "Cozmoトーク"
   },
   "unlockable.CubeRollAction.Title" : {
-    "translation" : "ドリブル"
+    "translation" : "ころがす"
   },
   "unlockable.CubeRollAction.Description" : {
     "translation" : "COZMOはキューブを正しい側を上にしておくのが好きです。このトリックにより、特にキューブがCOZMOの横にあるときにころがせるようになります。"
@@ -100,7 +100,7 @@
     "translation" : "たんけん"
   },
   "unlockable.DroneMode.Description" : {
-    "translation" : "このトリックで、あなたはたんけんでCozmoを自由自在に動かせるようになります。"
+    "translation" : "このトリックで、あなたはたんけんでCOZMOを自由自在に動かせるようになります。"
   },
   "unlockable.CubeStackAction.Title" : {
     "translation" : "つむ"
@@ -136,7 +136,7 @@
     "translation" : "タップしてCOZMOにピラミッドを作らせます。"
   },
   "unlockable.BuildPyramid.SparkedStateDescription" : {
-    "translation" : "COZMOが3つのキューブを使ってピラミッド作りをするのを見てください。"
+    "translation" : "COZMOが3つのキューブを使ってピラミッドをするのを見てください。"
   },
   "unlockable.PopAWheelieAction.Title" : {
     "translation" : "ウィリー"
@@ -148,7 +148,7 @@
     "translation" : "タップしてCOZMOにウィリーをさせます。"
   },
   "unlockable.PopAWheelieAction.SparkedStateDescription" : {
-    "translation" : "COZMOがキューブから離れてウィーリーをするのを見てください。"
+    "translation" : "COZMOがキューブから離れてウィリーをするのを見てください。"
   },
   "unlockable.KnockOverThreeCubeStack.Title" : {
     "translation" : "たおす"
@@ -172,7 +172,7 @@
     "translation" : "タップしてCOZMOにキューブをもちあげさせます。"
   },
   "unlockable.PickupCube.SparkedStateDescription" : {
-    "translation" : "COZMOがキューブを拾うのを見てください。"
+    "translation" : "COZMOがもちあげるのを見てください。"
   },
   "unlockable.GatherCubes.Title" : {
     "translation" : "キューブのタイトル<placeholder>を収集します"
@@ -211,7 +211,7 @@
     "translation" : "エナジーボール"
   },
   "sparks.Spark.ConfirmQuit" : {
-    "translation" : "Cozmoはエナジーボールで指示されました！"
+    "translation" : "Cozmoはエナジースパークで指示されました！"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
     "translation" : "Cozmoが完了する前に離れると、Cozmoはもうエナジースパーク状態でなくなります。"

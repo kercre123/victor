@@ -52,7 +52,7 @@
     "translation" : ""
   },
   "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body" : {
-    "translation" : "Cozmo doesn’t need a Quick Snack since he has enough Energy to play.\u000a\u000aTo keep him fully fed, follow the instructions to help him recognize his Cubes."
+    "translation" : "Cozmo n'a pas besoin d'un petit encas, car il a assez d'énergie pour jouer.\u000a\u000aAssure-toi qu'il est bien nourri en suivant les instructions pour l'aider à reconnaître ses cubes."
   },
   "cubeHelpStrings.Instructions.SlideA2Copy" : {
     "translation" : "Ensuite, appuie sur <b>ACTUALISER LES CUBES</b>."

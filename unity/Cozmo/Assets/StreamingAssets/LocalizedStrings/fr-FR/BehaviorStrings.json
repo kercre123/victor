@@ -211,7 +211,7 @@
     "translation" : "Cozmo a besoin d'un réglage..."
   },
   "behavior.VC_Refuse_Sparks" : {
-    "translation" : "Tu n'as pas assez d'étincelles..."
+    "translation" : "Tu n'as pas assez d'éclats..."
   },
   "behavior.VC_HowAreYouDoing_AllGood" : {
     "translation" : "Cozmo se sent bien..."

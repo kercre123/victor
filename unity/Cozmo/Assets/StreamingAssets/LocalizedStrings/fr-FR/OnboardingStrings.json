@@ -34,7 +34,7 @@
     "translation" : "Tu peux prendre Cozmo si tu le souhaites, mais son plus grand bonheur est de se déplacer tout seul."
   },
   "onboarding.CozmoNeedsCharge.message5" : {
-    "translation" : "Lorsque tu laisses Cozmo se débrouiller, il adore explorer le monde par lui-même en mode de jeu libre. Il demandera automatiquement à faire des jeux, exécutera des tours et gagnera parfois des étincelles."
+    "translation" : "Lorsque tu laisses Cozmo se débrouiller, il adore explorer le monde par lui-même en mode de jeu libre. Il demandera automatiquement à faire des jeux, exécutera des tours et gagnera parfois des éclats."
   },
   "onboarding.CozmoNeedsCharge.finalMessage" : {
     "translation" : "Cozmo est prêt à jouer. Pour charger complètement sa batterie, tu peux le laisser sur le chargeur pendant encore 7 minutes."
@@ -106,7 +106,7 @@
     "translation" : "<b>Cozmo veut jouer.</b>\u000a\u000aAppuie sur le bouton <b><color=#f5ea12>JOUER</color></b> pour demander des jeux ou des tours. Chaque jour où tu remplis cette barre jaune, tu gagnes un jeton."
   },
   "onboarding.ActivitiesIntro" : {
-    "translation" : "Les activités de découverte sont particulières ; elles n'affectent pas les besoins de Cozmo et ne coûtent pas d'étincelles."
+    "translation" : "Les activités de découverte sont particulières ; elles n'affectent pas les besoins de Cozmo et ne coûtent pas d'éclats."
   },
   "onboarding.needs.ticker" : {
     "translation" : "Analyse des besoins de Cozmo en cours..."

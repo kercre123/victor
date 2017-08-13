@@ -94,7 +94,7 @@
     "translation" : "Eine Runde des Geschwindigkeitsspiels gewonnen, nachdem es vorher 4:4 stand"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "Geschwindigkeitsspiel im Modus \"Mensch vs Mensch vs Cozmo\" gespielt"
+    "translation" : "Mensch gegen Mensch gegen Cozmo"
   },
   "reward.description.Keepaway.Played" : {
     "translation" : "Das Spiel \"Fernhalten\" gespielt"
