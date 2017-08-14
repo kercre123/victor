@@ -240,6 +240,7 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle, kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
+      Cozmo.PauseManager.Instance.ExitChallengeOnPause = false;
 
       DAS.Event("onboarding.start", FirstTime ? "1" : "0");
       // in the event they've ever booted the app before, or it's an old robot.
@@ -297,6 +298,7 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
+      Cozmo.PauseManager.Instance.ExitChallengeOnPause = true;
     }
 
     RobotEngineManager.Instance.Message.RegisterOnboardingComplete =

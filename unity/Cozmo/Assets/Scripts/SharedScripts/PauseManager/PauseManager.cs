@@ -48,6 +48,7 @@ namespace Cozmo {
       get { return _IdleTimeOutEnabled; }
       set { _IdleTimeOutEnabled = value; }
     }
+    public bool ExitChallengeOnPause { get; set; }
     public bool AllowFreeplayOnResume { get; set; }
 
     [SerializeField]
@@ -88,6 +89,7 @@ namespace Cozmo {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleReactionaryBehavior);
+      ExitChallengeOnPause = true;
       DasTracker.Instance.TrackAppStartup();
     }
 
@@ -157,7 +159,7 @@ namespace Cozmo {
         _IsPaused = true;
 
         HubWorldBase hub = HubWorldBase.Instance;
-        if (null != hub) {
+        if (null != hub && ExitChallengeOnPause) {
           _ClosedMinigameOnPause = hub.CloseChallengeImmediately();
         }
         else {
