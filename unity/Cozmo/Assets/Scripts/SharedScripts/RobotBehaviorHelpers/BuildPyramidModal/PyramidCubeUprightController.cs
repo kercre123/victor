@@ -15,6 +15,7 @@ namespace Cozmo.Upgrades {
 
     private float _ReopenModalCooldownStartTimestamp;
     private bool _AreCubesUpright = true;
+    private bool _OpenModalDueToMessage = false;
 
     private void Start() {
       RobotEngineManager.Instance.AddCallback<PyramidPreReqState>(HandleReceivedPyramidPreReqState);
@@ -36,20 +37,24 @@ namespace Cozmo.Upgrades {
     }
 
     private void Update() {
-      if (!_ReopenModalCooldownStartTimestamp.IsNear(-1, float.Epsilon)
-          && (_ReopenModalCooldown_sec <= (Time.time - _ReopenModalCooldownStartTimestamp)
-          && (!_AreCubesUpright))) {
-        OpenCubeShouldBeUprightModal();
+      if (!_ReopenModalCooldownStartTimestamp.IsNear(-1, float.Epsilon)){
+        bool isTimeToReopenModal = 
+               (_ReopenModalCooldown_sec <= (Time.time - _ReopenModalCooldownStartTimestamp)
+               && (!_AreCubesUpright));
+        if(isTimeToReopenModal ||
+          _OpenModalDueToMessage){
+          OpenCubeShouldBeUprightModal();
+        }
       }
+
+      _OpenModalDueToMessage = false;
     }
 
     private void HandleReceivedPyramidPreReqState(PyramidPreReqState message) {
       if (_AreCubesUpright != message.areCubesUpright) {
         DAS.Debug ("PyramidCubeUprightController.HandleBuildPyramidPreReqsChanged", "cubes upright: " + message.areCubesUpright);
         if (!message.areCubesUpright) {
-          if (_ReopenModalCooldownStartTimestamp.IsNear(-1, float.Epsilon)) {
-            OpenCubeShouldBeUprightModal();
-          }
+          _OpenModalDueToMessage = true;
         } else {
           CloseCubeShouldBeUprightModal();
         }
