@@ -171,6 +171,9 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
      (currentTime_s > _timeCubeIsSuccessfullyDrained_sec)){
     _hasRegisteredActionComplete = true;
     robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Feed);
+    for(auto& listener: _feedingListeners){
+      listener->EatingComplete(robot);
+    }
   }
 
   
@@ -201,9 +204,6 @@ void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementS
          (_currentState == State::PlacingLiftOnCube)){
         StopActing(false);
         TransitionToReactingToInterruption(robot);
-        for(auto& listener: _feedingListeners){
-          listener->EatingInterrupted(robot);
-        }
       }else if(_currentState == State::DrivingToFood){
         StopActing(false);
       }
@@ -334,6 +334,17 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
 {
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool currentlyEating = (_currentState == State::Eating) &&
+                 (_timeCubeIsSuccessfullyDrained_sec > currentTime_s);
+  
+  if(currentlyEating ||
+     (_currentState == State::PlacingLiftOnCube)){
+    for(auto& listener: _feedingListeners){
+      listener->EatingInterrupted(robot);
+    }
+  }
+  
   SET_STATE(ReactingToInterruption);
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
   
@@ -344,7 +355,6 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
     trigger = AnimationTrigger::FeedingInterrupted_Severe;
   }
   StartActing(new TriggerLiftSafeAnimationAction(robot, trigger));
-  
 }
 
 

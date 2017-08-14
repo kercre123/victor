@@ -509,20 +509,7 @@ void ActivityFeeding::UpdateCurrentStage(Robot& robot)
           // we ate the target cube, so remove it from the ones we couldn't find, so that we will be allowed
           // to do a full search for it again in the future if it gets shaken again
           _cubesSearchCouldntFind.erase(_cubeIDToEat);
-
-          // if the cube isn't charged now, we won't want to eat it
-          if(!_cubeControllerMap[_cubeIDToEat]->IsCubeCharged()){
-
-            PRINT_CH_INFO("Feeding",
-                          "FeedingActivity.Update.EatFoot.CubeNotCharged",
-                          "Clearing cubeIDToEat because cube %d is no longer charged",
-                          _cubeIDToEat.GetValue());
-            
-            using CS = FeedingCubeController::ControllerState;
-            _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Deactivated);
-            _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Activated);
-            _cubeIDToEat.UnSet();
-          }
+          _cubeIDToEat.UnSet();
 
           TransitionToBestActivityStage(robot);
         }
@@ -721,6 +708,15 @@ void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
   using CS = FeedingCubeController::ControllerState;
   _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::DrainCube, duration_s);
   _DASCubesPerFeeding++;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFeeding::EatingComplete(Robot& robot)
+{
+  using CS = FeedingCubeController::ControllerState;
+  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Deactivated);
+  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Activated);
 }
 
 
