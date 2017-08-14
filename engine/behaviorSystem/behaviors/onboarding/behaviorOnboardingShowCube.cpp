@@ -20,6 +20,7 @@
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/onboarding/behaviorOnboardingShowCube.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/cozmoContext.h"
@@ -119,6 +120,14 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
     _numErrorsPickup = 0;
     _timesPickedUpCube = 0;
     SET_STATE(WaitForShowCube,robot);
+  }
+  
+  // can only be in this state if they moved the robot while it was picking up the cube and am coming back from an error
+  if( robot.GetCarryingComponent().IsCarryingObject() )
+  {
+   // Can't transition out of WaitForShowCube state until
+    // GetDockingComponent().CanPickUpObjectFromGround is true so the next transition will wait until the putdown is complete.
+    StartActing(new PlaceObjectOnGroundAction(robot));
   }
   
   return Result::RESULT_OK;
@@ -353,7 +362,6 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
   
   auto onPickupSuccess = [this](Robot& robot)
   {
-    _timesPickedUpCube++;
     StartSubStateCelebratePickup(robot);
   };
   
@@ -415,6 +423,7 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
   StartActing(action,
               [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
               {
+                _timesPickedUpCube++;
                 robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
                 SET_STATE(WaitForFinalContinue,robot);
               });
