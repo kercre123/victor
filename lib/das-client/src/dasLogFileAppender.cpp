@@ -56,7 +56,6 @@ DasLogFileAppender::DasLogFileAppender(const std::string& logDirPath,
 , _archiveFileExtension(archiveFileExtension)
 {
   _currentLogFileNumber = NextAvailableLogFileNumber();
-  UpdateLogFilePath();
   UpdateLogFileHandle();
 }
 
@@ -158,19 +157,38 @@ uint32_t DasLogFileAppender::NextAvailableLogFileNumber() const
   uint32_t fileNumber = 1;
   bool foundFileNumber = false;
   while (!foundFileNumber) {
-    std::string candidateFinishedPath = MakeLogFilePath(_logDirPath, fileNumber, kDasLogFileExtension);
-    if (!AnkiUtil::FileExistsAtPath(candidateFinishedPath)) {
-      foundFileNumber = true;
-    } else {
+    
+    // Lets be optimistic to simplify some logic
+    foundFileNumber = true;
+    
+    // Check for a file that exists without any archive extension
+    std::string candidatePath = MakeLogFilePath(_logDirPath, fileNumber, kDasLogFileExtension);
+    if (AnkiUtil::FileExistsAtPath(candidatePath)) {
+      foundFileNumber = false;
+    }
+    
+    // Check for a file that exists with an archive extension
+    if (foundFileNumber && !_archiveFileExtension.empty()) {
+      const auto fullArchiveExtension = std::string(kDasLogFileExtension + _archiveFileExtension);
+      candidatePath = MakeLogFilePath(_logDirPath, fileNumber, fullArchiveExtension);
+      if (AnkiUtil::FileExistsAtPath(candidatePath))
+      {
+        foundFileNumber = false;
+      }
+    }
+    
+    // Otherwise keep looking
+    if (!foundFileNumber) {
       fileNumber++;
+      
+      if (fileNumber >= _maxLogFiles) {
+        // we'll blow away the first log..
+        // FIXME: we should log the fact that we've rolled over, since it means we're losing data.
+        fileNumber = 0;
+        foundFileNumber = true;
+      }
     }
 
-    if (fileNumber >= _maxLogFiles) {
-      // we'll blow away the first log..
-      // FIXME: we should log the fact that we've rolled over, since it means we're losing data.
-      fileNumber = 0;
-      foundFileNumber = true;
-    }
   }
   return fileNumber;
 }
