@@ -375,7 +375,9 @@ namespace Cozmo.Repair.UI {
     }
 
     protected override void CleanUp() {
-      CloseInterruptionAlert();
+      if (_InterruptedAlert != null) {
+        _InterruptedAlert.CloseDialog();
+      }
     }
 
     private void OnApplicationPause(bool pauseStatus) {
@@ -789,7 +791,7 @@ namespace Cozmo.Repair.UI {
         _RobotRespondingDimmerPanel.SetActive(true);
 
         var robot = RobotEngineManager.Instance.CurrentRobot;
-        if(robot != null) {
+        if (robot != null) {
           robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
           robot.CancelAction(RobotActionType.PLAY_ANIMATION);
         }
@@ -981,12 +983,12 @@ namespace Cozmo.Repair.UI {
       RobotOffTreadsStateChanged offTreadsState = messageObject as RobotOffTreadsStateChanged;
       _RobotOffTreadsState = offTreadsState.treadsState;
       if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
-        if(_InterruptedAlert != null) {
-          CloseInterruptionAlert();
+        if (_InterruptedAlert != null) {
+          _InterruptedAlert.CloseDialog();
         }
       }
       else {
-        ShowReactionAlert(_RobotOffTreadsState);
+        ShowDontMoveCozmoAlert(_RobotOffTreadsState);
       }
     }
 
@@ -1163,12 +1165,12 @@ namespace Cozmo.Repair.UI {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         // Ensure that Cozmo is upright before playing calibration response animations
-        if(_RobotOffTreadsState != OffTreadsState.OnTreads) {
+        if (_RobotOffTreadsState != OffTreadsState.OnTreads) {
           robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
           _WaitingForAnimationsToBeRunnable = true;
           return;
         }
-          
+
         //start with intro anims
         NeedsStateManager nsm = NeedsStateManager.Instance;
         bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
@@ -1409,40 +1411,28 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private bool ShowReactionAlert(OffTreadsState offTreadsState) {
+    private bool ShowDontMoveCozmoAlert(OffTreadsState offTreadsState) {
       if (_CozmoMovedReactionsInterrupt) {
-        DAS.Event("robot.interrupt", DASEventDialogName, DASUtil.FormatExtraData(offTreadsState.ToString()));
-        ShowDontMoveCozmoAlert();
+        DAS.Event("NeedsRepairModal.ShowReactionAlert.OffTreads", DASEventDialogName, DASUtil.FormatExtraData(offTreadsState.ToString()));
+        if (_InterruptedAlert == null) {
+          ShowInterruptionAlert("cozmo_off_treads_by_user_alert", LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle,
+                                LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription);
+        }
         return true;
       }
       return false;
     }
 
-    private void ShowDontMoveCozmoAlert() {
-      if (_InterruptedAlert == null) {
-        ShowInterruptionAlert("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
-                                           LocalizationKeys.kMinigameDontMoveCozmoDescription);
-      }
-    }
-
     private void ShowInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
-      CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
-    }
-
-    private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
       if (_InterruptedAlert == null) {
         var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey);
 
         var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
-                                     LowPriorityModalAction.Queue,
-                                     HighPriorityModalAction.Stack);
+                                                                 LowPriorityModalAction.CancelSelf,
+                                                                 HighPriorityModalAction.Stack);
 
         System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
-          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += CloseInterruptionAlert;
-          alertModal.ModalForceClosedAnimationFinished += () => {
-            _InterruptedAlert = null;
-            CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
-          };
+          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleInterruptionAlertClosed;
           _InterruptedAlert = alertModal;
           GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
         };
@@ -1452,11 +1442,8 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void CloseInterruptionAlert() {
-      if (_InterruptedAlert != null) {
-        UIManager.CloseModal(_InterruptedAlert);
-        _InterruptedAlert = null;
-      }
+    private void HandleInterruptionAlertClosed() {
+      _InterruptedAlert = null;
     }
 
     #endregion //Misc Helper Methods

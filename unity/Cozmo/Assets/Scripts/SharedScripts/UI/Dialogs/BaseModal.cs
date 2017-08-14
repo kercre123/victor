@@ -110,7 +110,7 @@ namespace Cozmo {
         }
 
         if (_OptionalCloseDialogCozmoButton != null) {
-          _OptionalCloseDialogCozmoButton.Initialize(HandleUserClose, "defualt_close_view_button", DASEventDialogName);
+          _OptionalCloseDialogCozmoButton.Initialize(HandleUserClose, "default_close_view_button", DASEventDialogName);
         }
       }
 
