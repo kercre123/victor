@@ -127,11 +127,11 @@ WRAP_EXTERN_CONSOLE_VAR(bool,  kWriteToStorage,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(bool,  kIgnoreFailures,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(float, kDefaultTimeout_ms,    "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(bool,  kCheckFirmwareVersion, "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(bool, kCheckFirmwareVersion,  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32,  kMinBatteryVoltage,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kMinFirmwareVersion,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(int, kMinHardwareVersion,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kMfgIDTimeout_ms,        "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u32,  kMinFirmwareVersion,    "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(int,  kMinHardwareVersion,    "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u32,  kMfgIDTimeout_ms,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(BodyColor, kMinBodyColor,     "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(u32, kMotorCalibrationTimeout_ms, "Playpen");
@@ -140,8 +140,8 @@ WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToPlaySound,    "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kIMUDriftDetectPeriod_ms, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kIMUDriftAngleThreshDeg,  "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(u16, kExposure_ms,                      "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kGain,                           "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u16, kExposure_ms,                               "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(f32, kGain,                                      "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kFocalLengthTolerance,                      "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kCenterTolerance,                           "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kRadialDistortionTolerance,                 "Playpen");
@@ -157,6 +157,9 @@ WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToTriggerFrontCliffs_mm, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToTriggerBackCliffs_mm,  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToDriveOverCliff_mm,     "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kTimeToWaitForCliffEvent_ms,      "Playpen");
+
+WRAP_EXTERN_CONSOLE_VAR(f32, kToolCodeDistThreshX_pix, "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(f32, kToolCodeDistThreshY_pix, "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseDistThresh_mm,       "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseHeightThresh_mm,     "Playpen");

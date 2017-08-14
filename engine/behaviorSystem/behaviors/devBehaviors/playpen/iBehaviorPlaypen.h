@@ -75,7 +75,8 @@ protected:
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override final;
   void SubscribeToTags(std::set<EngineToGameTag>&& tags); // Hide base class function
   bool StartActing(IActionRunner* action, SimpleCallback callback); // Hide base class function
-  bool StartActing(IActionRunner* action, ActionResultCallback callback, bool expectFailure = false); // Hide base class function
+  bool StartActing(IActionRunner* action, ActionResultCallback callback); // Hide base class function
+  bool StartActing(IActionRunner* action, RobotCompletedActionCallback callback); // Hide base class function
   
 
   // Virtual functions for subclasses to override

@@ -50,6 +50,10 @@ bool IBehaviorPlaypen::IsRunnableInternal(const BehaviorPreReqPlaypen& preReq) c
 Result IBehaviorPlaypen::InitInternal(Robot& robot)
 {
   AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
+    PRINT_NAMED_WARNING("", "Behavior %s has timed out and we are %s ignoring failures",
+                        GetIDStr().c_str(),
+                        (ShouldIgnoreFailures() ? "" : "NOT"));
+    
     if(!ShouldIgnoreFailures())
     {
       SetResult(FactoryTestResultCode::TEST_TIMED_OUT);
@@ -200,15 +204,30 @@ bool IBehaviorPlaypen::StartActing(IActionRunner* action, SimpleCallback callbac
   return IBehavior::StartActing(action, callbackWrapper);
 }
 
-bool IBehaviorPlaypen::StartActing(IActionRunner* action, ActionResultCallback callback, bool expectFailure)
+bool IBehaviorPlaypen::StartActing(IActionRunner* action, ActionResultCallback callback)
 {
-  auto callbackWrapper = [this, callback, expectFailure](ActionResult result){
-    if(!expectFailure && result != ActionResult::SUCCESS)
+  auto callbackWrapper = [this, callback](ActionResult result){
+    if(result != ActionResult::SUCCESS)
     {
-      PLAYPEN_SET_RESULT(FactoryTestResultCode::ACTION_FAILED);
+      PRINT_NAMED_WARNING("", "Action failed with result %s",
+                          EnumToString(result));
     }
     
     callback(result);
+  };
+  return IBehavior::StartActing(action, callbackWrapper);
+}
+
+bool IBehaviorPlaypen::StartActing(IActionRunner* action, RobotCompletedActionCallback callback)
+{
+  auto callbackWrapper = [this, callback](const ExternalInterface::RobotCompletedAction& rca){
+    if(rca.result != ActionResult::SUCCESS)
+    {
+      PRINT_NAMED_WARNING("", "Action failed with result %s",
+                          EnumToString(rca.result));
+    }
+    
+    callback(rca);
   };
   return IBehavior::StartActing(action, callbackWrapper);
 }

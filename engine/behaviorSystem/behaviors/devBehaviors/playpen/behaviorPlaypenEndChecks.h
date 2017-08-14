@@ -1,5 +1,5 @@
 /**
- * File: behaviorPlaypenReadToolCode.h
+ * File: behaviorPlaypenEndChecks.h
  *
  * Author: Al Chaussee
  * Created: 08/14/17
@@ -10,21 +10,21 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorPlaypenReadToolCode_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorPlaypenReadToolCode_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorPlaypenEndChecks_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorPlaypenEndChecks_H__
 
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorPlaypenReadToolCode : public IBehaviorPlaypen
+class BehaviorPlaypenEndChecks : public IBehaviorPlaypen
 {
 protected:
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
-  BehaviorPlaypenReadToolCode(Robot& robot, const Json::Value& config);
+  BehaviorPlaypenEndChecks(Robot& robot, const Json::Value& config);
   
 protected:
   
@@ -38,11 +38,11 @@ protected:
   virtual void GetResultsInternal() override;
   
 private:
-  
-  void TransitionToToolCodeRead(Robot& robot, const ExternalInterface::RobotCompletedAction& rca);
+
+  bool _heardFromLightCube = false;
 };
 
 }
 }
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenReadToolCode_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorPlaypenEndChecks_H__

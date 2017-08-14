@@ -3396,15 +3396,16 @@ namespace Cozmo {
                                   0, 507, 359,
                                   0, 0, 1);
     
-    cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(8,1) << -0.07f, -0.2f, 0.001f, 0.001f, 0.1f,
-                                                0.f, 0.f, 0.f);
+    cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) << -0.07f, -0.2f, 0.001f,
+                                                                                     0.001f, 0.1f, 0.f, 0.f, 0.f);
 #else
     cv::Mat_<f64> cameraMatrix = (cv::Mat_<double>(3,3) <<
                            362, 0, 303,
                            0, 364, 196,
                            0, 0, 1);
     
-    cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(8,1) << -0.1, -0.1, 0.00005, -0.0001, 0.05, 0, 0, 0);
+    cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) << -0.1, -0.1, 0.00005,
+                                                                                    -0.0001, 0.05, 0, 0, 0);
 #endif
 #else
     cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
@@ -3446,6 +3447,7 @@ namespace Cozmo {
     
     const f64* distCoeffs_data = distCoeffs[0];
     std::array<f32,NUM_RADIAL_DISTORTION_COEFFS> distCoeffsVec;
+    distCoeffsVec.fill(0.f);
     std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
     
     calibration = Vision::CameraCalibration(img.GetNumRows(), img.GetNumCols(),

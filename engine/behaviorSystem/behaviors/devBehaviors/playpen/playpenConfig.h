@@ -69,6 +69,11 @@ static f32 kDistanceToTriggerBackCliffs_mm  = 60;
 static f32 kDistanceToDriveOverCliff_mm     = 30;
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;
 
+// Tool Code
+static const u32 kNumToolCodes = 2;
+static f32       kToolCodeDistThreshX_pix = 20.f;
+static f32       kToolCodeDistThreshY_pix = 40.f;
+
 // Pickup Cube
 static f32 kExpectedCubePoseDistThresh_mm       = 30;
 static f32 kExpectedCubePoseHeightThresh_mm     = 10;
