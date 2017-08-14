@@ -925,10 +925,6 @@ public abstract class GameBase : MonoBehaviour {
 
     if (_ChallengeData.IsActivity) {
       Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
-      //Skip activities view if we're still onboarding.
-      if (OnboardingManager.Instance == null || !OnboardingManager.Instance.IsAnyOnboardingRequired()) {
-        ((Cozmo.Hub.NeedsHub)Cozmo.Hub.NeedsHub.Instance).ShowActivitiesView();
-      }
     }
   }
 
