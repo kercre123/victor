@@ -217,6 +217,8 @@ namespace Cozmo.Repair.UI {
     #region Life Span
 
     public void InitializeRepairModal() {
+      RobotEngineManager.Instance.AddCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
+
       HubWorldBase.Instance.StopFreeplay();
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
@@ -325,6 +327,7 @@ namespace Cozmo.Repair.UI {
     private void Update() {
       if (!IsClosed) {
         RefreshModalStateLogic(Time.deltaTime);
+        UpdateInterruptModal();
 
         if (_InteractionDetected) {
           _InactivityTimer_sec = _InactivityTimeOut_sec;
@@ -339,6 +342,19 @@ namespace Cozmo.Repair.UI {
         }
 
         _InteractionDetected = false;
+      }
+    }
+
+    private void UpdateInterruptModal(){
+      if (_CurrentModalState == RepairModalState.TUNE_UP) {
+        if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
+          if (_InterruptedAlert != null) {
+            _InterruptedAlert.CloseDialog();
+          }
+        }
+        else {
+          ShowDontMoveCozmoAlert(_RobotOffTreadsState);
+        }
       }
     }
 
@@ -375,6 +391,8 @@ namespace Cozmo.Repair.UI {
     }
 
     protected override void CleanUp() {
+      RobotEngineManager.Instance.RemoveCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
+
       if (_InterruptedAlert != null) {
         _InterruptedAlert.CloseDialog();
       }
@@ -523,8 +541,6 @@ namespace Cozmo.Repair.UI {
 
         _CurrentTuneUpState = TuneUpState.INTRO;
 
-        RobotEngineManager.Instance.AddCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
-
         EnterTuneUpState();
         break;
       case RepairModalState.REPAIRED:
@@ -569,8 +585,6 @@ namespace Cozmo.Repair.UI {
         break;
       case RepairModalState.TUNE_UP:
         ExitTuneUpState(TuneUpState.INTRO);
-
-        RobotEngineManager.Instance.RemoveCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
 
         while (_UpDownArrows.Count > 0) {
           GameObject.Destroy(_UpDownArrows[0].gameObject);
@@ -982,14 +996,6 @@ namespace Cozmo.Repair.UI {
     private void HandleRobotOffTreadsStateChanged(object messageObject) {
       RobotOffTreadsStateChanged offTreadsState = messageObject as RobotOffTreadsStateChanged;
       _RobotOffTreadsState = offTreadsState.treadsState;
-      if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
-        if (_InterruptedAlert != null) {
-          _InterruptedAlert.CloseDialog();
-        }
-      }
-      else {
-        ShowDontMoveCozmoAlert(_RobotOffTreadsState);
-      }
     }
 
     #endregion //Robot Callback Handlers
