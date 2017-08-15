@@ -25,21 +25,16 @@ RESULTS_FILE_PATTERN = "*_Results.log"
 
 def process_result_file(file_path):
     result = ""
-    num_of_pass = 0
-    num_of_fail = 0
     is_fail = False
     file_name = os.path.splitext(os.path.basename(file_path))[0]
     with open(file_path, encoding="utf-8") as lines:
         for line in lines:
-            if "True" in line:
-                num_of_pass += 1
-            elif "False" in line:
-                num_of_fail += 1
+            if "False" in line:
                 is_fail = True
     if not is_fail:
         result = "{} - PASSED".format(file_name)
     else:
-        result = "{} - FAILED".format(result)
+        result = "{} - FAILED".format(file_name)
     result += "\n"
     return is_fail, result
 
