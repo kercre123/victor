@@ -29,7 +29,7 @@ def process_result_file(file_path):
     num_of_fail = 0
     is_fail = False
     file_name = os.path.splitext(os.path.basename(file_path))[0]
-    with open(file_path) as lines:
+    with open(file_path, encoding="utf-8") as lines:
         for line in lines:
             if "True" in line:
                 num_of_pass += 1
