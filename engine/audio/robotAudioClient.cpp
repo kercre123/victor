@@ -301,20 +301,10 @@ bool RobotAudioClient::UpdateAnimationIsReady( TimeStamp_t startTime_ms, TimeSta
     return true;
   }
   
-  // Buffer is ready to get the next frame from
-  if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::AudioFramesReady ) {
+  // Buffer is ready to get the next frame from or we're inbetween audio streams
+  if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::AudioFramesReady ||
+       _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::LoadingStream ) {
     return true;
-  }
-  
-  // Buffer is loading, however it's not yet time to play the next audio event
-  if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::LoadingStream ) {
-    const TimeStamp_t relavantTime_ms = streamingTime_ms - startTime_ms;
-    const TimeStamp_t nextEventTime_ms = _currentAnimation->GetNextEventTime_ms();
-    // Check if the next event is in the future
-    // This is also true when the result is kInvalidEventTime
-    if ( relavantTime_ms < nextEventTime_ms ) {
-      return true;
-    }
   }
   
   // Animation is completed or has error, clear it and proceed

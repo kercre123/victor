@@ -149,40 +149,56 @@ void RobotAudioAnimationOnRobot::UpdateLoading( TimeStamp_t startTime_ms, TimeSt
     return;
   }
   
-  if (_audioBuffer->AudioStreamHasData())
+  const bool streamHasData = _audioBuffer->AudioStreamHasData();
+  const bool streamMarkedComplete = _audioBuffer->AudioStreamIsComplete();
+  
+  if (!streamHasData)
   {
-    const TimeStamp_t relevantTime_ms = streamingTime_ms - startTime_ms;
-    const AnimationEvent* nextEvent = GetNextEvent();
-    const bool nextEventIsReady = (nextEvent != nullptr) && (nextEvent->time_ms <= relevantTime_ms);
-    
-    if (!_didPlayFirstStream)
+    if (streamMarkedComplete)
     {
-      if (nextEventIsReady)
-      {
-        // Setup initial condition for the first event
-        _didPlayFirstStream = true;
-        // Calculate the time when we started playing this animation on the audio streaming timeline. This means we
-        // start time when delivery of the first chunk of audio on the first event occurred, then count backwards assuming
-        // it was delivered exactly when it was supposed to be consumed/played
-        _streamAnimationOffsetTime_ms = _audioBuffer->GetAudioStreamCreatedTime_ms() - nextEvent->time_ms;
-        SetAnimationState( AnimationState::AudioFramesReady );
-      }
+      _audioBuffer->PopAudioBufferStream();
+      SetAnimationState(RobotAudioAnimation::AnimationState::LoadingStream);
     }
     else
     {
-      const uint32_t streamRelevantTime_ms = floor( _audioBuffer->GetAudioStreamCreatedTime_ms() - _streamAnimationOffsetTime_ms );
-      if (streamRelevantTime_ms <= relevantTime_ms || nextEventIsReady)
-      {
-        SetAnimationState( AnimationState::AudioFramesReady );
-      }
+      // we wait for the stream to get data or be marked complete
+    }
+    return;
+  }
+  
+  // So the stream has data, now see if it's time to play it
+  const TimeStamp_t relevantTime_ms = streamingTime_ms - startTime_ms;
+  const AnimationEvent* nextEvent = GetNextEvent();
+  const bool nextEventIsReady = (nextEvent != nullptr) && (nextEvent->time_ms <= relevantTime_ms);
+  
+  if (!_didPlayFirstStream)
+  {
+    if (nextEventIsReady)
+    {
+      // Setup initial condition for the first event
+      _didPlayFirstStream = true;
+      // Calculate the time when we started playing this animation on the audio streaming timeline. This means we
+      // start time when delivery of the first chunk of audio on the first event occurred, then count backwards assuming
+      // it was delivered exactly when it was supposed to be consumed/played
+      _streamAnimationOffsetTime_ms = _audioBuffer->GetAudioStreamCreatedTime_ms() - nextEvent->time_ms;
+      SetAnimationState( AnimationState::AudioFramesReady );
     }
   }
-  else if (_audioBuffer->AudioStreamIsComplete())
+  else
   {
-    _audioBuffer->PopAudioBufferStream();
-    SetAnimationState(RobotAudioAnimation::AnimationState::LoadingStream);
+    const uint32_t streamRelevantTime_ms = floor( _audioBuffer->GetAudioStreamCreatedTime_ms() - _streamAnimationOffsetTime_ms );
+    if (streamRelevantTime_ms <= relevantTime_ms || nextEventIsReady)
+    {
+      SetAnimationState( AnimationState::AudioFramesReady );
+    }
+    else if (streamMarkedComplete)
+    {
+      // If it's not time to play this audio but our stream is done loading, go back to LoadingStream state
+      // This results in RobotAudioClient::UpdateAnimationIsReady returning true, which allows the animation to continue
+      // so we can get to the point in time when this audio _should_ play.
+      SetAnimationState(RobotAudioAnimation::AnimationState::LoadingStream);
+    }
   }
-  // otherwise we wait for the stream to get data or be marked complete
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
