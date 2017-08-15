@@ -468,7 +468,7 @@ public class StartupManager : MonoBehaviour {
 
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
-    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.InitInventory();
+    DataPersistence.DataPersistenceManager.Instance.InitSaveData();
 
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
   }

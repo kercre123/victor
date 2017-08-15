@@ -34,6 +34,10 @@ namespace Cozmo {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
     }
 
+    public void DestroyInventory() {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
+    }
+
     public void HandleEngineInventoryUpdated(Anki.Cozmo.ExternalInterface.InventoryStatus message) {
       int sparksAmount = message.allInventory.inventoryItemAmount[(int)Anki.Cozmo.InventoryType.Sparks];
 
