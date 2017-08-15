@@ -29,7 +29,7 @@ void LightLEDs();   // Light up LEDs for the rest of the beat
 
 // Complete a handshake with the robot - hop, broadcast, listen, timeout
 void RadioHandshake();
-void RadioLegacyStart();
+void RadioTest();
 
 // At 2mbaud, UART-print a 1 character note followed by len bytes of hex data
 #ifdef DEBUG

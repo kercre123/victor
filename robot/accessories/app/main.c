@@ -75,6 +75,13 @@ void MainExecution()
   } else {
     RTC2CMP0 += RXTX_TICKS;   // TIMING: CPU gets exactly RXTX_TICKS*2+_jitterTicks*2
     
+    // XXX: If we're asked to perform the TOMY radio test, blast out a tone
+    if ('T' == _radioIn[14])
+    {
+      RadioTest();
+      _radioIn[14] = 0;
+    }
+    
     // If we're ready for the accelerometer, drain its FIFO
     if (_accelWait & 0x80)
     {

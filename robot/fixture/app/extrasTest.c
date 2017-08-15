@@ -26,7 +26,9 @@ bool FinishDetect(void)
 void FinishTest(void)
 {
   // Try to set the mode - if that succeeds, we're golden
-  if (g_fixtureType == FIXTURE_FINISHX_TEST || g_fixtureType == FIXTURE_EMCUBE_TEST)
+  if (g_fixtureType == FIXTURE_EMCUBE_TEST)
+    SetRadioMode('J');  // JRL/TOMY mode - blast an extra tone for the Japan Radio test fixture
+  else if (g_fixtureType == FIXTURE_FINISHX_TEST)
     SetRadioMode('C');  // All types
   else
     SetRadioMode('0' + g_fixtureType - FIXTURE_FINISHC_TEST);

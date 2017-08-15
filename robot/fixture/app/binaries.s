@@ -10,7 +10,7 @@
   EXPORT g_CubeEnd
 g_Cube
 #ifdef FCC
-  INCBIN releases\\xsfcc.bin
+  INCBIN releases\\xsfcc_-12db.bin
 #else
   INCBIN releases\\xsboot.bin
 #endif
@@ -95,7 +95,9 @@ g_EspSafeEnd
   EXPORT g_Radio
   EXPORT g_RadioEnd
 g_Radio
+#ifndef FCC
   INCBIN releases\\radio.bin
+#endif
 g_RadioEnd
 
   ALIGN

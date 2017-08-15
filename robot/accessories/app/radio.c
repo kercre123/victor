@@ -7,6 +7,7 @@ u8 data _radioIn[HAND_LEN] _at_ 0x50;    // Inbound payload
 u8 data _radioOut[HAND_LEN];             // Outbound payload
 
 code u8 SETUP_OFF[] = {
+  WREG | RF_SETUP,      RF_PWR1,                // XXX - restore TOMY - 1mbps, -6dB (due to crap antenna)
   WREG | CONFIG,        0,                      // Power down
   0
 };
@@ -44,6 +45,12 @@ void RadioHandshake()
       chan += 22;
   }
   
+  // XXX: To recover from TOMY test mode
+  RFCE = 0;
+  RadioSetup(SETUP_OFF);
+  RFCKEN = 0;
+  RFF = 0;
+
   // Listen for packet or timeout
   RadioSetup(SETUP_RX_HAND);
   RadioHopTo(chan);
@@ -81,4 +88,35 @@ void RadioHandshake()
   RadioSetup(SETUP_OFF);
   RFCKEN = 0;
   return;
+}
+
+// XXX: TOMY test mode
+void writeReg(u8 reg, u8 value)
+{
+  RFCSN = 0;
+
+  SPIRDAT = W_REGISTER + reg;       // FIFO is 2 bytes deep, so first byte never waits
+  SPIRDAT = value;
+  while(!(SPIRSTAT & TXEMPTY))  ;   // Wait for TX complete
+  
+  RFCSN = 1;
+}
+
+// TOMY test mode can directly control the radio registers
+// This is generally used to blast out carrier waves (tone tests) at 30ms on/5ms off
+// packet[14] = 'T'
+// packet[15] = SETUP reg - typically RF_PWR1|PLL_LOCK|CONT_WAVE
+// packet[16] = CHANNEL reg - typically 2 (for 2402MHz)
+// There is little risk of this happening in the wild - you must enter -p4, then send a 'T' command - both CRC protected
+void RadioTest()
+{
+  // Power up radio
+  RadioSetup(SETUP_TX_HAND);
+  
+  // Set up test mode
+  writeReg(RF_SETUP, _radioIn[15]);
+  writeReg(RF_CH, _radioIn[16]);
+  
+  RFCE = 1; // Activate radio and hope a tone comes out
+  RFF = 0;  // The "8051 way" to acknowledge an untaken interrupt
 }

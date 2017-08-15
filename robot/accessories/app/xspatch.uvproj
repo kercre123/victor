@@ -239,7 +239,7 @@
               </RXB>
               <Ocm1>
                 <Type>0</Type>
-                <StartAddress>0x3400</StartAddress>
+                <StartAddress>0x2c00</StartAddress>
                 <Size>0x400</Size>
               </Ocm1>
               <Ocm2>

@@ -191,36 +191,18 @@ void PlaypenTest(void)
   EnableChargeComms();
   MicroWait(300*1000); // Let Espressif finish booting
   
-  //Repurpose Playpen test cmd for JRL testing
   uint8_t param;
-  if( g_fixtureType == FIXTURE_EMROBOT_TEST )
-  {
-    const int mod = 1; //{0=2=PHY_MODE_11G, 1=PHY_MODE_11B, 3=PHY_MODE_11N} [robot/espressif/app/factory/factoryTests.cpp]
-    const int channel = 6; //{0..15}
-    
-    param = 0x80    //<7> 1 = JRL mode: continuous packet tx
-      | (mod << 4)  //<5:4> modulation
-      | (channel);  //<3:0> channel
-    
-    ConsolePrintf("playpen continuous tx: channel %u, modulation %s\r\n", channel, (mod==1 ? "11B" : mod==3 ? "11N" : "11G") );
-  } 
-  else
-  {
-    param = 0x00  //<7> 0 = standard playpen mode
-      | ((FIXTURE_SERIAL)&63); //<5:0> SSID -> "Afix##"
-  }
+  param = 0x00  //<7> 0 = standard playpen mode
+    | ((FIXTURE_SERIAL)&63); //<5:0> SSID -> "Afix##"
   
   // Try to put robot into playpen mode
   SendCommand(FTM_PlayPenTest, param, 0, 0);
   
   // Do this last:  Try to put fixture radio in advertising mode
-  if( g_fixtureType != FIXTURE_EMROBOT_TEST )
-  {
-    static bool setRadio = false;
-    if (!setRadio)
-      SetRadioMode('A');
-    setRadio = true;
-  }
+  static bool setRadio = false;
+  if (!setRadio)
+    SetRadioMode('A');
+  setRadio = true;
 }
 
 extern int g_stepNumber;
@@ -305,6 +287,27 @@ void SlowMotors(void)
   CheckMotor(MOTOR_LIFT,        SLOW_POWER, SLOW_LIFT_THRESH, 0);
   CheckMotor(MOTOR_HEAD,        SLOW_POWER, SLOW_HEAD_THRESH, 0);
 }
+
+void WifiPowerTest(void)
+{
+  EnableChargeComms();
+  MicroWait(300*1000); // Let Espressif finish booting
+  
+  uint8_t param;
+  const int mod = 1; //{0=2=PHY_MODE_11G, 1=PHY_MODE_11B, 3=PHY_MODE_11N} [robot/espressif/app/factory/factoryTests.cpp]
+  const int channel = 11; //{0..15} - 2462MHz is the peak power channel
+  
+//  TryMotor(MOTOR_HEAD, FAST_HEADLIFT_POWER);
+//  SendCommand(TEST_POWERON, 4, 0, NULL);      // Reset robot timeout after motor stops
+  
+  param = 0x80    //<7> 1 = JRL mode: continuous packet tx
+    | (mod << 4)  //<5:4> modulation
+    | (channel);  //<3:0> channel
+  
+  ConsolePrintf("playpen continuous tx: channel %u, modulation %s\r\n", channel, (mod==1 ? "11B" : mod==3 ? "11N" : "11G") );
+  SendCommand(FTM_PlayPenTest, param, 0, 0);
+}
+
 
 const int JAM_POWER = 124;    // Full power
 const int JAM_THRESH[4] = { 2000, 2000, 150000, 70000 };  // Measured on 1 unit
@@ -1002,7 +1005,7 @@ TestFunction* GetEMRobotTestFunctions(void)
   {
     InfoTest,
     //BatteryCheck,
-    PlaypenTest,
+    WifiPowerTest,
     EmPlaypenDelay,
     DtmTest,
     PlaypenWaitTest, //wait for robot removal

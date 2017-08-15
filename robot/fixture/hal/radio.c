@@ -219,6 +219,7 @@ void RadioProcess()
 // Put the radio into a specific test mode
 void SetRadioMode(char mode, bool forceupdate )
 {
+#ifndef FCC
   InitRadio();
   // Try 5 times, since a buggy ISR in the NRF clobbers the update attempt
   for (int i = 5; i >= 0; i--)
@@ -240,6 +241,7 @@ void SetRadioMode(char mode, bool forceupdate )
 
   g_mode = mode;
   PutChar(g_mode);
+#endif
 }
 
 void RadioGetRssi( int8_t out_rssi[9] )

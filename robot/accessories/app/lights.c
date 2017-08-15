@@ -8,11 +8,11 @@ void Sleep()
   PWRDWN = 0;
 }
 // Deep sleep until RTC time is up
-// This works only with RTC and can't work with 
+// XXX: Specially modified for TOMY radio test - waste power but leave radio on
 void DeepSleep()
 {
-  IRCON = 0;
-  PWRDWN = RETENTION;
+//  IRCON = 0;
+//  PWRDWN = RETENTION;
   Sleep();    // Until RTC fires
 }
 

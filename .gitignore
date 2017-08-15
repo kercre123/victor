@@ -266,9 +266,9 @@ uImage
 fixture.build
 
 robot/include/anki/cozmo/robot/version.h
-robot/fixture/ankilog/Release
-robot/fixture/ankilog/Debug
-robot/fixture/ankilog/obj
+robot/fixture/anki*/Release
+robot/fixture/anki*/Debug
+robot/fixture/anki*/obj
 
 buildMakefile
 

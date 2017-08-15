@@ -39,17 +39,17 @@ void delayms(u8 delay);
 
 // Test mode configuration: CONFIG (RX/TX), RF_SETUP (power/data rate), CHAN, unused
 u8 code TESTS[] = {
-  PRIM_RX|PWR_UP, RF_PWR1, 2,  0,
+  PRIM_RX|PWR_UP, RF_PWR0, 2,  0,
   
-  PWR_UP,         RF_PWR1, 2,  0,
-  PWR_UP,         RF_PWR1, 42, 0,
-  PWR_UP,         RF_PWR1, 81, 0,
+  PWR_UP,         RF_PWR0, 2,  0,
+  PWR_UP,         RF_PWR0, 42, 0,
+  PWR_UP,         RF_PWR0, 81, 0,
   
-  PRIM_RX|PWR_UP, RF_PWR1, 81, 0,
+  PRIM_RX|PWR_UP, RF_PWR0, 81, 0,
   
-  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 2,  0,
-  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 42, 0,
-  PWR_UP,         RF_PWR1|PLL_LOCK|CONT_WAVE, 81, 0,
+  PWR_UP,         RF_PWR0|PLL_LOCK|CONT_WAVE, 2,  0,
+  PWR_UP,         RF_PWR0|PLL_LOCK|CONT_WAVE, 42, 0,
+  PWR_UP,         RF_PWR0|PLL_LOCK|CONT_WAVE, 81, 0,
 };
 
 extern u8 xdata _whichTest;

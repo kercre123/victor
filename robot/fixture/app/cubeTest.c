@@ -316,8 +316,10 @@ TestFunction* GetCubeTestFunctions(void)
   {
     CubeInit,
     CubeBurn,
+#ifndef FCC
     CubePOST,
     CubeScan,
+#endif
     NULL
   };
 
