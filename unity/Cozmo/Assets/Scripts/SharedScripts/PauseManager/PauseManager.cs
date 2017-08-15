@@ -90,6 +90,7 @@ namespace Cozmo {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleReactionaryBehavior);
       ExitChallengeOnPause = true;
+      AllowFreeplayOnResume = true;
       DasTracker.Instance.TrackAppStartup();
     }
 
