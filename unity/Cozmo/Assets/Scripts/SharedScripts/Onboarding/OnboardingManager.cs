@@ -64,10 +64,6 @@ public class OnboardingManager : MonoBehaviour {
   [SerializeField]
   private List<int> _NumOnboardingStages;
 
-  // The DAS phaseIDs are checkpoints from the design doc.
-  private int _CurrDASPhaseID = -1;
-  private float _CurrDASPhaseStartTime = 0;
-
   private const string kOnboardingManagerIdleLock = "onboarding_manager_idle";
 
 #if UNITY_EDITOR
@@ -428,7 +424,6 @@ public class OnboardingManager : MonoBehaviour {
       DAS.Error("onboardingmanager.SetSpecificStage", "Onboarding Asset Bundle load not completed");
       return;
     }
-    int nextDASPhaseID = -1;
     SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < _OnboardingUIInstance.GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
@@ -438,7 +433,6 @@ public class OnboardingManager : MonoBehaviour {
         _CurrPhase = OnboardingPhases.None;
         return;
       }
-      nextDASPhaseID = stagePrefab.DASPhaseID;
       _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
       if (OnOnboardingStageStarted != null) {
         OnOnboardingStageStarted.Invoke(_CurrPhase, nextStage);
@@ -465,18 +459,7 @@ public class OnboardingManager : MonoBehaviour {
       }
       UnloadIfDoneWithAllPhases();
     }
-    // Just started something new...
-    if (_CurrDASPhaseID != nextDASPhaseID) {
-      // Not first time, record a transition out
-      if (_CurrDASPhaseID != -1) {
-        float timeSinceLastPhase = Time.time - _CurrDASPhaseStartTime;
-        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
-      }
 
-      // start recording the next one...
-      _CurrDASPhaseStartTime = Time.time;
-      _CurrDASPhaseID = nextDASPhaseID;
-    }
     DataPersistenceManager.Instance.Save();
   }
 
