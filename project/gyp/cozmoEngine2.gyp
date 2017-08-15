@@ -1912,7 +1912,7 @@
         'CORETECH_ROBOT',
         'COZMO_V2',
         '_DEBUG',
-        'USING_ANDROID_PHONE',  # Uncomment if deploying on non-Cozmo android device
+        #'USING_ANDROID_PHONE',  # Uncomment if deploying on non-Cozmo android device
       ],
       'defines!': [
         'RELEASE'

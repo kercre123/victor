@@ -218,7 +218,7 @@ namespace Anki {
         printf("FC = %d ", bodyData_->framecounter);
         printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
         printf("raw = %d ", bodyData_->motor[MOTOR_OF_INTEREST].position);
-        printf("pos = %f ", HAL::MotorGetPosition(MotorID::MOTOR_OF_INTEREST));
+        printf("pos = %f ", HAL::MotorGetPosition(MOTOR_OF_INTEREST));
         printf("spd = %f ", internalData_.motorSpeed[MOTOR_OF_INTEREST]);
         printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
         printf("cliff = %d %d% d% d ",bodyData_->cliffSense[0],bodyData_->cliffSense[1],bodyData_->cliffSense[2],bodyData_->cliffSense[3]);

@@ -298,6 +298,7 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
+                AnkiInfo( 1251, "LiftController.Calibrated", 305, "", 0);
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT_RAD);
                 calState_ = LCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);

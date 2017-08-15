@@ -23,8 +23,6 @@
 #include "util/logging/multiFormattedLoggerProvider.h"
 #include "util/global/globalDefinitions.h"
 
-#include "util/time/stopWatch.h"
-
 #include <fstream>
 
 #if ANKI_DEV_CHEATS
@@ -188,30 +186,13 @@ int main(int argc, char **argv)
 
   PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
 
-  Anki::Util::Time::StopWatch stopWatch("tick");
-
   //
   // Main Execution loop: step the world forward forever
   //
-  auto tick_start = std::chrono::system_clock::now();
   while (engineSupervisor.step(BS_TIME_STEP) != -1)
   {
-    stopWatch.Start();
-
     double currTimeNanoseconds = Util::SecToNanoSec(engineSupervisor.getTime());
     myCozmo.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
-
-    double timeMS = stopWatch.Stop();
-
-    if( timeMS >= BS_TIME_STEP ) {
-      PRINT_NAMED_WARNING("EngineHeartbeat.Overtime", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
-    }
-    else if( timeMS >= 0.85*BS_TIME_STEP) {
-      PRINT_NAMED_INFO("EngineHeartbeat.SlowTick", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
-    }
-    
-    tick_start = std::chrono::system_clock::now();
-    
   } // while still stepping
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::DestroyInstance();
