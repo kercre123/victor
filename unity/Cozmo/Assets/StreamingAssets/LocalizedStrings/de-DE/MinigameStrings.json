@@ -109,10 +109,10 @@
     "translation" : "Antippen, um die Nachtsichtfunktion ein- oder auszuschalten."
   },
   "droneMode.text.raiseLowerHead" : {
-    "translation" : "Ziehen, um den Kopf oder die Krangabel von Cozmo nach oben oder unten zu bewegen."
+    "translation" : "Ziehen, um den Kopf oder den Hebearm von Cozmo nach oben oder unten zu bewegen."
   },
   "droneMode.text.switchHeadOrLift" : {
-    "translation" : "Antippen, um zwischen der Steuerung des Kopfs und der Krangabel zu wechseln."
+    "translation" : "Antippen, um zwischen der Steuerung des Kopfs und des Hebearms zu wechseln."
   },
   "droneMode.text.cozmoReticleHeader" : {
     "translation" : "Wenn Cozmo ein Objekt auswählt, siehst du es hier."
@@ -130,7 +130,7 @@
     "translation" : "Du spielst und Cozmo sieht zu.\u000aMerke dir das Muster, in dem die Cubes aufblitzen, und wiederhole es."
   },
   "memoryMatchGame.difficulty.hardDescription.locked" : {
-    "translation" : "Zum Freischalten musst du ein Gedächtnisspiel im Modus DU GEGEN COZMO gewinnen."
+    "translation" : "Zum Freischalten musst du Erinner Dich im Modus DU GEGEN COZMO gewinnen."
   },
   "memoryMatchGame.label.yourTurn" : {
     "translation" : "Du bist dran"
@@ -277,16 +277,16 @@
     "translation" : "Cozmo bereitet sich vor..."
   },
   "speedTap.difficulty.easyDescription.locked" : {
-    "translation" : "Zum Freischalten muss das Geschwindigkeitsspiel freigeschaltet werden."
+    "translation" : "Zum Freischalten muss Hau mich freigeschaltet werden."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "Der Modus <b>2 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>1 FARBE</b> gewinnen."
+    "translation" : "Der Modus <b>2 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du Hau mich im Modus <b>1 FARBE</b> gewinnen."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "Der Modus <b>3 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>2 FARBEN</b> gewinnen."
+    "translation" : "Der Modus <b>3 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du Hau mich im Modus <b>2 FARBEN</b> gewinnen."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "Der Modus <b>4 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>3 FARBEN</b> gewinnen."
+    "translation" : "Der Modus <b>4 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du Hau mich im Modus <b>3 FARBEN</b> gewinnen."
   },
   "speedTap.text.getReady" : {
     "translation" : "Mach dich bereit!"

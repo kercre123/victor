@@ -19,7 +19,7 @@
     "translation" : "プレイ"
   },
   "needs.NeedsEnergyModal.Title" : {
-    "translation" : "Cozmoに\u000aチャージする"
+    "translation" : "Cozmoにチャージする"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
     "translation" : "COZMOを元気いっぱいの状態に保つには、チャージが必要です。"
@@ -43,7 +43,7 @@
     "translation" : "キューブの再接続"
   },
   "needs.NeedsRepairModal.Title" : {
-    "translation" : "COZMOをチューンアップする。"
+    "translation" : "COZMOをチューンアップする"
   },
   "needs.NeedsRepairModal.RepairSummary" : {
     "translation" : "COZMOを最適で活動的な状態に保つには、チューンアップが必要です。"

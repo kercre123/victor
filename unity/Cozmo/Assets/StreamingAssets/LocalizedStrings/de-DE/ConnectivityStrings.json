@@ -55,7 +55,7 @@
     "translation" : "Cozmo geht schlafen und trennt demnächst die Verbindung..."
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "Der Ladestand von Cozmos Batterie ist niedrig."
+    "translation" : "Der Ladestand von Cozmos Batterie ist niedrig"
   },
   "connectivity.cozmoLowBatteryDesc" : {
     "translation" : "Bitte setze Cozmo auf die Ladestation."

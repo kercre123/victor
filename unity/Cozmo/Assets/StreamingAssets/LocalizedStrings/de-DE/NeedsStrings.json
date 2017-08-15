@@ -61,10 +61,10 @@
     "translation" : "Die Laufwerke wurden ausgerichtet."
   },
   "needs.NeedsRepairModal.LiftDamageNotice" : {
-    "translation" : "Die Krangabel muss kalibriert werden."
+    "translation" : "Der Hebearm muss kalibriert werden."
   },
   "needs.NeedsRepairModal.LiftRepairedNotice" : {
-    "translation" : "Die Krangabel wurde kalibriert."
+    "translation" : "Der Hebearm wurde kalibriert."
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
     "translation" : "Tippe die Teile an, die du tunen möchtest."
@@ -85,7 +85,7 @@
     "translation" : "Kopf wird justiert..."
   },
   "needs.NeedsRepairModal.AligningLift" : {
-    "translation" : "Krangabel wird kalibriert..."
+    "translation" : "Hebearm wird kalibriert..."
   },
   "needs.NeedsRepairModal.AligningTreads" : {
     "translation" : "Laufwerke werden ausgerichtet..."

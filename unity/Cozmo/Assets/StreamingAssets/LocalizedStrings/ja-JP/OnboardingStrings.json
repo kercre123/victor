@@ -10,13 +10,13 @@
     "translation" : "COZMOはチャージ中です..."
   },
   "onboarding.CozmoNeedsCharge.SecondsLeft" : {
-    "translation" : "残り秒数："
+    "translation" : "残り秒数"
   },
   "onboarding.CozmoNeedsCharge.KeepOnCharger" : {
-    "translation" : "Cozmoを充電ドックに置いてください。"
+    "translation" : "COZMOを充電ドックに置いてください。"
   },
   "onboarding.CozmoNeedsCharge.PutBackOnCharger" : {
-    "translation" : "Cozmoを充電ドックに戻してください。"
+    "translation" : "COZMOを充電ドックに戻してください。"
   },
   "onboarding.CozmoNeedsCharge.CozmoIsReady" : {
     "translation" : "COZMOの準備ができました！"

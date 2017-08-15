@@ -25,7 +25,7 @@
     "translation" : "SDKを有効にする"
   },
   "settings.sdkPanel.label.title" : {
-    "translation" : "Cozmo SDK"
+    "translation" : "COZMO SDK"
   },
   "settings.sdkPanel.connectionCommandCount.text" : {
     "translation" : "コマンド：{0}"
@@ -82,7 +82,7 @@
     "translation" : "COZMOを復元する"
   },
   "settings.supportView.label.directions" : {
-    "translation" : "カスタマーサポートはオンラインで利用可能です"
+    "translation" : "カスタマーサポートはオンラインで利用可能です。"
   },
   "settings.supportView.label.restoreCozmoClarification" : {
     "translation" : "このプロファイルからCOZMOにアンロックを再適用します。"
@@ -118,7 +118,7 @@
     "translation" : "謝辞"
   },
   "settings.versionPanel.button.eraseCozmo" : {
-    "translation" : "Cozmoを消去する"
+    "translation" : "COZMOを消去する"
   },
   "settings.versionPanel.button.support" : {
     "translation" : "サポート"
@@ -187,7 +187,7 @@
     "translation" : "一般設定"
   },
   "settings.sdkPanel.sdkUrl.preface" : {
-    "translation" : "Cozmo SDKについての詳細は、こちらを参照してください："
+    "translation" : "COZMO SDKについての詳細は、こちらを参照してください："
   },
   "settings.sdkPanel.sdkUrl.address" : {
     "translation" : "go.anki.com/cozmo-app-sdk"

@@ -22,7 +22,7 @@
     "translation" : "Fauststoß"
   },
   "unlockable.FistBump.Description" : {
-    "translation" : "Möchtest du Cozmo zeigen, dass du stolz auf ihn bist? Mach einen Fauststoß mit ihm! Bei diesem Trick fährt Cozmo seine Krangabel nach oben und wartet, bis du sie mit deiner Faust anstößt."
+    "translation" : "Möchtest du Cozmo zeigen, dass du stolz auf ihn bist? Mach einen Fauststoß mit ihm! Bei diesem Trick fährt Cozmo seinen Hebearm nach oben und wartet, bis du ihn mit deiner Faust anstößt."
   },
   "unlockable.FistBump.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo um einen Fauststoß zu bitten."
@@ -55,10 +55,10 @@
     "translation" : "Sieh Cozmo zu, wie er einen Cube sucht und trainiert."
   },
   "unlockable.CubePounce.Title" : {
-    "translation" : "Fernhalten"
+    "translation" : "Fang mich"
   },
   "unlockable.CubePounce.Description" : {
-    "translation" : "Bei diesem Trick lernt Cozmo das Spiel \"Fernhalten\", bei dem gute Reflexe und eine schnelle Reaktionszeit gefragt sind."
+    "translation" : "Bei diesem Trick lernt Cozmo das Spiel \"Fang mich\", bei dem gute Reflexe und eine schnelle Reaktionszeit gefragt sind."
   },
   "unlockable.FaceEnrollment.Title" : {
     "translation" : "Kennenlernen"
@@ -67,16 +67,16 @@
     "translation" : "Cozmo lernt, sich Gesichter zu merken und Namen zu sagen.\u000a\u000aSuche in der Aktivität \"Kennenlernen\" danach."
   },
   "unlockable.MemoryMatch.Title" : {
-    "translation" : "Gedächtnisspiel"
+    "translation" : "Erinner Dich"
   },
   "unlockable.MemoryMatch.Description" : {
-    "translation" : "Bei diesem Trick lernt Cozmo, das Gedächtnisspiel zu spielen."
+    "translation" : "Bei diesem Trick lernt Cozmo, Erinner Dich zu spielen."
   },
   "unlockable.SpeedTap.Title" : {
-    "translation" : "Geschwindigkeitsspiel"
+    "translation" : "Hau mich"
   },
   "unlockable.SpeedTap.Description" : {
-    "translation" : "Bei diesem Trick lernt Cozmo, das Geschwindigkeitsspiel zu spielen. Mit der Zeit wird er immer besser!"
+    "translation" : "Bei diesem Trick lernt Cozmo, Hau mich zu spielen. Mit der Zeit wird er immer besser!"
   },
   "unlockable.CodeLab.Title" : {
     "translation" : "Code Lab"

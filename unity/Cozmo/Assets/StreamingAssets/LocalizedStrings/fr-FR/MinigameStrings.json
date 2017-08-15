@@ -91,7 +91,7 @@
     "translation" : "Soulever cube"
   },
   "droneMode.button.action.dropCube" : {
-    "translation" : "Jeter cube"
+    "translation" : "Poser cube"
   },
   "droneMode.button.action.stackCube" : {
     "translation" : "Empiler cube"
@@ -124,13 +124,13 @@
     "translation" : "Appuie sur les options qui apparaissent pour faire interagir Cozmo."
   },
   "memoryMatchGame.howToPlay" : {
-    "translation" : "Cozmo et toi jouerez chacun à votre tour.\u000aLorsque les cubes clignotent, mémorise la séquence. Appuie ensuite sur les cubes pour la répéter."
+    "translation" : "Cozmo et toi jouerez chacun votre tour.\u000aLorsque les cubes clignotent, mémorise la séquence. Appuie ensuite sur les cubes pour la répéter."
   },
   "memoryMatchGame.solo.howToPlay" : {
     "translation" : "Pendant que tu joues, Cozmo regarde.\u000aLorsque les cubes clignotent, mémorise la séquence puis répète-la."
   },
   "memoryMatchGame.difficulty.hardDescription.locked" : {
-    "translation" : "Pour débloquer, tu dois gagner en mode TOI contre COZMO."
+    "translation" : "Pour débloquer, tu dois gagner en mode TOI CONTRE COZMO."
   },
   "memoryMatchGame.label.yourTurn" : {
     "translation" : "À toi de jouer"
@@ -148,7 +148,7 @@
     "translation" : "Jouer la séquence"
   },
   "memoryMatchGame.label.correct" : {
-    "translation" : "C'est CORRECT !"
+    "translation" : "C'est EXACT !"
   },
   "memoryMatchGame.label.nextRound" : {
     "translation" : "Tour suivant !"
@@ -196,7 +196,7 @@
     "translation" : "Touche le cube pour commencer la partie suivante."
   },
   "speedTap.multiplayer.overTime" : {
-    "translation" : "Temps dépassé !"
+    "translation" : "Prolongations !"
   },
   "speedTap.multiplayer.player1" : {
     "translation" : "Joueur 1"
@@ -247,7 +247,7 @@
     "translation" : "Comment jouer :"
   },
   "minigame.difficulty.easy" : {
-    "translation" : "UNE SEULE COULEUR"
+    "translation" : "UNE COULEUR"
   },
   "minigame.difficulty.medium" : {
     "translation" : "DEUX COULEURS"
@@ -289,7 +289,7 @@
     "translation" : "Le mode <b>QUATRE COULEURS</b> est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe Flash en mode <b>TROIS COULEURS</b>."
   },
   "speedTap.text.getReady" : {
-    "translation" : "Soit prêt !"
+    "translation" : "Sois prêt !"
   },
   "speedTap.text.bestOf" : {
     "translation" : "<b>Gagnant :</b> Le meilleur sur {0} parties"
@@ -307,7 +307,7 @@
     "translation" : "Score {0}"
   },
   "speedTap.text.MP.bestOf" : {
-    "translation" : "<b>Gagnant :</b> Premier sur 2 tours"
+    "translation" : "<b>Gagnant :</b> Premier à 2 parties"
   },
   "speedTap.title.MP.Locked" : {
     "translation" : "Verrouillé !"

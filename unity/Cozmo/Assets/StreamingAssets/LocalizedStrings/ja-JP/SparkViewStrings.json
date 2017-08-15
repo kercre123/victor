@@ -10,10 +10,10 @@
     "translation" : "プレイ"
   },
   "sparksView.askForGameCard.title" : {
-    "translation" : "ゲームをエナジースパーク"
+    "translation" : "ゲームを発動"
   },
   "sparksView.askForTrickCard.title" : {
-    "translation" : "トリックをエナジーボール"
+    "translation" : "トリックを発動"
   },
   "sparksView.listAbilitiesCard.title" : {
     "translation" : "トリックとゲーム"

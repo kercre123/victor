@@ -214,7 +214,7 @@
     "translation" : "キューブの接続が解除されました"
   },
   "minigame.lostTrackOfBlock.description" : {
-    "translation" : "キューブの1つの接続が解除されています。<b>設定</b>に移動してキューブのトラブルシューティングを確認してください。"
+    "translation" : "1つのキューブの接続が解除されています。<b>設定</b>に移動してキューブのトラブルシューティングを確認してください。"
   },
   "minigame.timeout.title" : {
     "translation" : "ゲームが終了しました"

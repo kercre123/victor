@@ -61,7 +61,7 @@
     "translation" : "Führe diese Schritte durch:\u000a\u000a1. Nimm Cozmo von der Ladestation und setze ihn dann wieder darauf.\u000a2. <b>Deaktiviere</b> das WLAN auf deinem Gerät und <b>aktiviere</b> es dann wieder."
   },
   "wifi.gethelp.description2" : {
-    "translation" : "Wenn du die Netzwerkdaten von Cozmo sehen möchtest, hebe die Krangabel an und senke sie wieder."
+    "translation" : "Wenn du die Netzwerkdaten von Cozmo sehen möchtest, hebe den Hebearm an und senke ihn wieder."
   },
   "wifi.gethelp.footer" : {
     "translation" : "Klappt es immer noch nicht? Besuche auf einem anderen Gerät unsere Support-Website: <b>support.anki.com</b>."

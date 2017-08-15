@@ -10,7 +10,7 @@
     "translation" : "Pas assez de cubes"
   },
   "challengeDetails.needsMoreCubesModal.description" : {
-    "translation" : "Cozmo a besoin de {0} {1} de plus pour commencer {2}."
+    "translation" : "Cozmo veut {0} {1} de plus pour commencer {2}."
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
     "translation" : "Cozmo n'est pas prêt"
@@ -22,7 +22,7 @@
     "translation" : "Cozmo est étourdi"
   },
   "challengeDetails.cozmoDizzy.description" : {
-    "translation" : "Attends que Cozmo se rétablisse et soit prêt à jouer."
+    "translation" : "Attends que Cozmo se rétablisse et sois prêt à jouer."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
     "translation" : "Cozmo se réveille"
@@ -85,7 +85,7 @@
     "translation" : "Découvrir"
   },
   "memoryMatchGame.label.incorrect" : {
-    "translation" : "INCORRECT"
+    "translation" : "FAUX !"
   },
   "activityView.freeplayDescription" : {
     "translation" : "Cozmo adore pouvoir choisir comment il veut jouer.  Il demandera de lui-même à faire des jeux, exécutera des tours et gagnera parfois même des éclats."

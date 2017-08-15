@@ -82,7 +82,7 @@
     "translation" : "コードラボ"
   },
   "unlockable.cozmoSays.Title" : {
-    "translation" : "Cozmoトーク"
+    "translation" : "おしゃべり"
   },
   "unlockable.CubeRollAction.Title" : {
     "translation" : "ころがす"
@@ -91,7 +91,7 @@
     "translation" : "COZMOはキューブを正しい側を上にしておくのが好きです。このトリックにより、特にキューブがCOZMOの横にあるときにころがせるようになります。"
   },
   "unlockable.CubeRollAction.SparkButtonDescription" : {
-    "translation" : "タップしてCOZMOにたおさせます。"
+    "translation" : "タップしてCOZMOにキューブをころがさせます。"
   },
   "unlockable.CubeRollAction.SparkedStateDescription" : {
     "translation" : "COZMOが最初に見たキューブをころがすのを見てください。"
@@ -202,7 +202,7 @@
     "translation" : "COZMOはエナジースパークされました："
   },
   "sparks.SparkCozmo" : {
-    "translation" : "Cozmoにエナジーボールする"
+    "translation" : "COZMOのエナジーボールを発動"
   },
   "sparks.Spark" : {
     "translation" : "エナジーボール"

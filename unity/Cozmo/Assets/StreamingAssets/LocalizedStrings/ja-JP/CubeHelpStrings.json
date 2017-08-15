@@ -10,7 +10,7 @@
     "translation" : "COZMOがすべてのキューブを認識できません。キューブをCOZMOの近くに置いてください。"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "まだ問題がある場合は「<b><color=#d3d3d3>次へ</color></b>」をタップします"
+    "translation" : "まだ問題がある場合は「<b><color=#d3d3d3>次へ</color></b>」をタップします。"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
     "translation" : "まず<b>設定</b>に移動します。"
