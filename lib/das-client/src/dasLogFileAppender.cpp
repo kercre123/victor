@@ -177,6 +177,15 @@ uint32_t DasLogFileAppender::NextAvailableLogFileNumber() const
       }
     }
     
+    // Check for a file that exists with an in-progress extension
+    if (foundFileNumber) {
+      candidatePath = MakeLogFilePath(_logDirPath, fileNumber, kDasInProgressExtension);
+      if (AnkiUtil::FileExistsAtPath(candidatePath))
+      {
+        foundFileNumber = false;
+      }
+    }
+    
     // Otherwise keep looking
     if (!foundFileNumber) {
       fileNumber++;
