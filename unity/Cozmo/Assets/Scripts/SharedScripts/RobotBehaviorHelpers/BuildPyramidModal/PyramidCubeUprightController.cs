@@ -14,13 +14,14 @@ namespace Cozmo.Upgrades {
     private float _ReopenModalCooldown_sec;
 
     private float _ReopenModalCooldownStartTimestamp;
+    private const float kDontCheckModalTimestamp = -1;
+
     private bool _AreCubesUpright = true;
-    private bool _OpenModalDueToMessage = false;
 
     private void Start() {
       RobotEngineManager.Instance.AddCallback<PyramidPreReqState>(HandleReceivedPyramidPreReqState);
       RobotEngineManager.Instance.AddCallback<HardSparkEndedByEngine>(HandleSparkComplete);
-      _ReopenModalCooldownStartTimestamp = -1;
+      _ReopenModalCooldownStartTimestamp = kDontCheckModalTimestamp;
     }
 
     private void OnDestroy() {
@@ -37,26 +38,24 @@ namespace Cozmo.Upgrades {
     }
 
     private void Update() {
-      if (!_ReopenModalCooldownStartTimestamp.IsNear(-1, float.Epsilon)){
+      if (!_ReopenModalCooldownStartTimestamp.IsNear(kDontCheckModalTimestamp, float.Epsilon)){
         bool isTimeToReopenModal = 
                (_ReopenModalCooldown_sec <= (Time.time - _ReopenModalCooldownStartTimestamp)
                && (!_AreCubesUpright));
-        if(isTimeToReopenModal ||
-          _OpenModalDueToMessage){
+        if(isTimeToReopenModal){
           OpenCubeShouldBeUprightModal();
         }
       }
-
-      _OpenModalDueToMessage = false;
     }
 
     private void HandleReceivedPyramidPreReqState(PyramidPreReqState message) {
       if (_AreCubesUpright != message.areCubesUpright) {
         DAS.Debug ("PyramidCubeUprightController.HandleBuildPyramidPreReqsChanged", "cubes upright: " + message.areCubesUpright);
         if (!message.areCubesUpright) {
-          _OpenModalDueToMessage = true;
+          _ReopenModalCooldownStartTimestamp = Time.time - _ReopenModalCooldown_sec;
         } else {
           CloseCubeShouldBeUprightModal();
+          _ReopenModalCooldownStartTimestamp = kDontCheckModalTimestamp;
         }
         _AreCubesUpright = message.areCubesUpright;
       }
@@ -68,7 +67,7 @@ namespace Cozmo.Upgrades {
 
     private void OpenCubeShouldBeUprightModal() {
       DAS.Debug("PyramidCubeUprightController.OpenCubeShouldBeUprightModal", "Opening modal");
-      _ReopenModalCooldownStartTimestamp = -1;
+      _ReopenModalCooldownStartTimestamp = kDontCheckModalTimestamp;
       UIManager.OpenModal(_PyramidCubeUprightModalPrefab,
                           new UI.ModalPriorityData(UI.ModalPriorityLayer.High, 0, UI.LowPriorityModalAction.CancelSelf, UI.HighPriorityModalAction.Stack),
                           HandleCubeShouldBeUprightModalCreated);
