@@ -1087,15 +1087,12 @@ message BlockPoolResetMessage {
 ///////////////////////////////////////////////////////////////////////////////
 
 message SaveCalibrationImage {
-  uint_8 robotID,
 }
 
 message ClearCalibrationImages {
-  uint_8 robotID,
 }
 
 message ComputeCameraCalibration {
-  uint_8 robotID,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

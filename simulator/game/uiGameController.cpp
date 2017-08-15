@@ -1705,7 +1705,6 @@ namespace Anki {
     void UiGameController::SendSaveCalibrationImage()
     {
       ExternalInterface::SaveCalibrationImage msg;
-      msg.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_SaveCalibrationImage(msg);
       SendMessage(message);
@@ -1714,7 +1713,6 @@ namespace Anki {
     void UiGameController::SendClearCalibrationImages()
     {
       ExternalInterface::ClearCalibrationImages msg;
-      msg.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ClearCalibrationImages(msg);
       SendMessage(message);
@@ -1723,7 +1721,6 @@ namespace Anki {
     void UiGameController::SendComputeCameraCalibration()
     {
       ExternalInterface::ComputeCameraCalibration msg;
-      msg.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ComputeCameraCalibration(msg);
       SendMessage(message);
