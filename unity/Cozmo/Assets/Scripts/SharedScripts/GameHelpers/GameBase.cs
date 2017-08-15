@@ -1088,6 +1088,7 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HidePlayer2Scoreboard();
       SharedMinigameView.HideCozmoScoreboard();
+      SharedMinigameView.HideShelf();
       DASReportPendingActionRewards();
       SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
                                                   Localization.Get(LocalizationKeys.kButtonContinue),
