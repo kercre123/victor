@@ -1286,6 +1286,11 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void MoveLift(float speed_radps) {
+    RobotEngineManager.Instance.Message.MoveLift = Singleton<MoveLift>.Instance.Initialize(speed_radps);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     RobotEngineManager.Instance.Message.DriveWheels =
       Singleton<DriveWheels>.Instance.Initialize(leftWheelSpeedMmps, rightWheelSpeedMmps, 0, 0);

@@ -56,10 +56,13 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         // Actions
         cozmo_vert_turn: this.verticalTurn,
         cozmo_vert_drive: this.verticalDrive,
+        cozmo_vert_wheels_speed: this.verticalDriveWheels,
+        cozmo_vert_stop_motor: this.verticalStopMotor,
         cozmo_vert_path_offset: this.verticalPathOffset,
         cozmo_vert_path_to: this.verticalPathTo,
         cozmo_vert_set_headangle: this.verticalSetHeadAngle,
         cozmo_vert_set_liftheight: this.verticalSetLiftHeight,
+        cozmo_vert_move_lift: this.verticalMoveLift,
         cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
         cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         // Sensors / Inputs
@@ -504,6 +507,25 @@ Scratch3CozmoBlocks.prototype.verticalDrive = function(args, util) {
     return commandPromise;
 };
 
+Scratch3CozmoBlocks.prototype.verticalDriveWheels = function(args, util) {
+    var requestId = this._getRequestId();
+    var leftSpeed = Cast.toNumber(args.LEFT_SPEED);
+    var rightSpeed = Cast.toNumber(args.RIGHT_SPEED);
+    
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozVertDriveWheels", argFloat: leftSpeed, argFloat2: rightSpeed});
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalStopMotor = function(args, util) {
+    var requestId = this._getRequestId();
+    var motorToStop = Cast.toString(args.MOTOR_SELECT);
+    
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozVertStopMotor", argString: motorToStop});
+    return commandPromise;
+};
+
 Scratch3CozmoBlocks.prototype.verticalPathOffset = function(args, util) {
     var requestId = this._getRequestId();
     var offsetX = Cast.toNumber(args.OFFSET_X);
@@ -545,6 +567,15 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function(args, util) {
     window.Unity.call({requestId: requestId, command: "cozVertLiftHeight", argFloat: heightRatio, argFloat2: speed});
     return commandPromise;
 };      
+
+Scratch3CozmoBlocks.prototype.verticalMoveLift = function(args, util) {
+    var requestId = this._getRequestId();
+    var speed = Cast.toNumber(args.LIFT_SPEED);
+
+    var commandPromise = this._promiseForCommand(requestId);    
+    window.Unity.call({requestId: requestId, command: "cozVertMoveLift", argFloat: speed});
+    return commandPromise;
+};
 
 Scratch3CozmoBlocks.prototype.setCubeLightCorners = function(args, util) {
     var cubeIndex = Cast.toNumber(args.CUBE_SELECT);

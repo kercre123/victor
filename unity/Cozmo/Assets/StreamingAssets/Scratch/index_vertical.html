@@ -70,6 +70,21 @@
                   </value>
               </block>
 
+              <block type="cozmo_vert_wheels_speed">
+                  <value name="LEFT_SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">25.0</field>
+                      </shadow>
+                  </value>
+                  <value name="RIGHT_SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">25.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_vert_stop_motor"></block>
+
               <block type="cozmo_vert_path_offset">
                   <value name="OFFSET_X">
                       <shadow type="math_number">
@@ -132,6 +147,14 @@
                   <value name="SPEED">
                       <shadow type="math_number">
                           <field name="NUM">45.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_vert_move_lift">
+                  <value name="LIFT_SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">15.0</field>
                       </shadow>
                   </value>
               </block>

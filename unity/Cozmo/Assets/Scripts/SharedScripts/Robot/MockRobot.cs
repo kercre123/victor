@@ -202,6 +202,9 @@ public class MockRobot : IRobot {
   public void DriveHead(float speed_radps) {
   }
 
+  public void MoveLift(float speed_radps) {
+  }
+
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     LeftWheelSpeed = leftWheelSpeedMmps;
     RightWheelSpeed = rightWheelSpeedMmps;

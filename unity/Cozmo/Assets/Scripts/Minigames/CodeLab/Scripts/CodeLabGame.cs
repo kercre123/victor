@@ -554,7 +554,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.NOW;
 
-      RobotEngineManager.Instance.CurrentRobot.TurnOffAllBackpackBarLED();
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+
+      robot.TurnOffAllBackpackBarLED();
+      robot.DriveWheels(0.0f, 0.0f);
 
       if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos)) {
         ++_PendingResetToHomeActions;
@@ -948,6 +951,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           inProgressScratchBlock.AdvanceToNextBlock(true);
         }
       }
+      else if (scratchRequest.command == "cozVertMoveLift") {
+        float speed = scratchRequest.argFloat * Mathf.Deg2Rad;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(speed.ToString()));
+
+        robot.MoveLift(speed);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
       else if (scratchRequest.command == "cozVertTurn") {
         float angle = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
@@ -959,6 +969,32 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float speed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
         robot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+      }
+      else if (scratchRequest.command == "cozVertDriveWheels") {
+        float leftSpeed = scratchRequest.argFloat;
+        float rightSpeed = scratchRequest.argFloat2;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(leftSpeed.ToString() + " , " + rightSpeed.ToString()));
+        robot.DriveWheels(leftSpeed, rightSpeed);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertStopMotor") {
+        string motorToStop = scratchRequest.argString;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(motorToStop));
+        switch (motorToStop) {
+        case "wheels":
+          robot.DriveWheels(0.0f, 0.0f);
+          break;
+        case "head":
+          robot.DriveHead(0.0f);
+          break;
+        case "lift":
+          robot.MoveLift(0.0f);
+          break;
+        case "all":
+          robot.StopAllMotors();
+          break;
+        }
+        inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozmoDriveForward") {
         // argFloat represents the number selected from the dropdown under the "drive forward" block
