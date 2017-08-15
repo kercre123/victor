@@ -25,11 +25,6 @@ BehaviorPlaypenEndChecks::BehaviorPlaypenEndChecks(Robot& robot, const Json::Val
                              {RobotInterface::RobotToEngineTag::activeObjectAvailable});
 }
 
-void BehaviorPlaypenEndChecks::GetResultsInternal()
-{
-  
-}
-
 Result BehaviorPlaypenEndChecks::InternalInitInternal(Robot& robot)
 {
   if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)

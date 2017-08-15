@@ -40,11 +40,6 @@ BehaviorPlaypenPickupCube::BehaviorPlaypenPickupCube(Robot& robot, const Json::V
   SubscribeToTags({EngineToGameTag::BlockPickedUp});
 }
 
-void BehaviorPlaypenPickupCube::GetResultsInternal()
-{
-  
-}
-
 PoseData ConvertToPoseData(const Pose3d& p)
 {
   PoseData poseData;
@@ -97,7 +92,7 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
                                                 PlaypenConfig::kExpectedCubePoseAngleThresh_rad,
                                                 Tdiff, angleDiff))
   {
-    PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
+    PRINT_NAMED_WARNING("BehaviorPlaypenPickupCube.InternalInitInternal.CubeNotWhereExpected",
                         "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f; tdiff: %f %f %f; angleDiff (deg): %f",
                         object->GetPose().GetTranslation().x(),
                         object->GetPose().GetTranslation().y(),
@@ -116,7 +111,7 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
   {
     const f32 kObservedCubePoseHeight_mm = object->GetPose().GetTranslation().z();
     
-    PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpectedZ", "%f %f",
+    PRINT_NAMED_WARNING("BehaviorPlaypenPickupCube.InternalInitInternal.CubeNotWhereExpectedZ", "%f %f",
                         kObservedCubePoseHeight_mm,
                         (0.5f*object->GetSize().z()));
     
@@ -156,7 +151,7 @@ void BehaviorPlaypenPickupCube::TransitionToPlaceCube(Robot& robot)
   Radians robotAngleAfterBackup = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
   f32 angleChange_rad = std::fabsf((robotAngleAfterBackup - _robotAngleAtPickup).ToFloat());
   
-  PRINT_NAMED_INFO("BehaviorFactoryTest.Update.AngleChangeDuringBackup",
+  PRINT_NAMED_INFO("BehaviorPlaypenPickupCube.TransitionToPlaceCube.AngleChangeDuringBackup",
                    "%f deg", RAD_TO_DEG(angleChange_rad));
   
   if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)
@@ -188,7 +183,7 @@ void BehaviorPlaypenPickupCube::TransitionToBackup(Robot& robot)
     Radians robotAngleAfterBackAndForth = robot.GetPose().GetRotation().GetAngleAroundZaxis();
     f32 angleChange_rad = std::fabsf((robotAngleAfterBackAndForth - _robotAngleAtPickup).ToFloat());
     
-    PRINT_NAMED_INFO("BehaviorFactoryTest.Update.AngleChangeDuringBackAndForth",
+    PRINT_NAMED_INFO("BehaviorPlaypenPickupCube.TransitionToBackup.AngleChangeDuringBackAndForth",
                      "%f deg", RAD_TO_DEG(angleChange_rad));
     
     if (angleChange_rad > PlaypenConfig::kMaxRobotAngleChangeDuringBackup_rad)

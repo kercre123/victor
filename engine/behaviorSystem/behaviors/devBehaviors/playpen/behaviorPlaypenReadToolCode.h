@@ -32,11 +32,6 @@ protected:
   virtual BehaviorStatus InternalUpdateInternal(Robot& robot) override;
   virtual void           StopInternal(Robot& robot)   override;
   
-  virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
-  virtual void AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot) override;
-  
-  virtual void GetResultsInternal() override;
-  
 private:
   
   void TransitionToToolCodeRead(Robot& robot, const ExternalInterface::RobotCompletedAction& rca);

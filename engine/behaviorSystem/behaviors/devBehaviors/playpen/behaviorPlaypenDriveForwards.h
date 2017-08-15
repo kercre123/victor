@@ -36,8 +36,6 @@ protected:
   
   virtual bool ShouldRunWhileOnCharger() const override { return true; }
   
-  virtual void GetResultsInternal() override;
-  
 private:
 
   void TransitionToWaitingForBackCliffs(Robot& robot);

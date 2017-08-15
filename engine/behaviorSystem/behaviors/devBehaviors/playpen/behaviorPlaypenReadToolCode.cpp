@@ -27,11 +27,6 @@ BehaviorPlaypenReadToolCode::BehaviorPlaypenReadToolCode(Robot& robot, const Jso
                              {RobotInterface::RobotToEngineTag::activeObjectAvailable});
 }
 
-void BehaviorPlaypenReadToolCode::GetResultsInternal()
-{
-  
-}
-
 Result BehaviorPlaypenReadToolCode::InternalInitInternal(Robot& robot)
 {
   ReadToolCodeAction* action = new ReadToolCodeAction(robot, false);
@@ -56,7 +51,7 @@ void BehaviorPlaypenReadToolCode::TransitionToToolCodeRead(Robot& robot,
   bool tooManyToolCodeImages = rawJpegData.size() > PlaypenConfig::kNumToolCodes;
   if(tooManyToolCodeImages)
   {
-    PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.TooManyToolCodeImagesFound",
+    PRINT_NAMED_WARNING("BehaviorPlaypenReadToolCode.TransitionToToolCodeRead.TooManyToolCodeImagesFound",
                         "%zu images found. Why?", rawJpegData.size());
     rawJpegData.resize(PlaypenConfig::kNumToolCodes);
   }
@@ -87,7 +82,7 @@ void BehaviorPlaypenReadToolCode::TransitionToToolCodeRead(Robot& robot,
   }
   
   const ToolCodeInfo &info = rca.completionInfo.Get_readToolCodeCompleted().info;
-  PRINT_NAMED_INFO("BehaviorFactoryTest.RecvdToolCodeInfo.Info",
+  PRINT_NAMED_INFO("BehaviorPlaypenReadToolCode.TransitionToToolCodeRead.RecvdToolCodeInfo.Info",
                    "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
                    EnumToString(info.code),
                    info.expectedCalibDotLeft_x,  info.expectedCalibDotLeft_y,
@@ -132,16 +127,6 @@ BehaviorStatus BehaviorPlaypenReadToolCode::InternalUpdateInternal(Robot& robot)
 void BehaviorPlaypenReadToolCode::StopInternal(Robot& robot)
 {
   
-}
-
-void BehaviorPlaypenReadToolCode::HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot)
-{
-  
-}
-
-void BehaviorPlaypenReadToolCode::AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot)
-{
-
 }
 
 }

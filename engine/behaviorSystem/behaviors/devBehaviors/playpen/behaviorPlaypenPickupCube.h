@@ -34,8 +34,6 @@ namespace Anki {
       
       virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
       
-      virtual void GetResultsInternal() override;
-      
     private:
       
       void TransitionToPlaceCube(Robot& robot);

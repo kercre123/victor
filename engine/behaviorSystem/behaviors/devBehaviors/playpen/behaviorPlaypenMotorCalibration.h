@@ -36,8 +36,6 @@ protected:
   
   virtual bool ShouldRunWhileOnCharger() const override { return true; }
   
-  virtual void GetResultsInternal() override;
-  
 private:
   
   bool _liftCalibrated = false;

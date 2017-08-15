@@ -60,7 +60,7 @@ protected:
 public:
 
   // TODO: Pass in results struct to populate
-  FactoryTestResultCode GetResults() { GetResultsInternal(); return _result; }
+  FactoryTestResultCode GetResult() { return _result; }
   
   void Reset() { Stop(); _timers.clear(); _result = FactoryTestResultCode::UNKNOWN; }
 
@@ -80,7 +80,6 @@ protected:
   
 
   // Virtual functions for subclasses to override
-  virtual void GetResultsInternal() { }
   virtual Result InternalInitInternal(Robot& robot) = 0;
   virtual BehaviorStatus InternalUpdateInternal(Robot& robot) { return IBehavior::UpdateInternal(robot); }
   virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) { }

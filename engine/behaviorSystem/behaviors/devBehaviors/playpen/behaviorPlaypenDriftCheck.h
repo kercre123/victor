@@ -32,18 +32,14 @@ protected:
   virtual BehaviorStatus InternalUpdateInternal(Robot& robot) override;
   virtual void           StopInternal(Robot& robot)   override;
   
-  virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
-  
   virtual bool ShouldRunWhileOnCharger() const override { return true; }
-  
-  virtual void GetResultsInternal() override;
   
 private:
   
   void TransitionToPlayingSound(Robot& robot);
   void CheckDrift(Robot& robot);
   
-  Radians _startingRobotOrientation;
+  Radians _startingRobotOrientation = 0;
   
   bool _soundComplete = false;
   bool _driftCheckComplete = false;

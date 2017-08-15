@@ -29,11 +29,6 @@ BehaviorPlaypenDriveForwards::BehaviorPlaypenDriveForwards(Robot& robot, const J
                     EngineToGameTag::CliffEvent}});
 }
 
-void BehaviorPlaypenDriveForwards::GetResultsInternal()
-{
-  
-}
-
 Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
 {
   MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(robot, 0);
@@ -60,14 +55,17 @@ Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
         }
         else
         {
-          PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_UNDETECTED);
+          PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_NOT_DETECTED);
         }
       });
     }
     else
     {
-      // TODO: separate result for this case?
-      PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_UNDETECTED);
+      PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.InternalInitInternal.ActionCompleted",
+                          "Expected DriveStraightAction to fail with %s but instead completed with %s",
+                          EnumToString(ActionResult::CANCELLED_WHILE_RUNNING),
+                          EnumToString(result));
+      PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_NOT_DETECTED);
     }
   });
   
@@ -77,7 +75,6 @@ Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
 
 BehaviorStatus BehaviorPlaypenDriveForwards::InternalUpdateInternal(Robot& robot)
 {
-  
   return BehaviorStatus::Running;
 }
 
@@ -103,22 +100,30 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(Robot& robot
       AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &robot]() {
         if(_backCliffsDetected)
         {
-          DEV_ASSERT(_frontCliffsDetected, "BehaviorPlaypenDriveForwards.FrontCliffsNotDetcted");
+          if(!_frontCliffsDetected)
+          {
+            PRINT_NAMED_ERROR("BehaviorPlaypenDriveForwards.CliffEventTimeout.FrontCliffsNotDetected",
+                              "Back cliffs are detected but front cliffs are not, this shouldn't be possible");
+            PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_NOT_DETECTED);
+          }
+          
           _waitingForCliffsState = WAITING_FOR_BACK_CLIFFS_UNDETECTED;
           TransitionToWaitingForBackCliffUndetected(robot);
         }
         else
         {
-          PRINT_NAMED_WARNING("", "cliff event timer finished and no back cliffs detected");
-          PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_UNDETECTED);
+          PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.CliffEventTimeout.BackCliffsNotDetected", "");
+          PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_NOT_DETECTED);
         }
       });
     }
     else
     {
-      // TODO: separate result for this case?
-      PRINT_NAMED_WARNING("", "back cliff action not failed");
-      PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_UNDETECTED);
+      PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.TransitionToWaitingForBackCliffs.ActionCompleted",
+                          "Expected DriveStraightAction to fail with %s but instead completed with %s",
+                          EnumToString(ActionResult::CANCELLED_WHILE_RUNNING),
+                          EnumToString(result));
+      PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_NOT_DETECTED);
     }
   });
 }
@@ -143,6 +148,9 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected(Rob
       }
       else
       {
+        PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.TransitionToWaitingForBackCliffUndetected.WrongState",
+                            "Must not have seen back cliffs undetected in state %d",
+                            _waitingForCliffsState);
         PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_NOT_UNDETECTED);
       }
     });
@@ -157,7 +165,14 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
     const auto& payload = event.GetData().Get_CliffEvent();
     
     const bool cliffDetected = (payload.detectedFlags != 0);
-    PRINT_NAMED_WARNING("", "Cliff event %d", cliffDetected);
+    
+    PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.CliffEvent",
+                     "CliffDetected?: %d, FR: %u, FL: %u, BR: %u, BL: %u",
+                     cliffDetected,
+                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FR),
+                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_FL),
+                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BR),
+                     robot.GetCliffSensorComponent().GetCliffDataRaw((u16)CliffSensor::CLIFF_BL));
     
     const uint8_t FL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FL));
     const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
@@ -171,9 +186,9 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
     {
       case NONE:
       {
-        PRINT_NAMED_WARNING("", "got cliff event while in NONE state");
-        // TODO: Need different failure
-        PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_UNDETECTED);
+        PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.UnexpectedCliffEvent",
+                            "Got cliff event while in NONE state");
+        PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
         break;
       }
       case WAITING_FOR_FRONT_CLIFFS:
@@ -189,18 +204,22 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
             PLAYPEN_TRY(GetLogger().AppendCliffValuesOnFrontDrop(cliffVals),
                         FactoryTestResultCode::WRITE_TO_LOG_FAILED);
             
+            PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.WaitingForFrontCliffs.CliffDetected", "");
+            
             _frontCliffsDetected = true;
           }
           else
           {
-            PRINT_NAMED_WARNING("", "waiting for front cliffs but not all front cliffs detected");
-            PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_UNDETECTED);
+            PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.WaitingForFrontCliffs.FrontCliffsNotDetected",
+                                "Waiting for front cliffs but not all front cliffs detected");
+            PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_NOT_DETECTED);
           }
         }
         else
         {
-          PRINT_NAMED_WARNING("", "waiting for front cliffs but got cliff undetected");
-          PLAYPEN_SET_RESULT(FactoryTestResultCode::FRONT_CLIFFS_UNDETECTED);
+          PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.WaitingForFrontCliffs.CliffUndetected",
+                              "Waiting for front cliffs but got cliff undetected");
+          PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNDETECTED);
         }
         break;
       }
@@ -208,14 +227,17 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
       {
         if(!cliffDetected)
         {
-          PRINT_NAMED_WARNING("", "moving to waiting for back cliffs");
+          PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.WaitingForFrontCliffsUndetected.CliffUndetected",
+                           "Moving to waiting for back cliffs");
+          
           _waitingForCliffsState = WAITING_FOR_BACK_CLIFFS;
         }
         else
         {
-          PRINT_NAMED_WARNING("", "waiting for front cliff undetected but detected cliff");
+          PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.WaitingForFrontCliffsUndetected.CliffDetected",
+                              "Waiting for front cliff undetected but detected cliff");
           // TODO: Need different failure
-          PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_UNDETECTED);
+          PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
         }
         break;
       }
@@ -236,14 +258,16 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
           }
           else
           {
-            PRINT_NAMED_WARNING("", "waiting for back cliffs but not all back cliffs detected");
-            PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_UNDETECTED);
+            PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.WaitingForBackCliffs.BackCliffsNotDetected",
+                                "Waiting for back cliffs but not all back cliffs detected");
+            PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_NOT_DETECTED);
           }
         }
         else
         {
-          PRINT_NAMED_WARNING("", "got cliff undetected while waiting for back cliffs");
-          PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_UNDETECTED);
+          PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.WaitingForBackCliffs.CliffUndetected",
+                              "Got cliff undetected while waiting for back cliffs");
+          PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNDETECTED);
         }
         break;
       }
@@ -251,13 +275,16 @@ void BehaviorPlaypenDriveForwards::HandleWhileRunningInternal(const EngineToGame
       {
         if(!cliffDetected)
         {
+          PRINT_NAMED_INFO("BehaviorPlaypenDriveForwards.WaitingForBackCliffsUndetected.CliffUndetected",
+                           "Moving to state NONE");
+          
           _waitingForCliffsState = NONE;
         }
         else
         {
-          PRINT_NAMED_WARNING("", "waiting for back cliff undetected but detected cliff");
-          // TODO: Need different failure
-          PLAYPEN_SET_RESULT(FactoryTestResultCode::BACK_CLIFFS_UNDETECTED);
+          PRINT_NAMED_WARNING("BehaviorPlaypenDriveForwards.WaitingForBackCliffsUndetected.CliffDetected",
+                              "Waiting for back cliff undetected but detected cliff");
+          PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
         }
         break;
       }

@@ -24,11 +24,6 @@ BehaviorPlaypenMotorCalibration::BehaviorPlaypenMotorCalibration(Robot& robot, c
                     EngineToGameTag::MotorAutoEnabled*/});
 }
 
-void BehaviorPlaypenMotorCalibration::GetResultsInternal()
-{
-  
-}
-
 Result BehaviorPlaypenMotorCalibration::InternalInitInternal(Robot& robot)
 {
   robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartMotorCalibration(true, true)));

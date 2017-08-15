@@ -28,11 +28,6 @@ BehaviorPlaypenInitChecks::BehaviorPlaypenInitChecks(Robot& robot, const Json::V
                                RobotInterface::RobotToEngineTag::mfgId}});
 }
 
-void BehaviorPlaypenInitChecks::GetResultsInternal()
-{
-  
-}
-
 Result BehaviorPlaypenInitChecks::InternalInitInternal(Robot& robot)
 {
   
@@ -113,11 +108,6 @@ void BehaviorPlaypenInitChecks::StopInternal(Robot& robot)
   
   _gotMfgID = false;
   _hwVersion = -1;
-}
-
-void BehaviorPlaypenInitChecks::HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot)
-{
-  
 }
 
 void BehaviorPlaypenInitChecks::AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot)

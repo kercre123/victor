@@ -61,11 +61,6 @@ BehaviorPlaypenCameraCalibration::BehaviorPlaypenCameraCalibration(Robot& robot,
                     EngineToGameTag::RobotObservedObject}});
 }
 
-void BehaviorPlaypenCameraCalibration::GetResultsInternal()
-{
-  
-}
-
 Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
 {
   // Define a custom object with marker Diamonds3 so we can know when we are seeing the
@@ -183,7 +178,7 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
   bool tooManyCalibImages = rawJpegData.size() > NUM_CAMERA_CALIB_IMAGES;
   if (tooManyCalibImages)
   {
-    PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.TooManyCalibImagesFound",
+    PRINT_NAMED_WARNING("BehaviorPlaypenCameraCalibration.HandleCameraCalibration.TooManyCalibImagesFound",
                         "%zu images found. Why?", rawJpegData.size());
     rawJpegData.resize(NUM_CAMERA_CALIB_IMAGES);
   }
@@ -215,7 +210,7 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
       calibMsg.nrows != kApproxCalib.GetNrows() ||
       calibMsg.ncols != kApproxCalib.GetNcols())
   {
-    PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.OOR",
+    PRINT_NAMED_WARNING("BehaviorPlaypenCameraCalibration.HandleCameraCalibration.Intrinsics.OOR",
                         "focalLength (%f, %f), center (%f, %f)",
                         calibMsg.focalLength_x, calibMsg.focalLength_y, calibMsg.center_x, calibMsg.center_y);
     
@@ -246,7 +241,7 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
     {
       ss << coeff << ", ";
     }
-    PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.OOR",
+    PRINT_NAMED_WARNING("BehaviorPlaypenCameraCalibration.HandleCameraCalibration.Distortions.OOR",
                         "%s",
                         ss.str().c_str());
     

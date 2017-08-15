@@ -27,11 +27,6 @@ BehaviorPlaypenDriftCheck::BehaviorPlaypenDriftCheck(Robot& robot, const Json::V
   
 }
 
-void BehaviorPlaypenDriftCheck::GetResultsInternal()
-{
-  
-}
-
 Result BehaviorPlaypenDriftCheck::InternalInitInternal(Robot& robot)
 {
   // Move head and lift to extremes then move to sound playing angle
@@ -74,7 +69,7 @@ void BehaviorPlaypenDriftCheck::CheckDrift(Robot& robot)
   
   if(angleChange > PlaypenConfig::kIMUDriftAngleThreshDeg)
   {
-    PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
+    PRINT_NAMED_WARNING("BehaviorPlaypenDriftCheck.CheckDrift.DriftDetected",
                         "Angle change of %f deg detected in %f seconds",
                         angleChange, (PlaypenConfig::kIMUDriftDetectPeriod_ms / 1000.f));
     PLAYPEN_SET_RESULT(FactoryTestResultCode::IMU_DRIFTING);
@@ -88,8 +83,7 @@ BehaviorStatus BehaviorPlaypenDriftCheck::InternalUpdateInternal(Robot& robot)
   // Wait until both sound and drift check complete
   if(_soundComplete && _driftCheckComplete)
   {
-    SetResult(FactoryTestResultCode::SUCCESS);
-    return BehaviorStatus::Complete;
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
   }
   
   // TODO: Checking microphones here while playing sound
@@ -98,12 +92,9 @@ BehaviorStatus BehaviorPlaypenDriftCheck::InternalUpdateInternal(Robot& robot)
 
 void BehaviorPlaypenDriftCheck::StopInternal(Robot& robot)
 {
-  
-}
-
-void BehaviorPlaypenDriftCheck::HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot)
-{
-  
+  _soundComplete = false;
+  _driftCheckComplete = false;
+  _startingRobotOrientation = 0;
 }
 
 }
