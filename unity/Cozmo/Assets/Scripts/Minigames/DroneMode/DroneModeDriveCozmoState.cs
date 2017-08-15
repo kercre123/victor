@@ -152,8 +152,6 @@ namespace Cozmo {
           // Show how to play when the player plays drone mode for the first time
           if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen) {
             _DroneModeControlsSlide.OpenHowToPlayModal(showCloseButton: false, playAnimations: true);
-            DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen = true;
-            DataPersistence.DataPersistenceManager.Instance.Save();
           }
 
           // Send get in animation; do not accept input while animation is playing
@@ -262,6 +260,9 @@ namespace Cozmo {
 
           // Re-enable input so that players can drive Cozmo again
           EnableInput();
+          //Reset tread movement in case they're holding down the slider
+          _CurrentDriveSpeed_mmps = 0;
+          _DroneModeControlsSlide.ForceSpeedThrottleUpdate();
         }
 
         private void SetSlidersToCurrentPosition() {

@@ -71,7 +71,7 @@ void RobotAudioBuffer::UpdateBuffer( const AudioEngine::AudioSample* samples, co
   }
   
   // Copy audio samples into frame & push it into the queue
-  AudioEngine::AudioFrameData *audioFrame = new AudioEngine::AudioFrameData( sampleCount );
+  AudioEngine::AudioFrameData *audioFrame = new AudioEngine::AudioFrameData;
   audioFrame->CopySamples( samples, sampleCount );
   _streamQueue.back().PushRobotAudioFrame( audioFrame );
 }
@@ -103,6 +103,46 @@ bool RobotAudioBuffer::HasAudioBufferStream() const
 {
   std::lock_guard<std::recursive_mutex> lock( _lock );
   return !_streamQueue.empty();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RobotAudioBuffer::AudioStreamHasData() const
+{
+  std::lock_guard<std::recursive_mutex> lock( _lock );
+  DEV_ASSERT(!_streamQueue.empty(), "RobotAudioBuffer.AudioStreamHasData.NoAudioStreamAvailable");
+  return _streamQueue.front().HasAudioFrame();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RobotAudioBuffer::AudioStreamIsComplete() const
+{
+  std::lock_guard<std::recursive_mutex> lock( _lock );
+  DEV_ASSERT(!_streamQueue.empty(), "RobotAudioBuffer.AudioStreamIsComplete.NoAudioStreamAvailable");
+  return _streamQueue.front().IsComplete();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+double RobotAudioBuffer::GetAudioStreamCreatedTime_ms() const
+{
+  std::lock_guard<std::recursive_mutex> lock( _lock );
+  DEV_ASSERT(!_streamQueue.empty(), "RobotAudioBuffer.GetAudioStreamCreatedTime_ms.NoAudioStreamAvailable");
+  return _streamQueue.front().GetCreatedTime_ms();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+size_t RobotAudioBuffer::GetAudioStreamFrameCount() const
+{
+  std::lock_guard<std::recursive_mutex> lock( _lock );
+  DEV_ASSERT(!_streamQueue.empty(), "RobotAudioBuffer.GetAudioStreamFrameCount.NoAudioStreamAvailable");
+  return _streamQueue.front().AudioFrameCount();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const AudioEngine::AudioFrameData* RobotAudioBuffer::PopNextAudioFrameData()
+{
+  std::lock_guard<std::recursive_mutex> lock( _lock );
+  DEV_ASSERT(!_streamQueue.empty(), "RobotAudioBuffer.PopNextAudioFrameData.NoAudioStreamAvailable");
+  return _streamQueue.front().PopRobotAudioFrame();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  

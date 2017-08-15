@@ -133,7 +133,22 @@ namespace DataPersistence {
       }
     }
 
+    public Action OnSaveDataReset;
     public readonly SaveData Data;
+
+    public void ResetSaveData() {
+      // Reset what is normally a read only value.
+      typeof(DataPersistenceManager).GetField("Data").SetValue(Instance, new SaveData());
+      Instance.Save();
+
+      // In the event after this disconnect you connect to yet another device, we still want you to have default sparks
+      OnboardingManager.Instance.GiveStartingInventory();
+      OnboardingManager.Instance.FirstTime = true;
+
+      if (OnSaveDataReset != null) {
+        OnSaveDataReset();
+      }
+    }
 
     // Helper function to clean up code that checks for SDK mode
     public bool IsSDKEnabled {
@@ -159,6 +174,16 @@ namespace DataPersistence {
           return lastSession;
         }
         return null;
+      }
+    }
+
+    public int DisplayedSparks {
+      get {
+        return Data.DefaultProfile.DisplayedSparks;
+      }
+      set {
+        Data.DefaultProfile.DisplayedSparks = value;
+        Save();
       }
     }
 

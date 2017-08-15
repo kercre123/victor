@@ -34,13 +34,13 @@
     "translation" : "Choisis le réseau de Cozmo dans la liste."
   },
   "wifiStrings.Instructions.Slide3" : {
-    "translation" : "Saisis le mot de passé affiché sur ton Cozmo."
+    "translation" : "Saisis le mot de passe affiché sur ton Cozmo."
   },
   "wifiStrings.Instructions.Slide3.altCopy" : {
     "translation" : "Tu ne vois pas de mot de passe ? Appuie ici :"
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "Use ALL CAPS with no spaces. Include any dashes."
+    "translation" : "Utilise des MAJUSCULES sans espace. Inclus des tirets."
   },
   "wifiStrings.Instructions.Slide3.5" : {
     "translation" : "Cozmo ne fournit pas de connexion Internet."
@@ -55,10 +55,10 @@
     "translation" : "L'application saura quand Cozmo est connecté."
   },
   "wifi.gethelp.title" : {
-    "translation" : "Tu rencontres des difficultés pour te connecter au Wi-Fi de Cozmo ?"
+    "translation" : "Des difficultés pour te connecter au Wi-Fi de Cozmo ?"
   },
   "wifi.gethelp.description" : {
-    "translation" : "Essaye de faire ceci :\u000a\u000aRetire Cozmo de son chargeur puis replace-le dessus.\u000a2. <b>Désactive</b> le Wi-Fi de ton appareil puis <b>réactive-le</b>."
+    "translation" : "Essaye de faire ceci :\u000a\u000a1. Retire Cozmo de son chargeur puis replace-le dessus.\u000a2. <b>Désactive</b> puis <b>réactive</b> le Wi-Fi de ton appareil."
   },
   "wifi.gethelp.description2" : {
     "translation" : "Si tu as besoin de voir les informations réseau de Cozmo, relève son bras élévateur, puis rabaisse-le."
@@ -73,7 +73,7 @@
     "translation" : "Saisir le mot de passe pour {0}"
   },
   "wifi.passwordFormat" : {
-    "translation" : "Longueur incorrecte du mot de passe."
+    "translation" : "Longueur du mot de passe incorrecte."
   },
   "wifi.selectNetwork" : {
     "translation" : "Sélectionne ton Cozmo :"
@@ -94,7 +94,7 @@
     "translation" : "Le Wi-Fi est désactivé. Appuie sur le bouton ci-dessous pour l'activer."
   },
   "wifi.locationPermission" : {
-    "translation" : "Laisse l'application Cozmo faciliter la connexion ! Appuie sur «<b>Autoriser</b>» lorsque les autorisations de localisation te sont demandées, afin que l'application Cozmo puisse trouver les Cozmos à proximité.\u000a\u000aRemarque : Nous n'enregistrons jamais ton emplacement !"
+    "translation" : "Laisse l'application Cozmo faciliter la connexion ! Appuie sur «<b>Autoriser</b>» lorsque les autorisations de localisation te sont demandées, afin que l'application Cozmo puisse trouver les Cozmos à proximité.\u000a\u000aRemarque : Nous n'enregistrons jamais ta position !"
   },
   "wifi.pleaseLocationPermission" : {
     "translation" : "En es-tu sûr ? Sans autorisation de localisation, tu devras te connecter manuellement à Cozmo dans les paramètres Wi-Fi de ton téléphone. Appuie sur <b>Autoriser</b> lorsque tu y es invité pour permettre à l'application Cozmo de se connecter à ta place, ou appuie sur <b>Annuler</b> pour te connecter par toi-même."

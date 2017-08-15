@@ -26,11 +26,13 @@ namespace CozmoSays {
     private void TurnTowardsLastFaceDone() {
       if (CurrentRobot != null) {
         CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CozmoSaysIdle, idleAnimLock);
+        CurrentRobot.SetDefaultHeadAndLiftState(true, CurrentRobot.GetHeadAngleFactor(), 0.0f);
       }
     }
 
     protected override void CleanUpOnDestroy() {
       if (CurrentRobot != null) {
+        CurrentRobot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
         CurrentRobot.RemoveIdleAnimation(idleAnimLock);
       }
     }

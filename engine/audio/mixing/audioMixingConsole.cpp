@@ -127,13 +127,13 @@ bool AudioMixingConsole::MixInputSources()
         if ( sourceFrame!= nullptr && !aSource->GetMute() && Util::IsFltGT(volume, 0.0f) ) {
           if (Util::IsFltNear(volume, 1.0f)) {
             // Don't scale just mix
-            for ( size_t idx = 0; idx < sourceFrame->sampleCount; ++idx ) {
+            for ( size_t idx = 0; idx < sourceFrame->samples.size(); ++idx ) {
               _mixingBuffer[idx] += sourceFrame->samples[idx];
             }
           }
           else {
             // Scale for volume & mix
-            for ( size_t idx = 0; idx < sourceFrame->sampleCount; ++idx ) {
+            for ( size_t idx = 0; idx < sourceFrame->samples.size(); ++idx ) {
               _mixingBuffer[idx] += sourceFrame->samples[idx] * volume;
             }
           }

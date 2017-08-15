@@ -12,6 +12,7 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 
 #include "anki/common/basestation/math/poseOriginList.h"
+#include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -110,6 +111,8 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _returnedToTreadsAtTime_sec(-1.0f)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
+, _hasHiccups(false)
+, _severeNeedExpression(NeedId::Count)
 {
 }
 
@@ -159,15 +162,12 @@ void AIWhiteboard::Init()
 void AIWhiteboard::Update()
 {
   if( HasSevereNeedExpression() ) {
-    const bool needsPaused = _robot.GetContext()->GetNeedsManager()->GetPaused();
     NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
     // If needs are paused or the current severeNeedExpression is no longer critical, clear the severe expression
-    if(needsPaused ||
-       !currNeedState.IsNeedAtBracket(_severeNeedExpression, NeedBracketId::Critical)) {
+    if(!currNeedState.IsNeedAtBracket(_severeNeedExpression, NeedBracketId::Critical)){
       PRINT_CH_INFO("AIWhiteboard", "SevereNeedsState.AutoClear",
                     "Automatically clearing currently expressed severe needs state. Was '%s'",
                     NeedIdToString(_severeNeedExpression));
-
       ClearSevereNeedExpression();
     }
   }

@@ -15,6 +15,7 @@ namespace Cozmo.Needs.UI {
 
     public enum RewardState {
       IDLE,   //no change in stars or star level rewards detected
+      PRE_BLING,  //newly earned star detected, wait a bit before playing bling effect
       BLING,  //newly earned stars are about to be display, spawn bling effect over needs meter
       STARS,  //spawn or despawn stars to match the current count from engine
       CRATE,  //spawn a crate icon
@@ -31,6 +32,9 @@ namespace Cozmo.Needs.UI {
 
     [SerializeField]
     private GameObject _BlingPrefab = null;
+
+    [SerializeField]
+    private float _BlingDelay_sec = 1.75f; //small delay before playing bling, to wait for view open anims to finish
 
     [SerializeField]
     private float _BlingDuration_sec = 2f;
@@ -100,8 +104,7 @@ namespace Cozmo.Needs.UI {
     }
 
     private void Update() {
-
-      bool pause = UIManager.Instance.AreAnyModalsOpen;
+      bool pause = UIManager.Instance.AreAnyModalsOpen && _NeedsModal == null;
 
 #if ANKI_DEV_CHEATS
       pause |= (DebugMenuManager.Instance != null && DebugMenuManager.Instance.IsDialogOpen());
@@ -139,13 +142,18 @@ namespace Cozmo.Needs.UI {
           return ChangeState(RewardState.ONBOARDING_WAIT_FOR_FILL);
         }
         if (DataPersistenceManager.Instance.StarLevelToDisplay) {
-          return ChangeState(RewardState.BLING);
+          return ChangeState(RewardState.PRE_BLING);
         }
         if (NeedsStateManager.Instance.GetLatestStarAwardedFromEngine() > _DisplayedStars.Count) {
-          return ChangeState(RewardState.BLING);
+          return ChangeState(RewardState.PRE_BLING);
         }
         if (NeedsStateManager.Instance.GetLatestStarAwardedFromEngine() < _DisplayedStars.Count) {
           return ChangeState(RewardState.STARS);
+        }
+        break;
+      case RewardState.PRE_BLING:
+        if (_TimeInState_sec >= _BlingDelay_sec) {
+          return ChangeState(RewardState.BLING);
         }
         break;
       case RewardState.BLING:
@@ -167,7 +175,7 @@ namespace Cozmo.Needs.UI {
         }
         break;
       case RewardState.MODAL:
-        if (_NeedsModal == null) {
+        if (_NeedsModal == null || _NeedsModal.IsClosed) {
           return ChangeState(RewardState.IDLE);
         }
         break;
@@ -175,12 +183,12 @@ namespace Cozmo.Needs.UI {
         // iff onboarding says we've reached stage 2, show the bling animation
         if (OnboardingManager.Instance.GetCurrentPhase() == OnboardingManager.OnboardingPhases.RewardBox) {
           if (OnboardingManager.Instance.GetCurrStageInPhase(OnboardingManager.OnboardingPhases.RewardBox) > 0) {
-            return ChangeState(RewardState.BLING);
+            return ChangeState(RewardState.PRE_BLING);
           }
         }
         else {
           // they've debug skipped past the phase
-          return ChangeState(RewardState.BLING);
+          return ChangeState(RewardState.PRE_BLING);
         }
         break;
       }
@@ -269,6 +277,7 @@ namespace Cozmo.Needs.UI {
 
     private bool DisableTouchEventsForState(RewardState state) {
       switch (state) {
+      case RewardState.PRE_BLING:
       case RewardState.BLING:
       case RewardState.STARS:
       case RewardState.CRATE:

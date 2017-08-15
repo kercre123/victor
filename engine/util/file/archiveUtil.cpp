@@ -6,27 +6,25 @@
  *
  * Description: Utility wrapper around needed archive file creation functionality.
  *
- * Copyright: Anki, inc. 2016
+ * Copyright: Anki, Inc. 2016
  *
  */
 #include "engine/util/file/archiveUtil.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 
-
-#if ANKI_DEV_CHEATS
 #include "archive.h"
 #include "archive_entry.h"
 
 #include <sys/stat.h>
 #include <fstream>
-#endif
 
 namespace Anki {
 namespace Cozmo {
 
-  
-#if ANKI_DEV_CHEATS
+
 bool ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
                                          const std::string& filenameBase,
                                          const std::vector<std::string>& filenames)
@@ -135,7 +133,255 @@ std::string ArchiveUtil::RemoveFilenameBase(const std::string& filenameBase, con
   }
   return filename;
 }
+
+// Declaring this helper used in CreateFilesFromArchive
+static int copy_data(struct archive *ar, struct archive *aw);
+
+bool ArchiveUtil::CreateFilesFromArchive(const std::string& archivePath,
+                                         const std::string& outputPath)
+{
+  struct archive * read_archive = archive_read_new();
+  if (nullptr == read_archive)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive", "Could not alloc read_archive");
+    return false;
+  }
   
+  // Set up the finishing task list (to close things properly after error or at end)
+  auto finishingTasks = std::vector<std::function<void()>>();
+  auto doFinishingTasks = [&finishingTasks] () {
+    for (const auto& task : finishingTasks) { task(); }
+  };
+  
+  // Add in the finishing task to clean up the read_archive object
+  finishingTasks.push_back( [read_archive] () {
+    int errorCode = ARCHIVE_OK;
+    errorCode = archive_read_close(read_archive);
+    if (ARCHIVE_OK != errorCode)
+    {
+      PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                        "Could not close read_archive: %s",
+                        GetArchiveErrorString(errorCode));
+    }
+    
+    errorCode = archive_read_free(read_archive);
+    if (ARCHIVE_OK != errorCode)
+    {
+      PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                        "Could not free read_archive: %s",
+                        GetArchiveErrorString(errorCode));
+    }
+  });
+  
+  // Configure the read_archive object
+  int errorCode = ARCHIVE_OK;
+  errorCode = archive_read_support_format_tar(read_archive);
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                      "Could not set support_format_tar: %s",
+                      GetArchiveErrorString(errorCode));
+    doFinishingTasks();
+    return false;
+  }
+  
+  errorCode = archive_read_support_filter_gzip(read_archive);
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                      "Could not set support_filter_gzip: %s",
+                      GetArchiveErrorString(errorCode));
+    doFinishingTasks();
+    return false;
+  }
+  
+  // Create the extract_archive object
+  struct archive * extract_archive = archive_write_disk_new();
+  if (nullptr == extract_archive)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive", "Could not alloc extract_archive");
+    doFinishingTasks();
+    return false;
+  }
+  
+  // Add in the finishing task to clean up the extract_archive object
+  finishingTasks.push_back( [extract_archive] () {
+    int errorCode = ARCHIVE_OK;
+    errorCode = archive_write_close(extract_archive);
+    if (ARCHIVE_OK != errorCode)
+    {
+      PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                        "Could not close extract_archive: %s",
+                        GetArchiveErrorString(errorCode));
+    }
+    
+    errorCode = archive_write_free(extract_archive);
+    if (ARCHIVE_OK != errorCode)
+    {
+      PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                        "Could not free extract_archive: %s",
+                        GetArchiveErrorString(errorCode));
+    }
+  });
+  
+  // Configure the extract_archive object
+  // Use the default options
+  const int desiredOptions = 0;
+  errorCode = archive_write_disk_set_options(extract_archive, desiredOptions);
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                      "Could not call disk_set_options: %s with options %d",
+                      GetArchiveErrorString(errorCode), desiredOptions);
+    doFinishingTasks();
+    return false;
+  }
+  
+  errorCode = archive_write_disk_set_standard_lookup(extract_archive);
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                      "Could not call disk_set_standard_lookup: %s",
+                      GetArchiveErrorString(errorCode));
+    doFinishingTasks();
+    return false;
+  }
+  
+  // Try to open the archive
+  errorCode = archive_read_open_filename(read_archive, archivePath.c_str(), 10240);
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                      "Could not open filename %s: %s",
+                      archivePath.c_str(), archive_error_string(read_archive));
+    doFinishingTasks();
+    return false;
+  }
+  
+  // Create the archive_entry object
+  struct archive_entry* entry = archive_entry_new();
+  if (nullptr == entry)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive", "Could not alloc entry");
+    doFinishingTasks();
+    return false;
+  }
+  
+  // Add in the finishing task to clean up the entry object
+  finishingTasks.push_back( [entry] () { archive_entry_free(entry); });
+  
+  // Loop through the archive and extract everything
+  for (;;)
+  {
+    archive_entry_clear(entry);
+    // Read the next entry header. Use the '2' version to pull info into our allocated entry object
+    errorCode = archive_read_next_header2(read_archive, entry);
+    if (ARCHIVE_EOF == errorCode)
+    {
+      break;
+    }
+    else if (errorCode < ARCHIVE_WARN)
+    {
+      PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                        "Header read failed with fatal error: %s",
+                        archive_error_string(read_archive));
+      doFinishingTasks();
+      return false;
+    }
+    else if (errorCode < ARCHIVE_OK)
+    {
+      PRINT_NAMED_WARNING("ArchiveUtil.CreateFilesFromArchive",
+                          "Header read failed with nonfatal error: %s",
+                          archive_error_string(read_archive));
+    }
+    
+    // Update the pathname where we want to put this next entry
+    const char* curPathname = archive_entry_pathname(entry);
+    std::string destPathname = Util::FileUtils::FullFilePath( {outputPath, curPathname } );
+    archive_entry_set_pathname(entry, destPathname.c_str());
+    
+    // Write the header to the extract archive
+    errorCode = archive_write_header(extract_archive, entry);
+    if (errorCode < ARCHIVE_OK)
+    {
+      PRINT_NAMED_WARNING("ArchiveUtil.CreateFilesFromArchive",
+                          "Problem writing entry to extract archive: %s",
+                          archive_error_string(extract_archive));
+    }
+    else if (archive_entry_size(entry) > 0)
+    {
+      // Copy out the data through the extract_archive object
+      errorCode = copy_data(read_archive, extract_archive);
+      if (errorCode < ARCHIVE_WARN)
+      {
+        PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                          "copy_data failed: %s",
+                          archive_error_string(extract_archive));
+        doFinishingTasks();
+        return false;
+      }
+      else if (errorCode < ARCHIVE_OK)
+      {
+        PRINT_NAMED_WARNING("ArchiveUtil.CreateFilesFromArchive",
+                            "copy_data problem: %s",
+                            archive_error_string(extract_archive));
+      }
+    }
+    
+    // Close up the entry
+    errorCode = archive_write_finish_entry(extract_archive);
+    if (errorCode < ARCHIVE_WARN)
+    {
+      PRINT_NAMED_ERROR("ArchiveUtil.CreateFilesFromArchive",
+                        "write_finish_entry failed: %s",
+                        archive_error_string(extract_archive));
+      doFinishingTasks();
+      return false;
+    }
+    else if (errorCode < ARCHIVE_OK)
+    {
+      PRINT_NAMED_WARNING("ArchiveUtil.CreateFilesFromArchive",
+                          "write_finish_entry problem: %s",
+                          archive_error_string(extract_archive));
+    }
+  }
+  
+  doFinishingTasks();
+  return true;
+}
+
+static int copy_data(struct archive *ar, struct archive *aw)
+{
+  int errorCode = ARCHIVE_OK;
+  const void *buff;
+  size_t size;
+  la_int64_t offset;
+  
+  for (;;) {
+    errorCode = archive_read_data_block(ar, &buff, &size, &offset);
+    if (errorCode == ARCHIVE_EOF)
+    {
+      return ARCHIVE_OK;
+    }
+    if (errorCode < ARCHIVE_OK)
+    {
+      PRINT_NAMED_INFO("ArchiveUtil.copy_data",
+                       "Problem with read_data_block: %s",
+                       archive_error_string(ar));
+      return errorCode;
+    }
+    
+    errorCode = Util::numeric_cast<int>(archive_write_data_block(aw, buff, size, offset));
+    if (errorCode < ARCHIVE_OK)
+    {
+      PRINT_NAMED_INFO("ArchiveUtil.copy_data",
+                       "Problem with write_data_block: %s",
+                       archive_error_string(aw));
+      return errorCode;
+    }
+  }
+}
+
 const char* ArchiveUtil::GetArchiveErrorString(int errorCode)
 {
   switch (errorCode)
@@ -149,25 +395,6 @@ const char* ArchiveUtil::GetArchiveErrorString(int errorCode)
     default: return "UNKNOWN";
   }
 }
-  
-#else // #if ANKI_DEV_CHEATS
-  
-bool ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath, const std::string& filenameBase, const std::vector<std::string>& filenames)
-{
-  return false;
-}
-
-std::string ArchiveUtil::RemoveFilenameBase(const std::string& filenameBase, const std::string& filename)
-{
-  return "";
-}
-
-const char* ArchiveUtil::GetArchiveErrorString(int errorCode)
-{
-  return nullptr;
-}
-
-#endif
 
 } // end namespace Cozmo
 } // end namespace Anki

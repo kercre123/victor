@@ -27,8 +27,9 @@ namespace CodeLab {
   }
 
   public class CozmoStateForCodeLab {
-    public float poseAngle_d;
     public float posePitch_d;
+    public float poseRoll_d;
+    public float poseYaw_d;
     public float liftHeightFactor; // 0.0 to 1.0
     public float headAngle_d;
     public Vector3 pos;

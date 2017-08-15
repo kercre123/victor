@@ -29,6 +29,8 @@ namespace Anki.Debug {
     [SerializeField]
     public GameObject CategoryPanelPrefab;
 
+    private static string _SearchFilterText = "";
+
     private Dictionary<string, GameObject> _CategoryPanels;
 
     private void Start() {
@@ -40,10 +42,14 @@ namespace Anki.Debug {
       // Query for our initial data so DebugConsoleData gets populated when dirty in update.
       RobotEngineManager.Instance.InitDebugConsole();
 
+      // Preserve filter text, if any
+      _SearchFilterField.text = _SearchFilterText;
+
       _SearchFilterField.onValueChanged.AddListener(HandleFilterUpdate);
     }
 
     private void HandleFilterUpdate(string filter) {
+      _SearchFilterText = filter;
       DebugConsoleData.Instance.SetNeedsUIUpdate(true);
     }
 

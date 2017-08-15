@@ -339,10 +339,11 @@ private:
   ObjectID _objectIDWithoutPreDock;
   
   // Whether or not Cozmo has the hiccups
-  bool _hasHiccups = false;
+  bool _hasHiccups;
 
   // current severe need based on activity expression (may differ from needs manager state)
-  NeedId _severeNeedExpression = NeedId::Count;
+  NeedId _severeNeedExpression;
+  
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

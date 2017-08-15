@@ -76,6 +76,7 @@ namespace Cozmo.Energy.UI {
       if (robot != null) {
         robot.CancelAllCallbacks();
         robot.CancelAction(RobotActionType.UNKNOWN);
+        robot.SetEnableFreeplayLightStates(true);
         robot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
       }
 
@@ -118,9 +119,7 @@ namespace Cozmo.Energy.UI {
       }
 
       // if no cubes are connected help them get around it.
-      if ((robot != null && robot.LightCubes.Count == 0)) {
-        HandleBlockConnectivityChanged(robot.LightCubes.Count);
-      }
+      CheckBlockConnectivity();
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
@@ -175,6 +174,10 @@ namespace Cozmo.Energy.UI {
     }
 
     private void OnApplicationPause(bool pauseStatus) {
+      // Since the window closes back they need instructions from start again
+      if (pauseStatus && OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
+        OnboardingManager.Instance.RestartPhaseAtStage(0);
+      }
       DAS.Debug("NeedsEnergyModal.OnApplicationPause", "Application pause: " + pauseStatus);
       HandleUserClose();
     }
@@ -183,14 +186,23 @@ namespace Cozmo.Energy.UI {
 
     #region ROBOT CALLBACK HANDLERS
 
-    private void HandleBlockConnectivityChanged(int blocksConnected) {
-      bool isFeedCritical = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Bracket == NeedBracketId.Critical;
-      bool isInFeedOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro);
-      if ((blocksConnected == 0) && (isFeedCritical || isInFeedOnboarding)) {
-        _CubeHelpGroup.SetActive(true);
+    private void CheckBlockConnectivity() {
+      if (RobotEngineManager.Instance != null) {
+        IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+        if ((robot != null && robot.LightCubes.Count == 0)) {
+          HandleBlockConnectivityChanged(robot.LightCubes.Count);
+        }
       }
-      else {
-        _CubeHelpGroup.SetActive(false);
+    }
+
+    private void HandleBlockConnectivityChanged(int blocksConnected) {
+      if (_WasFull == null || !_WasFull.Value) {
+        if (blocksConnected == 0) {
+          _CubeHelpGroup.SetActive(true);
+        }
+        else {
+          _CubeHelpGroup.SetActive(false);
+        }
       }
     }
 
@@ -204,11 +216,6 @@ namespace Cozmo.Energy.UI {
 
       if (actionId == NeedsActionId.Feed) {
         _InactivityTimer = _InactivityTimeOut;
-
-        _CubeHelpGroup.SetActive(false);
-        if (_CubeHelpModal != null) {
-          _CubeHelpModal.CloseDialog();
-        }
 
         // If Cozmo was full and the user fed him again, there's a chance he gets the hiccups
         if (triggeredFromMessage &&
@@ -275,8 +282,8 @@ namespace Cozmo.Energy.UI {
       }
     }
 
-    private void HandleBehaviorTransition(BehaviorTransition message){
-      if(_WasCozmoOverfed){
+    private void HandleBehaviorTransition(BehaviorTransition message) {
+      if (_WasCozmoOverfed) {
         // Exit feeding so that hiccups can take over
         CloseDialog();
       }
@@ -304,7 +311,15 @@ namespace Cozmo.Energy.UI {
           AnimateElements(fullElements: !cozmoIsFull, hide: true, snap: _LastNeedBracket == NeedBracketId.Count);
           //then show wanted elements
           AnimateElements(fullElements: cozmoIsFull, hide: false);
+
           _WasFull = cozmoIsFull;
+
+          if (_WasFull.Value) {
+            _CubeHelpGroup.SetActive(false);
+          }
+          else {
+            CheckBlockConnectivity();
+          }
         }
         _LastNeedBracket = newNeedBracket;
       }

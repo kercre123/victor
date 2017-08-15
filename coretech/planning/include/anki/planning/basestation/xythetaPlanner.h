@@ -60,7 +60,7 @@ public:
   // the same path. Everything in context is allowed to change between replan calls (but it won't necessarily
   // be efficient if too many things change). If the second argument is not null, then its value will be
   // checked somewhere within the planenr loop, and the planner will return quickly if it turns false
-  bool Replan(unsigned int maxExpansions = DEFUALT_MAX_EXPANSIONS, bool* runPlan = nullptr);
+  bool Replan(unsigned int maxExpansions = DEFUALT_MAX_EXPANSIONS, volatile bool* runPlan = nullptr);
 
   // must Replan before getting the plan
   xythetaPlan& GetPlan();

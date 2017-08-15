@@ -151,7 +151,7 @@ namespace Cozmo.Repair.UI {
     private float _InactivityTimeOut_sec = 300f;
 
     [SerializeField]
-    private bool _CozmoMovedReactionsInterrupt = false;
+    private bool _CozmoMovedReactionsInterrupt = true;
 
     #endregion //Serialized Fields
 
@@ -217,6 +217,8 @@ namespace Cozmo.Repair.UI {
     #region Life Span
 
     public void InitializeRepairModal() {
+      RobotEngineManager.Instance.AddCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
+
       HubWorldBase.Instance.StopFreeplay();
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
@@ -316,11 +318,16 @@ namespace Cozmo.Repair.UI {
       }
       HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
       _OpeningTweenComplete = true;
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.SetDefaultHeadAndLiftState(true, robot.GetHeadAngleFactor(), 0.0f);
+      }
     }
 
     private void Update() {
       if (!IsClosed) {
         RefreshModalStateLogic(Time.deltaTime);
+        UpdateInterruptModal();
 
         if (_InteractionDetected) {
           _InactivityTimer_sec = _InactivityTimeOut_sec;
@@ -335,6 +342,19 @@ namespace Cozmo.Repair.UI {
         }
 
         _InteractionDetected = false;
+      }
+    }
+
+    private void UpdateInterruptModal(){
+      if (_CurrentModalState == RepairModalState.TUNE_UP) {
+        if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
+          if (_InterruptedAlert != null) {
+            _InterruptedAlert.CloseDialog();
+          }
+        }
+        else {
+          ShowDontMoveCozmoAlert(_RobotOffTreadsState);
+        }
       }
     }
 
@@ -356,6 +376,7 @@ namespace Cozmo.Repair.UI {
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
         robot.CancelAction(RobotActionType.PLAY_ANIMATION);
         PlayGetOutAnim(_LastBracket);
         robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
@@ -370,10 +391,18 @@ namespace Cozmo.Repair.UI {
     }
 
     protected override void CleanUp() {
-      CloseInterruptionAlert();
+      RobotEngineManager.Instance.RemoveCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
+
+      if (_InterruptedAlert != null) {
+        _InterruptedAlert.CloseDialog();
+      }
     }
 
     private void OnApplicationPause(bool pauseStatus) {
+      // Since the window closes back they need instructions from start again
+      if (pauseStatus && OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        OnboardingManager.Instance.RestartPhaseAtStage(1);
+      }
       DAS.Debug("NeedsRepairModal.OnApplicationPause", "Application pause: " + pauseStatus);
       HandleUserClose();
     }
@@ -512,8 +541,6 @@ namespace Cozmo.Repair.UI {
 
         _CurrentTuneUpState = TuneUpState.INTRO;
 
-        RobotEngineManager.Instance.AddCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
-
         EnterTuneUpState();
         break;
       case RepairModalState.REPAIRED:
@@ -558,8 +585,6 @@ namespace Cozmo.Repair.UI {
         break;
       case RepairModalState.TUNE_UP:
         ExitTuneUpState(TuneUpState.INTRO);
-
-        RobotEngineManager.Instance.RemoveCallback<RobotOffTreadsStateChanged>(HandleRobotOffTreadsStateChanged);
 
         while (_UpDownArrows.Count > 0) {
           GameObject.Destroy(_UpDownArrows[0].gameObject);
@@ -655,14 +680,14 @@ namespace Cozmo.Repair.UI {
           }
           return ChangeTuneUpState(TuneUpState.TUNE_UP_COMPLETE);
         }
-        if(_RobotOffTreadsState != OffTreadsState.OnTreads) {
+        if (_RobotOffTreadsState != OffTreadsState.OnTreads) {
           RobotEngineManager.Instance.CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.UNKNOWN);
           return ChangeTuneUpState(TuneUpState.ROBOT_RESPONSE_INTERRUPTED);
         }
         break;
 
       case TuneUpState.ROBOT_RESPONSE_INTERRUPTED:
-        if(_RobotOffTreadsState == OffTreadsState.OnTreads) {
+        if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
           return ChangeTuneUpState(TuneUpState.ROBOT_RESPONSE);
         }
         break;
@@ -772,13 +797,18 @@ namespace Cozmo.Repair.UI {
         break;
       case TuneUpState.ROBOT_RESPONSE:
         // Proxy for "first time responding"
-        if(_CalibrateButton.Interactable) {
+        if (_CalibrateButton.Interactable) {
           GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Calibrate);
         }
         _CalibrateButton.gameObject.SetActive(true);
         _CalibrateButton.Interactable = false;
         _RobotRespondingDimmerPanel.SetActive(true);
 
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
+          robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+        }
         PlayRobotCalibrationResponseAnim();
         _RevealProgressBar.gameObject.SetActive(false);
         break;
@@ -937,7 +967,7 @@ namespace Cozmo.Repair.UI {
     private void HandleCalibrateAnimMiddle(bool success) {
       if (success) {
         if (_RobotResponseIndex < _UpDownArrows.Count) {
-          _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch [_RobotResponseIndex]);
+          _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch[_RobotResponseIndex]);
         }
 
         if (_RobotResponseIndex >= _UpDownArrows.Count && _RoundIndex >= _RoundData.Length - 1) {
@@ -949,14 +979,14 @@ namespace Cozmo.Repair.UI {
         }
 
         _RobotResponseIndex++;
-      }else if(!_WaitingForAnimationsToBeRunnable) {
+      }
+      else if (!_WaitingForAnimationsToBeRunnable) {
         var robot = RobotEngineManager.Instance.CurrentRobot;
-        robot.CancelAction(RobotActionType.UNKNOWN);
         robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
         _WaitingForAnimationsToBeRunnable = true;
       }
     }
-      
+
     private void HandleRobotResponseDone(bool success) {
       if (!_WaitingForAnimationsToBeRunnable) {
         _RobotResponseDone = true;
@@ -965,18 +995,7 @@ namespace Cozmo.Repair.UI {
 
     private void HandleRobotOffTreadsStateChanged(object messageObject) {
       RobotOffTreadsStateChanged offTreadsState = messageObject as RobotOffTreadsStateChanged;
-      _RobotOffTreadsState = offTreadsState.treadsState;              
-      if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
-        var robot = RobotEngineManager.Instance.CurrentRobot;
-        if (robot != null) {
-          robot.TryResetHeadAndLift(null);
-        }
-        if(_InterruptedAlert != null) {
-          CloseInterruptionAlert();
-        }
-      }else{
-        ShowReactionAlert(_RobotOffTreadsState);
-      }
+      _RobotOffTreadsState = offTreadsState.treadsState;
     }
 
     #endregion //Robot Callback Handlers
@@ -1151,8 +1170,12 @@ namespace Cozmo.Repair.UI {
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-
-        robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+        // Ensure that Cozmo is upright before playing calibration response animations
+        if (_RobotOffTreadsState != OffTreadsState.OnTreads) {
+          robot.WaitAction(1, PlayRobotCalibrationResponseAnim);
+          _WaitingForAnimationsToBeRunnable = true;
+          return;
+        }
 
         //start with intro anims
         NeedsStateManager nsm = NeedsStateManager.Instance;
@@ -1394,40 +1417,28 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private bool ShowReactionAlert(OffTreadsState offTreadsState) {
+    private bool ShowDontMoveCozmoAlert(OffTreadsState offTreadsState) {
       if (_CozmoMovedReactionsInterrupt) {
-        DAS.Event("robot.interrupt", DASEventDialogName, DASUtil.FormatExtraData(offTreadsState.ToString()));
-        ShowDontMoveCozmoAlert();
+        DAS.Event("NeedsRepairModal.ShowReactionAlert.OffTreads", DASEventDialogName, DASUtil.FormatExtraData(offTreadsState.ToString()));
+        if (_InterruptedAlert == null) {
+          ShowInterruptionAlert("cozmo_off_treads_by_user_alert", LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle,
+                                LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription);
+        }
         return true;
       }
       return false;
     }
 
-    private void ShowDontMoveCozmoAlert() {
-      if (_InterruptedAlert == null) {
-        ShowInterruptionAlert("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
-                                           LocalizationKeys.kMinigameDontMoveCozmoDescription);
-      }
-    }
-
     private void ShowInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
-      CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
-    }
-
-    private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
       if (_InterruptedAlert == null) {
         var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey);
 
         var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
-                                     LowPriorityModalAction.Queue,
-                                     HighPriorityModalAction.Stack);
+                                                                 LowPriorityModalAction.CancelSelf,
+                                                                 HighPriorityModalAction.Stack);
 
         System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
-          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += CloseInterruptionAlert;
-          alertModal.ModalForceClosedAnimationFinished += () => {
-            _InterruptedAlert = null;
-            CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
-          };
+          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleInterruptionAlertClosed;
           _InterruptedAlert = alertModal;
           GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
         };
@@ -1437,11 +1448,8 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void CloseInterruptionAlert() {
-      if (_InterruptedAlert != null) {
-        UIManager.CloseModal(_InterruptedAlert);
-        _InterruptedAlert = null;
-      }
+    private void HandleInterruptionAlertClosed() {
+      _InterruptedAlert = null;
     }
 
     #endregion //Misc Helper Methods

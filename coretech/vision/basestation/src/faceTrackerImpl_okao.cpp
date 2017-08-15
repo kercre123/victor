@@ -282,7 +282,10 @@ namespace Vision {
   {
     //Util::SafeDeleteArray(_workingMemory);
     //Util::SafeDeleteArray(_backupMemory);
-    
+
+    // Must release album handles before common handle
+    _recognizer.Shutdown();
+
     if(NULL != _okaoSmileDetectHandle) {
       if(OKAO_NORMAL != OKAO_SM_DeleteHandle(_okaoSmileDetectHandle)) {
         PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.FaceLibSmileDetectHandleDeleteFail", "");

@@ -16,13 +16,13 @@
     "translation" : "Noch nicht freigeschaltete Fähigkeit"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
+    "translation" : "Erfülle Cozmos Spielbedarf jeden Tag, um eine Spielmarke zu erhalten. Mit diesen Marken kannst du Bonuskisten freischalten, die Belohnungen wie Sparks und Tricks enthalten."
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Fauststoß"
   },
   "unlockable.FistBump.Description" : {
-    "translation" : "Möchtest du Cozmo zeigen, dass du stolz auf ihn bist? Mach einen Fauststoß mit ihm! Bei diesem Trick fährt Cozmo seine Krangabel nach oben und wartet, bis du sie mit deiner Faust anstößt."
+    "translation" : "Möchtest du Cozmo zeigen, dass du stolz auf ihn bist? Mach einen Fauststoß mit ihm! Bei diesem Trick fährt Cozmo seinen Hebearm nach oben und wartet, bis du ihn mit deiner Faust anstößt."
   },
   "unlockable.FistBump.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo um einen Fauststoß zu bitten."
@@ -55,10 +55,10 @@
     "translation" : "Sieh Cozmo zu, wie er einen Cube sucht und trainiert."
   },
   "unlockable.CubePounce.Title" : {
-    "translation" : "Fernhalten"
+    "translation" : "Fang mich"
   },
   "unlockable.CubePounce.Description" : {
-    "translation" : "Bei diesem Trick lernt Cozmo das Spiel \"Fernhalten\", bei dem gute Reflexe und eine schnelle Reaktionszeit gefragt sind."
+    "translation" : "Bei diesem Trick lernt Cozmo das Spiel \"Fang mich\", bei dem gute Reflexe und eine schnelle Reaktionszeit gefragt sind."
   },
   "unlockable.FaceEnrollment.Title" : {
     "translation" : "Kennenlernen"
@@ -67,16 +67,16 @@
     "translation" : "Cozmo lernt, sich Gesichter zu merken und Namen zu sagen.\u000a\u000aSuche in der Aktivität \"Kennenlernen\" danach."
   },
   "unlockable.MemoryMatch.Title" : {
-    "translation" : "Gedächtnisspiel"
+    "translation" : "Erinner Dich"
   },
   "unlockable.MemoryMatch.Description" : {
-    "translation" : "Bei diesem Trick lernt Cozmo, das Gedächtnisspiel zu spielen."
+    "translation" : "Bei diesem Trick lernt Cozmo, Erinner Dich zu spielen."
   },
   "unlockable.SpeedTap.Title" : {
-    "translation" : "Geschwindigkeitsspiel"
+    "translation" : "Hau mich"
   },
   "unlockable.SpeedTap.Description" : {
-    "translation" : "Bei diesem Trick lernt Cozmo, das Geschwindigkeitsspiel zu spielen. Mit der Zeit wird er immer besser!"
+    "translation" : "Bei diesem Trick lernt Cozmo, Hau mich zu spielen. Mit der Zeit wird er immer besser!"
   },
   "unlockable.CodeLab.Title" : {
     "translation" : "Code Lab"
@@ -88,7 +88,7 @@
     "translation" : "Cube rollen"
   },
   "unlockable.CubeRollAction.Description" : {
-    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen – insbesondere, wenn sie auf der Seite liegen."
+    "translation" : "Cozmo hat es gerne, wenn die Cubes mit der Oberseite nach oben liegen. Bei diesem Trick lernt er, Cubes zu rollen – insbesondere, wenn sie auf der Seite liegen."
   },
   "unlockable.CubeRollAction.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo zu bitten, einen Cube zu rollen."
@@ -109,7 +109,7 @@
     "translation" : "Bei diesem Trick lernt Cozmo, zwei Cubes zu stapeln."
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
-    "translation" : "Sieh Cozmo zu, wie Cozmo Cubes stapelt."
+    "translation" : "Sieh Cozmo zu, wie er Cubes stapelt."
   },
   "unlockable.CubeStackAction.SparkButtonDescription" : {
     "translation" : "Tippe hier, um Cozmo zu bitten, zwei Cubes zu stapeln."
@@ -196,7 +196,7 @@
     "translation" : "Cube-Bewachen"
   },
   "unlockable.GuardDog.Description" : {
-    "translation" : "When Cozmo’s Cubes are close together, he might take a nap while guarding them. Carefully turn his Cubes upside-down without waking him."
+    "translation" : "Wenn Cozmos Cubes nah beeinander liegen, macht er unter Umständen ein Nickerchen, während er sie bewacht. Stelle die Cubes vorsichtig auf den Kopf, ohne in aufzuwecken."
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo besitzt Sparks:"

@@ -49,6 +49,7 @@ public class UnlockablesManager : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.UnlockedDefaults>(HandleUnlockDefaultsSet);
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
+    DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset -= HandleSaveDataReset;
   }
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
@@ -107,6 +108,7 @@ public class UnlockablesManager : MonoBehaviour {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockedDefaults>(HandleUnlockDefaultsSet);
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
+    DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset += HandleSaveDataReset;
     RobotEngineManager.Instance.SendRequestUnlockDataFromBackup();
   }
 
@@ -262,6 +264,10 @@ public class UnlockablesManager : MonoBehaviour {
         OnUnlockComplete(resultMessage.unlockID);
       }
     }
+  }
+
+  private void HandleSaveDataReset() {
+    _UnlocksLoaded = false;
   }
 
   // Do not clear unlock slots until they have been played once.

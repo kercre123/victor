@@ -29,7 +29,7 @@ class LocalNotifications
 public:
   LocalNotifications(NeedsManager& needsManager);
 
-  void Init(const Json::Value& json);
+  void Init(const Json::Value& json, Util::RandomGenerator* rng);
 
 
   // Notify the OS to cancel all pending local notifications
@@ -42,13 +42,21 @@ public:
 
 private:
 
-  bool ShouldBeRegistered(const LocalNotificationItem& config);
+  bool ShouldBeRegistered(const LocalNotificationItem& config) const;
 
-  float DetermineTimeToNotify(const LocalNotificationItem& config);
-  float CalculateMinutesToThreshold(const NeedId needId, const float targetLevel);
+  float DetermineTimeToNotify(const LocalNotificationItem& config,
+                              const NeedsMultipliers& multipliers,
+                              const float timeSinceAppOpen_m,
+                              const Time now) const;
+  float CalculateMinutesInFuture(const LocalNotificationItem& config,
+                                 const float timeSinceAppOpen_m,
+                                 const Time now) const;
+  float CalculateMinutesToThreshold(const NeedId needId, const float targetLevel,
+                                    const NeedsMultipliers& multipliers) const;
 
   NeedsManager& _needsManager;
-  
+  Util::RandomGenerator* _rng;
+
   LocalNotificationConfig _localNotificationConfig;
 };
 

@@ -57,18 +57,27 @@ public:
    * Audio Client methods
    */
 
-  // Check if the buffer is currently active
-  bool IsActive() const;
-
   // Check if the buffer is in the reset audio buffer state
   // Note: Will update state if the internal timeout period has expired
   bool IsWaitingForReset() const;
 
-  // Check if buffer stream has an audio streams
+  // Check if any audio streams are available
   bool HasAudioBufferStream() const;
   
-  // Get the front / top Audio Buffer stream in the queue
-  RobotAudioFrameStream* GetFrontAudioBufferStream();
+  // Check if next audio stream has any data
+  bool AudioStreamHasData() const;
+  
+  // Check if next audio stream is complete
+  bool AudioStreamIsComplete() const;
+  
+  // Get audio stream creation time in ms
+  double GetAudioStreamCreatedTime_ms() const;
+  
+  // Get audio stream frame count
+  size_t GetAudioStreamFrameCount() const;
+  
+  // Pops the next AudioFrameData out of the next AudioStream
+  const AudioEngine::AudioFrameData* PopNextAudioFrameData();
   
   // Pop the front / top Audio buffer stream in the queue
   void PopAudioBufferStream();
@@ -89,8 +98,14 @@ protected:
   // Flag to identify we are waiting for current update buffer session to complete
   bool _isWaitingForReset = false;
   
+  // Check if the buffer is currently active
+  bool IsActive() const;
+  
   // Clear the Audio buffer stream queue
   void ClearBufferStreams();
+  
+  // Get the front / top Audio Buffer stream in the queue
+  RobotAudioFrameStream* GetFrontAudioBufferStream();
 };
 
 

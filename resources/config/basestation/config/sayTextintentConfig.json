@@ -91,14 +91,14 @@
     "durationTraits" : [
       {
         "textLengthMax"	: 6,
-        "rangeMin" : 1.2,
-        "rangeMax" : 1.4,
+        "rangeMin" : 0.85,
+        "rangeMax" : 1.1,
         "stepSize" : 0.05
       },
       {
         "textLengthMin" : 7,
-        "rangeMin" : 1.2,
-        "rangeMax" : 1.4,
+        "rangeMin" : 0.85,
+        "rangeMax" : 1.1,
         "stepSize" : 0.05
       }
     ],
@@ -116,8 +116,8 @@
     "durationTraits" : [
       {
         "textLengthMax"	: 6,
-        "rangeMin" : 1.4,
-        "rangeMax" : 1.6,
+        "rangeMin" : 1.2,
+        "rangeMax" : 1.4,
         "stepSize" : 0.05
       },
       {
@@ -141,14 +141,14 @@
     "durationTraits" : [
       {
         "textLengthMax"	: 6,
-        "rangeMin" : 1.4,
-        "rangeMax" : 1.6,
+        "rangeMin" : 1.0,
+        "rangeMax" : 1.2,
         "stepSize" : 0.05
       },
       {
         "textLengthMin" : 7,
-        "rangeMin" : 1.2,
-        "rangeMax" : 1.4,
+        "rangeMin" : 1.0,
+        "rangeMax" : 1.2,
         "stepSize" : 0.05
       }
     ],

@@ -21,7 +21,6 @@
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/utilMessaging.h"
-#include "anki/messaging/basestation/advertisementService.h"
 
 #include "clad/types/advertisementTypes.h"
 #include "util/helpers/arrayHelpers.h"

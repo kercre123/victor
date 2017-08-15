@@ -14,11 +14,11 @@
 
 #include <deque>
 #include <anki/messaging/basestation/IComms.h>
-#include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageShared.h"
+#include "engine/messaging/advertisementService.h"
 
 
 namespace Anki {

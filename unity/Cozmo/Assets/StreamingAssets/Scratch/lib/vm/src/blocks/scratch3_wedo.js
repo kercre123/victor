@@ -1,4 +1,5 @@
 var Cast = require('../util/cast');
+const Color = require('../util/color');
 var MathUtil = require('../util/math-util');
 var Timer = require('../util/timer');
 
@@ -19,6 +20,7 @@ var Scratch3CozmoBlocks = function (runtime) {
 Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
+        cozmo_vert_setbackpackcolor: this.verticalSetBackpackColor,
         cozmo_drive_forward: this.driveForward,
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
@@ -54,17 +56,21 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         // Actions
         cozmo_vert_turn: this.verticalTurn,
         cozmo_vert_drive: this.verticalDrive,
+        cozmo_vert_wheels_speed: this.verticalDriveWheels,
+        cozmo_vert_stop_motor: this.verticalStopMotor,
         cozmo_vert_path_offset: this.verticalPathOffset,
         cozmo_vert_path_to: this.verticalPathTo,
         cozmo_vert_set_headangle: this.verticalSetHeadAngle,
         cozmo_vert_set_liftheight: this.verticalSetLiftHeight,
+        cozmo_vert_move_lift: this.verticalMoveLift,
         cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
         cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         // Sensors / Inputs
         // Cozmo
         cozmo_vert_get_position_3d: this.verticalCozmoGetPosition,
-        cozmo_vert_get_angle: this.verticalCozmoGetAngle,
         cozmo_vert_get_pitch: this.verticalCozmoGetPitch,
+        cozmo_vert_get_roll: this.verticalCozmoGetRoll,
+        cozmo_vert_get_yaw: this.verticalCozmoGetYaw,
         cozmo_vert_get_lift_height: this.verticalCozmoGetLiftHeight,
         cozmo_vert_get_head_angle: this.verticalCozmoGetHeadAngle,
         // Faces
@@ -130,6 +136,30 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
             util.yield();
         }
     }
+};
+
+
+Scratch3CozmoBlocks.prototype.verticalSetBackpackColor = function(args, util) {
+    const rgb = Cast.toRgbColorObject(args.COLOR);
+
+    // Color from rgb to hex value (like 0xffffffff).
+    var colorHexValue = Color.rgbToHex(rgb);
+
+    // Strip leading '#' char
+    colorHexValue = colorHexValue.substring(1, colorHexValue.length);
+
+    // Prepend "0x".
+    colorHexValue = "0x" + colorHexValue;
+
+    if (colorHexValue != "0x000000") {
+        // Append alpha channel to all but black
+        colorHexValue = colorHexValue + "ff";
+    }
+
+    // Convert from string to number
+    colorHexValue = parseInt(colorHexValue);
+
+    window.Unity.call({requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHexValue});
 };
 
 Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
@@ -477,6 +507,25 @@ Scratch3CozmoBlocks.prototype.verticalDrive = function(args, util) {
     return commandPromise;
 };
 
+Scratch3CozmoBlocks.prototype.verticalDriveWheels = function(args, util) {
+    var requestId = this._getRequestId();
+    var leftSpeed = Cast.toNumber(args.LEFT_SPEED);
+    var rightSpeed = Cast.toNumber(args.RIGHT_SPEED);
+    
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozVertDriveWheels", argFloat: leftSpeed, argFloat2: rightSpeed});
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalStopMotor = function(args, util) {
+    var requestId = this._getRequestId();
+    var motorToStop = Cast.toString(args.MOTOR_SELECT);
+    
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: "cozVertStopMotor", argString: motorToStop});
+    return commandPromise;
+};
+
 Scratch3CozmoBlocks.prototype.verticalPathOffset = function(args, util) {
     var requestId = this._getRequestId();
     var offsetX = Cast.toNumber(args.OFFSET_X);
@@ -518,6 +567,15 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function(args, util) {
     window.Unity.call({requestId: requestId, command: "cozVertLiftHeight", argFloat: heightRatio, argFloat2: speed});
     return commandPromise;
 };      
+
+Scratch3CozmoBlocks.prototype.verticalMoveLift = function(args, util) {
+    var requestId = this._getRequestId();
+    var speed = Cast.toNumber(args.LIFT_SPEED);
+
+    var commandPromise = this._promiseForCommand(requestId);    
+    window.Unity.call({requestId: requestId, command: "cozVertMoveLift", argFloat: speed});
+    return commandPromise;
+};
 
 Scratch3CozmoBlocks.prototype.setCubeLightCorners = function(args, util) {
     var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
@@ -574,12 +632,16 @@ Scratch3CozmoBlocks.prototype.verticalCozmoGetPosition = function(args, util) {
     return getVector3Axis(gCozmoWorldState.pos, axis);
 };
 
-Scratch3CozmoBlocks.prototype.verticalCozmoGetAngle = function(args, util) {
-    return Cast.toNumber(gCozmoWorldState.poseAngle_d);
-};
-
 Scratch3CozmoBlocks.prototype.verticalCozmoGetPitch = function(args, util) {
     return Cast.toNumber(gCozmoWorldState.posePitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetRoll = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.poseRoll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetYaw = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.poseYaw_d);
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoGetLiftHeight = function(args, util) {

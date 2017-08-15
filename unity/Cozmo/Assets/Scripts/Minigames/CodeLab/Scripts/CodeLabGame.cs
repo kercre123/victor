@@ -340,8 +340,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Set Cozmo data
 
         _LatestCozmoState.pos = robot.WorldPosition;
-        _LatestCozmoState.poseAngle_d = robot.PoseAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.poseYaw_d = robot.PoseAngle * Mathf.Rad2Deg;
         _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.poseRoll_d = robot.RollAngle * Mathf.Rad2Deg;
         _LatestCozmoState.liftHeightFactor = robot.LiftHeightFactor;
         _LatestCozmoState.headAngle_d = robot.HeadAngle * Mathf.Rad2Deg;
 
@@ -378,7 +379,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _LatestCozmoState.device.yaw_d = Input.gyro.attitude.eulerAngles.z;
 
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
-
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
         this.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
       }
@@ -554,7 +554,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.NOW;
 
-      RobotEngineManager.Instance.CurrentRobot.TurnOffAllBackpackBarLED();
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+
+      robot.TurnOffAllBackpackBarLED();
+      robot.DriveWheels(0.0f, 0.0f);
 
       if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos)) {
         ++_PendingResetToHomeActions;
@@ -948,6 +951,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           inProgressScratchBlock.AdvanceToNextBlock(true);
         }
       }
+      else if (scratchRequest.command == "cozVertMoveLift") {
+        float speed = scratchRequest.argFloat * Mathf.Deg2Rad;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(speed.ToString()));
+
+        robot.MoveLift(speed);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
       else if (scratchRequest.command == "cozVertTurn") {
         float angle = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
@@ -959,6 +969,32 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float speed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
         robot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+      }
+      else if (scratchRequest.command == "cozVertDriveWheels") {
+        float leftSpeed = scratchRequest.argFloat;
+        float rightSpeed = scratchRequest.argFloat2;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(leftSpeed.ToString() + " , " + rightSpeed.ToString()));
+        robot.DriveWheels(leftSpeed, rightSpeed);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertStopMotor") {
+        string motorToStop = scratchRequest.argString;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(motorToStop));
+        switch (motorToStop) {
+        case "wheels":
+          robot.DriveWheels(0.0f, 0.0f);
+          break;
+        case "head":
+          robot.DriveHead(0.0f);
+          break;
+        case "lift":
+          robot.MoveLift(0.0f);
+          break;
+        case "all":
+          robot.StopAllMotors();
+          break;
+        }
+        inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozmoDriveForward") {
         // argFloat represents the number selected from the dropdown under the "drive forward" block
@@ -1016,7 +1052,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
         for (int i = 0; i < cozmoSaysText.Length; i++) {
           char currentChar = cozmoSaysText[i];
-          if (char.IsLetterOrDigit(currentChar) || char.IsWhiteSpace(currentChar) || IsPunctuation(currentChar)) {
+          if (CozmoInputFilter.IsValidInput(currentChar, allowPunctuation: true, allowDigits: true)) {
             cozmoSaysTextCleaned += currentChar;
           }
         }
@@ -1088,6 +1124,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
+      else if (scratchRequest.command == "cozmoVerticalSetBackpackColor") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
+        robot.SetAllBackpackBarLED(scratchRequest.argUInt);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
       else if (scratchRequest.command == "cozmoSetCubeLightCorners") {
         uint color1 = scratchRequest.argUInt;
         uint color2 = scratchRequest.argUInt2;
@@ -1140,11 +1181,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         DAS.Error("CodeLab.BadCubeIndex", "cubeIndex " + cubeIndex.ToString());
         return ObjectType.UnknownObject;
       }
-    }
-
-    // Less forgiving than char.IsPunctuation()
-    private bool IsPunctuation(char c) {
-      return c == '.' || c == ';' || c == '\'' || c == ',' || c == '?' || c == '!' || c == ':';
     }
 
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {

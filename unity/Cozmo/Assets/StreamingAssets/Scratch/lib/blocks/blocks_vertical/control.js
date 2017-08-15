@@ -195,21 +195,24 @@ Blockly.Blocks['control_stop'] = {
   init: function() {
     var ALL_SCRIPTS = 'all';
     var THIS_SCRIPT = 'this script';
-    var OTHER_SCRIPTS = 'other scripts in sprite';
+    // *** ANKI CHANGE ***
+    // Removing the 'Other scripts in sprite' option. mcembalest, 8/10/17
+
+    //var OTHER_SCRIPTS = 'other scripts in sprite';
     var stopDropdown = new Blockly.FieldDropdown(function() {
-      if (this.sourceBlock_ &&
-          this.sourceBlock_.nextConnection &&
-          this.sourceBlock_.nextConnection.isConnected()) {
-        return [
-          ['other scripts in sprite', OTHER_SCRIPTS]
-        ];
-      }
+    // if (this.sourceBlock_ &&
+    //     this.sourceBlock_.nextConnection &&
+    //     this.sourceBlock_.nextConnection.isConnected()) {
+    //   return [
+    //     ['other scripts in sprite', OTHER_SCRIPTS]
+    //   ];
+    // }
       return [['all', ALL_SCRIPTS],
-        ['this script', THIS_SCRIPT],
-        ['other scripts in sprite', OTHER_SCRIPTS]
+        ['this script', THIS_SCRIPT] //,
+    // ['other scripts in sprite', OTHER_SCRIPTS]
       ];
-    }, function(option) {
-      this.sourceBlock_.setNextStatement(option == OTHER_SCRIPTS);
+    // }, function(option) {
+    //   this.sourceBlock_.setNextStatement(option == OTHER_SCRIPTS);
     });
     this.appendDummyInput()
         .appendField('stop')

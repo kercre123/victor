@@ -32,7 +32,7 @@
       CozmoAPI.getProjects('window.renderProjects');
 
       // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
-      // _devLoadProjects();
+      //_devLoadProjects();
     });
 
     // register main click handler for the document
@@ -245,7 +245,8 @@
     setProjectData(project, projectData);
 
     // set the project title to the localized name
-    project.querySelector('.project-title').textContent = $t(projectData.ProjectName);
+    var title = project.querySelector('.project-title');
+    title.textContent = $t(projectData.ProjectName);
 
     // set the icon to match the content of the sample project
     var icon = projectData.ProjectIconName;
@@ -260,6 +261,9 @@
     block.setAttribute('src', 'images/icon_block_' + type + '.svg');
     block.addEventListener('load', function(elem) {
       project.style.visibility = 'visible';
+
+      // if title is unusually large, add a class to reduce the font
+      _shrinkLongProjectTitle(title, project);
 
       // show the entire Projects UI when the first sample project is ready to be shown
       projectsUI.style.visibility = 'visible';
@@ -283,7 +287,8 @@
     setProjectData(project, projectData);
 
     // set the project title
-    project.querySelector('.project-title').textContent = projectData.ProjectName;
+    var title = project.querySelector('.project-title');
+    title.textContent = projectData.ProjectName;
 
     // set color of puzzle pieces on background card based on order position
     var cardUrl = 'images/framing_widgetBackground_player' + ((order % 3) + 1) + '.svg';
@@ -292,9 +297,27 @@
     card.addEventListener('load', function(){
       // show the card once the background has loaded
       project.style.display = 'inline-block';
+
+      // if title is unusually large, add a class to reduce the font
+      _shrinkLongProjectTitle(title, project);
     });
 
     return project;
+  }
+
+
+  /**
+   * Applies a CSS class to project title container if it is too large to fit on the card
+   * @param titleElem {HTMLElement} element on project card containing the project title text
+   * @param projectElem {HTMLElement} container element for the project card
+   * @returns {void}
+   */
+  function _shrinkLongProjectTitle(titleElem, projectElem) {
+    var approxTitleAreaHeight = (parseInt(projectElem.clientHeight, 10) / 3);
+    if (titleElem.clientHeight > approxTitleAreaHeight) {
+      // title exceedes the size given so apply class to reduce the font size
+      titleElem.classList.add('long-title');
+    }
   }
 
   /**
@@ -325,19 +348,22 @@
     var projectName = projectElem.getAttribute('data-project-name');
 
 
+    // @NOTE: translation tags for confirm/cancel button strings are intentionally switched.
+    //        the keys should have been chosen based on their content, and not whether they
+    //        were confirms or cancels.
     ModalConfirm.open({
       title: $t('codeLab.projects.confirmDeleteProject.confirmPromptTitle', projectName),
-      confirmButtonLabel: $t('codeLab.projects.confirmDeleteProject.confirmButton.labelText'),
-      cancelButtonLabel: $t('codeLab.projects.confirmDeleteProject.cancelButton.labelText'),
+      confirmButtonLabel: $t('codeLab.projects.confirmDeleteProject.cancelButton.labelText'),
+      cancelButtonLabel: $t('codeLab.projects.confirmDeleteProject.confirmButton.labelText'),
       prompt: $t('codeLab.projects.confirmDeleteProject.confirmPrompt'),
       confirmCallback: function(result) {
         if (result) {
+          window.player.play('click');
+        } else {
           if (window.player) {
             window.player.play('delete');
           }
           CozmoAPI.deleteProject(uuid);
-        } else {
-          window.player.play('click');
         }
       }
     });

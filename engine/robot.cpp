@@ -23,14 +23,15 @@
 #include "engine/actions/animActions.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/animations/engineAnimationController.h"
 #include "engine/animations/proceduralFace.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/robotAudioClient.h"
-#include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/aiComponent/aiComponent.h"
 #include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -70,6 +71,8 @@
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/textToSpeech/textToSpeechComponent.h"
 #include "engine/viz/vizManager.h"
+
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -271,6 +274,9 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     
 Robot::~Robot()
 {
+  // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
+  GetAIComponent().GetFreeplayDataTracker().ForceUpdate();
+  
   AbortAll();
   
   // This needs to happen before ActionList is destroyed, because otherwise behaviors will try to respond
@@ -357,10 +363,10 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
   // Can only not be on platform if not on charge contacts
   onPlatform = onPlatform || IsOnCharger();
   
-  const bool shouldBroadcast = _isOnChargerPlatform != onPlatform;
+  const bool stateChanged = _isOnChargerPlatform != onPlatform;
   _isOnChargerPlatform = onPlatform;
   
-  if( shouldBroadcast ) {
+  if( stateChanged ) {
     Broadcast(
       ExternalInterface::MessageEngineToGame(
         ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
@@ -368,6 +374,9 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
     
     const u32 thresh = (onPlatform ? CLIFF_SENSOR_UNDROP_LEVEL_MIN : CLIFF_SENSOR_DROP_LEVEL);
     _cliffSensorComponent->SendCliffDetectThresholdToRobot(thresh);
+
+    // pause the freeplay tracking if we are on the charger
+    GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
   }
 }
   
@@ -556,6 +565,12 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                       "OffTreadsState: %s  %s",
                       EnumToString(_offTreadsState),
                       awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
+
+  if( offTreadsStateChanged ) {
+    // pause the freeplay tracking if we are not on the treads
+    const bool isPaused = (_offTreadsState != OffTreadsState::OnTreads);
+    GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::OffTreads);
+  }
   
   return offTreadsStateChanged;
 }
@@ -1051,7 +1066,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // check for new obstacles from prox sensor
   _blockWorld->UpdateProxObstaclePoses();
   
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wdeprecated-declarations" 
   _gyroDriftDetector->DetectGyroDrift(msg);
+# pragma clang diagnostic pop
   _gyroDriftDetector->DetectBias(msg);
   
   _cliffSensorComponent->UpdateCliffRunningStats(msg);
@@ -1543,9 +1561,11 @@ Result Robot::Update()
     std::vector<ObservableObject*> matchingObjects;
     GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {
-        const ObservableObject* topObj = GetBlockWorld().FindLocatedObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
+        const ObservableObject* topObj __attribute__((unused)) =
+            GetBlockWorld().FindLocatedObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
-        bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
+        bool gotRelPose __attribute__((unused)) =
+            obj->GetPose().GetWithRespectTo(GetPose(), relPose);
 
         const char* axisStr = "";
         switch( obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() ) {

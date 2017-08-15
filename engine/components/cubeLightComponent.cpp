@@ -780,58 +780,62 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
   
   if(objectID.IsUnknown())
   {
-    if(enable)
-    {
-      SetObjectLights(objectID, kCubeLightsOff);
-      for(auto& pair : _objectInfo)
+    if( _onlyGameLayerEnabledForAll != enable ) {
+      if(enable)
       {
-        pair.second.isOnlyGameLayerEnabled = true;
+        SetObjectLights(objectID, kCubeLightsOff);
+        for(auto& pair : _objectInfo)
+        {
+          pair.second.isOnlyGameLayerEnabled = true;
+        }
+        StopAllAnimsOnLayer(AnimLayerEnum::Engine);
+        StopAllAnimsOnLayer(AnimLayerEnum::State);
       }
-      StopAllAnimsOnLayer(AnimLayerEnum::Engine);
-      StopAllAnimsOnLayer(AnimLayerEnum::State);
-    }
-    else
-    {
-      StopAllAnimsOnLayer(AnimLayerEnum::User);
+      else
+      {
+        StopAllAnimsOnLayer(AnimLayerEnum::User);
       
-      for(auto& pair : _objectInfo)
-      {
-        pair.second.isOnlyGameLayerEnabled = false;
-        if( pair.second.animationsOnLayer[AnimLayerEnum::Engine].empty() ) {
-          pair.second.curLayer = AnimLayerEnum::State;
+        for(auto& pair : _objectInfo)
+        {
+          pair.second.isOnlyGameLayerEnabled = false;
+          if( pair.second.animationsOnLayer[AnimLayerEnum::Engine].empty() ) {
+            pair.second.curLayer = AnimLayerEnum::State;
+          }
+          else {
+            pair.second.curLayer = AnimLayerEnum::Engine;
+          }
+          PickNextAnimForDefaultLayer(pair.first);
         }
-        else {
-          pair.second.curLayer = AnimLayerEnum::Engine;
-        }
-        PickNextAnimForDefaultLayer(pair.first);
       }
+      _onlyGameLayerEnabledForAll = enable;
     }
-    _onlyGameLayerEnabledForAll = enable;
   }
   else
   {
     auto iter = _objectInfo.find(objectID);
     if(iter != _objectInfo.end())
     {
-      if(enable)
-      {
-        SetObjectLights(objectID, kCubeLightsOff);
-        StopAllAnimsOnLayer(AnimLayerEnum::Engine, objectID);
-        StopAllAnimsOnLayer(AnimLayerEnum::State, objectID);
-        iter->second.isOnlyGameLayerEnabled = true;
-      }
-      else
-      {
-        StopAllAnimsOnLayer(AnimLayerEnum::User, objectID);
-        StopAllAnimsOnLayer(AnimLayerEnum::State, objectID);
-        if( iter->second.animationsOnLayer[AnimLayerEnum::Engine].empty() ) {
-          iter->second.curLayer = AnimLayerEnum::State;
+      if( enable != iter->second.isOnlyGameLayerEnabled ) {
+        if(enable)
+        {
+          SetObjectLights(objectID, kCubeLightsOff);
+          StopAllAnimsOnLayer(AnimLayerEnum::Engine, objectID);
+          StopAllAnimsOnLayer(AnimLayerEnum::State, objectID);
+          iter->second.isOnlyGameLayerEnabled = true;
         }
-        else {
-          iter->second.curLayer = AnimLayerEnum::Engine;
+        else
+        {
+          StopAllAnimsOnLayer(AnimLayerEnum::User, objectID);
+          StopAllAnimsOnLayer(AnimLayerEnum::State, objectID);
+          if( iter->second.animationsOnLayer[AnimLayerEnum::Engine].empty() ) {
+            iter->second.curLayer = AnimLayerEnum::State;
+          }
+          else {
+            iter->second.curLayer = AnimLayerEnum::Engine;
+          }
+          iter->second.isOnlyGameLayerEnabled = false;
+          PickNextAnimForDefaultLayer(objectID);
         }
-        iter->second.isOnlyGameLayerEnabled = false;
-        PickNextAnimForDefaultLayer(objectID);
       }
     }
   }

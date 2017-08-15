@@ -13,7 +13,7 @@
 #include "../shared/ctrlCommonInitialization.h"
 #include <stdio.h>
 #include <string.h>
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 
 #if (DO_NOT_QUIT_WEBOTS == 1)
 #define QUIT_WEBOTS(status) return status;

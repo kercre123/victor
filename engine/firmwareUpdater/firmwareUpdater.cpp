@@ -93,24 +93,25 @@ void LoadFirmwareFile(AsyncLoaderData* loaderData, std::function<void()> callbac
   }
 }
 
-std::string GetFirmwareFilename(FirmwareType type)
+std::string GetFirmwareFilename(FirmwareType type, int version)
 {
-  const char* folder = nullptr;
+  std::string folder;
   switch (type)
   {
     case FirmwareType::Current:
       folder = "firmware";
       break;
     case FirmwareType::Old:
-      folder = "old_firmware";
+      folder = "firmware_" + std::to_string(version);
       break;
   }
   return std::string{"config/basestation/"} + folder + "/cozmo.safe";
 }
 
-void FirmwareUpdater::LoadHeader(FirmwareType type, const JsonCallback& callback)
+void FirmwareUpdater::LoadHeader(FirmwareType type, int verison, const JsonCallback& callback)
 {
-  _fileLoaderData.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename(type)));
+  _fileLoaderData.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                   GetFirmwareFilename(type, verison)));
 
   auto loadCallback = [this, callback]
   {
@@ -344,7 +345,8 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
       
       WaitForLoadingThreadToExit();
 
-      _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename(_type)) );
+      _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                        GetFirmwareFilename(_type, _version)));
       _loadingThread = std::thread(LoadFirmwareFile, &_fileLoaderData, nullptr);
       
       PRINT_NAMED_INFO("FirmwareUpdater.Update.Init", "State %s:%s, loading file '%s'",

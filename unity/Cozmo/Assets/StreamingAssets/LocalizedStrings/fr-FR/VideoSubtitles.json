@@ -16,10 +16,10 @@
     "translation" : "Appuie pour sélectionner ton cube."
   },
   "videoSubtitles.speedTap.fourth" : {
-    "translation" : "Soit prêt !"
+    "translation" : "Sois prêt !"
   },
   "videoSubtitles.speedTap.fifth" : {
-    "translation" : "Touche si les couleurs correspondent."
+    "translation" : "Tape si les couleurs correspondent."
   },
   "videoSubtitles.speedTap.sixth" : {
     "translation" : "Pas de correspondance."
@@ -46,7 +46,7 @@
     "translation" : "Si tu es trop lent,"
   },
   "videoSubtitles.cubePounce.sixth" : {
-    "translation" : "Cozmo va marquer un point."
+    "translation" : "Cozmo marquera un point."
   },
   "videoSubtitles.memoryMatch.first" : {
     "translation" : "Configuration du jeu"

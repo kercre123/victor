@@ -39,6 +39,9 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
   private void CheckWifiEnabled() {
     Action nextStage = CheckLocationPermission;
     bool changeNeeded = !AndroidConnectionFlow.CallJava<bool>("isWifiEnabled");
+#if UNITY_EDITOR
+    changeNeeded = false;
+#endif
     if (!changeNeeded) {
       nextStage();
       return;
@@ -53,6 +56,9 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
   private void CheckLocationPermission() {
     Action<bool> nextStage = CheckLocationEnabled;
     bool changeNeeded = !AndroidConnectionFlow.CallJava<bool>("hasLocationPermission");
+#if UNITY_EDITOR
+    changeNeeded = false;
+#endif
     if (!changeNeeded) {
       nextStage(false);
       return;
@@ -94,6 +100,9 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
   private void CheckLocationEnabled(bool didGetPermissions) {
     Action nextStage = () => OnStageComplete();
     bool changeNeeded = AndroidConnectionFlow.CallJava<bool>("needLocationService");
+#if UNITY_EDITOR
+    changeNeeded = false;
+#endif
     if (!changeNeeded) {
       nextStage();
       return;

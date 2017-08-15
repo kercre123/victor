@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.6911765, g: 0.6911765, b: 0.6911765, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.509}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -137,7 +137,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MediaPlayerCtrl: {fileID: 11483000}
   _SubtitlesText: {fileID: 114089537218572194}
-  _SubtitlesBackground: {fileID: 11444558}
 --- !u!114 &11464060
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -964,7 +963,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Grey
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114959074440803056}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1093,7 +1091,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114770125595000832}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1436,7 +1433,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114337680415537552}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1575,7 +1571,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -44, y: -51.1}
+  m_AnchoredPosition: {x: -44, y: -51.100098}
   m_SizeDelta: {x: 725, y: 217}
   m_Pivot: {x: 1, y: 1}
 --- !u!224 &224071974716056740
@@ -1614,7 +1610,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -44, y: -51.1}
+  m_AnchoredPosition: {x: -44, y: -51.100098}
   m_SizeDelta: {x: 725, y: 217}
   m_Pivot: {x: 1, y: 1}
 --- !u!224 &224211029499416104

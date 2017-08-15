@@ -127,6 +127,7 @@ public class ShowCozmoVideo : MonoBehaviour {
   private void HandleVideoFinished() {
     _ReplayButton.gameObject.SetActive(true);
     _ContinueButton.gameObject.SetActive(true);
+    _RawImage.enabled = false;
     ShowSkipButton(false);
   }
 

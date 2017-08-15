@@ -23,6 +23,7 @@
 #include "engine/cozmoAPI/comms/tcpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
+#include "engine/messaging/advertisementService.h"
 
 #include "engine/behaviorSystem/behaviorManager.h"
 
@@ -36,7 +37,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include <anki/messaging/basestation/IComms.h>
-#include <anki/messaging/basestation/advertisementService.h>
 
 #include "clad/externalInterface/messageGameToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame_hash.h"

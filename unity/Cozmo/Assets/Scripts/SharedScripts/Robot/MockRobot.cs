@@ -202,6 +202,9 @@ public class MockRobot : IRobot {
   public void DriveHead(float speed_radps) {
   }
 
+  public void MoveLift(float speed_radps) {
+  }
+
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     LeftWheelSpeed = leftWheelSpeedMmps;
     RightWheelSpeed = rightWheelSpeedMmps;
@@ -754,6 +757,10 @@ public class MockRobot : IRobot {
 
   public float PitchAngle {
     get { return Rotation.eulerAngles.y * Mathf.Deg2Rad; }
+  }
+
+  public float RollAngle {
+    get { return Rotation.eulerAngles.x * Mathf.Deg2Rad; }
   }
 
   public float LeftWheelSpeed {

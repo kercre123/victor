@@ -59,7 +59,6 @@ public:
     LoadingStream,        // Animation is waiting for audio stream
     LoadingStreamFrames,  // Current Stream is waiting for audio frames
     AudioFramesReady,     // Has Animation audio frames are ready
-    AnimationAbort,       // In progress of aborting animation
     AnimationCompleted,   // Animation is completed
     AnimationError,       // Error creating animation
     AnimationStateCount   // Number of Animation States
@@ -161,10 +160,6 @@ protected:
   // Track how many events have completed playback to track animation completion state
   int GetCompletedEventCount() const { return _completedEventCount; }
   void IncrementCompletedEventCount() { ++_completedEventCount; }
-  
-  // Hold on to the current stream frames are being pulled from
-  RobotAudioFrameStream* _currentBufferStream = nullptr;
-  bool HasCurrentBufferStream() const { return _currentBufferStream != nullptr; }
 
   // All the animations events have and completed
   virtual bool IsAnimationDone() const;

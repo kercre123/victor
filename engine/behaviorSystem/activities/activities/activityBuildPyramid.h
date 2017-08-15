@@ -153,6 +153,9 @@ private:
   /// Functions relating to updating music/light state
   ///////
   void UpdateChooserPhase(Robot& robot);
+  int  GetNumberOfBlocksUpright();
+  void NotifyGameOfPyramidPreReqs(Robot& robot);
+
   PyramidConstructionStage CheckLightAndPyramidConstructionStage(Robot& robot) const;
   void UpdateMusic(Robot& robot, const PyramidConstructionStage& desiredState);
   void UpdateDesiredLights(Robot& robot, const PyramidConstructionStage& desiredState);

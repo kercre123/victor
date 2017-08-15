@@ -51,6 +51,8 @@ public interface IRobot : IDisposable {
 
   float PitchAngle { get; }
 
+  float RollAngle { get; }
+
   float LeftWheelSpeed { get; }
 
   float RightWheelSpeed { get; }
@@ -207,6 +209,8 @@ public interface IRobot : IDisposable {
   void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams);
 
   void DriveHead(float speed_radps);
+
+  void MoveLift(float speed_radps);
 
   void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps);
 

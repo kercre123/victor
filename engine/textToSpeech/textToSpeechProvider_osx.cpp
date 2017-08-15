@@ -45,6 +45,10 @@
 /* How many samples do we fetch in one call? */
 #define ACAPELA_SAMPLE_BUFSIZ (16*1024)
 
+// Fixed parameters
+#define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
+#define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
+
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
@@ -160,14 +164,14 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx,
               _tts_shaping, BabTTS_GetErrorName(err));
   }
 
-  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_LEADINGSILENCE, 0);
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_LEADINGSILENCE, TTS_LEADINGSILENCE_MS);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.Initialize.SetLeadingSilence",
               "Unable to set leading silence (%s)",
               BabTTS_GetErrorName(err));
   }
 
-  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_TRAILINGSILENCE, 0);
+  err = BabTTS_SetSettings(_lpBabTTS, BABTTS_PARAM_TRAILINGSILENCE, TTS_TRAILINGSILENCE_MS);
   if (E_BABTTS_NOERROR != err) {
     LOG_ERROR("TextToSpeechProvider.Initialize.SetTrailingSilence",
               "Unable to set trailing silence (%s)",

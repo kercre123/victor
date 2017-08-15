@@ -49,7 +49,7 @@
     "translation" : "Aucun message reçu"
   },
   "settings.sdkPanel.modeDuration.text" : {
-    "translation" : "En mode SDK pour : {0}"
+    "translation" : "En mode SDK depuis : {0}"
   },
   "settings.sdkPanel.programsRun.text" : {
     "translation" : "Exécution de programmes : {0}"
@@ -58,7 +58,7 @@
     "translation" : "Programmes SDK en cours d'exécution"
   },
   "settings.sdkPanel.sdkNotConnected.text" : {
-    "translation" : "Aucun programme SDK n'est actuellement en cours d'exécution"
+    "translation" : "Aucun programme SDK en cours d'exécution"
   },
   "settings.sdkPanel.wrongVersion.text" : {
     "translation" : "Version du SDK incompatible"
@@ -191,5 +191,8 @@
   },
   "settings.sdkPanel.sdkUrl.address" : {
     "translation" : "go.anki.com/cozmo-app-sdk"
+  },
+  "settings.acknowledgementsPanel.dataCollectionTitle" : {
+    "translation" : "Collecte de données"
   }
 }

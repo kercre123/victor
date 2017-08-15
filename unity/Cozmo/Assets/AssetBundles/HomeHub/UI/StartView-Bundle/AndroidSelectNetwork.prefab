@@ -150,6 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _InstructionsLabel: {fileID: 114974740370318896}
   _ContinueButton: {fileID: 114625995293330556}
+  _ContinueButtonFadeInTime: 1
   _CancelButton: {fileID: 114397962856670002}
   _NetworkCellPrefab: {fileID: 11491236, guid: 0790c1b5fe41b4674a86ad529e5d4901, type: 2}
   _ScrollViewContent: {fileID: 22487264}
@@ -492,6 +493,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224224167585417592}
   - component: {fileID: 114625995293330556}
+  - component: {fileID: 225768283681460324}
   m_Layer: 5
   m_Name: ContinueButton
   m_TagString: Untagged
@@ -510,7 +512,7 @@ GameObject:
   - component: {fileID: 222391205636473316}
   - component: {fileID: 114565317513721472}
   m_Layer: 5
-  m_Name: ButtonhitRegion
+  m_Name: ButtonHitRegion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -532,7 +534,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &114057565362262074
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -594,7 +596,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: eccf0d7ea36bd47fbb85c8ced7961a86, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -742,7 +744,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: CozmoButton_InvisibleHitZone
+  _LinkedComponentId: CozmoButton_HitRegion
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114614433935221538
@@ -1373,10 +1375,10 @@ RectTransform:
   m_Father: {fileID: 224077848190921360}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 108, y: 108}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224267615329905678
 RectTransform:
@@ -1450,3 +1452,14 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -2.5}
   m_SizeDelta: {x: -80, y: -35}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &225768283681460324
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1849562272999722}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

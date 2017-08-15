@@ -38,7 +38,7 @@ protected:
 public:
 
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
   virtual bool ShouldRunWhileOnCharger() const override { return true;}
 
 protected:
@@ -62,6 +62,7 @@ private:
   using State = ExternalInterface::OnboardingStateEnum;
   State _state = State::Inactive;
   uint8_t     _numErrors = 0;
+  uint8_t     _numErrorsPickup = 0;
   uint8_t     _timesPickedUpCube = 0;
   ObjectID    _targetBlock;
     

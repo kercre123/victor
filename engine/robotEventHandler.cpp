@@ -1413,14 +1413,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObje
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationImage& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {
@@ -1433,14 +1431,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationIm
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationImages& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {
@@ -1453,14 +1449,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationI
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCalibration& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {

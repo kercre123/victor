@@ -13,52 +13,52 @@
     "translation" : "Cozmoが{2}を開始するには、あと{0}個の{1}が必要です。"
   },
   "challengeDetails.cozmoNotOnTreads.title" : {
-    "translation" : "Cozmoは準備ができていません"
+    "translation" : "COZMOは準備ができていません"
   },
   "challengeDetails.cozmoNotOnTreads.description" : {
-    "translation" : "Cozmoを立たせてプレイできるようにしてください。"
+    "translation" : "COZMOを立たせてプレイできるようにしてください。"
   },
   "challengeDetails.cozmoDizzy.title" : {
-    "translation" : "Cozmoはめまいがしています"
+    "translation" : "COZMOはめまいがしています"
   },
   "challengeDetails.cozmoDizzy.description" : {
-    "translation" : "Cozmoのめまいが治って遊べるようになるまでお待ちください。"
+    "translation" : "COZMOのめまいが治って遊べるようになるまでお待ちください。"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
-    "translation" : "Cozmoが目覚めます"
+    "translation" : "COZMOが目覚めます"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.description" : {
-    "translation" : "Cozmoが目を覚ましてチャージャーから離れるまでお待ちください。"
+    "translation" : "COZMOが目を覚まして充電ドックから離れるまでお待ちください。"
   },
   "challengeDetails.needsMoreCubesModal.button" : {
     "translation" : "方法を見る"
   },
   "challengeDetails.cozmoHasHiccups.title" : {
-    "translation" : "Cozmoはしゃっくりをしています"
+    "translation" : "COZMOはしゃっくりをしています"
   },
   "challengeDetails.cozmoHasHiccups.description" : {
-    "translation" : "Cozmoを逆さまにして助けてください。"
+    "translation" : "COZMOを逆さまにして助けてください。"
   },
   "cubeSlap.title" : {
-    "translation" : "キープアウェー"
+    "translation" : "キープアウェイ"
   },
   "cubeSlap.description" : {
-    "translation" : "Cozmoがキューブにアタックするように誘って、直前にキューブを引っ込めます！"
+    "translation" : "COZMOがキューブにアタックするように誘って、直前にキューブを引っ込めます！"
   },
   "droneMode.title" : {
-    "translation" : "リモコンモード"
+    "translation" : "たんけん"
   },
   "droneMode.description" : {
-    "translation" : "Cozmoの目を通して世界を探検しましょう！"
+    "translation" : "COZMOの目を通して世界を探検しましょう！"
   },
   "faceEnrollment.title" : {
-    "translation" : "顔認識"
+    "translation" : "おぼえる"
   },
   "faceEnrollment.description" : {
-    "translation" : "Cozmoが人を認識して名前を覚えられるように、手伝います。"
+    "translation" : "COZMOが人を認識して名前を覚えられるように、手伝います。"
   },
   "memoryMatchGame.title" : {
-    "translation" : "記憶ゲーム"
+    "translation" : "メモリーマッチ"
   },
   "memoryMatchGame.description" : {
     "translation" : "記憶力が試されるパターンゲームです。キューブをよく見て、音に注意してください！"
@@ -70,28 +70,28 @@
     "translation" : "反射神経と機転が必要なカラーマッチングゲームです。"
   },
   "cozmoSays.title" : {
-    "translation" : "Cozmoトーク"
+    "translation" : "おしゃべり"
   },
   "cozmoSays.description" : {
-    "translation" : "Cozmoに単語かフレーズを言わせてみましょう！"
+    "translation" : "COZMOに単語かフレーズを言わせてみましょう！"
   },
   "codeLab.title" : {
     "translation" : "コードラボ"
   },
   "codeLab.description" : {
-    "translation" : "創造力を使ってCozmoをプログラムし、どんなことが一緒にできるか探ってください！"
+    "translation" : "創造力を使ってCOZMOをプログラムし、どんなことが一緒にできるか探ってください！"
   },
   "activityView.title" : {
-    "translation" : "発見"
+    "translation" : "メニュー"
   },
   "memoryMatchGame.label.incorrect" : {
     "translation" : "間違い"
   },
   "activityView.freeplayDescription" : {
-    "translation" : "Cozmoは自由に行動することが好きです。Cozmoはいつもゲームをリクエストしたり、トリックをしたり、たまにスパークを獲得したりもします。"
+    "translation" : "COZMOは自由に行動することが好きです。COZMOはいつもゲームをリクエストしたり、トリックをしたり、たまにエナジーボールを獲得したりもします。"
   },
   "activityView.freeplayTitle" : {
-    "translation" : "Cozmoは現在フリープレイ中です"
+    "translation" : "COZMOは現在おさんぽ中です"
   },
   "faceEnrollment.title.cancelScanning" : {
     "translation" : "顔のスキャンを中止しますか？"

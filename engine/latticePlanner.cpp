@@ -197,16 +197,16 @@ public:
   std::thread *_plannerThread = nullptr;
   std::recursive_mutex _contextMutex;
   std::condition_variable_any _threadRequest;
-  bool _timeToPlan = false;
+  volatile bool _timeToPlan = false;
   
   // this is a bool used to clean up and stop the thread (entirely)
-  bool _stopThread = false;
+  volatile bool _stopThread = false;
 
   // this is the bool passed in to the planner to allow it to stop early
-  bool _runPlanner = true;
+  volatile bool _runPlanner = true;
 
   // This is toggled by the planner thread when it is crunching
-  bool _plannerRunning = false;
+  volatile bool _plannerRunning = false;
 
   // whether to run multi-goal planner (true) or just plan with respect to the nearest fatal-penalty-free goal
   bool _multiGoalPlanning = LATTICE_PLANNER_MULTIPLE_GOALS;
@@ -215,7 +215,7 @@ public:
   bool _isSynchronous = false;
 
   // this is also locked by _contextMutex, due to laziness
-  EPlannerStatus _internalComputeStatus = EPlannerStatus::Error;
+  volatile EPlannerStatus _internalComputeStatus = EPlannerStatus::Error;
 
   const LatticePlanner* _parent;
   
@@ -226,7 +226,7 @@ public:
   TimeStamp_t _timeOfLastObjectsImport = 0;
 
   // useful for testing / debugging, wait this many extra milliseconds to simulate a slower planner
-  int _msToBlock = 0;
+  volatile int _msToBlock = 0;
 
   std::vector<Signal::SmartHandle> _signalHandles;
 };

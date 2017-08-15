@@ -27,10 +27,17 @@ namespace Anki
 namespace Das
 {
 
-DasAppender::DasAppender(const std::string& dasLogDir, const std::string& url,uint32_t flush_interval)
+DasAppender::DasAppender(const std::string& dasLogDir,
+                         const std::string& url,
+                         uint32_t flush_interval,
+                         size_t maxLogLength,
+                         size_t maxLogFiles,
+                         const DASArchiveFunction& archiveFunction,
+                         const DASUnarchiveFunction& unarchiveFunction,
+                         const std::string& archiveFileExtension)
 : _logFileAppender(nullptr)
 , _url(url)
-, _maxLogLength(DasLogFileAppender::kDefaultMaxLogLength)
+, _maxLogLength(maxLogLength)
 , _isWaitingForFlush(false)
 , _lastFlushFailed(false)
 , _flushIntervalSeconds(flush_interval)
@@ -40,7 +47,8 @@ DasAppender::DasAppender(const std::string& dasLogDir, const std::string& url,ui
 
   bool mkdirSuccess = (0 == mkdir(dasLogDir.c_str(), S_IRWXU)) || (EEXIST == errno);
   if (mkdirSuccess) {
-    _logFileAppender = new Anki::Das::DasLogFileAppender(dasLogDir);
+    _logFileAppender = new Anki::Das::DasLogFileAppender(dasLogDir, maxLogLength, maxLogFiles,
+                                                         archiveFunction, unarchiveFunction, archiveFileExtension);
     _syncQueue.Wake([this]() {_logFileAppender->RolloverAllLogFiles(); Flush();});
   } else {
     LOGD("ERROR! Couldn't create DAS log directory('%s'): %s", dasLogDir.c_str(), strerror(errno));

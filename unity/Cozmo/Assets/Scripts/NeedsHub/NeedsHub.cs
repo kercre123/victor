@@ -46,8 +46,6 @@ namespace Cozmo.Hub {
 
     private ChallengeManager _ChallengeManager;
 
-    public bool PlayNeedsMeterAppearingSound { get; set; }
-
     // Total ConnectedTime For GameEvents
     private const float _kConnectedTimeIntervalCheck = 60.0f;
     private float _ConnectedTimeIntervalLastTimestamp = -1;
@@ -67,7 +65,6 @@ namespace Cozmo.Hub {
       RequestGameManager.Instance.OnRequestGameConfirmed += HandleStartChallengeRequest;
       RobotEngineManager.Instance.AddCallback<HardSparkStartedByEngine>(HandleRandomTrickStarted);
 
-      PlayNeedsMeterAppearingSound = true;
       _Instance = this;
       StartLoadNeedsHubView();
 
@@ -140,18 +137,11 @@ namespace Cozmo.Hub {
       while (_ChallengeManager.IsChallengePlaying || !UnlockablesManager.Instance.UnlocksLoaded) {
         yield return 0;
       }
-
       UIManager.OpenView(needsHubViewPrefab.GetComponent<NeedsHubView>(), (newNeedsHubView) => {
         _NeedsViewHubInstance = (NeedsHubView)newNeedsHubView;
         _NeedsViewHubInstance.OnActivitiesButtonClicked += HandleActivitiesButtonClicked;
         _NeedsViewHubInstance.OnSparksButtonClicked += HandleSparksButtonClicked;
 
-        // First time connecting play the sound of first showing the scene
-        if (PlayNeedsMeterAppearingSound &&
-          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear);
-          PlayNeedsMeterAppearingSound = false;
-        }
         // things like discover tab never brought us out of freeplay if a game was never loaded.
         if (transitionToFreeplay) {
           ResetRobotToFreeplaySettings();
@@ -175,7 +165,6 @@ namespace Cozmo.Hub {
             });
           }
         }
-
       });
     }
 

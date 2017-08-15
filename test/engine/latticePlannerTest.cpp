@@ -50,16 +50,21 @@ protected:
   // "busy sleep" while suggesting that other threads run 
   // for a small amount of time
   void little_sleep(std::chrono::microseconds us) {
-    auto start = std::chrono::high_resolution_clock::now();
+    using namespace std::chrono;
+    auto start = high_resolution_clock::now();
     auto end = start + us;
     do {
       std::this_thread::yield();
-    } while (std::chrono::high_resolution_clock::now() < end);
+    } while (high_resolution_clock::now() < end);
   }
 
   void ExpectPlanCompleteInThread(int maxTimeMs) {
     bool done = false;
     int ms = 0;
+
+    using namespace std::chrono;
+
+    high_resolution_clock::time_point wallStart = high_resolution_clock::now();
 
     for(ms = 0; ms < maxTimeMs; ms++) {
       little_sleep(std::chrono::milliseconds(1));
@@ -83,9 +88,13 @@ protected:
         break;
     }
 
-    ASSERT_TRUE(done) << "planner didn't finish";
+    high_resolution_clock::time_point wallEnd = high_resolution_clock::now();
+    duration<double> time_d = duration_cast<duration<double>>(wallEnd - wallStart);
+    double time = time_d.count();
 
-    std::cout<<"planner took "<<ms<<"ms\n";
+    ASSERT_TRUE(done) << "planner didn't finish in " << ms << "ms. Wall time " << time << " sec";
+
+    std::cout<<"planner took "<<ms<<"ms wall time " << time << " sec\n";
   
     EXPECT_LT(ms, maxTimeMs) << "shouldn't use all the available time";
   }

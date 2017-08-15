@@ -9,7 +9,7 @@
  
 #include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
+#include "simulator/robot/sim_overlayDisplay.h"
 #include "anki/cozmo/robot/hal.h"
 #include <cstdio>
 #include <sstream>

@@ -770,7 +770,6 @@ GameObject:
   m_Component:
   - component: {fileID: 224561826991258748}
   - component: {fileID: 222280784991101666}
-  - component: {fileID: 114257122567826546}
   - component: {fileID: 114251134713054080}
   m_Layer: 5
   m_Name: CubesNotWorkingText
@@ -1407,19 +1406,6 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
---- !u!114 &114257122567826546
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1564129485092398}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1741964061, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 2
-  m_VerticalFit: 2
 --- !u!114 &114319387444198986
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2734,8 +2720,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -632, y: 90.10547}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -1092, y: 90}
+  m_SizeDelta: {x: 1260, y: 72}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &224573927707045996
 RectTransform:

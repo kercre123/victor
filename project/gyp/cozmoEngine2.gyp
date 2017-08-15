@@ -570,7 +570,7 @@
             'include_dirs': [
               '../../robot/include',
               '../../include',
-              '../../simulator/include',
+              '../..',
               '<@(webots_includes)',
             ],
             'dependencies': [
@@ -666,7 +666,7 @@
               '../../robot/generated',
               '../../robot/supervisor/src',
               '../../include',
-              '../../simulator/include',
+              '../..',
             ],
             'dependencies': [
               '<(ce-cti_gyp_path):ctiCommon',
@@ -753,7 +753,7 @@
 
             #Force linked due to objective-C categories.
             'xcode_settings': {
-              'OTHER_LDFLAGS': ['-force_load <(coretech_external_path)/routing_http_server/generated/Mac/DerivedData/Release/librouting_http_server.a'],
+              'OTHER_LDFLAGS': ['-force_load <(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release/librouting_http_server.a'],
             },
 
 

@@ -40,11 +40,6 @@ namespace FaceEnrollment {
       _FaceEnrollmentGame = _StateMachine.GetGame() as FaceEnrollmentGame;
       RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete += HandleEnrolledFace;
       CreateInstructionsModal();
-      if (_FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
-        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed += HandleUserClosedInstructionsModal;
-        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.OverrideModalText(
-          LocalizationKeys.kFaceEnrollmentTitleCancelScanning);
-      }
     }
 
     private void CreateInstructionsModal() {
@@ -69,6 +64,12 @@ namespace FaceEnrollment {
       _FaceEnrollmentInstructionsModalInstance.ModalForceClosedAnimationFinished += HandleInstructionsModalForceClosed;
 
       _FaceEnrollmentInstructionsModalInstance.SetNameForFace(_NameForFace);
+
+      if (_FaceEnrollmentInstructionsModalInstance.QuitMinigameButton != null) {
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.QuitGameConfirmed += HandleUserClosedInstructionsModal;
+        _FaceEnrollmentInstructionsModalInstance.QuitMinigameButton.OverrideModalText(
+          LocalizationKeys.kFaceEnrollmentTitleCancelScanning);
+      }
 
       SendEnrollFace();
     }

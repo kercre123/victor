@@ -16,7 +16,9 @@ namespace DataPersistence {
     public bool OverrideLanguage;
     public UnityEngine.SystemLanguage LanguageSettingOverride;
     public bool UseConnectFlowInMock;
+    public bool UseAndroidFlowInMock;
     public bool ForceFirstTimeConnectFlow;
+    public bool ForceNotFirstTimeConnectFlow;
     public bool FakeGermanLocale;
     public bool UseVerticalGrammarCodelab;
     public bool EnableAutoBlockPoolOnStart;
@@ -27,7 +29,9 @@ namespace DataPersistence {
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
       UseConnectFlowInMock = false;
+      UseAndroidFlowInMock = false;
       ForceFirstTimeConnectFlow = false;
+      ForceNotFirstTimeConnectFlow = false;
       FakeGermanLocale = false;
       UseVerticalGrammarCodelab = false;
       EnableAutoBlockPoolOnStart = true;
@@ -38,7 +42,9 @@ namespace DataPersistence {
       // editor-only ui debug options
 #if UNITY_EDITOR 
       DebugConsoleData.Instance.AddConsoleVar("UseConnectFlowInMock", "UIMockFlow", this);
+      DebugConsoleData.Instance.AddConsoleVar("UseAndroidFlowInMock", "UIMockFlow", this);
       DebugConsoleData.Instance.AddConsoleVar("ForceFirstTimeConnectFlow", "UIMockFlow", this);
+      DebugConsoleData.Instance.AddConsoleVar("ForceNotFirstTimeConnectFlow", "UIMockFlow", this);
       DebugConsoleData.Instance.AddConsoleVar("FakeGermanLocale", "UIMockFlow", this);
 #endif
       DebugConsoleData.Instance.AddConsoleVar("UseVerticalGrammarCodelab", "CodeLab", this);
@@ -80,9 +86,10 @@ namespace DataPersistence {
           RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(!NoFreeplayOnStart);
           // Ensure freeplay idles are disabled
           if (DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
-            RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation (Anki.Cozmo.AnimationTrigger.Count, 
+            RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.Count,
                                                                         DebugProfile.kNoFreelpayOnStartLock);
-          }else {
+          }
+          else {
             RobotEngineManager.Instance.CurrentRobot.RemoveIdleAnimation(DebugProfile.kNoFreelpayOnStartLock);
           }
         }

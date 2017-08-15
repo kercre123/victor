@@ -132,6 +132,17 @@ Blockly.FieldTextInput.prototype.setValue = function(newValue) {
   Blockly.Field.prototype.setValue.call(this, newValue);
 };
 
+// Used to filter out kanji since our fonts can't support all kanji.
+Blockly.FieldTextInput.prototype.removeKanji = function(newText) {
+  if (newText == null) return;
+
+  // Kanji is in the range from 0x4E00 to 0x9FC3, inclusive. Filter out all
+  // those characters and replace with empty string.
+  newText = newText.replace(/[\u4E00-\u9FC3]/g, "");
+
+  return newText;
+}
+
 /**
  * Set the text in this field and fire a change event.
  * @param {*} newText New text.
@@ -141,6 +152,9 @@ Blockly.FieldTextInput.prototype.setText = function(newText) {
     // No change if null.
     return;
   }
+
+  newText = this.removeKanji(newText);
+
   newText = String(newText);
   if (newText === this.text_) {
     // No change.

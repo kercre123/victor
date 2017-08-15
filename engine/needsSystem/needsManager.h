@@ -79,6 +79,8 @@ public:
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
   void PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState);
 
+  bool GetConnectionOccurredThisAppRun() const { return _connectionOccurredThisAppRun; };
+
   // Needs "handlers". Currently the only one is the eye glitch based on repair need:
   DesiredFaceDistortionComponent& GetDesiredFaceDistortionComponent() {
     assert(_faceDistortionComponent);
@@ -179,8 +181,7 @@ private:
   
   NeedsConfig   _needsConfig;
   ActionsConfig _actionsConfig;
-  std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
-
+  std::shared_ptr<StarRewardsConfig>  _starRewardsConfig;
   std::shared_ptr<LocalNotifications> _localNotifications;
 
   Time          _savedTimeLastWrittenToDevice;
@@ -191,6 +192,7 @@ private:
   bool          _deviceNeedsVersionUpdate;
   u32           _previousRobotSerialNumber;
   int           _robotOnboardingStageCompleted;
+  bool          _connectionOccurredThisAppRun;
 
   bool          _isPausedOverall;
   float         _timeWhenPausedOverall_s;
@@ -208,7 +210,7 @@ private:
 
   std::array<float, static_cast<size_t>(NeedsActionId::Count)> _actionCooldown_s;
   
-  bool _onlyWhiteListedActionsEnabled;
+  bool          _onlyWhiteListedActionsEnabled;
   std::set<NeedsActionId> _whiteListedActions;
 
   float         _currentTime_s;

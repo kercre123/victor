@@ -133,7 +133,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Color = __webpack_require__(23);
+var Color = __webpack_require__(16);
 
 /**
  * @fileoverview
@@ -2887,7 +2887,7 @@ process.umask = function() { return 0; };
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(16);
+var processNextTick = __webpack_require__(17);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -3963,6 +3963,264 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Color = function () {
+    function Color() {
+        _classCallCheck(this, Color);
+    }
+
+    _createClass(Color, null, [{
+        key: 'decimalToHex',
+
+
+        /**
+         * Convert a Scratch decimal color to a hex string, #RRGGBB.
+         * @param {number} decimal RGB color as a decimal.
+         * @return {string} RGB color as #RRGGBB hex string.
+         */
+        value: function decimalToHex(decimal) {
+            if (decimal < 0) {
+                decimal += 0xFFFFFF + 1;
+            }
+            var hex = Number(decimal).toString(16);
+            hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
+            return hex;
+        }
+
+        /**
+         * Convert a Scratch decimal color to an RGB color object.
+         * @param {number} decimal RGB color as decimal.
+         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         */
+
+    }, {
+        key: 'decimalToRgb',
+        value: function decimalToRgb(decimal) {
+            var a = decimal >> 24 & 0xFF;
+            var r = decimal >> 16 & 0xFF;
+            var g = decimal >> 8 & 0xFF;
+            var b = decimal & 0xFF;
+            return { r: r, g: g, b: b, a: a > 0 ? a : 255 };
+        }
+
+        /**
+         * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
+         * CC-BY-SA Tim Down:
+         * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+         * @param {!string} hex Hex representation of the color.
+         * @return {RGBObject} null on failure, or rgb: {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         */
+
+    }, {
+        key: 'hexToRgb',
+        value: function hexToRgb(hex) {
+            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+            hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+                return r + r + g + g + b + b;
+            });
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        /**
+         * Convert an RGB color object to a hex color.
+         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         * @return {!string} Hex representation of the color.
+         */
+
+    }, {
+        key: 'rgbToHex',
+        value: function rgbToHex(rgb) {
+            return Color.decimalToHex(Color.rgbToDecimal(rgb));
+        }
+
+        /**
+         * Convert an RGB color object to a Scratch decimal color.
+         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         * @return {!number} Number representing the color.
+         */
+
+    }, {
+        key: 'rgbToDecimal',
+        value: function rgbToDecimal(rgb) {
+            return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+        }
+
+        /**
+        * Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
+        * @param {!string} hex Hex representation of the color.
+        * @return {!number} Number representing the color.
+        */
+
+    }, {
+        key: 'hexToDecimal',
+        value: function hexToDecimal(hex) {
+            return Color.rgbToDecimal(Color.hexToRgb(hex));
+        }
+
+        /**
+         * Convert an HSV color to RGB format.
+         * @param {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
+         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         */
+
+    }, {
+        key: 'hsvToRgb',
+        value: function hsvToRgb(hsv) {
+            var h = hsv.h % 360;
+            if (h < 0) h += 360;
+            var s = Math.max(0, Math.min(hsv.s, 1));
+            var v = Math.max(0, Math.min(hsv.v, 1));
+
+            var i = Math.floor(h / 60);
+            var f = h / 60 - i;
+            var p = v * (1 - s);
+            var q = v * (1 - s * f);
+            var t = v * (1 - s * (1 - f));
+
+            var r = void 0;
+            var g = void 0;
+            var b = void 0;
+
+            switch (i) {
+                default:
+                case 0:
+                    r = v;
+                    g = t;
+                    b = p;
+                    break;
+                case 1:
+                    r = q;
+                    g = v;
+                    b = p;
+                    break;
+                case 2:
+                    r = p;
+                    g = v;
+                    b = t;
+                    break;
+                case 3:
+                    r = p;
+                    g = q;
+                    b = v;
+                    break;
+                case 4:
+                    r = t;
+                    g = p;
+                    b = v;
+                    break;
+                case 5:
+                    r = v;
+                    g = p;
+                    b = q;
+                    break;
+            }
+
+            return {
+                r: Math.floor(r * 255),
+                g: Math.floor(g * 255),
+                b: Math.floor(b * 255)
+            };
+        }
+
+        /**
+         * Convert an RGB color to HSV format.
+         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
+         * @return {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
+         */
+
+    }, {
+        key: 'rgbToHsv',
+        value: function rgbToHsv(rgb) {
+            var r = rgb.r / 255;
+            var g = rgb.g / 255;
+            var b = rgb.b / 255;
+            var x = Math.min(Math.min(r, g), b);
+            var v = Math.max(Math.max(r, g), b);
+
+            // For grays, hue will be arbitrarily reported as zero. Otherwise, calculate
+            var h = 0;
+            var s = 0;
+            if (x !== v) {
+                var f = r === x ? g - b : g === x ? b - r : r - g;
+                var i = r === x ? 3 : g === x ? 5 : 1;
+                h = (i - f / (v - x)) * 60 % 360;
+                s = (v - x) / v;
+            }
+
+            return { h: h, s: s, v: v };
+        }
+
+        /**
+         * Linear interpolation between rgb0 and rgb1.
+         * @param {RGBObject} rgb0 - the color corresponding to fraction1 <= 0.
+         * @param {RGBObject} rgb1 - the color corresponding to fraction1 >= 1.
+         * @param {number} fraction1 - the interpolation parameter. If this is 0.5, for example, mix the two colors equally.
+         * @return {RGBObject} the interpolated color.
+         */
+
+    }, {
+        key: 'mixRgb',
+        value: function mixRgb(rgb0, rgb1, fraction1) {
+            if (fraction1 <= 0) return rgb0;
+            if (fraction1 >= 1) return rgb1;
+            var fraction0 = 1 - fraction1;
+            return {
+                r: fraction0 * rgb0.r + fraction1 * rgb1.r,
+                g: fraction0 * rgb0.g + fraction1 * rgb1.g,
+                b: fraction0 * rgb0.b + fraction1 * rgb1.b
+            };
+        }
+    }, {
+        key: 'RGB_BLACK',
+
+        /**
+         * @typedef {object} RGBObject - An object representing a color in RGB format.
+         * @property {number} r - the red component, in the range [0, 255].
+         * @property {number} g - the green component, in the range [0, 255].
+         * @property {number} b - the blue component, in the range [0, 255].
+         */
+
+        /**
+         * @typedef {object} HSVObject - An object representing a color in HSV format.
+         * @property {number} h - hue, in the range [0-359).
+         * @property {number} s - saturation, in the range [0,1].
+         * @property {number} v - value, in the range [0,1].
+         */
+
+        /** @type {RGBObject} */
+        get: function get() {
+            return { r: 0, g: 0, b: 0 };
+        }
+
+        /** @type {RGBObject} */
+
+    }, {
+        key: 'RGB_WHITE',
+        get: function get() {
+            return { r: 255, g: 255, b: 255 };
+        }
+    }]);
+
+    return Color;
+}();
+
+module.exports = Color;
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 if (!process.version ||
@@ -4010,7 +4268,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4038,7 +4296,7 @@ var List = function List(name, contents) {
 module.exports = List;
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4397,7 +4655,7 @@ var Thread = function () {
 module.exports = Thread;
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4440,7 +4698,7 @@ var Variable = function () {
 module.exports = Variable;
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4526,7 +4784,7 @@ var loadCostume = function loadCostume(md5ext, costume, runtime) {
 module.exports = loadCostume;
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4567,7 +4825,7 @@ var loadSound = function loadSound(sound, runtime) {
 module.exports = loadSound;
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5532,264 +5790,6 @@ var RenderedTarget = function (_Target) {
 }(Target);
 
 module.exports = RenderedTarget;
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Color = function () {
-    function Color() {
-        _classCallCheck(this, Color);
-    }
-
-    _createClass(Color, null, [{
-        key: 'decimalToHex',
-
-
-        /**
-         * Convert a Scratch decimal color to a hex string, #RRGGBB.
-         * @param {number} decimal RGB color as a decimal.
-         * @return {string} RGB color as #RRGGBB hex string.
-         */
-        value: function decimalToHex(decimal) {
-            if (decimal < 0) {
-                decimal += 0xFFFFFF + 1;
-            }
-            var hex = Number(decimal).toString(16);
-            hex = '#' + '000000'.substr(0, 6 - hex.length) + hex;
-            return hex;
-        }
-
-        /**
-         * Convert a Scratch decimal color to an RGB color object.
-         * @param {number} decimal RGB color as decimal.
-         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         */
-
-    }, {
-        key: 'decimalToRgb',
-        value: function decimalToRgb(decimal) {
-            var a = decimal >> 24 & 0xFF;
-            var r = decimal >> 16 & 0xFF;
-            var g = decimal >> 8 & 0xFF;
-            var b = decimal & 0xFF;
-            return { r: r, g: g, b: b, a: a > 0 ? a : 255 };
-        }
-
-        /**
-         * Convert a hex color (e.g., F00, #03F, #0033FF) to an RGB color object.
-         * CC-BY-SA Tim Down:
-         * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-         * @param {!string} hex Hex representation of the color.
-         * @return {RGBObject} null on failure, or rgb: {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         */
-
-    }, {
-        key: 'hexToRgb',
-        value: function hexToRgb(hex) {
-            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-            hex = hex.replace(shorthandRegex, function (m, r, g, b) {
-                return r + r + g + g + b + b;
-            });
-            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16),
-                g: parseInt(result[2], 16),
-                b: parseInt(result[3], 16)
-            } : null;
-        }
-
-        /**
-         * Convert an RGB color object to a hex color.
-         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         * @return {!string} Hex representation of the color.
-         */
-
-    }, {
-        key: 'rgbToHex',
-        value: function rgbToHex(rgb) {
-            return Color.decimalToHex(Color.rgbToDecimal(rgb));
-        }
-
-        /**
-         * Convert an RGB color object to a Scratch decimal color.
-         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         * @return {!number} Number representing the color.
-         */
-
-    }, {
-        key: 'rgbToDecimal',
-        value: function rgbToDecimal(rgb) {
-            return (rgb.r << 16) + (rgb.g << 8) + rgb.b;
-        }
-
-        /**
-        * Convert a hex color (e.g., F00, #03F, #0033FF) to a decimal color number.
-        * @param {!string} hex Hex representation of the color.
-        * @return {!number} Number representing the color.
-        */
-
-    }, {
-        key: 'hexToDecimal',
-        value: function hexToDecimal(hex) {
-            return Color.rgbToDecimal(Color.hexToRgb(hex));
-        }
-
-        /**
-         * Convert an HSV color to RGB format.
-         * @param {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
-         * @return {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         */
-
-    }, {
-        key: 'hsvToRgb',
-        value: function hsvToRgb(hsv) {
-            var h = hsv.h % 360;
-            if (h < 0) h += 360;
-            var s = Math.max(0, Math.min(hsv.s, 1));
-            var v = Math.max(0, Math.min(hsv.v, 1));
-
-            var i = Math.floor(h / 60);
-            var f = h / 60 - i;
-            var p = v * (1 - s);
-            var q = v * (1 - s * f);
-            var t = v * (1 - s * (1 - f));
-
-            var r = void 0;
-            var g = void 0;
-            var b = void 0;
-
-            switch (i) {
-                default:
-                case 0:
-                    r = v;
-                    g = t;
-                    b = p;
-                    break;
-                case 1:
-                    r = q;
-                    g = v;
-                    b = p;
-                    break;
-                case 2:
-                    r = p;
-                    g = v;
-                    b = t;
-                    break;
-                case 3:
-                    r = p;
-                    g = q;
-                    b = v;
-                    break;
-                case 4:
-                    r = t;
-                    g = p;
-                    b = v;
-                    break;
-                case 5:
-                    r = v;
-                    g = p;
-                    b = q;
-                    break;
-            }
-
-            return {
-                r: Math.floor(r * 255),
-                g: Math.floor(g * 255),
-                b: Math.floor(b * 255)
-            };
-        }
-
-        /**
-         * Convert an RGB color to HSV format.
-         * @param {RGBObject} rgb - {r: red [0,255], g: green [0,255], b: blue [0,255]}.
-         * @return {HSVObject} hsv - {h: hue [0,360), s: saturation [0,1], v: value [0,1]}
-         */
-
-    }, {
-        key: 'rgbToHsv',
-        value: function rgbToHsv(rgb) {
-            var r = rgb.r / 255;
-            var g = rgb.g / 255;
-            var b = rgb.b / 255;
-            var x = Math.min(Math.min(r, g), b);
-            var v = Math.max(Math.max(r, g), b);
-
-            // For grays, hue will be arbitrarily reported as zero. Otherwise, calculate
-            var h = 0;
-            var s = 0;
-            if (x !== v) {
-                var f = r === x ? g - b : g === x ? b - r : r - g;
-                var i = r === x ? 3 : g === x ? 5 : 1;
-                h = (i - f / (v - x)) * 60 % 360;
-                s = (v - x) / v;
-            }
-
-            return { h: h, s: s, v: v };
-        }
-
-        /**
-         * Linear interpolation between rgb0 and rgb1.
-         * @param {RGBObject} rgb0 - the color corresponding to fraction1 <= 0.
-         * @param {RGBObject} rgb1 - the color corresponding to fraction1 >= 1.
-         * @param {number} fraction1 - the interpolation parameter. If this is 0.5, for example, mix the two colors equally.
-         * @return {RGBObject} the interpolated color.
-         */
-
-    }, {
-        key: 'mixRgb',
-        value: function mixRgb(rgb0, rgb1, fraction1) {
-            if (fraction1 <= 0) return rgb0;
-            if (fraction1 >= 1) return rgb1;
-            var fraction0 = 1 - fraction1;
-            return {
-                r: fraction0 * rgb0.r + fraction1 * rgb1.r,
-                g: fraction0 * rgb0.g + fraction1 * rgb1.g,
-                b: fraction0 * rgb0.b + fraction1 * rgb1.b
-            };
-        }
-    }, {
-        key: 'RGB_BLACK',
-
-        /**
-         * @typedef {object} RGBObject - An object representing a color in RGB format.
-         * @property {number} r - the red component, in the range [0, 255].
-         * @property {number} g - the green component, in the range [0, 255].
-         * @property {number} b - the blue component, in the range [0, 255].
-         */
-
-        /**
-         * @typedef {object} HSVObject - An object representing a color in HSV format.
-         * @property {number} h - hue, in the range [0-359).
-         * @property {number} s - saturation, in the range [0,1].
-         * @property {number} v - value, in the range [0,1].
-         */
-
-        /** @type {RGBObject} */
-        get: function get() {
-            return { r: 0, g: 0, b: 0 };
-        }
-
-        /** @type {RGBObject} */
-
-    }, {
-        key: 'RGB_WHITE',
-        get: function get() {
-            return { r: 255, g: 255, b: 255 };
-        }
-    }]);
-
-    return Color;
-}();
-
-module.exports = Color;
 
 /***/ }),
 /* 24 */
@@ -13259,7 +13259,7 @@ exports.encode = exports.stringify = __webpack_require__(135);
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(16);
+var processNextTick = __webpack_require__(17);
 /*</replacement>*/
 
 module.exports = Writable;
@@ -14822,7 +14822,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RenderedTarget = __webpack_require__(22);
+var RenderedTarget = __webpack_require__(23);
 var Blocks = __webpack_require__(12);
 
 var Sprite = function () {
@@ -16543,7 +16543,7 @@ module.exports = typeof Promise === 'function' ? Promise : __webpack_require__(1
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(16);
+var processNextTick = __webpack_require__(17);
 /*</replacement>*/
 
 module.exports = Readable;
@@ -17756,7 +17756,7 @@ function done(stream, er, data) {
 
 /*<replacement>*/
 
-var processNextTick = __webpack_require__(16);
+var processNextTick = __webpack_require__(17);
 /*</replacement>*/
 
 // undocumented cb() API, needed for core, not for public API
@@ -19811,9 +19811,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Cast = __webpack_require__(2);
 var Clone = __webpack_require__(36);
-var Color = __webpack_require__(23);
+var Color = __webpack_require__(16);
 var MathUtil = __webpack_require__(7);
-var RenderedTarget = __webpack_require__(22);
+var RenderedTarget = __webpack_require__(23);
 
 /**
  * @typedef {object} PenState - the pen state associated with a particular target.
@@ -20924,6 +20924,7 @@ module.exports = Scratch3SoundBlocks;
 
 
 var Cast = __webpack_require__(2);
+var Color = __webpack_require__(16);
 var MathUtil = __webpack_require__(7);
 var Timer = __webpack_require__(13);
 
@@ -20944,6 +20945,7 @@ var Scratch3CozmoBlocks = function Scratch3CozmoBlocks(runtime) {
 Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
+        cozmo_vert_setbackpackcolor: this.verticalSetBackpackColor,
         cozmo_drive_forward: this.driveForward,
         cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
@@ -20979,17 +20981,21 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         // Actions
         cozmo_vert_turn: this.verticalTurn,
         cozmo_vert_drive: this.verticalDrive,
+        cozmo_vert_wheels_speed: this.verticalDriveWheels,
+        cozmo_vert_stop_motor: this.verticalStopMotor,
         cozmo_vert_path_offset: this.verticalPathOffset,
         cozmo_vert_path_to: this.verticalPathTo,
         cozmo_vert_set_headangle: this.verticalSetHeadAngle,
         cozmo_vert_set_liftheight: this.verticalSetLiftHeight,
+        cozmo_vert_move_lift: this.verticalMoveLift,
         cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
         cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
         // Sensors / Inputs
         // Cozmo
         cozmo_vert_get_position_3d: this.verticalCozmoGetPosition,
-        cozmo_vert_get_angle: this.verticalCozmoGetAngle,
         cozmo_vert_get_pitch: this.verticalCozmoGetPitch,
+        cozmo_vert_get_roll: this.verticalCozmoGetRoll,
+        cozmo_vert_get_yaw: this.verticalCozmoGetYaw,
         cozmo_vert_get_lift_height: this.verticalCozmoGetLiftHeight,
         cozmo_vert_get_head_angle: this.verticalCozmoGetHeadAngle,
         // Faces
@@ -21055,6 +21061,29 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function (args, util) {
             util.yield();
         }
     }
+};
+
+Scratch3CozmoBlocks.prototype.verticalSetBackpackColor = function (args, util) {
+    var rgb = Cast.toRgbColorObject(args.COLOR);
+
+    // Color from rgb to hex value (like 0xffffffff).
+    var colorHexValue = Color.rgbToHex(rgb);
+
+    // Strip leading '#' char
+    colorHexValue = colorHexValue.substring(1, colorHexValue.length);
+
+    // Prepend "0x".
+    colorHexValue = "0x" + colorHexValue;
+
+    if (colorHexValue != "0x000000") {
+        // Append alpha channel to all but black
+        colorHexValue = colorHexValue + "ff";
+    }
+
+    // Convert from string to number
+    colorHexValue = parseInt(colorHexValue);
+
+    window.Unity.call({ requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHexValue });
 };
 
 Scratch3CozmoBlocks.prototype.driveForward = function (args, util) {
@@ -21375,6 +21404,25 @@ Scratch3CozmoBlocks.prototype.verticalDrive = function (args, util) {
     return commandPromise;
 };
 
+Scratch3CozmoBlocks.prototype.verticalDriveWheels = function (args, util) {
+    var requestId = this._getRequestId();
+    var leftSpeed = Cast.toNumber(args.LEFT_SPEED);
+    var rightSpeed = Cast.toNumber(args.RIGHT_SPEED);
+
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({ requestId: requestId, command: "cozVertDriveWheels", argFloat: leftSpeed, argFloat2: rightSpeed });
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalStopMotor = function (args, util) {
+    var requestId = this._getRequestId();
+    var motorToStop = Cast.toString(args.MOTOR_SELECT);
+
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({ requestId: requestId, command: "cozVertStopMotor", argString: motorToStop });
+    return commandPromise;
+};
+
 Scratch3CozmoBlocks.prototype.verticalPathOffset = function (args, util) {
     var requestId = this._getRequestId();
     var offsetX = Cast.toNumber(args.OFFSET_X);
@@ -21414,6 +21462,15 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function (args, util) {
 
     var commandPromise = this._promiseForCommand(requestId);
     window.Unity.call({ requestId: requestId, command: "cozVertLiftHeight", argFloat: heightRatio, argFloat2: speed });
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalMoveLift = function (args, util) {
+    var requestId = this._getRequestId();
+    var speed = Cast.toNumber(args.LIFT_SPEED);
+
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({ requestId: requestId, command: "cozVertMoveLift", argFloat: speed });
     return commandPromise;
 };
 
@@ -21472,12 +21529,16 @@ Scratch3CozmoBlocks.prototype.verticalCozmoGetPosition = function (args, util) {
     return getVector3Axis(gCozmoWorldState.pos, axis);
 };
 
-Scratch3CozmoBlocks.prototype.verticalCozmoGetAngle = function (args, util) {
-    return Cast.toNumber(gCozmoWorldState.poseAngle_d);
-};
-
 Scratch3CozmoBlocks.prototype.verticalCozmoGetPitch = function (args, util) {
     return Cast.toNumber(gCozmoWorldState.posePitch_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetRoll = function (args, util) {
+    return Cast.toNumber(gCozmoWorldState.poseRoll_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoGetYaw = function (args, util) {
+    return Cast.toNumber(gCozmoWorldState.poseYaw_d);
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoGetLiftHeight = function (args, util) {
@@ -21755,7 +21816,7 @@ module.exports = adapter;
 
 
 var log = __webpack_require__(10);
-var Thread = __webpack_require__(18);
+var Thread = __webpack_require__(19);
 
 var _require = __webpack_require__(27),
     Map = _require.Map;
@@ -22069,7 +22130,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(4);
 var Sequencer = __webpack_require__(71);
 var Blocks = __webpack_require__(12);
-var Thread = __webpack_require__(18);
+var Thread = __webpack_require__(19);
 
 var _require = __webpack_require__(27),
     OrderedMap = _require.OrderedMap;
@@ -23369,7 +23430,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Timer = __webpack_require__(13);
-var Thread = __webpack_require__(18);
+var Thread = __webpack_require__(19);
 var execute = __webpack_require__(68);
 
 var Sequencer = function () {
@@ -23654,8 +23715,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var EventEmitter = __webpack_require__(4);
 
 var Blocks = __webpack_require__(12);
-var Variable = __webpack_require__(19);
-var List = __webpack_require__(17);
+var Variable = __webpack_require__(20);
+var List = __webpack_require__(18);
 var uid = __webpack_require__(37);
 
 /**
@@ -24639,17 +24700,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  */
 
 var Blocks = __webpack_require__(12);
-var RenderedTarget = __webpack_require__(22);
+var RenderedTarget = __webpack_require__(23);
 var Sprite = __webpack_require__(35);
-var Color = __webpack_require__(23);
+var Color = __webpack_require__(16);
 var log = __webpack_require__(10);
 var uid = __webpack_require__(37);
 var specMap = __webpack_require__(78);
-var Variable = __webpack_require__(19);
-var List = __webpack_require__(17);
+var Variable = __webpack_require__(20);
+var List = __webpack_require__(18);
 
-var loadCostume = __webpack_require__(20);
-var loadSound = __webpack_require__(21);
+var loadCostume = __webpack_require__(21);
+var loadSound = __webpack_require__(22);
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -26213,11 +26274,11 @@ module.exports = specMap;
 var vmPackage = __webpack_require__(157);
 var Blocks = __webpack_require__(12);
 var Sprite = __webpack_require__(35);
-var Variable = __webpack_require__(19);
-var List = __webpack_require__(17);
+var Variable = __webpack_require__(20);
+var List = __webpack_require__(18);
 
-var loadCostume = __webpack_require__(20);
-var loadSound = __webpack_require__(21);
+var loadCostume = __webpack_require__(21);
+var loadSound = __webpack_require__(22);
 
 /**
  * Serializes the specified VM runtime.
@@ -26428,8 +26489,8 @@ var sb2 = __webpack_require__(77);
 var sb3 = __webpack_require__(79);
 var StringUtil = __webpack_require__(24);
 
-var loadCostume = __webpack_require__(20);
-var loadSound = __webpack_require__(21);
+var loadCostume = __webpack_require__(21);
+var loadSound = __webpack_require__(22);
 
 var RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -41990,7 +42051,7 @@ module.exports = {
 		"promise": "7.1.1",
 		"scratch-audio": "^0.1.0-prerelease.0",
 		"scratch-blocks": "0.1.0-prerelease.1501619541",
-		"scratch-render": "^0.1.0-prerelease.0",
+		"scratch-render": "0.1.0-prerelease.1502395503",
 		"scratch-storage": "^0.2.0",
 		"script-loader": "0.7.0",
 		"socket.io-client": "1.7.3",

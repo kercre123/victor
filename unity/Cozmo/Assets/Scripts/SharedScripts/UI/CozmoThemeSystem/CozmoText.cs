@@ -142,7 +142,11 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
 
   protected override void Start() {
     base.Start();
+  }
+
+  protected override void Awake() {
     TrySetLocalizedText();
+    base.Awake();
   }
 
   private void TrySetLocalizedText() {

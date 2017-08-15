@@ -56,8 +56,11 @@ public class InitialCubesState : State {
   }
 
   public override void Resume(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
-    // Reset cozmo's head
-    SetupRobot();
+    // Don't interrupt the process of going to sleep
+    if (!Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled) {
+      // Reset cozmo's head
+      SetupRobot();
+    }
   }
 
   private void SetupRobot() {

@@ -28,6 +28,7 @@ class AIWhiteboard;
 class BehaviorEventAnimResponseDirector;
 class BehaviorHelperComponent;
 class DoATrickSelector;
+class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
 class RequestGameComponent;
 class Robot;
@@ -77,6 +78,8 @@ public:
   inline RequestGameComponent& GetNonConstRequestGameComponent() const { assert(_requestGameComponent); return *_requestGameComponent;}
 
   inline DoATrickSelector& GetDoATrickSelector()  { assert(_doATrickSelector); return *_doATrickSelector; }
+
+  inline FreeplayDataTracker& GetFreeplayDataTracker()  { assert(_freeplayDataTracker); return *_freeplayDataTracker; }  
   
   
   ////////////////////////////////////////////////////////////////////////////////
@@ -132,7 +135,9 @@ private:
   
   // component which behaviors can delegate to for selecting a random Trick / Spark
   std::unique_ptr<DoATrickSelector>    _doATrickSelector;
-  
+
+  // component for tracking freeplay DAS data
+  std::unique_ptr<FreeplayDataTracker> _freeplayDataTracker;  
 
 };
 

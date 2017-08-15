@@ -1,6 +1,6 @@
 #include <webots/Supervisor.hpp>
 #include <webots/LED.hpp>
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "clad/types/ledTypes.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "clad/types/vizTypes.h"

@@ -23,6 +23,7 @@ namespace Cozmo {
 
     private static PauseManager _Instance;
     public Action OnPauseDialogOpen;
+    public Action<bool> OnPauseStateChanged;
     private bool _IsPaused = false;
     private bool _ClosedMinigameOnPause = false;
     private BaseModal _GoToSleepDialog = null;
@@ -47,6 +48,8 @@ namespace Cozmo {
       get { return _IdleTimeOutEnabled; }
       set { _IdleTimeOutEnabled = value; }
     }
+    public bool ExitChallengeOnPause { get; set; }
+    public bool AllowFreeplayOnResume { get; set; }
 
     [SerializeField]
     private AlertModal _LowBatteryAlertPrefab;
@@ -86,6 +89,8 @@ namespace Cozmo {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionTriggerTransition>(HandleReactionaryBehavior);
+      ExitChallengeOnPause = true;
+      AllowFreeplayOnResume = true;
       DasTracker.Instance.TrackAppStartup();
     }
 
@@ -155,7 +160,7 @@ namespace Cozmo {
         _IsPaused = true;
 
         HubWorldBase hub = HubWorldBase.Instance;
-        if (null != hub) {
+        if (null != hub && ExitChallengeOnPause) {
           _ClosedMinigameOnPause = hub.CloseChallengeImmediately();
         }
         else {
@@ -178,6 +183,11 @@ namespace Cozmo {
 
         DasTracker.Instance.TrackAppBackgrounded();
 
+        // Keep as an event so can call from nonmonobehaviors
+        if (OnPauseStateChanged != null) {
+          OnPauseStateChanged(shouldBePaused);
+        }
+
         RobotEngineManager.Instance.FlushChannelMessages();
       }
       // When unpausing, put the robot back into freeplay
@@ -186,6 +196,11 @@ namespace Cozmo {
         _IsPaused = false;
 
         DasTracker.Instance.TrackAppResumed();
+
+        // Keep as an event so can call from nonmonobehaviors
+        if (OnPauseStateChanged != null) {
+          OnPauseStateChanged(shouldBePaused);
+        }
 
         // Let the engine know that we're being unpaused
         RobotEngineManager.Instance.SendGameBeingPaused(false);
@@ -198,6 +213,13 @@ namespace Cozmo {
 
             if (_ShouldPlayWakeupTimestamp > 0 && Time.realtimeSinceStartup >= _ShouldPlayWakeupTimestamp) {
               shouldPlayWakeup = true;
+            }
+          }
+          else {
+            // Normally StopIdleTimeout() is responsible for removing the reaction lock, however, if idle timeout is not enabled
+            // we still need to make sure to remove the lock
+            if (robot != null) {
+              robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
             }
           }
 
@@ -308,7 +330,7 @@ namespace Cozmo {
 
       if (robotValid) {
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
-        robot.RobotResumeFromIdle(true);
+        robot.RobotResumeFromIdle(AllowFreeplayOnResume);
       }
     }
 

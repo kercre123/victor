@@ -54,6 +54,7 @@ static const char* kPlaceMotionProfileKey = "place_motion_profile";
 static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
 static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
 static const char* kShouldUseBlocksKey = "use_block";
+static const char* kDisableReactionsEarlyKey = "disable_reactions_early";
 
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
@@ -133,6 +134,8 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
   
     _zeroBlockConfig.LoadFromJson(config[kZeroBlockGroupKey]);
 
+    _disableReactionsEarly = config.get(kDisableReactionsEarlyKey, false).asBool();
+
     if( _shouldUseBlocks ) {
       _oneBlockConfig.LoadFromJson(config[kOneBlockGroupKey]);
 
@@ -182,12 +185,18 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 {
+
+  if( _disableReactionsEarly ) {
+    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
+    PRINT_CH_INFO("Behaviors", "BehaviorRequestGameSimple.DisableReactions.Early",
+                  "%s: disabling reactions in init",
+                  GetIDStr().c_str());
+  }
+
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
   // use the driving motion profile by default
   SmartSetMotionProfile(_driveToPlaceProfile);
-
-  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   
   if(_wasTriggeredAsInterrupt){
     _activeConfig = &_zeroBlockConfig;
@@ -536,7 +545,13 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
-  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
+
+  if( ! _disableReactionsEarly ) {
+    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
+    PRINT_CH_INFO("Behaviors", "BehaviorRequestGameSimple.DisableReactions.Request",
+                  "%s: disabling reactions in TransitionToPlayingRequstAnim",
+                  GetIDStr().c_str());
+  }
 
   StartActing(new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
               &BehaviorRequestGameSimple::TransitionToIdle);
@@ -555,20 +570,14 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::IdleLoop(Robot& robot){
+  if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
+    SmartPushIdleAnimation(robot, _activeConfig->idleAnimTrigger);
+  }else{
+    SmartPushIdleAnimation(robot, AnimationTrigger::Count);
+  }
 
-  
-  if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count
-     && GetFaceID() != Vision::UnknownFaceID){
-    // no callback here, behavior is over once this is done
-    StartActing(new CompoundActionParallel(robot, {
-      new TrackFaceAction(robot, GetFaceID()),
-      new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 0),
-    }));
-  }else if(GetFaceID() != Vision::UnknownFaceID){
+  if(GetFaceID() != Vision::UnknownFaceID){
     StartActing(new TrackFaceAction(robot, GetFaceID()));
-  }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
-    StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 1),
-                &BehaviorRequestGameSimple::IdleLoop);
   }else{
     StartActing( new HangAction(robot) );
   }

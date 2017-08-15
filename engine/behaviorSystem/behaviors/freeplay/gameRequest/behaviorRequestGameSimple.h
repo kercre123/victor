@@ -76,12 +76,15 @@ private:
     AnimationTrigger requestAnimTrigger = AnimationTrigger::Count;
     AnimationTrigger denyAnimTrigger = AnimationTrigger::Count;
     AnimationTrigger idleAnimTrigger = AnimationTrigger::Count;
-    float       minRequestDelay;
-    float       scoreFactor;
+    float            minRequestDelay;
+    float            scoreFactor;
   };
 
   ConfigPerNumBlocks _zeroBlockConfig;
   ConfigPerNumBlocks _oneBlockConfig;
+
+  // if true, disable (some) reaction triggers right away rather than waiting for the request
+  bool _disableReactionsEarly;
 
   PathMotionProfile _driveToPickupProfile;
   PathMotionProfile _driveToPlaceProfile;

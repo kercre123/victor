@@ -72,8 +72,7 @@ protected:
 private:
   
   // Use in Update method to perform actions for the current state
-  void UpdateLoadingStream( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
-  void UpdateLoadingStreamFrames( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
+  void UpdateLoading( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
   void UpdateAudioFramesReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
   
   // Track the time the first stream was created and audio event to calculate the streams relevant animation time

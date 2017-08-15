@@ -37,13 +37,13 @@
     "translation" : "Cozmo s'améliore avec le temps."
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "Chaque jour où tu satisfais l'envie de jouer de Cozmo, tu gagnes un token. Les tokens débloquent les boîtes à bonus, qui sont pleines de récompenses telles que des étincelles, des jeux et des tours."
+    "translation" : "Chaque jour où tu satisfais l'envie de jouer de Cozmo, tu gagnes un jeton. Les jetons débloquent les boîtes à bonus, qui sont pleines de récompenses telles que des éclats, des jeux et des tours."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<color=#FFFFFF>Gagne des </color><b><color=#F5BF2D>tokens</color></b><color=#FFFFFF> chaque jour.</color>"
+    "translation" : "<color=#FFFFFF>Gagne des </color><b><color=#F5BF2D>jetons</color></b><color=#FFFFFF> chaque jour.</color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<color=#FFFFFF>3 tokens débloquent une </color><b><color=#F5BF2D>boîte à bonus.</color></b>"
+    "translation" : "<color=#FFFFFF>3 jetons débloquent une </color><b><color=#F5BF2D>boîte à bonus.</color></b>"
   },
   "helpTipsStrings.Slide5.title" : {
     "translation" : "Occupe-toi bien de Cozmo."
@@ -70,10 +70,10 @@
     "translation" : "La batterie de\u000aCozmo est faible."
   },
   "helpTipsStrings.Slide8.title" : {
-    "translation" : "Cozmo est en sécurité."
+    "translation" : "Cozmo sécurisé."
   },
   "helpTipsStrings.Slide8.body" : {
-    "translation" : "Cozmo et sa caméra sont en sécurité Aucune photo ni vidéo n'est jamais enregistrée, ni en ligne ni hors ligne. Cozmo n'échange qu'avec les appareils que tu autorises."
+    "translation" : "Cozmo et sa caméra sont sécurisés. Aucune photo ni vidéo n'est jamais enregistrée, ni en ligne ni hors ligne. Cozmo ne communique qu'avec les appareils que tu autorises."
   },
   "helpTipsStrings.Slide9.title" : {
     "translation" : "Veille à ce que Cozmo soit chargé."

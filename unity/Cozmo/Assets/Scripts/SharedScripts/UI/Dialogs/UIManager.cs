@@ -210,10 +210,6 @@ public class UIManager : MonoBehaviour {
     }
   }
 
-  public static void CloseAllModals() {
-    _Instance.CloseAllModalsInternal(forceCloseByModal: false);
-  }
-
   /// <summary>
   /// Creates a dialog using the AlertModal script.
   /// Plays open animations on that dialog by default. 

@@ -189,8 +189,8 @@ GameObject:
   - component: {fileID: 224519314985003428}
   - component: {fileID: 225958362338381118}
   - component: {fileID: 114038308215078204}
-  - component: {fileID: 114882870678416936}
   - component: {fileID: 114977645654998372}
+  - component: {fileID: 114658955209775464}
   m_Layer: 5
   m_Name: SparksView
   m_TagString: Untagged
@@ -3358,6 +3358,24 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: 1
   m_FlexibleHeight: -1
+--- !u!114 &114658955209775464
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1143542890987360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de82e9bc70396489881b13dba93654a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _CountLabel: {fileID: 114043272771009416}
+  _ItemIcon: {fileID: 0}
+  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
+    type: 2}
+  _ItemIconAnimatorContainer: {fileID: 224040429106874622}
+  _ItemIconAnimatorLocalScale: 1.2
+  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114665331384488190
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4343,25 +4361,6 @@ MonoBehaviour:
     _Event: Play__Ui__Click_General
     _EventType: Ui
   _ShowDisabledStateWhenInteractable: 0
---- !u!114 &114882870678416936
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1143542890987360}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1dc55167ef35949318682a0a14e46fdc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ItemId: spark
-  _CountLabel: {fileID: 114043272771009416}
-  _ItemIcon: {fileID: 0}
-  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
-    type: 2}
-  _ItemIconAnimatorContainer: {fileID: 224040429106874622}
-  _ItemIconAnimatorLocalScale: 1.2
-  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114884990582489992
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -5989,7 +5988,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -191}
-  m_SizeDelta: {x: -120, y: -1026}
+  m_SizeDelta: {x: -56, y: -1026}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224671369791419414
 RectTransform:
