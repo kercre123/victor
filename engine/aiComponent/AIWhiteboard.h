@@ -344,7 +344,6 @@ private:
   // current severe need based on activity expression (may differ from needs manager state)
   NeedId _severeNeedExpression;
   
-  bool _waitingForSevereNeedExpressionToBeCleared;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
