@@ -43,8 +43,6 @@
 
 // Acapela configuration
 #import "AcapelaSpeech.h"
-#import "acattsioslicense.h"
-#import "acattsioslicense.m"
 
 #if REMOTE_CONSOLE_ENABLED
 
@@ -74,7 +72,11 @@ namespace {
 + (id)shared;
 
 // Instance methods to implement SDK operations
-- (Anki::Result)loadVoice:(const char*)voice;
+- (Anki::Result)loadVoice:(const char*)voice
+    userid:(int)userid
+  password:(int)password
+   license:(const char*)license;
+
 - (Anki::Result)generateAudioFile:(const char*)str
     path:(const char*)path
     speed:(int)speed
@@ -110,6 +112,9 @@ namespace {
 }
 
 - (Anki::Result)loadVoice:(const char*)voice
+    userid:(int)userid
+  password:(int)password
+   license:(const char*)license
 {
   @autoreleasepool
   {
@@ -120,11 +125,10 @@ namespace {
     // Initialize SDK object
     _acaTTS = [[AcapelaSpeech alloc] init];
 
-    // Initialize Acapela license info. Note Acapela SDK provides license info as unobscured string,
-    // but they seem to be OK with that.
-    NSString* nsLicense = [acattsioslicense license];
-    NSInteger nsUserid = [acattsioslicense userid];
-    NSInteger nsPassword = [acattsioslicense password];
+    // Initialize Acapela license info
+    NSString* nsLicense = [NSString stringWithCString:license encoding:NSASCIIStringEncoding];
+    NSInteger nsUserid = userid;
+    NSInteger nsPassword = password;
     NSString* nsMode = @"";
   
     //
@@ -287,8 +291,14 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
 
     // Initialize SDK and load voice
     AcapelaProviderImpl * impl = [AcapelaProviderImpl shared];
+    const int userid = AcapelaTTS::GetUserid();
+    const int password = AcapelaTTS::GetPassword();
+    const std::string& license = AcapelaTTS::GetLicense();
   
-    Result result = [impl loadVoice:_tts_voice.c_str()];
+    Result result = [impl loadVoice:_tts_voice.c_str()
+                             userid:userid
+                           password:password
+                            license:license.c_str()];
 
     if (RESULT_OK != result) {
       LOG_ERROR("TextToSpeechProvider.LoadVoice",

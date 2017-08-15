@@ -11,6 +11,10 @@
 #ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_acapela_H__
 #define __Anki_cozmo_basestation_textToSpeech_textToSpeechProvider_acapela_H__
 
+#include "util/global/globalDefinitions.h"
+
+#include <string>
+
 namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
@@ -26,7 +30,12 @@ public:
   
   // Adjust base speed by unit scalar, then clamp to supported range
   static float GetSpeechRate(int speed, float durationScalar);
-  
+
+  // License info
+  static int GetUserid();
+  static int GetPassword();
+  static std::string GetLicense();
+
 };
   
 } // end namespace TextToSpeech
