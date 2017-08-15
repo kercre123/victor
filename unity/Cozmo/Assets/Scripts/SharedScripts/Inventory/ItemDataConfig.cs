@@ -76,6 +76,12 @@ namespace Cozmo {
 
     public static ItemDataConfig Instance {
       get {
+        if (_sInstance == null) {
+          string stackTrace = System.Environment.StackTrace;
+          DAS.Error("ItemDataConfig.Instance.NullInstance", "Instance has not been initialized");
+          DAS.Debug("ItemDataConfig.Instance.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
+          HockeyApp.ReportStackTrace("ItemDataConfig.Instance.NullInstance", stackTrace);
+        }                       
         return _sInstance;
       }
     }
