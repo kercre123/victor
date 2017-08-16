@@ -53,10 +53,11 @@ bool BodyDetect(void)
 void BodyNRF51(void)
 {
   EnableVEXT();   // Turn on external power to the body
+  EnableBAT();
   MicroWait(100000);
   
   // Try to talk to head on SWD
-  SWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd);
+  SWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd); //enables VBAT
 
   // Send the bootloader and app
   SWDSend(0x20001000, 0x400, 0,       g_BodyBLE,  g_BodyBLEEnd,    0,    0,   true);  // Quick check
@@ -64,6 +65,7 @@ void BodyNRF51(void)
   SWDSend(0x20001000, 0x400, 0x1F000, g_BodyBoot, g_BodyBootEnd,   0x1F014,    0);    // Serial number
  
   DisableVEXT();  // Even on failure, this should happen
+  DisableBAT();
 }
 
 void SendTestChar(int c);
@@ -74,6 +76,7 @@ void HeadlessBoot(void)
   ConsolePrintf("Headless Boot...");
   
   // Let last step drain out
+  EnableBAT(); //legacy - in the past this was left on by previous test
   DisableVEXT();
   MicroWait(100000);
   
@@ -83,7 +86,7 @@ void HeadlessBoot(void)
   EnableVEXT();
   MicroWait(350000);        // Around 275ms for robot to recognize fixture
   PIN_IN(GPIOC, PINC_TRX);
-    
+  
   // Make sure the robot really booted into test mode
   SendTestChar(-1);
   ConsolePrintf("ok in %dms\r\n", (getMicroCounter()-startTime)/1000 );
@@ -355,6 +358,108 @@ static void BodyFlashlightTest(void)
   FlashlightTest(); //merged with robot test
 }
 
+//get averaged/LPF current measurement
+static int body1GetCurrentMa(void)
+{
+  const int oversample = 5;
+  int current_ma = 0;
+  for (int i = 0; i < 1<<oversample; i++) {
+    MicroWait(750);
+    current_ma += ChargerGetCurrentMa();
+  }
+  return (current_ma >> oversample);
+}
+
+//get averaged/LPF voltage measurement
+static int body1GetBatVoltageMv(void)
+{
+  const int oversample = 4;
+  int voltage_mv = 0;
+  for (int i = 0; i < 1<<oversample; i++) {
+    MicroWait(750);
+    voltage_mv += BatGetVoltageMv();
+  }
+  return (voltage_mv >> oversample);
+}
+
+//return true if battery voltage detected above the threshold
+static bool wait4BatVoltage(int vthresh_mv, u32 max_wait_ms)
+{
+  #define VOLT_WAIT_DEBUG(x)    x
+  VOLT_WAIT_DEBUG( int ibase_ma = 0; int ibase_mv = 0; u32 print_time = 0; );
+  VOLT_WAIT_DEBUG( ConsolePrintf("wait4BatVoltage(%dmV, %ums)\r\n", vthresh_mv, max_wait_ms); );
+  
+  const int min_thresh_cnt = 4; //maintain threshold voltage for x samples
+  int current_ma = 0, volt_mv = 0, thresh_cnt = 0;
+  u32 waitTime = getMicroCounter();
+  while( getMicroCounter() - waitTime < (max_wait_ms*1000) )
+  {
+    current_ma = body1GetCurrentMa();
+    volt_mv = body1GetBatVoltageMv();
+    
+    //DEBUG: log voltage/current bar graph
+    VOLT_WAIT_DEBUG ( {
+      const int DISP_MA_PER_CHAR = 15;
+      const int IDIFF_MA = 25;
+      const int IDIFF_MV = 100;
+      
+      if( getMicroCounter() - print_time > 250*1000 || ABS(current_ma - ibase_ma) >= IDIFF_MA || ABS(volt_mv - ibase_mv) >= IDIFF_MV )
+      {
+        ibase_ma = current_ma;
+        ibase_mv = volt_mv;
+        
+        print_time = getMicroCounter();
+        ConsolePrintf("  %04dmV %03dmA ", volt_mv, current_ma );
+        for(int x=1; x <= current_ma; x += DISP_MA_PER_CHAR )
+          ConsolePrintf("=");
+        ConsolePrintf("\r\n");
+      }
+    } );
+    
+    //test for success
+    thresh_cnt = volt_mv >= vthresh_mv ? thresh_cnt + 1 : 0;
+    if( thresh_cnt >= min_thresh_cnt )
+      break;
+  }
+  ConsolePrintf("vbat-mV,%d,cnt,%u,ibat-mA,%d\r\n", volt_mv, thresh_cnt, current_ma );
+  
+  return thresh_cnt >= min_thresh_cnt;
+}
+
+extern u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s);
+
+//Test body charging circuit
+void Body1ChargeTest(void)
+{
+  const int vthresh_mv = 3800; //voltage threshold to pass the test
+  const int max_wait_ms = 2000;
+  
+  //make sure we're properly booted and keep power on for the duration of this test
+  SendTestChar(-1);
+  robot_get_battVolt100x(4,0); //+TEST_POWERON extension
+  
+  //DEBUG:
+  //wait4BatVoltage( 4500, 1000 );
+  
+  //turn on charging power and disconnect our VBAT supply
+  EnableVEXT();
+  MicroWait(100);
+  PIN_SET(GPIOC, PINC_NBAT); //disable DUT_VBAT
+  
+  //monitor bat voltage to make sure charger is driving it up
+  bool success = wait4BatVoltage( vthresh_mv, max_wait_ms );
+  
+  //Be nice and return BAT control to known state
+  EnableBAT();
+  DisableBAT();
+  EnableBAT();
+  
+  SendTestChar(-1);
+  
+  if( !success )
+    throw ERROR_BAT_CHARGER;
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetBody1TestFunctions(void)
 {
@@ -362,6 +467,7 @@ TestFunction* GetBody1TestFunctions(void)
   {
     BodyNRF51,
     HeadlessBoot,
+    Body1ChargeTest, //must be immediately after boot; measures beginning of charge cycle
     TestBackpackPullup,
     TestTreadEncoders,
     SleepCurrent,
