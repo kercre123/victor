@@ -55,7 +55,7 @@
     "translation" : "次へ"
   },
   "button.staySparked" : {
-    "translation" : "スパーク状態"
+    "translation" : "エナジースパーク状態"
   },
   "button.soundsGood" : {
     "translation" : "いいですね"
@@ -73,7 +73,7 @@
     "translation" : "{0}！"
   },
   "requestGame.description" : {
-    "translation" : "Cozmoは遊びたがっています"
+    "translation" : "COZMOは遊びたがっています"
   },
   "label.connect" : {
     "translation" : "接続"
@@ -88,7 +88,7 @@
     "translation" : "サウンドチェック"
   },
   "button.GetACozmo" : {
-    "translation" : "Cozmoをゲット"
+    "translation" : "COZMOをゲット"
   },
   "button.start" : {
     "translation" : "スタート"
@@ -100,7 +100,7 @@
     "translation" : "デバイスのサウンドがオンになっているか確認してください。"
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Cozmoの横に1つのキューブを置いて<b><color=#11a2f0ff>更新</color></b>をタップします。Cozmoは一番近いと思う3つに接続します。"
+    "translation" : "COZMOの横に1つのキューブを置いて<b><color=#11a2f0ff>更新</color></b>をタップします。COZMOは一番近いと思う3つに接続します。"
   },
   "button.replay" : {
     "translation" : "リプレイ"
@@ -112,7 +112,7 @@
     "translation" : "サウンドが聞こえますか？"
   },
   "error.badLight.Top" : {
-    "translation" : "Cozmoはよく見えません！"
+    "translation" : "COZMOはよく見えません！"
   },
   "error.badLight.Bottom" : {
     "translation" : "まぶしい光や薄暗いスペースは避けてください。"
@@ -145,9 +145,9 @@
     "translation" : "{0}/{1}"
   },
   "label.RewardHeader" : {
-    "translation" : "ご褒美"
+    "translation" : "ごほうび"
   },
   "button.buyACozmo" : {
-    "translation" : "Cozmoを購入する"
+    "translation" : "COZMOを購入する"
   }
 }

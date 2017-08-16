@@ -152,7 +152,7 @@ namespace Anki {
               robot.SetRobotVolume(volume);
             }
             else {
-              DAS.Warn("GameAudioClient.SetVolumeValue", "Attempt to VolumeParameters.VolumeType.Robot value, Robot is NULL");
+              DAS.Warn("GameAudioClient.SetVolumeValue", "Attempt to set robot volume without robot");
             }
           }
           else {

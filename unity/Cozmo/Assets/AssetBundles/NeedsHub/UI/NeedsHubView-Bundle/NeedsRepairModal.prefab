@@ -4400,13 +4400,14 @@ MonoBehaviour:
   _RobotRespondingDimmerPanel: {fileID: 1593348784764202}
   _ContinueButton: {fileID: 114954418950594912}
   _RevealProgressBar: {fileID: 224842083253456264}
+  _PreScanMinTime_sec: 0.25
   _ScanDuration_sec: 3
   _TuneUpIntroTime_sec: 0.5
   _StartRoundTime_sec: 1
   _MismatchDisplayDuration_sec: 2
   _RobotResponseMaxTime_sec: 30
   _InactivityTimeOut_sec: 300
-  _CozmoMovedReactionsInterrupt: 0
+  _CozmoMovedReactionsInterrupt: 1
 --- !u!114 &114418333717953272
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -25694,7 +25695,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -65, y: -60}
-  m_SizeDelta: {x: 1283, y: 200}
+  m_SizeDelta: {x: 2464, y: 200}
   m_Pivot: {x: 1, y: 1}
 --- !u!224 &224032012280138950
 RectTransform:
@@ -26728,7 +26729,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -106.6001, y: 151.50003}
+  m_AnchoredPosition: {x: -106.59961, y: 151.50003}
   m_SizeDelta: {x: 725, y: 217}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &224419485159780224

@@ -199,7 +199,7 @@
     "translation": "ROUND {0:N0}"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap a flashing Cube you\nwant to play with."
+    "translation": "Tap a flashing Cube you want to play with."
   },
   "speedTap.separateBlocks": {
     "translation": "Cubes should be separated."
@@ -325,16 +325,16 @@
     "translation": "Locked!"
   },
   "speedTap.text.MP.Locked": {
-    "translation": "To unlock 3 player mode, play Human vs. Cozmo once on this difficulty."
+    "translation": "To unlock 3 player mode, play HUMAN VS. COZMO once on this difficulty."
   },
   "speedTapGame.label.vs": {
     "translation": "vs."
   },
   "speedTapGame.mode.HvC": {
-    "translation": "Human vs. Cozmo"
+    "translation": "HUMAN VS. COZMO"
   },
   "speedTapGame.mode.HvHvC": {
-    "translation": "Human vs. Human vs. Cozmo"
+    "translation": "HUMAN VS. HUMAN VS. COZMO"
   },
   "cozmoSays.instructions.label": {
     "translation": "Type a word or phrase and hear Cozmo say it:"

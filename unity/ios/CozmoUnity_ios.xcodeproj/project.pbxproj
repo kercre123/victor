@@ -807,7 +807,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
-					"$(SRCROOT)/../../basestation/src",
+					"$(SRCROOT)/../..",
 					"$(SRCROOT)/../../lib/util/source/anki",
 				);
 				INFOPLIST_FILE = Info.plist;
@@ -870,7 +870,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
-					"$(SRCROOT)/../../basestation/src",
+					"$(SRCROOT)/../..",
 					"$(SRCROOT)/../../lib/util/source/anki",
 				);
 				INFOPLIST_FILE = Info.plist;
@@ -954,7 +954,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
-					"$(SRCROOT)/../../basestation/src",
+					"$(SRCROOT)/../..",
 					"$(SRCROOT)/../../lib/util/source/anki",
 				);
 				INFOPLIST_FILE = Info.plist;

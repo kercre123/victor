@@ -197,7 +197,8 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     if (CallJava<bool>("isPingSuccessful")) {
       StopPingTest();
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }
@@ -222,12 +223,14 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
       _Stage++;
       if ((int)_Stage >= numStages) {
         return;
-      } else {
+      }
+      else {
         var skipHandler = _StageSkipHandlers[(int)_Stage];
         if (!skipHandler()) {
           DAS.Info("AndroidConnectionFlow.NextStage", "selected " + _Stage.ToString());
           isSkipping = false;
-        } else {
+        }
+        else {
           DAS.Info("AndroidConnectionFlow.NextStage", "skipping " + _Stage.ToString());
         }
       }
@@ -273,7 +276,8 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     if (SSIDs.Length > 0) {
       CozmoSSIDs = SSIDs;
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }
@@ -282,7 +286,8 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     if (CozmoSSIDs.Length == 1 && !_ForceSelectScreen) {
       SelectedSSID = CozmoSSIDs[0];
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }
@@ -310,42 +315,49 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     connectingOverlay.gameObject.transform.SetParent(parentObject.transform, false);
   }
 
+  //Returns true if permissions are available or have not yet been asked for.
   public static bool IsAvailable() {
-    return AnkiPrefs.GetInt(AnkiPrefs.Prefs.AndroidAutoConnectDisabled) == 0;
+    return AnkiPrefs.GetInt(AnkiPrefs.Prefs.AndroidAutoConnectDisabled) == 0 ||
+                    (AndroidConnectionFlow.CallJava<bool>("isWifiEnabled") &&
+                     AndroidConnectionFlow.CallJava<bool>("hasLocationPermission"));
   }
 
   #region Shared utility functions for flow/stages
 
   public static ReturnType CallJava<ReturnType>(string method, params object[] parameters) {
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
     return CozmoBinding.GetWifiUtilClass().CallStatic<ReturnType>(method, parameters);
-    #else
+#else
     return default(ReturnType);
-    #endif
+#endif
   }
   public static ReturnType CallLocationJava<ReturnType>(string method, params object[] parameters) {
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
     return CozmoBinding.GetLocationUtilClass().CallStatic<ReturnType>(method, parameters);
-    #else
+#else
     return default(ReturnType);
-    #endif
+#endif
   }
   public static void CallJava(string method, params object[] parameters) {
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
     CozmoBinding.GetWifiUtilClass().CallStatic(method, parameters);
-    #endif
+#endif
   }
   public static void CallLocationJava(string method, params object[] parameters) {
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
     CozmoBinding.GetLocationUtilClass().CallStatic(method, parameters);
-    #endif
+#endif
   }
 
   public static string[] GetCozmoSSIDs() {
     return GetCozmoSSIDs(CallJava<string[]>("getSSIDs"));
   }
   public static string[] GetCozmoSSIDs(string[] allSSIDs) {
+#if UNITY_EDITOR
+    return new string[] { "Cozmo_123456", "Cozmo_234567", "Cozmo_345667" };
+#else
     return allSSIDs.Where(s => s.StartsWith("Cozmo_")).ToArray();
+#endif
   }
 
   public bool Connect(string SSID, string password) {

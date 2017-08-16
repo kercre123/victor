@@ -77,6 +77,7 @@ std::string DemangleBacktraceSymbols(const std::string& backtraceFrame) {
         break;
       }
     }
+    free(tempPtr);
   } else {
     PRINT_NAMED_WARNING("Callstack.DemangleBacktraceSymbols",
                         "Something is wrong with the format of the backtrace frame. It should look "

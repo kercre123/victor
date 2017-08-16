@@ -568,7 +568,7 @@
             'include_dirs': [
               '../../robot/include',
               '../../include',
-              '../../simulator/include',
+              '../..',
               '<@(webots_includes)',
             ],
             'dependencies': [
@@ -663,7 +663,7 @@
               '../../robot/include',
               '../../robot/generated',
               '../../include',
-              '../../simulator/include',
+              '../..',
             ],
             'dependencies': [
               '<(ce-cti_gyp_path):ctiCommon',
@@ -750,7 +750,7 @@
 
             #Force linked due to objective-C categories.
             'xcode_settings': {
-              'OTHER_LDFLAGS': ['-force_load <(coretech_external_path)/routing_http_server/generated/Mac/DerivedData/Release/librouting_http_server.a'],
+              'OTHER_LDFLAGS': ['-force_load <(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release/librouting_http_server.a'],
             },
 
 
@@ -1136,7 +1136,7 @@
             'target_name': 'cozmoEngineUnitTest',
             'type': 'executable',
             'include_dirs': [
-              '../../basestation/test',
+              '../../test/engine',
               '../../robot/include',
               '<@(opencv_includes)',
               '<@(flatbuffers_include)',
@@ -1275,8 +1275,7 @@
         '<!@(cat <(androidHAL_source))'
       ],
       'include_dirs': [
-        '../../androidHAL/include',
-        '../../androidHAL/src',
+        '../..',
         '../../robot/include',
         '../../generated/clad/engine',
       ],
@@ -1319,7 +1318,7 @@
               ['exclude', '_mac\\.'],
             ],
             'include_dirs': [
-              '../../androidHAL/src/anki/cozmo/basestation/androidHAL/android/camera',
+              '../../androidHAL/android/camera',
             ],
             'libraries': [
               '-llog',
@@ -1349,12 +1348,7 @@
         ['exclude', 'bleComms.mm'],
       ],
       'include_dirs': [
-        '../../basestation/src',
-        '../../basestation/include',
-        '../../basestation/include/anki/cozmo/basestation',
-        '../../basestation/include/anki/cozmo/basestation/actions',
-        '../../androidHAL/include',
-        '../../include',
+        '../..',
         '../../robot/include',
         '../../generated/clad/engine',
         '../../coretech/generated/clad/vision',
@@ -1369,12 +1363,11 @@
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          '../../basestation/include',
-          '../../androidHAL/include',
+          '../..',
+          '../../androidHAL',
           '../../include',
           '../../robot/include',
           '../../generated/clad/engine',
-          '../../basestation/src',
           '../../generated/clad/game',
         ],
         'defines': [
@@ -1417,7 +1410,7 @@
               ['exclude', '.androidHAL/src/anki/cozmo/.'],
               ['exclude', '_android\\.'],
               ['exclude', '(linux)'],
-              ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios']
+              ['exclude', '../../engine/cozmoAPI/csharp-binding/ios']
             ],
             'include_dirs' : [
               '<@(webots_includes)', # After opencv!

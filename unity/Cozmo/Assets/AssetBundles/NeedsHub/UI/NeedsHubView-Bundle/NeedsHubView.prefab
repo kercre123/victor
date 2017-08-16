@@ -525,7 +525,6 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224561424295851892}
-  - component: {fileID: 225928643906352730}
   m_Layer: 5
   m_Name: RewardsEffectAnchor
   m_TagString: Untagged
@@ -779,7 +778,7 @@ GameObject:
   - component: {fileID: 224039583023915882}
   - component: {fileID: 114471098088570178}
   - component: {fileID: 225584830591259054}
-  - component: {fileID: 114741899832926054}
+  - component: {fileID: 114999987838964432}
   m_Layer: 5
   m_Name: NeedsHubView
   m_TagString: Untagged
@@ -2620,11 +2619,34 @@ MonoBehaviour:
         useCustom: 0
         duration_sec: 0
         easing: 0
+    - target: {fileID: 224282468266441368}
+      originOffset: {x: -4000, y: 0}
+      openSetting:
+        startTime_sec: 0.25
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
   _FadeTweenSettings:
     staggerType: 0
     uniformStagger_sec: 0
     targets:
     - target: {fileID: 225481575435129142}
+      openSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+    - target: {fileID: 225012241855168130}
       openSetting:
         startTime_sec: 0
         useCustom: 0
@@ -2802,6 +2824,7 @@ MonoBehaviour:
   _BlingAnchor: {fileID: 224561424295851892}
   _BlingPrefab: {fileID: 1404152446195122, guid: f7169fbed09d348a48b7f89e056977bb,
     type: 2}
+  _BlingDelay_sec: 1.75
   _BlingDuration_sec: 0.7
   _StarAnchor: {fileID: 224112869421590676}
   _StarPrefab: {fileID: 164212, guid: fd898ade9b55d4f489de6ad2bd66d130, type: 2}
@@ -3119,25 +3142,6 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &114741899832926054
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1715304759342780}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1dc55167ef35949318682a0a14e46fdc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ItemId: spark
-  _CountLabel: {fileID: 114880814084252638}
-  _ItemIcon: {fileID: 0}
-  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
-    type: 2}
-  _ItemIconAnimatorContainer: {fileID: 224884124942746320}
-  _ItemIconAnimatorLocalScale: 1
-  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114743978935695850
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3820,6 +3824,24 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
+--- !u!114 &114999987838964432
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1715304759342780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de82e9bc70396489881b13dba93654a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _CountLabel: {fileID: 114880814084252638}
+  _ItemIcon: {fileID: 0}
+  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
+    type: 2}
+  _ItemIconAnimatorContainer: {fileID: 224884124942746320}
+  _ItemIconAnimatorLocalScale: 1
+  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!222 &222002199649513328
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -4144,8 +4166,8 @@ RectTransform:
   - {fileID: 224761106986502990}
   - {fileID: 224660601535063088}
   - {fileID: 224282468266441368}
-  - {fileID: 224561424295851892}
   - {fileID: 224806678506971396}
+  - {fileID: 224561424295851892}
   - {fileID: 224017556785568954}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -4670,7 +4692,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 224039583023915882}
-  m_RootOrder: 8
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -4959,7 +4981,7 @@ RectTransform:
   - {fileID: 224952305956987926}
   - {fileID: 224685039714158826}
   m_Father: {fileID: 224039583023915882}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
@@ -5310,17 +5332,6 @@ CanvasGroup:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1715304759342780}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
---- !u!225 &225928643906352730
-CanvasGroup:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1480335096909748}
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1

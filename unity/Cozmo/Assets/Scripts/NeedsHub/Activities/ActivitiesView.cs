@@ -55,7 +55,7 @@ namespace Cozmo.Needs.Activities.UI {
         OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.DiscoverIntro);
       }
 
-      ChallengeEdgeCases edgeCases = ChallengeEdgeCases.CheckForDizzy | ChallengeEdgeCases.CheckForHiccups
+      ChallengeEdgeCases edgeCases = ChallengeEdgeCases.CheckForDizzy
                                                        | ChallengeEdgeCases.CheckForDriveOffCharger
                                                        | ChallengeEdgeCases.CheckForOnTreads
                                                        | ChallengeEdgeCases.CheckForOS;

@@ -15,6 +15,7 @@ android_groups = [
     { "prefix": "assets/AssetBundles", "category": "Unity Asset Bundle" },
     { "prefix": "assets/cozmo_resources/config/basestation/firmware", "category": "Firmware" },
     { "prefix": "assets/cozmo_resources/config/basestation/old_firmware", "category": "Firmware" },
+    { "prefix": "assets/cozmo_resources/config/basestation/firmware_", "category": "Firmware" },
     { "prefix": "assets", "category": "Data" },
 
     { "prefix": "English", "category": "Audio English" },
@@ -43,6 +44,7 @@ android_groups = [
 ios_groups = [
     { "prefix": "Payload/Cozmo.app/Data/Raw/cozmo_resources/config/basestation/firmware", "category": "Firmware" },
     { "prefix": "Payload/Cozmo.app/Data/Raw/cozmo_resources/config/basestation/old_firmware", "category": "Firmware" },
+    { "prefix": "Payload/Cozmo.app/Data/Raw/cozmo_resources/config/basestation/firmware_", "category": "Firmware" },
     { "prefix": "Payload/Cozmo.app/Data/Raw/AssetBundles", "category": "Unity Asset Bundle" },
     { "prefix": "Payload/Cozmo.app/Data/Raw", "category": "Data" },
     { "prefix": "Payload/Cozmo.app/Data", "category": "Unity Data" },

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Cozmo.UI;
+using System.Collections;
 
 namespace Onboarding {
 
@@ -7,6 +8,8 @@ namespace Onboarding {
 
     [SerializeField]
     private CozmoText _CubesRequiredLabel;
+
+    private bool _WasSparked = false;
 
     public override void Start() {
       base.Start();
@@ -24,6 +27,7 @@ namespace Onboarding {
 
     public override void OnDisable() {
       base.OnDisable();
+      StopCoroutine("AttemptSparkRestart");
 
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
     }
@@ -32,15 +36,7 @@ namespace Onboarding {
       IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
       if (CurrentRobot != null) {
         if (CurrentRobot.TreadState == Anki.Cozmo.OffTreadsState.OnTreads) {
-          // switch to freeplay so sparks work
-          CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Freeplay);
-          CurrentRobot.EnableSparkUnlock(Anki.Cozmo.UnlockId.RollCube);
-          UnlockableInfo info = UnlockablesManager.Instance.GetUnlockableInfo(Anki.Cozmo.UnlockId.RollCube);
-          Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = info.SparkedMusicState.Sparked;
-          if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {
-            sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
-          }
-          RobotEngineManager.Instance.CurrentRobot.SetSparkedMusicState(sparkedMusicState);
+          StartSpark();
         }
         else {
           var cozmoNotOnTreadsData = new AlertModalData("cozmo_off_treads_alert",
@@ -60,7 +56,44 @@ namespace Onboarding {
       }
     }
 
+    private void StartSpark() {
+      IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+      if (CurrentRobot != null) {
+        _WasSparked = true;
+        // switch to freeplay so sparks work
+        CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Freeplay);
+        CurrentRobot.EnableSparkUnlock(Anki.Cozmo.UnlockId.RollCube);
+        UnlockableInfo info = UnlockablesManager.Instance.GetUnlockableInfo(Anki.Cozmo.UnlockId.RollCube);
+        Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = info.SparkedMusicState.Sparked;
+        if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {
+          sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
+        }
+        RobotEngineManager.Instance.CurrentRobot.SetSparkedMusicState(sparkedMusicState);
+      }
+    }
+
+    protected override void HandlePauseStateChanged(bool isPaused) {
+      base.HandlePauseStateChanged(isPaused);
+      if (!isPaused && _WasSparked) {
+        StartCoroutine("AttemptSparkRestart");
+      }
+    }
+
+    private IEnumerator AttemptSparkRestart() {
+      // Wait a bit for engine to wake up
+      yield return new WaitForSeconds(0.05f);
+      StartSparkIfRobotInValidState();
+    }
+
     private void HandleSparkEnded(Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine message) {
+      // In the event we were backgrounded, make sure cozmo goes back to sitting around quietly as soon as done.
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
+        robot.ExecuteBehaviorByID(Anki.Cozmo.BehaviorID.Wait);
+      }
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
       // we don't want to stop them in the event they got a broken cozmo and it cant work.
       // so success or fail just move on.
       OnboardingManager.Instance.GoToNextStage();

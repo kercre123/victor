@@ -64,10 +64,6 @@ public class OnboardingManager : MonoBehaviour {
   [SerializeField]
   private List<int> _NumOnboardingStages;
 
-  // The DAS phaseIDs are checkpoints from the design doc.
-  private int _CurrDASPhaseID = -1;
-  private float _CurrDASPhaseStartTime = 0;
-
   private const string kOnboardingManagerIdleLock = "onboarding_manager_idle";
 
 #if UNITY_EDITOR
@@ -148,6 +144,10 @@ public class OnboardingManager : MonoBehaviour {
   public bool IsOnboardingRequired(OnboardingPhases phase) {
     return GetCurrStageInPhase(phase) < GetMaxStageInPhase(phase);
   }
+  public bool IsAnyOnboardingRequired() {
+    //Test is the final stage has been finished
+    return IsOnboardingRequired(OnboardingPhases.PlayIntro);
+  }
   public bool IsAnyOnboardingActive() {
     return _CurrPhase != OnboardingPhases.None;
   }
@@ -204,6 +204,14 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
+  public void RestartPhaseAtStage(int stage = 0) {
+    if (_CurrStageInst != null) {
+      OnboardingBaseStage onboardingInfo = _CurrStageInst.GetComponent<OnboardingBaseStage>();
+      onboardingInfo.StageForceClosed = true;
+    }
+    SetSpecificStage(stage);
+  }
+
   public void StartPhase(OnboardingPhases phase) {
 #if SDK_ONLY
     return;
@@ -228,6 +236,7 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle, kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
+      Cozmo.PauseManager.Instance.ExitChallengeOnPause = false;
 
       DAS.Event("onboarding.start", FirstTime ? "1" : "0");
       // in the event they've ever booted the app before, or it's an old robot.
@@ -246,7 +255,7 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseStarted != null) {
       OnOnboardingPhaseStarted.Invoke(_CurrPhase);
     }
-
+    DAS.Event("onboarding.checkpoint.started", _CurrPhase.ToString());
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
     if (PreloadOnboarding()) {
@@ -277,6 +286,7 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseCompleted != null) {
       OnOnboardingPhaseCompleted.Invoke(_CurrPhase);
     }
+    DAS.Event("onboarding.checkpoint.completed", _CurrPhase.ToString());
     IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
     if (currentRobot == null) {
       return;
@@ -284,6 +294,7 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
+      Cozmo.PauseManager.Instance.ExitChallengeOnPause = true;
     }
 
     RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
@@ -413,7 +424,6 @@ public class OnboardingManager : MonoBehaviour {
       DAS.Error("onboardingmanager.SetSpecificStage", "Onboarding Asset Bundle load not completed");
       return;
     }
-    int nextDASPhaseID = -1;
     SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < _OnboardingUIInstance.GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
@@ -423,7 +433,6 @@ public class OnboardingManager : MonoBehaviour {
         _CurrPhase = OnboardingPhases.None;
         return;
       }
-      nextDASPhaseID = stagePrefab.DASPhaseID;
       _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
       if (OnOnboardingStageStarted != null) {
         OnOnboardingStageStarted.Invoke(_CurrPhase, nextStage);
@@ -450,18 +459,7 @@ public class OnboardingManager : MonoBehaviour {
       }
       UnloadIfDoneWithAllPhases();
     }
-    // Just started something new...
-    if (_CurrDASPhaseID != nextDASPhaseID) {
-      // Not first time, record a transition out
-      if (_CurrDASPhaseID != -1) {
-        float timeSinceLastPhase = Time.time - _CurrDASPhaseStartTime;
-        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
-      }
 
-      // start recording the next one...
-      _CurrDASPhaseStartTime = Time.time;
-      _CurrDASPhaseID = nextDASPhaseID;
-    }
     DataPersistenceManager.Instance.Save();
   }
 

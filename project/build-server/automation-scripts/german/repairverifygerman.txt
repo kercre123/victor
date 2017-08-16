@@ -1,0 +1,15 @@
+0.847626:click:repair_need_meter_button:0.1468353
+3.556367:click:scan_button:0.1158295
+2.04755:text:Das Cozmo-Tuning ist abgeschlossen!
+0.356236:text:WEITER
+0.247889:text:Bilde das Pfeilmuster mithilfe der Tasten auf der rechten Seite nach. Tippe dann auf <b>SENDEN</b>.
+0.088089:text:Laufwerke werden ausgerichtet...
+0.808412:text:Krangabel wird kalibriert...
+0.751699:text:Kopf wird justiert...
+0.968476:text:Tippe die Teile an, die du tunen möchtest.
+0.475801:text:Die Laufwerke wurden ausgerichtet.
+0.27196:text:Die Krangabel muss kalibriert werden.
+0.051554:text:Der Kopf wurde justiert.
+0.404448:text:Für Cozmo muss ein Tuning durchgeführt werden, damit er weiterhin optimiert ist und mobil bleibt.
+0.667428:text:Cozmo-Tuning
+0.168061:click:defualt_close_view_button:0.107605

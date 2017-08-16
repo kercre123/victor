@@ -40,7 +40,7 @@
     "translation" : "Hilf Cozmo, indem du ihn auf den Kopf stellst."
   },
   "cubeSlap.title" : {
-    "translation" : "Fernhalten"
+    "translation" : "Fang mich"
   },
   "cubeSlap.description" : {
     "translation" : "Bringe Cozmo dazu, nach einem Cube zu schnappen, und ziehe diesen weg, bevor Cozmo ihn erwischt!"
@@ -58,13 +58,13 @@
     "translation" : "Hilf Cozmo, neue Menschen zu erkennen und ihren Namen zu lernen."
   },
   "memoryMatchGame.title" : {
-    "translation" : "Gedächtnisspiel"
+    "translation" : "Erinner Dich"
   },
   "memoryMatchGame.description" : {
     "translation" : "Spiel, bei dem es um Muster geht und dein Gedächtnis getestet wird. Beobachte die Cubes und höre gut hin!"
   },
   "speedTap.title" : {
-    "translation" : "Geschwindigkeitsspiel"
+    "translation" : "Hau mich"
   },
   "speedTap.description" : {
     "translation" : "Spiel, bei dem gleiche Farben gesucht werden müssen. Hier werden deine Reflexe und dein Verstand auf den Prüfstand gestellt."
@@ -94,6 +94,6 @@
     "translation" : "AKTUELLER MODUS: FREIES SPIEL"
   },
   "faceEnrollment.title.cancelScanning" : {
-    "translation" : "Cancel Face Scanning?"
+    "translation" : "Soll das Scannen von Gesichtern beendet werden?"
   }
 }

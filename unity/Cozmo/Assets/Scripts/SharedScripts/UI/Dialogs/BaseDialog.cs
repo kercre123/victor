@@ -176,6 +176,10 @@ namespace Cozmo {
 
       public void CloseDialogImmediately() {
         if (_CurrentDialogState != DialogState.Closed) {
+          if (_CurrentDialogState == DialogState.IsOpening) {
+            UIManager.EnableTouchEvents(_kOpenAnimationDisableKey);
+          }
+
           if (_CurrentDialogState != DialogState.IsClosing) {
             RaiseDialogClosed();
           }
@@ -216,6 +220,10 @@ namespace Cozmo {
       }
 
       private void PlayCloseAnimations() {
+        if (_CurrentDialogState == DialogState.IsOpening) {
+          UIManager.EnableTouchEvents(_kOpenAnimationDisableKey);
+        }
+
         _CurrentDialogState = DialogState.IsClosing;
         UIManager.DisableTouchEvents(_kCloseAnimationDisableKey);
 

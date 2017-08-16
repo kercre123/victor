@@ -13,6 +13,7 @@
 #include "dasGlobals.h"
 #include "dasLocalAppender.h"
 #include "dasLocalAppenderFactory.h"
+#include "dasLogFileAppender.h"
 #include "dasAppender.h"
 #include "dasFilter.h"
 #include "stringUtils.h"
@@ -83,6 +84,9 @@ static const std::string kThisRunDasGlobalsFileName = "thisRun.dasGlobals";
 static std::string pathToThisRunDasGlobalsFile;
 static std::string pathToLastRunDasGlobalsFile;
 
+static DASArchiveFunction sLogFileArchiveFunc = DASArchiveFunction{};
+static DASUnarchiveFunction sLogFileUnarchiveFunc = DASUnarchiveFunction{};
+static std::string sLogFileArchiveExtension = "";
 
 void _setThreadLocalUInt32(pthread_key_t key, uint32_t value) {
   uint32_t* p = (uint32_t *) pthread_getspecific(key);
@@ -266,7 +270,24 @@ void DASConfigure(const char* configurationJsonFilePath,
         {
           flush_interval = root["dasConfig"].get("flushInterval", DASClient::Json::uintValue).asUInt();
         }
-        sRemoteAppender.reset(new Anki::Das::DasAppender(sDasLogDir, url,flush_interval));
+        
+        size_t maxLogLength = Anki::Das::DasLogFileAppender::kDefaultMaxLogLength;
+        if( root["dasConfig"].isMember("maxLogLength") )
+        {
+          maxLogLength = root["dasConfig"].get("maxLogLength", DASClient::Json::uintValue).asUInt();
+        }
+        
+        size_t maxLogFiles = Anki::Das::DasLogFileAppender::kDasDefaultMaxLogFiles;
+        if( root["dasConfig"].isMember("maxLogFiles") )
+        {
+          maxLogFiles = root["dasConfig"].get("maxLogFiles", DASClient::Json::uintValue).asUInt();
+        }
+        
+        sRemoteAppender.reset(new Anki::Das::DasAppender(sDasLogDir, url,flush_interval,
+                                                         maxLogLength, maxLogFiles,
+                                                         sLogFileArchiveFunc,
+                                                         sLogFileUnarchiveFunc,
+                                                         sLogFileArchiveExtension));
       }
     } else {
       LOGD("Failed to parse configuration: %s", reader.getFormattedErrorMessages().c_str());
@@ -330,6 +351,13 @@ void DASForceFlushWithCallback(const DASFlushCallback& callback) {
   else if (callback) {
     callback(false);
   }
+}
+
+void DASSetArchiveLogConfig(const DASArchiveFunction& archiveFunction, const DASUnarchiveFunction& unarchiveFunction, const std::string& archiveExtension)
+{
+  sLogFileArchiveFunc = archiveFunction;
+  sLogFileUnarchiveFunc = unarchiveFunction;
+  sLogFileArchiveExtension = archiveExtension;
 }
 
 int _DAS_IsEventEnabledForLevel(const char* eventName, DASLogLevel level) {

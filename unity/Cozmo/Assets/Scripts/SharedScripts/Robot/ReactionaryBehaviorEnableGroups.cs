@@ -61,9 +61,10 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  // in repair we also disable reactions when robot on back, side, face (to be consistent with freeplay when in severe repair state)
+  // in repair we also disable certain reactions when in severe repair state: (to be consistent with freeplay)
+  //    robot on back, side, face, robotPickedUp, returnedToTreads
   public static Anki.Cozmo.AllTriggersConsidered kRepairGameSevereTriggers = new Anki.Cozmo.AllTriggersConsidered(
-    cliffDetected: false,
+    cliffDetected: true,
     cubeMoved: true,
     facePositionUpdated: true,
     fistBump: true,
@@ -74,9 +75,9 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: true,
-    robotPickedUp: false,
+    robotPickedUp: true,
     robotPlacedOnSlope: true,
-    returnedToTreads: false,
+    returnedToTreads: true,
     robotOnBack: true,
     robotOnFace: true,
     robotOnSide: true,
@@ -296,7 +297,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     motorCalibration: false,
     noPreDockPoses: false,
     objectPositionUpdated: false,
-    placedOnCharger: false,
+    placedOnCharger: true,
     petInitialDetection: true,
     robotPickedUp: false,
     robotPlacedOnSlope: false,

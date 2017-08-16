@@ -13,7 +13,7 @@
     "translation" : "Appuie sur <b><color=#d3d3d3>SUIVANT</color></b> si tu rencontres encore des problèmes"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "First, go to <b>SETTINGS</b>."
+    "translation" : "Tout d'abord, accède aux <b>PARAMÈTRES</b>."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
     "translation" : "Ensuite, essaye de remplacer la pile de ton cube."
@@ -31,16 +31,16 @@
     "translation" : "Remets en place le couvercle et fixe-le délicatement."
   },
   "cubeHelpStrings.Instructions.Slide3altCopy" : {
-    "translation" : "Assure-toi que le couvercle s'adapte bien au cube. Il doit maintenant s'allumer!"
+    "translation" : "Assure-toi que le couvercle correspond bien au cube. Il devrait maintenant s'allumer !"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Title" : {
-    "translation" : "Cozmo a trop faim pour jouer?"
+    "translation" : "Cozmo a trop faim pour jouer ?"
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Body" : {
     "translation" : "Donne lui vite à manger pendant que tu reconnectes ses cubes."
   },
   "cubeHelpStrings.Instructions.QuickSnackSlide.Button" : {
-    "translation" : "COLLATION RAPIDE"
+    "translation" : "REPAS RAPIDE"
   },
   "cubeHelpStrings.Instructions.FeedPopup.Title" : {
     "translation" : "Cozmo peut désormais continuer à jouer"
@@ -48,7 +48,13 @@
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
     "translation" : "Pour qu'il soit bien nourri, suis les instructions pour l'aider à reconnaître ses cubes."
   },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title" : {
+    "translation" : ""
+  },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body" : {
+    "translation" : "Cozmo n'a pas besoin d'un petit encas, car il a assez d'énergie pour jouer.\u000a\u000aAssure-toi qu'il est bien nourri en suivant les instructions pour l'aider à reconnaître ses cubes."
+  },
   "cubeHelpStrings.Instructions.SlideA2Copy" : {
-    "translation" : "Then, tap <b>REFRESH CUBES</b>."
+    "translation" : "Ensuite, appuie sur <b>ACTUALISER LES CUBES</b>."
   }
 }

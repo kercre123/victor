@@ -5,6 +5,7 @@ using Cozmo.RequestGame;
 using Cozmo.UI;
 using DataPersistence;
 using UnityEngine;
+using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparksDetailModal : BaseModal {
@@ -225,6 +226,11 @@ namespace Cozmo.Needs.Sparks.UI {
         PlaySparkedSounds();
         // Button state already updated by InitializeButtonState above
 
+        // If engine started pyramid we may have missed the pyramid pre-req information, so ask that
+        // it be re-sent
+        RobotEngineManager.Instance.Message.RequestPyramidPreReqState = Singleton<RequestPyramidPreReqState>.Instance;
+        RobotEngineManager.Instance.SendMessage();
+
         if (OnSparkTrickStarted != null) {
           OnSparkTrickStarted();
         }
@@ -403,21 +409,19 @@ namespace Cozmo.Needs.Sparks.UI {
     #region UI Updates
 
     private void InitializeButtonState() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded += HandleItemValueChanged;
-      playerInventory.ItemRemoved += HandleItemValueChanged;
-      playerInventory.ItemCountSet += HandleItemValueChanged;
-      playerInventory.ItemCountUpdated += HandleItemValueChanged;
+      Inventory.ItemAdded += HandleItemValueChanged;
+      Inventory.ItemRemoved += HandleItemValueChanged;
+      Inventory.ItemCountSet += HandleItemValueChanged;
+      Inventory.ItemCountUpdated += HandleItemValueChanged;
 
       UpdateButtonState();
     }
 
     private void CleanUpButtonState() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded -= HandleItemValueChanged;
-      playerInventory.ItemRemoved -= HandleItemValueChanged;
-      playerInventory.ItemCountSet -= HandleItemValueChanged;
-      playerInventory.ItemCountUpdated -= HandleItemValueChanged;
+      Inventory.ItemAdded -= HandleItemValueChanged;
+      Inventory.ItemRemoved -= HandleItemValueChanged;
+      Inventory.ItemCountSet -= HandleItemValueChanged;
+      Inventory.ItemCountUpdated -= HandleItemValueChanged;
     }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {

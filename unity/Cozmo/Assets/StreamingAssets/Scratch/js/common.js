@@ -47,7 +47,7 @@
         if (window.isVertical) {
             toolboxPosition = 'start';
             controls = true;
-            startScale = 0.80;
+            startScale = 0.85;
         }
 
         // Instantiate scratch-blocks and attach it to the DOM.

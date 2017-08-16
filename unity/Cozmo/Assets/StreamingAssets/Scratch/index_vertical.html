@@ -19,6 +19,7 @@
         <!-- or in app), must also copy tools/scratch/closure-library to Scratch/lib/closure-library -->
         <!--
         <script src="./lib/blocks/blockly_uncompressed_vertical.js"></script>
+        <script src="./lib/blocks/blocks_common/colour.js"></script>
         <script src="./lib/blocks/blocks_common/math.js"></script>
         <script src="./lib/blocks/blocks_common/text.js"></script>
         <script src="./lib/blocks/blocks_vertical/control.js"></script>
@@ -69,6 +70,21 @@
                   </value>
               </block>
 
+              <block type="cozmo_vert_wheels_speed">
+                  <value name="LEFT_SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">25.0</field>
+                      </shadow>
+                  </value>
+                  <value name="RIGHT_SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">25.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_vert_stop_motor"></block>
+
               <block type="cozmo_vert_path_offset">
                   <value name="OFFSET_X">
                       <shadow type="math_number">
@@ -117,8 +133,8 @@
                       </shadow>
                   </value>
               </block>
-              
               <block type="cozmo_dock_with_cube"></block>
+              <block type="cozmo_vert_dock_with_cube_by_id"></block>
             </category>
             <category name="Actions" colour="#5e3dfc" secondaryColour="0">
             
@@ -131,6 +147,14 @@
                   <value name="SPEED">
                       <shadow type="math_number">
                           <field name="NUM">45.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_vert_move_lift">
+                  <value name="LIFT_SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">15.0</field>
                       </shadow>
                   </value>
               </block>
@@ -148,11 +172,9 @@
                   </value>
               </block>
 
-              <block type="cozmo_setbackpackcolor">
-                  <value name="CHOICE">
-                      <shadow type="dropdown_cozmo_setcolor">
-                          <field name="CHOICE">coral</field>
-                      </shadow>
+              <block type="cozmo_vert_setbackpackcolor">
+                  <value name="COLOR">
+                      <shadow type="colour_picker"></shadow>
                   </value>
               </block>
               <block type="cozmo_says">
@@ -217,20 +239,14 @@
               <block type="control_wait_until"></block>
               <block type="control_repeat_until"></block>
               <block type="control_stop"></block>
-              <block type="control_start_as_clone"></block>
-              <block type="control_create_clone_of">
-                  <value name="CLONE_OPTION">
-                      <shadow type="control_create_clone_of_menu"></shadow>
-                  </value>
-              </block>
-              <block type="control_delete_this_clone"></block>
             </category>
             
             <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
               <!-- Cozmo -->
               <block type="cozmo_vert_get_position_3d"></block>
-              <block type="cozmo_vert_get_angle"></block>
               <block type="cozmo_vert_get_pitch"></block>
+              <block type="cozmo_vert_get_roll"></block>
+              <block type="cozmo_vert_get_yaw"></block>
               <block type="cozmo_vert_get_lift_height"></block>
               <block type="cozmo_vert_get_head_angle"></block>
               <!-- Faces -->

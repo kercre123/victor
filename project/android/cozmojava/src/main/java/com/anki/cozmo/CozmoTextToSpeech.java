@@ -48,16 +48,10 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
     // DAS.Debug(TAG+evt, text);
   }
 
-  // Acapela license info
-  // TODO: Encrypt or obscure these values?
-  private static final int TTS_USERID = 0x616e596a;
-  private static final int TTS_PASSWORD = 0x0003909b;
-  private static final String TTS_LICENSE =
-    "\"3728 0 jYna #COMMERCIAL#Anki-SanFrancisco-UnitedStatesofAmerica\"\n"
-    + "TaswmpTh5wDkWrvG2@qcUjG6tywkk7UFaT8TBelBzpD3NZoV5wgA!HPJZc@uxZfwgjfUXdzxAXzB@BWkIborrT##\n"
-    + "RG5dt6vLuFzK5a$fKbcaxcbUrc7!zUIiHPdrVm3nu!dJvyyb\n"
-    + "WWGfgh4ZR9pnqgv9mrlCAS##\n";
-
+  // Fixed parameters
+  private static final int TTS_LEADINGSILENCE_MS = 50;  // Minimum allowed by Acapela TTS SDK
+  private static final int TTS_TRAILINGSILENCE_MS = 50; // Minimum allowed by Acapela TTS SDK
+  
   //
   // JNI declaration of C++ function to be invoked as callback.
   // Note that method name and signature must match definition in TextToSpeechProvider_android.cpp
@@ -84,12 +78,6 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
 
     // Enable SDK log output
     // _tts.setLog(true);
-
-    int err = _tts.setLicense(TTS_USERID, TTS_PASSWORD, TTS_LICENSE);
-    if (0 != err) {
-      error(EVT, "Unable to set license, err=" + err);
-      return;
-    }
 
     String version = _tts.getVersion();
     debug(EVT, "TTS SDK version=" + version);
@@ -133,7 +121,7 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
   }
 
   // Load given voice
-  public int doLoadVoice(String path, String voice, int speed, int shaping) {
+  public int doLoadVoice(String path, String voice, int userid, int password, String license, int speed, int shaping) {
     final String EVT = "CozmoTextToSpeech.doLoadVoice";
 
     debug(EVT, "path=" + path + " voice=" + voice + " speed=" + speed + " shaping=" + shaping);
@@ -150,8 +138,13 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
       debug(EVT, "Available voice=" + s);
     }
 
+    int err = _tts.setLicense(userid, password, license);
+    if (0 != err) {
+      error(EVT, "Unable to set license, err=" + err);
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
     // Attempt to load requested voice
-    int err = _tts.load(voice, "");
+    err = _tts.load(voice, "");
     if (0 != err) {
       error(EVT, "Unable to load voice, err="+err);
       return RESULT_FAIL_INVALID_PARAMETER;
@@ -169,12 +162,12 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
       return RESULT_FAIL_INVALID_PARAMETER;
     }
 
-    err = _tts.setTTSSettings("LEADINGSILENCE", 0);
+    err = _tts.setTTSSettings("LEADINGSILENCE", TTS_LEADINGSILENCE_MS);
     if (0 != err) {
       error(EVT, "Unable to set leading silence, err="+err);
     }
 
-    err = _tts.setTTSSettings("TRAILINGSILENCE", 0);
+    err = _tts.setTTSSettings("TRAILINGSILENCE", TTS_TRAILINGSILENCE_MS);
     if (0 != err) {
       error(EVT, "Unable to set trailing silence, err="+err);
     }
@@ -231,8 +224,8 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
     sInstance = null;
   }
 
-  public static int loadVoice(String path, String voice, int speed, int shaping) {
-    return sInstance.doLoadVoice(path, voice, speed, shaping);
+  public static int loadVoice(String path, String voice, int userid, int password, String license, int speed, int shaping) {
+    return sInstance.doLoadVoice(path, voice, userid, password, license, speed, shaping);
   }
 
   public static int createAudioData(String text, int speed) {

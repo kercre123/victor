@@ -8,10 +8,10 @@ namespace Cozmo {
     // Delta is always a positive number
     public delegate void InventoryValueChangedHandler(string itemId, int delta, int newCount);
 
-    public event InventoryValueChangedHandler ItemAdded;
-    public event InventoryValueChangedHandler ItemRemoved;
-    public event InventoryValueChangedHandler ItemCountSet;
-    public event InventoryValueChangedHandler ItemCountUpdated;
+    public static event InventoryValueChangedHandler ItemAdded;
+    public static event InventoryValueChangedHandler ItemRemoved;
+    public static event InventoryValueChangedHandler ItemCountSet;
+    public static event InventoryValueChangedHandler ItemCountUpdated;
 
     public int InventoryCap {
       get {
@@ -32,6 +32,10 @@ namespace Cozmo {
       // Setup listeners for inventory still stored in engine...
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
+    }
+
+    public void DestroyInventory() {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
     }
 
     public void HandleEngineInventoryUpdated(Anki.Cozmo.ExternalInterface.InventoryStatus message) {

@@ -93,6 +93,9 @@ namespace Cozmo.ConnectionFlow {
         if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ForceFirstTimeConnectFlow) {
           firstTime = true;
         }
+        else if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ForceFirstTimeConnectFlow) {
+          firstTime = false;
+        }
       }
 #endif
       OnboardingManager.Instance.PreloadOnboarding();
@@ -216,7 +219,8 @@ namespace Cozmo.ConnectionFlow {
 
     private void HandleConnectionFlowComplete() {
       DestroyConnectionFlowInstance();
-      CloseNeedsUnconnectView(true);
+      // close without animation, so we don't get a glimpse on the way out (COZMO-12283)
+      CloseNeedsUnconnectView(false);
       AssetBundleManager.Instance.UnloadAssetBundle(_NeedsUnconnectViewPrefabData.AssetBundle);
       AssetBundleManager.Instance.UnloadAssetBundle(_ConnectionFlowPrefabData.AssetBundle);
       IntroFlowComplete();

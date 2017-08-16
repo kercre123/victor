@@ -7,22 +7,22 @@
     "source_key_paths" : ["/{*}"]
   },
   "needs.NeedsHubView.Button.Activities" : {
-    "translation" : "Entdecken"
+    "translation" : "ENTDECKEN"
   },
   "needs.NeedsHubView.Button.Feed" : {
-    "translation" : "Füttern"
+    "translation" : "FÜTTERN"
   },
   "needs.NeedsHubView.Button.Repair" : {
-    "translation" : "Tuning"
+    "translation" : "TUNING"
   },
   "needs.NeedsHubView.Button.Play" : {
-    "translation" : "Spielen"
+    "translation" : "SPIELEN"
   },
   "needs.NeedsEnergyModal.Title" : {
     "translation" : "Cozmo füttern"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
-    "translation" : "Cozmo musst gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
+    "translation" : "Cozmo muss gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
   },
   "needs.NeedsEnergyModal.Instruction1" : {
     "translation" : "Nimm einen blau blinkenden Cube."
@@ -40,7 +40,7 @@
     "translation" : "Cozmo kann nicht gefüttert werden, da er seine Cubes nicht hören kann."
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt.Button" : {
-    "translation" : "VERBINDUNG MIT CUBES WIEDERHERSTELLEN"
+    "translation" : "CUBES WIEDER VERBINDEN"
   },
   "needs.NeedsRepairModal.Title" : {
     "translation" : "Cozmo-Tuning"
@@ -61,10 +61,10 @@
     "translation" : "Die Laufwerke wurden ausgerichtet."
   },
   "needs.NeedsRepairModal.LiftDamageNotice" : {
-    "translation" : "Die Krangabel muss kalibriert werden."
+    "translation" : "Der Hebearm muss kalibriert werden."
   },
   "needs.NeedsRepairModal.LiftRepairedNotice" : {
-    "translation" : "Die Krangabel wurde kalibriert."
+    "translation" : "Der Hebearm wurde kalibriert."
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
     "translation" : "Tippe die Teile an, die du tunen möchtest."
@@ -76,7 +76,7 @@
     "translation" : "Das Cozmo-Tuning ist abgeschlossen!"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "Senden"
+    "translation" : "SENDEN"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
     "translation" : "COZMO SCANNEN"
@@ -85,7 +85,7 @@
     "translation" : "Kopf wird justiert..."
   },
   "needs.NeedsRepairModal.AligningLift" : {
-    "translation" : "Krangabel wird kalibriert..."
+    "translation" : "Hebearm wird kalibriert..."
   },
   "needs.NeedsRepairModal.AligningTreads" : {
     "translation" : "Laufwerke werden ausgerichtet..."

@@ -25,7 +25,7 @@
     "translation" : "SDK AKTIVIEREN"
   },
   "settings.sdkPanel.label.title" : {
-    "translation" : "COZMO-SDK"
+    "translation" : "Cozmo-SDK"
   },
   "settings.sdkPanel.connectionCommandCount.text" : {
     "translation" : "Befehle: {0}"
@@ -191,5 +191,8 @@
   },
   "settings.sdkPanel.sdkUrl.address" : {
     "translation" : "go.anki.com/cozmo-app-sdk"
+  },
+  "settings.acknowledgementsPanel.dataCollectionTitle" : {
+    "translation" : "Datensammlung"
   }
 }

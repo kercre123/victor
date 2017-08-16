@@ -30,10 +30,10 @@ namespace Cozmo {
 
       private void Start() {
         Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-        playerInventory.ItemAdded += HandleItemValueChanged;
-        playerInventory.ItemRemoved += HandleItemValueChanged;
-        playerInventory.ItemCountSet += HandleItemValueChanged;
-        playerInventory.ItemCountUpdated += HandleItemValueChanged;
+        Inventory.ItemAdded += HandleItemValueChanged;
+        Inventory.ItemRemoved += HandleItemValueChanged;
+        Inventory.ItemCountSet += HandleItemValueChanged;
+        Inventory.ItemCountUpdated += HandleItemValueChanged;
 
         SetCountText(playerInventory.GetItemAmount(_ItemId));
 
@@ -72,11 +72,10 @@ namespace Cozmo {
       }
 
       private void OnDestroy() {
-        Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-        playerInventory.ItemAdded -= HandleItemValueChanged;
-        playerInventory.ItemRemoved -= HandleItemValueChanged;
-        playerInventory.ItemCountSet -= HandleItemValueChanged;
-        playerInventory.ItemCountUpdated -= HandleItemValueChanged;
+        Inventory.ItemAdded -= HandleItemValueChanged;
+        Inventory.ItemRemoved -= HandleItemValueChanged;
+        Inventory.ItemCountSet -= HandleItemValueChanged;
+        Inventory.ItemCountUpdated -= HandleItemValueChanged;
       }
 
       private void HandleItemValueChanged(string itemId, int delta, int newCount) {
@@ -86,8 +85,9 @@ namespace Cozmo {
               _ItemIconAnimatorInstance.Play(_ItemIconBurstAnimHash);
             }
             else {
-              DAS.Error(this, string.Format("Missing animator for {0}, item id: {1}, count: {2}, animName: {3}",
-                                            name, itemId, newCount, _ItemIconBurstAnimStateName));
+              DAS.Error("ItemDataLabel.HandleItemValueChanged",
+                        string.Format("Missing animator for {0}, item id: {1}, count: {2}, animName: {3}",
+                        name, itemId, newCount, _ItemIconBurstAnimStateName));
             }
           }
           SetCountText(newCount);
@@ -103,7 +103,7 @@ namespace Cozmo {
           _CountLabel.gameObject.SetActive(true);
         }
         else {
-          DAS.Error(this, string.Format("Missing Count Label for {0}, item id: {1}, count: {2}, animName: {3}",
+          DAS.Error("ItemDataLabel.SetCountText", string.Format("Missing Count Label for {0}, item id: {1}, count: {2}, animName: {3}",
                                         name, _ItemId, newCount, _ItemIconBurstAnimStateName));
         }
       }

@@ -74,6 +74,32 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_setbackpackcolor'] = {
+  /**
+   * Block to set color of LED
+   * @this Blockly.Block
+   */
+
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_vert_setbackpackcolor",
+      "message0": "set backpack color to %1",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "COLOR"
+        }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_play_animation_from_dropdown'] = {
   /**
     * Block to make Cozmo play an animation
@@ -150,6 +176,37 @@ Blockly.Blocks['cozmo_dock_with_cube'] = {
     this.jsonInit({
       "id": "cozmo_dock_with_cube",
       "message0": "dock with cube",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.motion,
+      "colour": Blockly.Colours.motion.primary,
+      "colourSecondary": Blockly.Colours.motion.secondary,
+      "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_dock_with_cube_by_id'] = {
+  /**
+   * Block to tell Cozmo to dock with a cube that he can see, if any.
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_vert_dock_with_cube_by_id",
+      "message0": "Dock with cube %1",
+      "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "CUBE_SELECT",
+            "options": [
+              ['1', '1'],
+              ['2', '2'],
+              ['3', '3']
+            ]
+          },
+        ],
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -332,14 +389,15 @@ Blockly.Blocks['cozmo_vert_get_position_3d'] = {
   }
 };
 
-Blockly.Blocks['cozmo_vert_get_angle'] = {
+Blockly.Blocks['cozmo_vert_get_pitch'] = {
   /**
-   * Block to read Cozmo's angle (left/right rotation)
+   * Block to read Cozmo's pitch (angle about y-axis)
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Cozmo angle",
+      "id": "cozmo_vert_get_pitch",
+      "message0": "Cozmo pitch",
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -350,14 +408,34 @@ Blockly.Blocks['cozmo_vert_get_angle'] = {
   }
 };
 
-Blockly.Blocks['cozmo_vert_get_pitch'] = {
+Blockly.Blocks['cozmo_vert_get_roll'] = {
   /**
-   * Block to read Cozmo's pitch (up/down rotation)
+   * Block to read Cozmo's roll (angle about x-axis)
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Cozmo pitch",
+      "id": "cozmo_vert_get_roll",
+      "message0": "Cozmo roll",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Number",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_get_yaw'] = {
+  /**
+   * Block to read Cozmo's yaw (angle about z-axis)
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_vert_get_yaw",
+      "message0": "Cozmo yaw",
       "category": Blockly.Categories.sensing,
       "colour": Blockly.Colours.sensing.primary,
       "colourSecondary": Blockly.Colours.sensing.secondary,
@@ -783,6 +861,69 @@ Blockly.Blocks['cozmo_vert_drive'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_wheels_speed'] = {
+  /**
+   * Block to drive Cozmo's wheels at different speeds
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_wheels_speed",
+        "message0": "drive wheels left %1 right %2",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "LEFT_SPEED"
+          },
+          {
+            "type": "input_value",
+            "name": "RIGHT_SPEED"
+          }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.motion,
+        "colour": Blockly.Colours.motion.primary,
+        "colourSecondary": Blockly.Colours.motion.secondary,
+        "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_stop_motor'] = {
+  /**
+   * Block to drive Cozmo's wheels at different speeds
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_stop_motor",
+        "message0": "stop motors: %1",
+        "args0": [
+          {
+          "type": "field_dropdown",
+          "name": "MOTOR_SELECT",
+          "options": [
+            ['wheels', 'wheels'],
+            ['head', 'head'],
+            ['lift', 'lift'],
+            ['all', 'all']
+          ]
+        }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.motion,
+        "colour": Blockly.Colours.motion.primary,
+        "colourSecondary": Blockly.Colours.motion.secondary,
+        "colourTertiary": Blockly.Colours.motion.tertiary
+    });
+  }
+};
+
+
 Blockly.Blocks['cozmo_vert_path_offset'] = {
   /**
    * Block to drive Cozmo to a given pose, offset from Cozmo's current pose
@@ -911,6 +1052,31 @@ Blockly.Blocks['cozmo_vert_set_liftheight'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_move_lift'] = {
+  /**
+   * Block to start moving the lift at the given speed
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_move_lift",
+        "message0": "move lift at speed %1",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "LIFT_SPEED"
+          }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.looks,
+        "colour": Blockly.Colours.looks.primary,
+        "colourSecondary": Blockly.Colours.looks.secondary,
+        "colourTertiary": Blockly.Colours.looks.tertiary
+    });
+  }
+};
 
 Blockly.Blocks['cozmo_vert_set_headangle'] = {
   /**

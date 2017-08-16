@@ -144,7 +144,7 @@ def main(scriptArgs):
   generator.processFolder(['planning/basestation/test'], ['project/gyp/planning-standalone.lst'])
   generator.processFolder(['planning/basestation/test'], ['project/gyp/planning-test.lst'])
   generator.processFolder(['planning/shared/src'], ['project/gyp/planning-robot.lst'])
-  generator.processFolder(['messaging/basestation/src', 'messaging/include', 'messaging/shared/src'], ['project/gyp/messaging.lst'])
+  generator.processFolder(['messaging/include', 'messaging/shared/src'], ['project/gyp/messaging.lst'])
   generator.processFolder(['messaging/shared/src'], ['project/gyp/messaging-robot.lst'])
   
   if options.updateListsOnly:

@@ -233,6 +233,7 @@ TAGS
 #symlinks
 resources/config/basestation/firmware
 resources/config/basestation/old_firmware
+resources/config/basestation/firmware_*
 
 # VSCode
 .vscode

@@ -206,7 +206,8 @@ button:focus {
 
 #tutorial-modal .slide .slide-image {
   display: inline-block;
-  height: 78%;
+  height: 74%;
+  margin-bottom: 1vh;
 }
 
 #tutorial-modal .slide .slide-image-label {
@@ -232,9 +233,11 @@ button:focus {
   position: relative;
   top: -1%;
   margin: 0;
+  padding: 0 20px;
   height: 20%;
   color: #d7d8d9;
   font-family: 'Avenir Next';
+  font-size: 4.5vh;
   display: flex;
   flex-direction: column;
   justify-content: center;

@@ -37,7 +37,7 @@ GameObject:
   - component: {fileID: 224699196781052812}
   - component: {fileID: 225965415729563214}
   - component: {fileID: 114685069775253958}
-  - component: {fileID: 114222757550883576}
+  - component: {fileID: 114064846955624772}
   m_Layer: 5
   m_Name: SparksListModal
   m_TagString: Untagged
@@ -72,6 +72,7 @@ GameObject:
   - component: {fileID: 224833859377840732}
   - component: {fileID: 222379529207831594}
   - component: {fileID: 114727537228357842}
+  - component: {fileID: 225473858326158990}
   m_Layer: 5
   m_Name: SparkCountLabelText
   m_TagString: Untagged
@@ -423,7 +424,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -505,6 +506,24 @@ MonoBehaviour:
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
+--- !u!114 &114064846955624772
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1136851350824816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de82e9bc70396489881b13dba93654a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _CountLabel: {fileID: 114550700341961088}
+  _ItemIcon: {fileID: 0}
+  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
+    type: 2}
+  _ItemIconAnimatorContainer: {fileID: 224480608325929506}
+  _ItemIconAnimatorLocalScale: 1.2
+  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114097202499692002
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -725,25 +744,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
---- !u!114 &114222757550883576
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1136851350824816}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1dc55167ef35949318682a0a14e46fdc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ItemId: spark
-  _CountLabel: {fileID: 114550700341961088}
-  _ItemIcon: {fileID: 0}
-  _ItemIconAnimatorPrefab: {fileID: 1814470148798544, guid: f8bdf829ed21846169f674ce56348ac3,
-    type: 2}
-  _ItemIconAnimatorContainer: {fileID: 224480608325929506}
-  _ItemIconAnimatorLocalScale: 1.2
-  _ItemIconBurstAnimStateName: SparksBurstAnimation
 --- !u!114 &114310516785843792
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1225,7 +1225,7 @@ MonoBehaviour:
         duration_sec: 0
         easing: 0
   _FadeTweenSettings:
-    staggerType: 2
+    staggerType: 0
     uniformStagger_sec: 0
     targets:
     - target: {fileID: 225100588600205570}
@@ -1235,9 +1235,20 @@ MonoBehaviour:
         duration_sec: 0
         easing: 0
       closeSetting:
-        startTime_sec: 0.3
+        startTime_sec: 0.05
         useCustom: 0
         duration_sec: 0
+        easing: 0
+    - target: {fileID: 225473858326158990}
+      openSetting:
+        startTime_sec: 1
+        useCustom: 1
+        duration_sec: 0.75
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 1
+        duration_sec: 0.05
         easing: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
@@ -2165,7 +2176,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 1370, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 1160}
   m_Pivot: {x: 0, y: 1}
 --- !u!225 &225100588600205570
@@ -2174,6 +2185,17 @@ CanvasGroup:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1071880653109826}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!225 &225473858326158990
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1201514657198746}
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1

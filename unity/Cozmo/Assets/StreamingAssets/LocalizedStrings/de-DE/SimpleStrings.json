@@ -43,7 +43,7 @@
     "translation" : "FERTIG"
   },
   "button.play" : {
-    "translation" : "Spielen"
+    "translation" : "SPIELEN"
   },
   "button.leave" : {
     "translation" : "VERLASSEN"
@@ -103,7 +103,7 @@
     "translation" : "Platziere jeweils einen Cube auf jeder Seite von Cozmo und tippe auf <b><color=#11a2f0ff>AKTUALISIEREN</color></b>. Cozmo verbindet sich dann mit den drei Cubes, die am nächsten liegen."
   },
   "button.replay" : {
-    "translation" : "Wiederholen"
+    "translation" : "WIEDERHOLEN"
   },
   "button.skip" : {
     "translation" : "ÜBERSPRINGEN"

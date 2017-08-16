@@ -368,6 +368,14 @@
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',        # Why is this needed for ctiUnitTest?
               '<@(opencv_libs)',
             ],
+            'copies': [
+              {
+                'files': [
+                  '<(cti-gtest_path)/gtest.framework',
+                ],
+                'destination': '<(PRODUCT_DIR)',
+              },
+            ],
             'actions' : [
               {
                 'action_name': 'create_symlink_ctiUnitTestFaceLibraryLibs',

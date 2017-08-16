@@ -14,6 +14,8 @@ namespace Anki {
   namespace Assets {
 
     public class AssetBundleManager : MonoBehaviour {
+      // Made static and public to avoid warning; use locally to test with debug info
+      public static bool kLogDebugLogs = false;
 
       public const string kAssetBundlesFolder = "AssetBundles";
 
@@ -56,7 +58,10 @@ namespace Anki {
         }
       }
 
-      public static bool IsLogEnabled {
+      public static bool
+
+
+      IsLogEnabled {
         get {
           return _sIsLogEnabled;
         }
@@ -80,12 +85,13 @@ namespace Anki {
       // Initializes the asset manager. Once the process is finished, the function calls the callback indicating if the
       // intialization process was successful or not.
       public void Initialize(Action<bool> callback) {
-        Log(LogType.Log, "Initializing Asset Manager");
+        Log(LogType.Log, "AssetBundleManager.Initialize", "Initializing Asset Manager");
         _sInstance = this;
 
 #if UNITY_EDITOR
         // In simulator mode we don't load any bundles
-        Log(LogType.Log, "Simulation Mode: " + (SimulateAssetBundleInEditor ? "Enabled" : "Disabled"));
+        Log(LogType.Log, "AssetBundleManager.Initialize.SetSimulationMode",
+            "Simulation Mode: " + (SimulateAssetBundleInEditor ? "Enabled" : "Disabled"));
         if (SimulateAssetBundleInEditor) {
           CallCallback(callback, true);
           return;
@@ -103,13 +109,14 @@ namespace Anki {
         manifestAssetBundleName = GetRuntimePlatformName();
         _AssetBundleFolder = System.IO.Path.Combine(Application.streamingAssetsPath, kAssetBundlesFolder) + "/";
 #endif
-        Log(LogType.Log, "Asset bundle folder is " + _AssetBundleFolder);
+        Log(LogType.Log, "AssetBundleManager.Initialize.LogFolder", "Asset bundle folder is " + _AssetBundleFolder);
 
         // Load the asset bundle manifest from the main bundle which is called like the platform
-        Log(LogType.Log, "Loading asset bundle manifest");
+        Log(LogType.Log, "AssetBundleManager.Initialize.LoadingManifest", "Loading asset bundle manifest");
         LoadAssetBundleAsync(manifestAssetBundleName, (bool successful) => {
           if (!successful) {
-            Log(LogType.Error, "Error initializing the asset system. Couldn't load the manifest bundle");
+            Log(LogType.Error, "AssetBundleManager.LoadManifestBundle.Failed",
+                "Error initializing the asset system. Couldn't load the manifest bundle");
             CallCallback(callback, false);
             return;
           }
@@ -134,7 +141,8 @@ namespace Anki {
               }
             }
             else {
-              Log(LogType.Error, "Error initializing the asset system. Couln't load the asset bundle manifest.");
+              Log(LogType.Error, "AssetBundleManager.LoadManifestFile.Failed",
+                  "Error initializing the asset system. Couldn't load the asset bundle manifest.");
             }
 
             CallCallback(callback, _AssetBundleManifest != null);
@@ -147,7 +155,7 @@ namespace Anki {
       // Once the operation is completed, the callback will be called with a boolean indicating if the load was successful or not.
       // Asset bundles are reference counted so they are only loaded once.
       public void LoadAssetBundleAsync(string assetBundleName, Action<bool> callback) {
-        Log(LogType.Log, "Loading asset bundle " + assetBundleName);
+        Log(LogType.Log, "AssetBundleManager.LoadAssetBundle", "Loading asset bundle " + assetBundleName);
 
 #if UNITY_EDITOR
         if (SimulateAssetBundleInEditor) {
@@ -158,7 +166,7 @@ namespace Anki {
 
         string variantAssetBundleName = RemapVariantName(assetBundleName);
 
-        Log(LogType.Log, variantAssetBundleName);
+        Log(LogType.Log, "AssetBundleManager.LoadAssetBundle.LogVariant", variantAssetBundleName);
 
         StartCoroutine(LoadAssetBundleAsyncInternal(variantAssetBundleName, callback));
       }
@@ -168,11 +176,11 @@ namespace Anki {
       // loaded from the bundle will be destroyed automatically. When it is false, the assets won't be destroyed but the connection
       // with the bundle is lost. If the same bundle and asset are loaded again, a new copy of the asset will be created.
       public void UnloadAssetBundle(string assetBundleName, bool destroyObjectsCreatedFromBundle = true) {
-        Log(LogType.Log, "Try unloading asset bundle " + assetBundleName);
+        Log(LogType.Log, "AssetBundleManager.UnloadAssetBundle", "Try unloading asset bundle " + assetBundleName);
 
 #if UNITY_EDITOR
         if (SimulateAssetBundleInEditor) {
-          Log(LogType.Log, "Unloaded asset bundle " + assetBundleName);
+          Log(LogType.Log, "AssetBundleManager.UnloadAssetBundle.Simulate", "Unloaded asset bundle " + assetBundleName);
           return;
         }
 #endif
@@ -188,16 +196,19 @@ namespace Anki {
           string[] assetPaths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, assetName);
 
           if (assetPaths.Length == 0) {
-            Log(LogType.Error, "Couldn't find asset " + assetName + " in asset bundle " + assetBundleName);
+            Log(LogType.Error, "AssetBundleManager.LoadAsset.CannotFindAsset",
+                "Couldn't find asset " + assetName + " in asset bundle " + assetBundleName);
             return null;
           }
           // There are multiple possible assets that match this name...
           if (assetPaths.Length > 1) {
-            Log(LogType.Warning, "Multiple assets named " + assetName + " found in " + assetBundleName + " using first");
+            Log(LogType.Warning, "AssetBundleManager.LoadAsset.MultipleAssetsFound",
+                "Multiple assets named " + assetName + " found in " + assetBundleName + " using first");
           }
           AssetType asset = AssetDatabase.LoadAssetAtPath(assetPaths[0], typeof(AssetType)) as AssetType;
           if (asset == null) {
-            Log(LogType.Error, "Asset returned from LoadMainAssetsAtPath is null. " + assetPaths[0]);
+            Log(LogType.Error, "AssetBundleManager.LoadAsset.NullAssetFound",
+                "Asset returned from LoadMainAssetsAtPath is null. " + assetPaths[0]);
           }
           return asset;
 
@@ -212,18 +223,21 @@ namespace Anki {
       private AssetType LoadAssetInternal<AssetType>(string assetBundleName, string assetName) where AssetType : UnityEngine.Object {
         LoadedAssetBundle loadedAssetBundle = null;
         if (!_LoadedAssetBundles.TryGetValue(assetBundleName, out loadedAssetBundle) || (loadedAssetBundle == null)) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
+          Log(LogType.Error, "AssetBundleManager.LoadAssetInternal.BundleNotLoaded",
+              "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
           return null;
         }
 
         if (loadedAssetBundle.AssetBundle == null) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is null");
+          Log(LogType.Error, "AssetBundleManager.LoadAssetInternal.BundleNull",
+              "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is null");
           return null;
         }
 
         AssetType asset = loadedAssetBundle.AssetBundle.LoadAsset(assetName, typeof(AssetType)) as AssetType;
         if (asset == null) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The request returned a null asset");
+          Log(LogType.Error, "AssetBundleManager.LoadAssetInternal.FoundNullAsset",
+              "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The request returned a null asset");
           return null;
         }
         return asset;
@@ -232,19 +246,22 @@ namespace Anki {
       // Loads an asset asynchronously from the given asset bundle. The asset bundle must have been loaded previously.
       // When the operation  is completed, the callback will be called with the asset or a null refrence if it wasn't found.
       public void LoadAssetAsync<AssetType>(string assetBundleName, string assetName, Action<AssetType> callback) where AssetType : UnityEngine.Object {
-        Log(LogType.Log, "Loading asset " + assetName + " from asset bundle " + assetBundleName);
+        Log(LogType.Log, "AssetBundleManager.LoadAssetAsync",
+            "Loading asset " + assetName + " from asset bundle " + assetBundleName);
 
 #if UNITY_EDITOR
         if (SimulateAssetBundleInEditor) {
           string[] assetPaths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, assetName);
           if (assetPaths.Length == 0) {
-            Log(LogType.Error, "Couldn't find asset " + assetName + " in asset bundle " + assetBundleName);
+            Log(LogType.Error, "AssetBundleManager.LoadAssetAsync.AssetPathNotFound",
+                "Couldn't find asset " + assetName + " in asset bundle " + assetBundleName);
             CallCallback(callback, null);
             return;
           }
 
           if (assetPaths.Length > 1) {
-            Log(LogType.Warning, "This case in LoadAssets needs to be implemented");
+            Log(LogType.Warning, "AssetBundleManager.LoadAssetAsync.MultipleAssetPaths",
+                "This case in LoadAssets needs to be implemented");
             CallCallback(callback, null);
             return;
           }
@@ -264,7 +281,8 @@ namespace Anki {
       // Once the operation is completed, the callback will be called with a boolean indicating if the load was successful
       // or not.
       public void LoadSceneAsync(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
-        Log(LogType.Log, "Loading scene " + sceneName + " from asset bundle " + assetBundleName + ((loadAdditively) ? " additively" : " non additively"));
+        Log(LogType.Log, "AssetBundleManager.LoadSceneAsync",
+            "Loading scene " + sceneName + " from asset bundle " + assetBundleName + ((loadAdditively) ? " additively" : " non additively"));
 
 #if UNITY_EDITOR
         if (SimulateAssetBundleInEditor) {
@@ -283,7 +301,7 @@ namespace Anki {
       // assets are not left in memory.
       // After the operation is completed, the callback is called with a boolean to indicate if it was successful
       public void UnloadSceneAsync(string sceneName, Action<bool> callback, bool unloadUnusedAssets = true) {
-        Log(LogType.Log, "Unloading scene " + sceneName);
+        Log(LogType.Log, "AssetBundleManager.UnloadSceneAsync", "Unloading scene " + sceneName);
 
         SceneManager.UnloadSceneAsync(sceneName);
 
@@ -308,7 +326,8 @@ namespace Anki {
         case BuildTarget.StandaloneOSXUniversal:
           return "mac";
         default:
-          Log(LogType.Error, "Unsupported platform " + Application.platform);
+          Log(LogType.Error, "AssetBundleManager.GetPlatformName.UnsupportedPlatform",
+              "Unsupported platform " + Application.platform);
           return null;
         }
       }
@@ -323,7 +342,8 @@ namespace Anki {
         case RuntimePlatform.OSXPlayer:
           return "mac";
         default:
-          Log(LogType.Error, "Unsupported platform " + Application.platform);
+          Log(LogType.Error, "AssetBundleManager.GetRuntimePlatformName.UnsupportedPlatform",
+            "Unsupported platform " + Application.platform);
           return null;
         }
       }
@@ -368,7 +388,8 @@ namespace Anki {
 
         if (variantIndex != -1) {
           string variantAssetBundleName = split[0] + "." + variants[variantIndex];
-          Log(LogType.Log, "Remapping asset bundle " + assetBundleName + " to " + variantAssetBundleName);
+          Log(LogType.Log, "AssetBundleManager.RemapVariantName",
+              "Remapping asset bundle " + assetBundleName + " to " + variantAssetBundleName);
 
           return variantAssetBundleName;
         }
@@ -436,7 +457,8 @@ namespace Anki {
 
         }
         else {
-          Log(LogType.Error, "Couldn't load asset bundle " + assetBundleName);
+          Log(LogType.Error, "AssetBundleManager.LoadAssetBundleAsyncInternal.Failed",
+              "Couldn't load asset bundle " + assetBundleName);
         }
 
         CallCallback(callback, assetBundle != null);
@@ -453,20 +475,23 @@ namespace Anki {
           yield break;
         }
 
-        Log(LogType.Log, "Loading dependencies for asset bundle " + assetBundleName);
+        Log(LogType.Log, "AssetBundleManager.LoadAssetBundleDependenciesAsync",
+            "Loading dependencies for asset bundle " + assetBundleName);
 
         // Record and load all dependencies.
         int loadedDependencies = 0;
         for (int i = 0; i < loadedAssetBundle.Dependencies.Length; i++) {
           loadedAssetBundle.Dependencies[i] = RemapVariantName(loadedAssetBundle.Dependencies[i]);
           string dependencyName = loadedAssetBundle.Dependencies[i];
-          Log(LogType.Log, "Loading asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
+          Log(LogType.Log, "AssetBundleManager.LoadAssetBundleDependenciesAsync.LoadDependencyBundle",
+              "Loading asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
 
           StartCoroutine(LoadAssetBundleAsyncInternal(loadedAssetBundle.Dependencies[i], (bool successful) => {
             loadedDependencies++;
 
             if (!successful) {
-              Log(LogType.Error, "Couldn't load asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
+              Log(LogType.Error, "AssetBundleManager.LoadAssetBundleDependenciesAsync.LoadFailed",
+                  "Couldn't load asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
             }
           }));
         }
@@ -486,21 +511,20 @@ namespace Anki {
             // Unload the bundle itself
             loadedAssetBundle.AssetBundle.Unload(destroyObjectsCreatedFromBundle);
             _LoadedAssetBundles.Remove(assetBundleName);
-            Log(LogType.Log, "Unloaded asset bundle " + assetBundleName);
+            Log(LogType.Log, "AssetBundleManager.UnloadAssetBundleInternal.UnloadBundle",
+                "Unloaded asset bundle " + assetBundleName);
             PrintLoadedBundleInfo();
 
             // Unload the bundle dependencies
             if (loadedAssetBundle.Dependencies.Length != 0) {
 
               for (int i = 0; i < loadedAssetBundle.Dependencies.Length; i++) {
-                Log(LogType.Log, "Try unloading " + loadedAssetBundle.Dependencies[i] + " which " + assetBundleName + " depends on");
+                Log(LogType.Log, "AssetBundleManager.UnloadAssetBundleInternal.UnloadDependencies",
+                    "Try unloading " + loadedAssetBundle.Dependencies[i] + " which " + assetBundleName + " depends on");
                 UnloadAssetBundleInternal(loadedAssetBundle.Dependencies[i], destroyObjectsCreatedFromBundle);
               }
             }
           }
-        }
-        else {
-          Log(LogType.Error, "Couldn't unload bundle " + assetBundleName + " because it is not loaded");
         }
 
         PrintLoadedBundleInfo();
@@ -509,27 +533,31 @@ namespace Anki {
       private IEnumerator LoadAssetAsyncInternal<AssetType>(string assetBundleName, string assetName, Action<AssetType> callback) where AssetType : UnityEngine.Object {
         LoadedAssetBundle loadedAssetBundle = null;
         if (!_LoadedAssetBundles.TryGetValue(assetBundleName, out loadedAssetBundle) || (loadedAssetBundle == null)) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
+          Log(LogType.Error, "AssetBundleManager.LoadAssetAsyncInternal.BundleNotLoaded",
+              "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
           CallCallback(callback, null);
           yield break;
         }
 
         if (loadedAssetBundle.AssetBundle == null) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is null");
+          Log(LogType.Error, "AssetBundleManager.LoadAssetAsyncInternal.AssetBundleNull",
+              "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is null");
           CallCallback(callback, null);
           yield break;
         }
 
         AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetAsync<AssetType>(assetName);
         if (request == null) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". Request to load failed");
+          Log(LogType.Error, "AssetBundleManager.LoadAssetAsyncInternal.RequestFailed",
+              "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". Request to load failed");
           CallCallback(callback, null);
           yield break;
         }
         yield return request;
 
         if (request.asset == null) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The request returned a null asset");
+          Log(LogType.Error, "AssetBundleManager.LoadAssetAsyncInternal.FoundNullAsset",
+              "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The request returned a null asset");
           CallCallback(callback, null);
           yield break;
         }
@@ -541,7 +569,8 @@ namespace Anki {
       private IEnumerator LoadSceneAsyncInternalInEditor(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
         string[] scenePaths = UnityEditor.AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, sceneName);
         if (scenePaths.Length == 0) {
-          Log(LogType.Error, "Couldn't load scene " + sceneName + " from asset bundle " + assetBundleName);
+          Log(LogType.Error, "AssetBundleManager.LoadSceneAsyncInternalInEditor.LoadSceneFailed",
+              "Couldn't load scene " + sceneName + " from asset bundle " + assetBundleName);
           CallCallback(callback, false);
           yield break;
         }
@@ -561,7 +590,8 @@ namespace Anki {
       private IEnumerator LoadSceneAsyncInternal(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
         LoadedAssetBundle loadedAssetBundle = null;
         if (!_LoadedAssetBundles.TryGetValue(assetBundleName, out loadedAssetBundle)) {
-          Log(LogType.Error, "Couldn't load scene " + sceneName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
+          Log(LogType.Error, "AssetBundleManager.LoadSceneAsyncInternal.BundleNotLoaded",
+              "Couldn't load scene " + sceneName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
           CallCallback(callback, false);
           yield break;
         }
@@ -580,21 +610,21 @@ namespace Anki {
         CallCallback(callback, true);
       }
 
-      private static void Log(LogType logType, string text) {
+      private static void Log(LogType logType, string dasEvent, string dasMessage) {
         if (_sIsLogEnabled) {
-          string message = "[AssetManager] " + text;
-
           switch (logType) {
           case LogType.Log:
-            DAS.Debug("[AssetManager]", message);
+            if (kLogDebugLogs) {
+              DAS.Debug(dasEvent, dasMessage);
+            }
             break;
 
           case LogType.Warning:
-            DAS.Warn("[AssetManager]", message);
+            DAS.Warn(dasEvent, dasMessage);
             break;
 
           case LogType.Error:
-            DAS.Error("[AssetManager]", message);
+            DAS.Error(dasEvent, dasMessage);
             break;
           }
         }
@@ -605,11 +635,11 @@ namespace Anki {
         foreach (var pair in _LoadedAssetBundles) {
           sb.Append(pair.Key + " (" + pair.Value.ReferenceCount + ")\n");
         }
-        Log(LogType.Log, sb.ToString());
+        Log(LogType.Log, "AssetBundleManager.PrintLoadedBundleInfo", sb.ToString());
       }
 
       private void PrintActiveVariants() {
-        Log(LogType.Log, ActiveVariantsToString());
+        Log(LogType.Log, "AssetBundleManager.PrintActiveVariants", ActiveVariantsToString());
       }
 
       public string ActiveVariantsToString() {

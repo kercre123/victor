@@ -22,7 +22,7 @@
     "translation" : "Cozmo aime être dans les parages avec ses cubes. Ils fonctionnent mieux lorsqu'il peut voir clairement le symbole, et qu'ils sont à l'endroit. Vérifie les <b><color=#d3d3d3>PARAMÈTRES</color></b> pour l'entretien des cubes."
   },
   "helpTipsStrings.Slide2.title" : {
-    "translation" : "Lorsque tu ne joues pas à un jeu,\u000ales voyants des cubes peuvent t'indiquer que:"
+    "translation" : "Lorsque tu ne joues pas à un jeu,\u000ales voyants des cubes peuvent t'indiquer que :"
   },
   "helpTipsStrings.Slide2.subtitle1" : {
     "translation" : "Cozmo a vu\u000ace cube."
@@ -37,28 +37,28 @@
     "translation" : "Cozmo s'améliore avec le temps."
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "Chaque jour où tu satisfais l'envie de jouer de Cozmo, tu gagnes un token. Les tokens débloquent les boîtes à bonus, qui sont pleines de récompenses telles que des étincelles, des jeux et des tours."
+    "translation" : "Chaque jour où tu satisfais l'envie de jouer de Cozmo, tu gagnes un jeton. Les jetons débloquent les boîtes à bonus, qui sont pleines de récompenses telles que des éclats, des jeux et des tours."
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
-    "translation" : "<color=#FFFFFF>Gagne des </color><b><color=#F5BF2D>tokens</color></b><color=#FFFFFF> chaque jour.</color>"
+    "translation" : "<color=#FFFFFF>Gagne des </color><b><color=#F5BF2D>jetons</color></b><color=#FFFFFF> chaque jour.</color>"
   },
   "helpTipsStrings.Slide3.bodyApp" : {
-    "translation" : "<color=#FFFFFF>3tokens débloquent une </color><b><color=#F5BF2D>boîte à bonus.</color></b>"
+    "translation" : "<color=#FFFFFF>3 jetons débloquent une </color><b><color=#F5BF2D>boîte à bonus.</color></b>"
   },
   "helpTipsStrings.Slide5.title" : {
     "translation" : "Occupe-toi bien de Cozmo."
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Pour rendre Cozmo heureux, rien de plus simple: il suffit de lancer l'application chaque jour! Joue avec lui pour l'aider à apprendre et à progresser tout en remportant des boîtes à bonus. Connecte-toi à Cozmo pour le réveiller et lui porter toute l'attention dont il a besoin."
+    "translation" : "Pour rendre Cozmo heureux, rien de plus simple : il suffit de lancer l'application chaque jour ! Joue avec lui pour l'aider à apprendre et à progresser tout en remportant des boîtes à bonus. Connecte-toi à Cozmo pour le réveiller et lui porter toute l'attention dont il a besoin."
   },
   "helpTipsStrings.Slide6.title" : {
     "translation" : "Assure la sécurité de Cozmo."
   },
   "helpTipsStrings.Slide6.body" : {
-    "translation" : "Cozmo a besoin que tu le protèges. Il est semblable à un hamster ou un autre petit animal domestique. Garde un œil sur lui au cas où il aurait un problème; il peut avoir besoin de ton aide en cas de blocage."
+    "translation" : "Cozmo a besoin que tu le protèges. Il est semblable à un hamster ou un autre petit animal domestique. Garde un œil sur lui au cas où il aurait un problème ; il peut avoir besoin de ton aide en cas de blocage."
   },
   "helpTipsStrings.Slide7.title" : {
-    "translation" : "Les voyants dorsaux de Cozmo indiquent que:"
+    "translation" : "Les voyants dorsaux de Cozmo indiquent que :"
   },
   "helpTipsStrings.Slide7.subtitle1" : {
     "translation" : "Cozmo est\u000achargé."
@@ -70,15 +70,15 @@
     "translation" : "La batterie de\u000aCozmo est faible."
   },
   "helpTipsStrings.Slide8.title" : {
-    "translation" : "Cozmo est en sécurité."
+    "translation" : "Cozmo sécurisé."
   },
   "helpTipsStrings.Slide8.body" : {
-    "translation" : "Cozmo et sa caméra sont en sécurité Aucune photo ni vidéo n'est jamais enregistrée, ni en ligne ni hors ligne. Cozmo n'échange qu'avec les appareils que tu autorises."
+    "translation" : "Cozmo et sa caméra sont sécurisés. Aucune photo ni vidéo n'est jamais enregistrée, ni en ligne ni hors ligne. Cozmo ne communique qu'avec les appareils que tu autorises."
   },
   "helpTipsStrings.Slide9.title" : {
     "translation" : "Veille à ce que Cozmo soit chargé."
   },
   "helpTipsStrings.Slide9.body" : {
-    "translation" : "Cozmo a besoin de son chargeur: garde-le à portée de main. Lorsque tu as fini de jouer, place-le sur son chargeur pour qu'il s'endorme."
+    "translation" : "Cozmo a besoin de son chargeur : garde-le à portée de main. Lorsque tu as fini de jouer, place-le sur son chargeur pour qu'il s'endorme."
   }
 }

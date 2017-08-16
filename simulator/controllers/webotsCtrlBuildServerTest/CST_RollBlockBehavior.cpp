@@ -10,8 +10,8 @@
  *
  **/
 
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "engine/robot.h"
+#include "simulator/game/cozmoSimTestController.h"
 
 #define SET_STATE(s) {                                                  \
     PRINT_NAMED_INFO("CST_RollBlockBehavior.TransitionTestState",       \

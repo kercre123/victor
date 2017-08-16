@@ -1364,7 +1364,7 @@ MonoBehaviour:
   _PetButtonContainer: {fileID: 151938}
   _CubeInLiftButtonContainer: {fileID: 148848}
   _CubeNotInLiftButtonContainer: {fileID: 121322}
-  _DroneModeActionButtonPrefab: {fileID: 11488882, guid: 6adfe16d5369e4b968c148c56e936f8f,
+  _DroneModeActionButtonPrefab: {fileID: 114531525313507612, guid: 6adfe16d5369e4b968c148c56e936f8f,
     type: 2}
   _DaytimeColors:
     _ButtonColor: {r: 0.14117648, g: 0.88235295, b: 0.9098039, a: 1}

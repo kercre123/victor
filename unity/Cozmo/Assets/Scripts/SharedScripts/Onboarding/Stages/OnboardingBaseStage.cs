@@ -14,6 +14,7 @@ namespace Onboarding {
     public List<Anki.Cozmo.NeedId> DimNeedsMeters {
       get { return _DimNeedsMeters; }
     }
+    public bool StageForceClosed { get; set; }
 
     public OnboardingButtonStates ButtonStateDiscover { get { return _ButtonStateDiscover; } }
     public OnboardingButtonStates ButtonStateRepair { get { return _ButtonStateRepair; } }
@@ -135,16 +136,12 @@ namespace Onboarding {
     }
 
     public virtual void OnEnable() {
+      Cozmo.PauseManager.Instance.AllowFreeplayOnResume = false;
+      Cozmo.PauseManager.Instance.OnPauseStateChanged += HandlePauseStateChanged;
+
       if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
         if (OnboardingManager.Instance.OnOverrideTickerString != null) {
           OnboardingManager.Instance.OnOverrideTickerString.Invoke(Localization.Get(_OverrideTickerKey));
-        }
-      }
-
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value, kOnboardingIdleAnimLock + name);
         }
       }
 
@@ -157,6 +154,7 @@ namespace Onboarding {
       SetNeedsActionWhitelist(_EnableWhiteListOnly);
       NeedsStateManager.Instance.PauseExceptForNeed(_UnPausedNeedMeter);
 
+      Init();
     }
     public virtual void OnDisable() {
       if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
@@ -179,11 +177,31 @@ namespace Onboarding {
       SetNeedsActionWhitelist(false);
       NeedsStateManager.Instance.ResumeAllNeeds();
 
-      // forced end levels of needs
-      if (System.Array.TrueForAll(_ForceNeedValuesOnEnd, (float obj) => { return obj >= 0.0f; })) {
-        RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
-                                Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnEnd);
-        RobotEngineManager.Instance.SendMessage();
+      if (!StageForceClosed) {
+        // forced end levels of needs
+        if (System.Array.TrueForAll(_ForceNeedValuesOnEnd, (float obj) => { return obj >= 0.0f; })) {
+          RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
+                                  Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnEnd);
+          RobotEngineManager.Instance.SendMessage();
+        }
+      }
+      Cozmo.PauseManager.Instance.AllowFreeplayOnResume = true;
+      Cozmo.PauseManager.Instance.OnPauseStateChanged -= HandlePauseStateChanged;
+    }
+
+    protected virtual void HandlePauseStateChanged(bool isPaused) {
+      if (!isPaused) {
+        Init();
+      }
+    }
+
+    // This will get called when first enabled and when coming back from backgrounding when pause manager has suspended idles, etc.
+    protected virtual void Init() {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
+          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value, kOnboardingIdleAnimLock + name);
+        }
       }
     }
 

@@ -40,7 +40,7 @@
     "translation" : "Cozmo surveille ses cubes..."
   },
   "behavior.RollBlock" : {
-    "translation" : "Cozmo fait rouler un cube"
+    "translation" : "Cozmo fait rouler un cube..."
   },
   "behavior.StackCube" : {
     "translation" : "Cozmo empile des cubes..."
@@ -139,7 +139,7 @@
     "translation" : "Cozmo chante Le port de Tacoma..."
   },
   "behavior.singing.ItsyBitsySpider" : {
-    "translation" : "Cozmo chante Itsy Bitsy Spider..."
+    "translation" : "Cozmo chante L'araignée Gipsy..."
   },
   "behavior.singing.Beethovens5th" : {
     "translation" : "Cozmo chante la 5e symphonie de Beethoven..."
@@ -151,7 +151,7 @@
     "translation" : "Cozmo chante Row Your Boat..."
   },
   "behavior.singing.PachebelCanon" : {
-    "translation" : "Cozmo chante le Canon Pachelbel"
+    "translation" : "Cozmo chante le Canon de Pachelbel..."
   },
   "behavior.singing.OdeToJoy" : {
     "translation" : "Cozmo chante la 9e symphonie de Beethoven..."
@@ -163,7 +163,7 @@
     "translation" : "Cozmo chante Frère Jacques..."
   },
   "behavior.singing.MaryHadALittleLamb" : {
-    "translation" : "Cozmo chante Mary Had a Little Lamb..."
+    "translation" : "Cozmo chante Marie avait un petit mouton..."
   },
   "behavior.singing.TakeMeOutToTheBallgame" : {
     "translation" : "Cozmo chante Take Me Out to the Ballgame..."
@@ -211,7 +211,7 @@
     "translation" : "Cozmo a besoin d'un réglage..."
   },
   "behavior.VC_Refuse_Sparks" : {
-    "translation" : "Tu n'as pas assez d'étincelles..."
+    "translation" : "Tu n'as pas assez d'éclats..."
   },
   "behavior.VC_HowAreYouDoing_AllGood" : {
     "translation" : "Cozmo se sent bien..."
@@ -229,25 +229,25 @@
     "translation" : "Cozmo a besoin d'un réglage..."
   },
   "behavior.Needs_SevereLowEnergyGetIn" : {
-    "translation" : "Cozmo a très faim: il a vraiment besoin d'énergie!"
+    "translation" : "Cozmo a très faim : il a vraiment besoin d'énergie !"
   },
   "behavior.Needs_SevereLowEnergyRequest" : {
-    "translation" : "Cozmo a très faim: il a vraiment besoin d'énergie!"
+    "translation" : "Cozmo a très faim : il a vraiment besoin d'énergie !"
   },
   "behavior.Needs_SevereLowPlayGetIn" : {
-    "translation" : "Cozmo s'ennuie ferme et se sent frustré: il voudrait vraiment jouer!"
+    "translation" : "Cozmo s'ennuie ferme et se sent frustré : il voudrait vraiment jouer !"
   },
   "behavior.Needs_SevereLowPlayBored" : {
-    "translation" : "Cozmo s'ennuie ferme et se sent frustré: il voudrait vraiment jouer!"
+    "translation" : "Cozmo s'ennuie ferme et se sent frustré : il voudrait vraiment jouer !"
   },
   "behavior.Needs_SevereLowPlayRequest" : {
-    "translation" : "Cozmo s'ennuie ferme et se sent frustré: il voudrait vraiment jouer!"
+    "translation" : "Cozmo s'ennuie ferme et se sent frustré : il voudrait vraiment jouer !"
   },
   "behavior.Needs_SevereLowRepairGetIn" : {
-    "translation" : "Cozmo ne se sent pas bien: il faut absolument le régler!"
+    "translation" : "Cozmo ne se sent pas bien : il faut absolument le régler !"
   },
   "behavior.Needs_SevereLowRepairRequest" : {
-    "translation" : "Cozmo ne se sent pas bien: il faut absolument le régler!"
+    "translation" : "Cozmo ne se sent pas bien : il faut absolument le régler !"
   },
   "behavior.VC_TrackLaser" : {
     "translation" : "Cozmo recherche un laser"

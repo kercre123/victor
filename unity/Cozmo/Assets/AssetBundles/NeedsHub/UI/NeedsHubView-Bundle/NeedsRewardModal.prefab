@@ -134,6 +134,7 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224594153072955346}
+  - component: {fileID: 225111482761217654}
   m_Layer: 5
   m_Name: CrateRightSide
   m_TagString: Untagged
@@ -655,6 +656,7 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 224580177005154136}
+  - component: {fileID: 225811314915894334}
   m_Layer: 5
   m_Name: CrateLeftSide
   m_TagString: Untagged
@@ -1163,7 +1165,6 @@ MonoBehaviour:
   _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
-  _VoiceCommandIcon: {fileID: 0}
   _TextLabel: {fileID: 114376144562379882}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1949,7 +1950,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 391.7
+  m_fontSize: 391.25
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2332,7 +2333,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: -1154463835
+  randomSeed: -1218151860
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -2485,7 +2486,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 0.5
+          value: 0.49817157
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -5216,7 +5217,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: -1756474607
+  randomSeed: -690820798
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -5369,7 +5370,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 0.99999994
+          value: 0.49817157
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -9151,6 +9152,17 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &225111482761217654
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1108850268436272}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!225 &225242520737413446
 CanvasGroup:
   m_ObjectHideFlags: 1
@@ -9190,6 +9202,17 @@ CanvasGroup:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1076056155905100}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!225 &225811314915894334
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1865009051431218}
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
