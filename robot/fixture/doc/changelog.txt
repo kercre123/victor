@@ -1,4 +1,17 @@
 ----------------
+Release v104.5
+----------------
+
+BODY1:
+-add 'charge' test to verify Q13 electrical connection
+
+----------------
+Release v104.4
+----------------
+
+(Nathan, add change notes)
+
+----------------
 Release v104.2
 ----------------
 
