@@ -26,6 +26,15 @@
 #define PINA_ENCHG 15
 #define GPIOA_ENCHG (1 << PINA_ENCHG)
 
+#define PINC_ENBAT_LC 1
+#define GPIOC_ENBAT_LC (1 << PINC_ENBAT_LC)
+
+#define PINC_NBAT 2
+#define GPIOC_NBAT (1 << PINC_NBAT)
+
+#define PIND_NBATSINK 2
+#define GPIOD_NBATSINK (1 << PIND_NBATSINK)
+
 #define PINB_SWD  10
 #define GPIOB_SWD (1 << PINB_SWD)
 #define PINB_SWC  11
