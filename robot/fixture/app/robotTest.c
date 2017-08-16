@@ -866,25 +866,21 @@ void EmPlaypenDelay(void)
 
 void DtmTest(void)
 {
-  int err = ERROR_OK;
   const int freq = 2; //2=2402MHz, 42=2442MHz, 81=2481MHz
   u8 dtm_status = 255;
   
   //EnableChargeComms();
   ConsolePrintf("Starting DTM: tone 0dBm %dMHz\r\n", 2400+freq );
-  try{ SendCommand(TEST_DTM, freq, sizeof(dtm_status), (u8*)&dtm_status); } catch(int e) { err = e; }
+  SendCommand(TEST_DTM, freq, sizeof(dtm_status), (u8*)&dtm_status);
+  
   if( dtm_status == 0 )
     ConsolePrintf("test-body-radio,%08x\r\n", body_esn); //PC software is waiting for this line to take RF measurements
-  else
-    ConsolePrintf("failed to enter DTM mode\r\n");
   
-  ConsolePrintf("dtm status=%u err=%u\r\n", dtm_status, err);
-  if( dtm_status == 255 ) {
-    if (g_allowOutdated)
-      return;
-    else
-      throw ERROR_BODY_OUTOFDATE; //old fw does not support fixture DTM
-  }
+  //log cmd status after the above line. gives PC software maximum scan time (robot watchdog will reset in a second or 2)
+  ConsolePrintf("dtm status=%u\r\n", dtm_status);
+  
+  if( dtm_status > 0 && !g_allowOutdated )
+    throw ERROR_BODY_OUTOFDATE; //old fw does not support fixture DTM
 }
 
 // List of all functions invoked by the test, in order

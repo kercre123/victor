@@ -1,4 +1,11 @@
 ----------------
+Release v104.6
+----------------
+
+EMROBOT:
+-improved error handling for DtmTest. Properly throw comms errors & log dtm response.
+
+----------------
 Release v104.5
 ----------------
 
