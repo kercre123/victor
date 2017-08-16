@@ -192,6 +192,19 @@ s32 ChargerGetVoltage(void)
   return (s32)value;
 }
 
+s32 BatGetVoltageMv(void)
+{
+  I2C_Send16(BATTERY_ADDRESS, 0, 6); // Measure bus voltage
+  MicroWait(1000);
+  
+  I2C_Send8(BATTERY_ADDRESS, 2);
+  s16 value = I2C_Receive16(BATTERY_ADDRESS);
+  
+  I2C_Send16(BATTERY_ADDRESS, 0, 5 + (1<<3)); // Measure current only, 10-bit (150uS), +/- 40mV (2A @ 0.02 ohm) full-scale
+  
+  return (s32)(value/2); //convert to mV
+}
+
 void MonitorSetDoubleSpeed(void)
 {
   CLOCK_WAIT = 0;

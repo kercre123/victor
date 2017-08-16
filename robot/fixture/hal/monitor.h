@@ -13,5 +13,6 @@ s32 ChargerGetVoltage(void);  //Get the voltage in mV
 s32 ChargerGetCurrentMa(void);  //measured current [mA]
 
 s32 BatGetCurrent(void);
+s32 BatGetVoltageMv(void);
 
 #endif
