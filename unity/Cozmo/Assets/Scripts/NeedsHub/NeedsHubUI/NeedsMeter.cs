@@ -169,6 +169,9 @@ namespace Cozmo {
         _AnimStartValue = CurrentValue;
         _TargetValue = target;
         if (_StartBurstParticles != null) {
+          var ps = _StartBurstParticles.main;
+          int lvl = PerformanceManager.Instance.GetQualitySetting();
+          ps.maxParticles = _MaxParticles[lvl];
           _StartBurstParticles.Play();
         }
       }
@@ -293,6 +296,8 @@ namespace Cozmo {
           if (_ConstantParticles != null) {
             var emissionMod = _ConstantParticles.emission;
             int lvl = PerformanceManager.Instance.GetQualitySetting();
+            var ps = _ConstantParticles.main;
+            ps.maxParticles = _MaxParticles[lvl];
             emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles[lvl], _MaxParticles[lvl], currentValue));
           }
           if (_TargetValue > currentValue) {

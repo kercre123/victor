@@ -13,7 +13,14 @@ namespace Cozmo {
 
     // seconds history we're tracking
     [SerializeField]
-    private int _AvgFPSSampleSize = 30;
+    private int _AvgFPSSampleSize = 10;
+
+    // If either of these are true, then we consider your device bad and start you immediately at the low end.
+    [SerializeField]
+    private int _LowEndSystemMemoryThresholdMB = 2048;
+
+    [SerializeField]
+    private int _LowEndVideoMemoryThresholdMB = 512;
 
     private LinkedList<int> _FpsSamples;
     private int _NumFramesInSecond = 0;
@@ -49,6 +56,10 @@ namespace Cozmo {
       Instance = this;
       _MaxQualityLevel = QualitySettings.names.Length;
       _QualityLevel = _MaxQualityLevel - 1;
+      if (SystemInfo.graphicsMemorySize < _LowEndVideoMemoryThresholdMB ||
+          SystemInfo.systemMemorySize < _LowEndSystemMemoryThresholdMB) {
+        _QualityLevel = 1;
+      }
       _FpsSamples = new LinkedList<int>();
     }
 
