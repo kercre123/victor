@@ -286,13 +286,13 @@
     "translation" : "#31の答え"
   },
   "codeLabChallenge_intruder.questionSlide.primaryText" : {
-    "translation" : "#32：<span class='yellow'>顔が見えたら、</span><span class='violet'>驚いて、</span><span class='orange'>無制限に：</span><span class='purple'>バックライト</span>を赤くし、「侵入者！」と<span class='purple'>言って</span><span class='purple'>バックライト</span>を点滅させます。"
+    "translation" : "#32：<span class='yellow'>顔が見えたら、</span><span class='violet'>驚いて、</span><span class='orange'>無制限に：</span><span class='purple'>バックライト</span>を赤くし、「しんにゅうしゃ！」と<span class='purple'>言って</span><span class='purple'>バックライト</span>を点滅させます。"
   },
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "先に課題に取り組んでから「次へ」をタップして答えを確認します！"
   },
   "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText" : {
-    "translation" : "侵入者"
+    "translation" : "しんにゅうしゃ!"
   },
   "codeLabChallenge_intruder.answerSlide.primaryText" : {
     "translation" : "#32の答え"
@@ -391,7 +391,7 @@
     "translation" : "キューブで\u000aエクササイズ"
   },
   "codeLabSampleProject_IntruderAlarm.projectName" : {
-    "translation" : "侵入者警報！"
+    "translation" : "しんにゅう者警報！"
   },
   "codeLab.SaveProject.Autosaved" : {
     "translation" : "自動保存されました"

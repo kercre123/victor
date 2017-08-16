@@ -209,7 +209,7 @@ COZMOが目を覚まして充電ドックから離れるまでお待ちくださ
 #29：<span class='yellow'>顔が見えたら、</span><span class='violet'>驚いて、</span>完全に後ろを<span class='blue'>向きます</span>。
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
 #9：<span class='yellow'>顔が見えたら</span><span class='purple'>バックライト</span>を何かの色にして、何か<span class='purple'>話して</span><span class='blue'>前に進みます。</span>
-侵入者警報！
+しんにゅう者警報！
 リフトを動かす
 #7：<span class='purple'>バックライト</span>をあなたの好きな色にして、それからその色の名前を<span class='purple'>言います</span>。
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
@@ -286,8 +286,8 @@ COZMOが目を覚まして充電ドックから離れるまでお待ちくださ
 #3の答え
 #20：4つのコードブロックだけを使って、正方形を描くように<span class='blue'>前に急いで進みます</span>。
 #16の答え
-#32：<span class='yellow'>顔が見えたら、</span><span class='violet'>驚いて、</span><span class='orange'>無制限に：</span><span class='purple'>バックライト</span>を赤くし、「侵入者！」と<span class='purple'>言って</span><span class='purple'>バックライト</span>を点滅させます。
-侵入者
+#32：<span class='yellow'>顔が見えたら、</span><span class='violet'>驚いて、</span><span class='orange'>無制限に：</span><span class='purple'>バックライト</span>を赤くし、「しんにゅうしゃ！」と<span class='purple'>言って</span><span class='purple'>バックライト</span>を点滅させます。
+しんにゅうしゃ!
 #28の答え
 サンプル
 コードブロックをタップすると、それが何をするのか確認できます。
