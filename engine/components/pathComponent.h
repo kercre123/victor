@@ -55,7 +55,33 @@ enum class ERobotDriveToPoseStatus {
     
   // Stopped and waiting (not planning or following)
   Ready,
+
+  // Similar to WaitingToBeginPath, this is the state the component is in when it has sent down a "cancel"
+  // request (e.g. in response to Abort), but the robot hasn't confirmed it yet. Note that the path
+  // component is able to start a new path from this state as well
+  WaitingToCancelPath,
+
+  // Same as above, but also counts as a failure
+  WaitingToCancelPathAndSetFailure
 };
+
+constexpr const char* ERobotDriveToPoseStatusToString(ERobotDriveToPoseStatus status)
+{
+
+#define HANDLE_ETDTPS_CASE(v) case ERobotDriveToPoseStatus::v: return #v
+
+  switch(status) {
+    HANDLE_ETDTPS_CASE(Failed);
+    HANDLE_ETDTPS_CASE(ComputingPath);
+    HANDLE_ETDTPS_CASE(WaitingToBeginPath);
+    HANDLE_ETDTPS_CASE(FollowingPath);
+    HANDLE_ETDTPS_CASE(Ready);
+    HANDLE_ETDTPS_CASE(WaitingToCancelPath);
+    HANDLE_ETDTPS_CASE(WaitingToCancelPathAndSetFailure);
+  }
+  
+#undef HANDLE_ETDTPS_CASE
+}
 
 class PathComponent : private Util::noncopyable
 {
@@ -99,7 +125,8 @@ public:
   const PathMotionProfile& GetCustomMotionProfile() const;
   
   // This function checks the planning / path following status of the robot. See the enum definition for
-  // details
+  // details. In 99% of cases you should prefer the direct bool functions below, like IsActive() or
+  // LastPathFailed()
   ERobotDriveToPoseStatus GetDriveToPoseStatus() const { return _driveToPoseStatus; }
 
   // Opposite of IsReady, this component is actively doing something (planning, following, etc)
@@ -107,6 +134,9 @@ public:
 
   // True if there is a path to follow (state is following path or waiting to begin)
   bool HasPathToFollow() const;
+
+  // True if the last path failed (based on status of failure)
+  bool LastPathFailed() const;
   
   // Execute a manually-assembled path
   Result ExecuteCustomPath(const Planning::Path& path, const bool useManualSpeed = false);
@@ -175,6 +205,11 @@ private:
   Result ClearPath();
   Result SendClearPath() const;
 
+  bool IsWaitingToCancelPath() const;
+
+  // true if we're waiting for something from the robot (e.g. start path or cancel path)
+  bool IsWaitingForRobotResponse() const;
+  
   // Drive the given path
   Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
 
@@ -200,14 +235,23 @@ private:
 
   // Do not directly set _driveToPoseStatus (use transition function instead)
   ERobotDriveToPoseStatus  _driveToPoseStatus            = ERobotDriveToPoseStatus::Ready;
-  float                    _lastPathSendTime_s           = 0.0f;
+  float                    _lastMsgSendTime_s            = 0.0f;
   s8                       _currPathSegment              = -1;
   u16                      _lastSentPathID               = 0;
   u16                      _lastRecvdPathID              = 0;
   bool                     _usingManualPathSpeed         = false;
   bool                     _plannerActive                = false;
   bool                     _hasCustomMotionProfile       = false;
-  
+
+
+  // keep track of the last path ID we canceled. Note that when we cancel a path we will transition to one of
+  // the "waiting to cancel" statuses, but then we may start working on a new plan before we actually get a
+  // message letting us know that the robot canceled the path. In that case, this variable will remain set but
+  // the status may move on to, e.g. ComputingPath or WaitingToBeginPath. We always leave this set, rather
+  // than resetting it to 0, just in case the robot send us multiple path event type messages with the same
+  // path ID (e.g. a completed followed by an interrupted)
+  u16 _lastCanceledPathID = 0;
+
   std::unique_ptr<PathMotionProfile> _pathMotionProfile;
   std::unique_ptr<PlanParameters>    _currPlanParams;
   
@@ -216,6 +260,7 @@ private:
   Signal::SmartHandle _pathEventHandle;
   
 };
+
 
 }
 }

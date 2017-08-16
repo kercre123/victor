@@ -45,19 +45,16 @@ ActionResult DrivePathAction::Init()
 
 ActionResult DrivePathAction::CheckIfDone()
 {
-  //Check if robot arrived at destination
-  switch( _robot.GetPathComponent().GetDriveToPoseStatus() ) {
-    case ERobotDriveToPoseStatus::Failed:
-      return ActionResult::FAILED_TRAVERSING_PATH;
-      
-    case ERobotDriveToPoseStatus::ComputingPath:
-    case ERobotDriveToPoseStatus::WaitingToBeginPath:
-    case ERobotDriveToPoseStatus::FollowingPath:
-      return ActionResult::RUNNING;
-
-    case ERobotDriveToPoseStatus::Ready:
-      return ActionResult::SUCCESS;
+  if( _robot.GetPathComponent().LastPathFailed() ) {
+    return ActionResult::FAILED_TRAVERSING_PATH;
   }
+
+  if( _robot.GetPathComponent().IsActive() ) {
+    return ActionResult::RUNNING;
+  }
+
+  // otherwise we must have completed
+  return ActionResult::SUCCESS;
 }
 
   

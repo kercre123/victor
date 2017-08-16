@@ -668,7 +668,7 @@ namespace Anki {
         return ActionResult::RUNNING;
       }
 
-      if( _robot.GetPathComponent().GetDriveToPoseStatus() == ERobotDriveToPoseStatus::Failed ) {
+      if( _robot.GetPathComponent().LastPathFailed() ) {
         return ActionResult::FAILED_TRAVERSING_PATH;
       }
       
