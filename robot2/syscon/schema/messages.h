@@ -59,13 +59,14 @@ typedef uint32_t DropSensor;
 // ENUM PayloadId
 enum {
   PAYLOAD_DATA_FRAME  = 0x6466,
+  PAYLOAD_CONT_DATA   = 0x6364,
   PAYLOAD_MODE_CHANGE = 0x6d64,
   PAYLOAD_VERSION     = 0x7276,
   PAYLOAD_ACK         = 0x6b61,
   PAYLOAD_ERASE       = 0x7878,
   PAYLOAD_VALIDATE    = 0x7374,
   PAYLOAD_DFU_PACKET  = 0x6675,
-  PAYLOAD_TYPE_COUNT  = 7,
+  PAYLOAD_TYPE_COUNT  = 8,
 };
 typedef uint16_t PayloadId;
 

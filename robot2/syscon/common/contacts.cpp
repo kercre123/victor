@@ -56,17 +56,17 @@ void Contacts::forward(const ContactData& pkt) {
 }
 
 bool Contacts::transmit(ContactData& pkt) {
-  if (rxDataIndex <= 0) {
-    return false;
-  }
-  
-  memcpy(pkt.data, rxData.data, rxDataIndex);
-  memset(rxData.data, 0, sizeof(pkt.data));
+  bool transmit = rxDataIndex > 0;
+
+  memcpy(pkt.data, rxData.data, sizeof(pkt.data));
+  memset(rxData.data, 0, sizeof(rxData.data));
   rxDataIndex = 0;
-  return true;
+
+  return transmit;
 }
 
 extern "C" void USART2_IRQHandler(void) {
+  // Transmit data
   if (USART2->ISR & USART_ISR_TXE) {
     txNextByte();
   }
