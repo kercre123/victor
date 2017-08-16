@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 08/14/17
  *
- * Description:
+ * Description: Checks that Cozmo can read the lift tool codes and that they are within expected bounds
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -112,21 +112,8 @@ void BehaviorPlaypenReadToolCode::TransitionToToolCodeRead(Robot& robot,
   {
     PLAYPEN_SET_RESULT(FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
   }
-  else
-  {
-    PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS);
-  }
-}
 
-BehaviorStatus BehaviorPlaypenReadToolCode::InternalUpdateInternal(Robot& robot)
-{
-  
-  return BehaviorStatus::Running;
-}
-
-void BehaviorPlaypenReadToolCode::StopInternal(Robot& robot)
-{
-  
+  PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS);
 }
 
 }

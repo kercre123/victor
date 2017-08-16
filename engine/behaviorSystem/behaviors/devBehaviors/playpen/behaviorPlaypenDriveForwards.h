@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/28/17
  *
- * Description:
+ * Description: Drives Cozmo fowards over a narrow cliff checking that all 4 cliff sensors are working
  *
  * Copyright: Anki, Inc. 2017
  *

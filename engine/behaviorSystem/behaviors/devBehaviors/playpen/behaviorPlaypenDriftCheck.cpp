@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/27/17
  *
- * Description:
+ * Description: Checks head and lift motor range, speaker works, mics work, and imu drift is minimal
  *
  * Copyright: Anki, Inc. 2017
  *

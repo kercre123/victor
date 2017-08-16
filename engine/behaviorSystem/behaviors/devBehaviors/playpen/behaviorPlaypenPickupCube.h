@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 08/08/17
  *
- * Description:
+ * Description: Checks that Cozmo can pickup and place LightCube1 (paperclip) with minimal changes in body rotation
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -29,7 +29,6 @@ namespace Anki {
     protected:
       
       virtual Result         InternalInitInternal(Robot& robot)   override;
-      virtual BehaviorStatus InternalUpdateInternal(Robot& robot) override;
       virtual void           StopInternal(Robot& robot)   override;
       
       virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
@@ -40,7 +39,7 @@ namespace Anki {
       void TransitionToBackup(Robot& robot);
       
       Pose3d _expectedCubePose;
-      Radians  _robotAngleAtPickup;
+      Radians _robotAngleAtPickup;
     };
     
   }

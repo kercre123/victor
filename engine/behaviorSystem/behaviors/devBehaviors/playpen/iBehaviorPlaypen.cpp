@@ -4,7 +4,11 @@
  * Author: Al Chaussee
  * Created: 07/24/17
  *
- * Description:
+ * Description: Base class for all playpen related behaviors
+ *              All Playpen behaviors should be written to be able to continue even after
+ *              receiving unexpected things (basically conditional branches should only contain code
+ *              that calls SET_RESULT) E.g. Even if camera calibration is outside our threshold we should
+ *              still be able to continue running the rest through the rest of playpen.
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -21,6 +25,9 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+
+// Set of messages that will immediately cause any playpen behaivor to end
+// Unless they have explicitly subscribed to the a message themselves and are expecting to see it
 static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = {
   ExternalInterface::MessageEngineToGameTag::RobotState,
   ExternalInterface::MessageEngineToGameTag::CliffEvent,
@@ -49,6 +56,7 @@ bool IBehaviorPlaypen::IsRunnableInternal(const BehaviorPreReqPlaypen& preReq) c
 
 Result IBehaviorPlaypen::InitInternal(Robot& robot)
 {
+  // Add a timer to force the behavior to end if runs too long
   AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
     PRINT_NAMED_WARNING("IBehaviorPlaypen.Timeout",
                         "Behavior %s has timed out and we are %s ignoring failures",
@@ -64,6 +72,7 @@ Result IBehaviorPlaypen::InitInternal(Robot& robot)
       SetResult(FactoryTestResultCode::SUCCESS);
     }
   });
+  
   return InternalInitInternal(robot);
 }
   
@@ -75,6 +84,7 @@ BehaviorStatus IBehaviorPlaypen::UpdateInternal(Robot& robot)
     return BehaviorStatus::Failure;
   }
 
+  // Update the timers
   for(auto& timer : _timers)
   {
     timer.Tick();
@@ -86,6 +96,9 @@ BehaviorStatus IBehaviorPlaypen::UpdateInternal(Robot& robot)
 void IBehaviorPlaypen::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   EngineToGameTag tag = event.GetData().GetTag();
+  
+  // If a subclass subscribed to the tag then let them handle it otherwise it is one we (the baseclass) subscribed
+  // to, one of the kFailureTags
   if(_tagsSubclassSubscribeTo.count(tag) > 0)
   {
     HandleWhileRunningInternal(event, robot);
@@ -249,7 +262,8 @@ void IBehaviorPlaypen::WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,co
   }
 }
   
-bool IBehaviorPlaypen::ShouldIgnoreFailures() const {
+bool IBehaviorPlaypen::ShouldIgnoreFailures() const
+{
   return PlaypenConfig::kIgnoreFailures;
 }
   

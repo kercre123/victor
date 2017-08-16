@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/26/17
  *
- * Description:
+ * Description: Calibrates Cozmo's motors
  *
  * Copyright: Anki, Inc. 2017
  *

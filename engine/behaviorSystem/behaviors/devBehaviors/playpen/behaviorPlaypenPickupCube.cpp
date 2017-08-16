@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 08/08/17
  *
- * Description:
+ * Description: Checks that Cozmo can pickup and place LightCube1 (paperclip) with minimal changes in body rotation
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -132,15 +132,13 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
   action->SetDoLiftLoadCheck(true);
   
   StartActing(action, [this, &robot, objectID = object->GetID()](ActionResult result) {
-    if(result == ActionResult::SUCCESS &&
-       robot.GetCarryingComponent().GetCarryingObject() == objectID)
-    {
-      TransitionToPlaceCube(robot);
-    }
-    else
+    if(!(result == ActionResult::SUCCESS &&
+         robot.GetCarryingComponent().GetCarryingObject() == objectID))
     {
       PLAYPEN_SET_RESULT(FactoryTestResultCode::PICKUP_FAILED)
     }
+    
+    TransitionToPlaceCube(robot);
   });
   
   return RESULT_OK;
@@ -161,15 +159,13 @@ void BehaviorPlaypenPickupCube::TransitionToPlaceCube(Robot& robot)
   
   PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
   StartActing(action, [this, &robot](ActionResult result) {
-    if(result == ActionResult::SUCCESS &&
-       !robot.GetCarryingComponent().IsCarryingObject()) // TODO: Probably don't need to be checking carrying component
-    {
-      TransitionToBackup(robot);
-    }
-    else
+    if(!(result == ActionResult::SUCCESS &&
+         !robot.GetCarryingComponent().IsCarryingObject()))
     {
       PLAYPEN_SET_RESULT(FactoryTestResultCode::PLACEMENT_FAILED);
     }
+    
+    TransitionToBackup(robot);
   });
 }
 
@@ -195,15 +191,9 @@ void BehaviorPlaypenPickupCube::TransitionToBackup(Robot& robot)
   });
 }
 
-BehaviorStatus BehaviorPlaypenPickupCube::InternalUpdateInternal(Robot& robot)
-{
-
-  return BehaviorStatus::Running;
-}
-
 void BehaviorPlaypenPickupCube::StopInternal(Robot& robot)
 {
-  
+  _robotAngleAtPickup = 0;
 }
 
 void BehaviorPlaypenPickupCube::HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot)

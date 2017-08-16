@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/25/17
  *
- * Description:
+ * Description: Calibrates Cozmo's camera by using a single calibration target
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -63,7 +63,7 @@ BehaviorPlaypenCameraCalibration::BehaviorPlaypenCameraCalibration(Robot& robot,
 
 Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
 {
-  // Define a custom object with marker Diamonds3 so we can know when we are seeing the
+  // Define a custom object with marker kMarkerToTriggerCalibration so we can know when we are seeing the
   // calibration target via a RobotObservedObject message
   CustomObject* customCube = CustomObject::CreateCube(ObjectType::CustomType00,
                                                       PlaypenConfig::kMarkerToTriggerCalibration,
@@ -74,7 +74,7 @@ Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
   robot.GetBlockWorld().DefineObject(std::unique_ptr<CustomObject>(customCube));
 
   // Set fake calibration if not already set so that we can actually run
-  // calibration from images.
+  // calibration from images
   if (!robot.GetVisionComponent().IsCameraCalibrationSet())
   {
     PRINT_NAMED_INFO("BehaviorPlaypenCameraCalibration.SettingFakeCalib", "");
@@ -83,6 +83,7 @@ Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
   
   robot.GetVisionComponent().ClearCalibrationImages();
   
+  // Move head and lift so we can see the target
   CompoundActionParallel* action = new CompoundActionParallel(robot, {new MoveHeadToAngleAction(robot, PlaypenConfig::kHeadAngleToSeeTarget),
                                                                       new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK)});
   
@@ -97,8 +98,8 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(Robot& r
 {
   if(!_computingCalibration)
   {
-    // If we are seeing the star block and our head is not moving then store the next image for
-    // camera calibration
+    // If we are seeing the target and our head is not moving and we haven't yet taken
+    // a calibration image then store the next image for camera calibration
     if(!IsActing() &&
        !robot.GetMoveComponent().IsHeadMoving() &&
        robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0 &&
@@ -130,8 +131,6 @@ void BehaviorPlaypenCameraCalibration::StopInternal(Robot& robot)
   robot.GetBlockWorld().DeleteLocatedObjects(filter);
   
   _computingCalibration = false;
-  
-  _timeStartedWaitingForTarget = 0;
   
   _seeingTarget = false;
 }

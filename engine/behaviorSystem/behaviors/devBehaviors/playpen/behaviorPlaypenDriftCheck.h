@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/27/17
  *
- * Description:
+ * Description: Checks head and lift motor range, speaker works, mics work, and imu drift is minimal
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -39,9 +39,13 @@ private:
   void TransitionToPlayingSound(Robot& robot);
   void CheckDrift(Robot& robot);
   
+  // Angle at the start of drift check
   Radians _startingRobotOrientation = 0;
   
+  // Whether or not the sound animation has completed
   bool _soundComplete = false;
+  
+  // Whether or not the drift check is complete
   bool _driftCheckComplete = false;
 };
 

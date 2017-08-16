@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 08/14/17
  *
- * Description:
+ * Description: Checks that Cozmo can read the lift tool codes and that they are within expected bounds
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -29,8 +29,6 @@ protected:
 protected:
   
   virtual Result         InternalInitInternal(Robot& robot)   override;
-  virtual BehaviorStatus InternalUpdateInternal(Robot& robot) override;
-  virtual void           StopInternal(Robot& robot)   override;
   
 private:
   

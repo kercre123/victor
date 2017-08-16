@@ -4,7 +4,8 @@
  * Author: Al Chaussee
  * Created: 08/09/17
  *
- * Description:
+ * Description: Checks any final things playpen is interested in like battery voltage and that we have heard
+ *              from an active object
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -40,20 +41,9 @@ Result BehaviorPlaypenEndChecks::InternalInitInternal(Robot& robot)
   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
 }
 
-BehaviorStatus BehaviorPlaypenEndChecks::InternalUpdateInternal(Robot& robot)
-{
-
-  return BehaviorStatus::Running;
-}
-
 void BehaviorPlaypenEndChecks::StopInternal(Robot& robot)
 {
   _heardFromLightCube = false;
-}
-
-void BehaviorPlaypenEndChecks::HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot)
-{
-  
 }
 
 void BehaviorPlaypenEndChecks::AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot)

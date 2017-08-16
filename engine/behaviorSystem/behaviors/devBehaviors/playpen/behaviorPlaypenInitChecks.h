@@ -4,7 +4,8 @@
  * Author: Al Chaussee
  * Created: 08/09/17
  *
- * Description:
+ * Description: Quick check of initial robot state for playpen. Checks things like firmware version,
+ *              battery voltage, cliff sensors, etc
  *
  * Copyright: Anki, Inc. 2017
  *

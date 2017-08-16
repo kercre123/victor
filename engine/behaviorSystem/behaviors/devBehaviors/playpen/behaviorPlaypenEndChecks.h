@@ -4,7 +4,8 @@
  * Author: Al Chaussee
  * Created: 08/14/17
  *
- * Description:
+ * Description: Checks any final things playpen is interested in like battery voltage and that we have heard
+ *              from an active object
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -29,10 +30,8 @@ protected:
 protected:
   
   virtual Result         InternalInitInternal(Robot& robot)   override;
-  virtual BehaviorStatus InternalUpdateInternal(Robot& robot) override;
   virtual void           StopInternal(Robot& robot)   override;
   
-  virtual void HandleWhileRunningInternal(const EngineToGameEvent& event, Robot& robot) override;
   virtual void AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot) override;
   
 private:

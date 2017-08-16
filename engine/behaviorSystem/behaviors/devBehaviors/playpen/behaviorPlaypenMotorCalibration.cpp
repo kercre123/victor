@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/25/17
  *
- * Description:
+ * Description: Calibrates Cozmo's motors
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -37,8 +37,7 @@ BehaviorStatus BehaviorPlaypenMotorCalibration::InternalUpdateInternal(Robot& ro
 {
   if(_liftCalibrated && _headCalibrated)
   {
-    SetResult(FactoryTestResultCode::SUCCESS);
-    return BehaviorStatus::Complete;
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, BehaviorStatus::Complete);
   }
   
   return BehaviorStatus::Running;

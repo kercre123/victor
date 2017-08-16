@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 08/10/17
  *
- * Description:
+ * Description: Configuration file for playpen
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -17,6 +17,7 @@ namespace Anki {
 
 namespace Util {
   
+// ConsoleVar specialization for BodyColor
 template<>
 ConsoleVar<Cozmo::BodyColor>::ConsoleVar(Cozmo::BodyColor& value, const char* id, const char* category)
 : IConsoleVariable( id, category )
@@ -65,9 +66,7 @@ template<> uint64_t ConsoleVar<Cozmo::BodyColor>::GetMaxAsUInt64() const
 
 template<> void ConsoleVar<Cozmo::BodyColor>::ToggleValue() { _value = (Cozmo::BodyColor)(!(((bool)(_value)))); }
 
-
-
-
+// ConsoleVar specialization for CustomObjectMarker
 template<>
 ConsoleVar<Cozmo::CustomObjectMarker>::ConsoleVar(Cozmo::CustomObjectMarker& value, const char* id, const char* category)
 : IConsoleVariable( id, category )

@@ -4,7 +4,7 @@
  * Author: Al Chaussee
  * Created: 07/25/17
  *
- * Description:
+ * Description: Calibrates Cozmo's camera by using a single calibration target
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -41,8 +41,10 @@ private:
   void HandleCameraCalibration(Robot& robot, const CameraCalibration& calibMsg);
   void HandleRobotObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
 
+  // Whether or not we are currently computing camera calibration
   bool        _computingCalibration        = false;
-  TimeStamp_t _timeStartedWaitingForTarget = 0;
+
+  // Whether or not we are currently seeing the target
   bool        _seeingTarget                = false;
 };
 
