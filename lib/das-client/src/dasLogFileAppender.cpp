@@ -358,6 +358,10 @@ void DasLogFileAppender::ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionB
                   LOGD("Error removing file '%s': %s", fullPath.c_str(), strerror(errno));
                 }
               }
+              // If we didn't successfully consume the file, archive it again
+              else if (_archiveCallback) {
+                (void) _archiveCallback(fullPath);
+              }
             }
           }
         }
