@@ -6,9 +6,9 @@
 typedef void (*VectorPtr)(void);
 
 static const uint32_t COZMO_APPLICATION_FINGERPRINT = 0x4F4D3243;
-static const uint32_t COZMO_APPLICATION_ADDRESS     = 0x8002000;
+static const uint32_t COZMO_APPLICATION_ADDRESS     = 0x8004000;
 static const uint32_t COZMO_APPLICATION_HEADER      = 0x110;
-static const uint32_t COZMO_APPLICATION_SIZE        = 0xDC00;
+static const uint32_t COZMO_APPLICATION_SIZE        = 0xC000;
 
 static const uint32_t* COZMO_HARDWARE_VERSION       = (uint32_t*)0x10;
 static const uint32_t* COZMO_MODEL_NUMBER           = (uint32_t*)0x14;
