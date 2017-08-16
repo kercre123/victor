@@ -32,7 +32,7 @@ public:
   virtual bool CanInterruptSelf() const override { return true; }
   
 protected:
-  virtual void EnabledStateChanged(bool enabled) override;
+  virtual void EnabledStateChanged(const Robot& robot, bool enabled) override;
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
 
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;

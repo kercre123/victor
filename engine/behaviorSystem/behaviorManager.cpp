@@ -1398,7 +1398,7 @@ void BehaviorManager::DisableReactionsWithLock(
         //About to disable, notify reaction trigger strategy
         const auto& allEntries = allStrategyMaps.GetStrategyMap();
         for(auto& entry : allEntries){
-          entry.first->EnabledStateChanged(false);
+          entry.first->EnabledStateChanged(_robot, false);
         }
       }
       
@@ -1445,7 +1445,7 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
       const auto& allEntries = allStrategyMaps.GetStrategyMap();
       for(auto& entry : allEntries)
       {
-        entry.first->EnabledStateChanged(false);
+        entry.first->EnabledStateChanged(_robot, false);
       }
     }
     
@@ -1493,7 +1493,7 @@ void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
         //About to enable, notify reaction trigger strategy
         const auto& allEntries = allStrategyMaps.GetStrategyMap();
         for(auto& entry : allEntries){
-          entry.first->EnabledStateChanged(true);
+          entry.first->EnabledStateChanged(_robot, true);
         }
       }
     }

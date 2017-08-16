@@ -160,7 +160,7 @@ void ReactionTriggerStrategyCubeMoved::AlwaysHandleInternal(const EngineToGameEv
 }
 
 
-void ReactionTriggerStrategyCubeMoved::EnabledStateChanged(bool enabled)
+void ReactionTriggerStrategyCubeMoved::EnabledStateChanged(const Robot& robot, bool enabled)
 {
   if(enabled){
     // Mark any blocks with a pose state still known as observed so that

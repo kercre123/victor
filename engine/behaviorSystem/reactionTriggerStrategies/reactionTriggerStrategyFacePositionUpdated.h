@@ -31,7 +31,7 @@ public:
 
 protected:
   virtual void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) override;
-  virtual void EnabledStateChanged(bool enabled) override
+  virtual void EnabledStateChanged(const Robot& robot, bool enabled) override
                  {_desiredTargets.clear();}
 
   virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
