@@ -102,7 +102,7 @@ enum {
   POWER_STATE_CHARGER_TEST_MODE = 6,
   POWER_STATE_DTM_MODE          = 7,
 };
-typedef uint16_t PowerState;
+typedef uint32_t PowerState;
 
 // ENUM LedIndexes
 enum {
@@ -124,18 +124,6 @@ enum {
   LED_COUNT   = 15,
 };
 typedef uint32_t LedIndexes;
-
-// ENUM ProxSensorCommands
-enum {
-  CMD_STOP         = 0,
-  CMD_RUN          = 1,
-  CALIBRATE        = 2,
-  SET_OFFSET       = 3,
-  SET_XTALK        = 4,
-  SET_RANGING_TIME = 5,
-  SET_PERIOD       = 6,
-};
-typedef uint16_t ProxSensorCommands;
 
 struct MotorPower
 {
@@ -173,14 +161,6 @@ struct ProcessorStatus
   uint16_t statusBits;
 };
 
-struct ProxControl
-{
-  uint32_t configValue;
-  uint32_t commandValue;
-  ProxSensorCommands command;
-  uint16_t spare;
-};
-
 struct MotorState
 {
   int32_t position;
@@ -212,14 +192,17 @@ struct BodyToHead
   int16_t audio[320];
 };
 
+struct ContactData
+{
+  uint8_t data[32];
+};
+
 struct HeadToBody
 {
   uint32_t framecounter;
   int16_t motorPower[4];
   uint8_t ledColors[16];
-  ProxControl proxCmd;
   PowerState powerState;
-  uint16_t spare;
 };
 
 struct AckMessage

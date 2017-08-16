@@ -1,7 +1,6 @@
 #include "common.h"
 #include "hardware.h"
 
-#include "timer.h"
 #include "power.h"
 
 #include "contacts.h"

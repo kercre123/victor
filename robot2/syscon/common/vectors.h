@@ -35,9 +35,6 @@ struct SystemHeader {
   };
   VectorPtr         resetVector;
   uint8_t           applicationVersion[16];
-  VectorPtr         visitorInit;
-  VectorPtr         visitorStop;
-  VectorPtr         visitorTick;
 };
 
 static const SystemHeader* const APP = (SystemHeader*)COZMO_APPLICATION_ADDRESS;

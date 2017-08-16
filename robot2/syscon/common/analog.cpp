@@ -5,7 +5,7 @@
 
 #include "analog.h"
 #include "power.h"
-#include "lights.h"
+//#include "lights.h"
 #include "vectors.h"
 #include "flash.h"
 
@@ -47,7 +47,8 @@ static void start_sample(void) {
       if (hold_count < POWER_DOWN_TIME) {
         hold_count++;
       } else if (hold_count < POWER_WIPE_TIME) {
-        Lights::disable();
+        // TODO: LIGHTS MANAGER
+        // Lights::disable();
       } else {
         // Mark the application as invalid
         // NOTE: This should only happen if the robot is on the charger
@@ -97,7 +98,6 @@ void Analog::init(void) {
   current_channel = 0;
   hold_count = 0;
   start_sample();
-
 }
 
 void Analog::stop(void) {

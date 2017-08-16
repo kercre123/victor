@@ -5,6 +5,7 @@
 #include "flash.h"
 #include "common.h"
 #include "hardware.h"
+#include "analog.h"
 
 #include "stm32f0xx.h"
 
@@ -136,7 +137,7 @@ void Comms::run(void) {
 
   while (!g_exitRuntime) {
     if (APP->fingerPrint == COZMO_APPLICATION_FINGERPRINT) {
-      APP->visitorTick();
+      Analog::tick();
     }
 
     __asm("WFI");
@@ -224,10 +225,6 @@ extern "C" void USART1_IRQHandler(void) {
     return ;
 
   case PAYLOAD_ERASE:
-    if (APP->fingerPrint == COZMO_APPLICATION_FINGERPRINT) {
-      APP->visitorStop();
-    }
-
     Flash::eraseApplication();
     break ;
 
@@ -242,7 +239,6 @@ extern "C" void USART1_IRQHandler(void) {
 
       // Write fingerprint to signify that write completed
       Flash::writeFlash(&APP->fingerPrint, &COZMO_APPLICATION_FINGERPRINT, sizeof(APP->fingerPrint));
-      APP->visitorInit();
     }
     break ;
 

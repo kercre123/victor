@@ -6,6 +6,10 @@
 
 #include "stm32f0xx.h"
 
+#include "power.h"
+#include "analog.h"
+#include "contacts.h"
+
 #include "common.h"
 #include "hardware.h"
 
@@ -66,6 +70,10 @@ void timer_init(void) {
   NVIC_EnableIRQ(WWDG_IRQn);
 }
 
+extern "C" void SoftReset(void) {
+  NVIC_SystemReset();
+}
+
 extern "C" void TIM14_IRQHandler(void) {
   #ifndef DISABLE_WDOG
   IWDG->KR = 0xAAAA;
@@ -94,6 +102,14 @@ int main(void) {
   // Start the watchdog up
   timer_init();
 
+  Power::enableClocking();
+  Power::init();
+  Contacts::init();
+  Analog::init();
+
+  // TODO: WAIT FOR BATTERY VOLTAGE TO GET ABOVE A CERTAIN LEVEL
+  // TODO: WAIT FOR VEXT TO GET ABOVE A CERTAIN LEVEL
+  
   // Turn power on to the board
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);
@@ -105,16 +121,15 @@ int main(void) {
     Flash::eraseApplication();
   }
 
-  if (APP->fingerPrint == COZMO_APPLICATION_FINGERPRINT) {
-    APP->visitorInit();
-  }
-
   Comms::run();
 
   // This flag is only set when DFU has validated the image
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
     NVIC_SystemReset();
   }
+
+  Analog::stop();
+  Power::stop();
 
   StartApplication(APP->stackStart, APP->resetVector);
 }

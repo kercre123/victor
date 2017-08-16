@@ -334,7 +334,7 @@
               <MiscControls>--gnu</MiscControls>
               <Define>STM32F030X8</Define>
               <Undefine></Undefine>
-              <IncludePath>common;schema;build</IncludePath>
+              <IncludePath>src;common;schema;build</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -403,16 +403,6 @@
               <FilePath>.\src\timer.cpp</FilePath>
             </File>
             <File>
-              <FileName>power.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\src\power.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>contacts.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\src\contacts.cpp</FilePath>
-            </File>
-            <File>
               <FileName>vectors.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\src\vectors.s</FilePath>
@@ -421,16 +411,6 @@
               <FileName>opto.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\opto.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>flash.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\flash.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>analog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\src\analog.cpp</FilePath>
             </File>
             <File>
               <FileName>lights.cpp</FileName>
@@ -446,6 +426,31 @@
               <FileName>touch.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\src\touch.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\power.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>common</GroupName>
+          <Files>
+            <File>
+              <FileName>analog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\common\analog.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>contacts.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\common\contacts.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>flash.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\common\flash.cpp</FilePath>
             </File>
           </Files>
         </Group>
