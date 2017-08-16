@@ -1,4 +1,4 @@
-﻿using Anki.UI;
+﻿using Cozmo.UI;
 using System;
 using UnityEngine;
 
@@ -8,10 +8,10 @@ public class AndroidPermissionBlocker : MonoBehaviour {
   public const string kPermission = "android.permission.READ_EXTERNAL_STORAGE";
 
   [SerializeField]
-  private AnkiTextLegacy _Label;
+	private CozmoText _Label;
 
   [SerializeField]
-  private AnkiButtonLegacy _Button;
+	private CozmoButton _Button;
 
   private AndroidJavaObject _Activity;
   private AndroidJavaObject _PermissionUtil;
