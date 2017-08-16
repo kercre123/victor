@@ -166,6 +166,19 @@ namespace Cozmo {
     // random face displayed (stream last face keyframe)
     void Abort();
     
+    
+    void StopTracks(const u8 whichTracks);
+    
+    void StopTracksInUse() {
+      // In case we are aborting an animation, stop any tracks that were in use
+      // (For now, this just means motor-based tracks.) Note that we don't
+      // stop tracks we weren't using, in case we were, for example, playing
+      // a head animation while driving a path.
+      StopTracks(_tracksInUse);
+    }
+
+    
+    
     const CozmoContext* _context = nullptr;
     
     // Container for all known "canned" animations (i.e. non-live)
@@ -194,9 +207,11 @@ namespace Cozmo {
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
     Tag _tagCtr   = 0;
-    
+
+    // Start and end messages sent to engine
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
+    
     bool _wasAnimationInterruptedWithNothing = false;
     
     bool _backpackAnimationLayerEnabled = false;
@@ -236,6 +251,10 @@ namespace Cozmo {
     
     // For track locking
     u8 _lockedTracks;
+    
+    // Which tracks are currently playing
+    u8 _tracksInUse;
+    
     
     // For live animation
     std::map<LiveIdleAnimationParameter, f32> _liveAnimParams;

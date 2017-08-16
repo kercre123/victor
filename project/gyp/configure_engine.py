@@ -242,7 +242,7 @@ def main(scriptArgs):
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c'])
-  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/robot', 'simulator/controllers/webotsCtrlRobot2'],
+  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'simulator/robot', 'simulator/controllers/webotsCtrlRobot2'],
                           ['project/gyp/ctrlRobot2.lst'],
                           ['nvStorage.*'])
   generator.processFolder(['robot2/hal/src', 'robot2/hal/spine', 'robot/supervisor/src'],

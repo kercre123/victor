@@ -20,7 +20,7 @@ namespace Anki {
 namespace Cozmo {
   
   CannedAnimationContainer::CannedAnimationContainer()
-  : _animIDCtr(0)
+  : _animIDCtr(0)   // 0 is reserved invalid
   {
     DefineHardCoded();
    
@@ -43,10 +43,10 @@ namespace Cozmo {
     
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
+      ++_animIDCtr;
       _animations.emplace(name,Animation(name));
       _animIDToNameMap.emplace(_animIDCtr, name);
       _animNameToIDMap.emplace(name, _animIDCtr);
-      ++_animIDCtr;
     }
     
     return lastResult;

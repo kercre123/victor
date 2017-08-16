@@ -32,6 +32,8 @@ AnimationComponent::AnimationComponent(Robot& robot, const CozmoContext* context
 , _robot(robot)
 , _isDolingAnims(false)
 , _nextAnimToDole("")
+, _currPlayingAnimID(0)
+, _currCallback({})
 {
   if (context) {
     // Setup game message handlers
@@ -108,7 +110,7 @@ void AnimationComponent::DoleAvailableAnimations()
 }
   
   
-Result AnimationComponent::PlayAnimByName(const std::string& animName)
+Result AnimationComponent::PlayAnimByName(const std::string& animName, int numLoops, bool interruptRunning, AnimationCompleteCallback callback)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.Uninitialized", "");
@@ -123,21 +125,27 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName)
   }
   
   PRINT_NAMED_DEBUG("AnimationComponent.PlayAnimByName.PlayingAnim", "[%d] %s", it->second, animName.c_str());
-  return PlayAnimByID(it->second);
+  return PlayAnimByID(it->second, numLoops, interruptRunning, callback);
 }
   
   
-Result AnimationComponent::PlayAnimByID(u32 animID)
+Result AnimationComponent::PlayAnimByID(u32 animID, int numLoops, bool interruptRunning, AnimationCompleteCallback callback)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByID.Uninitialized", "");
     return RESULT_FAIL;
   }
   
-  return _robot.SendRobotMessage<RobotInterface::PlayAnim>(animID);
+  if (IsPlayingAnimation() && !interruptRunning) {
+    PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByID.WontInterruptCurrentAnim", "");
+    return RESULT_OK;
+  }
+  
+  _currPlayingAnimID = animID;
+  _currCallback = callback;
+  return _robot.SendRobotMessage<RobotInterface::PlayAnim>(animID, numLoops);
 }
-  
-  
+
   
   
 // ================ Game messsage handlers ======================
@@ -162,13 +170,28 @@ void AnimationComponent::HandleAnimationAvailable(const AnkiEvent<RobotInterface
 void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const auto & payload = message.GetData().Get_animStarted();
-  PRINT_CH_INFO("AnimationComponent", "AnimStarted.Tag", "%d", payload.tag);
+  if (payload.id == _currPlayingAnimID) {
+    PRINT_CH_INFO("AnimationComponent", "AnimStarted.Tag", "id=%d, tag=%d", payload.id, payload.tag);
+  }
 }
 
 void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const auto & payload = message.GetData().Get_animEnded();
-  PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "%d", payload.tag);
+  
+  // Verify that expected animation completed and execute callback
+  if (payload.id != _currPlayingAnimID) {
+    PRINT_NAMED_WARNING("AnimationComponent.HandleAnimEnded.MismatchedID", "Expected %d, got %d", _currPlayingAnimID, payload.id);
+  } else {
+    PRINT_CH_INFO("AnimationComponent", "AnimEnded.Tag", "id=%d, tag=%d", payload.id, payload.tag);
+    if (_currCallback) {
+      _currCallback();
+    }
+  }
+  
+  // Reset the currently playing ID and callback
+  _currPlayingAnimID = 0;
+  _currCallback = {};
 }
   
 void AnimationComponent::HandleEndOfMessage(const AnkiEvent<RobotInterface::RobotToEngine>& message)

@@ -143,7 +143,7 @@ namespace Messages {
       case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
       {
         PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim", "%d", msg.playAnim.animID);
-        _animStreamer->SetStreamingAnimation(msg.playAnim.animID);
+        _animStreamer->SetStreamingAnimation(msg.playAnim.animID, msg.playAnim.numLoops);
 
         break;
       }

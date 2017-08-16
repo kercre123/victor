@@ -407,6 +407,7 @@ message RequestAvailableAnimations
 message PlayAnim
 {
   uint_32 animID,
+  uint_32 numLoops = 1,
 }
 
 message LockAnimTracks

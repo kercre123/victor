@@ -65,7 +65,8 @@ namespace Cozmo {
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _rng(*_context->GetRandom())
-//  , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
+  , _lockedTracks(0)
+  , _tracksInUse(0)
   , _liveAnimation("ProceduralLive")
 //  , _audioClient( audioClient )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
@@ -288,10 +289,7 @@ namespace Cozmo {
       // to it for determining when its time to stream out a keyframe
       _streamingTime_ms = _startTime_ms;
 
-      
-      // If this is an empty (e.g. live) animation, there is no need to
-      // send end of animation keyframe until we actually send a keyframe
-      _endOfAnimationSent = anim->IsEmpty();
+      _endOfAnimationSent = false;
       _startOfAnimationSent = false;
       
 //      // Prep sound
@@ -321,6 +319,7 @@ namespace Cozmo {
           case AnimTrackFlag::BODY_TRACK:
           case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
             res = Messages::SendToRobot(*msg);
+            _tracksInUse |= (u8)track;
             break;
           default:
             // Audio, face, and event frames are handled separately since they don't actually result in a EngineToRobot message
@@ -405,18 +404,21 @@ namespace Cozmo {
   Result AnimationStreamer::SendStartOfAnimation()
   {
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d", _tag);
+      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d, loopCtr=%d", _tag, _loopCtr);
     }
-    
-    RobotInterface::AnimationStarted startMsg;
-    startMsg.id = _streamingAnimID;
-    startMsg.tag = _tag;
-    if (!RobotInterface::SendMessageToEngine(startMsg)) {
-      return RESULT_FAIL;
+
+    if (_loopCtr == 0) {
+      RobotInterface::AnimationStarted startMsg;
+      startMsg.id = _streamingAnimID;
+      startMsg.tag = _tag;
+      if (!RobotInterface::SendMessageToEngine(startMsg)) {
+        return RESULT_FAIL;
+      }
     }
-    
+  
     _startOfAnimationSent = true;
     _endOfAnimationSent = false;
+
     return RESULT_OK;
   }
   
@@ -430,15 +432,17 @@ namespace Cozmo {
                "Should not be sending end of animation without having first sent start of animation.");
     
     if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Streaming EndOfAnimation at t=%dms.",
-                       _streamingTime_ms - _startTime_ms);
+      PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation.SendingToEngine", "t=%dms, loopCtr=%d, numLoops=%d",
+                       _streamingTime_ms - _startTime_ms, _loopCtr, _numLoops);
     }
     
-    RobotInterface::AnimationEnded endMsg;
-    endMsg.id = _streamingAnimID;
-    endMsg.tag = _tag;
-    if (!RobotInterface::SendMessageToEngine(endMsg)) {
-      return RESULT_FAIL;
+    if (_loopCtr == _numLoops - 1) {
+      RobotInterface::AnimationEnded endMsg;
+      endMsg.id = _streamingAnimID;
+      endMsg.tag = _tag;
+      if (!RobotInterface::SendMessageToEngine(endMsg)) {
+        return RESULT_FAIL;
+      }
     }
     
     _endOfAnimationSent = true;
@@ -693,6 +697,7 @@ namespace Cozmo {
         !_endOfAnimationSent)
     {      
 //       _audioClient.ClearCurrentAnimation();
+      StopTracksInUse();
       lastResult = SendEndOfAnimation();
     }
     
@@ -1113,6 +1118,40 @@ namespace Cozmo {
   {
     _longEnoughSinceLastStreamTimeout_s = kDefaultLongEnoughSinceLastStreamTimeout_s;
   }
+  
+
+  void AnimationStreamer::StopTracks(const u8 whichTracks)
+  {
+    if(whichTracks)
+    {
+      if(whichTracks & (u8)AnimTrackFlag::HEAD_TRACK)
+      {
+        RobotInterface::MoveHead msg;
+        msg.speed_rad_per_sec = 0;
+        RobotInterface::SendMessageToRobot(std::move(msg));
+      }
+      
+      if(whichTracks & (u8)AnimTrackFlag::LIFT_TRACK)
+      {
+        RobotInterface::MoveLift msg;
+        msg.speed_rad_per_sec = 0;
+        RobotInterface::SendMessageToRobot(std::move(msg));
+      }
+      
+      if(whichTracks & (u8)AnimTrackFlag::BODY_TRACK)
+      {
+        RobotInterface::DriveWheels msg;
+        msg.lwheel_speed_mmps = 0;
+        msg.rwheel_speed_mmps = 0;
+        msg.lwheel_accel_mmps2 = 0;
+        msg.rwheel_accel_mmps2 = 0;
+        RobotInterface::SendMessageToRobot(std::move(msg));
+      }
+      
+      _tracksInUse &= ~whichTracks;
+    }
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki

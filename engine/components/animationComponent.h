@@ -43,8 +43,12 @@ public:
   // Returns true when the list of available animations has been received from animation process
   bool IsInitialized() { return _isInitialized; }
 
-  Result PlayAnimByName(const std::string& animName);
+  using AnimationCompleteCallback = std::function<void()>;
+  Result PlayAnimByName(const std::string& animName, int numLoops = 1, bool interruptRunning = true, AnimationCompleteCallback callback = {});
 
+  
+  bool IsPlayingAnimation() const { return _currPlayingAnimID != 0; }
+  
   // Event/Message handling
   template<typename T>
   void HandleMessage(const T& msg);
@@ -65,7 +69,10 @@ private:
   bool _isDolingAnims;
   std::string _nextAnimToDole;
   
-  Result PlayAnimByID(u32 animID);
+  Result PlayAnimByID(u32 animID, int numLoops = 1, bool interruptRunning = true, AnimationCompleteCallback callback = {});
+  u32 _currPlayingAnimID;
+  AnimationCompleteCallback _currCallback;
+  
 };
 
 
