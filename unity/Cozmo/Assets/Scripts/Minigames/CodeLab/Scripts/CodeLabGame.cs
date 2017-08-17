@@ -1182,6 +1182,25 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return ObjectType.UnknownObject;
       }
     }
+    private ObjectType GetLightCubeIndexFromId(int cubeId) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      var cube1 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE1);
+      var cube2 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE2);
+      var cube3 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE3);
+      if (cube1 != null && cubeId == cube1.ID) {
+        return ObjectType.Block_LIGHTCUBE1;
+      }
+      else if (cube2 != null && cubeId == cube2.ID) {
+        return ObjectType.Block_LIGHTCUBE2;
+      }
+      else if (cube3 != null && cubeId == cube3.ID) {
+        return ObjectType.Block_LIGHTCUBE3;
+      }
+      else {
+        DAS.Error("CodeLab.BadCubeId", "cubeId " + cubeId.ToString());
+        return ObjectType.UnknownObject;
+      }
+    }
 
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
       DAS.Info("Codelab.OpenCodeLabProject", "request=" + request + ", UUID=" + projectUUID);
@@ -1439,12 +1458,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       // Listen for cube tapped events so we can kick off vertical "wait for cube tap" hat block
       LightCube.TappedAction += CubeTappedVerticalHatBlock;
+
+      // Listen for cube moved events so we can kick off vertical "wait for cube moved" hat block
+      LightCube.OnMovedAction += CubeMovedVerticalHatBlock;
     }
 
     private void StopVerticalHatBlockListeners() {
       RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedFaceVerticalHatBlock);
       RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(RobotObservedObjectVerticalHatBlock);
       LightCube.TappedAction -= CubeTappedVerticalHatBlock;
+      LightCube.OnMovedAction -= CubeMovedVerticalHatBlock;
     }
 
     public void RobotObservedFaceVerticalHatBlock(RobotObservedFace message) {
@@ -1477,7 +1500,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     public void CubeTappedVerticalHatBlock(int id, int tappedTimes, float timeStamp) {
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + id + "\"});");
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + ((int)GetLightCubeIndexFromId(id)) + "\"});");
+    }
+
+    public void CubeMovedVerticalHatBlock(int id, float XAccel, float YAccel, float ZAccel) {
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + ((int)GetLightCubeIndexFromId(id)) + "\"});");
     }
 
     void UnhideWebView() {

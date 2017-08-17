@@ -351,6 +351,36 @@ Blockly.Blocks['cozmo_event_on_cube_tap'] = {
   }
 };
 
+Blockly.Blocks['cozmo_event_on_cube_moved'] = {
+  /**
+   * Block to wait until a cube moves.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_event_on_cube_moved",
+      "message0": "when cube %1 is moved",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3']
+          ]
+        },
+      ],
+      "inputsInline": true,
+      "nextStatement": null,
+      "category": Blockly.Categories.event,
+      "colour": Blockly.Colours.event.primary,
+      "colourSecondary": Blockly.Colours.event.secondary,
+      "colourTertiary": Blockly.Colours.event.tertiary
+    });
+  }
+};
+
 // ========================================================================================================================
 // Vertical specific blocks
 // ========================================================================================================================
@@ -777,7 +807,7 @@ Blockly.Blocks['cozmo_vert_cube_get_yaw'] = {
 
 Blockly.Blocks['cozmo_vert_device_get_pitch'] = {
   /**
-   * Block to read the roll of the user's device
+   * Block to read the pitch of the user's device
    * @this Blockly.Block
    */
   init: function() {
@@ -813,7 +843,7 @@ Blockly.Blocks['cozmo_vert_device_get_roll'] = {
 
 Blockly.Blocks['cozmo_vert_device_get_yaw'] = {
   /**
-   * Block to read the roll of the user's device
+   * Block to read the yaw of the user's device
    * @this Blockly.Block
    */
   init: function() {
