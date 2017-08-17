@@ -1025,10 +1025,10 @@ public abstract class GameBase : MonoBehaviour {
         //If the player doesn't have a name, instead of "" WINS!, change the message to YOU WIN!
         if (!string.IsNullOrEmpty(player.name)) {
           if (useFlatText) {
-            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWinsFlat, new object[] { player.name });
           }
           else {
-            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWinsFlat, new object[] { player.name });
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
           }
         }
         else {
