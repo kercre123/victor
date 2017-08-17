@@ -243,7 +243,6 @@ message SetRobotAudioOutputSource
 }
 
 message ForceDelocalizeRobot {
-  uint_8 robotID
 }
 
 // Will restore the currently connected robot with either an automatically determined
@@ -293,7 +292,6 @@ message CancelActionByIdTag {
 
 // QueueCompoundAction
 message QueueCompoundAction {
-  uint_8  robotID,
   uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
   uint_8  numRetries = 0,
   bool  parallel,  // false means sequential
@@ -322,7 +320,6 @@ message ImageRequest {
 //       It is intended for dev use since the robot will likely always stream
 //       its image in the product.
 message SetRobotImageSendMode {
-    uint_8 robotID,
     ImageSendMode mode,
     ImageResolution resolution
 }
@@ -368,8 +365,7 @@ message SelectNextObject {
 // (Override robot's current belief about whether it's carrying a block)
 // (Ideally, for dev/prototyping only)
 message SetRobotCarryingObject {
-    int_32 objectID, // use -1 to specify "none"
-    uint_8 robotID
+    int_32 objectID // use -1 to specify "none"
 }
 
 
@@ -566,7 +562,6 @@ message SetLiftLoadTestAsRunnable {
 
 // Any message intended for a specific robot's behaviorManager
 message BehaviorManagerMessage {
-  uint_8  robotID,
   BehaviorManagerMessageUnion  BehaviorManagerMessageUnion
 }
 
@@ -593,7 +588,6 @@ message AbortAll {
 
 // StartTestMode
 message StartTestMode {
-    uint_8  robotID,
     int_32 p1,
     int_32 p2,
     int_32 p3,
@@ -721,7 +715,6 @@ message EraseQuad {
 
 // ReplayLastAnimation
 message ReplayLastAnimation {
-    uint_8  robotID,
     uint_32 numLoops
 }
 
@@ -761,7 +754,6 @@ message RequestAvailableAnimationGroups{
 message SetLiveIdleAnimationParameters {
   LiveIdleAnimationParameter   paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames
-  uint_8                       robotID,
   bool                         setUnspecifiedToDefault = 0
 }
 
@@ -802,7 +794,6 @@ message SetActiveObjectLEDs {
     WhichCubeLEDs   whichLEDs,
     MakeRelativeMode   makeRelative,
     uint_8   turnOffUnspecifiedLEDs, // whether to augment current pattern, or turn off everything but what's specified
-    uint_8   robotID
 }
 
 
@@ -910,7 +901,6 @@ union MoodMessageUnion {
 }
 
 message MoodMessage {
-  uint_8  robotID,
   MoodMessageUnion  MoodMessageUnion
 }
 

@@ -444,6 +444,13 @@ void BehaviorManager::InitializeEventHandlers()
                             {
                               BroadcastReactionTriggerMap();
                             }));
+  
+  _eventHandlers.push_back(externalInterface->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage,
+                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine> &event)
+                            {
+                              HandleMessage(event.GetData().Get_BehaviorManagerMessage().BehaviorManagerMessageUnion);
+                            }));
 }
 
   

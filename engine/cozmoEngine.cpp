@@ -686,10 +686,9 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& m
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
-  const RobotID_t robotID = msg.robotID;
   const ImageSendMode newMode = msg.mode;
   const ImageResolution resolution = msg.resolution;
-  Robot* robot = GetRobotByID(robotID);
+  Robot* robot = GetFirstRobot();
   
   if(robot != nullptr) {
     robot->SetImageSendMode(newMode);
@@ -709,7 +708,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::StartTestMode& msg)
 {
-  Robot* robot = GetRobotByID(msg.robotID);
+  Robot* robot = GetFirstRobot();
   if(robot != nullptr) {
     robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
   }

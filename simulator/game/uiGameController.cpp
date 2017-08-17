@@ -1101,7 +1101,6 @@ namespace Anki {
     void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
     {
       ExternalInterface::SetRobotImageSendMode m;
-      m.robotID = 1;
       m.mode = mode;
       m.resolution = resolution;
       ExternalInterface::MessageGameToEngine message;
@@ -1569,7 +1568,6 @@ namespace Anki {
     void UiGameController::SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
     {
       ExternalInterface::StartTestMode m;
-      m.robotID = 1;
       m.mode = mode;
       m.p1 = p1;
       m.p2 = p2;
@@ -1663,7 +1661,6 @@ namespace Anki {
     {
       ExternalInterface::ReplayLastAnimation m;
       m.numLoops = 1;
-      m.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ReplayLastAnimation(m);
       SendMessage(message);
@@ -1849,8 +1846,7 @@ namespace Anki {
         relativeToY,
         whichLEDs,
         makeRelative,
-        turnOffUnspecifiedLEDs,
-        1  // robotID
+        turnOffUnspecifiedLEDs
       );
 
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));

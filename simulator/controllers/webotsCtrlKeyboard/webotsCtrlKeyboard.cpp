@@ -902,7 +902,6 @@ namespace Anki {
                 if(shiftKeyPressed && altKeyPressed)
                 {
                   ExternalInterface::ForceDelocalizeRobot delocMsg;
-                  delocMsg.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
                 } else if(shiftKeyPressed) {
                   
@@ -1230,7 +1229,7 @@ namespace Anki {
                       ExternalInterface::ActivateSpark activate(unlock);
                       ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
                       behaviorUnion.Set_ActivateSpark(activate);
-                      ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
+                      ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
                       ExternalInterface::MessageGameToEngine msg;
                       msg.Set_BehaviorManagerMessage(behaviorMsg);
                       SendMessage(msg);
@@ -1246,7 +1245,7 @@ namespace Anki {
                     ExternalInterface::ActivateSpark deactivate(UnlockId::Count);
                     ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
                     behaviorUnion.Set_ActivateSpark(deactivate);
-                    ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
+                    ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
                     ExternalInterface::MessageGameToEngine msg;
                     msg.Set_BehaviorManagerMessage(behaviorMsg);
                     SendMessage(msg);
@@ -1362,7 +1361,7 @@ namespace Anki {
                 EmotionType emotionType = EmotionTypeFromString(emotionName.c_str());
 
                 SendMessage(ExternalInterface::MessageGameToEngine(
-                              ExternalInterface::MoodMessage(1,
+                              ExternalInterface::MoodMessage(
                                 ExternalInterface::MoodMessageUnion(
                                   ExternalInterface::SetEmotion( emotionType, emotionVal )))));
 
@@ -1621,7 +1620,6 @@ namespace Anki {
 
                   ExternalInterface::SetActiveObjectLEDs msg;
                   msg.objectID = GetLastObservedObject().id;
-                  msg.robotID = 1;
                   msg.onPeriod_ms = 250;
                   msg.offPeriod_ms = 250;
                   msg.transitionOnPeriod_ms = 500;
@@ -2584,7 +2582,6 @@ namespace Anki {
           
           ExternalInterface::SetActiveObjectLEDs msg;
           msg.objectID = GetLastObservedObject().id;
-          msg.robotID = 1;
           msg.onPeriod_ms = 100;
           msg.offPeriod_ms = 100;
           msg.transitionOnPeriod_ms = 50;
