@@ -50,7 +50,7 @@ static void txNextByte() {
 void Contacts::forward(const ContactData& pkt) {
   memcpy(txData.data, pkt.data, sizeof(txData.data));
   txDataIndex = 0;
-  
+
   USART2->CR1 |= ~USART_CR1_TXEIE;
   txNextByte();
 }

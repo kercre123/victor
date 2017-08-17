@@ -141,12 +141,13 @@ void Comms::run(void) {
   while (!g_exitRuntime) {
     Analog::tick();
 
-    NVIC_DisableIRQ(USART1_IRQn);
     ContactData outbound;
+
     if (Contacts::transmit(outbound)) {
+      NVIC_DisableIRQ(USART1_IRQn);
       sendPayload(PAYLOAD_CONT_DATA, &outbound, sizeof(outbound));
-    }  
-    NVIC_EnableIRQ(USART1_IRQn);
+      NVIC_EnableIRQ(USART1_IRQn);
+    }
 
     __asm("WFI");
   }
@@ -155,8 +156,6 @@ void Comms::run(void) {
 }
 
 extern "C" void USART1_IRQHandler(void) {
-  static uint16_t writeIndex = 0;
-
   // Start dequeueing fifo data
   if (USART1->ISR & USART_ISR_TXE) {
     USART1->TDR = tx_out_buffer[tx_read_index++];
@@ -180,8 +179,9 @@ extern "C" void USART1_IRQHandler(void) {
   if (~USART1->ISR & USART_ISR_RXNE) {
     return ;
   }
-
+ 
   // Receive data
+  static uint16_t writeIndex = 0;
   inbound.raw[writeIndex++] = USART1->RDR;
 
   // We've not finished receiving a header

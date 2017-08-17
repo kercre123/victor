@@ -185,6 +185,7 @@ struct SpineMessageFooter
 struct BodyToHead
 {
   uint32_t framecounter;
+  PowerState powerState;
   MotorState motor[4];
   uint16_t cliffSense[4];
   BatteryState battery;
@@ -201,9 +202,9 @@ struct ContactData
 struct HeadToBody
 {
   uint32_t framecounter;
+  PowerState powerState;
   int16_t motorPower[4];
   uint8_t ledColors[16];
-  PowerState powerState;
 };
 
 struct AckMessage

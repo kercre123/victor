@@ -87,25 +87,12 @@ extern "C" void WWDG_IRQHandler(void) {
 }
 
 int main(void) {
-  // Enable DMA, CRC, GPIO and USART1
-  RCC->AHBENR |= 0
-              | RCC_APB1ENR_WWDGEN
-              | RCC_AHBENR_CRCEN
-              | RCC_AHBENR_DMAEN
-              | RCC_AHBENR_GPIOAEN
-              | RCC_AHBENR_GPIOBEN
-              | RCC_AHBENR_GPIOCEN
-              | RCC_AHBENR_GPIOFEN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM14EN;
-  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
-  // Start the watchdog up
-  timer_init();
-
   Power::enableClocking();
   Power::init();
-  Contacts::init();
   Analog::init();
+  Contacts::init();
+
+  timer_init();
 
   // TODO: WAIT FOR BATTERY VOLTAGE TO GET ABOVE A CERTAIN LEVEL
   // TODO: WAIT FOR VEXT TO GET ABOVE A CERTAIN LEVEL

@@ -59,6 +59,6 @@ int main (void) {
   // Low priority interrupts are now our main execution
   for (;;) {
     __asm("WFI");
-    //Power::eject();
+    Power::eject();
   }
 }

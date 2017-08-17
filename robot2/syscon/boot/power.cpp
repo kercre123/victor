@@ -28,7 +28,7 @@ static volatile bool ejectSystem = false;
 
 void Power::init(void) {
   nCHG_EN::reset();
-  nCHG_EN::mode(MODE_OUTPUT);
+  nCHG_EN::mode(MODE_OUTPUT); 
 }
 
 void Power::stop(void) {
@@ -39,7 +39,15 @@ void Power::stop(void) {
 }
 
 void Power::enableClocking(void) {
-  RCC->APB1ENR |= APB1_CLOCKS;
-  RCC->APB2ENR |= APB2_CLOCKS;
+  RCC->AHBENR |= 0
+              | RCC_APB1ENR_WWDGEN
+              | RCC_AHBENR_CRCEN
+              | RCC_AHBENR_DMAEN
+              | RCC_AHBENR_GPIOAEN
+              | RCC_AHBENR_GPIOBEN
+              | RCC_AHBENR_GPIOCEN
+              | RCC_AHBENR_GPIOFEN;
+  RCC->APB1ENR = APB1_CLOCKS;
+  RCC->APB2ENR = APB2_CLOCKS;
 }
 
