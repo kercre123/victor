@@ -20992,7 +20992,8 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_set_liftheight: this.verticalSetLiftHeight,
         cozmo_vert_move_lift: this.verticalMoveLift,
         cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
-        cozmo_vert_set_cube_light_corners: this.setCubeLightCorners,
+        cozmo_vert_set_cube_light_corner: this.verticalSetCubeLightCorner,
+        cozmo_vert_cube_anim: this.verticalCubeAnim,
         // Sensors / Inputs
         // Cozmo
         cozmo_vert_get_position_3d: this.verticalCozmoGetPosition,
@@ -21067,25 +21068,8 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function (args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalSetBackpackColor = function (args, util) {
-    var rgb = Cast.toRgbColorObject(args.COLOR);
-
-    // Color from rgb to hex value (like 0xffffffff).
-    var colorHexValue = Color.rgbToHex(rgb);
-
-    // Strip leading '#' char
-    colorHexValue = colorHexValue.substring(1, colorHexValue.length);
-
-    // Prepend "0x".
-    colorHexValue = "0x" + colorHexValue;
-
-    if (colorHexValue != "0x000000") {
-        // Append alpha channel to all but black
-        colorHexValue = colorHexValue + "ff";
-    }
-
-    // Convert from string to number
-    colorHexValue = parseInt(colorHexValue);
-
+    var rgb = Cast.toRgbColorObject(args.Color);
+    colorHexValue = this._getColorIntFromColorObject(rgb);
     window.Unity.call({ requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHexValue });
 };
 
@@ -21381,6 +21365,25 @@ Scratch3CozmoBlocks.prototype._getAnimation = function (animationName) {
     return animationName;
 };
 
+Scratch3CozmoBlocks.prototype._getColorIntFromColorObject = function (rgbColor) {
+    // Color from rgb to hex value (like 0xffffffff).
+    var colorHexValue = Color.rgbToHex(rgbColor);
+
+    // Strip leading '#' char
+    colorHexValue = colorHexValue.substring(1, colorHexValue.length);
+
+    // Prepend "0x".
+    colorHexValue = "0x" + colorHexValue;
+
+    if (colorHexValue != "0x000000") {
+        // Append alpha channel to all but black
+        colorHexValue = colorHexValue + "ff";
+    }
+
+    // Convert from string to number
+    return parseInt(colorHexValue);
+};
+
 // ================================================================================================================================================================
 // Vertical Grammar
 // ================================================================================================================================================================
@@ -21468,6 +21471,14 @@ Scratch3CozmoBlocks.prototype.verticalSetLiftHeight = function (args, util) {
     return commandPromise;
 };
 
+Scratch3CozmoBlocks.prototype.verticalDockWithCubeById = function (args, util) {
+    var requestId = this._getRequestId();
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({ requestId: requestId, command: "cozVertDockWithCubeById", argUInt: cubeIndex });
+    return commandPromise;
+};
+
 Scratch3CozmoBlocks.prototype.verticalMoveLift = function (args, util) {
     var requestId = this._getRequestId();
     var speed = Cast.toNumber(args.LIFT_SPEED);
@@ -21477,22 +21488,20 @@ Scratch3CozmoBlocks.prototype.verticalMoveLift = function (args, util) {
     return commandPromise;
 };
 
-Scratch3CozmoBlocks.prototype.setCubeLightCorners = function (args, util) {
+Scratch3CozmoBlocks.prototype.verticalSetCubeLightCorner = function (args, util) {
     var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
-    var color1 = this._getColor(Cast.toString(args.CORNER_1_COLOR));
-    var color2 = this._getColor(Cast.toString(args.CORNER_2_COLOR));
-    var color3 = this._getColor(Cast.toString(args.CORNER_3_COLOR));
-    var color4 = this._getColor(Cast.toString(args.CORNER_4_COLOR));
-    window.Unity.call({ requestId: -1, command: "cozmoSetCubeLightCorners", argUInt: color1, argUInt2: color2, argUInt3: color3, argUInt4: color4, argUInt5: cubeIndex });
+    var lightIndex = Cast.toNumber(args.LIGHT_SELECT);
+    var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
+    window.Unity.call({ requestId: -1, command: "cozVertSetCubeLightCorner", argUInt: colorHex, argUInt2: cubeIndex, argUInt3: lightIndex });
 };
 
-Scratch3CozmoBlocks.prototype.verticalDockWithCubeById = function (args, util) {
-    var requestId = this._getRequestId();
+Scratch3CozmoBlocks.prototype.verticalCubeAnim = function (args, util) {
     var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
-    var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozVertDockWithCubeById", argUInt: cubeIndex });
-    return commandPromise;
+    var cubeAnim = Cast.toString(args.ANIM_SELECT);
+    var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
+    window.Unity.call({ requestId: -1, command: "cozVertCubeAnimation", argUInt: colorHex, argUInt2: cubeIndex, argString: cubeAnim });
 };
+
 // =================
 // Sensors / Inputs:
 // =================
@@ -42054,7 +42063,7 @@ module.exports = {
 		"promise": "7.1.1",
 		"scratch-audio": "^0.1.0-prerelease.0",
 		"scratch-blocks": "0.1.0-prerelease.1501619541",
-		"scratch-render": "0.1.0-prerelease.1502395503",
+		"scratch-render": "0.1.0-prerelease.1502304712",
 		"scratch-storage": "^0.2.0",
 		"script-loader": "0.7.0",
 		"socket.io-client": "1.7.3",

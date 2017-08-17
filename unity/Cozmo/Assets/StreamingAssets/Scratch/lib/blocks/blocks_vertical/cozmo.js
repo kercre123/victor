@@ -1138,15 +1138,27 @@ Blockly.Blocks['cozmo_vert_set_headangle'] = {
   }
 };
 
-Blockly.Blocks['cozmo_vert_set_cube_light_corners'] = {
+Blockly.Blocks['cozmo_vert_set_cube_light_corner'] = {
   /**
    * Block to set a cube's corner lights individually
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Set Cube %1 lights %2 %3 %4 %5",
+      "id": "cozmo_vert_set_cube_light_corner",
+      "message0": "set %1 on cube %2 to %3",
       "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "LIGHT_SELECT",
+          "options": [
+            ['light 1', '0'],
+            ['light 2', '1'],
+            ['light 3', '2'],
+            ['light 4', '3'],
+            ['all lights', '4']
+          ]
+        },
         {
           "type": "field_dropdown",
           "name": "CUBE_SELECT",
@@ -1157,64 +1169,51 @@ Blockly.Blocks['cozmo_vert_set_cube_light_corners'] = {
           ]
         },
         {
+          "type": "input_value",
+          "name": "COLOR"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.looks,
+      "colour": Blockly.Colours.looks.primary,
+      "colourSecondary": Blockly.Colours.looks.secondary,
+      "colourTertiary": Blockly.Colours.looks.tertiary,
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_anim'] = {
+  /**
+   * Block to play a light animation on a cube
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "id": "cozmo_vert_cube_anim",
+      "message0": "play %1 anim on cube %2 with color %3",
+      "args0": [
+        {
           "type": "field_dropdown",
-          "name": "CORNER_1_COLOR",
+          "name": "ANIM_SELECT",
           "options": [
-            ['Coral', 'coral'],
-            ['Orange', 'orange'],
-            ['Yellow', 'yellow'],
-            ['Green', 'green'],
-            ['Blue', 'blue'],
-            ['Purple', 'purple'],
-            ['White', 'white'],
-            ['Off', 'off'],
-            ['Mystery', 'mystery']
+            ['Spin', 'spin'],
+            ['Blink', 'blink']
           ]
         },
         {
           "type": "field_dropdown",
-          "name": "CORNER_2_COLOR",
+          "name": "CUBE_SELECT",
           "options": [
-            ['Coral', 'coral'],
-            ['Orange', 'orange'],
-            ['Yellow', 'yellow'],
-            ['Green', 'green'],
-            ['Blue', 'blue'],
-            ['Purple', 'purple'],
-            ['White', 'white'],
-            ['Off', 'off'],
-            ['Mystery', 'mystery']
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3']
           ]
         },
         {
-          "type": "field_dropdown",
-          "name": "CORNER_3_COLOR",
-          "options": [
-            ['Coral', 'coral'],
-            ['Orange', 'orange'],
-            ['Yellow', 'yellow'],
-            ['Green', 'green'],
-            ['Blue', 'blue'],
-            ['Purple', 'purple'],
-            ['White', 'white'],
-            ['Off', 'off'],
-            ['Mystery', 'mystery']
-          ]
-        },
-        {
-          "type": "field_dropdown",
-          "name": "CORNER_4_COLOR",
-          "options": [
-            ['Coral', 'coral'],
-            ['Orange', 'orange'],
-            ['Yellow', 'yellow'],
-            ['Green', 'green'],
-            ['Blue', 'blue'],
-            ['Purple', 'purple'],
-            ['White', 'white'],
-            ['Off', 'off'],
-            ['Mystery', 'mystery']
-          ]
+          "type": "input_value",
+          "name": "COLOR"
         }
       ],
       "inputsInline": true,

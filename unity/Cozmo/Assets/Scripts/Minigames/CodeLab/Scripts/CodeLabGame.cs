@@ -60,6 +60,29 @@ namespace CodeLab {
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
 
+    private CubeColors[] _CubeLightColors = { new CubeColors(),
+                                     new CubeColors(),
+                                     new CubeColors() };
+
+    private class CubeColors {
+      public Color[] Colors { get; set; }
+
+      public CubeColors() {
+        Colors = new Color[4];
+        SetAll(Color.black);
+      }
+
+      public void SetAll(Color color) {
+        for (int i = 0; i < 4; i++) {
+          Colors[i] = color;
+        }
+      }
+
+      public void SetColor(Color color, int lightIndex) {
+        Colors[lightIndex] = color;
+      }
+    }
+
     // GameToGameConn is used by dev-builds only (no GameToGame or SDK connection possible in CodeLab in Shipping builds)
     private class GameToGameConn {
       private bool _Enabled = false;
@@ -173,6 +196,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
 
       RobotEngineManager.Instance.AddCallback<GameToGame>(HandleGameToGame);
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
+      }
 
       LoadWebView();
     }
@@ -557,7 +583,17 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       var robot = RobotEngineManager.Instance.CurrentRobot;
 
       robot.TurnOffAllBackpackBarLED();
-      robot.DriveWheels(0.0f, 0.0f);
+
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        robot.TurnOffAllLights(true);
+        robot.DriveWheels(0.0f, 0.0f);
+        robot.EnableCubeSleep(true, true);
+
+        //turn off all cube lights
+        for (int i = 0; i < 3; i++) {
+          _CubeLightColors[i].SetAll(Color.black);
+        }
+      }
 
       if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos)) {
         ++_PendingResetToHomeActions;
@@ -1129,15 +1165,48 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
-      else if (scratchRequest.command == "cozmoSetCubeLightCorners") {
-        uint color1 = scratchRequest.argUInt;
-        uint color2 = scratchRequest.argUInt2;
-        uint color3 = scratchRequest.argUInt3;
-        uint color4 = scratchRequest.argUInt4;
-        uint cubeIndex = scratchRequest.argUInt5;
+      else if (scratchRequest.command == "cozVertSetCubeLightCorner") {
+        uint color = scratchRequest.argUInt;
+        uint cubeIndex = scratchRequest.argUInt2;
+        uint lightIndex = scratchRequest.argUInt3;
         LightCube cubeToLight = robot.GetLightCubeWithObjectType(GetLightCubeIdFromIndex(cubeIndex));
-        Color[] colorArray = new Color[] { color1.ToColor(), color2.ToColor(), color3.ToColor(), color4.ToColor() };
-        cubeToLight.SetLEDs(colorArray);
+        if (cubeToLight != null) {
+          switch (lightIndex) {
+          case 4:
+            //This is the case where the user selects all lights to be set the same color.
+            _CubeLightColors[cubeIndex - 1].SetAll(color.ToColor());
+            break;
+          default:
+            //The user is changing only one cube light, so we keep the other corners set to their current light.
+            _CubeLightColors[cubeIndex - 1].SetColor(color.ToColor(), (int)lightIndex);
+            break;
+          }
+          cubeToLight.SetLEDs(_CubeLightColors[cubeIndex - 1].Colors);
+        }
+        else {
+          DAS.Error("CodeLab.NullCube", "No connected cube with index " + cubeIndex.ToString());
+        }
+      }
+      else if (scratchRequest.command == "cozVertCubeAnimation") {
+        uint color = scratchRequest.argUInt;
+        uint cubeIndex = scratchRequest.argUInt2;
+        var cubeToAnimate = robot.GetLightCubeWithObjectType(GetLightCubeIdFromIndex(cubeIndex));
+        if (cubeToAnimate != null) {
+          string cubeAnim = scratchRequest.argString;
+          cubeToAnimate.SetLEDsOff();
+          switch (cubeAnim) {
+          case "spin":
+            Color[] colorArray = { color.ToColor(), Color.black, Color.black, Color.black };
+            StartCycleCube(cubeToAnimate.ID, colorArray, 0.05f);
+            break;
+          case "blink":
+            cubeToAnimate.SetFlashingLEDs(color.ToColor());
+            break;
+          }
+        }
+        else {
+          DAS.Error("CodeLab.NullCube", "No connected cube with index " + cubeIndex.ToString());
+        }
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeFace") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
@@ -1178,7 +1247,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       case 3:
         return ObjectType.Block_LIGHTCUBE3;
       default:
-        DAS.Error("CodeLab.BadCubeIndex", "cubeIndex " + cubeIndex.ToString());
+        DAS.Error("CodeLab.BadCubeIndex", "cubeIndex: " + cubeIndex.ToString());
         return ObjectType.UnknownObject;
       }
     }
@@ -1435,6 +1504,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         StartVerticalHatBlockListeners();
+
+        //in Vertical, disable cubes illuminating blue when Cozmo sees them
+        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
       }
     }
 

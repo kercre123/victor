@@ -2248,8 +2248,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void EnableCubeSleep(bool enable) {
-    RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable, false);
+  public void EnableCubeSleep(bool enable, bool skipAnimation = false) {
+    RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable, skipAnimation);
     RobotEngineManager.Instance.SendMessage();
   }
 

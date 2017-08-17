@@ -12,7 +12,7 @@
         <script src="./lib/blocks/blocks_compressed.js"></script>
         <script src="./lib/blocks/blocks_compressed_vertical.js"></script>
         <!-- BOTTOM COMPRESSED FILES -->
-
+ 
         <!-- TOP UNCOMPRESSED FILES -->
         <!-- NOTE: When updating lib/blocks/*, use these files instead of the above compressed files -->
         <!-- to see your changes immediately. When using these uncompressed files (either in browser -->
@@ -184,7 +184,16 @@
                       </shadow>
                   </value>
               </block>
-              <block type="cozmo_vert_set_cube_light_corners"></block>
+              <block type="cozmo_vert_set_cube_light_corner">
+                <value name="COLOR">
+                      <shadow type="colour_picker"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_vert_cube_anim">
+                <value name="COLOR">
+                      <shadow type="colour_picker"></shadow>
+                </value>
+              </block>
             </category>
             <category name="Animations" colour="#a03c87" secondaryColour="0">
               <block type="cozmo_play_animation_from_dropdown"></block>
