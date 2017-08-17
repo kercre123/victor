@@ -133,29 +133,11 @@ void AIWhiteboard::Init()
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::NotifyCozmoWakeup>();
   }
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
   }
-  
-  
-  // Setup Cozmo's current expressed need state - on Init need state will be handled
-  // by game to play Cozmo's wakeup animation, so set the current expressed need
-  // here manually
-  
-  NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool isRepairCritical =
-          currNeedState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical);
-  
-  const bool isEnergyCritical =
-          currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-  
-  if(isRepairCritical){
-    SetSevereNeedExpression(NeedId::Repair);
-  }else if(isEnergyCritical){
-    SetSevereNeedExpression(NeedId::Energy);
-  }
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -873,6 +855,29 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotOffTreadsStateCha
     _returnedToTreadsAtTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void AIWhiteboard::HandleMessage(const ExternalInterface::NotifyCozmoWakeup& msg)
+{
+  // Setup Cozmo's current expressed need state - on Init need state will be handled
+  // by game to play Cozmo's wakeup animation, so set the current expressed need
+  // here manually
+  NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  const bool isRepairCritical =
+  currNeedState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical);
+  
+  const bool isEnergyCritical =
+  currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
+  
+  if(isRepairCritical){
+    SetSevereNeedExpression(NeedId::Repair);
+  }else if(isEnergyCritical){
+    SetSevereNeedExpression(NeedId::Energy);
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d& obsPose)

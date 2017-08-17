@@ -514,6 +514,8 @@ public class ConnectionFlowController : MonoBehaviour {
     }
     else {
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(GetAnimationForWakeUp(), HandleWakeAnimationComplete);
+      RobotEngineManager.Instance.Message.NotifyCozmoWakeup = Singleton<Anki.Cozmo.ExternalInterface.NotifyCozmoWakeup>.Instance;
+      RobotEngineManager.Instance.SendMessage();
     }
 
   }
