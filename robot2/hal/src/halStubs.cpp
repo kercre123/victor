@@ -70,9 +70,9 @@ namespace Anki {
 
       //encoder counts -> mm or deg
       static const f32 HAL_MOTOR_POSITION_SCALE[RobotMotor_MOTOR_COUNT] = {
-        ((0.948 * 0.125 * 0.0292 * 3.14159265359) / 149.7), //Left Tread mm
-        ((0.948 * 0.125 * 0.0292 * 3.14159265359) / 149.7), //Right Tread mm
-        (0.125 * 3.14159265359) / 172.68,   //Lift radians
+        ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Left Tread mm
+        ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Right Tread mm
+        (0.25 * 3.14159265359) / 149.7,    //Lift radians
         (0.25 * 3.14159265359) / 348.77,   //Head radians
       };
 
@@ -110,6 +110,10 @@ namespace Anki {
     void InitIMU();
     void ProcessIMUEvents();
 
+    
+    inline u16 FlipBytes(u16 v) {
+      return ((((v) & 0x00FF)<<8) | ((v)>>8));
+    }
 
     Result GetSpineDataFrame(void)
     {
@@ -335,7 +339,7 @@ namespace Anki {
 
     u16 HAL::GetRawProxData()
     {
-      return bodyData_->proximity.rangeMM;
+      return FlipBytes(bodyData_->proximity.rangeMM);
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
