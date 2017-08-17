@@ -14,18 +14,23 @@ MonoBehaviour:
   _OffColor:
     uiSprite: {fileID: 0}
     lightColor: {r: 0, g: 0, b: 0, a: 1}
+    uiLightColor: {r: 0, g: 0, b: 0, a: 0}
   _InViewColor:
     uiSprite: {fileID: 21300000, guid: 92bc85540ed3a48d69facb4f53766472, type: 3}
     lightColor: {r: 0.283002, g: 0.934, b: 0.36830527, a: 1}
+    uiLightColor: {r: 0.44117647, g: 1, b: 0.46815407, a: 1}
   _OutOfViewColor:
     uiSprite: {fileID: 0}
     lightColor: {r: 0, g: 0, b: 0, a: 1}
+    uiLightColor: {r: 0, g: 0, b: 0, a: 0}
   _ReadyColor:
     uiSprite: {fileID: 0}
     lightColor: {r: 0, g: 1, b: 0, a: 1}
+    uiLightColor: {r: 0.44117647, g: 1, b: 0.46815407, a: 1}
   _ErrorColor:
     uiSprite: {fileID: 0}
     lightColor: {r: 1, g: 0, b: 0, a: 1}
+    uiLightColor: {r: 1, g: 0.28676468, b: 0.28676468, a: 1}
   _TapMeColor:
     lightColors:
     - {r: 1, g: 0, b: 0, a: 1}
@@ -36,6 +41,7 @@ MonoBehaviour:
   _CubeUprightColor:
     uiSprite: {fileID: 0}
     lightColor: {r: 0, g: 1, b: 1, a: 1}
+    uiLightColor: {r: 0.2647059, g: 1, b: 1, a: 1}
   _TopDownLightCubeSpritePrefab: {fileID: 11498570, guid: 811ec6786e21a4cb7bbb384a7c802f08,
     type: 2}
   _IsometricLightCubeSpritePrefab: {fileID: 11465378, guid: 52c44a1be5e964e02921d6066c332cba,
