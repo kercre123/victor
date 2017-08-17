@@ -1201,7 +1201,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction& msg)
 {
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   if (nullptr == robot)
   {
     return;
@@ -1392,14 +1392,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::BehaviorManagerMe
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObjects& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSendAvailableObjects.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSendAvailableObjects.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {

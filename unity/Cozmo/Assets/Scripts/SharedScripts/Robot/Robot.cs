@@ -736,7 +736,7 @@ public class Robot : IRobot {
   public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction =
-      Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID,
+      Singleton<QueueSingleAction>.Instance.Initialize(
       idTag: tag,
       numRetries: numRetries,
       position: queueActionPosition,
@@ -1356,7 +1356,7 @@ public class Robot : IRobot {
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
     DAS.Debug(this, "CancelAction actionType(" + actionType + ")");
 
-    RobotEngineManager.Instance.Message.CancelAction = Singleton<CancelAction>.Instance.Initialize(actionType, ID);
+    RobotEngineManager.Instance.Message.CancelAction = Singleton<CancelAction>.Instance.Initialize(actionType);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -2088,8 +2088,6 @@ public class Robot : IRobot {
 
   // should only be called from update loop
   private void SetAllBackpackLEDs() {
-
-    Singleton<SetBackpackLEDs>.Instance.robotID = ID;
     for (int i = 0; i < BackpackLights.Length; i++) {
       Singleton<SetBackpackLEDs>.Instance.onColor[i] = BackpackLights[i].OnColor;
       Singleton<SetBackpackLEDs>.Instance.offColor[i] = BackpackLights[i].OffColor;

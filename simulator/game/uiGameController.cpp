@@ -998,7 +998,6 @@ namespace Anki {
                                                const QueueActionPosition queueActionPosition)
     {
       ExternalInterface::QueueSingleAction m;
-      m.robotID = 1;
       m.idTag = ++_queueActionIdTag;
       m.position = queueActionPosition;
       m.numRetries = 1;
@@ -1012,7 +1011,6 @@ namespace Anki {
     void UiGameController::SendAction(const ExternalInterface::QueueSingleAction& msg_in)
     {
       ExternalInterface::QueueSingleAction m(msg_in);
-      m.robotID = 1;
       m.idTag = ++_queueActionIdTag;
       m.position = QueueActionPosition::NOW;
       m.numRetries = 1;
@@ -1091,10 +1089,9 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendImageRequest(ImageSendMode mode, u8 robotID)
+    void UiGameController::SendImageRequest(ImageSendMode mode)
     {
       ExternalInterface::ImageRequest m;
-      m.robotID = robotID;
       m.mode = mode;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ImageRequest(m);
@@ -1682,10 +1679,9 @@ namespace Anki {
     
     uint32_t UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
       ExternalInterface::QueueSingleAction msg;
-      msg.robotID = 1;
       msg.idTag = ++_queueActionIdTag;
       msg.position = pos;
-      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
+      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(1, numLoops, animName));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);
@@ -1696,7 +1692,6 @@ namespace Anki {
     void UiGameController::SendCancelAction() {
       ExternalInterface::CancelAction msg;
       msg.actionType = RobotActionType::UNKNOWN;
-      msg.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_CancelAction(msg);
       SendMessage(message);
@@ -1886,8 +1881,7 @@ namespace Anki {
         rotationPeriod_ms,
         relativeToX,
         relativeToY,
-        makeRelative,
-        1  // robotID
+        makeRelative
       );
 
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));

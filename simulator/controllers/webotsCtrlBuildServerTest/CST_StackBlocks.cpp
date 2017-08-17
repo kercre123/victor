@@ -79,7 +79,6 @@ namespace Anki {
                                                 GetNumObjectsInFamily(ObjectFamily::LightCube) == 1)
           {
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 1;
             

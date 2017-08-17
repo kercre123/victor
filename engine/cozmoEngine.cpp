@@ -700,7 +700,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& 
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   if(robot != nullptr) {
     return robot->SetImageSendMode(msg.mode);
   }

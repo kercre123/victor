@@ -64,7 +64,7 @@ namespace Cozmo.BlockPool {
       _RobotEngineManager.RemoveCallback<ObjectAvailable>(HandleObjectAvailableMsg);
       _RobotEngineManager.RemoveCallback<U2G.ObjectUnavailable>(HandleObjectUnavailableMsg);
 
-      SendAvailableObjects(false, (byte)_RobotEngineManager.CurrentRobotID);
+	  SendAvailableObjects(false);
 
       _BlocksByID.Clear();
       Blocks.Clear();
@@ -182,11 +182,10 @@ namespace Cozmo.BlockPool {
                       null);
     }
 
-    public void SendAvailableObjects(bool enable, byte robotId) {
+    public void SendAvailableObjects(bool enable) {
       // Will get a series of "Object Available" messages that represent blocks cozmo has "Heard" to connect to
       G2U.SendAvailableObjects msg = new G2U.SendAvailableObjects();
       msg.enable = enable;
-      msg.robotID = robotId;
       _RobotEngineManager.Message.SendAvailableObjects = msg;
       _RobotEngineManager.SendMessage();
     }

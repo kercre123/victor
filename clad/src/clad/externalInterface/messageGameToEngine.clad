@@ -275,19 +275,16 @@ message RequestUnlockDataFromBackup {
 //  Use actionType to cancel any queued actions of the specified type.
 //  Use actionType = -1 to cancel all actions, regardless of type.
 message CancelAction {
-  RobotActionType actionType,  // See actionTypes.def
-  uint_8 robotID
+  RobotActionType actionType  // See actionTypes.def
 }
 
 // CancelActionByIdTag
 message CancelActionByIdTag {
-  uint_32 idTag,
-  uint_8 robotID
+  uint_32 idTag
 }
 
 // QueueSingleAction
   message QueueSingleAction {
-  uint_8  robotID,
   uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
   uint_8  numRetries = 0,
   QueueActionPosition    position,
@@ -317,7 +314,6 @@ message RedirectViz {
 
 // ImageRequest
 message ImageRequest {
-    uint_8 robotID,
     ImageSendMode mode
 }
 
@@ -823,8 +819,7 @@ message SetAllActiveObjectLEDs {
   uint_32  rotationPeriod_ms,
   float_32 relativeToX,
   float_32 relativeToY,
-  MakeRelativeMode makeRelative,
-  uint_8   robotID
+  MakeRelativeMode makeRelative
 }
 
 // SetBackpackLEDs
@@ -836,8 +831,7 @@ message SetBackpackLEDs {
   uint_32  offPeriod_ms[5],
   uint_32  transitionOnPeriod_ms[5],
   uint_32  transitionOffPeriod_ms[5],
-  int_32   offset[5],
-  uint_8   robotID
+  int_32   offset[5]
 }
 
 // Enables/disables specific cube light states
@@ -1075,7 +1069,6 @@ message GetBlockPoolMessage {
 }
 
 message SendAvailableObjects {
-  uint_8 robotID,
   bool enable
 }
 
