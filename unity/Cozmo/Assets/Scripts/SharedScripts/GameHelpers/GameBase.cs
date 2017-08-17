@@ -164,6 +164,7 @@ public abstract class GameBase : MonoBehaviour {
     if (challengeData.IsActivity) {
       Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(true);
     }
+    Cozmo.PauseManager.Instance.AllowFreeplayOnResume = false;
 
     _GameStartTime = Time.time;
     _GameIntervalLastTimestamp = -1;
@@ -835,6 +836,8 @@ public abstract class GameBase : MonoBehaviour {
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.DialogCloseAnimationFinished -= CleanUp;
     }
+
+    Cozmo.PauseManager.Instance.AllowFreeplayOnResume = true;
 
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd -= HandleAppHoldEnd;
