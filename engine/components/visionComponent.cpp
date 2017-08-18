@@ -2451,11 +2451,33 @@ namespace Cozmo {
           } else {
             
             payload.Unpack(data, size);
+            
+            std::stringstream ss;
+            ss << "[";
+            for(int i = 0; i < payload.distCoeffs.size() - 1; ++i)
+            {
+              ss << payload.distCoeffs[i] << ", ";
+            }
+            ss << payload.distCoeffs.back() << "]";
+            
             PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.Recvd",
-                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
+                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f, distCoeffs: %s)",
                              payload.ncols, payload.nrows,
                              payload.focalLength_x, payload.focalLength_y,
-                             payload.center_x, payload.center_y);
+                             payload.center_x, payload.center_y,
+                             ss.str().c_str());
+            
+            
+            
+            // See hardware.h for the body hardware versions
+            // 6 == BODY_VER_1v5c and anything less is an older version
+            // We never verified the computed distortion coefficients of 1.0 or 1.5 robots at the factory
+            // so as far as we know they are garbage so ignore them.
+            if(_robot.GetBodyHWVersion() <= 6)
+            {
+              PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.IgnoringDistCoeffs", "");
+              payload.distCoeffs.fill(0);
+            }
             
             // Convert calibration message into a calibration object to pass to the robot
             Vision::CameraCalibration calib(payload.nrows,
