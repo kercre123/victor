@@ -2,21 +2,51 @@
 Release v104.6
 ----------------
 
+Firmware:
+-esp.factory.bin: roll back to build from v104.1, "10502", original power (0dBm?) setting
+
 EMROBOT:
 -improved error handling for DtmTest. Properly throw comms errors & log dtm response.
+
+-----[c104.6]
+roll back to standard xsfcc.bin firmware (from experimental -12dBm).
 
 ----------------
 Release v104.5
 ----------------
 
 BODY1:
--add 'charge' test to verify Q13 electrical connection
+-add charger test to verify Q13 electrical connection
+
+NOTE: this still has the bad esp.factory.bin from v104.4!!!
 
 ----------------
 Release v104.4
 ----------------
 
-(Nathan, add change notes)
+Kerfuffle:
+Changes were made to esp code to reduce WiFi TX power by -2dB. However, the re-generated bin was NOT included in the build.
+esp.factory.bin remains as previous version, 10502 reporting 10501 (bad state from previous hacked releases).
+
+----------------
+Release v104.3
+----------------
+ONE-OFF BUILD. CHANGES NOT CARRIED FORWARD.
+
+Firmware:
+-xs6-4.safe: new cube patch with a DTM test function inside.
+-radio-jrl.bin: special radio build (rev 12), adds mode 'J' to install xs6-4 patch and run "DTM tone" test.
+
+Radio, rev12 (special build for jrl)
+-max simultaneous connections reduced to 1. Helps solve confusion pulling s/n from wrong cubes.
+-fixed 'crashing' issue where fixture would not see new cubes after a while (minRSSI function bug).
+^^NOTE: changes have not been merged with standard radio_read,radio.bin. Revisit this if radio.bin needs updating...
+
+-----[c104.3]
+ONE-OFF BUILD. CHANGES NOT CARRIED FORWARD.
+
+Firmware:
+-xsfcc_-12db.bin: experimental cube FCC firmware at reduced (-12dBm) output power.
 
 ----------------
 Release v104.2
@@ -24,6 +54,12 @@ Release v104.2
 
 Firmware:
 -esp.factory.bin: change version string back to 10501 for compatibility. preserve updated build date.
+
+-----[c104.2]
+ONE-OFF BUILD. CHANGES NOT CARRIED FORWARD.
+
+Firmware:
+-xsfcc_revert.bin: specialized cube fw to 'revert' FCC program to run a factory patch. Only works once, no OTA capability.
 
 ----------------
 Release v104.1
