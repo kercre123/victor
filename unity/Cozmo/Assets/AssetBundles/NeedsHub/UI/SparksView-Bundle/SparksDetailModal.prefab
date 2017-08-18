@@ -2076,11 +2076,11 @@ MonoBehaviour:
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
-  _OverrideSkinFontSize: 0
+  _OverrideSkinFontSize: 1
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!114 &114706086175469938
 MonoBehaviour:
   m_ObjectHideFlags: 1
