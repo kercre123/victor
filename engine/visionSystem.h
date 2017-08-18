@@ -42,6 +42,7 @@
 #include "engine/rollingShutterCorrector.h"
 #include "engine/visionModeSchedule.h"
 #include "engine/visionPoseData.h"
+#include "engine/vision/cameraCalibrator.h"
 
 #include "anki/common/basestation/matlabInterface.h"
 
@@ -87,6 +88,7 @@ namespace Vision {
 namespace Cozmo {
     
   // Forward declaration:
+  class CameraCalibrator;
   class CozmoContext;
   class EncodedImage;
   class LaserPointDetector;
@@ -156,16 +158,12 @@ namespace Cozmo {
     Result Update(const VisionPoseData&      robotState,
                   const EncodedImage&        encodedImg);
     
-    Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
-    Result ClearCalibrationImages();
-    size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
-    using CalibImage = struct {
-      Vision::Image    img;
-      Rectangle<s32>   roiRect;
-      bool             dotsFound;
-    };
-    const std::vector<CalibImage>& GetCalibrationImages() const {return _calibImages;}
-    const std::vector<Pose3d>& GetCalibrationPoses() const { return _calibPoses;}
+    // Wrappers for camera calibration
+    Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI) { return _cameraCalibrator->AddCalibrationImage(calibImg, targetROI); }
+    Result ClearCalibrationImages() { return _cameraCalibrator->ClearCalibrationImages(); }
+    size_t GetNumStoredCalibrationImages() const { return _cameraCalibrator->GetNumStoredCalibrationImages(); }
+    const std::vector<CameraCalibrator::CalibImage>& GetCalibrationImages() const {return _cameraCalibrator->GetCalibrationImages();}
+    const std::vector<Pose3d>& GetCalibrationPoses() const { return _cameraCalibrator->GetCalibrationPoses();}
 
     Result ClearToolCodeImages();
     size_t GetNumStoredToolCodeImages() const {return _toolCodeImages.size();}
@@ -379,12 +377,6 @@ namespace Cozmo {
     std::vector<Vision::Image>    _toolCodeImages;
     bool                          _isReadingToolCode;
     
-    // Calibration stuff
-    static const u32              _kMinNumCalibImagesRequired = 1;
-    std::vector<CalibImage>       _calibImages;
-    bool                          _isCalibrating = false;
-    std::vector<Pose3d>           _calibPoses;
-    
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
        static const s32 OFFCHIP_BUFFER_SIZE = 20000000;
@@ -463,9 +455,6 @@ namespace Cozmo {
     
     Result ReadToolCode(const Vision::Image& image);
     
-    Result ComputeCalibration();
-    Result ComputeCalibrationSingleImage();
-    
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
@@ -477,6 +466,8 @@ namespace Cozmo {
     std::unique_ptr<LaserPointDetector> _laserPointDetector;
     
     std::unique_ptr<MotionDetector> _motionDetector;
+    
+    std::unique_ptr<CameraCalibrator> _cameraCalibrator;
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;

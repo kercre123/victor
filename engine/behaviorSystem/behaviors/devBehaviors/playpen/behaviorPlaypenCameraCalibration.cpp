@@ -20,6 +20,10 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
+#include "engine/vision/cameraCalibrator.h"
+
+#include "util/console/consoleSystem.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -63,6 +67,9 @@ BehaviorPlaypenCameraCalibration::BehaviorPlaypenCameraCalibration(Robot& robot,
 
 Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
 {
+  // Set CameraCalibrator's CalibTargetType console var to what the playpen config says
+  NativeAnkiUtilConsoleSetValueWithString("CalibTargetType", std::to_string(PlaypenConfig::kPlaypenCalibTarget).c_str());
+
   // Define a custom object with marker kMarkerToTriggerCalibration so we can know when we are seeing the
   // calibration target via a RobotObservedObject message
   CustomObject* customCube = CustomObject::CreateCube(ObjectType::CustomType00,

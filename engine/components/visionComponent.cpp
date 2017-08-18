@@ -494,7 +494,10 @@ namespace Cozmo {
               if (IsModeEnabled(VisionMode::ComputingCalibration)) {
                 PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
               } else {
+                Lock();
                 result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
+                Unlock();
+                
                 if(RESULT_OK != result) {
                   PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
                 }
@@ -1560,7 +1563,11 @@ namespace Cozmo {
     }
     else
     {
-      return _visionSystem->ClearCalibrationImages();
+      Lock();
+      Result res = _visionSystem->ClearCalibrationImages();
+      Unlock();
+      
+      return res;
     }
   }
   
@@ -1569,7 +1576,7 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredCalibrationImages();
   }
   
-  Result VisionComponent::GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p)
+  Result VisionComponent::GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const
   {
     Result lastResult = RESULT_FAIL;
     
@@ -1597,7 +1604,7 @@ namespace Cozmo {
     return lastResult;
   }
   
-  std::list<std::vector<u8> > VisionComponent::GetCalibrationImageJpegData(u8* dotsFoundMask)
+  std::list<std::vector<u8> > VisionComponent::GetCalibrationImageJpegData(u8* dotsFoundMask) const
   {
     const auto& calibImages = _visionSystem->GetCalibrationImages();
     

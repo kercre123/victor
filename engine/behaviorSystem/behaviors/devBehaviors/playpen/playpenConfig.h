@@ -28,7 +28,8 @@ namespace Cozmo {
   
 namespace PlaypenConfig {
 
-// Whether or not to disconnect from robot at end of test
+// ----------General----------
+// Whether or not to disconnect from robot at end of tests
 static bool  kDisconnectAtEnd      = false;
 
 // Whether or not to write to robot storage
@@ -42,7 +43,7 @@ static bool  kIgnoreFailures       = true;
 // Default timeout to force a playpen behavior to end
 static f32   kDefaultTimeout_ms    = 20000;
 
-// InitChecks
+// ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;
 
@@ -61,11 +62,11 @@ static u32       kMfgIDTimeout_ms      = 500;
 // Minimum body color we are looking for
 static BodyColor kMinBodyColor         = BodyColor::WHITE_v15;
 
-// Motor Calibration
+// ----------Motor Calibration----------
 // Timeout to wait for motor calibration to complete
 static u32 kMotorCalibrationTimeout_ms = 4000;
 
-// Drift Check
+// ----------Drift Check----------
 // Head angle at which we should play the sound for both speaker and mic check
 static f32 kHeadAngleToPlaySound    = DEG_TO_RAD(2.f);
 
@@ -75,7 +76,7 @@ static u32 kIMUDriftDetectPeriod_ms = 2000;
 // How much our heading can change over kIMUDriftDetectPeriod_ms
 static f32 kIMUDriftAngleThreshDeg  = 0.2f;
 
-// Camera Calibration
+// ----------Camera Calibration----------
 // Exposure setting for playpen
 static u16 kExposure_ms                               = 3;
 
@@ -103,6 +104,9 @@ static u32 kTimeoutWaitingForTarget_ms                = 10000;
 // How long we should wait for camera calibration to be computed
 static u32 kTimeoutForComputingCalibration_ms         = 2000;
 
+// Which calibration target we are using (see CameraCalibrator::CalibTargetTypes)
+static u32 kPlaypenCalibTarget                        = 1; // 1 = INVERTED_BOX 2 = BLEACHERS (I don't feel like including cameraCalibrator.h here)
+
 // How big the calibration target's markers are
 static f32 kCalibMarkerSize_mm                        = 15;
 
@@ -112,7 +116,7 @@ static f32 kCalibMarkerCubeSize_mm                    = 30;
 // Which marker we should wait to be seeing before automatically starting camera calibration
 static CustomObjectMarker kMarkerToTriggerCalibration = CustomObjectMarker::Triangles2;
 
-// Drive Forwards
+// ----------Drive Forwards----------
 // Distance to drive forwards to trigger the front cliff sensors
 static f32 kDistanceToTriggerFrontCliffs_mm = 90;
 
@@ -126,7 +130,7 @@ static f32 kDistanceToDriveOverCliff_mm     = 30;
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;
 
-// Tool Code
+// ----------Tool Code----------
 // Number of tool codes we should be seeing
 static const u32 kNumToolCodes = 2;
 
@@ -136,7 +140,7 @@ static f32       kToolCodeDistThreshX_pix = 20.f;
 // Allowed difference between expected and actual y pixel values of detected tool codes
 static f32       kToolCodeDistThreshY_pix = 40.f;
 
-// Pickup Cube
+// ----------Pickup Cube----------
 // Allowed difference between expected and observed cube pose in x and y
 static f32 kExpectedCubePoseDistThresh_mm       = 30;
 
