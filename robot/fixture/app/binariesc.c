@@ -24,6 +24,13 @@ bool g_format_csv;
 #define BINFCC 0
 #endif
 
+//JRL switch
+#ifdef JRL
+#define BINJRL 1
+#else
+#define BINJRL 0
+#endif
+
 //Hardware Version is hard coded into the body bootloader:
 //  syscon/boot/startup_nrf51.s
 //  DCD  # ;Syscon version - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2
@@ -49,6 +56,17 @@ static char* _bodyBootHwIdDebug(char* out_s)
     case 5: s = (char*)"1.5 EP2"; break;
     default:s = (char*)"INVALID"; break;
   }
+  return s;
+}
+
+//Fixture-Radio version is hard coded into the binary:
+//  syscon/radio_read/startup.s
+//  DCD  # ; radio_read VERSION NUMBER (Reserved)
+#define RADIO_FW_VER_ADDR   0x00010
+static u32 _radioBinVer(void) { return (g_RadioEnd-g_Radio) >= RADIO_FW_VER_ADDR+3 ? *((uint32_t*)&g_Radio[RADIO_FW_VER_ADDR]) : 0xFFFFffff; }
+
+static char* _radioFwVers(char* s) {
+  sprintf(s, "rev:%d", _radioBinVer() );
   return s;
 }
 
@@ -107,11 +125,12 @@ void binPrintInfo(bool csv)
   _bin_print((char*)"ESP",      (char*)"esp.factory.bin", BINFCC ? 0 : g_EspUserEnd-g_EspUser,(char*)"?",             NULL);
   _bin_print((char*)"ESP-FCC",  (char*)"esp.fcc.bin",     BINFCC ? g_EspUserEnd-g_EspUser : 0,(char*)"?",             NULL);
   #if BINFCC < 1
-  _bin_print((char*)"ESPBoot",  (char*)"esp.boot.bin",    g_EspBootEnd-g_EspBoot,             (char*)"?",         NULL);
-  _bin_print((char*)"ESPInit",  (char*)"esp.init.bin",    g_EspInitEnd-g_EspInit,             (char*)"?",         NULL);
-  _bin_print((char*)"ESPSafe",  (char*)"esp.safe.bin",    g_EspSafeEnd-g_EspSafe,             (char*)"?",         NULL);
+  _bin_print((char*)"ESPBoot",  (char*)"esp.boot.bin",    g_EspBootEnd-g_EspBoot,             (char*)"?",             NULL);
+  _bin_print((char*)"ESPInit",  (char*)"esp.init.bin",    g_EspInitEnd-g_EspInit,             (char*)"?",             NULL);
+  _bin_print((char*)"ESPSafe",  (char*)"esp.safe.bin",    g_EspSafeEnd-g_EspSafe,             (char*)"?",             NULL);
   #endif
-  _bin_print((char*)"Fix.Radio",(char*)"radio.bin",       g_RadioEnd-g_Radio,                 (char*)"?",         NULL);
+  _bin_print((char*)"Fix.Radio",(BINJRL ? (char*)"radio-jrl.bin" : (char*)"radio.bin"),
+                                                          g_RadioEnd-g_Radio,                 _radioFwVers(str),      NULL);
 
   sprintf(str,"0x%08X",g_canary);
   _bin_print((char*)"Canary",   str,                      0,                                  NULL,         NULL);

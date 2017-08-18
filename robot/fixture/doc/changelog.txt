@@ -2,14 +2,25 @@
 Release v104.6
 ----------------
 
+Adds new build option JRL. Release='v', FCC='c', JRL='j'
+
 Firmware:
 -esp.factory.bin: roll back to build from v104.1, "10502", original power (0dBm?) setting
 
 EMROBOT:
 -improved error handling for DtmTest. Properly throw comms errors & log dtm response.
 
+EMCUBE:
+-disable fixture radio on non-JRL builds.
+
+FINISHX:
+-disable fixture radio on JRL builds.
+
 -----[c104.6]
 roll back to standard xsfcc.bin firmware (from experimental -12dBm).
+
+-----[j104.6]
+-link radio-jrl.bin (rev 12) over std radio.bin (rev 11)
 
 ----------------
 Release v104.5

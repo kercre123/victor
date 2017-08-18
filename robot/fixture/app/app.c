@@ -28,6 +28,18 @@ u8 g_fixtureReleaseRev = 6; //'ver.rev' e.g. 104.2
 //Set this flag to modify display info - indicates a debug/test build
 #define NOT_FOR_FACTORY 1
 
+#ifdef FCC
+  const bool fcc = true;
+#else
+  const bool fcc = false;
+#endif
+
+#ifdef JRL
+  const bool jrl = true;
+#else
+  const bool jrl = false;
+#endif
+
 //other global dat
 app_reset_dat_t g_app_reset;
 
@@ -109,12 +121,6 @@ extern int g_canary;
 // Show the name of the fixture and version information
 void SetFixtureText(void)
 {
-#ifdef FCC
-  const bool fcc = true;
-#else
-  const bool fcc = false;
-#endif
-  
   DisplayClear();
   DisplayBigCenteredText(FIXTYPES[g_fixtureType]);
   
@@ -152,10 +158,11 @@ void SetFixtureText(void)
   DisplayMoveCursor(55, fcc ? 108+7 : 105+7 );
   DisplayPutChar('N');
   DisplayPutChar('A');
+  volatile bool junk = jrl; //i hate compiler warnings
 #else
   u8 rev_space = (g_fixtureReleaseRev > 0 ? 14 : 0); //leave space for ".#" revision
   DisplayMoveCursor(55, fcc ? 108-rev_space : 105-rev_space );
-  DisplayPutChar(fcc ? 'c' : 'v');
+  DisplayPutChar(fcc ? 'c' : (jrl ? 'j' : 'v') );
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 100)));
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));

@@ -26,12 +26,17 @@ bool FinishDetect(void)
 void FinishTest(void)
 {
   // Try to set the mode - if that succeeds, we're golden
+  //XXX: JRL and normal cube modes are mutually exclusive. JRL mode links in a different radio fw.
+  #ifdef JRL
   if (g_fixtureType == FIXTURE_EMCUBE_TEST)
     SetRadioMode('J');  // JRL/TOMY mode - blast an extra tone for the Japan Radio test fixture
-  else if (g_fixtureType == FIXTURE_FINISHX_TEST)
+  #else
+  if (g_fixtureType == FIXTURE_FINISHX_TEST)
     SetRadioMode('C');  // All types
   else
     SetRadioMode('0' + g_fixtureType - FIXTURE_FINISHC_TEST);
+  #endif
+  
   _whichType = g_fixtureType;
 }
 

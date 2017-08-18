@@ -95,7 +95,11 @@ g_EspSafeEnd
   EXPORT g_Radio
   EXPORT g_RadioEnd
 g_Radio
+#ifdef JRL
+  INCBIN releases\\radio-jrl.bin
+#else
   INCBIN releases\\radio.bin
+#endif
 g_RadioEnd
 
   ALIGN
