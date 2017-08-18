@@ -7,8 +7,6 @@
 #include "mics.h"
 #include "mic_tables.h"
 
-using namespace Anki::Cozmo::Spine;
-
 static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
 static const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;

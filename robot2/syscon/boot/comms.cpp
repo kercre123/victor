@@ -12,8 +12,6 @@
 
 #include "messages.h"
 
-using namespace Anki::Cozmo::Spine;
-
 extern bool validate(void);
 
 extern "C" {

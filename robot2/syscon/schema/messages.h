@@ -25,10 +25,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-namespace Anki {
-namespace Cozmo {
-namespace Spine {
-
 // ENUM SpineSync
 enum {
   SYNC_BODY_TO_HEAD = 0x483242aa,
@@ -226,9 +222,5 @@ struct VersionInfo
   uint8_t ein[16];
   uint8_t app_version[16];
 };
-
-}
-}
-}
 
 #endif

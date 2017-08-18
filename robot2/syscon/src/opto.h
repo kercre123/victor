@@ -6,7 +6,7 @@
 namespace Opto {
   void init(void);
   void tick(void);
-  void transmit(Anki::Cozmo::Spine::BodyToHead *payload);
+  void transmit(BodyToHead *payload);
 }
 
 // Cliff sensor registers

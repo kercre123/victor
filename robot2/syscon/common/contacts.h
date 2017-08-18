@@ -3,8 +3,6 @@
 
 #include "messages.h"
 
-using namespace Anki::Cozmo::Spine;
-
 namespace Contacts {
   void init(void);
   void forward(const ContactData& data);

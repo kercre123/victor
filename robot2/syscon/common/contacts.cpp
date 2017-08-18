@@ -28,47 +28,49 @@ void Contacts::init(void) {
               ;
 
   NVIC_SetPriority(USART2_IRQn, PRIORITY_CONTACTS_COMMS);
-  NVIC_EnableIRQ(USART2_IRQn);
+  //NVIC_EnableIRQ(USART2_IRQn);
   
-  memset(rxData.data, 0, sizeof(ContactData));
+  memset(&rxData, 0, sizeof(ContactData));
+  memset(&txData, 0, sizeof(ContactData));
   rxDataIndex = 0;
   txDataIndex = 0;
-}
-
-static void txNextByte() {
-  const uint8_t byte = txData.data[txDataIndex++];
-
-  if (byte > 0) {
-    USART2->TDR = byte;
-  }
-  
-  if (!byte || txDataIndex >= sizeof(txData)) {
-    USART2->CR1 &= ~USART_CR1_TXEIE;
-  }
 }
 
 void Contacts::forward(const ContactData& pkt) {
-  memcpy(txData.data, pkt.data, sizeof(txData.data));
+  NVIC_DisableIRQ(USART2_IRQn);
+  memcpy(&txData, &pkt, sizeof(ContactData));
   txDataIndex = 0;
 
-  USART2->CR1 |= ~USART_CR1_TXEIE;
-  txNextByte();
+  USART2->CR1 |= USART_CR1_TXEIE;
+  NVIC_EnableIRQ(USART2_IRQn);
 }
 
 bool Contacts::transmit(ContactData& pkt) {
-  bool transmit = rxDataIndex > 0;
-
-  memcpy(pkt.data, rxData.data, sizeof(pkt.data));
-  memset(rxData.data, 0, sizeof(rxData.data));
-  rxDataIndex = 0;
-
-  return transmit;
+  if (rxDataIndex > 0) {
+    NVIC_DisableIRQ(USART2_IRQn);
+    memcpy(&pkt, &rxData, sizeof(ContactData));
+    memset(&rxData, 0, sizeof(ContactData));
+    rxDataIndex = 0;
+    NVIC_EnableIRQ(USART2_IRQn);
+    
+    return true;
+  } else {
+    return false;
+  }
 }
 
 extern "C" void USART2_IRQHandler(void) {
   // Transmit data
   if (USART2->ISR & USART_ISR_TXE) {
-    txNextByte();
+    uint8_t byte = txData.data[txDataIndex++];
+    
+    if (byte > 0) { 
+      USART2->TDR = byte;
+    }
+    
+    if (!byte || txDataIndex >= sizeof(txData)) {
+      USART2->CR1 &= ~USART_CR1_TXEIE;
+    }
   }
 
   // Receive data

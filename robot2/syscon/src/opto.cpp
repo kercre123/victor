@@ -7,8 +7,6 @@
 #include "opto.h"
 #include "messages.h"
 
-using namespace Anki::Cozmo::Spine;
-
 enum I2C_Op {
   I2C_DONE,
   I2C_HOLD,

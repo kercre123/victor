@@ -25,7 +25,7 @@ void Main_Execution(void) {
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
-  Opto::tick();
+  //Opto::tick();
   Analog::tick();
   Lights::tick();
   Touch::tick();
@@ -48,17 +48,20 @@ int main (void) {
   Comms::init();
   Motors::init();
   Encoders::init();
-  Lights::init();
+  //Lights::init();
   Touch::init();
 
   __enable_irq(); // Start firing interrupts
 
   // This is all driven by IRQ logic
-  Opto::init();
+  //Opto::init();
+
+  USART2->TDR = 0x00;
+  USART2->TDR = 0x80;
 
   // Low priority interrupts are now our main execution
   for (;;) {
     __asm("WFI");
-    Power::eject();
+    //Power::eject();
   }
 }

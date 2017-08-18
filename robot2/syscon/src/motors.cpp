@@ -7,8 +7,6 @@
 #include "motors.h"
 #include "messages.h"
 
-using namespace Anki::Cozmo::Spine;
-
 static const int MOTOR_SERVICE_COUNTDOWN = 4;
 static const int MAX_ENCODER_FRAMES = 25; // 0.1250s
 static const int MAX_POWER = 0x8000;
@@ -48,7 +46,7 @@ struct MotorStatus {
 #define CONFIG_N(PIN) \
   (PIN::bank), ~(3 << (PIN::pin * 2)), (MODE_ALTERNATE << (PIN::pin * 2)), (MODE_OUTPUT << (PIN::pin * 2))
 
-static const MotorConfig MOTOR_DEF[Anki::Cozmo::Spine::MOTOR_COUNT] = {
+static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
   {
     &LTP1::bank->BSRR, LTP1::mask,
     &TIM1->CCR2, CONFIG_N(LTN1),
@@ -71,7 +69,7 @@ static const MotorConfig MOTOR_DEF[Anki::Cozmo::Spine::MOTOR_COUNT] = {
   },
 };
 
-static MotorStatus motorStatus[Anki::Cozmo::Spine::MOTOR_COUNT];
+static MotorStatus motorStatus[MOTOR_COUNT];
 static int16_t motorPower[MOTOR_COUNT];
 static int moterServiced;
 

@@ -115,4 +115,7 @@ void Analog::tick(void) {
 
     start_sample();
   }
+
+  USART2->TDR = values[ADC_VBAT];
+  USART2->TDR = values[ADC_VBAT] >> 8;
 }

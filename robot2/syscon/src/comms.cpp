@@ -14,8 +14,6 @@
 
 #include "messages.h"
 
-using namespace Anki::Cozmo::Spine;
-
 static struct {
   // Body 2 Head data
   SpineMessageHeader headerB2H;
