@@ -391,12 +391,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           _LatestCozmoState.face.camPos = face.VizRect.center;
           _LatestCozmoState.face.name = face.Name;
           _LatestCozmoState.face.isVisible = (face.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingFace);
+          _LatestCozmoState.face.expression = GetFaceExpressionName(face);
         }
         else {
           _LatestCozmoState.face.pos = new Vector3(0.0f, 0.0f, 0.0f);
           _LatestCozmoState.face.camPos = new Vector2(0.0f, 0.0f);
           _LatestCozmoState.face.name = "";
           _LatestCozmoState.face.isVisible = false;
+          _LatestCozmoState.face.expression = "";
         }
 
         // Set Device data
@@ -408,6 +410,31 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
         this.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
       }
+    }
+
+    public string GetFaceExpressionName(Face face) {
+      var expression = face.Expression;
+      string expressionName = "";
+      int expressionScore = face.ExpressionScore;
+      switch (expression) {
+      case Anki.Vision.FacialExpression.Happiness:
+        expressionName = "happy";
+        break;
+      case Anki.Vision.FacialExpression.Anger:
+      case Anki.Vision.FacialExpression.Sadness:
+        const int kMinUpsetExpressionScore = 75;
+        if (expressionScore >= kMinUpsetExpressionScore) {
+          expressionName = "upset";
+        }
+        else {
+          expressionName = "unknown";
+        }
+        break;
+      default:
+        expressionName = "unknown";
+        break;
+      }
+      return expressionName;
     }
 
     protected override void Update() {
@@ -635,11 +662,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void OnScriptStopped() {
+      if (_SessionState.GetGrammarMode() == GrammarMode.Horizontal) {
+        // We enable the facial expressions when first needed, and disable when scripts end (rather than ref-counting need)
+        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, false);
+      }
       _SessionState.EndProgram();
       // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
       InProgressScratchBlockPool.ReleaseAllInUse();
-      // We enable the facial expressions when first needed, and disable when scripts end (rather than ref-counting need)
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, false);
       _queuedScratchRequests.Clear();
       QueueResetRobotToHomePos();
     }

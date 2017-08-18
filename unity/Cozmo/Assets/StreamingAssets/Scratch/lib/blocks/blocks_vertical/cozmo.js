@@ -607,6 +607,24 @@ Blockly.Blocks['cozmo_vert_face_get_position_3d'] = {
   }
 };
 
+Blockly.Blocks['cozmo_vert_face_get_expression'] = {
+  /**
+   * Block to read the expression of the most recently seen face
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "face expression",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "String",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
 // Cubes (Sensors / Inputs)
 
 Blockly.Blocks['cozmo_vert_cube_get_is_visible'] = {

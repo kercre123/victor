@@ -79,6 +79,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_face_get_name: this.verticalFaceGetName,
         cozmo_vert_face_get_position_2d: this.verticalFaceGet2d,
         cozmo_vert_face_get_position_3d: this.verticalFaceGet3d,
+        cozmo_vert_face_get_expression: this.verticalFaceGetExpression,
         // Cubes
         cozmo_vert_cube_get_is_visible: this.verticalCubeGetIsVisible,
         cozmo_vert_cube_get_position_2d: this.verticalCubeGetPosition2d,
@@ -679,6 +680,10 @@ Scratch3CozmoBlocks.prototype.verticalFaceGet2d = function(args, util) {
 Scratch3CozmoBlocks.prototype.verticalFaceGet3d = function(args, util) {
     var axis = Cast.toNumber(args.AXIS);
     return getVector3Axis(gCozmoWorldState.face.pos, axis);
+};
+
+Scratch3CozmoBlocks.prototype.verticalFaceGetExpression = function(args, util) {
+    return Cast.toString(gCozmoWorldState.face.expression);
 };
 
 // Cubes

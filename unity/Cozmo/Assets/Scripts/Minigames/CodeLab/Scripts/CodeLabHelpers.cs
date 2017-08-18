@@ -18,6 +18,7 @@ namespace CodeLab {
     public Vector2 camPos;
     public string name;
     public bool isVisible;
+    public string expression;
   }
 
   public class DeviceStateForCodeLab {
