@@ -121,7 +121,7 @@
     "translation" : "選択した対象物の周りに輪郭が表示されます。"
   },
   "droneMode.text.cozmoInteractionChoice" : {
-    "translation" : "表示されたオプションをタップしてCOZMOにやり取りさせます。"
+    "translation" : "表示されたオプションをタップしてCOZMOに実行させます。"
   },
   "memoryMatchGame.howToPlay" : {
     "translation" : "あなたとCOZMOが順番にプレイします。\u000a光るキューブのパターンを覚えます。覚えた順番でキューブをタップします。"
@@ -220,7 +220,7 @@
     "translation" : "ゲームが終了しました"
   },
   "minigame.timeout.description" : {
-    "translation" : "Cozmoは待ちくたびれて、別のことをしたがっています。"
+    "translation" : "COZMOは待ちくたびれて、別のことをしたがっています。"
   },
   "cubePounce.info.setupText" : {
     "translation" : "1個のキューブをCOZMOの前に置いて、緑色になるのを静かに待ちます。"

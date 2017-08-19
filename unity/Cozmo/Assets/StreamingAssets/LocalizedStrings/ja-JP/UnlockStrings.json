@@ -16,7 +16,7 @@
     "translation" : "ロックされたしぐさ"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "COZMOのプレイメーターを満たすと、その日のプレイトークンを獲得できます。トークンを獲得すると、エナジースパークやトリックなどのご褒美が詰まったボーナスボックスのロックが解除されます！"
+    "translation" : "COZMOのプレイメーターを満たすと、その日のプレイトークンを獲得できます。トークンを獲得すると、エナジーボールやトリックなどのご褒美が詰まったボーナスボックスのロックが解除されます！"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "グータッチ"
@@ -94,7 +94,7 @@
     "translation" : "タップしてCOZMOにキューブをころがさせます。"
   },
   "unlockable.CubeRollAction.SparkedStateDescription" : {
-    "translation" : "COZMOが最初に見たキューブをころがすのを見てください。"
+    "translation" : "COZMOが最初に見つけたキューブをころがします。"
   },
   "unlockable.DroneMode.Title" : {
     "translation" : "たんけん"
@@ -136,7 +136,7 @@
     "translation" : "タップしてCOZMOにピラミッドを作らせます。"
   },
   "unlockable.BuildPyramid.SparkedStateDescription" : {
-    "translation" : "COZMOが3つのキューブを使ってピラミッドをするのを見てください。"
+    "translation" : "COZMOが3つのキューブを使ってピラミッドを作るのを見てください。"
   },
   "unlockable.PopAWheelieAction.Title" : {
     "translation" : "ウィリー"
@@ -175,7 +175,7 @@
     "translation" : "COZMOがもちあげるのを見てください。"
   },
   "unlockable.GatherCubes.Title" : {
-    "translation" : "キューブのタイトル<placeholder>を収集します"
+    "translation" : "キューブのタイトル<placeholder>を収集"
   },
   "unlockable.GatherCubes.Description" : {
     "translation" : "キューブの説明<placeholder>を収集します"
@@ -184,7 +184,7 @@
     "translation" : "キューブのエナジーボールボタン<placeholder>を収集します"
   },
   "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "キューブのエナジーボール状態<placeholder>を収集します"
+    "translation" : "キューブのエナジースパーク状態<placeholder>を収集します"
   },
   "unlockable.ComingSoon.Title" : {
     "translation" : "ロックされたしぐさ"
@@ -199,7 +199,7 @@
     "translation" : "COZMOの3つのキューブが近くにあると、COZMOはキューブを守りながら寝てしまうことがあります。COZMOを起こさないように注意して、キューブを裏返しましょう。"
   },
   "sparks.Sparked" : {
-    "translation" : "COZMOはエナジースパークされました："
+    "translation" : "COZMOはエナジースパーク状態になりました："
   },
   "sparks.SparkCozmo" : {
     "translation" : "COZMOのエナジーボールを発動"
@@ -211,10 +211,10 @@
     "translation" : "エナジーボール"
   },
   "sparks.Spark.ConfirmQuit" : {
-    "translation" : "Cozmoはエナジースパークで指示されました！"
+    "translation" : "COZMOがエナジースパーク状態になりました！"
   },
   "sparks.Spark.ConfirmQuit.Description" : {
-    "translation" : "Cozmoが完了する前に離れると、Cozmoはもうエナジースパーク状態でなくなります。"
+    "translation" : "Cozmoが完了する前に離れると、Cozmoはエナジースパーク状態でなくなります。"
   },
   "sparks.NotEnoughSparks.Title" : {
     "translation" : "エナジーボールが足りません"
@@ -232,6 +232,6 @@
     "translation" : "無料"
   },
   "sparks.notSparkable" : {
-    "translation" : "エナジーボールを獲得できません"
+    "translation" : "エナジーボールを発動できません"
   }
 }

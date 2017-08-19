@@ -40,7 +40,7 @@
     "translation" : "COZMOは自分のキューブを守っています..."
   },
   "behavior.RollBlock" : {
-    "translation" : "COZMOはころがしています..."
+    "translation" : "COZMOはキューブをころがしています..."
   },
   "behavior.StackCube" : {
     "translation" : "Cozmoはキューブの山を作っています..."
