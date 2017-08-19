@@ -43,6 +43,7 @@ private:
   std::string _tts_voice;
   int _tts_speed;
   int _tts_shaping;
+  int _tts_pitch;
   
   // Path to temporary audio file
   std::string _path;

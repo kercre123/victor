@@ -110,6 +110,7 @@ BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
   if(robot.HasExternalInterface()){
     auto handleSetSparkMusicState = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& musicState){
       _sparkedMusicState = musicState.GetData().Get_SetSparkedMusicState().sparkedMusicState;
+      HandleSparkUpdates(_lastUnlockIDReceived, _round);
     };
     
     _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(
@@ -126,6 +127,7 @@ BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::Init()
 {
   if(ANKI_DEV_CHEATS)
@@ -147,7 +149,7 @@ void BehaviorAudioClient::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, const int round)
 {
-  if (_unlockId != behaviorUnlockId) {
+  if (_activeSparkMusicID != behaviorUnlockId) {
     return false;
   }
   
@@ -208,15 +210,15 @@ bool BehaviorAudioClient::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
                                                const AudioMetaData::SwitchState::Sparked sparkedState,
                                                const int round)
 {
-  _unlockId = behaviorUnlockId;
+  _activeSparkMusicID = behaviorUnlockId;
 
-  if (_unlockId == UnlockId::Invalid) {
+  if (_activeSparkMusicID == UnlockId::Invalid) {
     _isActive = false;
     return false;
   }
 
   _isActive = true;
-  UpdateBehaviorRound(_unlockId, round);
+  UpdateBehaviorRound(_activeSparkMusicID, round);
 
   // Post Switch state for Sparked Behavior
   if (sparkedState != Sparked::Invalid) {
@@ -238,7 +240,7 @@ void BehaviorAudioClient::DeactivateSparkedMusic()
 {
   _sparkedMusicState = AudioMetaData::SwitchState::Sparked::Invalid;
   _isActive = false;
-  _unlockId = UnlockId::Count;
+  _activeSparkMusicID = UnlockId::Count;
   SetDefaultBehaviorRound();
 }
 
@@ -250,7 +252,8 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   HandleWorldEventUpdates(stateEvent);
   
   // Update sparked music if spark ID changed
-  HandleSparkUpdates(stateEvent);
+  HandleSparkUpdates(stateEvent.currentSpark,
+                     PublicStateBroadcaster::GetBehaviorRoundFromMessage(stateEvent));
   
   // Inform the audio engine of changes in needs levels
   HandleNeedsUpdates(stateEvent.needsLevels);
@@ -277,6 +280,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
     SetActiveBehaviorStage(currentStageTag);
   }
   
+  _lastUnlockIDReceived = stateEvent.currentSpark;
   // Ensure behavior stages have been cleared/re-set appropriately if the activity
   // has changed
   if(ANKI_DEV_CHEATS){
@@ -339,11 +343,9 @@ void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateE
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleSparkUpdates(const RobotPublicState& stateEvent)
+void BehaviorAudioClient::HandleSparkUpdates(const UnlockId& sparkID, const int behaviorRound)
 {
-  const auto& sparkID = stateEvent.currentSpark;
-  
-  if(_unlockId != sparkID){
+  if(_activeSparkMusicID != sparkID){
     if(sparkID == UnlockId::Count){
       DeactivateSparkedMusic();
     }else if(_sparkedMusicState == AudioMetaData::SwitchState::Sparked::Invalid){
@@ -364,14 +366,13 @@ void BehaviorAudioClient::HandleSparkUpdates(const RobotPublicState& stateEvent)
         _robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout, startingRound);
       }
       
-      ActivateSparkedMusic(stateEvent.currentSpark,
+      ActivateSparkedMusic(sparkID,
                            AudioMetaData::GameState::Music::Spark,
                            _sparkedMusicState,
                            startingRound);
     }
   } else {
     // Same spark - just update the behavior round
-    const int behaviorRound = PublicStateBroadcaster::GetBehaviorRoundFromMessage(stateEvent);
     if(_round != behaviorRound){
       UpdateBehaviorRound(sparkID, behaviorRound);
     }

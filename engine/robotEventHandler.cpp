@@ -1116,7 +1116,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // GameToEngine: (in alphabetical order)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::BehaviorManagerMessage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelActionByIdTag>();
@@ -1201,7 +1200,7 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction& msg)
 {
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   if (nullptr == robot)
   {
     return;
@@ -1247,9 +1246,10 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundAction& msg)
 {
   // Can't queue actions for nonexistent robots...
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   if (nullptr == robot)
   {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueCompoundAction.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
     return;
   }
   
@@ -1371,35 +1371,14 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::BehaviorManagerMessage& msg)
-{
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleBehaviorManagerEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
-  }
-  else
-  {
-    robot->GetBehaviorManager().HandleMessage(msg.BehaviorManagerMessageUnion);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObjects& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSendAvailableObjects.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSendAvailableObjects.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {
@@ -1412,14 +1391,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObje
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationImage& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {
@@ -1432,14 +1409,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationIm
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationImages& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {
@@ -1452,14 +1427,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationI
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCalibration& msg)
 {
-  const RobotID_t robotID = msg.robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot. Missing 'first' robot.");
   }
   else
   {

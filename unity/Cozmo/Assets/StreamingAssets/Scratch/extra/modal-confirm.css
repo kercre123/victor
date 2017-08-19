@@ -20,15 +20,21 @@
   text-align: center;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-content: center;
-  padding: 1em 1em 1.5em 1em;
-  border-radius: 10px;
+  padding: 1em;
+  border-radius: 13px;
+  height: 250px;
 }
 .modal-confirm .modal-confirm-title {
-  margin: .5em;
+  margin: 0 0 .5em 0;
   color: #1DAAD1;
 }
+.modal-confirm .modal-confirm-prompt {
+  font-size: 20px;
+  color: #777;
+}
+
 .modal-confirm .bd {
   font-family: 'Avenir Next';
   margin: 1em 0 2em 0;
@@ -42,24 +48,44 @@
   border: 0;
   border-radius: 5px;
   color: #fff;
-  padding: .7em 2em .5em 2em;
-  margin: 0 1em;
+  padding: .9em 2em .7em 2em;
   text-transform: uppercase;
   min-width: 200px;
+  font-size: 18px;
+  box-shadow: 0px 0px 6px 1px #999;
 }
 .modal-confirm .button-pill:active {
   opacity: 1;
 }
 .modal-confirm .button-blue-pill {
-  background-image: linear-gradient(to bottom, #3cbfe4, #2a9ad4);
+  background-image: linear-gradient(to bottom, #26b8df, #1f9cd6);
+  margin-left: .4em;
 }
 .modal-confirm .button-blue-pill:active {
-  background-image: linear-gradient(to bottom, #2c8da8, #1d6d93);
-}
-.modal-confirm .button-red-pill {
-  background-image: linear-gradient(to bottom, #ed5023, #c73719);
-}
-.modal-confirm .button-red-pill:active {
-  background-image: linear-gradient(to bottom, #c74921, #9d2d13);
+  background-image: linear-gradient(to bottom, #1d84ca, #1d9ec7);
 }
 
+.modal-confirm .button-red-pill {
+  background-image: linear-gradient(to bottom, #f7632a, #de4210);
+  margin-right: .4em;
+}
+.modal-confirm .button-red-pill:active {
+  background-image: linear-gradient(to bottom, #c93507, #eb4c0f);
+}
+
+
+
+.modal-confirm.without-prompt .modal-inner {
+  justify-content: center;
+  height: 200px;
+}
+.modal-confirm.without-prompt .modal-inner .modal-confirm-prompt {
+  display: none;
+}
+.modal-confirm.without-prompt .modal-inner .modal-confirm-title {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.modal-confirm.without-prompt .modal-inner .ft {
+  align-self: flex-end;
+}

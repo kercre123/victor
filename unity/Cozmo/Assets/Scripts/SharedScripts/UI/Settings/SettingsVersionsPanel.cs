@@ -193,13 +193,7 @@ namespace Cozmo.Settings {
           data.Pack(ms);
           RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
 
-          // Reset what is normally a read only value.
-          typeof(DataPersistence.DataPersistenceManager).GetField("Data").SetValue(DataPersistence.DataPersistenceManager.Instance,
-                                                                                  new DataPersistence.SaveData());
-          DataPersistence.DataPersistenceManager.Instance.Save();
-
-          // In the event after this disconnect you connect to yet another device, we still want you to have default sparks
-          OnboardingManager.Instance.GiveStartingInventory();
+          DataPersistence.DataPersistenceManager.Instance.ResetSaveData();
 
           _EraseCozmoModalInstance.CloseDialog();
           PauseManager.Instance.StartPlayerInducedSleep(false);

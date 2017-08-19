@@ -1,4 +1,4 @@
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/rotation.h"
 
 namespace Anki {

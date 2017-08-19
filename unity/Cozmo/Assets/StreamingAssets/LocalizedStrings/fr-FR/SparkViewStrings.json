@@ -10,10 +10,10 @@
     "translation" : "Jouer"
   },
   "sparksView.askForGameCard.title" : {
-    "translation" : "Étinceler un jeu"
+    "translation" : "ACTIVER UN JEU"
   },
   "sparksView.askForTrickCard.title" : {
-    "translation" : "Étinceler un tour"
+    "translation" : "ACTIVER UN TOUR"
   },
   "sparksView.listAbilitiesCard.title" : {
     "translation" : "TOURS ET JEUX"
@@ -22,12 +22,12 @@
     "translation" : "Demande à Cozmo de faire un tour ou un jeu particulier."
   },
   "sparksView.sparkCount.label" : {
-    "translation" : "Étincelles disponibles"
+    "translation" : "Éclats disponibles"
   },
   "sparksView.sparksRequired.label" : {
-    "translation" : "Sparks Required"
+    "translation" : "Éclats requis"
   },
   "sparksDetailModal.sparkButton.label" : {
-    "translation" : "SPARKS"
+    "translation" : "ÉCLATS"
   }
 }

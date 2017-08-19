@@ -102,6 +102,9 @@ namespace Cozmo.Challenge.DroneMode {
         }
       }
       else {
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen = true;
+        DataPersistence.DataPersistenceManager.Instance.Save();
+
         HandleUserClose();
       }
     }

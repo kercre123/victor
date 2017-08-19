@@ -26,9 +26,12 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/needsSystem/needsManager.h"
+#include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "util/console/consoleInterface.h"
+
 
 #define DEBUG_HICCUPS 0
 
@@ -107,6 +110,7 @@ void ReactionTriggerStrategyHiccup::SetupForceTriggerBehavior(const Robot& robot
   BehaviorPreReqAnimSequence req(robot, GetHiccupAnim());
   behavior->IsRunnable(req);
 }
+
   
 bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
@@ -158,6 +162,14 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   if(HasHiccups())
   {
+    // Hiccups can't be cured by the player in severe Need state, so cure them
+    const auto expressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+    if((expressedNeed == NeedId::Energy) ||
+       (expressedNeed == NeedId::Repair)){
+      CureHiccups(false);
+      return false;
+    }
+    
     _whiteboard.SetHasHiccups(true);
     
     if(curTime > _nextHiccupInBoutTime)
@@ -369,11 +381,20 @@ void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const GameToEngineEvent
   }
 }
 
-void ReactionTriggerStrategyHiccup::EnabledStateChanged(bool enabled)
+void ReactionTriggerStrategyHiccup::EnabledStateChanged(const Robot& robot, bool enabled)
 {
   if(!enabled)
   {
     _reactionDisabled = true;
+    // Hiccups can't be cured by the player in severe Need state, so cure them now
+    NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+    const NeedBracketId energyBracket = currNeedState.GetNeedBracket(NeedId::Energy);
+    const NeedBracketId repairBracket = currNeedState.GetNeedBracket(NeedId::Repair);
+    if(HasHiccups() &&
+       ((energyBracket == NeedBracketId::Critical) ||
+        (repairBracket == NeedBracketId::Critical))){
+         CureHiccups(false);
+       }
   }
 }
 

@@ -10,7 +10,7 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
@@ -64,7 +64,6 @@ namespace Anki {
                                                 !objIds.empty())
           {
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 11;
             m.numRetries = 3;

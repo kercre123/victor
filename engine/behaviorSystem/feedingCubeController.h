@@ -48,7 +48,6 @@ public:
   // controlled
   bool IsCubeCharging() const;
   bool IsCubeCharged() const;
-  bool IsCubeDrained() const;
 
 private:
   // As defined in messageEngineToGame.clad

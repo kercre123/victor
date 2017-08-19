@@ -289,6 +289,11 @@ def parse_engine_arguments():
         action='store_true',
         help='Use this flag to NOT pull down the latest dependencies (i.e. audio and animation)')
     parser.add_argument(
+        '--useReleaseWwise', 
+        dest='useReleaseWwise', 
+        action='store_true',
+        help="Use Release (not Profile) Wwise libs")
+    parser.add_argument(
         '--use-external',
         required=False,
         default=EXTERNALS_ROOT,

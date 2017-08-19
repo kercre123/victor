@@ -21,6 +21,9 @@ namespace Cozmo {
 
 static const std::string kLocalNotificationConfigsKey = "localNotificationConfigs";
 
+using namespace std::chrono;
+
+
 
 LocalNotifications::LocalNotifications(NeedsManager& needsManager)
 : _needsManager(needsManager)
@@ -28,8 +31,10 @@ LocalNotifications::LocalNotifications(NeedsManager& needsManager)
 {
 }
 
-void LocalNotifications::Init(const Json::Value& json)
+void LocalNotifications::Init(const Json::Value& json, Util::RandomGenerator* rng)
 {
+  _rng = rng;
+
   _localNotificationConfig.items.clear();
   const auto& jsonLocalNotifications = json[kLocalNotificationConfigsKey];
   if (jsonLocalNotifications.isArray())
@@ -56,18 +61,46 @@ void LocalNotifications::CancelAll()
 
 void LocalNotifications::Generate()
 {
+  using namespace std::chrono;
+
   CancelAll();
+
+  const auto& needsState = _needsManager.GetCurNeedsState();
+  const auto& needsConfig = _needsManager.GetNeedsConfig();
+
+  NeedsMultipliers multipliers;
+  needsState.GetDecayMultipliers(needsConfig._decayUnconnected, multipliers);
+
+  const Time now = system_clock::now();
+  static const float secondsPerMinute = 60.0f;
+  const float timeSinceAppOpen_m = (duration_cast<seconds>(now -
+                                    needsState._timeLastAppUnBackgrounded).count()) /
+                                    secondsPerMinute;
 
   for (const auto& config : _localNotificationConfig.items)
   {
     if (ShouldBeRegistered(config))
     {
-      const float duration_m = DetermineTimeToNotify(config);
+      const float duration_m = DetermineTimeToNotify(config, multipliers,
+                                                     timeSinceAppOpen_m, now);
 
+      // Pick random string key among variants
+      const int textKeyIndex = _rng->RandInt(static_cast<int>(config.textKeys.size()));
+
+      // Show pertinent info in the log
+      const float duration_h = duration_m / secondsPerMinute;
+      const float duration_d = duration_h / 24.0f;
+      const int secondsInFuture = static_cast<int>(duration_m * secondsPerMinute);
+      const Time futureDateTime = now + seconds(secondsInFuture);
+      const std::time_t futureTimeT = system_clock::to_time_t(futureDateTime);
+      const size_t bufLen = 255;
+      char whenStringBuf[bufLen];
+      strftime(whenStringBuf, bufLen, "%a %F %T", localtime(&futureTimeT));
       PRINT_CH_INFO(NeedsManager::kLogChannelName,
                     "LocalNotifications.Generate",
-                    "Registering: %10.1f minutes; key: \"%s\"",
-                    duration_m, config.textKeys[0].c_str());
+                    "From now:%8.1f minutes (%6.1f hours, or%7.2f days); at %s; key: \"%s\"",
+                    duration_m, duration_h, duration_d, whenStringBuf,
+                    config.textKeys[textKeyIndex].c_str());
 
       // TODO:  Send ETG message that Scott's wrapper will handle, to register this notification with OS
     }
@@ -75,11 +108,17 @@ void LocalNotifications::Generate()
 }
 
 
-bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config)
+bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config) const
 {
-  bool shouldBeRegistered = true;
+  // Filter on connection
+  const bool didConnect =_needsManager.GetConnectionOccurredThisAppRun();
+  if (((config.connection == Connection::DidConnect)    && !didConnect) ||
+      ((config.connection == Connection::DidNotConnect) &&  didConnect))
+  {
+    return false;
+  }
 
-  // TODO:  Filter on Connection
+  bool shouldBeRegistered = true;
 
   switch (config.notificationMainUnion.GetTag())
   {
@@ -121,7 +160,14 @@ bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config)
 
     case NotificationUnionTag::notificationDailyTokensToGo:
     {
-      // todo:  Ensure number of tokens to go is appropriate
+      const NeedsState state = _needsManager.GetCurNeedsState();
+      // Note that stars are now called tokens (externally, including in the data pipeline)
+      const int starsToGo = state._numStarsForNextUnlock - state._numStarsAwarded;
+      const auto& starsToGoConfig = config.notificationMainUnion.Get_notificationDailyTokensToGo();
+      if (starsToGo != starsToGoConfig.numTokensToGo)
+      {
+        shouldBeRegistered = false;
+      }
       break;
     }
 
@@ -133,7 +179,10 @@ bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config)
 }
 
 
-float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& config)
+float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& config,
+                                                const NeedsMultipliers& multipliers,
+                                                const float timeSinceAppOpen_m,
+                                                const Time now) const
 {
   float minutesInFuture = 0.0f;
 
@@ -141,7 +190,7 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
   {
     case NotificationUnionTag::notificationGeneral:
     {
-      // TODO: use WhenType and WhenParam
+      minutesInFuture = CalculateMinutesInFuture(config, timeSinceAppOpen_m, now);
       break;
     }
 
@@ -152,7 +201,7 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
       const float threshold = needLevelConfig.level;
 
       // How long will it take to decay to the given level?
-      minutesInFuture = CalculateMinutesToThreshold(needId, threshold);
+      minutesInFuture = CalculateMinutesToThreshold(needId, threshold, multipliers);
       break;
     }
 
@@ -171,7 +220,7 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
         const auto& needsConfig = _needsManager.GetNeedsConfig();
         const float threshold = needsConfig.NeedLevelForNeedBracket(needId, prevBracketId);
 
-        minutesInFuture = CalculateMinutesToThreshold(needId, threshold);
+        minutesInFuture = CalculateMinutesToThreshold(needId, threshold, multipliers);
       }
       else
       {
@@ -184,7 +233,7 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
 
     case NotificationUnionTag::notificationDailyTokensToGo:
     {
-      // TODO: use WhenType and WhenParam
+      minutesInFuture = CalculateMinutesInFuture(config, timeSinceAppOpen_m, now);
       break;
     }
 
@@ -192,7 +241,8 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
       break;
   }
   
-  // TODO:  RangeEarly, RangeLate
+  // Allow for a random uniform distribution if desired
+  minutesInFuture += static_cast<float>(_rng->RandDblInRange(-config.rangeEarly, config.rangeLate));
 
   // Enforce minimum duration
   if (minutesInFuture < config.minimumDuration)
@@ -200,31 +250,101 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
     minutesInFuture = config.minimumDuration;
   }
 
+  // Enforce maximum duration
+  const float maxMinutes = _needsManager.GetNeedsConfig()._localNotificationMaxFutureMinutes;
+  if (minutesInFuture > maxMinutes)
+  {
+    PRINT_CH_INFO(NeedsManager::kLogChannelName,
+                  "LocalNotifications.DetermineTimeToNotify",
+                  "Clamping local notification time at the configured maximum of %.1f minutes",
+                  maxMinutes);
+    minutesInFuture = maxMinutes;
+  }
+
   return minutesInFuture;
 }
 
 
-float LocalNotifications::CalculateMinutesToThreshold(const NeedId needId, const float targetLevel)
+float LocalNotifications::CalculateMinutesInFuture(const LocalNotificationItem& config,
+                                                   const float timeSinceAppOpen_m,
+                                                   const Time now) const
+{
+  float minutesInFuture = 0.0f;
+
+  switch (config.whenType)
+  {
+    case WhenType::NotApplicable:
+    {
+      DEV_ASSERT_MSG(config.whenType != WhenType::NotApplicable,
+                     "LocalNotifications.CalculateMinutesInFuture",
+                     "Notification config has 'when type' of NotApplicable but wants an applicable when type");
+      break;
+    }
+
+    case WhenType::AfterAppOpen:
+    {
+      minutesInFuture = config.whenParam - timeSinceAppOpen_m;
+      break;
+    }
+
+    case WhenType::AfterAppClose:
+    {
+      minutesInFuture = config.whenParam;
+      break;
+    }
+
+    case WhenType::ClockTime:
+    {
+      // First, create a Time for today, at the config's clock time:
+      using namespace std::chrono;
+      const std::time_t nowTimeT = system_clock::to_time_t(now);
+      std::tm targetLocalTime;
+      localtime_r(&nowTimeT, &targetLocalTime);
+      const int clockTimeHours = static_cast<int>(config.whenParam / 60.0f);
+      const int clockTimeMinutes = static_cast<int>(fmodf(config.whenParam, 60.0f));
+      targetLocalTime.tm_hour = clockTimeHours;
+      targetLocalTime.tm_min = clockTimeMinutes;
+      std::time_t targetTimeT = mktime(&targetLocalTime);
+
+      // If we've already passed this time of day, make it the NEXT day
+      if (targetTimeT <= nowTimeT)
+      {
+        targetTimeT += (24 * 60 * 60);
+      }
+      minutesInFuture = (targetTimeT - nowTimeT) / 60.0f;
+
+      // Finally, enforce the 'minimum duration' by bumping ahead a day if needed
+      if (minutesInFuture < config.minimumDuration)
+      {
+        minutesInFuture += (24 * 60);
+      }
+      break;
+    }
+  }
+
+  return minutesInFuture;
+}
+
+
+float LocalNotifications::CalculateMinutesToThreshold(const NeedId needId, const float targetLevel,
+                                                      const NeedsMultipliers& multipliers) const
 {
   // Calculate how long it will take (in minutes) for curLevel to decay
   // (with unconnected decay rates) to the target level
   const auto& needsState = _needsManager.GetCurNeedsState();
   const auto& needsConfig = _needsManager.GetNeedsConfig();
 
-  NeedsMultipliers multipliers;
-  needsState.SetDecayMultipliers(needsConfig._decayUnconnected, multipliers);
-
   const float minutesInFuture = needsState.TimeForDecayToLevel(needsConfig._decayUnconnected,
-                                                              static_cast<int>(needId),
-                                                              targetLevel,
-                                                              multipliers);
+                                                               static_cast<int>(needId),
+                                                               targetLevel,
+                                                               multipliers);
 
   if (minutesInFuture == std::numeric_limits<float>::max())
   {
     // If we calculated "infinite" (which could be the case when a
     // decay bracket has a rate of zero), report this
     PRINT_CH_INFO(NeedsManager::kLogChannelName,
-                  "LocalNotifications.DetermineTimeToNotify",
+                  "LocalNotifications.CalculateMinutesToThreshold",
                   "Notification set to infinite future");
   }
 

@@ -142,7 +142,7 @@
     "translation" : "Antwort 15"
   },
   "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText" : {
-    "translation" : "#16: <span class='purple'>KRANGABEL BEWEGEN</span>– 3 <span class='orange'>MAL</span> nach oben und unten."
+    "translation" : "#16: <span class='purple'>HEBEARM BEWEGEN</span> – 3 <span class='orange'>MAL</span> nach oben und unten."
   },
   "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
@@ -291,6 +291,9 @@
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "Probiere erst, die Aufgabe zu erledigen, und tippe dann auf WEITER, um deine Antwort zu überprüfen!"
   },
+  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText" : {
+    "translation" : "Eindringling!"
+  },
   "codeLabChallenge_intruder.answerSlide.primaryText" : {
     "translation" : "Antwort 32"
   },
@@ -325,7 +328,7 @@
     "translation" : "Um ein Programm zu erstellen, musst du einfach nur verschiedene Codeblöcke zusammenziehen."
   },
   "codeLab.tutorial.slide_greenBlockFirst" : {
-    "translation" : "Platziere immer zuerst einen BLOCK mit grüner Kennzeichnung. So kann das Programm dann mithilfe der TASTE mit grüner Kennzeichnung gestartet werden."
+    "translation" : "Platziere immer zuerst einen BLOCK mit grüner Kennzeichnung. So kann das Programm mithilfe dieser TASTE gestartet werden."
   },
   "codeLab.projects.modalTitle" : {
     "translation" : "Cozmo Code Lab"
@@ -472,7 +475,7 @@
     "translation" : "Unbestimmte Animation"
   },
   "codeLabHorizontal.Tooltip.MoveLift" : {
-    "translation" : "Krangabel bewegen"
+    "translation" : "Hebearm bewegen"
   },
   "codeLabHorizontal.Tooltip.MoveHead" : {
     "translation" : "Kopf bewegen"

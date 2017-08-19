@@ -234,6 +234,7 @@ public static class LocalizationKeys {
   public const string kCodeLabChallenge_whenCubeSeenSetBehindAnswerSlidePrimaryText = "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText";
   public const string kCodeLabChallenge_intruderQuestionSlidePrimaryText = "codeLabChallenge_intruder.questionSlide.primaryText";
   public const string kCodeLabChallenge_intruderQuestionSlideSecondaryText = "codeLabChallenge_intruder.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_intruderCozmoSaysBlockDefaultText = "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText";
   public const string kCodeLabChallenge_intruderAnswerSlidePrimaryText = "codeLabChallenge_intruder.answerSlide.primaryText";
   public const string kCodeLabChallenge_challengesUISlideXofY = "codeLabChallenge_challengesUI.slideXofY";
   public const string kCodeLabChallenge_challengesUIChallengesModalTitle = "codeLabChallenge_challengesUI.challengesModalTitle";
@@ -364,6 +365,8 @@ public static class LocalizationKeys {
   public const string kCubeHelpStringsInstructionsQuickSnackSlideButton = "cubeHelpStrings.Instructions.QuickSnackSlide.Button";
   public const string kCubeHelpStringsInstructionsFeedPopupTitle = "cubeHelpStrings.Instructions.FeedPopup.Title";
   public const string kCubeHelpStringsInstructionsFeedPopupBody = "cubeHelpStrings.Instructions.FeedPopup.Body";
+  public const string kCubeHelpStringsInstructionsDontNeedToFeedPopupTitle = "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title";
+  public const string kCubeHelpStringsInstructionsDontNeedToFeedPopupBody = "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body";
   public const string kCubeHelpStringsInstructionsSlideA2Copy = "cubeHelpStrings.Instructions.SlideA2Copy";
 
   #endregion

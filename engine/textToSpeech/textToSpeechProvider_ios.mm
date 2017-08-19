@@ -19,6 +19,7 @@
 #include "anki/common/basestation/utils/data/dataScope.h"
 #include "engine/cozmoContext.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
 #include "util/logging/logging.h"
 
@@ -42,12 +43,26 @@
 
 // Acapela configuration
 #import "AcapelaSpeech.h"
-#import "acattsioslicense.h"
-#import "acattsioslicense.m"
 
+#if REMOTE_CONSOLE_ENABLED
+
+// Debug sliders
+#define CONSOLE_GROUP "TextToSpeech.VoiceParameters"
+
+namespace {
+  CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, 100, 30, 300);
+  CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, 100, 70, 140);
+  CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, 100, 70, 160);
+}
+
+#endif
 
 // Max samples per read
 #define TTS_BLOCKSIZE (16*1024)
+
+// Fixed parameters
+#define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
+#define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
 
 //
 // This interface is used to provide a pure-C interface on top of Acapela's Objective-C SDK.
@@ -57,8 +72,16 @@
 + (id)shared;
 
 // Instance methods to implement SDK operations
-- (Anki::Result)loadVoice:(const char*)voice speed:(int)speed shaping:(int)shaping;
-- (Anki::Result)generateAudioFile:(const char*)str path:(const char*)path speechRate:(float)speechRate;
+- (Anki::Result)loadVoice:(const char*)voice
+    userid:(int)userid
+  password:(int)password
+   license:(const char*)license;
+
+- (Anki::Result)generateAudioFile:(const char*)str
+    path:(const char*)path
+    speed:(int)speed
+  shaping:(int)shaping
+    pitch:(int)pitch;
 
 // Instance methods to implement AcapelaSpeechDelegate callback interface.
 // These delegate methods appear to be required for correct operation of the SDK,
@@ -88,7 +111,10 @@
   return instance;
 }
 
-- (Anki::Result)loadVoice:(const char*)voice speed:(int)speed shaping:(int)shaping
+- (Anki::Result)loadVoice:(const char*)voice
+    userid:(int)userid
+  password:(int)password
+   license:(const char*)license
 {
   @autoreleasepool
   {
@@ -99,11 +125,10 @@
     // Initialize SDK object
     _acaTTS = [[AcapelaSpeech alloc] init];
 
-    // Initialize Acapela license info. Note Acapela SDK provides license info as unobscured string,
-    // but they seem to be OK with that.
-    NSString* nsLicense = [acattsioslicense license];
-    NSInteger nsUserid = [acattsioslicense userid];
-    NSInteger nsPassword = [acattsioslicense password];
+    // Initialize Acapela license info
+    NSString* nsLicense = [NSString stringWithCString:license encoding:NSASCIIStringEncoding];
+    NSInteger nsUserid = userid;
+    NSInteger nsPassword = password;
     NSString* nsMode = @"";
   
     //
@@ -124,10 +149,8 @@
       return Anki::RESULT_FAIL;
     }
   
-    [_acaTTS setRate:speed];
-    [_acaTTS setVoiceShaping:shaping];
-    [_acaTTS setTTSSetting:@"LEADINGSILENCE" settingvalue:0];
-    [_acaTTS setTTSSetting:@"TRAILINGSILENCE" settingvalue:0];
+    [_acaTTS setTTSSetting:@"LEADINGSILENCE" settingvalue:TTS_LEADINGSILENCE_MS];
+    [_acaTTS setTTSSetting:@"TRAILINGSILENCE" settingvalue:TTS_TRAILINGSILENCE_MS];
     
     //
     // Set SDK delegate for diagnostics.  At present, delegate methods don't do anything else,
@@ -139,7 +162,11 @@
   }
 }
 
-- (Anki::Result)generateAudioFile:(const char *)str path:(const char*)path speechRate:(float)speechRate
+- (Anki::Result)generateAudioFile:(const char *)str
+   path:(const char*)path
+  speed:(int)speed
+shaping:(int)shaping
+  pitch:(int)pitch
 {
   @autoreleasepool
   {
@@ -147,14 +174,18 @@
     DEV_ASSERT(nullptr != str, "TextToSpeechProviderImpl.NoString");
     DEV_ASSERT(nullptr != path, "TextToSpeechProviderImpl.NoPath");
   
-    LOG_DEBUG("TextToSpeechProviderImpl.GenerateAudioFile", "Speak %s to file %s",
-              Anki::Util::HidePersonallyIdentifiableInfo(str), path);
+    LOG_DEBUG("TextToSpeechProviderImpl.GenerateAudioFile", "str=%s path=%s speed=%d shaping=%d pitch=%d",
+              Anki::Util::HidePersonallyIdentifiableInfo(str), path,
+              speed, shaping, pitch);
   
     NSString* nsstr = [NSString stringWithUTF8String:str];
     NSURL* nsurl = [NSURL fileURLWithFileSystemRepresentation:path isDirectory:NO relativeToURL:nil];
     NSString* nstype = @"pcm";
   
-    [_acaTTS setRate:speechRate];
+    [_acaTTS setRate:speed];
+    [_acaTTS setVoiceShaping:shaping];
+    [_acaTTS setTTSSetting:@"SEL_PITCH" settingvalue:pitch];
+
   
     BOOL ok = [_acaTTS generateAudioFile:nsstr toURL:nsurl type:nstype sync:YES];
     if (!ok) {
@@ -232,22 +263,43 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     _tts_voice = "enu_ryan_22k_co.fl";
     _tts_speed = 100;
     _tts_shaping = 100;
-    
-    // Allow language configuration to override defaults
+    _tts_pitch = 100;
+
+    //
+    // Allow language configuration to override defaults.  Note pitch is not
+    // supported on all platforms, so it not supported as a config parameter
+    // at this time.
+    //
     Json::Value tts_language_config = tts_platform_config[_tts_language.c_str()];
     
     JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kVoiceKey, _tts_voice);
     JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
     JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
+    //JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kPitchKey, _tts_pitch);
     
     LOG_INFO("TextToSpeechProvider.Initialize",
-             "language=%s voice=%s speed=%d shaping=%d",
-             _tts_language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
-    
+             "language=%s voice=%s speed=%d shaping=%d pitch=%d",
+             _tts_language.c_str(), _tts_voice.c_str(), _tts_speed,
+             _tts_shaping, _tts_pitch);
+
+#if REMOTE_CONSOLE_ENABLED
+    // Initialize debug sliders to match voice params
+    kVoiceSpeed = _tts_speed;
+    kVoiceShaping = _tts_shaping;
+    kVoicePitch = _tts_pitch;
+#endif
+
     // Initialize SDK and load voice
     AcapelaProviderImpl * impl = [AcapelaProviderImpl shared];
+    const int userid = AcapelaTTS::GetUserid();
+    const int password = AcapelaTTS::GetPassword();
+    const std::string& license = AcapelaTTS::GetLicense();
   
-    Result result = [impl loadVoice:_tts_voice.c_str() speed:_tts_speed shaping:_tts_shaping];
+    Result result = [impl loadVoice:_tts_voice.c_str()
+                             userid:userid
+                           password:password
+                            license:license.c_str()];
+
     if (RESULT_OK != result) {
       LOG_ERROR("TextToSpeechProvider.LoadVoice",
                 "Unable to load voice=%s (result %d)",
@@ -272,14 +324,25 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   @autoreleasepool
   {
     const auto before = std::chrono::steady_clock::now();
-    
+
     // Get reference to shared instance
     AcapelaProviderImpl * impl = [AcapelaProviderImpl shared];
-  
+
+#if REMOTE_CONSOLE_ENABLED
+    // Update voice params to match debug sliders
+    _tts_speed = kVoiceSpeed;
+    _tts_shaping = kVoiceShaping;
+    _tts_pitch = kVoicePitch;
+#endif
+
     // Adjust base speed by scalar, then clamp to allowed range
-    const float speechRate = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
+    const float speed = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
   
-    Result result = [impl generateAudioFile:text.c_str() path:_path.c_str() speechRate:speechRate];
+    Result result = [impl generateAudioFile:text.c_str()
+                                       path:_path.c_str()
+                                      speed:speed
+                                    shaping:_tts_shaping
+                                      pitch:_tts_pitch];
     if (RESULT_OK != result) {
       LOG_ERROR("TextToSpeechProvider.CreateAudioData.GenerateAudioFile",
                 "Unable to generate audio file (error %d)",

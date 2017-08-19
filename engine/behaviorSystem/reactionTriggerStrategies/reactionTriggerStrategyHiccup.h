@@ -42,6 +42,8 @@ protected:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot) override;
 
+  virtual void EnabledStateChanged(const Robot& robot, bool enabled) override;
+
 private:
 
   // Returns true if Cozmo currently has the hiccups
@@ -61,9 +63,6 @@ private:
   
   // Returns which animation to play depending on our state
   std::vector<AnimationTrigger> GetHiccupAnim() const;
-  
-  
-  virtual void EnabledStateChanged(bool enabled) override;
   
   void ParseConfig(const Json::Value& config);
 

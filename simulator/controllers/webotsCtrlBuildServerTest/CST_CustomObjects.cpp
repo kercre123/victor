@@ -19,7 +19,7 @@
 *
 */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "engine/actions/basicActions.h"
 #include "engine/activeCube.h"
@@ -206,8 +206,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
           RobotActionUnion(SetHeadAngle(MIN_HEAD_ANGLE, 100.f, 100.f, 0.f)),
         };
         
-        SendMessage(MessageGameToEngine(QueueCompoundAction(kRobotID,
-                                                            kIdTag,
+        SendMessage(MessageGameToEngine(QueueCompoundAction(kIdTag,
                                                             kNumRetries,
                                                             kIsParallel,
                                                             kPosition,

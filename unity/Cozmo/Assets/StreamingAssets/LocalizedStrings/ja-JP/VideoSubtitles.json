@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "videoSubtitles.speedTap.first" : {
-    "translation" : "ゲーム設定"
+    "translation" : "ゲームセットアップ"
   },
   "videoSubtitles.speedTap.second" : {
     "translation" : "Cozmoは自分でキューブを選びます。"
@@ -31,13 +31,13 @@
     "translation" : "5ポイント先取で勝ち。"
   },
   "videoSubtitles.cubePounce.first" : {
-    "translation" : "1つのキューブを使う。"
+    "translation" : "1つのキューブを使います。"
   },
   "videoSubtitles.cubePounce.second" : {
-    "translation" : "緑色はCozmoから見えていることを示しています。"
+    "translation" : "緑色はCOZMOから見えていることを示しています。"
   },
   "videoSubtitles.cubePounce.third" : {
-    "translation" : "キューブをCozmoの方に押します。"
+    "translation" : "キューブをCOZMOの方に押します。"
   },
   "videoSubtitles.cubePounce.fourth" : {
     "translation" : "Cozmoがアタックする前に引っ込めます。"
@@ -46,13 +46,13 @@
     "translation" : "遅すぎると"
   },
   "videoSubtitles.cubePounce.sixth" : {
-    "translation" : "Cozmoが得点します。"
+    "translation" : "COZMOが得点します。"
   },
   "videoSubtitles.memoryMatch.first" : {
-    "translation" : "ゲーム設定"
+    "translation" : "ゲームセットアップ"
   },
   "videoSubtitles.memoryMatch.second" : {
-    "translation" : "Cozmoは遊ぶ準備ができました。"
+    "translation" : "COZMOは遊ぶ準備ができました。"
   },
   "videoSubtitles.memoryMatch.third" : {
     "translation" : "ゲームは1つのパターンから始まります。"
@@ -64,7 +64,7 @@
     "translation" : "次にその覚えたパターンを繰り返します。"
   },
   "videoSubtitles.memoryMatch.sixth" : {
-    "translation" : "次はCozmoの番です。"
+    "translation" : "次はCOZMOの番です。"
   },
   "videoSubtitles.memoryMatch.seventh" : {
     "translation" : "ラウンドごとにパターンが難しくなります。"

@@ -199,6 +199,8 @@ namespace Anki {
     public:
       PlayNeedsGetOutAnimIfNeeded(Robot& robot);
       
+      virtual ~PlayNeedsGetOutAnimIfNeeded();
+      
     protected:
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;

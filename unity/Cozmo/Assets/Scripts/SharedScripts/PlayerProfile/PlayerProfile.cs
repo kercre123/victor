@@ -42,6 +42,7 @@ namespace DataPersistence {
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
+    public int DisplayedSparks;
     public int DisplayedStars;
 
     public List<Anki.Cozmo.ExternalInterface.StarLevelCompleted> NewStarLevels;
@@ -81,6 +82,7 @@ namespace DataPersistence {
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       DisplayedStars = 0;
+      DisplayedSparks = 0;
       NewStarLevels = new List<Anki.Cozmo.ExternalInterface.StarLevelCompleted>();
       PreviousTags = new List<string>();
       LabAssignments = new Anki.Util.AnkiLab.AssignmentDef[0];

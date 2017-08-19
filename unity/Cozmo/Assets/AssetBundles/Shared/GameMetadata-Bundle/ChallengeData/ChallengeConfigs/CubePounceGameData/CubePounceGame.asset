@@ -39,13 +39,13 @@ MonoBehaviour:
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 408
+    _EnumValue: 519
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 408
+    _EnumValue: 519
   _NeedsActionIdWin:
     _EnumValueAsString: KeepAwayWin
-    _EnumValue: 9
+    _EnumValue: 6
   _NeedsActionIdLose:
     _EnumValueAsString: KeepAwayLose
-    _EnumValue: 10
+    _EnumValue: 7

@@ -13,31 +13,31 @@
     "translation" : "楽しい遊び場所を作ります。"
   },
   "helpTipsStrings.Slide0.body" : {
-    "translation" : "Cozmoは明るい部屋の、きれいで広いテーブルが好きです。室内で、直射日光が当たらないところがベストです。"
+    "translation" : "COZMOは明るい部屋の、きれいで広いテーブルが好きです。室内で、直射日光が当たらないところがベストです。"
   },
   "helpTipsStrings.Slide1.title" : {
     "translation" : "Cozmoのキューブ"
   },
   "helpTipsStrings.Slide1.body" : {
-    "translation" : "Cozmoはキューブの近くにいるのが好きです。キューブはCozmoからシンボルがはっきり見え、正しい面を上にしているときに最もよく機能します。キューブのメンテナンスの<b><color=#d3d3d3>設定</color></b>を確認してください。"
+    "translation" : "COZMOはキューブの近くにいるのが好きです。キューブはCOZMOからシンボルがはっきり見え、正しい面を上にしているときに最もよく機能します。キューブのメンテナンスの<b><color=#d3d3d3>設定</color></b>を確認してください。"
   },
   "helpTipsStrings.Slide2.title" : {
     "translation" : "ゲームをしていない場合、\u000aキューブのライトは次のことを示します。"
   },
   "helpTipsStrings.Slide2.subtitle1" : {
-    "translation" : "Cozmoが\u000a見ているキューブ"
+    "translation" : "COZMOが\u000a見ているキューブ"
   },
   "helpTipsStrings.Slide2.subtitle2" : {
-    "translation" : "Cozmoは\u000aこのキューブを使いたがっています。"
+    "translation" : "COZMOは\u000aこのキューブを使いたがっています。"
   },
   "helpTipsStrings.Slide2.subtitle3" : {
     "translation" : "このキューブは\u000a電池の残りが少ない"
   },
   "helpTipsStrings.Slide3.title" : {
-    "translation" : "Cozmoは時間とともに成長します。"
+    "translation" : "COZMOは時間とともに成長します。"
   },
   "helpTipsStrings.Slide3.body" : {
-    "translation" : "Cozmoのプレイメーターを満たすと、その日のプレイトークンを獲得できます。プレイトークンによって、スパーク、ゲーム、トリックなどのご褒美が詰まったボーナスボックスのロックを解除できます。"
+    "translation" : "COZMOのプレイメーターを満たすと、その日のプレイトークンを獲得できます。プレイトークンによって、エナジーボール、ゲーム、トリックなどのご褒美が詰まったボーナスボックスのロックを解除できます。"
   },
   "helpTipsStrings.Slide3.bodyUpgrade" : {
     "translation" : "<color=#FFFFFF>毎日</color><b><color=#F5BF2D>プレイトークン</color></b><color=#FFFFFF>を獲得しましょう。</color>"
@@ -46,19 +46,19 @@
     "translation" : "<color=#FFFFFF>トークン3つで</color><b><color=#F5BF2D>ボーナスボックスが解除されます。</color></b>"
   },
   "helpTipsStrings.Slide5.title" : {
-    "translation" : "Cozmoをお世話しましょう。"
+    "translation" : "COZMOをお世話しましょう。"
   },
   "helpTipsStrings.Slide5.body" : {
-    "translation" : "Cozmoアプリを毎日起動して、Cozmoをいつもハッピーにしましょう。Cozmoのプレイメーターを日々満たしてボーナスボックスを獲得すると、Cozmoは学び、成長していきます。Cozmoに接続すると目を覚まします。必要な世話をしてあげてください。"
+    "translation" : "COZMOアプリを毎日起動して、COZMOをいつもハッピーにしましょう。COZMOのプレイメーターを日々満たしてボーナスボックスを獲得すると、COZMOは学び、成長していきます。COZMOに接続すると目を覚まします。必要な世話をしてあげてください。"
   },
   "helpTipsStrings.Slide6.title" : {
-    "translation" : "Cozmoを守る。"
+    "translation" : "COZMOを守る。"
   },
   "helpTipsStrings.Slide6.body" : {
-    "translation" : "Cozmoの安全を守ってあげてください。Cozmoは小さいペットのようなものです。トラブルにあわないように目を離さないでください。動けなくなって、あなたの助けを必要としているかもしれません。"
+    "translation" : "COZMOの安全を守ってあげてください。COZMOは小さいペットのようなものです。トラブルにあわないように目を離さないでください。動けなくなって、あなたの助けを必要としているかもしれません。"
   },
   "helpTipsStrings.Slide7.title" : {
-    "translation" : "Cozmoのバックライトは、次のことを示します。"
+    "translation" : "COZMOのLEDライトは、次のことを示します。"
   },
   "helpTipsStrings.Slide7.subtitle1" : {
     "translation" : "フルチャージ"
@@ -70,15 +70,15 @@
     "translation" : "電池の残量不足"
   },
   "helpTipsStrings.Slide8.title" : {
-    "translation" : "Cozmoは安全。"
+    "translation" : "COZMOは安全。"
   },
   "helpTipsStrings.Slide8.body" : {
-    "translation" : "Cozmoと彼のカメラは安全に守られています。まだ画像や動画はオンラインでもオフラインでも保存されていません。Cozmoはあなたが承認するデバイスとしか話しません。"
+    "translation" : "COZMOと彼のカメラは安全に守られています。まだ画像や動画はオンラインでもオフラインでも保存されていません。COZMOはあなたが承認するデバイスとしか話しません。"
   },
   "helpTipsStrings.Slide9.title" : {
-    "translation" : "Cozmoをいつもチャージされた状態に保ちます。"
+    "translation" : "COZMOをいつもチャージされた状態に保ちましょう。"
   },
   "helpTipsStrings.Slide9.body" : {
-    "translation" : "Cozmoはチャージャーが必要なのでいつも用意しておいてください。遊び終わったら、Cozmoをチャージャーの上に置いてスリープさせます。"
+    "translation" : "COZMOは充電ドックが必要なのでいつも用意しておいてください。遊び終わったら、COZMOを充電ドックの上に置いてスリープさせます。"
   }
 }

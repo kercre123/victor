@@ -13,11 +13,11 @@
 # limitations under the License.
 
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 
 # build version string, to match the one in the app engine
-__build_version__ = "00002.00000.00000"
+__build_version__ = "00002.00001.00000"
 
 
 class CLADHashMismatch(Exception):

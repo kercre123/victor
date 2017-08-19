@@ -18,10 +18,10 @@
 #include <vector>
 #include <deque>
 #include <anki/messaging/basestation/IComms.h>
-#include "anki/messaging/basestation/advertisementService.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "engine/messaging/advertisementService.h"
 
 // Set to 1 to simulate a send/receive latencies
 // beyond the actual latency of TCP.

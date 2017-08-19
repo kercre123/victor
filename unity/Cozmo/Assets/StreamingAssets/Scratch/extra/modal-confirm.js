@@ -36,7 +36,15 @@ var ModalConfirm = (function(){
     _dialog.querySelector('.btn-confirm').textContent = options.confirmButtonLabel;
     _dialog.querySelector('.btn-cancel').textContent = options.cancelButtonLabel;
     _dialog.querySelector('.modal-confirm-title').textContent = options.title;
-    _dialog.querySelector('.modal-confirm-prompt').textContent = options.prompt;
+    _dialog.querySelector('.modal-confirm-prompt').textContent = options.prompt || '';
+
+    // add a class to the modal container if the subtext promot is not being displayed
+    if (!options.prompt) {
+      _dialog.classList.add('without-prompt');
+    } else {
+      _dialog.classList.remove('without-prompt');
+    }
+
 
     // show the dialog
     _dialog.style.visibility = 'visible';

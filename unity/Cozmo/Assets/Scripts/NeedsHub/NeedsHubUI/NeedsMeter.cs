@@ -168,7 +168,12 @@ namespace Cozmo {
         _BurstTimer = 0f;
         _AnimStartValue = CurrentValue;
         _TargetValue = target;
-        _StartBurstParticles.Play();
+        if (_StartBurstParticles != null) {
+          var ps = _StartBurstParticles.main;
+          int lvl = PerformanceManager.Instance.GetQualitySetting();
+          ps.maxParticles = _MaxParticles[lvl];
+          _StartBurstParticles.Play();
+        }
       }
 
       public void SetValueInstant(float target) {
@@ -287,11 +292,14 @@ namespace Cozmo {
           float currentValue = CurrentValue;
 
           SetBurstColor(_OffColor);
-
-          var emissionMod = _ConstantParticles.emission;
-          int lvl = PerformanceManager.Instance.GetQualitySetting();
-          emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles[lvl], _MaxParticles[lvl], currentValue));
-
+          // The "simple" prefabs don't have particles.
+          if (_ConstantParticles != null) {
+            var emissionMod = _ConstantParticles.emission;
+            int lvl = PerformanceManager.Instance.GetQualitySetting();
+            var ps = _ConstantParticles.main;
+            ps.maxParticles = _MaxParticles[lvl];
+            emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles[lvl], _MaxParticles[lvl], currentValue));
+          }
           if (_TargetValue > currentValue) {
             _ImageFillGlow.color = _IncreasingColor;
           }

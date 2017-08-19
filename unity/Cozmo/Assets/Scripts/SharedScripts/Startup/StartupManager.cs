@@ -195,20 +195,30 @@ public class StartupManager : MonoBehaviour {
     // _IsDebugBuild = Debug.isDebugBuild;
     _IsDebugBuild = true;
 
+    string delimiter = "-";
     string resolutionVariant = GetVariantBasedOnScreenResolution();
 
     // platform independent, resolution dependent
     assetBundleManager.AddActiveVariant(resolutionVariant);
 
     // platform dependent, resolution dependent
-    assetBundleManager.AddActiveVariant(GetVariantBasedOnPlatform() + "-" + resolutionVariant);
+    string platformVariant = GetVariantBasedOnPlatform();
+    assetBundleManager.AddActiveVariant(platformVariant + delimiter + resolutionVariant);
 
     // platform dependent only (usually prefabs)
-    assetBundleManager.AddActiveVariant(GetVariantBasedOnPlatform());
+    assetBundleManager.AddActiveVariant(platformVariant);
 
-    string localeVariant = Localization.GetStringsLocale();
-    assetBundleManager.AddActiveVariant(localeVariant.ToLower());
-    assetBundleManager.AddActiveVariant(Localization.GetCurrentFontBundleVariant());
+    // language dependent only; images with embedded text (Cozmo's password face)
+    string localeVariant = Localization.GetStringsLocale().ToLower();
+    assetBundleManager.AddActiveVariant(localeVariant);
+    assetBundleManager.AddActiveVariant(localeVariant + delimiter + resolutionVariant);
+
+    // platform and language dependent; device settings images with embedded text
+    assetBundleManager.AddActiveVariant(platformVariant + delimiter + localeVariant + delimiter + resolutionVariant);
+
+    // Font is different for latin vs. Japanese
+    string fontVariant = Localization.GetCurrentFontBundleVariant();
+    assetBundleManager.AddActiveVariant(fontVariant);
 
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
@@ -458,7 +468,7 @@ public class StartupManager : MonoBehaviour {
 
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
-    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.InitInventory();
+    DataPersistence.DataPersistenceManager.Instance.InitSaveData();
 
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
   }

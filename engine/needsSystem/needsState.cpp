@@ -23,10 +23,14 @@ namespace Anki {
 namespace Cozmo {
 
 
+using namespace std::chrono;
+
+
 NeedsState::NeedsState()
 : _timeLastWritten(Time())
 , _timeLastDisconnect(Time())
 , _timeLastAppBackgrounded(Time())
+, _timeLastAppUnBackgrounded(system_clock::now())
 , _timesOpenedSinceLastDisconnect(0)
 , _robotSerialNumber(0)
 , _rng(nullptr)
@@ -56,9 +60,10 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
 {
   Reset();
 
-  _timeLastWritten         = Time();  // ('never')
-  _timeLastDisconnect      = Time();  // ('never')
-  _timeLastAppBackgrounded = Time();  // ('never')
+  _timeLastWritten           = Time();  // ('never')
+  _timeLastDisconnect        = Time();  // ('never')
+  _timeLastAppBackgrounded   = Time();  // ('never')
+  _timeLastAppUnBackgrounded = system_clock::now();
   _timesOpenedSinceLastDisconnect = 0;
 
   _needsConfig = &needsConfig;
@@ -102,9 +107,9 @@ void NeedsState::Reset()
 }
 
 
-void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const
+void NeedsState::GetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const
 {
-  PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.SetDecayMultipliers",
+  PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.GetDecayMultipliers",
                 "Setting needs decay multipliers");
 
   // Set some decay rate multipliers, based on config data, and the CURRENT needs levels:
@@ -244,7 +249,7 @@ float NeedsState::TimeForDecayToLevel(const DecayConfig& decayConfig, const int 
   }
 
   bool done = false;
-  while (rateIndex < rates.size())
+  for ( ; rateIndex < rates.size(); rateIndex++)
   {
     const DecayRate& rate = rates[rateIndex];
     const float bottomThreshold = rate._threshold;
@@ -273,8 +278,6 @@ float NeedsState::TimeForDecayToLevel(const DecayConfig& decayConfig, const int 
     {
       break;
     }
-
-    rateIndex++;
   }
 
   return decayTimeMinutes;

@@ -35,7 +35,7 @@ public:
   virtual void AnimationComplete(Robot& robot) override;
   
 protected:
-  virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
+  virtual void EnabledStateChanged(const Robot& robot, bool enabled) override {_shouldTrigger = false;}
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;

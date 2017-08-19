@@ -71,7 +71,7 @@ bool xythetaPlanner::PathIsSafe(const Planning::Path& path, float startAngle, Pl
   return _impl->PathIsSafe(path, startAngle, validPath);
 }
 
-bool xythetaPlanner::Replan(unsigned int maxExpansions, bool* runPlan)
+bool xythetaPlanner::Replan(unsigned int maxExpansions, volatile bool* runPlan)
 {
   using namespace std::chrono;
 
@@ -482,7 +482,7 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal(const StateID& goalStateI
 }
 
 
-bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
+bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, volatile bool* runPlan)
 {
   _runPlan = runPlan;
 

@@ -2995,7 +2995,7 @@ namespace Cozmo {
   
     return RESULT_OK;
   } // ReadToolCode()
-  
+
   Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
                                              std::vector<u8>& enrollData) const
   {

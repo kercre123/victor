@@ -73,7 +73,12 @@ protected:
   
 private:  
   Robot&    _robot;
-  UnlockId  _unlockId = UnlockId::Count;
+  
+  // Track second unlockID value for instances where we receive the appropriate
+  // music state from game after a spark activity has already started
+  UnlockId  _activeSparkMusicID = UnlockId::Count;
+  UnlockId  _lastUnlockIDReceived = UnlockId::Count;
+  
   AudioMetaData::SwitchState::Sparked _sparkedMusicState = AudioMetaData::SwitchState::Sparked::Invalid;
   bool      _isActive = false;
   int       _round    = kBehaviorRound;
@@ -110,7 +115,7 @@ private:
   void SetActiveBehaviorStage(BehaviorStageTag stageTag);
   
   void HandleWorldEventUpdates(const RobotPublicState& stateEvent);
-  void HandleSparkUpdates(const RobotPublicState& stateEvent);
+  void HandleSparkUpdates(const UnlockId& sparkID, const int behaviorRound);
   void HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct);

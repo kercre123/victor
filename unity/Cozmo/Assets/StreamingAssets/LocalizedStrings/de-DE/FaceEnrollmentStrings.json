@@ -46,7 +46,7 @@
     "translation" : "Cozmo kennt deinen Namen!"
   },
   "faceEnrollment.firstTimeCompleteAlert.description" : {
-    "translation" : "Cozmo kennt dein Gesicht und sagt unter Umständen deinen namen, wenn er dich sieht. Verwende die Funktion \"Kennenlernen\", um Cozmo weitere Freunde vorzustellen."
+    "translation" : "Cozmo kennt dein Gesicht und sagt unter Umständen deinen Namen, wenn er dich sieht. Verwende die Funktion \"Kennenlernen\", um Cozmo weitere Freunde vorzustellen."
   },
   "faceEnrollment.button.addNewPerson" : {
     "translation" : "NEUE PERSON"

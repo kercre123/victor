@@ -63,7 +63,6 @@ namespace Anki {
       const f32 kTangentialDistCoeff2 = 0.001523473592445885f;
       const f32 kDistCoeffNoiseFrac = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
       
-      
       //Calibrated values
 //      const f32 kRadialDistCoeff1     = -0.01195035398831179;
 //      const f32 kRadialDistCoeff2     = -0.002578186894213538;
@@ -71,6 +70,7 @@ namespace Anki {
 //      const f32 kTangentialDistCoeff1 = 0.00251398322942893;
 //      const f32 kTangentialDistCoeff2 =  0.001282303969883647;
       
+
     } // "private" namespace
 
 

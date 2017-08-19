@@ -80,15 +80,21 @@ namespace Cozmo.ConnectionFlow.UI {
     private void HandleConnectButtonPressed() {
       if (OnConnectButtonPressed != null) {
         OnConnectButtonPressed();
+        Invoke("HideSelf", 1.0f);
       }
     }
 
     private void HandleMockConnectButtonPressed() {
       if (OnMockConnectButtonPressed != null) {
         OnMockConnectButtonPressed();
+        Invoke("HideSelf", 1.0f);
       }
     }
 
+    // hide this screen, it was still visible during the gaps between future screens (COZMO-12283)
+    private void HideSelf() {
+      gameObject.SetActive(false);
+    }
 
     private void HandleSettingsButton() {
       UIManager.OpenModal(_SettingsModalPrefab, new ModalPriorityData(), HandleSettingsModalCreated);

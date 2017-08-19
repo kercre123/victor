@@ -334,7 +334,6 @@ public class ObservableObject : IVisibleInCamera {
 
   public void SetAllLEDs() { // should only be called from update loop
     SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
-    SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
 
     for (int i = 0; i < Lights.Length; ++i) {
       SetAllActiveObjectLEDsMessage.onPeriod_ms[i] = Lights[i].OnPeriodMs;

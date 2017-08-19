@@ -384,6 +384,8 @@ TEST_F(RobotAudioTest, TestNoEvents)
 }
 
 
+#if BUILD_NEW_ANIMATION_CODE
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Test Single Streams
 TEST_F(RobotAudioTest, TestSingleEventAnimation_FirstFrame )
@@ -667,3 +669,5 @@ TEST_F(RobotAudioTest, TestFrameEdgeCase_StartsOnEdge)
 }
 
 // TODO: Add test for more edge cases!!
+
+#endif // BUILD_NEW_ANIMATION_CODE

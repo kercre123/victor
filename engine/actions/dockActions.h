@@ -262,6 +262,9 @@ namespace Anki {
       // block we are docking with" action
       void SetupTurnAndVerifyAction(const ObservableObject* dockObject);
       
+      // Identify cases where cozmo should squint while docking
+      bool ShouldApplyDockingSquint();
+      
       // Handler for when lift begins to move so that we can play an accompanying sound
       Signal::SmartHandle        _liftMovingSignalHandle;
       
@@ -619,7 +622,7 @@ namespace Anki {
       
       virtual ActionResult Verify() override;
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
       // Give the robot a little longer to start ascending/descending before
       // checking if it is done

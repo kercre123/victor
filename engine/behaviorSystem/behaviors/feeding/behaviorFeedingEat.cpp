@@ -49,11 +49,11 @@ namespace{
 CONSOLE_VAR(f32, kDistanceFromMarker_mm, CONSOLE_GROUP,  45.0f);
   
 // Constants for the CubeAccelComponent MovementListener:
-CONSOLE_VAR(f32, kHighPassFiltCoef,          CONSOLE_GROUP,  0.95f);
-CONSOLE_VAR(f32, kMaxMovementScoreToAdd,     CONSOLE_GROUP,  4.f);
-CONSOLE_VAR(f32, kMovementScoreDecay,        CONSOLE_GROUP,  3.f);
-CONSOLE_VAR(f32, kFeedingMovementScoreMax,   CONSOLE_GROUP,  6.f);
-CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, CONSOLE_GROUP,  5.0f);
+CONSOLE_VAR(f32, kHighPassFiltCoef,          CONSOLE_GROUP,  0.4f);
+CONSOLE_VAR(f32, kMaxMovementScoreToAdd,     CONSOLE_GROUP,  3.f);
+CONSOLE_VAR(f32, kMovementScoreDecay,        CONSOLE_GROUP,  2.f);
+CONSOLE_VAR(f32, kFeedingMovementScoreMax,   CONSOLE_GROUP,  100.f);
+CONSOLE_VAR(f32, kCubeMovedTooFastInterrupt, CONSOLE_GROUP,  8.f);
 
 CONSOLE_VAR(f32, kFeedingPreActionAngleTol_deg, CONSOLE_GROUP, 15.0f);
 
@@ -171,6 +171,9 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
      (currentTime_s > _timeCubeIsSuccessfullyDrained_sec)){
     _hasRegisteredActionComplete = true;
     robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Feed);
+    for(auto& listener: _feedingListeners){
+      listener->EatingComplete(robot);
+    }
   }
 
   
@@ -201,9 +204,6 @@ void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementS
          (_currentState == State::PlacingLiftOnCube)){
         StopActing(false);
         TransitionToReactingToInterruption(robot);
-        for(auto& listener: _feedingListeners){
-          listener->EatingInterrupted(robot);
-        }
       }else if(_currentState == State::DrivingToFood){
         StopActing(false);
       }
@@ -250,8 +250,9 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
       // can't see the cube, maybe it's obstructed? give up on the cube until we see it again. Let the
       // behavior end (it may get re-selected with a different cube)
       MarkCubeAsBad(robot);
-    }
-    else {
+    } else if( result == ActionResult::NO_PREACTION_POSES){
+      robot.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+    } else {
       const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
 
       if( resCat == ActionResultCategory::RETRY ) {
@@ -333,6 +334,17 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
 {
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool currentlyEating = (_currentState == State::Eating) &&
+                 (_timeCubeIsSuccessfullyDrained_sec > currentTime_s);
+  
+  if(currentlyEating ||
+     (_currentState == State::PlacingLiftOnCube)){
+    for(auto& listener: _feedingListeners){
+      listener->EatingInterrupted(robot);
+    }
+  }
+  
   SET_STATE(ReactingToInterruption);
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
   
@@ -343,7 +355,6 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
     trigger = AnimationTrigger::FeedingInterrupted_Severe;
   }
   StartActing(new TriggerLiftSafeAnimationAction(robot, trigger));
-  
 }
 
 

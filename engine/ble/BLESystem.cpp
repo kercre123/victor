@@ -95,7 +95,7 @@ void BLESystem::OnVehicleConnected(const UUIDBytes& vehicleId)
   });
   
   auto robots = GetAvailableRobots();
-  for (auto& robot : robots)
+  for (auto& robot __attribute__((unused)) : robots)
   {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleConnected.RobotAvailable","%s", StringFromUUIDBytes(&robot));
   }

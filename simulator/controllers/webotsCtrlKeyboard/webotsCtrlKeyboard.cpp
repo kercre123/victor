@@ -842,9 +842,6 @@ namespace Anki {
                 
               case (s32)'U':
               {
-                // TODO: How to choose which robot
-                const RobotID_t robotID = 1;
-                
                 // U - Request a single image from the game for a specified robot
                 ImageSendMode mode = ImageSendMode::SingleShot;
                 
@@ -863,7 +860,7 @@ namespace Anki {
                   printf("Requesting single game image.\n");
                 }
                 
-                SendImageRequest(mode, robotID);
+                SendImageRequest(mode);
                 
                 break;
               }
@@ -905,7 +902,6 @@ namespace Anki {
                 if(shiftKeyPressed && altKeyPressed)
                 {
                   ExternalInterface::ForceDelocalizeRobot delocMsg;
-                  delocMsg.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
                 } else if(shiftKeyPressed) {
                   
@@ -1013,7 +1009,6 @@ namespace Anki {
                   static bool backpackLightsOn = false;
                 
                   ExternalInterface::SetBackpackLEDs msg;
-                  msg.robotID = 1;
                   for(s32 i=0; i<(s32)LEDId::NUM_BACKPACK_LEDS; ++i)
                   {
                     msg.onColor[i] = 0;
@@ -1234,7 +1229,7 @@ namespace Anki {
                       ExternalInterface::ActivateSpark activate(unlock);
                       ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
                       behaviorUnion.Set_ActivateSpark(activate);
-                      ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
+                      ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
                       ExternalInterface::MessageGameToEngine msg;
                       msg.Set_BehaviorManagerMessage(behaviorMsg);
                       SendMessage(msg);
@@ -1250,7 +1245,7 @@ namespace Anki {
                     ExternalInterface::ActivateSpark deactivate(UnlockId::Count);
                     ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
                     behaviorUnion.Set_ActivateSpark(deactivate);
-                    ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
+                    ExternalInterface::BehaviorManagerMessage behaviorMsg(behaviorUnion);
                     ExternalInterface::MessageGameToEngine msg;
                     msg.Set_BehaviorManagerMessage(behaviorMsg);
                     SendMessage(msg);
@@ -1366,7 +1361,7 @@ namespace Anki {
                 EmotionType emotionType = EmotionTypeFromString(emotionName.c_str());
 
                 SendMessage(ExternalInterface::MessageGameToEngine(
-                              ExternalInterface::MoodMessage(1,
+                              ExternalInterface::MoodMessage(
                                 ExternalInterface::MoodMessageUnion(
                                   ExternalInterface::SetEmotion( emotionType, emotionVal )))));
 
@@ -1597,7 +1592,6 @@ namespace Anki {
                   reader.parse(jsonFile, jsonMsg);
                   jsonFile.close();
                   //ExternalInterface::SetActiveObjectLEDs msg(jsonMsg);
-                  msg.robotID = 1;
                   msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                   msg.objectID = jsonMsg["objectID"].asUInt();
                   for(s32 iLED = 0; iLED<(s32)ActiveObjectConstants::NUM_CUBE_LEDS; ++iLED) {
@@ -1626,7 +1620,6 @@ namespace Anki {
 
                   ExternalInterface::SetActiveObjectLEDs msg;
                   msg.objectID = GetLastObservedObject().id;
-                  msg.robotID = 1;
                   msg.onPeriod_ms = 250;
                   msg.offPeriod_ms = 250;
                   msg.transitionOnPeriod_ms = 500;
@@ -1685,7 +1678,6 @@ namespace Anki {
                     white = !white;
                     if (white) {
                       ExternalInterface::SetAllActiveObjectLEDs m;
-                      m.robotID = 1;
                       m.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                       m.objectID = GetLastObservedObject().id;
                       for(s32 iLED = 0; iLED<(s32)ActiveObjectConstants::NUM_CUBE_LEDS; ++iLED) {
@@ -1822,7 +1814,6 @@ namespace Anki {
                 {
                   static bool enable = true;
                   ExternalInterface::SendAvailableObjects msg;
-                  msg.robotID = 1;
                   msg.enable = enable;
                   
                   LOG_INFO("SendAvailableObjects", "enable: %d", enable);
@@ -2601,7 +2592,6 @@ namespace Anki {
           
           ExternalInterface::SetActiveObjectLEDs msg;
           msg.objectID = GetLastObservedObject().id;
-          msg.robotID = 1;
           msg.onPeriod_ms = 100;
           msg.offPeriod_ms = 100;
           msg.transitionOnPeriod_ms = 50;

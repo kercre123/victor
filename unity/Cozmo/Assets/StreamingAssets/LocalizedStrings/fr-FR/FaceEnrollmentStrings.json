@@ -7,16 +7,16 @@
     "source_key_paths" : ["/{*}"]
   },
   "faceEnrollment.instructions" : {
-    "translation" : "Cozmo doit t'examiner! Regarde Cozmo directement sans bouger\u000a\u000aQuand il aura terminé, tu entendras un carillon."
+    "translation" : "Cozmo doit t'examiner ! Regarde Cozmo directement sans bouger\u000a\u000aQuand il aura terminé, tu entendras un carillon."
   },
   "faceEnrollment.enterName.placeholderText" : {
-    "translation" : "Entre ton prénom:"
+    "translation" : "Entre ton prénom :"
   },
   "faceEnrollment.faceEnrollmentList.description" : {
     "translation" : "Apprends à Cozmo à reconnaître un visage !"
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle" : {
-    "translation" : "Supprimer {0}?"
+    "translation" : "Supprimer {0} ?"
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmButton" : {
     "translation" : "Supprimer"
@@ -28,7 +28,7 @@
     "translation" : "Quand il aura terminé, il prononcera ton nom."
   },
   "faceEnrollment.errors.neverSawValidFace.title" : {
-    "translation" : "Cozmo te connaît déjà!"
+    "translation" : "Cozmo te connaît déjà !"
   },
   "faceEnrollment.errors.neverSawValidFace.description" : {
     "translation" : "Cozmo te reconnaît comme {0}"
@@ -37,13 +37,13 @@
     "translation" : "Cozmo a du mal à te voir"
   },
   "faceEnrollment.errors.timeOut.description" : {
-    "translation" : "Vérifie que tu es dans une pièce bien éclairée et que tu es bien en face de son visage Cozmo doit se trouver sur une surface plane et stable."
+    "translation" : "Vérifie que tu es dans une pièce bien éclairée et que tu es bien en face de son visage. Cozmo doit se trouver sur une surface plane et stable."
   },
   "faceEnrollment.condition.allChangesSaved" : {
     "translation" : "Les modifications sont enregistrées."
   },
   "faceEnrollment.firstTimeCompleteAlert.title" : {
-    "translation" : "Cozmo connaît ton nom!"
+    "translation" : "Cozmo connaît ton nom !"
   },
   "faceEnrollment.firstTimeCompleteAlert.description" : {
     "translation" : "Cozmo a appris à reconnaître ton visage et peut prononcer ton nom lorsqu'il te voit. Utilise à nouveau Première rencontre pour lui présenter d'autres amis."
@@ -61,10 +61,10 @@
     "translation" : "{0} jours auparavant"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
-    "translation" : "Aide Cozmo à te reconnaître plus facilement:"
+    "translation" : "Aide Cozmo à te reconnaître plus facilement :"
   },
   "faceEnrollment.label.lastScanned" : {
-    "translation" : "Dernière numérisation:"
+    "translation" : "Dernière numérisation :"
   },
   "faceEnrollment.label.cozmoPrep" : {
     "translation" : "Cozmo est en train de se préparer..."

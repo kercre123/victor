@@ -36,7 +36,7 @@ namespace Cozmo {
 namespace {
 static constexpr const float kMaxDistanceForShortPlanner_mm = 40.0f;
 static constexpr const float kMinDistanceForMinAnglePlanner_mm = 1.0f;
-static constexpr const float kSendPathFailedTimeout_s = 1.0f;
+static constexpr const float kSendMsgFailedTimeout_s = 1.0f;
 }
 
 // info for the current plan
@@ -52,17 +52,6 @@ struct PlanParameters
   // the driver center pose and target poses all must share this origin for the plan to be valid
   const Pose3d* commonOrigin = nullptr;
 };
-
-constexpr const char* ERobotDriveToPoseStatusToString(ERobotDriveToPoseStatus status)
-{
-  switch(status) {
-    case ERobotDriveToPoseStatus::Failed: return "Failed";
-    case ERobotDriveToPoseStatus::ComputingPath: return "ComputingPath";
-    case ERobotDriveToPoseStatus::WaitingToBeginPath: return "WaitingToBeginPath";
-    case ERobotDriveToPoseStatus::FollowingPath: return "FollowingPath";
-    case ERobotDriveToPoseStatus::Ready: return "Ready";
-  }
-}
 
 void PlanParameters::Reset() {
   targetPoses.clear();
@@ -102,20 +91,80 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
     
     PRINT_CH_DEBUG("Planner", "PathComponent.ReceivedPathEvent", "ID:%d Event:%s",
                    payload.pathID, EnumToString(payload.eventType));
-    
+
+    // handle complete and interrupted paths in cases where we wait to cancel. Returns true if this lambda
+    // handled the message, false otherwise
+    auto handleCancelLambda = [this](const RobotInterface::PathFollowingEvent& payload) {
+      if( IsWaitingToCancelPath() ) {
+        if( payload.pathID == _lastCanceledPathID ) {
+          // path has canceled, update state appropriately          
+          if( _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToCancelPath ) {
+            SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
+          }
+          else {
+            ANKI_VERIFY(_driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure,
+                        "PathComponent.PathEvent.Completion.StatusMismatch",
+                        "We are waiting to cancel, but status is '%s'",
+                        ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+            SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
+          }
+        }
+        else {
+          // This is possible in cases of high latency. For example, engine could send path 1, send a cancel
+          // for path 1 and a new path, path 2, then abort path 2. After this, we might receive a message
+          // about path 1 while waiting to cancel path 2
+          PRINT_NAMED_WARNING("PathComponent.PathEvent.CanceledPathDifferentPathComplete",
+                              "We are in status '%s' waiting for path %d to cancel, but got message that path %d is %s",
+                              ERobotDriveToPoseStatusToString(_driveToPoseStatus),
+                              _lastCanceledPathID,
+                              payload.pathID,
+                              PathEventTypeToString(payload.eventType));
+        }
+        // we handled the message here, so tell the caller not to continue to process it
+        return true;
+      }
+
+      if( _lastCanceledPathID > 0 && payload.pathID == _lastCanceledPathID ) {
+        // we got a complete or interrupted message, but we've already canceled that path (and moved on to a
+        // new one, which is why our status isn't Waiting and this case isn't handled above). In this case,
+        // ignore this message (mark it as handled)
+        return true;
+      }
+
+      // in this case, let normal handling of the message continue
+      return false;
+    };
+
     switch(payload.eventType)
     {
       case PathEventType::PATH_STARTED:
       {
-        // In general, we should be coming from "Waiting to Begin" when we receive Path Started.
-        // We could be "Following" already if path/segment ID in RobotState already transitioned us.
-        // We could also be "Ready" if we received a Path Interrupted message already this tick.
-        ANKI_VERIFY(ERobotDriveToPoseStatus::WaitingToBeginPath == _driveToPoseStatus ||
-                    ERobotDriveToPoseStatus::FollowingPath == _driveToPoseStatus ||
-                    ERobotDriveToPoseStatus::Ready == _driveToPoseStatus,
-                    "PathComponent.PathEvent.UnexpectedStatus",
-                    "Expecting to be WaitingToBeginPath or FollowingPath, not %s",
-                    ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+
+        if( IsWaitingToCancelPath() || payload.pathID == _lastCanceledPathID ) {
+
+          // If we are waiting to cancel _any_ path, ignore paths starting. Also, separately check
+          // _lastCanceledPathID because we may have moved on to a status for a new path while still expecting
+          // to receive a cancel from an old path
+          
+          PRINT_CH_INFO("Planner", "PathComponent.PathEvent.OldPathStartedWhileWaitingForCancel",
+                        "The robot started path %d which is about to be canceled. Status is %s",
+                        payload.pathID,
+                        ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+          // don't set any state, ignore this message
+          break;
+        }
+        
+        // In general, we should be coming from "Waiting to Begin" when we receive Path Started. We could be
+        // "Following" already if path/segment ID in RobotState already transitioned us, or waiting to cancel
+        // (which is handled above, so not listed here)
+        if( !ANKI_VERIFY(ERobotDriveToPoseStatus::WaitingToBeginPath == _driveToPoseStatus ||
+                         ERobotDriveToPoseStatus::FollowingPath == _driveToPoseStatus,
+                         "PathComponent.PathEvent.UnexpectedStatus",
+                         "Expecting to be WaitingToBeginPath or FollowingPath, not %s",
+                         ERobotDriveToPoseStatusToString(_driveToPoseStatus)) ) {
+          Abort();
+          break;
+        }
     
         ANKI_VERIFY(payload.pathID == _lastSentPathID,
                     "PathComponent.PathEvent.StartingUnexpectedPathID",
@@ -131,12 +180,16 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
         
       case PathEventType::PATH_COMPLETED:
       {
+        if( handleCancelLambda(payload) ) {
+          return;
+        }
+            
         // Verify we are completing the last path we sent.
         ANKI_VERIFY(payload.pathID == _lastSentPathID,
                     "PathComponent.PathEvent.CompletingUnexpectedPathID",
                     "Last sent ID:%d, completing ID:%d",
                     _lastSentPathID, payload.pathID);
-       
+
         // Note that OnPathComplete is safe to call if the path is already complete (e.g. thanks to
         // RobotState message updates)
         OnPathComplete();
@@ -146,6 +199,10 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
         
       case PathEventType::PATH_INTERRUPTED:
       {
+        if( handleCancelLambda(payload) ) {
+          return;
+        }
+
         // Verify we are interrupting the last path we received.  
         ANKI_VERIFY(payload.pathID == _lastRecvdPathID,
                     "PathComponent.PathEvent.InterruptingUnexpectedPathID",
@@ -160,6 +217,7 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
           // RobotState message updates)
           OnPathComplete();
         }
+        
         break;
       }
     }
@@ -177,13 +235,38 @@ PathComponent::~PathComponent()
 
 Result PathComponent::Abort()
 {
+  PRINT_CH_INFO("Planner",
+                "PathComponent.Abort",
+                "Aborting from status '%s'",
+                ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+  
   if( _selectedPathPlanner ) {
     _selectedPathPlanner->StopPlanning();
     _plannerActive = false;
   }
   _plannerSelectedPoseIndex.reset();
+
   Result ret = ClearPath();
-  SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
+
+  // update status to either ready or waiting to cancel
+  switch(_driveToPoseStatus) {
+    case ERobotDriveToPoseStatus::Failed:
+    case ERobotDriveToPoseStatus::ComputingPath:
+    case ERobotDriveToPoseStatus::Ready:
+      SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
+      break;
+
+    case ERobotDriveToPoseStatus::WaitingToBeginPath:
+    case ERobotDriveToPoseStatus::FollowingPath:
+      SetDriveToPoseStatus(ERobotDriveToPoseStatus::WaitingToCancelPath);
+      break;
+
+    case ERobotDriveToPoseStatus::WaitingToCancelPath:
+    case ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure:
+      // no change
+      break;
+  }
+  
   _usingManualPathSpeed = false;
   _currPlanParams->Reset();
   
@@ -194,7 +277,7 @@ void PathComponent::AbortAndSetFailure()
 {
   Result res = Abort();
   DEV_ASSERT(res == RESULT_OK, "PathComponent.Abort.FailedtoAbort");
-  SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
+  SetDriveToPoseStatus(ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure);
 }
 
 void PathComponent::OnPathComplete()
@@ -244,10 +327,10 @@ void PathComponent::Update()
     HandlePossibleOriginChanges();
   }
 
-  if( _lastSentPathID > 0 && _lastRecvdPathID != _lastSentPathID ) {
-    // we are waiting on the robot to receive a path, make sure it hasn't been too long
+  if( IsWaitingForRobotResponse() ) {
+    // we are waiting on the robot to for something, make sure it hasn't timed out
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if( currTime_s > _lastPathSendTime_s + kSendPathFailedTimeout_s ) {
+    if( currTime_s > _lastMsgSendTime_s + kSendMsgFailedTimeout_s ) {
       PRINT_NAMED_ERROR("PathComponent.SentUnreceivedPath",
                         "robot did not start executing path. Last send = %d, last recv = %d",
                         _lastSentPathID,
@@ -380,7 +463,9 @@ void PathComponent::UpdatePlanning()
       
     case EPlannerStatus::Running: {
       DEV_ASSERT(_driveToPoseStatus != ERobotDriveToPoseStatus::Failed &&
-                 _driveToPoseStatus != ERobotDriveToPoseStatus::Ready,
+                 _driveToPoseStatus != ERobotDriveToPoseStatus::Ready &&
+                 _driveToPoseStatus != ERobotDriveToPoseStatus::WaitingToCancelPath &&
+                 _driveToPoseStatus != ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure,
                  "PathComponent.UpdatePlanning.StatusMismatch");
       // still waiting on a response from the planner
       break;
@@ -397,7 +482,10 @@ void PathComponent::UpdatePlanning()
                     "Running planner complete with no plan");
 
       if( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath ||
-          _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToBeginPath ) {
+          _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToBeginPath ||
+          _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToCancelPath ||
+          _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure ) {
+        
         // we must have replanned and discovered that we are at the goal, so stop following the path
         PRINT_CH_INFO("Planner", "PathComponent.Update.Planner.NoPlanWhileTraversing",
                       "Planner completed with empty plan while we were already following a plan. clearing plan");
@@ -634,13 +722,12 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
     _plannerActive = false;
   }
   
-  if( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath) {
+  if( IsActive() ) {
     // stop doing what we are doing, so we can make a new plan
-    Abort();
     PRINT_CH_INFO("Planner", "PathComponent.StartDrivingToPose.AlreadyBusy",
                   "Path component status was '%s'. Aborting current plan",
                   ERobotDriveToPoseStatusToString(_driveToPoseStatus));
-
+    Abort();
   }
 
   _usingManualPathSpeed = useManualSpeed;
@@ -800,13 +887,20 @@ void PathComponent::RestartPlannerIfNeeded()
 // Clears the path that the robot is executing which also stops the robot
 Result PathComponent::ClearPath()
 {
+  if( _lastSentPathID != 0 ) {
+    _lastCanceledPathID = _lastSentPathID;
+  }
+  
   _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
   if(_pdo) {
     _pdo->ClearPath();
   }
 
   _currPathSegment = -1;
-  
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastMsgSendTime_s = currTime_s;
+
   return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
 }
 
@@ -814,22 +908,65 @@ Result PathComponent::ClearPath()
 bool PathComponent::IsActive() const
 {
   switch(_driveToPoseStatus) {
-    case ERobotDriveToPoseStatus::Failed:             return false;
-    case ERobotDriveToPoseStatus::ComputingPath:      return true;
-    case ERobotDriveToPoseStatus::WaitingToBeginPath: return true;
-    case ERobotDriveToPoseStatus::FollowingPath:      return true;
-    case ERobotDriveToPoseStatus::Ready:              return false;
+    case ERobotDriveToPoseStatus::Failed:                           return false;
+    case ERobotDriveToPoseStatus::ComputingPath:                    return true;
+    case ERobotDriveToPoseStatus::WaitingToBeginPath:               return true;
+    case ERobotDriveToPoseStatus::FollowingPath:                    return true;
+    case ERobotDriveToPoseStatus::Ready:                            return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPath:              return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure: return false;
   }
 }
 
 bool PathComponent::HasPathToFollow() const
 {
   switch(_driveToPoseStatus) {
-    case ERobotDriveToPoseStatus::Failed:             return false;
-    case ERobotDriveToPoseStatus::ComputingPath:      return false;
-    case ERobotDriveToPoseStatus::WaitingToBeginPath: return true;
-    case ERobotDriveToPoseStatus::FollowingPath:      return true;
-    case ERobotDriveToPoseStatus::Ready:              return false;
+    case ERobotDriveToPoseStatus::Failed:                           return false;
+    case ERobotDriveToPoseStatus::ComputingPath:                    return false;
+    case ERobotDriveToPoseStatus::WaitingToBeginPath:               return true;
+    case ERobotDriveToPoseStatus::FollowingPath:                    return true;
+    case ERobotDriveToPoseStatus::Ready:                            return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPath:              return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure: return false;
+  }
+}
+
+bool PathComponent::LastPathFailed() const
+{
+  switch(_driveToPoseStatus) {
+    case ERobotDriveToPoseStatus::Failed:                           return true;
+    case ERobotDriveToPoseStatus::ComputingPath:                    return false;
+    case ERobotDriveToPoseStatus::WaitingToBeginPath:               return false;
+    case ERobotDriveToPoseStatus::FollowingPath:                    return false;
+    case ERobotDriveToPoseStatus::Ready:                            return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPath:              return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure: return true;
+  }
+}
+
+bool PathComponent::IsWaitingToCancelPath() const
+{
+  switch(_driveToPoseStatus) {
+    case ERobotDriveToPoseStatus::Failed:                           return false;
+    case ERobotDriveToPoseStatus::ComputingPath:                    return false;
+    case ERobotDriveToPoseStatus::WaitingToBeginPath:               return false;
+    case ERobotDriveToPoseStatus::FollowingPath:                    return false;
+    case ERobotDriveToPoseStatus::Ready:                            return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPath:              return true;
+    case ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure: return true;
+  }
+}
+
+bool PathComponent::IsWaitingForRobotResponse() const
+{
+  switch(_driveToPoseStatus) {
+    case ERobotDriveToPoseStatus::Failed:                           return false;
+    case ERobotDriveToPoseStatus::ComputingPath:                    return false;
+    case ERobotDriveToPoseStatus::WaitingToBeginPath:               return true;
+    case ERobotDriveToPoseStatus::FollowingPath:                    return false;
+    case ERobotDriveToPoseStatus::Ready:                            return false;
+    case ERobotDriveToPoseStatus::WaitingToCancelPath:              return true;
+    case ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure: return true;
   }
 }
 
@@ -872,7 +1009,8 @@ Result PathComponent::ExecutePath(const Planning::Path& path, const bool useManu
                                         RobotInterface::ExecutePath(_lastSentPathID, useManualSpeed)));
 
       if( lastResult == RESULT_OK) {
-        _lastPathSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        _lastMsgSendTime_s = currTime_s;
         // new path was successfully sent, wait for it to start
         SetDriveToPoseStatus(ERobotDriveToPoseStatus::WaitingToBeginPath);
       }

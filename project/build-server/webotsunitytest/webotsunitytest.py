@@ -14,6 +14,8 @@ COZMO_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-topleve
 BUILD_TOOLS_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'tools', 'build', 'tools')
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 WEBOTS_UNITY_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'webotsunitytest')
+LANGUAGES = ["german"]
+
 from ankibuild import util
 
 #set up default logger
@@ -167,12 +169,14 @@ def main(args):
   GENERATED_FILE_PATH = get_subpath("simulator/worlds", WORLD_FILE_NAME)
   show_graphics = True
   log_file_name = os.path.join(WEBOTS_UNITY_ROOT, 'webotsunitytest.txt')
+  smoke_test_path = os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'steps', 'smoke_test.sh')
   output = ThreadOutput()
-  run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH, 
-                                                                      show_graphics, log_file_name])
-  run_webots_thread.start()  
-  subprocess.call(os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'steps', 'smoke_test.sh'))
-  stop_webots()
+  for language in LANGUAGES:
+    run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH, 
+                                                                        show_graphics, log_file_name])
+    run_webots_thread.start()  
+    subprocess.call([smoke_test_path, language])
+    stop_webots()
   return 0
 
 if __name__ == '__main__':

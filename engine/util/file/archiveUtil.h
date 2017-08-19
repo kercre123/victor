@@ -6,7 +6,7 @@
  *
  * Description: Utility wrapper around needed archive file creation functionality.
  *
- * Copyright: Anki, inc. 2016
+ * Copyright: Anki, Inc. 2016
  *
  */
 #ifndef __Basestation_Util_File_ArchiveUtil_H_
@@ -22,10 +22,13 @@ namespace Cozmo {
   
 class ArchiveUtil {
 public:
-// mostly static methods for creating archive files
+  // Static methods for creating and expanding archive files. Only tar.gz files supported
   static bool CreateArchiveFromFiles(const std::string& outputPath,
                                      const std::string& filenameBase,
                                      const std::vector<std::string>& filenames);
+  
+  static bool CreateFilesFromArchive(const std::string& archivePath,
+                                     const std::string& outputDirectory);
   
   // Removes an initial part of a filename (does nothing if the filename has no path separators)
   static std::string RemoveFilenameBase(const std::string& filenameBase, const std::string& filename);

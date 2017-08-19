@@ -93,7 +93,7 @@ protected:
 
   // Override if you want to respond to being enabled/disabled
   // by RequestEnableReactionaryBehavior message
-  virtual void EnabledStateChanged(bool enabled) {};
+  virtual void EnabledStateChanged(const Robot& robot, bool enabled) {};
   
   // used by the ReactionTriggerStrategy Factory to set the reaction trigger type
   void SetReactionTrigger(ReactionTrigger trigger)

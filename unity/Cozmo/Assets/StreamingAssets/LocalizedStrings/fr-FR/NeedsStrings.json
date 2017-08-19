@@ -7,16 +7,16 @@
     "source_key_paths" : ["/{*}"]
   },
   "needs.NeedsHubView.Button.Activities" : {
-    "translation" : "Découvrir"
+    "translation" : "DÉCOUVRIR"
   },
   "needs.NeedsHubView.Button.Feed" : {
-    "translation" : "Alimenter"
+    "translation" : "ALIMENTER"
   },
   "needs.NeedsHubView.Button.Repair" : {
-    "translation" : "Réglage"
+    "translation" : "RÉGLAGE"
   },
   "needs.NeedsHubView.Button.Play" : {
-    "translation" : "Jouer"
+    "translation" : "JOUER"
   },
   "needs.NeedsEnergyModal.Title" : {
     "translation" : "Nourrir Cozmo"
@@ -34,7 +34,7 @@
     "translation" : "Place le cube de telle manière que Cozmo puisse le voir, pour qu'il puisse se nourrir."
   },
   "needs.NeedsEnergyModal.FeedingComplete" : {
-    "translation" : "Cozmo est bien nourri!"
+    "translation" : "Cozmo est bien nourri !"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt" : {
     "translation" : "Cozmo ne peut pas être nourri car il n'entend pas ses cubes"
@@ -73,10 +73,10 @@
     "translation" : "Utilise les boutons sur la droite pour recréer la disposition des flèches. Ensuite, appuie sur <b>ENVOYER</b>."
   },
   "needs.NeedsRepairModal.NoRepairsNeeded" : {
-    "translation" : "Cozmo est totalement réglé!"
+    "translation" : "Cozmo est totalement réglé !"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "Envoyer"
+    "translation" : "ENVOYER"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
     "translation" : "SCANNER COZMO"
@@ -94,76 +94,76 @@
     "translation" : "CONTINUER"
   },
   "needs.NeedsRepairModal.TuneUpComplete" : {
-    "translation" : "Cozmo est totalement réglé!"
+    "translation" : "Cozmo est totalement réglé !"
   },
   "needs.Done" : {
     "translation" : "TERMINÉ"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "Ton inventaire d'étincelles est plein."
+    "translation" : "Ton inventaire d'éclats est plein."
   },
   "needs.RewardsDialog.SparksEarned" : {
-    "translation" : "Tu as gagné plus d'étincelles!"
+    "translation" : "Tu as gagné plus d'éclats !"
   },
   "needs.RewardsDialog.TrickUnlocked" : {
-    "translation" : "Tu as déverrouillé {0}!"
+    "translation" : "Tu as déverrouillé {0} !"
   },
   "needs.RewardsDialog.SongUnlocked" : {
-    "translation" : "Tu as déverrouillé {0}!"
+    "translation" : "Tu as déverrouillé {0} !"
   },
   "needs.FreeplaySparksReward.CozmoSings" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en chantant une chanson!"
+    "translation" : "Cozmo vient de générer {0} éclats en chantant une chanson !"
   },
   "needs.FreeplaySparksReward.FistBump" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en faisant un check!"
+    "translation" : "Cozmo vient de générer {0} éclats en faisant un check !"
   },
   "needs.FreeplaySparksReward.GatherCubes" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en ramassant ses cubes!"
+    "translation" : "Cozmo vient de générer {0} éclats en ramassant ses cubes !"
   },
   "needs.FreeplaySparksReward.HiccupsEndBad" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en soignant son hoquet!"
+    "translation" : "Cozmo vient de générer {0} éclats en soignant son hoquet !"
   },
   "needs.FreeplaySparksReward.HiccupsEndGood" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en soignant son hoquet!"
+    "translation" : "Cozmo vient de générer {0} éclats en soignant son hoquet !"
   },
   "needs.FreeplaySparksReward.KnockDownCubes" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en renversant une pile de cubes!"
+    "translation" : "Cozmo vient de générer {0} éclats en renversant une pile de cubes !"
   },
   "needs.FreeplaySparksReward.PeekAboo" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en jouant à coucou!"
+    "translation" : "Cozmo vient de générer {0} éclats en jouant à coucou !"
   },
   "needs.FreeplaySparksReward.PickupCube" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en soulevant un cube!"
+    "translation" : "Cozmo vient de générer {0} éclats en soulevant un cube !"
   },
   "needs.FreeplaySparksReward.PopAWheelie" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en faisant une roue arrière!"
+    "translation" : "Cozmo vient de générer {0} éclats en faisant une roue arrière !"
   },
   "needs.FreeplaySparksReward.Pounce" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en attaquant!"
+    "translation" : "Cozmo vient de générer {0} éclats en attaquant !"
   },
   "needs.FreeplaySparksReward.PyramidCompleted" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en construisant une pyramide!"
+    "translation" : "Cozmo vient de générer {0} éclats en construisant une pyramide !"
   },
   "needs.FreeplaySparksReward.RollACube" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en faisant rouler un cube!"
+    "translation" : "Cozmo vient de générer {0} éclats en faisant rouler un cube !"
   },
   "needs.FreeplaySparksReward.StackCube" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en empilant des cubes!"
+    "translation" : "Cozmo vient de générer {0} éclats en empilant des cubes !"
   },
   "needs.FreeplaySparksReward.Workout" : {
-    "translation" : "Cozmo vient de générer des étincelles {0} en faisant de la muscu!"
+    "translation" : "Cozmo vient de générer {0} éclats en faisant de la muscu !"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmo t'a donné {0} étincelles pour avoir joué à Retourne cubes avec lui!"
+    "translation" : "Cozmo t'a donné {0} éclats pour avoir joué à Surveiller les cubes avec lui !"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmo t'a donné {0} étincelles pour avoir joué à Retourne cubes avec lui!"
+    "translation" : "Cozmo t'a donné {0} éclats pour avoir joué à Surveiller les cubes avec lui !"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmo a le hoquet"
   },
   "needs.FeedingOverfedHiccups.Description" : {
-    "translation" : "Cozmo a trop mangé - maintenant, il a le hoquet!"
+    "translation" : "Cozmo a trop mangé - maintenant, il a le hoquet !"
   },
   "needs.severeAlert.energy.title" : {
     "translation" : "Cozmo a vraiment besoin d'être nourri."

@@ -41,7 +41,7 @@
 #include "messages.h"
 #include "wheelController.h"
 
-#include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
+#include "simulator/robot/sim_overlayDisplay.h"
 #include "clad/robotInterface/lightCubeMessage.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/activeObjectConstants.h"

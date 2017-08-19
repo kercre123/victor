@@ -25,88 +25,88 @@
     "translation" : "\"Fauststoß\" erfolgreich abschließen"
   },
   "reward.description.MemoryMatch.Played.Solo" : {
-    "translation" : "Gedächtnisspiel im Solo-Modus gespielt"
+    "translation" : "Erinner Dich im Solo-Modus gespielt"
   },
   "reward.description.MemoryMatch.Played.Vs" : {
-    "translation" : "Gedächtnisspiel im Versus-Modus gespielt"
+    "translation" : "Erinner Dich im Versus-Modus gespielt"
   },
   "reward.description.MemoryMatch.WinGame.Vs" : {
-    "translation" : "Gedächtnisspiel im Versus-Modus gewonnen"
+    "translation" : "Erinner Dich im Versus-Modus gewonnen"
   },
   "reward.description.MemoryMatch.Lives.OneLeft" : {
-    "translation" : "Gedächtnisspiel mit dem letzten Leben im Versus-Modus gewonnen"
+    "translation" : "Erinner Dich mit dem letzten Leben im Versus-Modus gewonnen"
   },
   "reward.description.MemoryMatch.Lives.TwoLeft" : {
-    "translation" : "Gedächtnisspiel mit zwei verbleibenden Leben im Versus-Modus gewonnen"
+    "translation" : "Erinner Dich mit zwei verbleibenden Leben im Versus-Modus gewonnen"
   },
   "reward.description.MemoryMatch.Lives.ThreeLeft" : {
-    "translation" : "Gedächtnisspiel im Versus-Modus gewonnen, ohne ein Leben zu verlieren"
+    "translation" : "Erinner Dich im Versus-Modus gewonnen, ohne ein Leben zu verlieren"
   },
   "reward.description.MemoryMatch.PatternLength.Five" : {
-    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 5 Lichtern abgeschlossen"
+    "translation" : "Erinner Dich Muster mit einer Abfolge von mehr als 5 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Ten" : {
-    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 10 Lichtern abgeschlossen"
+    "translation" : "Erinner Dich Muster mit einer Abfolge von mehr als 10 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Fifteen" : {
-    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 15 Lichtern abgeschlossen"
+    "translation" : "Erinner Dich Muster mit einer Abfolge von mehr als 15 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
-    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 20 Lichtern abgeschlossen"
+    "translation" : "Erinner Dich Muster mit einer Abfolge von mehr als 20 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
-    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 25 Lichtern abgeschlossen"
+    "translation" : "Erinner Dich Muster mit einer Abfolge von mehr als 25 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.PatternLength.Thirty" : {
-    "translation" : "Gedächtnisspiel-Muster mit einer Abfolge von mehr als 30 Lichtern abgeschlossen"
+    "translation" : "Erinner Dich Muster mit einer Abfolge von mehr als 30 Lichtern abgeschlossen"
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
-    "translation" : "Neuen Muster-Rekord im Solo-Modus im Gedächtnisspiel erzielt"
+    "translation" : "Neuen Muster-Rekord im Solo-Modus in Erinner Dich erzielt"
   },
   "reward.description.QuickTap.Played" : {
-    "translation" : "Geschwindigkeitsspiel gespielt"
+    "translation" : "Hau mich gespielt"
   },
   "reward.description.QuickTap.WinGame.OneColor" : {
-    "translation" : "Geschwindigkeitsspiel im 1-Farben-Modus gewonnen"
+    "translation" : "Hau mich im 1-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.WinGame.TwoColor" : {
-    "translation" : "Geschwindigkeitsspiel im 2-Farben-Modus gewonnen"
+    "translation" : "Hau mich im 2-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.WinGame.ThreeColor" : {
-    "translation" : "Geschwindigkeitsspiel im 3-Farben-Modus gewonnen"
+    "translation" : "Hau mich im 3-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.WinGame.FourColor" : {
-    "translation" : "Geschwindigkeitsspiel im 4-Farben-Modus gewonnen"
+    "translation" : "Hau mich im 4-Farben-Modus gewonnen"
   },
   "reward.description.QuickTap.Accuracy.50" : {
-    "translation" : "Geschwindigkeitsspiel mit einer Tippgenauigkeit von über 50 % abgeschlossen"
+    "translation" : "Hau mich mit einer Tippgenauigkeit von über 50 % abgeschlossen"
   },
   "reward.description.QuickTap.Accuracy.75" : {
-    "translation" : "Geschwindigkeitsspiel mit einer Tippgenauigkeit von über 75 % abgeschlossen"
+    "translation" : "Hau mich mit einer Tippgenauigkeit von über 75 % abgeschlossen"
   },
   "reward.description.QuickTap.Accuracy.100" : {
-    "translation" : "Geschwindigkeitsspiel mit einer Tippgenauigkeit von 100 % abgeschlossen!"
+    "translation" : "Hau mich mit einer Tippgenauigkeit von 100 % abgeschlossen!"
   },
   "reward.description.QuickTap.Shutout.SingleRound" : {
-    "translation" : "Eine Runde des Geschwindigkeitsspiels 5:0 gewonnen"
+    "translation" : "Eine Runde Hau mich 5:0 gewonnen"
   },
   "reward.description.QuickTap.TieBreaker.OneRound" : {
-    "translation" : "Eine Runde des Geschwindigkeitsspiels gewonnen, nachdem es vorher 4:4 stand"
+    "translation" : "Eine Runde Hau mich gewonnen, nachdem es vorher 4:4 stand"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "Geschwindigkeitsspiel im Modus \"Mensch vs Mensch vs Cozmo\" gespielt"
+    "translation" : "Mensch gegen Mensch gegen Cozmo"
   },
   "reward.description.Keepaway.Played" : {
-    "translation" : "Das Spiel \"Fernhalten\" gespielt"
+    "translation" : "Das Spiel \"Fang mich\" gespielt"
   },
   "reward.description.Keepaway.Won" : {
-    "translation" : "Das Spiel \"Fernhalten\" gewonnen"
+    "translation" : "Das Spiel \"Fang mich\" gewonnen"
   },
   "reward.description.Keepaway.Shutout" : {
-    "translation" : "Das Spiel \"Fernhalten\" 5:0 gewonnen"
+    "translation" : "Das Spiel \"Fang mich\" 5:0 gewonnen"
   },
   "reward.description.Keepaway.TieBreaker" : {
-    "translation" : "Das Spiel \"Fernhalten\" gewonnen, nachdem es vorher 4:4 stand"
+    "translation" : "Das Spiel \"Fang mich\" gewonnen, nachdem es vorher 4:4 stand"
   },
   "reward.description.Explorer.Time.5" : {
     "translation" : "Erkundungsmodus länger als 5 Minuten gespielt"

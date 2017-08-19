@@ -169,27 +169,7 @@ namespace Vision {
   
   FaceRecognizer::~FaceRecognizer()
   {
-    // Wait for recognition thread to die before destructing since we gave it a
-    // reference to *this
-    StopThread();
-    
-    if(NULL != _okaoFaceAlbum) {
-      if(OKAO_NORMAL != OKAO_FR_DeleteAlbumHandle(_okaoFaceAlbum)) {
-        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.FaceLibAlbumHandleDeleteFail", "");
-      }
-    }
-    
-    if(NULL != _okaoRecogMergeFeatureHandle) {
-      if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecogMergeFeatureHandle)) {
-        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.FaceLibRecognitionMergeFeatureHandleDeleteFail", "");
-      }
-    }
-    
-    if(NULL != _okaoRecognitionFeatureHandle) {
-      if(OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecognitionFeatureHandle)) {
-        PRINT_NAMED_ERROR("FaceRecognizer.Destructor.FaceLibRecognitionFeatureHandleDeleteFail", "");
-      }
-    }
+    Shutdown();
   }
   
   Result FaceRecognizer::Init(HCOMMON okaoCommonHandle)
@@ -229,7 +209,37 @@ namespace Vision {
     
     return RESULT_OK;
   }
-  
+
+  Result FaceRecognizer::Shutdown()
+  {
+    // Wait for recognition thread to die before destructing since we gave it a
+    // reference to *this
+    StopThread();
+
+    if (NULL != _okaoFaceAlbum) {
+      if (OKAO_NORMAL != OKAO_FR_DeleteAlbumHandle(_okaoFaceAlbum)) {
+        PRINT_NAMED_ERROR("FaceRecognizer.Shutdown.FaceLibAlbumHandleDeleteFail", "");
+      }
+      _okaoFaceAlbum = NULL;
+    }
+
+    if (NULL != _okaoRecogMergeFeatureHandle) {
+      if (OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecogMergeFeatureHandle)) {
+        PRINT_NAMED_ERROR("FaceRecognizer.Shutdown.FaceLibRecognitionMergeFeatureHandleDeleteFail", "");
+      }
+      _okaoRecogMergeFeatureHandle = NULL;
+    }
+
+    if (NULL != _okaoRecognitionFeatureHandle) {
+      if (OKAO_NORMAL != OKAO_FR_DeleteFeatureHandle(_okaoRecognitionFeatureHandle)) {
+        PRINT_NAMED_ERROR("FaceRecognizer.Shutdown.FaceLibRecognitionFeatureHandleDeleteFail", "");
+      }
+      _okaoRecognitionFeatureHandle = NULL;
+    }
+
+    return RESULT_OK;
+  }
+
   void FaceRecognizer::StartThread()
   {
     if(_isInitialized)

@@ -83,13 +83,12 @@ void RobotAudioAnimation::AbortAnimation()
     // Flush all callbacks to update internal bookkeeping
     _audioClient->FlushAudioCallbackQueue();
     _audioBuffer->ResetAudioBufferAnimationCompleted();
-    _currentBufferStream = nullptr;
   }
   
   // Stop all animation audio events being played
   _audioClient->StopCozmoEvent( _gameObj );
     
-  SetAnimationState( AnimationState::AnimationAbort );
+  SetAnimationState( AnimationState::AnimationCompleted );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,7 +99,6 @@ const std::string& RobotAudioAnimation::GetStringForAnimationState( AnimationSta
     "LoadingStream",
     "LoadingStreamFrames",
     "AudioFramesReady",
-    "AnimationAbort",
     "AnimationCompleted",
     "AnimationError",
     "AnimationStateCount"

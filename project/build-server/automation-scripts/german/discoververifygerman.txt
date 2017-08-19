@@ -1,0 +1,11 @@
+1.01609:click:open_activities_button:0.1488514
+2.19044:text:Fordere Cozmo auf, ein Wort oder einen Begriff zu sagen.
+0.676704:text:SPRACHAUSGABE
+0.869879:text:Entdecke die Welt mit Cozmos Augen!
+0.103852:text:ERKUNDUNGSMODUS
+0.128958:text:Lass deiner Kreativität freien Lauf und programmiere Aktivitäten für dich und Cozmo!
+0.668732:text:CODE LAB
+0.580455:text:Hilf Cozmo, neue Menschen zu erkennen und ihren Namen zu lernen.
+0.77214:text:KENNENLERNEN
+0.563341:text:Entdecken
+0.367948:click:back_button:0.121994

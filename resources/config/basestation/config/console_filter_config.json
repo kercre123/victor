@@ -68,8 +68,6 @@
     "channels":
     [
       { "channel": "Unnamed",              "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "Unity"  ,              "enabled": false },
-      { "channel": "Audio",                "enabled": false },
       { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
       { "channel": "CpuProfiler",          "enabled": true  },
       { "channel": "Network",              "enabled": false },
@@ -120,8 +118,6 @@
     "channels":
     [
       { "channel": "Unnamed",              "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "Unity"  ,              "enabled": false },
-      { "channel": "Audio",                "enabled": false },
       { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
       { "channel": "CpuProfiler",          "enabled": true  },
       { "channel": "Network",              "enabled": false },

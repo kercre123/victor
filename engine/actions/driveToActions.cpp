@@ -774,7 +774,7 @@ namespace Anki {
         }
           
         case ERobotDriveToPoseStatus::Ready: {
-          // clear abort timing, since we got a path
+          // clear abort timing, since we had a path
           _timeToAbortPlanning = -1.0f;
           
           // No longer traversing the path, so check to see if we ended up in the right place
@@ -845,9 +845,11 @@ namespace Anki {
           break;
         }
 
-        case ERobotDriveToPoseStatus::WaitingToBeginPath:
-          // nothing to do, just waiting for the robot to start driving the path (path component will timeout
-          // on it's own here, if needed)
+        case ERobotDriveToPoseStatus::WaitingToBeginPath:         
+        case ERobotDriveToPoseStatus::WaitingToCancelPath:
+        case ERobotDriveToPoseStatus::WaitingToCancelPathAndSetFailure:
+          // nothing to do, just waiting for the robot (path component will timeout on it's own here, if
+          // needed)
           break;
       }
       
@@ -1604,7 +1606,7 @@ namespace Anki {
                                                                const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
-                                 PreActionPose::ENTRY,
+                                 PreActionPose::DOCKING,
                                  0,
                                  false,
                                  0,

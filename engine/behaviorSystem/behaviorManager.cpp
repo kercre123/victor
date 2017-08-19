@@ -21,6 +21,7 @@
 #include "engine/behaviorSystem/activities/activities/activityFactory.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "engine/behaviorSystem/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
@@ -312,6 +313,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
     // start with selection that defaults to Wait
     SetCurrentActivity(HighLevelActivity::Selection, true);
   }
+  else {
+    // no activities config (e.g. unit test), so we aren't in freeplay
+    _robot.GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(true, FreeplayPauseFlag::GameControl);
+  }
   
   if (_robot.HasExternalInterface())
   {
@@ -439,6 +444,13 @@ void BehaviorManager::InitializeEventHandlers()
                             {
                               BroadcastReactionTriggerMap();
                             }));
+  
+  _eventHandlers.push_back(externalInterface->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage,
+                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine> &event)
+                            {
+                              HandleMessage(event.GetData().Get_BehaviorManagerMessage().BehaviorManagerMessageUnion);
+                            }));
 }
 
   
@@ -546,15 +558,30 @@ void BehaviorManager::SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32
   if(enable){
     _defaultHeadAngle = headAngle;
     _defaultLiftHeight = liftHeight;
+
+    PRINT_CH_INFO("Behaviors", "BehaviorManager.DefaultHeadAnfLiftState.Set",
+                  "Set to head angle %f, lift height %f",
+                  headAngle,
+                  liftHeight);
     
-    if(_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) == 0) {
+    if(_robot.GetActionList().IsEmpty()) {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_robot, _defaultHeadAngle);
       IActionRunner* moveLiftAction = new MoveLiftToHeightAction(_robot, _defaultLiftHeight);
       _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
                                          new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
+
+      PRINT_CH_INFO("Behaviors", "BehaviorManager.DefaultHeadAnfLiftState.Set.MoveNow",
+                    "No action, so doing one now to head angle %f, lift height %f",
+                    headAngle,
+                    liftHeight);
+
     }
     
   }else{
+    
+    PRINT_CH_INFO("Behaviors", "BehaviorManager.DefaultHeadAnfLiftState.Clear",
+                  "Clearing default lift and head positions");
+
     _defaultHeadAngle = kIgnoreDefaultHeadAndLiftState;
     _defaultLiftHeight = kIgnoreDefaultHeadAndLiftState;
   }
@@ -739,9 +766,13 @@ void BehaviorManager::TryToResumeBehavior()
   // if a behavior checks the head or lift angle right as they start this may introduce a race condition
   // blame Brad
   
-  if(AreDefaultHeadAndLiftStateSet() &&
-     (_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) == 0))
-  {
+  if(AreDefaultHeadAndLiftStateSet() && _robot.GetActionList().IsEmpty()) {
+    
+    PRINT_CH_INFO("Behaviors", "BehaviorManager.DefaultHeadAnfLiftState.ResumeBehavior",
+                  "Resuming behavior and don't have an action, so setting head angle %f, lift height %f",
+                  _defaultHeadAngle,
+                  _defaultLiftHeight);
+
     IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_robot, _defaultHeadAngle);
     IActionRunner* moveLiftAction = new MoveLiftToHeightAction(_robot, _defaultLiftHeight);
     _robot.GetActionList().QueueAction(QueueActionPosition::NOW,
@@ -997,6 +1028,12 @@ void BehaviorManager::SetCurrentActivity(HighLevelActivity newActivity, const bo
   
   // mark the time at which the change happened (this is checked by behaviors)
   _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // tell data tracker what happened
+  {
+    const bool isPaused = (newActivity != HighLevelActivity::Freeplay);
+    _robot.GetAIComponent().GetFreeplayDataTracker().SetFreeplayPauseFlag(isPaused, FreeplayPauseFlag::GameControl);
+  }
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   if(!currentIsReactionary){
@@ -1368,7 +1405,7 @@ void BehaviorManager::DisableReactionsWithLock(
         //About to disable, notify reaction trigger strategy
         const auto& allEntries = allStrategyMaps.GetStrategyMap();
         for(auto& entry : allEntries){
-          entry.first->EnabledStateChanged(false);
+          entry.first->EnabledStateChanged(_robot, false);
         }
       }
       
@@ -1415,7 +1452,7 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
       const auto& allEntries = allStrategyMaps.GetStrategyMap();
       for(auto& entry : allEntries)
       {
-        entry.first->EnabledStateChanged(false);
+        entry.first->EnabledStateChanged(_robot, false);
       }
     }
     
@@ -1463,7 +1500,7 @@ void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
         //About to enable, notify reaction trigger strategy
         const auto& allEntries = allStrategyMaps.GetStrategyMap();
         for(auto& entry : allEntries){
-          entry.first->EnabledStateChanged(true);
+          entry.first->EnabledStateChanged(_robot, true);
         }
       }
     }

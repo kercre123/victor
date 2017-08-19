@@ -32,7 +32,7 @@ struct xythetaPlannerImpl
   bool StartIsValid() const;
 
   // This function starts by making a copy of the context, then computes a plan
-  bool ComputePath(unsigned int maxExpansions, bool* runPlan);
+  bool ComputePath(unsigned int maxExpansions, volatile bool* runPlan);
 
   // helper functions
   void Reset();
@@ -116,7 +116,7 @@ struct xythetaPlannerImpl
 
   unsigned int _searchNum;
 
-  bool* _runPlan;
+  volatile bool* _runPlan;
 
   double _lastPlanTime;
 

@@ -10,10 +10,10 @@
     "translation" : "プレイ"
   },
   "sparksView.askForGameCard.title" : {
-    "translation" : "ゲームをスパーク"
+    "translation" : "ゲームを発動"
   },
   "sparksView.askForTrickCard.title" : {
-    "translation" : "トリックをスパーク"
+    "translation" : "トリックを発動"
   },
   "sparksView.listAbilitiesCard.title" : {
     "translation" : "トリックとゲーム"
@@ -22,12 +22,12 @@
     "translation" : "特定のトリックまたはゲームをするようにCozmoに頼みます。"
   },
   "sparksView.sparkCount.label" : {
-    "translation" : "利用可能なスパーク"
+    "translation" : "利用可能なエナジーボール"
   },
   "sparksView.sparksRequired.label" : {
-    "translation" : "必要なスパーク"
+    "translation" : "エナジーボールが必要です"
   },
   "sparksDetailModal.sparkButton.label" : {
-    "translation" : "スパークス"
+    "translation" : "エナジーボール"
   }
 }

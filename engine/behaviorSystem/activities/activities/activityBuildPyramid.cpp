@@ -43,6 +43,8 @@ namespace Cozmo {
 
 namespace{
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
+using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
+
 static const char* kSetupChooserConfigKey = "setupChooser";
 static const char* kBuildChooserConfigKey = "buildChooser";
 
@@ -285,6 +287,10 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
     }
   };
   
+  auto requestPyramidPreReqState = [this, &robot](const GameToEngineEvent& event){
+    NotifyGameOfPyramidPreReqs(robot);
+  };
+  
   if(robot.HasExternalInterface()){
     using namespace ExternalInterface;
     
@@ -294,6 +300,9 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
     _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
                                                                     MessageEngineToGameTag::BehaviorObjectiveAchieved,
                                                                     objectiveAchievedCallback));
+    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
+                                                                    MessageGameToEngineTag::RequestPyramidPreReqState,
+                                                                    requestPyramidPreReqState));
   }
 }
   
@@ -886,12 +895,7 @@ Result ActivityBuildPyramid::Update(Robot& robot)
 void ActivityBuildPyramid::UpdateChooserPhase(Robot& robot)
 {
   // Check the up-axis of all cubes
-  int countOfBlocksUpright = 0;
-  for(auto const& entry: _pyramidCubePropertiesTrackers){
-    if(entry.second.GetCurrentUpAxis() == UpAxis::ZPositive){
-      countOfBlocksUpright++;
-    }
-  }
+  const int countOfBlocksUpright = GetNumberOfBlocksUpright();
   
   // If blocks have been removed since the last update,
   // they shouldn't be counted against the upright count
@@ -919,40 +923,58 @@ void ActivityBuildPyramid::UpdateChooserPhase(Robot& robot)
   /////
   const bool uprightCountChanged = _lastUprightBlockCount != countOfBlocksUpright;
   if(uprightCountChanged && _robot.HasExternalInterface()){
-    // Collect information about state of world/game
-    const bool isHardSpark = IsPyramidHardSpark(robot);
-    const bool didUserRequestSparkEnd =
-    robot.GetBehaviorManager().DidGameRequestSparkEnd();
-    
-    const bool minimumUprightCountReached =
-    countOfBlocksUpright >= kMinUprightBlocksForPyramid;
-    const bool fellBelowMinimumUprightCount =
-    (_lastUprightBlockCount >= kMinUprightBlocksForPyramid) &&
-    (countOfBlocksUpright < kMinUprightBlocksForPyramid);
-    
-    
-    // Combining all of the above conditions into should send determination
-    const bool shouldSendPreReqsMet = minimumUprightCountReached &&
-    isHardSpark &&
-    !didUserRequestSparkEnd;
-    
-    const bool shouldSendPreReqsNoLongerMet = fellBelowMinimumUprightCount &&
-    isHardSpark &&
-    !didUserRequestSparkEnd &&
-    !_pyramidObjectiveAchieved;
-    
-    if(shouldSendPreReqsMet){
-      _robot.GetExternalInterface()->BroadcastToGame<
-      ExternalInterface::BuildPyramidPreReqsChanged>(true);
-    }else if(shouldSendPreReqsNoLongerMet){
-      _robot.GetExternalInterface()->BroadcastToGame<
-      ExternalInterface::BuildPyramidPreReqsChanged>(false);
-    }
+    NotifyGameOfPyramidPreReqs(robot);
   }
   
-  
-  
   _lastUprightBlockCount = countOfBlocksUpright;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int  ActivityBuildPyramid::GetNumberOfBlocksUpright()
+{
+  int countOfBlocksUpright = 0;
+  for(auto const& entry: _pyramidCubePropertiesTrackers){
+    if(entry.second.GetCurrentUpAxis() == UpAxis::ZPositive){
+      countOfBlocksUpright++;
+    }
+  }
+  return countOfBlocksUpright;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityBuildPyramid::NotifyGameOfPyramidPreReqs(Robot& robot)
+{
+  const int countOfBlocksUpright = GetNumberOfBlocksUpright();
+
+  // Collect information about state of world/game
+  const bool isHardSpark = IsPyramidHardSpark(robot);
+  const bool didUserRequestSparkEnd =
+          robot.GetBehaviorManager().DidGameRequestSparkEnd();
+  
+  const bool minimumUprightCountReached =
+          countOfBlocksUpright >= kMinUprightBlocksForPyramid;
+  const bool belowMinimumUprightCount =
+          (countOfBlocksUpright < kMinUprightBlocksForPyramid);
+  
+  
+  // Combining all of the above conditions into should send determination
+  const bool shouldSendPreReqsMet = minimumUprightCountReached &&
+                                    isHardSpark &&
+                                    !didUserRequestSparkEnd;
+  
+  const bool shouldSendPreReqsNoLongerMet = belowMinimumUprightCount &&
+                                            isHardSpark &&
+                                            !didUserRequestSparkEnd &&
+                                            !_pyramidObjectiveAchieved;
+  if(shouldSendPreReqsMet){
+    _robot.GetExternalInterface()->BroadcastToGame<
+               ExternalInterface::PyramidPreReqState>(true);
+  }else if(shouldSendPreReqsNoLongerMet){
+    _robot.GetExternalInterface()->BroadcastToGame<
+               ExternalInterface::PyramidPreReqState>(false);
+  }
 }
 
 

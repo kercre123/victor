@@ -10,7 +10,7 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
@@ -60,7 +60,6 @@ namespace Anki {
           SendMoveHeadToAngle(MAX_HEAD_ANGLE, 100, 100);
           
           ExternalInterface::QueueSingleAction m;
-          m.robotID = 1;
           m.position = QueueActionPosition::AT_END;
           m.idTag = 2;
           m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false, 1));
@@ -82,7 +81,6 @@ namespace Anki {
             SendMoveHeadToAngle(0, 20, 20);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::AT_END;
             m.idTag = 3;
             m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false, 1));
@@ -103,7 +101,6 @@ namespace Anki {
                                                  NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10)))
           {
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 10;
             // Turn towards the last face pose

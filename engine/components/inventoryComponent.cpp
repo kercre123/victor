@@ -204,6 +204,13 @@ void InventoryComponent::ReadCurrentInventoryFromRobot()
                                             // If the tag doesn't exist on the robot indicating the robot is new or has been
                                             // wiped so assume 0, inited in constructor.
                                             SendInventoryAllToGame();
+                                            
+                                            // Unity has the default inventory for sparks, so request and it will get added
+                                            if( res == NVStorage::NVResult::NV_NOT_FOUND && _robot.HasExternalInterface())
+                                            {
+                                              ExternalInterface::RequestDefaultSparks message;
+                                              _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+                                            }
                                           }))
   {
     PRINT_CH_INFO(CONSOLE_GROUP_NAME,"InventoryComponent.ReadCurrentInventoryFromRobot.ReadFailed","");

@@ -34,9 +34,15 @@
 // To extract JNI method signatures:
 //   javap -s `find . -name CozmoTextToSpeech.class`
 //
+// public static int loadVoice(java.lang.String, java.lang.String, int, int, java.lang.String, int, int);
+// descriptor: (Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;II)I
+//
+// public static int createAudioData(java.lang.String, int);
+// descriptor: (Ljava/lang/String;I)I
+//
 constexpr static const char * kClassName = "com/anki/cozmo/CozmoTextToSpeech";
 constexpr static const char * kLoadVoiceName = "loadVoice";
-constexpr static const char * kLoadVoiceArgs = "(Ljava/lang/String;Ljava/lang/String;II)I";
+constexpr static const char * kLoadVoiceArgs = "(Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;II)I";
 
 constexpr static const char * kCreateAudioName = "createAudioData";
 constexpr static const char * kCreateAudioArgs = "(Ljava/lang/String;I)I";
@@ -138,13 +144,20 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     return;
   }
 
-  // Call JNI method CozmoTextToSpeech.loadVoice(path, voice, speed, shaping)
+  // Call JNI method CozmoTextToSpeech.loadVoice(path, voice, userid, password, license, speed, shaping)
   const jstring jpath = env->NewStringUTF(_tts_path.c_str());
   const jstring jvoice = env->NewStringUTF(_tts_voice.c_str());
+  const jint juserid = AcapelaTTS::GetUserid();
+  const jint jpassword = AcapelaTTS::GetPassword();
+  const jstring jlicense = env->NewStringUTF(AcapelaTTS::GetLicense().c_str());
+
   const jint jresult = env->CallStaticIntMethod(clazz.get(),
                                                 loadVoiceID,
                                                 jpath,
                                                 jvoice,
+                                                juserid,
+                                                jpassword,
+                                                jlicense,
                                                 _tts_speed,
                                                 _tts_shaping);
   if (0 != jresult) {

@@ -17,11 +17,13 @@ namespace Onboarding {
     }
 
     private void HandleModalClosed(BaseModal modal) {
-      if (modal is Cozmo.Repair.UI.NeedsRepairModal) {
-        OnboardingManager.Instance.GoToNextStage();
-      }
-      else if (modal is Cozmo.Energy.UI.NeedsEnergyModal) {
-        OnboardingManager.Instance.GoToNextStage();
+      if (!StageForceClosed) {
+        if (modal is Cozmo.Repair.UI.NeedsRepairModal) {
+          OnboardingManager.Instance.GoToNextStage();
+        }
+        else if (modal is Cozmo.Energy.UI.NeedsEnergyModal) {
+          OnboardingManager.Instance.GoToNextStage();
+        }
       }
     }
 

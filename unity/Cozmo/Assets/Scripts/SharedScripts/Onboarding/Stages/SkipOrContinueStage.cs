@@ -83,6 +83,8 @@ namespace Onboarding {
       IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
       if (CurrentRobot != null) {
         CurrentRobot.SendAnimationTrigger(ConnectionFlowController.GetAnimationForWakeUp(), HandleWakeAnimationComplete);
+        RobotEngineManager.Instance.Message.NotifyCozmoWakeup = Singleton<NotifyCozmoWakeup>.Instance;
+        RobotEngineManager.Instance.SendMessage();
       }
     }
 

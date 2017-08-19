@@ -490,14 +490,14 @@ RobotInterface::EngineToRobot* StreamingAnimation::CreateRobotMessage(const Audi
     DEV_ASSERT(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
                  "Block size must be less or equal to audioSameple size");
     // Convert audio format to robot format
-    for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
+    for ( size_t idx = 0; idx < audioFrame->samples.size(); ++idx ) {
       keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] );
     }
     
     // Pad the back of the buffer with 0s
     // This should only apply to the last frame
-    if (audioFrame->sampleCount < static_cast<int32_t>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
-      std::fill(keyFrame.sample.begin() + audioFrame->sampleCount, keyFrame.sample.end(), 0);
+    if (audioFrame->samples.size() < static_cast<int32_t>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
+      std::fill(keyFrame.sample.begin() + audioFrame->samples.size(), keyFrame.sample.end(), 0);
     }
     audioMsg = new RobotInterface::EngineToRobot( std::move(keyFrame) );
   }
@@ -593,8 +593,11 @@ void StreamingAnimation::AddAudioSilenceFrames()
     uint32_t frameEndTime_ms = frameStartTime_ms + IKeyFrame::SAMPLE_LENGTH_MS - 1;
     
     const AnimationEvent* nextEvent = GetNextAudioEvent();
-    Audio::RobotAudioFrameStream* nextStream = _audioBuffer->HasAudioBufferStream() ?
-    _audioBuffer->GetFrontAudioBufferStream() : nullptr;
+    Audio::RobotAudioFrameStream* nextStream = nullptr;
+    
+    // TODO Needs fixing to switch over to new system look for BUILD_NEW_ANIMATION_CODE in robot.h
+//    Audio::RobotAudioFrameStream* nextStream = _audioBuffer->HasAudioBufferStream() ?
+//    _audioBuffer->GetFrontAudioBufferStream() : nullptr;
     
     
     // Check Initial case
@@ -712,7 +715,10 @@ bool StreamingAnimation::IsAnimationDone() const
   // Compare completed event count with number of events && there are no more audio streams
   const bool isDone = ((GetCompletedEventCount() >= _animationAudioEvents.size())
                        && !_audioBuffer->HasAudioBufferStream()
-                       && !_audioBuffer->IsActive()
+                       // Commenting this out for now since we don't use this alternate audio system and it will be
+                       // deleted. I'm making IsActive private. Look for BUILD_NEW_ANIMATION_CODE in robot.h for the new
+                       // system.
+//                       && !_audioBuffer->IsActive()
                        && ((_audioBufferedFrameCount * IKeyFrame::SAMPLE_LENGTH_MS) > _lastKeyframeTime_ms));
   
   if (DEBUG_ROBOT_ANIMATION_AUDIO) {

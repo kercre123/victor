@@ -15,9 +15,6 @@ public class VideoSubtitleController : MonoBehaviour {
   [SerializeField]
   private CozmoText _SubtitlesText;
 
-  [SerializeField]
-  private UnityEngine.UI.Image _SubtitlesBackground;
-
   private int _CurrentIndex = 0;
   private float _IndexTime = 0.0f;
 
@@ -33,7 +30,6 @@ public class VideoSubtitleController : MonoBehaviour {
     }
 
     SetSubtitlesWithText(Localization.Get(_VideoLocalizationKeyPairs[0]._LocalizationKey));
-
   }
 
   private void Update() {
@@ -58,11 +54,9 @@ public class VideoSubtitleController : MonoBehaviour {
   private void SetSubtitlesWithText(string subtitleText) {
     if (string.IsNullOrEmpty(subtitleText)) {
       _SubtitlesText.text = "";
-      _SubtitlesBackground.gameObject.SetActive(false);
     }
     else {
       _SubtitlesText.text = subtitleText;
-      _SubtitlesBackground.gameObject.SetActive(true);
     }
   }
 }

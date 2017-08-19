@@ -80,6 +80,10 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   
+# ifdef COZMO_V2
+  CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
+# endif
+  
   namespace JsonKey
   {
     const char * const ImageQualityGroup = "ImageQuality";
@@ -2326,14 +2330,14 @@ namespace Cozmo {
       // Create ImageRGB object from image buffer
       Vision::ImageRGB imgRGB(numRows, numCols, buffer);
       
-      
-      
-      // DEBUG Distortion coeffs
-//      Vision::ImageRGB imgUndistorted(numRows,numCols);
-//      cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
-//                    _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-//                    _camera.GetCalibration()->GetDistortionCoeffs());
-//      imgUndistorted.Display("UndistortedImage");
+      if(kDisplayUndistortedImages)
+      {
+        Vision::ImageRGB imgUndistorted(numRows,numCols);
+        cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                      _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                      _camera.GetCalibration()->GetDistortionCoeffs());
+        imgUndistorted.Display("UndistortedImage");
+      }
       
       // Create EncodedImage with proper imageID and timestamp
       // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
@@ -2348,7 +2352,7 @@ namespace Cozmo {
       
       // Compress to jpeg and send to game and viz
       lastResult = CompressAndSendImage(imgRGB, 50);
-      DEV_ASSERT(RESULT_OK == lastResult, "CompressAndSendImage() failed");
+      DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
     }
   }
   
@@ -2462,11 +2466,33 @@ namespace Cozmo {
           } else {
             
             payload.Unpack(data, size);
+            
+            std::stringstream ss;
+            ss << "[";
+            for(int i = 0; i < payload.distCoeffs.size() - 1; ++i)
+            {
+              ss << payload.distCoeffs[i] << ", ";
+            }
+            ss << payload.distCoeffs.back() << "]";
+            
             PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.Recvd",
-                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
+                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f, distCoeffs: %s)",
                              payload.ncols, payload.nrows,
                              payload.focalLength_x, payload.focalLength_y,
-                             payload.center_x, payload.center_y);
+                             payload.center_x, payload.center_y,
+                             ss.str().c_str());
+            
+            
+            
+            // See hardware.h for the body hardware versions
+            // 6 == BODY_VER_1v5c and anything less is an older version
+            // We never verified the computed distortion coefficients of 1.0 or 1.5 robots at the factory
+            // so as far as we know they are garbage so ignore them.
+            if(_robot.GetBodyHWVersion() <= 6)
+            {
+              PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.IgnoringDistCoeffs", "");
+              payload.distCoeffs.fill(0);
+            }
             
             // Convert calibration message into a calibration object to pass to the robot
             Vision::CameraCalibration calib(payload.nrows,

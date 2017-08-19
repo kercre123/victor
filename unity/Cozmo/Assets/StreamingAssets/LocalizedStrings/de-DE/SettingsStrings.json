@@ -191,5 +191,8 @@
   },
   "settings.sdkPanel.sdkUrl.address" : {
     "translation" : "go.anki.com/cozmo-app-sdk"
+  },
+  "settings.acknowledgementsPanel.dataCollectionTitle" : {
+    "translation" : "Datensammlung"
   }
 }

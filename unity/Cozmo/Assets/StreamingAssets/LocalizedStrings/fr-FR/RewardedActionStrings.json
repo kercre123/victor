@@ -10,126 +10,126 @@
     "translation" : "Déclencher une mise à niveau"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack" : {
-    "translation" : "comportement «Empiler des cubes» réalisé avec succès"
+    "translation" : "comportement « Empiler des cubes » réalisé avec succès"
   },
   "reward.description.Freeplay.CompleteBehavior.Pounce" : {
-    "translation" : "comportement «Prédateur» réalisé avec succès"
+    "translation" : "comportement « Prédateur » réalisé avec succès"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid" : {
-    "translation" : "comportement «Construire une pyramide» réalisé avec succès"
+    "translation" : "comportement « Construire une pyramide » réalisé avec succès"
   },
   "reward.description.Freeplay.CompleteBehavior.PopWheelie" : {
-    "translation" : "comportement «Roue arrière» réalisé avec succès"
+    "translation" : "comportement « Roue arrière » réalisé avec succès"
   },
   "reward.description.Freeplay.CompleteBehavior.FistBump" : {
-    "translation" : "comportement «Check» réalisé avec succès"
+    "translation" : "comportement « Check » réalisé avec succès"
   },
   "reward.description.MemoryMatch.Played.Solo" : {
-    "translation" : "Partie de Jeu de mémoire en mode solo effectuée"
+    "translation" : "Partie de Mémoire Flash en mode solo effectuée"
   },
   "reward.description.MemoryMatch.Played.Vs" : {
-    "translation" : "Partie de Jeu de mémoire en mode Contre effectuée"
+    "translation" : "Partie de Mémoire Flash en mode Contre effectuée"
   },
   "reward.description.MemoryMatch.WinGame.Vs" : {
-    "translation" : "Partie de Jeu de mémoire en mode Contre gagnée"
+    "translation" : "Partie de Mémoire Flash en mode Contre gagnée"
   },
   "reward.description.MemoryMatch.Lives.OneLeft" : {
-    "translation" : "Partie de Jeu de mémoire en mode Contre gagnée lors de ta dernière vie"
+    "translation" : "Partie de Mémoire Flash en mode Contre gagnée lors de ta dernière vie"
   },
   "reward.description.MemoryMatch.Lives.TwoLeft" : {
-    "translation" : "Partie de Jeu de mémoire en mode Contre gagnée avec deux vies restantes"
+    "translation" : "Partie de Mémoire Flash en mode Contre gagnée avec deux vies restantes"
   },
   "reward.description.MemoryMatch.Lives.ThreeLeft" : {
-    "translation" : "Partie de Jeu de mémoire en mode Contre gagnée sans perdre une vie"
+    "translation" : "Partie de Mémoire Flash en mode Contre gagnée sans perdre une vie"
   },
   "reward.description.MemoryMatch.PatternLength.Five" : {
-    "translation" : "Partie de Jeu de mémoire terminée avec une séquence de > 5lumières."
+    "translation" : "Partie de Mémoire Flash terminée avec une séquence de > 5 lumières."
   },
   "reward.description.MemoryMatch.PatternLength.Ten" : {
-    "translation" : "Partie de Jeu de mémoire terminée avec une séquence de > 10lumières."
+    "translation" : "Partie de Mémoire Flash terminée avec une séquence de > 10 lumières."
   },
   "reward.description.MemoryMatch.PatternLength.Fifteen" : {
-    "translation" : "Partie de Jeu de mémoire terminée avec une séquence de > 15lumières."
+    "translation" : "Partie de Mémoire Flash terminée avec une séquence de > 15 lumières."
   },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
-    "translation" : "Partie de Jeu de mémoire terminée avec une séquence de > 20lumières."
+    "translation" : "Partie de Mémoire Flash terminée avec une séquence de > 20 lumières."
   },
   "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
-    "translation" : "Partie de Jeu de mémoire terminée avec une séquence de > 25lumières."
+    "translation" : "Partie de Mémoire Flash terminée avec une séquence de > 25 lumières."
   },
   "reward.description.MemoryMatch.PatternLength.Thirty" : {
-    "translation" : "Partie de Jeu de mémoire terminée avec une séquence de > 30lumières."
+    "translation" : "Partie de Mémoire Flash terminée avec une séquence de > 30 lumières."
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
-    "translation" : "Nouveau record de séquence pour le Jeu de mémoire en mode Solo"
+    "translation" : "Nouveau record de séquence pour Mémoire Flash en mode Solo"
   },
   "reward.description.QuickTap.Played" : {
-    "translation" : "Partie de Réflexe effectuée"
+    "translation" : "Partie de Réflexe Flash effectuée"
   },
   "reward.description.QuickTap.WinGame.OneColor" : {
-    "translation" : "Partie de Réflexe gagnée en mode «Une couleur»"
+    "translation" : "Partie de Réflexe Flash gagnée en mode « Une couleur »"
   },
   "reward.description.QuickTap.WinGame.TwoColor" : {
-    "translation" : "Partie de Réflexe gagnée en mode «Deux couleurs»"
+    "translation" : "Partie de Réflexe Flash gagnée en mode « Deux couleurs »"
   },
   "reward.description.QuickTap.WinGame.ThreeColor" : {
-    "translation" : "Partie de Réflexe gagnée en mode «Trois couleurs»"
+    "translation" : "Partie de Réflexe Flash gagnée en mode « Trois couleurs »"
   },
   "reward.description.QuickTap.WinGame.FourColor" : {
-    "translation" : "Partie de Réflexe gagnée en mode «Quatre couleurs»"
+    "translation" : "Partie de Réflexe Flash gagnée en mode « Quatre couleurs »"
   },
   "reward.description.QuickTap.Accuracy.50" : {
-    "translation" : "Partie de Réflexe terminée avec une précision > 50%"
+    "translation" : "Partie de Réflexe Flash terminée avec une précision > 50 %"
   },
   "reward.description.QuickTap.Accuracy.75" : {
-    "translation" : "Partie de Réflexe terminée avec une précision > 75%"
+    "translation" : "Partie de Réflexe Flash terminée avec une précision > 75 %"
   },
   "reward.description.QuickTap.Accuracy.100" : {
-    "translation" : "Partie de Réflexe terminée avec une précision de 100%"
+    "translation" : "Partie de Réflexe Flash terminée avec une précision de 100 %"
   },
   "reward.description.QuickTap.Shutout.SingleRound" : {
-    "translation" : "Partie de Réflexe gagnée5 à0"
+    "translation" : "Partie de Réflexe Flash gagnée 5 à 0"
   },
   "reward.description.QuickTap.TieBreaker.OneRound" : {
-    "translation" : "Partie de Réflexe gagnée après une égalité4 à4"
+    "translation" : "Partie de Réflexe Flash gagnée après une égalité 4 à 4"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "Partie de Réflexe Humain contre Humain contre Cozmo effectuée"
+    "translation" : "Partie de Réflexe Flash Humain vs Humain vs Cozmo effectuée"
   },
   "reward.description.Keepaway.Played" : {
-    "translation" : "Partie de Pas touche effectuée"
+    "translation" : "Partie d'Esquive effectuée"
   },
   "reward.description.Keepaway.Won" : {
-    "translation" : "Partie de Pas touche gagnée"
+    "translation" : "Partie d'Esquive gagnée"
   },
   "reward.description.Keepaway.Shutout" : {
-    "translation" : "Partie de Pas touche gagnée5 à0"
+    "translation" : "Partie d'Esquive gagnée 5 à 0"
   },
   "reward.description.Keepaway.TieBreaker" : {
-    "translation" : "Partie de Pas touche gagnée après une égalité4 à4"
+    "translation" : "Partie d'Esquive gagnée après une égalité 4 à 4"
   },
   "reward.description.Explorer.Time.5" : {
-    "translation" : "Utilisation du Mode Explorateur pendant plus de 5minutes"
+    "translation" : "Utilisation du Mode Explorateur pendant plus de 5 minutes"
   },
   "reward.description.Explorer.Time.10" : {
-    "translation" : "Utilisation du Mode Explorateur pendant plus de 10minutes"
+    "translation" : "Utilisation du Mode Explorateur pendant plus de 10 minutes"
   },
   "reward.description.Explorer.Time.15" : {
-    "translation" : "Utilisation du Mode Explorateur pendant plus de 15minutes"
+    "translation" : "Utilisation du Mode Explorateur pendant plus de 15 minutes"
   },
   "reward.description.Explorer.Time.20" : {
-    "translation" : "Utilisation du Mode Explorateur pendant plus de 20minutes"
+    "translation" : "Utilisation du Mode Explorateur pendant plus de 20 minutes"
   },
   "reward.collect.CollectEnergyButton" : {
     "translation" : "Récupérer de l'énergie"
   },
   "reward.description.NewDifficulty" : {
-    "translation" : "Mode {0} déverrouillé!"
+    "translation" : "Mode {0} déverrouillé !"
   },
   "reward.description.StartNewDay" : {
     "translation" : "Récompense pour série de connexions"
   },
   "reward.description.SkillUp" : {
-    "translation" : "La compétence {0} de Cozmo a augmenté!"
+    "translation" : "La compétence {0} de Cozmo a augmenté !"
   }
 }

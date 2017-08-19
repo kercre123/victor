@@ -195,6 +195,12 @@ const DAS::IDASPlatform* DASGetPlatform() __attribute__((visibility("default")))
 
 using DASFlushCallback = std::function<void(bool)>; // passes in success/fail
 void DASForceFlushWithCallback(const DASFlushCallback& callback) __attribute((visibility("default")));
+  
+using DASArchiveFunction = std::function<bool(const std::string&)>;
+using DASUnarchiveFunction = std::function<std::string(const std::string&)>;
+void DASSetArchiveLogConfig(const DASArchiveFunction& archiveFunction,
+                            const DASUnarchiveFunction& unarchiveFunction,
+                            const std::string& archiveExtension) __attribute((visibility("default")));
 #endif
 
 void SetDASLocalLoggerMode(DASLocalLoggerMode logMode) __attribute__((visibility("default")));

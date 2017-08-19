@@ -43,6 +43,7 @@ public:
   
   // Implementation of IFeedingListener
   virtual void StartedEating(Robot& robot, const int duration_s) override;
+  virtual void EatingComplete(Robot& robot) override;
   virtual void EatingInterrupted(Robot& robot) override;
   
 protected:
@@ -84,7 +85,7 @@ private:
   // Bool that will be set by a behavior listener callback when the behavior has
   bool _eatingComplete;
   
-  bool _severeAnimsSet;
+  bool _severeBehaviorLocksSet;
 
   AnimationTrigger _currIdle;
   bool _hasSetIdle;

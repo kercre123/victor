@@ -55,7 +55,7 @@ public:
             const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng);
 
   // Set up decay multipliers (we do this prior to calling ApplyDecay or TimeForDecayToLevel)
-  void SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const;
+  void GetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const;
   
   // Decay a need's level, according to how much time has passed since last decay, and config data
   void ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers);
@@ -118,6 +118,10 @@ public:
   // long has it been since the user exited (backgrounded) the app.  Similar to
   // the above, we don't bother storing this on the robot.
   Time _timeLastAppBackgrounded;
+
+  // Time of last app un-backgrounding:  Used for a certain timing type of local
+  // notifications
+  Time _timeLastAppUnBackgrounded;
 
   // Also for DAS purposes, this is the number of times the user has opened or
   // unbackgrounded the app, since the last robot disconnect.

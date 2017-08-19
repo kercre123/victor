@@ -76,7 +76,7 @@
     "translation" : "Sicheres Spielen:"
   },
   "droneMode.safePlay.description" : {
-    "translation" : "• Explore indoors in well lit spaces.\u000a\u000a•Drive on flat surfaces.\u000a\u000a• Be careful of falling off edges.\u000a\u000a•Stay close to Cozmo for the best experience."
+    "translation" : "• Erkunde gut beleuchtete Innenräume.\u000a\u000a• Fahre auf ebenen Oberflächen.\u000a\u000a• Pass auf, dass Cozmo nicht runterfällt.\u000a\u000a• Bleibe in der Nähe von Cozmo, um maximalen Spielspaß zu haben."
   },
   "droneMode.button.action.reactToPet" : {
     "translation" : "Grüßen"
@@ -106,13 +106,13 @@
     "translation" : "Ziehe und halte hier, um Cozmo vorwärts oder rückwärts fahren zu lassen.\u000aWenn du loslässt, hält Cozmo an."
   },
   "droneMode.text.toggleNightVision" : {
-    "translation" : "Antippen, um die Nachtsichtfunktion ein- oder auszuschalten"
+    "translation" : "Antippen, um die Nachtsichtfunktion ein- oder auszuschalten."
   },
   "droneMode.text.raiseLowerHead" : {
-    "translation" : "Ziehen, um den Kopf oder die Krangabel von Cozmo nach oben oder unten zu bewegen"
+    "translation" : "Ziehen, um den Kopf oder den Hebearm von Cozmo nach oben oder unten zu bewegen."
   },
   "droneMode.text.switchHeadOrLift" : {
-    "translation" : "Antippen, um zwischen der Steuerung des Kopfs und der Krangabel zu wechseln"
+    "translation" : "Antippen, um zwischen der Steuerung des Kopfs und des Hebearms zu wechseln."
   },
   "droneMode.text.cozmoReticleHeader" : {
     "translation" : "Wenn Cozmo ein Objekt auswählt, siehst du es hier."
@@ -130,13 +130,13 @@
     "translation" : "Du spielst und Cozmo sieht zu.\u000aMerke dir das Muster, in dem die Cubes aufblitzen, und wiederhole es."
   },
   "memoryMatchGame.difficulty.hardDescription.locked" : {
-    "translation" : "Zum Freischalten musst du ein Gedächtnisspiel im Modus DU GEGEN COZMO gewinnen."
+    "translation" : "Zum Freischalten musst du Erinner Dich im Modus DU GEGEN COZMO gewinnen."
   },
   "memoryMatchGame.label.yourTurn" : {
-    "translation" : "Du bist dran."
+    "translation" : "Du bist dran"
   },
   "memoryMatchGame.label.cozmoTurn" : {
-    "translation" : "Cozmo ist dran."
+    "translation" : "Cozmo ist dran"
   },
   "memoryMatchGame.label.listen" : {
     "translation" : "Hör zu..."
@@ -163,7 +163,7 @@
     "translation" : "SOLO"
   },
   "memoryMatchGame.label.placeCenter" : {
-    "translation" : "Stelle einen Cube vor Cozmo auf, und platziere jeweils links und rechts von ihm einen weiteren Cube.\u000a\u000aLasse Platz zwischen den Cubes."
+    "translation" : "Stelle einen Cube vor Cozmo auf, und platziere jeweils links und rechts von ihm einen weiteren Cube.\u000a\u000aLass Platz zwischen den Cubes."
   },
   "memoryMatchGame.label.waitingForCubes.placeCenter" : {
     "translation" : "Mittlerer Cube wird gesucht..."
@@ -187,7 +187,7 @@
     "translation" : "RUNDE {0:N0}"
   },
   "speedTap.tapBlock" : {
-    "translation" : "Tippe einen blinkenden Cube an,\u000amit dem du spielen möchtest."
+    "translation" : "Tippe einen blinkenden Cube an, mit dem du spielen möchtest."
   },
   "speedTap.separateBlocks" : {
     "translation" : "Cubes sollten getrennt werden."
@@ -277,16 +277,16 @@
     "translation" : "Cozmo bereitet sich vor..."
   },
   "speedTap.difficulty.easyDescription.locked" : {
-    "translation" : "Zum Freischalten muss das Geschwindigkeitsspiel freigeschaltet werden."
+    "translation" : "Zum Freischalten muss Hau mich freigeschaltet werden."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "Der Modus <b>2 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>1 FARBE</b> gewinnen."
+    "translation" : "Der Modus <b>2 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du Hau mich im Modus <b>1 FARBE</b> gewinnen."
   },
   "speedTap.difficulty.hardDescription.locked" : {
-    "translation" : "Der Modus <b>3 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>2 FARBEN</b> gewinnen."
+    "translation" : "Der Modus <b>3 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du Hau mich im Modus <b>2 FARBEN</b> gewinnen."
   },
   "speedTap.difficulty.expertDescription.locked" : {
-    "translation" : "Der Modus <b>4 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du das Geschwindigkeitsspiel im Modus <b>3 FARBEN</b> gewinnen."
+    "translation" : "Der Modus <b>4 FARBEN</b> ist gesperrt.\u000aZum Freischalten musst du Hau mich im Modus <b>3 FARBEN</b> gewinnen."
   },
   "speedTap.text.getReady" : {
     "translation" : "Mach dich bereit!"
@@ -295,7 +295,7 @@
     "translation" : "<b>Sieger:</b> Der Beste aus {0} Runden"
   },
   "speedTap.text.displayWinnerSubtitle" : {
-    "translation" : "takes ROUND {0}!"
+    "translation" : "gewinnt RUNDE {0}!"
   },
   "speedTap.text.roundScore" : {
     "translation" : "Spieler: {0} – Cozmo: {1}"
@@ -316,7 +316,7 @@
     "translation" : "Um den 3-Spieler-Modus freizuschalten, musst du \"Mensch gegen Cozmo\" ein Mal in diesem Schwierigkeitsgrad spielen."
   },
   "speedTapGame.label.vs" : {
-    "translation" : "vs."
+    "translation" : "gegen"
   },
   "speedTapGame.mode.HvC" : {
     "translation" : "Mensch gegen Cozmo"
@@ -370,12 +370,12 @@
     "translation" : "Text eingeben..."
   },
   "minigame.text.cozmoWinsFlat" : {
-    "translation" : "Cozmo\u000agewinnt!"
+    "translation" : "Cozmo gewinnt!"
   },
   "minigame.text.playerWinsFlat" : {
-    "translation" : "{0}\u000agewinnt!"
+    "translation" : "{0} gewinnt!"
   },
   "minigame.text.youWinFlat" : {
-    "translation" : "Du\u000agewinnst!"
+    "translation" : "Du gewinnst!"
   }
 }

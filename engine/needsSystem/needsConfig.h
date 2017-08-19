@@ -94,6 +94,8 @@ public:
   DecayConfig _decayConnected;
   DecayConfig _decayUnconnected;
 
+  float _localNotificationMaxFutureMinutes;
+
 private:
   void InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
   void InitDecayModifiers(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
