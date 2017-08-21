@@ -24,6 +24,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
+#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 
@@ -556,7 +557,7 @@ IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IB
                     "Picking new activity to match spark '%s'", EnumToString(robot.GetBehaviorManager().GetRequestedSpark()));
       getNewActivity = true;
     }
-    else if ( currentRunningBehavior == nullptr )
+    else if ( currentRunningBehavior == nullptr && !robot.GetContext()->GetNeedsManager()->IsPendingSparksRewardMsg() )
     {
       // check with the current activity if it wants to end
       // note that we will also ask the current activity this when picking new activities. This additional check is not
@@ -595,7 +596,9 @@ IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IB
         ActivityIDToString(_currentActivityPtr->GetID()),
         chosenBehavior ? BehaviorIDToString(chosenBehavior->GetID()) : "(null)" );
     }
-    else if ( !chosenBehavior->IsRunning() )
+    // The second check here is to prevent checking WantsToEnd while a sparks reward interlude behavior
+    // is pending, because we don't want to end if it is pending
+    else if ( !chosenBehavior->IsRunning() && !robot.GetContext()->GetNeedsManager()->IsPendingSparksRewardMsg() )
     {
       // check with the current activity if it wants to end
       // note that we will also ask the current activity this when picking new activities. This additional check is not
