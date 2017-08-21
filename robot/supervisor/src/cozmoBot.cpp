@@ -48,7 +48,11 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
+#ifdef COZMO_V2
+      ImageResolution captureResolution_ = NHD;
+#else
       ImageResolution captureResolution_ = QVGA;
+#endif
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
@@ -423,7 +427,7 @@ namespace Anki {
             const s32 captureHeight = Vision::CameraResInfo[HAL::captureResolution_].height;
             const s32 captureWidth  = Vision::CameraResInfo[HAL::captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
 
-            static const int bufferSize = 1000000;
+            static const int bufferSize = 5000000;
             static u8 buffer[bufferSize];
 
             HAL::CameraGetFrame(buffer,

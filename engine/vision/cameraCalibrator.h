@@ -1,0 +1,113 @@
+/**
+ * File: cameraCalibrator.h
+ *
+ * Author: Al Chaussee
+ * Created: 08/16/17
+ *
+ * Description:
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
+
+#ifndef __Cozmo_Basestation_Vision_CameraCalibrator_H__
+#define __Cozmo_Basestation_Vision_CameraCalibrator_H__
+
+#include "anki/common/basestation/math/rect.h"
+
+#include "anki/vision/basestation/cameraCalibration.h"
+#include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
+
+#include "anki/common/types.h"
+
+#include "engine/debugImageList.h"
+
+namespace Anki {
+namespace Cozmo {
+ 
+class VisionSystem;
+ 
+class CameraCalibrator
+{
+public:
+  
+  CameraCalibrator(VisionSystem& visionSystem);
+  ~CameraCalibrator();
+  
+  // Computes calibration from, depending on the calibration target, either stored calibration images or the passed in observed markers
+  // Outputs a set of calibrations and debug images via references and returns whether or not calibration was a success
+  Result ComputeCalibration(const std::list<Vision::ObservedMarker>& observedMarkers,
+                            std::list<Vision::CameraCalibration>& calibrations,
+                            DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+  
+  // Add an image to be stored for calibration along with a region of interest
+  Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
+  
+  // Clears all stored calibration images
+  Result ClearCalibrationImages();
+  
+  // Returns the number of stored calibration images
+  size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
+  
+  // Structure to hold information about each calibration image
+  struct CalibImage {
+    // Input provided by AddCalibrationImage
+    Vision::Image  img;
+    Rectangle<s32> roiRect;
+    
+    // Output
+    // Whether of not dots were found in the image (dot checkerboard calibration)
+    bool           dotsFound;
+  };
+  
+  // Returns a vector of all stored calibration images (may or may not have already been used for calibration)
+  const std::vector<CalibImage>& GetCalibrationImages() const {return _calibImages;}
+  
+  // Returns a vector of Camera poses based on where the camera was when taking each CalibImage
+  // Each index matches the corresponding images in _calibImages
+  const std::vector<Pose3d>& GetCalibrationPoses() const { return _calibPoses;}
+  
+  // Enum of various supported calibration targets
+  enum CalibTargetType {
+    CHECKERBOARD, // Dot checkerboard
+    INVERTED_BOX, // 3-sided inverted box target with markers
+    BLEACHERS,    // Target that looks like bleachers... I don't know how to describe it
+  };
+
+private:
+
+  // Computes camera calibration using stored images of checkerboard target
+  // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
+  Result ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibrations,
+                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+  
+  // Computes camera calibration using observed markers on either the INVERTED_BOX or BLEACHERS target
+  // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
+  Result ComputeCalibrationFromSingleTarget(const std::list<Vision::ObservedMarker>& observedMarkers,
+                                            std::list<Vision::CameraCalibration>& calibrations,
+                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+
+  // Calculates expected corner positions of the CHECKERBOARD target with the given board and square
+  // sizes
+  void CalcBoardCornerPositions(cv::Size boardSize,
+                                float squareSize,
+                                std::vector<cv::Point3f>& corners);
+  
+  // Populates markersTo3dCoords with the 3d world coordinates of each corner of each marker on
+  // the respective target
+  void GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
+  void GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
+
+  VisionSystem& _visionSystem;
+
+  std::vector<CalibImage> _calibImages;
+  std::vector<Pose3d>     _calibPoses;
+  bool                    _isCalibrating = false;
+};
+  
+}
+}
+
+#endif // __Cozmo_Basestation_Vision_CameraCalibrator_H__

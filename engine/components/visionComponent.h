@@ -81,7 +81,7 @@ struct DockingErrorSignal;
     void SetIsSynchronous(bool isSync);
 
     // Calibration must be provided before Update() will run
-    void SetCameraCalibration(Vision::CameraCalibration& camCalib);
+    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
     
     bool IsDisplayingProcessedImagesOnly() const;
     
@@ -192,10 +192,10 @@ struct DockingErrorSignal;
     
     // Get jpeg compressed data of calibration images
     // dotsFoundMask has bits set to 1 wherever the corresponding calibration image was found to contain a valid target
-    std::list<std::vector<u8> > GetCalibrationImageJpegData(u8* dotsFoundMask = nullptr);
+    std::list<std::vector<u8> > GetCalibrationImageJpegData(u8* dotsFoundMask = nullptr) const;
     
     // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
-    Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p);
+    Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
     
     // Tool code images
     Result ClearToolCodeImages();    

@@ -15,6 +15,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/types.h"
+#include "anki/common/basestation/math/rotation.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
@@ -23,14 +24,118 @@
 
 #include "anki/vision/basestation/imageCache.h"
 
+#include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include "gtest/gtest.h"
 #include "json/json.h"
 
+#include "opencv2/calib3d/calib3d.hpp"
+
+#include "anki/common/basestation/colorRGBA.h"
+
+
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
+TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
+{
+  NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
+                                          std::to_string(Anki::Cozmo::CameraCalibrator::BLEACHERS).c_str());
+
+  Anki::Cozmo::VisionSystem* visionSystem = new Anki::Cozmo::VisionSystem(cozmoContext);
+  cozmoContext->GetDataLoader()->LoadRobotConfigs();
+  Anki::Result result = visionSystem->Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  // Don't really need a valid camera calibration, so just pass a dummy one in
+  // to make vision system happy. All that matters is the image dimensions be correct.
+  Anki::Vision::CameraCalibration calib(360,640,290,290,320,180,0.f);
+  result = visionSystem->UpdateCameraCalibration(calib);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  // Turn on _only_ marker detection and camera calibration
+  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::Idle, true);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::DetectingMarkers, true);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  result = visionSystem->SetNextMode(Anki::Cozmo::VisionMode::ComputingCalibration, true);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  // Make sure we run on every frame
+  result = visionSystem->PushNextModeSchedule(Anki::Cozmo::AllVisionModesSchedule({{Anki::Cozmo::VisionMode::DetectingMarkers, Anki::Cozmo::VisionModeSchedule(1)}}));
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  Anki::Vision::ImageCache imageCache;
+  
+  Anki::Vision::ImageRGB img;
+  
+  std::string testImgPath = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
+                                                                            "test/markerDetectionTests/CalibrationTarget/bleachers.png");
+  result = img.Load(testImgPath);
+  
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  imageCache.Reset(img);
+  
+  Anki::Cozmo::VisionPoseData robotState; // not needed just to detect markers
+  result = visionSystem->Update(robotState, imageCache);
+  ASSERT_EQ(Anki::Result::RESULT_OK, result);
+  
+  Anki::Cozmo::VisionProcessingResult processingResult;
+  bool resultAvailable = visionSystem->CheckMailbox(processingResult);
+  EXPECT_TRUE(resultAvailable);
+  
+  ASSERT_EQ(processingResult.cameraCalibrations.size(), 1);
+
+  const std::vector<f32> distortionCoeffs = {{-0.07167206757206086,
+                                              -0.2198782133395603,
+                                              0.001435740245449692,
+                                              0.001523365725052927,
+                                              0.1341471670512819,
+                                              0, 0, 0}};
+  
+  Anki::Vision::CameraCalibration expectedCalibration(360,640,
+                                                      362.8773099149878,
+                                                      366.7347434532929,
+                                                      302.2888225643724,
+                                                      200.012543449327,
+                                                      0,
+                                                      distortionCoeffs);
+  
+  const auto computedCalibration = processingResult.cameraCalibrations.front();
+  
+  ASSERT_NEAR(computedCalibration.GetCenter_x(), expectedCalibration.GetCenter_x(),
+              Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  
+  ASSERT_NEAR(computedCalibration.GetCenter_y(), expectedCalibration.GetCenter_y(),
+              Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  
+  ASSERT_NEAR(computedCalibration.GetFocalLength_x(), expectedCalibration.GetFocalLength_x(),
+              Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  
+  ASSERT_NEAR(computedCalibration.GetFocalLength_y(), expectedCalibration.GetFocalLength_y(),
+              Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  
+  ASSERT_NEAR(computedCalibration.GetNcols(), expectedCalibration.GetNcols(),
+              Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  
+  ASSERT_NEAR(computedCalibration.GetNrows(), expectedCalibration.GetNrows(),
+              Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  
+  ASSERT_NEAR(computedCalibration.GetSkew(), expectedCalibration.GetSkew(),
+              Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  
+  ASSERT_NEAR(computedCalibration.GetDistortionCoeffs().size(), expectedCalibration.GetDistortionCoeffs().size(), 0);
+  
+  for(int i = 0; i < expectedCalibration.GetDistortionCoeffs().size(); ++i)
+  {
+    ASSERT_NEAR(computedCalibration.GetDistortionCoeffs()[i], expectedCalibration.GetDistortionCoeffs()[i],
+                Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  }
+}
 
 TEST(VisionSystem, MarkerDetectionTests)
 {
