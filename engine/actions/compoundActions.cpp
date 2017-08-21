@@ -168,6 +168,7 @@ namespace Anki {
       // Store this actions completion union before deleting it
       ActionCompletedUnion actionUnion;
       (*currentAction)->GetCompletionUnion(actionUnion);
+      
       _completedActionInfoStack[(*currentAction)->GetTag()] = CompletionData{
         .completionUnion = actionUnion,
         .type            = (*currentAction)->GetType(),
@@ -237,12 +238,22 @@ namespace Anki {
       {
         for(auto action : _actions) {
           if(action->GetTag() == _proxyTag) {
+            PRINT_CH_DEBUG("Actions", "ICompoundAction.GetCompletionUnion.UsingProxy",
+                           "%s [%d] using proxy action %s [%d] completion union",
+                           GetName().c_str(), GetTag(),
+                           action->GetName().c_str(), action->GetTag());
+            
             return action->GetCompletionUnion(completionUnion);
           }
         }
 
         auto iter = _completedActionInfoStack.find(_proxyTag);
         if(iter != _completedActionInfoStack.end()) {
+          PRINT_CH_DEBUG("Actions", "ICompoundAction.GetCompletionUnion.UsingProxy",
+                         "%s [%d] using proxy action with tag %d completion union",
+                         GetName().c_str(), GetTag(),
+                         iter->first);
+          
           completionUnion = iter->second.completionUnion;
           return;
         }

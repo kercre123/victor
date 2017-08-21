@@ -144,6 +144,7 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
       pickupAction->SetDoNearPredockPoseCheck(false);
       
       action->AddAction(pickupAction);
+      action->SetProxyTag(pickupAction->GetTag());
     }
     
     StartActingWithResponseAnim(action, &PickupBlockHelper::RespondToPickupResult,  [] (ActionResult result){
@@ -174,8 +175,9 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
+void PickupBlockHelper::RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca, Robot& robot)
 {
+  const ActionResult& result = rca.result;
   PRINT_CH_DEBUG("BehaviorHelpers", (GetName() + ".PickupResult").c_str(),
                  "%s", ActionResultToString(result));
     
@@ -187,18 +189,34 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
-      SearchParameters params;
-      params.searchingForID = _targetID;
-      params.searchIntensity = SearchIntensity::QuickSearch;
-      DelegateProperties properties;
-      properties.SetDelegateToSet(CreateSearchForBlockHelper(robot, params));
-      properties.SetOnSuccessFunction([this](Robot& robot){
-        StartPickupAction(robot); return _status;
-      });
-      properties.SetOnFailureFunction([this](Robot& robot){
-        MarkTargetAsFailedToPickup(robot); return BehaviorStatus::Failure;
-      });
-      DelegateAfterUpdate(properties);
+      DEV_ASSERT_MSG(rca.completionInfo.GetTag() == ActionCompletedUnionTag::objectInteractionCompleted,
+                 "PickupBlockHelper.RespondToPickupResult.UnexpectedActionCompletedUnionTag",
+                 "%hhu", rca.completionInfo.GetTag());
+      
+      if(rca.completionInfo.Get_objectInteractionCompleted().seeingUnexpectedObject)
+      {
+        PRINT_CH_DEBUG("BehaviorHelpers",
+                       (GetName() + ".VisualObservationFailed.SeeingUnexpectedObject").c_str(),
+                       "Marking target as failed to pickup");
+        
+        MarkTargetAsFailedToPickup(robot);
+        _status = BehaviorStatus::Failure;
+      }
+      else
+      {
+        SearchParameters params;
+        params.searchingForID = _targetID;
+        params.searchIntensity = SearchIntensity::QuickSearch;
+        DelegateProperties properties;
+        properties.SetDelegateToSet(CreateSearchForBlockHelper(robot, params));
+        properties.SetOnSuccessFunction([this](Robot& robot){
+          StartPickupAction(robot); return _status;
+        });
+        properties.SetOnFailureFunction([this](Robot& robot){
+          MarkTargetAsFailedToPickup(robot); return BehaviorStatus::Failure;
+        });
+        DelegateAfterUpdate(properties);
+      }
       break;
     }
     case ActionResult::NO_PREACTION_POSES:

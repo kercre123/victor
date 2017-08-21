@@ -322,6 +322,8 @@ protected:
   using RobotCompletedActionCallback = BehaviorRobotCompletedActionCallback;
   bool StartActing(IActionRunner* action, RobotCompletedActionCallback callback = {});
 
+  bool StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithRobotCallback callback);
+
   // helper that just looks at the result (simpler, but you can't get things like the completion union)
   using ActionResultCallback = BehaviorActionResultCallback;
   bool StartActing(IActionRunner* action, ActionResultCallback callback);
@@ -703,7 +705,6 @@ void IBehavior::HandleEvent(const EventType& event)
 inline bool IBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing) {
   IncreaseScoreWhileActing(extraScoreWhileActing);
   return StartActing(action);
-  return true;
 }
 
 template<typename CallbackType>
