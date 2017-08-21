@@ -3,6 +3,50 @@ prebuilt_jar(
   binary_jar = 'project/android/cozmojava/lib/unity-classes.jar'
 )
 
+
+android_prebuilt_aar(
+  name = 'play-services-gcm',
+  aar = 'project/android/cozmojava/lib/play-services-gcm-10.2.4.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'play-services-iid',
+  aar = 'project/android/cozmojava/lib/play-services-iid-10.2.4.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'play-services-tasks',
+  aar = 'project/android/cozmojava/lib/play-services-tasks-10.2.4.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'support-core-ui',
+  aar = 'project/android/cozmojava/lib/support-core-ui-26.0.0-alpha1.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'support-core-utils',
+  aar = 'project/android/cozmojava/lib/support-core-utils-26.0.0-alpha1.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'support-fragment',
+  aar = 'project/android/cozmojava/lib/support-fragment-26.0.0-alpha1.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'support-media-compat',
+  aar = 'project/android/cozmojava/lib/support-media-compat-26.0.0-alpha1.aar',
+  visibility = ['PUBLIC'],
+)
+
+
 # Acapela Text-To-Speech SDK
 prebuilt_jar(
   name = 'acattsandroid-sdk-library',
@@ -16,6 +60,13 @@ android_library(
   source = '1.6',
   target = '1.6',
   deps = [':unity_classes',
+          ':play-services-gcm',
+          ':play-services-iid',
+          ':play-services-tasks',
+          ':support-core-ui',
+          ':support-core-utils',
+          ':support-fragment',
+          ':support-media-compat',
           ':acattsandroid-sdk-library',
           '//lib/util/android:util',
           '//lib/crash-reporting-android/HockeyAppAndroid:hockey-app',
@@ -28,9 +79,11 @@ android_aar(
   manifest_skeleton = 'project/android/AndroidManifest.xml',
   deps = [
     ':cozmojava_lib',
-    '//lib/util/android:android-support-v4-23-aar',
     '//lib/util/android:play-services-location',
-    '//lib/util/android:play-services-base'
+    '//lib/util/android:play-services-base',
+    '//lib/util/android:play-services-basement',
+    '//lib/util/android:support-compat',
+    '//lib/util/android:support-v4'
   ]
 )
 
