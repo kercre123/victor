@@ -22,6 +22,7 @@ ASSET_DIRECTORY_PATH = 'Cozmo/Assets/AssetBundles'
 FONT_DIRECTORY_NAME = 'Font'
 ART_DIRECTORY_NAME = 'Art'
 PLATFORM_SPECIFIC_DIRECTORY_NAME = 'PlatformSpecificStartViewUISprites'
+LANGUAGE_SPECIFIC_DIRECTORY_NAME = 'LanguageSpecificStartViewUISprites'
 
 # Location of the ui_themes.json file from the Theme System
 THEME_JSON_PATH = 'Cozmo/Assets/Resources/ThemeSystem/ui_themes.json'
@@ -173,7 +174,7 @@ imageResourceKeys = get_image_resource_keys()
 for artDirectoryPath in ART_DIRECTORY_PATHS:
 	for artRoot, artDirs, artFilenames in os.walk(artDirectoryPath):
 		# Use UHD folders as the starting point; skip platform specific assets
-		if UHD_KEYWORD in artRoot and PLATFORM_SPECIFIC_DIRECTORY_NAME not in artRoot:
+		if UHD_KEYWORD in artRoot and PLATFORM_SPECIFIC_DIRECTORY_NAME not in artRoot and LANGUAGE_SPECIFIC_DIRECTORY_NAME not in artRoot:
 			for artFilename in artFilenames:
 				# Grab the meta files for pngs
 				if (PNG_EXTENSION + META_EXTENSION) in artFilename:

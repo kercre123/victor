@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.89658568 0.22197532 0.38322458 1.1471633
-  position 0.83351225 -0.91366175 0.89833399
+  orientation 0.76417471 0.31206369 0.56449382 1.2525386
+  position 1.5161389 -1.4271573 1.3270024
 }
 Background {
   skyColor [
@@ -29,16 +29,16 @@ CozmoMat {
   showMarkers FALSE
 }
 DEF cube0 LightCube {
-  translation 0.14658809 -0.017980075 0.021999415
+  translation 0.14658809 0 0.021999415
   rotation 0 1 0 0
 }
 DEF cube1 LightCube {
-  translation 0.14893655 -0.015157639 0.06800071
+  translation 0.14893654 0 0.06800069
   rotation 0.25857332 0.96126684 -0.095424861 6.2831815
   ID 1
 }
-%COZMOBOT% {
-  name "CozmoBot_1"
+%COZMOBOT% {		
+  name "CozmoBot_1"		
 }
 BuildServerTestController {
   controllerArgs "%COZMO_SIM_TEST%"

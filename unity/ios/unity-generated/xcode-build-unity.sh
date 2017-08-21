@@ -20,7 +20,7 @@ CONFIG=$(echo ${CONFIGURATION} | tr '[:upper:]' '[:lower:]')
 
 pwd
 echo
-python -u "${ANKI_BUILD_REPO_ROOT}/tools/build/tools/ankibuild/unity.py" \
+python2 -u "${ANKI_BUILD_REPO_ROOT}/tools/build/tools/ankibuild/unity.py" \
     --platform ios \
     --config "${CONFIG}" \
     --sdk "${PLATFORM_NAME}" \
