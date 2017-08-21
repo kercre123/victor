@@ -80,6 +80,8 @@ extern "C" void TIM14_IRQHandler(void) {
   WWDG->CR = 0xFF;
   #endif
   TIM14->SR = 0;
+
+  Analog::tick();
 }
 
 extern "C" void WWDG_IRQHandler(void) {

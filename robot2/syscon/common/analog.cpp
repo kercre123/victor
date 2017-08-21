@@ -9,11 +9,10 @@
 #include "vectors.h"
 #include "flash.h"
 
-static const int channels[ADC_CHANNELS] = {
-  ADC_CHSELR_CHSEL2,
-  ADC_CHSELR_CHSEL4,
-  ADC_CHSELR_CHSEL6
-};
+static const int SELECTED_CHANNELS = 0
+  | ADC_CHSELR_CHSEL2
+  | ADC_CHSELR_CHSEL4
+  | ADC_CHSELR_CHSEL6;
 
 static const int POWER_DOWN_TIME = 100;
 static const int POWER_WIPE_TIME = 500;
@@ -21,56 +20,12 @@ static const int BUTTON_THRESHOLD = 0xC00;
 static const int BOUNCE_LENGTH = 3;
 
 // Since the analog portion is shared with the bootloader, this has to be in the shared ram space
-uint16_t Analog::values[ADC_CHANNELS] __attribute__((section("SHARED_RAM")));
-bool Analog::button_pressed __attribute__((section("SHARED_RAM")));
-static bool bouncy_button __attribute__((section("SHARED_RAM")));
-static int bouncy_count __attribute__((section("SHARED_RAM")));
-static int current_channel __attribute__((section("SHARED_RAM")));
-static uint16_t calibration_value __attribute__((section("SHARED_RAM")));
-static int hold_count __attribute__((section("SHARED_RAM")));
-
-static void start_sample(void) {
-  using namespace Analog;
-
-  if (++current_channel >= ADC_CHANNELS) {
-    // Debounce buttons
-    bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
-
-    if (bouncy_button != new_button) {
-      bouncy_button = new_button;
-      bouncy_count = 0;
-    } else if (++bouncy_count > BOUNCE_LENGTH) {
-      button_pressed = bouncy_button;
-    }
-
-    if (button_pressed) {
-      if (hold_count < POWER_DOWN_TIME) {
-        hold_count++;
-      } else if (hold_count < POWER_WIPE_TIME) {
-        // TODO: LIGHTS MANAGER
-        // Lights::disable();
-      } else {
-        // Mark the application as invalid
-        // NOTE: This should only happen if the robot is on the charger
-        for (int i = 0; i < MAX_FAULT_COUNT; i++) {
-          Flash::writeFaultReason(FAULT_USER_WIPE);
-        }
-        NVIC_SystemReset();
-      }
-    } else {
-      if (hold_count >= POWER_DOWN_TIME) {
-        Power::stop();
-      } else {
-        hold_count = 0;
-      }
-    }
-
-    current_channel = 0;
-  }
-
-  ADC1->CHSELR = channels[current_channel];
-  ADC1->CR |= ADC_CR_ADSTART;
-}
+uint16_t volatile Analog::values[ADC_CHANNELS];
+bool Analog::button_pressed;
+static bool bouncy_button;
+static int bouncy_count;
+static uint16_t calibration_value;
+static int hold_count;
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -83,39 +38,85 @@ void Analog::init(void) {
   while ((ADC1->CR & ADC_CR_ADCAL) != 0) ;
   calibration_value = ADC1->DR;
 
-  // Enable ADC1
-  if (ADC1->ISR & ADC_ISR_ADRDY) {
-    ADC1->ISR |= ADC_ISR_ADRDY;
-  }
+  // Setup the ADC for continuous mode
+  ADC1->CHSELR = SELECTED_CHANNELS;
+  ADC1->CFGR1 = 0
+              | ADC_CFGR1_CONT
+              | ADC_CFGR1_DMAEN
+              | ADC_CFGR1_DMACFG
+              ;
+  ADC1->CFGR2 = 0
+              | ADC_CFGR2_CKMODE_1
+              ;
+  ADC1->SMPR  = 0
+              | ADC_SMPR_SMP  // Long polling time
+              ;
+
+  // Enable VRef
+  ADC->CCR = ADC_CCR_VREFEN;
+
+  // Enable ADC
+  ADC1->ISR = ADC_ISR_ADRDY;
   ADC1->CR |= ADC_CR_ADEN;
   while (~ADC1->ISR & ADC_ISR_ADRDY) ;
 
-  // Configure ADC
-  ADC1->SMPR |= ADC_SMPR_SMP_0 | ADC_SMPR_SMP_1 | ADC_SMPR_SMP_2;
-  ADC->CCR |= ADC_CCR_VREFEN;
+  // Start sampling
+  ADC1->CR |= ADC_CR_ADSTART;
 
-  // Kick off the ADC
-  current_channel = 0;
-  hold_count = 0;
-  start_sample();
+  // DMA in continuous mode
+  DMA1_Channel1->CPAR = (uint32_t)&ADC1->DR;
+  DMA1_Channel1->CMAR = (uint32_t)&values[0];
+  DMA1_Channel1->CNDTR = ADC_CHANNELS;
+  DMA1_Channel1->CCR |= 0
+                     | DMA_CCR_MINC 
+                     | DMA_CCR_MSIZE_0 
+                     | DMA_CCR_PSIZE_0
+                     | DMA_CCR_CIRC; 
+  DMA1_Channel1->CCR |= DMA_CCR_EN;
 }
 
 void Analog::stop(void) {
+  // Disable the DMA
+  DMA1_Channel1->CCR = 0;
+
+  // Stop reading values
   ADC1->CR |= ADC_CR_ADSTP;
   while ((ADC1->CR & ADC_CR_ADSTP) != 0) ;
 
   ADC1->CR |= ADC_CR_ADDIS;
-  while ((ADC1->CR & ADC_CR_ADEN) != 0) ;
+  while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
 }
 
 void Analog::tick(void) {
-  // While we have samples waiting
-  if (ADC1->ISR & ADC_ISR_EOC) {
-    values[current_channel] = ADC1->DR;
+  // Debounce buttons
+  bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
-    start_sample();
+  if (bouncy_button != new_button) {
+    bouncy_button = new_button;
+    bouncy_count = 0;
+  } else if (++bouncy_count > BOUNCE_LENGTH) {
+    button_pressed = bouncy_button;
   }
 
-  USART2->TDR = values[ADC_VBAT];
-  USART2->TDR = values[ADC_VBAT] >> 8;
+  if (button_pressed) {
+    if (hold_count < POWER_DOWN_TIME) {
+      hold_count++;
+    } else if (hold_count < POWER_WIPE_TIME) {
+      // TODO: LIGHTS MANAGER
+      // Lights::disable();
+    } else {
+      // Mark the application as invalid
+      // NOTE: This should only happen if the robot is on the charger
+      for (int i = 0; i < MAX_FAULT_COUNT; i++) {
+        Flash::writeFaultReason(FAULT_USER_WIPE);
+      }
+      NVIC_SystemReset();
+    }
+  } else {
+    if (hold_count >= POWER_DOWN_TIME) {
+      Power::stop();
+    } else {
+      hold_count = 0;
+    }
+  }
 }

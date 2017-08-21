@@ -137,8 +137,6 @@ void Comms::run(void) {
   NVIC_EnableIRQ(USART1_IRQn);
 
   while (!g_exitRuntime) {
-    Analog::tick();
-
     ContactData outbound;
 
     if (Contacts::transmit(outbound)) {

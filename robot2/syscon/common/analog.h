@@ -9,7 +9,7 @@ enum ADC_CHANNEL {
 };
 
 namespace Analog {
-  extern uint16_t values[ADC_CHANNELS];
+  extern volatile uint16_t values[ADC_CHANNELS];
   extern bool button_pressed;
 
   void init(void);
