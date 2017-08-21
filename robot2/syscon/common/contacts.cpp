@@ -28,7 +28,7 @@ void Contacts::init(void) {
               ;
 
   NVIC_SetPriority(USART2_IRQn, PRIORITY_CONTACTS_COMMS);
-  //NVIC_EnableIRQ(USART2_IRQn);
+  NVIC_EnableIRQ(USART2_IRQn);
   
   memset(&rxData, 0, sizeof(ContactData));
   memset(&txData, 0, sizeof(ContactData));
@@ -61,16 +61,14 @@ bool Contacts::transmit(ContactData& pkt) {
 
 extern "C" void USART2_IRQHandler(void) {
   // Transmit data
-  if (USART2->ISR & USART_ISR_TXE) {
+  if (USART2->ISR & USART_ISR_TXE && txDataIndex < sizeof(txData)) {
     uint8_t byte = txData.data[txDataIndex++];
     
     if (byte > 0) { 
       USART2->TDR = byte;
     }
-    
-    if (!byte || txDataIndex >= sizeof(txData)) {
-      USART2->CR1 &= ~USART_CR1_TXEIE;
-    }
+  } else {
+    USART2->CR1 &= ~USART_CR1_TXEIE;
   }
 
   // Receive data
