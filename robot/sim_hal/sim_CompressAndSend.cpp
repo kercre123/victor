@@ -53,6 +53,14 @@ namespace Anki {
             m.resolution = CVGA;
             break;
 
+          case 360:
+            if(captureWidth!=640*3) {
+              PRINT("CompressAndSendImage - Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
+              return RESULT_FAIL;
+            }
+            m.resolution = NHD;
+            break;
+
           case 480:
             if (captureWidth!=640*3) {
               PRINT("CompressAndSendImage - Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
@@ -66,7 +74,7 @@ namespace Anki {
               PRINT("CompressAndSendImage - Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
               return RESULT_FAIL;
             }
-            m.resolution = HD720;
+            m.resolution = HD;
             break;
 
           default:

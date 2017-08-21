@@ -63,23 +63,24 @@ Result CameraCalibrator::ComputeCalibration(const std::list<Vision::ObservedMark
                                             std::list<Vision::CameraCalibration>& calibrations,
                                             DebugImageList<Vision::ImageRGB>& debugImageRGBs)
 {
+  Result res = RESULT_FAIL;
+  
   switch (kCalibTargetType)
   {
     case CHECKERBOARD:
     {
-      ComputeCalibrationFromCheckerboard(calibrations, debugImageRGBs);
+      res = ComputeCalibrationFromCheckerboard(calibrations, debugImageRGBs);
       break;
     }
     case INVERTED_BOX:
     case BLEACHERS:
     {
-      ComputeCalibrationFromSingleTarget(observedMarkers, calibrations, debugImageRGBs);
+      res = ComputeCalibrationFromSingleTarget(observedMarkers, calibrations, debugImageRGBs);
       break;
     }
   }
   
-  
-  return RESULT_OK;
+  return res;
 }
 
 Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibrations,
@@ -336,10 +337,10 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
                         s.c_str());
   }
   
-  const Vision::Image& img = _calibImages[0].img;
-  
   if(DRAW_CALIB_IMAGES)
   {
+    const Vision::Image& img = _calibImages[0].img;
+
     Vision::ImageRGB dispImg;
     cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
     for(int i =0; i < imgPts.size(); ++i)
@@ -384,10 +385,14 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
   vecOfImgPts.push_back(imgPts);
   vecOfWorldPts.push_back(worldPts);
   
+  const size_t captureRes = static_cast<size_t>(_visionSystem.GetCaptureResolution());
+  const s32 numRows = Vision::CameraResInfo[captureRes].height;
+  const s32 numCols  = Vision::CameraResInfo[captureRes].width;
+  
   f64 rms = 0;
   try
   {
-    rms = cv::calibrateCamera(vecOfWorldPts, vecOfImgPts, cv::Size(img.GetNumCols(), img.GetNumRows()),
+    rms = cv::calibrateCamera(vecOfWorldPts, vecOfImgPts, cv::Size(numCols, numRows),
                               cameraMatrix, distCoeffs, rvecs, tvecs,
                               cv::CALIB_USE_INTRINSIC_GUESS);
   }
@@ -414,9 +419,9 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
   const f64* distCoeffs_data = distCoeffs[0];
   std::array<f32,NUM_RADIAL_DISTORTION_COEFFS> distCoeffsVec;
   distCoeffsVec.fill(0.f);
-  std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
+  std::copy(distCoeffs_data, distCoeffs_data+distCoeffs.cols, distCoeffsVec.begin());
   
-  calibration = Vision::CameraCalibration(img.GetNumRows(), img.GetNumCols(),
+  calibration = Vision::CameraCalibration(numRows, numCols,
                                           cameraMatrix(0,0), cameraMatrix(1,1),
                                           cameraMatrix(0,2), cameraMatrix(1,2),
                                           0.f, // skew
@@ -434,8 +439,9 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
   
   
   // Check if average reprojection error is too high
-  const f64 reprojErrThresh_pix = 0.5;
-  if (rms > reprojErrThresh_pix) {
+  const f64 reprojErrThresh_pix = 1.5;
+  if (rms > reprojErrThresh_pix)
+  {
     PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.ReprojectionErrorTooHigh",
                         "%f > %f", rms, reprojErrThresh_pix);
     return RESULT_FAIL;
@@ -497,6 +503,31 @@ void CameraCalibrator::CalcBoardCornerPositions(cv::Size boardSize,
 void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
 {
   markersTo3dCoords.clear();
+
+  /*
+  Top down view of bottom row
+   _
+  | |
+   - _
+    | |
+     - _
+      | |
+       - ...
+   
+   ^
+   Robot
+   
+   ^ +y
+   |
+   -> +x
+   +z out
+   
+   Marker corners are defined relative to center of bottom left cube of the target in this orientation
+    (before rotations are applied to get cubes to their actual positions)
+   FrontFace is the marker that is facing the robot in this orientation. 
+   !FrontMarker is the left marker, that will be visible when rotation are applied 
+    (rotate 45 degree on Z and then -30 degree in Y in this origin)
+   */
 
   const f32 halfMarkerSize_mm = BLEACHER_CALIB_MARKER_SIZE_MM / 2.f;
   const f32 halfTargetFace_mm = BLEACHER_CALIB_TARGET_FACE_SIZE_MM / 2.f;
@@ -578,7 +609,7 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision:
   
   markersTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS]     = GetCoordsForFace(false, 6, -4, 2);
   
-  // Fourth row of cubes
+  // Fourth row of cubes (top row)
   markersTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(true, 0, 3, 3);
   
   markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK]   = GetCoordsForFace(true, 1, 2, 3);
@@ -601,6 +632,35 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision:
 void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
 {
   markersTo3dCoords.clear();
+  
+  /*
+  Top down view bottom row
+   _  _  _  _
+  |  |* |  |  |
+   -  -  -  - _
+             | |
+              -
+             | |
+              -
+             | |
+              -
+             | |
+              -
+   
+   ^
+   Robot
+   
+   ^ +y
+   |
+   -> +x
+   +z out
+   
+   Marker corners are defined relative to center of the * cube of the target in this orientation
+   (before rotations are applied to get cubes to their actual positions)
+   isFrontFace are the markers that is facing the robot in this orientation.
+   !isFrontFace are the left markers, that will be visible when rotation are applied
+   isBottomFace are the markers on the top face
+   */
   
   const f32 halfMarkerSize_mm = INVERTEDBOX_CALIB_MARKER_SIZE_MM / 2.f;
   const f32 halfTargetFace_mm = INVERTEDBOX_CALIB_TARGET_FACE_SIZE_MM / 2.f;
@@ -625,11 +685,13 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
     { halfMarkerSize_mm,  halfMarkerSize_mm, -halfTargetFace_mm},
   });
   
-  auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace, &originsBottomFace](bool isFrontFace,
-                                                                                    int numCubesRightOfOrigin,
-                                                                                    int numCubesAwayRobotFromOrigin,
-                                                                                    int numCubesAboveOrigin,
-                                                                                    bool isBottomFace = false)
+
+  auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace, &originsBottomFace]
+    (bool isFrontFace,
+     int numCubesRightOfOrigin,
+     int numCubesAwayRobotFromOrigin,
+     int numCubesAboveOrigin,
+     bool isBottomFace = false)
   {
     
     Anki::Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
@@ -644,50 +706,56 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
     return whichFace;
   };
   
-  // Bottom row of cubes
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT] = GetCoordsForFace(true, 0, 0, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT] = GetCoordsForFace(true, 1, 0, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP] = GetCoordsForFace(true, 2, 0, 0);
+  // Left face
+  // Bottom row
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(true, 0, 0, 0);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT]  = GetCoordsForFace(true, 1, 0, 0);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(true, 2, 0, 0);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES] = GetCoordsForFace(true, -1, 0, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP] = GetCoordsForFace(true, 0, 0, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK] = GetCoordsForFace(true, 1, 0, 1);
+  // Middle row
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES]      = GetCoordsForFace(true, -1, 0, 1);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP]    = GetCoordsForFace(true, 0, 0, 1);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK]   = GetCoordsForFace(true, 1, 0, 1);
   markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BOTTOM] = GetCoordsForFace(true, 2, 0, 1);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES] = GetCoordsForFace(true, -1, 0, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS] = GetCoordsForFace(true, 0, 0, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS] = GetCoordsForFace(true, 1, 0, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES] = GetCoordsForFace(true, 2, 0, 2);
+  // Top row
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES]      = GetCoordsForFace(true, -1, 0, 2);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS]     = GetCoordsForFace(true, 0, 0, 2);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS]     = GetCoordsForFace(true, 1, 0, 2);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(true, 2, 0, 2);
   
-  // Left face
+  // Right face
+  // Bottom row
   markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 3, -1, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT] = GetCoordsForFace(false, 3, -2, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT] = GetCoordsForFace(false, 3, -3, 0);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT]  = GetCoordsForFace(false, 3, -2, 0);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT]   = GetCoordsForFace(false, 3, -3, 0);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT] = GetCoordsForFace(false, 3, -1, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT] = GetCoordsForFace(false, 3, -2, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP] = GetCoordsForFace(false, 3, -3, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK] = GetCoordsForFace(false, 3, -4, 1);
+  // Middle row
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT]   = GetCoordsForFace(false, 3, -1, 1);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT]  = GetCoordsForFace(false, 3, -2, 1);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP]    = GetCoordsForFace(false, 3, -3, 1);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK]   = GetCoordsForFace(false, 3, -4, 1);
   
-  markersTo3dCoords[Anki::Vision::MARKER_ARROW] = GetCoordsForFace(false, 3, -1, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK] = GetCoordsForFace(false, 3, -2, 2);
+  // Top row
+  markersTo3dCoords[Anki::Vision::MARKER_ARROW]             = GetCoordsForFace(false, 3, -1, 2);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK]   = GetCoordsForFace(false, 3, -2, 2);
   markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 3, -3, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT] = GetCoordsForFace(false, 3, -4, 2);
+  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT]  = GetCoordsForFace(false, 3, -4, 2);
   
-  //  // Bottom of top face
-  markersTo3dCoords[Anki::Vision::MARKER_BULLSEYE2] = GetCoordsForFace(false, -1, -1, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES] = GetCoordsForFace(false, 0, -1, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES] = GetCoordsForFace(false, 1, -1, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS] =  GetCoordsForFace(false, 2, -1, 3, true);
+  // Top face
+  markersTo3dCoords[Anki::Vision::MARKER_BULLSEYE2]         = GetCoordsForFace(false, -1, -1, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES]    = GetCoordsForFace(false, 0, -1, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES]    = GetCoordsForFace(false, 1, -1, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS]     =  GetCoordsForFace(false, 2, -1, 3, true);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS] = GetCoordsForFace(false, 0, -2, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES] =          GetCoordsForFace(false, 1, -2, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS] =      GetCoordsForFace(false, 2, -2, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS]     = GetCoordsForFace(false, 0, -2, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(false, 1, -2, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS]     = GetCoordsForFace(false, 2, -2, 3, true);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3HEXAGONS] = GetCoordsForFace(false, 1, -3, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES] =  GetCoordsForFace(false, 2, -3, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_3HEXAGONS]     = GetCoordsForFace(false, 1, -3, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 2, -3, 3, true);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS] = GetCoordsForFace(false, 2, -4, 3, true);
+  markersTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 2, -4, 3, true);
 }
 
 }

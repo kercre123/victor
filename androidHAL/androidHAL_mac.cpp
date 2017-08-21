@@ -55,21 +55,13 @@ namespace Anki {
       webots::Display* face_;
       
       // Lens distortion
-      const bool kUseLensDistortion = true;
+      const bool kUseLensDistortion = false;
       const f32 kRadialDistCoeff1     = -0.07178328295562293f;
-      const f32 kRadialDistCoeff2     =  -0.2195788148163958f;
+      const f32 kRadialDistCoeff2     = -0.2195788148163958f;
       const f32 kRadialDistCoeff3     = 0.13393879360293f;
       const f32 kTangentialDistCoeff1 = 0.001433240008548796f;
       const f32 kTangentialDistCoeff2 = 0.001523473592445885f;
-      const f32 kDistCoeffNoiseFrac = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
-      
-      //Calibrated values
-//      const f32 kRadialDistCoeff1     = -0.01195035398831179;
-//      const f32 kRadialDistCoeff2     = -0.002578186894213538;
-//      const f32 kRadialDistCoeff3     = -0.003164561938733199;
-//      const f32 kTangentialDistCoeff1 = 0.00251398322942893;
-//      const f32 kTangentialDistCoeff2 =  0.001282303969883647;
-      
+      const f32 kDistCoeffNoiseFrac   = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
 
     } // "private" namespace
 

@@ -298,6 +298,8 @@ namespace Cozmo {
     f32 GetMinCameraGain() const { return _minCameraGain; }
     f32 GetMaxCameraGain() const { return _maxCameraGain; }
     
+    ImageResolution GetCaptureResolution() const { return _captureResolution; }
+    
   protected:
   
     RollingShutterCorrector _rollingShutterCorrector;

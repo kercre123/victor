@@ -77,7 +77,6 @@
 #define DEBUG_DISPLAY_CLAHE_IMAGE 0
 
 #define DRAW_TOOL_CODE_DEBUG 0
-#define DRAW_CALIB_IMAGES 0
 
 #define DO_SINGLE_IMAGE_CALIB 1
 #define CALIB_MARKER_SIZE_MM 15.f
@@ -348,10 +347,18 @@ namespace Cozmo {
     bool calibSizeValid = false;
     switch(camCalib.GetNcols())
     {
-//      case 640:
-//        calibSizeValid = camCalib.GetNrows() == 480;
-//        _captureResolution = ImageResolution::VGA;
-//        break;
+      case 640:
+        if(camCalib.GetNrows() == 480)
+        {
+          calibSizeValid = true;
+          _captureResolution = ImageResolution::VGA;
+        }
+        else if(camCalib.GetNrows() == 360)
+        {
+          calibSizeValid = true;
+          _captureResolution = ImageResolution::NHD;
+        }
+        break;
       case 400:
         calibSizeValid = camCalib.GetNrows() == 296;
         _captureResolution = ImageResolution::CVGA;
@@ -362,11 +369,7 @@ namespace Cozmo {
         break;
       case 1280:
         calibSizeValid = camCalib.GetNrows() == 720;
-        _captureResolution = ImageResolution::HD720;
-        break;
-      case 640:
-        calibSizeValid = camCalib.GetNrows() == 360;
-        _captureResolution = ImageResolution::TEST;
+        _captureResolution = ImageResolution::HD;
         break;
     }
     

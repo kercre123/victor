@@ -1491,7 +1491,15 @@ namespace Cozmo {
         if (captureWidth!=1280) {
           result = RESULT_FAIL;
         } else {
-          m.resolution = ImageResolution::HD720;
+          m.resolution = ImageResolution::HD;
+        }
+        break;
+        
+      case 360:
+        if (captureWidth!=640) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::NHD;
         }
         break;
         
@@ -2306,7 +2314,7 @@ namespace Cozmo {
   void VisionComponent::CaptureAndSendImage()
   {
     // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::HD720;
+    const ImageResolution expectedResolution = ImageResolution::NHD;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);

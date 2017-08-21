@@ -4,9 +4,9 @@ PROTO CozmoCamera [
   field SFVec3f    translation 0 0 0
   field SFRotation rotation 0 0 1 0
 
-  field SFInt32  cameraWidth  1280
-  field SFInt32  cameraHeight 720
-  field SFFloat  fieldOfView  1.8
+  field SFInt32  cameraWidth  640
+  field SFInt32  cameraHeight 360
+  field SFFloat  fieldOfView  2.09 # 120 degrees
 ]
 {
   Camera {

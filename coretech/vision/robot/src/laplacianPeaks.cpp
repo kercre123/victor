@@ -606,13 +606,15 @@ namespace Anki
           } // for(s32 jLine=0; jLine<4; jLine++)
         } // for(s32 iLine=0; iLine<4; iLine++)
       } // if(didFitFourLines)
-      
+
+      // Sort corners by distance to boundry center
       std::sort(corners.begin(), corners.end(), [](std::pair<cv::Point_<f32>, u32> i,
                                                    std::pair<cv::Point_<f32>, u32> j) {
         return (i.second < j.second);
       });
       
       if(corners.size() >= 4) {
+        // Use the four closest corners to the boundry center
         Quadrilateral<f32> quad(
           Point<f32>(corners[0].first.x, corners[0].first.y),
           Point<f32>(corners[1].first.x, corners[1].first.y),
