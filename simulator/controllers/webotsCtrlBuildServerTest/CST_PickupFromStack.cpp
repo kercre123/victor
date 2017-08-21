@@ -62,7 +62,7 @@ private:
 
   // Parameters:
   const float _kRobotNearBlockThreshold_mm = 65.f;
-  const float _kRobotNearBlockThresholdHigh_mm = 150.f;
+  const float _kRobotNearBlockThresholdHigh_mm = 100.f;
   ObjectType  _baseCube    = ObjectType::Block_LIGHTCUBE1;
   std::string _baseCubeStr = "cube0";
   ObjectType  _topCube     = ObjectType::Block_LIGHTCUBE2;
@@ -137,7 +137,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       const bool nearBlock = distBetween < _kRobotNearBlockThresholdHigh_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view so that the pickup will fail.
-        SendApplyForce(_topCubeStr, 20, 40, 5);
+        SendApplyForce(_topCubeStr, 20, 4000, 5);
         SET_STATE(PickupHighShouldFail)
       }
       
@@ -171,8 +171,11 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       Pose3d cubePose = GetLightCubePoseActual(_baseCube);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
-        // Push the block out of view:
-        SendApplyForce(_baseCubeStr, 0, -40, 10);
+        // Transport the block out of view:
+        Pose3d cubePose = GetRobotPoseActual();
+        Vec3f T = cubePose.GetTranslation();
+        cubePose.SetTranslation(Vec3f(T.x(), T.y() + 200.f, 25));
+        SetLightCubePose(_baseCube, cubePose);
         SET_STATE(PickupLowOutOfViewShouldFail)
       }
       
@@ -305,7 +308,7 @@ s32 CST_PickupFromStack::UpdateSimInternal()
       // than NOT_CARRYING_OBJECT_ABORT. If the robot is not fast enough, it would fail in visual observation
       const bool actionFailed = (_placeObjectResult == ActionResult::BAD_OBJECT) ||
                                 (_placeObjectResult == ActionResult::VISUAL_OBSERVATION_FAILED);
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(actionFailed, 10)
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(actionFailed, 20)
       {
         PRINT_NAMED_INFO("CST_PickupFromStack.TestInfo",
                          "Finished PlaceObjectShouldFail with code '%s'",
