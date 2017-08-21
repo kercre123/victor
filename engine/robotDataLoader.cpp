@@ -687,6 +687,19 @@ void RobotDataLoader::LoadRobotConfigs()
       _robotActivitiesConfig.clear();
     }
   }
+  
+  // victor behavior systems config
+  {
+    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/behavior_system_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _behaviorSystemConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.BehaviorSystemJsonFailed",
+                        "Behavior Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+      _behaviorSystemConfig.clear();
+    }
+  }
 
   // Workout config
   {

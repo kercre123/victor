@@ -237,15 +237,12 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _runningAndResumeInfo(new BehaviorRunningAndResumeInfo())
 , _currentHighLevelActivity(HighLevelActivity::Count)
 , _uiRequestGameBehavior(nullptr)
-, _behaviorContainer(std::unique_ptr<BehaviorContainer>(new BehaviorContainer(robot)))
+, _behaviorContainer(new BehaviorContainer(robot, robot.GetContext()->GetDataLoader()->GetBehaviorJsons()))
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 , _behaviorThatSetLights(BehaviorClass::Wait)
 , _behaviorStateLightsPersistOnReaction(false)
 {
-  // Load all behavior files into the factory
-  LoadBehaviorsIntoFactory();
-  
   // Setup the UnlockID to game request behavior map for ui driven requests
   std::shared_ptr<BehaviorRequestGameSimple> VC_Keepaway;
   FindBehaviorByIDAndDowncast(BehaviorID::VC_RequestKeepAway, BehaviorClass::RequestGameSimple, VC_Keepaway);
@@ -330,44 +327,8 @@ Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
     
   return RESULT_OK;
 }
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::LoadBehaviorsIntoFactory()
-{
-  // Load Scored Behaviors
-  const auto& behaviorData = _robot.GetContext()->GetDataLoader()->GetBehaviorJsons();
-  for( const auto& behaviorIDJsonPair : behaviorData )
-  {
-    const auto& behaviorID = behaviorIDJsonPair.first;
-    const auto& behaviorJson = behaviorIDJsonPair.second;
-    if (!behaviorJson.empty())
-    {
-      // PRINT_NAMED_DEBUG("BehaviorManager.LoadBehavior", "Loading '%s'", fullFileName.c_str());
-      const Result ret = CreateBehaviorFromConfiguration(behaviorJson);
-      if ( ret != RESULT_OK ) {
-        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed",
-                          "Failed to create a behavior for behavior id '%s'",
-                          BehaviorIDToString(behaviorID));
-      }
-    }
-    else
-    {
-      PRINT_NAMED_WARNING("Robot.LoadBehavior",
-                          "Failed to read behavior file for behavior id '%s'",
-                          BehaviorIDToString(behaviorID));
-    }
-    // don't print anything if we read an empty json
-  }
-  
-  // If we didn't load any behaviors from data, there's no reason to check to
-  // see if all executable behaviors have a 1-to-1 matching
-  if(behaviorData.size() > 0){
-    _behaviorContainer->VerifyExecutableBehaviors();
-  }
-}
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::InitializeEventHandlers()
 {
@@ -505,16 +466,6 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorManager::CreateBehaviorFromConfiguration(const Json::Value& behaviorJson)
-{
-  // try to create behavior, name should be unique here
-  IBehaviorPtr newBehavior = _behaviorContainer->CreateBehavior(behaviorJson, _robot);
-  const Result ret = (nullptr != newBehavior) ? RESULT_OK : RESULT_FAIL;
-  return ret;
-}
-  
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const IBehaviorPtr BehaviorManager::GetCurrentBehavior() const{
   return GetRunningAndResumeInfo().GetCurrentBehavior();
