@@ -57,6 +57,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 463824}
+  - {fileID: 4263886076656312}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -105,11 +106,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _LoadingBar: {fileID: 0}
   _LoadingBarLabel: {fileID: 0}
-  _HomeHubData:
-    AssetBundlesToLoad:
-    - main_scene
-    MainSceneAssetBundleName: main_scene
-    MainSceneName: HomeHub
   _NeedsHubData:
     AssetBundlesToLoad:
     - needs_hub_scene
@@ -126,6 +122,7 @@ MonoBehaviour:
     type: 2}
   _LoadingVersionLabel: {fileID: 0}
   _LoadingDeviceIdLabel: {fileID: 0}
+  _ItemDataConfig: {fileID: 114434738812907500}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -161,3 +158,66 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 117198}
   m_IsPrefabParent: 1
+--- !u!1 &1153655188821400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 4263886076656312}
+  - component: {fileID: 114434738812907500}
+  m_Layer: 0
+  m_Name: ItemDataConfig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4263886076656312
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153655188821400}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 472660}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114434738812907500
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1153655188821400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7e86f2a00dfd40478ef89b94b2a6804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _ItemMap:
+  - _ItemId: experience
+    _LocKey: item.experience
+    _ItemIcon: {fileID: 0}
+    _StartingAmount: 0
+    _DemoStartingAmount: -1
+  - _ItemId: spark
+    _LocKey: item.treat
+    _ItemIcon: {fileID: 0}
+    _StartingAmount: 103
+    _DemoStartingAmount: 200
+  - _ItemId: TestHexItem0
+    _LocKey: item.genericHex
+    _ItemIcon: {fileID: 0}
+    _StartingAmount: 0
+    _DemoStartingAmount: -1
+  _GenericCubeItemData:
+    _ItemId: genericCube
+    _LocKey: item.cube
+    _ItemIcon: {fileID: 0}
+    _StartingAmount: 0
+    _DemoStartingAmount: -1
+  _MaxInventoryLimit: 999
