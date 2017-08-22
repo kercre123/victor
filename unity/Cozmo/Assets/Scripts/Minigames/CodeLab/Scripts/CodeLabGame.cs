@@ -696,6 +696,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnGetCozmoUserAndSampleProjectLists", "");
 
+      // Check which projects we want to display: vertical or horizontal.
+      bool showVerticalProjects = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
+
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
       // Provide save and load UI with JSON arrays of the user and sample projects.
@@ -706,9 +709,21 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
       List<CodeLabProject> copyCodeLabProjectList = new List<CodeLabProject>();
       for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
+        var project = defaultProfile.CodeLabProjects[i];
+
+        if (showVerticalProjects && !project.IsVertical) {
+          // We want to show only vertical projects so skip the horizontal projects.
+          continue;
+        }
+        else if (!showVerticalProjects && project.IsVertical) {
+          // We want to show only horizontal projects so skip the vertical projects.
+          continue;
+        }
+
         CodeLabProject proj = new CodeLabProject();
-        proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
-        proj.ProjectName = EscapeProjectName(defaultProfile.CodeLabProjects[i].ProjectName);
+        proj.ProjectUUID = project.ProjectUUID;
+        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        proj.IsVertical = project.IsVertical;
 
         copyCodeLabProjectList.Add(proj);
       }
@@ -719,10 +734,22 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       _CodeLabSampleProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
       List<CodeLabSampleProject> copyCodeLabSampleProjectList = new List<CodeLabSampleProject>();
       for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
+        var project = _CodeLabSampleProjects[i];
+
+        if (showVerticalProjects && !project.IsVertical) {
+          // We want to show only vertical projects so skip the horizontal projects.
+          continue;
+        }
+        else if (!showVerticalProjects && project.IsVertical) {
+          // We want to show only horizontal projects so skip the vertical projects.
+          continue;
+        }
+
         CodeLabSampleProject proj = new CodeLabSampleProject();
-        proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
-        proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
-        proj.ProjectName = EscapeProjectName(_CodeLabSampleProjects[i].ProjectName);
+        proj.ProjectUUID = project.ProjectUUID;
+        proj.ProjectIconName = project.ProjectIconName;
+        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        proj.IsVertical = project.IsVertical;
         copyCodeLabSampleProjectList.Add(proj);
       }
 
@@ -770,7 +797,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           newUserProjectName = Localization.GetWithArgs(LocalizationKeys.kCodeLabHorizontalUserProjectMyProject, defaultProfile.CodeLabUserProjectNum);
           defaultProfile.CodeLabUserProjectNum++;
 
-          newProject = new CodeLabProject(newUserProjectName, projectXML);
+          bool isVertical = _SessionState.GetGrammarMode() == GrammarMode.Vertical;
+          newProject = new CodeLabProject(newUserProjectName, projectXML, isVertical);
 
           if (defaultProfile.CodeLabProjects == null) {
             DAS.Error("OnCozmoSaveUserProject.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
