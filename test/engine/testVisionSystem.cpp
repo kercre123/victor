@@ -38,7 +38,7 @@
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
-TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
+TEST(VisionSystem, CameraCalibrationTarget_Qbert)
 {
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
                                           std::to_string(Anki::Cozmo::CameraCalibrator::QBERT).c_str());
