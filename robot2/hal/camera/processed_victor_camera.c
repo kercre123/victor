@@ -14367,7 +14367,7 @@ int camera_cleanup(CameraObj* camera)
 }
 
 
-#define AS_APPLICATION
+//#define AS_APPLICATION
 #ifdef AS_APPLICATION
 
 // # 31 "hardware/qcom/camera/QCamera2/stack/mm-camera-test/src/mm_qcamera_main_menu.c" 2
