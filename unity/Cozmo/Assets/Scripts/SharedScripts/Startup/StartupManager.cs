@@ -471,6 +471,7 @@ public class StartupManager : MonoBehaviour {
     DataPersistence.DataPersistenceManager.Instance.InitSaveData();
 
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
+    Cozmo.Notifications.NotificationsManager.CreateInstance();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
