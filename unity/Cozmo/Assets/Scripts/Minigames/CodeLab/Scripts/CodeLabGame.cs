@@ -54,6 +54,8 @@ namespace CodeLab {
     // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
     private Queue<ScratchRequest> _queuedScratchRequests = new Queue<ScratchRequest>();
 
+    private CodeLabCozmoFaceDisplay _CozmoFaceDisplay = new CodeLabCozmoFaceDisplay();
+
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
@@ -959,12 +961,69 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       robot.TurnInPlace(finalTurnAngle, speed_rad_per_sec, accel_rad_per_sec2, toleranceAngle, callback, QueueActionPosition.IN_PARALLEL);
     }
 
-    private void DrawToFace() {
-      // TODO: implement C#-side drawing routines to build this image
-      byte[] faceData = new byte[1024];
-      uint duration_ms = 1000 * 30;
-      var robot = RobotEngineManager.Instance.CurrentRobot;
-      robot.DisplayFaceImage(duration_ms, faceData, queueActionPosition: QueueActionPosition.IN_PARALLEL);
+    private bool HandleDrawOnFaceRequest(ScratchRequest scratchRequest) {
+      switch (scratchRequest.command) {
+      case "cozVertCozmoFaceClear":
+        _CozmoFaceDisplay.ClearScreen(0);
+        return true;
+      case "cozVertCozmoFaceDisplay":
+        _CozmoFaceDisplay.Display();
+        return true;
+      case "cozVertCozmoFaceDrawLine": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float x2 = scratchRequest.argFloat3;
+          float y2 = scratchRequest.argFloat4;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawLine(x1, y1, x2, y2, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceFillRect": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float x2 = scratchRequest.argFloat3;
+          float y2 = scratchRequest.argFloat4;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.FillRect(x1, y1, x2, y2, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceDrawRect": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float x2 = scratchRequest.argFloat3;
+          float y2 = scratchRequest.argFloat4;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawRect(x1, y1, x2, y2, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceFillCircle": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float radius = scratchRequest.argFloat3;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.FillCircle(x1, y1, radius, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceDrawCircle": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float radius = scratchRequest.argFloat3;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawCircle(x1, y1, radius, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceDrawText": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float scale = scratchRequest.argFloat3;
+          string text = scratchRequest.argString;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawText(x1, y1, scale, text, drawColor);
+          return true;
+        }
+      default:
+        return false;
+      }
     }
 
     private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
@@ -972,7 +1031,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       inProgressScratchBlock.Init(scratchRequest.requestId, this);
       var robot = RobotEngineManager.Instance.CurrentRobot;
 
-      if (scratchRequest.command == "cozVertPathOffset") {
+      if (HandleDrawOnFaceRequest(scratchRequest)) {
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertPathOffset") {
         float offsetX = scratchRequest.argFloat;
         float offsetY = scratchRequest.argFloat2;
         float offsetAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;

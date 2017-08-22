@@ -66,6 +66,16 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
         cozmo_vert_set_cube_light_corner: this.verticalSetCubeLightCorner,
         cozmo_vert_cube_anim: this.verticalCubeAnim,
+        // Draw (on Cozmo's face)
+        cozmo_vert_cozmoface_clear: this.verticalCozmoFaceClear,
+        cozmo_vert_cozmoface_display: this.verticalCozmoFaceDisplay,
+        cozmo_vert_cozmoface_draw_line: this.verticalCozmoFaceDrawLine,
+        cozmo_vert_cozmoface_fill_rect: this.verticalCozmoFaceFillRect,
+        cozmo_vert_cozmoface_draw_rect: this.verticalCozmoFaceDrawRect,
+        cozmo_vert_cozmoface_fill_circle: this.verticalCozmoFaceFillCircle,
+        cozmo_vert_cozmoface_draw_circle: this.verticalCozmoFaceDrawCircle,
+        cozmo_vert_cozmoface_draw_text: this.verticalCozmoFaceDrawText,
+        // ================
         // Sensors / Inputs
         // Cozmo
         cozmo_vert_get_position_3d: this.verticalCozmoGetPosition,
@@ -601,6 +611,68 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function(args, util) {
     var cubeAnim = Cast.toString(args.ANIM_SELECT);
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({requestId: -1, command: "cozVertCubeAnimation", argUInt: colorHex, argUInt2: cubeIndex, argString: cubeAnim});
+};
+
+// Drawing on Cozmo's Face
+
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceClear = function(args, util) {
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceClear"});
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceDisplay = function(args, util) {
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDisplay"});
+};   
+
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawLine = function(args, util) {
+    var x1 = Cast.toNumber(args.X1);
+    var y1 = Cast.toNumber(args.Y1);
+    var x2 = Cast.toNumber(args.X2);
+    var y2 = Cast.toNumber(args.Y2);
+    var drawColor = Cast.toBoolean(args.DRAW_COLOR);
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawLine", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2, argBool: drawColor});
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillRect = function(args, util) {
+    var x1 = Cast.toNumber(args.X1);
+    var y1 = Cast.toNumber(args.Y1);
+    var x2 = Cast.toNumber(args.X2);
+    var y2 = Cast.toNumber(args.Y2);
+    var drawColor = Cast.toBoolean(args.DRAW_COLOR);
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceFillRect", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2, argBool: drawColor});
+};
+        
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawRect = function(args, util) {
+    var x1 = Cast.toNumber(args.X1);
+    var y1 = Cast.toNumber(args.Y1);
+    var x2 = Cast.toNumber(args.X2);
+    var y2 = Cast.toNumber(args.Y2);
+    var drawColor = Cast.toBoolean(args.DRAW_COLOR);
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawRect", argFloat: x1, argFloat2: y1, argFloat3: x2, argFloat4: y2, argBool: drawColor});
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceFillCircle = function(args, util) {
+    var x1 = Cast.toNumber(args.X1);
+    var y1 = Cast.toNumber(args.Y1);
+    var radius = Cast.toNumber(args.RADIUS);
+    var drawColor = Cast.toBoolean(args.DRAW_COLOR);
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceFillCircle", argFloat: x1, argFloat2: y1, argFloat3: radius, argBool: drawColor});
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawCircle = function(args, util) {
+    var x1 = Cast.toNumber(args.X1);
+    var y1 = Cast.toNumber(args.Y1);
+    var radius = Cast.toNumber(args.RADIUS);
+    var drawColor = Cast.toBoolean(args.DRAW_COLOR);
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawCircle", argFloat: x1, argFloat2: y1, argFloat3: radius, argBool: drawColor});
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoFaceDrawText = function(args, util) {
+    var x1 = Cast.toNumber(args.X1);
+    var y1 = Cast.toNumber(args.Y1);
+    var scale = Cast.toNumber(args.SCALE);
+    var text = Cast.toString(args.TEXT);
+    var drawColor = Cast.toBoolean(args.DRAW_COLOR);
+    window.Unity.call({requestId: -1, command: "cozVertCozmoFaceDrawText", argFloat: x1, argFloat2: y1, argFloat3: scale, argString: text, argBool: drawColor});
 };
 
 // =================

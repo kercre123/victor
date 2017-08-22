@@ -1245,3 +1245,313 @@ Blockly.Blocks['cozmo_vert_cube_anim'] = {
   }
 };
 
+// Draw on Cozmo's face
+
+Blockly.Blocks['cozmo_vert_cozmoface_clear'] = {
+  /**
+   * Block to clear the image that will be displayed on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_clear",
+        "message0": "clear screen",
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cozmoface_draw_line'] = {
+  /**
+   * Block to draw a line on the image that will be displayed on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_draw_line",
+        "message0": "draw line from %1, %2 to %3, %4 : %5",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "X1"
+          },
+          {
+            "type": "input_value",
+            "name": "Y1"
+          },
+          {
+            "type": "input_value",
+            "name": "X2"
+          },
+          {
+            "type": "input_value",
+            "name": "Y2"
+          },
+          {
+             "type": "field_dropdown",
+             "name": "DRAW_COLOR",
+             "options": [
+                ['On', 'true'],
+                ['Off', 'false'],    
+              ]
+           }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cozmoface_fill_rect'] = {
+  /**
+   * Block to draw a filled rectangle on the image that will be displayed on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_fill_rect",
+        "message0": "fill rectangle from %1, %2 to %3, %4 : %5",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "X1"
+          },
+          {
+            "type": "input_value",
+            "name": "Y1"
+          },
+          {
+            "type": "input_value",
+            "name": "X2"
+          },
+          {
+            "type": "input_value",
+            "name": "Y2"
+          },
+          {
+             "type": "field_dropdown",
+             "name": "DRAW_COLOR",
+             "options": [
+                ['On', 'true'],
+                ['Off', 'false'],    
+              ]
+           }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cozmoface_draw_rect'] = {
+  /**
+   * Block to draw the outline of a rectangle on the image that will be displayed on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_draw_rect",
+        "message0": "draw rectangle from %1, %2 to %3, %4 : %5",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "X1"
+          },
+          {
+            "type": "input_value",
+            "name": "Y1"
+          },
+          {
+            "type": "input_value",
+            "name": "X2"
+          },
+          {
+            "type": "input_value",
+            "name": "Y2"
+          },
+          {
+             "type": "field_dropdown",
+             "name": "DRAW_COLOR",
+             "options": [
+                ['On', 'true'],
+                ['Off', 'false'],    
+              ]
+           }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cozmoface_fill_circle'] = {
+  /**
+   * Block to draw a filled circle on the image that will be displayed on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_fill_circle",
+        "message0": "fill circle at %1, %2 radius %3 : %4",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "X1"
+          },
+          {
+            "type": "input_value",
+            "name": "Y1"
+          },
+          {
+            "type": "input_value",
+            "name": "RADIUS"
+          },
+          {
+             "type": "field_dropdown",
+             "name": "DRAW_COLOR",
+             "options": [
+                ['On', 'true'],
+                ['Off', 'false'],    
+              ]
+           }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cozmoface_draw_circle'] = {
+  /**
+   * Block to draw the outline of a circle on the image that will be displayed on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_draw_circle",
+        "message0": "draw circle at %1, %2 radius %3 : %4",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "X1"
+          },
+          {
+            "type": "input_value",
+            "name": "Y1"
+          },
+          {
+            "type": "input_value",
+            "name": "RADIUS"
+          },
+          {
+             "type": "field_dropdown",
+             "name": "DRAW_COLOR",
+             "options": [
+                ['On', 'true'],
+                ['Off', 'false'],    
+              ]
+           }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cozmoface_draw_text'] = {
+  /**
+   * Block to draw a string of text on the image that will be displayed on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_draw_text",
+        "message0": "draw %1 at %2, %3 scale %4 : %5",
+        "args0": [
+          {
+            "type": "input_value",
+            "name": "TEXT"
+          },
+          {
+            "type": "input_value",
+            "name": "X1"
+          },
+          {
+            "type": "input_value",
+            "name": "Y1"
+          },
+          {
+            "type": "input_value",
+            "name": "SCALE"
+          },
+          {
+             "type": "field_dropdown",
+             "name": "DRAW_COLOR",
+             "options": [
+                ['On', 'true'],
+                ['Off', 'false'],    
+              ]
+           }
+        ],
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
+
+
+Blockly.Blocks['cozmo_vert_cozmoface_display'] = {
+  /**
+   * Block to display the current image (drawn with the blocks above) on Cozmo's face
+   * @this Blockly.Block
+  */
+  init: function() {
+    this.jsonInit({
+        "id": "cozmo_vert_cozmoface_display",
+        "message0": "display on face",
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "category": Blockly.Categories.pen,
+        "colour": Blockly.Colours.pen.primary,
+        "colourSecondary": Blockly.Colours.pen.secondary,
+        "colourTertiary": Blockly.Colours.pen.tertiary
+    });
+  }
+};
