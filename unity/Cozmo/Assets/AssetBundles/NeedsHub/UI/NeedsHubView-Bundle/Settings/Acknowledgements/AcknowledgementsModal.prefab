@@ -540,7 +540,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Close
+  _LinkedComponentId: CozmoButton_CloseLiteBackground
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 114011755758583410}
@@ -552,9 +552,9 @@ MonoBehaviour:
   ButtonGraphics:
   - targetImage: {fileID: 114610684022523056}
     pressedSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
-    pressedColor: {r: 1, g: 1, b: 1, a: 1}
+    pressedColor: {r: 0.44117647, g: 0.44117647, b: 0.44117647, a: 1}
     disabledSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
-    disabledColor: {r: 0.86764705, g: 0.86764705, b: 0.86764705, a: 1}
+    disabledColor: {r: 0.44117647, g: 0.44117647, b: 0.44117647, a: 0.7058824}
   - targetImage: {fileID: 114963741999310444}
     pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
@@ -613,7 +613,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: ed8864cf923b84cad9fd27a1bffb1737, type: 3}
+  m_Sprite: {fileID: 21300000, guid: de0bc60db5c074b4a90853cbca73d84f, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -621,7 +621,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: Frame_Card_Background
+  _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114542368807621506
@@ -663,7 +663,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.63235295, g: 0.63235295, b: 0.63235295, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -678,7 +678,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: CozmoButton_Close_Background
+  _LinkedComponentId: CozmoButton_Close_LiteBackground
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114719900072427070
