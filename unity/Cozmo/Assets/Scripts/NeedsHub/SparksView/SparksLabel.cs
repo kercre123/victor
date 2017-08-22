@@ -19,6 +19,9 @@ namespace Cozmo {
       private CozmoText _CountLabel;
 
       [SerializeField]
+      private UnityEngine.UI.Image _ItemIcon;
+
+      [SerializeField]
       private GameObject _ItemIconAnimatorPrefab;
 
       [SerializeField]
@@ -54,6 +57,16 @@ namespace Cozmo {
         }
         else {
           SetToActualCount();
+        }
+
+        if (_ItemIcon != null) {
+          ItemData data = ItemDataConfig.GetData(_SparkItemId);
+          if (data != null) {
+            _ItemIcon.overrideSprite = data.Icon;
+          }
+          else {
+            _ItemIcon.enabled = false;
+          }
         }
 
         if (_ItemIconAnimatorPrefab != null

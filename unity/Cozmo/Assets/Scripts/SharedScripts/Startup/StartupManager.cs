@@ -78,9 +78,6 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _LoadingDeviceIdLabel;
 
-  [SerializeField]
-  private Cozmo.ItemDataConfig _ItemDataConfig;
-
   private string _ExtractionErrorMessage;
 
   private bool _IsDebugBuild = false;
@@ -177,9 +174,6 @@ public class StartupManager : MonoBehaviour {
       StopAllCoroutines();
       yield break;
     }
-
-    // Load ItemDataConfig before starting Engine because engine depends on it
-    Cozmo.ItemDataConfig.SetInstance(_ItemDataConfig);
 
     RobotEngineManager.Instance.CozmoEngineInitialization();
 
@@ -495,6 +489,10 @@ public class StartupManager : MonoBehaviour {
     assetBundleManager.LoadAssetAsync<Cozmo.UI.UIDefaultTransitionSettings>(_BasicUIPrefabAssetBundleName,
                                                           "UIDefaultTransitionSettings",
                                                           Cozmo.UI.UIDefaultTransitionSettings.SetInstance);
+
+    assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
+                                                          "ItemDataConfig",
+                                                          Cozmo.ItemDataConfig.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.Challenge.ChallengeDataList>(_GameMetadataAssetBundleName,
                                                           "ChallengeList",

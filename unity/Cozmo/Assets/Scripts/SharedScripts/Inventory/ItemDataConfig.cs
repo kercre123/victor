@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Cozmo {
@@ -22,6 +23,13 @@ namespace Cozmo {
 
     public string LocKey {
       get { return _LocKey; }
+    }
+
+    [SerializeField]
+    private Sprite _ItemIcon;
+
+    public Sprite Icon {
+      get { return _ItemIcon; }
     }
 
     [SerializeField]
@@ -57,7 +65,7 @@ namespace Cozmo {
     }
   }
 
-  public class ItemDataConfig : MonoBehaviour {
+  public class ItemDataConfig : ScriptableObject {
 
     private static ItemDataConfig _sInstance;
 
@@ -73,7 +81,7 @@ namespace Cozmo {
           DAS.Error("ItemDataConfig.Instance.NullInstance", "Instance has not been initialized");
           DAS.Debug("ItemDataConfig.Instance.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
           HockeyApp.ReportStackTrace("ItemDataConfig.Instance.NullInstance", stackTrace);
-        }
+        }                       
         return _sInstance;
       }
     }
