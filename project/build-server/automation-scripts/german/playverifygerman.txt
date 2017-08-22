@@ -21,5 +21,5 @@
 0.346388:text:Fernhalten
 0.438581:text:Sparks verfügbar
 0.733289:text:Spielen
-0.251089:click:defualt_close_view_button:0.1503296
+0.251089:click:default_close_view_button:0.1503296
 1.083712:click:back_button:0.1168365
