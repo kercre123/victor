@@ -63,7 +63,7 @@ namespace Cozmo.Notifications {
       foreach (var notification in _NotificationCache) {
         UTNotifications.Manager.Instance.ScheduleNotification(
           notification.SecondsInFuture,
-          notification.TextKey,
+          Localization.GetWithArgs(notification.TextKey),
           "",
           _NotifId++
         );
