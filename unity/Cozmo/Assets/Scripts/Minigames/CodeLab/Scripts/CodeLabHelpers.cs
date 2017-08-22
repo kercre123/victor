@@ -55,6 +55,7 @@ namespace CodeLab {
     public float argFloat { get; set; }
     public float argFloat2 { get; set; }
     public float argFloat3 { get; set; }
+    public float argFloat4 { get; set; }
     public bool argBool { get; set; }
     public bool argBool2 { get; set; }
     public bool argBool3 { get; set; }

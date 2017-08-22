@@ -1,0 +1,12 @@
+
+cxx_project(
+    name = 'cti_vision',
+    srcs = cxx_src_glob(['basestation/src', 'robot/src']),
+    platform_srcs = [
+        ('android', glob(['basestation/src/**/*_android.cpp', 'robot/src/**/*_android.cpp']))
+    ],
+    headers = cxx_header_glob(['include/anki/vision']),
+    platform_headers = [
+        ('android', glob(['include/anki/vision/**/*_android.h']))
+    ]
+)

@@ -292,6 +292,9 @@ void IActivity::OnDeselected(Robot& robot)
   // We're changing what cozmo's doing at a high level, so we don't want to
   // communicate the sparks reward to the user, just pretend we have
   if(robot.GetContext()->GetNeedsManager()->IsPendingSparksRewardMsg()){
+    PRINT_NAMED_INFO("IActivity.OnDeselected.CancelSparksRewardMsg",
+                     "Cancelling sparks reward message because ending activity %s",
+                     ActivityIDToString(_id));
     robot.GetContext()->GetNeedsManager()->SparksRewardCommunicatedToUser();
   }
   
@@ -319,7 +322,7 @@ void IActivity::OnDeselected(Robot& robot)
 IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
 
-  // if an intlude behavior was chosen and is still running, return that
+  // if an interlude behavior was chosen and is still running, return that
   if( _lastChosenInterludeBehavior != nullptr &&
       _lastChosenInterludeBehavior == currentRunningBehavior ) {
     return _lastChosenInterludeBehavior;
@@ -327,14 +330,19 @@ IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr curr
   else {
     _lastChosenInterludeBehavior.reset();
   }
-  
+
   IBehaviorPtr ret = ChooseNextBehaviorInternal(robot, currentRunningBehavior);
 
   const bool hasInterludeChooser = _interludeBehaviorChooserPtr != nullptr;
   const bool switchingBehaviors = ret != currentRunningBehavior;
-  
+  if (!switchingBehaviors) {
+    DEV_ASSERT_MSG(ret == nullptr || ret->IsRunning(),
+                   "IActivity.ChooseNextBehavior.NextBehaviorNotRunning",
+                   "Next chosen behavior is not running (and not switching behaviors); should not happen");
+  }
+
   if( hasInterludeChooser && switchingBehaviors ) {
-    // if we are changing behaviors, give the interlude choose an opportunity to run something. Pass in the
+    // if we are changing behaviors, give the interlude chooser an opportunity to run something. Pass in the
     // behavior that we would otherwise choose (The one that would run next) as "current"
     _lastChosenInterludeBehavior = _interludeBehaviorChooserPtr->ChooseNextBehavior(robot, ret);
     if(_lastChosenInterludeBehavior != nullptr) {
@@ -345,10 +353,6 @@ IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr curr
                     currentRunningBehavior ? currentRunningBehavior->GetIDStr().c_str() : "NULL",
                     ret ? ret->GetIDStr().c_str() : "NULL");
       return _lastChosenInterludeBehavior;
-    }
-    else {
-      // set to null to avoid confusing with None (see COZMO-12095)
-      _lastChosenInterludeBehavior = nullptr;
     }
   }
   

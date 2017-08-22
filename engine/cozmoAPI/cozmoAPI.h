@@ -14,6 +14,7 @@
 #ifndef __Anki_Cozmo_CozmoAPI_h__
 #define __Anki_Cozmo_CozmoAPI_h__
 #include "anki/common/types.h"
+#include "util/export/export.h"
 #include "util/helpers/noncopyable.h"
 #include "json/json.h"
 
@@ -41,28 +42,28 @@ class CozmoAPI : private Util::noncopyable
 {
 public:
   // When the engine should run in a separate thread
-  bool StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
+  ANKI_VISIBLE bool StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
   
   // When manual control over updating the engine is desired:
-  bool Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
-  bool Update(const BaseStationTime_t currentTime_nanosec);
+  ANKI_VISIBLE bool Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
+  ANKI_VISIBLE bool Update(const BaseStationTime_t currentTime_nanosec);
 
   // Send messages to game, receive messages from game
-  size_t SendMessages(uint8_t* buffer, size_t bufferSize);
-  void ReceiveMessages(const uint8_t* buffer, size_t size);
-  void ExecuteBackgroundTransfers();
+  ANKI_VISIBLE size_t SendMessages(uint8_t* buffer, size_t bufferSize);
+  ANKI_VISIBLE void ReceiveMessages(const uint8_t* buffer, size_t size);
+  ANKI_VISIBLE void ExecuteBackgroundTransfers();
 
   // Activate A/B experiment
-  uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
-                              uint8_t* responseBuffer, size_t responseLen);
+  ANKI_VISIBLE uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
+                                           uint8_t* responseBuffer, size_t responseLen);
 
   // Debug viz communication
-  size_t SendVizMessages(uint8_t* buffer, size_t bufferSize);
+  ANKI_VISIBLE size_t SendVizMessages(uint8_t* buffer, size_t bufferSize);
   
   // Destroys any running thread and game instance
-  void Clear();
+  ANKI_VISIBLE void Clear();
   
-  virtual ~CozmoAPI();
+  ANKI_VISIBLE ~CozmoAPI();
   
 private:
   class CozmoInstanceRunner

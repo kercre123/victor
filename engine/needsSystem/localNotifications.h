@@ -29,15 +29,15 @@ class LocalNotifications
 public:
   LocalNotifications(NeedsManager& needsManager);
 
-  void Init(const Json::Value& json, Util::RandomGenerator* rng);
+  void Init(const Json::Value& json, Util::RandomGenerator* rng,
+            const float currentTime_s);
 
+  void Update(const float currentTime_s);
 
-  // Notify the OS to cancel all pending local notifications
-  // (called when app opens or becomes un-backgrounded)
-  void CancelAll();
+  void SetPaused(const bool pausing);
 
-  // Generate all appropriate local notifications, register them
-  // with the OS (called when app is backgrounded)
+  // Generate all appropriate local notifications, and register them
+  // with the Game
   void Generate();
 
 private:
@@ -54,8 +54,10 @@ private:
   float CalculateMinutesToThreshold(const NeedId needId, const float targetLevel,
                                     const NeedsMultipliers& multipliers) const;
 
-  NeedsManager& _needsManager;
-  Util::RandomGenerator* _rng;
+  NeedsManager&           _needsManager;
+  Util::RandomGenerator*  _rng;
+
+  float                   _timeForPeriodicGenerate_s;
 
   LocalNotificationConfig _localNotificationConfig;
 };

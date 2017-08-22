@@ -101,9 +101,38 @@ namespace Cozmo {
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorContainer::BehaviorContainer(Robot& robot)
+BehaviorContainer::BehaviorContainer(Robot& robot, const BehaviorIDJsonMap& behaviorData)
 : _robot(robot)
 {
+  for( const auto& behaviorIDJsonPair : behaviorData )
+  {
+    const auto& behaviorID = behaviorIDJsonPair.first;
+    const auto& behaviorJson = behaviorIDJsonPair.second;
+    if (!behaviorJson.empty())
+    {
+      // PRINT_NAMED_DEBUG("BehaviorContainer.Constructor", "Loading '%s'", fullFileName.c_str());
+      IBehaviorPtr newBehaviorPtr = CreateBehavior(behaviorJson, _robot);
+      if ( newBehaviorPtr == nullptr ) {
+        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed",
+                          "Failed to create a behavior for behavior id '%s'",
+                          BehaviorIDToString(behaviorID));
+      }
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("Robot.LoadBehavior",
+                          "Failed to read behavior file for behavior id '%s'",
+                          BehaviorIDToString(behaviorID));
+    }
+    // don't print anything if we read an empty json
+  }
+  
+  // If we didn't load any behaviors from data, there's no reason to check to
+  // see if all executable behaviors have a 1-to-1 matching
+  if(behaviorData.size() > 0){
+    VerifyExecutableBehaviors();
+  }
+  
   if(robot.HasExternalInterface()) {
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;

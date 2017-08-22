@@ -228,6 +228,11 @@ bool IHelper::StartActing(IActionRunner* action, IBehavior::ActionResultWithRobo
   return _behaviorToCallActionsOn.StartActing(action, callback);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IHelper::StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithRobotCallback callback)
+{
+  return _behaviorToCallActionsOn.StartActing(action, callback);
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IHelper::StopActing(bool allowCallback)
@@ -350,39 +355,56 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
+
+template<typename T>
+void IHelper::RespondToActionWithAnim(const T& res, ActionResult actionResult,
+                                      Robot& robot, std::function<void(const T&, Robot&)>& callback)
 {
   PRINT_CH_INFO("BehaviorHelpers",
                 "IHelper.RespondToResultWithAnim.ActionResult",
                 "Action completed with result %s - playing appropriate response",
-                EnumToString(result));
+                EnumToString(actionResult));
   
-  if(_actionResultMapFunc != nullptr){
-    UserFacingActionResult userResult = _actionResultMapFunc(result);
-    if(userResult != UserFacingActionResult::Count){
+  if(_actionResultMapFunc != nullptr)
+  {
+    UserFacingActionResult userResult = _actionResultMapFunc(actionResult);
+    if(userResult != UserFacingActionResult::Count)
+    {
       AnimationTrigger responseAnim = AnimationResponseToActionResult(robot, userResult);
-      if(responseAnim != AnimationTrigger::Count){
+      if(responseAnim != AnimationTrigger::Count)
+      {
         StartActing(new TriggerAnimationAction(robot, responseAnim),
-                    [this, result](ActionResult animPlayed, Robot& robot){
-          // Pass through the true action result, not the played animation result
-          BehaviorActionResultWithRobotCallback tmpCallback = _callbackAfterResponseAnim;
-          _callbackAfterResponseAnim = nullptr;
-          if(tmpCallback != nullptr){
-            tmpCallback(result, robot);
-          }
-        });
+                    [res, &callback](ActionResult animPlayed, Robot& robot){
+                      // Pass through the true action result, not the played animation result
+                      auto tmpCallback = callback;
+                      callback = nullptr;
+                      if(tmpCallback != nullptr){
+                        tmpCallback(res, robot);
+                      }
+                    });
+        
         _actionResultMapFunc = nullptr;
         return;
       }
     }
   }
   
-  BehaviorActionResultWithRobotCallback tmpCallback = _callbackAfterResponseAnim;
-  _callbackAfterResponseAnim = nullptr;
+  auto tmpCallback = callback;
+  callback = nullptr;
   _actionResultMapFunc = nullptr;
   if(tmpCallback != nullptr){
-    tmpCallback(result, robot);
+    tmpCallback(res, robot);
   }
+}
+
+void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
+{
+  RespondToActionWithAnim(result, result, robot, _callbackAfterResponseAnim);
+}
+
+void IHelper::RespondToRCAWithAnim(const ExternalInterface::RobotCompletedAction& rca, Robot& robot)
+{
+  RespondToActionWithAnim(rca, rca.result, robot, _callbackAfterResponseAnimUsingRCA);
 }
 
 

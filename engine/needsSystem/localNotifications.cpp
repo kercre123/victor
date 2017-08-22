@@ -21,19 +21,25 @@ namespace Cozmo {
 
 static const std::string kLocalNotificationConfigsKey = "localNotificationConfigs";
 
+static const float kAutoGeneratePeriod_s = 30.0f;
+
 using namespace std::chrono;
 
 
 
 LocalNotifications::LocalNotifications(NeedsManager& needsManager)
 : _needsManager(needsManager)
+, _timeForPeriodicGenerate_s(0.0f)
 , _localNotificationConfig()
 {
 }
 
-void LocalNotifications::Init(const Json::Value& json, Util::RandomGenerator* rng)
+void LocalNotifications::Init(const Json::Value& json, Util::RandomGenerator* rng,
+                              const float currentTime_s)
 {
   _rng = rng;
+
+  _timeForPeriodicGenerate_s = currentTime_s + kAutoGeneratePeriod_s;
 
   _localNotificationConfig.items.clear();
   const auto& jsonLocalNotifications = json[kLocalNotificationConfigsKey];
@@ -53,17 +59,37 @@ void LocalNotifications::Init(const Json::Value& json, Util::RandomGenerator* rn
 }
 
 
-void LocalNotifications::CancelAll()
+void LocalNotifications::Update(const float currentTime_s)
 {
-  // TODO:  Send ETG message that Scott's wrapper will handle
+  if (currentTime_s > _timeForPeriodicGenerate_s)
+  {
+    Generate();
+  }
 }
 
+
+void LocalNotifications::SetPaused(const bool pausing)
+{
+  // Whether the needs system is being paused, or un-paused, re-generate
+  // the local notifications
+  Generate();
+}
+
+
+// Generate all local notifications appropriate for the current state, and send them
+// to the Game.  The reason we can't do this on app backgrounding (the logical time)
+// is because by that time the messages get sent to Game, Unity will have paused the
+// entire app, preventing us from processing those messages.  So instead, we generate
+// these periodically and at key times (such as when a daily star token is awarded),
+// and send them to the Game, which saves the latest set.  Then when the app is back-
+// grounded, it uses that last saved set for the actual local notifications that are
+// registered with the OS.
 
 void LocalNotifications::Generate()
 {
   using namespace std::chrono;
 
-  CancelAll();
+  // TODO:  Scott, this is where you can send your 'clear all' ETG CLAD message
 
   const auto& needsState = _needsManager.GetCurNeedsState();
   const auto& needsConfig = _needsManager.GetNeedsConfig();
@@ -93,7 +119,7 @@ void LocalNotifications::Generate()
       const int secondsInFuture = static_cast<int>(duration_m * secondsPerMinute);
       const Time futureDateTime = now + seconds(secondsInFuture);
       const std::time_t futureTimeT = system_clock::to_time_t(futureDateTime);
-      const size_t bufLen = 255;
+      static const size_t bufLen = 255;
       char whenStringBuf[bufLen];
       strftime(whenStringBuf, bufLen, "%a %F %T", localtime(&futureTimeT));
       PRINT_CH_INFO(NeedsManager::kLogChannelName,
@@ -105,6 +131,9 @@ void LocalNotifications::Generate()
       // TODO:  Send ETG message that Scott's wrapper will handle, to register this notification with OS
     }
   }
+
+  // Reset the periodic timer after any generate (periodic or not)
+  _timeForPeriodicGenerate_s = _needsManager.GetCurrentTime() + kAutoGeneratePeriod_s;
 }
 
 

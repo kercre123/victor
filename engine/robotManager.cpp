@@ -313,7 +313,9 @@ void RobotManager::BroadcastAvailableAnimations()
   if (nullptr != _context->GetExternalInterface()) {
     std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
     for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+      #ifndef COZMO_V2
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(*i);
+      #endif
     }
 
     _context->GetExternalInterface()->

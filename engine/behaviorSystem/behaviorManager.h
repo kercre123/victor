@@ -108,13 +108,8 @@ public:
 
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(const Json::Value& activitiesConfig);
-  void LoadBehaviorsIntoFactory();
   Result InitReactionTriggerMap(const Json::Value& config);
-  
-  // create a behavior from the given config and add to the factory. Can fail if the configuration is not valid
-  Result CreateBehaviorFromConfiguration(const Json::Value& behaviorConfig);
 
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Games
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

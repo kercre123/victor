@@ -84,6 +84,7 @@ public:
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const          { return _robotMoodConfig; }
   const Json::Value& GetRobotActivitiesConfig() const    { return _robotActivitiesConfig; }
+  const Json::Value& GetBehaviorSystemConfig() const     { return _behaviorSystemConfig; }
   const Json::Value& GetRobotWorkoutConfig() const       { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const        { return _robotVisionConfig; }
   const Json::Value& GetReactionTriggerMap() const       { return _reactionTriggerMap; }
@@ -164,6 +165,7 @@ private:
   // robot configs
   Json::Value _robotMoodConfig;
   Json::Value _robotActivitiesConfig;
+  Json::Value _behaviorSystemConfig;
   Json::Value _robotVisionConfig;
   Json::Value _reactionTriggerMap;
   Json::Value _robotWorkoutConfig;
