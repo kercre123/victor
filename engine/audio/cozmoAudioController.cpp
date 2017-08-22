@@ -93,16 +93,23 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
     
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
+    
+    bool hasJNI = false;
+#ifdef ANDROID
+    // If we're on android, check for a valid JNIEnv. We might be running inside a system daemon
+    // where there is no JNI.
+    auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
+    JNIEnv* env = envWrapper->GetEnv();
+    hasJNI = (nullptr != env);
+#endif
 
     // If assets don't exist don't init the Audio engine
-#ifndef ANDROID
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
     
-    if ( !assetsExist ) {
+    if ( !hasJNI && !assetsExist ) {
       PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets do NOT exist - Ignore if Unit Test");
       return;
     }
-#endif
     
     // Config Engine
     SetupConfig config{};
@@ -115,11 +122,7 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
     // Add Assets Zips to list.
 #ifdef ANDROID
     // Add to the APK file and OBB file (if it exists) to the list of valid zip files where the audio assets can be
-    {
-      auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
-      JNIEnv* env = envWrapper->GetEnv();
-      JNI_CHECK(env);
-      
+    if (hasJNI) {
       // Get a handle to the activity instance
       Util::JClassHandle contextClass{env->FindClass("android/content/ContextWrapper"), env};
       Util::JObjectHandle activity{Util::JNIUtils::getCurrentActivity(env), env};
@@ -169,6 +172,14 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
       std::string apkZipPath = apkPath + "?" + "assets/cozmo_resources/sound/AudioAssets.zip";
       PRINT_CH_INFO(kLogChannelName, "CozmoAudioController.CozmoAudioController", "APK file: %s", apkZipPath.c_str());
       config.pathToZipFiles.push_back(std::move(apkZipPath));
+    } else {
+      std::string zipAssets = assetPath + "AudioAssets.zip";
+      if (Util::FileUtils::FileExists(zipAssets)) {
+        config.pathToZipFiles.push_back(std::move(zipAssets));
+      }
+      else {
+        PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
+      }
     }
 #else
     // iOS & Mac Platfroms

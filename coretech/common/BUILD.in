@@ -1,0 +1,33 @@
+
+cxx_project(
+    name = 'cti_common',
+    srcs = cxx_src_glob(['basestation/src',
+                         'shared/src',
+                         'robot/src']),
+    platform_srcs = [
+        ('android', glob(['basestation/src/**/*_android.cpp',
+                          'shared/src/**/*_android.cpp',
+                          'robot/src/**/*_android.cpp']))
+    ],
+    headers = cxx_header_glob(['include/anki/common']),
+    platform_headers = [
+        ('android', glob(['include/anki/common/**/*_android.h']))
+    ]
+)
+
+cxx_project(
+    name = 'cti_common_robot',
+    srcs = cxx_src_glob(['shared/src',
+                         'robot/src'],
+                        excludes=['radians*',
+                                  'utilities_shared*',
+                                  'externalInterface*']),
+    platform_srcs = [
+        ('android', glob(['shared/src/**/*_android.cpp',
+                          'robot/src/**/*_android.cpp']))
+    ],
+    headers = cxx_header_glob(['include/anki/common']),
+    platform_headers = [
+        ('android', glob(['include/anki/common/**/*_android.h']))
+    ]
+)

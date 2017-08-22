@@ -13,6 +13,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/dispatchQueue/dispatchQueue.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/jni/jniUtils.h"
 #include "util/logging/logging.h"
 
@@ -32,6 +33,12 @@ HttpAdapter::HttpAdapter(Util::Dispatch::Queue* queue /* = nullptr */)
 : _internalQueue(queue)
 , _adapterState(IHttpAdapter::AdapterState::DOWN)
 {
+  if (!ANKI_USE_JNI) {
+    PRINT_NAMED_WARNING("http_adapter.disabled", "%s",
+                        "JNI required but not available");
+    return;
+  }
+
   auto envWrapper = JNIUtils::getJNIEnvWrapper();
   JNIEnv* env = envWrapper->GetEnv();
   if (nullptr != env) {

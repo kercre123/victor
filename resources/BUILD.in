@@ -1,0 +1,33 @@
+
+asset_project(
+    name = 'cozmo_resources_assets',
+    srcs = subdir_glob([
+                ('assets', 'animationGroupMaps/AnimationTriggerMap.json'),
+                ('assets', 'cubeAnimationGroupMaps/CubeAnimationTriggerMap.json'),
+                ('assets', 'RewardedActions/RewardedActions.json'),
+                ('assets', 'voiceCommand/voice-recognition-data.txt'),
+                ('assets', 'voiceCommand/exports/**/*.raw'),
+                ('external', 'animations/**/*.bin'),
+                ('external', 'animationGroups/**/*.json'),
+                ('external', 'faceAnimations/**/*.png'),
+                ],
+                prefix = 'assets'
+            ),
+)
+
+
+asset_project(
+    name = 'cozmo_resources_config',
+    srcs = glob([
+                'config/**/*',
+                ],
+           ),
+)
+
+asset_project(
+    name = 'cozmo_bundle',
+    srcs = subdir_glob([
+                ('bundle', 'DASConfig.json'),
+           ]),
+)
+

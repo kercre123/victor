@@ -99,7 +99,6 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     return;
   }
 
-
   // Check for valid locale before we do any work
   const Locale * locale = context->GetLocale();
   if (nullptr == locale) {
@@ -124,6 +123,12 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
 
   LOG_DEBUG("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d",
             language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
+
+  if (!ANKI_USE_JNI) {
+    LOG_WARNING("TextToSpeechProvider.Initialize.NoJNI",
+                "%s", "Data not available without JNI support");
+    return;
+  }
 
   // Get a handle to the TTS class & methods
   auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
@@ -180,6 +185,11 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
             Anki::Util::HidePersonallyIdentifiableInfo(text.c_str()),
             durationScalar);
 
+  if (!ANKI_USE_JNI) {
+    LOG_WARNING("TextToSpeechProvider.CreateAudioData.NoJNI",
+                "%s", "Data not available without JNI support");
+    return RESULT_FAIL_INVALID_OBJECT;
+  }
   // Get a handle to the TTS class & methods
   auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
   auto * env = envWrapper->GetEnv();

@@ -1,0 +1,57 @@
+project(libankiutil LANGUAGES CXX)
+
+set(AUDIO_UTIL_SRC
+  audioRecognizerProcessor.cpp
+  audioRecognizerProcessor.h
+  speechRecognizer.cpp
+  speechRecognizer.h
+  waveFile.cpp
+  waveFile.h
+)
+
+if (ANDROID)
+  set(AUDIO_UTIL_SRC_PLATFORM
+    audioCaptureSystem_android.cpp
+    audioDataTypes_android.cpp
+    audioFileReader_android.cpp
+    audioPlayer_android.cpp
+  )
+elseif(APPLE)
+  set(AUDIO_UTIL_SRC_PLATFORM
+    audioCaptureSystem_iososx.mm
+    audioDataTypes_iososx.mm
+    audioFileReader_iososx.mm
+    audioPlayer_iososx.mm
+  )
+else()
+  set(AUDIO_UTIL_SRC_PLATFORM "")
+endif()
+
+add_library(util_audio
+  ${AUDIO_UTIL_SRC}
+  ${AUDIO_UTIL_SRC_PLATFORM}
+)
+
+
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+if (ANDROID)
+  set(PLATFORM_LIBS android log OpenSLES)
+elseif(MACOSX)
+    find_library(AUDIO_TOOLBOX AudioToolbox)
+    find_library(FOUNDATION Foundation)
+    set(PLATFORM_LIBS ${AUDIO_TOOLBOX} ${FOUNDATION})
+endif()
+
+target_include_directories(util_audio PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+PRIVATE
+  $<BUILD_INTERFACE:${PLATFORM_INCLUDES}> 
+  )
+
+target_link_libraries(util_audio
+  util
+  ${PLATFORM_LIBS})
+
+#export(TARGETS ankiutil FILE ankiutil-config.cmake)
+
