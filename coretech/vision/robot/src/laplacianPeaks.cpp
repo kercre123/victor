@@ -572,7 +572,11 @@ namespace Anki
 #endif
       
       // Vector of the corners of the boundary as well as their squared distance from the center of the boundary
-      std::vector<std::pair<cv::Point_<f32>, u32>> corners;
+      struct Corner {
+        cv::Point2f point;
+        u32         distToCenterSq;
+      };
+      std::vector<Corner> corners;
       
       if(didFitFourLines) {
         for(s32 iLine=0; iLine<4; iLine++) {
@@ -608,18 +612,18 @@ namespace Anki
       } // if(didFitFourLines)
       
       // Sort corners by distance to boundry center
-      std::sort(corners.begin(), corners.end(), [](std::pair<cv::Point_<f32>, u32> i,
-                                                   std::pair<cv::Point_<f32>, u32> j) {
-        return (i.second < j.second);
+      const size_t numToSort = (corners.size() < 4 ? corners.size() : 4);
+      std::partial_sort(corners.begin(), corners.begin() + numToSort, corners.end(), [](Corner i, Corner j) {
+        return (i.distToCenterSq < j.distToCenterSq);
       });
       
       if(corners.size() >= 4) {
         // Use the four closest corners to the boundry center
         Quadrilateral<f32> quad(
-          Point<f32>(corners[0].first.x, corners[0].first.y),
-          Point<f32>(corners[1].first.x, corners[1].first.y),
-          Point<f32>(corners[2].first.x, corners[2].first.y),
-          Point<f32>(corners[3].first.x, corners[3].first.y));
+          Point<f32>(corners[0].point.x, corners[0].point.y),
+          Point<f32>(corners[1].point.x, corners[1].point.y),
+          Point<f32>(corners[2].point.x, corners[2].point.y),
+          Point<f32>(corners[3].point.x, corners[3].point.y));
         
         Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
         

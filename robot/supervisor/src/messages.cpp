@@ -1200,7 +1200,7 @@ namespace Anki {
         syncTimeAckSent_ = false;
         #ifdef SIMULATOR
         #ifndef COZMO_V2
-        HAL::SetImageSendMode(Stream, QVGA);
+        HAL::SetImageSendMode(Stream, DEFAULT_IMAGE_RESOLUTION);
         #endif
         #endif
       }

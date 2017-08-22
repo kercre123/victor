@@ -41,7 +41,7 @@ extern Anki::Cozmo::CozmoContext* cozmoContext;
 TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
 {
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
-                                          std::to_string(Anki::Cozmo::CameraCalibrator::BLEACHERS).c_str());
+                                          std::to_string(Anki::Cozmo::CameraCalibrator::QBERT).c_str());
 
   Anki::Cozmo::VisionSystem* visionSystem = new Anki::Cozmo::VisionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
@@ -88,7 +88,8 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
   bool resultAvailable = visionSystem->CheckMailbox(processingResult);
   EXPECT_TRUE(resultAvailable);
   
-  ASSERT_EQ(processingResult.cameraCalibrations.size(), 1);
+  // 1 is the default value of focal length
+  ASSERT_EQ(processingResult.cameraCalibration.GetFocalLength_x() != 1.f, true);
 
   const std::vector<f32> distortionCoeffs = {{-0.07167206757206086,
                                               -0.2198782133395603,
@@ -97,15 +98,15 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
                                               0.1341471670512819,
                                               0, 0, 0}};
   
-  Anki::Vision::CameraCalibration expectedCalibration(360,640,
-                                                      362.8773099149878,
-                                                      366.7347434532929,
-                                                      302.2888225643724,
-                                                      200.012543449327,
-                                                      0,
-                                                      distortionCoeffs);
+  const Anki::Vision::CameraCalibration expectedCalibration(360,640,
+                                                            362.8773099149878,
+                                                            366.7347434532929,
+                                                            302.2888225643724,
+                                                            200.012543449327,
+                                                            0,
+                                                            distortionCoeffs);
   
-  const auto computedCalibration = processingResult.cameraCalibrations.front();
+  const auto computedCalibration = processingResult.cameraCalibration;
   
   ASSERT_NEAR(computedCalibration.GetCenter_x(), expectedCalibration.GetCenter_x(),
               Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
@@ -135,6 +136,9 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
     ASSERT_NEAR(computedCalibration.GetDistortionCoeffs()[i], expectedCalibration.GetDistortionCoeffs()[i],
                 Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
   }
+  
+  Anki::Util::SafeDelete(visionSystem);
+  visionSystem = nullptr;
 }
 
 TEST(VisionSystem, MarkerDetectionTests)

@@ -108,6 +108,8 @@ namespace Cozmo {
     f32 cameraGain;       // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
     u8  imageMean;        // Only valid if VisionMode::ComputingStatistics enabled
     
+    Vision::CameraCalibration cameraCalibration;
+    
     std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
     std::list<Vision::ObservedMarker>                           observedMarkers;
     std::list<Vision::TrackedFace>                              faces;
@@ -116,7 +118,6 @@ namespace Cozmo {
     std::list<OverheadEdgeFrame>                                overheadEdges;
     std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
     std::list<ToolCodeInfo>                                     toolCodes;
-    std::list<Vision::CameraCalibration>                        cameraCalibrations;
     std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     
     // Used to pass debug images back to main thread for display:

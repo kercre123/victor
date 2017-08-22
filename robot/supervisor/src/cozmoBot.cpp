@@ -49,9 +49,9 @@ namespace Anki {
     namespace HAL {
       ImageSendMode imageSendMode_;
 #ifdef COZMO_V2
-      ImageResolution captureResolution_ = NHD;
+      ImageResolution captureResolution_ = DEFAULT_IMAGE_RESOLUTION;
 #else
-      ImageResolution captureResolution_ = QVGA;
+      ImageResolution captureResolution_ = DEFAULT_IMAGE_RESOLUTION;
 #endif
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
@@ -236,7 +236,7 @@ namespace Anki {
           WheelController::Disable();
           HAL::CameraSetColorEnabled(false);
           #ifndef SIMULATOR
-          HAL::SetImageSendMode(Off, QVGA);
+          HAL::SetImageSendMode(Off, DEFAULT_IMAGE_RESOLUTION);
           Messages::ResetMissedLogCount();
           // Put body into bluetooth mode when the engine is connected
           SetBodyRadioMode bMsg;

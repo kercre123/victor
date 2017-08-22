@@ -36,11 +36,24 @@ public:
   CameraCalibrator(VisionSystem& visionSystem);
   ~CameraCalibrator();
   
-  // Computes calibration from, depending on the calibration target, either stored calibration images or the passed in observed markers
-  // Outputs a set of calibrations and debug images via references and returns whether or not calibration was a success
-  Result ComputeCalibration(const std::list<Vision::ObservedMarker>& observedMarkers,
-                            std::list<Vision::CameraCalibration>& calibrations,
-                            DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+  // Enum of various supported calibration targets
+  enum CalibTargetType {
+    CHECKERBOARD, // Dot checkerboard
+    INVERTED_BOX, // 3-sided inverted box target with markers
+    QBERT,        // Target that looks like a QBert level
+  };
+  
+  // Computes camera calibration using stored images of checkerboard target
+  // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
+  Result ComputeCalibrationFromCheckerboard(Vision::CameraCalibration& calibration_out,
+                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs_out);
+  
+  // Computes camera calibration using observed markers on either the INVERTED_BOX or BLEACHERS target
+  // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
+  Result ComputeCalibrationFromSingleTarget(CalibTargetType targetType,
+                                            const std::list<Vision::ObservedMarker>& observedMarkers,
+                                            Vision::CameraCalibration& calibration_out,
+                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs_out);
   
   // Add an image to be stored for calibration along with a region of interest
   Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
@@ -68,26 +81,8 @@ public:
   // Returns a vector of Camera poses based on where the camera was when taking each CalibImage
   // Each index matches the corresponding images in _calibImages
   const std::vector<Pose3d>& GetCalibrationPoses() const { return _calibPoses;}
-  
-  // Enum of various supported calibration targets
-  enum CalibTargetType {
-    CHECKERBOARD, // Dot checkerboard
-    INVERTED_BOX, // 3-sided inverted box target with markers
-    BLEACHERS,    // Target that looks like bleachers... I don't know how to describe it
-  };
 
 private:
-
-  // Computes camera calibration using stored images of checkerboard target
-  // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
-  Result ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibrations,
-                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs);
-  
-  // Computes camera calibration using observed markers on either the INVERTED_BOX or BLEACHERS target
-  // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
-  Result ComputeCalibrationFromSingleTarget(const std::list<Vision::ObservedMarker>& observedMarkers,
-                                            std::list<Vision::CameraCalibration>& calibrations,
-                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs);
 
   // Calculates expected corner positions of the CHECKERBOARD target with the given board and square
   // sizes

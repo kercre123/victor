@@ -1224,25 +1224,25 @@ namespace Cozmo {
 
   Result VisionComponent::UpdateComputedCalibration(const VisionProcessingResult& procResult)
   {
-    for(auto & calib : procResult.cameraCalibrations)
-    {
-      CameraCalibration msg;
-      msg.center_x = calib.GetCenter_x();
-      msg.center_y = calib.GetCenter_y();
-      msg.focalLength_x = calib.GetFocalLength_x();
-      msg.focalLength_y = calib.GetFocalLength_y();
-      msg.nrows = calib.GetNrows();
-      msg.ncols = calib.GetNcols();
-      msg.skew = calib.GetSkew();
-      
-      DEV_ASSERT_MSG(msg.distCoeffs.size() == calib.GetDistortionCoeffs().size(),
-                     "VisionComponent.UpdateComputedCalibration.WrongNumDistCoeffs",
-                     "Message expects %zu, got %zu", msg.distCoeffs.size(), calib.GetDistortionCoeffs().size());
-      
-      std::copy(calib.GetDistortionCoeffs().begin(), calib.GetDistortionCoeffs().end(), msg.distCoeffs.begin());
-      
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-    }
+    const auto& calib = procResult.cameraCalibration;
+    
+    CameraCalibration msg;
+    msg.center_x = calib.GetCenter_x();
+    msg.center_y = calib.GetCenter_y();
+    msg.focalLength_x = calib.GetFocalLength_x();
+    msg.focalLength_y = calib.GetFocalLength_y();
+    msg.nrows = calib.GetNrows();
+    msg.ncols = calib.GetNcols();
+    msg.skew = calib.GetSkew();
+    
+    DEV_ASSERT_MSG(msg.distCoeffs.size() == calib.GetDistortionCoeffs().size(),
+                   "VisionComponent.UpdateComputedCalibration.WrongNumDistCoeffs",
+                   "Message expects %zu, got %zu", msg.distCoeffs.size(), calib.GetDistortionCoeffs().size());
+    
+    std::copy(calib.GetDistortionCoeffs().begin(), calib.GetDistortionCoeffs().end(), msg.distCoeffs.begin());
+    
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    
   
     return RESULT_OK;
   }
@@ -2314,7 +2314,7 @@ namespace Cozmo {
   void VisionComponent::CaptureAndSendImage()
   {
     // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::NHD;
+    const ImageResolution expectedResolution = DEFAULT_IMAGE_RESOLUTION;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);
