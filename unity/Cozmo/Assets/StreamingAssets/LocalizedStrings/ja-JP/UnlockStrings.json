@@ -175,16 +175,16 @@
     "translation" : "COZMOがもちあげるのを見てください。"
   },
   "unlockable.GatherCubes.Title" : {
-    "translation" : "キューブのタイトル<placeholder>を収集"
+    "translation" : "Gather Cubes Title <placeholder>"
   },
   "unlockable.GatherCubes.Description" : {
-    "translation" : "キューブの説明<placeholder>を収集します"
+    "translation" : "Gather Cubes Description <placeholder>"
   },
   "unlockable.GatherCubes.SparkButtonDescription" : {
-    "translation" : "キューブのエナジーボールボタン<placeholder>を収集します"
+    "translation" : "Gather Cubes Spark Button <placeholder>"
   },
   "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "キューブのエナジースパーク状態<placeholder>を収集します"
+    "translation" : "Gather Cubes Spark State <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
     "translation" : "ロックされたしぐさ"
