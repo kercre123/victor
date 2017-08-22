@@ -52,9 +52,9 @@ if [ -z $CURL ];then
   exit 1
 fi
 
-PYTHON=`which python`
+PYTHON=`which python2`
 if [ -z $PYTHON ];then
-  echo python not found
+  echo python2 not found
   exit 1
 fi
 
