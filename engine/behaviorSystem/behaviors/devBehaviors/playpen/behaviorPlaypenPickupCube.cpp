@@ -67,6 +67,11 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
   if(object == nullptr)
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_NOT_FOUND, RESULT_FAIL);
+    
+    // Should we be ignoring playpen failures we will need a valid object to do stuff with so make
+    // a ghost object
+    object = new Block_Cube1x1(ObjectType::Block_LIGHTCUBE_GHOST);
+    object->InitPose(Pose3d(), PoseState::Known);
   }
   
   const Pose3d& cubePose = object->GetPose();
@@ -140,6 +145,12 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
     
     TransitionToPlaceCube(robot);
   });
+  
+  if(object->GetType() == ObjectType::Block_LIGHTCUBE_GHOST)
+  {
+    Util::SafeDelete(object);
+    object = nullptr;
+  }
   
   return RESULT_OK;
 }

@@ -45,6 +45,7 @@ WebotsKeyboardController {
 }
 CozmoVizDisplay {
   filterLogs TRUE
+  streamResolution "NHD"
 }
 Transform {
   translation 0.005 0 0.057

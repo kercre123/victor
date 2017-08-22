@@ -351,16 +351,17 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
     debugImageRGBs.push_back({"CalibImage", dispImg});
   }
   
-  //  (fx: 507.872742, fy: 507.872742, cx: 639.500000 cy: 359.500000)
 #ifdef COZMO_V2
 #ifdef SIMULATOR
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
-                                507, 0, 639,
-                                0, 507, 359,
+                                185, 0, 319,
+                                0, 185, 179,
                                 0, 0, 1);
   
-  cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
-                              -0.07f, -0.2f, 0.001f, 0.001f, 0.1f, 0.f, 0.f, 0.f);
+//  cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
+//                              -0.07f, -0.2f, 0.001f, 0.001f, 0.1f, 0.f, 0.f, 0.f);
+  
+  cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
 #else
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<double>(3,3) <<
                                 362, 0, 303,

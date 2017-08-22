@@ -190,18 +190,12 @@ Supervisor {
       %{ elseif fields.streamResolution.value == "CVGA" then }%
       width 400
       height 296
-<<<<<<< HEAD
-      %{ elseif fields.streamResolution.value == "HD720" then }%
-      width 1280
-      height 720
-=======
       %{ elseif fields.streamResolution.value == "HD" then }%
       width 1280
       height 720
       %{ elseif fields.streamResolution.value == "NHD" then }%
       width 640
       height 360
->>>>>>> 992010b47d6b91d861a24b910ae65b3dfccec2d7
       %{ end }%
     }
   ]

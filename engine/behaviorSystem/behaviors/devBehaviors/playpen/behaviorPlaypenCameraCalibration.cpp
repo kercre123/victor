@@ -32,12 +32,14 @@ namespace {
 #ifdef COZMO_V2
 #ifdef SIMULATOR
 // V2 Simulated camera calibration
-static const Vision::CameraCalibration kApproxCalib(720, 1280,
-                                                    507, 507,
-                                                    639, 359,
+static const Vision::CameraCalibration kApproxCalib(360, 640,
+                                                    185, 185,
+                                                    319, 179,
                                                     0.f,
-                                                    std::vector<f32>({-0.07f, -0.2f, 0.001f, 0.001f, 0.1f,
-                                                                      0.f, 0.f, 0.f}));
+                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f,
+  0.f, 0.f, 0.f}));
+                                                    /*std::vector<f32>({-0.07f, -0.2f, 0.001f, 0.001f, 0.1f,
+                                                                      0.f, 0.f, 0.f}));*/
 #else
 // V2 Physical camera calibration
 static const Vision::CameraCalibration kApproxCalib(360, 640,
@@ -68,7 +70,11 @@ BehaviorPlaypenCameraCalibration::BehaviorPlaypenCameraCalibration(Robot& robot,
 Result BehaviorPlaypenCameraCalibration::InternalInitInternal(Robot& robot)
 {
   // Set CameraCalibrator's CalibTargetType console var to what the playpen config says
-  NativeAnkiUtilConsoleSetValueWithString("CalibTargetType", std::to_string(PlaypenConfig::kPlaypenCalibTarget).c_str());
+  NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
+                                          std::to_string(PlaypenConfig::kPlaypenCalibTarget).c_str());
+  
+  // Make sure marker detection is enabled for calibration
+  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
 
   // Define a custom object with marker kMarkerToTriggerCalibration so we can know when we are seeing the
   // calibration target via a RobotObservedObject message
@@ -107,6 +113,9 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(Robot& r
   {
     // If we are seeing the target and our head is not moving and we haven't yet taken
     // a calibration image then store the next image for camera calibration
+    // Note: Technically don't need to store a calibration image as single image calibration
+    // just uses markers detected from the current image, however, we need to store an image
+    // so we can grab it later to write to log
     if(!IsActing() &&
        !robot.GetMoveComponent().IsHeadMoving() &&
        robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0 &&
@@ -129,6 +138,9 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(Robot& r
 void BehaviorPlaypenCameraCalibration::StopInternal(Robot& robot)
 {
   robot.GetVisionComponent().ClearCalibrationImages();
+  
+  // Make sure to disable computing calibration mode in case it was left on for some reason
+  robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, false);
   
   // Clear all objects from blockworld since calib target contains markers it will
   // cause objects to get added to the world
@@ -181,10 +193,10 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
   
   // Verify number of images
   const u32 NUM_CAMERA_CALIB_IMAGES = 1;
-  bool tooManyCalibImages = rawJpegData.size() > NUM_CAMERA_CALIB_IMAGES;
-  if (tooManyCalibImages)
+  bool invalidNumCalibImages = rawJpegData.size() != NUM_CAMERA_CALIB_IMAGES;
+  if (invalidNumCalibImages)
   {
-    PRINT_NAMED_WARNING("BehaviorPlaypenCameraCalibration.HandleCameraCalibration.TooManyCalibImagesFound",
+    PRINT_NAMED_WARNING("BehaviorPlaypenCameraCalibration.HandleCameraCalibration.InvalidNumCalibImagesFound",
                         "%zu images found. Why?", rawJpegData.size());
     rawJpegData.resize(NUM_CAMERA_CALIB_IMAGES);
   }

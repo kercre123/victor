@@ -43,6 +43,9 @@ static bool  kIgnoreFailures       = true;
 // Default timeout to force a playpen behavior to end
 static f32   kDefaultTimeout_ms    = 20000;
 
+// How long to display the playpen result on Cozmo's face
+static f32 kTimeToDisplayResultOnFace_ms = 10000;
+
 // ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;
@@ -99,13 +102,13 @@ static f32 kTangentialDistortionTolerance             = 0.05f;
 static f32 kHeadAngleToSeeTarget                      = MAX_HEAD_ANGLE;
 
 // How long we should wait to see the calibration target after looking up at it
-static u32 kTimeoutWaitingForTarget_ms                = 10000;
+static u32 kTimeoutWaitingForTarget_ms                = 3000;
 
 // How long we should wait for camera calibration to be computed
 static u32 kTimeoutForComputingCalibration_ms         = 2000;
 
 // Which calibration target we are using (see CameraCalibrator::CalibTargetTypes)
-static u32 kPlaypenCalibTarget                        = 1; // 1 = INVERTED_BOX 2 = BLEACHERS (I don't feel like including cameraCalibrator.h here)
+static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2 = BLEACHERS (I don't feel like including cameraCalibrator.h here)
 
 // How big the calibration target's markers are
 static f32 kCalibMarkerSize_mm                        = 15;

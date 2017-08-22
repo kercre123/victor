@@ -462,7 +462,7 @@ namespace Cozmo {
     }
     
     // Get directories inside CurrentGameLog. There should only ever be one.
-    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "");
+    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger");
     std::vector<std::string> dirs;
     Util::FileUtils::ListAllDirectories(srcDir, dirs);
 
@@ -477,6 +477,13 @@ namespace Cozmo {
     
     srcDir = Util::FileUtils::FullFilePath({srcDir, dirs.front(), "print"});
     std::vector<std::string> engineLogFiles = Util::FileUtils::FilesInDirectory(srcDir, true, ".log", true);
+
+    if(engineLogFiles.empty())
+    {
+      PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.NoEngineLogsFound",
+                          "Did not find any engine logs in directory %s",
+                          srcDir.c_str());
+    }
 
     bool res = true;
     for (auto f : engineLogFiles) {
