@@ -40,7 +40,7 @@
 
 cmake_minimum_required(VERSION 3.6.0)
 
-set(ANDROID_NDK_REVISION 14)
+set(ANDROID_NDK_REVISION 15)
 
 # Touch toolchain variable to suppress "unused variable" warning.
 # This happens if CMake is invoked with the same command line the second time.
