@@ -11,19 +11,35 @@
 #include "mics.h"
 #include "touch.h"
 #include "contacts.h"
+#include "vectors.h"
+#include "flash.h"
 
 #include "messages.h"
 
+struct TransmitFifo {
+  uint8_t size;
+  struct {
+    SpineMessageHeader header;
+    union {
+      ContactData contactData;
+      AckMessage ack;
+      VersionInfo version;
+      uint8_t raw[];
+    };
+    SpineMessageFooter _footer;
+  } payload;
+};
+
 static struct {
-  // Body 2 Head data
-  SpineMessageHeader headerB2H;
-  BodyToHead payloadB2H;
-  SpineMessageFooter footerB2H;
+  struct {
+    // Body 2 Head data
+    SpineMessageHeader header;
+    BodyToHead payload;
+    SpineMessageFooter footer;
+  } sync;
   
-  // Contact data
-  SpineMessageHeader headerCD;
-  ContactData payloadCD;
-  SpineMessageFooter footerCD;
+  // Additional data (after sync)
+  uint8_t tail[sizeof(VersionInfo) + sizeof(ContactData)];
 } outboundPacket;
 
 static struct {
@@ -34,6 +50,8 @@ static struct {
   union {
     HeadToBody headToBody;
     ContactData contactData;
+    AckMessage ack;
+    VersionInfo version;
     uint8_t raw[];
   };
   SpineMessageFooter _footer;
@@ -42,7 +60,14 @@ static struct {
 static const uint16_t BYTE_TIMER_PRESCALE = SYSTEM_CLOCK / COMMS_BAUDRATE;
 static const uint16_t BYTE_TIMER_PERIOD = 14; // 8 bits, 1 start / stop + 3 bits of "slop"
 static const int MAX_MISSED_FRAMES = 200; // 1 second of missed frames
-static int missed_frames;
+static const int MAX_FIFO_SLOTS = 4;
+
+static TransmitFifo txFifo[MAX_FIFO_SLOTS];
+static int txFifo_read = 0;
+static int txFifo_write = 0;
+
+static int missed_frames = 0;
+static bool applicationRunning = false;
 
 static uint32_t crc(const void* ptr, int length) {
   const uint32_t* data = (const uint32_t*) ptr;
@@ -85,51 +110,104 @@ void Comms::init(void) {
   TIM6->CR1 = TIM_CR1_CEN;
 
   // Setup our constants for outbound data
-  outboundPacket.headerB2H.sync_bytes = SYNC_BODY_TO_HEAD;
-  outboundPacket.headerB2H.bytes_to_follow = sizeof(outboundPacket.payloadB2H);
-  outboundPacket.headerB2H.payload_type = PAYLOAD_DATA_FRAME;
-  
-  outboundPacket.headerCD.sync_bytes = SYNC_BODY_TO_HEAD;
-  outboundPacket.headerCD.bytes_to_follow = sizeof(outboundPacket.payloadCD);
-  outboundPacket.headerCD.payload_type = PAYLOAD_CONT_DATA;
+  outboundPacket.sync.header.sync_bytes = SYNC_BODY_TO_HEAD;
+  outboundPacket.sync.header.payload_type = PAYLOAD_DATA_FRAME;
+  outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
+
+  missed_frames = 0;
+  applicationRunning = false;
+
+  static const AckMessage ack = { ACK_PAYLOAD };
+  enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
 
   // Configure our interrupts
   NVIC_SetPriority(USART1_IRQn, PRIORITY_SPINE_COMMS);
   NVIC_EnableIRQ(USART1_IRQn);
   NVIC_SetPriority(DMA1_Channel4_5_IRQn, PRIORITY_SPINE_COMMS);
   NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
+}
 
-  missed_frames = 0;
+void Comms::enqueue(PayloadId kind, const void* packet, int size) {
+  int next = (txFifo_write + 1) % MAX_FIFO_SLOTS;
+  
+  // Drop payload (should probably do something)
+  if (next == txFifo_read) {
+    return ;
+  }
+  
+  TransmitFifo* target = &txFifo[txFifo_write];
+  SpineMessageFooter* footer = (SpineMessageFooter*)&target->payload.raw[size];
+    
+  target->payload.header.sync_bytes = SYNC_BODY_TO_HEAD;
+  target->payload.header.payload_type = kind;
+  target->payload.header.bytes_to_follow = size;
+  memcpy(&target->payload.raw, packet, size);
+  footer->checksum = crc(target->payload.raw, size / sizeof(uint32_t));
+
+  target->size = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter) + size;
+  
+  txFifo_write = next;
+}
+
+static int dequeuePacket(void* out, int size) {
+  uint8_t* output = (uint8_t*) out;
+  int transmitted = 0;
+
+  while (txFifo_read != txFifo_write) {
+    TransmitFifo* target = &txFifo[txFifo_read];
+    if (target->size > size) {
+      break ;
+    }
+    
+    memcpy(output, &target->payload, target->size);
+    transmitted += target->size;
+    size -= target->size;
+    output += target->size;
+    
+    txFifo_read = (txFifo_read + 1) % MAX_FIFO_SLOTS;
+  }
+
+  return transmitted;
 }
 
 void Comms::tick(void) {
-  Motors::transmit(&outboundPacket.payloadB2H);
-  Opto::transmit(&outboundPacket.payloadB2H);
-  Mics::transmit(outboundPacket.payloadB2H.audio);
-  Touch::transmit(outboundPacket.payloadB2H.touchLevel);
-
+  // Soft-watchdog
   if (missed_frames++ >= MAX_MISSED_FRAMES) {
     // Reset but don't pull power
-    Power::softReset();
+    applicationRunning = false;
   }
 
+  // Stop our DMA
+  DMA1_Channel3->CCR = DMA_CCR_MINC
+                     | DMA_CCR_DIR;
+  
   // Finalize the packet
-  outboundPacket.payloadB2H.framecounter++;
-  outboundPacket.footerB2H.checksum = crc(&outboundPacket.payloadB2H, sizeof(outboundPacket.payloadB2H) / sizeof(uint32_t));
+  int count;
 
-  // Always send contact data (regardless if it's used or not)
-  Contacts::transmit(outboundPacket.payloadCD);
-  outboundPacket.footerCD.checksum = crc(&outboundPacket.payloadB2H, sizeof(outboundPacket.payloadCD) / sizeof(uint32_t));
+  if (applicationRunning) {
+    Motors::transmit(&outboundPacket.sync.payload);
+    Opto::transmit(&outboundPacket.sync.payload);
+    Mics::transmit(outboundPacket.sync.payload.audio);
+    Touch::transmit(outboundPacket.sync.payload.touchLevel);
+
+    outboundPacket.sync.payload.framecounter++;
+    outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
+
+    DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
+    count = sizeof(outboundPacket);
+  } else {
+    DMA1_Channel3->CMAR = (uint32_t)&outboundPacket.tail;
+    count = 0;
+  }
+
+  count += dequeuePacket(&outboundPacket.tail, sizeof(&outboundPacket.tail));
 
   // Fire out ourbound data
-  DMA1_Channel3->CCR = 0;
-  DMA1_Channel3->CPAR = (uint32_t)&USART1->TDR;
-  DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
-  DMA1_Channel3->CNDTR = sizeof(outboundPacket);
-
-  DMA1_Channel3->CCR = DMA_CCR_MINC
-                     | DMA_CCR_DIR
-                     | DMA_CCR_EN;
+  if (DMA1_Channel3->CNDTR) {
+    DMA1_Channel3->CPAR = (uint32_t)&USART1->TDR;
+    DMA1_Channel3->CNDTR = count;
+    DMA1_Channel3->CCR |= DMA_CCR_EN;
+  }
 }
 
 static int sizeOfInboundPayload(PayloadId id) {
@@ -198,14 +276,32 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
   }
 
   switch (inboundPacket.header.payload_type) {
+    case PAYLOAD_MODE_CHANGE:
+      applicationRunning = true;
+      break ;
+    case PAYLOAD_VERSION:
+      {
+        VersionInfo ver;
+
+        ver.hw_revision = COZMO_HWINFO->hw_revision;
+        ver.hw_model = COZMO_HWINFO->hw_model;
+        memcpy(ver.ein, COZMO_HWINFO->ein, sizeof(ver.ein));
+        memcpy(ver.app_version, APP->applicationVersion, sizeof(ver.app_version));
+
+        Comms::enqueue(PAYLOAD_VERSION, &ver, sizeof(ver));
+      }
+      break ;
+    case PAYLOAD_ERASE:
+      Flash::markForWipe();
+      break ;
     case PAYLOAD_DATA_FRAME:
       missed_frames = 0;
       Motors::receive(&inboundPacket.headToBody);
       Lights::receive(inboundPacket.headToBody.ledColors);
-      break ;
+      return ;
     case PAYLOAD_CONT_DATA:
       Contacts::forward(inboundPacket.contactData);
-      break ;
+      return ;
     default:
       break ;
   }

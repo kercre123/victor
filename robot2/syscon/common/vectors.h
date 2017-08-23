@@ -5,10 +5,18 @@
 
 typedef void (*VectorPtr)(void);
 
+struct HWInfo {
+  uint32_t hw_revision;
+  uint32_t hw_model;
+  uint8_t ein[16];
+};
+
+static const HWInfo*  COZMO_HWINFO                  = (const HWInfo*) 0x8000010;
+
 static const uint32_t COZMO_APPLICATION_FINGERPRINT = 0x4F4D3243;
-static const uint32_t COZMO_APPLICATION_ADDRESS     = 0x8004000;
+static const uint32_t COZMO_APPLICATION_ADDRESS     = 0x8003000;
 static const uint32_t COZMO_APPLICATION_HEADER      = 0x110;
-static const uint32_t COZMO_APPLICATION_SIZE        = 0xC000;
+static const uint32_t COZMO_APPLICATION_SIZE        = 0xD000;
 
 static const uint32_t* COZMO_HARDWARE_VERSION       = (uint32_t*)0x10;
 static const uint32_t* COZMO_MODEL_NUMBER           = (uint32_t*)0x14;

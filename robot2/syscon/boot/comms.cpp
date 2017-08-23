@@ -5,8 +5,6 @@
 #include "flash.h"
 #include "common.h"
 #include "hardware.h"
-#include "analog.h"
-#include "contacts.h"
 
 #include "stm32f0xx.h"
 
@@ -14,11 +12,11 @@
 
 extern bool validate(void);
 
-extern "C" {
-  extern const uint32_t  __HW_REVISION[];
-  extern const uint32_t  __HW_MODEL[];
-  extern const uint8_t   __EIN[16];
-}
+static struct {
+  SpineMessageHeader header;
+  AckMessage payload;
+  SpineMessageFooter footer;
+} outbound;
 
 static struct {
   union {
@@ -26,19 +24,18 @@ static struct {
     uint8_t raw[];
   };
   union {
-    ContactData contacts;
-    WriteDFU write;
-    uint8_t payload[];
+    struct {
+      WriteDFU payload;
+      SpineMessageFooter footer;
+    } write;
+    struct {
+      SpineMessageFooter footer;
+    } null;
   };
-  SpineMessageFooter _footer;    
 } inbound;
 
 static const int EXTRA_BYTES = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
 static volatile bool g_exitRuntime = false;
-
-static volatile uint8_t tx_read_index;
-static volatile uint8_t tx_write_index;
-static uint8_t tx_out_buffer[0x100];
 
 static uint32_t crc(const void* ptr, int bytes) {
   int length = bytes / sizeof(uint32_t);
@@ -51,54 +48,19 @@ static uint32_t crc(const void* ptr, int bytes) {
   return CRC->DR;
 }
 
-static void enqueue(const void* data, int size) {
-  const uint8_t* index = (const uint8_t*) data;
-  
-  while (size-- > 0) {
-    tx_out_buffer[tx_write_index++] = *(index++);
-  }
-}
-
-static void sendPayload(PayloadId id, const void* data, int size) {
-  {
-    SpineMessageHeader header;
-    
-    header.sync_bytes = SYNC_BODY_TO_HEAD;
-    header.bytes_to_follow = size;
-    header.payload_type = id;
-    enqueue(&header, sizeof(header));
-  }
-  
-  enqueue(data, size);
-
-  {
-    SpineMessageFooter footer;
-    footer.checksum = crc(data, size);
-    enqueue(&footer, sizeof(footer));
-  }
-
-  // Start sending out data
-  USART1->CR1 |= USART_CR1_TXEIE;
-}
-
-static void sendVersion() {
-  VersionInfo version;
-
-  version.hw_revision = __HW_REVISION[0];
-  version.hw_model = __HW_MODEL[0];
-  memcpy(&version.ein, __EIN, sizeof(version.ein));
-  memcpy(&version.app_version, APP->applicationVersion, sizeof(version.app_version));
-
-  sendPayload(PAYLOAD_VERSION, &version, sizeof(version));
-}
-
 static void sendAck(Ack c) {
-  AckMessage ack;
-
   // Frame a dummy packet
-  ack.status = c;
+  outbound.payload.status = c;
+  outbound.footer.checksum = crc(&outbound.payload, sizeof(outbound.payload));
 
-  sendPayload(PAYLOAD_ACK, &ack, sizeof(ack));
+  // Fire out ourbound data
+  DMA1_Channel2->CCR = DMA_CCR_MINC
+                     | DMA_CCR_DIR;
+  DMA1_Channel2->CPAR = (uint32_t)&USART1->TDR;
+  DMA1_Channel2->CMAR = (uint32_t)&outbound;
+  DMA1_Channel2->CNDTR = sizeof(outbound);
+
+  DMA1_Channel2->CCR |= DMA_CCR_EN;
 }
 
 void Comms::run(void) {
@@ -125,41 +87,28 @@ void Comms::run(void) {
               | USART_CR1_CMIE
               | USART_CR1_UE;
 
-  tx_read_index = 0;
-  tx_write_index = 0;
 
-  // Hold high for a random time
-  for (int i = 100; i; i--) __asm("nop");
-  sendAck(ACK_PAYLOAD);
-  
+  // Setup our constants for outbound data
+  outbound.header.sync_bytes = SYNC_BODY_TO_HEAD;
+  outbound.header.payload_type = PAYLOAD_ACK;
+  outbound.header.bytes_to_follow = sizeof(outbound.payload);
+
   // Configure our interrupts
-  NVIC_SetPriority(USART1_IRQn, PRIORITY_CONTACTS_COMMS); // Match priority so interrupts don't preempt each other
+  for (int i = 100; i; i--) __asm("nop");
+
+  sendAck(ACK_PAYLOAD);
+
+  NVIC_SetPriority(USART1_IRQn, 2);
   NVIC_EnableIRQ(USART1_IRQn);
 
-  while (!g_exitRuntime) {
-    ContactData outbound;
-
-    if (Contacts::transmit(outbound)) {
-      NVIC_DisableIRQ(USART1_IRQn);
-      sendPayload(PAYLOAD_CONT_DATA, &outbound, sizeof(outbound));
-      NVIC_EnableIRQ(USART1_IRQn);
-    }
-
-    __asm("WFI");
-  }
+  while (!g_exitRuntime) __asm("WFI");
 
   NVIC_DisableIRQ(USART1_IRQn);
 }
 
 extern "C" void USART1_IRQHandler(void) {
-  // Start dequeueing fifo data
-  if (USART1->ISR & USART_ISR_TXE) {
-    USART1->TDR = tx_out_buffer[tx_read_index++];
-    if (tx_read_index == tx_write_index) {
-      USART1->CR1 &= ~USART_CR1_TXEIE;
-    }
-  }
-  
+  static uint16_t writeIndex = 0;
+
   // Character match (used to mark the start of a packet)
   if (USART1->ISR & USART_ISR_CMF) {
     USART1->ICR = USART_ICR_CMCF;
@@ -175,9 +124,8 @@ extern "C" void USART1_IRQHandler(void) {
   if (~USART1->ISR & USART_ISR_RXNE) {
     return ;
   }
- 
+
   // Receive data
-  static uint16_t writeIndex = 0;
   inbound.raw[writeIndex++] = USART1->RDR;
 
   // We've not finished receiving a header
@@ -213,32 +161,16 @@ extern "C" void USART1_IRQHandler(void) {
   USART1->RQR = USART_RQR_RXFRQ;
   writeIndex = 0;
 
-  uint32_t expected_crc = crc(inbound.payload, inbound.header.bytes_to_follow);
-  SpineMessageFooter* footer = (SpineMessageFooter*)&inbound.payload[inbound.header.bytes_to_follow];
+  uint32_t expected_crc = crc(&inbound.null, inbound.header.bytes_to_follow);
+  uint8_t* message_end = (__packed uint8_t*)(&inbound.null) + inbound.header.bytes_to_follow;
+  uint32_t received_crc = *(__packed uint32_t*)message_end;
 
-  if (expected_crc != footer->checksum) {
+  if (expected_crc != received_crc) {
     sendAck(NACK_CRC_FAILED);
     return ;
   }
 
   switch (inbound.header.payload_type) {
-  case PAYLOAD_VERSION:
-    sendVersion();
-    return ;
-
-  case PAYLOAD_CONT_DATA:
-    Contacts::forward(inbound.contacts);
-    return ;
-
-  case PAYLOAD_MODE_CHANGE:
-    if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
-      sendAck(NACK_NOT_VALID);
-      return ;
-    }
-
-    g_exitRuntime = true;
-    return ;
-
   case PAYLOAD_ERASE:
     Flash::eraseApplication();
     break ;
@@ -254,29 +186,30 @@ extern "C" void USART1_IRQHandler(void) {
 
       // Write fingerprint to signify that write completed
       Flash::writeFlash(&APP->fingerPrint, &COZMO_APPLICATION_FINGERPRINT, sizeof(APP->fingerPrint));
+      g_exitRuntime = true;
     }
     break ;
 
   case PAYLOAD_DFU_PACKET:
     {
-      const uint32_t word_size = inbound.write.wordCount * sizeof(inbound.write.data[0]);
-      const uint32_t* dst = (uint32_t*)&APP->certificate[inbound.write.address];
-      const uint32_t* src = inbound.write.data;
+      const uint32_t word_size = inbound.write.payload.wordCount * sizeof(inbound.write.payload.data[0]);
+      const uint32_t* dst = (uint32_t*)&APP->certificate[inbound.write.payload.address];
+      const uint32_t* src = inbound.write.payload.data;
 
       // We can only work with aligned addresses
-      if (inbound.write.address & 3) {
+      if (inbound.write.payload.address & 3) {
         sendAck(NACK_SIZE_ALIGN);
         return;
       }
 
       // Address is out of bounds
-      if ((inbound.write.address + word_size + 8) > COZMO_APPLICATION_SIZE) {
+      if ((inbound.write.payload.address + word_size + 8) > COZMO_APPLICATION_SIZE) {
         sendAck(NACK_BAD_ADDRESS);
         return ;
       }
 
       // Check if the space is erased
-      for (int i = 0; i < inbound.write.wordCount; i++) {
+      for (int i = 0; i < inbound.write.payload.wordCount; i++) {
         if (dst[i] != 0xFFFFFFFF) {
           sendAck(NACK_NOT_ERASED);
           return ;
@@ -287,7 +220,7 @@ extern "C" void USART1_IRQHandler(void) {
       Flash::writeFlash(dst, src, word_size);
 
       // Verify flash
-      for (int i = 0; i < inbound.write.wordCount; i++) {
+      for (int i = 0; i < inbound.write.payload.wordCount; i++) {
         if (dst[i] != src[i]) {
           sendAck(NACK_FLASH_FAILED);
           return ;

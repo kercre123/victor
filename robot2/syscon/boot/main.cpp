@@ -17,6 +17,9 @@
 
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
+static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
+static const uint16_t MAIN_EXEC_PERIOD = SYSTEM_CLOCK / MAIN_EXEC_PRESCALE / 200;        // 200hz (5ms period)
+
 bool validate(void) {
   // Elevate the watchdog kicker while a cert check is running
   NVIC_SetPriority(TIM14_IRQn, 0);
@@ -43,15 +46,9 @@ static bool boot_test(void) {
   return validate();
 }
 
-static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
-static const uint16_t MAIN_EXEC_PERIOD = SYSTEM_CLOCK / MAIN_EXEC_PRESCALE / 200;        // 200hz (5ms period)
-
 void timer_init(void) {
   // Start our cheese watchdog
   #ifndef DISABLE_WDOG
-  WWDG->SR = WWDG_SR_EWIF | 0x7F;
-  WWDG->CR = 0xFF;
-
   // Start the watchdog up
   IWDG->KR = 0xCCCC;
   IWDG->KR = 0x5555;
@@ -67,7 +64,6 @@ void timer_init(void) {
   TIM14->CR1 = TIM_CR1_CEN;
 
   NVIC_EnableIRQ(TIM14_IRQn);
-  NVIC_EnableIRQ(WWDG_IRQn);
 }
 
 extern "C" void SoftReset(void) {
@@ -77,40 +73,27 @@ extern "C" void SoftReset(void) {
 extern "C" void TIM14_IRQHandler(void) {
   #ifndef DISABLE_WDOG
   IWDG->KR = 0xAAAA;
-  WWDG->CR = 0xFF;
   #endif
   TIM14->SR = 0;
-
-  Analog::tick();
-}
-
-extern "C" void WWDG_IRQHandler(void) {
-  Flash::writeFaultReason(FAULT_WATCHDOG);
 }
 
 int main(void) {
   Power::enableClocking();
-  Power::init();
   Analog::init();
-  Contacts::init();
+  Power::init();
 
   timer_init();
-
-  // TODO: WAIT FOR BATTERY VOLTAGE TO GET ABOVE A CERTAIN LEVEL
-  // TODO: WAIT FOR VEXT TO GET ABOVE A CERTAIN LEVEL
-  
-  // Turn power on to the board
-  POWER_EN::pull(PULL_UP);
-  POWER_EN::mode(MODE_INPUT);
 
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash
   // 2) Start recovery
   if (!boot_test()) {
+    // We need to run recovery
     Flash::eraseApplication();
-  }
 
-  Comms::run();
+    // Wait for firmware
+    Comms::run();
+  }
 
   // This flag is only set when DFU has validated the image
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {

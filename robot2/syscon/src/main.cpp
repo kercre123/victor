@@ -19,12 +19,12 @@ void Main_Execution(void) {
   #ifndef DISABLE_WDOG
   // Kick watch dog when we enter our service routine
   IWDG->KR = 0xAAAA;
-  WWDG->CR = 0xFF;  // Enabled with 64 ticks
   #endif
 
   // Do our main execution loop
   Comms::tick();
   Motors::tick();
+  Contacts::tick();
   //Opto::tick();
   Analog::tick();
   Lights::tick();

@@ -5,7 +5,6 @@
 
 #include "analog.h"
 #include "power.h"
-//#include "lights.h"
 #include "vectors.h"
 #include "flash.h"
 
@@ -14,18 +13,9 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6;
 
-static const int POWER_DOWN_TIME = 100;
-static const int POWER_WIPE_TIME = 500;
-static const int BUTTON_THRESHOLD = 0xC00;
-static const int BOUNCE_LENGTH = 3;
-
 // Since the analog portion is shared with the bootloader, this has to be in the shared ram space
 uint16_t volatile Analog::values[ADC_CHANNELS];
-bool Analog::button_pressed;
-static bool bouncy_button;
-static int bouncy_count;
 static uint16_t calibration_value;
-static int hold_count;
 
 void Analog::init(void) {
   // Calibrate ADC1
@@ -87,6 +77,19 @@ void Analog::stop(void) {
   while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
 }
 
+#ifndef BOOTLOADER
+#include "lights.h"
+
+static const int POWER_DOWN_TIME = 100;
+static const int POWER_WIPE_TIME = 500;
+static const int BUTTON_THRESHOLD = 0xC00;
+static const int BOUNCE_LENGTH = 3;
+
+bool Analog::button_pressed;
+static bool bouncy_button;
+static int bouncy_count;
+static int hold_count;
+
 void Analog::tick(void) {
   // Debounce buttons
   bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
@@ -102,15 +105,9 @@ void Analog::tick(void) {
     if (hold_count < POWER_DOWN_TIME) {
       hold_count++;
     } else if (hold_count < POWER_WIPE_TIME) {
-      // TODO: LIGHTS MANAGER
-      // Lights::disable();
+      Lights::disable();
     } else {
-      // Mark the application as invalid
-      // NOTE: This should only happen if the robot is on the charger
-      for (int i = 0; i < MAX_FAULT_COUNT; i++) {
-        Flash::writeFaultReason(FAULT_USER_WIPE);
-      }
-      NVIC_SystemReset();
+      Flash::markForWipe();
     }
   } else {
     if (hold_count >= POWER_DOWN_TIME) {
@@ -120,3 +117,4 @@ void Analog::tick(void) {
     }
   }
 }
+#endif

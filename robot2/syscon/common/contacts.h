@@ -5,8 +5,8 @@
 
 namespace Contacts {
   void init(void);
+  void tick(void);
   void forward(const ContactData& data);
-  bool transmit(ContactData& data);
 }
 
 #endif
