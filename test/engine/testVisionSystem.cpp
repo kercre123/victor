@@ -22,6 +22,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/vision/basestation/imageCache.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
