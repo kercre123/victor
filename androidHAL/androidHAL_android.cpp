@@ -22,6 +22,7 @@
 #include "androidHAL/android/camera/camera_manager.h"
 #include "androidHAL/android/camera/image_reader.h"
 #include "androidHAL/android/camera/utils/native_debug.h"
+#include "androidHAL/android/fugly_camera/victor_camera.h"
 #include "anki/vision/CameraSettings.h"
 
 #include <vector>
@@ -41,7 +42,13 @@ namespace Anki {
 
 #pragma mark --- Simulated Hardware Method Implementations ---
     
-    
+    int victor_fugly_camera_callback(const uint8_t* image, int width, int height)
+    {
+      // process camera image...
+      // NOTE: This callback may occur on a thread that is _not_ owned by the engine.
+      return 0;
+    }
+
     // Definition of static field
     AndroidHAL* AndroidHAL::_instance = 0;
     
@@ -79,6 +86,15 @@ namespace Anki {
     {
       //InitIMU();
       //InitCamera();
+
+      // victor_camera usage
+      CameraHandle camera  = camera_alloc();
+      camera_init(camera);
+      camera_start(camera, victor_fugly_camera_callback);
+    
+      camera_stop(camera);
+      camera_cleanup(camera);
+      free(camera);
     }
     
     AndroidHAL::~AndroidHAL()
