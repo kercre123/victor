@@ -13,7 +13,7 @@
 #include "common.h"
 #include "hardware.h"
 
-//#define DISABLE_WDOG
+#define DISABLE_WDOG
 
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
@@ -81,7 +81,6 @@ extern "C" void TIM14_IRQHandler(void) {
 int main(void) {
   Power::enableClocking();
   timer_init();
-
   Analog::init();
   Power::init();
 

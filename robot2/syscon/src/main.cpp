@@ -56,9 +56,6 @@ int main (void) {
   // This is all driven by IRQ logic
   //Opto::init();
 
-  USART2->TDR = 0x00;
-  USART2->TDR = 0x80;
-
   // Low priority interrupts are now our main execution
   for (;;) {
     __asm("WFI");

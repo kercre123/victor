@@ -47,15 +47,17 @@ void Contacts::forward(const ContactData& pkt) {
 }
 
 void Contacts::tick(void) {
-  ContactData pkt;
-  
-  NVIC_DisableIRQ(USART2_IRQn);
-  memcpy(&pkt, &rxData, sizeof(ContactData));  
-  memset(&rxData, 0, sizeof(ContactData));
-  rxDataIndex = 0;
-  NVIC_EnableIRQ(USART2_IRQn);
+  if (rxDataIndex > 0) {
+    ContactData pkt;
 
-  Comms::enqueue(PAYLOAD_CONT_DATA, &pkt, sizeof(pkt));
+    NVIC_DisableIRQ(USART2_IRQn);
+    memcpy(&pkt, &rxData, sizeof(ContactData));  
+    memset(&rxData, 0, sizeof(ContactData));
+    rxDataIndex = 0;
+    NVIC_EnableIRQ(USART2_IRQn);
+
+    Comms::enqueue(PAYLOAD_CONT_DATA, &pkt, sizeof(pkt));
+  }
 }
 
 extern "C" void USART2_IRQHandler(void) {

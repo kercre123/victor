@@ -16,18 +16,20 @@
 
 #include "messages.h"
 
+struct TransmitFifoPayload {
+  SpineMessageHeader header;
+  union {
+    ContactData contactData;
+    AckMessage ack;
+    VersionInfo version;
+    uint8_t raw[];
+  };
+  SpineMessageFooter _footer;
+};
+
 struct TransmitFifo {
   uint8_t size;
-  struct {
-    SpineMessageHeader header;
-    union {
-      ContactData contactData;
-      AckMessage ack;
-      VersionInfo version;
-      uint8_t raw[];
-    };
-    SpineMessageFooter _footer;
-  } payload;
+  TransmitFifoPayload payload;
 };
 
 static struct {
@@ -39,7 +41,7 @@ static struct {
   } sync;
   
   // Additional data (after sync)
-  uint8_t tail[sizeof(VersionInfo) + sizeof(ContactData)];
+  uint8_t tail[sizeof(TransmitFifoPayload) * 3];
 } outboundPacket;
 
 static struct {
@@ -115,7 +117,7 @@ void Comms::init(void) {
   outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
 
   missed_frames = 0;
-  applicationRunning = false;
+  applicationRunning = true;
 
   static const AckMessage ack = { ACK_PAYLOAD };
   enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
@@ -171,9 +173,8 @@ static int dequeuePacket(void* out, int size) {
 }
 
 void Comms::tick(void) {
-  // Soft-watchdog
+  // Soft-watchdog (This is lame)
   if (missed_frames++ >= MAX_MISSED_FRAMES) {
-    // Reset but don't pull power
     applicationRunning = false;
   }
 
@@ -200,10 +201,10 @@ void Comms::tick(void) {
     count = 0;
   }
 
-  count += dequeuePacket(&outboundPacket.tail, sizeof(&outboundPacket.tail));
+  count += dequeuePacket(&outboundPacket.tail, sizeof(outboundPacket.tail));
 
   // Fire out ourbound data
-  if (DMA1_Channel3->CNDTR) {
+  if (count > 0) {
     DMA1_Channel3->CPAR = (uint32_t)&USART1->TDR;
     DMA1_Channel3->CNDTR = count;
     DMA1_Channel3->CCR |= DMA_CCR_EN;
@@ -277,6 +278,7 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
 
   switch (inboundPacket.header.payload_type) {
     case PAYLOAD_MODE_CHANGE:
+      missed_frames = 0;
       applicationRunning = true;
       break ;
     case PAYLOAD_VERSION:
