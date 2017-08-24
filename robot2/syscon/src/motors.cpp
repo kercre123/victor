@@ -206,6 +206,24 @@ void Motors::init() {
   configure_pins();
 }
 
+void Motors::stop() {
+  LP1::mode(MODE_INPUT);
+  LN1::mode(MODE_INPUT);
+  LN2::mode(MODE_INPUT);
+
+  HP1::mode(MODE_INPUT);
+  HN1::mode(MODE_INPUT);
+  HN2::mode(MODE_INPUT);
+
+  RTP1::mode(MODE_INPUT);
+  RTN1::mode(MODE_INPUT);
+  RTN2::mode(MODE_INPUT);
+
+  LTP1::mode(MODE_INPUT);
+  LTN1::mode(MODE_INPUT);
+  LTN2::mode(MODE_INPUT);
+}
+
 // This treats 0 power as a 'transitional' state
 // This can be optimized so that if in configured and direction has not changed, to reconfigure the pins, otherwise set power
 

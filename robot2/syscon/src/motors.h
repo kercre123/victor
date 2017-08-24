@@ -11,6 +11,7 @@ namespace Motors {
   void transmit(BodyToHead *payload);
 
   void init();
+  void stop();
   void tick();
 }
 
