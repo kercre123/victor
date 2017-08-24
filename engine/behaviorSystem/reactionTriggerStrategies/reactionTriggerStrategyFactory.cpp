@@ -72,7 +72,9 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       // unless it "canInterruptSelf". This prevents the CliffEvent message (which comes in ~0.5 sec after
       // the RobotStopped msg) from causing the ReactToCliff behavior to run a second time.
       auto callback = [genericStrategy](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
-          return (robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::CliffDetected) || genericStrategy->CanInterruptSelf();
+        const bool cliffDetectedTriggerEnabled = robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::CliffDetected);
+          return cliffDetectedTriggerEnabled &&
+                ((robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::CliffDetected) || genericStrategy->CanInterruptSelf());
         };
       genericStrategy->ConfigureRelevantEvents(relevantTypes, callback);
       strategy = genericStrategy;
@@ -161,7 +163,8 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
         MessageEngineToGameTag::RobotOffTreadsStateChanged
       };
       genericStrategy->ConfigureRelevantEvents(relevantTypes, [] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
-        return (event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads);
+        const bool returnToTreadsTriggerEnabled = robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::ReturnedToTreads);
+        return returnToTreadsTriggerEnabled && (event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads);
       });
       
       strategy = genericStrategy;

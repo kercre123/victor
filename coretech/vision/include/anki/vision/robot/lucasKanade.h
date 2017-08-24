@@ -356,10 +356,11 @@ namespace Anki
           const Point<f32>& roundedCornersFraction,
           const s32 maxSamplesAtBaseLevel,
           const s32 numSamplingRegions,
-          const f32 focalLength_x,
+          const f32 focalLength_x,          // TODO: move all this to CTI-Vision-Basestation and use take in CameraCalibration
           const f32 focalLength_y,
           const f32 camCenter_x,
           const f32 camCenter_y,
+          const std::vector<f32>& distortionCoeffs,
           const Point<f32>& templateSize_mm, // actual physical size of the template
           MemoryStack ccmMemory,
           MemoryStack &onchipScratch,

@@ -84,6 +84,7 @@ public:
   // robot configuration json files
   const Json::Value& GetRobotMoodConfig() const          { return _robotMoodConfig; }
   const Json::Value& GetRobotActivitiesConfig() const    { return _robotActivitiesConfig; }
+  const Json::Value& GetBehaviorSystemConfig() const     { return _behaviorSystemConfig; }
   const Json::Value& GetRobotWorkoutConfig() const       { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const        { return _robotVisionConfig; }
   const Json::Value& GetReactionTriggerMap() const       { return _reactionTriggerMap; }
@@ -96,6 +97,7 @@ public:
   const Json::Value& GetLocalNotificationConfig() const  { return _localNotificationConfig; }
   const Json::Value& GetTextToSpeechConfig() const       { return _textToSpeechConfig; }
   const Json::Value& GetInventoryConfig() const          { return _inventoryConfig; }
+  const Json::Value& GetDasEventConfig() const           { return _dasEventConfig; }
   
   // voice command configs
   const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
@@ -164,6 +166,7 @@ private:
   // robot configs
   Json::Value _robotMoodConfig;
   Json::Value _robotActivitiesConfig;
+  Json::Value _behaviorSystemConfig;
   Json::Value _robotVisionConfig;
   Json::Value _reactionTriggerMap;
   Json::Value _robotWorkoutConfig;
@@ -176,6 +179,7 @@ private:
   Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
+  Json::Value _dasEventConfig;
   
   // voice command configs
   Json::Value _gameRequestWeights;

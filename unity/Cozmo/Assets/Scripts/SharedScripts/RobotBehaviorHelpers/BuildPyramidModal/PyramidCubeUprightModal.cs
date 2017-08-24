@@ -26,7 +26,7 @@ namespace Cozmo.Upgrades {
       GameObject newCube = UIManager.CreateUIElement(isometricPrefab, lightCubeContainer);
       LightCubeSprite newCubeScript = newCube.GetComponent<LightCubeSprite>();
       newCubeScript.SetIcon(lightCubeType);
-      newCubeScript.SetColor(CubePalette.Instance.CubeUprightColor.lightColor);
+      newCubeScript.SetColor(CubePalette.Instance.CubeUprightColor.uiLightColor);
     }
   }
 }

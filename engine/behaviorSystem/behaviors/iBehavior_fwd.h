@@ -35,8 +35,9 @@ class Robot;
 
 using IBehaviorPtr                          = std::shared_ptr<IBehavior>;
 using BehaviorRobotCompletedActionCallback  = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
+using BehaviorRobotCompletedActionWithRobotCallback = std::function<void(const ExternalInterface::RobotCompletedAction&, Robot&)>;
 using BehaviorActionResultCallback          = std::function<void(ActionResult)>;
-using BehaviorActionResultWithRobotCallback = std::function<void(ActionResult, Robot&)>;
+using BehaviorActionResultWithRobotCallback = std::function<void(const ActionResult&, Robot&)>;
 using BehaviorSimpleCallback                = std::function<void(void)>;
 using BehaviorSimpleCallbackWithRobot       = std::function<void(Robot& robot)>;
 using BehaviorStatusCallbackWithRobot       = std::function<BehaviorStatus(Robot& robot)>;

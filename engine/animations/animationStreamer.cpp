@@ -204,10 +204,10 @@ namespace Cozmo {
         return NotAnimatingTag;
       }
       
-      PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
-                          "Animation %s is interrupting animation %s",
-                          anim != nullptr ? anim->GetName().c_str() : "NULL",
-                          _streamingAnimation->GetName().c_str());
+      PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.Aborting",
+                       "Animation %s is interrupting animation %s",
+                       anim != nullptr ? anim->GetName().c_str() : "NULL",
+                       _streamingAnimation->GetName().c_str());
     }
     
     // If there's something already streaming or we're purposefully clearing the buffer, abort

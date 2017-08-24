@@ -80,6 +80,10 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   
+# ifdef COZMO_V2
+  CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
+# endif
+  
   namespace JsonKey
   {
     const char * const ImageQualityGroup = "ImageQuality";
@@ -196,16 +200,13 @@ namespace Cozmo {
     
   } //Init()
   
-  void VisionComponent::SetCameraCalibration(Vision::CameraCalibration& camCalib)
+  void VisionComponent::SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
-    if(_camCalib != camCalib || !_isCamCalibSet)
+    const bool calibChanged = _camera.SetCalibration(camCalib);
+    if(calibChanged)
     {
-      _camCalib = camCalib;
-      _camera.SetSharedCalibration(&_camCalib);
-      _isCamCalibSet = true;
-     
       Lock();
-      _visionSystem->UpdateCameraCalibration(_camCalib);
+      _visionSystem->UpdateCameraCalibration(camCalib);
       Unlock();
      
       if(!_isSynchronous)
@@ -250,7 +251,7 @@ namespace Cozmo {
   
   void VisionComponent::Start()
   {
-    if(!_isCamCalibSet) {
+    if(!IsCameraCalibrationSet()) {
       PRINT_NAMED_ERROR("VisionComponent.Start",
                         "Camera calibration must be set to start VisionComponent.");
       return;
@@ -415,7 +416,7 @@ namespace Cozmo {
     }
     _lastReceivedImageTimeStamp_ms = encodedImage.GetTimeStamp();
     
-    if(_isCamCalibSet) {
+    if(IsCameraCalibrationSet()) {
       DEV_ASSERT(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       DEV_ASSERT(_visionSystem->IsInitialized(), "VisionComponent.SetNextImage.VisionSystemNotInitialized");
 
@@ -580,7 +581,8 @@ namespace Cozmo {
     
     DEV_ASSERT(_camera.IsCalibrated(), "VisionComponent.PopulateGroundPlaneHomographyLUT.CameraNotCalibrated");
     
-    const Matrix_3x3f K = _camera.GetCalibration()->GetCalibrationMatrix();
+    const auto calibration = _camera.GetCalibration();
+    const Matrix_3x3f K = calibration->GetCalibrationMatrix();
     
     GroundPlaneROI groundPlaneROI;
     
@@ -606,7 +608,7 @@ namespace Cozmo {
       const Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
       
       Quad2f imgQuad;
-      groundPlaneROI.GetImageQuad(H, _camCalib.GetNcols(), _camCalib.GetNrows(), imgQuad);
+      groundPlaneROI.GetImageQuad(H, calibration->GetNcols(), calibration->GetNrows(), imgQuad);
       
       if(_camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
          _camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
@@ -1227,7 +1229,13 @@ namespace Cozmo {
       msg.nrows = calib.GetNrows();
       msg.ncols = calib.GetNcols();
       msg.skew = calib.GetSkew();
-      msg.distCoeffs = calib.GetDistortionCoeffs();
+      
+      DEV_ASSERT_MSG(msg.distCoeffs.size() == calib.GetDistortionCoeffs().size(),
+                     "VisionComponent.UpdateComputedCalibration.WrongNumDistCoeffs",
+                     "Message expects %zu, got %zu", msg.distCoeffs.size(), calib.GetDistortionCoeffs().size());
+      
+      std::copy(calib.GetDistortionCoeffs().begin(), calib.GetDistortionCoeffs().end(), msg.distCoeffs.begin());
+      
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
   
@@ -2161,7 +2169,7 @@ namespace Cozmo {
 
       GetImuDataHistory().CalculateTimestampForImageIMU(entry.imageId, t,
                                                         RollingShutterCorrector::timeBetweenFrames_ms,
-                                                        GetCameraCalibration().GetNrows());
+                                                        GetCameraCalibration()->GetNrows());
     }
   }
   
@@ -2305,6 +2313,15 @@ namespace Cozmo {
       // Create ImageRGB object from image buffer
       Vision::ImageRGB imgRGB(numRows, numCols, buffer);
       
+      if(kDisplayUndistortedImages)
+      {
+        Vision::ImageRGB imgUndistorted(numRows,numCols);
+        cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                      _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                      _camera.GetCalibration()->GetDistortionCoeffs());
+        imgUndistorted.Display("UndistortedImage");
+      }
+        
       // Create EncodedImage with proper imageID and timestamp
       // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
       TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
@@ -2318,7 +2335,7 @@ namespace Cozmo {
       
       // Compress to jpeg and send to game and viz
       lastResult = CompressAndSendImage(imgRGB, 50);
-      DEV_ASSERT(RESULT_OK == lastResult, "CompressAndSendImage() failed");
+      DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
     }
   }
   
@@ -2432,31 +2449,50 @@ namespace Cozmo {
           } else {
             
             payload.Unpack(data, size);
+            
+            std::stringstream ss;
+            ss << "[";
+            for(int i = 0; i < payload.distCoeffs.size() - 1; ++i)
+            {
+              ss << payload.distCoeffs[i] << ", ";
+            }
+            ss << payload.distCoeffs.back() << "]";
+            
             PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.Recvd",
-                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
+                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f, distCoeffs: %s)",
                              payload.ncols, payload.nrows,
                              payload.focalLength_x, payload.focalLength_y,
-                             payload.center_x, payload.center_y);
+                             payload.center_x, payload.center_y,
+                             ss.str().c_str());
             
-            // Convert calibration message into a calibration object to pass to the robot
-            Vision::CameraCalibration calib(payload.nrows,
-                                            payload.ncols,
-                                            payload.focalLength_x,
-                                            payload.focalLength_y,
-                                            payload.center_x,
-                                            payload.center_y,
-                                            payload.skew,
-                                            payload.distCoeffs);
+            
+            
+            // See hardware.h for the body hardware versions
+            // 6 == BODY_VER_1v5c and anything less is an older version
+            // We never verified the computed distortion coefficients of 1.0 or 1.5 robots at the factory
+            // so as far as we know they are garbage so ignore them.
+            if(_robot.GetBodyHWVersion() <= 6)
+            {
+              PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.IgnoringDistCoeffs", "");
+              payload.distCoeffs.fill(0);
+            }
+            
+            // Convert calibration data in payload to a shared CameraCalibration object
+            auto calib = std::make_shared<Vision::CameraCalibration>(payload.nrows,
+                                                                     payload.ncols,
+                                                                     payload.focalLength_x,
+                                                                     payload.focalLength_y,
+                                                                     payload.center_x,
+                                                                     payload.center_y,
+                                                                     payload.skew,
+                                                                     payload.distCoeffs);
             
             SetCameraCalibration(calib);
             
             #ifdef COZMO_V2
             {
-              // Compute FOV from focal length
-              f32 headCamFOV_ver = 2.f * atanf(static_cast<f32>(payload.nrows) / (2.f * payload.focalLength_y));
-              f32 headCamFOV_hor = 2.f * atanf(static_cast<f32>(payload.ncols) / (2.f * payload.focalLength_x));
-             
-              CameraFOVInfo msg(headCamFOV_hor, headCamFOV_ver);
+              // Compute FOV from focal length and send
+              CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
               if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
                 PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
               }
@@ -2471,12 +2507,12 @@ namespace Cozmo {
 #ifdef COZMO_V2
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
-          std::array<float,8> junkArr;
-          Vision::CameraCalibration calib(240, 320,
-                                          280, 280,
-                                          160, 120,
-                                          0,
-                                          junkArr);
+          std::array<float,8> distCoeffs{{0.2f,0.1f,0.05f,0.025f,0.f,0.f,0.f,0.f}};
+          auto calib = std::make_shared<Vision::CameraCalibration>(240, 320,
+                                                                   280, 280,
+                                                                   160, 120,
+                                                                   0,
+                                                                   distCoeffs);
           SetCameraCalibration(calib);
 #endif
           

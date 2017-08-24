@@ -243,7 +243,6 @@ message SetRobotAudioOutputSource
 }
 
 message ForceDelocalizeRobot {
-  uint_8 robotID
 }
 
 // Will restore the currently connected robot with either an automatically determined
@@ -275,19 +274,16 @@ message RequestUnlockDataFromBackup {
 //  Use actionType to cancel any queued actions of the specified type.
 //  Use actionType = -1 to cancel all actions, regardless of type.
 message CancelAction {
-  RobotActionType actionType,  // See actionTypes.def
-  uint_8 robotID
+  RobotActionType actionType  // See actionTypes.def
 }
 
 // CancelActionByIdTag
 message CancelActionByIdTag {
-  uint_32 idTag,
-  uint_8 robotID
+  uint_32 idTag
 }
 
 // QueueSingleAction
   message QueueSingleAction {
-  uint_8  robotID,
   uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
   uint_8  numRetries = 0,
   QueueActionPosition    position,
@@ -296,7 +292,6 @@ message CancelActionByIdTag {
 
 // QueueCompoundAction
 message QueueCompoundAction {
-  uint_8  robotID,
   uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
   uint_8  numRetries = 0,
   bool  parallel,  // false means sequential
@@ -317,7 +312,6 @@ message RedirectViz {
 
 // ImageRequest
 message ImageRequest {
-    uint_8 robotID,
     ImageSendMode mode
 }
 
@@ -326,7 +320,6 @@ message ImageRequest {
 //       It is intended for dev use since the robot will likely always stream
 //       its image in the product.
 message SetRobotImageSendMode {
-    uint_8 robotID,
     ImageSendMode mode,
     ImageResolution resolution
 }
@@ -372,8 +365,7 @@ message SelectNextObject {
 // (Override robot's current belief about whether it's carrying a block)
 // (Ideally, for dev/prototyping only)
 message SetRobotCarryingObject {
-    int_32 objectID, // use -1 to specify "none"
-    uint_8 robotID
+    int_32 objectID // use -1 to specify "none"
 }
 
 
@@ -570,7 +562,6 @@ message SetLiftLoadTestAsRunnable {
 
 // Any message intended for a specific robot's behaviorManager
 message BehaviorManagerMessage {
-  uint_8  robotID,
   BehaviorManagerMessageUnion  BehaviorManagerMessageUnion
 }
 
@@ -597,7 +588,6 @@ message AbortAll {
 
 // StartTestMode
 message StartTestMode {
-    uint_8  robotID,
     int_32 p1,
     int_32 p2,
     int_32 p3,
@@ -654,6 +644,10 @@ message NotifyOverfeedingShouldTriggerHiccups{
 
 // A message for Game to poll pyramid pre-reqs
 message RequestPyramidPreReqState{
+}
+
+// A message for Game to let engine know that Cozmo is waking up
+message NotifyCozmoWakeup{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -721,7 +715,6 @@ message EraseQuad {
 
 // ReplayLastAnimation
 message ReplayLastAnimation {
-    uint_8  robotID,
     uint_32 numLoops
 }
 
@@ -761,7 +754,6 @@ message RequestAvailableAnimationGroups{
 message SetLiveIdleAnimationParameters {
   LiveIdleAnimationParameter   paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames
-  uint_8                       robotID,
   bool                         setUnspecifiedToDefault = 0
 }
 
@@ -802,7 +794,6 @@ message SetActiveObjectLEDs {
     WhichCubeLEDs   whichLEDs,
     MakeRelativeMode   makeRelative,
     uint_8   turnOffUnspecifiedLEDs, // whether to augment current pattern, or turn off everything but what's specified
-    uint_8   robotID
 }
 
 
@@ -819,8 +810,7 @@ message SetAllActiveObjectLEDs {
   uint_32  rotationPeriod_ms,
   float_32 relativeToX,
   float_32 relativeToY,
-  MakeRelativeMode makeRelative,
-  uint_8   robotID
+  MakeRelativeMode makeRelative
 }
 
 // SetBackpackLEDs
@@ -832,8 +822,7 @@ message SetBackpackLEDs {
   uint_32  offPeriod_ms[5],
   uint_32  transitionOnPeriod_ms[5],
   uint_32  transitionOffPeriod_ms[5],
-  int_32   offset[5],
-  uint_8   robotID
+  int_32   offset[5]
 }
 
 // Enables/disables specific cube light states
@@ -912,7 +901,6 @@ union MoodMessageUnion {
 }
 
 message MoodMessage {
-  uint_8  robotID,
   MoodMessageUnion  MoodMessageUnion
 }
 
@@ -976,6 +964,13 @@ message WipeRobotNeedsData {
 // Wipes all needs data on the device
 message WipeDeviceNeedsData {
   bool reinitializeNeeds
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Notifications
+///////////////////////////////////////////////////////////////////////////////
+
+message NotificationsManagerReady {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1071,7 +1066,6 @@ message GetBlockPoolMessage {
 }
 
 message SendAvailableObjects {
-  uint_8 robotID,
   bool enable
 }
 

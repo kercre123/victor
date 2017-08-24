@@ -1,0 +1,33 @@
+2.70107:click:settings_button:0.06650543
+3.403988:text:Allgemeine Einstellungen
+0.856254:text:Hilf uns, Cozmo noch besser zu machen, indem du uns deine Spieldaten und -statistiken sendest.
+0.15685:text:Datensammlung
+0.24709:text:Anerkennungen
+0.41479:text:Nutzungsbedingungen
+0.663724:text:Datenschutzerklärung
+0.508273:text:Rechtliche Hinweise
+0.700124:text:COZMO LÖSCHEN
+0.423953:text:Support
+0.940056:text:Gehäuse-Hardware-Version: 1.0p (0)
+0.572793:text:Cozmo-Farbe: Original
+0.111965:text:Geräte-ID: {0}
+0.158968:text:Cozmo-Seriennummer: 00000000
+0.856387:text:Cozmo-Version: 0
+0.923936:text:App-Ausführungs-ID: {0}
+0.015553:text:App-Version: {0}
+0.108789:text:Infos
+0.732485:text:SDK AKTIVIEREN
+0.230628:text:go.anki.com/cozmo-app-sdk
+0.33736:text:Informationen zum Cozmo-SDK findest du hier:
+0.774613:text:Cozmo-SDK
+0.556381:text:Hilfe
+0.0361:text:Funktonieren die Cubes nicht?
+0.252234:text:Tippe hier, um Cubes zu suchen.
+0.167931:text:CUBES AKTUALISIEREN
+0.383493:text:Cube-Status
+0.837479:text:COZMO SCHLAFEN LEGEN
+0.654414:text:HOCH
+0.108616:text:NIEDRIG
+0.82765:text:MITTEL
+0.651636:text:Lautstärke und allgemeine Einstellungen
+0.680769:click:default_close_view_button:0.1187134

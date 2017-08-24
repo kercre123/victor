@@ -31,7 +31,7 @@ namespace {
 static const int kObsSampleWindow_ms          = 300;   // sample all measurements over this period
 static const f32 kObsTriggerSensitivity       = 1.2;   // scaling factor for robot speed to object speed
 static const f32 kObsMinObjectSpeed_mmps      = .1;    // prevents trigger if robot is stationary
-static const f32 kObsMaxRotationVariance_deg2 = .25;   // variance of heading angle in degrees
+static const f32 kObsMaxRotationVariance_rad2 = DEG_TO_RAD(.25);  // variance of heading angle in degrees (stored as radians)
 static const int kObsMaxObjectDistance_mm     = 100;   // don't respond if sensor reading is too far
 }
 
@@ -123,41 +123,44 @@ void AIComponent::CheckForSuddenObstacle()
   // calculate average sensor value over several samples
   f32 avgProxValue_mm       = 0;  // average forward sensor value
   f32 avgRobotSpeed_mmps    = 0;  // average foward wheel speed
-  f32 avgRotation_deg       = 0;  // average heading angle
-  f32 varRotation_degsq     = 0;  // variance of heading angle
+  f32 avgRotation_rad       = 0;  // average heading angle
+  f32 varRotation_radsq     = 0;  // variance of heading angle
   
-  const auto        states  = _robot.GetStateHistory()->GetRawPoses();
+  const auto&       states  = _robot.GetStateHistory()->GetRawPoses();
   const TimeStamp_t endTime = _robot.GetLastMsgTimestamp() - kObsSampleWindow_ms;
   
   int n = 0;
   for(auto st = states.rbegin(); st != states.rend() && st->first > endTime; ++st) {
-    Pose2d tempPos      = st->second.GetPose();
-    avgProxValue_mm    += st->second.GetProxSensorVal_mm();
-    avgRobotSpeed_mmps += fabs(st->second.GetLeftWheelSpeed_mmps() + st->second.GetRightWheelSpeed_mmps()) / 2;
-    avgRotation_deg    += RAD_TO_DEG(tempPos.GetAngle().ToFloat());
-    varRotation_degsq  += powf(RAD_TO_DEG(tempPos.GetAngle().ToFloat()), 2);
+    const auto& state = st->second;
+    const float angle_rad = state.GetPose().GetRotationAngle<'Z'>().ToFloat();
+    avgProxValue_mm    += state.GetProxSensorVal_mm();
+    avgRobotSpeed_mmps += fabs(state.GetLeftWheelSpeed_mmps() + state.GetRightWheelSpeed_mmps());
+    avgRotation_rad    += angle_rad;
+    varRotation_radsq  += (angle_rad * angle_rad);
     n++;
   }
-  
+  // Divide by two here, instead of inside the loop every iteration
+  avgRobotSpeed_mmps *= 0.5f;
+
   if (0 == n) {    // not enough robot history to calculate
     _suddenObstacleDetected = false;
     return;
   }
-  
+
   avgRobotSpeed_mmps /= n;
   avgProxValue_mm    /= n;
-  avgRotation_deg    /= n;
-  varRotation_degsq  /= n;
+  avgRotation_rad    /= n;
+  varRotation_radsq  /= n;
   
-  varRotation_degsq = fabs(varRotation_degsq - powf(avgRotation_deg, 2));
-                 
+  varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
+
   f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - _robot.GetForwardSensorValue()) / kObsSampleWindow_ms;
 
   
   // only trigger if sensor is changing faster than the robot speed, robot is
   // not turning, and sensor is not being changed by noise
   _suddenObstacleDetected = (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
-                            (varRotation_degsq   <= kObsMaxRotationVariance_deg2) &&
+                            (varRotation_radsq   <= kObsMaxRotationVariance_rad2) &&
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
                             (avgProxValue_mm     <= kObsMaxObjectDistance_mm);                   
   

@@ -66,12 +66,18 @@ Locale GetCurrentLocaleAndroid(void *jniEnv)
 
 Locale GetCurrentLocaleAndroid()
 {
-  auto envWrapper = JNIUtils::getJNIEnvWrapper();
-  JNIEnv* env = envWrapper->GetEnv();
-  if (env != nullptr) {
-    return GetCurrentLocaleAndroid((void *) env);
+  if (ANKI_USE_JNI) {
+    auto envWrapper = JNIUtils::getJNIEnvWrapper();
+    JNIEnv* env = envWrapper->GetEnv();
+    if (env != nullptr) {
+      return GetCurrentLocaleAndroid((void *) env);
+    } else {
+      PRINT_NAMED_ERROR("GetCurrentLocaleAndroid_env_null", "");
+      return Locale::kDefaultLocale;
+    }
   } else {
-    PRINT_NAMED_ERROR("GetCurrentLocaleAndroid_env_null", "");
+    PRINT_NAMED_WARNING("GetCurrentLocaleAndroid.jni_disabled",
+                        "%s", "JNI locale not available");
     return Locale::kDefaultLocale;
   }
 

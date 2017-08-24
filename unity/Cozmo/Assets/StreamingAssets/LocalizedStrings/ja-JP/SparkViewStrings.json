@@ -22,12 +22,12 @@
     "translation" : "特定のトリックまたはゲームをするようにCozmoに頼みます。"
   },
   "sparksView.sparkCount.label" : {
-    "translation" : "利用可能なエナジースパーク"
+    "translation" : "利用可能なエナジーボール"
   },
   "sparksView.sparksRequired.label" : {
-    "translation" : "エナジースパークが必要です"
+    "translation" : "エナジーボールが必要です"
   },
   "sparksDetailModal.sparkButton.label" : {
-    "translation" : "エナジースパーク"
+    "translation" : "エナジーボール"
   }
 }

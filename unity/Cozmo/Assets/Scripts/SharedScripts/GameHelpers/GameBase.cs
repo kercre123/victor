@@ -164,6 +164,7 @@ public abstract class GameBase : MonoBehaviour {
     if (challengeData.IsActivity) {
       Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(true);
     }
+    Cozmo.PauseManager.Instance.AllowFreeplayOnResume = false;
 
     _GameStartTime = Time.time;
     _GameIntervalLastTimestamp = -1;
@@ -836,6 +837,8 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.DialogCloseAnimationFinished -= CleanUp;
     }
 
+    Cozmo.PauseManager.Instance.AllowFreeplayOnResume = true;
+
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd -= HandleAppHoldEnd;
 
@@ -1025,10 +1028,10 @@ public abstract class GameBase : MonoBehaviour {
         //If the player doesn't have a name, instead of "" WINS!, change the message to YOU WIN!
         if (!string.IsNullOrEmpty(player.name)) {
           if (useFlatText) {
-            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWinsFlat, new object[] { player.name });
           }
           else {
-            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWinsFlat, new object[] { player.name });
+            winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
           }
         }
         else {

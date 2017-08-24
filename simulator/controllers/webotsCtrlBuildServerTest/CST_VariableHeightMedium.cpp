@@ -64,7 +64,6 @@ namespace Anki {
                                                 GetNumObjects() == 1)
           {
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 1;
             m.numRetries = 3;

@@ -423,7 +423,7 @@ namespace Anki {
     void CozmoSimTestController::SendForceDeloc()
     {
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ForceDelocalizeRobot(GetRobotState().robotID)));
+                    ExternalInterface::ForceDelocalizeRobot()));
     }
   
     bool CozmoSimTestController::IsLocalizedToObject() const

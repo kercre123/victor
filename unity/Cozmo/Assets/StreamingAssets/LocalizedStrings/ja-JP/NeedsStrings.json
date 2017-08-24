@@ -100,10 +100,10 @@
     "translation" : "完了"
   },
   "needs.RewardsDialog.SparksInventoryFull" : {
-    "translation" : "エナジースパークインベントリがいっぱいです。"
+    "translation" : "エナジーボールインベントリがいっぱいです。"
   },
   "needs.RewardsDialog.SparksEarned" : {
-    "translation" : "さらにエナジースパークを獲得しました！"
+    "translation" : "さらにエナジーボールを獲得しました！"
   },
   "needs.RewardsDialog.TrickUnlocked" : {
     "translation" : "{0}をロック解除しました！"

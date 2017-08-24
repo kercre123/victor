@@ -65,6 +65,9 @@ public static class Localization {
   private static System.Globalization.CultureInfo _CurrentCulture = null;
   private static SystemLanguage _SystemLanguage = Application.systemLanguage;
 
+  private const string _kLatinFontVariant = "latin";
+  private const string _kJapaneseFontVariant = "ja-JP";
+
   public static string LoadLocaleAndCultureInfo(bool overrideLanguage = false, SystemLanguage languageOverride = SystemLanguage.English) {
     if (overrideLanguage) {
       _SystemLanguage = languageOverride;
@@ -73,23 +76,23 @@ public static class Localization {
     switch (_SystemLanguage) {
     case SystemLanguage.English:
       _CurrentLocale = "en-US";
-      _CurrentFontBundleVariant = "latin";
+      _CurrentFontBundleVariant = _kLatinFontVariant;
       break;
     case SystemLanguage.French:
       _CurrentLocale = "fr-FR";
-      _CurrentFontBundleVariant = "latin";
+      _CurrentFontBundleVariant = _kLatinFontVariant;
       break;
     case SystemLanguage.German:
       _CurrentLocale = "de-DE";
-      _CurrentFontBundleVariant = "latin";
+      _CurrentFontBundleVariant = _kLatinFontVariant;
       break;
     case SystemLanguage.Japanese:
       _CurrentLocale = "ja-JP";
-      _CurrentFontBundleVariant = "ja-JP";
+      _CurrentFontBundleVariant = _kJapaneseFontVariant;
       break;
     default:
       _CurrentLocale = "en-US";
-      _CurrentFontBundleVariant = "latin";
+      _CurrentFontBundleVariant = _kLatinFontVariant;
       break;
     }
 
@@ -115,6 +118,10 @@ public static class Localization {
       LoadLocaleAndCultureInfo();
     }
     return _CurrentFontBundleVariant;
+  }
+
+  public static bool UseJapaneseFont() {
+    return _CurrentFontBundleVariant == _kJapaneseFontVariant;
   }
 
   private const string kLocalizationStreamingAssetsFolderPath = "/LocalizedStrings/";

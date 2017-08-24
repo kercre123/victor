@@ -857,9 +857,9 @@ static const char* kBehaviorTestName = "Behavior factory test";
         // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
           PRINT_NAMED_INFO("BehaviorFactoryTest.Update.SettingFakeCalib", "");
-          Vision::CameraCalibration fakeCalib(240, 320,
-                                              290, 290,
-                                              160, 120);
+          auto fakeCalib = std::make_shared<Vision::CameraCalibration>(240, 320,
+                                                                       290, 290,
+                                                                       160, 120);
           robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
         }
         
@@ -1892,11 +1892,11 @@ static const char* kBehaviorTestName = "Behavior factory test";
   Result BehaviorFactoryTest::HandleCameraCalibration(Robot &robot, const CameraCalibration &calibMsg)
   {
  
-    Vision::CameraCalibration camCalib(calibMsg.nrows, calibMsg.ncols,
-                                       calibMsg.focalLength_x, calibMsg.focalLength_y,
-                                       calibMsg.center_x, calibMsg.center_y,
-                                       calibMsg.skew,
-                                       calibMsg.distCoeffs);
+    auto camCalib = std::make_shared<Vision::CameraCalibration>(calibMsg.nrows, calibMsg.ncols,
+                                                                calibMsg.focalLength_x, calibMsg.focalLength_y,
+                                                                calibMsg.center_x, calibMsg.center_y,
+                                                                calibMsg.skew,
+                                                                calibMsg.distCoeffs);
     
     // Set camera calibration
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");

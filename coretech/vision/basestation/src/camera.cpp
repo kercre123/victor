@@ -1,4 +1,4 @@
-﻿//
+//
 //  camera.cpp
 //  CoreTech_Vision
 //
@@ -36,7 +36,6 @@ namespace Anki {
     Camera::Camera(void)
     : _camID(0)
     , _calibration(nullptr)
-    , _isCalibrationShared(false)
     {
       
     } // Constructor: Camera()
@@ -44,36 +43,48 @@ namespace Anki {
     Camera::Camera(const CameraID_t ID)
     : _camID(ID)
     , _calibration(nullptr)
-    , _isCalibrationShared(false)
     {
       
     }
     
     Camera::Camera(const Camera& other)
     : _camID(other._camID)
-    , _calibration(nullptr)
-    , _isCalibrationShared(other._isCalibrationShared)
+    , _calibration(other._calibration)
     , _pose(other._pose)
     , _occluderList(other._occluderList)
     {
-      if(_isCalibrationShared) {
-        // If we're sharing calibrations, just share the same one as
-        // the Camera we are copying
-        _calibration = other._calibration;
-      } else if(other._calibration != nullptr) {
-        // Otherwise create another copy of calibration
-        _calibration = new CameraCalibration(*other._calibration);
-      }
+      
     }
     
     Camera::~Camera()
     {
-      if(this->IsCalibrated() && !_isCalibrationShared) {
-        // If the calibration pointer doesn't point to a shared calibration object
-        // then we must have instantiated a CameraCalibration object with new.
-        // So we must make sure to delete it here.
-        delete _calibration;
+     
+    }
+    
+    bool Camera::SetCalibration(std::shared_ptr<CameraCalibration> calib)
+    {
+      if(IsCalibrated() )
+      {
+        if(!ANKI_VERIFY(calib != nullptr, "Camera.SetCalibration.NullCalibration",
+                        "Camera already calibrated. Cannot set with nullptr."))
+        {
+          return false;
+        }
+        
+        // If Camera is already calibrated and the new one is the same, then nothing is actually changing.
+        if(calib == _calibration)
+        {
+          return false;
+        }
       }
+      else if(calib == nullptr)
+      {
+        // The Camera isn't already calibrated and a null calibration is being passed in, nothing is actually changing.
+        return false;
+      }
+      
+      _calibration = calib;
+      return true;
     }
     
 #if ANKICORETECH_USE_OPENCV
@@ -86,7 +97,9 @@ namespace Anki {
       
       Matrix_3x3f calibMatrix(_calibration->GetCalibrationMatrix());
       
-      cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
+      const CameraCalibration::DistortionCoeffs& distCoeffs = _calibration->GetDistortionCoeffs();
+      cv::Mat_<f32> distortionCoeffs(1, (s32)distCoeffs.size(), const_cast<f32*>(distCoeffs.data()));
+      
       cv::solvePnP(cvObjPoints, cvImagePoints,
                    calibMatrix.get_CvMatx_(), distortionCoeffs,
                    cvRvec, cvTranslation,
@@ -330,12 +343,43 @@ namespace Anki {
         imgPoint = BEHIND_OR_OCCLUDED;
         return false;
       } else {
-        // Point visible, project it
-        imgPoint.x() = (objPoint.x() / objPoint.z());
-        imgPoint.y() = (objPoint.y() / objPoint.z());
+        // Point visible, distort and project it
+        imgPoint.x() = objPoint.x() / objPoint.z();
+        imgPoint.y() = objPoint.y() / objPoint.z();
         
-        // TODO: Add radial distortion here
-        //DistortCoordinate(imgPoints[i_corner], imgPoints[i_corner]);
+        auto const& k = _calibration->GetDistortionCoeffs();
+        if(!k.empty())
+        {
+          // Radial/tangental distortion
+          // Uses OpenCV model here: http://docs.opencv.org/2.4/doc/tutorials/calib3d/camera_calibration/camera_calibration.html
+          
+          DEV_ASSERT_MSG(k.size() == 4 || k.size() == 5 || k.size() == 8,
+                         "Camera.Project3dPoints.UnsupportedNumDistCoeffs", "N=%zu", k.size());
+          
+          const f32 x2 = imgPoint.x() * imgPoint.x();
+          const f32 y2 = imgPoint.y() * imgPoint.y();
+          const f32 r2 = x2 + y2;
+          const f32 r4 = r2*r2;
+          const f32 a1 = 2.f*imgPoint.x()*imgPoint.y();
+          const f32 a2 = r2 + 2.f*x2;
+          const f32 a3 = r2 + 2.f*y2;
+          f32 cdist = 1.f + k[0]*r2 + k[1]*r4;
+          if(k.size() >= 5)
+          {
+            const f32 r6 = r4*r2;
+            cdist += k[4]*r6;
+            
+            if(k.size() == 8)
+            {
+              const f32 icdist2 = 1.f/(1.f + k[5]*r2 + k[6]*r4 + k[7]*r6);
+              cdist *= icdist2;
+            }
+          }
+          
+          imgPoint.x() = imgPoint.x()*cdist + k[2]*a1 + k[3]*a2; // TODO: numCoeffs > 8: + k[8]*r2+k[9]*r4;
+          imgPoint.y() = imgPoint.y()*cdist + k[2]*a3 + k[3]*a1; // TODO: numCoeffs > 8: + k[10]*r2+k[11]*r4;
+          
+        }
         
         imgPoint.x() *= _calibration->GetFocalLength_x();
         imgPoint.y() *= _calibration->GetFocalLength_y();

@@ -41,6 +41,7 @@ namespace Cozmo {
 
 
 const int kHighestVersion = 0;
+const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";
 
 RobotManager::RobotManager(const CozmoContext* context)
 : _context(context)
@@ -55,6 +56,7 @@ RobotManager::RobotManager(const CozmoContext* context)
 , _robotMessageHandler(new RobotInterface::MessageHandler())
 , _fwVersion(0)
 , _fwTime(0)
+, _dasBlacklistedAnimationTriggers()
 {
   using namespace ExternalInterface;
   
@@ -85,7 +87,7 @@ RobotManager::~RobotManager()
                  "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
 }
 
-void RobotManager::Init(const Json::Value& config)
+void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventConfig)
 {
   auto startTime = std::chrono::steady_clock::now();
 
@@ -97,6 +99,8 @@ void RobotManager::Init(const Json::Value& config)
   Anki::Util::Time::ClearSteps();
 
   BroadcastAvailableAnimations();
+  
+  LoadDasBlacklistedAnimationTriggers(dasEventConfig);
   
   auto endTime = std::chrono::steady_clock::now();
   auto timeSpent_millis = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
@@ -116,6 +120,16 @@ void RobotManager::Init(const Json::Value& config)
   LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
 
   _firmwareUpdater->LoadHeader(FirmwareType::Current, kHighestVersion, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
+}
+
+void RobotManager::LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEventConfig)
+{
+  const Json::Value& blacklistedTriggers = dasEventConfig[kBlacklistedAnimationTriggersConfigKey];
+  for (int i = 0; i < blacklistedTriggers.size(); i++)
+  {
+    const std::string& trigger = blacklistedTriggers[i].asString();
+    _dasBlacklistedAnimationTriggers.insert(AnimationTriggerFromString(trigger));
+  }
 }
 
 void RobotManager::AddRobot(const RobotID_t withID)
@@ -313,7 +327,9 @@ void RobotManager::BroadcastAvailableAnimations()
   if (nullptr != _context->GetExternalInterface()) {
     std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
     for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+      #ifndef COZMO_V2
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(*i);
+      #endif
     }
 
     _context->GetExternalInterface()->

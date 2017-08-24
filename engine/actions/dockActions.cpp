@@ -876,6 +876,10 @@ namespace Anki {
         verifyNoObjectOnTopOfAction->ShouldSuppressTrackLocking(true);
         
         _faceAndVerifyAction->AddAction(verifyNoObjectOnTopOfAction);
+        
+        // Don't delete actions on completion since PickupObjectAction needs to look though them to determine
+        // if the VerifyNoObjectOnTopOfAction failed in order to set some completion info
+        _faceAndVerifyAction->SetDeleteActionOnCompletion(false);
       }
       
       if(_firstTurnTowardsObject)
@@ -1332,6 +1336,21 @@ namespace Anki {
         {
           if(!_carryingComponentRef.IsCarryingObject()) {
             PRINT_CH_INFO("Actions", "PickupObjectAction.GetCompletionUnion.ExpectedCarryingObject", "");
+        
+            if(_checkForObjectOnTopOf &&
+               _faceAndVerifyAction != nullptr)
+            {
+              for(const auto& action : _faceAndVerifyAction->GetActionList())
+              {
+                if(action->GetType() == RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE &&
+                   action->GetState() == ActionResult::VISUAL_OBSERVATION_FAILED)
+                {
+                  PRINT_CH_INFO("Actions", "PickupObjectAction.GetCompletionUnion.SeeingUnexpectedObject", "");
+                  info.seeingUnexpectedObject = true;
+                }
+              }
+            }
+            
           } else {
             const std::set<ObjectID> carriedObjects = _carryingComponentRef.GetCarryingObjects();
             info.numObjects = carriedObjects.size();
@@ -1342,7 +1361,6 @@ namespace Anki {
             for (auto& objID : carriedObjects) {
               info.objectIDs[objectCnt++] = objID.GetValue();
             }
-            
           }
           break;
         }
@@ -1358,7 +1376,6 @@ namespace Anki {
       }
       
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
-      IDockAction::GetCompletionUnion(completionUnion);
     }
     
     ActionResult PickupObjectAction::SelectDockAction(ActionableObject* object)

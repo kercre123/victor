@@ -12,6 +12,7 @@
 #ifdef COZMO_V2
 #include "androidHAL/androidHAL.h"
 #endif
+#define USE_BSM 0
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
@@ -32,6 +33,7 @@
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
 #include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/behaviorSystem/behaviorSystemManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -168,6 +170,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _petWorld(new PetWorld(*this))
   , _publicStateBroadcaster(new PublicStateBroadcaster())
   , _behaviorMgr(new BehaviorManager(*this))
+  , _behaviorSysMgr(new BehaviorSystemManager(*this))
   , _audioClient(new Audio::RobotAudioClient(this))
   , _pathComponent(new PathComponent(*this, robotID, context))
   , _animationStreamer(_context, *_audioClient)
@@ -245,6 +248,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
   
+  if(USE_BSM){
+    _behaviorSysMgr->InitConfiguration(*this, _context->GetDataLoader()->GetBehaviorSystemConfig());
+  }
+  
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
   _visionComponent->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
@@ -280,6 +287,7 @@ Robot::~Robot()
   // This needs to happen before ActionList is destroyed, because otherwise behaviors will try to respond
   // to actions shutting down
   _behaviorMgr.reset();
+  _behaviorSysMgr.reset();
   
   // Destroy our actionList before things like the path planner, since actions often rely on those.
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
@@ -1366,18 +1374,32 @@ Result Robot::Update()
   static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
   if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
   {
-    _behaviorMgr->Update(*this);
+    
+    IBehaviorPtr currentBehavior;
+    if(USE_BSM){
+      _behaviorSysMgr->Update(*this);
+      
+      currentActivityName = "ACTIVITY NAME TBD";
+      
+      behaviorDebugStr = currentActivityName;
+      
+      currentBehavior = _behaviorSysMgr->GetCurrentBehavior();
+    }else{
+      _behaviorMgr->Update(*this);
+      
+      currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
+      
+      behaviorDebugStr = currentActivityName;
+      
+      currentBehavior = _behaviorMgr->GetCurrentBehavior();
+    }
 
-    currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
 
-    behaviorDebugStr = currentActivityName;
 
-    const IBehaviorPtr behavior = _behaviorMgr->GetCurrentBehavior();
-
-    if(behavior != nullptr) {
+    if(currentBehavior != nullptr) {
       behaviorDebugStr += " ";
-      behaviorDebugStr +=  BehaviorIDToString(behavior->GetID());
-      const std::string& stateName = behavior->GetDebugStateName();
+      behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
+      const std::string& stateName = currentBehavior->GetDebugStateName();
       if (!stateName.empty())
       {
         behaviorDebugStr += "-" + stateName;
@@ -2477,14 +2499,22 @@ template<>
 void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
 {
   const VisionComponent& visionComponent = GetVisionComponent();
-  const Vision::CameraCalibration& cameraCalibration = visionComponent.GetCameraCalibration();
+  std::shared_ptr<Vision::CameraCalibration> cameraCalibration;
   
-  ExternalInterface::CameraConfig cameraConfig(cameraCalibration.GetFocalLength_x(),
-                                               cameraCalibration.GetFocalLength_y(),
-                                               cameraCalibration.GetCenter_x(),
-                                               cameraCalibration.GetCenter_y(),
-                                               cameraCalibration.ComputeHorizontalFOV().getDegrees(),
-                                               cameraCalibration.ComputeVerticalFOV().getDegrees(),
+  cameraCalibration = visionComponent.GetCameraCalibration();
+  
+  if(cameraCalibration == nullptr)
+  {
+    PRINT_NAMED_WARNING("Robot.HandleRequestRobotSettings.CameraNotCalibrated", "");
+    cameraCalibration = std::make_shared<Vision::CameraCalibration>(0,0,1.f,1.f,0.f,0.f);
+  }
+  
+  ExternalInterface::CameraConfig cameraConfig(cameraCalibration->GetFocalLength_x(),
+                                               cameraCalibration->GetFocalLength_y(),
+                                               cameraCalibration->GetCenter_x(),
+                                               cameraCalibration->GetCenter_y(),
+                                               cameraCalibration->ComputeHorizontalFOV().getDegrees(),
+                                               cameraCalibration->ComputeVerticalFOV().getDegrees(),
                                                visionComponent.GetMinCameraExposureTime_ms(),
                                                visionComponent.GetMaxCameraExposureTime_ms(),
                                                visionComponent.GetMinCameraGain(),
@@ -3245,7 +3275,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
   
   Vision::Camera camera(_visionComponent->GetCamera());
   
-  const Vision::CameraCalibration* calib = camera.GetCalibration();
+  auto calib = camera.GetCalibration();
   if(nullptr == calib)
   {
     PRINT_NAMED_ERROR("Robot.ComputeHeadAngleToSeePose.NullCamera", "");
@@ -3310,7 +3340,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
 Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
                                                  Radians& absPanAngle, Radians& absTiltAngle) const
 {
-  const Vision::CameraCalibration* calib = GetVisionComponent().GetCamera().GetCalibration();
+  auto calib = GetVisionComponent().GetCamera().GetCalibration();
   const Point2f pt = imgPoint - calib->GetCenter();
   
   HistRobotState histState;

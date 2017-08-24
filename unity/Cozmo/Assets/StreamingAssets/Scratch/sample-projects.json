@@ -79,5 +79,14 @@
     "VersionNum" : "1",
     "IsVertical" : "false",
     "DisplayOrder": "9"
+  },
+    {
+    "ProjectUUID": "c99f3fe9-0494-4c41-979d-42ed796bc884",
+    "ProjectXML": "",
+    "ProjectName": "Temp vertical - DO NOT USE",
+    "ProjectIconName" : "cozmo-turn-right",
+    "VersionNum" : "2",
+    "IsVertical" : "true",
+    "DisplayOrder": "1"
   }
 ]

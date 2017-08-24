@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/androidHAL/androidHAL.h"
+#include "androidHAL/androidHAL.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
@@ -19,9 +19,9 @@
 #include <android/sensor.h>
 
 // Android camera
-#include "anki/cozmo/basestation/androidHAL/android/camera/camera_manager.h"
-#include "anki/cozmo/basestation/androidHAL/android/camera/image_reader.h"
-#include "anki/cozmo/basestation/androidHAL/android/camera/utils/native_debug.h"
+#include "androidHAL/android/camera/camera_manager.h"
+#include "androidHAL/android/camera/image_reader.h"
+#include "androidHAL/android/camera/utils/native_debug.h"
 #include "anki/vision/CameraSettings.h"
 
 #include <vector>
@@ -77,8 +77,8 @@ namespace Anki {
     , _imageCaptureResolution(ImageResolution::QVGA)
     , _imageFrameID(1)
     {
-      InitIMU();
-      InitCamera();
+      //InitIMU();
+      //InitCamera();
     }
     
     AndroidHAL::~AndroidHAL()
@@ -170,7 +170,7 @@ namespace Anki {
     
     Result AndroidHAL::Update()
     {
-      ProcessIMUEvents();
+      //ProcessIMUEvents();
 
       return RESULT_OK;
     }

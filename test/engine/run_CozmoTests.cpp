@@ -129,15 +129,15 @@ TEST(BlockWorld, AddAndRemoveObject)
   };
   */
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
-  const f32 halfHeight = 0.25f*static_cast<f32>(camCalib.GetNrows());
-  const f32 halfWidth = 0.25f*static_cast<f32>(camCalib.GetNcols());
-  const f32 xcen = camCalib.GetCenter_x();
-  const f32 ycen = camCalib.GetCenter_y();
+  const f32 halfHeight = 0.25f*static_cast<f32>(camCalib->GetNrows());
+  const f32 halfWidth = 0.25f*static_cast<f32>(camCalib->GetNcols());
+  const f32 xcen = camCalib->GetCenter_x();
+  const f32 ycen = camCalib->GetCenter_y();
 
   // stretch observed bottom side slightly to make computed pose definitely not flat (so it doesn't get clamped)
   const f32 kNotFlatFraction = 1.03f;
@@ -454,9 +454,9 @@ TEST(BlockWorld, UpdateObjectOrigins)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -616,9 +616,9 @@ TEST(BlockWorld, PoseUpdates)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -657,10 +657,10 @@ TEST(BlockWorld, PoseUpdates)
 //  };
 
   // These parameters create corners beyond localizable distance
-  const f32 halfHeight = 0.05f*static_cast<f32>(camCalib.GetNrows());
-  const f32 halfWidth = 0.05f*static_cast<f32>(camCalib.GetNcols());
-  const f32 xcen = camCalib.GetCenter_x();
-  const f32 ycen = camCalib.GetCenter_y();
+  const f32 halfHeight = 0.05f*static_cast<f32>(camCalib->GetNrows());
+  const f32 halfWidth = 0.05f*static_cast<f32>(camCalib->GetNcols());
+  const f32 xcen = camCalib->GetCenter_x();
+  const f32 ycen = camCalib->GetCenter_y();
   Quad2f farCorners;
   const f32 markerHalfSize = std::min(halfHeight, halfWidth);
   farCorners[Quad::TopLeft]    = {xcen - markerHalfSize, ycen - markerHalfSize};
@@ -838,9 +838,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1045,9 +1045,9 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1387,9 +1387,9 @@ TEST(BlockWorld, UnobserveCubeStack)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1637,9 +1637,9 @@ TEST(Localization, LocalizationDistance)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1910,7 +1910,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   //  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
   
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
-  Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
+  auto calib = std::make_shared<Vision::CameraCalibration>(jsonRoot["CameraCalibration"]);
   robot.GetVisionComponent().SetCameraCalibration(calib);
   
   bool checkRobotPose;
@@ -2242,7 +2242,7 @@ TEST(FactoryTest, IdealCameraPose)
   using namespace Anki;
   using namespace Cozmo;
   
-  Vision::CameraCalibration calib(240, 320, 290.f, 290.f, 160.f, 120.f);
+  auto calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f);
   const f32 kDotSpacingX_mm = 40.f;
   const f32 kDotSpacingY_mm = 27.f;
   const f32 kTargetDist_mm  = 60.f;
@@ -2305,8 +2305,8 @@ TEST(FactoryTest, IdealCameraPose)
         
         
         // Imperfect calibration:
-        calib.SetFocalLength(288, 287);
-        calib.SetCenter(Point2f(155.f, 114.f));
+        calib->SetFocalLength(288, 287);
+        calib->SetCenter(Point2f(155.f, 114.f));
         robot.GetVisionComponent().SetCameraCalibration(calib);
         
         result = robot.GetVisionComponent().ComputeCameraPoseVsIdeal(imgQuad, pose);
@@ -2349,26 +2349,26 @@ TEST(FactoryTest, FindDotsInImages)
   struct TestData
   {
     std::string filename;
-    Vision::CameraCalibration calib;
+    std::shared_ptr<Vision::CameraCalibration> calib;
   };
   
   // TODO: Fill in actual calibration data for each test image
   std::vector<TestData> tests = {
     {
       .filename = "test/factoryTests/factoryDotTarget.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
     {
       .filename = "test/factoryTests/factoryDotTarget_trulycam2.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
     {
       .filename = "test/factoryTests/rocky1.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
     {
       .filename = "test/factoryTests/rocky2.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
   };
   
@@ -2389,8 +2389,8 @@ TEST(FactoryTest, FindDotsInImages)
     
     lastResult = image.Load(testFilename);
     ASSERT_EQ(lastResult, RESULT_OK);
-    ASSERT_EQ(image.GetNumRows(), test.calib.GetNrows());
-    ASSERT_EQ(image.GetNumCols(), test.calib.GetNcols());
+    ASSERT_EQ(image.GetNumRows(), test.calib->GetNrows());
+    ASSERT_EQ(image.GetNumCols(), test.calib->GetNcols());
     
     lastResult = robot.GetVisionComponent().FindFactoryTestDotCentroids(image, msg);
     ASSERT_EQ(lastResult, RESULT_OK);
@@ -2588,9 +2588,9 @@ TEST(Localization, UnexpectedMovement)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   

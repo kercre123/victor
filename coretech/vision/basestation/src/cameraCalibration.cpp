@@ -16,17 +16,6 @@
 
 namespace Anki {
 namespace Vision {
-    
-  CameraCalibration::CameraCalibration()
-  : _nrows(480)
-  , _ncols(640)
-  , _focalLength_x(1.f)
-  , _focalLength_y(1.f)
-  , _center(0.f,0.f)
-  , _skew(0.f)
-  {
-    _distortionCoeffs.fill(0);
-  }
   
   CameraCalibration::CameraCalibration(u16 nrows,    u16 ncols,
                                        f32 fx,       f32 fy,
@@ -40,17 +29,6 @@ namespace Vision {
   , _skew(skew)
   {
     
-  }
-
-  
-  CameraCalibration::CameraCalibration(const u16 nrows, const u16 ncols,
-                                       const f32 fx,    const f32 fy,
-                                       const f32 cenx,  const f32 ceny,
-                                       const f32 skew,
-                                       const DistortionCoeffs &distCoeffs)
-  : CameraCalibration(nrows, ncols, fx, fy, cenx, ceny, skew)
-  {
-    _distortionCoeffs = distCoeffs;
   }
   
   CameraCalibration::CameraCalibration(const Json::Value &jsonNode)
@@ -95,7 +73,8 @@ namespace Vision {
     }
     _skew = JsonTools::GetValue<f32>(jsonNode["skew"]);
 
-    // TODO: Add distortion coefficients
+    // Note: unlike parameters above, if distortionCoeffs not present, they are left at 0
+    JsonTools::GetVectorOptional(jsonNode, "distortionCoeffs", _distortionCoeffs);
     
     return RESULT_OK;
   } // Set()

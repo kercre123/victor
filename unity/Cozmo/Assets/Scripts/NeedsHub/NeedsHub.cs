@@ -52,6 +52,7 @@ namespace Cozmo.Hub {
     private float _ConnectedTimeStartedTimestamp = -1;
 
     private const string _kDisableTouchesDuringRequestAnim = "needs_hub_request_anim";
+    private bool _IsDisablingTouches = false;
 
     public override void LoadHubWorld() {
       _ChallengeManager = new ChallengeManager(_ChallengeDataPrefabAssetBundle);
@@ -73,7 +74,7 @@ namespace Cozmo.Hub {
     }
 
     public override void DestroyHubWorld() {
-      UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
+      EnableTouchEvents();
 
       _ChallengeManager.CleanUp();
       _ChallengeManager.OnShowEndGameDialog -= HandleEndGameDialog;
@@ -108,6 +109,20 @@ namespace Cozmo.Hub {
       GameObject.Destroy(this.gameObject);
     }
 
+    private void DisableTouchEvents() {
+      if (!_IsDisablingTouches) {
+        UIManager.DisableTouchEvents(_kDisableTouchesDuringRequestAnim);
+        _IsDisablingTouches = true;
+      }
+    }
+
+    private void EnableTouchEvents() {
+      if (_IsDisablingTouches) {
+        UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
+        _IsDisablingTouches = false;
+      }
+    }
+
     public override GameBase GetChallengeInstance() {
       if (_ChallengeManager != null) {
         return _ChallengeManager.ChallengeInstance;
@@ -120,6 +135,12 @@ namespace Cozmo.Hub {
         return _ChallengeManager.CloseChallengeImmediately();
       }
       return false;
+    }
+
+    private void OnApplicationPause(bool isPaused) {
+      if (!isPaused) {
+        EnableTouchEvents();
+      }
     }
 
     #region LoadNeedsHub
@@ -209,7 +230,7 @@ namespace Cozmo.Hub {
     #region StartChallenge
 
     private void HandleStartChallengeRequest(string challengeRequested) {
-      UIManager.DisableTouchEvents(_kDisableTouchesDuringRequestAnim);
+      DisableTouchEvents();
       PlayChallenge(challengeRequested, true);
     }
 
@@ -234,7 +255,7 @@ namespace Cozmo.Hub {
     }
 
     private void HandleRequestAnimationComplete(bool animSuccessful = false) {
-      UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
+      EnableTouchEvents();
       // Close needs dialog if open
       if (_NeedsViewHubInstance != null) {
         DeregisterNeedsViewEvents();

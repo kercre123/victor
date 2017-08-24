@@ -568,7 +568,7 @@ bool FirmwareUpdater::InitUpdate(const RobotMap& robots, FirmwareType type, int 
     if (externalInterface)
     {
       // Cancel animations/sounds
-      ExternalInterface::CancelAction cancelActionMsg(RobotActionType::UNKNOWN, robotId);
+      ExternalInterface::CancelAction cancelActionMsg(RobotActionType::UNKNOWN);
       externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(std::move(cancelActionMsg)));
     }
   }

@@ -52,7 +52,7 @@
     "translation" : ""
   },
   "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body" : {
-    "translation" : "COZMOは満足にチャージされているので、クイックスナックは必要ありません。COZMOを満腹にするには、指示に従ってCOZMOがキューブを認識できるようにしてください。"
+    "translation" : "COZMOは満足にチャージされているので、おやつは必要ありません。COZMOを満腹にするには、指示に従ってCOZMOがキューブを認識できるようにしてください。"
   },
   "cubeHelpStrings.Instructions.SlideA2Copy" : {
     "translation" : "それから<b>キューブの更新</b>をタップします。"

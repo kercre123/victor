@@ -1,0 +1,27 @@
+set(BREAKPAD_INCLUDE_PATHS
+    "${CMAKE_SOURCE_DIR}/lib/crash-reporting-android/Breakpad/include"
+)
+
+# Android platform-specific library
+set(BREAKPAD_LIBS "")
+
+if (ANDROID)
+    set(BREAKPAD_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/crash-reporting-android/Breakpad/libs/armeabi-v7a")
+    set(BREAKPAD_LIBS
+      breakpad_client
+    )
+endif()
+
+foreach(LIB ${BREAKPAD_LIBS})
+    add_library(${LIB} STATIC IMPORTED)
+    set_target_properties(${LIB} PROPERTIES
+        IMPORTED_LOCATION
+        "${BREAKPAD_LIB_PATH}/lib${LIB}.a"
+        INTERFACE_INCLUDE_DIRECTORIES
+        "${BREAKPAD_INCLUDE_PATHS}")
+    # message(STATUS "LIB: ${LIB}")
+endforeach()
+
+#if (NOT breakpad_client)
+#  message(FATAL_ERROR "breakpad_client target not added")
+#endif()

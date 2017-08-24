@@ -734,6 +734,15 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithRobotCallback callback)
+{
+  return StartActing(action,
+                     [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
+                       callback(msg, _robot);
+                     });
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::StartActing(IActionRunner* action, ActionResultCallback callback)

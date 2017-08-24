@@ -161,7 +161,7 @@ static void Motors::transmit(BodyToHead *payload) {
       payload->motor[i].position = state->position;
 
       // Copy over tick values
-      payload->motor[i].delta =  delta_last[i];
+      payload->motor[i].delta = state->direction ? delta_last[i] : -delta_last[i];
       payload->motor[i].time = state->last_time - time_last[i];
 
       // We will survives

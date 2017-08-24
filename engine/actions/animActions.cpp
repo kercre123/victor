@@ -260,7 +260,12 @@ namespace Anki {
       }
       else {
         const ActionResult res = PlayAnimationAction::Init();
-        if( res == ActionResult::SUCCESS ) {
+        
+        RobotManager* robotMgr = _robot.GetContext()->GetRobotManager();
+        const std::set<AnimationTrigger>& dasBlacklistedTriggers = robotMgr->GetDasBlacklistedAnimationTriggers();
+        const bool isBlacklisted = std::find(dasBlacklistedTriggers.begin(), dasBlacklistedTriggers.end(), _animTrigger) != dasBlacklistedTriggers.end();
+        
+        if( res == ActionResult::SUCCESS && !isBlacklisted ) {
           const std::string& dataStr = std::string(AnimationTriggerToString(_animTrigger)) + ":" + _animGroupName;
           Anki::Util::sEvent("robot.play_animation",
                              {{DDATA, dataStr.c_str()}},
@@ -461,6 +466,14 @@ namespace Anki {
       : Base(robot, AnimationTrigger::Count)
     {
       SetName("PlayNeedsGetOut");
+    }
+    
+    PlayNeedsGetOutAnimIfNeeded::~PlayNeedsGetOutAnimIfNeeded()
+    {
+      auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+      if(whiteboard.HasSevereNeedExpression() && !_hasClearedExpression){
+        whiteboard.ClearSevereNeedExpression();
+      }
     }
 
     ActionResult PlayNeedsGetOutAnimIfNeeded::Init()

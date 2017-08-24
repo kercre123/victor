@@ -67,7 +67,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
       _ObjectConnectedSprites[i] = newSprite.GetComponent<LightCubeSprite>();
       _ObjectConnectedSprites[i].SetIcon(_ObjectConnectedTypeList[i]);
       _ObjectConnectedSprites[i].SetAlpha(1f);
-      _ObjectConnectedSprites[i].SetColor(CubePalette.Instance.OffColor.lightColor);
+      _ObjectConnectedSprites[i].SetColor(CubePalette.Instance.OffColor.uiLightColor);
     }
 
     for (int i = 0; i < _DoneMarks.Length; ++i) {
@@ -139,7 +139,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
         DAS.Debug("PullCubeTabView.ProcessNewObject", "Processing: " + _NewlyConnectedObject);
         if (robot.LightCubes.ContainsKey(_NewlyConnectedObjectId)) {
           int typeIndex = (int)robot.LightCubes[_NewlyConnectedObjectId].ObjectType - 1;
-          _ObjectConnectedSprites[typeIndex].SetColor(CubePalette.Instance.ReadyColor.lightColor);
+          _ObjectConnectedSprites[typeIndex].SetColor(CubePalette.Instance.ReadyColor.uiLightColor);
           _DoneMarks[typeIndex].gameObject.SetActive(true);
           _ObjectConnectedList.Add(_NewlyConnectedObject);
           robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.green.ToUInt(), Color.black.ToUInt(),

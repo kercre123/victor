@@ -26,22 +26,23 @@ namespace Anki {
     {
     public:
       
-      static const u32 kNumDistCoeffs = 8;
-      using DistortionCoeffs = std::array<f32,kNumDistCoeffs>;
+      using DistortionCoeffs = std::vector<f32>;
       
       // Constructors:
-      CameraCalibration();
+      CameraCalibration() = delete;
       
       CameraCalibration(u16 nrows,    u16 ncols,
                         f32 fx,       f32 fy,
                         f32 center_x, f32 center_y,
                         f32 skew = 0.f);
-                        
+      
+      // Construct with distortion coeffs provided in some kind of container which supports std::copy
+      template<class DistCoeffContainer>
       CameraCalibration(u16 nrows,    u16 ncols,
                         f32 fx,       f32 fy,
                         f32 center_x, f32 center_y,
                         f32 skew,
-                        const DistortionCoeffs &distCoeffs);
+                        const DistCoeffContainer& distCoeffs);
       
       // Construct from a Json node
       CameraCalibration(const Json::Value& jsonNode);
@@ -146,6 +147,16 @@ namespace Anki {
       return _distortionCoeffs;
     }
     
+    template<class DistCoeffContainer>
+    CameraCalibration::CameraCalibration(u16 nrows,    u16 ncols,
+                                         f32 fx,       f32 fy,
+                                         f32 center_x, f32 center_y,
+                                         f32 skew,
+                                         const DistCoeffContainer& distCoeffs)
+    : CameraCalibration(nrows, ncols, fx, fy, center_x, center_y, skew)
+    {
+      std::copy(distCoeffs.begin(), distCoeffs.end(), std::back_inserter(_distortionCoeffs));
+    }
     
   } // namespace Vision
 } // namespace Anki

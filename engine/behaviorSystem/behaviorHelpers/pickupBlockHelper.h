@@ -44,7 +44,7 @@ private:
   bool _hasTriedOtherPose;
   
   void StartPickupAction(Robot& robot, bool ignoreCurrentPredockPose = false);
-  void RespondToPickupResult(ActionResult result, Robot& robot);
+  void RespondToPickupResult(const ExternalInterface::RobotCompletedAction& rca, Robot& robot);
 
   void MarkTargetAsFailedToPickup(Robot& robot);
   

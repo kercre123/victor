@@ -48,6 +48,11 @@ public:
 protected:
   using base = IBehavior;
   virtual Result InitInternal(Robot& robot) override;
+
+  // This behavior can't be resumed (cube might not be valid and the None/Robot version of IsRunnable isn't
+  // implemented)
+  virtual Result ResumeInternal(Robot& robot) override { return Result::RESULT_FAIL; }
+
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
