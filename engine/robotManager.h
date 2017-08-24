@@ -18,6 +18,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <string>
 
@@ -62,7 +63,7 @@ public:
   
   ~RobotManager();
   
-  void Init(const Json::Value& config);
+  void Init(const Json::Value& config, const Json::Value& dasEventConfig);
   
   // Get the list of known robot ID's
   std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -131,6 +132,8 @@ public:
   bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::EngineToRobotTag msgType) const;
 
   void ConnectRobotToNeedsManager(u32 serialNumber) const;
+  
+  const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }
 
 protected:
   RobotMap _robots;
@@ -153,6 +156,9 @@ protected:
 private:
   void ParseFirmwareHeader(const Json::Value& header);
   bool MakeRobotFirmwareUntrusted(RobotID_t robotId);
+  void LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEventConfig);
+  
+  std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
 
 }; // class RobotManager
   
