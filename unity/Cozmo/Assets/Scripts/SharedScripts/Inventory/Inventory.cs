@@ -32,6 +32,18 @@ namespace Cozmo {
       // Setup listeners for inventory still stored in engine...
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
+
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestDefaultSparks>(HandleRequestDefaultSparks);
+    }
+
+    public void DestroyInventory() {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestDefaultSparks>(HandleRequestDefaultSparks);
+    }
+
+    // Called as soon as we know it's a new robot.
+    public void HandleRequestDefaultSparks(Anki.Cozmo.ExternalInterface.RequestDefaultSparks message) {
+      OnboardingManager.Instance.GiveStartingInventory();
     }
 
     public void HandleEngineInventoryUpdated(Anki.Cozmo.ExternalInterface.InventoryStatus message) {

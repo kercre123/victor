@@ -43,7 +43,7 @@ public class ImageReceiver : IDisposable {
 
   private void RequestImage(ImageSendMode sendMode) {
     RobotEngineManager.Instance.Message.ImageRequest =
-      Singleton<ImageRequest>.Instance.Initialize((byte)RobotEngineManager.Instance.CurrentRobotID, sendMode);
+      Singleton<ImageRequest>.Instance.Initialize(sendMode);
     RobotEngineManager.Instance.SendMessage();
   }
 

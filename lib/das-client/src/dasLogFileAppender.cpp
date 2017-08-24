@@ -55,7 +55,7 @@ DasLogFileAppender::DasLogFileAppender(const std::string& logDirPath,
 , _unarchiveCallback(unarchiveCallback)
 , _archiveFileExtension(archiveFileExtension)
 {
-  _currentLogFileNumber = NextAvailableLogFileNumber();
+  _currentLogFileNumber = NextAvailableLogFileNumber(_currentLogFileNumber + 1);
   UpdateLogFileHandle();
 }
 
@@ -143,18 +143,12 @@ std::string DasLogFileAppender::MakeLogFilePath(const std::string &logDir,
   return path;
 }
 
-uint32_t DasLogFileAppender::NextLogFileNumber()
+uint32_t DasLogFileAppender::NextAvailableLogFileNumber(uint32_t startNumber) const
 {
-  _currentLogFileNumber++;
-  if (_currentLogFileNumber >= _maxLogFiles) {
-    _currentLogFileNumber = 0;
-  }
-  return _currentLogFileNumber;
-}
-
-uint32_t DasLogFileAppender::NextAvailableLogFileNumber() const
-{
-  uint32_t fileNumber = 1;
+  // Make sure we aren't looking over our limit
+  startNumber = startNumber % _maxLogFiles;
+  
+  uint32_t fileNumber = startNumber;
   bool foundFileNumber = false;
   while (!foundFileNumber) {
     
@@ -191,9 +185,13 @@ uint32_t DasLogFileAppender::NextAvailableLogFileNumber() const
       fileNumber++;
       
       if (fileNumber >= _maxLogFiles) {
-        // we'll blow away the first log..
-        // FIXME: we should log the fact that we've rolled over, since it means we're losing data.
         fileNumber = 0;
+      }
+      
+      if (fileNumber == startNumber)
+      {
+        // If we've wrapped around to the number we started with, give up trying
+        // FIXME: we should log the fact that we've rolled over, since it means we're losing data.
         foundFileNumber = true;
       }
     }
@@ -270,7 +268,7 @@ void DasLogFileAppender::PrvRolloverCurrentLogFile()
 
   _currentLogFileName.clear();
   _bytesLoggedToCurrentFile = 0;
-  _currentLogFileNumber = NextLogFileNumber();
+  _currentLogFileNumber = NextAvailableLogFileNumber(_currentLogFileNumber + 1);
 }
 
 void DasLogFileAppender::RolloverLogFileAtPath(std::string path) const
@@ -357,6 +355,10 @@ void DasLogFileAppender::ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionB
                 if (!success) {
                   LOGD("Error removing file '%s': %s", fullPath.c_str(), strerror(errno));
                 }
+              }
+              // If we didn't successfully consume the file, archive it again
+              else if (_archiveCallback) {
+                (void) _archiveCallback(fullPath);
               }
             }
           }

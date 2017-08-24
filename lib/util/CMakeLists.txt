@@ -1,0 +1,50 @@
+cmake_minimum_required(VERSION 3.6)
+
+project(anki_util)
+
+list(APPEND CMAKE_MODULE_PATH
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+)
+
+include(import)
+
+# sadly... these seem to be ignored by the cmake android toolchain
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 99)
+
+if (NOT ANKI_SRCLIST_DIR)
+  set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
+endif()
+
+if (NOT TARGET clad)                                                                                
+  if (NOT CLAD_SOURCE_DIR)
+    set(CLAD_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/message-buffers")
+  endif()
+  add_subdirectory(${CLAD_SOURCE_DIR} "${CMAKE_BINARY_DIR}/message-buffers")               
+endif()
+
+if (NOT TARGET jsoncpp)
+  add_subdirectory("source/3rd/jsoncpp")
+endif()
+
+if (NOT TARGET kazmath)
+  add_subdirectory("source/3rd/kazmath")
+endif()
+
+if (NOT TARGET webp)
+  add_subdirectory("source/3rd/libwebp")
+endif()
+
+if (NOT TARGET audio_util)
+  add_subdirectory("source/anki/audioUtil")
+endif()
+
+if (NOT TARGET util_clad)
+  add_subdirectory("source/anki/clad")
+endif()
+
+if (NOT TARGET util)
+  add_subdirectory("source/anki/util")
+endif()

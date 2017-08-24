@@ -1,0 +1,126 @@
+#!/bin/bash
+
+set -e
+set -u
+
+# Go to directory of this script                                                                    
+SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
+GIT=`which git`
+if [ -z $GIT ]
+then
+    echo git not found
+    exit 1
+fi
+TOPLEVEL=`$GIT rev-parse --show-toplevel`
+
+
+source ${SCRIPT_PATH}/android_env.sh
+
+# Settings can be overridden through environment
+: ${VERBOSE:=0}
+: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
+
+echo "INSTALL_ROOT: ${INSTALL_ROOT}"
+
+: ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
+: ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
+
+$ADB shell mkdir -p "${INSTALL_ROOT}"
+$ADB shell mkdir -p "${INSTALL_ROOT}/config"
+$ADB shell mkdir -p "${LIB_INSTALL_PATH}"
+$ADB shell mkdir -p "${BIN_INSTALL_PATH}"
+
+: ${ANKI_BUILD_TYPE:="Debug"}
+: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/${ANKI_BUILD_TYPE}"}
+
+function log_v()
+{
+    if [ $VERBOSE -eq 1 ]; then
+        echo "$1"
+    fi
+}
+
+function adb_deploy()
+{
+    SRC="$1"
+    DST="$2"
+    
+    XATTR_KEY="user.com.anki.digest.md5"
+
+    NEEDS_INSTALL=0
+    DIGEST=
+    XATTR="${BIN_INSTALL_PATH}/axattr"
+
+    FILENAME=$(basename "${SRC}")
+    DST_PATH="${DST}/${FILENAME}"
+
+    echo "deploy $DST_PATH"
+
+    log_v "check $DST_PATH"
+
+    EXISTS=0
+    $ADB shell test -f "${DST_PATH}" || EXISTS=1
+
+    if [ $EXISTS -eq 0 ]; then
+      log_v "$DST_PATH exists"
+      X_DIGEST=$($ADB shell "${XATTR} -n ${XATTR_KEY} ${DST_PATH}" || true)
+      DIGEST=$(md5 -q "${SRC}")
+      if [ "$DIGEST" != "${X_DIGEST}" ]; then
+        log_v "$DST_PATH differs"
+        NEEDS_INSTALL=1
+      else
+        log_v "$DST_PATH up-to-date [$DIGEST]"
+      fi
+    else
+      log_v "$DST_PATH not found"
+      NEEDS_INSTALL=1
+    fi
+
+    if [ $NEEDS_INSTALL -eq 1 ]; then
+      log_v "install $DST_PATH"
+      $ADB push "$SRC" "$DST"
+      if [ -n $DIGEST ]; then
+        DIGEST=$(md5 -q "${SRC}")
+      fi
+      $ADB shell "${XATTR} -n ${XATTR_KEY} -v ${DIGEST} ${DST_PATH}"
+    fi
+}
+
+function adb_deploy_files()
+{
+    DST="$1"
+    shift
+    SRC_LIST=("$@")
+
+    for SRC in "${SRC_LIST[@]}"; do
+        echo "deploy $SRC -> $DST"
+        adb_deploy $SRC $DST
+    done
+}
+
+# deploy xattr utility
+# $ADB shell test -f ${BIN_INSTALL_PATH}/axattr && $ADB push ${BUILD_ROOT}/bin/axattr ${BIN_INSTALL_PATH}
+adb_deploy "${BUILD_ROOT}/bin/axattr" "${BIN_INSTALL_PATH}"
+
+export -f log_v
+export -f adb_deploy
+export VERBOSE
+export ADB
+export INSTALL_ROOT
+export BIN_INSTALL_PATH
+export LIB_INSTALL_PATH
+find "${BUILD_ROOT}/lib" -depth 1 -type f -name '*.so' \
+    -exec bash -c \
+    'adb_deploy "${0}" "${LIB_INSTALL_PATH}"' {} \;
+
+find "${BUILD_ROOT}/bin" -type f -not -name '*.full' -not -name 'axattr' \
+     -exec bash -c \
+    'adb_deploy "${0}" "${BIN_INSTALL_PATH}"' {} \;
+
+find "${TOPLEVEL}/project/victor/runtime" -type f -depth 1 \
+    -exec bash -c \
+    'adb_deploy "${0}" "${INSTALL_ROOT}"' {} \;
+
+find "${TOPLEVEL}/project/victor/runtime/config" -type f -depth 1 \
+    -exec bash -c \
+    'adb_deploy "${0}" "${INSTALL_ROOT}/config"' {} \;

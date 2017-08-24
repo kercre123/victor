@@ -37,16 +37,6 @@ enum class TestState {
   TurnToObject2,                // Turn toward the second block's new location
   Stacking,                     // Stacking should occur
   VerifyStack,                  // Make sure stack was created
-  AttemptPickupHigh,            // Attempt to pick up the high block
-  PickupHighShouldFail,         // Should fail since block was pushed away at the last second
-  AttemptPickupLowOutOfView,    // Attempt to pick up the low block
-  PickupLowOutOfViewShouldFail, // Should fail since block was pushed away at the last second
-  MoveHeadUp,                   //
-  AttemptPickupLowInView,       // Attempt to pick up the low block again and push the block away at last second.
-  TeleportBlockInView,          // Teleport the block back into view of the robot.
-  PickupLowInViewShouldFail,    // Should fail since robot sees the block in front of it and not on its lift.
-  RemoveCube,                   // Pick up the cube again and make it vanish from the world after successful pickup
-  PlaceObjectShouldFail,        // Placing should fail since the cube is no longer on the lift.
   TestDone
 };
 
@@ -67,15 +57,10 @@ private:
   virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
   
-  // Helpers:
-  void SendPickupObjectByType(const ObjectType& objType);
-  
   // State:
   TestState _testState = TestState::Init;
 
   // Parameters:
-  const float _kRobotNearBlockThreshold_mm = 65.f;
-  const float _kRobotNearBlockThresholdHigh_mm = 95.f;
   ObjectType  _baseCube    = ObjectType::InvalidObject;
   std::string _baseCubeStr = "";
   int         _topCubeID  = -1;
@@ -349,194 +334,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         // Cancel the stack behavior:
         SendMessage(ExternalInterface::MessageGameToEngine(
                        ExternalInterface::ExecuteBehaviorByID(BehaviorID::Wait, -1)));
-        // Now attempt to pick up the top block:
-        _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(_topCube);
-        SET_STATE(AttemptPickupHigh)
-      }
-      break;
-    }
-      
-      
-    case TestState::AttemptPickupHigh:
-    {
-      const Pose3d robotPose = GetRobotPoseActual();
-      const Pose3d cubePose = GetLightCubePoseActual(_topCube);
-      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThresholdHigh_mm;
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
-        // Push the block out of view so that the pickup will fail.
-        SendApplyForce(_topCubeStr, -20, -5, 5);
-        SET_STATE(PickupHighShouldFail)
-      }
-      
-      break;
-    }
-      
-      
-    case TestState::PickupHighShouldFail:
-    {
-      // Keep applying a force ocassionally to keep the block 'moving', so that the pickup will
-      //  fail with PICKUP_OBJECT_UNEXPECTEDLY_MOVING.
-      static int cnt = 1;
-      if ((++cnt % 5) == 0) {
-        SendApplyForce(_topCubeStr, -5, 0, 0);
-      }
-      
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING, 15) {
-        // Pick up object 1:
-        _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(_baseCube);
-        SET_STATE(AttemptPickupLowOutOfView)
-      }
-      
-      break;
-    }
-      
-      
-    case TestState::AttemptPickupLowOutOfView:
-    {
-      Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(_baseCube);
-      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
-        // Push the block out of view:
-        SendApplyForce(_baseCubeStr, 20, -7, 10);
-        SET_STATE(PickupLowOutOfViewShouldFail)
-      }
-      
-      break;
-    }
-    
-      
-    case TestState::PickupLowOutOfViewShouldFail:
-    {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING, DEFAULT_TIMEOUT) {
-        // move cube in front of robot and look at it:
-        Pose3d cubePose = GetRobotPoseActual();
-        Vec3f T = cubePose.GetTranslation();
-        cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 25));
-        SetLightCubePose(_baseCube, cubePose);
-        // move head up to see the cube:
-        _moveHeadToAngleResult = ActionResult::RUNNING;
-        SendMoveHeadToAngle(0, 100, 100);
-        SET_STATE(MoveHeadUp)
-      }
-      
-      break;
-    }
-      
-      
-    case TestState::MoveHeadUp:
-    {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_moveHeadToAngleResult == ActionResult::SUCCESS, 5) {
-        // pick up object 1:
-        _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(_baseCube);
-        SET_STATE(AttemptPickupLowInView)
-      }
-      
-      break;
-    }
-      
-      
-    case TestState::AttemptPickupLowInView:
-    {
-      Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(_baseCube);
-      const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
-        // Push the block out of view:
-        SendApplyForce(_baseCubeStr, 20, -7, 10);
-        // Keep track of where the robot was when the cube was first pushed.
-        _robotPoseWhenBlockShoved = GetRobotPoseActual();
-        SET_STATE(TeleportBlockInView)
-      }
-      
-      break;
-    }
-      
-      
-    case TestState::TeleportBlockInView:
-    {
-      // Keep applying a force ocassionally to keep the block moving,
-      //  to trick Cozmo into thinking it's moving as expected.
-      static int cnt = 0;
-      if ((++cnt % 5) == 0) {
-        SendApplyForce(_baseCubeStr, -5, 0, 0);
-      }
-      
-      Pose3d robotPoseNow = GetRobotPoseActual();
-        
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(ComputeDistanceBetween(_robotPoseWhenBlockShoved, robotPoseNow) > 35.f, DEFAULT_TIMEOUT) {
-        // Teleport the cube to just in front of the robot:
-        Pose3d cubePose = GetRobotPoseActual();
-        Vec3f T = cubePose.GetTranslation();
-        cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 22));
-        SetLightCubePose(_baseCube, cubePose);
-        SET_STATE(PickupLowInViewShouldFail)
-      }
-      
-      break;
-    }
-
-      
-    case TestState::PickupLowInViewShouldFail:
-    {
-      // Cozmo should see the cube in front of him and realize he's not carrying it.
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::NOT_CARRYING_OBJECT_RETRY, DEFAULT_TIMEOUT) {
-        // Pick up the cube again:
-        _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(_baseCube);
-        
-        SET_STATE(RemoveCube)
-      }
-      
-      break;
-    }
-
-      
-    case TestState::RemoveCube:
-    {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::SUCCESS, DEFAULT_TIMEOUT) {
-        CST_ASSERT(GetCarryingObjectID() != _topCubeID &&
-                   GetCarryingObjectID() != -1, "robot should be carrying object at this point");
-        
-        // Remove the light cube from the world (as it someone has taken it off the lift)
-        CST_ASSERT(RemoveLightCubeByType(_baseCube), "LightCube removal failed");
-        
-        // Attempt to place the now-removed block:
-        Pose3d placePose = GetRobotPoseActual();
-        Vec3f T = placePose.GetTranslation();
-        placePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 22));
-        
-        _placeObjectResult = ActionResult::RUNNING;
-        SendPlaceObjectOnGroundSequence(placePose, _defaultTestMotionProfile);
-        
-        SET_STATE(PlaceObjectShouldFail)
-      }
-      
-      break;
-    }
-
-      
-    case TestState::PlaceObjectShouldFail:
-    {
-      // rsam: if the robot is faster flagging the object as unknown before verify action can finish it
-      // will delete the object from BlockWorld, which makes the action fail with BAD_OBJECT rather
-      // than NOT_CARRYING_OBJECT_ABORT. If the robot is not fast enough, it would fail in visual observation
-      const bool actionFailed = (_placeObjectResult == ActionResult::BAD_OBJECT) ||
-                                (_placeObjectResult == ActionResult::VISUAL_OBSERVATION_FAILED);
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(actionFailed, 10)
-      {
-        PRINT_NAMED_INFO("CST_StackBlockBehavior.TestInfo",
-                         "Finished PlaceObjectShouldFail with code '%s'",
-                         EnumToString(_placeObjectResult));
         SET_STATE(TestDone)
       }
-      
       break;
     }
-    
+      
       
     case TestState::TestDone:
     {
@@ -595,18 +397,6 @@ void CST_StackBlockBehavior::HandleActiveObjectConnectionState(const ObjectConne
   } else if (_numObjectsConnected > 0) {
     --_numObjectsConnected;
   }
-}
-  
-void CST_StackBlockBehavior::SendPickupObjectByType(const ObjectType& objType)
-{
-  PRINT_NAMED_INFO("CST_StackBlockBehavior.SendPickupObjectByType", "Attempting to SendPickupObject for Object Type %s", EnumToString(objType));
-  
-  std::vector<s32> objIds = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, objType);
-  
-  // Should have found exactly one object ID for this object type:
-  CST_ASSERT(objIds.size() == 1, "Did not find exactly one object ID for given type!");
-  
-  SendPickupObject(objIds[0], _defaultTestMotionProfile, true);
 }
   
 

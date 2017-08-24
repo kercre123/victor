@@ -1,0 +1,12 @@
+cxx_project(
+    name = 'supervisor',
+    srcs = cxx_src_glob(['supervisor/src', 'transport'],
+                        excludes = ['*_android.*',
+                                    'android/**/*',
+                                    'matlabVisionProcessor.*',
+                                    'matlabVisualization.*',
+                                    'nvStorage.*']),
+    platform_srcs = [],
+    headers = cxx_header_glob(['supervisor/src/*.h', 'transport/src/*.h']),
+    platform_headers = []
+)

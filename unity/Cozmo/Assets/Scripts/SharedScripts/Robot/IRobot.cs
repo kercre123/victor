@@ -395,7 +395,7 @@ public interface IRobot : IDisposable {
 
   void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false);
 
-  void EnableCubeSleep(bool enable);
+  void EnableCubeSleep(bool enable, bool skipAnimation = false);
 
   void EnableCubeLightsStateTransitionMessages(bool enable);
 

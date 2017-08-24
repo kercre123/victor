@@ -1144,8 +1144,8 @@ MonoBehaviour:
   _ImageBurst: {fileID: 114091869877188458}
   _ConstantParticles: {fileID: 198862202336623652}
   _StartBurstParticles: {fileID: 198995598399127996}
-  _MinParticles: 02000000050000000a0000000f0000001400000014000000
-  _MaxParticles: 0a0000003200000050000000c80000002c010000f4010000
+  _MinParticles: 0100000002000000050000000a0000000f00000014000000
+  _MaxParticles: 050000000a0000003200000050000000c80000002c010000
   _MaskFillMin: 0.003
   _MaskFillMax: 0.497
   _GlowFillMin: 0.003
@@ -1826,8 +1826,8 @@ MonoBehaviour:
   _ImageBurst: {fileID: 114400907671066898}
   _ConstantParticles: {fileID: 198640156744469828}
   _StartBurstParticles: {fileID: 198914241695959412}
-  _MinParticles: 02000000050000000a0000000f0000001400000014000000
-  _MaxParticles: 0a0000003200000050000000c80000002c010000f4010000
+  _MinParticles: 0100000002000000050000000a0000000f00000014000000
+  _MaxParticles: 050000000a0000003200000050000000c80000002c010000
   _MaskFillMin: 0.003
   _MaskFillMax: 0.497
   _GlowFillMin: 0.003
@@ -2025,8 +2025,8 @@ MonoBehaviour:
   _ImageBurst: {fileID: 114285735519477838}
   _ConstantParticles: {fileID: 198528286085198086}
   _StartBurstParticles: {fileID: 198137091656767232}
-  _MinParticles: 02000000050000000a0000000f0000001400000014000000
-  _MaxParticles: 0a0000003200000050000000c80000002c010000f4010000
+  _MinParticles: 0100000002000000050000000a0000000f00000014000000
+  _MaxParticles: 050000000a0000003200000050000000c80000002c010000
   _MaskFillMin: 0.05
   _MaskFillMax: 0.95
   _GlowFillMin: 0.05
@@ -2481,7 +2481,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -5292,7 +5292,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -8110,7 +8110,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -10928,7 +10928,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -13734,7 +13734,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -16552,7 +16552,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -19358,7 +19358,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -22152,7 +22152,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -25065,7 +25065,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:

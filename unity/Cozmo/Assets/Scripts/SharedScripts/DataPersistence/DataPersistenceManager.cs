@@ -136,10 +136,18 @@ namespace DataPersistence {
     public Action OnSaveDataReset;
     public readonly SaveData Data;
 
+    public void InitSaveData() {
+      if (Data != null && Data.DefaultProfile != null) {
+        Data.DefaultProfile.Inventory.InitInventory();
+      }
+    }
+
     public void ResetSaveData() {
+      Data.DefaultProfile.Inventory.DestroyInventory();
       // Reset what is normally a read only value.
       typeof(DataPersistenceManager).GetField("Data").SetValue(Instance, new SaveData());
-      Instance.Save();
+      InitSaveData();
+      Save();
 
       // In the event after this disconnect you connect to yet another device, we still want you to have default sparks
       OnboardingManager.Instance.GiveStartingInventory();

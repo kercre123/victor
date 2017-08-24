@@ -60,8 +60,7 @@ private:
   void UpdateLogFileHandle();
   std::string FullLogFilePath() const;
   std::string MakeLogFilePath(const std::string &logDir, uint32_t logNumber, const std::string &extension) const;
-  uint32_t NextLogFileNumber();
-  uint32_t NextAvailableLogFileNumber() const;
+  uint32_t NextAvailableLogFileNumber(uint32_t startNumber) const;
   std::ofstream& CurrentLogFileHandle();
   std::string PrvCurrentLogFilePath();
   void PrvRolloverCurrentLogFile();

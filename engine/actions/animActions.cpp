@@ -462,6 +462,14 @@ namespace Anki {
     {
       SetName("PlayNeedsGetOut");
     }
+    
+    PlayNeedsGetOutAnimIfNeeded::~PlayNeedsGetOutAnimIfNeeded()
+    {
+      auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+      if(whiteboard.HasSevereNeedExpression() && !_hasClearedExpression){
+        whiteboard.ClearSevereNeedExpression();
+      }
+    }
 
     ActionResult PlayNeedsGetOutAnimIfNeeded::Init()
     {

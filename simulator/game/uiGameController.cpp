@@ -998,7 +998,6 @@ namespace Anki {
                                                const QueueActionPosition queueActionPosition)
     {
       ExternalInterface::QueueSingleAction m;
-      m.robotID = 1;
       m.idTag = ++_queueActionIdTag;
       m.position = queueActionPosition;
       m.numRetries = 1;
@@ -1012,7 +1011,6 @@ namespace Anki {
     void UiGameController::SendAction(const ExternalInterface::QueueSingleAction& msg_in)
     {
       ExternalInterface::QueueSingleAction m(msg_in);
-      m.robotID = 1;
       m.idTag = ++_queueActionIdTag;
       m.position = QueueActionPosition::NOW;
       m.numRetries = 1;
@@ -1091,10 +1089,9 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendImageRequest(ImageSendMode mode, u8 robotID)
+    void UiGameController::SendImageRequest(ImageSendMode mode)
     {
       ExternalInterface::ImageRequest m;
-      m.robotID = robotID;
       m.mode = mode;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ImageRequest(m);
@@ -1104,7 +1101,6 @@ namespace Anki {
     void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
     {
       ExternalInterface::SetRobotImageSendMode m;
-      m.robotID = 1;
       m.mode = mode;
       m.resolution = resolution;
       ExternalInterface::MessageGameToEngine message;
@@ -1572,7 +1568,6 @@ namespace Anki {
     void UiGameController::SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
     {
       ExternalInterface::StartTestMode m;
-      m.robotID = 1;
       m.mode = mode;
       m.p1 = p1;
       m.p2 = p2;
@@ -1666,7 +1661,6 @@ namespace Anki {
     {
       ExternalInterface::ReplayLastAnimation m;
       m.numLoops = 1;
-      m.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ReplayLastAnimation(m);
       SendMessage(message);
@@ -1682,10 +1676,9 @@ namespace Anki {
     
     uint32_t UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
       ExternalInterface::QueueSingleAction msg;
-      msg.robotID = 1;
       msg.idTag = ++_queueActionIdTag;
       msg.position = pos;
-      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
+      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(1, numLoops, animName));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);
@@ -1696,7 +1689,6 @@ namespace Anki {
     void UiGameController::SendCancelAction() {
       ExternalInterface::CancelAction msg;
       msg.actionType = RobotActionType::UNKNOWN;
-      msg.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_CancelAction(msg);
       SendMessage(message);
@@ -1854,8 +1846,7 @@ namespace Anki {
         relativeToY,
         whichLEDs,
         makeRelative,
-        turnOffUnspecifiedLEDs,
-        1  // robotID
+        turnOffUnspecifiedLEDs
       );
 
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
@@ -1886,8 +1877,7 @@ namespace Anki {
         rotationPeriod_ms,
         relativeToX,
         relativeToY,
-        makeRelative,
-        1  // robotID
+        makeRelative
       );
 
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));

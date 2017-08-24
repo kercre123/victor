@@ -1518,8 +1518,8 @@
             'sources/': [
               ['exclude', '.androidHAL/src/anki/cozmo/.'],
               ['exclude', '_android\\.'],
-              ['exclude', '(linux)'],
-              ['exclude', '../../engine/cozmoAPI/csharp-binding/ios']
+              ['exclude', '(linux|android)'],
+              ['exclude', '../../engine/cozmoAPI/csharp-binding/ios'],
             ],
             'include_dirs' : [
               '<@(webots_includes)', # After opencv!

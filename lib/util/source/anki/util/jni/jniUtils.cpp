@@ -1,5 +1,6 @@
 #ifdef ANDROID
 
+#include "util/helpers/ankiDefines.h"
 #include "util/jni/jniUtils.h"
 #include "util/logging/logging.h"
 
@@ -252,6 +253,11 @@ public:
   , _jvm(jvm)
   , _env(nullptr)
   {
+    if (!ANKI_USE_JNI) {
+      PRINT_NAMED_WARNING("JNIEnvWrapperImpl.Init", "JVM not enabled for platform");
+      return;
+    }
+
     if (_jvm == nullptr) {
       PRINT_NAMED_ERROR("JNIEnvWrapperImpl.Init", "No JVM available");
       return;

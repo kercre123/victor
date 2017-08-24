@@ -297,7 +297,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     motorCalibration: false,
     noPreDockPoses: false,
     objectPositionUpdated: false,
-    placedOnCharger: false,
+    placedOnCharger: true,
     petInitialDetection: true,
     robotPickedUp: false,
     robotPlacedOnSlope: false,

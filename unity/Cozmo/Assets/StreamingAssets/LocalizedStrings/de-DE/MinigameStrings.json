@@ -187,7 +187,7 @@
     "translation" : "RUNDE {0:N0}"
   },
   "speedTap.tapBlock" : {
-    "translation" : "Tippe einen blinkenden Cube an,\u000amit dem du spielen möchtest."
+    "translation" : "Tippe einen blinkenden Cube an, mit dem du spielen möchtest."
   },
   "speedTap.separateBlocks" : {
     "translation" : "Cubes sollten getrennt werden."

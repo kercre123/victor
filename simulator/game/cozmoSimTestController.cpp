@@ -30,7 +30,7 @@ namespace Anki {
         {ReactionTrigger::CubeMoved,                    true},
         {ReactionTrigger::FacePositionUpdated,          false},
         {ReactionTrigger::FistBump,                     false},
-        {ReactionTrigger::Frustration,                  false},
+        {ReactionTrigger::Frustration,                  true},
         {ReactionTrigger::Hiccup,                       true},
         {ReactionTrigger::MotorCalibration,             false},
         {ReactionTrigger::NoPreDockPoses,               false},
@@ -423,7 +423,7 @@ namespace Anki {
     void CozmoSimTestController::SendForceDeloc()
     {
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ForceDelocalizeRobot(GetRobotState().robotID)));
+                    ExternalInterface::ForceDelocalizeRobot()));
     }
   
     bool CozmoSimTestController::IsLocalizedToObject() const

@@ -12,31 +12,49 @@ public class AnkiInfiniteScrollView : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _AnkiInfiniteScrollTextCellPrefab;
 
-  private string[] _StringsToDisplay;
+  private int _NumberOfStringsToDisplay;
   private Coroutine _CurrentRoutine;
+  private bool _CreateContentOnEnable = false;
+  private string _LongString;
 
   private const int _kStringsToProcessPerFrame = 10;
   private const int _kCharactersPerString = 16000; // See http://forum.unity3d.com/threads/apparent-string-length-limit.30874/
+
+  private void OnEnable() {
+    if (_CreateContentOnEnable) {
+      _CreateContentOnEnable = false;
+      if (_CurrentRoutine != null) {
+        StopCoroutine(_CurrentRoutine);
+      }
+      _CurrentRoutine = StartCoroutine(CreateTextLabels(_LongString));
+      _LongString = string.Empty;
+    }
+  }
 
   public void SetString(string longString) {
     ClearContainer();
 
     // Equivalent to Math.Ceiling(longString.Length / _kCharactersPerString) but without the int <-> double conversions
-    int numberOfStrings = (longString.Length + _kCharactersPerString - 1) / _kCharactersPerString; 
-    _StringsToDisplay = new string[numberOfStrings];
+    _NumberOfStringsToDisplay = (longString.Length + _kCharactersPerString - 1) / _kCharactersPerString;
 
-    if (_CurrentRoutine != null) {
-      StopCoroutine(_CurrentRoutine);
+    if (isActiveAndEnabled) {
+      if (_CurrentRoutine != null) {
+        StopCoroutine(_CurrentRoutine);
+      }
+      _CurrentRoutine = StartCoroutine(CreateTextLabels(longString));
     }
-    _CurrentRoutine = StartCoroutine(CreateTextLabels(longString));
+    else {
+      _CreateContentOnEnable = true;
+      _LongString = longString;
+    }
   }
 
   private IEnumerator CreateTextLabels(string longString) {
     int currentSubString = 0;
     int subStringStartIndex = 0;
 
-    while (currentSubString < _StringsToDisplay.Length) {
-      int targetIndex = System.Math.Min(currentSubString + _kStringsToProcessPerFrame, _StringsToDisplay.Length);
+    while (currentSubString < _NumberOfStringsToDisplay) {
+      int targetIndex = System.Math.Min(currentSubString + _kStringsToProcessPerFrame, _NumberOfStringsToDisplay);
 
       while (currentSubString < targetIndex) {
         Anki.UI.AnkiTextLegacy scrollTextCell = GameObject.Instantiate(_AnkiInfiniteScrollTextCellPrefab.gameObject).GetComponent<Anki.UI.AnkiTextLegacy>();

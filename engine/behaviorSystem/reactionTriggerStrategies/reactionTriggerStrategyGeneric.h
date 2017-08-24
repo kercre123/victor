@@ -41,7 +41,7 @@ public:
                                StrategyGeneric::G2EHandleCallbackType callback = StrategyGeneric::G2EHandleCallbackType{});
   
 protected:
-  virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
+  virtual void EnabledStateChanged(const Robot& robot, bool enabled) override {_shouldTrigger = false;}
 
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;

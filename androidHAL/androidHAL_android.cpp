@@ -77,8 +77,8 @@ namespace Anki {
     , _imageCaptureResolution(ImageResolution::QVGA)
     , _imageFrameID(1)
     {
-      InitIMU();
-      InitCamera();
+      //InitIMU();
+      //InitCamera();
     }
     
     AndroidHAL::~AndroidHAL()
@@ -170,7 +170,7 @@ namespace Anki {
     
     Result AndroidHAL::Update()
     {
-      ProcessIMUEvents();
+      //ProcessIMUEvents();
 
       return RESULT_OK;
     }

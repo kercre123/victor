@@ -44,6 +44,7 @@ public class State {
   }
 
   public virtual void Pause(PauseReason reason, Anki.Cozmo.ReactionTrigger reactionaryBehavior) {
+    DAS.Info("State.Pause", reactionaryBehavior.ToString());
     ShowDontMoveCozmoView();
   }
 

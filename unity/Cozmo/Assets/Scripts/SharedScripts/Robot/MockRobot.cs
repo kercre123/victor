@@ -1119,7 +1119,7 @@ public class MockRobot : IRobot {
     }
   }
 
-  public void EnableCubeSleep(bool enable) {
+  public void EnableCubeSleep(bool enable, bool skipAnimation = false) {
   }
 
   public void EnableCubeLightsStateTransitionMessages(bool enable) {

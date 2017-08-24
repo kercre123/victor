@@ -2771,6 +2771,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 166.20078f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 121.8759768f;
   const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
+  const std::vector<f32> DIST_COEFFS(8,0.f);
 
   // TODO: add check that images were loaded correctly
   templateImage.Set(&imgTemplate[0], imgTemplate_WIDTH*imgTemplate_HEIGHT);
@@ -2802,6 +2803,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
       HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
       HEAD_CAM_CALIB_CENTER_X,
       HEAD_CAM_CALIB_CENTER_Y,
+      DIST_COEFFS,
       Point<f32>(DEFAULT_BLOCK_MARKER_WIDTH_MM, DEFAULT_BLOCK_MARKER_WIDTH_MM),
       scratchCcm,
       scratchOnchip,

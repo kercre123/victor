@@ -17,12 +17,6 @@
           "flatScore": 10
         }
       },
-      { "behaviorID" : "Singing_Camptown",
-        "scoring" :
-        {
-          "flatScore": 10
-        }
-      },
       { "behaviorID" : "Singing_EntryOfTheGladiators",
         "scoring" :
         {
@@ -30,12 +24,6 @@
         }
       },
       { "behaviorID" : "Singing_FrereJacques",
-        "scoring" :
-        {
-          "flatScore": 10
-        }
-      },
-      { "behaviorID" : "Singing_HelloMyBaby",
         "scoring" :
         {
           "flatScore": 10
@@ -108,12 +96,6 @@
         }
       },
       { "behaviorID" : "Singing_TaRaRaBoom",
-        "scoring" :
-        {
-          "flatScore": 10
-        }
-      },
-      { "behaviorID" : "Singing_TurkeyInTheStraw",
         "scoring" :
         {
           "flatScore": 10

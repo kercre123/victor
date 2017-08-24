@@ -160,7 +160,7 @@ protected:
   void SendEnableLiftPower(bool enable);
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
-  void SendImageRequest(ImageSendMode mode, u8 robotID);
+  void SendImageRequest(ImageSendMode mode);
   void SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution);
   void SendSaveImages(ImageSendMode imageMode, const std::string& path = "");
   void SendSaveState(bool enabled, const std::string& path = "");

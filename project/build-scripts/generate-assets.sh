@@ -21,31 +21,17 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 # Where do we put the output?
-TARGET="${TOPLEVEL}/unity/Cozmo/Assets/Resources/Acknowledgements.txt"
+TARGET="${TOPLEVEL}/unity/Cozmo/Assets/Resources/Acknowledgements"
 
-# Where do we put the temporary file?
-TMP=`mktemp -t cozmo-generate-assets`
+mkdir -p $TARGET
 
-# Put this marker after each license
-SEPARATOR="\n--------------------------\n"
-
-#
-# can add  ${TOPLEVEL}/licenses/${PLATFORM}/*.license; if platform specific
-#
-
-echo > $TMP
 for license in ${TOPLEVEL}/licenses/*.license
 do
     if [ -e "$license" ]; then
-        cat $license >> $TMP
-        printf $SEPARATOR >> $TMP
+      filename=`basename $license ".license"`
+      target_path=$TARGET/$filename".txt"
+      #only copy if newer, cp doesn't support -u on mac.
+      rsync -u $license $target_path
     fi
 done
 
-#
-# install -C: Copy the file.  If the target file already exists and the files 
-# are the same, then don't change the modification time of the target.
-#
-install -m 644 -C $TMP "${TARGET}"
-
-rm -f $TMP

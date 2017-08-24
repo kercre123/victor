@@ -14,6 +14,8 @@
 #include "androidHAL/androidHAL.h"
 #include "util/logging/logging.h"
 
+#include "util/random/randomGenerator.h"
+
 #include <vector>
 
 #include <webots/Supervisor.hpp>
@@ -48,6 +50,15 @@ namespace Anki {
       // IMU
       webots::Gyro* gyro_;
       webots::Accelerometer* accel_;
+      
+      // Lens distortion
+      const bool kUseLensDistortion = false;
+      const f32 kRadialDistCoeff1     = -0.4f;
+      const f32 kRadialDistCoeff2     = -0.2f;
+      const f32 kRadialDistCoeff3     = -0.1f;
+      const f32 kTangentialDistCoeff1 = 0.05f;
+      const f32 kTangentialDistCoeff2 = 0.025f;
+      const f32 kDistCoeffNoiseFrac = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
       
     } // "private" namespace
 
@@ -190,11 +201,25 @@ namespace Anki {
       info.skew          = 0.f;
       info.nrows         = nrows;
       info.ncols         = ncols;
-
-      for(u8 i=0; i<NUM_RADIAL_DISTORTION_COEFFS; ++i) {
-        info.distCoeffs[i] = 0.f;
+      info.distCoeffs.fill(0.f);
+      
+      if(kUseLensDistortion)
+      {
+        info.distCoeffs[0] = kRadialDistCoeff1;
+        info.distCoeffs[1] = kRadialDistCoeff2;
+        info.distCoeffs[2] = kTangentialDistCoeff1;
+        info.distCoeffs[3] = kTangentialDistCoeff2;
+        info.distCoeffs[4] = kRadialDistCoeff3;
+        
+        if(Util::IsFltGTZero(kDistCoeffNoiseFrac))
+        {
+          // Simulate not having perfectly calibrated distortion coefficients
+          static Util::RandomGenerator rng(0);
+          for(s32 i=0; i<5; ++i) {
+            info.distCoeffs[i] *= rng.RandDblInRange(1.f-kDistCoeffNoiseFrac, 1.f+kDistCoeffNoiseFrac);
+          }
+        }
       }
-
     } // FillCameraInfo
 
     const CameraCalibration* AndroidHAL::GetHeadCamInfo(void)
@@ -249,12 +274,59 @@ namespace Anki {
         }
       }
 
-#     if BLUR_CAPTURED_IMAGES
-      // Add some blur to simulated images
-      cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
-      cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
-#     endif
-
+      if(kUseLensDistortion)
+      {
+        // Apply radial/lens distortion. Note that cv::remap uses in inverse lookup to find where the pixels in
+        // the output (distorted) image came from in the source. So we have to compute the inverse distortion here.
+        // We do that using cv::undistortPoints to create the necessary x/y maps for remap:
+        static cv::Mat_<f32> x_undistorted, y_undistorted;
+        if(x_undistorted.empty())
+        {
+          // Compute distortion maps on first use
+          std::vector<cv::Point2f> points;
+          points.reserve(headCamInfo_.nrows * headCamInfo_.ncols);
+          
+          for (s32 i=0; i < headCamInfo_.nrows; i++) {
+            for (s32 j=0; j < headCamInfo_.ncols; j++) {
+              points.emplace_back(j,i);
+            }
+          }
+          
+          const std::vector<f32> distCoeffs{
+            kRadialDistCoeff1, kRadialDistCoeff2, kTangentialDistCoeff1, kTangentialDistCoeff2, kRadialDistCoeff3
+          };
+          const cv::Matx<f32,3,3> cameraMatrix(headCamInfo_.focalLength_x, 0.f, headCamInfo_.center_x,
+                                               0.f, headCamInfo_.focalLength_y, headCamInfo_.center_y,
+                                               0.f, 0.f, 1.f);
+          
+          cv::undistortPoints(points, points, cameraMatrix, distCoeffs, cv::noArray(), cameraMatrix);
+          
+          x_undistorted.create(headCamInfo_.nrows, headCamInfo_.ncols);
+          y_undistorted.create(headCamInfo_.nrows, headCamInfo_.ncols);
+          std::vector<cv::Point2f>::const_iterator pointIter = points.begin();
+          for (s32 i=0; i < headCamInfo_.nrows; i++)
+          {
+            f32* x_i = x_undistorted.ptr<f32>(i);
+            f32* y_i = y_undistorted.ptr<f32>(i);
+            
+            for (s32 j=0; j < headCamInfo_.ncols; j++)
+            {
+              x_i[j] = pointIter->x;
+              y_i[j] = pointIter->y;
+              ++pointIter;
+            }
+          }
+        }
+        cv::Mat  cvFrame(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
+        cv::remap(cvFrame, cvFrame, x_undistorted, y_undistorted, CV_INTER_LINEAR);
+      }
+      
+      if(BLUR_CAPTURED_IMAGES)
+      {
+        // Add some blur to simulated images
+        cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);
+        cv::GaussianBlur(cvImg, cvImg, cv::Size(0,0), 0.75f);
+      }
       
       // Return a few pieces of ImageImuData.
       // Webots camera has no global shutter so sending the current IMU values

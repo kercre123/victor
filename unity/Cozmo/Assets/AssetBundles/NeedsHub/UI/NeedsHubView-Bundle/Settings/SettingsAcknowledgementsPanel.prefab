@@ -263,7 +263,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _AcknowledgementsLinkButton: {fileID: 11421896}
-  _AcknowledgementsTextFileName: Acknowledgements.txt
+  _AcknowledgementsModalPrefab: {fileID: 114090514984687812, guid: 884396c2d8de34962952b257ca7bb303,
+    type: 2}
+  _AcknowledgementsTextFolder: Acknowledgements
   _PrivacyPolicyLinkButton: {fileID: 11455492}
   _PrivacyPolicyTextFileName: PrivacyPolicy.txt
   _TermsOfUseButton: {fileID: 11439748}

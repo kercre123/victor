@@ -130,7 +130,7 @@
     "translation" : "Pendant que tu joues, Cozmo regarde.\u000aLorsque les cubes clignotent, mémorise la séquence puis répète-la."
   },
   "memoryMatchGame.difficulty.hardDescription.locked" : {
-    "translation" : "Pour débloquer, tu dois gagner en mode TOI CONTRE COZMO."
+    "translation" : "Pour débloquer, tu dois gagner en mode TOI VS COZMO."
   },
   "memoryMatchGame.label.yourTurn" : {
     "translation" : "À toi de jouer"
@@ -157,7 +157,7 @@
     "translation" : "Longueur de la séquence : {0}"
   },
   "memoryMatchGame.mode.vs" : {
-    "translation" : "TOI CONTRE COZMO"
+    "translation" : "TOI VS COZMO"
   },
   "memoryMatchGame.mode.solo" : {
     "translation" : "SOLO"
@@ -280,7 +280,7 @@
     "translation" : "Pour débloquer, déverrouille Réflexe Flash."
   },
   "speedTap.difficulty.mediumDescription.locked" : {
-    "translation" : "Le mode <b>DEUX COULEURS</b> est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe en mode <b>UNE COULEUR </b>."
+    "translation" : "Le mode <b>DEUX COULEURS</b> est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe Flash en mode <b>UNE COULEUR </b>."
   },
   "speedTap.difficulty.hardDescription.locked" : {
     "translation" : "Le mode <b>TROIS COULEURS</b> est verrouillé.\u000aPour le débloquer, tu dois gagner à Réflexe Flash en mode <b>DEUX COULEURS</b>."

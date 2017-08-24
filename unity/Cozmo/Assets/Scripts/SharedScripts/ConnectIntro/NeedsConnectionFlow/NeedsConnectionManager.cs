@@ -326,10 +326,22 @@ namespace Cozmo.ConnectionFlow {
       DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
       DataPersistenceManager.Instance.Save();
 
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
+        robot.PlayNeedsGetOutAnimIfNeeded(OpenModal);
+      } else {
+        OpenModal();
+      }
+    }
+
+    private void OpenModal(bool unused = false){
       var sdkModalPriorityData = new Cozmo.UI.ModalPriorityData(Cozmo.UI.ModalPriorityLayer.VeryHigh, 0,
-                                Cozmo.UI.LowPriorityModalAction.Queue,
-                                Cozmo.UI.HighPriorityModalAction.ForceCloseOthersAndOpen);
+                                                  Cozmo.UI.LowPriorityModalAction.Queue,
+                                                  Cozmo.UI.HighPriorityModalAction.ForceCloseOthersAndOpen);
       UIManager.OpenModal(_SDKModalPrefab, sdkModalPriorityData, null);
     }
+
+
   }
 }

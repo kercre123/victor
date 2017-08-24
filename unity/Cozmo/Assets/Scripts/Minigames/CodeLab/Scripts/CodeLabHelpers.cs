@@ -18,6 +18,7 @@ namespace CodeLab {
     public Vector2 camPos;
     public string name;
     public bool isVisible;
+    public string expression;
   }
 
   public class DeviceStateForCodeLab {
@@ -54,6 +55,7 @@ namespace CodeLab {
     public float argFloat { get; set; }
     public float argFloat2 { get; set; }
     public float argFloat3 { get; set; }
+    public float argFloat4 { get; set; }
     public bool argBool { get; set; }
     public bool argBool2 { get; set; }
     public bool argBool3 { get; set; }
@@ -119,11 +121,13 @@ namespace CodeLab {
       rEM.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
       rEM.RemoveCallback<RobotObservedObject>(RobotObservedObject);
       var robot = rEM.CurrentRobot;
-      robot.CancelCallback(NeutralFaceThenAdvanceToNextBlock);
-      robot.CancelCallback(CompletedTurn);
-      robot.CancelCallback(AdvanceToNextBlock);
-      robot.CancelCallback(DockWithCube);
-      robot.CancelCallback(FinishDockWithCube);
+      if (robot != null) {
+        robot.CancelCallback(NeutralFaceThenAdvanceToNextBlock);
+        robot.CancelCallback(CompletedTurn);
+        robot.CancelCallback(AdvanceToNextBlock);
+        robot.CancelCallback(DockWithCube);
+        robot.CancelCallback(FinishDockWithCube);
+      }
     }
 
     public void RobotObservedFace(RobotObservedFace message) {

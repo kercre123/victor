@@ -736,7 +736,7 @@ public class Robot : IRobot {
   public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction =
-      Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID,
+      Singleton<QueueSingleAction>.Instance.Initialize(
       idTag: tag,
       numRetries: numRetries,
       position: queueActionPosition,
@@ -760,7 +760,6 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.QueueCompoundAction =
       Singleton<QueueCompoundAction>.Instance.Initialize(
-      robotID: ID,
       idTag: tag,
       numRetries: 0,
       parallel: isParallel,
@@ -805,7 +804,7 @@ public class Robot : IRobot {
   public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue, string source) {
 
     RobotEngineManager.Instance.Message.MoodMessage =
-      Singleton<MoodMessage>.Instance.Initialize(ID,
+      Singleton<MoodMessage>.Instance.Initialize(
       Singleton<AddToEmotion>.Instance.Initialize(type, deltaValue, source));
     RobotEngineManager.Instance.SendMessage();
   }
@@ -815,7 +814,6 @@ public class Robot : IRobot {
   public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
     RobotEngineManager.Instance.Message.MoodMessage =
       Singleton<MoodMessage>.Instance.Initialize(
-      ID,
       Singleton<SetEmotion>.Instance.Initialize(type, value));
     RobotEngineManager.Instance.SendMessage();
   }
@@ -1356,7 +1354,7 @@ public class Robot : IRobot {
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
     DAS.Debug(this, "CancelAction actionType(" + actionType + ")");
 
-    RobotEngineManager.Instance.Message.CancelAction = Singleton<CancelAction>.Instance.Initialize(actionType, ID);
+    RobotEngineManager.Instance.Message.CancelAction = Singleton<CancelAction>.Instance.Initialize(actionType);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1407,7 +1405,7 @@ public class Robot : IRobot {
   public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues,
                                              bool setUnspecifiedToDefault = false) {
     RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters =
-      Singleton<SetLiveIdleAnimationParameters>.Instance.Initialize(paramNames, paramValues, ID, setUnspecifiedToDefault);
+      Singleton<SetLiveIdleAnimationParameters>.Instance.Initialize(paramNames, paramValues, setUnspecifiedToDefault);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1827,7 +1825,7 @@ public class Robot : IRobot {
     DAS.Debug(this, "Set Robot Carrying Object: " + objectID);
 
     RobotEngineManager.Instance.Message.SetRobotCarryingObject =
-      Singleton<SetRobotCarryingObject>.Instance.Initialize(objectID, ID);
+      Singleton<SetRobotCarryingObject>.Instance.Initialize(objectID);
     RobotEngineManager.Instance.SendMessage();
 
     SetLiftHeight(0f);
@@ -1864,7 +1862,6 @@ public class Robot : IRobot {
   public void RequestRandomGame() {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID,
       Singleton<PlayAGameRequest>.Instance
       );
     RobotEngineManager.Instance.SendMessage();
@@ -1873,7 +1870,6 @@ public class Robot : IRobot {
   public void DoRandomSpark() {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID,
       Singleton<DoATrickRequest>.Instance
       );
     RobotEngineManager.Instance.SendMessage();
@@ -1889,7 +1885,6 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID,
       Singleton<ActivateSpark>.Instance.Initialize(SparkUnlockId)
     );
     RobotEngineManager.Instance.SendMessage();
@@ -2088,8 +2083,6 @@ public class Robot : IRobot {
 
   // should only be called from update loop
   private void SetAllBackpackLEDs() {
-
-    Singleton<SetBackpackLEDs>.Instance.robotID = ID;
     for (int i = 0; i < BackpackLights.Length; i++) {
       Singleton<SetBackpackLEDs>.Instance.onColor[i] = BackpackLights[i].OnColor;
       Singleton<SetBackpackLEDs>.Instance.offColor[i] = BackpackLights[i].OffColor;
@@ -2255,8 +2248,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void EnableCubeSleep(bool enable) {
-    RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable, false);
+  public void EnableCubeSleep(bool enable, bool skipAnimation = false) {
+    RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable, skipAnimation);
     RobotEngineManager.Instance.SendMessage();
   }
 

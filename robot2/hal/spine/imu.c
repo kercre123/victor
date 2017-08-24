@@ -316,6 +316,7 @@ int imu_manage(struct IMURawData* data)
     data->acc[1]  =  (rawdata[10] << 8) | rawdata[9];
     data->acc[2]  = -((rawdata[8] << 8) | rawdata[7]);
 
+
     data->timestamp = (rawtime[3] << 16) | (rawtime[2] << 8) | rawtime[1];
     data->temperature = rawtemplen[1] + (rawtemplen[2] << 8);
 

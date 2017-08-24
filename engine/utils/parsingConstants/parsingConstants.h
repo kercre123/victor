@@ -21,7 +21,7 @@ namespace AnkiUtil
   #endif
 
   //#define STRING_NAMED_CONST(name, value) extern const std::string name;
-  #define STRING_NAMED_CONST(name, value) extern char const * const name;
+  #define STRING_NAMED_CONST(name, value) __attribute__((visibility("default"))) extern char const * const name;
   #include "engine/utils/parsingConstants/parsingConstants.def"
   #undef STRING_NAMED_CONST
   

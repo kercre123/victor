@@ -130,7 +130,7 @@
     "translation" : "<b>COZMOはチャージする必要があります。</b>\u000a\u000a青いバーが少ない場合、COZMOがお腹を空かしています。<b><color=#31EBFF>チャージ</color></b>ボタンをタップします。"
   },
   "onboarding.DoATrickDesc" : {
-    "translation" : "COZMOは遊び好きなロボットで、トリックが大好きです！COZMOから見える場所にキューブがあることを確認し、COZMOころがすのを見守りましょう。"
+    "translation" : "COZMOは遊び好きなロボットで、トリックが大好きです！COZMOから見える場所にキューブがあることを確認し、COZMOがころがすのを見守りましょう。"
   },
   "onboarding.RewardsIntro.Part1" : {
     "translation" : "COZMOの<color=#f5ea12>プレイメーターが満たされました。</color>"

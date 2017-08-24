@@ -1,7 +1,7 @@
-0.713298:click:settings_button:3.236197
+2.70107:click:settings_button:0.06650543
 3.403988:text:Allgemeine Einstellungen
 0.856254:text:Hilf uns, Cozmo noch besser zu machen, indem du uns deine Spieldaten und -statistiken sendest.
-0.15685:text:settings.acknowledgementsPanel.dataCollectionTitle
+0.15685:text:Datensammlung
 0.24709:text:Anerkennungen
 0.41479:text:Nutzungsbedingungen
 0.663724:text:Datenschutzerklärung
@@ -30,4 +30,4 @@
 0.108616:text:NIEDRIG
 0.82765:text:MITTEL
 0.651636:text:Lautstärke und allgemeine Einstellungen
-0.680769:click:defualt_close_view_button:0.1187134
+0.680769:click:default_close_view_button:0.1187134

@@ -212,7 +212,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
-, _localNotifications(new LocalNotifications(*this))
+, _localNotifications(new LocalNotifications(cozmoContext, *this))
 , _savedTimeLastWrittenToDevice()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
@@ -294,7 +294,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     _faceDistortionComponent->Init(inHandlersJson, _cozmoContext->GetRandom());
   }
 
-  _localNotifications->Init(inLocalNotificationJson, _cozmoContext->GetRandom());
+  _localNotifications->Init(inLocalNotificationJson, _cozmoContext->GetRandom(), currentTime_s);
 
   _connectionOccurredThisAppRun = false;
 
@@ -349,8 +349,6 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
 
 void NeedsManager::InitInternal(const float currentTime_s)
 {
-  _localNotifications->CancelAll();
-
   const u32 uninitializedSerialNumber = 0;
   InitReset(currentTime_s, uninitializedSerialNumber);
 
@@ -386,6 +384,9 @@ void NeedsManager::InitInternal(const float currentTime_s)
   WriteToDevice();
 
   SendNeedsLevelsDasEvent("app_start");
+
+  // Generate all appropriate notifications now (see function comments)
+  _localNotifications->Generate();
 
 #if ANKI_DEV_CHEATS
   g_DebugNeedsManager = this;
@@ -602,6 +603,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     _timeLastWrittenToRobot = now;
     StartWriteToRobot();
   }
+
+  _localNotifications->Generate();
 }
 
 
@@ -639,6 +642,8 @@ void NeedsManager::Update(const float currentTime_s)
 
   if (_isPausedOverall)
     return;
+
+  _localNotifications->Update(currentTime_s);
 
   // Handle periodic decay:
   if (currentTime_s >= _timeForNextPeriodicDecay_s)
@@ -718,6 +723,8 @@ void NeedsManager::SetPaused(const bool paused)
       _timeWhenBracketChanged_s[needIndex] += durationOfPause;
     }
   }
+
+  _localNotifications->SetPaused(paused);
 
   SendNeedsPauseStateToGame();
 }
@@ -857,7 +864,7 @@ void NeedsManager::PredictNeedsActionResult(const NeedsActionId actionCompleted,
 
 void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId actionCompleted,
                                                         NeedsState& needsState,
-                                                        bool predictionOnly)
+                                                        const bool predictionOnly)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompletedInternal",
                 "%s %s", predictionOnly ? "Predicted" : "Completed",
@@ -919,7 +926,10 @@ void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId acti
                                 actionDelta._needDeltas[needIndex],
                                 actionCompleted))
       {
-        StartFullnessCooldownForNeed(needId);
+        if (!predictionOnly)
+        {
+          StartFullnessCooldownForNeed(needId);
+        }
       }
     }
   }
@@ -941,6 +951,11 @@ void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId acti
     }
     default:
       break;
+  }
+
+  if (!predictionOnly)
+  {
+    _localNotifications->Generate();
   }
 }
 
@@ -1191,6 +1206,9 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
 
     SendNeedsStateToGame();
 
+    // Re-generate the notifications since we have a different number of stars
+    _localNotifications->Generate();
+
     // DAS Event: "needs.onboarding_completed"
     // s_val: Unused
     // data: Unused
@@ -1229,7 +1247,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
   // Pause/unpause for decay
   NeedsMultipliers multipliers;
   bool multipliersSet = false;
-  bool needToSendNeedsStateToGame = false;
+  bool needsLevelsChanged = false;
 
   for (int needIndex = 0; needIndex < _isDecayPausedForNeed.size(); needIndex++)
   {
@@ -1269,7 +1287,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
           const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
           _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
           _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
-          needToSendNeedsStateToGame = true;
+          needsLevelsChanged = true;
         }
       }
     }
@@ -1291,7 +1309,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
         {
           StartFullnessCooldownForNeed(needId);
         }
-        needToSendNeedsStateToGame = true;
+        needsLevelsChanged = true;
       }
       queuedDeltas.clear();
     }
@@ -1299,7 +1317,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
     _isActionsPausedForNeed[needIndex] = msg.actionPause[needIndex];
   }
 
-  if (needToSendNeedsStateToGame)
+  if (needsLevelsChanged)
   {
     SendNeedsStateToGame();
 
@@ -1309,6 +1327,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
     }
 
     DetectBracketChangeForDas();
+
+    _localNotifications->Generate();
   }
 }
 
@@ -1413,13 +1433,12 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 
     SendNeedsLevelsDasEvent("app_background");
 
-    _localNotifications->Generate();
+    // It's too late to generate local notifications, which is why we
+    // generate them peridically and on certain events
   }
   else
   {
-    // When un-backgrounding, apply decay
-    _localNotifications->CancelAll();
-
+    // When un-backgrounding, apply decay for the time we were backgrounded
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
@@ -1606,7 +1625,7 @@ void NeedsManager::StartFullnessCooldownForNeed(const NeedId needId)
 }
 
 
-bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
+bool NeedsManager::UpdateStarsState(const bool cheatGiveStar)
 {
   bool starAwarded = false;
 
@@ -1653,6 +1672,9 @@ bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
       // Save that we've issued a star today
       PossiblyStartWriteToRobot(true);
     }
+
+    // Re-generate the notifications since we have a different number of stars
+    _localNotifications->Generate();
 
     // DAS Event: "needs.play_need_filled"
     // s_val: Whether a daily star was awarded (1 or 0)
@@ -1708,8 +1730,8 @@ void NeedsManager::SendStarLevelCompletedToGame()
 }
 
 
-void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewards,
-                                       bool unlocksOnly, int* allowedPriorUnlocks)
+void NeedsManager::ProcessLevelRewards(const int level, std::vector<NeedsReward>& rewards,
+                                       const bool unlocksOnly, int* allowedPriorUnlocks)
 {
   std::vector<NeedsReward> rewardsThisLevel;
   _starRewardsConfig->GetRewardsForLevel(level, rewardsThisLevel);
@@ -1826,7 +1848,7 @@ void NeedsManager::SendNeedsOnboardingToGame()
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
-void NeedsManager::DetectBracketChangeForDas(bool forceSend)
+void NeedsManager::DetectBracketChangeForDas(const bool forceSend)
 {
   for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
   {
@@ -2457,6 +2479,8 @@ void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
 
   PossiblyWriteToDevice();
   PossiblyStartWriteToRobot();
+
+  _localNotifications->Generate();
 }
 
 void NeedsManager::DebugPassTimeMinutes(const float minutes)

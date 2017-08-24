@@ -228,14 +228,16 @@ def main(scriptArgs):
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['engine', 'include', 'resources'],
-   ['project/gyp/cozmoEngine.lst'])
+                          ['project/gyp/cozmoEngine.lst'],
+                          ['engine/tools/*'])
   generator.processFolder(['engine', 'include', 'resources'],
-                          ['project/gyp/cozmoEngine2.lst'])
+                          ['project/gyp/cozmoEngine2.lst'],
+                          ['engine/tools/*'])
   generator.processFolder(['animProcess/src/cozmoAnim', 
                            'robot/transport',
                            'include', 'resources'],
                           ['project/gyp/cozmoAnim.lst'],
-                          ['reliableSequenceId.c', 'reliableMessageTypes.c']),
+                          ['reliableSequenceId.c', 'reliableMessageTypes.c'])
   generator.processFolder(['androidHAL'],
                           ['project/gyp/androidHAL.lst'])
   generator.processFolder(['test/engine', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])

@@ -123,16 +123,25 @@ protected:
   template <typename T>
   bool StartActing(IActionRunner* action, void(T::*callback)(ActionResult,Robot&));
   
-  // Pass in a function that maps action results to UserFacingACtionResults so that the
+  template <typename T>
+  bool StartActing(IActionRunner* action, void(T::*callback)(const ExternalInterface::RobotCompletedAction&,
+                                                             Robot&));
+  
+  // Pass in a function that maps action results to UserFacingActionResults so that the
   // BehaviorEventAnimationResponseDirector knows how to respond to the failure with the
   // appropriate animation
-  template <typename T>
-  bool StartActingWithResponseAnim(
-            IActionRunner* action,
-            void(T::*callback)(ActionResult,Robot&),
-            UserFacingActionResultMapFunc mapFunc = nullptr);
+  template<typename T>
+  bool StartActingWithResponseAnim(IActionRunner* action,
+                                   void(T::*callback)(ActionResult, Robot&),
+                                   UserFacingActionResultMapFunc mapFunc = nullptr);
+  
+  template<typename T>
+  bool StartActingWithResponseAnim(IActionRunner* action,
+                                   void(T::*callback)(const ExternalInterface::RobotCompletedAction&, Robot&),
+                                   UserFacingActionResultMapFunc mapFunc = nullptr);
 
   bool StartActing(IActionRunner* action, BehaviorActionResultWithRobotCallback callback);
+  bool StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithRobotCallback callback);
 
   // Stop the behavior acting so that the delegate can issue a new action
   bool StopActing(bool allowCallback);
@@ -175,8 +184,17 @@ private:
   // Functions for responding to action results with StartActingWithResponseAnim
   UserFacingActionResultMapFunc _actionResultMapFunc = nullptr;
   BehaviorActionResultWithRobotCallback _callbackAfterResponseAnim = nullptr;
+  BehaviorRobotCompletedActionWithRobotCallback _callbackAfterResponseAnimUsingRCA = nullptr;
   
   AnimationTrigger AnimationResponseToActionResult(Robot& robot, UserFacingActionResult result);
+  
+  template<typename T>
+  void RespondToActionWithAnim(const T& res,
+                               ActionResult actionResult,
+                               Robot& robot,
+                               std::function<void(const T&,Robot&)>& callback);
+  
+  void RespondToRCAWithAnim(const ExternalInterface::RobotCompletedAction& rca, Robot& robot);
   void RespondToResultWithAnim(ActionResult result, Robot& robot);
 
 };
@@ -189,23 +207,51 @@ bool IHelper::StartActing(IActionRunner* action, void(T::*callback)(ActionResult
           std::bind(callback, static_cast<T*>(this), std::placeholders::_1,
                                                      std::placeholders::_2));
 }
+
+template<typename T>
+bool IHelper::StartActing(IActionRunner* action,
+                          void(T::*callback)(const ExternalInterface::RobotCompletedAction&,Robot&))
+{
+  return StartActing(action,
+                     std::bind(callback,
+                               static_cast<T*>(this),
+                               std::placeholders::_1,
+                               std::placeholders::_2));
+}
   
 template<typename T>
-bool IHelper::StartActingWithResponseAnim(
-            IActionRunner* action,
-            void(T::*callback)(ActionResult,Robot&),
-            UserFacingActionResultMapFunc mapFunc)
+bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
+                                          void(T::*callback)(ActionResult,Robot&),
+                                          UserFacingActionResultMapFunc mapFunc)
 {
-  _callbackAfterResponseAnim = std::bind(callback, static_cast<T*>(this), std::placeholders::_1,
+  _callbackAfterResponseAnim = std::bind(callback,
+                                         static_cast<T*>(this),
+                                         std::placeholders::_1,
                                          std::placeholders::_2);
   _actionResultMapFunc = mapFunc;
   
   DEV_ASSERT(_callbackAfterResponseAnim != nullptr,
-             "IHelper.StartActingWithResponseAnim.NullCllback");
+             "IHelper.StartActingWithResponseAnim.NullActionResultCallback");
+  
   return StartActing(action, &IHelper::RespondToResultWithAnim);
 }
+
+template<typename T>
+bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
+                                          void(T::*callback)(const ExternalInterface::RobotCompletedAction&,Robot&),
+                                          UserFacingActionResultMapFunc mapFunc)
+{
+  _callbackAfterResponseAnimUsingRCA = std::bind(callback,
+                                                 static_cast<T*>(this),
+                                                 std::placeholders::_1,
+                                                 std::placeholders::_2);
+  _actionResultMapFunc = mapFunc;
   
+  DEV_ASSERT(_callbackAfterResponseAnimUsingRCA != nullptr,
+             "IHelper.StartActingWithResponseAnim.NullRCACallback");
   
+  return StartActing(action, &IHelper::RespondToRCAWithAnim);
+}
 
 } // namespace Cozmo
 } // namespace Anki

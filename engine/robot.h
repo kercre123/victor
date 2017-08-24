@@ -63,6 +63,7 @@ class AIComponent;
 class ActionList;
 class BehaviorFactory;
 class BehaviorManager;
+class BehaviorSystemManager;
 class BlockFilter;
 class BlockTapFilterComponent;
 class BlockWorld;
@@ -765,6 +766,7 @@ protected:
   std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
 
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
+  std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;

@@ -198,15 +198,17 @@ namespace Vision {
     // Removes alpha channel and squeezes into 24bpp
     ImageRGB(const ImageRGBA& imageRGBA);
     
-    // Replicates grayscale image across all three channels
-    ImageRGB(const Image& imageGray);
-    
     ImageRGB(const Array2d<PixelRGB>& array2d) : ImageBase<PixelRGB>(array2d) { }
     
     ImageRGB GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     const ImageRGB GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     
-    Image ToGray() const;
+    // To/From Gray:
+    // (Gray->Color replicates grayscale image across all three channels.)
+    ImageRGB(const Image& imageGray);             // Construct new RGB image from a gray one
+    Image ToGray() const;                         // Return a new gray image from this RGB one
+    void FillGray(Image& grayOut) const;          // Fill existing gray image from this RGB image
+    ImageRGB& SetFromGray(const Image& grayIn);   // Set this RGB image from given gray image
     
     // Sets all pixels > value to 255 and all values <= value to 0.
     // If anyChannel=true, then any channel being above the value suffices. Otherwise, all channels must be.
@@ -240,6 +242,7 @@ namespace Vision {
 #   endif
     
     Image ToGray() const;
+    void FillGray(Image& grayOut) const;
     
     ImageRGBA GetROI(Rectangle<s32>& roiRect) {
       return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);

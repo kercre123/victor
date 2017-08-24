@@ -114,8 +114,8 @@ void CliffSensorComponent::UpdateCliffDetectThreshold()
   // after stopping indicating a suspicious cliff.
   if (_cliffStartTimestamp > 0) {
     if( !_robot.GetMoveComponent().AreWheelsMoving() ) {
-      
-      auto poseMap = _robot.GetStateHistory()->GetRawPoses();
+
+      const auto& poseMap = _robot.GetStateHistory()->GetRawPoses();
       u16 minVal = std::numeric_limits<u16>::max();
       for (auto startIt = poseMap.lower_bound(_cliffStartTimestamp); startIt != poseMap.end(); ++startIt) {
         u16 currVal = startIt->second.GetCliffData();

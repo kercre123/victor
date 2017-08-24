@@ -345,7 +345,7 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void UpdateInterruptModal(){
+    private void UpdateInterruptModal() {
       if (_CurrentModalState == RepairModalState.TUNE_UP) {
         if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
           if (_InterruptedAlert != null) {
@@ -1177,153 +1177,96 @@ namespace Cozmo.Repair.UI {
           return;
         }
 
-        //start with intro anims
+        // Get the latest bracket value
         NeedsStateManager nsm = NeedsStateManager.Instance;
         bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
 
-        switch (_PartToRepair) {
-        case RepairablePartId.Head:
-          if (severe) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady,
-                                       HandleCalibrateAnimMiddle,
-                                       QueueActionPosition.AT_END);
-          }
-          else {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetReady,
-                                       HandleCalibrateAnimMiddle,
-                                       QueueActionPosition.AT_END);
-          }
+        // Start with a get in
+        robot.SendAnimationTrigger((severe) ? AnimationTrigger.RepairFixSevereGetReady : AnimationTrigger.RepairFixMildGetReady,
+                                   null,
+                                   QueueActionPosition.AT_END);
 
-          for (int i = 0; i < _TuneUpPatternToMatch.Count; ++i) {
-            if (_TuneUpPatternToMatch[i] == ArrowInput.Up) {
-              if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereHeadUp,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-              else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildHeadUp,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-            }
-            else {
-              if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereHeadDown,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-              else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildHeadDown,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-            }
-          }
-          robot.SetHeadAngle(0.0f, null, QueueActionPosition.AT_END);
-          break;
-        case RepairablePartId.Lift:
-          if (severe) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady,
-                                       null,
-                                       QueueActionPosition.AT_END);
-          }
-          else {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetReady,
-                                       null,
-                                       QueueActionPosition.AT_END);
-          }
-
-          //fix lift height, only do this for mild animations
-          if (!severe) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildRaiseLift,
-                                                   HandleCalibrateAnimMiddle,
-                                                   QueueActionPosition.AT_END);
-          }
-
-          for (int i = 0; i < _TuneUpPatternToMatch.Count; ++i) {
-            if (_TuneUpPatternToMatch[i] == ArrowInput.Up) {
-              if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereLiftUp,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-              else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildLiftUp,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-            }
-            else {
-              if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereLiftDown,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-              else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildLiftDown,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-            }
-          }
-          robot.SetLiftHeight(0.0f, null, QueueActionPosition.AT_END);
-          break;
-        case RepairablePartId.Treads:
-          if (severe) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady,
-                                       HandleCalibrateAnimMiddle,
-                                       QueueActionPosition.AT_END);
-          }
-          else {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetReady,
-                                       HandleCalibrateAnimMiddle,
-                                       QueueActionPosition.AT_END);
-          }
-
-          for (int i = 0; i < _TuneUpPatternToMatch.Count; ++i) {
-            if (_TuneUpPatternToMatch[i] == ArrowInput.Up) {
-              if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereWheelsForward,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-              else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildWheelsForward,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-            }
-            else {
-              if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereWheelsBack,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-              else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildWheelsBack,
-                                           HandleCalibrateAnimMiddle,
-                                           QueueActionPosition.AT_END);
-              }
-            }
-          }
-          break;
-        }
-
-        // Always end with a victory...
-        if (severe) {
-          if (_RoundIndex < _RoundData.Length - 1) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereRoundReact,
-                                       HandleRobotResponseDone,
-                                       QueueActionPosition.AT_END);
-          }
-        }
-        else {
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildRoundReact,
-                                     HandleRobotResponseDone,
+        // Play an animation for every arrow
+        for (int i = 0; i < _TuneUpPatternToMatch.Count; i++) {
+          robot.SendAnimationTrigger(GetRobotArrowAnimation(_TuneUpPatternToMatch[i], severe),
+                                     HandleCalibrateAnimMiddle,
                                      QueueActionPosition.AT_END);
         }
+
+        // End with a victory animation
+        robot.SendAnimationTrigger((severe) ? AnimationTrigger.RepairFixSevereRoundReact : AnimationTrigger.RepairFixMildRoundReact,
+                                   HandleRobotResponseDone,
+                                   QueueActionPosition.AT_END);
       }
+    }
+
+    private AnimationTrigger GetRobotArrowAnimation(ArrowInput arrowInput, bool isSevere) {
+      AnimationTrigger animationTrigger = AnimationTrigger.RepairFixMildHeadUp;
+      if (arrowInput == ArrowInput.Up) {
+        if (isSevere) {
+          switch (_PartToRepair) {
+          case RepairablePartId.Head:
+            animationTrigger = AnimationTrigger.RepairFixSevereHeadUp;
+            break;
+          case RepairablePartId.Lift:
+            animationTrigger = AnimationTrigger.RepairFixSevereLiftUp;
+            break;
+          case RepairablePartId.Treads:
+            animationTrigger = AnimationTrigger.RepairFixSevereWheelsForward;
+            break;
+          default:
+            break;
+          }
+        }
+        else { // mild
+          switch (_PartToRepair) {
+          case RepairablePartId.Head:
+            animationTrigger = AnimationTrigger.RepairFixMildHeadUp;
+            break;
+          case RepairablePartId.Lift:
+            animationTrigger = AnimationTrigger.RepairFixMildLiftUp;
+            break;
+          case RepairablePartId.Treads:
+            animationTrigger = AnimationTrigger.RepairFixMildWheelsForward;
+            break;
+          default:
+            break;
+          }
+        }
+      }
+      else { // arrowInput == ArrowInput.Down
+        if (isSevere) {
+          switch (_PartToRepair) {
+          case RepairablePartId.Head:
+            animationTrigger = AnimationTrigger.RepairFixSevereHeadDown;
+            break;
+          case RepairablePartId.Lift:
+            animationTrigger = AnimationTrigger.RepairFixSevereLiftDown;
+            break;
+          case RepairablePartId.Treads:
+            animationTrigger = AnimationTrigger.RepairFixSevereWheelsBack;
+            break;
+          default:
+            break;
+          }
+        }
+        else { // mild
+          switch (_PartToRepair) {
+          case RepairablePartId.Head:
+            animationTrigger = AnimationTrigger.RepairFixMildHeadDown;
+            break;
+          case RepairablePartId.Lift:
+            animationTrigger = AnimationTrigger.RepairFixMildLiftDown;
+            break;
+          case RepairablePartId.Treads:
+            animationTrigger = AnimationTrigger.RepairFixMildWheelsBack;
+            break;
+          default:
+            break;
+          }
+        }
+      }
+      return animationTrigger;
     }
 
     private void PlayRobotRepairIdleAnim() {

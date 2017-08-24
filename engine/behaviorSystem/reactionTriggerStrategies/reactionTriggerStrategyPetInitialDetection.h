@@ -28,7 +28,7 @@ public:
   virtual bool ShouldResumeLastBehavior() const override { return true;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   
-  virtual void EnabledStateChanged(bool enabled) override
+  virtual void EnabledStateChanged(const Robot& robot, bool enabled) override
                  {UpdateReactedTo(_robot);}
   
   // Implementation of IReactToPetListener

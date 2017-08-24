@@ -44,7 +44,14 @@
 // JNI
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// Should not need this. Platforms specific code is not shared
-// #define ANKI_USE_JNI !(defined(ANKI_PLATFORM_IOS) || ( defined(STANDALONE) && STANDALONE ))
+// The ANDROID platform has a JNI environment for interoperability with (java) Applications.
+// However, Android system utils and/or native services should not assume a valid JNI environment exists,
+// since they may be running before the android java runtime has been started.
+// For these cases, JNI support can be explicitly disabled by defining DISABLE_JNI.
+#if (defined(DISABLE_JNI) && (DISABLE_JNI == 1))
+#define ANKI_USE_JNI 0
+#else
+#define ANKI_USE_JNI ANKI_PLATFORM_ANDROID
+#endif
 
 #endif // header
