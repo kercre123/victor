@@ -849,7 +849,7 @@ namespace Anki {
               gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF_NORMAL;
               gyroMotionThresh_ = GYRO_MOTION_THRESHOLD;
             }
-            else if ( ProxSensors::IsAnyCliffDetected() ||
+            else if ( /*ProxSensors::IsAnyCliffDetected() ||*/
                       (ABS(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
                       (ABS(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
                       (ABS(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {

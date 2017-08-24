@@ -30,7 +30,7 @@ endif()
 
 
 include(anki_build_cxx_library)
-anki_build_cxx_library(androidHAL ${ANKI_SRCLIST_DIR})
+anki_build_cxx_library(androidHAL ${ANKI_SRCLIST_DIR} STATIC)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -61,7 +61,7 @@ PRIVATE
   cti_planning
   cti_messaging
   robot_clad # imageTypes.h
-# platform
+  # platform
 #PUBLIC
   # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}

@@ -50,7 +50,7 @@ namespace Anki {
     template<size_t NumPoints>
     Rectangle(const std::array<Point<2,T>,NumPoints>& points);
     
-    T Area() const { return width*height; }
+    T Area() const { return GetWidth()*GetHeight(); }
     
     // (x,y) is the top left
     inline T GetX()      const;

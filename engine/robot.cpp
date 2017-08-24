@@ -1288,7 +1288,9 @@ Result Robot::Update()
      }
      lastUpdateTime = currentTime_sec;
   */
-  
+  #   ifdef COZMO_V2
+  AndroidHAL::getInstance()->StartCamera();
+  #endif
   
   //////////// Android HAL Update ////////////
   #ifdef COZMO_V2
@@ -1296,15 +1298,20 @@ Result Robot::Update()
   #endif
   
   
+  #   ifdef COZMO_V2
+  _visionComponent->CaptureAndSendImage();
+#   endif
+
+#   ifdef COZMO_V2
+//  AndroidHAL::getInstance()->StopCamera();
+  #endif
   
-  //////////// VisionComponent //////////
-  
-      
+  //////////// VisionComponent //////////  
   if(_visionComponent->GetCamera().IsCalibrated())
   {
-#   ifdef COZMO_V2
-    _visionComponent->CaptureAndSendImage();
-#   endif
+// #   ifdef COZMO_V2
+//     _visionComponent->CaptureAndSendImage();
+// #   endif
     
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();

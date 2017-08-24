@@ -24,9 +24,12 @@
 #include "androidHAL/android/camera/utils/native_debug.h"
 #include "androidHAL/android/fugly_camera/victor_camera.h"
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/image.h"
 
 #include <vector>
 #include <chrono>
+
+#include <fstream>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using androidHAL.cpp
@@ -36,18 +39,18 @@ namespace Anki {
   namespace Cozmo {
     
     namespace { // "Private members"
-
+      CameraHandle _cameraHandle = nullptr;
+      uint8_t* _latestFrame = nullptr;
+      int _width = 0;
+      int _height = 0;
+      bool _cameraRunning = false;
+      bool _waitingForFrame = false;
+      bool _copyingNewFrame = false;
+      bool _cameraInited = false;
     } // "private" namespace
 
 
 #pragma mark --- Simulated Hardware Method Implementations ---
-    
-    int victor_fugly_camera_callback(const uint8_t* image, int width, int height)
-    {
-      // process camera image...
-      // NOTE: This callback may occur on a thread that is _not_ owned by the engine.
-      return 0;
-    }
 
     // Definition of static field
     AndroidHAL* AndroidHAL::_instance = 0;
@@ -85,16 +88,7 @@ namespace Anki {
     , _imageFrameID(1)
     {
       //InitIMU();
-      //InitCamera();
-
-      // victor_camera usage
-      CameraHandle camera  = camera_alloc();
-      camera_init(camera);
-      camera_start(camera, victor_fugly_camera_callback);
-    
-      camera_stop(camera);
-      camera_cleanup(camera);
-      free(camera);
+     InitCamera();
     }
     
     AndroidHAL::~AndroidHAL()
@@ -157,31 +151,111 @@ namespace Anki {
       (void)status;   //to silence unused compiler warning
     }
 
+    int CameraCallback(const uint8_t* image, int width, int height)
+    {
+        // PRINT_NAMED_WARNING("Camera callback", "Width: %d Height: %d",width, height);
+      if(_latestFrame == nullptr)
+      {
+        _latestFrame = (uint8_t*)malloc(width*height*sizeof(image));
+        _width = width;
+        _height = height;
+      }
+      _copyingNewFrame = true;
+      std::memcpy(_latestFrame, image, width*height);
+      
+//      static int count = 0;
+//      if(count < 20)
+//      {
+//        PRINT_NAMED_WARNING("Camera callback", "Width: %d Height: %d",width, height);
+
+//        const char* buf = reinterpret_cast<const char*>(image);
+//        std::ofstream f("/data/data/com.anki.cozmoengine/images/" + std::to_string(count) + ".jpg", std::ofstream::binary);
+//        f.write(buf, width*height);
+//        f.close();
+//        ++count;
+//      }
+      
+      _copyingNewFrame = false;
+      
+      _waitingForFrame = false;
+      return 0;
+    }
+
+    void AndroidHAL::StartCamera()
+    {
+//      if(!_cameraInited)
+//      {
+//        return;
+//      }
+//      
+//      if(!_cameraRunning && !_waitingForFrame)
+//      {
+//        _cameraRunning = true;
+//        _waitingForFrame = true;
+//        int res = camera_start(_cameraHandle, &CameraCallback);
+//        PRINT_NAMED_WARNING("Camera start", "%d", res);
+//      }
+    }
+    
+    void AndroidHAL::StopCamera()
+    {
+//      if(!_cameraInited)
+//      {
+//        return;
+//      }
+//    
+//      if(_cameraRunning && !_waitingForFrame)
+//      {
+//        int res = camera_stop(_cameraHandle);
+//        PRINT_NAMED_WARNING("Camera stop", "%d", res);
+//        _cameraRunning = false;
+//        _waitingForFrame = false;
+//      }
+    }
+
     void AndroidHAL::InitCamera()
     {
       PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingInit", "");
       
-      DeleteCamera();
-      
-      _androidCamera = new NativeCamera(nullptr);
-      ASSERT(_androidCamera, "Failed to Create CameraObject");
-      
-      // Get image resolution info
-      const int cameraRes = static_cast<const int>(_imageCaptureResolution);
-      const int width = Vision::CameraResInfo[cameraRes].width;
-      const int height = Vision::CameraResInfo[cameraRes].height;
+      _cameraHandle = camera_alloc();
 
-      PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingCaptureSession", "%d x %d", width, height);
-      ImageResolution_Android res {width, height, 0};
-      _reader= new ImageReader(&res);
+      int res = camera_init(_cameraHandle);
+      PRINT_NAMED_WARNING("Camera init", "%d", res);
       
-      _androidCamera->CreateSession(_reader->GetNativeWindow());
-      _androidCamera->Animate();
+      res = camera_start(_cameraHandle, &CameraCallback);
+      PRINT_NAMED_WARNING("Camera start", "%d", res);
+
+
+      _cameraInited = true;
+      // DeleteCamera();
+      
+      // _androidCamera = new NativeCamera(nullptr);
+      // ASSERT(_androidCamera, "Failed to Create CameraObject");
+      
+      // // Get image resolution info
+      // const int cameraRes = static_cast<const int>(_imageCaptureResolution);
+      // const int width = Vision::CameraResInfo[cameraRes].width;
+      // const int height = Vision::CameraResInfo[cameraRes].height;
+
+      // PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingCaptureSession", "%d x %d", width, height);
+      // ImageResolution_Android res {width, height, 0};
+      // _reader= new ImageReader(&res);
+      
+      // _androidCamera->CreateSession(_reader->GetNativeWindow());
+      // _androidCamera->Animate();
     }
 
     void AndroidHAL::DeleteCamera() {
       Util::SafeDelete(_androidCamera);
       Util::SafeDelete(_reader);
+
+      int res = camera_stop(_cameraHandle);
+      PRINT_NAMED_WARNING("Camera stop", "%d", res);
+
+      res = camera_cleanup(_cameraHandle);
+      PRINT_NAMED_WARNING("Camera cleanup", "%d", res);
+
+      free(_cameraHandle);
     }
     
     Result AndroidHAL::Update()
@@ -219,31 +293,52 @@ namespace Anki {
     bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
       DEV_ASSERT(frame != NULL, "androidHAL.CameraGetFrame.NullFramePointer");
-      
-      if (_reader && _reader->IsReady()) {
-        u32 dataLength;
-        _reader->GetLatestRGBImage(frame, dataLength);
+
+      if(_latestFrame != nullptr && !_copyingNewFrame)
+      {
+        std::memcpy(frame, _latestFrame, _width*_height);
         imageID = ++_imageFrameID;
-        
-        // --------------------------------------------------------------------
-        // TEMP: Image-imu sync isn't implemented yet so, just fake the imu data for now.
-        // See sim_hal::IMUGetCameraTime() for explanation of line2Number
+
         ImageImuData imu_meas(imageID,
-                              0.f, 0.f, 0.f,
-                              125);          // IMU data point for middle of this image
+          0.f, 0.f, 0.f,
+          125);          // IMU data point for middle of this image
 
         imuData.push_back(imu_meas);
-        
+
         // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
         imu_meas.imageId = imageID + 1;
         imu_meas.line2Number = 1;
         imuData.push_back(imu_meas);
-        // --------------------------------------------------------------------
-
+        
         return true;
       }
-      
+
       return false;
+
+      // if (_reader && _reader->IsReady()) {
+      //   u32 dataLength;
+      //   _reader->GetLatestRGBImage(frame, dataLength);
+      //   imageID = ++_imageFrameID;
+        
+      //   // --------------------------------------------------------------------
+      //   // TEMP: Image-imu sync isn't implemented yet so, just fake the imu data for now.
+      //   // See sim_hal::IMUGetCameraTime() for explanation of line2Number
+      //   ImageImuData imu_meas(imageID,
+      //                         0.f, 0.f, 0.f,
+      //                         125);          // IMU data point for middle of this image
+
+      //   imuData.push_back(imu_meas);
+        
+      //   // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
+      //   imu_meas.imageId = imageID + 1;
+      //   imu_meas.line2Number = 1;
+      //   imuData.push_back(imu_meas);
+      //   // --------------------------------------------------------------------
+
+      //   return true;
+      // }
+      
+      // return false;
 
     } // CameraGetFrame()
     

@@ -2290,15 +2290,20 @@ namespace Cozmo {
 # ifdef COZMO_V2
   void VisionComponent::CaptureAndSendImage()
   {
+    
+//      PRINT_NAMED_WARNING("Here","");
     // This resolution should match AndroidHAL::_imageCaptureResolution!
     const ImageResolution expectedResolution = ImageResolution::QVGA;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);
-    const int numRows = Vision::CameraResInfo[cameraRes].height;
-    const int numCols = Vision::CameraResInfo[cameraRes].width;
+    int numRows = Vision::CameraResInfo[cameraRes].height;
+    int numCols = Vision::CameraResInfo[cameraRes].width;
     
-    const int bufferSize = numRows * numCols * 3;
+    numRows = 360;
+    numCols = 640;
+
+    const int bufferSize = numRows * numCols;
     u8 buffer[bufferSize];
     
     // Get image buffer
@@ -2307,13 +2312,29 @@ namespace Cozmo {
     u32 imageId;
     if (AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData)) {
       
+      static bool b = false;
+      static int s = 0;
+      if(!b)
+      {
+        b = true;
+        s = imageId;
+      }
+      
       // Add IMU data to history
       for (const auto& data : imuData) {
         GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
       }
       
       // Create ImageRGB object from image buffer
-      Vision::ImageRGB imgRGB(numRows, numCols, buffer);
+      Vision::Image imgRGB(numRows, numCols, buffer);
+//      Vision::ImageRGB imgRGB(numRows, numCols, buffer);
+
+      if(imageId - s < 20)
+      {
+        const auto& path = _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "/images");
+        PRINT_NAMED_WARNING("", "%s", path.c_str());
+        imgRGB.Save(path + "/" + std::to_string(imageId) + ".jpg");
+      }
       
       if(kDisplayUndistortedImages)
       {
