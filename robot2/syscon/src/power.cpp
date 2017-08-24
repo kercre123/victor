@@ -38,7 +38,7 @@ void Power::init(void) {
 }
 
 void Power::stop(void) {
-  nVDDs_EN::set();
+  //nVDDs_EN::set();  // See if inrush current causes android to restart
   nCHG_EN::set();
   
   POWER_EN::mode(MODE_OUTPUT);

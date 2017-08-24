@@ -24,14 +24,10 @@ static struct {
     uint8_t raw[];
   };
   union {
-    struct {
-      WriteDFU payload;
-      SpineMessageFooter footer;
-    } write;
-    struct {
-      SpineMessageFooter footer;
-    } null;
+    WriteDFU writeDFU;
+    uint8_t raw_payload[];
   };
+  SpineMessageFooter _footer;
 } inbound;
 
 static const int EXTRA_BYTES = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
@@ -94,12 +90,11 @@ void Comms::run(void) {
   outbound.header.bytes_to_follow = sizeof(outbound.payload);
 
   // Configure our interrupts
-  for (int i = 100; i; i--) __asm("nop");
-
-  sendAck(ACK_BOOTED);
-
   NVIC_SetPriority(USART1_IRQn, 2);
   NVIC_EnableIRQ(USART1_IRQn);
+
+  USART1->TDR = 0xFF;
+  sendAck(ACK_BOOTED);
 
   while (!g_exitRuntime) __asm("WFI");
 
@@ -161,11 +156,10 @@ extern "C" void USART1_IRQHandler(void) {
   USART1->RQR = USART_RQR_RXFRQ;
   writeIndex = 0;
 
-  uint32_t expected_crc = crc(&inbound.null, inbound.header.bytes_to_follow);
-  uint8_t* message_end = (__packed uint8_t*)(&inbound.null) + inbound.header.bytes_to_follow;
-  uint32_t received_crc = *(__packed uint32_t*)message_end;
+  uint32_t expected_crc = crc(&inbound.raw_payload, inbound.header.bytes_to_follow);
+  SpineMessageFooter* message_end = (SpineMessageFooter*)(&inbound.raw_payload[inbound.header.bytes_to_follow]);
 
-  if (expected_crc != received_crc) {
+  if (expected_crc != message_end->checksum) {
     sendAck(NACK_CRC_FAILED);
     return ;
   }
@@ -192,24 +186,24 @@ extern "C" void USART1_IRQHandler(void) {
 
   case PAYLOAD_DFU_PACKET:
     {
-      const uint32_t word_size = inbound.write.payload.wordCount * sizeof(inbound.write.payload.data[0]);
-      const uint32_t* dst = (uint32_t*)&APP->certificate[inbound.write.payload.address];
-      const uint32_t* src = inbound.write.payload.data;
+      const uint32_t word_size = inbound.writeDFU.wordCount * sizeof(inbound.writeDFU.data[0]);
+      const uint32_t* dst = (uint32_t*)&APP->certificate[inbound.writeDFU.address];
+      const uint32_t* src = inbound.writeDFU.data;
 
       // We can only work with aligned addresses
-      if (inbound.write.payload.address & 3) {
+      if (inbound.writeDFU.address & 3) {
         sendAck(NACK_SIZE_ALIGN);
         return;
       }
 
       // Address is out of bounds
-      if ((inbound.write.payload.address + word_size + 8) > COZMO_APPLICATION_SIZE) {
+      if ((inbound.writeDFU.address + word_size + 8) > COZMO_APPLICATION_SIZE) {
         sendAck(NACK_BAD_ADDRESS);
         return ;
       }
 
       // Check if the space is erased
-      for (int i = 0; i < inbound.write.payload.wordCount; i++) {
+      for (int i = 0; i < inbound.writeDFU.wordCount; i++) {
         if (dst[i] != 0xFFFFFFFF) {
           sendAck(NACK_NOT_ERASED);
           return ;
@@ -220,7 +214,7 @@ extern "C" void USART1_IRQHandler(void) {
       Flash::writeFlash(dst, src, word_size);
 
       // Verify flash
-      for (int i = 0; i < inbound.write.payload.wordCount; i++) {
+      for (int i = 0; i < inbound.writeDFU.wordCount; i++) {
         if (dst[i] != src[i]) {
           sendAck(NACK_FLASH_FAILED);
           return ;
