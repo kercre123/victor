@@ -1,26 +1,21 @@
 
-typedef struct cameraobj_t* CameraHandle;
-
 
 //camera callback: called with captured `image` of `width` by `height` 8bit greyscale pixels
 // (called from separate thread)
 typedef int(*camera_cb)(const uint8_t* image, int width, int height); 
 
 
-//Allocates a camera object for you.  call `free(handle)` when shutting down
-CameraHandle camera_alloc(void);
-
 //Initializes the camera
-int camera_init(CameraHandle camera);
+int camera_init();
 
 //Starts capturing frames in new thread, sends them to callback `cb`.
-int camera_start(CameraHandle camera, camera_cb cb);
+int camera_start(camera_cb cb);
 
 //stops capturing frames
-int camera_stop(CameraHandle camera);
+int camera_stop();
 
 //de-initializes camera, makes it available to rest of system
-int camera_cleanup(CameraHandle camera);
+int camera_cleanup();
 
 
 

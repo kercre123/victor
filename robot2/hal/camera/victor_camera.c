@@ -1,11 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <inttypes.h>
-#include <ctype.h>
-#include <fcntl.h>
 #include <dlfcn.h>
 #include <sys/mman.h>
 
@@ -13,7 +5,6 @@
 
 #include "mm_qcamera_app.h"
 #include "mm_qcamera_dbg.h"
-#include "mm_qcamera_socket.h"
 
 /*************************************/
 #include "victor_camera.h"
@@ -76,34 +67,6 @@ mm_camera_stream_t * mm_app_add_raw_stream(mm_camera_test_obj_t *test_obj,
     }
 
     return stream;
-}
-
-static pthread_mutex_t app_mutex;
-static int thread_status = 0;
-static pthread_cond_t app_cond_v;
-
-#define MM_QCAMERA_APP_NANOSEC_SCALE 1000000000
-
-
-
-int mm_camera_app_wait()
-{
-    int rc = 0;
-    pthread_mutex_lock(&app_mutex);
-    if(FALSE == thread_status){
-        pthread_cond_wait(&app_cond_v, &app_mutex);
-    }
-    thread_status = FALSE;
-    pthread_mutex_unlock(&app_mutex);
-    return rc;
-}
-
-void mm_camera_app_done()
-{
-  pthread_mutex_lock(&app_mutex);
-  thread_status = TRUE;
-  pthread_cond_signal(&app_cond_v);
-  pthread_mutex_unlock(&app_mutex);
 }
 
 
@@ -568,14 +531,6 @@ int mm_app_close(mm_camera_test_obj_t *test_obj)
     }
     test_obj->cam = NULL;
 
-    /* close jpeg client */
-    if (test_obj->jpeg_hdl && test_obj->jpeg_ops.close) {
-        rc = test_obj->jpeg_ops.close(test_obj->jpeg_hdl);
-        test_obj->jpeg_hdl = 0;
-        if (rc != MM_CAMERA_OK) {
-            CDBG_ERROR("%s: close jpeg failed, rc=%d", __func__, rc);
-        }
-    }
 
     /* dealloc capability buf */
     rc = mm_app_release_bufs(1, &test_obj->cap_buf);
@@ -698,11 +653,6 @@ int mm_app_del_stream(mm_camera_test_obj_t *test_obj,
     return MM_CAMERA_OK;
 }
 
-mm_camera_channel_t *mm_app_get_channel_by_type(mm_camera_test_obj_t *test_obj,
-                                                mm_camera_channel_type_t ch_type)
-{
-    return &test_obj->channels[ch_type];
-}
 
 int mm_app_config_stream(mm_camera_test_obj_t *test_obj,
                          mm_camera_channel_t *channel,
@@ -895,7 +845,8 @@ int mm_app_stop_capture_raw(mm_camera_test_obj_t *test_obj)
     mm_camera_channel_t *ch = NULL;
     int i;
 
-    ch = mm_app_get_channel_by_type(test_obj, MM_CHANNEL_TYPE_CAPTURE);
+    ch = &test_obj->channels[MM_CHANNEL_TYPE_CAPTURE];
+
 
     rc = mm_app_stop_channel(test_obj, ch);
     if (MM_CAMERA_OK != rc) {
@@ -958,57 +909,29 @@ EXIT:
 
 
 
-int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
-                               mm_camera_lib_commands cmd,
-                               void *in_data, void *out_data)
-{
-    uint32_t width, height;
-    int rc = MM_CAMERA_OK;
-    cam_capability_t *camera_cap = NULL;
-    mm_camera_lib_snapshot_params *dim = NULL;
+int mm_camera_start_raw_capture(mm_camera_lib_handle *handle) {
 
-    if ( NULL == handle ) {
-        CDBG_ERROR(" %s : Invalid handle", __func__);
-        rc = MM_CAMERA_E_INVALID_INPUT;
-        goto EXIT;
-    }
-
-    camera_cap = (cam_capability_t *) handle->test_obj.cap_buf.mem_info.data;
-
-    switch(cmd) {
-        case MM_CAMERA_LIB_RAW_CAPTURE:
-            width = handle->test_obj.buffer_width;
-            height = handle->test_obj.buffer_height;
-            handle->test_obj.buffer_width =
-                    (uint32_t)camera_cap->raw_dim.width;
-            handle->test_obj.buffer_height =
-                    (uint32_t)camera_cap->raw_dim.height;
-            handle->test_obj.buffer_format = DEFAULT_RAW_FORMAT;
-            CDBG_ERROR("%s: MM_CAMERA_LIB_RAW_CAPTURE %dx%d\n",
-                       __func__,
-                       camera_cap->raw_dim.width,
-                       camera_cap->raw_dim.height);
+    cam_capability_t *camera_cap = (cam_capability_t *) handle->test_obj.cap_buf.mem_info.data;
+                
+    handle->test_obj.buffer_width =
+        (uint32_t)camera_cap->raw_dim.width;
+    handle->test_obj.buffer_height =
+        (uint32_t)camera_cap->raw_dim.height;
+    handle->test_obj.buffer_format = DEFAULT_RAW_FORMAT;
+    CDBG_ERROR("%s: MM_CAMERA_LIB_RAW_CAPTURE %dx%d\n",
+               __func__,
+               camera_cap->raw_dim.width,
+               camera_cap->raw_dim.height);
 	    
-            rc = mm_app_start_capture_raw(&handle->test_obj, 1);
-            if (rc != MM_CAMERA_OK) {
-                CDBG_ERROR("%s: mm_app_start_capture() err=%d\n",
-                           __func__, rc);
-                goto EXIT;
-            }
-            break;
-
-    case MM_CAMERA_LIB_NO_ACTION:
-         break;
-    default:
-         printf("YOu missed commmand %d\n",cmd);
-         exit(-5);
-         break;
-    };
-
-EXIT:
-
-    return rc;
+    int rc = mm_app_start_capture_raw(&handle->test_obj, 1);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: mm_app_start_capture() err=%d\n",
+                   __func__, rc);
+        return rc;
+    }
+    return 0;
 }
+
 
 int mm_camera_lib_close(mm_camera_lib_handle *handle)
 {
@@ -1043,73 +966,50 @@ EXIT:
 
 
 /**************************************************************/
-CameraHandle camera_alloc(void)
-{
-   return malloc(sizeof(CameraObj));
-}
 
-int camera_init(CameraObj* camera)
+static CameraObj gTheCamera;
+
+int camera_init()
 {
     int rc = 0;
-    uint8_t previewing = 0;
-    int isZSL = 0;
-    uint8_t wnr_enabled = 0;
-    mm_camera_lib_handle lib_handle;
-    int num_cameras;
-
-    
-    cam_scene_mode_type default_scene= CAM_SCENE_MODE_OFF;
-    int set_tintless= 0;
-
-    mm_camera_test_obj_t test_obj;
-    memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
+    /* mm_camera_test_obj_t test_obj; */
+    /* memset(&test_obj, 0, sizeof(mm_camera_test_obj_t)); */
 
     //open camera lib 
-    rc = mm_camera_lib_open(&lib_handle, 0);
+    rc = mm_camera_lib_open(&gTheCamera.lib_handle, 0);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s:mm_camera_lib_open() err=%d\n", __func__, rc);
         return -1;
     }
 
     //get number cameras
-    num_cameras =  lib_handle.app_ctx.num_cameras;
+    int num_cameras =  gTheCamera.lib_handle.app_ctx.num_cameras;
     if ( num_cameras <= 0 ) {
         CDBG_ERROR("%s: No camera sensors reported!", __func__);
         rc = -1;
-	return rc;
     } //else we are goint to use the first one.
 
-    camera->lib_handle = lib_handle;
-    return 0;
-}
-
-extern void camera_install_callback(camera_cb cb);
-
-int camera_start(CameraObj* camera, camera_cb cb)
-{
-  int rc = MM_CAMERA_OK;
-  camera_install_callback(cb);
-
-  rc = mm_camera_lib_send_command(&(camera->lib_handle),
-				  MM_CAMERA_LIB_RAW_CAPTURE,
-				  NULL,
-				  NULL);
-  if (rc != MM_CAMERA_OK) {
-    CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
     return rc;
-  }
-  return rc;
 }
 
-int camera_stop(CameraObj* camera)
+int camera_start(camera_cb cb)
+{
+    int rc = MM_CAMERA_OK; 
+    camera_install_callback(cb);
+
+    rc = mm_camera_start_raw_capture(&gTheCamera.lib_handle);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+        return rc;
+    }
+    return rc;
+}
+
+int camera_stop()
 {
   int rc;
-  mm_camera_app_done();
+  CameraObj* camera = &gTheCamera;
 
-//     printf("Wait\n");
-  mm_camera_app_wait();
-
-//  printf("Stop capture Raw\n");
   rc = mm_app_stop_capture_raw(&(camera->lib_handle.test_obj));
   if (rc != MM_CAMERA_OK) {
     CDBG_ERROR("%s: mm_app_stop_capture() err=%d\n",
@@ -1120,9 +1020,9 @@ int camera_stop(CameraObj* camera)
 }
 
 
-int camera_cleanup(CameraObj* camera)
+int camera_cleanup()
 {
-  mm_camera_lib_close(&camera->lib_handle);
+  mm_camera_lib_close(&gTheCamera.lib_handle);
   return 0;
 }
 
@@ -1139,7 +1039,6 @@ int my_camera_callback(const uint8_t *frame, int width, int height)
   int file_fd;
 
   snprintf(file_name, sizeof(file_name), "/data/misc/camera/test/%s_%04d.%s", name, frame_idx++, ext);
-  //      seq--;                                                                                                                    
   file_fd = open(file_name, O_RDWR | O_CREAT, 0777);
   if (file_fd < 0) {
     CDBG_ERROR("%s: cannot open file %s \n", __func__, file_name);
@@ -1162,23 +1061,26 @@ int main()
 {
     int rc = 0;
 
-    CameraHandle camera  = camera_alloc();
     printf("Camera Capturer\n");
 
-    camera_init(camera);
+    if (camera_init() != 0)
+    {
+        printf("Error opening camera\n");
+    }
+    else {
 
-    printf("Starting\n");
-    camera_start(camera, my_camera_callback);
+        printf("Starting\n");
+        camera_start(my_camera_callback);
 
-    printf("Sleeping\n");
-    sleep(2.0);
-    printf("Done Sleeping\n");
+        printf("Sleeping\n");
+        sleep(2.0);
+        printf("Done Sleeping\n");
 
-    camera_stop(camera);
+        camera_stop();
 
-    camera_cleanup(camera);
 
-    free(camera);
+    }
+    camera_cleanup();
     
     printf("Exiting application\n");
 
@@ -1188,6 +1090,3 @@ int main()
 #endif
 
 
-///replace all the headers with #include "camera_dependencies.h"
-/// generate that by preprocessing the current headers.
-/// But what about the #defines
