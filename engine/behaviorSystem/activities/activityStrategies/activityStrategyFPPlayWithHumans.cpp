@@ -13,6 +13,7 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/robot.h"
@@ -40,6 +41,7 @@ ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(Robot& robot,
 , _cooldownRejectionBaseSecs(0.0f)
 , _cooldownRejectionExponent(1.0f)
 , _numRejections(0)
+, _whiteboardRef(robot.GetAIComponent().GetWhiteboard())
 {
   
 
@@ -94,9 +96,11 @@ void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::Re
 template<>
 void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::DenyGameStart& msg)
 {
-  _numRejections++;
-  const float cooldown = _cooldownRejectionBaseSecs * pow(_numRejections, _cooldownRejectionExponent);
-  SetCooldown(cooldown);
+  if(!_whiteboardRef.IsCurrentGameRequestUIRequest()){
+    _numRejections++;
+    const float cooldown = _cooldownRejectionBaseSecs * pow(_numRejections, _cooldownRejectionExponent);
+    SetCooldown(cooldown);
+  }
 }
 
 } // namespace

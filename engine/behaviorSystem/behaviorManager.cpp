@@ -1068,6 +1068,7 @@ void BehaviorManager::SelectUIRequestGameBehavior()
       // We already check that the player can afford the cost Game side
       const u32 sparkCost = GetSparkCosts(SparkableThings::PlayAGame, 0);
       _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+      _robot.GetAIComponent().GetWhiteboard().SetCurrentGameRequestUIRequest(true);
     }
   }
   else {
@@ -1079,6 +1080,7 @@ void BehaviorManager::SelectUIRequestGameBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::EnsureRequestGameIsClear()
 {
+  _robot.GetAIComponent().GetWhiteboard().SetCurrentGameRequestUIRequest(false);
   _uiRequestGameBehavior = nullptr;
   _shouldRequestGame = false;
 }
