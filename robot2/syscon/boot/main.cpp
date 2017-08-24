@@ -101,7 +101,6 @@ int main(void) {
   }
 
   Analog::stop();
-  Power::stop();
 
   StartApplication(APP->stackStart, APP->resetVector);
 }

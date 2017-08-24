@@ -4,7 +4,7 @@
 #include "power.h"
 #include "analog.h"
 
-static const uint16_t MINIMUM_BATTERY = 2400; // ~3.5v
+static const uint16_t MINIMUM_BATTERY = 890; // ~3.6v
 
 void Power::init(void) {
   nCHG_EN::reset();
@@ -29,14 +29,6 @@ void Power::init(void) {
     POWER_EN::pull(PULL_DOWN);
     for (int i = 0; i < 5000; i++) __asm("wfi");
   } while(true);
-}
-
-void Power::stop(void) {
-  // Turn off charger 
-  nCHG_EN::set();
-
-  POWER_EN::mode(MODE_OUTPUT);
-  POWER_EN::reset();
 }
 
 void Power::enableClocking(void) {

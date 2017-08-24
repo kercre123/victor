@@ -70,6 +70,7 @@ typedef uint16_t PayloadId;
 enum {
   ACK_PAYLOAD       = 1,
   ACK_BOOTED        = 2,
+  ACK_APPLICATION   = 3,
   NACK_CRC_FAILED   = -1,
   NACK_NOT_ERASED   = -2,
   NACK_FLASH_FAILED = -3,

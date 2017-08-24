@@ -6,6 +6,7 @@
 namespace Comms {
   void init(void);
   void tick(void);
+  void sendVersion(void);
   void enqueue(PayloadId kind, const void* packet, int size);
 }
 

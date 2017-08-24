@@ -30,6 +30,8 @@ static const uint32_t APB2_CLOCKS = 0
 static volatile bool ejectSystem = false;
 
 void Power::init(void) {
+  POWER_EN::pull(PULL_UP);
+
   nCHG_EN::reset();
   nCHG_EN::mode(MODE_OUTPUT);
 
@@ -40,9 +42,6 @@ void Power::init(void) {
 void Power::stop(void) {
   //nVDDs_EN::set();  // See if inrush current causes android to restart
   nCHG_EN::set();
-  
-  POWER_EN::mode(MODE_OUTPUT);
-  POWER_EN::reset();
 }
 
 void Power::enableClocking(void) {

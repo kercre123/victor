@@ -116,9 +116,9 @@ void Comms::init(void) {
   outboundPacket.sync.header.payload_type = PAYLOAD_DATA_FRAME;
   outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
 
-  applicationRunning = false;
+  applicationRunning = true;
 
-  static const AckMessage ack = { ACK_PAYLOAD };
+  static const AckMessage ack = { ACK_APPLICATION };
   enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
 
   // Configure our interrupts
@@ -258,6 +258,17 @@ extern "C" void USART1_IRQHandler(void) {
                      ;
 }
 
+void Comms::sendVersion(void) {
+  VersionInfo ver;
+
+  ver.hw_revision = COZMO_HWINFO->hw_revision;
+  ver.hw_model = COZMO_HWINFO->hw_model;
+  memcpy(ver.ein, COZMO_HWINFO->ein, sizeof(ver.ein));
+  memcpy(ver.app_version, APP->applicationVersion, sizeof(ver.app_version));
+
+  Comms::enqueue(PAYLOAD_VERSION, &ver, sizeof(ver));
+}
+
 extern "C" void DMA1_Channel4_5_IRQHandler(void) {
   // Clear our flag
   DMA1->IFCR = DMA_IFCR_CGIF5;
@@ -281,16 +292,7 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
       applicationRunning = true;
       break ;
     case PAYLOAD_VERSION:
-      {
-        VersionInfo ver;
-
-        ver.hw_revision = COZMO_HWINFO->hw_revision;
-        ver.hw_model = COZMO_HWINFO->hw_model;
-        memcpy(ver.ein, COZMO_HWINFO->ein, sizeof(ver.ein));
-        memcpy(ver.app_version, APP->applicationVersion, sizeof(ver.app_version));
-
-        Comms::enqueue(PAYLOAD_VERSION, &ver, sizeof(ver));
-      }
+      Comms::sendVersion();
       break ;
     case PAYLOAD_ERASE:
       Flash::markForWipe();
