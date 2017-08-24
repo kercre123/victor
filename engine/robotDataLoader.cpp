@@ -403,8 +403,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 
   ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoader.AnimFileOnMainThread", "" );
 
-  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingAnimationsFromBinaryOrJson",
-                "Loading animations from %s", path.c_str());
+//  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingAnimationsFromBinaryOrJson",
+//                "Loading animations from %s", path.c_str());
 
   const bool binFile = Util::FileUtils::FilenameHasSuffix(path.c_str(), "bin");
 
@@ -439,8 +439,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
     for (int clipIdx=0; clipIdx < allClips->size(); clipIdx++) {
       auto animClip = allClips->Get(clipIdx);
       auto animName = animClip->Name()->c_str();
-      PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingSpecificAnimFromBinary",
-                    "Loading '%s' from %s", animName, path.c_str());
+//      PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingSpecificAnimFromBinary",
+//                    "Loading '%s' from %s", animName, path.c_str());
       std::string strName = animName;
 
       // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
@@ -492,8 +492,8 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
     auto dotIndex = jsonName.find_last_of(".");
     std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
 
-    PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
-                  "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
+//    PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
+//                  "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
 
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     DEV_ASSERT(nullptr != _cannedAnimations, "RobotDataLoader.LoadAnimationGroupFile.NullCannedAnimations");

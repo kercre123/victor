@@ -266,6 +266,11 @@ namespace Anki {
     } // HAL::CameraSetParameters()
 
 
+    void AndroidHAL::InitCamera()
+    {
+      return;
+    }
+
     // Starts camera frame synchronization
     bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {

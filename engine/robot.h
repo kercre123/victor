@@ -995,7 +995,7 @@ protected:
   Result SendSyncTime() const;
   
   float _syncTimeSentTime_sec = 0.0f;
-  constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
+  constexpr static float kMaxSyncTimeAckDelay_sec = 15.0f;
   
   // Send robot's current pose
   Result SendAbsLocalizationUpdate() const;

@@ -1522,6 +1522,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAct
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
 {
+  PRINT_NAMED_WARNING("RobotConnectionResponse message received", "%s", EnumToString(msg.result));
   if (msg.result == RobotConnectionResult::Success) {
     Robot* robot = _context->GetRobotManager()->GetFirstRobot();
     

@@ -274,6 +274,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #if REMOTE_CONSOLE_ENABLED
   _thisRobot = this;
 #endif
+
+#ifdef COZMO_V2
+  AndroidHAL::getInstance();
+  #endif
   
 } // Constructor: Robot
     
@@ -1259,6 +1263,20 @@ Result Robot::Update()
   
   _robotIdleTimeoutComponent->Update(currentTime);
   
+#   ifdef COZMO_V2
+  _visionComponent->CaptureAndSendImage();
+  
+  if(_visionComponent->GetCamera().IsCalibrated())
+  {
+    // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
+    Result visionResult = _visionComponent->UpdateAllResults();
+    if(RESULT_OK != visionResult) {
+      PRINT_NAMED_WARNING("Robot.Update.VisionComponentUpdateFail", "");
+      return visionResult;
+    }
+  }
+#   endif
+  
   // Check for syncTimeAck taking too long to arrive
   if (_syncTimeSentTime_sec > 0.0f && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
     PRINT_NAMED_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
@@ -1270,6 +1288,16 @@ Result Robot::Update()
     PRINT_NAMED_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
   }
+  
+  static bool b = false;
+  static float t = currentTime;
+  if(t + 10 < currentTime && !b)
+  {
+    PRINT_NAMED_WARNING("", "Initing camera");
+    AndroidHAL::getInstance()->InitCamera();
+    b = true;
+  }
+
   
 #if(0)
   ActiveBlockLightTest(1);
@@ -1289,7 +1317,7 @@ Result Robot::Update()
      lastUpdateTime = currentTime_sec;
   */
   #   ifdef COZMO_V2
-  AndroidHAL::getInstance()->StartCamera();
+//  AndroidHAL::getInstance()->StartCamera();
   #endif
   
   //////////// Android HAL Update ////////////
@@ -1298,9 +1326,9 @@ Result Robot::Update()
   #endif
   
   
-  #   ifdef COZMO_V2
-  _visionComponent->CaptureAndSendImage();
-#   endif
+//  #   ifdef COZMO_V2
+//  _visionComponent->CaptureAndSendImage();
+//#   endif
 
 #   ifdef COZMO_V2
 //  AndroidHAL::getInstance()->StopCamera();

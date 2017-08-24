@@ -1484,6 +1484,15 @@ namespace Cozmo {
         }
         break;
         
+      case 360:
+        if (captureWidth!=640) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::NHD;
+        }
+        break;
+
+        
       default:
         result = RESULT_FAIL;
     }
@@ -1499,7 +1508,9 @@ namespace Cozmo {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
     
-    cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+    if(img.GetNumChannels() == 3) {
+      cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+    }
     
     std::vector<u8> compressedBuffer;
     cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
@@ -1535,6 +1546,8 @@ namespace Cozmo {
       bytesRemainingToSend -= chunkSize;
       ++m.chunkId;
     }
+    
+    _vizManager->DisplayCameraImage(img.GetTimestamp());
 
     return RESULT_OK;
     
@@ -2311,7 +2324,7 @@ namespace Cozmo {
     std::vector<ImageImuData> imuData;
     u32 imageId;
     if (AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData)) {
-      
+//      PRINT_NAMED_WARNING("ENGINE CAMERAGETFRAME", "Got FRAME");
       static bool b = false;
       static int s = 0;
       if(!b)
@@ -2328,13 +2341,11 @@ namespace Cozmo {
       // Create ImageRGB object from image buffer
       Vision::Image imgRGB(numRows, numCols, buffer);
 //      Vision::ImageRGB imgRGB(numRows, numCols, buffer);
-
-      if(imageId - s < 20)
-      {
-        const auto& path = _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "/images");
-        PRINT_NAMED_WARNING("", "%s", path.c_str());
-        imgRGB.Save(path + "/" + std::to_string(imageId) + ".jpg");
-      }
+//
+//      if(imageId - s < 20)
+//      {
+//        imgRGB.Save("/data/data/com.anki.cozmoengine/images/" + std::to_string(imageId) + ".jpg");
+//      }
       
       if(kDisplayUndistortedImages)
       {
@@ -2354,10 +2365,10 @@ namespace Cozmo {
       EncodedImage encodedImage(imgRGB, imageId);
       
       // Set next image for VisionComponent
-      Result lastResult = SetNextImage(encodedImage);
+//      Result lastResult = SetNextImage(encodedImage);
       
       // Compress to jpeg and send to game and viz
-      lastResult = CompressAndSendImage(imgRGB, 50);
+      Result lastResult = CompressAndSendImage(imgRGB, 50);
       DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
     }
   }
@@ -2530,12 +2541,20 @@ namespace Cozmo {
 #ifdef COZMO_V2
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
-          std::array<float,8> distCoeffs{{0.2f,0.1f,0.05f,0.025f,0.f,0.f,0.f,0.f}};
-          Vision::CameraCalibration calib(240, 320,
-                                          280, 280,
-                                          160, 120,
+          const std::vector<f32> distortionCoeffs = {{-0.07167206757206086,
+            -0.2198782133395603,
+            0.001435740245449692,
+            0.001523365725052927,
+            0.1341471670512819,
+            0, 0, 0}};
+          Vision::CameraCalibration calib(360,
+                                          640,
+                                          362.8743258347415,
+                                          366.7335187649505,
+                                          302.279771069911,
+                                          200.0289589104854,
                                           0,
-                                          distCoeffs);
+                                          distortionCoeffs);
           SetCameraCalibration(calib);
 #endif
           

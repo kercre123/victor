@@ -135,6 +135,8 @@ namespace Anki
       // Print text to face display
       void FacePrintf(const char *format, ...);
       
+      void InitCamera();
+      
     private:
 
       AndroidHAL();
@@ -142,8 +144,8 @@ namespace Anki
 
       void InitIMU();
       void ProcessIMUEvents();
-        
-      void InitCamera();
+      
+
       void DeleteCamera();
       
 #ifdef SIMULATOR
