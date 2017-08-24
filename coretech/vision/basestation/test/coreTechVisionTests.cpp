@@ -102,10 +102,10 @@ GTEST_TEST(PoseEstimation, FromQuads)
   poseTrue.ApplyTo(marker3d, marker3d_atPose);
   
   // Compute the ground truth projection of the marker in the image
-  Vision::CameraCalibration calib(camNumRows,    camNumCols,
-                                  focalLength_x, focalLength_y,
-                                  camCenter_x,   camCenter_y,
-                                  0.f);           // skew
+  auto calib = std::make_shared<Vision::CameraCalibration>(camNumRows,    camNumCols,
+                                                           focalLength_x, focalLength_y,
+                                                           camCenter_x,   camCenter_y,
+                                                           0.f);           // skew
 
   Pose3d cameraPose;
   cameraPose.SetParent(&origin);
@@ -170,9 +170,9 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
   
   const Pose3d camPose(0.f, Z_AXIS_3D(), {0.f, 0.f, 0.f}, &poseOrigin);
   
-  const Vision::CameraCalibration calib(240, 320,
-                                  300.f, 300.f,
-                                  160.f, 120.f);
+  const auto calib = std::make_shared<Vision::CameraCalibration>(240, 320,
+                                                                 300.f, 300.f,
+                                                                 160.f, 120.f);
   
   Vision::Camera camera(57);
   

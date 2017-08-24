@@ -2499,14 +2499,22 @@ template<>
 void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
 {
   const VisionComponent& visionComponent = GetVisionComponent();
-  const Vision::CameraCalibration& cameraCalibration = visionComponent.GetCameraCalibration();
+  std::shared_ptr<Vision::CameraCalibration> cameraCalibration;
   
-  ExternalInterface::CameraConfig cameraConfig(cameraCalibration.GetFocalLength_x(),
-                                               cameraCalibration.GetFocalLength_y(),
-                                               cameraCalibration.GetCenter_x(),
-                                               cameraCalibration.GetCenter_y(),
-                                               cameraCalibration.ComputeHorizontalFOV().getDegrees(),
-                                               cameraCalibration.ComputeVerticalFOV().getDegrees(),
+  cameraCalibration = visionComponent.GetCameraCalibration();
+  
+  if(cameraCalibration == nullptr)
+  {
+    PRINT_NAMED_WARNING("Robot.HandleRequestRobotSettings.CameraNotCalibrated", "");
+    cameraCalibration = std::make_shared<Vision::CameraCalibration>(0,0,1.f,1.f,0.f,0.f);
+  }
+  
+  ExternalInterface::CameraConfig cameraConfig(cameraCalibration->GetFocalLength_x(),
+                                               cameraCalibration->GetFocalLength_y(),
+                                               cameraCalibration->GetCenter_x(),
+                                               cameraCalibration->GetCenter_y(),
+                                               cameraCalibration->ComputeHorizontalFOV().getDegrees(),
+                                               cameraCalibration->ComputeVerticalFOV().getDegrees(),
                                                visionComponent.GetMinCameraExposureTime_ms(),
                                                visionComponent.GetMaxCameraExposureTime_ms(),
                                                visionComponent.GetMinCameraGain(),
@@ -3267,7 +3275,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
   
   Vision::Camera camera(_visionComponent->GetCamera());
   
-  const Vision::CameraCalibration* calib = camera.GetCalibration();
+  auto calib = camera.GetCalibration();
   if(nullptr == calib)
   {
     PRINT_NAMED_ERROR("Robot.ComputeHeadAngleToSeePose.NullCamera", "");
@@ -3332,7 +3340,7 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
 Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
                                                  Radians& absPanAngle, Radians& absTiltAngle) const
 {
-  const Vision::CameraCalibration* calib = GetVisionComponent().GetCamera().GetCalibration();
+  auto calib = GetVisionComponent().GetCamera().GetCalibration();
   const Point2f pt = imgPoint - calib->GetCenter();
   
   HistRobotState histState;

@@ -122,7 +122,7 @@ namespace Cozmo {
     Result Init(const Json::Value& config);
     bool   IsInitialized() const;
     
-    Result UpdateCameraCalibration(Vision::CameraCalibration& camCalib);
+    Result UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib);
     
     Result SetNextMode(VisionMode mode, bool enable);
     bool   IsModeEnabled(VisionMode whichMode) const { return _mode.IsBitFlagSet(whichMode); }
