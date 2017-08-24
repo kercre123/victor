@@ -39,8 +39,8 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spriteBorder: {x: 42, y: 48, z: 42, w: 38}
-  spritePixelsToUnits: 100
+  spriteBorder: {x: 14.7, y: 16.8, z: 14.7, w: 13.3}
+  spritePixelsToUnits: 35
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
