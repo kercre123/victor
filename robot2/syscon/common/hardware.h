@@ -62,12 +62,13 @@ namespace LTENC GPIO_DEFINE(C, 15);
 namespace POWER_EN GPIO_DEFINE(A, 6);
 namespace POWER_B GPIO_DEFINE(A, 6);
 namespace nCHG_EN GPIO_DEFINE(A, 12);
-namespace nAC_OK GPIO_DEFINE(A, 15);
 namespace nCHG_HC GPIO_DEFINE(B, 12);
 namespace nVDDs_EN GPIO_DEFINE(C, 13);
-namespace nCHG_OK GPIO_DEFINE(F, 1);
 namespace VEXT_SENSE GPIO_DEFINE(A, 2);
 namespace VBAT_SENSE GPIO_DEFINE(A, 4);
+
+namespace CHRG1 GPIO_DEFINE(F, 1);
+namespace CHRG2 GPIO_DEFINE(F, 0);
 
 // Microphones
 namespace MIC_LR      GPIO_DEFINE(B, 15);
@@ -77,9 +78,8 @@ namespace MIC2_SCK    GPIO_DEFINE(A, 5);
 namespace MIC1_SCK    GPIO_DEFINE(B, 13);
 
 // Cap Sense
-namespace CAPO GPIO_DEFINE(A, 3);
 namespace CAP1I GPIO_DEFINE(B, 8);
-namespace CAP2I GPIO_DEFINE(B, 9);
+namespace CAPO GPIO_DEFINE(B, 9);
 
 // Communication
 namespace VEXT_TX GPIO_DEFINE(A, 2);
