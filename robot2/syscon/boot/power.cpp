@@ -17,14 +17,14 @@ static const uint32_t APB2_CLOCKS = 0
               ;
 
 static volatile bool ejectSystem = false;
-static const uint16_t MINIMUM_BATTERY = 2310; // ~3.3v
+//static const uint16_t MINIMUM_BATTERY = 145; // ~3.3v
 
 void Power::init(void) {
   nCHG_EN::reset();
   nCHG_EN::mode(MODE_OUTPUT); 
 
   // Make sure battery is partially charged, and that the robot is on a charger
-  while (Analog::values[ADC_VBAT] < MINIMUM_BATTERY) __asm("wfi");
+  //while (Analog::values[ADC_VBAT] < MINIMUM_BATTERY) __asm("wfi");
 
   POWER_EN::pull(PULL_UP);
   POWER_EN::mode(MODE_INPUT);

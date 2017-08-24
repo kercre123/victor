@@ -63,6 +63,7 @@ void timer_init(void) {
   TIM14->DIER = TIM_DIER_UIE;
   TIM14->CR1 = TIM_CR1_CEN;
 
+  NVIC_SetPriority(TIM14_IRQn, 0);
   NVIC_EnableIRQ(TIM14_IRQn);
 }
 
@@ -79,10 +80,10 @@ extern "C" void TIM14_IRQHandler(void) {
 
 int main(void) {
   Power::enableClocking();
+  timer_init();
+
   Analog::init();
   Power::init();
-
-  timer_init();
 
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash

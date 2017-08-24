@@ -96,7 +96,7 @@ void Comms::run(void) {
   // Configure our interrupts
   for (int i = 100; i; i--) __asm("nop");
 
-  sendAck(ACK_PAYLOAD);
+  sendAck(ACK_BOOTED);
 
   NVIC_SetPriority(USART1_IRQn, 2);
   NVIC_EnableIRQ(USART1_IRQn);
