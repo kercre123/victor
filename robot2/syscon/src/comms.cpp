@@ -116,8 +116,7 @@ void Comms::init(void) {
   outboundPacket.sync.header.payload_type = PAYLOAD_DATA_FRAME;
   outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
 
-  missed_frames = 0;
-  applicationRunning = true;
+  applicationRunning = false;
 
   static const AckMessage ack = { ACK_PAYLOAD };
   enqueue(PAYLOAD_ACK, &ack, sizeof(ack));

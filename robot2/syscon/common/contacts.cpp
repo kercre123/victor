@@ -66,7 +66,7 @@ extern "C" void USART2_IRQHandler(void) {
     uint8_t byte = txData.data[txDataIndex++];
     
     if (byte > 0) { 
-      //USART2->TDR = byte;
+      USART2->TDR = byte;
     }
   } else {
     USART2->CR1 &= ~USART_CR1_TXEIE;
