@@ -133,7 +133,7 @@ static void Motors::transmit(BodyToHead *payload) {
   } else {
     moterServiced--;
   }
-
+  
   for (int i = 0; i < MOTOR_COUNT; i++) {
     MotorStatus* state = &motorStatus[i];
 
