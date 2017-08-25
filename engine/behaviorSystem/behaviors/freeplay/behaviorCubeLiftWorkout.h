@@ -37,7 +37,7 @@ public:
 
 protected:
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   virtual Result InitInternal(Robot& robot) override;
 

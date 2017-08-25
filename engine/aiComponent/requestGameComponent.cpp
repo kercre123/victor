@@ -38,6 +38,7 @@ const int kMaxRetrys = 1000;
 RequestGameComponent::RequestGameComponent(Robot& robot)
 : _lastGameRequested(UnlockId::Count)
 , _canRequestGame(false)
+, _shouldAutomaticallyResetDefaults(false)
 {
   // load the lets play mapping in from JSON
   const Json::Value& letsPlayConfig = robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig();
@@ -132,6 +133,10 @@ void RequestGameComponent::RegisterRequestingGameType(UnlockId unlockId)
                  "Game requestes does not contain entry for %s",
                  UnlockIdToString(unlockId))){
     _lastGameRequested = iter->first;
+    if(_shouldAutomaticallyResetDefaults){
+      _gameRequests = _defaultGameRequests;
+      _shouldAutomaticallyResetDefaults = false;
+    }
   }
 }
 
@@ -163,6 +168,7 @@ void RequestGameComponent::HandleMessage(const ExternalInterface::SetOverrideGam
                           GameRequestData(msg.unlockIDs[i],msg.weights[i])));
     }
   }
+  _shouldAutomaticallyResetDefaults = msg.resetDefaultsOnNextRequest;
 }
 
 

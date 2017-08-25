@@ -802,6 +802,18 @@ void RobotDataLoader::LoadRobotConfigs()
                         jsonFilename.c_str());
     }
   }
+  
+  // DAS event config
+  {
+    static const std::string jsonFilename = "config/basestation/config/das_event_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _dasEventConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DasEventConfigJsonNotFound",
+                        "DAS Event Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
 
   // Text-to-speech config
   {

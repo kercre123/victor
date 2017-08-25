@@ -12,8 +12,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/setFaceAction.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
@@ -258,10 +256,8 @@ BehaviorBouncer::BehaviorBouncer(Robot& robot, const Json::Value& config)
 }
 
 // Check if behavior can run at this time
-bool BehaviorBouncer::IsRunnableInternal(const BehaviorPreReqRobot & preReq) const
+bool BehaviorBouncer::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot & robot = preReq.GetRobot();
-  
   // Is this feature enabled?
   if (!IsFeatureEnabled(robot)) {
     LOG_TRACE("BehaviorBouncer.IsRunnableInternal", "Feature is disabled");

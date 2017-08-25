@@ -174,6 +174,10 @@ bool BehaviorSystemManager::SwitchToBehaviorBase(Robot& robot, BehaviorRunningIn
   StopAndNullifyCurrentBehavior();
   bool initSuccess = true;
   if( nullptr != nextBehavior ) {
+    ANKI_VERIFY(nextBehavior->IsRunnable(robot),
+                "BehaviorSystemManager.SwitchToBehaviorBase.BehaviorNotRunnable",
+                "Behavior %s returned but it's not runnable",
+                BehaviorIDToString(nextBehavior->GetID()));
     const Result initRet = nextBehavior->Init();
     if ( initRet != RESULT_OK ) {
       // the previous behavior has been told to stop, but no new behavior has been started

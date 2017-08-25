@@ -31,13 +31,17 @@ static const char* kTriggerStrategyName = "Trigger Strategy Frustration";
 static const char* kMaxConfidenceKey = "maxConfidence";
 static const char* kCooldownTime_sKey = "cooldownTime_s";
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyFrustration::ReactionTriggerStrategyFrustration(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 {
   LoadJson(config);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFrustration::LoadJson(const Json::Value& config)
 {
   const Json::Value& frustrationParams = config[kReactionConfigKey];
@@ -47,11 +51,15 @@ void ReactionTriggerStrategyFrustration::LoadJson(const Json::Value& config)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFrustration::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  behavior->IsRunnable(robot);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyFrustration::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -63,17 +71,21 @@ bool ReactionTriggerStrategyFrustration::ShouldTriggerBehaviorInternal(const Rob
   if(notReactingToFrustration &&
      confidentVal < _maxConfidentScore &&
      ( (_lastReactedTime_s <= 0.f) || ((currTime_s - _lastReactedTime_s) > _cooldownTime_s)) ){
-    return behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+    return behavior->IsRunnable(robot);
   }
   
   return false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFrustration::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   behavior->AddListener(this);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFrustration::AnimationComplete(Robot& robot)
 {
   _lastReactedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

@@ -378,6 +378,15 @@
   "codeLab.projects.confirmDeleteProject.confirmPrompt": {
       "translation": "Are you sure you want to delete this project?"
   },
+  "codeLab.projects.featuredTab.title": {
+      "translation": "Code Lab Featured"
+  },
+  "codeLab.projects.sandboxTab.title": {
+      "translation": "Code Lab Sandbox"
+  },
+  "codeLab.projects.constructorTab.title": {
+      "translation": "Code Lab Constructor"
+  },
   "codeLabSampleProject_DriveInSquare.projectName": {
       "translation": "Drive In Square"
   },

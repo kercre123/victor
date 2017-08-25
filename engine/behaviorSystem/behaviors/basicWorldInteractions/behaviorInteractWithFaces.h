@@ -49,7 +49,7 @@ protected:
 public:
 
   virtual bool CarryingObjectHandledInternally() const override { return false;}
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
     
 protected:
 

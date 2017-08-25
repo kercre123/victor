@@ -48,23 +48,20 @@ namespace Anki {
       // Accessors:
       const CameraID_t          GetID()          const;
       const Pose3d&             GetPose()        const;
-      const CameraCalibration*  GetCalibration() const; // nullptr if not calibrated
-      CameraCalibration*        GetCalibration();       //   "
+      const std::shared_ptr<CameraCalibration> GetCalibration() const; // nullptr if not calibrated
+      std::shared_ptr<CameraCalibration>       GetCalibration();       //   "
 
       void SetID(const CameraID_t ID);
       void SetPose(const Pose3d& newPose);
       
-      // Set the calibration of the camera. This will store a copy of this
-      // calibration data inside the camera.
-      void SetCalibration(const CameraCalibration& calib);
-      
-      // Set the camera to use shared calibration data. In this case, it simply
-      // references the calibration data but the caller must ensure that the
-      // calibration data persists and is valid for the life of the camera.
-      void SetSharedCalibration(CameraCalibration* sharedCalib);
+      // Set the calibration of the camera. Multiple Camera instantiations can share
+      // the same underlying CameraCalibration object.
+      // Returns true if the calibration actually changed, false if this was the same calibration as before.
+      // NOTE: Once a calibration is set, calling SetCalibration(nullptr) will generate an error, return false,
+      //       and not "un-set" it.
+      bool SetCalibration(std::shared_ptr<CameraCalibration> calib);
       
       bool IsCalibrated() const;
-      bool IsCalibrationShared() const;
       
       //
       // Methods:
@@ -155,12 +152,11 @@ namespace Anki {
       void ComputePanAndTiltAngles(const Point2f& imgPoint, Radians& relPanAngle, Radians& relTiltAngle) const;
 
     protected:
-      CameraID_t               _camID;
-      CameraCalibration*       _calibration = nullptr;
-      bool                     _isCalibrationShared;
-      Pose3d                   _pose;
+      CameraID_t                         _camID;
+      std::shared_ptr<CameraCalibration> _calibration;
+      Pose3d                             _pose;
       
-      OccluderList             _occluderList;
+      OccluderList                       _occluderList;
       
       // TODO: Include const reference or pointer to a parent Robot object?
       void DistortCoordinate(const Point2f& ptIn, Point2f& ptDistorted);
@@ -186,29 +182,11 @@ namespace Anki {
     inline const Pose3d& Camera::GetPose(void) const
     { return _pose; }
     
-    inline CameraCalibration* Camera::GetCalibration(void)
+    inline std::shared_ptr<CameraCalibration> Camera::GetCalibration(void)
     { return _calibration; }
     
-    inline const CameraCalibration* Camera::GetCalibration(void) const
+    inline const std::shared_ptr<CameraCalibration> Camera::GetCalibration(void) const
     { return _calibration; }
-    
-    inline void Camera::SetCalibration(const CameraCalibration &calib)
-    {
-      if(!_isCalibrationShared && nullptr != _calibration) {
-        Util::SafeDelete(_calibration);
-      }
-      _isCalibrationShared = false;
-      _calibration = new CameraCalibration(calib);
-    }
-    
-    inline void Camera::SetSharedCalibration(CameraCalibration* sharedCalib)
-    {
-      if(!_isCalibrationShared && nullptr != _calibration) {
-        Util::SafeDelete(_calibration);
-      }
-      _isCalibrationShared = true;
-      _calibration = sharedCalib;
-    }
     
     inline void Camera::SetID(const CameraID_t ID)
     { _camID = ID; }
@@ -219,11 +197,7 @@ namespace Anki {
     inline bool Camera::IsCalibrated() const {
       return (_calibration != nullptr);
     }
-    
-    inline bool Camera::IsCalibrationShared() const {
-      return _isCalibrationShared;
-    }
-    
+        
     inline bool Camera::IsOccluded(const Point2f& projectedPoint, const f32 atDistance) const {
       return _occluderList.IsOccluded(projectedPoint, atDistance);
     }

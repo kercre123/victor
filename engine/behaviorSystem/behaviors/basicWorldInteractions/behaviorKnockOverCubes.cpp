@@ -20,7 +20,6 @@
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -148,9 +147,9 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorKnockOverCubes::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorKnockOverCubes::IsRunnableInternal(const Robot& robot) const
 {
-  UpdateTargetStack(preReqData.GetRobot());
+  UpdateTargetStack(robot);
   if(auto tallestStack = _currentTallestStack.lock()){
     return tallestStack->GetStackHeight() >= _minStackHeight;
   }

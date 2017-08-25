@@ -14,7 +14,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToVoiceCommand.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
@@ -63,20 +62,11 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(Robot& robot, const Jso
 }
 
 
-bool BehaviorReactToVoiceCommand::IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData) const
+bool BehaviorReactToVoiceCommand::IsRunnableInternal(const Robot& robot) const
 {
-  const auto& desiredTargets = preReqData.GetDesiredTargets();
-  if (!ANKI_VERIFY(desiredTargets.size() == 1, "BehaviorReactToVoiceCommand.IsRunnableInternal.PreReqDataInvalid", "PreReqData needs exactly 1 faceID"))
-  {
-    return false;
-  }
-  
-  _desiredFace = *(desiredTargets.begin());
-  
   if (Vision::UnknownFaceID != _desiredFace)
   {
     // If we don't know where this face is right now, switch it to Invalid so we just look toward the last face pose
-    const auto& robot = preReqData.GetRobot();
     const auto* face = robot.GetFaceWorld().GetFace(_desiredFace);
     Pose3d pose;
     if(nullptr == face || !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), pose))

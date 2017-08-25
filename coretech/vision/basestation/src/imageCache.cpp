@@ -58,7 +58,7 @@ inline Image& ImageCache::ResizedEntry::Get<Image>(bool computeFromOpposite)
   if(computeFromOpposite)
   {
     DEV_ASSERT(_hasValidRGB, "ImageCache.ResizedEntry.GetGray.NoColorAvailable");
-    _gray = _rgb.ToGray();
+    _rgb.FillGray(_gray);
     _hasValidGray = true;
   }
   
@@ -73,7 +73,7 @@ inline ImageRGB& ImageCache::ResizedEntry::Get<ImageRGB>(bool computeFromOpposit
   if(computeFromOpposite)
   {
     DEV_ASSERT(!_gray.IsEmpty(), "ImageCache.ResizedEntry.GetRGB.NoGrayAvailable");
-    _rgb = ImageRGB(_gray);
+    _rgb.SetFromGray(_gray);
     _hasValidRGB = true;
   }
   

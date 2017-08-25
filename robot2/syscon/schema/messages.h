@@ -62,7 +62,7 @@ enum {
   PAYLOAD_ERASE       = 0x7878,
   PAYLOAD_VALIDATE    = 0x7374,
   PAYLOAD_DFU_PACKET  = 0x6675,
-  PAYLOAD_TYPE_COUNT  = 7,     
+  PAYLOAD_TYPE_COUNT  = 7,
 };
 typedef uint16_t PayloadId;
 
@@ -72,7 +72,7 @@ const char* PayloadIdToString(PayloadId m);
 
 // ENUM Ack
 enum {
-  ACK_PAYLOAD       = 1, 
+  ACK_PAYLOAD       = 1,
   NACK_CRC_FAILED   = -1,
   NACK_NOT_ERASED   = -2,
   NACK_FLASH_FAILED = -3,
@@ -119,16 +119,16 @@ const char* PowerStateToString(PowerState m);
 
 // ENUM LedIndexes
 enum {
-  LED0_RED    = 0, 
-  LED0_GREEN  = 1, 
-  LED0_BLUE   = 2, 
-  LED1_RED    = 3, 
-  LED1_GREEN  = 4, 
-  LED1_BLUE   = 5, 
-  LED2_RED    = 6, 
-  LED2_GREEN  = 7, 
-  LED2_BLUE   = 8, 
-  LED3_RED    = 9, 
+  LED0_RED    = 0,
+  LED0_GREEN  = 1,
+  LED0_BLUE   = 2,
+  LED1_RED    = 3,
+  LED1_GREEN  = 4,
+  LED1_BLUE   = 5,
+  LED2_RED    = 6,
+  LED2_GREEN  = 7,
+  LED2_BLUE   = 8,
+  LED3_RED    = 9,
   LED3_GREEN  = 10,
   LED3_BLUE   = 11,
   LED_UNUSED1 = 12,
@@ -165,19 +165,19 @@ struct MotorPower
   int16_t rightWheel;
   int16_t liftMotor;
   int16_t headMotor;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 8;
   static const uint32_t MIN_SIZE = 8;
   inline uint32_t Size() const { return 8; }
-  
+
 };
 
 // STRUCTURE BatteryState
@@ -186,38 +186,38 @@ struct BatteryState
   int32_t batteryVolts;
   int32_t chargerVolts;
   Anki::Cozmo::Spine::BatteryFlags flags;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 12;
   static const uint32_t MIN_SIZE = 12;
   inline uint32_t Size() const { return 12; }
-  
+
 };
 
 // STRUCTURE ButtonState
 struct ButtonState
 {
   uint16_t level;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 2;
   static const uint32_t MIN_SIZE = 2;
   inline uint32_t Size() const { return 2; }
-  
+
 };
 
 // STRUCTURE RangeData
@@ -229,19 +229,19 @@ struct RangeData
   uint16_t signalRate;
   uint16_t ambientRate;
   uint32_t calibrationResult;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 12;
   static const uint32_t MIN_SIZE = 12;
   inline uint32_t Size() const { return 12; }
-  
+
 };
 
 // STRUCTURE ProcessorStatus
@@ -249,19 +249,19 @@ struct ProcessorStatus
 {
   uint16_t watchdogCount;
   uint16_t statusBits;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 4;
   static const uint32_t MIN_SIZE = 4;
   inline uint32_t Size() const { return 4; }
-  
+
 };
 
 // STRUCTURE ProxControl
@@ -271,19 +271,19 @@ struct ProxControl
   uint32_t commandValue;
   Anki::Cozmo::Spine::ProxSensorCommands command;
   uint16_t spare;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 12;
   static const uint32_t MIN_SIZE = 12;
   inline uint32_t Size() const { return 12; }
-  
+
 };
 
 // STRUCTURE MotorState
@@ -292,19 +292,19 @@ struct MotorState
   int32_t position;
   int32_t delta;
   uint32_t time;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 12;
   static const uint32_t MIN_SIZE = 12;
   inline uint32_t Size() const { return 12; }
-  
+
 };
 
 // STRUCTURE SpineMessageHeader
@@ -313,38 +313,38 @@ struct SpineMessageHeader
   Anki::Cozmo::Spine::SpineSync sync_bytes;
   Anki::Cozmo::Spine::PayloadId payload_type;
   uint16_t bytes_to_follow;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 8;
   static const uint32_t MIN_SIZE = 8;
   inline uint32_t Size() const { return 8; }
-  
+
 };
 
 // STRUCTURE SpineMessageFooter
 struct SpineMessageFooter
 {
   uint32_t checksum;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 4;
   static const uint32_t MIN_SIZE = 4;
   inline uint32_t Size() const { return 4; }
-  
+
 };
 
 // STRUCTURE BodyToHead
@@ -356,20 +356,20 @@ struct BodyToHead
   Anki::Cozmo::Spine::BatteryState battery;
   Anki::Cozmo::Spine::RangeData proximity;
   uint16_t touchLevel[2];
-  int16_t audio[320];
-  
+  //int16_t audio[320];
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 728;
   static const uint32_t MIN_SIZE = 728;
   inline uint32_t Size() const { return 728; }
-  
+
 };
 
 // STRUCTURE HeadToBody
@@ -381,38 +381,38 @@ struct HeadToBody
   Anki::Cozmo::Spine::ProxControl proxCmd;
   Anki::Cozmo::Spine::PowerState powerState;
   uint16_t spare;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 44;
   static const uint32_t MIN_SIZE = 44;
   inline uint32_t Size() const { return 44; }
-  
+
 };
 
 // STRUCTURE AckMessage
 struct AckMessage
 {
   Anki::Cozmo::Spine::Ack status;
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 4;
   static const uint32_t MIN_SIZE = 4;
   inline uint32_t Size() const { return 4; }
-  
+
 };
 
 // STRUCTURE WriteDFU
@@ -421,19 +421,19 @@ struct WriteDFU
   uint16_t address;
   uint16_t wordCount;
   uint32_t data[256];
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 1028;
   static const uint32_t MIN_SIZE = 1028;
   inline uint32_t Size() const { return 1028; }
-  
+
 };
 
 // STRUCTURE VersionInfo
@@ -443,19 +443,19 @@ struct VersionInfo
   uint32_t hw_model;
   uint8_t ein[16];
   uint8_t app_version[16];
-  
+
   /**** Cast to/from buffer, adjusting any padding. ****/
   inline uint8_t* GetBuffer() { return reinterpret_cast<uint8_t*>(this); }
   inline const uint8_t* GetBuffer() const { return reinterpret_cast<const uint8_t*>(this); }
-  
+
   /**** Check if current message is parsable. ****/
   bool IsValid() const { return true; }
-  
+
   /**** Serialized size, starting from GetBuffer(). ****/
   static const uint32_t MAX_SIZE = 40;
   static const uint32_t MIN_SIZE = 40;
   inline uint32_t Size() const { return 40; }
-  
+
 };
 
 } // namespace Spine

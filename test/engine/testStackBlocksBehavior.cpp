@@ -20,7 +20,6 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/behaviorSystem/behaviorContainer.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/components/carryingComponent.h"
@@ -118,20 +117,19 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, ObjectID& objID1,
 
   CreateStackBehavior(robot, stackBehavior);
 
-  BehaviorPreReqRobot prereq(robot);
-  ASSERT_FALSE(stackBehavior->IsRunnable(prereq)) << "behavior should not be runnable without cubes";
+  ASSERT_FALSE(stackBehavior->IsRunnable(robot)) << "behavior should not be runnable without cubes";
 
   aiComponent.Update();
   aiComponent.Update();
   aiComponent.Update();
-  ASSERT_FALSE(stackBehavior->IsRunnable(prereq)) << "behavior should not be runnable without cubes after update";
+  ASSERT_FALSE(stackBehavior->IsRunnable(robot)) << "behavior should not be runnable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
   blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
 
   aiComponent.Update();
-  ASSERT_FALSE(stackBehavior->IsRunnable(prereq)) << "behavior should not be runnable with unknown cubes";
+  ASSERT_FALSE(stackBehavior->IsRunnable(robot)) << "behavior should not be runnable with unknown cubes";
 
   // Add two objects
   ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
@@ -157,7 +155,7 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, ObjectID& objID1,
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
-  ASSERT_TRUE(stackBehavior->IsRunnable(prereq)) << "now behavior should be runnable";
+  ASSERT_TRUE(stackBehavior->IsRunnable(robot)) << "now behavior should be runnable";
 
 }
 

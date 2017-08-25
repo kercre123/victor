@@ -140,7 +140,7 @@ namespace Anki {
       const bool GetClosestPreDockPose(ActionableObject* object, Pose3d& closestPose) const;
       
       // Whether or not to verify the final pose, once the path is complete,
-      // according to the latest know preAction pose for the specified object.
+      // according to the latest known preAction pose for the specified object.
       void DoPositionCheckOnPathCompletion(bool doCheck) { _doPositionCheckOnPathCompletion = doCheck; }
 
       // Set the angle tolerance to use for the pre action pose checks done by this action. Defaults to using
@@ -512,20 +512,6 @@ namespace Anki {
                                      const bool sayName = false);
       
       virtual ~DriveToAndTraverseObjectAction() { }
-      
-    };
-    
-    
-    class DriveToAndMountChargerAction : public IDriveToInteractWithObject
-    {
-    public:
-      DriveToAndMountChargerAction(Robot& robot,
-                                   const ObjectID& objectID,
-                                   const bool useManualSpeed = false,
-                                   Radians maxTurnTowardsFaceAngle_rad = 0.f,
-                                   const bool sayName = false);
-      
-      virtual ~DriveToAndMountChargerAction() { }
       
     };
     

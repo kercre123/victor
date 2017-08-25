@@ -65,6 +65,12 @@ namespace Anki {
       }
     }
     
+    void TurnInPlaceAction::SetRequestedTurnAngle(const f32 turnAngle_rad)
+    {
+      DEV_ASSERT(!IsRunning(), "TurnInPlaceAction.SetRequestedTurnAngle.ActionAlreadyRunning");
+      _requestedAngle_rad = turnAngle_rad;
+    }
+    
     void TurnInPlaceAction::SetMaxSpeed(f32 maxSpeed_radPerSec)
     {
       if (std::fabsf(maxSpeed_radPerSec) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {

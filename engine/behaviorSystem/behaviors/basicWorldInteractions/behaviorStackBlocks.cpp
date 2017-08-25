@@ -21,8 +21,6 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
@@ -84,9 +82,9 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorStackBlocks::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
 {
-  UpdateTargetBlocks(preReqData.GetRobot());
+  UpdateTargetBlocks(robot);
   return _targetBlockBottom.IsSet() && _targetBlockTop.IsSet();
 }
 

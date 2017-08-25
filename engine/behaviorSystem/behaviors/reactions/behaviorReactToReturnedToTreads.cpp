@@ -28,7 +28,7 @@ BehaviorReactToReturnedToTreads::BehaviorReactToReturnedToTreads(Robot& robot, c
 }
 
   
-bool BehaviorReactToReturnedToTreads::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToReturnedToTreads::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

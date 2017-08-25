@@ -60,7 +60,7 @@ BehaviorLookForFaceAndCube::~BehaviorLookForFaceAndCube()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookForFaceAndCube::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorLookForFaceAndCube::IsRunnableInternal(const Robot& robot) const
 {
   // can run as long as it's not carrying a cube (potentially it could, but may look weird), which is handled in base
   return true;

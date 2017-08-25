@@ -28,6 +28,7 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/chargerActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveOffChargerContactsAction.h"
 #include "engine/actions/driveToActions.h"
@@ -1054,7 +1055,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(flipBlock,                FlipBlock,                0),
       DEFINE_HANDLER(gotoObject,               GotoObject,               0),
       DEFINE_HANDLER(gotoPose,                 GotoPose,                 2),
-      DEFINE_HANDLER(mountCharger,             MountCharger,             1),
+      DEFINE_HANDLER(mountCharger,             MountCharger,             2),
       DEFINE_HANDLER(panAndTilt,               PanAndTilt,               0),
       DEFINE_HANDLER(pickupObject,             PickupObject,             0),
       DEFINE_HANDLER(placeObjectOnGround,      PlaceObjectOnGround,      1),

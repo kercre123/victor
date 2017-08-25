@@ -16,7 +16,6 @@
 #include "engine/actions/trackFaceAction.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
@@ -169,10 +168,10 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorInteractWithFaces::IsRunnableInternal(const Robot& robot) const
 {
   _targetFace = Vision::UnknownFaceID;
-  SelectFaceToTrack(preReqData.GetRobot());
+  SelectFaceToTrack(robot);
 
   return _targetFace != Vision::UnknownFaceID;
 }

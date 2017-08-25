@@ -97,6 +97,7 @@ public:
   const Json::Value& GetLocalNotificationConfig() const  { return _localNotificationConfig; }
   const Json::Value& GetTextToSpeechConfig() const       { return _textToSpeechConfig; }
   const Json::Value& GetInventoryConfig() const          { return _inventoryConfig; }
+  const Json::Value& GetDasEventConfig() const           { return _dasEventConfig; }
   
   // voice command configs
   const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
@@ -178,6 +179,7 @@ private:
   Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
+  Json::Value _dasEventConfig;
   
   // voice command configs
   Json::Value _gameRequestWeights;

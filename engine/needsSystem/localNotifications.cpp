@@ -18,16 +18,32 @@
 #include "engine/needsSystem/needsManager.h"
 #include "anki/common/basestation/jsonTools.h"
 
+#include "util/console/consoleInterface.h"
+
 
 namespace Anki {
 namespace Cozmo {
 
 static const std::string kLocalNotificationConfigsKey = "localNotificationConfigs";
 
-static const float kAutoGeneratePeriod_s = 30.0f;
+static const float kAutoGeneratePeriod_s = 60.0f;
 
-using namespace std::chrono;
 
+CONSOLE_VAR(bool, kDumpLocalNotificationsWhenGenerated, "Needs.LocalNotifications", false);
+
+#if ANKI_DEV_CHEATS
+namespace {
+  LocalNotifications* g_DebugLocalNotifications = nullptr;
+  void GenerateLocalNotificationsNow( ConsoleFunctionContextRef context )
+  {
+    if (g_DebugLocalNotifications != nullptr)
+    {
+      g_DebugLocalNotifications->Generate();
+    }
+  }
+  CONSOLE_FUNC( GenerateLocalNotificationsNow, "Needs" );
+};
+#endif
 
 
 LocalNotifications::LocalNotifications(const CozmoContext* context, NeedsManager& needsManager)
@@ -42,6 +58,10 @@ LocalNotifications::LocalNotifications(const CozmoContext* context, NeedsManager
 LocalNotifications::~LocalNotifications()
 {
   _signalHandles.clear();
+
+#if ANKI_DEV_CHEATS
+  g_DebugLocalNotifications = nullptr;
+#endif
 }
 
 
@@ -71,6 +91,10 @@ void LocalNotifications::Init(const Json::Value& json, Util::RandomGenerator* rn
   auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::NotificationsManagerReady>();
+
+#if ANKI_DEV_CHEATS
+  g_DebugLocalNotifications = this;
+#endif
 }
 
 template<>
@@ -132,25 +156,28 @@ void LocalNotifications::Generate()
     {
       const float duration_m = DetermineTimeToNotify(config, multipliers,
                                                      timeSinceAppOpen_m, now);
+      const int secondsInFuture = static_cast<int>(duration_m * secondsPerMinute);
+
 
       // Pick random string key among variants
       const int textKeyIndex = _rng->RandInt(static_cast<int>(config.textKeys.size()));
       const std::string textKey = config.textKeys[textKeyIndex];
 
-      // Show pertinent info in the log
-      const float duration_h = duration_m / secondsPerMinute;
-      const float duration_d = duration_h / 24.0f;
-      const int secondsInFuture = static_cast<int>(duration_m * secondsPerMinute);
-      const Time futureDateTime = now + seconds(secondsInFuture);
-      const std::time_t futureTimeT = system_clock::to_time_t(futureDateTime);
-      static const size_t bufLen = 255;
-      char whenStringBuf[bufLen];
-      strftime(whenStringBuf, bufLen, "%a %F %T", localtime(&futureTimeT));
-      PRINT_CH_INFO(NeedsManager::kLogChannelName,
-                    "LocalNotifications.Generate",
-                    "From now:%8.1f minutes (%6.1f hours, or%7.2f days); at %s; key: \"%s\"",
-                    duration_m, duration_h, duration_d, whenStringBuf,
-                    textKey.c_str());
+      if (kDumpLocalNotificationsWhenGenerated)
+      {
+        const float duration_h = duration_m / secondsPerMinute;
+        const float duration_d = duration_h / 24.0f;
+        const Time futureDateTime = now + seconds(secondsInFuture);
+        const std::time_t futureTimeT = system_clock::to_time_t(futureDateTime);
+        static const size_t bufLen = 255;
+        char whenStringBuf[bufLen];
+        strftime(whenStringBuf, bufLen, "%a %F %T", localtime(&futureTimeT));
+        PRINT_CH_INFO(NeedsManager::kLogChannelName,
+                      "LocalNotifications.Generate",
+                      "From now:%8.1f minutes (%6.1f hours, or%7.2f days); at %s; key: \"%s\"",
+                      duration_m, duration_h, duration_d, whenStringBuf,
+                      textKey.c_str());
+      }
 
       const auto& extInt = _context->GetExternalInterface();
       extInt->Broadcast(ExternalInterface::MessageEngineToGame

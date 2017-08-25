@@ -48,7 +48,7 @@ namespace Anki {
       
         virtual ~BehaviorDockingTestSimple() { }
       
-        virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+        virtual bool IsRunnableInternal(const Robot& robot) const override;
 
         virtual bool CarryingObjectHandledInternally() const override { return false;}
 

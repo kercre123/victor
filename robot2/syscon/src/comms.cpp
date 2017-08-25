@@ -88,7 +88,7 @@ void Comms::init(void) {
 void Comms::tick(void) {
   Motors::transmit(&outboundPacket.payload);
   Opto::transmit(&outboundPacket.payload);
-  Mics::transmit(outboundPacket.payload.audio);
+  //Mics::transmit(outboundPacket.payload.audio);
   Touch::transmit(outboundPacket.payload.touchLevel);
 
   if (missed_frames++ >= MAX_MISSED_FRAMES) {

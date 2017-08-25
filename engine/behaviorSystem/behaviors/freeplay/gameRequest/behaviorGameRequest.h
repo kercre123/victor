@@ -38,7 +38,7 @@ public:
   IBehaviorRequestGame(Robot& robot, const Json::Value& config);
 
   // final to ensure subclass does not skip. If you need to override in subclass I suggest another internal one
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const final override;
+  virtual bool IsRunnableInternal(const Robot& robot) const final override;
   
   virtual Result InitInternal(Robot& robot) final override;
   virtual Status UpdateInternal(Robot& robot) final override;

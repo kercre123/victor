@@ -13,7 +13,6 @@
 
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyGeneric.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/messageHelpers.h"
 #include "engine/robot.h"
@@ -94,11 +93,11 @@ void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(const Robot& robo
 {
   if (_needsRobotPreReq)
   {
-    behavior->IsRunnable(BehaviorPreReqRobot(robot));
+    behavior->IsRunnable(robot);
   }
   else
   {
-    behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+    behavior->IsRunnable(robot);
   }
 }
   
@@ -113,8 +112,8 @@ bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(const Robot& 
     
     const bool isRunnable = (behavior->IsRunning() ||
                              (_needsRobotPreReq ?
-                              behavior->IsRunnable(BehaviorPreReqRobot(robot)) :
-                              behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs)));
+                              behavior->IsRunnable(robot) :
+                              behavior->IsRunnable(robot)));
     
     return isRunnable && _wantsToRunStrategy->WantsToRun(robot);
   }

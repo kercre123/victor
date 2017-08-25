@@ -1,5 +1,0 @@
-0.729066:click:connect_button:0.1494923
-3.502685:click:open_activities_button:0.1559696
-4.812686:click:large_start_activity_buttonfaceEnrollment.title:0.1653652
-4.58431:click:open_quit_game_confirm_view_button:0.1162376
-0.969353:click:confirm_button:0.1612587

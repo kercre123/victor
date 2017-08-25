@@ -18,7 +18,6 @@
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
@@ -103,10 +102,8 @@ BehaviorGuardDog::BehaviorGuardDog(Robot& robot, const Json::Value& config)
   _connectedCubesOnlyFilter->AddFilterFcn([](const ObservableObject* obj) { return obj->GetActiveID() >= 0; });
 }
   
-bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
-{
-  const Robot& robot = preReqData.GetRobot();
-  
+bool BehaviorGuardDog::IsRunnableInternal(const Robot& robot) const
+{  
   // Is this feature enabled?
   if (!robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::GuardDog)) {
     return false;
