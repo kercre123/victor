@@ -1,4 +1,10 @@
+#ifndef VICTOR_CAMERA_H_INCLUDED_
+#define VICTOR_CAMERA_H_INCLUDED_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //camera callback: called with captured `image` of `width` by `height` 8bit greyscale pixels
 // (called from separate thread)
@@ -22,19 +28,21 @@ int camera_cleanup();
 /* Usage Example   
 --------------------
 
-    CameraHandle camera  = camera_alloc();
-    camera_init(camera);
-    camera_start(camera, my_camera_callback);
+    camera_init();
+    camera_start(my_camera_callback);
 
     sleep(2.0); //cap 2 seconds of video
 
-    camera_stop(camera);
-    camera_cleanup(camera);
-    free(camera);
+    camera_stop();
+    camera_cleanup();
     
  -----------------------
 */
 
 
+#ifdef __cplusplus
+}
+#endif
 
 
+#endif//VICTOR_CAMERA_H_INCLUDED_

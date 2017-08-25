@@ -3,6 +3,7 @@ cxx_project(
     srcs = cxx_src_glob(['.'],
                         excludes = ['*_android.*',
                                     'android/**/*',
+                                    '**/test/*',
                                     '*_mac.*']),
     platform_srcs = [
         ('android', glob(['android/**/*.cpp',
