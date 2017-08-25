@@ -179,7 +179,7 @@ structure BodyToHead {
   BatteryState battery,
   RangeData proximity,
   uint_16 touchLevel[2],
-  int_16 audio[320]
+  //int_16 audio[320]
 }
 
 structure HeadToBody {
