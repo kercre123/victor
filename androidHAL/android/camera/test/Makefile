@@ -1,6 +1,6 @@
 ANDROID_NDK_ROOT:=~/.anki/android/ndk-repository/android-ndk-r15b
 
-ANDROID_ARM_TOOLS_ROOT:=../../../generated/android/tools/arm
+ANDROID_ARM_TOOLS_ROOT:=../../../../generated/android/tools/arm
 ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
 # Compilation Tools
 CC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc
@@ -8,15 +8,15 @@ CPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++
 AR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
 # Compiler flags
 # Specify all the flags below which you want to use for your compilation, For this simple example, we only need to specify the include directory path
-CFLAGS          := -I.
-CFLAGS          += -I./inc
+CFLAGS          := -I..
+CFLAGS          += -I../inc
 CFLAGS          += -DPLATFORM_ANDROID=1
 
 
 # SRCS = processed_victor_camera.c
 # OBJ =  processed_victor_camera.o
-SRCS = victor_camera.c camera_test_main.c
-OBJ =  victor_camera.o camera_test_main.o
+#SRCS = victor_camera.c camera_test_main.c
+OBJ =  ../victor_camera.o camera_test_main.o
 
 APP = camera_test
 
