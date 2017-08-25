@@ -736,13 +736,13 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     void BodyMotionKeyFrame::CheckRotationSpeed(const std::string& animNameDebug)
     {
       // Check that speed is valid
-      if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
+      if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
         PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
                       "%s: PointTurn speed %f deg/s exceeds limit of %f deg/s. Clamping",
-                      animNameDebug.c_str(), std::abs(RAD_TO_DEG(_streamMsg.speed)), MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
+                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed,
-                                -MAX_BODY_ROTATION_SPEED_RAD_PER_SEC,
-                                MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
+                                -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
+                                MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
       }
     }
 

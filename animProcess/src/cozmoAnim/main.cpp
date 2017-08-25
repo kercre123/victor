@@ -12,13 +12,17 @@
 
 #include <stdio.h>
 #include <chrono>
+#include <fstream>
 #include <thread>
 
 #include "cozmoAnim/cozmoAnim.h"
 #include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+
+
 
 #define TIC_TIME_MS 33
 
@@ -27,6 +31,14 @@ using namespace Anki::Cozmo;
 
 int main(void)
 {
+  
+  // - create and set logger
+  Anki::Util::PrintfLoggerProvider loggerProvider;
+  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
+  Anki::Util::gLoggerProvider = &loggerProvider;
+
+  
   /*
   const char* configuration_data = "{}";
   
@@ -47,10 +59,24 @@ int main(void)
   */
   
   
+  // Check /data/data/com.anki.cozmoengine/files/assets/current for the hash of the assets directory to use
+  std::string assetHash;
+  std::string assetHashFileName = "/data/data/com.anki.cozmoengine/files/assets/current";
+  std::ifstream assetHashFile(assetHashFileName.c_str());
+  if (assetHashFile.is_open()) {
+    getline(assetHashFile, assetHash);
+    assetHashFile.close();
+    PRINT_NAMED_INFO("main.AssetHashFound", "%s", assetHash.c_str());
+  } else {
+    PRINT_NAMED_WARNING("main.AssetHashFileNotFound", "%s not found", assetHashFileName.c_str());
+    exit(-1);
+  }
+  
+  
   std::string filesPath = "/data/local/tmp";
   std::string cachePath = "/data/local/tmp";
   std::string externalPath = "/data/local/tmp";
-  std::string resourcesPath = "/data/local/tmp";
+  std::string resourcesPath = "/data/data/com.anki.cozmoengine/files/assets/" + assetHash + "/cozmo_resources";
   std::string resourcesBasePath = "/data/local/tmp";
   
   
