@@ -15,7 +15,6 @@
 
 #include "engine/robot.h"
 #include "engine/actions/animActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/blockWorld/blockConfigTypeHelpers.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -64,7 +63,7 @@ void BehaviorOnConfigSeen::ReadJson(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnConfigSeen::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorOnConfigSeen::IsRunnableInternal(const Robot& robot) const
 {
   // if this is the first update in a long time consider that the config was already known
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -74,7 +73,7 @@ bool BehaviorOnConfigSeen::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
   bool newConfigSeen = false;
   
   for(auto& mapEntry: _configurationCountMap){
-    const auto& configs = preReqData.GetRobot().GetBlockWorld().
+    const auto& configs = robot.GetBlockWorld().
                            GetBlockConfigurationManager().GetCacheByType(mapEntry.first);
     if(configs.ConfigurationCount() > mapEntry.second){
       newConfigSeen = true;

@@ -65,16 +65,23 @@ CameraCalibrator::~CameraCalibrator()
   
 }
 
-Result CameraCalibrator::ComputeCalibrationFromCheckerboard(Vision::CameraCalibration& calibration_out,
+Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibration_out,
                                                             DebugImageList<Vision::ImageRGB>& debugImageRGBs_out)
 {
-  Vision::CameraCalibration calibration;
+  std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
   
   // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
   // no matter how we return from this function
   Util::CleanupHelper disableComputingCalibration([this, &calibration_out, &calibration]() {
-    calibration_out = calibration;
+    if(calibration == nullptr)
+    {
+      PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromCheckerboard.NullCalibration", "");
+    }
+    else
+    {
+      calibration_out.push_back(*calibration);
+    }
     _visionSystem.SetNextMode(VisionMode::ComputingCalibration, false);
     _isCalibrating = false;
   });
@@ -93,7 +100,6 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(Vision::CameraCalibr
   
   // Description of asymmetric circles calibration target
   const cv::Size boardSize(kCheckerboardHeight, kCheckerboardWidth);
-  const f32 squareSize = kCheckerboardSquareSize_mm;
   const Vision::Image& firstImg = _calibImages.front().img;
   cv::Size imageSize(firstImg.GetNumCols(), firstImg.GetNumRows());
   
@@ -161,7 +167,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(Vision::CameraCalibr
   }
   
   // Get object points
-  CalcBoardCornerPositions(boardSize, squareSize, objectPoints[0]);
+  CalcBoardCornerPositions(boardSize, kCheckerboardSquareSize_mm, objectPoints[0]);
   objectPoints.resize(imagePoints.size(), objectPoints[0]);
   
   // Compute calibration
@@ -176,11 +182,11 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(Vision::CameraCalibr
   Vision::CameraCalibration::DistortionCoeffs distCoeffsVec;
   std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
   
-  calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
-                                          cameraMatrix(0,0), cameraMatrix(1,1),
-                                          cameraMatrix(0,2), cameraMatrix(1,2),
-                                          0.f, // skew
-                                          distCoeffsVec);
+  calibration.reset(new Vision::CameraCalibration(imageSize.height, imageSize.width,
+                                                  cameraMatrix(0,0), cameraMatrix(1,1),
+                                                  cameraMatrix(0,2), cameraMatrix(1,2),
+                                                  0.f, // skew
+                                                  distCoeffsVec));
   
   DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
                  "CameraCalibrator.ComputeCalibrationFromCheckerboard.BadCalibPoseData",
@@ -202,8 +208,8 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(Vision::CameraCalibr
   PRINT_CH_INFO(kLogChannelName,
                 "CameraCalibrator.ComputeCalibrationFromCheckerboard.CalibValues",
                 "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
-                calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
-                calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+                calibration->GetFocalLength_x(), calibration->GetFocalLength_y(),
+                calibration->GetCenter_x(), calibration->GetCenter_y(), rms);
   
   // Check if average reprojection error is too high
   const f64 reprojErrThresh_pix = 0.5;
@@ -220,16 +226,23 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(Vision::CameraCalibr
 
 Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targetType,
                                                             const std::list<Vision::ObservedMarker>& observedMarkers,
-                                                            Vision::CameraCalibration& calibration_out,
+                                                            std::list<Vision::CameraCalibration>& calibration_out,
                                                             DebugImageList<Vision::ImageRGB>& debugImageRGBs_out)
 {
-  Vision::CameraCalibration calibration;
+  std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
   
   // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
   // no matter how we return from this function
   Util::CleanupHelper disableComputingCalibration([this, &calibration_out, &calibration]() {
-    calibration_out = calibration;
+    if(calibration == nullptr)
+    {
+      PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.NullCalibration", "");
+    }
+    else
+    {
+      calibration_out.push_back(*calibration);
+    }
     _visionSystem.SetNextMode(VisionMode::ComputingCalibration, false);
     _isCalibrating = false;
   });
@@ -246,18 +259,23 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   
   std::map<Vision::MarkerType, Quad3f> markersTo3dCoords;
   
-  if(targetType == QBERT)
+  switch(targetType)
   {
-    GetCalibTargetMarkersTo3dCoords_Bleacher(markersTo3dCoords);
-  }
-  else if(targetType == INVERTED_BOX)
-  {
-    GetCalibTargetMarkersTo3dCoords_InvertedBox(markersTo3dCoords);
-  }
-  else
-  {
-    PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.InvalidTarget", "");
-    return RESULT_FAIL;
+    case INVERTED_BOX:
+    {
+      GetCalibTargetMarkersTo3dCoords_InvertedBox(markersTo3dCoords);
+      break;
+    }
+    case QBERT:
+    {
+      GetCalibTargetMarkersTo3dCoords_Qbert(markersTo3dCoords);
+      break;
+    }
+    case CHECKERBOARD:
+    {
+      PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.InvalidTarget", "");
+      return RESULT_FAIL;
+    }
   }
   
   // For each marker we should have 4 points (each corner of the marker)
@@ -336,7 +354,7 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
     cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
     for(int i =0; i < imgPts.size(); ++i)
     {
-      auto p = imgPts[i];
+      const auto& p = imgPts[i];
       dispImg.DrawFilledCircle({p[0], p[1]}, NamedColors::RED, 2);
     }
     debugImageRGBs_out.push_back({"CalibImage", dispImg});
@@ -376,7 +394,7 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   vecOfImgPts.push_back(imgPts);
   vecOfWorldPts.push_back(worldPts);
   
-  const size_t captureRes = static_cast<size_t>(_visionSystem.GetCaptureResolution());
+  const size_t captureRes = static_cast<size_t>(DEFAULT_IMAGE_RESOLUTION);
   const s32 numRows = Vision::CameraResInfo[captureRes].height;
   const s32 numCols  = Vision::CameraResInfo[captureRes].width;
   
@@ -412,11 +430,11 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   distCoeffsVec.fill(0.f);
   std::copy(distCoeffs_data, distCoeffs_data+distCoeffs.cols, distCoeffsVec.begin());
   
-  calibration = Vision::CameraCalibration(numRows, numCols,
-                                          cameraMatrix(0,0), cameraMatrix(1,1),
-                                          cameraMatrix(0,2), cameraMatrix(1,2),
-                                          0.f, // skew
-                                          distCoeffsVec);
+  calibration.reset(new Vision::CameraCalibration(numRows, numCols,
+                                                  cameraMatrix(0,0), cameraMatrix(1,1),
+                                                  cameraMatrix(0,2), cameraMatrix(1,2),
+                                                  0.f, // skew
+                                                  distCoeffsVec));
   
   DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
                  "VisionSystem.ComputeCalibrationFromSingleTarget.BadCalibPoseData",
@@ -425,8 +443,8 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   
   PRINT_CH_INFO(kLogChannelName, "CameraCalibrator.ComputeCalibrationFromSingleTarget.CalibValues",
                 "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
-                calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
-                calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+                calibration->GetFocalLength_x(), calibration->GetFocalLength_y(),
+                calibration->GetCenter_x(), calibration->GetCenter_y(), rms);
   
   
   // Check if average reprojection error is too high
@@ -451,11 +469,20 @@ Result CameraCalibrator::AddCalibrationImage(const Vision::Image& calibImg,
     return RESULT_FAIL;
   }
   
-  _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
-  
+  if(targetROI.GetX() < 0 && targetROI.GetY() < 0 && targetROI.GetWidth() < 0 && targetROI.GetHeight() < 0)
+  {
+    // Use entire image if negative ROI specified
+    const Anki::Rectangle<s32> entireImgROI(0, 0, calibImg.GetNumCols(), calibImg.GetNumRows());
+    _calibImages.push_back({.img = calibImg, .roiRect = entireImgROI, .dotsFound = false});
+  } 
+  else 
+  {
+    _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
+  }
+
   PRINT_CH_INFO(kLogChannelName, "CameraCalibrator.AddCalibrationImage",
                 "Num images including this: %u", (u32)_calibImages.size());
-  
+
   return RESULT_OK;
 }
 
@@ -463,7 +490,7 @@ Result CameraCalibrator::ClearCalibrationImages()
 {
   if(_isCalibrating)
   {
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ClearCalibrationImages.AlreadyCalibrating",
+    PRINT_CH_INFO(kLogChannelName, "CameraCalibrator.ClearCalibrationImages.AlreadyCalibrating",
                   "Cannot clear calibration images while already in the middle of doing calibration.");
     
     return RESULT_FAIL;
@@ -490,7 +517,7 @@ void CameraCalibrator::CalcBoardCornerPositions(cv::Size boardSize,
   }
 }
 
-void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
+void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
 {
   markersTo3dCoords.clear();
 

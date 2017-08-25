@@ -17,17 +17,21 @@
 #include "anki/common/types.h"
 #include "engine/needsSystem/needsManager.h"
 #include "clad/types/needsSystemTypes.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include <vector>
 
 
 namespace Anki {
 namespace Cozmo {
 
+class CozmoContext;
 class NeedsManager;
 
 class LocalNotifications
 {
 public:
-  LocalNotifications(NeedsManager& needsManager);
+  LocalNotifications(const CozmoContext* context, NeedsManager& needsManager);
+  ~LocalNotifications();
 
   void Init(const Json::Value& json, Util::RandomGenerator* rng,
             const float currentTime_s);
@@ -39,6 +43,10 @@ public:
   // Generate all appropriate local notifications, and register them
   // with the Game
   void Generate();
+  
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 private:
 
@@ -54,8 +62,11 @@ private:
   float CalculateMinutesToThreshold(const NeedId needId, const float targetLevel,
                                     const NeedsMultipliers& multipliers) const;
 
+  const CozmoContext* _context;
   NeedsManager&           _needsManager;
   Util::RandomGenerator*  _rng;
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
 
   float                   _timeForPeriodicGenerate_s;
 

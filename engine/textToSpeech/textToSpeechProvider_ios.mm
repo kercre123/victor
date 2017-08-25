@@ -267,7 +267,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
 
     //
     // Allow language configuration to override defaults.  Note pitch is not
-    // supported on all platforms, so it not supported as a config parameter
+    // supported on all platforms, so it is not supported as a config parameter
     // at this time.
     //
     Json::Value tts_language_config = tts_platform_config[_tts_language.c_str()];

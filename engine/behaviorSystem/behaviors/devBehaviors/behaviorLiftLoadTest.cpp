@@ -75,7 +75,7 @@ namespace Anki {
       });
     }
     
-    bool BehaviorLiftLoadTest::IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
+    bool BehaviorLiftLoadTest::IsRunnableInternal(const Robot& robot ) const
     {
       return _canRun && (_currentState == State::Init || _currentState == State::TestComplete);
     }

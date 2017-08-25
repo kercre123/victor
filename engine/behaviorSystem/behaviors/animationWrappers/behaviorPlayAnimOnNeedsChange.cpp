@@ -15,7 +15,6 @@
 
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
@@ -48,9 +47,9 @@ BehaviorPlayAnimOnNeedsChange::~BehaviorPlayAnimOnNeedsChange()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimOnNeedsChange::IsRunnableAnimSeqInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPlayAnimOnNeedsChange::IsRunnableAnimSeqInternal(const Robot& robot) const
 {
-  return ShouldGetInBePlayed(preReqData.GetRobot());
+  return ShouldGetInBePlayed(robot);
 }
   
   

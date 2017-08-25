@@ -17,7 +17,6 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/requestGameComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -74,10 +73,8 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   }});
 }
 
-bool IBehaviorRequestGame::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
-{
-  const Robot& robot = preReqData.GetRobot();
-  
+bool IBehaviorRequestGame::IsRunnableInternal(const Robot& robot) const
+{  
   // Save some computation by checking wether this request is the one the request component
   // wants next first
   RequestGameComponent& requestComponent = robot.GetAIComponent().GetNonConstRequestGameComponent();

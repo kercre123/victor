@@ -14,7 +14,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/charger.h"
 #include "engine/drivingAnimationHandler.h"
@@ -76,10 +75,9 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveOffCharger::IsRunnableInternal(const BehaviorPreReqRobot& preReqData ) const
+bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot ) const
 {
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
-  const Robot& robot = preReqData.GetRobot();
   DEV_ASSERT(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
              "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
 

@@ -34,8 +34,9 @@ private:
 
 
 public:
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
+  void SetObjectToAcknowledge(const ObjectID& objID){_activeObjectID = objID;}
 
 protected:
   virtual void StopInternal(Robot& robot) override;
@@ -45,12 +46,11 @@ protected:
   virtual IBehavior::Status UpdateInternal(Robot& robot) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-
-
+  
 private:
   Robot& _robot;
   
-  mutable ObjectID _activeObjectID; //Most recent move - object to turn towards
+  ObjectID _activeObjectID; //Most recent move - object to turn towards
   
   enum class State {
     PlayingSenseReaction,

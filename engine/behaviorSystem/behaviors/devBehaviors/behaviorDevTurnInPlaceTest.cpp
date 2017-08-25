@@ -51,7 +51,7 @@ BehaviorDevTurnInPlaceTest::BehaviorDevTurnInPlaceTest(Robot& robot, const Json:
 }
   
 
-bool BehaviorDevTurnInPlaceTest::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorDevTurnInPlaceTest::IsRunnableInternal(const Robot& robot) const
 {
   return (ANKI_DEV_CHEATS != 0);
 }

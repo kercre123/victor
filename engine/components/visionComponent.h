@@ -81,7 +81,7 @@ struct DockingErrorSignal;
     void SetIsSynchronous(bool isSync);
 
     // Calibration must be provided before Update() will run
-    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
+    void SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib);
     
     bool IsDisplayingProcessedImagesOnly() const;
     
@@ -136,8 +136,8 @@ struct DockingErrorSignal;
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
-    const Vision::CameraCalibration& GetCameraCalibration() const;
-    bool IsCameraCalibrationSet() const { return _isCamCalibSet; }
+    const std::shared_ptr<Vision::CameraCalibration> GetCameraCalibration() const;
+    bool IsCameraCalibrationSet() const { return _camera.IsCalibrated(); }
     Result ClearCalibrationImages();
     
     // If enabled, the camera calibration will be updated based on the
@@ -299,8 +299,6 @@ struct DockingErrorSignal;
     // This is so we can share the same calibration data across multiple
     // cameras (e.g. those stored inside the pose history)
     Vision::Camera            _camera;
-    Vision::CameraCalibration _camCalib;
-    bool                      _isCamCalibSet = false;
     bool                      _enabled = false;
     
     bool   _isSynchronous = false;
@@ -390,8 +388,8 @@ struct DockingErrorSignal;
     return _camera;
   }
   
-  inline const Vision::CameraCalibration& VisionComponent::GetCameraCalibration() const {
-    return _camCalib;
+  inline const std::shared_ptr<Vision::CameraCalibration> VisionComponent::GetCameraCalibration() const {
+    return _camera.GetCalibration();
   }
   
   inline void VisionComponent::EnableVisionWhileMovingFast(bool enable) {
@@ -422,7 +420,7 @@ struct DockingErrorSignal;
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration() {
-    StoreNextImageForCameraCalibration(Rectangle<s32>(0,0,_camCalib.GetNcols(), _camCalib.GetNrows()));
+    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,-1, -1));
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI) {

@@ -17,7 +17,6 @@
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "engine/aiComponent/AIWhiteboard.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "engine/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
@@ -64,14 +63,6 @@ class DriveToObjectAction;
 class BehaviorHelperFactory;
 class IHelper;
 enum class ObjectInteractionIntention;
-  
-class BehaviorPreReqNone;
-class BehaviorPreReqRobot;
-class BehaviorPreReqAcknowledgeObject;
-class BehaviorPreReqAcknowledgeFace;
-class BehaviorPreReqAcknowledgePet;
-class BehaviorPreReqRespondPossiblyRoll;
-class BehaviorPreReqAnimSequence;
   
 class ISubtaskListener;
 class IReactToFaceListener;
@@ -157,8 +148,7 @@ public:
   void StopOnNextActionComplete();
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  template<typename T>
-  bool IsRunnable(const T& preReqData, bool allowWhileRunning = false) const;
+  bool IsRunnable(const Robot& robot) const;
 
   BehaviorID         GetID()      const { return _id; }
   const std::string& GetIDStr()   const { return _idString; }
@@ -233,21 +223,7 @@ protected:
 
   // To keep passing through data generic, if robot is not overridden
   // check the NoPreReqs IsRunnableInternal
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData ) const
-                 { BehaviorPreReqNone noPreReqs;  return IsRunnableInternal(noPreReqs);}
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
-                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqNone.NoOverride"); return false;}
-  
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData ) const
-                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgeObject.NoOverride"); return false;}
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const
-                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgeFace.NoOverride"); return false;}
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgePet& preReqData ) const
-                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgePet.NoOverride"); return false;}
-  virtual bool IsRunnableInternal(const BehaviorPreReqRespondPossiblyRoll& preReqData ) const
-                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqRespondPossiblyRoll.NoOverride"); return false;}
-  virtual bool IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData ) const
-                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAnimSequence.NoOverride"); return false;}
+  virtual bool IsRunnableInternal(const Robot& robot) const = 0;
 
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
@@ -462,7 +438,7 @@ private:
   IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  bool IsRunnableBase(const Robot& robot, bool allowWhileRunning) const;
+  bool IsRunnableBase(const Robot& robot) const;
   
   bool ReadFromJson(const Json::Value& config);
   
@@ -590,7 +566,7 @@ protected:
   template<typename CallbackType>
   bool StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing, CallbackType callback);
   
-  bool IsRunnableScored(const BehaviorPreReqNone& preReqData) const;
+  bool IsRunnableScored() const;
   
 private:
   void ScoredConstructor(Robot& robot);
@@ -624,17 +600,7 @@ private:
   float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0;
   
 }; // class IBehavior
-  
 
-template<typename T>
-bool IBehavior::IsRunnable(const T& preReqData, bool allowWhileRunning) const
-{
-  if(IsRunnableBase(_robot, allowWhileRunning)){
-    return IsRunnableInternal(preReqData);
-  }
-  
-  return false;
-}
   
   
 template<typename T>

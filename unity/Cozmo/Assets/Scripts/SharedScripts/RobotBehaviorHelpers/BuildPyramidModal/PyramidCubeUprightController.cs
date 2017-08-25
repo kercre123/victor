@@ -14,7 +14,7 @@ namespace Cozmo.Upgrades {
     private float _ReopenModalCooldown_sec;
 
     private float _ReopenModalCooldownStartTimestamp;
-    private const float kDontCheckModalTimestamp = -1;
+    private const float kDontCheckModalTimestamp = -1.0f;
 
     private bool _AreCubesUpright = true;
 

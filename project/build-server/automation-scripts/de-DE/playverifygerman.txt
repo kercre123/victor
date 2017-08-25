@@ -1,0 +1,25 @@
+0.776356:click:open_sparks_button:0.1445732
+2.20289:text:Spielen
+0.806329:text:Bitte Cozmo, dir einen bestimmten Trick oder ein Spiel zu zeigen.
+0.978083:text:TRICKS UND SPIELE
+0.00502:text:Sparks erforderlich
+0.499825:text:SPARKS FÜR SPIEL EINLÖSEN
+0.868575:text:Sparks erforderlich
+0.98296:text:SPARKS FÜR TRICK EINLÖSEN
+0.336322:text:Keine Sparks erforderlich
+0.398139:text:Cozmo findet es toll, wenn er selbst entscheiden darf, wie er mit dir spielt.  Er wird dir automatisch anbieten, Spiele mit ihm zu spielen, dir Tricks vorführen und gelegentlich sogar Sparks verdienen.
+0.954385:text:AKTUELLER MODUS: FREIES SPIEL
+0.307185:click:list_abilities_button:0.1228714
+1.19505:text:Noch nicht freigeschaltete Fähigkeit
+0.997782:text:Stapel umwerfen
+0.121144:text:Cube rollen
+0.083369:text:Finger fangen
+0.214145:text:Cubes stapeln
+0.159075:text:Cube aufheben
+0.998366:text:Gedächtnisspiel
+0.93114:text:Geschwindigkeitsspiel
+0.346388:text:Fernhalten
+0.438581:text:Sparks verfügbar
+0.733289:text:Spielen
+0.251089:click:default_close_view_button:0.1503296
+1.083712:click:back_button:0.1168365

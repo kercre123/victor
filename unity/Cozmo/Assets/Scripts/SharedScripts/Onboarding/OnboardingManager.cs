@@ -184,7 +184,7 @@ public class OnboardingManager : MonoBehaviour {
       int[] firstWeight = { 100 };
       RobotEngineManager.Instance.Message.SetOverrideGameRequestWeights =
                 Singleton<Anki.Cozmo.ExternalInterface.SetOverrideGameRequestWeights>.Instance.Initialize(
-                            false, firstRequest, firstWeight);
+                            false, firstRequest, firstWeight, true);
       RobotEngineManager.Instance.SendMessage();
     }
 
@@ -467,9 +467,6 @@ public class OnboardingManager : MonoBehaviour {
     // First time they see this, thats all.
     if (IsOnboardingRequired(OnboardingPhases.GameRequests)) {
       CompletePhase(OnboardingPhases.GameRequests);
-      // reset back to using the default weights for next request
-      RobotEngineManager.Instance.Message.SetOverrideGameRequestWeights =
-          Singleton<Anki.Cozmo.ExternalInterface.SetOverrideGameRequestWeights>.Instance.Initialize(true, null, null);
       RobotEngineManager.Instance.SendMessage();
     }
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);

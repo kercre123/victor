@@ -132,6 +132,7 @@ Blockly.FieldTextInput.prototype.setValue = function(newValue) {
   Blockly.Field.prototype.setValue.call(this, newValue);
 };
 
+// *** ANKI CHANGES ***
 // Used to filter out kanji since our fonts can't support all kanji.
 Blockly.FieldTextInput.prototype.removeKanji = function(newText) {
   if (newText == null) return;
@@ -153,6 +154,8 @@ Blockly.FieldTextInput.prototype.setText = function(newText) {
     return;
   }
 
+  // *** ANKI CHANGES ***
+  // Used to filter out kanji since our fonts can't support all kanji.
   newText = this.removeKanji(newText);
 
   newText = String(newText);

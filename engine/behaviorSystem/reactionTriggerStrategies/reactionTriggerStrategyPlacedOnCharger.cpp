@@ -34,7 +34,7 @@ ReactionTriggerStrategyPlacedOnCharger::ReactionTriggerStrategyPlacedOnCharger(R
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyPlacedOnCharger::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  behavior->IsRunnable(robot);
 }
   
   

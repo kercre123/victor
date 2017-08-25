@@ -388,9 +388,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
       saliencyImageDispGround.DrawQuad(groundQuad, NamedColors::YELLOW, 1.f);
       snprintf(tempText, 127, "Area:%.2f%% X:%d Y:%d", groundRegionArea*100.f,
                (s32)std::round(groundPlaneCentroid.x()), (s32)std::round(groundPlaneCentroid.y()));
-      cv::putText(saliencyImageDispGround.get_CvMat_(), std::string(tempText),
-                  cv::Point(0,poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
-                  CV_RGB(0,255,0));
+      saliencyImageDispGround.DrawText({0.f,poseData.groundPlaneROI.GetWidthFar()}, tempText, NamedColors::GREEN, .4f);
     }
     debugImageRGBs.push_back({"LaserSaliencyImageGround", saliencyImageDispGround});
   }

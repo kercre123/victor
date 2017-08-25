@@ -43,7 +43,7 @@ protected:
   // Do nothing while in the air, just idle
   virtual bool ShouldRunWhileOffTreads() const override { return true; } 
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 private:

@@ -48,11 +48,8 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-#ifdef COZMO_V2
       ImageResolution captureResolution_ = DEFAULT_IMAGE_RESOLUTION;
-#else
-      ImageResolution captureResolution_ = DEFAULT_IMAGE_RESOLUTION;
-#endif
+
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;

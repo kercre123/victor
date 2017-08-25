@@ -29,7 +29,7 @@ namespace Anki {
       using DistortionCoeffs = std::vector<f32>;
       
       // Constructors:
-      CameraCalibration();
+      CameraCalibration() = delete;
       
       CameraCalibration(u16 nrows,    u16 ncols,
                         f32 fx,       f32 fy,

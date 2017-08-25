@@ -23,6 +23,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/vision/basestation/imageCache.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
@@ -50,7 +51,10 @@ TEST(VisionSystem, CameraCalibrationTarget_Qbert)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  Anki::Vision::CameraCalibration calib(360,640,290,290,320,180,0.f);
+  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(360,640,
+                                                                                             290,290,
+                                                                                             320,180,
+                                                                                             0.f));
   result = visionSystem->UpdateCameraCalibration(calib);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
@@ -89,7 +93,8 @@ TEST(VisionSystem, CameraCalibrationTarget_Qbert)
   EXPECT_TRUE(resultAvailable);
   
   // 1 is the default value of focal length
-  ASSERT_EQ(processingResult.cameraCalibration.GetFocalLength_x() != 1.f, true);
+  ASSERT_EQ(processingResult.cameraCalibration.size(), 1);
+  ASSERT_EQ(processingResult.cameraCalibration.front().GetFocalLength_x() != 1.f, true);
 
   const std::vector<f32> distortionCoeffs = {{-0.07167206757206086,
                                               -0.2198782133395603,
@@ -106,7 +111,7 @@ TEST(VisionSystem, CameraCalibrationTarget_Qbert)
                                                             0,
                                                             distortionCoeffs);
   
-  const auto computedCalibration = processingResult.cameraCalibration;
+  const auto& computedCalibration = processingResult.cameraCalibration.front();
   
   ASSERT_NEAR(computedCalibration.GetCenter_x(), expectedCalibration.GetCenter_x(),
               Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
@@ -159,7 +164,7 @@ TEST(VisionSystem, MarkerDetectionTests)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  Vision::CameraCalibration calib(240,320,290.f,290.f,160.f,120.f,0.f);
+  auto calib = std::make_shared<Vision::CameraCalibration>(240,320,290.f,290.f,160.f,120.f,0.f);
   result = visionSystem.UpdateCameraCalibration(calib);
   ASSERT_EQ(RESULT_OK, result);
   
@@ -325,7 +330,7 @@ TEST(VisionSystem, ImageQuality)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  Vision::CameraCalibration calib(240,320,290.f,290.f,160.f,120.f,0.f);
+  auto calib = std::make_shared<Vision::CameraCalibration>(240,320,290.f,290.f,160.f,120.f,0.f);
   result = visionSystem.UpdateCameraCalibration(calib);
   ASSERT_EQ(RESULT_OK, result);
   

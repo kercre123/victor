@@ -342,9 +342,9 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   // Since we're processing faster than real time (using saved images)
   Vision::kTimeBetweenFaceEnrollmentUpdates_sec = 1.f;

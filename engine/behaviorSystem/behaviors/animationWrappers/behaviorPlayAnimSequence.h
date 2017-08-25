@@ -32,17 +32,17 @@ public:
   
   virtual ~BehaviorPlayAnimSequence();
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
-  virtual bool IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual void AddListener(ISubtaskListener* listener) override;
   
   // Begin playing the animations
   void StartPlayingAnimations(Robot& robot);
+  void SetAnimSequence(const std::vector<AnimationTrigger>& animations){_animTriggers = animations;}
 
 protected:
   
-  virtual bool IsRunnableAnimSeqInternal(const BehaviorPreReqRobot& preReqData) const { return true;}
+  virtual bool IsRunnableAnimSeqInternal(const Robot& robot) const { return true;}
   
   virtual Result InitInternal(Robot& robot) override;
 
@@ -51,7 +51,7 @@ protected:
     
   // ========== Members ==========
   
-  mutable std::vector<AnimationTrigger> _animTriggers;
+  std::vector<AnimationTrigger> _animTriggers;
   int _numLoops;
   int _sequenceLoopsDone; // for sequences it's not per animation, but per sequence, so we have to wait till the last one
 

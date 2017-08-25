@@ -356,6 +356,9 @@ namespace Cozmo.Needs.Sparks.UI {
         CreateConfirmQuitTrickAlert();
       }
       else {
+        if (OnSparkTrickQuit != null) {
+          OnSparkTrickQuit();
+        }
         base.HandleUserClose();
       }
     }

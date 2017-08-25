@@ -18,7 +18,6 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRespondPossiblyRoll.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -74,13 +73,8 @@ BehaviorRespondPossiblyRoll::~BehaviorRespondPossiblyRoll()
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRespondPossiblyRoll::IsRunnableInternal(const BehaviorPreReqRespondPossiblyRoll& preReqData) const
+bool BehaviorRespondPossiblyRoll::IsRunnableInternal(const Robot& robot) const
 {
-  
-  _metadata = RespondPossiblyRollMetadata(preReqData.GetObjectID(),
-                                          preReqData.GetUprightAnimIndex(),
-                                          preReqData.GetOnSideAnimIndex(),
-                                          preReqData.GetPoseUpAxisAccurate());
   return true;
 }
 

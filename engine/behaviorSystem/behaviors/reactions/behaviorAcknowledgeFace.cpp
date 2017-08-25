@@ -23,7 +23,6 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iReactToFaceListener.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
@@ -43,12 +42,22 @@ CONSOLE_VAR(f32, kMaxTimeForInitialGreeting_s, "AcknowledgementBehaviors", 60.0f
 
 using namespace AcknowledgeFaceConsoleVars;
   
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config)
 : super(robot, config)
 {
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorAcknowledgeFace::IsRunnableInternal(const Robot& robot) const
+{
+  return !_desiredTargets.empty();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorAcknowledgeFace::InitInternal(Robot& robot)
 {
   // don't actually init until the first Update call. This gives other messages that came in this tick a
@@ -58,13 +67,18 @@ Result BehaviorAcknowledgeFace::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeFace::StopInternal(Robot& robot)
 {
   for(auto& listener: _faceListeners){
     listener->ClearDesiredTargets();
   }
+  _desiredTargets.clear();
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorAcknowledgeFace::UpdateInternal(Robot& robot)
 {
   if( _shouldStart ) {
@@ -76,6 +90,8 @@ IBehavior::Status BehaviorAcknowledgeFace::UpdateInternal(Robot& robot)
   return super::UpdateInternal(robot);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAcknowledgeFace::UpdateBestTarget(const Robot& robot)
 {
   const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
@@ -91,6 +107,8 @@ bool BehaviorAcknowledgeFace::UpdateBestTarget(const Robot& robot)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
 {
   _targetFace = Vision::UnknownFaceID;
@@ -138,6 +156,8 @@ void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
   StartActing(turnAction, &BehaviorAcknowledgeFace::FinishIteration);
 } // InitInternalReactionary()
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
 {
   _desiredTargets.erase( _targetFace );
@@ -152,19 +172,8 @@ void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
   BeginIteration(robot);
 }
 
-  
-bool BehaviorAcknowledgeFace::IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData) const
-{
-  _desiredTargets.clear();
-  auto desiredTargets = preReqData.GetDesiredTargets();
-  for(auto& entry: desiredTargets){
-    _desiredTargets.emplace(entry);
-  }
-  desiredTargets.clear();
-  
-  return !_desiredTargets.empty();
-}
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeFace::AddListener(IReactToFaceListener* listener)
 {
   _faceListeners.insert(listener);

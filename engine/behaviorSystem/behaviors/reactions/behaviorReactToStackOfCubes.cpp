@@ -13,7 +13,6 @@
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToStackOfCubes.h"
 
 #include "engine/robot.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 
@@ -31,10 +30,10 @@ BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(Robot& robot, const Jso
 {  
 }
   
-bool BehaviorReactToStackOfCubes::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorReactToStackOfCubes::IsRunnableInternal(const Robot& robot) const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = preReqData.GetRobot().GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
+  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
   if(allPyramids.size() > 0){
     auto currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime > _nextValidReactionTime_s){

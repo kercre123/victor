@@ -163,7 +163,11 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
     else:
         tmp_dir = tempfile.mkdtemp()
         zip_file = os.path.join(externals_dir, audio_assets_package)
-        zip_obj = zipfile.ZipFile(zip_file, 'r')
+        try:
+            zip_obj = zipfile.ZipFile(zip_file, 'r')
+        except (IOError, OSError, zipfile.error), e:
+            msg = "Unable to validate audio events used in animations because: %s" % e
+            raise ValueError(msg)
         zip_obj.extract(soundbanks_xml_file, tmp_dir)
         zip_obj.close()
         soundbanks_xml_file = os.path.join(tmp_dir, soundbanks_xml_file)

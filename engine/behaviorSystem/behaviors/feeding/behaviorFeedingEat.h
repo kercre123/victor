@@ -38,12 +38,14 @@ protected:
   BehaviorFeedingEat(Robot& robot, const Json::Value& config);
 
 public:
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
   virtual void AddListener(IFeedingListener* listener) override{
     _feedingListeners.push_back(listener);
   };
+  
+  void SetTargetObject(const ObjectID& objID){_targetID = objID;}
   
 protected:
   using base = IBehavior;

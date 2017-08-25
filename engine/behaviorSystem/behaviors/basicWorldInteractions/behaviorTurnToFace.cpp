@@ -15,8 +15,6 @@
 #include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 
 #include "engine/actions/basicActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 
@@ -36,28 +34,13 @@ BehaviorTurnToFace::BehaviorTurnToFace(Robot& robot, const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTurnToFace::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorTurnToFace::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
   Pose3d wastedPose;
   TimeStamp_t lastTimeObserved = robot.GetFaceWorld().GetLastObservedFace(wastedPose);
   std::set<Vision::FaceID_t> facesObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(lastTimeObserved);
   if(facesObserved.size() > 0){
     _targetFace = robot.GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
-  }
-  
-  return _targetFace.IsValid();
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTurnToFace::IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData) const
-{
-  if(ANKI_VERIFY(preReqData.GetDesiredTargets().size() == 1,
-                 "BehaviorTurnToFace.IsRunnableInternal.PreReqAcknowledgeFace",
-                 "Received %zu faces", preReqData.GetDesiredTargets().size())){
-    const Robot& robot = preReqData.GetRobot();
-    _targetFace = robot.GetFaceWorld().GetSmartFaceID(*preReqData.GetDesiredTargets().begin());
   }
   
   return _targetFace.IsValid();

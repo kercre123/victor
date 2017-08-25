@@ -43,7 +43,7 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
 }
 
   
-bool BehaviorReactToPickup::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToPickup::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

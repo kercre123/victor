@@ -16,17 +16,6 @@
 
 namespace Anki {
 namespace Vision {
-    
-  CameraCalibration::CameraCalibration()
-  : _nrows(480)
-  , _ncols(640)
-  , _focalLength_x(1.f)
-  , _focalLength_y(1.f)
-  , _center(0.f,0.f)
-  , _skew(0.f)
-  {
-
-  }
   
   CameraCalibration::CameraCalibration(u16 nrows,    u16 ncols,
                                        f32 fx,       f32 fy,

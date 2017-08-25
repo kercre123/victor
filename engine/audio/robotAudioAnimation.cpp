@@ -30,7 +30,7 @@
 #include "util/random/randomGenerator.h"
 
 
-#define DEBUG_ROBOT_AUDIO_ANIMATION_OVERRIDE 1
+#define DEBUG_ROBOT_AUDIO_ANIMATION_OVERRIDE 0
 
 
 namespace Anki {

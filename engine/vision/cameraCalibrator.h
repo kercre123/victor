@@ -45,14 +45,14 @@ public:
   
   // Computes camera calibration using stored images of checkerboard target
   // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
-  Result ComputeCalibrationFromCheckerboard(Vision::CameraCalibration& calibration_out,
+  Result ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibration_out,
                                             DebugImageList<Vision::ImageRGB>& debugImageRGBs_out);
   
-  // Computes camera calibration using observed markers on either the INVERTED_BOX or BLEACHERS target
+  // Computes camera calibration using observed markers on either the INVERTED_BOX or QBERT target
   // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
   Result ComputeCalibrationFromSingleTarget(CalibTargetType targetType,
                                             const std::list<Vision::ObservedMarker>& observedMarkers,
-                                            Vision::CameraCalibration& calibration_out,
+                                            std::list<Vision::CameraCalibration>& calibration_out,
                                             DebugImageList<Vision::ImageRGB>& debugImageRGBs_out);
   
   // Add an image to be stored for calibration along with a region of interest
@@ -92,7 +92,7 @@ private:
   
   // Populates markersTo3dCoords with the 3d world coordinates of each corner of each marker on
   // the respective target
-  void GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
+  void GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
   void GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords);
 
   VisionSystem& _visionSystem;

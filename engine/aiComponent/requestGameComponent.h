@@ -71,6 +71,9 @@ private:
   // Keep track of when game says requests can/cant happen
   bool _canRequestGame;
   
+  // Reset default weights on the next request without waiting for a message from unity
+  bool _shouldAutomaticallyResetDefaults;
+  
   // struct for caching game request information so that randomness etc
   // doesn't result in different results being returned within the same tick
   struct CacheRequestData{

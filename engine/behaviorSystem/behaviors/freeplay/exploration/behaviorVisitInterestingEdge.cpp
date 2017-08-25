@@ -18,7 +18,6 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
@@ -138,11 +137,9 @@ BehaviorVisitInterestingEdge::~BehaviorVisitInterestingEdge()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorVisitInterestingEdge::IsRunnableInternal(const Robot& robot) const
 {
   ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::IsRunnableInternal"); // we are doing some processing now, keep an eye
-
-  const Robot& robot = preReqData.GetRobot();
   
   // clear debug render from previous runs
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");

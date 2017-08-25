@@ -212,7 +212,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
-, _localNotifications(new LocalNotifications(*this))
+, _localNotifications(new LocalNotifications(cozmoContext, *this))
 , _savedTimeLastWrittenToDevice()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
@@ -385,7 +385,10 @@ void NeedsManager::InitInternal(const float currentTime_s)
 
   SendNeedsLevelsDasEvent("app_start");
 
-  // Generate all appropriate notifications now (see function comments)
+  // Generate all appropriate notifications now (see function comments). Note that on
+  // app startup, this is actually too early (because the Game side is not quite ready
+  // to accept the messages that Generate sends).  But we keep this here because this
+  // function (InitInternal) is also called when wiping the device or robot save.
   _localNotifications->Generate();
 
 #if ANKI_DEV_CHEATS
@@ -809,6 +812,10 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
   // If no daily star was awarded, possibly award sparks for freeplay activities
   if (!starAwarded)
   {
+    // Also, generate the updated local notifications here (if a star was awarded, we've
+    // already done this in UpdateStarsState)
+    _localNotifications->Generate();
+
     if (!Util::IsNearZero(actionDelta._freeplaySparksRewardWeight))
     {
       if (ShouldRewardSparksForFreeplay())
@@ -951,11 +958,6 @@ void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId acti
     }
     default:
       break;
-  }
-
-  if (!predictionOnly)
-  {
-    _localNotifications->Generate();
   }
 }
 
@@ -1671,10 +1673,10 @@ bool NeedsManager::UpdateStarsState(const bool cheatGiveStar)
 
       // Save that we've issued a star today
       PossiblyStartWriteToRobot(true);
-    }
 
-    // Re-generate the notifications since we have a different number of stars
-    _localNotifications->Generate();
+      // Re-generate the notifications since we have a different number of stars
+      _localNotifications->Generate();
+    }
 
     // DAS Event: "needs.play_need_filled"
     // s_val: Whether a daily star was awarded (1 or 0)

@@ -12,13 +12,15 @@
   function setLocalizedText() {
     setText('#app-title', $t('codeLab.projects.modalTitle'));
 
-    setText('#attribution-label', '');
     setText('#tutorial-label', $t('codeLab.projects.tutorialLabel'));
     setText('#new-project-label', $t('codeLab.projects.newProjectButtonLabel'));
 
-
     setText('#prototype-sample-project .project-type', $t('codeLab.projects.projectType.sampleProject'));
     setText('#prototype-user-project .project-type', $t('codeLab.projects.projectType.personalProject'));
+
+    setText('#featured-tab', $t('codeLab.projects.featuredTab.title'));
+    setText('#sandbox-tab', $t('codeLab.projects.sandboxTab.title'));
+    setText('#constructor-tab', $t('codeLab.projects.constructorTab.title'));
   }
 
 
@@ -32,7 +34,7 @@
       CozmoAPI.getProjects('window.renderProjects');
 
       // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
-      //_devLoadProjects();
+      // _devLoadProjects();
     });
 
     // register main click handler for the document

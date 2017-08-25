@@ -150,11 +150,9 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
     }
 };
 
-
 Scratch3CozmoBlocks.prototype.verticalSetBackpackColor = function(args, util) {
-    const rgb = Cast.toRgbColorObject(args.Color);
-    colorHexValue = this._getColorIntFromColorObject(rgb);
-    window.Unity.call({requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHexValue});
+    var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
+    window.Unity.call({requestId: -1, command: "cozmoVerticalSetBackpackColor", argUInt: colorHex});
 };
 
 Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {

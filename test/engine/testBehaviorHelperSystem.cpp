@@ -71,7 +71,7 @@ public:
     _lastStartActingResult = false;
   }
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override {
+  virtual bool IsRunnableInternal(const Robot& robot) const override {
     return true;
   }
 
