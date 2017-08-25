@@ -32,7 +32,7 @@ public:
   virtual ~BehaviorPlayAnimOnNeedsChange();
 
 protected:
-  virtual bool IsRunnableAnimSeqInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableAnimSeqInternal(const Robot& robot) const override;
   virtual void StopInternal(Robot& robot) override;
 
   

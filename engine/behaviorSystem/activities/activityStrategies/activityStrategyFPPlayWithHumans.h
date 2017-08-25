@@ -17,7 +17,10 @@
 
 namespace Anki {
 namespace Cozmo {
-
+  
+// Forward Declarations
+class AIWhiteboard;
+  
 class ActivityStrategyFPPlayWithHumans : public IActivityStrategy
 {
 public:
@@ -51,6 +54,8 @@ private:
   float _cooldownRejectionBaseSecs;
   float _cooldownRejectionExponent;
   int _numRejections;
+  
+  AIWhiteboard& _whiteboardRef;
 };
   
 } // namespace

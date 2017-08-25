@@ -15,7 +15,6 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/robot.h"
@@ -115,16 +114,16 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
     }
     return bestBehavior;
   }
-  BehaviorPreReqRobot preReqData(robot);
+
   // otherwise, check if it's time to change behaviors
   switch( _state ) {
     case State::Initial: {
-      if( _interactWithFacesBehavior->IsRunnable(preReqData) ) {
+      if( _interactWithFacesBehavior->IsRunnable(robot) ) {
         // if we can just right to interact, do that
         bestBehavior = _interactWithFacesBehavior;
         _state = State::Interacting;
       }
-      else if( _findFacesBehavior->IsRunnable(preReqData) ) {
+      else if( _findFacesBehavior->IsRunnable(robot) ) {
         // otherwise, search for a face
         bestBehavior = _findFacesBehavior;
         _state = State::FindingFaces;
@@ -134,7 +133,7 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
     }
     
     case State::FindingFaces: {
-      if( _interactWithFacesBehavior->IsRunnable(preReqData) ) {
+      if( _interactWithFacesBehavior->IsRunnable(robot) ) {
         bestBehavior = _interactWithFacesBehavior;
         _state = State::Interacting;
       }
@@ -165,7 +164,7 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
     case State::Interacting: {
       // keep interacting until the behavior ends. If we can't interact (e.g. we lost the face) then go back
       // to searching
-      if( _interactWithFacesBehavior->IsRunning() || _interactWithFacesBehavior->IsRunnable(preReqData) ) {
+      if( _interactWithFacesBehavior->IsRunning() || _interactWithFacesBehavior->IsRunnable(robot) ) {
         bestBehavior = _interactWithFacesBehavior;
       }
       else {
@@ -189,11 +188,10 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
           if( _objectivesLeft.find(reqPtr->objective) != _objectivesLeft.end() )
           {
             IBehaviorPtr beh = robot.GetBehaviorManager().FindBehaviorByID(reqPtr->behaviorID);
-            BehaviorPreReqRobot preReqData(robot);
             if( beh != nullptr )
             {
               // Check if runnable and valid.
-              if( beh->IsRunnable(preReqData) )
+              if( beh->IsRunnable(robot) )
               {
                 wantsRunnableBehaviors.push_back(beh);
                 PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedInteraction",
@@ -244,7 +242,7 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
         }
       }
       
-      if( _playingBehavior->IsRunning() || _playingBehavior->IsRunnable(preReqData) ) {
+      if( _playingBehavior->IsRunning() || _playingBehavior->IsRunnable(robot) ) {
         bestBehavior = _playingBehavior;
       }
       break;

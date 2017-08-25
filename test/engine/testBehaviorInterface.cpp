@@ -14,7 +14,6 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -47,7 +46,7 @@ public:
   bool _stopped = false;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override {
+  virtual bool IsRunnableInternal(const Robot& robot) const override {
     return true;
   }
 
@@ -132,8 +131,7 @@ TEST(BehaviorInterface, Create)
 
   EXPECT_FALSE( b.IsRunning() );
   EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
-  BehaviorPreReqNone noPreReqs;
-  EXPECT_TRUE( b.IsRunnable(noPreReqs));
+  EXPECT_TRUE( b.IsRunnable(robot));
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -720,7 +718,7 @@ public:
 
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override {
+  virtual bool IsRunnableInternal(const Robot& robot) const override {
     return true;
   }
 

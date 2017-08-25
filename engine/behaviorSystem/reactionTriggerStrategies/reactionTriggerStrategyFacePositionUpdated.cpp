@@ -15,7 +15,7 @@
 
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
+#include "engine/behaviorSystem/behaviors/reactions/behaviorAcknowledgeFace.h"
 #include "engine/faceWorld.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/robot.h"
@@ -34,7 +34,9 @@ CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 
 CONSOLE_VAR(bool, kEnableFaceAcknowledgeReact, "AcknowledgeFaceBehavior", true);
 static const char* kTriggerStrategyName = "Strategy React To Face Position Updated";
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionUpdated(Robot& robot,
                                                                                        const Json::Value& config)
 : ReactionTriggerStrategyPositionUpdate(robot, config,
@@ -46,18 +48,22 @@ ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionU
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
+  std::shared_ptr<BehaviorAcknowledgeFace> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::AcknowledgeFace,
+                                                         directPtr);
+  
   if(!_desiredTargets.empty()){
-    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets, robot);
-    behavior->IsRunnable(acknowledgeFacePreReqs);
+    directPtr->SetFacesToAcknowledge(_desiredTargets);
   }
   else{
     std::set<Vision::FaceID_t> possibleFaces = robot.GetFaceWorld().GetFaceIDs();
     if (!possibleFaces.empty()){
       //  acknowledge even if it's empty?
-      BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(possibleFaces, robot);
-      behavior->IsRunnable(acknowledgeFacePreReqs);
+      directPtr->SetFacesToAcknowledge(possibleFaces);
     }
     else
     {
@@ -65,20 +71,28 @@ void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(const
     }
   }
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
+  std::shared_ptr<BehaviorAcknowledgeFace> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::AcknowledgeFace,
+                                                         directPtr);
   if(!_desiredTargets.empty()){
-    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets, robot);
+    directPtr->SetFacesToAcknowledge(_desiredTargets);
     const bool robotOffCharger = !robot.IsOnChargerPlatform();
-    return robotOffCharger && kEnableFaceAcknowledgeReact &&
-            behavior->IsRunnable(acknowledgeFacePreReqs);
+    return robotOffCharger &&
+           kEnableFaceAcknowledgeReact &&
+           behavior->IsRunnable(robot);
   }
   
   return false;
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(const Robot& robot,
                                                                     const ExternalInterface::RobotObservedFace& msg)
 {
@@ -154,7 +168,8 @@ void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(const Robot&
   _faceWasClose[ msg.faceID ] = currPoseClose;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyFacePositionUpdated::AddDesiredFace(const Robot& robot, Vision::FaceID_t faceID)
 {
   if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::FacePositionUpdated)) {
@@ -166,8 +181,8 @@ bool ReactionTriggerStrategyFacePositionUpdated::AddDesiredFace(const Robot& rob
   }
 }
 
-  
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFacePositionUpdated::AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
@@ -194,6 +209,8 @@ void ReactionTriggerStrategyFacePositionUpdated::AlwaysHandlePoseBasedInternal(c
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   behavior->AddListener(this);
@@ -202,14 +219,18 @@ void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTrigger
 /////////////
 // Implement IReactToFaceListener
 /////////////
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFacePositionUpdated::FinishedReactingToFace(Robot& robot, Vision::FaceID_t faceID)
 {
   RobotReactedToId(robot, faceID);
   _hasReactedToFace.insert( faceID );
   _lastReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFacePositionUpdated::ClearDesiredTargets()
 {
   _desiredTargets.clear();

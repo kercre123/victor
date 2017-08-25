@@ -39,7 +39,7 @@ public:
   void SetAnimationTrigger(AnimationTrigger trigger, int numLoops);
   void SetAnimationTriggers(std::vector<AnimationTrigger>& triggers, int sequenceLoopCount);
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   
 protected:
   virtual Result InitInternal(Robot& robot) override;

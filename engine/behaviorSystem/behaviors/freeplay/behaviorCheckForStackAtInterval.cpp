@@ -14,7 +14,6 @@
 #include "engine/behaviorSystem/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
 
 #include "engine/actions/basicActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/robot.h"
@@ -45,12 +44,12 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCheckForStackAtInterval::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorCheckForStackAtInterval::IsRunnableInternal(const Robot& robot) const
 {
   const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currTime > _nextCheckTime_s)
   {
-    UpdateTargetBlocks(preReqData.GetRobot());
+    UpdateTargetBlocks(robot);
     const bool hasBlocks = !_knownBlockIDs.empty();
     return hasBlocks;
   }

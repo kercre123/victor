@@ -639,6 +639,7 @@ MonoBehaviour:
   _SwipeContainer: {fileID: 224167029939247450}
   _PageIndicatorPrefab: {fileID: 11435474, guid: 21499c84522ef45ed93f569f90663b16,
     type: 2}
+  _CacheSlides: 0
 --- !u!114 &114568815057204096
 MonoBehaviour:
   m_ObjectHideFlags: 1

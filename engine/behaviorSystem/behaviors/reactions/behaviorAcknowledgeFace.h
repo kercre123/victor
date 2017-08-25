@@ -45,7 +45,8 @@ public:
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
   virtual void AddListener(IReactToFaceListener* listener) override;
-
+  
+  void SetFacesToAcknowledge(const std::set<Vision::FaceID_t> targetFaces){_desiredTargets = targetFaces;}
   
 protected:
   // Enforce creation through BehaviorContainer
@@ -56,7 +57,7 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const override;
+  virtual bool IsRunnableInternal(const Robot& robot ) const override;
 
   
 private:
@@ -71,7 +72,7 @@ private:
   Vision::FaceID_t _targetFace = Vision::UnknownFaceID;
 
   // everything we want to react to before we stop (to handle multiple faces in the same frame)
-  mutable std::set< Vision::FaceID_t > _desiredTargets;
+  std::set< Vision::FaceID_t > _desiredTargets;
   
   bool _shouldStart = false;
 

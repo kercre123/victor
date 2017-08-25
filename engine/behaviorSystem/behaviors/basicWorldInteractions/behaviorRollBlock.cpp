@@ -19,7 +19,6 @@
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/moodSystem/moodManager.h"
@@ -58,9 +57,9 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRollBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
 {
-  UpdateTargetBlock(preReqData.GetRobot());
+  UpdateTargetBlock(robot);
   
   return _targetID.IsSet() || IsActing();
 }

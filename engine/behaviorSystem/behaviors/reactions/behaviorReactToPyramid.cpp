@@ -13,7 +13,6 @@
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToPyramid.h"
 
 #include "engine/robot.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 
@@ -25,17 +24,21 @@ namespace Cozmo {
 namespace{
 const constexpr float kTimeBetweenReactions_s = 100.f;
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPyramid::BehaviorReactToPyramid(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _nextValidReactionTime_s(0)
 {
 }
-  
-bool BehaviorReactToPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToPyramid::IsRunnableInternal(const Robot& robot) const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = preReqData.GetRobot().GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
+  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   if(allPyramids.size() > 0){
     const auto currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime > _nextValidReactionTime_s){
@@ -46,6 +49,8 @@ bool BehaviorReactToPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preRe
   return false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToPyramid::InitInternal(Robot& robot)
 {
   _nextValidReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kTimeBetweenReactions_s;

@@ -20,7 +20,6 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/aiComponent/workoutComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
@@ -77,9 +76,8 @@ BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(Robot& robot, const Json::Value
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCubeLiftWorkout::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorCubeLiftWorkout::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
   if( robot.GetCarryingComponent().IsCarryingObject() ) {
     return true;
   }

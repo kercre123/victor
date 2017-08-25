@@ -51,7 +51,7 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
   // Fixed parameters
   private static final int TTS_LEADINGSILENCE_MS = 50;  // Minimum allowed by Acapela TTS SDK
   private static final int TTS_TRAILINGSILENCE_MS = 50; // Minimum allowed by Acapela TTS SDK
-  
+
   //
   // JNI declaration of C++ function to be invoked as callback.
   // Note that method name and signature must match definition in TextToSpeechProvider_android.cpp
@@ -121,10 +121,10 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
   }
 
   // Load given voice
-  public int doLoadVoice(String path, String voice, int userid, int password, String license, int speed, int shaping) {
+  public int doLoadVoice(String path, String voice, int userid, int password, String license) {
     final String EVT = "CozmoTextToSpeech.doLoadVoice";
 
-    debug(EVT, "path=" + path + " voice=" + voice + " speed=" + speed + " shaping=" + shaping);
+    debug(EVT, "path=" + path + " voice=" + voice);
 
     // Enumerate voices available with given resource path
     String[] voiceDirPaths = {path};
@@ -150,18 +150,6 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
       return RESULT_FAIL_INVALID_PARAMETER;
     }
 
-    err = _tts.setSpeechRate(speed);
-    if (0 != err) {
-      error(EVT, "Unable to set speech rate, err="+err);
-      return RESULT_FAIL_INVALID_PARAMETER;
-    }
-
-    err = _tts.setTTSSettings("VOICESHAPE", shaping);
-    if (0 != err) {
-      error(EVT, "Unable to set shaping, err="+err);
-      return RESULT_FAIL_INVALID_PARAMETER;
-    }
-
     err = _tts.setTTSSettings("LEADINGSILENCE", TTS_LEADINGSILENCE_MS);
     if (0 != err) {
       error(EVT, "Unable to set leading silence, err="+err);
@@ -176,13 +164,25 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
   }
 
   // Create audio for given text
-  public int doCreateAudioData(String text, int speed) {
+  public int doCreateAudioData(String text, int speed, int shaping, int pitch) {
     final String EVT = "CozmoTextToSpeech.doCreateAudioData";
-    debug(EVT, "text=" + text + " speed=" + speed);
+    debug(EVT, "text=" + text + " speed=" + speed + " shaping=" + shaping + " pitch=" + pitch);
     int err = _tts.setSpeechRate(speed);
     if (0 != err) {
       error(EVT, "Unable to set speech rate, err="+err);
-      return RESULT_FAIL;
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+
+    err = _tts.setTTSSettings("VOICESHAPE", shaping);
+    if (0 != err) {
+      error(EVT, "Unable to set shaping, err="+err);
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+
+    err = _tts.setPitch(pitch);
+    if (0 != err) {
+      error(EVT, "Unable to set pitch, err="+err);
+      return RESULT_FAIL_INVALID_PARAMETER;
     }
 
     // Reset data count
@@ -224,11 +224,11 @@ public class CozmoTextToSpeech implements iTTSEventsCallback, iTTSSamplesCallbac
     sInstance = null;
   }
 
-  public static int loadVoice(String path, String voice, int userid, int password, String license, int speed, int shaping) {
-    return sInstance.doLoadVoice(path, voice, userid, password, license, speed, shaping);
+  public static int loadVoice(String path, String voice, int userid, int password, String license) {
+    return sInstance.doLoadVoice(path, voice, userid, password, license);
   }
 
-  public static int createAudioData(String text, int speed) {
-    return sInstance.doCreateAudioData(text, speed);
+  public static int createAudioData(String text, int speed, int shaping, int pitch) {
+    return sInstance.doCreateAudioData(text, speed, shaping, pitch);
   }
 }

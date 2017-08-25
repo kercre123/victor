@@ -35,7 +35,7 @@ BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(Robot& robot, const Json:
 }
 
 
-bool BehaviorReactToRobotOnFace::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToRobotOnFace::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

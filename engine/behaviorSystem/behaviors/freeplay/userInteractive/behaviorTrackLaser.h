@@ -29,7 +29,7 @@ private:
   
 public:
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 protected:

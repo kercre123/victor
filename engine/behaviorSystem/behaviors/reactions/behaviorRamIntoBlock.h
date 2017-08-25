@@ -34,8 +34,10 @@ private:
 
 
 public:
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
+  
+  void SetBlockToRam(s32 targetID){_targetID = targetID;}
 
 protected:
   virtual Result InitInternal(Robot& robot) override;
@@ -43,7 +45,7 @@ protected:
   virtual Result ResumeInternal(Robot& robot) override;
 
 private:
-  mutable s32 _targetID;
+  s32 _targetID;
   
   void TransitionToPuttingDownBlock(Robot& robot);
   void TransitionToTurningToBlock(Robot& robot);

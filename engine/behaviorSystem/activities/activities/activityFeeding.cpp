@@ -20,8 +20,6 @@
 #include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
@@ -567,8 +565,8 @@ void ActivityFeeding::UpdateCubeToEat(Robot& robot)
   // now go through each cube and see if it's valid for eating
   for(const auto& entry: _cubeControllerMap){
     if( entry.second->IsCubeCharged() ) {
-      BehaviorPreReqAcknowledgeObject preReqData(entry.first, robot);
-      if( _eatFoodBehavior->IsRunnable(preReqData) ) {
+      _eatFoodBehavior->SetTargetObject(entry.first);
+      if( _eatFoodBehavior->IsRunnable(robot)) {
 
         // just eat the first cube we can. It might be better to eat the closest cube, or the most recently
         // seen cube, but any cube will do        
@@ -630,8 +628,8 @@ void ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
       return;
     }
     else {
-      BehaviorPreReqAcknowledgeObject preReqData(_cubeIDToEat, robot);
-      if( _eatFoodBehavior->IsRunnable(preReqData) ) {
+      _eatFoodBehavior->SetTargetObject(_cubeIDToEat);
+      if( _eatFoodBehavior->IsRunnable(robot) ) {
         SET_STAGE(robot, EatFood);
         return;
       }

@@ -42,6 +42,8 @@ private:
 public:
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
+  void SetObjectsToAcknowledge(const std::set<s32>& targets){_targets = targets;}
+  
 protected:
   // Default configuration parameters which can be overridden by JSON config
   struct AcknowledgeConfigParams {
@@ -62,7 +64,7 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   
   virtual void AddListener(IReactToObjectListener* listener) override;
 
@@ -95,7 +97,7 @@ private:
   bool _shouldCheckBelowTarget;
   bool _forceBackupWhenCheckingForStack = false;
   
-  mutable std::set<s32> _targets;
+  std::set<s32> _targets;
   
   std::set<IReactToObjectListener*> _objectListeners;
   

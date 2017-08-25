@@ -13,10 +13,11 @@
 
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyNoPreDockPoses.h"
 
+#include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/behaviorSystem/behaviors/reactions/behaviorRamIntoBlock.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/objectIDs.h"
@@ -38,20 +39,24 @@ ReactionTriggerStrategyNoPreDockPoses::ReactionTriggerStrategyNoPreDockPoses(Rob
 
 void ReactionTriggerStrategyNoPreDockPoses::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  behavior->IsRunnable(robot);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyNoPreDockPoses::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
+  std::shared_ptr<BehaviorRamIntoBlock> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::RamIntoBlock,
+                                                         directPtr);
+  
   const ObjectID& objID = robot.GetAIComponent().GetWhiteboard().GetNoPreDockPosesOnObject();
   if(objID.IsSet()){
     const ObjectID objectWithoutPosesCopy = objID;
     ObjectID unsetObj;
     robot.GetAIComponent().GetNonConstWhiteboard().SetNoPreDockPosesOnObject(unsetObj);
-    
-    BehaviorPreReqAcknowledgeObject preReq(objectWithoutPosesCopy, robot);
-    return behavior->IsRunnable(preReq);
+    directPtr->SetBlockToRam(objectWithoutPosesCopy.GetValue());
+    return behavior->IsRunnable(robot);
   }
   return false;
 }

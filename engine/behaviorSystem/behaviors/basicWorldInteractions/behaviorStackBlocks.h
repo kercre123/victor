@@ -36,7 +36,7 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { BehaviorStackBlocks::UpdateTargetBlocks(robot); }

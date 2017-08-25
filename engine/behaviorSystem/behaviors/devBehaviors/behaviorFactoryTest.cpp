@@ -242,7 +242,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorFactoryTest::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+  bool BehaviorFactoryTest::IsRunnableInternal(const Robot& robot) const
   {
     return _testResult == FactoryTestResultCode::UNKNOWN;
   }

@@ -49,7 +49,7 @@ BehaviorFeedingSearchForCube::BehaviorFeedingSearchForCube(Robot& robot, const J
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingSearchForCube::IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
+bool BehaviorFeedingSearchForCube::IsRunnableInternal(const Robot& robot ) const
 {
   return true;
 }

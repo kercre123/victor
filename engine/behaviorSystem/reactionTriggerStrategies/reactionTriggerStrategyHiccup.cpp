@@ -20,7 +20,6 @@
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
@@ -73,6 +72,8 @@ namespace {
   static const char* kHiccupUnlockId = "hiccupsUnlockId";
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyHiccup::ReactionTriggerStrategyHiccup(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 , _externalInterface((robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr))
@@ -95,6 +96,8 @@ ReactionTriggerStrategyHiccup::ReactionTriggerStrategyHiccup(Robot& robot, const
   _this = this;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyHiccup::~ReactionTriggerStrategyHiccup()
 {
   if(HasHiccups())
@@ -105,15 +108,28 @@ ReactionTriggerStrategyHiccup::~ReactionTriggerStrategyHiccup()
   _this = nullptr;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  BehaviorPreReqAnimSequence req(robot, GetHiccupAnim());
-  behavior->IsRunnable(req);
+  std::shared_ptr<BehaviorPlayAnimSequence> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::PlayArbitraryAnim,
+                                                         directPtr);
+  
+  directPtr->SetAnimSequence(GetHiccupAnim());
+  behavior->IsRunnable(robot);
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
+  std::shared_ptr<BehaviorPlayAnimSequence> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::PlayAnim,
+                                                         directPtr);
+  
   // If Hiccups are not enabled then do nothing
   if(!robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::Hiccups))
   {
@@ -147,8 +163,8 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
     
     // Make sure that we only consider ourselves cured once the get out animation plays
     // Otherwise we could be cured but the player never saw the get out
-    BehaviorPreReqAnimSequence req(robot, anim);
-    if(behavior->IsRunnable(req))
+    directPtr->SetAnimSequence(anim);
+    if(behavior->IsRunnable(robot))
     {
       _hiccupsCured = HiccupsCured::NotCured;
       const_cast<Robot&>(robot).GetAnimationStreamer().ResetKeepFaceAliveLastStreamTimeout();
@@ -204,8 +220,8 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
         }
       }
       
-      BehaviorPreReqAnimSequence req(robot, GetHiccupAnim());
-      const bool isRunnable = behavior->IsRunnable(req);
+      directPtr->SetAnimSequence(GetHiccupAnim());
+      const bool isRunnable = behavior->IsRunnable(robot);
 
       if(!isRunnable)
       {
@@ -229,6 +245,8 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
   return false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::ResetHiccups()
 {
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -267,6 +285,8 @@ void ReactionTriggerStrategyHiccup::ResetHiccups()
   _whiteboard.SetHasHiccups(false);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::ForceHiccups()
 {
   // Force hiccups to occur now
@@ -275,6 +295,8 @@ void ReactionTriggerStrategyHiccup::ForceHiccups()
   _nextHiccupInBoutTime = _shouldGetHiccupsAtTime;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyHiccup::CanHiccup(const Robot& robot) const
 {
   const bool isPickingOrPlacing = robot.GetDockingComponent().IsPickingOrPlacing();
@@ -287,6 +309,8 @@ bool ReactionTriggerStrategyHiccup::CanHiccup(const Robot& robot) const
   return true;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::CureHiccups(bool playerCured)
 {
   SendDasEvent(playerCured);
@@ -308,6 +332,8 @@ void ReactionTriggerStrategyHiccup::CureHiccups(bool playerCured)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::SendDasEvent(bool playerCured)
 {
   // Log an event to DAS before resetting
@@ -326,6 +352,8 @@ void ReactionTriggerStrategyHiccup::SendDasEvent(bool playerCured)
                 "%s", (playerCured ? "PLAYER_CURED" : "SELF_CURED"));
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::Hiccup))
@@ -362,7 +390,9 @@ void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const EngineToGameEvent
     }
   }
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot)
 {
   if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::Hiccup)){
@@ -381,6 +411,8 @@ void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const GameToEngineEvent
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::EnabledStateChanged(const Robot& robot, bool enabled)
 {
   if(!enabled)
@@ -398,6 +430,8 @@ void ReactionTriggerStrategyHiccup::EnabledStateChanged(const Robot& robot, bool
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyHiccup::ParseConfig(const Json::Value& config)
 {
   bool res = true;
@@ -428,6 +462,8 @@ void ReactionTriggerStrategyHiccup::ParseConfig(const Json::Value& config)
   DEV_ASSERT(res, "ReactionTriggerStrategyHiccup.MissingParamFromJson");
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::vector<AnimationTrigger> ReactionTriggerStrategyHiccup::GetHiccupAnim() const
 {
   // This is the first hiccup so play GetIn
@@ -442,6 +478,8 @@ std::vector<AnimationTrigger> ReactionTriggerStrategyHiccup::GetHiccupAnim() con
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyHiccup::HasHiccups() const
 {
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();

@@ -2601,50 +2601,6 @@ namespace Anki {
       
       return ActionResult::SUCCESS;
     } // Verify()
-    
-#pragma mark ---- MountChargerAction ----
-    
-    MountChargerAction::MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed)
-    : IDockAction(robot,
-                  chargerID,
-                  "MountCharger",
-                  RobotActionType::MOUNT_CHARGER,
-                  useManualSpeed)
-    {
-      // TODO: Charger marker pose still oscillates so just do your best from where you are
-      //       rather than oscillating between jumpy predock poses.
-      SetDoNearPredockPoseCheck(false);
-    }
-    
-    ActionResult MountChargerAction::SelectDockAction(ActionableObject* object)
-    {
-      Charger* charger = dynamic_cast<Charger*>(object);
-      if(charger == nullptr) {
-        PRINT_NAMED_ERROR("MountChargerAction.SelectDockAction.NotChargerObject",
-                          "Could not cast generic ActionableObject into Charger object.");
-        return ActionResult::BAD_OBJECT;
-      }
-      
-      _dockAction = DockAction::DA_MOUNT_CHARGER;
-      
-      // Tell robot which charger it will be using
-      _robot.SetCharger(_dockObjectID);
-      
-      return ActionResult::SUCCESS;
-      
-    } // SelectDockAction()
-    
-    
-    ActionResult MountChargerAction::Verify()
-    {
-      // Verify that robot is on charger
-      if (_robot.IsOnCharger()) {
-        PRINT_CH_INFO("Actions", "MountChargerAction.Verify.MountingChargerComplete",
-                      "Robot has mounted charger.");
-        return ActionResult::SUCCESS;
-      }
-      return ActionResult::ABORT;
-    } // Verify()
 
 #pragma mark ---- CrossBridgeAction ----
     

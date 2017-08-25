@@ -32,6 +32,7 @@ class BehaviorReactToPet : public IBehavior
   
 public:
   virtual bool CarryingObjectHandledInternally() const override { return false; }
+  void SetTargets(const std::set<Vision::FaceID_t>& targets){_targets = targets;}
 
 protected:
   // Enforce creation through BehaviorContainer
@@ -42,7 +43,7 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgePet& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   virtual void AddListener(IReactToPetListener* listener) override;
   
@@ -53,7 +54,7 @@ private:
   
   // Everything we want to react to before we stop (to handle multiple targets in the same frame).
   // This member must be mutable to retain state from const method IsRunnableInternal().
-  mutable std::set<Vision::FaceID_t> _targets;
+  std::set<Vision::FaceID_t> _targets;
   
   // Current target
   Vision::FaceID_t _target = Vision::UnknownFaceID;

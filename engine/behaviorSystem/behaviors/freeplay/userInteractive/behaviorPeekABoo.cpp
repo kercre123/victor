@@ -20,7 +20,6 @@
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/components/animTrackHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -117,10 +116,9 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPeekABoo::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPeekABoo::IsRunnableInternal(const Robot& robot) const
 {
   const float currentTime_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const Robot& robot = preReqData.GetRobot();
   // for COZMO-8914 - no way to play spark get out if no face is found during spark search
   // so run the peek a boo behavior with a flag set to indicate that we should just play the
   // spark get out animation
@@ -137,7 +135,7 @@ bool BehaviorPeekABoo::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
 
   return (_nextTimeIsRunnable_Sec < currentTime_Sec) &&
          (GetInteractionFace(robot) != Vision::UnknownFaceID) &&
-         preReqData.GetRobot().GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
+         robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
 }
 
   

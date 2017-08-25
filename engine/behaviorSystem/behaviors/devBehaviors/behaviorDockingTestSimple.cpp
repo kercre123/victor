@@ -136,7 +136,7 @@ namespace Anki {
       }
     }
     
-    bool BehaviorDockingTestSimple::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+    bool BehaviorDockingTestSimple::IsRunnableInternal(const Robot& robot) const
     {
       return _currentState == State::Init;
     }
