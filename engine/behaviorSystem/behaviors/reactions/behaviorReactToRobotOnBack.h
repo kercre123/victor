@@ -27,7 +27,7 @@ private:
   BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config);
   
 public:
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   // don't know where the robot will land, so don't resume
   // TODO:(bn) should this depend on how long the robot was "in the air"?
   virtual bool ShouldRunWhileOffTreads() const override { return true;}

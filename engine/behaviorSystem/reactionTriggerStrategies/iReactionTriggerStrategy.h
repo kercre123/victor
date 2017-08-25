@@ -14,7 +14,6 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "engine/behaviorSystem/behaviors/iBehavior_fwd.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 
@@ -31,10 +30,6 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-
-namespace ReactionTriggerConst{
-static const BehaviorPreReqNone kNoPreReqs;
-}
   
 class IReactionTriggerStrategy{
 public:

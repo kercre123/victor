@@ -23,23 +23,29 @@ namespace Cozmo {
 namespace{
 static const char* kTriggerStrategyName = "Trigger strategy robot shaken";
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyRobotShaken::ReactionTriggerStrategyRobotShaken(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 {
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyRobotShaken::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  behavior->IsRunnable(robot);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyRobotShaken::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
                  "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
-    const bool isRunnable = behavior->IsRunning() || behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+    const bool isRunnable = behavior->IsRunning() || behavior->IsRunnable(robot);
 
     return _wantsToRunStrategy->WantsToRun(robot) && isRunnable;
   }

@@ -22,7 +22,6 @@
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/behaviorSystem/behaviorHelpers/behaviorHelperParameters.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/pathComponent.h"
 #include "engine/robot.h"
@@ -161,7 +160,7 @@ IBehavior::Status BehaviorDriveInDesperation::UpdateInternal(Robot& robot)
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveInDesperation::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorDriveInDesperation::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

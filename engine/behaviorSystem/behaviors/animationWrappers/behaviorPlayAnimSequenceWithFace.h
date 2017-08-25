@@ -30,6 +30,9 @@ protected:
 public:
 
   virtual Result InitInternal(Robot& robot) override;
+  void SetAnimationsToPlay(const std::vector<AnimationTrigger>& animations){
+    _animTriggers = animations;
+  }
 };
 
 }

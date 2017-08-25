@@ -16,7 +16,6 @@
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/actions/animActions.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,9 +39,9 @@ BehaviorPlayArbitraryAnim::~BehaviorPlayArbitraryAnim()
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const Robot& robot) const
 {
-  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(preReqData);
+  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(robot);
   return retVal;
 }
   

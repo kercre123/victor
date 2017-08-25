@@ -18,7 +18,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
@@ -103,10 +102,8 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(Robot& robot, const Json::Value& conf
                  "Behavior '%s'", GetIDStr().c_str());  
 }
 
-bool BehaviorExpressNeeds::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorExpressNeeds::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
-
   if(_caresAboutExpressedState &&
      (_requiredBracket == NeedBracketId::Critical)){
     if(_need != robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){

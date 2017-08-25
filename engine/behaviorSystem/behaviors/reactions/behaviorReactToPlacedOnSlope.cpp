@@ -62,7 +62,7 @@ BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(Robot& robot, const J
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPlacedOnSlope::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToPlacedOnSlope::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

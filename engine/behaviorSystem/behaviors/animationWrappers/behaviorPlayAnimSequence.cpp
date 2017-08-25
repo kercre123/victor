@@ -12,8 +12,6 @@
 
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "engine/actions/animActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/robot.h"
 
@@ -55,22 +53,12 @@ BehaviorPlayAnimSequence::~BehaviorPlayAnimSequence()
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPlayAnimSequence::IsRunnableInternal(const Robot& robot) const
 {
   const bool hasAnims = !_animTriggers.empty();
-  return hasAnims && IsRunnableAnimSeqInternal(preReqData);
+  return hasAnims && IsRunnableAnimSeqInternal(robot);
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData) const
-{
-  _animTriggers = preReqData.GetAnims();
-  
-  const bool hasAnims = !_animTriggers.empty();
-  BehaviorPreReqRobot preReqRobot(preReqData.GetRobot());
-  return hasAnims && IsRunnableAnimSeqInternal(preReqRobot);
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPlayAnimSequence::InitInternal(Robot& robot)

@@ -12,7 +12,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/trackPetFaceAction.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iReactToPetListener.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgePet.h"
 #include "engine/robot.h"
 #include "engine/petWorld.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -49,6 +48,7 @@ using namespace Anki::Vision;
 #define PRINT_TRACE(name...) {}
 #endif
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPet::BehaviorReactToPet(Robot& robot, const Json::Value& config)
   : super(robot, config)
 {
@@ -59,28 +59,27 @@ BehaviorReactToPet::BehaviorReactToPet(Robot& robot, const Json::Value& config)
 //
 // Called at the start of each tick. Return true if behavior can run.
 //
-bool BehaviorReactToPet::IsRunnableInternal(const BehaviorPreReqAcknowledgePet& preReqData) const
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToPet::IsRunnableInternal(const Robot& robot) const
 {
   if (AlreadyReacting()) {
     PRINT_TRACE("ReactToPet.IsRunnable.AlreadyReacting", "Already reacting to a pet");
     return true;
   }
   
-  // Retain list of targets that triggered behavior
-  _targets = preReqData.GetTargets();
-
-  // Trigger should always provide targets
-  DEV_ASSERT(_targets.size() > 0, "BehaviorReactToPet.IsRunnable.NoTargets");
   
-  PRINT_TRACE("ReactToPet.IsRunnable.Runnable", "Behavior is runnable with %z targets", _targets.size());
+  PRINT_TRACE("ReactToPet.IsRunnable.Runnable",
+              "Behavior is runnable with %z targets",
+              _targets.size());
   
-  return true;
+  return (_targets.size() > 0);
 }
   
 
 //
 // Called each time behavior becomes active.
 //
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToPet::InitInternal(Robot& robot)
 {
   PRINT_INFO("ReactToPet.Init.BeginIteration", "Begin iteration");
@@ -91,6 +90,7 @@ Result BehaviorReactToPet::InitInternal(Robot& robot)
 //
 // Called each tick while behavior is active.
 //
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorReactToPet::UpdateInternal(Robot& robot)
 {
   //
@@ -124,6 +124,7 @@ IBehavior::Status BehaviorReactToPet::UpdateInternal(Robot& robot)
 // Called when behavior becomes inactive.
 // This can happen if behavior is preempted during iteration.
 //
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPet::StopInternal(Robot& robot)
 {
   PRINT_TRACE("ReactToPet.Stop", "Stop behavior");
@@ -143,6 +144,7 @@ void BehaviorReactToPet::StopInternal(Robot& robot)
 //
 // Which animation trigger do we play for this pet?
 //
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationTrigger BehaviorReactToPet::GetAnimationTrigger(Vision::PetType petType)
 {
   // Random chance that Cozmo will respond to cat or dog with sneeze
@@ -165,6 +167,7 @@ AnimationTrigger BehaviorReactToPet::GetAnimationTrigger(Vision::PetType petType
 //
 // Called by ReactToPet.Init to start reaction cycle
 //
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPet::BeginIteration(Robot& robot)
 {
   // Trigger should always provide targets
@@ -243,6 +246,7 @@ void BehaviorReactToPet::BeginIteration(Robot& robot)
 // Called by ReactToPet.Update() to end reaction cycle.
 // Could also be called by tracking action if action reaches end.
 //
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPet::EndIteration(Robot& robot)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -263,11 +267,15 @@ void BehaviorReactToPet::EndIteration(Robot& robot)
   // BehaviorObjectiveAchieved(BehaviorObjective::ReactedToPet);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToPet::AlreadyReacting() const
 {
   return (_target != Vision::UnknownFaceID);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPet::AddListener(IReactToPetListener* listener)
 {
   _petListeners.insert(listener);

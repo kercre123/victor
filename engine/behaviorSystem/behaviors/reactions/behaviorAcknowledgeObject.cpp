@@ -22,7 +22,6 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iReactToObjectListener.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
 #include "engine/events/animationTriggerHelpers.h"
@@ -428,15 +427,14 @@ void BehaviorAcknowledgeObject::StopInternal(Robot& robot)
   }
   
   _currTarget.UnSet();
+  _targets.clear();
   _shouldStart = false;
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeObject::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
+bool BehaviorAcknowledgeObject::IsRunnableInternal(const Robot& robot) const
 {
-  _targets = preReqData.GetTargets();
-  
   return !_targets.empty();
 }
  

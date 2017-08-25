@@ -30,7 +30,7 @@ Result BehaviorReactToSparked::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
 
-bool BehaviorReactToSparked::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToSparked::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

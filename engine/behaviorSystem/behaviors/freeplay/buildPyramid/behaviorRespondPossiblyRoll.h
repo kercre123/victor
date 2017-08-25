@@ -47,7 +47,7 @@ public:
   s32 GetOnSideAnimIndex()      const { return _onSideAnimIndex;}
   bool GetPlayedOnSideAnim()    const { return _playedOnSide;}
   bool GetReachedPreDocRoll()   const { return _reachedPreDockRoll;}
-  bool GetPoseUpAxisAccurate()         const { return _poseUpAxisAccurate;}
+  bool GetPoseUpAxisAccurate()  const { return _poseUpAxisAccurate;}
   
 protected:
   friend class BehaviorRespondPossiblyRoll;
@@ -87,11 +87,12 @@ public:
   virtual ~BehaviorRespondPossiblyRoll();
   virtual bool CarryingObjectHandledInternally() const override { return false;}
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqRespondPossiblyRoll& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   
   // Behavior can be queried to find out where it is in its process
   const RespondPossiblyRollMetadata& GetResponseMetadata() const { return _metadata;}
-  
+  void SetRespondPossiblyRollMetadata(const RespondPossiblyRollMetadata& metadata){_metadata = metadata;}
+
 protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
@@ -100,7 +101,7 @@ protected:
 
   
 private:
-  mutable RespondPossiblyRollMetadata _metadata;
+  RespondPossiblyRollMetadata _metadata;
   
   std::map<ObjectID, UpAxis> _upAxisChangedIDs;
   std::vector<Signal::SmartHandle> _eventHalders;

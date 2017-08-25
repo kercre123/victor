@@ -94,7 +94,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json:
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnboardingShowCube::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorOnboardingShowCube::IsRunnableInternal(const Robot& robot) const
 {
   // behavior will be killed by unity, the only thing that can start it...
   return true;

@@ -43,7 +43,7 @@ protected:
   // don't resume, since it will run again anyway if it wants to
   virtual Result ResumeInternal(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   virtual bool CarryingObjectHandledInternally() const override { return false; }
 

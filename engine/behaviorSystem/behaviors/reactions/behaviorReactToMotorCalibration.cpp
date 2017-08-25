@@ -62,7 +62,7 @@ BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(Robot& robot, c
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToMotorCalibration::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToMotorCalibration::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

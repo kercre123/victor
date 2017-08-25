@@ -29,7 +29,6 @@
 #include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/behaviorSystem/behaviorContainer.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
@@ -548,6 +547,10 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBeh
   StopAndNullifyCurrentBehavior();
   bool initSuccess = true;
   if( nullptr != nextBehavior ) {
+    ANKI_VERIFY(nextBehavior->IsRunnable(_robot),
+                "BehaviorManager.SwitchToBehaviorBase.BehaviorNotRunnable",
+                "Behavior %s returned but it's not runnable",
+                BehaviorIDToString(nextBehavior->GetID()));
     const Result initRet = nextBehavior->Init();
     if ( initRet != RESULT_OK ) {
       // the previous behavior has been told to stop, but no new behavior has been started

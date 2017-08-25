@@ -28,6 +28,7 @@ class BehaviorPyramidThankYou : public IBehavior
 {
 public:
   virtual ~BehaviorPyramidThankYou();
+  void SetTargetID(s32 targetID){_targetID = targetID;}
   
 protected:
   // Enforce creation through BehaviorContainer
@@ -38,7 +39,7 @@ protected:
   virtual Result ResumeInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false;}
     
 private:

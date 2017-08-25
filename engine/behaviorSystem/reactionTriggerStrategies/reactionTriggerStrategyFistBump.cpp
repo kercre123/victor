@@ -35,7 +35,9 @@ static const char* kCooldownTime_sKey     = "triggerCooldownTime_s";
 static const char* kTriggerProbabilityKey = "triggerProbability";
 static const char* kTriggerExpirationKey  = "triggerExpiration_s";
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyFistBump::ReactionTriggerStrategyFistBump(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
   , _shouldTrigger(false)
@@ -48,7 +50,9 @@ ReactionTriggerStrategyFistBump::ReactionTriggerStrategyFistBump(Robot& robot, c
     ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved
   });
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
 {
   const Json::Value& behaviorObjectiveTriggerParams = config[kReactionConfigKey];
@@ -104,12 +108,16 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
     }
   }
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFistBump::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  behavior->IsRunnable(robot);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyFistBump::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -131,12 +139,12 @@ bool ReactionTriggerStrategyFistBump::ShouldTriggerBehaviorInternal(const Robot&
   
   return _shouldTrigger &&
          (robot.GetOffTreadsState() == OffTreadsState::OnTreads) &&
-         behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+         behavior->IsRunnable(robot);
 }
 
-  
-  
+
 // Listen for achieved objectives
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   switch (event.GetData().GetTag())
@@ -177,13 +185,16 @@ void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEve
     }
   }
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFistBump::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   behavior->AddListener(this);
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFistBump::ResetTrigger(bool updateLastCompletionTime)
 {
   _shouldTrigger = false;

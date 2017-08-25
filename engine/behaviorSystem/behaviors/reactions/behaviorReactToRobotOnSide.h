@@ -27,7 +27,7 @@ private:
   BehaviorReactToRobotOnSide(Robot& robot, const Json::Value& config);
   
 public:
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool ShouldRunWhileOffTreads() const override { return true;}  
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
