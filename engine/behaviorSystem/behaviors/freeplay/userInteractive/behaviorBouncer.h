@@ -33,7 +33,7 @@ protected:
   BehaviorBouncer(Robot& robot, const Json::Value& config);
   
   // IBehavior interface
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReq) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false; }
   
   virtual Result InitInternal(Robot& robot) override;

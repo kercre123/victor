@@ -58,8 +58,6 @@ namespace Anki {
         // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
         const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 10;
         
-        const u32 MOUNT_CHARGER_POINT_OF_NO_RETURN_DIST_MM = 10;
-
         const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 1.5;
         const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
 
@@ -89,15 +87,6 @@ namespace Anki {
 
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
-
-        // Time when robot first becomes tiled on charger (while docking)
-        u32 tiltedOnChargerStartTime_ = 0;
-
-        // Pitch angle at which Cozmo is probably having trouble backing up on charger
-        const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
-
-        // Amount of time that Cozmo pitch needs to exceed TILT_FAILURE_ANGLE_RAD in order to fail at backing up on charger
-        const u32 TILT_FAILURE_DURATION_MS = 250;
 
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
@@ -193,17 +182,6 @@ namespace Anki {
       {
         MovingLiftPostDock msg;
         msg.action = action_;
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
-        }
-        return RESULT_FAIL;
-      }
-      
-      Result SendChargerMountCompleteMessage(const bool success)
-      {
-        ChargerMountComplete msg;
-        msg.timestamp = HAL::GetTimeStamp();
-        msg.didSucceed = success;
         if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
@@ -317,9 +295,6 @@ namespace Anki {
               case DA_CROSS_BRIDGE:
                 dockOffsetDistX_ = BRIDGE_ALIGNED_MARKER_DISTANCE;
                 break;
-              case DA_MOUNT_CHARGER:
-                dockOffsetDistX_ = CHARGER_ALIGNED_MARKER_DISTANCE;
-                break;
               case DA_POST_DOCK_ROLL:
                 // Skip docking completely and go straight to Setting lift for Post Dock
                 mode_ = SET_LIFT_POSTDOCK;
@@ -363,10 +338,6 @@ namespace Anki {
                   case DA_ALIGN:
                   case DA_ALIGN_SPECIAL:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
-                    break;
-                  case DA_MOUNT_CHARGER:
-                    pointOfNoReturnDist = dockOffsetDistX_ + MOUNT_CHARGER_POINT_OF_NO_RETURN_DIST_MM;
-                    useFirstErrorSignalOnly = true;
                     break;
                   default:
                     break;
@@ -422,22 +393,6 @@ namespace Anki {
                   // Start driving forward (blindly) -- wheel guides!
                   SteeringController::ExecuteDirectDrive(BRIDGE_TRAVERSE_SPEED_MMPS, BRIDGE_TRAVERSE_SPEED_MMPS);
                   mode_ = ENTER_BRIDGE;
-                } else if (action_ == DA_MOUNT_CHARGER) {
-                  #if(DEBUG_PAP_CONTROLLER)
-                  AnkiDebug( 14, "PAP", 126, "MOUNT_CHARGER\n", 0);
-                  #endif
-
-                  // Compute angle to turn in order to face marker
-                  f32 robotPose_x, robotPose_y;
-                  Radians robotPose_angle;
-                  Localization::GetDriveCenterPose(robotPose_x, robotPose_y, robotPose_angle);
-                  const Anki::Embedded::Pose2d& markerPose = DockingController::GetLastMarkerAbsPose();
-                  f32 relAngleToMarker = atan2_acc(markerPose.GetY() - robotPose_y, markerPose.GetX() - robotPose_x);
-                  relAngleToMarker -= robotPose_angle.ToFloat();
-
-                  f32 targetAngle = (Localization::GetCurrPose_angle() + M_PI_F + relAngleToMarker).ToFloat();
-                  SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, DEG_TO_RAD_F32(1), true);
-                  mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)
                   AnkiDebug( 14, "PAP", 127, "SET_LIFT_POSTDOCK\n", 0);
@@ -777,57 +732,6 @@ namespace Anki {
               #endif
               Reset();
               Localization::SetOnBridge(false);
-            }
-            break;
-          }
-          case ROTATE_FOR_CHARGER_APPROACH:
-          {
-            if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
-              // Move lift up, otherwise it drags on the ground when the robot gets on the ramp
-              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK + 15, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-
-              // Start backing into charger
-              SteeringController::ExecuteDirectDrive(-30, -30);
-              transitionTime_ = HAL::GetTimeStamp() + 8000;
-
-              mode_ = BACKUP_ON_CHARGER;
-            }
-            break;
-          }
-          case BACKUP_ON_CHARGER:
-          {
-            if (HAL::GetTimeStamp() > transitionTime_) {
-              AnkiEvent( 292, "PAP.BACKUP_ON_CHARGER.Timeout", 305, "", 0);
-              SendChargerMountCompleteMessage(false);
-              Reset();
-              // TODO: Some kind of recovery?
-              // ...
-            } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
-              // Check for tilt
-              if (tiltedOnChargerStartTime_ == 0) {
-                tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
-              } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
-                // Drive forward until no tilt or timeout
-                AnkiEvent( 293, "PAP.BACKUP_ON_CHARGER.Tilted", 305, "", 0);
-                SteeringController::ExecuteDirectDrive(40, 40);
-                transitionTime_ = HAL::GetTimeStamp() + 2500;
-                mode_ = DRIVE_FORWARD;
-              }
-            } else if (HAL::BatteryIsOnCharger()) {
-              AnkiEvent( 294, "PAP.BACKUP_ON_CHARGER.Success", 305, "", 0);
-              SendChargerMountCompleteMessage(true);
-              Reset();
-            } else {
-              tiltedOnChargerStartTime_ = 0;
-            }
-            break;
-          }
-          case DRIVE_FORWARD:
-          {
-            // For failed charger mounting recovery only
-            if (HAL::GetTimeStamp() > transitionTime_) {
-              SendChargerMountCompleteMessage(false);
-              Reset();
             }
             break;
           }

@@ -175,16 +175,16 @@
     "translation" : "Regarde Cozmo prendre un cube."
   },
   "unlockable.GatherCubes.Title" : {
-    "translation" : "Titre de Collecter des cubes<placeholder>"
+    "translation" : "Gather Cubes Title <placeholder>"
   },
   "unlockable.GatherCubes.Description" : {
-    "translation" : "Description de Collecter des cubes <placeholder>"
+    "translation" : "Gather Cubes Description <placeholder>"
   },
   "unlockable.GatherCubes.SparkButtonDescription" : {
-    "translation" : "Bouton Collecter des éclats de cubes <placeholder>"
+    "translation" : "Gather Cubes Spark Button <placeholder>"
   },
   "unlockable.GatherCubes.SparkedStateDescription" : {
-    "translation" : "État de Collecter des éclats de cubes <placeholder>"
+    "translation" : "Gather Cubes Spark State <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
     "translation" : "Compétence verrouillée"

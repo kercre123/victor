@@ -71,6 +71,8 @@ public:
   void SetPaused(const bool paused);
   bool GetPaused() const { return _isPausedOverall; };
 
+  float GetCurrentTime() const { return _currentTime_s; };
+
   NeedsState& GetCurNeedsStateMutable();
   const NeedsState& GetCurNeedsState();
 
@@ -142,16 +144,16 @@ private:
 
   void RegisterNeedsActionCompletedInternal(const NeedsActionId actionCompleted,
                                             NeedsState& needsState,
-                                            bool predictionOnly);
+                                            const bool predictionOnly);
 
   bool ShouldRewardSparksForFreeplay();
   int  RewardSparksForFreeplay();
   int  AwardSparks(const int targetSparks, const float minPct, const float maxPct,
                    const int minSparks, const int minMaxSparks);
 
-  bool UpdateStarsState(bool cheatGiveStar = false);
+  bool UpdateStarsState(const bool cheatGiveStar = false);
 
-  void DetectBracketChangeForDas(bool forceSend = false);
+  void DetectBracketChangeForDas(const bool forceSend = false);
   void SendRepairDasEvent(const NeedsState& needsState,
                           const NeedsActionId cause,
                           const RepairablePartId part);
@@ -170,8 +172,8 @@ private:
   void SendNeedsOnboardingToGame();
   void SendNeedsDebugVizString(const NeedsActionId actionCausingTheUpdate);
 
-  void ProcessLevelRewards(int level, std::vector<NeedsReward>& rewards,
-                           bool unlocksOnly = false, int* allowedPriorUnlocks = nullptr);
+  void ProcessLevelRewards(const int level, std::vector<NeedsReward>& rewards,
+                           const bool unlocksOnly = false, int* allowedPriorUnlocks = nullptr);
 
   const CozmoContext* _cozmoContext;
   Robot*        _robot;

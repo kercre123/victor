@@ -17,12 +17,11 @@
 
 
 #include "engine/behaviorSystem/behaviors/iBehavior_fwd.h"
-
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
-#include <map>
+#include <unordered_map>
 
 
 namespace Json {
@@ -36,7 +35,6 @@ namespace Cozmo {
 
 class IReactionaryBehavior;
 class Robot;
-
   
 class BehaviorContainer : private Util::noncopyable
 {
@@ -52,7 +50,10 @@ protected:
   // Behavior manager should be the only clas that directly interacts with the
   // container
   friend class BehaviorManager;
-  BehaviorContainer(Robot& robot);
+  friend class BehaviorSystemManager;
+  
+  using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
+  BehaviorContainer(Robot& robot, const BehaviorIDJsonMap& behaviorData);
   
   
   IBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
@@ -61,9 +62,6 @@ protected:
   // Check to ensure that the factory only includes one behavior per executable
   // type
   void VerifyExecutableBehaviors() const;
-  
-
-  
   
   using BehaviorIDToBehaviorMap = std::map<BehaviorID, IBehaviorPtr>;
 

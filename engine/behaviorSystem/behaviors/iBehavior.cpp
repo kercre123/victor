@@ -21,7 +21,6 @@
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/audio/behaviorAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -545,13 +544,24 @@ void IBehavior::StopOnNextActionComplete()
   _actingCallback = nullptr;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
+bool IBehavior::IsRunnable(const Robot& robot) const
+{
+  if(IsRunnableBase(_robot)){
+    return IsRunnableInternal(robot);
+  }
+  
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::IsRunnableBase(const Robot& robot) const
 {
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
-  DEV_ASSERT(allowWhileRunning || !IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
-  if (!allowWhileRunning && IsRunning()) {
+  DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+  if (IsRunning()) {
     PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetIDStr().c_str());
     return true;
   }
@@ -640,8 +650,7 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
     return false;
   }
      
-  BehaviorPreReqNone preReqData;
-  return IsRunnableScored(preReqData);
+  return IsRunnableScored();
 }
 
 
@@ -681,8 +690,7 @@ Result IBehavior::ResumeInternal(Robot& robot)
   // by default, if we are runnable again, initialize and start over
   Result resumeResult = RESULT_FAIL;
   
-  BehaviorPreReqRobot preReqData(robot);
-  if ( IsRunnable(preReqData) ) {
+  if ( IsRunnable(robot) ) {
     _isRunning = true;
     resumeResult = InitInternal(robot);
   }
@@ -732,6 +740,15 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   }
 
   return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithRobotCallback callback)
+{
+  return StartActing(action,
+                     [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
+                       callback(msg, _robot);
+                     });
 }
 
   
@@ -1147,8 +1164,7 @@ float IBehavior::EvaluateScore(const Robot& robot) const
                  "No score was loaded in for behavior name %s",
                  GetIDStr().c_str());
 #endif
-  BehaviorPreReqRobot preReqData(robot);
-  if (IsRunning() || IsRunnable(preReqData))
+  if (IsRunning() || IsRunnable(robot))
   {
     const bool isRunning = IsRunning();
     
@@ -1344,7 +1360,7 @@ void IBehavior::InitScored(Robot& robot)
 }
   
   
-bool IBehavior::IsRunnableScored(const BehaviorPreReqNone& preReqData) const
+bool IBehavior::IsRunnableScored() const
 {
   // Currently we only resume from scored behaviors, which is why we have this
   // logic separated out

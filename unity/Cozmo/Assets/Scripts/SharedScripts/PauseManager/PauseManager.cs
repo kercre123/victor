@@ -83,6 +83,7 @@ namespace Cozmo {
 
     private void Awake() {
       Instance = this;
+      Cozmo.Notifications.NotificationsManager.Instance.Init();
     }
 
     private void Start() {

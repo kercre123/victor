@@ -23,6 +23,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/vision/basestation/imageCache.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
@@ -154,7 +155,7 @@ TEST(VisionSystem, MarkerDetectionTests)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  Vision::CameraCalibration calib(240,320,290.f,290.f,160.f,120.f,0.f);
+  auto calib = std::make_shared<Vision::CameraCalibration>(240,320,290.f,290.f,160.f,120.f,0.f);
   result = visionSystem.UpdateCameraCalibration(calib);
   ASSERT_EQ(RESULT_OK, result);
   
@@ -320,7 +321,7 @@ TEST(VisionSystem, ImageQuality)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  Vision::CameraCalibration calib(240,320,290.f,290.f,160.f,120.f,0.f);
+  auto calib = std::make_shared<Vision::CameraCalibration>(240,320,290.f,290.f,160.f,120.f,0.f);
   result = visionSystem.UpdateCameraCalibration(calib);
   ASSERT_EQ(RESULT_OK, result);
   

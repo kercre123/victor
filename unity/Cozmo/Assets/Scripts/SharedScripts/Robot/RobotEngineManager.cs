@@ -552,6 +552,11 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+  public void SendNotificationsManagerReady() {
+    Message.NotificationsManagerReady = Singleton<Anki.Cozmo.ExternalInterface.NotificationsManagerReady>.Instance;
+    SendMessage();
+  }
+
   public bool AllCubesConnected() {
     return (CurrentRobot != null && CurrentRobot.LightCubes.Count >= kMaxCubeCount);
   }

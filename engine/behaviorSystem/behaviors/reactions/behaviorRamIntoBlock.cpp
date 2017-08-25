@@ -16,7 +16,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/dockActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
@@ -71,16 +70,9 @@ BehaviorRamIntoBlock::BehaviorRamIntoBlock(Robot& robot, const Json::Value& conf
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRamIntoBlock::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
+bool BehaviorRamIntoBlock::IsRunnableInternal(const Robot& robot) const
 {
-  const auto& targets = preReqData.GetTargets();
-  DEV_ASSERT(targets.size() == 1, "BehaviorRamIntoBlock.ImproperNumberOfTargets");
-  if(targets.size() == 1){
-    _targetID = *(targets.begin());
-    return _targetID >= 0;
-  }
-  
-  return false;
+  return _targetID >= 0;
 }
 
   
@@ -105,7 +97,8 @@ Result BehaviorRamIntoBlock::ResumeInternal(Robot& robot)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::StopInternal(Robot& robot)
-{  
+{
+  _targetID = -1;
 }
 
   

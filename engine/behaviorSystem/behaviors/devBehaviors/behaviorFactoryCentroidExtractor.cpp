@@ -78,7 +78,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     }});
   }
   
-  bool BehaviorFactoryCentroidExtractor::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+  bool BehaviorFactoryCentroidExtractor::IsRunnableInternal(const Robot& robot) const
   {
     return !IsActing() && !_waitingForDots;
   }

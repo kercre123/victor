@@ -15,7 +15,6 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -186,10 +185,10 @@ void BehaviorExploreBringCubeToBeacon::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) const
 {
   _candidateObjects.clear();
-  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   
   // check that we have an active beacon
   const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
@@ -218,8 +217,8 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRo
     // so that we don't go into a loop on pick up
     for( const AIWhiteboard::ObjectInfo& objectInfo : cubesOutOfBeacons )
     {
-      const ObservableObject* objPtr = preReqData.GetRobot().GetBlockWorld().
-                                        GetLocatedObjectByID( objectInfo.id, objectInfo.family );
+      const ObservableObject* objPtr = robot.GetBlockWorld().
+                                          GetLocatedObjectByID( objectInfo.id, objectInfo.family );
       if ( nullptr != objPtr )
       {
         const Pose3d& currentPose = objPtr->GetPose();

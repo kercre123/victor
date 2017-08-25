@@ -95,7 +95,7 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   JsonTools::GetValueOptional(config, kUpdateLastCompletionTimeKey, _updateLastCompletionTime);
 }
 
-bool BehaviorFistBump::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorFistBump::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

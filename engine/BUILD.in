@@ -1,0 +1,24 @@
+cxx_project(
+    name = 'cozmo_engine',
+    srcs = cxx_src_glob(['.'],
+                        excludes = [
+                            '**/android/*',
+                            'tools/**/*',
+                        ]),
+    platform_srcs = [
+        ('android', glob([
+                            '**/*_android.cpp',
+                            '**/android/*.cpp',
+                         ])),
+        ('mac', glob(['**/*_ios*.mm']))
+    ],
+    headers = cxx_header_glob(['.'],
+                              excludes = ['**/android/*']),
+    platform_headers = [
+        ('android', glob([
+                            '**/*_android.h',
+                            '**/android/*.h',
+                         ])),
+        ('mac', glob(['**/*_ios*.h'])),
+    ]
+)

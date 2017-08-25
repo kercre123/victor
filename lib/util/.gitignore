@@ -1,6 +1,9 @@
 .DS_Store
 .idea
 
+# android studio
+*.iml
+
 # project folders
 project/gyp-android
 project/gyp-ios
@@ -22,6 +25,8 @@ source/anki/messages
 *.pyc
 libs/packaged/include
 project/gyp/build
+_build/
+generated/
 
 #emacs turds
 *~

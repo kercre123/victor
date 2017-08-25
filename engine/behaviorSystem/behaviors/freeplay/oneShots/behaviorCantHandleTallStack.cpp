@@ -15,7 +15,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -57,9 +56,8 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(Robot& robot, const Jso
   _minStackHeight = config.get(kMinimumStackHeight, 3).asInt();
 }
   
-bool BehaviorCantHandleTallStack::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorCantHandleTallStack::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
   const bool forFreeplay = true;
   
   if(!robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::KnockOverThreeCubeStack, forFreeplay)){

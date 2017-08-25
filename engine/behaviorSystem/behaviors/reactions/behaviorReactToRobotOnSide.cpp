@@ -32,7 +32,7 @@ BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(Robot& robot, const Json:
 }
 
 
-bool BehaviorReactToRobotOnSide::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToRobotOnSide::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

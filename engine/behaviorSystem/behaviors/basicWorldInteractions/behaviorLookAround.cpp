@@ -64,7 +64,7 @@ BehaviorLookAround::~BehaviorLookAround()
 {
 }
   
-bool BehaviorLookAround::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorLookAround::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

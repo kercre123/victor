@@ -42,6 +42,7 @@ private:
   std::string _tts_voice;
   jint _tts_speed;
   jint _tts_shaping;
+  jint _tts_pitch;
 
 }; // class TextToSpeechProviderImpl
 

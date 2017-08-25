@@ -54,9 +54,12 @@ namespace CodeLab {
     // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
     private Queue<ScratchRequest> _queuedScratchRequests = new Queue<ScratchRequest>();
 
+    private CodeLabCozmoFaceDisplay _CozmoFaceDisplay = new CodeLabCozmoFaceDisplay();
+
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
+    private bool _IsDrivingOffCharger = false;
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
 
@@ -154,8 +157,6 @@ namespace CodeLab {
     private string _DevLoadPath = null; // Custom path for loading assets in dev builds
     private bool _DevLoadPathFirstRequest = true;
 
-    private bool _QuitCodeLabWhenOnCharger = true; // released app does this, but it's annoying for dev
-
     private uint _ChallengeBookmark = 1;
 
     private const float kNormalDriveSpeed_mmps = 70.0f;
@@ -243,12 +244,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
             LoadURL(_CurrentURLFilename);
           }
         }
-        break;
-      case "AllowOnCharger":
-        _QuitCodeLabWhenOnCharger = false;
-        break;
-      case "QuitOnCharger":
-        _QuitCodeLabWhenOnCharger = true;
         break;
       case "SetAppPath":
         _DevLoadPath = null;
@@ -443,33 +438,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical && IsDisplayingWorkspacePage()) {
         SendWorldStateToWebView();
       }
-
-      // Error case exiting conditions:
-      // WebView visibility is the same as being "loaded." Attaching is platform depended so for this edge case
-      // avoid cases where the load callback might be called after the quit wait until loaded.
-      if (_WebViewObjectComponent != null && _WebViewObjectComponent.GetVisibility() &&
-          RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
-        // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
-        // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
-        if (_QuitCodeLabWhenOnCharger && ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0)) {
-          if (IsDisplayingWorkspacePage()) {
-            try {
-              // We want to exit Code Lab, but first, let's check if we have
-              // a project to save before exiting. Unity will wait until
-              // JavaScript calls back into Unity with cozmoSaveOnQuitCompleted,
-              // and then Unity will exit Code Lab.
-              this.EvaluateJS("window.saveCozmoUserProject(true);");
-            }
-            catch (Exception) {
-              // If anything unexpected happens, don't wait to exit Code Lab.
-              RaiseChallengeQuit();
-            }
-          }
-          else {
-            RaiseChallengeQuit();
-          }
-        }
-      }
     }
 
     private void LoadWebView() {
@@ -575,6 +543,23 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
+    private void ExecuteAllQueuedScratchRequests() {
+      if (UpdateIsGettingOffCharger()) {
+        // Wait until Cozmo is off the charger
+        DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.Wait", "Queue length = " + _queuedScratchRequests.Count.ToString());
+      }
+      else {
+        DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.Exec", "Queue length = " + _queuedScratchRequests.Count.ToString());
+        // Unqueue all requests (could be one per green-flag in the case of parallel scripts)
+        while (_queuedScratchRequests.Count > 0) {
+          var scratchRequest = _queuedScratchRequests.Dequeue();
+          DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.UnQueue", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
+
+          HandleBlockScratchRequest(scratchRequest);
+        }
+      }
+    }
+
     private void OnResetToHomeCompleted(bool success) {
       --_PendingResetToHomeActions;
 
@@ -583,17 +568,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           DAS.Error("CodeLab.OnResetToHomeCompleted.NegativeHomeActions", "_PendingResetToHomeActions = " + _PendingResetToHomeActions);
         }
 
-        if (_queuedScratchRequests.Count > 0) {
-          // Unqueue all requests (could be one per green-flag in the case of parallel scripts)
-          while (_queuedScratchRequests.Count > 0) {
-            var scratchRequest = _queuedScratchRequests.Dequeue();
-            DAS.Info("CodeLab.OnResetToHomeCompleted.AllDone.UnQueue", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
-            HandleBlockScratchRequest(scratchRequest);
-          }
-        }
-        else {
-          DAS.Info("CodeLab.OnResetToHomeCompleted.AllDone.NoQueue", "");
-        }
+        DAS.Info("CodeLab.OnResetToHomeCompleted.ExecuteQueue", "");
+        ExecuteAllQueuedScratchRequests();
       }
     }
 
@@ -602,12 +578,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Only does anything if not already close to that pose.
       // Any other in-progress actions will be cancelled by the first queued (NOW) action
 
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot == null) {
+        // Robot has been deleted, app is disconnecting
+        return;
+      }
+
       // Cancel any queued up requests and just do it immediately
       CancelQueueResetRobotToHomePos();
 
       Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.NOW;
-
-      var robot = RobotEngineManager.Instance.CurrentRobot;
 
       robot.TurnOffAllBackpackBarLED();
 
@@ -637,7 +617,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Only wait for the neutral face animation if already waiting for something, or there's definitely a face animation to clear
       if ((_PendingResetToHomeActions > 0) || _RequiresResetToNeutralFace) {
         _RequiresResetToNeutralFace = false;
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.OnResetToHomeCompleted, queuePos);
+        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.OnResetToHomeCompleted, queuePos);
         ++_PendingResetToHomeActions;
       }
 
@@ -694,6 +674,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnGetCozmoUserAndSampleProjectLists", "");
 
+      // Check which projects we want to display: vertical or horizontal.
+      bool showVerticalProjects = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
+
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
       // Provide save and load UI with JSON arrays of the user and sample projects.
@@ -704,9 +687,21 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
       List<CodeLabProject> copyCodeLabProjectList = new List<CodeLabProject>();
       for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
+        var project = defaultProfile.CodeLabProjects[i];
+
+        if (showVerticalProjects && !project.IsVertical) {
+          // We want to show only vertical projects so skip the horizontal projects.
+          continue;
+        }
+        else if (!showVerticalProjects && project.IsVertical) {
+          // We want to show only horizontal projects so skip the vertical projects.
+          continue;
+        }
+
         CodeLabProject proj = new CodeLabProject();
-        proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
-        proj.ProjectName = EscapeProjectName(defaultProfile.CodeLabProjects[i].ProjectName);
+        proj.ProjectUUID = project.ProjectUUID;
+        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        proj.IsVertical = project.IsVertical;
 
         copyCodeLabProjectList.Add(proj);
       }
@@ -717,10 +712,22 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       _CodeLabSampleProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
       List<CodeLabSampleProject> copyCodeLabSampleProjectList = new List<CodeLabSampleProject>();
       for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
+        var project = _CodeLabSampleProjects[i];
+
+        if (showVerticalProjects && !project.IsVertical) {
+          // We want to show only vertical projects so skip the horizontal projects.
+          continue;
+        }
+        else if (!showVerticalProjects && project.IsVertical) {
+          // We want to show only horizontal projects so skip the vertical projects.
+          continue;
+        }
+
         CodeLabSampleProject proj = new CodeLabSampleProject();
-        proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
-        proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
-        proj.ProjectName = EscapeProjectName(_CodeLabSampleProjects[i].ProjectName);
+        proj.ProjectUUID = project.ProjectUUID;
+        proj.ProjectIconName = project.ProjectIconName;
+        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        proj.IsVertical = project.IsVertical;
         copyCodeLabSampleProjectList.Add(proj);
       }
 
@@ -768,7 +775,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           newUserProjectName = Localization.GetWithArgs(LocalizationKeys.kCodeLabHorizontalUserProjectMyProject, defaultProfile.CodeLabUserProjectNum);
           defaultProfile.CodeLabUserProjectNum++;
 
-          newProject = new CodeLabProject(newUserProjectName, projectXML);
+          bool isVertical = _SessionState.GetGrammarMode() == GrammarMode.Vertical;
+          newProject = new CodeLabProject(newUserProjectName, projectXML, isVertical);
 
           if (defaultProfile.CodeLabProjects == null) {
             DAS.Error("OnCozmoSaveUserProject.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
@@ -887,6 +895,26 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
+    private void OnDrivingOffChargerCompleted(bool success) {
+      _IsDrivingOffCharger = false;
+      DAS.Info("CodeLab.OnDrivingOffChargerCompleted.ExecuteQueue", "");
+      ExecuteAllQueuedScratchRequests();
+    }
+
+    private bool UpdateIsGettingOffCharger() {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot == null) {
+        return false;
+      }
+      bool isOnCharger = ((robot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0);
+      if (isOnCharger && !_IsDrivingOffCharger) {
+        DAS.Info("CodeLab.DriveOffCharger", "");
+        _IsDrivingOffCharger = true;
+        robot.DriveOffChargerContacts(callback: OnDrivingOffChargerCompleted, queueActionPosition: QueueActionPosition.IN_PARALLEL);
+      }
+      return _IsDrivingOffCharger;
+    }
+
     private void WebViewCallback(string jsonStringFromJS) {
       // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
       string logJSONStringFromJS = jsonStringFromJS;
@@ -918,7 +946,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return;
       }
 
-      if (IsResettingToHomePose()) {
+      if (IsResettingToHomePose() || UpdateIsGettingOffCharger()) {
         // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
         DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + scratchRequest.argString);
         _queuedScratchRequests.Enqueue(scratchRequest);
@@ -959,12 +987,69 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       robot.TurnInPlace(finalTurnAngle, speed_rad_per_sec, accel_rad_per_sec2, toleranceAngle, callback, QueueActionPosition.IN_PARALLEL);
     }
 
-    private void DrawToFace() {
-      // TODO: implement C#-side drawing routines to build this image
-      byte[] faceData = new byte[1024];
-      uint duration_ms = 1000 * 30;
-      var robot = RobotEngineManager.Instance.CurrentRobot;
-      robot.DisplayFaceImage(duration_ms, faceData, queueActionPosition: QueueActionPosition.IN_PARALLEL);
+    private bool HandleDrawOnFaceRequest(ScratchRequest scratchRequest) {
+      switch (scratchRequest.command) {
+      case "cozVertCozmoFaceClear":
+        _CozmoFaceDisplay.ClearScreen(0);
+        return true;
+      case "cozVertCozmoFaceDisplay":
+        _CozmoFaceDisplay.Display();
+        return true;
+      case "cozVertCozmoFaceDrawLine": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float x2 = scratchRequest.argFloat3;
+          float y2 = scratchRequest.argFloat4;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawLine(x1, y1, x2, y2, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceFillRect": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float x2 = scratchRequest.argFloat3;
+          float y2 = scratchRequest.argFloat4;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.FillRect(x1, y1, x2, y2, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceDrawRect": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float x2 = scratchRequest.argFloat3;
+          float y2 = scratchRequest.argFloat4;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawRect(x1, y1, x2, y2, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceFillCircle": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float radius = scratchRequest.argFloat3;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.FillCircle(x1, y1, radius, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceDrawCircle": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float radius = scratchRequest.argFloat3;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawCircle(x1, y1, radius, drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceDrawText": {
+          float x1 = scratchRequest.argFloat;
+          float y1 = scratchRequest.argFloat2;
+          float scale = scratchRequest.argFloat3;
+          string text = scratchRequest.argString;
+          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
+          _CozmoFaceDisplay.DrawText(x1, y1, scale, text, drawColor);
+          return true;
+        }
+      default:
+        return false;
+      }
     }
 
     private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
@@ -972,7 +1057,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       inProgressScratchBlock.Init(scratchRequest.requestId, this);
       var robot = RobotEngineManager.Instance.CurrentRobot;
 
-      if (scratchRequest.command == "cozVertPathOffset") {
+      if (robot == null) {
+        // No robot - it probably disconnected, advance to the next scratch block
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+        return;
+      }
+
+      if (HandleDrawOnFaceRequest(scratchRequest)) {
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertPathOffset") {
         float offsetX = scratchRequest.argFloat;
         float offsetY = scratchRequest.argFloat2;
         float offsetAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;
@@ -1372,6 +1466,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // when the active page and Javascript is nuked, so manually force an OnScriptStopped event
         DAS.Info("Codelab.ManualOnScriptStopped", "");
         OnScriptStopped();
+      }
+
+      if (_WebViewObjectComponent == null) {
+        DAS.Error("CodeLab.LoadURL.NullWebView", "Ignoring request to open '" + scratchPathToHTML + "'");
+        return;
       }
 
       string baseFilename = GetRootPath() + scratchPathToHTML;

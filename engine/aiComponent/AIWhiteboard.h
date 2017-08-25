@@ -242,7 +242,13 @@ public:
 
   void SetSevereNeedExpression(NeedId need);
   void ClearSevereNeedExpression();
-
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Tracking Game Requests
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void SetCurrentGameRequestUIRequest(bool isUIRequest){_isGameRequestUIRequest = isUIRequest;}
+  bool IsCurrentGameRequestUIRequest(){ return _isGameRequestUIRequest;}
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -303,7 +309,7 @@ private:
   // retrieve ObjectFailureTable for the given failure reason/action
   const ObjectFailureTable& GetObjectFailureTable(ObjectActionFailure action) const;
   ObjectFailureTable& GetObjectFailureTable(ObjectActionFailure action);
-
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -340,6 +346,8 @@ private:
   
   // Whether or not Cozmo has the hiccups
   bool _hasHiccups;
+  
+  bool _isGameRequestUIRequest;
 
   // current severe need based on activity expression (may differ from needs manager state)
   NeedId _severeNeedExpression;

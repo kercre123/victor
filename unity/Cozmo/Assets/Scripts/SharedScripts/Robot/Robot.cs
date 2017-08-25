@@ -2295,4 +2295,8 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<DisplayFaceImage>.Instance.Initialize(duration_ms, faceData), callback, queueActionPosition);
   }
 
+  public void DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(Singleton<DriveOffChargerContacts>.Instance, callback, queueActionPosition);
+  }
+
 }

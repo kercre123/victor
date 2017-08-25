@@ -1,0 +1,12 @@
+
+cxx_project(
+    name = 'cti_messaging',
+    srcs = cxx_src_glob(['basestation/src', 'shared/src']),
+    platform_srcs = [
+        ('android', glob(['basestation/src/**/*_android.cpp', 'shared/src/**/*_android.cpp']))
+    ],
+    headers = cxx_header_glob(['include/anki/messaging']),
+    platform_headers = [
+        ('android', glob(['include/anki/messaging/**/*_android.h']))
+    ]
+)

@@ -300,12 +300,22 @@ int imu_manage(struct IMURawData* data)
       return -2; //TODO: crash harder
     }
 
-    data->gyro[0] = (rawdata[2] << 8) | rawdata[1];
-    data->gyro[1] = (rawdata[4] << 8) | rawdata[3];
-    data->gyro[2] = (rawdata[6] << 8) | rawdata[5];
-    data->acc[0] =  (rawdata[8] << 8) | rawdata[7];
-    data->acc[1] = (rawdata[10] << 8) | rawdata[9];
-    data->acc[2] = (rawdata[12] << 8) | rawdata[11];
+    // IMU axes:
+    // x: points down
+    // y: points to robot's left
+    // z: points forward
+    //
+    // Desired axes:
+    // x: points forward
+    // y: points to robot's left
+    // z: points up
+    data->gyro[0] =  (rawdata[6] << 8) | rawdata[5];
+    data->gyro[1] =  (rawdata[4] << 8) | rawdata[3];
+    data->gyro[2] = -((rawdata[2] << 8) | rawdata[1]);
+    data->acc[0]  =  (rawdata[12] << 8) | rawdata[11];
+    data->acc[1]  =  (rawdata[10] << 8) | rawdata[9];
+    data->acc[2]  = -((rawdata[8] << 8) | rawdata[7]);
+
 
     data->timestamp = (rawtime[3] << 16) | (rawtime[2] << 8) | rawtime[1];
     data->temperature = rawtemplen[1] + (rawtemplen[2] << 8);

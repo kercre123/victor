@@ -34,9 +34,6 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   private const float _kHDScaleFactor = 0.5f;
   private const float _kSDScaleFactor = 0.35f;
 
-  private const float _kMinWidth = 200f;
-  private const float _kMinHeight = 200f;
-
   static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths) {
     // TODO handle materials
   }
@@ -99,27 +96,11 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
 
   private float GetPixelsPerUnit() {
     float ppu = _kSpritePixelsPerUnit;
-    string uhdAssetPath = null;
     if (IsSDAsset()) {
       ppu *= _kSDScaleFactor;
-      uhdAssetPath = assetPath.Replace(_kSDBundleTag, _kUHDBundleTag);
     }
     else if (IsHDAsset()) {
       ppu *= _kHDScaleFactor;
-      uhdAssetPath = assetPath.Replace(_kHDBundleTag, _kUHDBundleTag);
-    }
-
-    if (!string.IsNullOrEmpty(uhdAssetPath)) {
-      Sprite uhdSprite = AssetDatabase.LoadAssetAtPath(uhdAssetPath, typeof(Sprite)) as Sprite;
-      if (uhdSprite != null) {
-        if ((uhdSprite.texture.height < _kMinHeight && uhdSprite.texture.width < _kMinWidth)) {
-          // if we didn't downsample due to minimum sprite requirements then we shouldn't downsample the ppu either.
-          ppu = _kSpritePixelsPerUnit;
-        }
-      }
-      else {
-        Debug.LogError("Tried to compute pixels per unit for asset " + assetPath + " but UHD version does not exist! udhpath: " + uhdAssetPath);
-      }
     }
     return ppu;
   }
@@ -141,12 +122,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     if (!string.IsNullOrEmpty(uhdAssetPath)) {
       Sprite uhdSprite = AssetDatabase.LoadAssetAtPath(uhdAssetPath, typeof(Sprite)) as Sprite;
       if (uhdSprite != null) {
-        if ((uhdSprite.texture.height < _kMinHeight && uhdSprite.texture.width < _kMinWidth)) {
-          border = uhdSprite.border;
-        }
-        else {
-          border = uhdSprite.border * borderScale;
-        }
+        border = uhdSprite.border * borderScale;
 
         //if our source sprite is FullRect, our copies should be as well
         TextureImporter textureImporter = AssetImporter.GetAtPath(uhdAssetPath) as TextureImporter;
@@ -246,11 +222,6 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
       Debug.LogError("Scaled image to " + scale + " for UHD a" +
                      "sset at " + assetPath + " but base UHD image is too small! Clamping new texture height to 1.");
       newHeight = 1;
-    }
-
-    if (baseTexture.height < _kMinHeight && baseTexture.width < _kMinWidth) {
-      newHeight = baseTexture.height;
-      newWidth = baseTexture.width;
     }
 
     TextureScale.Bilinear(newTexture, newWidth, newHeight);

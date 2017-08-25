@@ -26,7 +26,7 @@ private:
   BehaviorReactToStackOfCubes(Robot& robot, const Json::Value& config);
 
 public:
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool ShouldRunWhileOffTreads() const override { return false;}
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   

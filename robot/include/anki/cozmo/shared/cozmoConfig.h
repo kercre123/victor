@@ -1,8 +1,6 @@
 #ifndef COZMO_CONFIG_H
 #define COZMO_CONFIG_H
 
-
-
 #ifdef COZMO_ROBOT
 #include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"
@@ -11,6 +9,7 @@
 #include "util/math/math.h"
 #endif
 
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -148,25 +147,47 @@ namespace Cozmo {
   
   /***************************************************************************
    *
-   *                          Camera Calibration
+   *                          Camera
    *
    **************************************************************************/
   
   const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
   
+#ifdef COZMO_V2
+#ifdef COZMO_ROBOT
+  const ImageResolution DEFAULT_IMAGE_RESOLUTION = NHD;
+#else
+  const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::NHD;
+#endif
+#else
+#ifdef COZMO_ROBOT
+  const ImageResolution DEFAULT_IMAGE_RESOLUTION = QVGA;
+#else
+  const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::QVGA;
+#endif
+#endif
   
   /***************************************************************************
    *
    *                          Cliff Sensor
    *
    **************************************************************************/
+
+#ifdef COZMO_V2
+  // Default cliff detection threshold
+  const u32 CLIFF_SENSOR_DROP_LEVEL = 180;
   
+  // Cliff un-detection threshold (hysteresis)
+  const u32 CLIFF_SENSOR_UNDROP_LEVEL = 210;
+  const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 100;
+#else
   // Default cliff detection threshold
   const u32 CLIFF_SENSOR_DROP_LEVEL = 400;
   
   // Cliff un-detection threshold (hysteresis)
   const u32 CLIFF_SENSOR_UNDROP_LEVEL = 600;
   const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 50;
+#endif
   
   // V2 cliff sensors (assumes 4 cliff sensors are arranged in a rectangle symmetric about the robot x axis)
   // NOTE: These values are approximate and should be verified for final V2 design.

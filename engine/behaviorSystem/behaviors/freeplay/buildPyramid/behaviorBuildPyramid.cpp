@@ -20,7 +20,6 @@
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockConfiguration.h"
@@ -93,9 +92,8 @@ BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& conf
     
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
   UpdatePyramidTargets(robot);
 
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();  

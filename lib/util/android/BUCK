@@ -1,18 +1,30 @@
 android_prebuilt_aar(
-  name = 'android-support-v4-23-aar',
-  aar = 'libs/support-v4-23.4.0.aar',
-  visibility = ['PUBLIC'],
-)
-
-android_prebuilt_aar(
   name = 'play-services-location',
-  aar = 'libs/play-services-location-7.0.0.aar',
+  aar = 'libs/play-services-location-10.2.4.aar',
   visibility = ['PUBLIC'],
 )
 
 android_prebuilt_aar(
   name = 'play-services-base',
-  aar = 'libs/play-services-base-7.0.0.aar',
+  aar = 'libs/play-services-base-10.2.4.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'play-services-basement',
+  aar = 'libs/play-services-basement-10.2.4.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'support-compat',
+  aar = 'libs/support-compat-26.0.0-alpha1.aar',
+  visibility = ['PUBLIC'],
+)
+
+android_prebuilt_aar(
+  name = 'support-v4',
+  aar = 'libs/support-v4-26.0.0-alpha1.aar',
   visibility = ['PUBLIC'],
 )
 
@@ -30,9 +42,11 @@ android_library(
   manifest = 'util/src/AndroidManifest.xml',
   source = '1.6',
   target = '1.6',
-  exported_deps = [':android-support-v4-23-aar',
-                   ':play-services-location',
+  exported_deps = [':play-services-location',
                    ':play-services-base',
+                   ':play-services-basement',
+                   ':support-compat',
+                   ':support-v4',
                    ':http-adapter'],
   visibility = ['PUBLIC'],
 )

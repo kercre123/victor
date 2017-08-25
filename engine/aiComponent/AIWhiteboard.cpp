@@ -112,6 +112,7 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 , _hasHiccups(false)
+, _isGameRequestUIRequest(false)
 , _severeNeedExpression(NeedId::Count)
 {
 }

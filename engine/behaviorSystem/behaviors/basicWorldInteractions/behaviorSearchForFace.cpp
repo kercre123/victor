@@ -14,7 +14,6 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 
@@ -36,11 +35,11 @@ BehaviorSearchForFace::BehaviorSearchForFace(Robot& robot, const Json::Value& co
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSearchForFace::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorSearchForFace::IsRunnableInternal(const Robot& robot) const
 {
   // For the time being this behavior is designed under the assumption that
   // no faces are known and we're searching for a new face
-  return !preReqData.GetRobot().GetFaceWorld().HasAnyFaces();
+  return !robot.GetFaceWorld().HasAnyFaces();
 }
 
 

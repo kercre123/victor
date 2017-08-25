@@ -417,7 +417,10 @@ public class StartupManager : MonoBehaviour {
       break;
     }
 #endif
-
+    if (SystemInfo.deviceModel == "iPad2,5" || SystemInfo.deviceModel == "iPad2,6" || SystemInfo.deviceModel == "iPad2,7") {
+      DAS.Event("App.ForceResolution","detected iPad2,5 iPad2,6 iPad2,7");
+      variant = _kSDVariant;
+    }
     return variant;
   }
 
@@ -471,6 +474,7 @@ public class StartupManager : MonoBehaviour {
     DataPersistence.DataPersistenceManager.Instance.InitSaveData();
 
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
+    Cozmo.Notifications.NotificationsManager.CreateInstance();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {

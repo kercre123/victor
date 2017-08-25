@@ -42,7 +42,13 @@ CONSOLE_VAR(float, kMinCalibBlobPixelArea,         "Vision.Calibration", 20.f);
 CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f);
 CONSOLE_VAR(bool,  kDrawCalibImages,               "Vision.Calibration", false);
 CONSOLE_VAR(u32,   kMinNumCalibImages,             "Vision.Calibration", 1);
-CONSOLE_VAR(u32,   kCalibTargetType,               "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
+CONSOLE_VAR(u32,   kCheckerboardWidth,             "Vision.Calibration", 11);
+CONSOLE_VAR(u32,   kCheckerboardHeight,            "Vision.Calibration", 4);
+CONSOLE_VAR(f32,   kCheckerboardSquareSize_mm,     "Vision.Calibration", 0.05);
+CONSOLE_VAR(f32,   kSingleTargetReprojErr_pix,     "Vision.Calibration", 1.5);
+
+// TODO Figure out min number of markers (what if top row is cut off thats like 12 markers)
+CONSOLE_VAR(u32,   kNumMarkersNeededForCalibration,"Vision.Calibration", 10);
 
 namespace {
 static const char* const kLogChannelName = "CameraCalibrator";
@@ -59,40 +65,23 @@ CameraCalibrator::~CameraCalibrator()
   
 }
 
-Result CameraCalibrator::ComputeCalibration(const std::list<Vision::ObservedMarker>& observedMarkers,
-                                            std::list<Vision::CameraCalibration>& calibrations,
-                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibration_out,
+                                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs_out)
 {
-  Result res = RESULT_FAIL;
-  
-  switch (kCalibTargetType)
-  {
-    case CHECKERBOARD:
-    {
-      res = ComputeCalibrationFromCheckerboard(calibrations, debugImageRGBs);
-      break;
-    }
-    case INVERTED_BOX:
-    case BLEACHERS:
-    {
-      res = ComputeCalibrationFromSingleTarget(observedMarkers, calibrations, debugImageRGBs);
-      break;
-    }
-  }
-  
-  return res;
-}
-
-Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibrations,
-                                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs)
-{
-  Vision::CameraCalibration calibration;
+  std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
   
   // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
   // no matter how we return from this function
-  Util::CleanupHelper disableComputingCalibration([this, &calibrations, &calibration]() {
-    calibrations.push_back(calibration);
+  Util::CleanupHelper disableComputingCalibration([this, &calibration_out, &calibration]() {
+    if(calibration == nullptr)
+    {
+      PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromCheckerboard.NullCalibration", "");
+    }
+    else
+    {
+      calibration_out.push_back(*calibration);
+    }
     _visionSystem.SetNextMode(VisionMode::ComputingCalibration, false);
     _isCalibrating = false;
   });
@@ -110,8 +99,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
                 "%u.", (u32)_calibImages.size());
   
   // Description of asymmetric circles calibration target
-  cv::Size boardSize(4,11);
-  static constexpr f32 squareSize = 0.005;
+  const cv::Size boardSize(kCheckerboardHeight, kCheckerboardWidth);
   const Vision::Image& firstImg = _calibImages.front().img;
   cv::Size imageSize(firstImg.GetNumCols(), firstImg.GetNumRows());
   
@@ -124,7 +112,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
   params.minArea = kMinCalibBlobPixelArea;
   params.minDistBetweenBlobs = kMinCalibPixelDistBetweenBlobs;
   cv::Ptr<cv::SimpleBlobDetector> blobDetector = cv::SimpleBlobDetector::create(params);
-  int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
+  const int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
   
   int imgCnt = 0;
   Vision::Image img(firstImg.GetNumRows(), firstImg.GetNumCols());
@@ -161,7 +149,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
         cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), calibImage.dotsFound);
       }
       
-      debugImageRGBs.push_back({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
+      debugImageRGBs_out.push_back({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
     }
     
     ++imgCnt;
@@ -179,7 +167,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
   }
   
   // Get object points
-  CalcBoardCornerPositions(boardSize, squareSize, objectPoints[0]);
+  CalcBoardCornerPositions(boardSize, kCheckerboardSquareSize_mm, objectPoints[0]);
   objectPoints.resize(imagePoints.size(), objectPoints[0]);
   
   // Compute calibration
@@ -194,11 +182,11 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
   Vision::CameraCalibration::DistortionCoeffs distCoeffsVec;
   std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
   
-  calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
-                                          cameraMatrix(0,0), cameraMatrix(1,1),
-                                          cameraMatrix(0,2), cameraMatrix(1,2),
-                                          0.f, // skew
-                                          distCoeffsVec);
+  calibration.reset(new Vision::CameraCalibration(imageSize.height, imageSize.width,
+                                                  cameraMatrix(0,0), cameraMatrix(1,1),
+                                                  cameraMatrix(0,2), cameraMatrix(1,2),
+                                                  0.f, // skew
+                                                  distCoeffsVec));
   
   DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
                  "CameraCalibrator.ComputeCalibrationFromCheckerboard.BadCalibPoseData",
@@ -220,8 +208,8 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
   PRINT_CH_INFO(kLogChannelName,
                 "CameraCalibrator.ComputeCalibrationFromCheckerboard.CalibValues",
                 "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
-                calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
-                calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+                calibration->GetFocalLength_x(), calibration->GetFocalLength_y(),
+                calibration->GetCenter_x(), calibration->GetCenter_y(), rms);
   
   // Check if average reprojection error is too high
   const f64 reprojErrThresh_pix = 0.5;
@@ -236,24 +224,30 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
   return RESULT_OK;
 }
 
-Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Vision::ObservedMarker>& observedMarkers,
-                                                            std::list<Vision::CameraCalibration>& calibrations,
-                                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targetType,
+                                                            const std::list<Vision::ObservedMarker>& observedMarkers,
+                                                            std::list<Vision::CameraCalibration>& calibration_out,
+                                                            DebugImageList<Vision::ImageRGB>& debugImageRGBs_out)
 {
-  Vision::CameraCalibration calibration;
+  std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
   
   // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
   // no matter how we return from this function
-  Util::CleanupHelper disableComputingCalibration([this, &calibrations, &calibration]() {
-    calibrations.push_back(calibration);
+  Util::CleanupHelper disableComputingCalibration([this, &calibration_out, &calibration]() {
+    if(calibration == nullptr)
+    {
+      PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.NullCalibration", "");
+    }
+    else
+    {
+      calibration_out.push_back(*calibration);
+    }
     _visionSystem.SetNextMode(VisionMode::ComputingCalibration, false);
     _isCalibrating = false;
   });
   
   // Check that there are enough markers
-  // TODO Figure out min number of markers (what if top row is cut off thats like 12 markers)
-  const u32 kNumMarkersNeededForCalibration = 10;
   if(observedMarkers.size() < kNumMarkersNeededForCalibration)
   {
     PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.NotEnoughMarkers",
@@ -263,20 +257,35 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
     return RESULT_FAIL;
   }
   
-  std::map<Anki::Vision::MarkerType, Anki::Quad3f> markersTo3dCoords;
+  std::map<Vision::MarkerType, Quad3f> markersTo3dCoords;
   
-  if(kCalibTargetType == BLEACHERS)
+  switch(targetType)
   {
-    GetCalibTargetMarkersTo3dCoords_Bleacher(markersTo3dCoords);
-  }
-  else if(kCalibTargetType == INVERTED_BOX)
-  {
-    GetCalibTargetMarkersTo3dCoords_InvertedBox(markersTo3dCoords);
+    case INVERTED_BOX:
+    {
+      GetCalibTargetMarkersTo3dCoords_InvertedBox(markersTo3dCoords);
+      break;
+    }
+    case QBERT:
+    {
+      GetCalibTargetMarkersTo3dCoords_Qbert(markersTo3dCoords);
+      break;
+    }
+    case CHECKERBOARD:
+    {
+      PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.InvalidTarget", "");
+      return RESULT_FAIL;
+    }
   }
   
+  // For each marker we should have 4 points (each corner of the marker)
   std::vector<cv::Vec2f> imgPts;
+  imgPts.reserve(observedMarkers.size() * 4);
+  
   std::vector<cv::Vec3f> worldPts;
-  std::set<Anki::Vision::Marker::Code> codes;
+  worldPts.reserve(observedMarkers.size() * 4);
+  
+  std::set<Vision::Marker::Code> codes;
   for(const auto& marker : observedMarkers)
   {
     if(codes.count(marker.GetCode()) != 0)
@@ -288,35 +297,35 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
     }
     
     codes.insert(marker.GetCode());
-    const auto& iter = markersTo3dCoords.find(static_cast<Anki::Vision::MarkerType>(marker.GetCode()));
+    const auto& iter = markersTo3dCoords.find(static_cast<Vision::MarkerType>(marker.GetCode()));
     
     if(iter != markersTo3dCoords.end())
     {
       const auto& corners = marker.GetImageCorners();
       
-      imgPts.push_back({corners.GetTopLeft().x(),
-                        corners.GetTopLeft().y()});
-      worldPts.push_back({iter->second.GetTopLeft().x(),
-                          iter->second.GetTopLeft().y(),
-                          iter->second.GetTopLeft().z()});
+      imgPts.emplace_back(corners.GetTopLeft().x(),
+                          corners.GetTopLeft().y());
+      worldPts.emplace_back(iter->second.GetTopLeft().x(),
+                            iter->second.GetTopLeft().y(),
+                            iter->second.GetTopLeft().z());
       
-      imgPts.push_back({corners.GetTopRight().x(),
-                        corners.GetTopRight().y()});
-      worldPts.push_back({iter->second.GetTopRight().x(),
-                          iter->second.GetTopRight().y(),
-                          iter->second.GetTopRight().z()});
+      imgPts.emplace_back(corners.GetTopRight().x(),
+                          corners.GetTopRight().y());
+      worldPts.emplace_back(iter->second.GetTopRight().x(),
+                            iter->second.GetTopRight().y(),
+                            iter->second.GetTopRight().z());
       
-      imgPts.push_back({corners.GetBottomLeft().x(),
-                        corners.GetBottomLeft().y()});
-      worldPts.push_back({iter->second.GetBottomLeft().x(),
-                          iter->second.GetBottomLeft().y(),
-                          iter->second.GetBottomLeft().z()});
+      imgPts.emplace_back(corners.GetBottomLeft().x(),
+                          corners.GetBottomLeft().y());
+      worldPts.emplace_back(iter->second.GetBottomLeft().x(),
+                            iter->second.GetBottomLeft().y(),
+                            iter->second.GetBottomLeft().z());
       
-      imgPts.push_back({corners.GetBottomRight().x(),
-                        corners.GetBottomRight().y()});
-      worldPts.push_back({iter->second.GetBottomRight().x(),
-                          iter->second.GetBottomRight().y(),
-                          iter->second.GetBottomRight().z()});
+      imgPts.emplace_back(corners.GetBottomRight().x(),
+                          corners.GetBottomRight().y());
+      worldPts.emplace_back(iter->second.GetBottomRight().x(),
+                            iter->second.GetBottomRight().y(),
+                            iter->second.GetBottomRight().z());
     }
   }
   
@@ -340,28 +349,27 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
   if(DRAW_CALIB_IMAGES)
   {
     const Vision::Image& img = _calibImages[0].img;
-
+    
     Vision::ImageRGB dispImg;
     cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
     for(int i =0; i < imgPts.size(); ++i)
     {
-      auto p = imgPts[i];
-      dispImg.DrawFilledCircle({p[0], p[1]}, Anki::NamedColors::RED, 2);
+      const auto& p = imgPts[i];
+      dispImg.DrawFilledCircle({p[0], p[1]}, NamedColors::RED, 2);
     }
-    debugImageRGBs.push_back({"CalibImage", dispImg});
+    debugImageRGBs_out.push_back({"CalibImage", dispImg});
   }
   
+  // Depending on what type of robot we are running, provide a different initial guess for calibration
 #ifdef COZMO_V2
 #ifdef SIMULATOR
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
-                                185, 0, 319,
-                                0, 185, 179,
+                                507, 0, 639,
+                                0, 507, 359,
                                 0, 0, 1);
   
-//  cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
-//                              -0.07f, -0.2f, 0.001f, 0.001f, 0.1f, 0.f, 0.f, 0.f);
-  
-  cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
+  cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
+                              -0.07f, -0.2f, 0.001f, 0.001f, 0.1f, 0.f, 0.f, 0.f);
 #else
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<double>(3,3) <<
                                 362, 0, 303,
@@ -386,7 +394,7 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
   vecOfImgPts.push_back(imgPts);
   vecOfWorldPts.push_back(worldPts);
   
-  const size_t captureRes = static_cast<size_t>(_visionSystem.GetCaptureResolution());
+  const size_t captureRes = static_cast<size_t>(DEFAULT_IMAGE_RESOLUTION);
   const s32 numRows = Vision::CameraResInfo[captureRes].height;
   const s32 numCols  = Vision::CameraResInfo[captureRes].width;
   
@@ -422,29 +430,28 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
   distCoeffsVec.fill(0.f);
   std::copy(distCoeffs_data, distCoeffs_data+distCoeffs.cols, distCoeffsVec.begin());
   
-  calibration = Vision::CameraCalibration(numRows, numCols,
-                                          cameraMatrix(0,0), cameraMatrix(1,1),
-                                          cameraMatrix(0,2), cameraMatrix(1,2),
-                                          0.f, // skew
-                                          distCoeffsVec);
+  calibration.reset(new Vision::CameraCalibration(numRows, numCols,
+                                                  cameraMatrix(0,0), cameraMatrix(1,1),
+                                                  cameraMatrix(0,2), cameraMatrix(1,2),
+                                                  0.f, // skew
+                                                  distCoeffsVec));
   
   DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
-                 "VisionSystem.ComputeCalibration.BadCalibPoseData",
+                 "VisionSystem.ComputeCalibrationFromSingleTarget.BadCalibPoseData",
                  "Got %zu rotations and %zu translations",
                  rvecs.size(), tvecs.size());
   
   PRINT_CH_INFO(kLogChannelName, "CameraCalibrator.ComputeCalibrationFromSingleTarget.CalibValues",
                 "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
-                calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
-                calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+                calibration->GetFocalLength_x(), calibration->GetFocalLength_y(),
+                calibration->GetCenter_x(), calibration->GetCenter_y(), rms);
   
   
   // Check if average reprojection error is too high
-  const f64 reprojErrThresh_pix = 1.5;
-  if (rms > reprojErrThresh_pix)
+  if (rms > kSingleTargetReprojErr_pix)
   {
     PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.ReprojectionErrorTooHigh",
-                        "%f > %f", rms, reprojErrThresh_pix);
+                        "%f > %f", rms, kSingleTargetReprojErr_pix);
     return RESULT_FAIL;
   }
   
@@ -452,7 +459,7 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(const std::list<Visi
 }
 
 Result CameraCalibrator::AddCalibrationImage(const Vision::Image& calibImg,
-                                             const Anki::Rectangle<s32>& targetROI)
+                                             const Rectangle<s32>& targetROI)
 {
   if(_isCalibrating)
   {
@@ -462,11 +469,20 @@ Result CameraCalibrator::AddCalibrationImage(const Vision::Image& calibImg,
     return RESULT_FAIL;
   }
   
-  _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
-  
+  if(targetROI.GetX() < 0 && targetROI.GetY() < 0 && targetROI.GetWidth() < 0 && targetROI.GetHeight() < 0)
+  {
+    // Use entire image if negative ROI specified
+    const Anki::Rectangle<s32> entireImgROI(0, 0, calibImg.GetNumCols(), calibImg.GetNumRows());
+    _calibImages.push_back({.img = calibImg, .roiRect = entireImgROI, .dotsFound = false});
+  } 
+  else 
+  {
+    _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
+  }
+
   PRINT_CH_INFO(kLogChannelName, "CameraCalibrator.AddCalibrationImage",
                 "Num images including this: %u", (u32)_calibImages.size());
-  
+
   return RESULT_OK;
 }
 
@@ -474,7 +490,7 @@ Result CameraCalibrator::ClearCalibrationImages()
 {
   if(_isCalibrating)
   {
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ClearCalibrationImages.AlreadyCalibrating",
+    PRINT_CH_INFO(kLogChannelName, "CameraCalibrator.ClearCalibrationImages.AlreadyCalibrating",
                   "Cannot clear calibration images while already in the middle of doing calibration.");
     
     return RESULT_FAIL;
@@ -501,7 +517,7 @@ void CameraCalibrator::CalcBoardCornerPositions(cv::Size boardSize,
   }
 }
 
-void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
+void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
 {
   markersTo3dCoords.clear();
 
@@ -532,14 +548,14 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision:
 
   const f32 halfMarkerSize_mm = BLEACHER_CALIB_MARKER_SIZE_MM / 2.f;
   const f32 halfTargetFace_mm = BLEACHER_CALIB_TARGET_FACE_SIZE_MM / 2.f;
-  const Anki::Quad3f originsFrontFace({
+  const Quad3f originsFrontFace({
     {-halfMarkerSize_mm, -halfTargetFace_mm,  halfMarkerSize_mm},
     {-halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm},
     { halfMarkerSize_mm, -halfTargetFace_mm,  halfMarkerSize_mm},
     { halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm}
   });
   
-  const Anki::Quad3f originsLeftFace({
+  const Quad3f originsLeftFace({
     {-halfTargetFace_mm,  halfMarkerSize_mm,  halfMarkerSize_mm},
     {-halfTargetFace_mm,  halfMarkerSize_mm, -halfMarkerSize_mm},
     {-halfTargetFace_mm, -halfMarkerSize_mm,  halfMarkerSize_mm},
@@ -552,9 +568,9 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision:
                                                                 int numCubesAboveOrigin)
   {
     
-    Anki::Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
+    Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
     
-    Anki::Pose3d p;
+    Pose3d p;
     p.SetTranslation({BLEACHER_CALIB_TARGET_FACE_SIZE_MM * numCubesRightOfOrigin,
                       BLEACHER_CALIB_TARGET_FACE_SIZE_MM * numCubesAwayRobotFromOrigin,
                       BLEACHER_CALIB_TARGET_FACE_SIZE_MM * numCubesAboveOrigin});
@@ -564,70 +580,70 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Bleacher(std::map<Vision:
   };
   
   // Bottom row of cubes
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT]  = GetCoordsForFace(true, 0, 0, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_RIGHT]  = GetCoordsForFace(true, 0, 0, 0);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(false, 1, -1, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_FRONT]  = GetCoordsForFace(true, 1, -1, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(false, 1, -1, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_FRONT]  = GetCoordsForFace(true, 1, -1, 0);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(false, 2, -2, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK]   = GetCoordsForFace(true, 2, -2, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(false, 2, -2, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_BACK]   = GetCoordsForFace(true, 2, -2, 0);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP]    = GetCoordsForFace(false, 3, -3, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_RIGHT]  = GetCoordsForFace(true, 3, -3, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_TOP]    = GetCoordsForFace(false, 3, -3, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_RIGHT]  = GetCoordsForFace(true, 3, -3, 0);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT]   = GetCoordsForFace(false, 4, -4, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_LEFT]   = GetCoordsForFace(false, 4, -4, 0);
   
   // Second row of cubes
-  markersTo3dCoords[Anki::Vision::MARKER_ARROW]             = GetCoordsForFace(true, 0, 1, 1);
+  markersTo3dCoords[Vision::MARKER_ARROW]             = GetCoordsForFace(true, 0, 1, 1);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS]     = GetCoordsForFace(true, 1, 0, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_2HEXAGONS]     = GetCoordsForFace(true, 1, 0, 1);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5DIAMONDS]     = GetCoordsForFace(false, 2, -1, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS]     = GetCoordsForFace(true, 2, -1, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_5DIAMONDS]     = GetCoordsForFace(false, 2, -1, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_4DIAMONDS]     = GetCoordsForFace(true, 2, -1, 1);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 3, -2, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS]     = GetCoordsForFace(true, 3, -2, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 3, -2, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_2DIAMONDS]     = GetCoordsForFace(true, 3, -2, 1);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5CIRCLES]      = GetCoordsForFace(false, 4, -3, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_5CIRCLES]      = GetCoordsForFace(false, 4, -3, 1);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES]      = GetCoordsForFace(false, 5, -4, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_3CIRCLES]      = GetCoordsForFace(false, 5, -4, 1);
   
   // Third row of cubes
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS]     = GetCoordsForFace(true, 0, 2, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_4HEXAGONS]     = GetCoordsForFace(true, 0, 2, 2);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES]      = GetCoordsForFace(true, 1, 1, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_2CIRCLES]      = GetCoordsForFace(true, 1, 1, 2);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT]  = GetCoordsForFace(false, 2, 0, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(true, 2, 0, 2);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_FRONT]  = GetCoordsForFace(false, 2, 0, 2);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(true, 2, 0, 2);
   
-  markersTo3dCoords[Anki::Vision::MARKER_STAR5]             = GetCoordsForFace(false, 3, -1, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_BULLSEYE2]         = GetCoordsForFace(true, 3, -1, 2);
+  markersTo3dCoords[Vision::MARKER_STAR5]             = GetCoordsForFace(false, 3, -1, 2);
+  markersTo3dCoords[Vision::MARKER_BULLSEYE2]         = GetCoordsForFace(true, 3, -1, 2);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES]    = GetCoordsForFace(false, 4, -2, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES]    = GetCoordsForFace(true, 4, -2, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_5TRIANGLES]    = GetCoordsForFace(false, 4, -2, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_4TRIANGLES]    = GetCoordsForFace(true, 4, -2, 2);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 5, -3, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 5, -3, 2);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS]     = GetCoordsForFace(false, 6, -4, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_5HEXAGONS]     = GetCoordsForFace(false, 6, -4, 2);
   
   // Fourth row of cubes (top row)
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(true, 0, 3, 3);
+  markersTo3dCoords[Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(true, 0, 3, 3);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK]   = GetCoordsForFace(true, 1, 2, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_BACK]   = GetCoordsForFace(true, 1, 2, 3);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT]  = GetCoordsForFace(true, 2, 1, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_RIGHT]  = GetCoordsForFace(true, 2, 1, 3);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT]   = GetCoordsForFace(false, 3, 0, 3);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT]  = GetCoordsForFace(true, 3, 0, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_LEFT]   = GetCoordsForFace(false, 3, 0, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_FRONT]  = GetCoordsForFace(true, 3, 0, 3);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 4, -1, 3);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK]   = GetCoordsForFace(true, 4, -1, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 4, -1, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_BACK]   = GetCoordsForFace(true, 4, -1, 3);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP]    = GetCoordsForFace(false, 5, -2, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_TOP]    = GetCoordsForFace(false, 5, -2, 3);
   
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 6, -3, 3);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 6, -3, 3);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(false, 7, -4, 3);
+  markersTo3dCoords[Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(false, 7, -4, 3);
 }
 
 void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
@@ -665,28 +681,27 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
   
   const f32 halfMarkerSize_mm = INVERTEDBOX_CALIB_MARKER_SIZE_MM / 2.f;
   const f32 halfTargetFace_mm = INVERTEDBOX_CALIB_TARGET_FACE_SIZE_MM / 2.f;
-  const Anki::Quad3f originsFrontFace({
+  const Quad3f originsFrontFace({
     {-halfMarkerSize_mm, -halfTargetFace_mm,  halfMarkerSize_mm},
     {-halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm},
     { halfMarkerSize_mm, -halfTargetFace_mm,  halfMarkerSize_mm},
     { halfMarkerSize_mm, -halfTargetFace_mm, -halfMarkerSize_mm}
   });
   
-  const Anki::Quad3f originsLeftFace({
+  const Quad3f originsLeftFace({
     {-halfTargetFace_mm,  halfMarkerSize_mm,  halfMarkerSize_mm},
     {-halfTargetFace_mm,  halfMarkerSize_mm, -halfMarkerSize_mm},
     {-halfTargetFace_mm, -halfMarkerSize_mm,  halfMarkerSize_mm},
     {-halfTargetFace_mm, -halfMarkerSize_mm, -halfMarkerSize_mm}
   });
   
-  const Anki::Quad3f originsBottomFace({
+  const Quad3f originsBottomFace({
     {-halfMarkerSize_mm, -halfMarkerSize_mm, -halfTargetFace_mm},
     {-halfMarkerSize_mm,  halfMarkerSize_mm, -halfTargetFace_mm},
     { halfMarkerSize_mm, -halfMarkerSize_mm, -halfTargetFace_mm},
     { halfMarkerSize_mm,  halfMarkerSize_mm, -halfTargetFace_mm},
   });
   
-
   auto GetCoordsForFace = [&originsLeftFace, &originsFrontFace, &originsBottomFace]
     (bool isFrontFace,
      int numCubesRightOfOrigin,
@@ -695,10 +710,10 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
      bool isBottomFace = false)
   {
     
-    Anki::Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
+    Quad3f whichFace = (isFrontFace ? originsFrontFace : originsLeftFace);
     whichFace = (isBottomFace ? originsBottomFace : whichFace);
     
-    Anki::Pose3d p;
+    Pose3d p;
     p.SetTranslation({INVERTEDBOX_CALIB_TARGET_FACE_SIZE_MM * numCubesRightOfOrigin,
                       INVERTEDBOX_CALIB_TARGET_FACE_SIZE_MM * numCubesAwayRobotFromOrigin,
                       INVERTEDBOX_CALIB_TARGET_FACE_SIZE_MM * numCubesAboveOrigin});
@@ -709,54 +724,54 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
   
   // Left face
   // Bottom row
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(true, 0, 0, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_RIGHT]  = GetCoordsForFace(true, 1, 0, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(true, 2, 0, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(true, 0, 0, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_RIGHT]  = GetCoordsForFace(true, 1, 0, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(true, 2, 0, 0);
   
   // Middle row
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3CIRCLES]      = GetCoordsForFace(true, -1, 0, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_TOP]    = GetCoordsForFace(true, 0, 0, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BACK]   = GetCoordsForFace(true, 1, 0, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEK_BOTTOM] = GetCoordsForFace(true, 2, 0, 1);
+  markersTo3dCoords[Vision::MARKER_SDK_3CIRCLES]      = GetCoordsForFace(true, -1, 0, 1);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_TOP]    = GetCoordsForFace(true, 0, 0, 1);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_BACK]   = GetCoordsForFace(true, 1, 0, 1);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_BOTTOM] = GetCoordsForFace(true, 2, 0, 1);
   
   // Top row
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2CIRCLES]      = GetCoordsForFace(true, -1, 0, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2DIAMONDS]     = GetCoordsForFace(true, 0, 0, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2HEXAGONS]     = GetCoordsForFace(true, 1, 0, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(true, 2, 0, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_2CIRCLES]      = GetCoordsForFace(true, -1, 0, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_2DIAMONDS]     = GetCoordsForFace(true, 0, 0, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_2HEXAGONS]     = GetCoordsForFace(true, 1, 0, 2);
+  markersTo3dCoords[Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(true, 2, 0, 2);
   
   // Right face
   // Bottom row
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 3, -1, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_FRONT]  = GetCoordsForFace(false, 3, -2, 0);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_LEFT]   = GetCoordsForFace(false, 3, -3, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 3, -1, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_FRONT]  = GetCoordsForFace(false, 3, -2, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_LEFT]   = GetCoordsForFace(false, 3, -3, 0);
   
   // Middle row
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_LEFT]   = GetCoordsForFace(false, 3, -1, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_RIGHT]  = GetCoordsForFace(false, 3, -2, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_TOP]    = GetCoordsForFace(false, 3, -3, 1);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEJ_BACK]   = GetCoordsForFace(false, 3, -4, 1);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_LEFT]   = GetCoordsForFace(false, 3, -1, 1);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_RIGHT]  = GetCoordsForFace(false, 3, -2, 1);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_TOP]    = GetCoordsForFace(false, 3, -3, 1);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_BACK]   = GetCoordsForFace(false, 3, -4, 1);
   
   // Top row
-  markersTo3dCoords[Anki::Vision::MARKER_ARROW]             = GetCoordsForFace(false, 3, -1, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BACK]   = GetCoordsForFace(false, 3, -2, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 3, -3, 2);
-  markersTo3dCoords[Anki::Vision::MARKER_LIGHTCUBEI_FRONT]  = GetCoordsForFace(false, 3, -4, 2);
+  markersTo3dCoords[Vision::MARKER_ARROW]             = GetCoordsForFace(false, 3, -1, 2);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_BACK]   = GetCoordsForFace(false, 3, -2, 2);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_BOTTOM] = GetCoordsForFace(false, 3, -3, 2);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEI_FRONT]  = GetCoordsForFace(false, 3, -4, 2);
   
   // Top face
-  markersTo3dCoords[Anki::Vision::MARKER_BULLSEYE2]         = GetCoordsForFace(false, -1, -1, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5TRIANGLES]    = GetCoordsForFace(false, 0, -1, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4TRIANGLES]    = GetCoordsForFace(false, 1, -1, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_5HEXAGONS]     =  GetCoordsForFace(false, 2, -1, 3, true);
+  markersTo3dCoords[Vision::MARKER_BULLSEYE2]         = GetCoordsForFace(false, -1, -1, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_5TRIANGLES]    = GetCoordsForFace(false, 0, -1, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_4TRIANGLES]    = GetCoordsForFace(false, 1, -1, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_5HEXAGONS]     =  GetCoordsForFace(false, 2, -1, 3, true);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4DIAMONDS]     = GetCoordsForFace(false, 0, -2, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(false, 1, -2, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_4HEXAGONS]     = GetCoordsForFace(false, 2, -2, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_4DIAMONDS]     = GetCoordsForFace(false, 0, -2, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(false, 1, -2, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_4HEXAGONS]     = GetCoordsForFace(false, 2, -2, 3, true);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3HEXAGONS]     = GetCoordsForFace(false, 1, -3, 3, true);
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 2, -3, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_3HEXAGONS]     = GetCoordsForFace(false, 1, -3, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 2, -3, 3, true);
   
-  markersTo3dCoords[Anki::Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 2, -4, 3, true);
+  markersTo3dCoords[Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 2, -4, 3, true);
 }
 
 }

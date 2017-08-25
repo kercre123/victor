@@ -653,6 +653,7 @@ def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, di
   """
 
   dev_log_folder = os.path.join(log_folder, "playbackLogs", get_engine_output_folder_name(cozmo_version), "gameLogs","devLogger")
+  print("Path to DevLogger folder: " + dev_log_folder)
   assert os.path.isdir(dev_log_folder)
   dirs = [entry.path for entry in os.scandir(dev_log_folder) if entry.is_dir()]
   assert len(dirs) == 1

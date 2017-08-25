@@ -28,25 +28,31 @@ namespace Cozmo {
 namespace{
 static const char* kTriggerStrategyName = "Trigger Strategy Placed On Slope";
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyRobotPlacedOnSlope::ReactionTriggerStrategyRobotPlacedOnSlope(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 {
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyRobotPlacedOnSlope::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  behavior->IsRunnable(robot);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyRobotPlacedOnSlope::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   
   if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
                  "ReactionTriggerStrategyPlacedOnCharger.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
-    return _wantsToRunStrategy->WantsToRun(robot) && behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);;
+    return _wantsToRunStrategy->WantsToRun(robot) && behavior->IsRunnable(robot);
   }
   return false;
 }

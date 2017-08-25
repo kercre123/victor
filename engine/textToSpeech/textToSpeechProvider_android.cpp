@@ -18,6 +18,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
 #include "util/jni/includeJni.h"
 #include "util/jni/jniUtils.h"
@@ -30,22 +31,35 @@
 #define LOG_INFO(...)  PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 #define LOG_DEBUG(...) PRINT_CH_DEBUG(LOG_CHANNEL, ##__VA_ARGS__)
 
+// Debug sliders
+#if REMOTE_CONSOLE_ENABLED
+
+#define CONSOLE_GROUP "TextToSpeech.VoiceParameters"
+
+namespace {
+  CONSOLE_VAR_RANGED(s32, kVoiceSpeed, CONSOLE_GROUP, 100, 30, 300);
+  CONSOLE_VAR_RANGED(s32, kVoiceShaping, CONSOLE_GROUP, 100, 70, 140);
+  CONSOLE_VAR_RANGED(s32, kVoicePitch, CONSOLE_GROUP, 100, 70, 160);
+}
+
+#endif
+
 //
 // To extract JNI method signatures:
 //   javap -s `find . -name CozmoTextToSpeech.class`
 //
-// public static int loadVoice(java.lang.String, java.lang.String, int, int, java.lang.String, int, int);
-// descriptor: (Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;II)I
+// public static int loadVoice(java.lang.String, java.lang.String, int, int, java.lang.String);
+// descriptor: (Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;)I
 //
-// public static int createAudioData(java.lang.String, int);
-// descriptor: (Ljava/lang/String;I)I
+// public static int createAudioData(java.lang.String, int, int, int);
+// descriptor: (Ljava/lang/String;III)I
 //
 constexpr static const char * kClassName = "com/anki/cozmo/CozmoTextToSpeech";
 constexpr static const char * kLoadVoiceName = "loadVoice";
-constexpr static const char * kLoadVoiceArgs = "(Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;II)I";
+constexpr static const char * kLoadVoiceArgs = "(Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;)I";
 
 constexpr static const char * kCreateAudioName = "createAudioData";
-constexpr static const char * kCreateAudioArgs = "(Ljava/lang/String;I)I";
+constexpr static const char * kCreateAudioArgs = "(Ljava/lang/String;III)I";
 
 extern "C"
 {
@@ -99,7 +113,6 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     return;
   }
 
-
   // Check for valid locale before we do any work
   const Locale * locale = context->GetLocale();
   if (nullptr == locale) {
@@ -113,17 +126,35 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
   _tts_voice = "Ryan";
   _tts_speed = 100;
   _tts_shaping = 100;
+  _tts_pitch = 100;
 
-  // Allow language configuration to override defaults
+  //
+  // Allow language configuration to override defaults.  Note pitch is not
+  // supported on all platforms, so it is not supported as a config parameter
+  // at this time.
+  //
   const std::string& language = locale->GetLanguageString();
   Json::Value tts_language_config = tts_platform_config[language.c_str()];
 
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kVoiceKey, _tts_voice);
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
   JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
+  //JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kPitchKey, _tts_pitch);
 
-  LOG_DEBUG("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d",
-            language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
+  LOG_DEBUG("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d pitch=%d",
+            language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping, _tts_pitch);
+
+#if REMOTE_CONSOLE_ENABLED
+  kVoiceSpeed = _tts_speed;
+  kVoiceShaping = _tts_shaping;
+  kVoicePitch = _tts_pitch;
+#endif
+
+  if (!ANKI_USE_JNI) {
+    LOG_WARNING("TextToSpeechProvider.Initialize.NoJNI",
+                "%s", "Data not available without JNI support");
+    return;
+  }
 
   // Get a handle to the TTS class & methods
   auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
@@ -144,7 +175,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
     return;
   }
 
-  // Call JNI method CozmoTextToSpeech.loadVoice(path, voice, userid, password, license, speed, shaping)
+  // Call JNI method CozmoTextToSpeech.loadVoice(path, voice, userid, password, license)
   const jstring jpath = env->NewStringUTF(_tts_path.c_str());
   const jstring jvoice = env->NewStringUTF(_tts_voice.c_str());
   const jint juserid = AcapelaTTS::GetUserid();
@@ -157,9 +188,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, 
                                                 jvoice,
                                                 juserid,
                                                 jpassword,
-                                                jlicense,
-                                                _tts_speed,
-                                                _tts_shaping);
+                                                jlicense);
   if (0 != jresult) {
     LOG_ERROR("TextToSpeechProvider.Initialize.LoadVoice", "Unable to load voice (error=%d)", jresult);
     return;
@@ -180,6 +209,11 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
             Anki::Util::HidePersonallyIdentifiableInfo(text.c_str()),
             durationScalar);
 
+  if (!ANKI_USE_JNI) {
+    LOG_WARNING("TextToSpeechProvider.CreateAudioData.NoJNI",
+                "%s", "Data not available without JNI support");
+    return RESULT_FAIL_INVALID_OBJECT;
+  }
   // Get a handle to the TTS class & methods
   auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
   auto * env = envWrapper->GetEnv();
@@ -204,6 +238,14 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   const int numChannels = AcapelaTTS::GetNumChannels();
   data.Init(sampleRate, numChannels);
 
+#if REMOTE_CONSOLE_ENABLED
+  _tts_speed = kVoiceSpeed;
+  _tts_shaping = kVoiceShaping;
+  _tts_pitch = kVoicePitch;
+#endif
+
+  const auto before = std::chrono::steady_clock::now();
+
   // Marshal arguments for JNI
   const jstring jtext = env->NewStringUTF(text.c_str());
   const jint jspeed = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
@@ -213,7 +255,9 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
   const jint jresult = env->CallStaticIntMethod(clazz.get(),
                                                 createAudioID,
                                                 jtext,
-                                                jspeed);
+                                                jspeed,
+                                                _tts_shaping,
+                                                _tts_pitch);
   sAudioChunkPtr = nullptr;
 
   if (0 != jresult) {
@@ -222,8 +266,11 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     return ((Anki::Result)jresult);
   }
 
-  LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Return %zu samples",
-            data.GetNumSamples());
+  const auto after = std::chrono::steady_clock::now();
+  const auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
+
+  LOG_DEBUG("TextToSpeechProvider.CreateAudioData", "Return %zu samples after %d ms",
+            data.GetNumSamples(), (int) elapsed_ms.count());
 
   return RESULT_OK;
   

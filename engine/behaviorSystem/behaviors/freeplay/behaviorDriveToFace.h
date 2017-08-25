@@ -28,6 +28,8 @@ public:
   // drive forward when this behavior runs
   bool IsCozmoAlreadyCloseEnoughToFace(Robot& robot, Vision::FaceID_t faceID);
   
+  void SetTargetFace(const SmartFaceID faceID){_targetFace = faceID;}
+  
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
@@ -38,8 +40,7 @@ protected:
   virtual void StopInternal(Robot& robot) override;
 
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 private:

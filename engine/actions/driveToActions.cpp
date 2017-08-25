@@ -394,7 +394,7 @@ namespace Anki {
     
     void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
-      ObjectInteractionCompleted interactionCompleted({{_objectID.GetValue(), -1, -1, -1, -1}}, 1);
+      ObjectInteractionCompleted interactionCompleted({{_objectID.GetValue(), -1, -1, -1, -1}}, 1, false);
       completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     
@@ -1597,34 +1597,7 @@ namespace Anki {
       AddAction(action);
     }
     
-#pragma mark ---- DriveToAndMountChargerAction ----
-    
-    DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
-                                                               const ObjectID& objectID,
-                                                               const bool useManualSpeed,
-                                                               Radians maxTurnTowardsFaceAngle_rad,
-                                                               const bool sayName)
-    : IDriveToInteractWithObject(robot,
-                                 objectID,
-                                 PreActionPose::DOCKING,
-                                 0,
-                                 false,
-                                 0,
-                                 useManualSpeed,
-                                 maxTurnTowardsFaceAngle_rad,
-                                 sayName)
-    {
-      // Get DriveToObjectAction
-      DriveToObjectAction* driveAction = GetDriveToObjectAction();
-      if(driveAction != nullptr)
-      {
-        driveAction->DoPositionCheckOnPathCompletion(false);
-      }
-      
-      MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
-      SetProxyTag(action->GetTag());
-      AddDockAction(action);
-    }
+#pragma mark ---- DriveToReAlignWithObjectAction ----
     
     DriveToRealignWithObjectAction::DriveToRealignWithObjectAction(Robot& robot,
                                     ObjectID objectID,

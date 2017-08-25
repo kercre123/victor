@@ -14,7 +14,7 @@ COZMO_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-topleve
 BUILD_TOOLS_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'tools', 'build', 'tools')
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 WEBOTS_UNITY_ROOT = os.path.join(COZMO_ENGINE_ROOT, 'project', 'build-server', 'webotsunitytest')
-LANGUAGES = ["german"]
+LANGUAGES = ["de-DE", "en-US"]
 
 from ankibuild import util
 
