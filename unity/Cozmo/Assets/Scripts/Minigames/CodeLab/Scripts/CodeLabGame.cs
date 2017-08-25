@@ -59,6 +59,7 @@ namespace CodeLab {
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
+    private bool _IsDrivingOffCharger = false;
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
 
@@ -156,8 +157,6 @@ namespace CodeLab {
     private string _DevLoadPath = null; // Custom path for loading assets in dev builds
     private bool _DevLoadPathFirstRequest = true;
 
-    private bool _QuitCodeLabWhenOnCharger = true; // released app does this, but it's annoying for dev
-
     private uint _ChallengeBookmark = 1;
 
     private const float kNormalDriveSpeed_mmps = 70.0f;
@@ -245,12 +244,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
             LoadURL(_CurrentURLFilename);
           }
         }
-        break;
-      case "AllowOnCharger":
-        _QuitCodeLabWhenOnCharger = false;
-        break;
-      case "QuitOnCharger":
-        _QuitCodeLabWhenOnCharger = true;
         break;
       case "SetAppPath":
         _DevLoadPath = null;
@@ -445,33 +438,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical && IsDisplayingWorkspacePage()) {
         SendWorldStateToWebView();
       }
-
-      // Error case exiting conditions:
-      // WebView visibility is the same as being "loaded." Attaching is platform depended so for this edge case
-      // avoid cases where the load callback might be called after the quit wait until loaded.
-      if (_WebViewObjectComponent != null && _WebViewObjectComponent.GetVisibility() &&
-          RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
-        // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
-        // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
-        if (_QuitCodeLabWhenOnCharger && ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0)) {
-          if (IsDisplayingWorkspacePage()) {
-            try {
-              // We want to exit Code Lab, but first, let's check if we have
-              // a project to save before exiting. Unity will wait until
-              // JavaScript calls back into Unity with cozmoSaveOnQuitCompleted,
-              // and then Unity will exit Code Lab.
-              this.EvaluateJS("window.saveCozmoUserProject(true);");
-            }
-            catch (Exception) {
-              // If anything unexpected happens, don't wait to exit Code Lab.
-              RaiseChallengeQuit();
-            }
-          }
-          else {
-            RaiseChallengeQuit();
-          }
-        }
-      }
     }
 
     private void LoadWebView() {
@@ -577,6 +543,23 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
+    private void ExecuteAllQueuedScratchRequests() {
+      if (UpdateIsGettingOffCharger()) {
+        // Wait until Cozmo is off the charger
+        DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.Wait", "Queue length = " + _queuedScratchRequests.Count.ToString());
+      }
+      else {
+        DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.Exec", "Queue length = " + _queuedScratchRequests.Count.ToString());
+        // Unqueue all requests (could be one per green-flag in the case of parallel scripts)
+        while (_queuedScratchRequests.Count > 0) {
+          var scratchRequest = _queuedScratchRequests.Dequeue();
+          DAS.Info("CodeLab.ExecuteAllQueuedScratchRequests.UnQueue", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
+
+          HandleBlockScratchRequest(scratchRequest);
+        }
+      }
+    }
+
     private void OnResetToHomeCompleted(bool success) {
       --_PendingResetToHomeActions;
 
@@ -585,17 +568,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           DAS.Error("CodeLab.OnResetToHomeCompleted.NegativeHomeActions", "_PendingResetToHomeActions = " + _PendingResetToHomeActions);
         }
 
-        if (_queuedScratchRequests.Count > 0) {
-          // Unqueue all requests (could be one per green-flag in the case of parallel scripts)
-          while (_queuedScratchRequests.Count > 0) {
-            var scratchRequest = _queuedScratchRequests.Dequeue();
-            DAS.Info("CodeLab.OnResetToHomeCompleted.AllDone.UnQueue", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
-            HandleBlockScratchRequest(scratchRequest);
-          }
-        }
-        else {
-          DAS.Info("CodeLab.OnResetToHomeCompleted.AllDone.NoQueue", "");
-        }
+        DAS.Info("CodeLab.OnResetToHomeCompleted.ExecuteQueue", "");
+        ExecuteAllQueuedScratchRequests();
       }
     }
 
@@ -604,12 +578,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Only does anything if not already close to that pose.
       // Any other in-progress actions will be cancelled by the first queued (NOW) action
 
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot == null) {
+        // Robot has been deleted, app is disconnecting
+        return;
+      }
+
       // Cancel any queued up requests and just do it immediately
       CancelQueueResetRobotToHomePos();
 
       Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.NOW;
-
-      var robot = RobotEngineManager.Instance.CurrentRobot;
 
       robot.TurnOffAllBackpackBarLED();
 
@@ -639,7 +617,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Only wait for the neutral face animation if already waiting for something, or there's definitely a face animation to clear
       if ((_PendingResetToHomeActions > 0) || _RequiresResetToNeutralFace) {
         _RequiresResetToNeutralFace = false;
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.OnResetToHomeCompleted, queuePos);
+        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.OnResetToHomeCompleted, queuePos);
         ++_PendingResetToHomeActions;
       }
 
@@ -917,6 +895,26 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
+    private void OnDrivingOffChargerCompleted(bool success) {
+      _IsDrivingOffCharger = false;
+      DAS.Info("CodeLab.OnDrivingOffChargerCompleted.ExecuteQueue", "");
+      ExecuteAllQueuedScratchRequests();
+    }
+
+    private bool UpdateIsGettingOffCharger() {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot == null) {
+        return false;
+      }
+      bool isOnCharger = ((robot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0);
+      if (isOnCharger && !_IsDrivingOffCharger) {
+        DAS.Info("CodeLab.DriveOffCharger", "");
+        _IsDrivingOffCharger = true;
+        robot.DriveOffChargerContacts(callback: OnDrivingOffChargerCompleted, queueActionPosition: QueueActionPosition.IN_PARALLEL);
+      }
+      return _IsDrivingOffCharger;
+    }
+
     private void WebViewCallback(string jsonStringFromJS) {
       // Note that prior to WebViewCallback being called, WebViewObject.CallFromJS() calls WWW.UnEscapeURL(), unencoding the jsonStringFromJS.
       string logJSONStringFromJS = jsonStringFromJS;
@@ -948,7 +946,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return;
       }
 
-      if (IsResettingToHomePose()) {
+      if (IsResettingToHomePose() || UpdateIsGettingOffCharger()) {
         // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
         DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + scratchRequest.argString);
         _queuedScratchRequests.Enqueue(scratchRequest);
@@ -1058,6 +1056,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, this);
       var robot = RobotEngineManager.Instance.CurrentRobot;
+
+      if (robot == null) {
+        // No robot - it probably disconnected, advance to the next scratch block
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+        return;
+      }
 
       if (HandleDrawOnFaceRequest(scratchRequest)) {
         inProgressScratchBlock.AdvanceToNextBlock(true);
@@ -1462,6 +1466,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // when the active page and Javascript is nuked, so manually force an OnScriptStopped event
         DAS.Info("Codelab.ManualOnScriptStopped", "");
         OnScriptStopped();
+      }
+
+      if (_WebViewObjectComponent == null) {
+        DAS.Error("CodeLab.LoadURL.NullWebView", "Ignoring request to open '" + scratchPathToHTML + "'");
+        return;
       }
 
       string baseFilename = GetRootPath() + scratchPathToHTML;
