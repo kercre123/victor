@@ -227,20 +227,19 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'resources'],
-   ['project/gyp/cozmoEngine.lst'])
-  generator.processFolder(['basestation/src/anki/cozmo',
-                           'basestation/include/anki/cozmo',
-                           'include', 'resources'],
-                          ['project/gyp/cozmoEngine2.lst'])
-  generator.processFolder(['androidHAL/include/anki/cozmo',
-                           'androidHAL/src/anki/cozmo'],
+  generator.processFolder(['engine', 'include', 'resources'],
+                          ['project/gyp/cozmoEngine.lst'],
+                          ['engine/tools/*'])
+  generator.processFolder(['engine', 'include', 'resources'],
+                          ['project/gyp/cozmoEngine2.lst'],
+                          ['engine/tools/*'])
+  generator.processFolder(['androidHAL'],
                           ['project/gyp/androidHAL.lst'])
-  generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
-  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
+  generator.processFolder(['test/engine', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
+  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c'])
-  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot2'],
+  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/robot', 'simulator/controllers/webotsCtrlRobot2'],
                           ['project/gyp/ctrlRobot2.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c', 'nvStorage.*'])
   generator.processFolder(['robot2/hal/src', 'robot2/hal/spine', 'robot/supervisor/src', 'robot/transport'],
@@ -249,8 +248,8 @@ def main(scriptArgs):
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/shared'], ['project/gyp/ctrlShared.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
-  generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'simulator/game'], ['project/gyp/ctrlKeyboard.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'simulator/game'], ['project/gyp/ctrlBuildServerTest.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'], ['*.dylib'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine2'], ['project/gyp/ctrlGameEngine2.lst'], ['*.dylib'])
   generator.processFolder(['simulator/controllers/webotsCtrlDevLog'], ['project/gyp/ctrlDevLog.lst'])

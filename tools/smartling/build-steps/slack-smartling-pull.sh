@@ -52,9 +52,9 @@ if [ -z $CURL ];then
   exit 1
 fi
 
-PYTHON=`which python`
+PYTHON=`which python2`
 if [ -z $PYTHON ];then
-  echo python not found
+  echo python2 not found
   exit 1
 fi
 
@@ -67,7 +67,7 @@ fi
 _TOPLEVEL=`$GIT rev-parse --show-toplevel`
 _SMARTLING_PULL_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-pull.sh
 _GENERATE_SDF_SCRIPT=${_TOPLEVEL}/tools/smartling/generateSDFfromTranslations.py
-_STRIP_ZERO_WIDTH_SPACES_SCRIPT=${_TOPLEVEL}/tools/smartling/strip-zero-width-spaces.py
+_STRIP_SPECIAL_CHARACTERS=${_TOPLEVEL}/tools/smartling/smartling-strip-special-characters.py
 _UNITY_PROJECT_DIR=${_TOPLEVEL}/unity/Cozmo/
 _TRANSLATED_ASSETS_DIR=Assets/StreamingAssets/LocalizedStrings/ja-JP
 _ASSET_BUNDLES_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/AssetBundles
@@ -82,7 +82,7 @@ if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem downloading *.json from Smartling. Check build log!" "danger" $exit_status
 fi
 
-$PYTHON3 $_STRIP_ZERO_WIDTH_SPACES_SCRIPT --localized-strings-dir $_LOCALIZED_STRINGS_DIR || exit_status=$?
+$PYTHON3 $_STRIP_SPECIAL_CHARACTERS --localized-strings-dir $_LOCALIZED_STRINGS_DIR || exit_status=$?
 if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem stripping zero width spaces. Check build log!" "danger" $exit_status
 fi

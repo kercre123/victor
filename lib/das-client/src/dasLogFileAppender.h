@@ -12,9 +12,11 @@
 #ifndef __DasLogFileAppender_H__
 #define __DasLogFileAppender_H__
 
+#include "DAS.h"
 #include "taskExecutor.h"
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -28,7 +30,13 @@ using DASLogFileConsumptionBlock = std::function<bool (const std::string& logFil
 class DasLogFileAppender
 {
 public:
-  DasLogFileAppender(const std::string& logDirPath);
+  DasLogFileAppender(const std::string& logDirPath,
+                     size_t maxLogLength,
+                     size_t maxLogFiles,
+                     const DASArchiveFunction& archiveCallback,
+                     const DASUnarchiveFunction& unarchiveCallback,
+                     const std::string& archiveFileExtension);
+  
   ~DasLogFileAppender();
   std::string CurrentLogFilePath();
   void WriteDataToCurrentLogfile(const std::string logData);
@@ -41,7 +49,7 @@ public:
   static const size_t kDefaultMaxLogLength = 100 * 1024;
   static constexpr const char* kDasLogFileExtension = "das";
   static constexpr const char* kDasInProgressExtension = "das_inprogress";
-  static const int kDasMaxLogFiles = 400;
+  static const size_t kDasDefaultMaxLogFiles = 400;
 
 private:
   bool CreateNewLogFile() const;
@@ -52,22 +60,25 @@ private:
   void UpdateLogFileHandle();
   std::string FullLogFilePath() const;
   std::string MakeLogFilePath(const std::string &logDir, uint32_t logNumber, const std::string &extension) const;
-  uint32_t NextLogFileNumber();
-  uint32_t NextAvailableLogFileNumber() const;
+  uint32_t NextAvailableLogFileNumber(uint32_t startNumber) const;
   std::ofstream& CurrentLogFileHandle();
   std::string PrvCurrentLogFilePath();
   void PrvRolloverCurrentLogFile();
   void RolloverLogFileAtPath(std::string path) const;
-  std::vector<uint32_t> InProgressLogNumbers() const;
+  std::vector<std::string> InProgressLogFiles() const;
 
 private:
   std::string _logDirPath;
-  uint32_t _maxLogLength;
+  size_t _maxLogLength;
+  size_t _maxLogFiles;
   uint64_t _bytesLoggedToCurrentFile;
   std::string _currentLogFileName;
   std::ofstream _currentLogFileHandle;
   uint32_t _currentLogFileNumber;
   TaskExecutor _loggingQueue;
+  DASArchiveFunction _archiveCallback;
+  DASUnarchiveFunction _unarchiveCallback;
+  std::string _archiveFileExtension;
 };
 
 #endif // __DasLogFileAppender_H__

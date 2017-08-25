@@ -108,7 +108,8 @@ public class JavaMessageReceiver : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    _MessageReceiver.Call("unregister");
-  }
-
+		if (_MessageReceiver != null) {
+			_MessageReceiver.Call ("unregister");
+		}
+	}
 }

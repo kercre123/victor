@@ -46,12 +46,13 @@ namespace Cozmo.Hub {
 
     private ChallengeManager _ChallengeManager;
 
-    public bool PlayNeedsMeterAppearingSound { get; set; }
-
     // Total ConnectedTime For GameEvents
     private const float _kConnectedTimeIntervalCheck = 60.0f;
     private float _ConnectedTimeIntervalLastTimestamp = -1;
     private float _ConnectedTimeStartedTimestamp = -1;
+
+    private const string _kDisableTouchesDuringRequestAnim = "needs_hub_request_anim";
+    private bool _IsDisablingTouches = false;
 
     public override void LoadHubWorld() {
       _ChallengeManager = new ChallengeManager(_ChallengeDataPrefabAssetBundle);
@@ -65,7 +66,6 @@ namespace Cozmo.Hub {
       RequestGameManager.Instance.OnRequestGameConfirmed += HandleStartChallengeRequest;
       RobotEngineManager.Instance.AddCallback<HardSparkStartedByEngine>(HandleRandomTrickStarted);
 
-      PlayNeedsMeterAppearingSound = true;
       _Instance = this;
       StartLoadNeedsHubView();
 
@@ -74,6 +74,8 @@ namespace Cozmo.Hub {
     }
 
     public override void DestroyHubWorld() {
+      EnableTouchEvents();
+
       _ChallengeManager.CleanUp();
       _ChallengeManager.OnShowEndGameDialog -= HandleEndGameDialog;
       _ChallengeManager.OnChallengeViewFinishedClosing -= HandleChallengeViewFinishedClosing;
@@ -107,6 +109,20 @@ namespace Cozmo.Hub {
       GameObject.Destroy(this.gameObject);
     }
 
+    private void DisableTouchEvents() {
+      if (!_IsDisablingTouches) {
+        UIManager.DisableTouchEvents(_kDisableTouchesDuringRequestAnim);
+        _IsDisablingTouches = true;
+      }
+    }
+
+    private void EnableTouchEvents() {
+      if (_IsDisablingTouches) {
+        UIManager.EnableTouchEvents(_kDisableTouchesDuringRequestAnim);
+        _IsDisablingTouches = false;
+      }
+    }
+
     public override GameBase GetChallengeInstance() {
       if (_ChallengeManager != null) {
         return _ChallengeManager.ChallengeInstance;
@@ -119,6 +135,12 @@ namespace Cozmo.Hub {
         return _ChallengeManager.CloseChallengeImmediately();
       }
       return false;
+    }
+
+    private void OnApplicationPause(bool isPaused) {
+      if (!isPaused) {
+        EnableTouchEvents();
+      }
     }
 
     #region LoadNeedsHub
@@ -136,18 +158,11 @@ namespace Cozmo.Hub {
       while (_ChallengeManager.IsChallengePlaying || !UnlockablesManager.Instance.UnlocksLoaded) {
         yield return 0;
       }
-
       UIManager.OpenView(needsHubViewPrefab.GetComponent<NeedsHubView>(), (newNeedsHubView) => {
         _NeedsViewHubInstance = (NeedsHubView)newNeedsHubView;
         _NeedsViewHubInstance.OnActivitiesButtonClicked += HandleActivitiesButtonClicked;
         _NeedsViewHubInstance.OnSparksButtonClicked += HandleSparksButtonClicked;
 
-        // First time connecting play the sound of first showing the scene
-        if (PlayNeedsMeterAppearingSound &&
-          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear);
-          PlayNeedsMeterAppearingSound = false;
-        }
         // things like discover tab never brought us out of freeplay if a game was never loaded.
         if (transitionToFreeplay) {
           ResetRobotToFreeplaySettings();
@@ -171,7 +186,6 @@ namespace Cozmo.Hub {
             });
           }
         }
-
       });
     }
 
@@ -216,6 +230,7 @@ namespace Cozmo.Hub {
     #region StartChallenge
 
     private void HandleStartChallengeRequest(string challengeRequested) {
+      DisableTouchEvents();
       PlayChallenge(challengeRequested, true);
     }
 
@@ -226,16 +241,21 @@ namespace Cozmo.Hub {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
         AllowFreeplayUI(false);
-        RobotEngineManager.Instance.CurrentRobot.PlayNeedsGetOutAnimIfNeeded();
 
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
         RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig();
         if (rc != null) {
-          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger.Value);
+          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger.Value, HandleRequestAnimationComplete);
+        }
+        else {
+          RobotEngineManager.Instance.CurrentRobot.PlayNeedsGetOutAnimIfNeeded(HandleRequestAnimationComplete);
         }
       }
+    }
 
+    private void HandleRequestAnimationComplete(bool animSuccessful = false) {
+      EnableTouchEvents();
       // Close needs dialog if open
       if (_NeedsViewHubInstance != null) {
         DeregisterNeedsViewEvents();

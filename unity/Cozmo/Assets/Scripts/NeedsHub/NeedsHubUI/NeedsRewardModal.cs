@@ -1,3 +1,4 @@
+using System;
 using Anki.Cozmo;
 using Cozmo.Songs;
 using Cozmo.UI;
@@ -38,6 +39,8 @@ namespace Cozmo.Needs.UI {
     private static readonly int _ModalCloseAnimHash = Animator.StringToHash("RewardModalCloseAnimation");
     private static readonly int _StartOpenParamHash = Animator.StringToHash("StartOpen");
     private static readonly int _StartCloseParamHash = Animator.StringToHash("StartClose");
+
+    public static event Action CrateSparksRewardDisplayed = null;
 
     public void Start() {
       _ContinueButton.Initialize(HandleContinueButtonClicked, "rewards_continue_button", DASEventDialogName);
@@ -112,7 +115,7 @@ namespace Cozmo.Needs.UI {
     private void UpdateRewardDisplay() {
       _SparkRewardContainer.SetActive(false);
       _UnlockRewardContainer.SetActive(false);
-      
+
       // reset reward text color in case it was changed by last reward
       _RewardText.color = UIColorPalette.NeutralTextColor;
 
@@ -150,7 +153,7 @@ namespace Cozmo.Needs.UI {
 
     private void DisplaySparkReward(NeedsReward currentReward) {
       _SparkRewardContainer.SetActive(true);
-      
+
       if (currentReward.inventoryIsFull) {
         _RewardText.text = Localization.GetWithArgs(LocalizationKeys.kNeedsRewardsDialogSparksInventoryFull);
         _RewardText.color = UIColorPalette.WarningTextColor;
@@ -158,7 +161,7 @@ namespace Cozmo.Needs.UI {
       else {
         _RewardText.text = Localization.GetWithArgs(LocalizationKeys.kNeedsRewardsDialogSparksEarned);
       }
-      
+
       int numSparksEarned = -1;
       int.TryParse(currentReward.data, out numSparksEarned);
       if (numSparksEarned != -1) {
@@ -167,6 +170,10 @@ namespace Cozmo.Needs.UI {
       else {
         DAS.Error("NeedsRewardModal.DisplaySparkReward.InvalidIntAmount",
                   string.Format("rewardType={0} data={1}", currentReward.rewardType, currentReward.data));
+      }
+
+      if (CrateSparksRewardDisplayed != null) {
+        CrateSparksRewardDisplayed();
       }
     }
 

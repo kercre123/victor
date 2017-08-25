@@ -594,6 +594,9 @@ message InventoryStatus {
   InventoryList allInventory
 }
 
+message RequestDefaultSparks {
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Debug / Console
 ///////////////////////////////////////////////////////////////////////////////
@@ -820,7 +823,7 @@ message BehaviorObjectiveAchieved{
 }
 
 // notify game that build pyramid spark prerequisites have been met/not met
-message BuildPyramidPreReqsChanged{
+message PyramidPreReqState{
   bool areCubesUpright
 }
 
@@ -905,6 +908,18 @@ message ResponseLocale {
 
 message UpdatedAssignments {
   Anki::Util::AnkiLab::AssignmentDef assignments[uint_16]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Notifications
+///////////////////////////////////////////////////////////////////////////////
+
+message ClearNotificationCache {
+}
+
+message CacheNotificationToSchedule {
+  int_32 secondsInFuture,
+  string textKey
 }
 
 ///////////////////////////////////////////////////////////////////////////////

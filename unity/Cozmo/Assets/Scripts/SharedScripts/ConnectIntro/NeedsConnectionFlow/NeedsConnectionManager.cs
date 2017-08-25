@@ -93,6 +93,9 @@ namespace Cozmo.ConnectionFlow {
         if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ForceFirstTimeConnectFlow) {
           firstTime = true;
         }
+        else if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ForceFirstTimeConnectFlow) {
+          firstTime = false;
+        }
       }
 #endif
       OnboardingManager.Instance.PreloadOnboarding();
@@ -216,7 +219,8 @@ namespace Cozmo.ConnectionFlow {
 
     private void HandleConnectionFlowComplete() {
       DestroyConnectionFlowInstance();
-      CloseNeedsUnconnectView(true);
+      // close without animation, so we don't get a glimpse on the way out (COZMO-12283)
+      CloseNeedsUnconnectView(false);
       AssetBundleManager.Instance.UnloadAssetBundle(_NeedsUnconnectViewPrefabData.AssetBundle);
       AssetBundleManager.Instance.UnloadAssetBundle(_ConnectionFlowPrefabData.AssetBundle);
       IntroFlowComplete();
@@ -249,14 +253,18 @@ namespace Cozmo.ConnectionFlow {
     private void SetupForDemoMode() {
       // Set needing onboarding home, but not other phases
       DataPersistence.PlayerProfile profile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
-      profile.OnboardingStages[OnboardingManager.OnboardingPhases.InitialSetup] = 0;
       // reset the item inventory
       List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
       for (int i = 0; i < itemIDs.Count; ++i) {
         profile.Inventory.SetItemAmount(itemIDs[i], 0);
       }
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Loot);
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+      // Complete everything but first two phases.
+      int numStates = System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1;
+      for (int i = 0; i < numStates; ++i) {
+        OnboardingManager.Instance.CompletePhase((OnboardingManager.OnboardingPhases)i, false);
+      }
+      profile.OnboardingStages[OnboardingManager.OnboardingPhases.InitialSetup] = 0;
+      profile.OnboardingStages[OnboardingManager.OnboardingPhases.MeetCozmo] = 0;
       // Needs to set all difficulties unlocked ( don't just return in UI so that we don't have "new difficulty unlocked popups");
       Challenge.ChallengeData[] challengeList = Challenge.ChallengeDataList.Instance.ChallengeData;
       for (int i = 0; i < challengeList.Length; ++i) {
@@ -318,10 +326,22 @@ namespace Cozmo.ConnectionFlow {
       DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
       DataPersistenceManager.Instance.Save();
 
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
+        robot.PlayNeedsGetOutAnimIfNeeded(OpenModal);
+      } else {
+        OpenModal();
+      }
+    }
+
+    private void OpenModal(bool unused = false){
       var sdkModalPriorityData = new Cozmo.UI.ModalPriorityData(Cozmo.UI.ModalPriorityLayer.VeryHigh, 0,
-                                Cozmo.UI.LowPriorityModalAction.Queue,
-                                Cozmo.UI.HighPriorityModalAction.ForceCloseOthersAndOpen);
+                                                  Cozmo.UI.LowPriorityModalAction.Queue,
+                                                  Cozmo.UI.HighPriorityModalAction.ForceCloseOthersAndOpen);
       UIManager.OpenModal(_SDKModalPrefab, sdkModalPriorityData, null);
     }
+
+
   }
 }

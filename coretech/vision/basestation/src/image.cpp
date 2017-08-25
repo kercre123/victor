@@ -434,11 +434,15 @@ namespace Vision {
   Image ImageRGBA::ToGray() const
   {
     Image grayImage(GetNumRows(), GetNumCols());
-    grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
-    cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
+    FillGray(grayImage);
     return grayImage;
   }
   
+  void ImageRGBA::FillGray(Image& grayImage) const
+  {
+    grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
+    cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
+  }
   
 #if 0 
 #pragma mark --- ImageRGB ---
@@ -481,16 +485,27 @@ namespace Vision {
   ImageRGB::ImageRGB(const Image& imageGray)
   : ImageBase<PixelRGB>(imageGray.GetNumRows(), imageGray.GetNumCols())
   {
+    SetFromGray(imageGray);
+  }
+  
+  ImageRGB& ImageRGB::SetFromGray(const Image& imageGray)
+  {
     cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGB);
     SetTimestamp(imageGray.GetTimestamp());
+    return *this;
   }
   
   Image ImageRGB::ToGray() const
   {
     Image grayImage(GetNumRows(), GetNumCols());
+    FillGray(grayImage);
+    return grayImage;
+  }
+  
+  void ImageRGB::FillGray(Image& grayImage) const
+  {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGB2GRAY);
-    return grayImage;
   }
   
   Image ImageRGB::Threshold(u8 value, bool anyChannel) const

@@ -174,6 +174,14 @@ namespace Cozmo.Needs.UI {
     private void HandleRepairModalCreated(BaseModal newModal) {
       _NeedsRepairModalInstance = (NeedsRepairModal)newModal;
       _NeedsRepairModalInstance.InitializeRepairModal();
+      _NeedsRepairModalInstance.DialogClosed += HandleFeedOrRepairModalClosed;
+
+      // Setting this alpha to seems to be a performance gain and not a garbage spike as long as set to 0 exactly.
+      // ( as of unity 5.6 using Frame Debugger to visualize and profiling on android )
+      CanvasGroup group = GetComponent<CanvasGroup>();
+      if (group != null) {
+        group.alpha = 0;
+      }
     }
 
     private void HandleEnergyButton() {
@@ -182,12 +190,28 @@ namespace Cozmo.Needs.UI {
       }
 
       UIManager.OpenModal(_NeedsEnergyModalPrefab, new ModalPriorityData(), HandleEnergyModalCreated);
+
+      // Setting this alpha to seems to be a performance gain and not a garbage spike as long as set to 0 exactly.
+      // ( as of unity 5.6 using Frame Debugger to visualize and profiling on android )
+      CanvasGroup group = GetComponent<CanvasGroup>();
+      if (group != null) {
+        group.alpha = 0;
+      }
     }
 
     private void HandleEnergyModalCreated(BaseModal newModal) {
       _NeedsEnergyModalInstance = (NeedsEnergyModal)newModal;
       _NeedsEnergyModalInstance.InitializeEnergyModal();
       _NeedsEnergyModalInstance.CozmoOverfed += HandleCozmoOverfed;
+
+      _NeedsEnergyModalInstance.DialogClosed += HandleFeedOrRepairModalClosed;
+    }
+
+    private void HandleFeedOrRepairModalClosed() {
+      CanvasGroup group = GetComponent<CanvasGroup>();
+      if (group != null) {
+        group.alpha = 1;
+      }
     }
 
     private void HandleHelpButton() {
@@ -211,6 +235,10 @@ namespace Cozmo.Needs.UI {
     }
 
     private void PopLatestBracketAndUpdateButtons() {
+      // Wait until Needs meter animates up for first time
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        return;
+      }
       NeedsStateManager nsm = NeedsStateManager.Instance;
       NeedsValue repairValue, energyValue;
       repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
@@ -281,6 +309,13 @@ namespace Cozmo.Needs.UI {
       OnboardingManager.Instance.OnOnboardingAnimEvent.Invoke(param);
     }
     public void OnboardingSkipped() {
+
+      // They've completed everything really.
+      RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
+                 new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete(
+                      System.Enum.GetNames(typeof(OnboardingManager.OnboardingPhases)).Length - 1, true);
+      RobotEngineManager.Instance.SendMessage();
+
       PopLatestBracketAndUpdateButtons();
       if (_MetersWidget != null) {
         _MetersWidget.OnboardingSkipped();

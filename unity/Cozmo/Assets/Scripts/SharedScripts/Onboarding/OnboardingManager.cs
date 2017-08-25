@@ -55,7 +55,6 @@ public class OnboardingManager : MonoBehaviour {
 
   private Transform _OnboardingTransform;
 
-  private bool _StageDisabledReactionaryBehaviors = false;
   private int _LastOnboardingPhaseCompletedRobot = 0;
 
   [SerializeField]
@@ -64,10 +63,6 @@ public class OnboardingManager : MonoBehaviour {
 
   [SerializeField]
   private List<int> _NumOnboardingStages;
-
-  // The DAS phaseIDs are checkpoints from the design doc.
-  private int _CurrDASPhaseID = -1;
-  private float _CurrDASPhaseStartTime = 0;
 
   private const string kOnboardingManagerIdleLock = "onboarding_manager_idle";
 
@@ -149,6 +144,10 @@ public class OnboardingManager : MonoBehaviour {
   public bool IsOnboardingRequired(OnboardingPhases phase) {
     return GetCurrStageInPhase(phase) < GetMaxStageInPhase(phase);
   }
+  public bool IsAnyOnboardingRequired() {
+    //Test is the final stage has been finished
+    return IsOnboardingRequired(OnboardingPhases.PlayIntro);
+  }
   public bool IsAnyOnboardingActive() {
     return _CurrPhase != OnboardingPhases.None;
   }
@@ -185,7 +184,7 @@ public class OnboardingManager : MonoBehaviour {
       int[] firstWeight = { 100 };
       RobotEngineManager.Instance.Message.SetOverrideGameRequestWeights =
                 Singleton<Anki.Cozmo.ExternalInterface.SetOverrideGameRequestWeights>.Instance.Initialize(
-                            false, firstRequest, firstWeight);
+                            false, firstRequest, firstWeight, true);
       RobotEngineManager.Instance.SendMessage();
     }
 
@@ -203,6 +202,14 @@ public class OnboardingManager : MonoBehaviour {
       _NeedsHubView.DialogOpenAnimationFinished -= HandleNeedsViewOpenAnimationCompleted;
       OnboardingManager.Instance.StartAnyPhaseIfNeeded();
     }
+  }
+
+  public void RestartPhaseAtStage(int stage = 0) {
+    if (_CurrStageInst != null) {
+      OnboardingBaseStage onboardingInfo = _CurrStageInst.GetComponent<OnboardingBaseStage>();
+      onboardingInfo.StageForceClosed = true;
+    }
+    SetSpecificStage(stage);
   }
 
   public void StartPhase(OnboardingPhases phase) {
@@ -226,12 +233,10 @@ public class OnboardingManager : MonoBehaviour {
     }
     int startStage = 0;
     _CurrPhase = phase;
-    if (PhaseWantsReactionsDisabled(_CurrPhase)) {
-      currentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId, ReactionaryBehaviorEnableGroups.kOnboardingHomeTriggers);
-    }
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle, kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
+      Cozmo.PauseManager.Instance.ExitChallengeOnPause = false;
 
       DAS.Event("onboarding.start", FirstTime ? "1" : "0");
       // in the event they've ever booted the app before, or it's an old robot.
@@ -250,7 +255,7 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseStarted != null) {
       OnOnboardingPhaseStarted.Invoke(_CurrPhase);
     }
-
+    DAS.Event("onboarding.checkpoint.started", _CurrPhase.ToString());
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
     if (PreloadOnboarding()) {
@@ -258,7 +263,9 @@ public class OnboardingManager : MonoBehaviour {
     }
     // Because sparks are now saved on the robot they could have changed robots between these checkpoints.
     // Make sure they have a min number of sparks for places right before required to spend them.
-    if (_CurrPhase == OnboardingPhases.PlayIntro || _CurrPhase == OnboardingPhases.NurtureIntro) {
+    if (_CurrPhase == OnboardingPhases.InitialSetup ||
+        _CurrPhase == OnboardingPhases.PlayIntro ||
+        _CurrPhase == OnboardingPhases.NurtureIntro) {
       GiveStartingInventory();
     }
 #endif
@@ -279,6 +286,7 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseCompleted != null) {
       OnOnboardingPhaseCompleted.Invoke(_CurrPhase);
     }
+    DAS.Event("onboarding.checkpoint.completed", _CurrPhase.ToString());
     IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
     if (currentRobot == null) {
       return;
@@ -286,9 +294,7 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       currentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
-    }
-    if (PhaseWantsReactionsDisabled(_CurrPhase)) {
-      currentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId);
+      Cozmo.PauseManager.Instance.ExitChallengeOnPause = true;
     }
 
     RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
@@ -418,7 +424,6 @@ public class OnboardingManager : MonoBehaviour {
       DAS.Error("onboardingmanager.SetSpecificStage", "Onboarding Asset Bundle load not completed");
       return;
     }
-    int nextDASPhaseID = -1;
     SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < _OnboardingUIInstance.GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
@@ -428,7 +433,6 @@ public class OnboardingManager : MonoBehaviour {
         _CurrPhase = OnboardingPhases.None;
         return;
       }
-      nextDASPhaseID = stagePrefab.DASPhaseID;
       _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
       if (OnOnboardingStageStarted != null) {
         OnOnboardingStageStarted.Invoke(_CurrPhase, nextStage);
@@ -455,18 +459,7 @@ public class OnboardingManager : MonoBehaviour {
       }
       UnloadIfDoneWithAllPhases();
     }
-    // Just started something new...
-    if (_CurrDASPhaseID != nextDASPhaseID) {
-      // Not first time, record a transition out
-      if (_CurrDASPhaseID != -1) {
-        float timeSinceLastPhase = Time.time - _CurrDASPhaseStartTime;
-        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
-      }
 
-      // start recording the next one...
-      _CurrDASPhaseStartTime = Time.time;
-      _CurrDASPhaseID = nextDASPhaseID;
-    }
     DataPersistenceManager.Instance.Save();
   }
 
@@ -474,9 +467,6 @@ public class OnboardingManager : MonoBehaviour {
     // First time they see this, thats all.
     if (IsOnboardingRequired(OnboardingPhases.GameRequests)) {
       CompletePhase(OnboardingPhases.GameRequests);
-      // reset back to using the default weights for next request
-      RobotEngineManager.Instance.Message.SetOverrideGameRequestWeights =
-          Singleton<Anki.Cozmo.ExternalInterface.SetOverrideGameRequestWeights>.Instance.Initialize(true, null, null);
       RobotEngineManager.Instance.SendMessage();
     }
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
@@ -541,18 +531,7 @@ public class OnboardingManager : MonoBehaviour {
   }
   #endregion
 
-  private bool PhaseWantsReactionsDisabled(OnboardingPhases phase) {
-    switch (phase) {
-    case OnboardingPhases.InitialSetup:
-    case OnboardingPhases.NurtureIntro:
-    case OnboardingPhases.FeedIntro:
-    case OnboardingPhases.PlayIntro:
-      return true;
-    }
-    return false;
-  }
-
-  private void GiveStartingInventory() {
+  public void GiveStartingInventory() {
     PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
     Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(Cozmo.UI.GenericRewardsConfig.Instance.SparkID);
     int giveSparksAmount = itemData.StartingAmount;
@@ -601,7 +580,6 @@ public class OnboardingManager : MonoBehaviour {
     OnboardingBaseStage.OnboardingButtonStates showButtonFeed = OnboardingBaseStage.OnboardingButtonStates.Active;
     OnboardingBaseStage.OnboardingButtonStates showButtonPlay = OnboardingBaseStage.OnboardingButtonStates.Active;
     bool showContent = true;
-    bool reactionsEnabled = true;
     bool showDimmer = false;
     List<NeedId> dimmedMeters = new List<NeedId>();
     if (stage != null) {
@@ -610,7 +588,6 @@ public class OnboardingManager : MonoBehaviour {
       showButtonFeed = stage.ButtonStateFeed;
       showButtonPlay = stage.ButtonStatePlay;
       showContent = stage.ActiveMenuContent;
-      reactionsEnabled = stage.ReactionsEnabled;
       showDimmer = stage.DimBackground;
       dimmedMeters = stage.DimNeedsMeters;
     }
@@ -630,22 +607,6 @@ public class OnboardingManager : MonoBehaviour {
       if (_NeedsHubView.MetersWidget != null) {
         _NeedsHubView.MetersWidget.DimNeedMeters(dimmedMeters);
       }
-    }
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      if (reactionsEnabled) {
-        if (_StageDisabledReactionaryBehaviors) {
-          RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId);
-          _StageDisabledReactionaryBehaviors = false;
-        }
-
-      }
-      else {
-        if (!_StageDisabledReactionaryBehaviors) {
-          RobotEngineManager.Instance.CurrentRobot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId);
-          _StageDisabledReactionaryBehaviors = true;
-        }
-      }
-
     }
   }
 

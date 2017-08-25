@@ -7,10 +7,10 @@
     "source_key_paths" : ["/{*}"]
   },
   "item.treat.singular" : {
-    "translation" : "Étincelle"
+    "translation" : "Éclat"
   },
   "item.treat.plural" : {
-    "translation" : "Étincelles"
+    "translation" : "Éclats"
   },
   "item.cube.singular" : {
     "translation" : "Cube"

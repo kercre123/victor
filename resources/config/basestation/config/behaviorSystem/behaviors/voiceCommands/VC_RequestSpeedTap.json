@@ -4,6 +4,7 @@
   "displayNameKey":"behavior.RequestToPlay",
   "requiredUnlockId": "QuickTapGame",
   "use_block" : false,
+  "disable_reactions_early": true,
   
   "zero_block_config": {
     "initial_animName" : "RequestGameSpeedTapInitial0",

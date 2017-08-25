@@ -3,6 +3,7 @@ using Cozmo.UI;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using DG.Tweening;
 
 // If multiple Cozmos are detected, or if the user indicates that the
 // Cozmo displayed on the Enter Password screen is the wrong one, this
@@ -19,6 +20,10 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
 
   [SerializeField]
   private CozmoButton _ContinueButton;
+  private CanvasGroup _ContinueButtonCanvasGroup;
+
+  [SerializeField]
+  private float _ContinueButtonFadeInTime = 1.0f;
 
   [SerializeField]
   private CozmoButton _CancelButton;
@@ -35,13 +40,19 @@ public class AndroidSelectNetwork : AndroidConnectionFlowStage {
 
   private Dictionary<string, AndroidNetworkCell> _CellButtons = new Dictionary<string, AndroidNetworkCell>();
 
-  private void Start() {
+  public void Awake() {
+    _ContinueButtonCanvasGroup = _ContinueButton.GetComponent<CanvasGroup>();
+    _ContinueButtonCanvasGroup.alpha = 0;
+  }
+
+  public void Start() {
     var networks = AndroidConnectionFlow.Instance.CozmoSSIDs;
     AddNetworkCells(networks);
 
     StartCoroutine("UpdateNetworks");
     _ContinueButton.Initialize(HandleContinueButton, "continue_button", "android_select_network");
     _ContinueButton.Interactable = false;
+    _ContinueButtonCanvasGroup.DOFade(1.0f, _ContinueButtonFadeInTime);
 
     _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "close_button", "android_select_network");
 

@@ -3184,7 +3184,7 @@
                             "TextAlignment": 0,
                             "SkinTextOverflow": false,
                             "TextOverflow": 0,
-                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Black SDF.asset",
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
                             "SkinFontSize": false,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
@@ -3858,7 +3858,7 @@
                             "SkinButtonImageArray": true,
                             "ButtonImageArray": [
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
@@ -3874,14 +3874,14 @@
                                     }
                                 },
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
                                         "b": 1.0,
                                         "a": 0.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
                                     "DisabledSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
@@ -4949,7 +4949,7 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 65.0,
+                            "AutoSizingMin": 5.0,
                             "AutoSizingMax": 80.0,
                             "RectTF": {
                                 "AnchoredPosition": {
@@ -10901,8 +10901,8 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 98.0,
-                            "AutoSizingMax": 108.0,
+                            "AutoSizingMin": 80.0,
+                            "AutoSizingMax": 98.0,
                             "RectTF": {
                                 "AnchoredPosition": {
                                     "x": 0.0,
@@ -14037,7 +14037,7 @@
                             "FontResourceKey": "",
                             "SkinFontSize": false,
                             "FontSizeOffset": 0,
-                            "SkinButtonTransition": true,
+                            "SkinButtonTransition": false,
                             "SkinRectTF": false,
                             "SkinShrinkOnClick": false,
                             "ShrinkOnClick": false,
@@ -14069,7 +14069,40 @@
                             "SkinTMPOutlineThickness": false,
                             "TMPOutlineThickness": 0.0,
                             "SkinButtonImageArray": false,
-                            "ButtonImageArray": [],
+                            "ButtonImageArray": [
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
+                                    "PressedSpriteColor": {
+                                        "r": 0.6323529481887817,
+                                        "g": 0.6323529481887817,
+                                        "b": 0.6323529481887817,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.44117647409439089,
+                                        "g": 0.44117647409439089,
+                                        "b": 0.44117647409439089,
+                                        "a": 0.0784313753247261
+                                    }
+                                },
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
+                                    "PressedSpriteColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    }
+                                }
+                            ],
                             "SkinAutoSizing": false,
                             "EnableAutoSizing": false,
                             "AutoSizingMin": 0.0,
@@ -15083,7 +15116,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,
@@ -15280,8 +15313,8 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 60.0,
-                            "AutoSizingMax": 80.0,
+                            "AutoSizingMin": 50.0,
+                            "AutoSizingMax": 70.0,
                             "RectTF": {
                                 "AnchoredPosition": {
                                     "x": 0.0,

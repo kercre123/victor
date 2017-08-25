@@ -33,7 +33,7 @@ if (gEnableSdkConnection) {
                 if (xhr.readyState == XMLHttpRequest.DONE) {
                     // Handle each response in turn?
                     if (xhr.responseText != "OK") {
-                        eval(xhr.responseText)
+                        eval(xhr.responseText);
                     }
                 }
             }

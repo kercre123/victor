@@ -88,6 +88,14 @@ class FileListGenerator(object):
             #UtilLog.debug("ignoring file: %s" % fileName)
             continue
 
+          # Test for excludes against (file path relative to project root)
+          # This should correctly match against excluded path components (e.g. "engine/tools/*")
+          relFileName = os.path.join(os.path.relpath(dirPath, self.options.projectRoot), fileName)
+          is_ignored = any((exclude_re.match(relFileName) is not None) for exclude_re in re_exclude_patterns)
+          if is_ignored:
+            # UtilLog.debug("ignoring file: %s" % relFileName)
+            continue
+
           fullFilePath = os.path.join(relativePath, fileName)
 
           # look through 'knownFiles'

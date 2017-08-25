@@ -22,7 +22,7 @@
         this.x = x;
         this.y = y;
     }
- 
+
     // Starting point for one script to appear on phones and tablets.
     window.getScriptStartingPoint = function() {
         var point = null;
@@ -112,7 +112,7 @@
         }
 
         if (unityIsWaitingForCallback) {
-            window.Unity.call('{"requestId": "-1", "command": "cozmoSaveOnQuitCompleted"}');
+            window.Unity.call({requestId: -1, command: "cozmoSaveOnQuitCompleted"});
         }
     }
 
@@ -144,7 +144,7 @@
         if (window.cozmoProjectUUID == null) {
             window.cozmoProjectUUID = '';
         }
-        
+
         if (window.cozmoProjectUUID != '' && window.previouslySavedProjectXML == xmlText) {
             // No changes to save
             window.saveProjectCompleted(unityIsWaitingForCallback);
@@ -165,6 +165,11 @@
 
     window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
+
+        // TODO: Special case to fix localized text for intruder sample project. Rip out and revisit post-2.0.0.
+        if (isCozmoSampleProject && projectUUID == "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62") {
+            projectXML = window.replaceSampleProjectTextForIntruder(projectXML);
+        }
 
         // Remove all existing scripts from workspace
         Scratch.workspace.clear();
@@ -193,6 +198,12 @@
 
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
         setText('#app-title', $t(projectName));
+
+        // if the title overflows the container, reduce the font size to make it fit
+        var title = document.querySelector('#app-title');
+        if (title.scrollWidth > title.clientWidth) {
+          title.classList.add('long-title');
+        }
 
         var autosavedText = window.$t('codeLab.SaveProject.Autosaved');
         if (isSampleProject) {
@@ -226,5 +237,11 @@
     window.openBlocklyXML = function(xml) {
         var domXML = Blockly.Xml.textToDom(xml);
         Blockly.Xml.domToWorkspace(domXML, Scratch.workspace);
+    }
+
+    // TODO Replace this method used for the very particular case of replacing intruder localized text in sample project.
+    window.replaceSampleProjectTextForIntruder = function(projectXML) {
+        var intruderTranslation = window.$t('codeLabChallenge_intruder.CozmoSaysBlock.DefaultText');
+        return projectXML.replace("Intruder!", intruderTranslation);
     }
 })();

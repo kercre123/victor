@@ -174,6 +174,7 @@ namespace Cozmo.Settings {
         RobotEngineManager.Instance.AddCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
 
         RobotEngineManager.Instance.CurrentRobot.WipeRobotGameData();
+        // This button actually means "erase everything" so we continue to restart everything in HandleEraseRobotStatus
       }
     }
 
@@ -191,6 +192,8 @@ namespace Cozmo.Settings {
           System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
           data.Pack(ms);
           RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
+
+          DataPersistence.DataPersistenceManager.Instance.ResetSaveData();
 
           _EraseCozmoModalInstance.CloseDialog();
           PauseManager.Instance.StartPlayerInducedSleep(false);

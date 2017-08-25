@@ -5,6 +5,8 @@
 *.swp
 matlab.mat
 
+_build*/
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # build folders
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,6 +81,12 @@ simulator/controllers/webotsCtrlViz/lib
 *.mode2v3
 *.perspectivev3
 *.moved-aside
+
+# gradle
+.gradle
+
+# Android Studio
+*.iml
 
 # Xcode ignores
 *.pbxuser
@@ -233,9 +241,8 @@ TAGS
 #symlinks
 resources/config/basestation/firmware
 resources/config/basestation/old_firmware
+resources/config/basestation/firmware_*
 
-# VSCode
-.vscode
 # Misc
 *.bak
 # *.orig ## Going to try NOT ignoring these for awhile: if you don't need them, just delete them instead of hiding them

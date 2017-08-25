@@ -91,13 +91,15 @@ button:focus {
 .project .project-title {
   position: absolute;
   bottom: 0;
-  display: flex;
-  align-items: flex-end;
   width: 100%;
   padding: 0 7% 4% 7%;
   color: #fff;
   line-height: 1.2em;
 }
+.project .project-title.long-title {
+  font-size: .8em;
+}
+
 .project .project-type {
   position: absolute;
   top: 0;
@@ -183,7 +185,7 @@ button:focus {
   bottom: 0;
   width: 100%;
   height: 15vh;
-  padding: 0 3vw 2.5vh 3vw;
+  padding: 0 0 2.5vh 0;
   text-align: right;
   background-color: #575a5b;
   border-top: 1px solid #989899;
@@ -192,16 +194,6 @@ button:focus {
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
-}
-
-#projects .ft #attribution-label {
-  margin: 0 auto 0 0;
-  padding: 2vh 1.5vh 1.5vh 1.5vh;
-  font-family: 'Avenir Next';
-  text-align: left;
-  font-size: 4vh;
-  color: #989899;
-  margin-top: .2em;
 }
 
 #tutorial-link {
@@ -215,6 +207,8 @@ button:focus {
   padding-top: .1em;
   height: 100%;
   color: #1fadda;
+
+  display: none;
 }
 
 #tutorial-link #tutorial-label {
@@ -229,6 +223,36 @@ button:focus {
   margin-left: .9em;
 }
 
+#tabs {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  align-content: center;
+}
+#tabs .tab {
+  display: inline-block;
+  font-size: 4vh;
+  text-align: center;
+  flex: 1 1 auto;
+  color: #fff;
+  text-decoration: none;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+#tabs .tab.tab-selected {
+  background-color: #989899;
+  color: #525253;
+}
+#tabs .tab:nth-of-type(even) {
+  border: 1px solid #989899;
+  border-width: 0 1px;
+}
+
 
 
 .button-plain {border: 0; background-color: transparent;}
@@ -238,10 +262,6 @@ button:focus {
 @media screen and (min-height: 416px) {
   .project {
     font-size: 3.5vh;
-  }
-
-  #projects .ft #attribution-label {
-    font-size: 3vh;
   }
 }
 

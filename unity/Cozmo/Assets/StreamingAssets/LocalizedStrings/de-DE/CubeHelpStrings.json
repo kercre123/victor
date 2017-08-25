@@ -13,7 +13,7 @@
     "translation" : "Tippe auf <b><color=#d3d3d3>WEITER</color></b>, falls das Problem weiterhin besteht."
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "Wähle <b>EINSTELLUNGEN</b> aus.\u000aTippe anschließend auf <b>CUBES AKTUALISIEREN</b>."
+    "translation" : "Wähle <b>EINSTELLUNGEN</b> aus."
   },
   "cubeHelpStrings.Instructions.Slide1" : {
     "translation" : "Wenn nötig solltest du die Batterie des Cube wechseln."
@@ -47,5 +47,14 @@
   },
   "cubeHelpStrings.Instructions.FeedPopup.Body" : {
     "translation" : "Damit er nicht wieder Hunger bekommt, kannst du die folgenden Schritte ausführen, sodass er seine Cubes erkennt."
+  },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title" : {
+    "translation" : ""
+  },
+  "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body" : {
+    "translation" : "Cozmo braucht keinen Snack, da er genügend Energie zum Spielen hat.\u000a\u000aDamit er nicht wieder Hunger bekommt, kannst du die folgenden Schritte ausführen, sodass er seine Cubes erkennt."
+  },
+  "cubeHelpStrings.Instructions.SlideA2Copy" : {
+    "translation" : "Tippe anschließend auf <b>CUBES AKTUALISIEREN</b>."
   }
 }

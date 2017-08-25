@@ -869,7 +869,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1011,7 +1011,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1144,8 +1144,8 @@ MonoBehaviour:
   _ImageBurst: {fileID: 114091869877188458}
   _ConstantParticles: {fileID: 198862202336623652}
   _StartBurstParticles: {fileID: 198995598399127996}
-  _MinParticles: 02000000050000000a0000000f0000001400000014000000
-  _MaxParticles: 0a0000003200000050000000c80000002c010000f4010000
+  _MinParticles: 0100000002000000050000000a0000000f00000014000000
+  _MaxParticles: 050000000a0000003200000050000000c80000002c010000
   _MaskFillMin: 0.003
   _MaskFillMax: 0.497
   _GlowFillMin: 0.003
@@ -1401,7 +1401,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.897}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1648,7 +1648,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1826,8 +1826,8 @@ MonoBehaviour:
   _ImageBurst: {fileID: 114400907671066898}
   _ConstantParticles: {fileID: 198640156744469828}
   _StartBurstParticles: {fileID: 198914241695959412}
-  _MinParticles: 02000000050000000a0000000f0000001400000014000000
-  _MaxParticles: 0a0000003200000050000000c80000002c010000f4010000
+  _MinParticles: 0100000002000000050000000a0000000f00000014000000
+  _MaxParticles: 050000000a0000003200000050000000c80000002c010000
   _MaskFillMin: 0.003
   _MaskFillMax: 0.497
   _GlowFillMin: 0.003
@@ -2025,8 +2025,8 @@ MonoBehaviour:
   _ImageBurst: {fileID: 114285735519477838}
   _ConstantParticles: {fileID: 198528286085198086}
   _StartBurstParticles: {fileID: 198137091656767232}
-  _MinParticles: 02000000050000000a0000000f0000001400000014000000
-  _MaxParticles: 0a0000003200000050000000c80000002c010000f4010000
+  _MinParticles: 0100000002000000050000000a0000000f00000014000000
+  _MaxParticles: 050000000a0000003200000050000000c80000002c010000
   _MaskFillMin: 0.05
   _MaskFillMax: 0.95
   _GlowFillMin: 0.05
@@ -2143,7 +2143,7 @@ ParticleSystem:
   moveWithTransform: 1
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: -337736502
+  randomSeed: 1455118255
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -2481,7 +2481,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -5292,7 +5292,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -7766,7 +7766,7 @@ ParticleSystem:
   moveWithTransform: 1
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: -861729995
+  randomSeed: -1903964015
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -7913,7 +7913,7 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 0.147}
     startSize:
       minMaxState: 3
-      scalar: 30
+      scalar: 20
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -7931,7 +7931,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 0.25
+          value: 0.375
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -8110,7 +8110,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -10584,7 +10584,7 @@ ParticleSystem:
   moveWithTransform: 1
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: 294463205
+  randomSeed: -43860086
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -10731,7 +10731,7 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 0.147}
     startSize:
       minMaxState: 3
-      scalar: 30
+      scalar: 20
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -10749,7 +10749,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 0.25
+          value: 0.375
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -10928,7 +10928,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -13734,7 +13734,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -16355,7 +16355,7 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 0.147}
     startSize:
       minMaxState: 3
-      scalar: 30
+      scalar: 20
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -16373,7 +16373,7 @@ ParticleSystem:
         m_Curve:
         - serializedVersion: 2
           time: 0
-          value: 0.25
+          value: 0.375
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -16552,7 +16552,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -19358,7 +19358,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -21832,7 +21832,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: 1001915597
+  randomSeed: 1651006015
   InitialModule:
     serializedVersion: 3
     enabled: 1
@@ -22152,7 +22152,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -25065,7 +25065,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 10
     size3D: 0
     rotation3D: 0
     gravityModifier:

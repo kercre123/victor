@@ -7,22 +7,22 @@
     "source_key_paths" : ["/{*}"]
   },
   "needs.NeedsHubView.Button.Activities" : {
-    "translation" : "Entdecken"
+    "translation" : "ENTDECKEN"
   },
   "needs.NeedsHubView.Button.Feed" : {
-    "translation" : "Füttern"
+    "translation" : "FÜTTERN"
   },
   "needs.NeedsHubView.Button.Repair" : {
-    "translation" : "Tuning"
+    "translation" : "TUNING"
   },
   "needs.NeedsHubView.Button.Play" : {
-    "translation" : "Spielen"
+    "translation" : "SPIELEN"
   },
   "needs.NeedsEnergyModal.Title" : {
     "translation" : "Cozmo füttern"
   },
   "needs.NeedsEnergyModal.FeedingSummary" : {
-    "translation" : "Cozmo musst gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
+    "translation" : "Cozmo muss gefüttert werden, damit er genügend Kraft hat und fröhlich bleibt."
   },
   "needs.NeedsEnergyModal.Instruction1" : {
     "translation" : "Nimm einen blau blinkenden Cube."
@@ -40,7 +40,7 @@
     "translation" : "Cozmo kann nicht gefüttert werden, da er seine Cubes nicht hören kann."
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt.Button" : {
-    "translation" : "VERBINDUNG MIT CUBES WIEDERHERSTELLEN"
+    "translation" : "CUBES WIEDER VERBINDEN"
   },
   "needs.NeedsRepairModal.Title" : {
     "translation" : "Cozmo-Tuning"
@@ -61,10 +61,10 @@
     "translation" : "Die Laufwerke wurden ausgerichtet."
   },
   "needs.NeedsRepairModal.LiftDamageNotice" : {
-    "translation" : "Die Krangabel muss kalibriert werden."
+    "translation" : "Der Hebearm muss kalibriert werden."
   },
   "needs.NeedsRepairModal.LiftRepairedNotice" : {
-    "translation" : "Die Krangabel wurde kalibriert."
+    "translation" : "Der Hebearm wurde kalibriert."
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
     "translation" : "Tippe die Teile an, die du tunen möchtest."
@@ -76,7 +76,7 @@
     "translation" : "Das Cozmo-Tuning ist abgeschlossen!"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "Senden"
+    "translation" : "SENDEN"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
     "translation" : "COZMO SCANNEN"
@@ -85,7 +85,7 @@
     "translation" : "Kopf wird justiert..."
   },
   "needs.NeedsRepairModal.AligningLift" : {
-    "translation" : "Krangabel wird kalibriert..."
+    "translation" : "Hebearm wird kalibriert..."
   },
   "needs.NeedsRepairModal.AligningTreads" : {
     "translation" : "Laufwerke werden ausgerichtet..."
@@ -154,10 +154,10 @@
     "translation" : "Cozmo hat gerade {0} Sparks verdient, indem er trainiert hat!"
   },
   "needs.FreeplaySparksReward.GuardDogWin" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo hat dir {0} Sparks gegeben, weil du mit ihm Cube-Bewachen gespielt hast!"
   },
   "needs.FreeplaySparksReward.GuardDogLose" : {
-    "translation" : "Cozmo gave you {0} Sparks for playing Cube Guard with him!"
+    "translation" : "Cozmo hat dir {0} Sparks gegeben, weil du mit ihm Cube-Bewachen gespielt hast!"
   },
   "needs.FeedingOverfedHiccups.Title" : {
     "translation" : "Cozmo hat Schluckauf."
@@ -166,15 +166,15 @@
     "translation" : "Cozmo hat zu viel gegessen. Jetzt hat er Schluckauf!"
   },
   "needs.severeAlert.energy.title" : {
-    "translation" : "Cozmo Really Needs Feeding"
+    "translation" : "Cozmo muss dringend gefüttert werden."
   },
   "needs.severeAlert.energy.description" : {
-    "translation" : "You'll need to feed Cozmo before continuing."
+    "translation" : "Du musst Cozmo füttern, bevor du weitermachen kannst."
   },
   "needs.severeAlert.repair.title" : {
-    "translation" : "Cozmo Really Needs a Tune-Up"
+    "translation" : "Cozmo benötigt dringend ein Tuning."
   },
   "needs.severeAlert.repair.description" : {
-    "translation" : "You'll need to tune up Cozmo before continuing."
+    "translation" : "Du musst ein Tuning für Cozmo durchführen, bevor du weitermachen kannst."
   }
 }

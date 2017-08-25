@@ -1,0 +1,890 @@
+/**
+ * File: robotDataLoader
+ *
+ * Author: baustin
+ * Created: 6/10/16
+ *
+ * Description: Loads and holds static data robots use for initialization
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#include "engine/robotDataLoader.h"
+
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "engine/actions/sayTextAction.h"
+#include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
+#include "engine/animations/animationContainers/cannedAnimationContainer.h"
+#include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
+#include "engine/animations/animationGroup/animationGroupContainer.h"
+#include "engine/animations/animationTransfer.h"
+#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/behaviorSystem/activities/activities/iActivity.h"
+#include "engine/components/cubeLightComponent.h"
+#include "engine/components/bodyLightComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/events/animationTriggerResponsesContainer.h"
+#include "engine/animations/faceAnimationManager.h"
+#include "engine/animations/proceduralFace.h"
+#include "engine/utils/cozmoExperiments.h"
+#include "engine/utils/cozmoFeatureGate.h"
+#include "cozmo_anim_generated.h"
+#include "threadedPrintStressTester.h"
+#include "util/ankiLab/ankiLab.h"
+#include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
+#include "util/dispatchWorker/dispatchWorker.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/logging/logging.h"
+#include "util/math/numericCast.h"
+#include "util/time/universalTime.h"
+#include <json/json.h>
+#include <string>
+#include <sys/stat.h>
+
+namespace {
+
+CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false);
+
+#if REMOTE_CONSOLE_ENABLED
+static Anki::Cozmo::ThreadedPrintStressTester stressTester;
+#endif // REMOTE_CONSOLE_ENABLED
+
+  
+}
+
+namespace Anki {
+namespace Cozmo {
+
+RobotDataLoader::RobotDataLoader(const CozmoContext* context)
+: _context(context)
+, _platform(_context->GetDataPlatform())
+, _cannedAnimations(new CannedAnimationContainer())
+, _cubeLightAnimations(new CubeLightAnimationContainer())
+, _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
+, _animationTriggerResponses(new AnimationTriggerResponsesContainer())
+, _cubeAnimationTriggerResponses(new AnimationTriggerResponsesContainer())
+, _backpackLightAnimations(new BackpackLightAnimationContainer())
+{
+}
+
+RobotDataLoader::~RobotDataLoader()
+{
+  if (_dataLoadingThread.joinable()) {
+    _abortLoad = true;
+    _dataLoadingThread.join();
+  }
+}
+  
+// We report some loading data info so the UI can inform the user. Ratio of time taken per section is approximate,
+// based on recent profiling. Some sections below are called out specifically, the rest makes up the remainder.
+// These should add up to be less than or equal to 1.0!
+static constexpr float _kAnimationsLoadingRatio = 0.7f;
+static constexpr float _kFaceAnimationsLoadingRatio = 0.2f;
+
+void RobotDataLoader::LoadNonConfigData()
+{
+  if (_platform == nullptr) {
+    return;
+  }
+
+  // Uncomment this line to enable the profiling of loading data
+  //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
+
+  ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoadingShouldNotBeOnMainThread", "" );
+  
+  if( kStressTestThreadedPrintsDuringLoad ) {
+    REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
+    CollectAnimFiles();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimations");
+    LoadAnimationsInternal();
+    // The threaded animation loading workers each add to the loading ratio
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
+    LoadAnimationGroups();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
+    LoadCubeLightAnimations();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
+    LoadBackpackLightAnimations();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadFaceAnimations");
+    LoadFaceAnimations();
+    AddToLoadingRatio(_kFaceAnimationsLoadingRatio);
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
+    LoadEmotionEvents();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
+    LoadBehaviors();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadActivities");
+    LoadActivities();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadReactionTriggerMap");
+    LoadReactionTriggerMap();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
+    LoadAnimationTriggerResponses();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
+    LoadCubeAnimationTriggerResponses();
+  }
+  
+  {
+    // Load SayText Action Intent Config
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
+    SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+  }
+
+  // this map doesn't need to be persistent
+  _jsonFiles.clear();
+
+  if( kStressTestThreadedPrintsDuringLoad ) {
+    REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Stop() );
+  }
+  
+  // we're done
+  _loadingCompleteRatio.store(1.0f);
+}
+  
+void RobotDataLoader::AddToLoadingRatio(float delta)
+{
+  // Allows for a thread to repeatedly try to update the loading ratio until it gets access
+  auto current = _loadingCompleteRatio.load();
+  while (!_loadingCompleteRatio.compare_exchange_weak(current, current + delta));
+}
+  
+void RobotDataLoader::CollectAnimFiles()
+{
+  // animations
+  {
+    const std::vector<std::string> paths = {"assets/animations/", "config/basestation/animations/"};
+    for (const auto& path : paths) {
+      WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
+        _jsonFiles[FileType::Animation].push_back(filename);
+      });
+    }
+  }
+  
+  // cube light animations
+  {
+    WalkAnimationDir("config/basestation/lights/cubeLights", _cubeLightAnimFileTimestamps, [this] (const std::string& filename) {
+      _jsonFiles[FileType::CubeLightAnimation].push_back(filename);
+    });
+  }
+  
+  // backpack light animations
+  {
+    WalkAnimationDir("config/basestation/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
+      _jsonFiles[FileType::BackpackLightAnimation].push_back(filename);
+    });
+  }
+
+  // animation groups
+  {
+    WalkAnimationDir("assets/animationGroups/", _groupAnimFileTimestamps, [this] (const std::string& filename) {
+      _jsonFiles[FileType::AnimationGroup].push_back(filename);
+    });
+  }
+
+  // print results
+  {
+    for (const auto& fileListPair : _jsonFiles) {
+      PRINT_CH_INFO("Animations", "RobotDataLoader.CollectAnimFiles.Results", "Found %zu animation files of type %d",
+                    fileListPair.second.size(), (int)fileListPair.first);
+    }
+  }
+}
+
+void RobotDataLoader::LoadAnimations()
+{
+  CollectAnimFiles();
+  LoadAnimationsInternal();
+  _jsonFiles.clear();
+}
+  
+bool RobotDataLoader::IsCustomAnimLoadEnabled() const
+{
+  return (_context->IsInSdkMode() || (ANKI_DEV_CHEATS != 0));
+}
+
+void RobotDataLoader::LoadAnimationsInternal()
+{
+  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+
+  // Disable super-verbose warnings about clipping face parameters in json files
+  // To help find bad/deprecated animations, try removing this.
+  ProceduralFace::EnableClippingWarning(false);
+  
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
+
+  const auto& fileList = _jsonFiles[FileType::Animation];
+  unsigned long size = fileList.size();
+  for (int i = 0; i < size; i++) {
+    myWorker.PushJob(fileList[i]);
+    //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
+  }
+  
+  if (IsCustomAnimLoadEnabled())
+  {
+    _test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
+    if (Util::FileUtils::FileExists(_test_anim)) {
+      myWorker.PushJob(_test_anim);
+      size += 1;
+    }
+  }
+
+  _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
+  myWorker.Process();
+
+  ProceduralFace::EnableClippingWarning(true);
+
+  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  double loadTime = endTime - startTime;
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationsInternal.LoadTime",
+                "Time to load animations = %.2f ms", loadTime);
+
+  auto animNames = _cannedAnimations->GetAnimationNames();
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimations.CannedAnimationsCount",
+                "Total number of canned animations available = %lu", (unsigned long) animNames.size());
+}
+
+void RobotDataLoader::LoadCubeLightAnimations()
+{
+  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadCubeLightAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
+  
+  const auto& fileList = _jsonFiles[FileType::CubeLightAnimation];
+  const auto size = fileList.size();
+  for (int i = 0; i < size; i++) {
+    myWorker.PushJob(fileList[i]);
+  }
+
+  myWorker.Process();
+  
+  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  double loadTime = endTime - startTime;
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadCubeLightAnimations.LoadTime",
+                "Time to load cube light animations = %.2f ms", loadTime);
+}
+
+void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
+{
+  Json::Value animDefs;
+  const bool success = _platform->readAsJson(path.c_str(), animDefs);
+  if (success && !animDefs.empty()) {
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+    _cubeLightAnimations->DefineFromJson(animDefs);
+  }
+}
+
+void RobotDataLoader::LoadBackpackLightAnimations()
+{
+  const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadBackpackLightAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
+  
+  const auto& fileList = _jsonFiles[FileType::BackpackLightAnimation];
+  const auto size = fileList.size();
+  for (int i = 0; i < size; i++) {
+    myWorker.PushJob(fileList[i]);
+  }
+  
+  myWorker.Process();
+  
+  const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  double loadTime = endTime - startTime;
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadBackpackLightAnimations.LoadTime",
+                "Time to load backpack light animations = %.2f ms", loadTime);
+}
+
+void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
+{
+  Json::Value animDefs;
+  const bool success = _platform->readAsJson(path.c_str(), animDefs);
+  if (success && !animDefs.empty()) {
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+    _backpackLightAnimations->DefineFromJson(animDefs);
+  }
+}
+
+void RobotDataLoader::LoadAnimationGroups()
+{
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadAnimationGroupFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
+  const auto& fileList = _jsonFiles[FileType::AnimationGroup];
+  const auto size = fileList.size();
+  for (int i = 0; i < size; i++) {
+    myWorker.PushJob(fileList[i]);
+    //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimationGroups", "loaded anim group %d of %zu", i, size);
+  }
+  myWorker.Process();
+}
+
+void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps, const std::function<void(const std::string&)>& walkFunc)
+{
+  const std::string animationFolder = _platform->pathToResource(Util::Data::Scope::Resources, animationDir);
+  const std::vector<const char*> fileExts = {"json", "bin"};
+  auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, fileExts, true);
+
+  for (const auto& path : filePaths) {
+    struct stat attrib{0};
+    int result = stat(path.c_str(), &attrib);
+    if (result == -1) {
+      PRINT_NAMED_WARNING("RobotDataLoader.WalkAnimationDir", "could not get mtime for %s", path.c_str());
+      continue;
+    }
+    bool loadFile = false;
+    auto mapIt = timestamps.find(path);
+#ifdef __APPLE__  // TODO: COZMO-1057
+    time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
+#else
+    time_t tmpSeconds = attrib.st_mtime;
+#endif
+    if (mapIt == timestamps.end()) {
+      timestamps.insert({path, tmpSeconds});
+      loadFile = true;
+    } else {
+      if (mapIt->second < tmpSeconds) {
+        mapIt->second = tmpSeconds;
+        loadFile = true;
+      }
+    }
+    if (loadFile) {
+      walkFunc(path);
+    }
+  }
+}
+
+void RobotDataLoader::LoadAnimationFile(const std::string& path)
+{
+  if (_abortLoad.load(std::memory_order_relaxed)) {
+    return;
+  }
+
+  ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoader.AnimFileOnMainThread", "" );
+
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingAnimationsFromBinaryOrJson",
+                "Loading animations from %s", path.c_str());
+
+  const bool binFile = Util::FileUtils::FilenameHasSuffix(path.c_str(), "bin");
+
+  if (binFile) {
+
+    // Read the binary file
+    auto binFileContents = Util::FileUtils::ReadFileAsBinary(path);
+    if (binFileContents.size() == 0) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataEmpty", "Found no data in %s", path.c_str());
+      return;
+    }
+    unsigned char *binData = binFileContents.data();
+    if (nullptr == binData) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.BinaryDataNull", "Found no data in %s", path.c_str());
+      return;
+    }
+    auto animClips = CozmoAnim::GetAnimClips(binData);
+    if (nullptr == animClips) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsNull", "Found no animations in %s", path.c_str());
+      return;
+    }
+    auto allClips = animClips->clips();
+    if (nullptr == allClips) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AllClipsNull", "Found no animations in %s", path.c_str());
+      return;
+    }
+    if (allClips->size() == 0) {
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadAnimationFile.AnimClipsEmpty", "Found no animations in %s", path.c_str());
+      return;
+    }
+
+    for (int clipIdx=0; clipIdx < allClips->size(); clipIdx++) {
+      auto animClip = allClips->Get(clipIdx);
+      auto animName = animClip->Name()->c_str();
+      PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingSpecificAnimFromBinary",
+                    "Loading '%s' from %s", animName, path.c_str());
+      std::string strName = animName;
+
+      // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
+      std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+
+      _cannedAnimations->DefineFromFlatBuf(animClip, strName);
+    }
+
+  } else {
+    Json::Value animDefs;
+    // add json filename and callback (to perform load) here?
+    const bool success = _platform->readAsJson(path.c_str(), animDefs);
+    std::string animationId;
+    if (success && !animDefs.empty()) {
+      std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+      _cannedAnimations->DefineFromJson(animDefs, animationId);
+
+      // TODO: This warning is useful, but it causes a crash when we use the current mechanism for
+      //       animators to preview their work in Maya on the robot. We plan on changing that
+      //       preview-on-robot to use the SDK, so this warning should be tested and potentially
+      //       enabled after that. See COZMO-9251 for some related info (nishkar, 2/2/2017).
+      //
+      //if(path.find(animationId) == std::string::npos) {
+      //  PRINT_NAMED_WARNING("RobotDataLoader.LoadAnimationFile.AnimationNameMismatch",
+      //                      "Animation name '%s' does not seem to match filename '%s'",
+      //                      animationId.c_str(), path.c_str());
+      //}
+
+    }
+  }
+  AddToLoadingRatio(_perAnimationLoadingRatio);
+}
+
+void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
+{
+  if (_abortLoad.load(std::memory_order_relaxed)) {
+    return;
+  }
+  Json::Value animGroupDef;
+  const bool success = _platform->readAsJson(path, animGroupDef);
+  if (success && !animGroupDef.empty()) {
+
+    std::string fullName(path);
+
+    // remove path
+    auto slashIndex = fullName.find_last_of("/");
+    std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
+    // remove extension
+    auto dotIndex = jsonName.find_last_of(".");
+    std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+
+    PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
+                  "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
+
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
+    DEV_ASSERT(nullptr != _cannedAnimations, "RobotDataLoader.LoadAnimationGroupFile.NullCannedAnimations");
+    _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
+  }
+}
+
+void RobotDataLoader::LoadEmotionEvents()
+{
+  const std::string emotionEventFolder = _platform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/emotionevents/");
+  auto eventFiles = Util::FileUtils::FilesInDirectory(emotionEventFolder, true, ".json", false);
+  for (const std::string& filename : eventFiles) {
+    Json::Value eventJson;
+    const bool success = _platform->readAsJson(filename, eventJson);
+    if (success && !eventJson.empty())
+    {
+      _emotionEvents.emplace(std::piecewise_construct, std::forward_as_tuple(filename), std::forward_as_tuple(std::move(eventJson)));
+      PRINT_NAMED_DEBUG("RobotDataLoader.EmotionEvents", "Loaded '%s'", filename.c_str());
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("RobotDataLoader.EmotionEvents", "Failed to read '%s'", filename.c_str());
+    }
+  }
+}
+
+void RobotDataLoader::LoadBehaviors()
+{
+  const std::string path =  "config/basestation/config/behaviorSystem/behaviors/";
+
+  const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+  auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
+  for (const auto& filename : behaviorJsonFiles)
+  {
+    Json::Value behaviorJson;
+    const bool success = _platform->readAsJson(filename, behaviorJson);
+    if (success && !behaviorJson.empty())
+    {
+      BehaviorID behaviorID = IBehavior::ExtractBehaviorIDFromConfig(behaviorJson, filename);
+      auto result = _behaviors.emplace(std::piecewise_construct,
+                                       std::forward_as_tuple(behaviorID),
+                                       std::forward_as_tuple(std::move(behaviorJson)));
+      
+      DEV_ASSERT_MSG(result.second,
+                     "RobotDataLoader.LoadBehaviors.FailedEmplace",
+                     "Failed to insert BehaviorID %s - make sure all behaviors have unique IDs",
+                     BehaviorIDToString(behaviorID));
+      
+    }
+    else if (!success)
+    {
+      PRINT_NAMED_WARNING("RobotDataLoader.Behavior", "Failed to read '%s'", filename.c_str());
+    }
+  }
+}
+  
+void RobotDataLoader::LoadActivities()
+{
+  const std::string path =  "config/basestation/config/behaviorSystem/activities/";
+  
+  const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+  auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
+  for (const auto& filename : activityJsonFiles)
+  {
+    Json::Value activityJson;
+    const bool success = _platform->readAsJson(filename, activityJson);
+    if (success && !activityJson.empty())
+    {
+      ActivityID activityID = IActivity::ExtractActivityIDFromConfig(activityJson);
+      
+      auto result = _activities.emplace(std::piecewise_construct,
+                                        std::forward_as_tuple(activityID),
+                                        std::forward_as_tuple(std::move(activityJson)));
+      DEV_ASSERT_MSG(result.second,
+                     "RobotDataLoader.LoadActivity.FailedEmplace",
+                     "Failed to insert ActivityID %s - make sure all activities have unique IDs",
+                     ActivityIDToString(activityID));
+    }
+    else if (!success)
+    {
+      PRINT_NAMED_WARNING("RobotDataLoader.Activity", "Failed to read '%s'", filename.c_str());
+    }
+  }
+}
+
+
+void RobotDataLoader::LoadVoiceCommandConfigs()
+{
+#if THF_FUNCTIONALITY
+  // Configuration for voice command component 
+  {
+    std::string jsonFilename = "assets/voiceCommand/voiceCommand_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
+                        "Voice Command Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+      _voiceCommandConfig.clear();
+    }
+  }
+#endif
+  
+  // Configuration for "lets play" game selection
+  {
+    std::string jsonFilename = "config/basestation/config/game_request_weights.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _gameRequestWeights);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
+                        "Lets play Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+      _gameRequestWeights.clear();
+    }
+  }
+  
+  // Configuration for "do a trick" spark selection
+  {
+    std::string jsonFilename = "config/basestation/config/voiceCommands/do_a_trick_weights.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _doATrickWeights);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DoATrickWeightsConfigFailed",
+                        "Do a trick Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+      _doATrickWeights.clear();
+    }
+  }
+}
+
+
+void RobotDataLoader::LoadReactionTriggerMap()
+{
+  const std::string filename = "config/basestation/config/behaviorSystem/reactionTrigger_behavior_map.json";
+
+  Json::Value reactionJSON;
+  const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
+  if (!success)
+  {
+    PRINT_NAMED_ERROR("RobotDataLoader.ReactionTriggerMap", "Failed to read '%s'", filename.c_str());
+  }
+}
+
+void RobotDataLoader::LoadFaceAnimations()
+{
+  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
+  if (IsCustomAnimLoadEnabled())
+  {
+    FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
+  }
+}
+
+void RobotDataLoader::LoadAnimationTriggerResponses()
+{
+  _animationTriggerResponses->Load(_platform, "assets/animationGroupMaps");
+}
+
+void RobotDataLoader::LoadCubeAnimationTriggerResponses()
+{
+  _cubeAnimationTriggerResponses->Load(_platform, "assets/cubeAnimationGroupMaps");
+}
+
+void RobotDataLoader::LoadRobotConfigs()
+{
+  if (_platform == nullptr) {
+    return;
+  }
+  
+  ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadRobotConfigs");
+  // mood config
+  {
+    static const std::string jsonFilename = "config/basestation/config/mood_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotMoodConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.MoodConfigJsonNotFound",
+                        "Mood Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // activities config
+  {
+    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/activities_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
+                        "Behavior Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+      _robotActivitiesConfig.clear();
+    }
+  }
+  
+  // victor behavior systems config
+  {
+    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/behavior_system_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _behaviorSystemConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.BehaviorSystemJsonFailed",
+                        "Behavior Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+      _behaviorSystemConfig.clear();
+    }
+  }
+
+  // Workout config
+  {
+    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/workout_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
+                        "Workout Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+      _robotWorkoutConfig.clear();
+    }
+  }
+
+  // vision config
+  {
+    static const std::string jsonFilename = "config/basestation/config/vision_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotVisionConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.VisionConfigJsonNotFound",
+                        "Vision Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+  
+  // Voice Command config
+  {
+    LoadVoiceCommandConfigs();
+  }
+  
+  // needs system config
+  {
+    static const std::string jsonFilename = "config/basestation/config/needs_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.NeedsConfigJsonNotFound",
+                        "Needs System Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+  
+  // needs level (star rewards) config
+  {
+    static const std::string jsonFilename = "config/basestation/config/needs_level_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.StarsConfigJsonNotFound",
+                        "Needs Level (star rewards) Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs system actions config
+  {
+    static const std::string jsonFilename = "config/basestation/config/needs_action_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.ActionConfigJsonNotFound",
+                        "Needs System Action Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs system decay config
+  {
+    static const std::string jsonFilename = "config/basestation/config/needs_decay_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
+                        "Needs System Decay Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs "handlers" config (e.g. eye procedural glitches for low repair)
+  {
+    static const std::string jsonFilename = "config/basestation/config/needs_handlers_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsHandlersConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.NeedsHandlersConfigJsonNotFound",
+                        "Needs System Handlers Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+    
+  // local notifications config
+  {
+    static const std::string jsonFilename = "config/basestation/config/local_notification_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _localNotificationConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.LocalNotificationConfigJsonNotFound",
+                        "Local notification Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+  
+  // DAS event config
+  {
+    static const std::string jsonFilename = "config/basestation/config/das_event_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _dasEventConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DasEventConfigJsonNotFound",
+                        "DAS Event Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // Text-to-speech config
+  {
+    static const std::string jsonFilename = "config/basestation/config/tts_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
+                        "Text-to-speech config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  
+  // feature gate
+  {
+    const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/features.json")};
+    const std::string fileContents{Util::FileUtils::ReadFile(filename)};
+    _context->GetFeatureGate()->Init(fileContents);
+  }
+  
+  // A/B testing definition
+  {
+    const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/experiments.json")};
+    const std::string fileContents{Util::FileUtils::ReadFile(filename)};
+    _context->GetExperiments()->GetAnkiLab().Load(fileContents);
+  }
+
+  // Inventory config
+  {
+    static const std::string jsonFilename = "config/basestation/config/inventory_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _inventoryConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.InventoryConfigNotFound",
+                        "Inventory Config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+}
+
+bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
+{
+  loadingCompleteRatio_out = _loadingCompleteRatio.load();
+  
+  if (_isNonConfigDataLoaded)
+  {
+    return true;
+  }
+  
+  // loading hasn't started
+  if (!_dataLoadingThread.joinable())
+  {
+    // start loading
+    _dataLoadingThread = std::thread(&RobotDataLoader::LoadNonConfigData, this);
+    return false;
+  }
+  
+  // loading has started but isn't complete
+  if (loadingCompleteRatio_out < 1.0f)
+  {
+    return false;
+  }
+  
+  // loading is now done so lets clean up
+  _dataLoadingThread.join();
+  _dataLoadingThread = std::thread();
+  _isNonConfigDataLoaded = true;
+  
+  return true;
+}
+
+}
+}

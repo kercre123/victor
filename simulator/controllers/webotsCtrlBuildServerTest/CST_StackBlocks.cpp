@@ -10,10 +10,10 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 
 namespace Anki {
@@ -79,7 +79,6 @@ namespace Anki {
                                                 GetNumObjectsInFamily(ObjectFamily::LightCube) == 1)
           {
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 1;
             
@@ -105,7 +104,6 @@ namespace Anki {
                                                 GetCarryingObjectID() == _topCube)
           {
             ExternalInterface::QueueCompoundAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 2;
             m.parallel = false;

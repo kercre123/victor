@@ -61,7 +61,7 @@ namespace Cozmo.BlockPool {
       _BlockPoolTracker.OnBlockDataUpdated += HandleBlockDataUpdated;
       _BlockPoolTracker.OnBlockDataUnavailable += HandleBlockDataUnavailable;
       _BlockPoolTracker.OnBlockDataConnectionChanged += HandleBlockDataConnectionChanged;
-      _BlockPoolTracker.SendAvailableObjects(true, (byte)RobotEngineManager.Instance.CurrentRobotID);
+			_BlockPoolTracker.SendAvailableObjects(true);
 
       _FilterInput.text = _DefaultRSSIFilter.ToString();
 
@@ -81,7 +81,7 @@ namespace Cozmo.BlockPool {
         _BlockPoolTracker.OnBlockDataConnectionChanged -= HandleBlockDataConnectionChanged;
 
         if (robot != null) {
-          _BlockPoolTracker.SendAvailableObjects(false, (byte)RobotEngineManager.Instance.CurrentRobotID);
+          _BlockPoolTracker.SendAvailableObjects(false);
         }
       }
 

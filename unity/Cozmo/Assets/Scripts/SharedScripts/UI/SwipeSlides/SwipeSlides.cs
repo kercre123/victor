@@ -26,11 +26,12 @@ public class SwipeSlides : MonoBehaviour {
   private SwipePageIndicator _PageIndicatorPrefab;
   private SwipePageIndicator _PageIndicatorInstance;
 
-  //private float _ThresholdSpeed;
-  //private Dictionary<int, TouchInfo> _StartTouchInfo = new Dictionary<int, TouchInfo>();
+  [SerializeField]
+  private bool _CacheSlides = true;
 
   private int _CurrentIndex = 0;
   private bool _Transitioning = false;
+  private bool _WantsInitialization = true;
   private Vector3 _StartingPosition;
 
   private GameObject _SwipeContainerMask;
@@ -38,22 +39,33 @@ public class SwipeSlides : MonoBehaviour {
 
   private RectTransform _RectTransform;
 
+  public System.Action<GameObject, int> OnSlideCreated;
+
   private void Start() {
-    if (_SlidePrefabs.Length > 0) {
+    if (_SlidePrefabs.Length > 0 && _WantsInitialization) {
       Initialize(_SlidePrefabs);
     }
   }
 
   public void Initialize(GameObject[] slidePrefabs) {
+    _WantsInitialization = false;
     _RectTransform = GetComponent<RectTransform>();
+    if (_SlidePrefabs.Length <= 0) {
+      _SlidePrefabs = slidePrefabs;
+    }
 
-    //_ThresholdSpeed = GetComponent<RectTransform>().rect.width * 0.5f;
-
-    for (int i = 0; i < slidePrefabs.Length; ++i) {
-      GameObject slideInstance = GameObject.Instantiate(slidePrefabs[i]);
-      slideInstance.transform.SetParent(_SwipeContainer, false);
-      slideInstance.transform.localPosition = new Vector3(i * GetComponent<RectTransform>().rect.width, slideInstance.transform.localPosition.y, slideInstance.transform.localPosition.z);
-      _SlideInstances.Add(slideInstance);
+    // Fill in with defaults so can fill in at correct index.
+    _SlideInstances = new List<GameObject>(_SlidePrefabs.Length);
+    for (int i = 0; i < _SlidePrefabs.Length; ++i) {
+      _SlideInstances.Add(null);
+    }
+    if (_CacheSlides) {
+      for (int i = 0; i < _SlidePrefabs.Length; ++i) {
+        CreateSlide(i);
+      }
+    }
+    else {
+      CreateSlide(0);
     }
     _StartingPosition = _SwipeContainer.localPosition;
 
@@ -65,6 +77,21 @@ public class SwipeSlides : MonoBehaviour {
     _PageIndicatorInstance.SetCurrentPage(_CurrentIndex);
     _PageIndicatorInstance.OnNextButton += TransitionRight;
     _PageIndicatorInstance.OnBackButton += TransitionLeft;
+
+    // Makes sure everything is not active and hidden.
+    // huge perf boost on low end phones because it still counts as a triangle even when masked
+    TransitionDone();
+  }
+
+  private GameObject CreateSlide(int slideIndex) {
+    GameObject slideInstance = GameObject.Instantiate(_SlidePrefabs[slideIndex]);
+    slideInstance.transform.SetParent(_SwipeContainer, false);
+    slideInstance.transform.localPosition = new Vector3(slideIndex * _RectTransform.rect.width, slideInstance.transform.localPosition.y, slideInstance.transform.localPosition.z);
+    _SlideInstances[slideIndex] = slideInstance;
+    if (OnSlideCreated != null) {
+      OnSlideCreated(slideInstance, slideIndex);
+    }
+    return slideInstance;
   }
 
   public GameObject GetSlideInstanceAt(int index) {
@@ -85,6 +112,13 @@ public class SwipeSlides : MonoBehaviour {
     }
     _Transitioning = true;
 
+    // Create slides
+    if (_SlideInstances[index] != null) {
+      _SlideInstances[index].SetActive(true);
+    }
+    else {
+      CreateSlide(index);
+    }
     Vector3 unitsToMove = _StartingPosition - Vector3.right * _RectTransform.rect.width * index;
     _SwipeTween = _SwipeContainer.DOLocalMove(unitsToMove,
                                               UIDefaultTransitionSettings.Instance.SwipeDurationSeconds)
@@ -95,8 +129,20 @@ public class SwipeSlides : MonoBehaviour {
   private void TransitionDone() {
     _Transitioning = false;
     _PageIndicatorInstance.SetCurrentPage(_CurrentIndex);
-  }
 
+    for (int i = 0; i < _SlideInstances.Count; ++i) {
+      if (_SlideInstances[i] != null) {
+        // Destroy previous when not caching....
+        if (!_CacheSlides && i != _CurrentIndex) {
+          GameObject.Destroy(_SlideInstances[i]);
+          _SlideInstances[i] = null;
+        }
+        else {
+          _SlideInstances[i].SetActive(i == _CurrentIndex);
+        }
+      }
+    }
+  }
   private void TransitionLeft() {
     if (_CurrentIndex <= 0 || _Transitioning) {
       return;
@@ -123,33 +169,5 @@ public class SwipeSlides : MonoBehaviour {
       _SwipeTween = null;
     }
   }
-
-  // NOTE: needs class to inherit from IPointerDownhandler etc.
-  /*public void OnPointerDown(PointerEventData eventData) {
-    _StartTouchInfo[eventData.pointerId] = new TouchInfo(eventData.position, Time.time);
-  }
-
-  public void OnPointerUp(PointerEventData eventData) {
-    float horizontalSpeed = ComputeHorizontalSpeed(eventData);
-    if (Mathf.Abs(horizontalSpeed) > _ThresholdSpeed) {
-      if (horizontalSpeed > 0.0f) {
-        TransitionLeft();
-      }
-      else {
-        TransitionRight();
-      }
-    }
-  }
-
-  private float ComputeHorizontalSpeed(PointerEventData eventData) {
-    TouchInfo startTouch;
-    if (_StartTouchInfo.TryGetValue(eventData.pointerId, out startTouch)) {
-      return (eventData.position.x - startTouch._Position.x) / (Time.time - startTouch._Time);
-    }
-    else {
-      DAS.Warn("SwipeSlides.ComputeVelocity", "No start touch found.");
-      return 0f;
-    }
-  }*/
 
 }

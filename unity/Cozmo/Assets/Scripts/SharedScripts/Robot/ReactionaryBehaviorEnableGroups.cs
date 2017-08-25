@@ -8,9 +8,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
   public static string kDroneModeDriveId = "drone_mode_driving";
   public static string kDroneModeIdleId = "drone_mode_idle";
   public static string kSpeedTapRoundEndId = "speed_tap_roundend";
-  public static string kOnboardingHomeId = "onboarding_home";
   public static string kOnboardingUpdateStageId = "onboarding_update_stage";
-  public static string kOnboardingCubeStageId = "onboarding_cube_stage";
+  public static string kOnboardingBigReactionsOffId = "onboarding_big_reactions_off";
 
   // triggers disabled during wake up sequence.
   public static Anki.Cozmo.AllTriggersConsidered kWakeupTriggers = new Anki.Cozmo.AllTriggersConsidered(
@@ -56,6 +55,32 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnBack: false,
     robotOnFace: false,
     robotOnSide: false,
+    robotShaken: false,
+    sparked: true,
+    unexpectedMovement: false,
+    vc: true
+  );
+
+  // in repair we also disable certain reactions when in severe repair state: (to be consistent with freeplay)
+  //    robot on back, side, face, robotPickedUp, returnedToTreads
+  public static Anki.Cozmo.AllTriggersConsidered kRepairGameSevereTriggers = new Anki.Cozmo.AllTriggersConsidered(
+    cliffDetected: true,
+    cubeMoved: true,
+    facePositionUpdated: true,
+    fistBump: true,
+    frustration: true,
+    hiccup: true,
+    motorCalibration: true,
+    noPreDockPoses: true,
+    objectPositionUpdated: true,
+    placedOnCharger: false,
+    petInitialDetection: true,
+    robotPickedUp: true,
+    robotPlacedOnSlope: true,
+    returnedToTreads: true,
+    robotOnBack: true,
+    robotOnFace: true,
+    robotOnSide: true,
     robotShaken: false,
     sparked: true,
     unexpectedMovement: false,
@@ -262,31 +287,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  public static Anki.Cozmo.AllTriggersConsidered kOnboardingHomeTriggers = new Anki.Cozmo.AllTriggersConsidered(
-    cliffDetected: false,
-    cubeMoved: false,
-    facePositionUpdated: false,
-    fistBump: false,
-    frustration: false,
-    hiccup: false,
-    motorCalibration: false,
-    noPreDockPoses: false,
-    objectPositionUpdated: false,
-    placedOnCharger: true,
-    petInitialDetection: false,
-    robotPickedUp: false,
-    robotPlacedOnSlope: false,
-    returnedToTreads: false,
-    robotOnBack: false,
-    robotOnFace: false,
-    robotOnSide: false,
-    robotShaken: false,
-    sparked: false,
-    unexpectedMovement: false,
-    vc: true
-  );
-
-  public static Anki.Cozmo.AllTriggersConsidered kOnboardingShowCubeStageTriggers = new Anki.Cozmo.AllTriggersConsidered(
+  public static Anki.Cozmo.AllTriggersConsidered kOnboardingBigReactionsOffTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
     facePositionUpdated: false,
@@ -296,7 +297,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     motorCalibration: false,
     noPreDockPoses: false,
     objectPositionUpdated: false,
-    placedOnCharger: false,
+    placedOnCharger: true,
     petInitialDetection: true,
     robotPickedUp: false,
     robotPlacedOnSlope: false,

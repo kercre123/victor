@@ -202,6 +202,9 @@ public class MockRobot : IRobot {
   public void DriveHead(float speed_radps) {
   }
 
+  public void MoveLift(float speed_radps) {
+  }
+
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     LeftWheelSpeed = leftWheelSpeedMmps;
     RightWheelSpeed = rightWheelSpeedMmps;
@@ -338,8 +341,8 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void PlayNeedsGetOutAnimIfNeeded() {
-    // Do nothing
+  public void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null) {
+    QueueCallback(0.1f, callback);
   }
 
   public void RemoveDrivingAnimations(string lockName) {
@@ -756,6 +759,10 @@ public class MockRobot : IRobot {
     get { return Rotation.eulerAngles.y * Mathf.Deg2Rad; }
   }
 
+  public float RollAngle {
+    get { return Rotation.eulerAngles.x * Mathf.Deg2Rad; }
+  }
+
   public float LeftWheelSpeed {
     get;
     private set;
@@ -1112,7 +1119,7 @@ public class MockRobot : IRobot {
     }
   }
 
-  public void EnableCubeSleep(bool enable) {
+  public void EnableCubeSleep(bool enable, bool skipAnimation = false) {
   }
 
   public void EnableCubeLightsStateTransitionMessages(bool enable) {

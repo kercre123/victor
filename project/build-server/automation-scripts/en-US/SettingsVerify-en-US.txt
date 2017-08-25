@@ -1,0 +1,30 @@
+2.70107:click:settings_button:0.06650543
+0.383334:text:Acknowledgments
+0.38398:text:Terms of Use
+0.925323:text:Privacy Policy
+0.936198:text:Legal
+0.334178:text:ERASE COZMO
+0.467895:text:Support
+0.973814:text:Body HW Version: 1.0p (0)
+0.261497:text:Cozmo Color: Original
+0.045366:text:Device ID: {0}
+0.191451:text:Cozmo Serial: 00000000
+0.867109:text:Cozmo Version: 0
+0.65654:text:App Version: {0}
+0.276126:text:About
+0.136323:text:ENABLE SDK
+0.905509:text:go.anki.com/cozmo-app-sdk
+0.169825:text:To learn about the Cozmo SDK visit:
+0.589672:text:Cozmo SDK
+0.02099:text:Get Help
+0.565071:text:Cubes not working?
+0.583842:text:Tap to locate Cubes.
+0.578122:text:REFRESH CUBES
+0.810728:text:Cube Status
+0.274475:text:SLEEP COZMO
+0.136682:text:HIGH
+0.496198:text:MED
+0.269404:text:LOW
+0.045746:text:Volume & General
+0.494625:text:General Settings
+0.680769:click:default_close_view_button:0.1187134

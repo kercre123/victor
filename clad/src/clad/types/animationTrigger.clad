@@ -422,6 +422,7 @@ enum int_32 AnimationTrigger
   RepairFixSevereWheelsBack,
   RepairFixSevereWheelsForward,
   RepairIdleFullyRepaired,
+  RequestGameInterrupt,
   RequestGameKeepAwayAccept0,
   RequestGameKeepAwayAccept1,
   RequestGameKeepAwayDeny0,

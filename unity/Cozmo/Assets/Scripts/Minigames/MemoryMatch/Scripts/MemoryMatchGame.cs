@@ -117,7 +117,7 @@ namespace MemoryMatch {
       CurrentPlayer = _FirstPlayer;
 
       State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
-        new WaitForNextRoundMemoryMatchState(), showLabel: false),
+        new WaitForNextRoundMemoryMatchState()),
                           DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
                                           _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec, false);

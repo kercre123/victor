@@ -90,6 +90,13 @@ Blockly.Blocks['event_whenbroadcastreceived'] = {
           "options": [
             ['message1', 'message1'],
             ['message2', 'message2'],
+            ['message3', 'message3'],
+            ['message4', 'message4'],
+            ['message5', 'message5'],
+            ['message6', 'message6'],
+            ['message7', 'message7'],
+            ['message8', 'message8'],
+            ['message9', 'message9'],
             ['new message', 'new message']
           ]
         }
@@ -178,6 +185,13 @@ Blockly.Blocks['event_broadcast_menu'] = {
             "options": [
               ['message1', 'message1'],
               ['message2', 'message2'],
+              ['message3', 'message3'],
+              ['message4', 'message4'],
+              ['message5', 'message5'],
+              ['message6', 'message6'],
+              ['message7', 'message7'],
+              ['message8', 'message8'],
+              ['message9', 'message9'],
               ['new message', 'new message']
             ]
           }

@@ -54,11 +54,11 @@
     ],
     "style" : "Unprocessed"
   },
-	
+
   "Text" : {
     "durationTraits" : [
       {
-        "rangeMin" : 1.0
+        "rangeMin" : 0.75
       }
     ],
     "pitchTraits" : [
@@ -68,12 +68,12 @@
     ],
     "style" : "CozmoProcessing_Sentence"
   },
-	
+
   "Cozmo_Says" : {
     "durationTraits" : [
       {
-        "rangeMin" : 0.9,
-        "rangeMax" : 1.1,
+        "rangeMin" : 0.75,
+        "rangeMax" : 1.0,
         "stepSize" : 0.05
       }
     ],
@@ -86,19 +86,19 @@
     ],
     "style" : "CozmoProcessing_Sentence"
   },
-	
+
   "Name_Normal" : {
     "durationTraits" : [
       {
         "textLengthMax"	: 6,
-        "rangeMin" : 1.2,
-        "rangeMax" : 1.4,
+        "rangeMin" : 0.85,
+        "rangeMax" : 1.1,
         "stepSize" : 0.05
       },
       {
         "textLengthMin" : 7,
-        "rangeMin" : 1.2,
-        "rangeMax" : 1.4,
+        "rangeMin" : 0.85,
+        "rangeMax" : 1.1,
         "stepSize" : 0.05
       }
     ],
@@ -111,13 +111,13 @@
     ],
     "style" : "CozmoProcessing_Name"
   },
-	
+
   "Name_FirstIntroduction_1" : {
     "durationTraits" : [
       {
         "textLengthMax"	: 6,
-        "rangeMin" : 1.4,
-        "rangeMax" : 1.6,
+        "rangeMin" : 1.2,
+        "rangeMax" : 1.4,
         "stepSize" : 0.05
       },
       {
@@ -136,19 +136,19 @@
     ],
     "style" : "CozmoProcessing_Name_Question"
   },
-	
+
   "Name_FirstIntroduction_2" : {
     "durationTraits" : [
       {
         "textLengthMax"	: 6,
-        "rangeMin" : 1.4,
-        "rangeMax" : 1.6,
+        "rangeMin" : 1.0,
+        "rangeMax" : 1.2,
         "stepSize" : 0.05
       },
       {
         "textLengthMin" : 7,
-        "rangeMin" : 1.2,
-        "rangeMax" : 1.4,
+        "rangeMin" : 1.0,
+        "rangeMax" : 1.2,
         "stepSize" : 0.05
       }
     ],

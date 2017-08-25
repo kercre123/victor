@@ -213,7 +213,7 @@ public final class WifiUtil {
     final AnkitivityDispatcher.PermissionListener listener = new AnkitivityDispatcher.PermissionListener() {
       @Override public void onRequestPermissionsResult(final String[] permissions, final int[] grantResults) {
         MessageSender.sendMessage("permissionResult",
-          new String[] { grantResults[0] == PackageManager.PERMISSION_GRANTED ? "true" : "false" });
+          new String[] { grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED ? "true" : "false" });
       }
     };
     PermissionUtil.askForPermission(Manifest.permission.ACCESS_COARSE_LOCATION, listener);

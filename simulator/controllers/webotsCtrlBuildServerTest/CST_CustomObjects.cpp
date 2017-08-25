@@ -19,12 +19,12 @@
 *
 */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/activeCube.h"
-#include "anki/cozmo/basestation/customObject.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/activeCube.h"
+#include "engine/customObject.h"
+#include "engine/robot.h"
 
 
 namespace Anki {
@@ -206,8 +206,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
           RobotActionUnion(SetHeadAngle(MIN_HEAD_ANGLE, 100.f, 100.f, 0.f)),
         };
         
-        SendMessage(MessageGameToEngine(QueueCompoundAction(kRobotID,
-                                                            kIdTag,
+        SendMessage(MessageGameToEngine(QueueCompoundAction(kIdTag,
                                                             kNumRetries,
                                                             kIsParallel,
                                                             kPosition,

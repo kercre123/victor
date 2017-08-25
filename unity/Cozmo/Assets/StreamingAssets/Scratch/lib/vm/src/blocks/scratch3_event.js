@@ -56,6 +56,9 @@ class Scratch3EventBlocks {
             },
             cozmo_event_on_cube_tap: {
                 restartExistingThreads: false
+            },
+            cozmo_event_on_cube_moved: {
+                restartExistingThreads: false
             }
         };
     }

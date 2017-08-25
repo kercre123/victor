@@ -26,7 +26,7 @@ namespace Cozmo.Upgrades.GuardDog {
       GameObject newCube = UIManager.CreateUIElement(upsidedownPrefab, lightCubeContainer);
       LightCubeSprite newCubeScript = newCube.GetComponent<LightCubeSprite>();
       newCubeScript.SetIcon(lightCubeType);
-      newCubeScript.SetColor(CubePalette.Instance.ReadyColor.lightColor);
+      newCubeScript.SetColor(CubePalette.Instance.ReadyColor.uiLightColor);
     }
   }
 }

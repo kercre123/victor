@@ -36,8 +36,8 @@ namespace Cozmo.Settings {
           // If this is the first time enabling the SDK, display a confirmation modal
           // with EULA and only EnableSDK on confirmation.
           // Create alert view with Icon
-          var enableSDKButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonYesPlease, EnableSDK);
-          var cancelSDKButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonNoThankYou, HandleCloseSDKPopup);
+          var enableSDKButtonData = new AlertModalButtonData("confirm_button", LocalizationKeys.kButtonYes, EnableSDK);
+          var cancelSDKButtonData = new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonNo, HandleCloseSDKPopup);
 
           var confirmEnableSDKAlert = new AlertModalData("confirm_enable_sdk_alert",
                                                          LocalizationKeys.kSettingsSdkPanelActivateSDKalertText,
@@ -61,6 +61,16 @@ namespace Cozmo.Settings {
       DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
       DataPersistenceManager.Instance.Save();
 
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
+        robot.PlayNeedsGetOutAnimIfNeeded(OpenModal);
+      } else {
+        OpenModal();
+      }
+    }
+
+    private void OpenModal(bool unused = false){
       var sdkModalPriorityData = new UI.ModalPriorityData(ModalPriorityLayer.VeryHigh, 0,
                                                           LowPriorityModalAction.Queue,
                                                           HighPriorityModalAction.ForceCloseOthersAndOpen);

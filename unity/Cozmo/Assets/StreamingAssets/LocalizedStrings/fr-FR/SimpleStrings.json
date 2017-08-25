@@ -21,14 +21,8 @@
   "button.yes" : {
     "translation" : "OUI"
   },
-  "button.yesPlease" : {
-    "translation" : "OUI, S'IL TE PLAIT"
-  },
   "button.no" : {
     "translation" : "NON"
-  },
-  "button.noThankYou" : {
-    "translation" : "NON, MERCI"
   },
   "button.continue" : {
     "translation" : "CONTINUER"
@@ -61,7 +55,7 @@
     "translation" : "SUIVANT"
   },
   "button.staySparked" : {
-    "translation" : "RESTER ÉTINCELÉ"
+    "translation" : "RESTER CHARGÉ"
   },
   "button.soundsGood" : {
     "translation" : "ÇA A L'AIR BIEN"
@@ -139,7 +133,7 @@
     "translation" : "Conditions d'utilisation"
   },
   "label.termsInstructions" : {
-    "translation" : "En appuyant sur<b> <color=#11a2f0ff>CONNECTER</color></b>, tu acceptes les conditions suivantes :"
+    "translation" : "En appuyant sur<b> <color=#11a2f0ff>CONNECTER</color></b>, vous acceptez les conditions suivantes :"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"

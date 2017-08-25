@@ -393,7 +393,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114261673222874854}
-    characterCount: 16
+    characterCount: 24
     spriteCount: 0
     spaceCount: 1
     wordCount: 2
@@ -972,7 +972,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -62, y: -62}
-  m_SizeDelta: {x: 800, y: 100}
+  m_SizeDelta: {x: 1403, y: 100}
   m_Pivot: {x: 1, y: 1}
 --- !u!224 &224746109960469254
 RectTransform:

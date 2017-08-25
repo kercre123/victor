@@ -10,10 +10,10 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 
 namespace Anki {
@@ -99,7 +99,6 @@ namespace Anki {
             PRINT_NAMED_INFO("DockingSpeed1", "Docking with speed:%f accel:%f decel:%f", mp.dockSpeed_mmps, mp.accel_mmps2, mp.dockDecel_mmps2);
           
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 1;
             m.numRetries = 3;
@@ -128,7 +127,6 @@ namespace Anki {
             PRINT_NAMED_INFO("DockingSpeed2", "Docking with speed:%f accel:%f decel:%f", mp.dockSpeed_mmps, mp.accel_mmps2, mp.dockDecel_mmps2);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 2;
             m.numRetries = 3;
@@ -155,7 +153,6 @@ namespace Anki {
             PRINT_NAMED_INFO("DockingSpeed3", "Docking with speed:%f accel:%f decel:%f", mp.dockSpeed_mmps, mp.accel_mmps2, mp.dockDecel_mmps2);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 3;
             m.numRetries = 3;
@@ -183,7 +180,6 @@ namespace Anki {
             PRINT_NAMED_INFO("DockingSpeed4", "Docking with speed:%f accel:%f decel:%f", mp.dockSpeed_mmps, mp.accel_mmps2, mp.dockDecel_mmps2);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 4;
             m.numRetries = 3;
@@ -211,7 +207,6 @@ namespace Anki {
             PRINT_NAMED_INFO("DockingSpeed5", "Docking with speed:%f accel:%f decel:%f", mp.dockSpeed_mmps, mp.accel_mmps2, mp.dockDecel_mmps2);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 5;
             m.numRetries = 3;
@@ -242,7 +237,6 @@ namespace Anki {
                                                 GetCarryingObjectID() == 0)
           {
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = _placeActionTag;
             m.numRetries = 3;
@@ -270,7 +264,6 @@ namespace Anki {
             
             // This wait is for things to settle down after resetting the world
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW_AND_CLEAR_REMAINING;
             m.idTag = 10;
             m.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,VisionMode::DetectingMarkers));
@@ -279,7 +272,6 @@ namespace Anki {
             SendMessage(message);
             
             ExternalInterface::QueueSingleAction m1;
-            m1.robotID = 1;
             m1.position = QueueActionPosition::NEXT;
             m1.idTag = 20;
             m1.action.Set_setHeadAngle(ExternalInterface::SetHeadAngle(0,100,100,0));
@@ -289,7 +281,6 @@ namespace Anki {
             
             // This wait is to ensure block pose is stable before trying to pickup
             ExternalInterface::QueueSingleAction m2;
-            m2.robotID = 1;
             m2.position = QueueActionPosition::NEXT;
             m2.idTag = 30;
             m2.action.Set_waitForImages(ExternalInterface::WaitForImages(5,0,VisionMode::DetectingMarkers));

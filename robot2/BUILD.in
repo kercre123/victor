@@ -1,0 +1,24 @@
+cxx_project(
+    name = 'robot_supervisor',
+    srcs = cxx_src_glob(['hal/src',],
+                        excludes = ['halStubs.cpp', '*_android.*', 'android/**/*']),
+    platform_srcs = [],
+    headers = cxx_header_glob(['hal/src/**/*.h',]),
+    platform_headers = []
+)
+
+
+cxx_project(
+    name = 'spine',
+    srcs = cxx_src_glob(['hal/spine'],
+                        excludes = ['*_android.*', 'android/**/*']),
+    platform_srcs = [
+        ('android', glob(['hal/spine/**/android/**/*.c',
+                          'hal/spine/**/*_android.c']))
+    ],
+    headers = cxx_header_glob(['hal/spine/**/*.h']),
+    platform_headers = [
+        ('android', glob(['hal/spine/**/android/**/*.h',
+                          'hal/spine/**/*_android.h']))
+    ]
+)

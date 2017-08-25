@@ -10,10 +10,10 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 #define SET_STATE(s) {                                          \
   PRINT_NAMED_INFO("CST_BasicActions.TransitionTestState",      \
@@ -144,7 +144,6 @@ namespace Anki {
             StartingAction(RobotActionType::DRIVE_STRAIGHT);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 2;
             m.action.Set_driveStraight(ExternalInterface::DriveStraight(200, 50, true));
@@ -167,7 +166,6 @@ namespace Anki {
             StartingAction(RobotActionType::DRIVE_STRAIGHT);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 3;
             m.action.Set_driveStraight(ExternalInterface::DriveStraight(200, -50, true));
@@ -219,7 +217,6 @@ namespace Anki {
             StartingAction(RobotActionType::PAN_AND_TILT);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 6;
             m.action.Set_panAndTilt(ExternalInterface::PanAndTilt(M_PI_F, M_PI_F, true, true));
@@ -243,7 +240,6 @@ namespace Anki {
             StartingAction(RobotActionType::TURN_TOWARDS_POSE);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 7;
             // Face the position (0,-100,0) wrt robot
@@ -269,7 +265,6 @@ namespace Anki {
             StartingAction(RobotActionType::TURN_TOWARDS_OBJECT);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 8;
             
@@ -297,7 +292,6 @@ namespace Anki {
             StartingAction(RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 9;
             m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(GetRobotPose().GetTranslation().x(), GetRobotPose().GetTranslation().y() + 100, NECK_JOINT_POSITION[2], 10, 10, 10));
@@ -320,7 +314,6 @@ namespace Anki {
             StartingAction(RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE);
             
             ExternalInterface::QueueSingleAction m;
-            m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 10;
             m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(_poseToVerify.x(), _poseToVerify.y(), _poseToVerify.z(), 10, 10, 10));

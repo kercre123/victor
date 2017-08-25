@@ -185,16 +185,27 @@ button:focus {
 }
 
 #projecttext .primary #app-title {
+    display: inline-block;
     font-weight: bold;
-    font-size: 5vh;
+    font-size: 32px;
     background-color: #525253;
     color: #1fadda;
+    max-width: calc(100vw - 210px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: hidden;
+    padding: 0 5px;
+}
+#projecttext .primary #app-title.long-title {
+  font-size: 24px;
 }
 
 #projecttext .primary #app-title-subtext {
+    display: inline-block;
     color: #c0bfbf;
-    font-size: 3.5vh;
+    font-size: 20px;
     background-color: #525253;
+    padding: 0 5px;
 }
 
 /**
@@ -374,6 +385,22 @@ button:focus {
         width: 98%;
         height: 60px;
     }
+
+
+    #projecttext .primary #app-title {
+        margin-top: 3px;
+        font-size: 20px;
+        max-width: calc(100vw - 120px);
+    }
+    #projecttext .primary #app-title.long-title {
+      font-size: 16px;
+    }
+
+    #projecttext .primary #app-title-subtext {
+        font-size: 15px;
+    }
+
+
 
     #navigation .greenflag {
         left: calc(100% - 55px);

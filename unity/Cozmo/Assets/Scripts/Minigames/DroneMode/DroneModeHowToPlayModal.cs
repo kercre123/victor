@@ -51,8 +51,8 @@ namespace Cozmo.Challenge.DroneMode {
     }
 
     public void Initialize(bool showCornerCloseButton, bool playAnimations) {
-      if (!showCornerCloseButton && _OptionalCloseDialogButton != null) {
-        _OptionalCloseDialogButton.gameObject.SetActive(showCornerCloseButton);
+      if (_OptionalCloseDialogCozmoButton != null) {
+        _OptionalCloseDialogCozmoButton.gameObject.SetActive(showCornerCloseButton);
       }
 
       _IsPlayingAnimations = playAnimations;
@@ -102,6 +102,9 @@ namespace Cozmo.Challenge.DroneMode {
         }
       }
       else {
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DroneModeInstructionsSeen = true;
+        DataPersistence.DataPersistenceManager.Instance.Save();
+
         HandleUserClose();
       }
     }

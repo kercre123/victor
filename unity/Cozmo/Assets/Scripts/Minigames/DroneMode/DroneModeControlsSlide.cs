@@ -353,6 +353,10 @@ namespace Cozmo.Challenge.DroneMode {
       }
     }
 
+    public void ForceSpeedThrottleUpdate() {
+      _SpeedThrottle.ForceTrigger();
+    }
+
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {
       SpeedSliderSegment newSegment;
       float newSegmentValue;

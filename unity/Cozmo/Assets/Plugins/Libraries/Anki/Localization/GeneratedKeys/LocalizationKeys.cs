@@ -133,6 +133,7 @@ public static class LocalizationKeys {
   public const string kMemoryMatchGameLabelIncorrect = "memoryMatchGame.label.incorrect";
   public const string kActivityViewFreeplayDescription = "activityView.freeplayDescription";
   public const string kActivityViewFreeplayTitle = "activityView.freeplayTitle";
+  public const string kFaceEnrollmentTitleCancelScanning = "faceEnrollment.title.cancelScanning";
 
   #endregion
 
@@ -233,6 +234,7 @@ public static class LocalizationKeys {
   public const string kCodeLabChallenge_whenCubeSeenSetBehindAnswerSlidePrimaryText = "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText";
   public const string kCodeLabChallenge_intruderQuestionSlidePrimaryText = "codeLabChallenge_intruder.questionSlide.primaryText";
   public const string kCodeLabChallenge_intruderQuestionSlideSecondaryText = "codeLabChallenge_intruder.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_intruderCozmoSaysBlockDefaultText = "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText";
   public const string kCodeLabChallenge_intruderAnswerSlidePrimaryText = "codeLabChallenge_intruder.answerSlide.primaryText";
   public const string kCodeLabChallenge_challengesUISlideXofY = "codeLabChallenge_challengesUI.slideXofY";
   public const string kCodeLabChallenge_challengesUIChallengesModalTitle = "codeLabChallenge_challengesUI.challengesModalTitle";
@@ -363,6 +365,9 @@ public static class LocalizationKeys {
   public const string kCubeHelpStringsInstructionsQuickSnackSlideButton = "cubeHelpStrings.Instructions.QuickSnackSlide.Button";
   public const string kCubeHelpStringsInstructionsFeedPopupTitle = "cubeHelpStrings.Instructions.FeedPopup.Title";
   public const string kCubeHelpStringsInstructionsFeedPopupBody = "cubeHelpStrings.Instructions.FeedPopup.Body";
+  public const string kCubeHelpStringsInstructionsDontNeedToFeedPopupTitle = "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Title";
+  public const string kCubeHelpStringsInstructionsDontNeedToFeedPopupBody = "cubeHelpStrings.Instructions.DontNeedToFeedPopup.Body";
+  public const string kCubeHelpStringsInstructionsSlideA2Copy = "cubeHelpStrings.Instructions.SlideA2Copy";
 
   #endregion
 
@@ -803,9 +808,7 @@ public static class LocalizationKeys {
   public const string kButtonQuit = "button.quit";
   public const string kButtonCancel = "button.cancel";
   public const string kButtonYes = "button.yes";
-  public const string kButtonYesPlease = "button.yesPlease";
   public const string kButtonNo = "button.no";
-  public const string kButtonNoThankYou = "button.noThankYou";
   public const string kButtonContinue = "button.continue";
   public const string kButtonOkay = "button.okay";
   public const string kButtonAgain = "button.again";
@@ -886,6 +889,8 @@ public static class LocalizationKeys {
   public const string kSparksViewListAbilitiesCardTitle = "sparksView.listAbilitiesCard.title";
   public const string kSparksViewListAbilitiesCardDescription = "sparksView.listAbilitiesCard.description";
   public const string kSparksViewSparkCountLabel = "sparksView.sparkCount.label";
+  public const string kSparksViewSparksRequiredLabel = "sparksView.sparksRequired.label";
+  public const string kSparksDetailModalSparkButtonLabel = "sparksDetailModal.sparkButton.label";
 
   #endregion
 

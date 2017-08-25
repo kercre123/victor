@@ -37,7 +37,7 @@
     "translation" : "Cozmo a du mal à te voir"
   },
   "faceEnrollment.errors.timeOut.description" : {
-    "translation" : "Vérifie que tu es dans une pièce bien éclairée et que tu es bien en face de son visage Cozmo doit se trouver sur une surface plane et stable."
+    "translation" : "Vérifie que tu es dans une pièce bien éclairée et que tu es bien en face de son visage. Cozmo doit se trouver sur une surface plane et stable."
   },
   "faceEnrollment.condition.allChangesSaved" : {
     "translation" : "Les modifications sont enregistrées."

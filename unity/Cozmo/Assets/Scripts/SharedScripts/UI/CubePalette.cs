@@ -64,9 +64,8 @@ namespace Cozmo {
 
       [System.Serializable]
       public class CubeColor {
-        // TODO: Remove and only track color to tint sprites
-        public Sprite uiSprite;
         public Color lightColor;
+        public Color uiLightColor;
       }
 
       [System.Serializable]

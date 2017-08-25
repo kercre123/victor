@@ -41,6 +41,7 @@ namespace FaceEnrollment {
     public override void Exit() {
       base.Exit();
 
+
       if (_CurrentRobot != null) {
         _CurrentRobot.OnEnrolledFaceRemoved -= HandleEraseEnrolledFace;
       }
@@ -53,6 +54,7 @@ namespace FaceEnrollment {
 
       _FaceEnrollmentGame.SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentGame.SharedMinigameView.HideShelf();
+      _FaceEnrollmentGame.SharedMinigameView.HideBackButton();
     }
 
     private void ReturnToFaceSlide() {

@@ -9,12 +9,12 @@ namespace Onboarding {
   public class OnboardingBaseStage : MonoBehaviour {
 
     public bool ActiveMenuContent { get { return _ActiveMenuContent; } }
-    public bool ReactionsEnabled { get { return _ReactionsEnabled; } }
     public bool DimBackground { get { return _DimBackground; } }
     public int DASPhaseID { get { return _DASPhaseID; } }
     public List<Anki.Cozmo.NeedId> DimNeedsMeters {
       get { return _DimNeedsMeters; }
     }
+    public bool StageForceClosed { get; set; }
 
     public OnboardingButtonStates ButtonStateDiscover { get { return _ButtonStateDiscover; } }
     public OnboardingButtonStates ButtonStateRepair { get { return _ButtonStateRepair; } }
@@ -105,6 +105,16 @@ namespace Onboarding {
           NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
         }
       }
+      if (currentRobot != null) {
+        // During onboarding we really don't want pet reactions or hiccups anywhere
+        if (_ReactionsEnabled) {
+          currentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingBigReactionsOffId + name, ReactionaryBehaviorEnableGroups.kOnboardingBigReactionsOffTriggers);
+        }
+        else {
+          // early phases of onboarding, no reactions
+          currentRobot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId + name);
+        }
+      }
     }
 
     public virtual void OnDestroy() {
@@ -113,21 +123,25 @@ namespace Onboarding {
         instance.StartFreeplay();
       }
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
-
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      if (currentRobot != null) {
+        if (_ReactionsEnabled) {
+          currentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingBigReactionsOffId + name);
+        }
+        else {
+          currentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId + name);
+        }
+      }
       DAS.Info("DEV onboarding stage.ended", name);
     }
 
     public virtual void OnEnable() {
+      Cozmo.PauseManager.Instance.AllowFreeplayOnResume = false;
+      Cozmo.PauseManager.Instance.OnPauseStateChanged += HandlePauseStateChanged;
+
       if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
         if (OnboardingManager.Instance.OnOverrideTickerString != null) {
           OnboardingManager.Instance.OnOverrideTickerString.Invoke(Localization.Get(_OverrideTickerKey));
-        }
-      }
-
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value, kOnboardingIdleAnimLock);
         }
       }
 
@@ -140,6 +154,7 @@ namespace Onboarding {
       SetNeedsActionWhitelist(_EnableWhiteListOnly);
       NeedsStateManager.Instance.PauseExceptForNeed(_UnPausedNeedMeter);
 
+      Init();
     }
     public virtual void OnDisable() {
       if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
@@ -151,7 +166,7 @@ namespace Onboarding {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          robot.RemoveIdleAnimation(kOnboardingIdleAnimLock);
+          robot.RemoveIdleAnimation(kOnboardingIdleAnimLock + name);
         }
         // since the animation is looped was looped, force kill it.
         if (_LoopedAnim.Value != Anki.Cozmo.AnimationTrigger.Count) {
@@ -162,11 +177,31 @@ namespace Onboarding {
       SetNeedsActionWhitelist(false);
       NeedsStateManager.Instance.ResumeAllNeeds();
 
-      // forced end levels of needs
-      if (System.Array.TrueForAll(_ForceNeedValuesOnEnd, (float obj) => { return obj >= 0.0f; })) {
-        RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
-                                Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnEnd);
-        RobotEngineManager.Instance.SendMessage();
+      if (!StageForceClosed) {
+        // forced end levels of needs
+        if (System.Array.TrueForAll(_ForceNeedValuesOnEnd, (float obj) => { return obj >= 0.0f; })) {
+          RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
+                                  Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnEnd);
+          RobotEngineManager.Instance.SendMessage();
+        }
+      }
+      Cozmo.PauseManager.Instance.AllowFreeplayOnResume = true;
+      Cozmo.PauseManager.Instance.OnPauseStateChanged -= HandlePauseStateChanged;
+    }
+
+    protected virtual void HandlePauseStateChanged(bool isPaused) {
+      if (!isPaused) {
+        Init();
+      }
+    }
+
+    // This will get called when first enabled and when coming back from backgrounding when pause manager has suspended idles, etc.
+    protected virtual void Init() {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
+          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value, kOnboardingIdleAnimLock + name);
+        }
       }
     }
 

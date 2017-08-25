@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace Cozmo.Challenge.CubePounce {
   // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
@@ -77,6 +76,9 @@ namespace Cozmo.Challenge.CubePounce {
     protected override void CleanUpOnDestroy() {
       if (null != CurrentRobot) {
         CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
+        // remove any idles that might have been around due to a sudden quit.
+        CurrentRobot.RemoveIdleAnimation(CubePounceStateResetPoint.kCubePounceResetPoint);
+        CurrentRobot.RemoveIdleAnimation(CubePounceStatePostPoint.kCubePounceIdle);
       }
       LightCube.OnMovedAction -= HandleCubeMoved;
       LightCube.OnStoppedAction -= HandleCubeStopped;

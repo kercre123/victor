@@ -52,3 +52,28 @@ Blockly.Blocks['text'] = {
     });
   }
 };
+
+// *** ANKI Change ***   
+// Same as text block above. This was in releases Cozmo 1.6 and 1.7 for horizontal grammar only.
+// We can't remove it because it is already in people's projects. Now it is just a copy of the
+// 'text' block above.
+Blockly.Blocks['text_with_validator'] = {
+  /**
+   * Block for text value.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_input",
+          "name": "TEXT"
+        }
+      ],
+      "output": "String",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
+      "colour": Blockly.Colours.textField
+    });
+  }
+};

@@ -13,10 +13,10 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 #define SET_STATE(s) {                                          \
 PRINT_NAMED_INFO("CST_DockActionInterrupts.TransitionTestState",      \
@@ -81,7 +81,6 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
                                             GetNumObjects() == 2)
       {
         ExternalInterface::QueueSingleAction m;
-        m.robotID = 1;
         m.position = QueueActionPosition::NOW;
         m.idTag = 10;
         m.numRetries = 3;

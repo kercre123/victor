@@ -8,10 +8,13 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _AcknowledgementsLinkButton;
 
-    private ScrollingTextModal _AcknowledgementsModalInstance;
+    [SerializeField]
+    private AcknowledgementModal _AcknowledgementsModalPrefab;
+
+    private AcknowledgementModal _AcknowledgementsModalInstance;
 
     [SerializeField]
-    private string _AcknowledgementsTextFileName;
+    private string _AcknowledgementsTextFolder;
 
     [SerializeField]
     private CozmoButton _PrivacyPolicyLinkButton;
@@ -52,16 +55,14 @@ namespace Cozmo.Settings {
     private void HandleAcknowledgementsLinkButtonTapped() {
       if (_AcknowledgementsModalInstance == null) {
         System.Action<BaseModal> acknowledgementsModalCreated = (modal) => {
-          _AcknowledgementsModalInstance = (ScrollingTextModal)modal;
+          _AcknowledgementsModalInstance = (AcknowledgementModal)modal;
           _AcknowledgementsModalInstance.DASEventDialogName = "acknowledgements_view";
           // now in unity resources folder, strip extension for Resources not our loc assets
-          _AcknowledgementsTextFileName = _AcknowledgementsTextFileName.Replace(".txt", "");
-          TextAsset acknowledgementsText = Resources.Load<TextAsset>(_AcknowledgementsTextFileName);
           _AcknowledgementsModalInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
-                                                    acknowledgementsText.text);
+                                                    _AcknowledgementsTextFolder);
         };
 
-        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab,
+        UIManager.OpenModal(_AcknowledgementsModalPrefab,
                             SettingsModal.SettingsSubModalPriorityData(), acknowledgementsModalCreated);
       }
     }

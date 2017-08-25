@@ -199,6 +199,7 @@ public class RobotEngineManager : MonoBehaviour {
     else {
       JSONObject configJson = JSONObject.Create(config.text);
       AddDataPlatformPathsToConfiguration(configJson);
+      AddDataCollectionChoiceToConfiguration(configJson);
 
       CozmoBinding.Startup(configJson);
       _CozmoBindingStarted = true;
@@ -527,6 +528,11 @@ public class RobotEngineManager : MonoBehaviour {
     json.AddField("DataPlatformResourcesBasePath", PlatformUtil.GetResourcesBaseFolder());
   }
 
+  private void AddDataCollectionChoiceToConfiguration(JSONObject json) {
+    bool dataCollectionEnabled = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled;
+    json.AddField("DataCollectionEnabled", dataCollectionEnabled);
+  }
+
   public void StartIdleTimeout(float faceOffTime_s, float disconnectTime_s) {
     Message.StartIdleTimeout = Singleton<Anki.Cozmo.ExternalInterface.StartIdleTimeout>.Instance.Initialize(faceOffTime_s, disconnectTime_s);
     SendMessage();
@@ -543,6 +549,11 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendGameBeingPaused(bool isPaused) {
     Message.SetGameBeingPaused = Singleton<Anki.Cozmo.ExternalInterface.SetGameBeingPaused>.Instance.Initialize(isPaused);
+    SendMessage();
+  }
+
+  public void SendNotificationsManagerReady() {
+    Message.NotificationsManagerReady = Singleton<Anki.Cozmo.ExternalInterface.NotificationsManagerReady>.Instance;
     SendMessage();
   }
 

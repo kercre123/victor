@@ -23,15 +23,10 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   [SerializeField]
   private RectTransform _CozmoImageTransform;
 
-  [SerializeField]
-  private float _UILightColorAlphaOverride = 0.7f;
-
   private IconProxy[] _CubeImages;
 
-  private float _OutOfViewAlpha = 0.5f;
-
-  private CubePalette.CubeColor _InViewColor;
-  private CubePalette.CubeColor _OutViewColor;
+  private Color _InViewColor;
+  private Color _OutViewColor;
 
   private Tweener _Tween;
 
@@ -48,10 +43,10 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   }
 
   public void Initialize(int numCubesToShow, CubePalette.CubeColor inViewColor, CubePalette.CubeColor outViewColor, bool showTransparentCube = true) {
-    _InViewColor = inViewColor;
-    _OutViewColor = outViewColor;
+    _InViewColor = inViewColor.uiLightColor;
+    _OutViewColor = outViewColor.uiLightColor;
     _ShowTransparentCube = showTransparentCube;
-    CreateCubes(numCubesToShow, inViewColor.uiSprite);
+    CreateCubes(numCubesToShow);
     LightUpCubes(0);
     string locKeyToUse = (numCubesToShow > 1) ? LocalizationKeys.kMinigameLabelShowCubesPlural : LocalizationKeys.kMinigameLabelShowCubesSingular;
     _ShowCozmoCubesLabel.text = Localization.GetWithArgs(locKeyToUse,
@@ -93,16 +88,10 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   public void LightUpCubes(int numberCubes) {
     for (int i = 0; i < _CubeImages.Length; i++) {
       if (i < numberCubes) {
-        _CubeImages[i].SetIcon(_InViewColor.uiSprite);
-        Color lightColor = _InViewColor.lightColor;
-        lightColor.a = _UILightColorAlphaOverride;
-        _CubeImages[i].IconImage.color = lightColor;
-        _CubeImages[i].SetAlpha(1f);
+        _CubeImages[i].IconImage.color = _InViewColor;
       }
       else {
-        _CubeImages[i].SetIcon(_OutViewColor.uiSprite);
-        _CubeImages[i].IconImage.color = _OutViewColor.lightColor;
-        _CubeImages[i].SetAlpha(_OutOfViewAlpha);
+        _CubeImages[i].IconImage.color = _OutViewColor;
       }
       _CubeImages[i].IconImage.enabled = _CubeImages[i].IconImage.sprite != null;
     }
@@ -114,14 +103,11 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   public void LightUpCubes(List<int> cubeIndices) {
     for (int i = 0; i < _CubeImages.Length; i++) {
       if (cubeIndices.Contains(i)) {
-        _CubeImages[i].SetIcon(_InViewColor.uiSprite);
-        _CubeImages[i].IconImage.color = _InViewColor.lightColor;
+        _CubeImages[i].IconImage.color = _InViewColor;
         _CubeImages[i].SetAlpha(1f);
       }
       else {
-        _CubeImages[i].SetIcon(_OutViewColor.uiSprite);
-        _CubeImages[i].IconImage.color = _OutViewColor.lightColor;
-        _CubeImages[i].SetAlpha(_OutOfViewAlpha);
+        _CubeImages[i].IconImage.color = _OutViewColor;
       }
       _CubeImages[i].IconImage.enabled = _CubeImages[i].IconImage.sprite != null;
     }
@@ -130,12 +116,11 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     }
   }
 
-  private void CreateCubes(int numCubesToShow, Sprite inViewSprite) {
+  private void CreateCubes(int numCubesToShow) {
     _CubeImages = new IconProxy[numCubesToShow];
     for (int i = 0; i < _CubeImages.Length; i++) {
       _CubeImages[i] = UIManager.CreateUIElement(_CubePrefab, _CubeContainer.transform).GetComponent<Cozmo.UI.IconProxy>();
-      _CubeImages[i].SetIcon(inViewSprite);
-      _CubeImages[i].IconImage.color = _InViewColor.lightColor;
+      _CubeImages[i].IconImage.color = _InViewColor;
     }
   }
 }

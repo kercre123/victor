@@ -1,0 +1,109 @@
+/**
+ * File: chargerActions.h
+ *
+ * Author: Matt Michini
+ * Date:   8/10/2017
+ *
+ * Description: Implements charger-related actions, e.g. docking with the charger.
+ *
+ *
+ * Copyright: Anki, Inc. 2017
+ **/
+
+#ifndef __Anki_Cozmo_Engine_ChargerActions_H__
+#define __Anki_Cozmo_Engine_ChargerActions_H__
+
+#include "engine/actions/actionInterface.h"
+#include "engine/actions/basicActions.h"
+#include "engine/actions/compoundActions.h"
+#include "engine/actionableObject.h"
+
+namespace Anki {
+namespace Cozmo {
+    
+// Forward Declarations:
+class Robot;
+
+// MountChargerAction
+//
+// Use the robot's docking controller to align with the charger, then turn
+// around and drive backward onto the charger, optionally using the cliff
+// sensors to detect the charger docking pattern and correct while reversing.
+class MountChargerAction : public IAction
+{
+public:
+  MountChargerAction(Robot& robot,
+                     ObjectID chargerID,
+                     const bool useCliffSensorCorrection = false,
+                     const bool useManualSpeed = false);
+  
+protected:
+  
+  virtual ActionResult Init() override;
+  virtual ActionResult CheckIfDone() override;
+  
+private:
+  const ObjectID _chargerID;
+
+  const bool _useCliffSensorCorrection;
+  const bool _useManualSpeed;
+  
+  // Pointers to compound actions which comprise this action:
+  std::unique_ptr<ICompoundAction> _alignWithChargerAction = nullptr;
+  std::unique_ptr<ICompoundAction> _turnAndMountAction = nullptr;
+  std::unique_ptr<DriveStraightAction> _driveForRetryAction = nullptr;
+  
+  // Allocate and add actions to the member compound actions:
+  ActionResult ConfigureAlignWithChargerAction();
+  ActionResult ConfigureTurnAndMountAction();
+  ActionResult ConfigureDriveForRetryAction();
+  
+}; // class MountChargerAction
+
+
+// BackupOntoChargerAction
+//
+// Reverse onto the charger, stopping when charger contacts are sensed.
+// Optionally, use the cliff sensors to correct heading while reversing.
+class BackupOntoChargerAction : public DriveStraightAction
+{
+using super = DriveStraightAction;
+public:
+  BackupOntoChargerAction(Robot& robot,
+                          f32 dist_mm,
+                          f32 speed_mmps,
+                          bool useCliffSensorCorrection);
+  
+protected:
+  
+  virtual ActionResult CheckIfDone() override;
+  virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
+  
+private:
+  
+  // If true, use the cliff sensors to detect the light/dark pattern
+  // while reversing onto the charger and adjust accordingly
+  bool _useCliffSensorCorrection;
+  
+}; // class BackupOntoChargerAction
+
+
+// DriveToAndMountChargerAction
+//
+// Drive to the charger and mount it.
+class DriveToAndMountChargerAction : public CompoundActionSequential
+{
+public:
+  DriveToAndMountChargerAction(Robot& robot,
+                               const ObjectID& objectID,
+                               const bool useCliffSensorCorrection = false,
+                               const bool useManualSpeed = false);
+  
+  virtual ~DriveToAndMountChargerAction() { }
+}; // class DriveToAndMountChargerAction
+
+  
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Anki_Cozmo_Engine_ChargerActions_H__

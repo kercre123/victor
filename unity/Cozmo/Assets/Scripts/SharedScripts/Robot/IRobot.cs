@@ -51,6 +51,8 @@ public interface IRobot : IDisposable {
 
   float PitchAngle { get; }
 
+  float RollAngle { get; }
+
   float LeftWheelSpeed { get; }
 
   float RightWheelSpeed { get; }
@@ -208,6 +210,8 @@ public interface IRobot : IDisposable {
 
   void DriveHead(float speed_radps);
 
+  void MoveLift(float speed_radps);
+
   void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps);
 
   void DriveArc(float wheelSpeedMmps, short curveRadiusMm, float accelMmps = 0.0f);
@@ -242,7 +246,7 @@ public interface IRobot : IDisposable {
 
   void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false);
 
-  void PlayNeedsGetOutAnimIfNeeded();
+  void PlayNeedsGetOutAnimIfNeeded(RobotCallback callback = null);
 
   float GetHeadAngleFactor();
 
@@ -391,7 +395,7 @@ public interface IRobot : IDisposable {
 
   void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false);
 
-  void EnableCubeSleep(bool enable);
+  void EnableCubeSleep(bool enable, bool skipAnimation = false);
 
   void EnableCubeLightsStateTransitionMessages(bool enable);
 

@@ -291,6 +291,9 @@
   "codeLabChallenge_intruder.questionSlide.secondaryText" : {
     "translation" : "Relève d'abord le défi, puis appuie sur SUIVANT pour vérifier ta réponse !"
   },
+  "codeLabChallenge_intruder.CozmoSaysBlock.DefaultText" : {
+    "translation" : "Intrus !"
+  },
   "codeLabChallenge_intruder.answerSlide.primaryText" : {
     "translation" : "Réponse 32"
   },
@@ -310,10 +313,10 @@
     "translation" : "Terminé"
   },
   "codeLab.tutorial.modalTitle" : {
-    "translation" : "Tutoriel du Code Lab"
+    "translation" : "Tutoriel de Code Lab"
   },
   "codeLab.tutorial.slide_letsYouProgramCozmo" : {
-    "translation" : "Le Code Lab te permet de programmer Cozmo."
+    "translation" : "Code Lab te permet de programmer Cozmo."
   },
   "codeLab.tutorial.slide_tapBlockToSeeFunction" : {
     "translation" : "Tu peux appuyer sur un bloc de code pour voir ce qu'il fait."
@@ -325,7 +328,7 @@
     "translation" : "Assemble les blocs de code par glisser-déposer pour créer un programme."
   },
   "codeLab.tutorial.slide_greenBlockFirst" : {
-    "translation" : "Place toujours d'abord un BLOC de drapeau vert. Ainsi, le BOUTON de drapeau vert lance ton programme !"
+    "translation" : "Commence toujours avec un BLOC drapeau vert : le BOUTON drapeau vert lance ton programme !"
   },
   "codeLab.projects.modalTitle" : {
     "translation" : "Cozmo Code Lab"
@@ -337,7 +340,7 @@
     "translation" : "Nouveau projet"
   },
   "codeLab.projects.projectType.sampleProject" : {
-    "translation" : "Échantillon"
+    "translation" : "Exemple"
   },
   "codeLab.projects.projectType.personalProject" : {
     "translation" : "Personnel"
@@ -352,7 +355,7 @@
     "translation" : "Annuler"
   },
   "codeLab.projects.confirmDeleteProject.confirmPromptTitle" : {
-    "translation" : "Supprimer « \"{0} » ?"
+    "translation" : "Supprimer « {0} » ?"
   },
   "codeLab.projects.confirmDeleteProject.confirmButton.labelText" : {
     "translation" : "Oui, supprimer"
@@ -364,7 +367,7 @@
     "translation" : "Veux-tu-vraiment supprimer ce projet ?"
   },
   "codeLabSampleProject_DriveInSquare.projectName" : {
-    "translation" : "Avancer dans le carré"
+    "translation" : "Rouler dans un carré"
   },
   "codeLabSampleProject_RainbowBackpack.projectName" : {
     "translation" : "Voyants dorsaux arc-en-ciel"
@@ -373,10 +376,10 @@
     "translation" : "Conduite et éternuement"
   },
   "codeLabSampleProject_TapCubeForMysteryAnimation.projectName" : {
-    "translation" : "Touche le cube pour l'animation mystère"
+    "translation" : "Taper le cube pour l'animation mystère"
   },
   "codeLabSampleProject_DriveInSquareAdvanced.projectName" : {
-    "translation" : "Avancer dans un carré : avancé"
+    "translation" : "Rouler dans un carré : avancé"
   },
   "codeLabSampleProject_PushCube.projectName" : {
     "translation" : "Pousser le cube"
@@ -454,13 +457,13 @@
     "translation" : "Réfléchir profondément"
   },
   "codeLabHorizontal.Tooltip.ActBored" : {
-    "translation" : "Paraître s'ennuyer"
+    "translation" : "Avoir l'air de s'ennuyer"
   },
   "codeLabHorizontal.Tooltip.ActFrustrated" : {
     "translation" : "Paraître frustré"
   },
   "codeLabHorizontal.Tooltip.ActChatty" : {
-    "translation" : "Paraître bavard"
+    "translation" : "Bavarder"
   },
   "codeLabHorizontal.Tooltip.ActDisappointed" : {
     "translation" : "Paraître déçu"

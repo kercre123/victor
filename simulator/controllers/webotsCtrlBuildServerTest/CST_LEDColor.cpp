@@ -1,10 +1,10 @@
 #include <webots/Supervisor.hpp>
 #include <webots/LED.hpp>
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "clad/types/ledTypes.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "clad/types/vizTypes.h"
-#include "anki/cozmo/basestation/ledEncoding.h"
+#include "engine/ledEncoding.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 namespace Anki {

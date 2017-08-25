@@ -29,6 +29,12 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
   public uint LastSeenEngineTimestamp { get; private set; }
 
+  public Anki.Vision.FacialExpression Expression { get; private set; }
+
+  public byte[] ExpressionScoreValues { get; private set; }
+
+  public int ExpressionScore { get; private set; }
+
   // Faces are created when they are seen and destroyed when not seen for a while
   private bool _IsInFieldOfView = true;
 
@@ -114,12 +120,26 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
     _ConsecutiveVisionFramesNotSeen = 0;
     IsInFieldOfView = true;
+
+    Expression = message.expression;
+    ExpressionScoreValues = message.expressionValues;
+    ExpressionScore = 0;
+    CheckExpression();
   }
 
 
   // this should only be called in response to RobotChangedObservedFaceID
   public void UpdateFaceID(int id) {
     ID = id;
+  }
+
+  public void CheckExpression() {
+    if (Expression != Anki.Vision.FacialExpression.Unknown) {
+      ExpressionScore = ExpressionScoreValues[(int)Expression];
+      if (ExpressionScore == 0) {
+        Expression = Anki.Vision.FacialExpression.Unknown;
+      }
+    }
   }
 
   public void MarkNotVisibleThisFrame() {

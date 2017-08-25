@@ -7,22 +7,22 @@
     "source_key_paths" : ["/{*}"]
   },
   "wifiStrings.Instructions.SlideA.titleCopy" : {
-    "translation" : "CozmoのWiFiに接続するには、デバイスの設定に移動する必要があります。"
+    "translation" : "COZMOのWiFiに接続するには、デバイスの設定に移動する必要があります。"
   },
   "wifiStrings.Instructions.SlideA.altCopy" : {
     "translation" : "最初にすべての手順をお読みください"
   },
   "wifiStrings.Instructions.SlideB" : {
-    "translation" : "Cozmoの電源が入っていることを確認してください。"
+    "translation" : "COZMOの電源が入っていることを確認してください。"
   },
   "wifiStrings.Instructions.SlideB.altCopy" : {
-    "translation" : "Cozmoをチャージャーから外してもう一度置きます"
+    "translation" : "COZMOを充電ドックから外してもう一度置きます。"
   },
   "wifiStrings.Instructions.Slide0" : {
     "translation" : "デバイスの設定アイコンを見つけてタップします。"
   },
   "wifiStrings.Instructions.Slide0altCopy" : {
-    "translation" : "ホームボタンを押してCozmoアプリを終了します。"
+    "translation" : "ホームボタンを押してCOZMOアプリを終了します。"
   },
   "wifiStrings.Instructions.Slide0Android" : {
     "translation" : "デバイスの設定パネルをプルダウンします。"
@@ -31,40 +31,40 @@
     "translation" : "設定メニューからWiFiセクションを選択します。"
   },
   "wifiStrings.Instructions.Slide2" : {
-    "translation" : "リストからCozmoのネットワークを選択します。"
+    "translation" : "リストからCOZMOのネットワークを選択します。"
   },
   "wifiStrings.Instructions.Slide3" : {
-    "translation" : "Cozmoに表示されたパスワードを入力します。"
+    "translation" : "COZMOに表示されたパスワードを入力します。"
   },
   "wifiStrings.Instructions.Slide3.altCopy" : {
-    "translation" : "パスワードが表示されませんか？ここをタップ："
+    "translation" : "パスワードが表示されない？ここをタップ："
   },
   "wifiStrings.Instructions.Slide3altCopy2" : {
-    "translation" : "すべて大文字で入力してください。スペースは使用できません。"
+    "translation" : "すべて大文字で入力してください。スペースは使用できません。ダッシュは使用できます。"
   },
   "wifiStrings.Instructions.Slide3.5" : {
-    "translation" : "Cozmoはインターネットアクセスを提供しません。"
+    "translation" : "COZMOはインターネットアクセスを提供しません。"
   },
   "wifiStrings.Instructions.Slide3.5altCopy" : {
-    "translation" : "CozmoのWifiに接続したままにするにはOKをタップします。"
+    "translation" : "COZMOのWifiに接続したままにするにはOKをタップします。"
   },
   "wifiStrings.Instructions.Slide4" : {
-    "translation" : "設定を終了し、Cozmoアプリに戻ります。"
+    "translation" : "設定を終了し、COZMOアプリに戻ります。"
   },
   "wifiStrings.Instructions.Slide4altCopy" : {
-    "translation" : "Cozmoが接続されると、アプリはそれを認識します。"
+    "translation" : "COZMOが接続されると、アプリはそれを認識します。"
   },
   "wifi.gethelp.title" : {
-    "translation" : "CozmoのWifiへの接続に問題がありますか？"
+    "translation" : "COZMOのWifiへの接続に問題がありますか？"
   },
   "wifi.gethelp.description" : {
-    "translation" : "次のことを試してください：\u000a\u000a1. Cozmoをチャージャーから外し、またチャージャーに戻します\u000a2. デバイスのWifiを<b>オフ</b>にしてから<b>オン</b>に戻します。"
+    "translation" : "次のことを試してください：\u000a\u000a1. COZMOを充電ドックから外し、また充電ドックに戻します\u000a2. デバイスのWifiを<b>オフ</b>にしてから<b>オン</b>に戻します。"
   },
   "wifi.gethelp.description2" : {
-    "translation" : "Cozmoのネットワーク情報を確認する必要がある場合は、Cozmoのリフトを上げ下げします。"
+    "translation" : "COZMOのネットワーク情報を確認する必要がある場合は、COZMOのリフトを上げ下げします。"
   },
   "wifi.gethelp.footer" : {
-    "translation" : "問題が解消しない場合は、別のデバイスで<b>support.anki.com</b>にアクセスしてください。"
+    "translation" : "別のデバイスでアクセスすることをおすすめします\u000a<b>http://www.takaratomy.co.jp/products/cozmo/support</b>"
   },
   "wifi.getHelp.linkText" : {
     "translation" : "ヘルプ"
@@ -76,10 +76,10 @@
     "translation" : "パスワードの長さが正しくありません。"
   },
   "wifi.selectNetwork" : {
-    "translation" : "接続するCozmoを選択します："
+    "translation" : "接続するCOZMOを選択します："
   },
   "wifi.lookingForNetworks" : {
-    "translation" : "Cozmoのネットワークを検索しています..."
+    "translation" : "COZMOのネットワークを検索しています..."
   },
   "wifi.currentSsid" : {
     "translation" : "現在のSSID：{0}"
@@ -94,18 +94,18 @@
     "translation" : "Wifiがオフです。下のボタンを押してオンにしてください。"
   },
   "wifi.locationPermission" : {
-    "translation" : "Cozmoアプリの接続をもっと簡単にしましょう！位置特定の許可を求められたら<b>許可</b>をタップして、Cozmoアプリが近くのCozmoを見つけられるようにします。注意：あなたの位置は保存されません！"
+    "translation" : "COZMOアプリの接続をもっと簡単にしましょう！位置特定の許可を求められたら<b>許可</b>をタップして、COZMOアプリが近くのCOZMOを見つけられるようにします。注意：あなたの位置は保存されません！"
   },
   "wifi.pleaseLocationPermission" : {
-    "translation" : "本当によろしいですか？位置特定ができないと、携帯電話のWifi設定でCozmoに手動で接続する必要があります。Cozmoアプリからが接続許可を求められたら<b>許可</b>をタップします。自分で接続する場合は<b>キャンセル</b>をタップします。"
+    "translation" : "本当によろしいですか？位置特定ができないと、携帯電話のWifi設定でCOZMOに手動で接続する必要があります。COZMOアプリから接続許可を求められたら<b>許可</b>をタップします。自分で接続する場合は<b>キャンセル</b>をタップします。"
   },
   "wifi.enableLocation" : {
-    "translation" : "「位置特定」をオンにすることを求められたら<b>許可</b>をタップして、Cozmoアプリが近くのCozmoを見つけられるようにします。注意：あなたの位置は保存されません！"
+    "translation" : "「位置特定」をオンにすることを求められたら<b>許可</b>をタップして、COZMOアプリが近くのCOZMOを見つけられるようにします。注意：あなたの位置は保存されません！"
   },
   "wifi.pleaseEnableLocation" : {
-    "translation" : "本当によろしいですか？位置特定ができないと、携帯電話のWifi設定でCozmoに手動で接続する必要があります。Cozmoアプリからが接続許可を求められたら<b>はい</b>をタップします。自分で接続する場合は<b>キャンセル</b>をタップします。"
+    "translation" : "本当によろしいですか？位置特定ができないと、携帯電話のWifi設定でCOZMOに手動で接続する必要があります。COZMOアプリから接続許可を求められたら<b>はい</b>をタップします。自分で接続する場合は<b>キャンセル</b>をタップします。"
   },
   "wifi.passwordRememberStatement" : {
-    "translation" : "パスワードはCozmoの顔に表示されます。表示された通りに入力してください。このパスワードはデバイスが記憶するので、一度しか入力する必要がありません。"
+    "translation" : "パスワードはCOZMOの顔に表示されます。表示された通りに入力してください。このパスワードはデバイスが記憶するので、一度しか入力する必要がありません。"
   }
 }

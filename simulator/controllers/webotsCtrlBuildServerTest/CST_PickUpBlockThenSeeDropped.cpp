@@ -12,10 +12,10 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "engine/actions/basicActions.h"
+#include "engine/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -97,7 +97,6 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
                                             GetNumObjectsInFamily(ObjectFamily::LightCube) == 1)
       {
         ExternalInterface::QueueSingleAction m;
-        m.robotID = 1;
         m.position = QueueActionPosition::NOW;
         m.idTag = 1;
         
@@ -143,7 +142,6 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
         // move back
         const float dist_mm = 50.0f;
         ExternalInterface::QueueSingleAction m;
-        m.robotID = 1;
         m.position = QueueActionPosition::NOW;
         m.idTag = 3;
         m.action.Set_driveStraight(ExternalInterface::DriveStraight(200, -dist_mm, true));

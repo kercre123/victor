@@ -11,7 +11,7 @@
  *
  */
 
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "simulator/game/cozmoSimTestController.h"
 
 namespace Anki {
 namespace Cozmo {
