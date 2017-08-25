@@ -804,7 +804,10 @@ int mm_app_start_capture_raw(mm_camera_test_obj_t *test_obj, uint8_t num_snapsho
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
     attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
     //attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
-    attr.max_unmatched_frames = 2;
+    attr.max_unmatched_frames = 1; //I had tried 2
+
+    //attr.post_frame_skip = 4; //4x decimation?
+    
     channel = mm_app_add_channel(test_obj,
                                  MM_CHANNEL_TYPE_CAPTURE,
                                  &attr,
@@ -1025,68 +1028,4 @@ int camera_cleanup()
   mm_camera_lib_close(&gTheCamera.lib_handle);
   return 0;
 }
-
-
-#define AS_APPLICATION
-#ifdef AS_APPLICATION
-
-int my_camera_callback(const uint8_t *frame, int width, int height)
-{
-  char file_name[64];
-  static int frame_idx = 0;
-  const char* name = "main";
-  const char* ext = "gray";
-  int file_fd;
-
-  snprintf(file_name, sizeof(file_name), "/data/misc/camera/test/%s_%04d.%s", name, frame_idx++, ext);
-  file_fd = open(file_name, O_RDWR | O_CREAT, 0777);
-  if (file_fd < 0) {
-    CDBG_ERROR("%s: cannot open file %s \n", __func__, file_name);
-  } else {
-    write(file_fd,
-          frame,
-          width * height);
-  }
-
-  close(file_fd);
-  CDBG("dump %s", file_name);
-  //save file                                                                                                                       
-  return 0;
-}
-
-
-
-
-int main()
-{
-    int rc = 0;
-
-    printf("Camera Capturer\n");
-
-    if (camera_init() != 0)
-    {
-        printf("Error opening camera\n");
-    }
-    else {
-
-        printf("Starting\n");
-        camera_start(my_camera_callback);
-
-        printf("Sleeping\n");
-        sleep(2.0);
-        printf("Done Sleeping\n");
-
-        camera_stop();
-
-
-    }
-    camera_cleanup();
-    
-    printf("Exiting application\n");
-
-    return rc;
-}
-
-#endif
-
 
