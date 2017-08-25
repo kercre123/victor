@@ -201,7 +201,29 @@
             
             <category name="Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_clear"></block>
-                <block type="cozmo_vert_cozmoface_display"></block>                
+                <block type="cozmo_vert_cozmoface_display"></block>
+                <block type="cozmo_vert_cozmoface_draw_text">
+                  <value name="TEXT">
+                      <shadow type="text">
+                          <field name="TEXT">text</field>
+                      </shadow>
+                  </value>
+                  <value name="X1">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="Y1">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="SCALE">
+                      <shadow type="math_positive_number">
+                          <field name="NUM">1.0</field>
+                      </shadow>
+                  </value>
+                </block>                
                 <block type="cozmo_vert_cozmoface_draw_line">
                   <value name="X1">
                       <shadow type="math_number">
@@ -303,29 +325,6 @@
                       </shadow>
                   </value>
                 </block>
-                <block type="cozmo_vert_cozmoface_draw_text">
-                  <value name="TEXT">
-                      <shadow type="text">
-                          <field name="TEXT">text</field>
-                      </shadow>
-                  </value>
-                  <value name="X1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="Y1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="SCALE">
-                      <shadow type="math_positive_number">
-                          <field name="NUM">1.0</field>
-                      </shadow>
-                  </value>
-                </block>
-                
             </category>
 
             <category name="Events" colour="#f4b606" secondaryColour="0">
