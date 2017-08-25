@@ -95,14 +95,14 @@ namespace Anki
       // CAMERAS
       // TODO: Add functions for adjusting ROI of cameras?
       //
-
+      
+      void InitCamera();
+      
       void CameraGetParameters(DefaultCameraParams& params);
 
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
 
-      void StartCamera();
-      void StopCamera();
       // Fill provided frame buffer with image data if available
       // Returns true if image available
       // TODO: How fast will this be in hardware? Is image ready and waiting?
@@ -134,8 +134,6 @@ namespace Anki
 
       // Print text to face display
       void FacePrintf(const char *format, ...);
-      
-      void InitCamera();
       
     private:
 

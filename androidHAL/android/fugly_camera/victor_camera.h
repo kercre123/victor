@@ -33,6 +33,12 @@ int camera_stop(CameraHandle camera);
 __attribute__((visibility("hidden")))
 int camera_cleanup(CameraHandle camera);
 
+__attribute__((visibility("hidden")))
+int camera_set_exposure(CameraHandle camera, int exp);
+
+__attribute__((visibility("hidden")))
+int camera_set_fps(CameraHandle camera, int fps);
+
 #ifdef __cplusplus
 }
 #endif

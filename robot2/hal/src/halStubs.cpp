@@ -125,9 +125,9 @@ namespace Anki {
       // Set ID
       robotID_ = 1;
 
-#if IMU_WORKING
+//#if IMU_WORKING
       InitIMU();
-#endif
+//#endif
 
       if (InitRadio(RADIO_IP) != RESULT_OK) {
         printf("Failed to initialize Radio.\n");
@@ -336,7 +336,8 @@ namespace Anki {
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {
       assert(cliff_id < DropSensor_DROP_SENSOR_COUNT);
-      return bodyData_->cliffSense[cliff_id];
+      return 800;
+//      return bodyData_->cliffSense[cliff_id];
     }
 
     u16 HAL::GetCliffOffLevel(const CliffID cliff_id)

@@ -13733,7 +13733,6 @@ ERROR:
     return rc;
 }
 
-
 int setScene(mm_camera_test_obj_t *test_obj, cam_scene_mode_type scene)
 {
     int rc = MM_CAMERA_OK;
@@ -13899,7 +13898,8 @@ int mm_app_start_capture_raw(mm_camera_test_obj_t *test_obj, uint8_t num_snapsho
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
     attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
 
-    attr.max_unmatched_frames = 2;
+    attr.max_unmatched_frames = 1;
+    attr.post_frame_skip = 2;
     channel = mm_app_add_channel(test_obj,
                                  MM_CHANNEL_TYPE_CAPTURE,
                                  &attr,
@@ -14364,6 +14364,25 @@ int camera_cleanup(CameraObj* camera)
 {
   mm_camera_lib_close(&camera->lib_handle);
   return 0;
+}
+
+int camera_set_exposure(CameraObj* camera, int exp)
+{
+  return mm_app_set_params_impl(&(camera->lib_handle.test_obj),
+                                CAM_INTF_PARM_EXPOSURE,
+                                sizeof(&exp),
+                                &exp);
+}
+
+int camera_set_fps(CameraObj* camera, int fps)
+{
+  cam_fps_range_t range;
+  range.min_fps = fps;
+  range.max_fps = fps;
+  range.video_min_fps = fps;
+  range.video_max_fps = fps;
+  
+  return setFPSRange(&(camera->lib_handle.test_obj), range);
 }
 
 

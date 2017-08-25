@@ -101,28 +101,28 @@ void RobotDataLoader::LoadNonConfigData()
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-    CollectAnimFiles();
+    //CollectAnimFiles();
   }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimations");
-    LoadAnimationsInternal();
+    //LoadAnimationsInternal();
     // The threaded animation loading workers each add to the loading ratio
   }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
-    LoadAnimationGroups();
+    //LoadAnimationGroups();
   }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
-    LoadCubeLightAnimations();
+    //LoadCubeLightAnimations();
   }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-    LoadBackpackLightAnimations();
+    //LoadBackpackLightAnimations();
   }
 
   {

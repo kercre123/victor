@@ -292,7 +292,7 @@ namespace Cozmo {
     
     // Re-initialize the marker detector for the new image size
     _markerDetector->Init(camCalib->GetNrows(), camCalib->GetNcols());
-        
+    
     return result;
   } // Init()
 

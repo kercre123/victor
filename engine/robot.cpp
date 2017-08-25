@@ -153,11 +153,19 @@ static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //Thi
 
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
-const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-  0,             -0.0698f,   0.9976f,
- -1.0000f,        0,         0,
-  0,             -0.9976f,  -0.0698f,
-});
+#ifdef COZMO_V2
+  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+     0,     0,   1.f,
+    -1.f,   0,   0,
+     0,    -1.f, 0,
+  });
+#else
+  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+    0,      -0.0698f,  0.9976f,
+  -1.0000f,  0,        0,
+    0,      -0.9976f, -0.0698f,
+  });
+#endif
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
@@ -258,6 +266,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
         
   if (nullptr != _context->GetDataPlatform())
   {
+    PRINT_NAMED_WARNING("", "Initing vision component");
     _visionComponent->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
   
@@ -278,6 +287,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #ifdef COZMO_V2
   AndroidHAL::getInstance();
   #endif
+  
+  _behaviorMgr->DisableReactionsWithLock("robot", ReactionTriggerHelpers::kAffectAllArray);
   
 } // Constructor: Robot
     
@@ -1263,20 +1274,6 @@ Result Robot::Update()
   
   _robotIdleTimeoutComponent->Update(currentTime);
   
-#   ifdef COZMO_V2
-  _visionComponent->CaptureAndSendImage();
-  
-  if(_visionComponent->GetCamera().IsCalibrated())
-  {
-    // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
-    Result visionResult = _visionComponent->UpdateAllResults();
-    if(RESULT_OK != visionResult) {
-      PRINT_NAMED_WARNING("Robot.Update.VisionComponentUpdateFail", "");
-      return visionResult;
-    }
-  }
-#   endif
-  
   // Check for syncTimeAck taking too long to arrive
   if (_syncTimeSentTime_sec > 0.0f && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
     PRINT_NAMED_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
@@ -1288,16 +1285,6 @@ Result Robot::Update()
     PRINT_NAMED_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
   }
-  
-  static bool b = false;
-  static float t = currentTime;
-  if(t + 10 < currentTime && !b)
-  {
-    PRINT_NAMED_WARNING("", "Initing camera");
-    AndroidHAL::getInstance()->InitCamera();
-    b = true;
-  }
-
   
 #if(0)
   ActiveBlockLightTest(1);
@@ -1316,31 +1303,20 @@ Result Robot::Update()
      }
      lastUpdateTime = currentTime_sec;
   */
-  #   ifdef COZMO_V2
-//  AndroidHAL::getInstance()->StartCamera();
-  #endif
-  
+
   //////////// Android HAL Update ////////////
   #ifdef COZMO_V2
   AndroidHAL::getInstance()->Update();
   #endif
-  
-  
-//  #   ifdef COZMO_V2
-//  _visionComponent->CaptureAndSendImage();
-//#   endif
 
-#   ifdef COZMO_V2
-//  AndroidHAL::getInstance()->StopCamera();
-  #endif
   
+  #ifdef COZMO_V2
+  _visionComponent->CaptureAndSendImage();
+  #endif
+
   //////////// VisionComponent //////////  
   if(_visionComponent->GetCamera().IsCalibrated())
   {
-// #   ifdef COZMO_V2
-//     _visionComponent->CaptureAndSendImage();
-// #   endif
-    
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();
     if(RESULT_OK != visionResult) {

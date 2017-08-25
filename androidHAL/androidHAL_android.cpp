@@ -43,10 +43,7 @@ namespace Anki {
       uint8_t* _latestFrame = nullptr;
       int _width = 0;
       int _height = 0;
-      bool _cameraRunning = false;
-      bool _waitingForFrame = false;
       bool _copyingNewFrame = false;
-      bool _cameraInited = false;
     } // "private" namespace
 
 
@@ -84,11 +81,11 @@ namespace Anki {
     , _looper(nullptr)
     , _androidCamera(nullptr)
     , _reader(nullptr)
-    , _imageCaptureResolution(ImageResolution::QVGA)
+    , _imageCaptureResolution(ImageResolution::NHD)
     , _imageFrameID(1)
     {
       //InitIMU();
-//     InitCamera();
+      InitCamera();
     }
     
     AndroidHAL::~AndroidHAL()
@@ -153,64 +150,24 @@ namespace Anki {
 
     int CameraCallback(const uint8_t* image, int width, int height)
     {
-        // PRINT_NAMED_WARNING("Camera callback", "Width: %d Height: %d",width, height);
+//      static TimeStamp_t lastFrame = AndroidHAL::getInstance()->GetTimeStamp();
+//      PRINT_NAMED_WARNING("FrameRate",
+//                          "%f",
+//                          (1000.f / (AndroidHAL::getInstance()->GetTimeStamp() - lastFrame)));
+//      lastFrame = AndroidHAL::getInstance()->GetTimeStamp();
+    
       if(_latestFrame == nullptr)
       {
         _latestFrame = (uint8_t*)malloc(width*height*sizeof(image));
         _width = width;
         _height = height;
       }
+      
       _copyingNewFrame = true;
       std::memcpy(_latestFrame, image, width*height);
-      
-//      static int count = 0;
-//      if(count < 20)
-//      {
-//        PRINT_NAMED_WARNING("Camera callback", "Width: %d Height: %d",width, height);
-
-//        const char* buf = reinterpret_cast<const char*>(image);
-//        std::ofstream f("/data/data/com.anki.cozmoengine/images/" + std::to_string(count) + ".jpg", std::ofstream::binary);
-//        f.write(buf, width*height);
-//        f.close();
-//        ++count;
-//      }
-      
       _copyingNewFrame = false;
       
-      _waitingForFrame = false;
       return 0;
-    }
-
-    void AndroidHAL::StartCamera()
-    {
-//      if(!_cameraInited)
-//      {
-//        return;
-//      }
-//      
-//      if(!_cameraRunning && !_waitingForFrame)
-//      {
-//        _cameraRunning = true;
-//        _waitingForFrame = true;
-//        int res = camera_start(_cameraHandle, &CameraCallback);
-//        PRINT_NAMED_WARNING("Camera start", "%d", res);
-//      }
-    }
-    
-    void AndroidHAL::StopCamera()
-    {
-//      if(!_cameraInited)
-//      {
-//        return;
-//      }
-//    
-//      if(_cameraRunning && !_waitingForFrame)
-//      {
-//        int res = camera_stop(_cameraHandle);
-//        PRINT_NAMED_WARNING("Camera stop", "%d", res);
-//        _cameraRunning = false;
-//        _waitingForFrame = false;
-//      }
     }
 
     void AndroidHAL::InitCamera()
@@ -220,13 +177,12 @@ namespace Anki {
       _cameraHandle = camera_alloc();
 
       int res = camera_init(_cameraHandle);
-      PRINT_NAMED_WARNING("Camera init", "%d", res);
       
       res = camera_start(_cameraHandle, &CameraCallback);
-      PRINT_NAMED_WARNING("Camera start", "%d", res);
-
-
-      _cameraInited = true;
+      
+//      res = camera_set_exposure(_cameraHandle, 10000000);
+      
+//      res = camera_set_fps(_cameraHandle, 5);
       // DeleteCamera();
       
       // _androidCamera = new NativeCamera(nullptr);
@@ -250,10 +206,8 @@ namespace Anki {
       Util::SafeDelete(_reader);
 
       int res = camera_stop(_cameraHandle);
-      PRINT_NAMED_WARNING("Camera stop", "%d", res);
 
       res = camera_cleanup(_cameraHandle);
-      PRINT_NAMED_WARNING("Camera cleanup", "%d", res);
 
       free(_cameraHandle);
     }
