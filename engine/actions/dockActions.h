@@ -608,27 +608,8 @@ namespace Anki {
       // checking if it is done
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.f; }
       
-    }; // class AscendOrDesceneRampAction
+    }; // class AscendOrDescendRampAction
     
-    
-    class MountChargerAction : public IDockAction
-    {
-    public:
-      MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed);
-      
-    protected:
-      
-      virtual ActionResult SelectDockAction(ActionableObject* object) override;
-      
-      virtual ActionResult Verify() override;
-      
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
-      
-      // Give the robot a little longer to start ascending/descending before
-      // checking if it is done
-      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.f; }
-      
-    }; // class MountChargerAction
   }
 }
 
