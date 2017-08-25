@@ -88,5 +88,14 @@
     "VersionNum" : "2",
     "IsVertical" : "true",
     "DisplayOrder": "1"
+  },
+    {
+    "ProjectUUID": "9267e69e-a2db-485e-8ebc-f2df72a1c309",
+    "ProjectXML": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"><block type=\"event_whenflagclicked\" id=\"RqohItYC/XpjZ2]xiar5\" x=\"534\" y=\"250\"><next><block type=\"cozmo_vert_path_offset\" id=\"dOYKgkY|Y)Z|o-]|6mm+\"><comment pinned=\"true\" h=\"60.0\" w=\"450.0\">Place a cube about 6 inches in front of Cozmo. Then, press the green flag block to start the script.</comment><value name=\"OFFSET_X\"><shadow type=\"math_number\" id=\"dVvV]*OlY}KICa#%^CZ6\"><field name=\"NUM\">400.0</field></shadow></value><value name=\"OFFSET_Y\"><shadow type=\"math_number\" id=\"f0A=eDJQjzy02.u8/*mN\"><field name=\"NUM\">0.0</field></shadow></value><value name=\"OFFSET_ANGLE\"><shadow type=\"math_number\" id=\"acVX6jE2[%)fX^5evn/|\"><field name=\"NUM\">0.0</field></shadow></value></block></next></block></xml>",
+    "ProjectName": "Drive around a cube",
+    "ProjectIconName" : "cozmo-turn-right",
+    "VersionNum" : "2",
+    "IsVertical" : "true",
+    "DisplayOrder": "2"
   }
 ]

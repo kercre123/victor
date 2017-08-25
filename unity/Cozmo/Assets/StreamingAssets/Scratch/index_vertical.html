@@ -133,7 +133,6 @@
                       </shadow>
                   </value>
               </block>
-              <block type="cozmo_dock_with_cube"></block>
               <block type="cozmo_vert_dock_with_cube_by_id"></block>
             </category>
             <category name="Actions" colour="#5e3dfc" secondaryColour="0">
@@ -359,6 +358,9 @@
             </category>
 
             <category name="Control" colour="#e5580a" secondaryColour="0">
+              <block type="control_forever"></block>
+              <block type="control_if"></block>
+              <block type="control_if_else"></block>
               <block type="control_wait" id="control_wait">
                   <value name="DURATION">
                       <shadow type="math_positive_number">
@@ -366,6 +368,7 @@
                       </shadow>
                   </value>
               </block>
+              <block type="control_wait_until"></block>
               <block type="control_repeat">
                   <value name="TIMES">
                       <shadow type="math_whole_number_with_validator">
@@ -373,10 +376,6 @@
                       </shadow>
                   </value>
               </block>
-              <block type="control_forever"></block>
-              <block type="control_if"></block>
-              <block type="control_if_else"></block>
-              <block type="control_wait_until"></block>
               <block type="control_repeat_until"></block>
               <block type="control_stop"></block>
             </category>
