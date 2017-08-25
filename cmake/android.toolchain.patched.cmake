@@ -40,7 +40,7 @@
 
 cmake_minimum_required(VERSION 3.6.0)
 
-set(ANDROID_NDK_REVISION 14)
+set(ANDROID_NDK_REVISION 15)
 
 # Touch toolchain variable to suppress "unused variable" warning.
 # This happens if CMake is invoked with the same command line the second time.
@@ -365,9 +365,10 @@ set(ANDROID_LINKER_FLAGS_EXE)
 
 # Generic flags.
 list(APPEND ANDROID_COMPILER_FLAGS
-	-g
+	-gsplit-dwarf
 	-DANDROID
 	-ffunction-sections
+	-fdata-sections
 	-funwind-tables
 	-fstack-protector-strong
 	-no-canonical-prefixes)
@@ -376,10 +377,11 @@ list(APPEND ANDROID_COMPILER_FLAGS_CXX
 	-fno-rtti)
 list(APPEND ANDROID_LINKER_FLAGS
 	-Wl,--build-id
+	-Wl,--gdb-index
 	-Wl,--warn-shared-textrel
+	-Wl,--gc-sections
 	-Wl,--fatal-warnings)
 list(APPEND ANDROID_LINKER_FLAGS_EXE
-	-Wl,--gc-sections
 	-Wl,-z,nocopyreloc)
 
 # Debug and release flags.
@@ -670,3 +672,21 @@ message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 message(STATUS "ANDROID_STL=${ANDROID_STL}")
 message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
+
+# CMake 3.7+ compatibility.
+if (CMAKE_VERSION VERSION_GREATER 3.7.0)
+    set(CMAKE_ANDROID_NDK ${ANDROID_NDK})
+
+    if(ANDROID_TOOLCHAIN STREQUAL gcc)
+        set(CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION 4.9)
+    else()
+        set(CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION clang)
+    endif()
+
+    set(CMAKE_ANDROID_STL_TYPE ${ANDROID_STL})
+
+    if(ANDROID_ABI MATCHES "^armeabi(-v7a)?$")
+        set(CMAKE_ANDROID_ARM_NEON ${ANDROID_ARM_NEON})
+        set(CMAKE_ANDROID_ARM_MODE ${ANDROID_ARM_MODE})
+    endif()
+endif()
