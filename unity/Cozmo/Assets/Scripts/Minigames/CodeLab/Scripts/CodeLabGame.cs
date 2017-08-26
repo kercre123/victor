@@ -593,7 +593,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         robot.TurnOffAllLights(true);
-        robot.DriveWheels(0.0f, 0.0f);
+        robot.StopAllMotors();
         robot.EnableCubeSleep(true, true);
 
         //turn off all cube lights
@@ -663,11 +663,21 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       _queuedScratchRequests.Clear();
 
-      // Cancel any in-progress actions (unless we're resetting to position)
-      // (if we're resetting to position then we will have already canceled other actions,
-      // and we don't want to cancel the in-progress reset animations).
-      if (!IsResettingToHomePose()) {
-        RobotEngineManager.Instance.CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        if (_PendingResetToHomeActions == 0) {
+          // If not already actively moving to reset, then stop all motors immediately
+          // The motors are stopped eventually in ResetRobotToHomePos, but we want to
+          // stop them even earlier if user actively presses the stop button.
+          robot.StopAllMotors();
+        }
+
+        // Cancel any in-progress actions (unless we're resetting to position)
+        // (if we're resetting to position then we will have already canceled other actions,
+        // and we don't want to cancel the in-progress reset animations).
+        if (!IsResettingToHomePose()) {
+          robot.CancelAction(RobotActionType.UNKNOWN);
+        }
       }
     }
 
@@ -1064,6 +1074,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float newAngle = robot.PoseAngle + offsetAngle;
         bool level = false;
         bool useManualSpeed = false;
+        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
         robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
       }
       else if (scratchRequest.command == "cozVertPathTo") {
@@ -1073,6 +1084,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(newX.ToString() + " , " + newY.ToString() + " , " + newAngle.ToString()));
         bool level = false;
         bool useManualSpeed = false;
+        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
         robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
       }
       else if (scratchRequest.command == "cozVertHeadAngle") {
@@ -1080,6 +1092,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
+        robot.DriveHead(0.0f); // Cancel any direct head motor usage to allow action to use it
         if (!SetHeadAngleLazy(angle, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
           inProgressScratchBlock.AdvanceToNextBlock(true);
         }
@@ -1090,6 +1103,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString() + " , " + speed.ToString()));
 
+        robot.MoveLift(0.0f); // Cancel any direct lift motor usage to allow action to use it
         if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
           inProgressScratchBlock.AdvanceToNextBlock(true);
         }
@@ -1105,12 +1119,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         float angle = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
+        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
         TurnInPlaceVertical(angle, speed, inProgressScratchBlock.CompletedTurn);
       }
       else if (scratchRequest.command == "cozVertDrive") {
         float dist_mm = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
+        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
         robot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
       }
       else if (scratchRequest.command == "cozVertDriveWheels") {
