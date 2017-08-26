@@ -32,31 +32,31 @@ namespace {
 #ifdef COZMO_V2
 #ifdef SIMULATOR
 // V2 Simulated camera calibration
-static const Vision::CameraCalibration kApproxCalib(360, 640,
-                                                    185, 185,
-                                                    319, 179,
-                                                    0.f,
-                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f,
-  0.f, 0.f, 0.f}));
+static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
+  new Vision::CameraCalibration(360, 640,
+                                185, 185,
+                                319, 179,
+                                0.f,
+                                std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f})));
                                                     /*std::vector<f32>({-0.07f, -0.2f, 0.001f, 0.001f, 0.1f,
                                                                       0.f, 0.f, 0.f}));*/
 #else
 // V2 Physical camera calibration
-static const Vision::CameraCalibration kApproxCalib(360, 640,
-                                                    362, 364,
-                                                    303, 196,
-                                                    0.f,
-                                                    std::vector<f32>({-0.1, -0.1, 0.00005, -0.0001, 0.05,
-                                                                      0.f, 0.f, 0.f}));
+static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
+  new Vision::CameraCalibration(360, 640,
+                                362, 364,
+                                303, 196,
+                                0.f,
+                                std::vector<f32>({-0.1, -0.1, 0.00005, -0.0001, 0.05, 0.f, 0.f, 0.f}));
 #endif
 #else
 // 1.5/1.0 Physical camera calibration
-static const Vision::CameraCalibration kApproxCalib(240, 320,
-                                                    290, 290,
-                                                    160, 120,
-                                                    0.f,
-                                                    std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f,
-                                                                      0.f, 0.f, 0.f}));
+static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
+  new Vision::CameraCalibration(240, 320,
+                                290, 290,
+                                160, 120,
+                                0.f,
+                                std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f}));
 #endif
 }
 
@@ -169,11 +169,12 @@ void BehaviorPlaypenCameraCalibration::HandleWhileRunningInternal(const EngineTo
 void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
                                                                const CameraCalibration& calibMsg)
 {
-  Vision::CameraCalibration camCalib(calibMsg.nrows, calibMsg.ncols,
-                                     calibMsg.focalLength_x, calibMsg.focalLength_y,
-                                     calibMsg.center_x, calibMsg.center_y,
-                                     calibMsg.skew,
-                                     calibMsg.distCoeffs);
+  std::shared_ptr<Vision::CameraCalibration> camCalib(new Vision::CameraCalibration(
+    calibMsg.nrows, calibMsg.ncols,
+    calibMsg.focalLength_x, calibMsg.focalLength_y,
+    calibMsg.center_x, calibMsg.center_y,
+    calibMsg.skew,
+    calibMsg.distCoeffs));
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -214,19 +215,19 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
   // Check if calibration values are sane
   #define CHECK_OOR(value, min, max) (value < min || value > max)
   if (CHECK_OOR(calibMsg.focalLength_x,
-                kApproxCalib.GetFocalLength_x() - PlaypenConfig::kFocalLengthTolerance,
-                kApproxCalib.GetFocalLength_x() + PlaypenConfig::kFocalLengthTolerance) ||
+                kApproxCalib->GetFocalLength_x() - PlaypenConfig::kFocalLengthTolerance,
+                kApproxCalib->GetFocalLength_x() + PlaypenConfig::kFocalLengthTolerance) ||
       CHECK_OOR(calibMsg.focalLength_y,
-                kApproxCalib.GetFocalLength_y() - PlaypenConfig::kFocalLengthTolerance,
-                kApproxCalib.GetFocalLength_y() + PlaypenConfig::kFocalLengthTolerance) ||
+                kApproxCalib->GetFocalLength_y() - PlaypenConfig::kFocalLengthTolerance,
+                kApproxCalib->GetFocalLength_y() + PlaypenConfig::kFocalLengthTolerance) ||
       CHECK_OOR(calibMsg.center_x,
-                kApproxCalib.GetCenter_x() - PlaypenConfig::kCenterTolerance,
-                kApproxCalib.GetCenter_x() + PlaypenConfig::kCenterTolerance) ||
+                kApproxCalib->GetCenter_x() - PlaypenConfig::kCenterTolerance,
+                kApproxCalib->GetCenter_x() + PlaypenConfig::kCenterTolerance) ||
       CHECK_OOR(calibMsg.center_y,
-                kApproxCalib.GetCenter_y() - PlaypenConfig::kCenterTolerance,
-                kApproxCalib.GetCenter_y() + PlaypenConfig::kCenterTolerance) ||
-      calibMsg.nrows != kApproxCalib.GetNrows() ||
-      calibMsg.ncols != kApproxCalib.GetNcols())
+                kApproxCalib->GetCenter_y() - PlaypenConfig::kCenterTolerance,
+                kApproxCalib->GetCenter_y() + PlaypenConfig::kCenterTolerance) ||
+      calibMsg.nrows != kApproxCalib->GetNrows() ||
+      calibMsg.ncols != kApproxCalib->GetNcols())
   {
     PRINT_NAMED_WARNING("BehaviorPlaypenCameraCalibration.HandleCameraCalibration.Intrinsics.OOR",
                         "focalLength (%f, %f), center (%f, %f)",
@@ -236,20 +237,20 @@ void BehaviorPlaypenCameraCalibration::HandleCameraCalibration(Robot& robot,
   }
   
   if(CHECK_OOR(calibMsg.distCoeffs[0],
-               kApproxCalib.GetDistortionCoeffs()[0] - PlaypenConfig::kRadialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[0] + PlaypenConfig::kRadialDistortionTolerance) ||
+               kApproxCalib->GetDistortionCoeffs()[0] - PlaypenConfig::kRadialDistortionTolerance,
+               kApproxCalib->GetDistortionCoeffs()[0] + PlaypenConfig::kRadialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[1],
-               kApproxCalib.GetDistortionCoeffs()[1] - PlaypenConfig::kRadialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[1] + PlaypenConfig::kRadialDistortionTolerance) ||
+               kApproxCalib->GetDistortionCoeffs()[1] - PlaypenConfig::kRadialDistortionTolerance,
+               kApproxCalib->GetDistortionCoeffs()[1] + PlaypenConfig::kRadialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[2],
-               kApproxCalib.GetDistortionCoeffs()[2] - PlaypenConfig::kTangentialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[2] + PlaypenConfig::kTangentialDistortionTolerance) ||
+               kApproxCalib->GetDistortionCoeffs()[2] - PlaypenConfig::kTangentialDistortionTolerance,
+               kApproxCalib->GetDistortionCoeffs()[2] + PlaypenConfig::kTangentialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[3],
-               kApproxCalib.GetDistortionCoeffs()[3] - PlaypenConfig::kTangentialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[3] + PlaypenConfig::kTangentialDistortionTolerance) ||
+               kApproxCalib->GetDistortionCoeffs()[3] - PlaypenConfig::kTangentialDistortionTolerance,
+               kApproxCalib->GetDistortionCoeffs()[3] + PlaypenConfig::kTangentialDistortionTolerance) ||
      CHECK_OOR(calibMsg.distCoeffs[4],
-               kApproxCalib.GetDistortionCoeffs()[4] - PlaypenConfig::kRadialDistortionTolerance,
-               kApproxCalib.GetDistortionCoeffs()[4] + PlaypenConfig::kRadialDistortionTolerance) ||
+               kApproxCalib->GetDistortionCoeffs()[4] - PlaypenConfig::kRadialDistortionTolerance,
+               kApproxCalib->GetDistortionCoeffs()[4] + PlaypenConfig::kRadialDistortionTolerance) ||
      calibMsg.distCoeffs[5] != 0.f ||
      calibMsg.distCoeffs[6] != 0.f ||
      calibMsg.distCoeffs[7] != 0.f)

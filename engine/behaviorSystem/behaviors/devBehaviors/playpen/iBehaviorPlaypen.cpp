@@ -16,6 +16,7 @@
 
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/iBehaviorPlaypen.h"
 
+#include "engine/behaviorSystem/activities/activities/activityPlaypenTest.h"
 #include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqPlaypen.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -48,9 +49,9 @@ IBehaviorPlaypen::IBehaviorPlaypen(Robot& robot, const Json::Value& config)
   IBehavior::SubscribeToTags(std::move(failureTagCopy));
 }
 
-bool IBehaviorPlaypen::IsRunnableInternal(const BehaviorPreReqPlaypen& preReq) const
+bool IBehaviorPlaypen::IsRunnableInternal(const Robot& robot) const
 {
-  _factoryTestLogger = &preReq.GetFactoryTestLogger();
+  _factoryTestLogger = &ActivityPlaypenTest::GetFactoryTestLogger();
   return true;
 }
 

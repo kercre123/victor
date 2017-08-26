@@ -56,10 +56,6 @@
 
 #define DRAW_TOOL_CODE_DEBUG 0
 
-#define DO_SINGLE_IMAGE_CALIB 1
-#define CALIB_MARKER_SIZE_MM 15.f
-#define CALIB_TARGET_FACE_SIZE_MM 20.f
-
 namespace Anki {
 namespace Cozmo {
   
@@ -91,6 +87,8 @@ namespace Cozmo {
   
   // For testing artificial slowdowns of the vision thread
   CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
+  
+  CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
   
   namespace {
     // These are initialized from Json config:
@@ -1829,9 +1827,30 @@ namespace Cozmo {
     
     if(ShouldProcessVisionMode(VisionMode::ComputingCalibration))
     {
-      if((lastResult = _cameraCalibrator->ComputeCalibration(_currentResult.observedMarkers,
-                                                             _currentResult.cameraCalibrations,
-                                                             _currentResult.debugImageRGBs)) != RESULT_OK) {
+      switch(kCalibTargetType)
+      {
+        case CameraCalibrator::CalibTargetType::CHECKERBOARD:
+        {
+          lastResult = _cameraCalibrator->ComputeCalibrationFromCheckerboard(_currentResult.cameraCalibration,
+                                                                             _currentResult.debugImageRGBs);
+          break;
+        }
+        case CameraCalibrator::CalibTargetType::QBERT:
+        case CameraCalibrator::CalibTargetType::INVERTED_BOX:
+        {
+          // Marker detection needs to have run before trying to do single taret calibration
+          DEV_ASSERT(visionModesProcessed.IsBitFlagSet(VisionMode::DetectingMarkers),
+                     "VisionSystem.Update.ComputingCalibration.MarkersNotDetected");
+          
+          CameraCalibrator::CalibTargetType targetType = static_cast<CameraCalibrator::CalibTargetType>(kCalibTargetType);
+          lastResult = _cameraCalibrator->ComputeCalibrationFromSingleTarget(targetType,
+                                                                             _currentResult.observedMarkers,
+                                                                             _currentResult.cameraCalibration,
+                                                                             _currentResult.debugImageRGBs);
+          break;
+        }
+      }
+      if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
         return lastResult;
       }

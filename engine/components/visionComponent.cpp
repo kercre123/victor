@@ -200,7 +200,6 @@ namespace Cozmo {
     
   } //Init()
   
-
   void VisionComponent::SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
     const bool calibChanged = _camera.SetCalibration(camCalib);
@@ -1223,7 +1222,10 @@ namespace Cozmo {
 
   Result VisionComponent::UpdateComputedCalibration(const VisionProcessingResult& procResult)
   {
-    for(auto & calib : procResult.cameraCalibrations)
+    DEV_ASSERT((procResult.cameraCalibration.empty() || procResult.cameraCalibration.size() == 1),
+               "VisionComponent.UpdateComputedCalibration.UnexpectedNumCalibrations");
+    
+    for(auto & calib : procResult.cameraCalibration)
     {
       CameraCalibration msg;
       msg.center_x = calib.GetCenter_x();
@@ -1242,7 +1244,7 @@ namespace Cozmo {
       
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
-  
+    
     return RESULT_OK;
   }
   
@@ -2313,7 +2315,7 @@ namespace Cozmo {
   void VisionComponent::CaptureAndSendImage()
   {
     // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::NHD;
+    const ImageResolution expectedResolution = DEFAULT_IMAGE_RESOLUTION;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);
@@ -2345,7 +2347,7 @@ namespace Cozmo {
                       _camera.GetCalibration()->GetDistortionCoeffs());
         imgUndistorted.Display("UndistortedImage");
       }
-      
+        
       // Create EncodedImage with proper imageID and timestamp
       // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
       TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;

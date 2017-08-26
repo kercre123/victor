@@ -36,13 +36,13 @@
 
 #include "anki/common/basestation/colorRGBA.h"
 
+
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
-TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
+TEST(VisionSystem, CameraCalibrationTarget_Qbert)
 {
   NativeAnkiUtilConsoleSetValueWithString("CalibTargetType",
-                                          std::to_string(Anki::Cozmo::CameraCalibrator::BLEACHERS).c_str());
-
+                                          std::to_string(Anki::Cozmo::CameraCalibrator::QBERT).c_str());
 
   Anki::Cozmo::VisionSystem* visionSystem = new Anki::Cozmo::VisionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
@@ -51,7 +51,10 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
   
   // Don't really need a valid camera calibration, so just pass a dummy one in
   // to make vision system happy. All that matters is the image dimensions be correct.
-  Anki::Vision::CameraCalibration calib(360,640,290,290,320,180,0.f);
+  std::shared_ptr<Anki::Vision::CameraCalibration> calib(new Anki::Vision::CameraCalibration(360,640,
+                                                                                             290,290,
+                                                                                             320,180,
+                                                                                             0.f));
   result = visionSystem->UpdateCameraCalibration(calib);
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
@@ -76,6 +79,7 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
   std::string testImgPath = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                             "test/markerDetectionTests/CalibrationTarget/bleachers.png");
   result = img.Load(testImgPath);
+  
   ASSERT_EQ(Anki::Result::RESULT_OK, result);
   
   imageCache.Reset(img);
@@ -88,7 +92,9 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
   bool resultAvailable = visionSystem->CheckMailbox(processingResult);
   EXPECT_TRUE(resultAvailable);
   
-  ASSERT_EQ(processingResult.cameraCalibrations.size(), 1);
+  // 1 is the default value of focal length
+  ASSERT_EQ(processingResult.cameraCalibration.size(), 1);
+  ASSERT_EQ(processingResult.cameraCalibration.front().GetFocalLength_x() != 1.f, true);
 
   const std::vector<f32> distortionCoeffs = {{-0.07167206757206086,
                                               -0.2198782133395603,
@@ -97,15 +103,15 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
                                               0.1341471670512819,
                                               0, 0, 0}};
   
-  Anki::Vision::CameraCalibration expectedCalibration(360,640,
-                                                      362.8773099149878,
-                                                      366.7347434532929,
-                                                      302.2888225643724,
-                                                      200.012543449327,
-                                                      0,
-                                                      distortionCoeffs);
+  const Anki::Vision::CameraCalibration expectedCalibration(360,640,
+                                                            362.8773099149878,
+                                                            366.7347434532929,
+                                                            302.2888225643724,
+                                                            200.012543449327,
+                                                            0,
+                                                            distortionCoeffs);
   
-  const auto computedCalibration = processingResult.cameraCalibrations.front();
+  const auto& computedCalibration = processingResult.cameraCalibration.front();
   
   ASSERT_NEAR(computedCalibration.GetCenter_x(), expectedCalibration.GetCenter_x(),
               Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
@@ -135,6 +141,9 @@ TEST(VisionSystem, CameraCalibrationTarget_Bleachers)
     ASSERT_NEAR(computedCalibration.GetDistortionCoeffs()[i], expectedCalibration.GetDistortionCoeffs()[i],
                 Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
   }
+  
+  Anki::Util::SafeDelete(visionSystem);
+  visionSystem = nullptr;
 }
 
 TEST(VisionSystem, MarkerDetectionTests)

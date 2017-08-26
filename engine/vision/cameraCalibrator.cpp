@@ -469,7 +469,7 @@ Result CameraCalibrator::AddCalibrationImage(const Vision::Image& calibImg,
     return RESULT_FAIL;
   }
   
-  if(targetROI.GetX() < 0 && targetROI.GetY() < 0 && targetROI.GetWidth() < 0 && targetROI.GetHeight() < 0)
+  if(targetROI.GetX() < 0 && targetROI.GetY() < 0 && targetROI.GetWidth() == 0 && targetROI.GetHeight() == 0)
   {
     // Use entire image if negative ROI specified
     const Anki::Rectangle<s32> entireImgROI(0, 0, calibImg.GetNumCols(), calibImg.GetNumRows());

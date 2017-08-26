@@ -73,7 +73,7 @@ public:
 protected:
   
   // Override of IBehavior functions
-  virtual bool IsRunnableInternal(const BehaviorPreReqPlaypen& preReq) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   
   // Playpen behaviors can not be resumed
   virtual Result ResumeInternal(Robot& robot) override { return RESULT_FAIL; }
