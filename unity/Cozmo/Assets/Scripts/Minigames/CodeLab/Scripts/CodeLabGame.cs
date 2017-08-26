@@ -957,32 +957,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void TurnInPlace(float turnAngle, RobotCallback callback) {
-      float finalTurnAngle = turnAngle;
-      const float kExtraAngle = 2.0f * Mathf.Deg2Rad; // All turns seem to, on average, be this short
-      if (finalTurnAngle < 0.0f) {
-        finalTurnAngle -= kExtraAngle;
-      }
-      else {
-        finalTurnAngle += kExtraAngle;
-      }
-
       var robot = RobotEngineManager.Instance.CurrentRobot;
       //DAS.Info("CodeLab.TurnInPlace.Start", "Turn " + (finalTurnAngle * Mathf.Rad2Deg) + "d from " + (robot.PoseAngle * Mathf.Rad2Deg) + "d");
-      robot.TurnInPlace(finalTurnAngle, 0.0f, 0.0f, kToleranceAngle, callback);
+      robot.TurnInPlace(turnAngle, 0.0f, 0.0f, kToleranceAngle, callback);
     }
 
-    private void TurnInPlaceVertical(float turnAngle, float speed_deg_per_sec, RobotCallback callback) {
-      float finalTurnAngle = turnAngle * Mathf.Deg2Rad;
-      const float kExtraAngle = 0.0f * Mathf.Deg2Rad; // No adjustment in vertical for now...
-      if (finalTurnAngle < 0.0f) {
-        finalTurnAngle -= kExtraAngle;
-      }
-      else {
-        finalTurnAngle += kExtraAngle;
-      }
+    private void TurnInPlaceVertical(float turnAngle_deg, float speed_deg_per_sec, RobotCallback callback) {
+      float finalTurnAngle = turnAngle_deg * Mathf.Deg2Rad;
       float speed_rad_per_sec = speed_deg_per_sec * Mathf.Deg2Rad;
       float accel_rad_per_sec2 = 0.0f;
-      float toleranceAngle = ((Math.Abs(turnAngle) > 25.0f) ? 10.0f : 5.0f) * Mathf.Deg2Rad;
+      float toleranceAngle = ((Math.Abs(turnAngle_deg) > 25.0f) ? 10.0f : 5.0f) * Mathf.Deg2Rad;
       var robot = RobotEngineManager.Instance.CurrentRobot;
       robot.TurnInPlace(finalTurnAngle, speed_rad_per_sec, accel_rad_per_sec2, toleranceAngle, callback, QueueActionPosition.IN_PARALLEL);
     }
