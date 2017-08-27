@@ -3,7 +3,7 @@
 import argparse
 import os
 
-singingBehaviorConfigsPath = os.getcwd() + '/../../resources/config/basestation/config/behaviors/singing/'
+singingBehaviorConfigsPath = os.getcwd() + '/../../resources/config/engine/behaviors/singing/'
 unlockCladPath = os.getcwd() + '/../../clad/src/clad/types/unlockTypes.clad'
 behaviorStringsPath = os.getcwd() + '/../../unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-US/BehaviorStrings.json'
 

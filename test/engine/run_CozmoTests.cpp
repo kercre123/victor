@@ -48,7 +48,7 @@ TEST(DataPlatform, ReadWrite)
   Json::Value config;
   const bool readSuccess = cozmoContext->GetDataPlatform()->readAsJson(
     Anki::Util::Data::Scope::Resources,
-    "config/basestation/config/configuration.json",
+    "config/engine/configuration.json",
     config);
   EXPECT_TRUE(readSuccess);
 

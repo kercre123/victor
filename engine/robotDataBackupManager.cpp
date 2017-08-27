@@ -34,7 +34,7 @@ static const std::string kStatsForBackupFile = "statsForBackup.json";
 static const std::string kConnectionCountKey = "ConnectionCount";
 
 // Config file containing the tags that we want to backup
-static const std::string kBackupConfig = "config/basestation/config/backup_config.json";
+static const std::string kBackupConfig = "config/engine/backup_config.json";
 
 // File name of the backup file for the currently connected robot
 static std::string _fileName;
