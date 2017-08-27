@@ -431,7 +431,7 @@ public static class LocalizationEditorUtility {
     string[] assetFilePaths = Directory.GetFiles("Assets/", "*.asset", SearchOption.AllDirectories);
     EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 3, totalDirectories), (float)3 / totalDirectories);
 
-    string[] productConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../lib/anki/products-cozmo-assets/",
+    string[] productConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../resources/assets/",
                                                          "*.json", SearchOption.AllDirectories);
     EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 4, totalDirectories), (float)4 / totalDirectories);
 
