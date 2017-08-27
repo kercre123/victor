@@ -199,14 +199,14 @@ void RobotDataLoader::CollectAnimFiles()
   
   // cube light animations
   {
-    WalkAnimationDir("config/basestation/lights/cubeLights", _cubeLightAnimFileTimestamps, [this] (const std::string& filename) {
+    WalkAnimationDir("config/engine/lights/cubeLights", _cubeLightAnimFileTimestamps, [this] (const std::string& filename) {
       _jsonFiles[FileType::CubeLightAnimation].push_back(filename);
     });
   }
   
   // backpack light animations
   {
-    WalkAnimationDir("config/basestation/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
+    WalkAnimationDir("config/engine/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
       _jsonFiles[FileType::BackpackLightAnimation].push_back(filename);
     });
   }
