@@ -35,8 +35,7 @@ PRIVATE
 
 target_include_directories(halstub
 PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/clad/src>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/generated/clad/robot>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/syscon>
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/include>
 )

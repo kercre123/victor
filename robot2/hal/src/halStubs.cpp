@@ -21,7 +21,7 @@
 
 #include "clad/robotInterface/messageRobotToEngine.h"    //TODO: why do we still need these 2?
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "clad/spine/spine_protocol.h"
+#include "schema/messages.h"
 
 #define RADIO_IP "127.0.0.1"
 

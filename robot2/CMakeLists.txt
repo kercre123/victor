@@ -35,7 +35,7 @@ PRIVATE
 target_include_directories(spine
 PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clad/src>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/robot>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/syscon>
 )
 
 
@@ -74,7 +74,5 @@ PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/generated>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/generated/clad/robot>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/generated/clad/robot>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal>
 )

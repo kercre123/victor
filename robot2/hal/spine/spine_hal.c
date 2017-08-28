@@ -10,7 +10,7 @@
 
 
 
-#include "clad/spine/spine_protocol.h"
+#include "schema/messages.h"
 #include "spine_crc.h"
 #include "spine_hal.h"
 

@@ -184,10 +184,10 @@ struct BodyToHead
 {
   uint32_t framecounter;
   PowerState powerState;
-  MotorState motor[4];
+  struct MotorState motor[4];
   uint16_t cliffSense[4];
-  BatteryState battery;
-  RangeData proximity;
+  struct BatteryState battery;
+  struct RangeData proximity;
   uint16_t touchLevel[2];
   int16_t audio[320];
 };
