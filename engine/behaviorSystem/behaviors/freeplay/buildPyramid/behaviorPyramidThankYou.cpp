@@ -16,7 +16,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
@@ -47,7 +46,7 @@ BehaviorPyramidThankYou::~BehaviorPyramidThankYou()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPyramidThankYou::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
+bool BehaviorPyramidThankYou::IsRunnableInternal(const Robot& robot) const
 {
   // Check to see if there's a person we can turn to look at
   if(_robot.GetFaceWorld().HasAnyFaces(kTimeSinceFaceSeenForTurn)){
@@ -55,14 +54,14 @@ bool BehaviorPyramidThankYou::IsRunnableInternal(const BehaviorPreReqAcknowledge
   }
   
   // Check to see if there's a block with a location we can turn to to say thanks
-  if(preReqData.GetTargets().size() >= 1){
-    _targetID = *preReqData.GetTargets().begin();
+  if(_targetID > -1){
     const ObservableObject* obj = _robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(obj != nullptr){
       return true;
     }
   }
-
+  
+  _targetID = -1;
   return false;
 }
   
@@ -74,7 +73,7 @@ Result BehaviorPyramidThankYou::InitInternal(Robot& robot)
   CompoundActionSequential* turnVerifyThank = new CompoundActionSequential(robot);
   Pose3d facePose;
   robot.GetFaceWorld().GetLastObservedFace(facePose);
-  const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+  const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
    // Turn to the user and say thank you
     TurnTowardsFaceAction* turnTowardsAction = new TurnTowardsLastFacePoseAction(robot);
@@ -106,7 +105,7 @@ Result BehaviorPyramidThankYou::ResumeInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPyramidThankYou::StopInternal(Robot& robot)
 {
-  
+  _targetID = -1;
 }
 
 }

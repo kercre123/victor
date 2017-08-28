@@ -13,7 +13,6 @@
  **/
 
 #include "engine/behaviorSystem/behaviors/freeplay/oneShots/behaviorSinging.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 
 #include "engine/activeObject.h"
 #include "engine/actions/animActions.h"
@@ -145,13 +144,13 @@ BehaviorSinging::~BehaviorSinging()
   
 }
 
-bool BehaviorSinging::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorSinging::IsRunnableInternal(const Robot& robot) const
 {
   // Always runnable, the higher level Singing goal/activity is responsible
   // for deciding when Cozmo should sing
   // Except if the needs system has unlocked a song, we want that to be the
   // next song played
-  const NeedsState& currNeedState = preReqData.GetRobot().GetContext()->GetNeedsManager()->GetCurNeedsState();
+  const NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
   const auto& forcedSong = currNeedState._forceNextSong;
   if (forcedSong == UnlockId::Invalid)
   {

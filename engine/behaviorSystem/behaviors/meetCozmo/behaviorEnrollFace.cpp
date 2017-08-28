@@ -139,7 +139,7 @@ BehaviorEnrollFace::BehaviorEnrollFace(Robot &robot, const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEnrollFace::IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const
+bool BehaviorEnrollFace::IsRunnableInternal(const Robot& robot ) const
 {
   // This behavior is runnable iff a face enrollment has been requested
   return IsEnrollmentRequested();

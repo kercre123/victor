@@ -18,7 +18,6 @@
 #include "engine/actions/retryWrapperAction.h"
 #include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeLightComponent.h"
@@ -75,8 +74,8 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogA
 CONSOLE_VAR_RANGED(float, kSleepingMinDuration_s, "Behavior.GuardDog",  60.f, 20.f, 120.f); // minimum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60.f, 300.f); // maximum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 20.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
-CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  18.f,  5.f,  30.f);
-CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
+CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  28.f,  5.f,  50.f);
+CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 70.f, 30.f, 200.f);
 CONSOLE_VAR_RANGED(float, kMaxMovementBustedGracePeriod_s, "Behavior.GuardDog", 10.f, 0.f, 120.f); // amount of time to wait (after falling asleep) before 'Busted' can happen due to movement above 'max' threshold
   
 // Constants for the CubeAccelComponent MovementListener:
@@ -103,10 +102,8 @@ BehaviorGuardDog::BehaviorGuardDog(Robot& robot, const Json::Value& config)
   _connectedCubesOnlyFilter->AddFilterFcn([](const ObservableObject* obj) { return obj->GetActiveID() >= 0; });
 }
   
-bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
-{
-  const Robot& robot = preReqData.GetRobot();
-  
+bool BehaviorGuardDog::IsRunnableInternal(const Robot& robot) const
+{  
   // Is this feature enabled?
   if (!robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::GuardDog)) {
     return false;

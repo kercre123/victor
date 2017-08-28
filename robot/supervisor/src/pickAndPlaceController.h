@@ -49,9 +49,6 @@ namespace Anki {
         ENTER_BRIDGE,
         TRAVERSE_BRIDGE,
         LEAVE_BRIDGE,
-        ROTATE_FOR_CHARGER_APPROACH,
-        BACKUP_ON_CHARGER,
-        DRIVE_FORWARD,
         PICKUP_ANIM,
       } Mode;
 

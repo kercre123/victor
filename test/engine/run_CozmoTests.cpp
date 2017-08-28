@@ -48,7 +48,7 @@ TEST(DataPlatform, ReadWrite)
   Json::Value config;
   const bool readSuccess = cozmoContext->GetDataPlatform()->readAsJson(
     Anki::Util::Data::Scope::Resources,
-    "config/basestation/config/configuration.json",
+    "config/engine/configuration.json",
     config);
   EXPECT_TRUE(readSuccess);
 
@@ -129,15 +129,15 @@ TEST(BlockWorld, AddAndRemoveObject)
   };
   */
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
-  const f32 halfHeight = 0.25f*static_cast<f32>(camCalib.GetNrows());
-  const f32 halfWidth = 0.25f*static_cast<f32>(camCalib.GetNcols());
-  const f32 xcen = camCalib.GetCenter_x();
-  const f32 ycen = camCalib.GetCenter_y();
+  const f32 halfHeight = 0.25f*static_cast<f32>(camCalib->GetNrows());
+  const f32 halfWidth = 0.25f*static_cast<f32>(camCalib->GetNcols());
+  const f32 xcen = camCalib->GetCenter_x();
+  const f32 ycen = camCalib->GetCenter_y();
 
   // stretch observed bottom side slightly to make computed pose definitely not flat (so it doesn't get clamped)
   const f32 kNotFlatFraction = 1.03f;
@@ -348,7 +348,7 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
   {
     stateMsg.timestamp = fakeTime;
     stateMsg.pose_frame_id = robot.GetPoseFrameID();
-    stateMsg.pose_origin_id = robot.GetPoseOriginList().GetOriginID(robot.GetWorldOrigin());
+    stateMsg.pose_origin_id = robot.GetPoseOriginList().GetCurrentOriginID();
     Result lastResult = robot.UpdateFullRobotState(stateMsg);
     if(RESULT_OK != lastResult)
     {
@@ -454,9 +454,9 @@ TEST(BlockWorld, UpdateObjectOrigins)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -616,9 +616,9 @@ TEST(BlockWorld, PoseUpdates)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -657,10 +657,10 @@ TEST(BlockWorld, PoseUpdates)
 //  };
 
   // These parameters create corners beyond localizable distance
-  const f32 halfHeight = 0.05f*static_cast<f32>(camCalib.GetNrows());
-  const f32 halfWidth = 0.05f*static_cast<f32>(camCalib.GetNcols());
-  const f32 xcen = camCalib.GetCenter_x();
-  const f32 ycen = camCalib.GetCenter_y();
+  const f32 halfHeight = 0.05f*static_cast<f32>(camCalib->GetNrows());
+  const f32 halfWidth = 0.05f*static_cast<f32>(camCalib->GetNcols());
+  const f32 xcen = camCalib->GetCenter_x();
+  const f32 ycen = camCalib->GetCenter_y();
   Quad2f farCorners;
   const f32 markerHalfSize = std::min(halfHeight, halfWidth);
   farCorners[Quad::TopLeft]    = {xcen - markerHalfSize, ycen - markerHalfSize};
@@ -838,9 +838,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1045,9 +1045,9 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1252,14 +1252,14 @@ TEST(BlockWorld, CubeStacks)
     Vec3f trans1{100,0,0};
     Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
     Rotation3d rotX1 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
-    const Pose3d object1Pose(rotZ1 * rotX1, trans1, &robot.GetPose() );
+    const Pose3d object1Pose(rotZ1 * rotX1, trans1, robot.GetPose() );
     lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, lastResult);
 
     Vec3f trans2{100,0,0};
     Rotation3d rotZ2 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
     Rotation3d rotX2 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
-    const Pose3d object2Pose(rotZ2 * rotX2, trans2, &robot.GetPose() );
+    const Pose3d object2Pose(rotZ2 * rotX2, trans2, robot.GetPose() );
     lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, lastResult);
 
@@ -1279,7 +1279,7 @@ TEST(BlockWorld, CubeStacks)
     {
       for(auto & btmTrans : TestBottomTranslations)
       {
-        const Pose3d bottomPose(Rotation3d(btmRot1) * Rotation3d(btmRot2), btmTrans, &robot.GetPose() );
+        const Pose3d bottomPose(Rotation3d(btmRot1) * Rotation3d(btmRot2), btmTrans, robot.GetPose() );
         
         lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
         ASSERT_EQ(RESULT_OK, lastResult);
@@ -1290,7 +1290,7 @@ TEST(BlockWorld, CubeStacks)
           {
             for(auto & topTrans : TestTopTranslations)
             {
-              const Pose3d topPose(Rotation3d(topRot1) * Rotation3d(topRot2), topTrans, &robot.GetPose() );
+              const Pose3d topPose(Rotation3d(topRot1) * Rotation3d(topRot2), topTrans, robot.GetPose() );
               
               // For help debugging when there are failures:
               //bottomPose.Print("Unnamed", "Bottom");
@@ -1310,7 +1310,7 @@ TEST(BlockWorld, CubeStacks)
             
             for(auto & nextToTrans : TestNextToTranslations)
             {
-              const Pose3d nextToPose(Rotation3d(topRot1) * Rotation3d(topRot2), nextToTrans, &robot.GetPose());
+              const Pose3d nextToPose(Rotation3d(topRot1) * Rotation3d(topRot2), nextToTrans, robot.GetPose());
               
               lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, nextToPose, object1);
               ASSERT_EQ(RESULT_OK, lastResult);
@@ -1329,11 +1329,11 @@ TEST(BlockWorld, CubeStacks)
   
   
   // Put Object 2 above Object 1, but too high, so this Find should fail:
-  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, &robot.GetPose() );
+  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, robot.GetPose() );
   lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, &robot.GetPose());
+  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, robot.GetPose());
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, tooHighPose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
@@ -1356,7 +1356,7 @@ TEST(BlockWorld, CubeStacks)
   
   // Put Object 2 at the right height to be on top of Object 1,
   // but move it off to the side so that the quads don't intersect
-  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, &robot.GetPose());
+  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, robot.GetPose());
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
@@ -1387,9 +1387,9 @@ TEST(BlockWorld, UnobserveCubeStack)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1412,11 +1412,11 @@ TEST(BlockWorld, UnobserveCubeStack)
   Vec3f testTopTranslation{175.f, 0.f,  66.f};
   
   Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
-  const Pose3d object1Pose(rotZ1, testBottomTranslation, &robot.GetPose() );
+  const Pose3d object1Pose(rotZ1, testBottomTranslation, robot.GetPose() );
   lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, lastResult);
 
-  const Pose3d object2Pose(rotZ1, testTopTranslation, &robot.GetPose() );
+  const Pose3d object2Pose(rotZ1, testTopTranslation, robot.GetPose() );
   lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, lastResult);
 
@@ -1637,9 +1637,9 @@ TEST(Localization, LocalizationDistance)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -1874,7 +1874,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     }
     
     const RotationVector3d randRot = {rotation, dominantAxis};
-    return Pose3d(randRot, {0,0,0}, &pose);
+    return Pose3d(randRot, {0,0,0}, pose);
   };
   
   
@@ -1886,8 +1886,8 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   };
   
   auto getRandRotatedRestingFlatPose = [&getRandRotationRestingFlat, &getRandomZRotation](const Pose3d& pose){
-    const Pose3d partialRot(getRandRotationRestingFlat(), {0,0,0}, &pose);
-    Pose3d wrtOrigin = Pose3d(getRandomZRotation(partialRot), {0,0,0}, &partialRot).GetWithRespectToOrigin();
+    const Pose3d partialRot(getRandRotationRestingFlat(), {0,0,0}, pose);
+    Pose3d wrtOrigin = Pose3d(getRandomZRotation(partialRot), {0,0,0}, partialRot).GetWithRespectToRoot();
     return wrtOrigin;
   };
   
@@ -1910,7 +1910,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   //  Robot robot(0, 0, &blockWorld, 0);    // TODO: Support multiple robots
   
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
-  Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
+  auto calib = std::make_shared<Vision::CameraCalibration>(jsonRoot["CameraCalibration"]);
   robot.GetVisionComponent().SetCameraCalibration(calib);
   
   bool checkRobotPose;
@@ -1923,7 +1923,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   robot.UpdateFullRobotState(stateMsg);
   // for calling robot update
   std::list<Vision::ObservedMarker> emptyMarkersList;
-  const Pose3d robotPose = robot.GetPose().GetWithRespectToOrigin();
+  const Pose3d robotPose = robot.GetPose().GetWithRespectToRoot();
     //////////
   //// Create Blocks
   //////////
@@ -1981,7 +1981,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     const float ob1X = randGen.RandDblInRange(xMinGrid, xMaxGrid);
     const float ob1Y = randGen.RandDblInRange(yMinGrid, yMaxGrid);
     const float ob1Z = firstBlockOnGround ? object1->GetSize().z()/2 : object1->GetSize().z()*5;
-    ob1Pose = Pose3d(0, Z_AXIS_3D(), {ob1X, ob1Y, ob1Z}, &robotPose);
+    ob1Pose = Pose3d(0, Z_AXIS_3D(), {ob1X, ob1Y, ob1Z}, robotPose);
     
     
     static const float secondBlockNotInStackMultiplier = 10;
@@ -2011,7 +2011,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
       
       ob2Pose = Pose3d(0, Z_AXIS_3D(), {xOffsetOb2 + ob1Pose.GetTranslation().x(),
                                         yOffsetOb2 + ob1Pose.GetTranslation().y(),
-                                        zOffsetOb2 + ob1Pose.GetTranslation().z()}, &robotPose);
+                                        zOffsetOb2 + ob1Pose.GetTranslation().z()}, robotPose);
     }
     
     // set up third block pose
@@ -2035,9 +2035,9 @@ TEST(BlockWorldTest, BlockConfigurationManager)
 
         ob3Pose = Pose3d(0, Z_AXIS_3D(), {xOffsetOb3 + ob1Pose.GetTranslation().x(),
                                           yOffsetOb3 + ob1Pose.GetTranslation().y(),
-                                          zOffsetOb3 + ob1Pose.GetTranslation().z()}, &robotPose);
+                                          zOffsetOb3 + ob1Pose.GetTranslation().z()}, robotPose);
       }else{
-        ob3Pose = Pose3d(0, Z_AXIS_3D(), {xMaxGrid*2, yMaxGrid*2, 0}, &robotPose);
+        ob3Pose = Pose3d(0, Z_AXIS_3D(), {xMaxGrid*2, yMaxGrid*2, 0}, robotPose);
       }
     }
     
@@ -2078,28 +2078,28 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
                      useThirdBlock, thirdBlockInStack);
             
     fprintf(stdout, "Ob1 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().x(),
-            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().y(),
-            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            finalOb1Pose.GetWithRespectToRoot().GetTranslation().x(),
+            finalOb1Pose.GetWithRespectToRoot().GetTranslation().y(),
+            finalOb1Pose.GetWithRespectToRoot().GetTranslation().z(),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob2 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().x(),
-            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().y(),
-            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            finalOb2Pose.GetWithRespectToRoot().GetTranslation().x(),
+            finalOb2Pose.GetWithRespectToRoot().GetTranslation().y(),
+            finalOb2Pose.GetWithRespectToRoot().GetTranslation().z(),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob3 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().x(),
-            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().y(),
-            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            finalOb3Pose.GetWithRespectToRoot().GetTranslation().x(),
+            finalOb3Pose.GetWithRespectToRoot().GetTranslation().y(),
+            finalOb3Pose.GetWithRespectToRoot().GetTranslation().z(),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     ASSERT_EQ(stackShouldExist, stacks.ConfigurationCount() > 0);
     
@@ -2156,8 +2156,8 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
   
   for(int i = 0; i < pyramidTestRepetitionCount; i++){
     for(const float staticOrientation: orientationList){
-      Pose3d staticPose = Pose3d(getRandRotationRestingFlat(), {0,0, blockHeightCenter}, &robotPose);
-      Pose3d staticPoseFinal = rotateForWorldZ(staticPose, staticOrientation).GetWithRespectToOrigin();
+      Pose3d staticPose = Pose3d(getRandRotationRestingFlat(), {0,0, blockHeightCenter}, robotPose);
+      Pose3d staticPoseFinal = rotateForWorldZ(staticPose, staticOrientation).GetWithRespectToRoot();
       
       setPoseHelper(staticBlock,  staticPoseFinal);
       
@@ -2167,8 +2167,8 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
           const float yBaseOffset = baseOffset.second;
 
           const Pose3d basePose = Pose3d(getRandRotationRestingFlat(),
-                            {xBaseOffset, yBaseOffset, blockHeightCenter}, &robotPose);
-          Pose3d basePoseFinal = rotateForWorldZ(basePose, baseBlockOrientaiton).GetWithRespectToOrigin();
+                            {xBaseOffset, yBaseOffset, blockHeightCenter}, robotPose);
+          Pose3d basePoseFinal = rotateForWorldZ(basePose, baseBlockOrientaiton).GetWithRespectToRoot();
           setPoseHelper(baseBlock, basePoseFinal);
           
           // build the configuration cache
@@ -2177,20 +2177,20 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
           const auto& bases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache();
           
           fprintf(stdout, "staticBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
-                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
-                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  staticPoseFinal.GetWithRespectToRoot().GetTranslation().x(),
+                  staticPoseFinal.GetWithRespectToRoot().GetTranslation().y(),
+                  staticPoseFinal.GetWithRespectToRoot().GetTranslation().z(),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           fprintf(stdout, "baseBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
-                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
-                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  basePoseFinal.GetWithRespectToRoot().GetTranslation().x(),
+                  basePoseFinal.GetWithRespectToRoot().GetTranslation().y(),
+                  basePoseFinal.GetWithRespectToRoot().GetTranslation().z(),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           ASSERT_TRUE(bases.ConfigurationCount() == 1);
           
@@ -2200,8 +2200,8 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             
             const Pose3d topPose = Pose3d(getRandRotationRestingFlat(),
                                           {xTopOffset, yTopOffset, blockHeightCenter + staticBlock->GetSize().z()},
-                                          &robotPose);
-            Pose3d topPoseFinal = rotateForWorldZ(topPose, topBlockOrientiation).GetWithRespectToOrigin();
+                                          robotPose);
+            Pose3d topPoseFinal = rotateForWorldZ(topPose, topBlockOrientiation).GetWithRespectToRoot();
             setPoseHelper(topBlock, topPoseFinal);
             
             // build a full pyramid, and then re-build the cache
@@ -2212,12 +2212,12 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             
             
             fprintf(stdout, "Top block pose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
-                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
-                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                    topPoseFinal.GetWithRespectToRoot().GetTranslation().x(),
+                    topPoseFinal.GetWithRespectToRoot().GetTranslation().y(),
+                    topPoseFinal.GetWithRespectToRoot().GetTranslation().z(),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
 
             
             ASSERT_TRUE(pyramids.ConfigurationCount() == 1);
@@ -2227,7 +2227,7 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             ASSERT_TRUE(basesShouldBeEmpty.ConfigurationCount() == 0);
           }
           // re-set the top block's pose
-          Pose3d farOffPose(0, Z_AXIS_3D(), {0, 500, 500}, &robotPose);
+          Pose3d farOffPose(0, Z_AXIS_3D(), {0, 500, 500}, robotPose);
           setPoseHelper(topBlock, farOffPose);
 
         }
@@ -2242,7 +2242,7 @@ TEST(FactoryTest, IdealCameraPose)
   using namespace Anki;
   using namespace Cozmo;
   
-  Vision::CameraCalibration calib(240, 320, 290.f, 290.f, 160.f, 120.f);
+  auto calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f);
   const f32 kDotSpacingX_mm = 40.f;
   const f32 kDotSpacingY_mm = 27.f;
   const f32 kTargetDist_mm  = 60.f;
@@ -2305,8 +2305,8 @@ TEST(FactoryTest, IdealCameraPose)
         
         
         // Imperfect calibration:
-        calib.SetFocalLength(288, 287);
-        calib.SetCenter(Point2f(155.f, 114.f));
+        calib->SetFocalLength(288, 287);
+        calib->SetCenter(Point2f(155.f, 114.f));
         robot.GetVisionComponent().SetCameraCalibration(calib);
         
         result = robot.GetVisionComponent().ComputeCameraPoseVsIdeal(imgQuad, pose);
@@ -2349,26 +2349,26 @@ TEST(FactoryTest, FindDotsInImages)
   struct TestData
   {
     std::string filename;
-    Vision::CameraCalibration calib;
+    std::shared_ptr<Vision::CameraCalibration> calib;
   };
   
   // TODO: Fill in actual calibration data for each test image
   std::vector<TestData> tests = {
     {
       .filename = "test/factoryTests/factoryDotTarget.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
     {
       .filename = "test/factoryTests/factoryDotTarget_trulycam2.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
     {
       .filename = "test/factoryTests/rocky1.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
     {
       .filename = "test/factoryTests/rocky2.png",
-      .calib = Vision::CameraCalibration(240, 320, 290.f, 290.f, 160.f, 120.f),
+      .calib = std::make_shared<Vision::CameraCalibration>(240, 320, 290.f, 290.f, 160.f, 120.f),
     },
   };
   
@@ -2389,8 +2389,8 @@ TEST(FactoryTest, FindDotsInImages)
     
     lastResult = image.Load(testFilename);
     ASSERT_EQ(lastResult, RESULT_OK);
-    ASSERT_EQ(image.GetNumRows(), test.calib.GetNrows());
-    ASSERT_EQ(image.GetNumCols(), test.calib.GetNcols());
+    ASSERT_EQ(image.GetNumRows(), test.calib->GetNrows());
+    ASSERT_EQ(image.GetNumCols(), test.calib->GetNcols());
     
     lastResult = robot.GetVisionComponent().FindFactoryTestDotCentroids(image, msg);
     ASSERT_EQ(lastResult, RESULT_OK);
@@ -2423,9 +2423,9 @@ TEST(ActionableObject, PreActionPoseCaching)
   using namespace Cozmo;
 
   const Pose3d origin(Rotation3d(0, {0,0,1}), {0,0,0});
-  const Pose3d robotPose(Rotation3d(0, {0,0,1}), {0,0,0}, &origin);
-  const Pose3d cubePose1(Rotation3d(0, {0,0,1}), {10,10,0}, &origin);
-  const Pose3d cubePose2(Rotation3d(0, {0,0,1}), {20,20,0}, &origin);
+  const Pose3d robotPose(Rotation3d(0, {0,0,1}), {0,0,0}, origin);
+  const Pose3d cubePose1(Rotation3d(0, {0,0,1}), {10,10,0}, origin);
+  const Pose3d cubePose2(Rotation3d(0, {0,0,1}), {20,20,0}, origin);
 
   ActiveCube cube(ObjectType::Block_LIGHTCUBE1);
   cube.InitPose(cubePose1, PoseState::Known);
@@ -2588,9 +2588,9 @@ TEST(Localization, UnexpectedMovement)
   const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
   const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
   
-  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   
@@ -2645,7 +2645,7 @@ TEST(Localization, UnexpectedMovement)
   // different from the robot's world origin
   FakeUnexpectedMovement(stateMsg, robot, fakeTime);
   
-  ASSERT_EQ(robot.GetWorldOrigin(), &robot.GetPose().FindOrigin());
+  ASSERT_TRUE(robot.IsPoseInWorldOrigin(robot.GetPose()));
 }
 
 #define CONFIGROOT "ANKICONFIGROOT"

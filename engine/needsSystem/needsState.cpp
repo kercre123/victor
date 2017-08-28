@@ -109,9 +109,6 @@ void NeedsState::Reset()
 
 void NeedsState::GetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers) const
 {
-  PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.GetDecayMultipliers",
-                "Setting needs decay multipliers");
-
   // Set some decay rate multipliers, based on config data, and the CURRENT needs levels:
 
   // Note that for long time periods (i.e. unconnected), we won't handle the progression across

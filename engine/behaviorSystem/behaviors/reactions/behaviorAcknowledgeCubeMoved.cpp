@@ -17,7 +17,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/components/visionComponent.h"
 #include "engine/robot.h"
@@ -81,17 +80,9 @@ BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(Robot& robot, const J
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
+bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(const Robot& robot) const
 {
-  const int targetCount = static_cast<int>(preReqData.GetTargets().size());
-  DEV_ASSERT_MSG(targetCount == 1, "BehaviorAcknowledgeCubeMoved.IsRunnableInternal.ImproperSize",
-                 "Prereq of size %d passed in, expected size of 1", targetCount);
-  if(targetCount == 1){
-    _activeObjectID = (*preReqData.GetTargets().begin());
-    return true;
-  }else{
-    return false;
-  }
+  return _activeObjectID.IsSet();
 }
 
   

@@ -3,7 +3,8 @@
 #
 
 ANKI_LOG_PP=tools/ankiLogPP.py
-ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
+ANKI_LOG_TABLE_DIR=../resources/config/engine
+ANKI_LOG_TABLE_JSON=$(ANKI_LOG_TABLE_DIR)/AnkiLogStringTables.json
 ANKI_LOG_SRC_DIRS=supervisor/src hal ../robot2/hal/src espressif/app sim_hal/ syscon/hal
 ANKI_LOG_ST_ERR_MSG='Anki log pre-preprocessing incomplete. Run `make dev` to process macros. If you see this on the build server, you need to merge locally, run `make dev` and push again.'
 
@@ -113,16 +114,19 @@ cppcheck:
 ########################################################################################################################
 # Code generation and preprocessing
 
-$(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
+$(ANKI_LOG_TABLE_DIR):
+	mkdir -p $@
+
+$(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_TABLE_DIR) $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
 	$(ON_ERR) $(ANKI_LOG_ST_ERR_MSG) $(PY) $(ANKI_LOG_PP) --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
 
 AnkiLog: $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
 	$(PY) $(ANKI_LOG_PP) --preprocessor $(ANKI_LOG_SRC_DIRS)
 
-verboseAnkiLog: $(ANKI_LOG_PP)
+verboseAnkiLog: $(ANKI_LOG_TABLE_DIR) $(ANKI_LOG_PP)
 	$(PY) $(ANKI_LOG_PP) -vvv --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
 
-purgeAnkiLog: $(ANKI_LOG_PP)
+purgeAnkiLog: $(ANKI_LOG_TABLE_DIR) $(ANKI_LOG_PP)
 	$(PY) $(ANKI_LOG_PP) --purge --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
 
 $(PUBLIC_KEYS_HEADER): Makefile $(PUBLIC_KEY_EXPORTER) $(CALCMONT_DEPS) $(GENERATED_DIR) $(BUILD_DIR)

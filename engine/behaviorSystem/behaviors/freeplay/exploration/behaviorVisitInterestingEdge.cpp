@@ -18,7 +18,6 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
@@ -138,11 +137,9 @@ BehaviorVisitInterestingEdge::~BehaviorVisitInterestingEdge()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorVisitInterestingEdge::IsRunnableInternal(const Robot& robot) const
 {
   ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::IsRunnableInternal"); // we are doing some processing now, keep an eye
-
-  const Robot& robot = preReqData.GetRobot();
   
   // clear debug render from previous runs
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
@@ -411,7 +408,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
   // process them and see if we can pick one
   if ( !interestingRegions.empty() )
   {
-    const Vec3f& robotLoc = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+    const Vec3f& robotLoc = robot.GetPose().GetWithRespectToRoot().GetTranslation();
 
     // define what a small region is in order to discard them as noise
     const float memMapPrecision_mm = robot.GetBlockWorld().GetNavMemoryMap()->GetContentPrecisionMM();
@@ -477,7 +474,7 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const 
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   DEV_ASSERT(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
   
-  const Vec3f& fromRobot = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+  const Vec3f& fromRobot = robot.GetPose().GetWithRespectToRoot().GetTranslation();
   const Vec3f& toGoal    = goalPosition; // assumed wrt origin
   
   // unforunately the goal (border point) can be inside InterestingEdge; this happens for diagonal edges.
@@ -509,7 +506,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(const Robot& robot, con
   const Vec3f& kRightVector = -Y_AXIS_3D();
   const Vec3f& kUpVector = Z_AXIS_3D();
 
-  const Pose3d* worldOrigin = robot.GetWorldOrigin();
+  const Pose3d& worldOrigin = robot.GetWorldOrigin();
 
   outVantagePoints.clear();
   {
@@ -756,7 +753,7 @@ void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(Robot& robot,
   float farPlaneDistFromRobot_mm,
   float halfWidthAtFarPlane_mm)
 {
-  const Pose3d& robotPoseWrtOrigin = robot.GetPose().GetWithRespectToOrigin();
+  const Pose3d& robotPoseWrtOrigin = robot.GetPose().GetWithRespectToRoot();
   
   // bottom corners of the quad are based on the robot pose
   const Point3f& cornerBL = robotPoseWrtOrigin * Vec3f{ 0.f, +halfWidthAtRobot_mm, 0.f};

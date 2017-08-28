@@ -1,11 +1,23 @@
 [
   {
     "unlockID": "StackTwoCubes",
-    "weight"  : 1
+    "weight"  : 2
+  },
+  {
+    "unlockID": "KnockOverThreeCubeStack",
+    "weight"  : 2
+  },
+  {
+    "unlockID": "PounceOnMotionAction",
+    "weight"  : 2
   },
   {
     "unlockID": "RollCube",
-    "weight"  : 1
+    "weight"  : 2
+  },
+  {
+    "unlockID": "PickupCube",
+    "weight"  : 2
   },
   {
     "unlockID": "PopAWheelieAction",
@@ -13,7 +25,7 @@
   },
   {
     "unlockID": "Workout",
-    "weight"  : 2
+    "weight"  : 1
   },
   {
     "unlockID": "FistBump",
@@ -25,7 +37,7 @@
   },
   {
     "unlockID": "PeekABoo",
-    "weight"  : 1
+    "weight"  : 2
   }
 ]
 

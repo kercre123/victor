@@ -133,7 +133,6 @@
                       </shadow>
                   </value>
               </block>
-              <block type="cozmo_dock_with_cube"></block>
               <block type="cozmo_vert_dock_with_cube_by_id"></block>
             </category>
             <category name="Actions" colour="#5e3dfc" secondaryColour="0">
@@ -185,6 +184,7 @@
                   </value>
               </block>
               <block type="cozmo_vert_set_cube_light_corner">
+                <field name="LIGHT_SELECT">4</field>
                 <value name="COLOR">
                       <shadow type="colour_picker"></shadow>
                 </value>
@@ -201,7 +201,29 @@
             
             <category name="Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_clear"></block>
-                <block type="cozmo_vert_cozmoface_display"></block>                
+                <block type="cozmo_vert_cozmoface_display"></block>
+                <block type="cozmo_vert_cozmoface_draw_text">
+                  <value name="TEXT">
+                      <shadow type="text">
+                          <field name="TEXT">text</field>
+                      </shadow>
+                  </value>
+                  <value name="X1">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="Y1">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="SCALE">
+                      <shadow type="math_positive_number">
+                          <field name="NUM">1.0</field>
+                      </shadow>
+                  </value>
+                </block>                
                 <block type="cozmo_vert_cozmoface_draw_line">
                   <value name="X1">
                       <shadow type="math_number">
@@ -303,29 +325,6 @@
                       </shadow>
                   </value>
                 </block>
-                <block type="cozmo_vert_cozmoface_draw_text">
-                  <value name="TEXT">
-                      <shadow type="text">
-                          <field name="TEXT">text</field>
-                      </shadow>
-                  </value>
-                  <value name="X1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="Y1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="SCALE">
-                      <shadow type="math_positive_number">
-                          <field name="NUM">1.0</field>
-                      </shadow>
-                  </value>
-                </block>
-                
             </category>
 
             <category name="Events" colour="#f4b606" secondaryColour="0">
@@ -359,6 +358,9 @@
             </category>
 
             <category name="Control" colour="#e5580a" secondaryColour="0">
+              <block type="control_forever"></block>
+              <block type="control_if"></block>
+              <block type="control_if_else"></block>
               <block type="control_wait" id="control_wait">
                   <value name="DURATION">
                       <shadow type="math_positive_number">
@@ -366,6 +368,7 @@
                       </shadow>
                   </value>
               </block>
+              <block type="control_wait_until"></block>
               <block type="control_repeat">
                   <value name="TIMES">
                       <shadow type="math_whole_number_with_validator">
@@ -373,10 +376,6 @@
                       </shadow>
                   </value>
               </block>
-              <block type="control_forever"></block>
-              <block type="control_if"></block>
-              <block type="control_if_else"></block>
-              <block type="control_wait_until"></block>
               <block type="control_repeat_until"></block>
               <block type="control_stop"></block>
             </category>

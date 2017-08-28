@@ -14,7 +14,6 @@
 #include "engine/robot.h"
 #include "anki/common/basestation/math/pose.h"
 #include "engine/actions/drivePathAction.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/planning/shared/path.h"
 #include "anki/planning/basestation/pathHelper.h"
 
@@ -30,10 +29,10 @@ BehaviorDrivePath::BehaviorDrivePath(Robot& robot, const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDrivePath::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorDrivePath::IsRunnableInternal(const Robot& robot) const
 {
   //Possibly add other limits later
-  return preReqData.GetRobot().GetEnabledAnimationTracks() & (u8)AnimTrackFlag::BODY_TRACK;
+  return robot.GetEnabledAnimationTracks() & (u8)AnimTrackFlag::BODY_TRACK;
 }
 
   

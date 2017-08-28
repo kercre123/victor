@@ -23,19 +23,24 @@ namespace Cozmo {
 namespace{
 static const char* kTriggerStrategyName = "Trigger strategy Sparked";
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategySparked::ReactionTriggerStrategySparked(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 {
   
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategySparked::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  behavior->IsRunnable(robot);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   bool currentBehaviorIsReaction = robot.GetBehaviorManager().CurrentBehaviorTriggeredAsReaction();
@@ -57,7 +62,7 @@ bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(const Robot& 
                                     ((currentBehavior->GetClass() == BehaviorClass::ReactToCliff) ||
                                      (currentBehavior->GetClass() == BehaviorClass::ReactToSparked)));
   
-  return cancelCurrentReaction && !behaviorWhitelisted && behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  return cancelCurrentReaction && !behaviorWhitelisted && behavior->IsRunnable(robot);
 }
 
   

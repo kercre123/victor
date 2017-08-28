@@ -13,10 +13,10 @@
 
 
 #include "anki/common/basestation/utils/timer.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
+#include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/behaviorSystem/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
@@ -38,7 +38,9 @@ static const char* kTriggerStrategyName = "Trigger Strategy Voice Command";
 static const char* kVoiceCommandParamsKey = "voiceCommandParams";
 static const char* kIsWakeUpReaction      = "isWakeUpReaction";
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 {
@@ -46,15 +48,20 @@ ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(Robot& 
   JsonTools::GetValueOptional(params, kIsWakeUpReaction, _isWakeUpReaction);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  std::set<Vision::FaceID_t> targets;
-  targets.insert(GetDesiredFace(robot));
-  BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
-  
-  behavior->IsRunnable(acknowledgeFacePreReqs);
+  std::shared_ptr<BehaviorReactToVoiceCommand> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::ReactToVoiceCommand,
+                                                         directPtr);
+  directPtr->SetDesiredFace(GetDesiredFace(robot));
+  behavior->IsRunnable(robot);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   auto* voiceCommandComponent = robot.GetContext()->GetVoiceCommandComponent();
@@ -77,8 +84,7 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Ro
       DEV_ASSERT(behavior->GetID() == BehaviorID::ReactToVoiceCommand_Wakeup,
                  "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.ExpectedWakeUpReaction");
     
-      BehaviorPreReqRobot req(robot);
-      return behavior->IsRunnable(req);
+      return behavior->IsRunnable(robot);
     }
     // Otherwise Cozmo is not going to sleep so the normal "Hey Cozmo" reaction can run
     else if(!robotHasIdleTimeout && !_isWakeUpReaction)
@@ -92,18 +98,21 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Ro
         _lookedAtTimesMap[desiredFace] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
       
-      std::set<Vision::FaceID_t> targets;
-      targets.insert(desiredFace);
-      BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
-      
+      std::shared_ptr<BehaviorReactToVoiceCommand> directPtr;
+      robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                             BehaviorClass::ReactToVoiceCommand,
+                                                             directPtr);
       LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.DesiredFace", "DesiredFaceID: %d", desiredFace);
-      return behavior->IsRunnable(acknowledgeFacePreReqs);
+      directPtr->SetDesiredFace(desiredFace);
+      return behavior->IsRunnable(robot);
     }
   }
   
   return false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vision::FaceID_t ReactionTriggerStrategyVoiceCommand::GetDesiredFace(const Robot& robot) const
 {
   // All recently seen face IDs
@@ -140,6 +149,8 @@ Vision::FaceID_t ReactionTriggerStrategyVoiceCommand::GetDesiredFace(const Robot
   return desiredFace;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyVoiceCommand::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   if(behavior != nullptr)
@@ -148,6 +159,8 @@ void ReactionTriggerStrategyVoiceCommand::BehaviorThatStrategyWillTriggerInterna
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyVoiceCommand::AnimationComplete(Robot& robot)
 {
   // When one of the behaviors this strategy is responsible for completes/decides to call

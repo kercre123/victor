@@ -106,7 +106,7 @@ namespace Anki
       void OnObjectVisuallyVerified(const ObservableObject* object);
 
       // Called when robot gets delocalized in order to do internal bookkeeping and broadcast updated object states
-      void OnRobotDelocalized(const Pose3d* newWorldOrigin);
+      void OnRobotDelocalized(PoseOriginID_t newWorldOriginID);
          
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Object Access
@@ -295,7 +295,7 @@ namespace Anki
       // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
       // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
       // is not a zombie even if it doesn't have any cubes yet.
-      bool IsZombiePoseOrigin(const Pose3d* origin) const;
+      bool IsZombiePoseOrigin(PoseOriginID_t originID) const;
       
       // Returns true if there are remaining objects that the robot could potentially
       // localize to
@@ -303,7 +303,7 @@ namespace Anki
       
       // returns true if there are localizable objects at the specified origin. It iterates all localizable objects
       // and returns true if any of them has the given origin as origin
-      bool AnyRemainingLocalizableObjects(const Pose3d* origin) const;
+      bool AnyRemainingLocalizableObjects(PoseOriginID_t origin) const;
 
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Others. TODO Categorize/organize
@@ -327,13 +327,13 @@ namespace Anki
       // Find all objects with the given parent and update them to have flatten
       // their objects w.r.t. the origin. Call this when the robot rejiggers
       // origins.
-      Result UpdateObjectOrigins(const Pose3d* oldOrigin, const Pose3d* newOrigin);
+      Result UpdateObjectOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t newOriginID);
       
       // Find the given objectID in the given origin, and update it so that it is
       // stored according to its _current_ origin. (Move from old origin to current origin.)
       // If the origin is already correct, nothing changes. If the objectID is not
       // found in the given origin, RESULT_FAIL is returned.
-      Result UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin);
+      Result UpdateObjectOrigin(const ObjectID& objectID, PoseOriginID_t oldOriginID);
       
       // checks the origins currently storing objects and if they have become zombies it deletes them
       void DeleteObjectsFromZombieOrigins();
@@ -371,8 +371,8 @@ namespace Anki
       // flags all current interesting edges as too small to give useful information
       void FlagInterestingEdgesAsUseless();
 
-      // create a new memory map from current robot frame of reference. The pointer is used as an identifier
-      void CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr);
+      // create a new memory map from current robot frame of reference.
+      void CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID);
       
       // Visualize the navigation memory information
       void DrawNavMemoryMap() const;
@@ -410,7 +410,7 @@ namespace Anki
       using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
-      using ObjectsByOrigin_t    = std::map<const PoseOrigin*, ObjectsMapByFamily_t>;
+      using ObjectsByOrigin_t    = std::map<PoseOriginID_t, ObjectsMapByFamily_t>;
       
       // defined objects
       using DefinedObjectsMapCountByFamily_t = std::map<ObjectFamily, size_t>;
@@ -534,7 +534,7 @@ namespace Anki
       void SetMemoryMapRenderEnabled(bool enabled);
       
       // updates the objects reported in curOrigin that are moving to the relocalizedOrigin by virtue of rejiggering
-      void UpdateOriginsOfObjectsReportedInMemMap(const Pose3d* curOrigin, const Pose3d* relocalizedOrigin);
+      void UpdateOriginsOfObjectsReportedInMemMap(PoseOriginID_t curOriginID, PoseOriginID_t relocalizedOriginID);
       
       // clear the space in the memory map between the robot and observed markers for the given object,
       // because if we saw the marker, it means there's nothing between us and the marker.
@@ -543,7 +543,7 @@ namespace Anki
       
       // add/remove the given object to/from the memory map
       void AddObjectReportToMemMap(const ObservableObject& object, const Pose3d& newPose);
-      void RemoveObjectReportFromMemMap(const ObservableObject& object, const Pose3d* origin);
+      void RemoveObjectReportFromMemMap(const ObservableObject& object, PoseOriginID_t originID);
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Vision border detection
@@ -596,9 +596,9 @@ namespace Anki
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
       
       // Map the world knows the robot has traveled
-      using NavMemoryMapTable = std::map<const Pose3d*, std::unique_ptr<INavMemoryMap>>;
+      using NavMemoryMapTable = std::map<PoseOriginID_t, std::unique_ptr<INavMemoryMap>>;
       NavMemoryMapTable _navMemoryMaps;
-      const Pose3d* _currentNavMemoryMapOrigin;
+      PoseOriginID_t _currentNavMemoryMapOriginID;
       bool _isNavMemoryMapRenderEnabled;
       
       // poses we have sent to the memory map for objects we know, in each origin
@@ -608,7 +608,7 @@ namespace Anki
         Pose3d pose;
         bool isInMap; // if true the pose was sent to the map, if false the pose was removed from the map
       };
-      using OriginToPoseInMapInfo = std::map<const PoseOrigin*, PoseInMapInfo>;
+      using OriginToPoseInMapInfo = std::map<PoseOriginID_t, PoseInMapInfo>;
       using ObjectIdToPosesPerOrigin = std::map<int, OriginToPoseInMapInfo>;
       ObjectIdToPosesPerOrigin _navMapReportedPoses;
       Pose3d _navMapReportedRobotPose;
@@ -807,16 +807,6 @@ namespace Anki
     {
       return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns non-const
     }
-    
-    
-    
-//    inline ObjectID BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
-//                                             const ObservableObject* objectToCopyID)
-//
-//    {
-//      return AddNewObject(_locatedObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
-//    }
-    
     
   } // namespace Cozmo
 } // namespace Anki

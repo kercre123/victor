@@ -390,13 +390,15 @@ namespace Anki {
                                            nullptr,
                                            preDockPoseDistOffsetX_mm);
       
+      const Pose3d& robotPoseParent = robot.GetPose().GetParent();
+      
       // If using approach angle remove any preAction poses that aren't close to the desired approach angle
       if(input.useApproachAngle)
       {
         for(auto iter = preActionPoses.begin(); iter != preActionPoses.end();)
         {
           Pose3d preActionPose;
-          if(iter->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), preActionPose) == false)
+          if(iter->GetPose().GetWithRespectTo(robotPoseParent, preActionPose) == false)
           {
             PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.PreActionPoseOriginProblem",
                                 "Could not get pre-action pose w.r.t. world origin.");
@@ -435,7 +437,7 @@ namespace Anki {
       for(size_t index = 0; index < preActionPoses.size(); ++index)
       {
         Pose3d preActionPose;
-        if(preActionPoses[index].GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), preActionPose) == false)
+        if(preActionPoses[index].GetPose().GetWithRespectTo(robotPoseParent, preActionPose) == false)
         {
           PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.PreActionPoseOriginProblem",
                               "Could not get pre-action pose w.r.t. world origin.");
@@ -858,7 +860,7 @@ namespace Anki {
       // add a VisuallyVerifyNoObjectAtPoseAction to the _faceAndVerifyAction
       if(_checkForObjectOnTopOf)
       {
-        Pose3d pose = dockObject->GetPose().GetWithRespectToOrigin();
+        Pose3d pose = dockObject->GetPose().GetWithRespectToRoot();
         const Point3f rotatedSize = dockObject->GetSizeInParentFrame(pose);
         pose.SetTranslation({
           pose.GetTranslation().x(),
@@ -962,7 +964,7 @@ namespace Anki {
     ActionResult PopAWheelieAction::SelectDockAction(ActionableObject* object)
     {
       Pose3d objectPose;
-      if(object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectPose) == false) {
+      if(object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), objectPose) == false) {
         PRINT_NAMED_WARNING("PopAWheelieAction.SelectDockAction.PoseWrtFailed",
                             "Could not get pose of dock object w.r.t. robot's parent.");
         return ActionResult::BAD_OBJECT;
@@ -1071,7 +1073,7 @@ namespace Anki {
     ActionResult FacePlantAction::SelectDockAction(ActionableObject* object)
     {
       Pose3d objectPose;
-      if(object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectPose) == false) {
+      if(object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), objectPose) == false) {
         PRINT_NAMED_WARNING("FacePlantAction.SelectDockAction.PoseWrtFailed",
                             "Could not get pose of dock object w.r.t. robot's parent.");
         return ActionResult::BAD_OBJECT;
@@ -1383,7 +1385,7 @@ namespace Anki {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
       // Make it w.r.t. robot's parent so we can compare heights fairly.
-      if(object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
+      if(object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
         PRINT_NAMED_WARNING("PickupObjectAction.SelectDockAction.PoseWrtFailed",
                             "Could not get pose of dock object w.r.t. robot parent.");
         return ActionResult::BAD_OBJECT;
@@ -2297,7 +2299,7 @@ namespace Anki {
                                                       trans.y() + clipY_mm,
                                                       trans.z()});
               
-              const bool poseOriginOk = preDocWRTUnrotatedBlock.GetWithRespectTo(*robot.GetWorldOrigin(), *fullIter);
+              const bool poseOriginOk = preDocWRTUnrotatedBlock.GetWithRespectTo(robot.GetWorldOrigin(), *fullIter);
               if ( !poseOriginOk ) {
                 // this should not be possible at all, since the predock poses are in robot origin
                 PRINT_NAMED_ERROR("DriveToPlaceRelObjectAction.GetPossiblePosesFunc.UnrotatedBlockPoseBadOrigin",
@@ -2430,7 +2432,7 @@ namespace Anki {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
       // Make it w.r.t. robot's parent so we don't have to worry about differing origins later.
-      if(object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
+      if(object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
         PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.PoseWrtFailed",
                             "Could not get pose of dock object w.r.t. robot's parent.");
         return ActionResult::BAD_OBJECT;
@@ -2600,50 +2602,6 @@ namespace Anki {
                     "Robot has completed going up/down ramp.");
       
       return ActionResult::SUCCESS;
-    } // Verify()
-    
-#pragma mark ---- MountChargerAction ----
-    
-    MountChargerAction::MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed)
-    : IDockAction(robot,
-                  chargerID,
-                  "MountCharger",
-                  RobotActionType::MOUNT_CHARGER,
-                  useManualSpeed)
-    {
-      // TODO: Charger marker pose still oscillates so just do your best from where you are
-      //       rather than oscillating between jumpy predock poses.
-      SetDoNearPredockPoseCheck(false);
-    }
-    
-    ActionResult MountChargerAction::SelectDockAction(ActionableObject* object)
-    {
-      Charger* charger = dynamic_cast<Charger*>(object);
-      if(charger == nullptr) {
-        PRINT_NAMED_ERROR("MountChargerAction.SelectDockAction.NotChargerObject",
-                          "Could not cast generic ActionableObject into Charger object.");
-        return ActionResult::BAD_OBJECT;
-      }
-      
-      _dockAction = DockAction::DA_MOUNT_CHARGER;
-      
-      // Tell robot which charger it will be using
-      _robot.SetCharger(_dockObjectID);
-      
-      return ActionResult::SUCCESS;
-      
-    } // SelectDockAction()
-    
-    
-    ActionResult MountChargerAction::Verify()
-    {
-      // Verify that robot is on charger
-      if (_robot.IsOnCharger()) {
-        PRINT_CH_INFO("Actions", "MountChargerAction.Verify.MountingChargerComplete",
-                      "Robot has mounted charger.");
-        return ActionResult::SUCCESS;
-      }
-      return ActionResult::ABORT;
     } // Verify()
 
 #pragma mark ---- CrossBridgeAction ----

@@ -157,14 +157,16 @@ namespace Vision {
                                                          const Pose3d&        atPose,
                                                          const Point2f&       size_mm)
   {
-    DEV_ASSERT(atPose.GetParent() == nullptr, "ObservableObject.AddMarker.MarkerPoseShouldBeRelative");
+    DEV_ASSERT(!atPose.HasParent(), "ObservableObject.AddMarker.MarkerPoseShouldBeRelative");
     
     // Copy the pose and set this object's pose as its parent
     Pose3d poseCopy(atPose);
-    poseCopy.SetParent(&_pose);
+    poseCopy.SetParent(_pose);
     
     // Construct a marker at that pose and store it keyed by its code
     _markers.emplace_back(withCode, poseCopy, size_mm);
+    DEV_ASSERT(_markers.back().GetPose().IsChildOf(_pose), "ObservableObject.AddMarker.IncorrectParent");
+    
     _markersWithCode[withCode].push_back(&_markers.back());
     
     return _markers.back();
@@ -402,7 +404,7 @@ namespace Vision {
 
   static inline bool IsPoseFlat(const Pose3d& pose, const Radians& angleTol, AxisName* outWhichAxis)
   {
-    const RotationMatrix3d Rmat = pose.GetWithRespectToOrigin().GetRotationMatrix();
+    const RotationMatrix3d Rmat = pose.GetWithRespectToRoot().GetRotationMatrix();
     const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>(outWhichAxis) < angleTol);
     return isFlat;
   }
@@ -459,7 +461,7 @@ namespace Vision {
   {
     // calculate the z translation of the top marker using the current object
     // center and half the size of the object along the current rotated parent axis
-    const Pose3d poseWRTOrigin = _pose.GetWithRespectToOrigin();
+    const Pose3d poseWRTOrigin = _pose.GetWithRespectToRoot();
     float zAxisTrans = poseWRTOrigin.GetTranslation().z();
     
     const f32 zSize = GetDimInParentFrame<'Z'>(poseWRTOrigin);
@@ -470,7 +472,7 @@ namespace Vision {
                   {_pose.GetTranslation().x(),
                     _pose.GetTranslation().y(),
                     zAxisTrans},
-                  &poseWRTOrigin.FindOrigin());
+                  poseWRTOrigin.FindRoot());
   }
 
 
@@ -478,7 +480,7 @@ namespace Vision {
   {
     DEV_ASSERT(HasValidPose(), "ObservableObject.IsRestingAtHeight.ObjectPoseIsNotValid");
     
-    const Pose3d& pose = GetPose().GetWithRespectToOrigin();
+    const Pose3d& pose = GetPose().GetWithRespectToRoot();
     const f32 blockHeight = GetDimInParentFrame<'Z'>(pose);
     return std::abs(height - (pose.GetTranslation().z() - blockHeight/2)) < tolerance;
   }

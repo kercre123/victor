@@ -21,7 +21,6 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockConfigTypeHelpers.h"
 #include "engine/blockWorld/blockConfiguration.h"
@@ -64,12 +63,10 @@ BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPickUpCube::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
   // check even if we haven't seen a block so that we can pickup blocks we know of
-  // that are outside FOV
-  
+  // that are outside FOV  
   UpdateTargetBlocksInternal(robot);
   return _targetBlockID.IsSet();
 }

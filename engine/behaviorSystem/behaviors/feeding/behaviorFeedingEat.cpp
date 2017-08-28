@@ -20,7 +20,6 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeAccelComponentListeners.h"
@@ -103,24 +102,22 @@ BehaviorFeedingEat::BehaviorFeedingEat(Robot& robot, const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingEat::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData ) const
+bool BehaviorFeedingEat::IsRunnableInternal(const Robot& robot ) const
 {
-  if(ANKI_VERIFY(preReqData.GetTargets().size() == 1,
-                 "BehaviorFeedingEat.PassedInInvalidNumberOfTargets",
-                 "Passed in %zu targets",
-                 preReqData.GetTargets().size())){
-    const ObjectID objID = *preReqData.GetTargets().begin();
-    const Robot& robot = preReqData.GetRobot();
-
-    if( IsCubeBad(robot, objID ) ) {
+  if(_targetID.IsSet()){
+    if( IsCubeBad(robot, _targetID ) ) {
+      _targetID.SetToUnknown();
       return false;
     }
     
-    _targetID = objID;
     const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
 
     // require a known object so we don't drive to and try to eat a moved cube
-    return (obj != nullptr) && obj->IsPoseStateKnown();
+    const bool canRun = (obj != nullptr) && obj->IsPoseStateKnown();
+    if(!canRun){
+      _targetID.SetToUnknown();
+    }
+    return canRun;
   }
   return false;
 }

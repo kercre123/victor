@@ -30,7 +30,7 @@ private:
   BehaviorReactToFrustration(Robot& robot, const Json::Value& config);
 
 public:
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData ) const override { return true; }
+  virtual bool IsRunnableInternal(const Robot& robot ) const override { return true; }
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
   virtual void AddListener(ISubtaskListener* listener) override;

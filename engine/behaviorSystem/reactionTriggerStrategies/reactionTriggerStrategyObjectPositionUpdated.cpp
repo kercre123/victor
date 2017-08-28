@@ -14,8 +14,8 @@
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
 
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/behaviorSystem/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/robot.h"
@@ -34,8 +34,9 @@ std::set<ObjectFamily> _objectFamilies = {{
   ObjectFamily::Block
 }};
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPositionUpdated(Robot& robot, const Json::Value& config)
 :ReactionTriggerStrategyPositionUpdate(robot, config, kTriggerStrategyName, ReactionTrigger::ObjectPositionUpdated)
 {
@@ -43,21 +44,29 @@ ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPosit
     EngineToGameTag::RobotObservedObject,
   });
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) {
   if (HasDesiredReactionTargets(robot)){
     std::set<s32> targets;
     GetDesiredReactionTargets(robot, targets);
     
-    BehaviorPreReqAcknowledgeObject acknowledgeObjectPreReqs(targets, robot);
-    behavior->IsRunnable(acknowledgeObjectPreReqs);
+    std::shared_ptr<BehaviorAcknowledgeObject> directPtr;
+    robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                           BehaviorClass::AcknowledgeObject,
+                                                           directPtr);
+    
+    directPtr->SetObjectsToAcknowledge(targets);
   }
   else
   {
     PRINT_NAMED_WARNING("ReactionTriggerStrategyObjectPositionUpdated.SetupForceTriggerBehavior", "No target to update");
   }
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   const bool robotInValidState = kEnableObjectAcknowledgement &&
@@ -68,14 +77,21 @@ bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal
   if(robotInValidState && HasDesiredReactionTargets(robot)){
     std::set<s32> targets;
     GetDesiredReactionTargets(robot, targets);
+ 
+    std::shared_ptr<BehaviorAcknowledgeObject> directPtr;
+    robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                           BehaviorClass::AcknowledgeObject,
+                                                           directPtr);
     
-    BehaviorPreReqAcknowledgeObject acknowledgeObjectPreReqs(targets, robot);
-    return behavior->IsRunnable(acknowledgeObjectPreReqs);
+    directPtr->SetObjectsToAcknowledge(targets);
+    return behavior->IsRunnable(robot);
   }
   
   return false;
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyObjectPositionUpdated::HandleObjectObserved(const Robot& robot,
                                                      const ExternalInterface::RobotObservedObject& msg)
 {
@@ -100,7 +116,9 @@ void ReactionTriggerStrategyObjectPositionUpdated::HandleObjectObserved(const Ro
     HandleNewObservation(robot, msg.objectID, obsPose, msg.timestamp);
   }
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
@@ -131,18 +149,23 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   behavior->AddListener(this);
   _classTriggerMapsTo = behavior->GetClass();
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyObjectPositionUpdated::ReactedToID(Robot& robot, s32 id)
 {
   RobotReactedToId(robot, id);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyObjectPositionUpdated::ClearDesiredTargets(Robot& robot)
 {
   std::set<s32> targets;

@@ -1,5 +1,5 @@
 //
-// resources/config/basestation/config/sayTextintentConfig.json
+// resources/config/engine/sayTextintentConfig.json
 //
 // Cozmo Says Intent metadata config
 // Author: Jordan Rivas
@@ -36,7 +36,7 @@
 //
 // Parameters here are applied as modifications to the "base voice" for each
 // locale, to reflect the intended use of a specific utterance. See
-//   resources/config/basestation/config/tts_config.json
+//   resources/config/engine/tts_config.json
 // for parameters that determine the "base voice" generated for each locale.
 //
 
@@ -58,12 +58,16 @@
   "Text" : {
     "durationTraits" : [
       {
-        "rangeMin" : 0.75
+        "rangeMin" : 0.75,
+        "rangeMax" : 1.0,
+        "stepSize" : 0.05
       }
     ],
     "pitchTraits" : [
       {
-        "rangeMin" : 0.0
+        "rangeMin" : -0.1,
+        "rangeMax" : 0.1,
+        "stepSize" : 0.05
       }
     ],
     "style" : "CozmoProcessing_Sentence"

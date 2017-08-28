@@ -256,7 +256,7 @@ namespace Vision {
         //objectsSeen.push_back(libObject->CloneType());
         ObsObjectType* newObject = libObject->CloneType();
         const f32 observedDistSq = poseCluster.GetPose().GetTranslation().LengthSq();
-        Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
+        Pose3d newPose = poseCluster.GetPose().GetWithRespectToRoot();
         
         if(clampPosesToFlatIfWithinLocalizableTol && newObject->IsActive())
         {
@@ -426,10 +426,10 @@ namespace Vision {
       
       // Compute the object pose from all the corresponding 2d (image)
       // and 3d (object) points
-      const Pose3d* originalParent = _pose.GetParent();
+      const Pose3d& originalParent = _pose.GetParent();
       _pose = camera->ComputeObjectPose(imgPoints, objPoints);
-      if(_pose.GetParent() != originalParent) {
-        if(_pose.GetWithRespectTo(*originalParent, _pose) == false) {
+      if(!_pose.IsChildOf(originalParent)) {
+        if(_pose.GetWithRespectTo(originalParent, _pose) == false) {
           PRINT_NAMED_ERROR("ObservableObjectLibrary.PoseCluster.RecomputePose.OriginMisMatch",
                             "Could not get object pose w.r.t. original parent.");
         }

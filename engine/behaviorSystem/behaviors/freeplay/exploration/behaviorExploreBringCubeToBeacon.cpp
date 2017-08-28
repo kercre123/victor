@@ -15,7 +15,6 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -106,7 +105,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   Vec3f offset{ locOffset*row, locOffset*col, 0.0f};
   offset = rotation * offset;
   Vec3f candidateLoc = center + offset;
-  outPose = Pose3d(rotation, candidateLoc, &robotRef.GetPose().FindOrigin()); // override even if not free
+  outPose = Pose3d(rotation, candidateLoc, robotRef.GetWorldOrigin()); // override even if not free
   
   // check if out of radius
   if ( offset.LengthSq() > radiusSQ )
@@ -186,10 +185,10 @@ void BehaviorExploreBringCubeToBeacon::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) const
 {
   _candidateObjects.clear();
-  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   
   // check that we have an active beacon
   const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
@@ -218,8 +217,8 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRo
     // so that we don't go into a loop on pick up
     for( const AIWhiteboard::ObjectInfo& objectInfo : cubesOutOfBeacons )
     {
-      const ObservableObject* objPtr = preReqData.GetRobot().GetBlockWorld().
-                                        GetLocatedObjectByID( objectInfo.id, objectInfo.family );
+      const ObservableObject* objPtr = robot.GetBlockWorld().
+                                          GetLocatedObjectByID( objectInfo.id, objectInfo.family );
       if ( nullptr != objPtr )
       {
         const Pose3d& currentPose = objPtr->GetPose();
@@ -723,7 +722,7 @@ bool CalculateDirectionalityAverage(AIWhiteboard::ObjectInfoList& objectsInBeaco
     const ObservableObject* objectPtr = world.GetLocatedObjectByID( objectInfo.id, objectInfo.family );
     if ( nullptr != objectPtr )
     {
-      double upAngle = objectPtr->GetPose().GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToDouble();
+      double upAngle = objectPtr->GetPose().GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToDouble();
       // normalize to to range [-45deg,45deg], to align either axis
       const double closest90Angle = std::round(upAngle/M_PI_2) * M_PI_2;
       upAngle = upAngle - closest90Angle;
@@ -784,7 +783,7 @@ bool CalculateDirectionalityClosest(AIWhiteboard::ObjectInfoList& objectsInBeaco
   {
     // calculate final angle and apply (do not copy Rotation since objects sometimes have roll due to bad estimations,
     // which we want to discard here
-    Radians rotZ = bestObject->GetPose().GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis();
+    Radians rotZ = bestObject->GetPose().GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis();
     outDirectionality = Rotation3d( rotZ, kUpVector );
     return true;
   }
@@ -829,7 +828,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   if( !isDirectionalitySetFromObjects )
   {
     // TODO rsam put this utility somewhere: create Rotation3d from vector in XY plane
-    Vec3f beaconNormal = (beacon->GetPose().GetWithRespectToOrigin().GetTranslation() - robot.GetPose().GetTranslation());
+    Vec3f beaconNormal = (beacon->GetPose().GetWithRespectToRoot().GetTranslation() - robot.GetPose().GetTranslation());
     beaconNormal.z() = 0.0f;
     float distance = beaconNormal.MakeUnitLength();
     
@@ -848,7 +847,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
     }
   }
   
-  const Vec3f& beaconCenter = beacon->GetPose().GetWithRespectToOrigin().GetTranslation();
+  const Vec3f& beaconCenter = beacon->GetPose().GetWithRespectToRoot().GetTranslation();
   LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), robot, recentFailureCooldown_sec);
 
   const int kMaxRow = beacon->GetRadius() / locCalc.GetLocationOffset();

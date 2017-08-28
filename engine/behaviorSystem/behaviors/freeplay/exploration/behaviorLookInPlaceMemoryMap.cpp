@@ -16,7 +16,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/groundPlaneROI.h"
@@ -82,10 +81,10 @@ BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const Robot& robot) const
 {
   // obviously this behavior needs memory map
-  const INavMemoryMap* memoryMap = preReqData.GetRobot().GetBlockWorld().GetNavMemoryMap();
+  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
     return false;
   }
@@ -97,7 +96,7 @@ bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const BehaviorPreReqRobot&
   float distanceSQ;
   const float distThreshold = _configParams.distanceThresholdForLocations_mm;
   const float closeDistSQ = distThreshold*distThreshold;
-  const Pose3d& currentPose = preReqData.GetRobot().GetPose();
+  const Pose3d& currentPose = robot.GetPose();
   for( const auto& previousFullLocation : _previousFullLocations )
   {
     // try to grab distance between robot pose and previousFullLocation (if comparable)
@@ -169,7 +168,7 @@ Result BehaviorLookInPlaceMemoryMap::InitInternal(Robot& robot)
   
   _visitedSectorCount = 0; // note that doing this here will be reset if we Resume (should consider different ResumeInternal)
   
-  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToOrigin().GetRotationAngle<'Z'>();
+  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   
   // restart all sectors
   _sectors.assign( _sectors.size(), SectorStatus::NeedsChecking);
@@ -334,7 +333,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   const Vec3f& sectorNormal = rotateAbsAroundUp * kFwdVector;
   
   // from robot current pose towards
-  const Point3f& robotLocation = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+  const Point3f& robotLocation = robot.GetPose().GetWithRespectToRoot().GetTranslation();
   const Point3f& from3D = robotLocation + sectorNormal * minDist;
   const Point3f& to3D   = robotLocation + sectorNormal * maxDist;
   
@@ -515,7 +514,7 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(Robot& robot)
       const float maxDist = MaxCircleDist();
       
       // render rings
-      const Point3f& renderCenter = (robot.GetPose().GetWithRespectToOrigin().GetTranslation()) + Vec3f{0,0,15.0f}; // z offset to render above mem map
+      const Point3f& renderCenter = (robot.GetPose().GetWithRespectToRoot().GetTranslation()) + Vec3f{0,0,15.0f}; // z offset to render above mem map
       robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,
         renderCenter, minDist, needCheckColor, false, kSectorsPerLocation);
       robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,

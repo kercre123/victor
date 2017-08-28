@@ -403,8 +403,8 @@ namespace Anki {
       // a common origin and see if the represent the same pose relative to that common
       // origin
       const PoseOrigin fakeOrigin;
-      objectPoseWrtRobot.SetParent(&fakeOrigin);
-      actualObjectPoseWrtRobot.SetParent(&fakeOrigin);
+      objectPoseWrtRobot.SetParent(fakeOrigin);
+      actualObjectPoseWrtRobot.SetParent(fakeOrigin);
       
       Vec3f Tdiff(0,0,0);
       Radians angleDiff(0);

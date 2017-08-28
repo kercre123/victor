@@ -12,7 +12,6 @@
 #include "engine/behaviorSystem/behaviorChoosers/strictPriorityBehaviorChooser.h"
 
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/robot.h"
 
@@ -63,11 +62,10 @@ StrictPriorityBehaviorChooser::~StrictPriorityBehaviorChooser()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorPtr StrictPriorityBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
-  BehaviorPreReqRobot preReq(robot);
   // Iterate through available behaviors, and return the first one that is runnable
   // since this is the highest priority behavior
   for(const auto& entry: _behaviors){
-    if(entry->IsRunning() || entry->IsRunnable(preReq)){
+    if(entry->IsRunning() || entry->IsRunnable(robot)){
       return entry;
     }
   }

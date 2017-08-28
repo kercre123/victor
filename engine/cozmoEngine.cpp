@@ -240,7 +240,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
                                     _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
                                     _context->GetDataLoader()->GetLocalNotificationConfig());
 
-  _context->GetRobotManager()->Init(_config);
+  _context->GetRobotManager()->Init(_config, _context->GetDataLoader()->GetDasEventConfig());
 
 #ifdef COZMO_V2
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");

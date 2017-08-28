@@ -69,11 +69,11 @@ namespace Anki {
                                  const f32 length_mm)
     : _type(type)
     , _marker(marker)
-    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D(), offset, &marker->GetPose()) // init w.r.t. marker
+    , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D(), offset, marker->GetPose()) // init w.r.t. marker
     , _preActionPoseLineLength_mm(length_mm)
     {
       // Now make pose w.r.t. marker parent
-      if(_poseWrtMarkerParent.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
+      if(_poseWrtMarkerParent.GetWithRespectTo(_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
         PRINT_NAMED_ERROR("PreActionPose.GetPoseWrtMarkerParentFailed",
                           "Could not get the pre-action pose w.r.t. the marker's parent.");
       }
@@ -92,11 +92,11 @@ namespace Anki {
     , _marker(marker)
     , _preActionPoseLineLength_mm(length_mm)
     {
-      if(poseWrtMarker.GetParent() != &marker->GetPose()) {
+      if(!poseWrtMarker.IsChildOf(marker->GetPose())) {
         PRINT_NAMED_ERROR("PreActionPose.PoseWrtMarkerParentInvalid",
                           "Given pose w.r.t. marker should have the marker as its parent pose.");
       }
-      if(poseWrtMarker.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
+      if(poseWrtMarker.GetWithRespectTo(_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
         PRINT_NAMED_ERROR("PreActionPose.GetPoseWrtMarkerParentFailed",
                           "Could not get the pre-action pose w.r.t. the marker's parent.");
       }

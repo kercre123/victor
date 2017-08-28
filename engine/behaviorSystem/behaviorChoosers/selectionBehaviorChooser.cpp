@@ -15,7 +15,6 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -62,9 +61,8 @@ IBehaviorPtr SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
 {
   auto runnable = [this, &robot](const IBehaviorPtr behavior)
   {
-    BehaviorPreReqRobot preReqData(robot);
     const bool behaviorIsRunning = nullptr != behavior && behavior->IsRunning();
-    bool ret = (nullptr != behavior && (behaviorIsRunning || behavior->IsRunnable(preReqData)));
+    bool ret = (nullptr != behavior && (behaviorIsRunning || behavior->IsRunnable(robot)));
     
     // If this is the selected behavior
     if(behavior == _selectedBehavior)

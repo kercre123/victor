@@ -17,8 +17,6 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/actions/visuallyVerifyActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 
@@ -51,13 +49,11 @@ BehaviorDriveToFace::BehaviorDriveToFace(Robot& robot, const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorDriveToFace::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
-
   Pose3d facePose;
   const TimeStamp_t timeLastFaceObserved = robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-  const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+  const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
     const auto facesObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
     if(facesObserved.size() > 0){
@@ -68,24 +64,6 @@ bool BehaviorDriveToFace::IsRunnableInternal(const BehaviorPreReqRobot& preReqDa
   }
   
   return _targetFace.IsValid();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveToFace::IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const
-{
-  
-  auto desiredTargets = preReqData.GetDesiredTargets();
-  const Robot& robot = preReqData.GetRobot();
-  if(ANKI_VERIFY(desiredTargets.size() == 1,
-                 "BehaviorDriveToFace.IsRunnableInternal.IncorrectTagets",
-                 "Recieved pre req with %zu targets",
-                 desiredTargets.size())){
-    _targetFace = robot.GetFaceWorld().GetSmartFaceID(*desiredTargets.begin());
-    return _targetFace.IsValid();
-  }
-
-  return false;
 }
 
 

@@ -60,7 +60,7 @@ BehaviorLookForFaceAndCube::~BehaviorLookForFaceAndCube()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookForFaceAndCube::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorLookForFaceAndCube::IsRunnableInternal(const Robot& robot) const
 {
   // can run as long as it's not carrying a cube (potentially it could, but may look weird), which is handled in base
   return true;
@@ -110,7 +110,7 @@ Result BehaviorLookForFaceAndCube::InitInternal(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
 
-  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToOrigin().GetRotationAngle<'Z'>();
+  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   _currentSidePicksDone = 0;
   _currentState = State::S0FaceOnCenter;
   _verifiedFaces.clear();

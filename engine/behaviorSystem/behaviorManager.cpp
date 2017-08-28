@@ -29,7 +29,6 @@
 #include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/behaviorSystem/behaviorContainer.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
@@ -548,6 +547,10 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBeh
   StopAndNullifyCurrentBehavior();
   bool initSuccess = true;
   if( nullptr != nextBehavior ) {
+    ANKI_VERIFY(nextBehavior->IsRunnable(_robot),
+                "BehaviorManager.SwitchToBehaviorBase.BehaviorNotRunnable",
+                "Behavior %s returned but it's not runnable",
+                BehaviorIDToString(nextBehavior->GetID()));
     const Result initRet = nextBehavior->Init();
     if ( initRet != RESULT_OK ) {
       // the previous behavior has been told to stop, but no new behavior has been started
@@ -1068,6 +1071,7 @@ void BehaviorManager::SelectUIRequestGameBehavior()
       // We already check that the player can afford the cost Game side
       const u32 sparkCost = GetSparkCosts(SparkableThings::PlayAGame, 0);
       _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+      _robot.GetAIComponent().GetWhiteboard().SetCurrentGameRequestUIRequest(true);
     }
   }
   else {
@@ -1079,6 +1083,7 @@ void BehaviorManager::SelectUIRequestGameBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::EnsureRequestGameIsClear()
 {
+  _robot.GetAIComponent().GetWhiteboard().SetCurrentGameRequestUIRequest(false);
   _uiRequestGameBehavior = nullptr;
   _shouldRequestGame = false;
 }

@@ -112,6 +112,7 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 , _hasHiccups(false)
+, _isGameRequestUIRequest(false)
 , _severeNeedExpression(NeedId::Count)
 {
 }
@@ -178,12 +179,12 @@ void AIWhiteboard::OnRobotRelocalized()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 {
-  const Pose3d* worldOriginPtr = _robot.GetWorldOrigin();
+  const Pose3d& worldOrigin = _robot.GetWorldOrigin();
   // remove all objects inside clear quads
-  auto isObjectInsideQuad = [&quad, worldOriginPtr](const PossibleObject& possibleObj)
+  auto isObjectInsideQuad = [&quad, worldOrigin](const PossibleObject& possibleObj)
   {
     Pose3d relPose;
-    if ( possibleObj.pose.GetWithRespectTo(*worldOriginPtr, relPose) ) {
+    if ( possibleObj.pose.GetWithRespectTo(worldOrigin, relPose) ) {
       return quad.Contains( relPose.GetTranslation() );
     } else {
       return false;
@@ -212,15 +213,14 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const
 {
-  #if ANKI_DEVELOPER_CODE
+  if(ANKI_DEVELOPER_CODE)
   {
     // all beacons should be in this world
     for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
                  "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
     }
   }
-  #endif
 
   outObjectList.clear();
   if ( !_beacons.empty() )
@@ -288,7 +288,7 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
     }
     DEV_ASSERT(beaconIsValid, "AIWhiteboard.FindCubesInBeacon.NotABeacon");
     DEV_ASSERT(beacon, "AIWhiteboard.FindCubesInBeacon.NullBeacon");
-    DEV_ASSERT(&beacon->GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+    DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon->GetPose() ),
                "AIWhiteboard.FindCubesInBeacon.BeaconNotInOrigin");
   }
   #endif
@@ -324,7 +324,7 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
   {
     // all beacons should be in this world
     for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose().FindRoot() ),
                  "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
     }
   }
@@ -681,12 +681,12 @@ void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObj
   possibleObjects.clear();
   
   // iterate all possible objects
-  const Pose3d* worldOriginPtr = _robot.GetWorldOrigin();
+  const Pose3d& worldOrigin = _robot.GetWorldOrigin();
   for( const auto& possibleObject : _possibleObjects )
   {
     // if we can obtain a pose with respect to the current origin, store that output (relative pose and type)
     Pose3d poseWRTOrigin;
-    if ( possibleObject.pose.GetWithRespectTo(*worldOriginPtr, poseWRTOrigin) )
+    if ( possibleObject.pose.GetWithRespectTo(worldOrigin, poseWRTOrigin) )
     {
       possibleObjects.emplace_back( poseWRTOrigin, possibleObject.type );
     }
@@ -788,8 +788,11 @@ void AIWhiteboard::RemovePossibleObjectsFromZombieMaps()
   PossibleObjectList::iterator iter = _possibleObjects.begin();
   while( iter != _possibleObjects.end() )
   {
-    const Pose3d* objOrigin = &(iter->pose.FindOrigin());
-    const bool isZombie = _robot.GetBlockWorld().IsZombiePoseOrigin(objOrigin);
+    const PoseOriginID_t objOriginID = iter->pose.GetRootID();
+    DEV_ASSERT_MSG(_robot.GetPoseOriginList().ContainsOriginID(objOriginID),
+                   "AIWhiteboard.RemovePossibleObjectsFromZombieMaps.ObjectOriginNotInOriginList",
+                   "ID:%d", objOriginID);
+    const bool isZombie = _robot.GetBlockWorld().IsZombiePoseOrigin(objOriginID);
     if ( isZombie ) {
       if ( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
         PRINT_CH_INFO("AIWhiteboard", "RemovePossibleObjectsFromZombieMaps", "Deleted possible object because it was zombie");
@@ -810,12 +813,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& m
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg;
   
-  // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
-  // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
-  // decision then
-  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
-             "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
-  
   Pose3d obsPose( msg.pose, _robot.GetPoseOriginList() );
   
   // iterate objects we previously had and remove them if we think they belong to this object
@@ -830,12 +827,6 @@ template<>
 void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleObject& msg)
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg.possibleObject;
-
-  // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
-  // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
-  // decision then
-  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
-             "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
   
   Pose3d obsPose( msg.possibleObject.pose, _robot.GetPoseOriginList() );
   
@@ -980,7 +971,7 @@ void AIWhiteboard::UpdatePossibleObjectRender()
 {
   if ( kBW_DebugRenderPossibleObjects )
   {
-    const Pose3d* worldOriginPtr = _robot.GetWorldOrigin();
+    const Pose3d& worldOrigin = _robot.GetWorldOrigin();
     _robot.GetContext()->GetVizManager()->EraseSegments("AIWhiteboard.PossibleObjects");
     for ( auto& possibleObjectIt : _possibleObjects )
     {
@@ -988,7 +979,7 @@ void AIWhiteboard::UpdatePossibleObjectRender()
       const Vec3f& zRenderOffset = (Z_AXIS_3D() * kBW_DebugRenderPossibleObjectsZ);
       
       Pose3d thisPose;
-      if ( possibleObjectIt.pose.GetWithRespectTo(*worldOriginPtr, thisPose))
+      if ( possibleObjectIt.pose.GetWithRespectTo(worldOrigin, thisPose))
       {
         const float kLen = kBW_PossibleObjectClose_mm;
         Quad3f quad3({ kLen,  kLen, 0},
@@ -1022,13 +1013,13 @@ void AIWhiteboard::UpdateBeaconRender()
     for( const auto& beacon : _beacons )
     {
       // currently we don't support beacons from older origins (rsam: I will soon)
-      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
                  "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
       
       // note that since we don't know what timeout behaviors use, we can only say that it ever failed
       ColorRGBA color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
       
-      Vec3f center = beacon.GetPose().GetWithRespectToOrigin().GetTranslation();
+      Vec3f center = beacon.GetPose().GetWithRespectToRoot().GetTranslation();
       center.z() += kBW_DebugRenderBeaconZ;
       _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
           center, beacon.GetRadius(), color, false);

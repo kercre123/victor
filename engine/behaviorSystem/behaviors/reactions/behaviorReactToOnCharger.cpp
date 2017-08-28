@@ -91,7 +91,7 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToOnCharger::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

@@ -686,23 +686,21 @@ public class Robot : IRobot {
   }
 
   private void UpdateInfo(G2U.RobotState message) {
-    if (message.robotID == ID) {
-      HeadAngle = message.headAngle_rad;
-      PoseAngle = message.poseAngle_rad;
-      PitchAngle = message.posePitch_rad;
-      RollAngle = (float)Math.Atan2(message.accel.y, message.accel.z);
-      LeftWheelSpeed = message.leftWheelSpeed_mmps;
-      RightWheelSpeed = message.rightWheelSpeed_mmps;
-      LiftHeight = message.liftHeight_mm;
-      RobotStatus = (RobotStatusFlag)message.status;
-      GameStatus = (GameStatusFlag)message.gameStatus;
-      BatteryVoltage = message.batteryVoltage;
-      CarryingObjectID = message.carryingObjectID;
-      HeadTrackingObjectID = message.headTrackingObjectID;
+    HeadAngle = message.headAngle_rad;
+    PoseAngle = message.poseAngle_rad;
+    PitchAngle = message.posePitch_rad;
+    RollAngle = (float)Math.Atan2(message.accel.y, message.accel.z);
+    LeftWheelSpeed = message.leftWheelSpeed_mmps;
+    RightWheelSpeed = message.rightWheelSpeed_mmps;
+    LiftHeight = message.liftHeight_mm;
+    RobotStatus = (RobotStatusFlag)message.status;
+    GameStatus = (GameStatusFlag)message.gameStatus;
+    BatteryVoltage = message.batteryVoltage;
+    CarryingObjectID = message.carryingObjectID;
+    HeadTrackingObjectID = message.headTrackingObjectID;
 
-      WorldPosition = new Vector3(message.pose.x, message.pose.y, message.pose.z);
-      Rotation = new Quaternion(message.pose.q1, message.pose.q2, message.pose.q3, message.pose.q0);
-    }
+    WorldPosition = new Vector3(message.pose.x, message.pose.y, message.pose.z);
+    Rotation = new Quaternion(message.pose.q1, message.pose.q2, message.pose.q3, message.pose.q0);
   }
 
   private void HandleRobotOffTreadsStateChanged(G2U.RobotOffTreadsStateChanged message) {
@@ -862,13 +860,10 @@ public class Robot : IRobot {
   }
 
   public void HandleDeleteObservedObject(Anki.Cozmo.ExternalInterface.RobotDeletedLocatedObject message) {
-    if (ID == message.robotID) {
-      KnownObjects.Remove((int)message.objectID);
-
-      ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
-      if (objectPoseUnknown != null) {
-        objectPoseUnknown.MarkPoseUnknown();
-      }
+    KnownObjects.Remove((int)message.objectID);
+    ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
+    if (objectPoseUnknown != null) {
+      objectPoseUnknown.MarkPoseUnknown();
     }
   }
 
@@ -972,21 +967,19 @@ public class Robot : IRobot {
   }
 
   private void HandleDeletedFace(Anki.Cozmo.ExternalInterface.RobotDeletedFace message) {
-    if (ID == message.robotID) {
-      int index = -1;
-      for (int i = 0; i < Faces.Count; i++) {
-        if (Faces[i].ID == message.faceID) {
-          index = i;
-          break;
-        }
+    int index = -1;
+    for (int i = 0; i < Faces.Count; i++) {
+      if (Faces[i].ID == message.faceID) {
+        index = i;
+        break;
       }
+    }
 
-      if (index != -1) {
-        Face removedFace = Faces[index];
-        Faces.RemoveAt(index);
-        if (OnFaceRemoved != null) {
-          OnFaceRemoved(removedFace);
-        }
+    if (index != -1) {
+      Face removedFace = Faces[index];
+      Faces.RemoveAt(index);
+      if (OnFaceRemoved != null) {
+        OnFaceRemoved(removedFace);
       }
     }
   }
@@ -1113,15 +1106,11 @@ public class Robot : IRobot {
 
   private void HandleObservedObjectPoseUnknown(Anki.Cozmo.ExternalInterface.RobotMarkedObjectPoseUnknown message) {
     int objectID = (int)message.objectID;
-    if (ID == message.robotID) {
-      // TODO Do we need a timestamp here? (message doesn't have it)
+    KnownObjects.Remove((int)message.objectID);
 
-      KnownObjects.Remove((int)message.objectID);
-
-      ActiveObject objectPoseUnknown = GetActiveObjectById(objectID);
-      if (objectPoseUnknown != null) {
-        objectPoseUnknown.MarkPoseUnknown();
-      }
+    ActiveObject objectPoseUnknown = GetActiveObjectById(objectID);
+    if (objectPoseUnknown != null) {
+      objectPoseUnknown.MarkPoseUnknown();
     }
   }
 
@@ -1387,7 +1376,7 @@ public class Robot : IRobot {
   public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1) {
 
     DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + loops + " loop " + useSafeLiftMotion);
-    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, loops, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
+    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(loops, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
   }
 
   public void PushIdleAnimation(AnimationTrigger default_anim, string lockName) {
@@ -1528,7 +1517,7 @@ public class Robot : IRobot {
     DAS.Debug(this, "Track Head To Object " + objId);
 
     RobotEngineManager.Instance.Message.TrackToObject =
-      Singleton<TrackToObject>.Instance.Initialize(objId, ID, headOnly);
+      Singleton<TrackToObject>.Instance.Initialize(objId, headOnly);
     RobotEngineManager.Instance.SendMessage();
 
   }
@@ -1561,7 +1550,6 @@ public class Robot : IRobot {
 
     SendQueueSingleAction(Singleton<TurnTowardsObject>.Instance.Initialize(
       objectID: observedObject,
-      robotID: ID,
       maxTurnAngle_rad: maxTurnAngle_rad,
       panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine
       headTrackWhenDone: headTrackWhenDone,
@@ -1595,8 +1583,7 @@ public class Robot : IRobot {
         tiltTolerance_rad: 0f,
         sayName: sayName,
         namedTrigger: namedTrigger,
-        unnamedTrigger: unnamedTrigger,
-        robotID: ID
+        unnamedTrigger: unnamedTrigger
       ),
       callback,
       queueActionPosition);
@@ -1620,8 +1607,7 @@ public class Robot : IRobot {
       tiltTolerance_rad: 0f,
       sayName: sayName,
       namedTrigger: namedTrigger,
-      unnamedTrigger: unnamedTrigger,
-      robotID: ID
+      unnamedTrigger: unnamedTrigger
     ),
       callback,
       queueActionPosition);
@@ -1911,8 +1897,7 @@ public class Robot : IRobot {
       speed_rad_per_sec,
       accel_rad_per_sec2,
       tolerance_rad, // Tolerance of 0.0f means use default tolerance in engine which is defined by POINT_TURN_ANGLE_TOL in cozmoEngineConfig.h
-      0,
-      ID
+      0
     ),
       callback,
       queueActionPosition);
@@ -2284,7 +2269,7 @@ public class Robot : IRobot {
   }
 
   public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
-    SendQueueSingleAction(Singleton<PlayCubeAnimationTrigger>.Instance.Initialize(ID, obj, trigger), callback, QueueActionPosition.IN_PARALLEL);
+    SendQueueSingleAction(Singleton<PlayCubeAnimationTrigger>.Instance.Initialize(obj, trigger), callback, QueueActionPosition.IN_PARALLEL);
   }
 
   public void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -2293,6 +2278,10 @@ public class Robot : IRobot {
 
   public void DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(Singleton<DisplayFaceImage>.Instance.Initialize(duration_ms, faceData), callback, queueActionPosition);
+  }
+
+  public void DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(Singleton<DriveOffChargerContacts>.Instance, callback, queueActionPosition);
   }
 
 }

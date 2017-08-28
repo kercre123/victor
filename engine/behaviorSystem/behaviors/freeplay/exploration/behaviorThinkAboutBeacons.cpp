@@ -15,7 +15,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/robot.h"
 
@@ -39,13 +38,13 @@ BehaviorThinkAboutBeacons::~BehaviorThinkAboutBeacons()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorThinkAboutBeacons::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorThinkAboutBeacons::IsRunnableInternal(const Robot& robot) const
 {
   // we want to think about beacons if we don't have any or we have finished the current one
   bool needsBeacon = true;
   
   // check current beacon
-  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const AIBeacon* activeBeacon = whiteboard.GetActiveBeacon();
   if ( nullptr != activeBeacon )
   {
@@ -91,7 +90,7 @@ void BehaviorThinkAboutBeacons::SelectNewBeacon(Robot& robot)
 {
   // TODO implement the real deal
    AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
-   whiteboard.AddBeacon( robot.GetPose().GetWithRespectToOrigin(), _configParams.beaconRadius_mm );
+   whiteboard.AddBeacon( robot.GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 
 } // namespace Cozmo

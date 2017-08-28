@@ -15,7 +15,6 @@
 #include "engine/behaviorSystem/behaviors/freeplay/exploration/behaviorExploreVisitPossibleMarker.h"
 
 #include "engine/actions/driveToActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -52,10 +51,10 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const Robot& robot) const
 {
   // check whiteboard for known markers
-  const AIWhiteboard& whiteboard = preReqData.GetRobot().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   whiteboard.GetPossibleObjectsWRTOrigin(_possibleObjects);
 
   const bool canRun = !_possibleObjects.empty(); // TODO: consider distance limit
@@ -73,7 +72,7 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
   for( const auto& possibleObject : _possibleObjects )
   {
     // all possible objects have to be in robot's origin, otherwise whiteboard lied to us
-    DEV_ASSERT((&possibleObject.pose.FindOrigin()) == (&robot.GetPose().FindOrigin()),
+    DEV_ASSERT(robot.IsPoseInWorldOrigin(possibleObject.pose),
                "BehaviorExploreVisitPossibleMarker.InitInternal.InvalidOrigin" );
   
     // pick closest marker to us
@@ -119,7 +118,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
                                                               const Pose3d& possibleCubePose)
 {
   // trust that the whiteboard will never return information that is not valid in the current origin
-  DEV_ASSERT(&robot.GetPose().FindOrigin() == &possibleCubePose.FindOrigin(),
+  DEV_ASSERT(robot.IsPoseInWorldOrigin(possibleCubePose),
              "BehaviorExploreVisitPossibleMarker.WhiteboardPossibleMarkersDirty");
 
   // TODO if we are closer than max, limit max to that. I dont want to simply face the cube in that case because
@@ -208,7 +207,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
     }
   
     const Vec3f& kUpVector = Z_AXIS_3D();
-    const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, &robot.GetPose().FindOrigin());
+    const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, robot.GetWorldOrigin());
     approachAction->AddAction( new DriveToPoseAction(robot, goalPose, false) );
   }
   else {
@@ -227,7 +226,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
       
       Pose3d newTargetPose(RotationVector3d{},
                            newTranslation * (oldLength - distanceRand),
-                           &robot.GetPose());
+                           robot.GetPose());
 
       // turn first to signal intent
       approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, M_PI_F) );

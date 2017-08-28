@@ -36,7 +36,6 @@ namespace Anki {
     Camera::Camera(void)
     : _camID(0)
     , _calibration(nullptr)
-    , _isCalibrationShared(false)
     {
       
     } // Constructor: Camera()
@@ -44,36 +43,48 @@ namespace Anki {
     Camera::Camera(const CameraID_t ID)
     : _camID(ID)
     , _calibration(nullptr)
-    , _isCalibrationShared(false)
     {
       
     }
     
     Camera::Camera(const Camera& other)
     : _camID(other._camID)
-    , _calibration(nullptr)
-    , _isCalibrationShared(other._isCalibrationShared)
+    , _calibration(other._calibration)
     , _pose(other._pose)
     , _occluderList(other._occluderList)
     {
-      if(_isCalibrationShared) {
-        // If we're sharing calibrations, just share the same one as
-        // the Camera we are copying
-        _calibration = other._calibration;
-      } else if(other._calibration != nullptr) {
-        // Otherwise create another copy of calibration
-        _calibration = new CameraCalibration(*other._calibration);
-      }
+      
     }
     
     Camera::~Camera()
     {
-      if(this->IsCalibrated() && !_isCalibrationShared) {
-        // If the calibration pointer doesn't point to a shared calibration object
-        // then we must have instantiated a CameraCalibration object with new.
-        // So we must make sure to delete it here.
-        delete _calibration;
+     
+    }
+    
+    bool Camera::SetCalibration(std::shared_ptr<CameraCalibration> calib)
+    {
+      if(IsCalibrated() )
+      {
+        if(!ANKI_VERIFY(calib != nullptr, "Camera.SetCalibration.NullCalibration",
+                        "Camera already calibrated. Cannot set with nullptr."))
+        {
+          return false;
+        }
+        
+        // If Camera is already calibrated and the new one is the same, then nothing is actually changing.
+        if(calib == _calibration)
+        {
+          return false;
+        }
       }
+      else if(calib == nullptr)
+      {
+        // The Camera isn't already calibrated and a null calibration is being passed in, nothing is actually changing.
+        return false;
+      }
+      
+      _calibration = calib;
+      return true;
     }
     
 #if ANKICORETECH_USE_OPENCV
@@ -98,7 +109,7 @@ namespace Anki {
       Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
       
       // Return Pose object w.r.t. the camera's pose
-      const Pose3d pose(rvec, translation, &(_pose));
+      const Pose3d pose(rvec, translation, _pose);
       
       return pose;
       

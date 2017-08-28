@@ -18,9 +18,6 @@
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
@@ -444,15 +441,15 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       case VoiceCommandType::ComeHere:
       {
 
-        std::set<Vision::FaceID_t> desiredFaces;
+        SmartFaceID desiredFace;
         
         Pose3d facePose;
         const TimeStamp_t timeLastFaceObserved = robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-        const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+        const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
         if(lastFaceInCurrentOrigin){
           const auto facesObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
           if(facesObserved.size() > 0){
-            desiredFaces.insert(*facesObserved.begin());
+            desiredFace = robot.GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
           }
         }
         
@@ -460,14 +457,17 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         // we should search for a face instead
         bool shouldSearchForFaces = false;
         
-        if(!desiredFaces.empty()){
-          BehaviorPreReqAcknowledgeFace preReqData(desiredFaces, robot);
-          if(_driveToFaceBehavior->IsRunnable(preReqData)){
+        if(desiredFace.IsValid()){
+          _driveToFaceBehavior->SetTargetFace(desiredFace);
+          if(_driveToFaceBehavior->IsRunnable(robot)){
             // Only play the "alrighty" animation if we're actually going to drive towards the face
-            if(!_driveToFaceBehavior->IsCozmoAlreadyCloseEnoughToFace(robot, *desiredFaces.begin())){
-               responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+            const auto& face = robot.GetFaceWorld().GetFace(desiredFace);
+            if(face != nullptr){
+              if(!_driveToFaceBehavior->IsCozmoAlreadyCloseEnoughToFace(robot, face->GetID())){
+                 responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+              }
+              responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _driveToFaceBehavior;});
             }
-            responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _driveToFaceBehavior;});
           }else{
             shouldSearchForFaces = true;
           }
@@ -476,8 +476,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         }
         
         if(shouldSearchForFaces){
-          BehaviorPreReqRobot preReqData(robot);
-          if(ANKI_VERIFY(_searchForFaceBehavior->IsRunnable(preReqData),
+          if(ANKI_VERIFY(_searchForFaceBehavior->IsRunnable(robot),
                          "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotRunnable",
                          "No way to respond to the voice command")){
             responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _searchForFaceBehavior;});
@@ -485,7 +484,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
             responseQueue.push([this, &robot](const IBehaviorPtr currentBehavior){
               Pose3d facePose;
               robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-              const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+              const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
               if(lastFaceInCurrentOrigin){
                 return std::static_pointer_cast<IBehavior>(_driveToFaceBehavior);
               }else{
@@ -500,9 +499,8 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       }
       case VoiceCommandType::FistBump:
       {
-        BehaviorPreReqRobot preReqRobot(robot);
         //Ensure fist bump is runnable
-        if(_fistBumpBehavior->IsRunnable(preReqRobot))
+        if(_fistBumpBehavior->IsRunnable(robot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
@@ -520,9 +518,8 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       }
       case VoiceCommandType::PeekABoo:
       {
-        BehaviorPreReqRobot preReqRobot(robot);
         //Ensure PeekABoo is runnable
-        if(_peekABooBehavior->IsRunnable(preReqRobot))
+        if(_peekABooBehavior->IsRunnable(robot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
@@ -540,8 +537,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       }
       case VoiceCommandType::GoToSleep:
       {
-        BehaviorPreReqNone req;
-        if(_goToSleepBehavior->IsRunnable(req))
+        if(_goToSleepBehavior->IsRunnable(robot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _goToSleepBehavior;});
@@ -559,8 +555,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       }
       case VoiceCommandType::LookDown:
       {
-        BehaviorPreReqRobot preReqRobot(robot);
-        if(_laserBehavior->IsRunnable(preReqRobot))
+        if(_laserBehavior->IsRunnable(robot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _laserBehavior;   });
@@ -761,8 +756,7 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
              refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
              "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");
   
-  BehaviorPreReqRobot preReqRobot(robot);
-  if(refuseBehavior->IsRunnable(preReqRobot))
+  if(refuseBehavior->IsRunnable(robot))
   {
     responseQueue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
     return true;
@@ -811,7 +805,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextB
   NeedBracketId bracket;
   curNeeds.GetLowestNeedAndBracket(need, bracket);
   
-  IBehaviorPtr howAreYouDoingBehavior;
+  std::shared_ptr<BehaviorPlayAnimSequenceWithFace> howAreYouDoingBehavior;
   std::vector<AnimationTrigger> howAreYouDoingAnims;
   
   // If we have a matching entry for the need and bracket then setup the behavior
@@ -822,20 +816,9 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextB
     const BehaviorID& behaviorID = behaviorAndAnims->second.first;
     const std::vector<AnimationTrigger>& anims = behaviorAndAnims->second.second;
     
-    IBehaviorPtr behavior = robot.GetBehaviorManager().FindBehaviorByID(behaviorID);
-    DEV_ASSERT(behavior != nullptr,
-               "ActivityVoiceCommand.HandleHowAreYouDoingCommand.NullBehavior");
-    
-    if(ANKI_DEV_CHEATS)
-    {
-      std::shared_ptr<BehaviorPlayAnimSequenceWithFace> playAnimBehavior =
-        std::static_pointer_cast<BehaviorPlayAnimSequenceWithFace>(behavior);
-      DEV_ASSERT(playAnimBehavior != nullptr &&
-                 playAnimBehavior->GetClass() == BehaviorClass::PlayAnimWithFace,
-                 "ActivityVoiceCommand.HandleHowAreYouDoingCommand.ImproperClassRetrievedForID");
-    }
-    
-    howAreYouDoingBehavior = behavior;
+    robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behaviorID,
+                                                           BehaviorClass::PlayAnimWithFace,
+                                                           howAreYouDoingBehavior);
     howAreYouDoingAnims = anims;
   }
   // Otherwise, based on the map, all needs are at least normal so respond with the "all good" behavior
@@ -846,16 +829,14 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextB
                 bracket == NeedBracketId::Normal),
                "ActivityVoiceCommand.HandleHowAreYouDoingCommand.NeedsBracketExpectedFullOrNormal");
     
-    IBehaviorPtr behavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_HowAreYouDoing_AllGood);
-    DEV_ASSERT(behavior != nullptr,
-               "ActivityVoiceCommand.HandleHowAreYouDoingCommand.AllGood.NullBehavior");
-    
-    howAreYouDoingBehavior = behavior;
+    robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(BehaviorID::VC_HowAreYouDoing_AllGood,
+                                                           BehaviorClass::PlayAnimWithFace,
+                                                           howAreYouDoingBehavior);
     howAreYouDoingAnims = {AnimationTrigger::VC_HowAreYouDoing_AllGood};
   }
   
-  BehaviorPreReqAnimSequence preReq(robot, howAreYouDoingAnims);
-  if(howAreYouDoingBehavior->IsRunnable(preReq))
+  howAreYouDoingBehavior->SetAnimationsToPlay(howAreYouDoingAnims);
+  if(howAreYouDoingBehavior->IsRunnable(robot))
   {
     responseQueue.push([howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
   }

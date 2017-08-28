@@ -17,7 +17,6 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/robot.h"
@@ -30,9 +29,9 @@ BehaviorPickUpAndPutDownCube::BehaviorPickUpAndPutDownCube(Robot& robot, const J
 {
 }
 
-bool BehaviorPickUpAndPutDownCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPickUpAndPutDownCube::IsRunnableInternal(const Robot& robot) const
 {
-  auto& objInfoCache = preReqData.GetRobot().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   _targetBlockID = objInfoCache.GetBestObjectForIntention(intent);
   return _targetBlockID.IsSet();

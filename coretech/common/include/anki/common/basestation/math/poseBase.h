@@ -4,10 +4,6 @@
  * Author: Andrew Stein (andrew)
  * Created: 6/19/2014
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
  *
  * Description: Defines a base class for Pose2d and Pose3d to inherit from in
  *                order to share pose tree capabilities.
@@ -16,8 +12,8 @@
  *
  **/
 
-#ifndef _ANKICORETECH_MATH_POSEBASE_H_
-#define _ANKICORETECH_MATH_POSEBASE_H_
+#ifndef __Anki_Common_Math_PoseBase_H__
+#define __Anki_Common_Math_PoseBase_H__
 
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/common/basestation/math/point.h"
@@ -27,22 +23,16 @@
 
 #include "anki/common/basestation/exceptions.h"
 
-#include <list>
-#include <mutex>
-#include <set>
 #include <string>
 
 namespace Anki {
 
-  // Forward declarations of types used below:
-  //  typedef Point3f Vec3f;
-  //template<typename T> class Matrix;
+  using PoseID_t = uint32_t;
   
-
   // Pose2d and Pose3d inherit from this base class, which defines the common
   // elements like the parent pointer, the GetTreeDepth() method, and the
   // GetWithRespectTo method.
-  template <class PoseNd>
+  template <class PoseNd, class TransformNd>
   class PoseBase
   {
   public:
@@ -50,20 +40,70 @@ namespace Anki {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Methods
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
+    bool IsNull() const { return (nullptr == _node); }
+    
     // init/destruction, copy, assignment
     virtual ~PoseBase();
 
-    // accessors
-    void SetParent(const PoseNd* otherPose);
-    const PoseNd* GetParent() const { Dev_AssertIsValidParentPointer(_parentPtr, this); return _parentPtr; }
-
-    void SetName(const std::string& newName) { _name = newName; }
-    const std::string& GetName() const { return _name; }
+    //
+    // Simple accessors:
+    //
+    void SetName(const std::string& newName) { DEV_ASSERT(!IsNull(), "PoseBase.SetName.NullNode"); _node->SetName(newName); }
+    const std::string& GetName() const { DEV_ASSERT(!IsNull(), "PoseBase.GetName.NullNode"); return _node->GetName(); }
     
-    // origin
-    bool IsOrigin() const { Dev_AssertIsValidParentPointer(_parentPtr, this); return _parentPtr == nullptr; }
-    const PoseNd& FindOrigin(const PoseNd& forPose) const;
+    // Get the ID assigned to this pose. IDs default to 0.
+    PoseID_t GetID() const { DEV_ASSERT(!IsNull(), "PoseBase.GetID.NullNode"); return _node->GetID(); }
+    
+    // Set the ID for this pose. NOTE: ID is *not* copied with pose!
+    void SetID(PoseID_t newID) { DEV_ASSERT(!IsNull(), "PoseBase.SetID.NullNode"); _node->SetID(newID); }
+    
+    const TransformNd& GetTransform() const { DEV_ASSERT(!IsNull(), "PoseBase.GetTransformConst.NullNode"); return _node->GetTransform(); }
+    TransformNd& GetTransform() { DEV_ASSERT(!IsNull(), "PoseBase.GetTransform.NullNode"); return _node->GetTransform(); }
+    
+    // Set / check parent relationships:
+    void ClearParent();
+    void SetParent(const PoseNd& otherPose);
+
+    // "Roots" are the top of a pose tree and thus have no parent
+    bool     IsRoot()    const { return (IsNull() ? true : _node->IsRoot()); }
+    bool     HasParent() const { return (IsNull() ? false : _node->HasParent()); }
+    PoseID_t GetRootID() const { return (IsNull() ? 0 : _node->GetRootID()); } // NOTE: more efficient than FindRoot().GetID()
+    
+    // Note that HasSameRootAs will be true if this is other's root or vice versa (a root's root is itself)
+    bool     HasSameRootAs(const PoseNd& otherPose)   const;
+    bool     HasSameParentAs(const PoseNd& otherPose) const;
+    
+    // Get a string suitable for log messages which describes this node's parent
+    std::string GetParentString() const;
+    
+    // Check if given pose is this pose's parent (or vice versa)
+    // Cheaper than calling this->GetParent and then comparing it to pose
+    bool IsChildOf(const PoseNd& otherPose) const  { return (IsNull() || otherPose.IsNull() ? false : _node->IsChildOf(*otherPose._node));  }
+    bool IsParentOf(const PoseNd& otherPose) const { return (IsNull() || otherPose.IsNull() ? false : _node->IsParentOf(*otherPose._node)); }
+    
+    // Composition with another PoseNd
+    void   PreComposeWith(const PoseNd& other)  { GetTransform().PreComposeWith(other.GetTransform()); }
+    void   operator*=(const PoseNd& other)      { GetTransform() *= other.GetTransform();              }
+    PoseNd operator*(const PoseNd& other) const;
+    
+    // Inversion
+    void   Invert(void)           { GetTransform().Invert(); ClearParent(); }
+    PoseNd GetInverse(void) const { return GetTransform().GetInverse();     }
+  
+    // Creates a new PoseNd around the underlying root/parent node
+    // This is "cheap", but not "free". Consider using one of the above helpers for comparing relationships b/w poses.
+    PoseNd FindRoot()  const;
+    PoseNd GetParent() const;
+    
+    // Check for exact numerical equality of Transform and matching parents/names. Generally only useful for unit tests.
+    bool operator==(const PoseNd &other) const { return ((GetTransform() == other.GetTransform()) &&
+                                                         HasSameParentAs(other) &&
+                                                         GetName()==other.GetName()); }
+    
+    // Useful for debugging and logging messages: print/return a string indicating the path up to the root node
+    std::string GetNamedPathToRoot(bool showTranslations) const;
+    void        PrintNamedPathToRoot(bool showTranslations) const;
     
   protected:
     
@@ -74,71 +114,28 @@ namespace Anki {
     // We don't want to actually publicly create PoseBase objects: just derived
     // classes like Pose2d and Pose3d
     PoseBase();
-    PoseBase(const PoseNd* parentPose, const std::string& name);
+    PoseBase(const TransformNd& transform, const PoseNd& parentPose, const std::string& name = "");
+    PoseBase(const TransformNd& transform, const std::string& name = "");
+    PoseBase(const PoseNd& parentPose, const std::string& name);
+    
+    // Copy/assignment. NOTE: IDs are *NOT* copied and name is appended with "_COPY".
     PoseBase(const PoseBase& other);
     PoseBase& operator=(const PoseBase& other);
-   
-    unsigned int GetTreeDepth(const PoseNd* poseNd) const;
     
-    bool GetWithRespectTo(const PoseNd& from, const PoseNd& to,
-                          PoseNd& newPose) const;
+    // Rvalue construction/assignment. NOTE: IDS *are* moved and name is preserved.
+    PoseBase(PoseBase&& other);
+    PoseBase& operator=(PoseBase&& other);
+
+    static bool GetWithRespectTo(const PoseNd& from, const PoseNd& to, PoseNd& newPose);
     
-    static std::string GetNamedPathToOrigin(const PoseNd& startPose, bool showTranslations);
-    static void        PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations);
-    
+    // Create a new Pose object which "wraps" an existing node
+    class PoseTreeNode;
+    void WrapExistingNode(std::shared_ptr<PoseTreeNode> node) { _node = node; }
+        
   private:
-
-    PoseBase(PoseBase&& other) = delete;
-    PoseBase& operator=(PoseBase&& other) = delete;
-
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Dev methods
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    // asserts that the parent is valid and that the child is a current valid child of the parent
-    static void Dev_AssertIsValidParentPointer(const PoseNd* parent, const PoseBase<PoseNd>* childBasePointer);
-
-    // updates children bookkeping variables for old and new parents
-    static void Dev_SwitchParent(const PoseNd* oldParent, const PoseNd* newParent, const PoseBase<PoseNd>* childBasePointer);
-    // note I'm not alive anymore, I can't be asked about parents
-    static void Dev_PoseDestroyed(const PoseBase<PoseNd>* basePointer);
-    // note I'm alive, and people can ask me about my children
-    static void Dev_PoseCreated(const PoseBase<PoseNd>* basePointer);
-
-    // funny note: because plugins create PoseNds on load/creation, we can't rely on static variables being initialized,
-    // so we need all static variables here to be created on demand, which should be guaranteed by using static local
-    // variables returned from a method. I say funny because now it's funny, but believe it was not funny before.
-
-    // static set of valid poses
-    using PoseCPtrSet = std::set<const PoseNd*>;
-    static PoseCPtrSet& Dev_GetValidPoses() {
-      static PoseCPtrSet sDev_ValidPoses;
-      return sDev_ValidPoses;
-    }
     
-    // mutex because we create poses like bunnies from different threads
-    static std::mutex& Dev_GetMutex() {
-      static std::mutex sDev_Mutex;
-      return sDev_Mutex;
-    }
-
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Attributes
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    // _parentPtr is private because in order to make sure parent pointers are not used when the
-    // parent is destroyed, we track reference counts when parents are switched. Do not use _parentPtr directly,
-    //use GetParent/SetParent that check pointer validity.
-    // Note: This should probably be an std::weak_ptr or std::shared_ptr, but our API is well defined at the moment,
-    // and switching to smart pointers seems daunting.
-    const PoseNd* _parentPtr;
-
-    // name
-    std::string _name;
-
-    // bookkeeping variables to ensure parent pointer validity. They should be empty in release.
-    // During debug, however, parents keep track of their children so that we can validate proper parenthood
-    mutable std::set<const PoseNd*> _devChildrenPtrs; // my current valid children
+    std::shared_ptr<PoseTreeNode> _node;
+    
   };
   
 } // namespace Anki
@@ -147,4 +144,4 @@ namespace Anki {
 // TODO: Ideally, we'd only need to include poseBase_impl.h from cpp files...
 #include "anki/common/basestation/math/poseBase_impl.h"
 
-#endif // _ANKICORETECH_MATH_POSEBASE_H_
+#endif /* __Anki_Common_Math_PoseBase_H__ */

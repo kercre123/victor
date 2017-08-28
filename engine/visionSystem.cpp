@@ -280,24 +280,19 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result VisionSystem::UpdateCameraCalibration(Vision::CameraCalibration& camCalib)
+  Result VisionSystem::UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
     Result result = RESULT_OK;
-    if(_camera.IsCalibrated() && *_camera.GetCalibration() == camCalib)
+    const bool updatedCalibration = _camera.SetCalibration(camCalib);
+    if(!updatedCalibration)
     {
       // Camera already calibrated with same settings, no need to do anything
       return result;
     }
     
     // Re-initialize the marker detector for the new image size
-    _markerDetector->Init(camCalib.GetNrows(), camCalib.GetNcols());
-    
-    // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
-    // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
-    // the main engine thread. We don't want it referring to any memory allocated
-    // here.
-    _camera.SetSharedCalibration(&camCalib);
-    
+    _markerDetector->Init(camCalib->GetNrows(), camCalib->GetNcols());
+        
     return result;
   } // Init()
 
@@ -837,8 +832,8 @@ namespace Cozmo {
       
       // Make head pose w.r.t. the historical world origin
       Pose3d headPose = currentFace.GetHeadPose();
-      headPose.SetParent(&_poseData.cameraPose);
-      headPose = headPose.GetWithRespectToOrigin();
+      headPose.SetParent(_poseData.cameraPose);
+      headPose = headPose.GetWithRespectToRoot();
 
       currentFace.SetHeadPose(headPose);
     }
@@ -1113,8 +1108,9 @@ namespace Cozmo {
       Anki::Vec3f offsetBotBackPoint { LIFT_BACK_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - kHardwareFallSlackMargin_mm};
 
       // calculate the lift pose with respect to the poseStamp's origin
-      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.histState.GetPose(), "RobotLiftBase");
-      Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, &liftBasePose, "RobotLift");
+      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
+                                _poseData.histState.GetPose(), "RobotLiftBase");
+      Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, liftBasePose, "RobotLift");
       Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
       
       // calculate lift wrt camera
@@ -1357,8 +1353,8 @@ namespace Cozmo {
         }
         for( const auto& point : chain.points ) {
           // project the point to 3D
-          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), &_poseData.histState.GetPose(), "ChainPoint");
-          Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToOrigin();
+          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), _poseData.histState.GetPose(), "ChainPoint");
+          Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToRoot();
           // disabled 3D render
           // _vizManager->DrawSegment("kRenderEdgesInCameraView", pointWrtOrigin.GetTranslation(), pointWrtOrigin.GetTranslation() + Vec3f{0,0,30}, NamedColors::WHITE, false);
           
@@ -1424,7 +1420,14 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
+    if(targetROI.GetX() < 0 && targetROI.GetY() < 0 && targetROI.GetWidth() < 0 && targetROI.GetHeight() < 0)
+    {
+      // Use entire image if negative ROI specified
+      const Anki::Rectangle<s32> entireImgROI(0,0,calibImg.GetNumCols(),calibImg.GetNumRows());
+      _calibImages.push_back({.img = calibImg, .roiRect = entireImgROI, .dotsFound = false});
+    } else {
+      _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
+    }
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.AddCalibrationImage",
                   "Num images including this: %u", (u32)_calibImages.size());
     return RESULT_OK;
@@ -2071,9 +2074,10 @@ namespace Cozmo {
       {1.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT}, // Right in image
     };
     
-    const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.histState.GetPose(), "RobotLiftBase");
+    const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
+                              _poseData.histState.GetPose(), "RobotLiftBase");
     
-    Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &liftBasePose, "RobotLift");
+    Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, liftBasePose, "RobotLift");
     
     Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
     
@@ -2145,7 +2149,7 @@ namespace Cozmo {
       if(DRAW_TOOL_CODE_DEBUG)
       {
         Quad3f dotQuadRoi3dWrtWorld;
-        liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
+        liftPose.GetWithRespectToRoot().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
         dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
         _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)iDot, dotQuadRoi3dWrtWorld, NamedColors::RED);
         
@@ -2156,7 +2160,7 @@ namespace Cozmo {
           {dotWrtLift3d.x() + kDotWidth_mm*0.5f, dotWrtLift3d.y() + kDotWidth_mm*0.5f, dotWrtLift3d.z()},
         };
         Quad3f dotQuadWrtWorld;
-        liftPose.GetWithRespectToOrigin().ApplyTo(dotQuad3d, dotQuadWrtWorld);
+        liftPose.GetWithRespectToRoot().ApplyTo(dotQuad3d, dotQuadWrtWorld);
         dotQuadWrtWorld += Point3f(0,0,0.5f);
         _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9337+(u32)iDot, dotQuadWrtWorld, NamedColors::GREEN);
       }
@@ -2467,14 +2471,14 @@ namespace Cozmo {
         if(true) // TODO: Only in debug?
         {
           Vision::Camera tempCamera;
-          Vision::CameraCalibration tempCalib(_camera.GetCalibration()->GetNrows(),
-                                              _camera.GetCalibration()->GetNcols(),
-                                              _camera.GetCalibration()->GetFocalLength_x(),
-                                              _camera.GetCalibration()->GetFocalLength_y(),
-                                              _camera.GetCalibration()->GetCenter_x(),
-                                              _camera.GetCalibration()->GetCenter_y());
-          tempCalib.SetFocalLength(f,f);
-          tempCalib.SetCenter(camCen);
+          auto tempCalib = std::make_shared<Vision::CameraCalibration>(_camera.GetCalibration()->GetNrows(),
+                                                                       _camera.GetCalibration()->GetNcols(),
+                                                                       _camera.GetCalibration()->GetFocalLength_x(),
+                                                                       _camera.GetCalibration()->GetFocalLength_y(),
+                                                                       _camera.GetCalibration()->GetCenter_x(),
+                                                                       _camera.GetCalibration()->GetCenter_y());
+          tempCalib->SetFocalLength(f,f);
+          tempCalib->SetCenter(camCen);
           tempCamera.SetCalibration(tempCalib);
           std::vector<Anki::Point2f> sanityCheckPoints;
           tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
@@ -2510,7 +2514,6 @@ namespace Cozmo {
                       _camera.GetCalibration()->GetFocalLength_y(),
                       f, f,
                       image.GetTimestamp());
-        
         _camera.GetCalibration()->SetCenter(camCen);
         _camera.GetCalibration()->SetFocalLength(f, f);
     
@@ -2546,13 +2549,17 @@ namespace Cozmo {
   
   Result VisionSystem::ComputeCalibration()
   {
-    Vision::CameraCalibration calibration;
+    std::unique_ptr<Vision::CameraCalibration> calibration;
     _isCalibrating = true;
     
     // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
     // no matter how we return from this function
     Util::CleanupHelper disableComputingCalibration([this,&calibration]() {
-      _currentResult.cameraCalibrations.push_back(calibration);
+      if(nullptr == calibration) {
+        PRINT_NAMED_WARNING("VisionSystem.ComputeCalibration.NullCalibration", "");
+      } else {
+        _currentResult.cameraCalibrations.push_back(*calibration);
+      }
       this->EnableMode(VisionMode::ComputingCalibration, false);
       _isCalibrating = false;
     });
@@ -2642,11 +2649,11 @@ namespace Cozmo {
     Vision::CameraCalibration::DistortionCoeffs distCoeffsVec;
     std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
     
-    calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
-                                            cameraMatrix(0,0), cameraMatrix(1,1),
-                                            cameraMatrix(0,2), cameraMatrix(1,2),
-                                            0.f, // skew
-                                            distCoeffsVec);
+    calibration.reset(new Vision::CameraCalibration(imageSize.height, imageSize.width,
+                                                    cameraMatrix(0,0), cameraMatrix(1,1),
+                                                    cameraMatrix(0,2), cameraMatrix(1,2),
+                                                    0.f, // skew
+                                                    distCoeffsVec));
     
     DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
                    "VisionSystem.ComputeCalibration.BadCalibPoseData",
@@ -2666,8 +2673,8 @@ namespace Cozmo {
 
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.CalibValues",
                   "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
-                  calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
-                  calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+                  calibration->GetFocalLength_x(), calibration->GetFocalLength_y(),
+                  calibration->GetCenter_x(), calibration->GetCenter_y(), rms);
     
                           
     // Check if average reprojection error is too high

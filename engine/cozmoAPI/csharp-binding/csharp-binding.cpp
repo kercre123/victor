@@ -343,7 +343,7 @@ int cozmo_startup(const char *configuration_data)
     
     // load file config
     Json::Value consoleFilterConfig;
-    const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
+    const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
     if (!dataPlatform->readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
     {
       PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());

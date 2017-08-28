@@ -96,7 +96,7 @@ bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::V
   {
     return false;
   }
-  std::string jsonFilename = "config/basestation/config/unlock_config_nurture.json";
+  std::string jsonFilename = "config/engine/unlock_config_nurture.json";
   bool success = context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
                                                         jsonFilename,
                                                         config);

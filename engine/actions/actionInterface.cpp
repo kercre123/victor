@@ -521,8 +521,7 @@ namespace Anki {
       ActionCompletedUnion acu;
       GetCompletionUnion(acu);
       
-      msg = ExternalInterface::RobotCompletedAction(_robot.GetID(),
-                                                    GetTag(),
+      msg = ExternalInterface::RobotCompletedAction(GetTag(),
                                                     GetType(),
                                                     GetState(),
                                                     subActionResults,

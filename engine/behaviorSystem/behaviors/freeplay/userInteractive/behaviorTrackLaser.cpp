@@ -21,7 +21,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/trackGroundPointAction.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -121,9 +120,8 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTrackLaser::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorTrackLaser::IsRunnableInternal(const Robot& robot) const
 {
-  const Robot& robot = preReqData.GetRobot();
   const bool featureEnabled = robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::Laser);
   if(!featureEnabled)
   {
@@ -147,7 +145,7 @@ bool BehaviorTrackLaser::IsRunnableInternal(const BehaviorPreReqRobot& preReqDat
     // Have we seen a potential laser observation recently?
     if(_lastLaserObservation.type != LaserObservation::Type::None)
     {
-      const TimeStamp_t lastImgTime_ms = preReqData.GetRobot().GetLastImageTimeStamp();
+      const TimeStamp_t lastImgTime_ms = robot.GetLastImageTimeStamp();
       const TimeStamp_t seenWithin_ms  = Util::SecToMilliSec(_params.startIfLaserSeenWithin_sec);
       
       const bool crntSeenRecently = ((_lastLaserObservation.timestamp_ms + seenWithin_ms) > lastImgTime_ms);
@@ -516,7 +514,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
   }
   
   const Point2f& pt = _lastLaserObservation.pointWrtRobot;
-  const Pose3d laserPointPose(0.f, Z_AXIS_3D(), {pt.x(), pt.y(), 0.f}, &robot.GetPose());
+  const Pose3d laserPointPose(0.f, Z_AXIS_3D(), {pt.x(), pt.y(), 0.f}, robot.GetPose());
   
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
     new TurnTowardsPoseAction(robot, laserPointPose, M_PI_F),

@@ -291,6 +291,13 @@ def parse_game_arguments():
         help='Use this flag to specify a non default external dependency location.')
 
     parser.add_argument(
+        '--set-das-endpoint',
+        required=False,
+        default=None,
+        choices=('Beta', 'Debug', 'Release', 'Shipping'),
+        help='Override Default DAS json during configuration.')
+
+    parser.add_argument(
         '--use-cte',
         required=False,
         default=None,
@@ -633,8 +640,12 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.execute([os.path.join(ENGINE_ROOT, 'project', 'buildScripts', 'create_boot_strings.py')])
 
         # Copy in DASConfig.json, but don't actually update the file if it is the same as it was the last time
-        DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration,
+        if self.options.set_das_endpoint is None:
+            DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration,
                                  'DASConfig.json')
+        else:
+            DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.set_das_endpoint,
+                                     'DASConfig.json')
         DASTargetTemp = os.path.join(self.unity_project_root, 'Assets', 'StreamingAssets', 'DASConfig.json.new')
         ankibuild.util.File.cp(DASSource, DASTargetTemp)
         DASTarget = os.path.join(self.unity_project_root, 'Assets', 'StreamingAssets', 'DASConfig.json')
@@ -657,7 +668,7 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.update_if_changed(build_config_final_path, build_config_temp_path)
 
         # Copy sensory voice recognition language data files from CTE to local folders to be used at runtime
-        voiceCommandLocalDir = os.path.join(GAME_ROOT, 'lib', 'anki', 'products-cozmo-assets', 'voiceCommand')
+        voiceCommandLocalDir = os.path.join(GAME_ROOT, 'resources', 'assets', 'voiceCommand')
         voiceRecogDataList = open(os.path.join(voiceCommandLocalDir, 'voice-recognition-data.txt')).read().splitlines()
 
         voiceCommandDataBaseDirSrc = os.path.join(CTE_ROOT, 'sensory', 'TrulyHandsfreeSDK', '4.4.23_noexpire', 'Data')

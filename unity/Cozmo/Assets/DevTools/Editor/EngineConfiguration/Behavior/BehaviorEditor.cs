@@ -24,11 +24,11 @@ public class BehaviorEditor : EditorWindow {
 
   private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
 
-  public static string sBehaviorDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/behaviors/"; } }
+  public static string sBehaviorDirectory { get { return Application.dataPath + "/../../../resources/assets/behaviors/"; } }
 
-  public static string sBehaviorCppDirectory { get { return Application.dataPath + "/../../../basestation/src/anki/cozmo/basestation/behaviors/"; } }
+  public static string sBehaviorCppDirectory { get { return Application.dataPath + "/../../../engine/behaviorSystem/behaviors/"; } }
 
-  public static string sBehaviorHDirectory { get { return Application.dataPath + "/../../../basestation/include/anki/cozmo/basestation/behaviors/"; } }
+  public static string sBehaviorHDirectory { get { return Application.dataPath + "/../../../engine/behaviorSystem/behaviors/"; } }
 
 
   public static string[] BehaviorNameOptions { get { return _BehaviorNameOptions; } }

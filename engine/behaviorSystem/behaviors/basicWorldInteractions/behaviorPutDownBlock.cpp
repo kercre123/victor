@@ -13,7 +13,6 @@
 #include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorPutDownBlock.h"
 
 #include "engine/actions/animActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/robot.h"
 #include "engine/actions/basicActions.h"
@@ -69,11 +68,13 @@ BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& conf
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPutDownBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPutDownBlock::IsRunnableInternal(const Robot& robot) const
 {
-  return preReqData.GetRobot().GetCarryingComponent().IsCarryingObject() || IsActing();
+  return robot.GetCarryingComponent().IsCarryingObject() || IsActing();
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 {
   // Disable double tap so we don't try to turn to a tapped object while in the middle of putting the block

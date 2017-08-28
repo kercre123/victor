@@ -11,7 +11,6 @@
  **/
 
 #include "engine/behaviorSystem/behaviors/freeplay/behaviorEarnedSparks.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/actions/animActions.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
@@ -37,9 +36,9 @@ BehaviorEarnedSparks::~BehaviorEarnedSparks()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEarnedSparks::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorEarnedSparks::IsRunnableInternal(const Robot& robot) const
 {
-  return preReqData.GetRobot().GetContext()->GetNeedsManager()->IsPendingSparksRewardMsg();
+  return robot.GetContext()->GetNeedsManager()->IsPendingSparksRewardMsg();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

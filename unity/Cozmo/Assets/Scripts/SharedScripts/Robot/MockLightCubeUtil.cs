@@ -5,7 +5,7 @@ using UnityEngine;
 public static class MockLightCubeUtil {
 
   public static RobotObservedObject CurrentState(this ObservableObject cube) {
-    return Singleton<RobotObservedObject>.Instance.Initialize(cube.RobotID,
+    return Singleton<RobotObservedObject>.Instance.Initialize(
       0,
       cube.Family,
       cube.ObjectType,

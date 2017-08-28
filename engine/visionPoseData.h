@@ -82,8 +82,8 @@ void swap(T1&& first, T2&& second)
   swap(first.imuDataHistory, second.imuDataHistory);
   
   // Because the cameraPose is wrt the pose contained in poseStamp, set it explicitly
-  first.cameraPose.SetParent(&(first.histState.GetPose()));
-  second.cameraPose.SetParent(&(second.histState.GetPose()));
+  first.cameraPose.SetParent(first.histState.GetPose());
+  second.cameraPose.SetParent(second.histState.GetPose());
 }
 
 

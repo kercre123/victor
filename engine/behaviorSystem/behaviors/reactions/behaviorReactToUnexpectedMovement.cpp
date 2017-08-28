@@ -31,7 +31,7 @@ BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(Robot& robo
   });
 }
 
-bool BehaviorReactToUnexpectedMovement::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToUnexpectedMovement::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

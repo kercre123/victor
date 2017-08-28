@@ -31,7 +31,7 @@ namespace Anki {
     // angle: angle about z-axis (which runs vertically along marker)
     //     x: distance along marker horizontal
     //     y: distance along marker normal
-    const Pose2d kChargerPreDockPoseOffset = {0, 0, 200.f};
+    const Pose2d kChargerPreDockPoseOffset = {0, 0, 250.f};
     
     const std::vector<Point3f>& Charger::GetCanonicalCorners() const {
     
@@ -89,23 +89,26 @@ namespace Anki {
       switch(type)
       {
         case PreActionPose::ActionType::DOCKING:
+        case PreActionPose::ActionType::PLACE_RELATIVE:
         {
           const float halfHeight = 0.5f * GetHeight();
           
           Pose3d poseWrtMarker(M_PI_2_F + kChargerPreDockPoseOffset.GetAngle().ToFloat(),
                                Z_AXIS_3D(),
                                {kChargerPreDockPoseOffset.GetX() , -kChargerPreDockPoseOffset.GetY(), -halfHeight},
-                               &_marker->GetPose());
+                               _marker->GetPose());
           
           poseWrtMarker.SetName("Charger" + std::to_string(GetID().GetValue()) + "PreActionPose");
           
-          preActionPoses.emplace_back(PreActionPose::DOCKING, _marker, poseWrtMarker, 0);
+          preActionPoses.emplace_back(type,
+                                      _marker,
+                                      poseWrtMarker,
+                                      0);
           break;
         }
         case PreActionPose::ActionType::ENTRY:
         case PreActionPose::ActionType::FLIPPING:
         case PreActionPose::ActionType::PLACE_ON_GROUND:
-        case PreActionPose::ActionType::PLACE_RELATIVE:
         case PreActionPose::ActionType::ROLLING:
         case PreActionPose::ActionType::NONE:
         {
@@ -118,7 +121,7 @@ namespace Anki {
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
                   Point3f{RobotToChargerDistWhenDocked, 0, 0},
-                  &GetPose());
+                  GetPose());
       
       pose.SetName("Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
       
@@ -129,7 +132,7 @@ namespace Anki {
     {
       return Pose3d(M_PI_F, Z_AXIS_3D(),
                     Point3f{RobotToChargerDistWhenDocked, 0, 0},
-                    &robot.GetPose(),
+                    robot.GetPose(),
                     "ChargerDockPose");
     }
     
@@ -145,7 +148,7 @@ namespace Anki {
     
     void Charger::Visualize(const ColorRGBA& color) const
     {
-      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
+      Pose3d vizPose = GetPose().GetWithRespectToRoot();
       _vizHandle = _vizManager->DrawCharger(GetID().GetValue(), Charger::PlatformLength + Charger::WallWidth,
                                                           Charger::SlopeLength, Charger::Width,
                                                           Charger::Height, vizPose, color);

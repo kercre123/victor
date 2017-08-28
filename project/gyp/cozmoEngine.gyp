@@ -1240,7 +1240,7 @@
                 'outputs': [],
                 'action': [
                 '../../tools/build/tools/ankibuild/symlink.py',
-                '--link_target', '<(cozmo_engine_path)/lib/anki/products-cozmo-assets/voiceCommand/exports',
+                '--link_target', '<(cozmo_engine_path)/resources/assets/voiceCommand/exports',
                 '--link_name', '<(PRODUCT_DIR)/resources/assets/voiceCommand',
                 '--create_folder', '<(PRODUCT_DIR)/resources/assets'
                 ],

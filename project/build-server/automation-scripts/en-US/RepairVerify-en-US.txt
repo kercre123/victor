@@ -1,0 +1,15 @@
+0.847626:click:repair_need_meter_button:0.1468353
+3.556367:click:scan_button:0.1158295
+2.05299:text:Cozmo is fully tuned up!
+0.701093:text:CONTINUE
+0.881977:text:Use the buttons on the right to recreate the arrow pattern. Then tap <b>SEND</b>.
+0.606084:text:Aligning Treads...
+0.85559:text:Calibrating Lift...
+0.218781:text:Adjusting Head...
+0.876549:text:Tap the parts to be tuned up.
+0.128147:text:Treads require alignment
+0.17087:text:Head needs adjustment
+0.710869:text:Lift needs calibration
+0.109061:text:Cozmo needs to be tuned up to stay optimized and on-the-move.
+0.788812:text:Tune Up Cozmo
+0.168061:click:default_close_view_button:0.107605

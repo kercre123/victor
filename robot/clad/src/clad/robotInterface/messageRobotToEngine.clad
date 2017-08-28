@@ -122,7 +122,7 @@ union RobotToEngine {
   PotentialCliff             potentialCliff         = 0xC1,
   SyncTimeAck                syncTimeAck            = 0xC2,
   RobotPoked                 robotPoked             = 0xC3,
-  ChargerMountComplete       chargerMountCompleted  = 0xC4,
+//          FREE SLOT!!!                            = 0xC4,
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
   PathFollowingEvent         pathFollowingEvent     = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,

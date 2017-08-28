@@ -19,7 +19,6 @@
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
@@ -75,9 +74,9 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPopAWheelie::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorPopAWheelie::IsRunnableInternal(const Robot& robot) const
 {
-  UpdateTargetBlock(preReqData.GetRobot());
+  UpdateTargetBlock(robot);
   
   return _targetBlock.IsSet();
 }

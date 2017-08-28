@@ -1753,7 +1753,6 @@ namespace Anki {
                   
                 } else if(shiftKeyPressed) {
                   ExternalInterface::TurnTowardsObject msg;
-                  msg.robotID = 1;
                   msg.objectID = std::numeric_limits<u32>::max(); // HACK to tell game to use blockworld's "selected" object
                   msg.panTolerance_rad = DEG_TO_RAD(5);
                   msg.maxTurnAngle_rad = DEG_TO_RAD(90);
@@ -2278,7 +2277,6 @@ namespace Anki {
                     ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
                     turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
                     turnTowardsPose.maxTurnAngle_rad = M_PI;
-                    turnTowardsPose.robotID = 1;
                     turnTowardsPose.sayName = true;
                     SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
                   }
@@ -2288,7 +2286,6 @@ namespace Anki {
                     turnTowardsFace.faceID = faceID;
                     turnTowardsFace.panTolerance_rad = DEG_TO_RAD(10);
                     turnTowardsFace.maxTurnAngle_rad = M_PI;
-                    turnTowardsFace.robotID = 1;
                     SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsFace)));
                   }
                     

@@ -56,6 +56,7 @@ namespace Cozmo {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       // Modify default parameters (must be called before Init() to have an effect)
+      void SetRequestedTurnAngle(const f32 turnAngle_rad);
       void SetMaxSpeed(f32 maxSpeed_radPerSec);
       void SetAccel(f32 accel_radPerSec2);
       void SetTolerance(const Radians& angleTol_rad);
@@ -330,7 +331,7 @@ namespace Cozmo {
     };  // class MoveHeadToAngleAction
     
     
-    // Set the lift to specified height with a given tolerance. Note that settign
+    // Set the lift to specified height with a given tolerance. Note that setting
     // the tolerance too small will likely lead to an action timeout.
     class MoveLiftToHeightAction : public IAction
     {

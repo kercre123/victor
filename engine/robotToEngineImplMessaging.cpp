@@ -179,17 +179,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        //SetOnBridge(false);
                                                      }));
   
-  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
-                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-                                                       ANKI_CPU_PROFILE("RobotTag::chargerMountCompleted");
-                                                       
-                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d charger mount %s.", robot->GetID(), message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
-                                                       
-                                                       if (message.GetData().Get_chargerMountCompleted().didSucceed) {
-                                                         robot->SetPoseOnCharger();
-                                                       }
-                                                     }));
-  
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::mainCycleTimeError,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::mainCycleTimeError");
@@ -667,9 +656,9 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       PRINT_NAMED_WARNING(MAKE_EVENT_NAME("ActiveObjectInDifferentFramesWithDifferentIDs"),
                           "First object=%d in '%s'. This object=%d in '%s'.",
                           matchingObjects.front()->GetID().GetValue(),
-                          matchingObjects.front()->GetPose().FindOrigin().GetName().c_str(),
+                          matchingObjects.front()->GetPose().FindRoot().GetName().c_str(),
                           object->GetID().GetValue(),
-                          object->GetPose().FindOrigin().GetName().c_str());
+                          object->GetPose().FindRoot().GetName().c_str());
     }
     
     // We expect carried objects to move, so don't mark them as dirty/inaccurate.
@@ -1088,8 +1077,7 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
   
   // Forward on with EngineToGame event
   PRINT_NAMED_INFO("Robot.HandleRobotPoked","");
-  RobotInterface::RobotPoked payload = message.GetData().Get_robotPoked();
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked()));
 }
 
 void RobotToEngineImplMessaging::HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

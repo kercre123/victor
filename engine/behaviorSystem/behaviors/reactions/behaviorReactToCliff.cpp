@@ -84,7 +84,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToCliff::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorReactToCliff::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

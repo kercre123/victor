@@ -21,9 +21,6 @@
 #include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorPyramidThankYou.h"
 #include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "engine/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRespondPossiblyRoll.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -636,10 +633,9 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
   //    Build full pyramid -> Build pyramid base -> Search/fast forward behaviors
   
   IBehaviorPtr bestBehavior = nullptr;
-  BehaviorPreReqRobot kRobotPreReq(robot);
   
   if(_behaviorBuildPyramid->IsRunning() ||
-     _behaviorBuildPyramid->IsRunnable(kRobotPreReq)){
+     _behaviorBuildPyramid->IsRunnable(robot)){
     
     bestBehavior = _behaviorBuildPyramid;
     // If the behavior has not been running, update pyramid assignments
@@ -650,7 +646,7 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
     }
     
   }else if(_behaviorBuildPyramidBase->IsRunning() ||
-           _behaviorBuildPyramidBase->IsRunnable(kRobotPreReq)){
+           _behaviorBuildPyramidBase->IsRunnable(robot)){
     
     bestBehavior = _behaviorBuildPyramidBase;
     // If the behavior has not been running, update pyramid assignments
@@ -696,8 +692,8 @@ IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
       }
       
       if(!rolledCubeHimself){
-        BehaviorPreReqAcknowledgeObject preReqObj(objectID, robot);
-        if(_behaviorPyramidThankYou->IsRunnable(preReqObj)){
+        _behaviorPyramidThankYou->SetTargetID(objectID);
+        if(_behaviorPyramidThankYou->IsRunnable(robot)){
           bestBehavior = _behaviorPyramidThankYou;
         }
       }
@@ -734,7 +730,6 @@ IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(Robot& robot,
   }
   
   IBehaviorPtr bestBehavior = nullptr;
-  BehaviorPreReqNone kNoPreReqs;
   int numberOfCubesOnSide = 0;
   
   for(auto& entry: _pyramidCubePropertiesTrackers){
@@ -745,11 +740,13 @@ IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(Robot& robot,
     ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(entry.second.GetObjectID());
     if(object != nullptr){
       if(entry.second.GetCurrentUpAxis() != UpAxis::ZPositive){
-        BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
-                                                     _uprightAnimIndex,
-                                                     _onSideAnimIndex,
-                                                     false);
-        if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
+        RespondPossiblyRollMetadata metadata(entry.second.GetObjectID(),
+                                             _uprightAnimIndex,
+                                             _onSideAnimIndex,
+                                             false);
+
+        _behaviorRespondPossiblyRoll->SetRespondPossiblyRollMetadata(metadata);
+        if(_behaviorRespondPossiblyRoll->IsRunnable(robot)){
           PRINT_CH_INFO("BuildPyramid",
                         "ActivityBuildPyramid.CheckForRespondPossiblyRoll.RespondToBlockOnSide",
                         "Responding to object %d which is on its side and rolling",
@@ -761,12 +758,13 @@ IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(Robot& robot,
       
       if(bestBehavior == nullptr && !entry.second.GetHasAcknowledgedPositively()){
         const int onSideIdx = IsPyramidHardSpark(robot) ? _onSideAnimIndex : -1;
+        RespondPossiblyRollMetadata metadata(entry.second.GetObjectID(),
+                                             _uprightAnimIndex,
+                                             onSideIdx,
+                                             true);
         
-        BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
-                                                     _uprightAnimIndex,
-                                                     onSideIdx,
-                                                     true);
-        if(_behaviorRespondPossiblyRoll->IsRunnable(preReqData)){
+        _behaviorRespondPossiblyRoll->SetRespondPossiblyRollMetadata(metadata);        
+        if(_behaviorRespondPossiblyRoll->IsRunnable(robot)){
           bestBehavior = _behaviorRespondPossiblyRoll;
           PRINT_CH_INFO("BuildPyramid",
                         "ActivityBuildPyramid.CheckForRespondPossiblyRoll.MayRespondToUpright",

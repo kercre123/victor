@@ -18,7 +18,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
@@ -73,7 +72,7 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) const
 {
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.
@@ -88,7 +87,7 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const BehaviorPreReqRo
   {
     // check distance to recent location (if can wrt robot)
     Pose3d distancePose;
-    if( recentLocation.GetWithRespectTo(preReqData.GetRobot().GetPose(), distancePose) )
+    if( recentLocation.GetWithRespectTo(robot.GetPose(), distancePose) )
     {
       // if close to any recent location, flag
       const float distSQ = distancePose.GetTranslation().LengthSq();
@@ -232,7 +231,7 @@ void BehaviorExploreLookAroundInPlace::BeginStateMachine(Robot& robot)
     if( hasConeOfFocus ) {
       robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlace.FocusCone");
 
-      Point3f center = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+      Point3f center = robot.GetPose().GetWithRespectToRoot().GetTranslation();
       float theta = _initialBodyDirection.ToFloat();
       float halfTurn = 0.5f * DEG_TO_RAD(_configParams.behavior_AngleOfFocus_deg);
       const float coneLength_mm = 200.0f;

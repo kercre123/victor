@@ -13,9 +13,10 @@
 
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCubeMoved.h"
 
+
 #include "engine/activeObject.h"
+#include "engine/behaviorSystem/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 #include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
@@ -65,7 +66,7 @@ private:
 //////
 /// ReactAcknowledge Cube Moved
 /////
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 , _robot(robot)
@@ -79,8 +80,15 @@ ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(Robot& robot,
   }});
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
+  std::shared_ptr<BehaviorAcknowledgeCubeMoved> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::ReactToCubeMoved,
+                                                         directPtr);
+  
   //  already failed to find a suitable cube so just grab the first valid cube
   auto objIter = _reactionObjects.begin();
   while(objIter != _reactionObjects.end()){
@@ -91,17 +99,22 @@ void ReactionTriggerStrategyCubeMoved::SetupForceTriggerBehavior(const Robot& ro
     }
     
     objIter->ResetObject();
-    BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID(), robot);
-    
-    behavior->IsRunnable(preReqData, behavior->IsRunning() );
+    directPtr->SetObjectToAcknowledge(objIter->GetObjectID());
     return;
   }
   
   PRINT_NAMED_WARNING("ReactionTriggerStrategyCubeMoved.SetupForceTriggerBehavior", "No cubes found to force behavior");
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
+  std::shared_ptr<BehaviorAcknowledgeCubeMoved> directPtr;
+  robot.GetBehaviorManager().FindBehaviorByIDAndDowncast(behavior->GetID(),
+                                                         BehaviorClass::ReactToCubeMoved,
+                                                         directPtr);
+  
   auto objIter = _reactionObjects.begin();
   while(objIter != _reactionObjects.end()){
     const ObservableObject* cube = robot.GetBlockWorld().GetLocatedObjectByID(objIter->GetObjectID());
@@ -123,9 +136,15 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(const Robot
                                                  false);
       if(!isVisible){
         objIter->ResetObject();
-        BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID(), robot);
+        directPtr->SetObjectToAcknowledge(objIter->GetObjectID());
         
-        return behavior->IsRunnable(preReqData, behavior->IsRunning() );
+        // To avoid the assert that IsRunnable can't be checked while the behavior
+        // is running, grab direct access to IsRunnable internal instead
+        if(behavior->IsRunning()){
+          return true;
+        }else{
+          return behavior->IsRunnable(robot);
+        }
       }
     }
     
@@ -133,8 +152,9 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(const Robot
   }
   return false;
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::ObjectPositionUpdated)){
@@ -160,6 +180,7 @@ void ReactionTriggerStrategyCubeMoved::AlwaysHandleInternal(const EngineToGameEv
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::EnabledStateChanged(const Robot& robot, bool enabled)
 {
   if(enabled){
@@ -185,18 +206,23 @@ void ReactionTriggerStrategyCubeMoved::EnabledStateChanged(const Robot& robot, b
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::HandleObjectMoved(const Robot& robot, const ObjectMoved& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectStartedMoving(robot, msg);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::HandleObjectStopped(const Robot& robot, const ObjectStoppedMoving& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectStoppedMoving(robot);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::HandleObjectUpAxisChanged(const Robot& robot, const ObjectUpAxisChanged& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
@@ -204,12 +230,15 @@ void ReactionTriggerStrategyCubeMoved::HandleObjectUpAxisChanged(const Robot& ro
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectObserved(robot);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyCubeMoved::HandleRobotDelocalized()
 {
   for(auto object : _reactionObjects){
@@ -218,6 +247,8 @@ void ReactionTriggerStrategyCubeMoved::HandleRobotDelocalized()
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyCubeMoved::Reaction_iter ReactionTriggerStrategyCubeMoved::GetReactionaryIterator(ObjectID objectID)
 {
   Reaction_iter iter = std::find(_reactionObjects.begin(), _reactionObjects.end(), objectID);
@@ -245,17 +276,22 @@ ReactionObjectData::ReactionObjectData(ObjectID objectID)
 {
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectID ReactionObjectData::GetObjectID() const
 {
   return _objectID;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionObjectData::operator==(const ReactionObjectData &other) const
 {
   return this->_objectID == other.GetObjectID();
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionObjectData::ObjectHasMovedLongEnough(const Robot& robot)
 {
   const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
@@ -273,6 +309,8 @@ bool ReactionObjectData::ObjectHasMovedLongEnough(const Robot& robot)
   return false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionObjectData::ObjectUpAxisHasChanged(const Robot& robot)
 {
   const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
@@ -283,6 +321,8 @@ bool ReactionObjectData::ObjectUpAxisHasChanged(const Robot& robot)
   return _hasUpAxisChanged && _observedSinceLastReaction;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)
 {
   const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
@@ -301,7 +341,9 @@ bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)
   return distance > kRadiusRobotTolerance;
 }
 
+
 // update values for reactionObject
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionObjectData::ObjectStartedMoving(const Robot& robot, const ObjectMoved& msg)
 {
   const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
@@ -320,11 +362,15 @@ void ReactionObjectData::ObjectStartedMoving(const Robot& robot, const ObjectMov
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionObjectData::ObjectStoppedMoving(const Robot& robot)
 {
   _isObjectMoving = false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionObjectData::ObjectObserved(const Robot& robot)
 {
   const ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
@@ -335,6 +381,8 @@ void ReactionObjectData::ObjectObserved(const Robot& robot)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionObjectData::ResetObject()
 {
   _isObjectMoving = false;

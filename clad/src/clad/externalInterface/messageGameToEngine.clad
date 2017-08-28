@@ -573,7 +573,9 @@ message CanCozmoRequestGame {
 message SetOverrideGameRequestWeights {
   bool useDefaults,
   UnlockId unlockIDs[uint_8],
-  int_32 weights[uint_8]
+  int_32 weights[uint_8],
+  bool resetDefaultsOnNextRequest = 0 // Allow the GameRequestSelector to reset defaults without
+                                      // waiting for another override message
 }
 
 

@@ -34,7 +34,7 @@ public class AnimationEventEditor : EditorWindow {
 
   public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../EXTERNALS/cozmo-assets/animationGroups/"; } }
 
-  public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
+  public static string sEventMapDirectory { get { return Application.dataPath + "/../../../resources/assets/animationGroupMaps"; } }
 
   public static string[] AnimationGroupNameOptions { get { return _AnimationGroupNameOptions; } }
 
