@@ -8,3 +8,4 @@ RTE
 *.pyc
 JLinkLog.txt
 JLinkSettings.ini
+node_modules

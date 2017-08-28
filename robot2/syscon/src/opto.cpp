@@ -7,6 +7,8 @@
 #include "opto.h"
 #include "messages.h"
 
+//#define DISABLE_TOF
+
 enum I2C_Op {
   I2C_DONE,
   I2C_HOLD,
@@ -59,10 +61,12 @@ static const I2C_Operation i2c_loop[] = {
   { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
   { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
   { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
+  #ifndef DISABLE_TOF
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS, TARGET(tof_status) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 10, TARGET(tof_reading) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 6, TARGET(tof_signal_rate) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 8, TARGET(tof_ambient_rate) },
+  #endif
   { I2C_DONE }
 };
 
@@ -454,6 +458,7 @@ static void initHardware() {
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
   }
 
+  #ifndef DISABLE_TOF
   // Turn on TOF sensor
   // "Set I2C standard mode"
   writeReg(0, TOF_SENSOR_ADDRESS, 0x88, 0x00);
@@ -669,6 +674,7 @@ static void initHardware() {
   writeReg(0, TOF_SENSOR_ADDRESS, 0xFF, 0x00);
   writeReg(0, TOF_SENSOR_ADDRESS, 0x80, 0x00);
   writeReg(0, TOF_SENSOR_ADDRESS, SYSRANGE_START, 0x02); // VL53L0X_REG_SYSRANGE_MODE_BACKTOBACK
+  #endif
 
   // Return the i2c bus to the main execution loop
   i2c_op = NULL;
@@ -713,7 +719,6 @@ void Opto::init(void) {
 
   NVIC_SetPriority(I2C2_IRQn, PRIORITY_I2C_TRANSMIT);
   NVIC_EnableIRQ(I2C2_IRQn);
-
 
   initHardware();
 }
