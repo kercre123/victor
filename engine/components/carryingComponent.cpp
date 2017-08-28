@@ -213,7 +213,7 @@ void CarryingComponent::UnSetCarryingObjects(bool topOnly)
       continue;
     }
     
-    if ( carriedObject->GetPose().GetParent() == &_robot.GetLiftPose()) {
+    if ( carriedObject->GetPose().IsChildOf(_robot.GetLiftPose())) {
       // if the carried object is still attached to the lift it can cause issues. We had a bug
       // in which we delocalized and unset as carrying, but would not dettach from lift, causing
       // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
@@ -226,7 +226,7 @@ void CarryingComponent::UnSetCarryingObjects(bool topOnly)
       continue;
     }
     
-    if ( !carriedObject->GetPose().GetParent()->IsOrigin() ) {
+    if ( !carriedObject->GetPose().GetParent().IsRoot() ) {
       // this happened as a bug when we had a stack of 2 cubes in the lift. The top one was not being detached properly,
       // so its pose was left attached to the bottom cube, which could cause issues if we ever deleted the bottom
       // object without seeing the top one ever again, since the pose for the bottom one (which is still top's pose's
@@ -356,7 +356,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
                        "Setting object %d on top of carried object as also being carried.",
                        objectOnTop->GetID().GetValue());
       
-      onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
+      onTopPoseWrtCarriedPose.SetParent(object->GetPose());
       
       // Related to COZMO-3384: Consider whether top cubes (in a stack) should notify memory map
       // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since

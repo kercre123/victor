@@ -186,7 +186,6 @@ namespace Anki {
       virtual void SetPose(const Pose3d& newPose,
                            f32 fromDistance = -1.f,
                            PoseState newPoseState = PoseState::Known);
-      void SetPoseParent(const Pose3d* newParent);
       
       // Returns last "fromDistance" supplied to SetPose(), or -1 if none set.
       f32 GetLastPoseUpdateDistance() const;
@@ -378,10 +377,6 @@ namespace Anki {
       return _lastSetPoseDistance;
     }
     
-    inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
-      _pose.SetParent(newParent);
-    }
-    
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
       return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
     }
@@ -448,7 +443,7 @@ namespace Anki {
     
     inline Point3f ObservableObject::GetSizeInParentFrame() const
     {
-      return GetSizeInParentFrame(GetPose().GetWithRespectToOrigin());
+      return GetSizeInParentFrame(GetPose().GetWithRespectToRoot());
     }
     
     template<char AXIS>
@@ -482,7 +477,7 @@ namespace Anki {
     template<char AXIS>
     inline f32 ObservableObject::GetDimInParentFrame() const
     {
-      return GetDimInParentFrame<AXIS>(GetPose().GetWithRespectToOrigin());
+      return GetDimInParentFrame<AXIS>(GetPose().GetWithRespectToRoot());
     }
     
   } // namespace Vision

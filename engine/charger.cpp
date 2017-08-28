@@ -96,7 +96,7 @@ namespace Anki {
           Pose3d poseWrtMarker(M_PI_2_F + kChargerPreDockPoseOffset.GetAngle().ToFloat(),
                                Z_AXIS_3D(),
                                {kChargerPreDockPoseOffset.GetX() , -kChargerPreDockPoseOffset.GetY(), -halfHeight},
-                               &_marker->GetPose());
+                               _marker->GetPose());
           
           poseWrtMarker.SetName("Charger" + std::to_string(GetID().GetValue()) + "PreActionPose");
           
@@ -121,7 +121,7 @@ namespace Anki {
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
                   Point3f{RobotToChargerDistWhenDocked, 0, 0},
-                  &GetPose());
+                  GetPose());
       
       pose.SetName("Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
       
@@ -132,7 +132,7 @@ namespace Anki {
     {
       return Pose3d(M_PI_F, Z_AXIS_3D(),
                     Point3f{RobotToChargerDistWhenDocked, 0, 0},
-                    &robot.GetPose(),
+                    robot.GetPose(),
                     "ChargerDockPose");
     }
     
@@ -148,7 +148,7 @@ namespace Anki {
     
     void Charger::Visualize(const ColorRGBA& color) const
     {
-      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
+      Pose3d vizPose = GetPose().GetWithRespectToRoot();
       _vizHandle = _vizManager->DrawCharger(GetID().GetValue(), Charger::PlatformLength + Charger::WallWidth,
                                                           Charger::SlopeLength, Charger::Width,
                                                           Charger::Height, vizPose, color);

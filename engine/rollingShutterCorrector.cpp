@@ -153,7 +153,7 @@ namespace Anki {
       _pixelShifts.clear();
       _pixelShifts.reserve(_rsNumDivisions);
 
-      Pose3d pose = poseData.cameraPose.GetWithRespectToOrigin();
+      Pose3d pose = poseData.cameraPose.GetWithRespectToRoot();
       
       // Time difference between subdivided rows in the image
       const f32 timeDif = timeBetweenFrames_ms/_rsNumDivisions;

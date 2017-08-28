@@ -104,8 +104,8 @@ namespace Anki {
           // not be the one we want. Explicitly ask for MatPiece's GetSize() implementation
           const Point3f& bridgeSize = MatPiece::GetSize();
         
-          Pose3d preCrossingPoseLeft  = Pose3d(0, Z_AXIS_3D(), {-bridgeSize.x()*.5f-30.f, 0.f, 0.f}, &GetPose());
-          Pose3d preCrossingPoseRight = Pose3d(M_PI, Z_AXIS_3D(), {bridgeSize.x()*.5f+30.f, 0.f, 0.f}, &GetPose());
+          Pose3d preCrossingPoseLeft  = Pose3d(0, Z_AXIS_3D(), {-bridgeSize.x()*.5f-30.f, 0.f, 0.f}, GetPose());
+          Pose3d preCrossingPoseRight = Pose3d(M_PI, Z_AXIS_3D(), {bridgeSize.x()*.5f+30.f, 0.f, 0.f}, GetPose());
           
           if(preCrossingPoseLeft.GetWithRespectTo(_leftMarker->GetPose(), preCrossingPoseLeft) == false)
           {

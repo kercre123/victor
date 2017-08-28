@@ -656,9 +656,9 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       PRINT_NAMED_WARNING(MAKE_EVENT_NAME("ActiveObjectInDifferentFramesWithDifferentIDs"),
                           "First object=%d in '%s'. This object=%d in '%s'.",
                           matchingObjects.front()->GetID().GetValue(),
-                          matchingObjects.front()->GetPose().FindOrigin().GetName().c_str(),
+                          matchingObjects.front()->GetPose().FindRoot().GetName().c_str(),
                           object->GetID().GetValue(),
-                          object->GetPose().FindOrigin().GetName().c_str());
+                          object->GetPose().FindRoot().GetName().c_str());
     }
     
     // We expect carried objects to move, so don't mark them as dirty/inaccurate.

@@ -100,11 +100,11 @@ namespace Anki {
         {
           Pose3d preAscentPose(0, Z_AXIS_3D(),
                                {-PreAscentDistance, 0.f, 0.f},
-                               &GetPose());
+                               GetPose());
           
           Pose3d preDescentPose(M_PI, Z_AXIS_3D(),
                                 {SlopeLength + PlatformLength + PreDescentDistance, 0, Height},
-                                &GetPose());
+                                GetPose());
           
           if(preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), preAscentPose) == false)
           {
@@ -163,7 +163,7 @@ namespace Anki {
     {
       Pose3d pose(0, Z_AXIS_3D(),
                   {Ramp::SlopeLength + wheelBase, 0, Ramp::Height},
-                  &GetPose());
+                  GetPose());
       
       //pose.PreComposeWith(GetPose());
       pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PostAscentPose");
@@ -175,7 +175,7 @@ namespace Anki {
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
                   {-wheelBase, 0, 0.f},
-                  &GetPose());
+                  GetPose());
       
       //pose.PreComposeWith(GetPose());
       pose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PostDescentPose");
@@ -195,7 +195,7 @@ namespace Anki {
     
     void Ramp::Visualize(const ColorRGBA& color) const
     {
-      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
+      Pose3d vizPose = GetPose().GetWithRespectToRoot();
       _vizHandle = _vizManager->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
                                                           Ramp::SlopeLength, Ramp::Width,
                                                           Ramp::Height, vizPose, color);
@@ -262,7 +262,7 @@ namespace Anki {
         // Make sure reachableFrom pose is at about the same height of the ENTRY pose.
       
         Pose3d reachableFromWrtEntryPose;
-        if(reachableFromPose->GetWithRespectTo(*preActionPose.GetPose().GetParent(), reachableFromWrtEntryPose) == false) {
+        if(reachableFromPose->GetWithRespectTo(preActionPose.GetPose().GetParent(), reachableFromWrtEntryPose) == false) {
           PRINT_NAMED_WARNING("Ramp.IsPreActionPoseValid.PoseOriginMisMatch",
                               "Could not get specified reachableFrom pose w.r.t. entry action's pose");
           isValid = false;

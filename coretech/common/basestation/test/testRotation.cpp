@@ -523,14 +523,14 @@ GTEST_TEST(TestPose, IsSameAs)
   const Pose3d origin, origin2;
   
   const std::vector<Pose3d> P1s{
-    Pose3d(0, Z_AXIS_3D(), {10.f,20.f,30.f}, &origin),
-    Pose3d(DEG_TO_RAD(90), Y_AXIS_3D(), {10.f,20.f,30.f}, &origin),
-    Pose3d(DEG_TO_RAD(10), X_AXIS_3D(), {-10.f, 0.f, 100.f}, &origin),
-    Pose3d(DEG_TO_RAD(45), Z_AXIS_3D(), {1.f,0.f,-30.f}, &origin),
-    Pose3d(DEG_TO_RAD(180), Y_AXIS_3D(), {0.f,0.f,0.f}, &origin),
+    Pose3d(0, Z_AXIS_3D(), {10.f,20.f,30.f}, origin),
+    Pose3d(DEG_TO_RAD(90), Y_AXIS_3D(), {10.f,20.f,30.f}, origin),
+    Pose3d(DEG_TO_RAD(10), X_AXIS_3D(), {-10.f, 0.f, 100.f}, origin),
+    Pose3d(DEG_TO_RAD(45), Z_AXIS_3D(), {1.f,0.f,-30.f}, origin),
+    Pose3d(DEG_TO_RAD(180), Y_AXIS_3D(), {0.f,0.f,0.f}, origin),
   };
   
-  for(auto & P1 : P1s)
+  for(auto const& P1 : P1s)
   {
     // P2 is P1 with a slight perturbation
     Pose3d P2(P1);
@@ -562,7 +562,7 @@ GTEST_TEST(TestPose, IsSameAs)
     
     // Poses with different origins should always fail IsSameAs
     P3 = P1;
-    P3.SetParent(&origin2);
+    P3.SetParent(origin2);
     EXPECT_FALSE(P1.IsSameAs(P3, 1000.f, M_PI));
   }
   
@@ -570,7 +570,7 @@ GTEST_TEST(TestPose, IsSameAs)
   // Assymmetric distance threshold: loose check only in X direction, so
   // shifting P1 along X a bunch should be fine, but small shift along Y should
   // fail
-  const Pose3d P1(0, Z_AXIS_3D(), {10.f,20.f,30.f}, &origin);
+  const Pose3d P1(0, Z_AXIS_3D(), {10.f,20.f,30.f}, origin);
   const Point3f distThreshold(100.f, 5.f, 5.f);
   Pose3d P4(P1);
   
@@ -584,10 +584,10 @@ GTEST_TEST(TestPose, IsSameAs)
   EXPECT_TRUE(P1.IsSameAs(P4, distThreshold, DEG_TO_RAD(3.f)));
   
   // P6 is not axis aligned. distThreshold will be considered in its rotated frame
-  const Pose3d P6(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 100.f, 0.f}, &origin);
+  const Pose3d P6(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 100.f, 0.f}, origin);
   
   Pose3d P7;
-  P7.SetParent(&origin);
+  P7.SetParent(origin);
   EXPECT_FALSE(P6.IsSameAs(P7, distThreshold, DEG_TO_RAD(30)));
   
   P7.SetTranslation({80.f, 80.f, 0.f});
@@ -607,7 +607,7 @@ GTEST_TEST(TestPose, IsSameAs)
 GTEST_TEST(TestPose, IsSameWithAmbiguity)
 {
   const Pose3d origin;
-  Pose3d P_ref(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f}, &origin);
+  Pose3d P_ref(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f}, origin);
   Pose3d P1(P_ref);
   
   RotationMatrix3d R_amb({0,-1,0,  0,0,1,  1,0,0});

@@ -24,13 +24,13 @@ TEST(RobotStateHistory, AddGetPose)
   HistRobotState histState;
   TimeStamp_t t;
   
-  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
+  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, "Origin");
   
   // Pose 1, 2, and 3
-  const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0), &origin );
-  const Pose3d p2(0.1f, Z_AXIS_3D(), Vec3f(1,1,2), &origin );
-  const Pose3d p3(-0.5, Z_AXIS_3D(), Vec3f(-2,-2,-3), &origin );
-  const Pose3d p1p2avg(0.05f, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) , &origin);
+  const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0), origin );
+  const Pose3d p2(0.1f, Z_AXIS_3D(), Vec3f(1,1,2), origin );
+  const Pose3d p3(-0.5, Z_AXIS_3D(), Vec3f(-2,-2,-3), origin );
+  const Pose3d p1p2avg(0.05f, Z_AXIS_3D(), Vec3f(0.5, 0.5, 1) , origin);
   
   RobotState state1(Robot::GetDefaultRobotState());
   RobotState state2(Robot::GetDefaultRobotState());
@@ -142,12 +142,12 @@ TEST(RobotStateHistory, GroundTruthPose)
   
   PoseFrameID_t frameID = 0;
   
-  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
+  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, "Origin");
   
   // Pose 1, 2, and 3
-  const Pose3d p1(0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1,0,0), &origin );
-  const Pose3d p2(M_PI_2_F, Z_AXIS_3D(), Vec3f(1,2,0), &origin );
-  const Pose3d p3(M_PI_2_F - 0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0), &origin );
+  const Pose3d p1(0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1,0,0), origin );
+  const Pose3d p2(M_PI_2_F, Z_AXIS_3D(), Vec3f(1,2,0), origin );
+  const Pose3d p3(M_PI_2_F - 0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1 - sqrtf(2),2,0), origin );
   Pose3d p1_by_p2Top3( p3 ); // Start by copying p3 so end result keeps origin
   p1_by_p2Top3 *= p2.GetInverse();
   p1_by_p2Top3 *= p1;
@@ -245,8 +245,8 @@ TEST(RobotStateHistory, CullToWindowSizeTest)
   
   RobotStateHistory hist;
   
-  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, nullptr, "Origin");
-  const Pose3d p(0, Z_AXIS_3D(), Vec3f(0,0,0), &origin );
+  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, "Origin");
+  const Pose3d p(0, Z_AXIS_3D(), Vec3f(0,0,0), origin );
   RobotState state(Robot::GetDefaultRobotState());
   HistRobotState histState(p, state);
 

@@ -648,8 +648,8 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
     float relX = distanceRatio * facePose.GetTranslation().x();
     float relY = distanceRatio * facePose.GetTranslation().y();
 
-    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, &robot.GetPose() };
-    targetPose = targetPose.GetWithRespectToOrigin();
+    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, robot.GetPose() };
+    targetPose = targetPose.GetWithRespectToRoot();
 
     BlockWorldFilter filter;
     filter.OnlyConsiderLatestUpdate(false);
@@ -665,7 +665,7 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
           return false;
         }
 
-        float distSq = (obj->GetPose().GetWithRespectToOrigin().GetTranslation() -
+        float distSq = (obj->GetPose().GetWithRespectToRoot().GetTranslation() -
                         targetPose.GetTranslation()).LengthSq();
         if( distSq < kSafeDistSqFromObstacle_mm ) {
           PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.GetFaceInteractionPose.Obstacle",
@@ -689,8 +689,8 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.NoSafeBlockPose",
                    "Could not find a safe place to put down the cube, using current position");  
-  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, &robot.GetPose() };
-  targetPoseRet = targetPoseRet.GetWithRespectToOrigin();
+  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, robot.GetPose() };
+  targetPoseRet = targetPoseRet.GetWithRespectToRoot();
 
   return true;
 }

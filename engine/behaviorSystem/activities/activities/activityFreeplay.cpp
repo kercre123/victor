@@ -485,7 +485,7 @@ void ActivityFreeplay::CalculateDesiredActivityFromObjects()
   // check if we have discovered new faces since we delocalized (last face's origin should be current)
   Pose3d lastFacePose;
   const TimeStamp_t lastFaceSeenTimestamp = _robot.GetFaceWorld().GetLastObservedFace(lastFacePose);
-  const bool hasNewFace = (lastFaceSeenTimestamp>0) && ((&lastFacePose.FindOrigin()) == _robot.GetWorldOrigin());
+  const bool hasNewFace = (lastFaceSeenTimestamp>0) && _robot.IsPoseInWorldOrigin(lastFacePose);
 
   // check if we have discovered new cubes since we delocalized (any not unknown in current origin)
   BlockWorldFilter cubeFilter;

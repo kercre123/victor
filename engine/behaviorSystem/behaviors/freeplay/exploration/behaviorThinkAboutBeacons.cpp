@@ -90,7 +90,7 @@ void BehaviorThinkAboutBeacons::SelectNewBeacon(Robot& robot)
 {
   // TODO implement the real deal
    AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
-   whiteboard.AddBeacon( robot.GetPose().GetWithRespectToOrigin(), _configParams.beaconRadius_mm );
+   whiteboard.AddBeacon( robot.GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 
 } // namespace Cozmo

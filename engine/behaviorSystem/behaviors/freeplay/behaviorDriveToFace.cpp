@@ -53,7 +53,7 @@ bool BehaviorDriveToFace::IsRunnableInternal(const Robot& robot) const
 {
   Pose3d facePose;
   const TimeStamp_t timeLastFaceObserved = robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-  const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+  const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
   if(lastFaceInCurrentOrigin){
     const auto facesObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
     if(facesObserved.size() > 0){

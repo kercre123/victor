@@ -65,8 +65,7 @@ namespace Anki {
     {
       if(!_poseOriginList.ContainsOriginID( poseStruct.originID ))
       {
-        PoseOrigin* newOrigin = new PoseOrigin();
-        _poseOriginList.AddOriginWithID(poseStruct.originID, newOrigin);
+        _poseOriginList.AddOriginWithID(poseStruct.originID);
       }
       
       Pose3d pose = Pose3d(poseStruct, _poseOriginList);
@@ -470,7 +469,8 @@ namespace Anki {
     
   
     UiGameController::UiGameController(s32 step_time_ms)
-    : _firstRobotPoseUpdate( true )
+    : _webotsOrigin("WebotsOrigin")
+    , _firstRobotPoseUpdate( true )
     , _doAutoBlockPool(true)
     , _isBlockPoolInitialized(false)
     {
@@ -481,6 +481,7 @@ namespace Anki {
       _robotPose.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
       _robotPoseActual.SetRotation(0, Z_AXIS_3D());
+      _robotPoseActual.SetParent(_webotsOrigin);
       
       _lastObservedObject.Reset();
     }
@@ -2066,9 +2067,9 @@ namespace Anki {
         Pose3d newEnginePose = newPose;
         Pose3d cpyRobotPose = _robotPoseActual;
         
-        enginePose.SetParent(&origin);
-        newEnginePose.SetParent(&origin);
-        cpyRobotPose.SetParent(&origin);
+        enginePose.SetParent(origin);
+        newEnginePose.SetParent(origin);
+        cpyRobotPose.SetParent(origin);
         
         if (enginePose.GetWithRespectTo(cpyRobotPose, newEnginePose)) {
           SetNodePose(_robotEngineNode, newPose*newEnginePose);
@@ -2163,6 +2164,8 @@ namespace Anki {
         static_cast<f32>(orientationActual[8])
       } );
 
+      pose.SetParent(_webotsOrigin);
+      
       return pose;
     }
 

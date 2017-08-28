@@ -445,7 +445,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         
         Pose3d facePose;
         const TimeStamp_t timeLastFaceObserved = robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-        const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+        const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
         if(lastFaceInCurrentOrigin){
           const auto facesObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
           if(facesObserved.size() > 0){
@@ -484,7 +484,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
             responseQueue.push([this, &robot](const IBehaviorPtr currentBehavior){
               Pose3d facePose;
               robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-              const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+              const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
               if(lastFaceInCurrentOrigin){
                 return std::static_pointer_cast<IBehavior>(_driveToFaceBehavior);
               }else{

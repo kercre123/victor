@@ -308,7 +308,7 @@ void TrackGroundPointAction::ComputeAbsAngles(const Robot&   robot,
 {
   // Tilt angle
   const f32 kComputeHeadAngleTol = 2.f*HEAD_ANGLE_TOL; // How accurately we want to compute the head angle
-  const Pose3d groundPoseWrtRobot(0, Z_AXIS_3D(), {groundPoint.x(), groundPoint.y(), 0.f}, &histRobotPose);
+  const Pose3d groundPoseWrtRobot(0, Z_AXIS_3D(), {groundPoint.x(), groundPoint.y(), 0.f}, histRobotPose);
   Result result = robot.ComputeHeadAngleToSeePose(groundPoseWrtRobot, absTiltAngle, kComputeHeadAngleTol);
   if(RESULT_OK != result)
   {
@@ -334,7 +334,7 @@ Point2f TrackGroundPointAction::ComputeGroundPointWrtCurrentRobot(const Pose3d& 
   // Compute the ground point relative to the _current_ robot pose, based on its position relative
   // to the _historical_ pose when it was observed.
   
-  Pose3d groundPose(0, Z_AXIS_3D(), {observedGroundPt.x(), observedGroundPt.y(), 0.f}, &histRobotPose);
+  Pose3d groundPose(0, Z_AXIS_3D(), {observedGroundPt.x(), observedGroundPt.y(), 0.f}, histRobotPose);
   
   const bool success = groundPose.GetWithRespectTo(currentRobotPose, groundPose);
   ANKI_VERIFY(success, "TrackGroundPointAction.GetGroundWrtCurrentRobot.GetWrtFailed", "");

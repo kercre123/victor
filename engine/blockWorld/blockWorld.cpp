@@ -218,7 +218,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _robotMsgTimeStampAtChange(0)
-  , _currentNavMemoryMapOrigin(nullptr)
+  , _currentNavMemoryMapOriginID(PoseOriginList::UnknownOriginID)
   , _isNavMemoryMapRenderEnabled(true)
   , _trackPoseChanges(false)
   , _memoryMapBroadcastRate_sec(-1.0f)
@@ -592,7 +592,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
     
     for(auto & objectsByOrigin : _locatedObjects) {
-      if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetWorldOrigin())) {
+      if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetPoseOriginList().GetCurrentOriginID())) {
         for(auto & objectsByFamily : objectsByOrigin.second) {
           if(filter.ConsiderFamily(objectsByFamily.first)) {
             for(auto & objectsByType : objectsByFamily.second) {
@@ -604,9 +604,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                   if(nullptr == object)
                   {
                     PRINT_NAMED_WARNING("BlockWorld.FindObjectHelper.NullExistingObject",
-                                        "Origin:%s(%p) Family:%s Type:%s ID:%d is NULL",
-                                        objectsByOrigin.first->GetName().c_str(),
-                                        objectsByOrigin.first,
+                                        "Origin:%s Family:%s Type:%s ID:%d is NULL",
+                                        _robot->GetPoseOriginList().GetOriginByID(objectsByOrigin.first).GetName().c_str(),
                                         EnumToString(objectsByFamily.first),
                                         EnumToString(objectsByType.first),
                                         objectsByID.first.GetValue());
@@ -986,17 +985,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result BlockWorld::UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin)
+  Result BlockWorld::UpdateObjectOrigin(const ObjectID& objectID, const PoseOriginID_t oldOriginID)
   {
-    auto originIter = _locatedObjects.find(oldOrigin);
+    auto originIter = _locatedObjects.find(oldOriginID);
     if(originIter == _locatedObjects.end())
     {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.BadOrigin",
-                    "Origin %s (%p) not found",
-                    oldOrigin->GetName().c_str(), oldOrigin);
+                    "Origin %d not found", oldOriginID);
       
       return RESULT_FAIL;
     }
+    
+    DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(oldOriginID),
+                   "BlockWorld.UpdateObjectOrigin.OldOriginNotInOriginList",
+                   "ID:%d", oldOriginID);
+    
+    const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
     
     for(auto & objectsByFamily : originIter->second)
     {
@@ -1006,8 +1010,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if(objectIter != objectsByType.second.end())
         {
           std::shared_ptr<ObservableObject> object = objectIter->second;
-          const Pose3d* newOrigin  = &object->GetPose().FindOrigin();
-          if(newOrigin != oldOrigin)
+          if(!object->GetPose().HasSameRootAs(oldOrigin))
           {
             const ObjectFamily family  = object->GetFamily();
             const ObjectType   objType = object->GetType();
@@ -1016,14 +1019,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             DEV_ASSERT(objType == objectsByType.first,  "BlockWorld.UpdateObjectOrigin.TypeMismatch");
             DEV_ASSERT(objectID == object->GetID(),     "BlockWorld.UpdateObjectOrigin.IdMismatch");
             
+            const Pose3d& newOrigin = object->GetPose().FindRoot();
+            
             PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.ObjectFound",
-                          "Updating ObjectID %d from origin %s(%p) to %s(%p)",
+                          "Updating ObjectID %d from origin %s to %s",
                           objectID.GetValue(),
-                          oldOrigin->GetName().c_str(), oldOrigin,
-                          newOrigin->GetName().c_str(), newOrigin);
+                          oldOrigin.GetName().c_str(),
+                          newOrigin.GetName().c_str());
+            
+            const PoseOriginID_t newOriginID = newOrigin.GetID();
+            DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(newOriginID),
+                           "BlockWorld.UpdateObjectOrigin.ObjectOriginNotInOriginList",
+                           "Name:%s", object->GetPose().FindRoot().GetName().c_str());
             
             // Add to object's current origin
-            _locatedObjects[newOrigin][family][objType][objectID] = object;
+            _locatedObjects[newOriginID][family][objType][objectID] = object;
             
             // Notify pose confirmer
             _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
@@ -1052,23 +1062,32 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
     
     PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.ObjectNotFound",
-                  "Object %d not found in origin %s (%p)",
-                  objectID.GetValue(), oldOrigin->GetName().c_str(), oldOrigin);
+                  "Object %d not found in origin %s",
+                  objectID.GetValue(), oldOrigin.GetName().c_str());
     
     return RESULT_FAIL;
   }
   
-  Result BlockWorld::UpdateObjectOrigins(const Pose3d *oldOrigin,
-                                         const Pose3d *newOrigin)
+  Result BlockWorld::UpdateObjectOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t newOriginID)
   {
     Result result = RESULT_OK;
     
-    if(nullptr == oldOrigin || nullptr == newOrigin) {
-      PRINT_NAMED_ERROR("BlockWorld.UpdateObjectOrigins.OriginFail",
-                        "Old and new origin must not be NULL");
-      
+    if(!ANKI_VERIFY(PoseOriginList::UnknownOriginID != oldOriginID &&
+                    PoseOriginList::UnknownOriginID != newOriginID,
+                    "BlockWorld.UpdateObjectOrigins.OriginFail",
+                    "Old and new origin IDs must not be Unknown"))
+    {
       return RESULT_FAIL;
     }
+    
+    DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(oldOriginID),
+                   "BlockWorld.UpdateObjectOrigins.BadOldOriginID", "ID:%d", oldOriginID);
+    
+    DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(newOriginID),
+                   "BlockWorld.UpdateObjectOrigins.BadNewOriginID", "ID:%d", newOriginID);
+    
+    const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
+    const Pose3d& newOrigin = _robot->GetPoseOriginList().GetOriginByID(newOriginID);
     
     // COZMO-9797
     // lengthy discussion between Andrew and Raul. Ideally we would keep unconfirmed observations when
@@ -1081,10 +1100,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // Look for objects in the old origin
     BlockWorldFilter filterOld;
     filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-    filterOld.AddAllowedOrigin(oldOrigin);
+    filterOld.AddAllowedOrigin(oldOriginID);
     
     // Use the modifier function to update matched objects to the new origin
-    ModifierFcn originUpdater = [oldOrigin,newOrigin,&result,this](ObservableObject* oldObject)
+    ModifierFcn originUpdater = [&oldOrigin,&newOrigin,newOriginID,&result,this](ObservableObject* oldObject)
     {
       Pose3d newPose;
       
@@ -1093,17 +1112,18 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // Special case: don't use the pose w.r.t. the origin b/c carried objects' parent
         // is the lift. The robot is already in the new frame by the time this called,
         // so we don't need to adjust anything
-        DEV_ASSERT(_robot->GetWorldOrigin() == newOrigin, "BlockWorld.UpdateObjectOrigins.RobotNotInNewOrigin");
-        DEV_ASSERT(&oldObject->GetPose().FindOrigin() == newOrigin,
+        DEV_ASSERT(_robot->GetPoseOriginList().GetCurrentOriginID() == newOriginID,
+                   "BlockWorld.UpdateObjectOrigins.RobotNotInNewOrigin");
+        DEV_ASSERT(oldObject->GetPose().GetRootID() == newOriginID,
                    "BlockWorld.UpdateObjectOrigins.OldCarriedObjectNotInNewOrigin");
         newPose = oldObject->GetPose();
       }
-      else if(false == oldObject->GetPose().GetWithRespectTo(*newOrigin, newPose))
+      else if(false == oldObject->GetPose().GetWithRespectTo(newOrigin, newPose))
       {
         PRINT_NAMED_ERROR("BlockWorld.UpdateObjectOrigins.OriginFail",
                           "Could not get object %d w.r.t new origin %s",
                           oldObject->GetID().GetValue(),
-                          newOrigin->GetName().c_str());
+                          newOrigin.GetName().c_str());
         
         result = RESULT_FAIL;
         return;
@@ -1116,7 +1136,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // same ID, or if not unique, the poses should match.
       BlockWorldFilter filterNew;
       filterNew.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-      filterNew.AddAllowedOrigin(newOrigin);
+      filterNew.AddAllowedOrigin(newOriginID);
       filterNew.AddAllowedFamily(oldObject->GetFamily());
       filterNew.AddAllowedType(oldObject->GetType());
       
@@ -1161,8 +1181,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                       "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
                       EnumToString(oldObject->GetType()),
                       oldObject->GetID().GetValue(),
-                      oldOrigin->GetName().c_str(),
-                      newOrigin->GetName().c_str(),
+                      oldOrigin.GetName().c_str(),
+                      newOrigin.GetName().c_str(),
                       oldObject->IsUnique() ? "type" : "pose",
                       newObject->GetID().GetValue(),
                       T_old.x(), T_old.y(), T_old.z(),
@@ -1183,7 +1203,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         {
           const ObjectFamily inFamily = oldObject->GetFamily();
           const ObjectType withType   = oldObject->GetType();
-          ObjectsMapByID_t& mapByID = _locatedObjects.at(newOrigin).at(inFamily).at(withType);
+          ObjectsMapByID_t& mapByID = _locatedObjects.at(newOriginID).at(inFamily).at(withType);
           // copy smart pointer to increment reference
           mapByID[newIDInNewOrigin] = mapByID.at(prevIDInNewOrigin);
           mapByID.erase(prevIDInNewOrigin);
@@ -1191,7 +1211,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.MovedSharedPointerDueToIDChange",
                         "Object with ID %d in new origin (%s) has inherited ID %d",
                         prevIDInNewOrigin.GetValue(),
-                        newOrigin->GetName().c_str(),
+                        newOrigin.GetName().c_str(),
                         newIDInNewOrigin.GetValue());
         }
       }
@@ -1207,11 +1227,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         AddLocatedObject(std::shared_ptr<ObservableObject>(newObject));
         
         PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
-                      "Adding %s object with ID %d to new origin %s (%p)",
+                      "Adding %s object with ID %d to new origin %s",
                       EnumToString(newObject->GetType()),
                       newObject->GetID().GetValue(),
-                      newOrigin->GetName().c_str(),
-                      newOrigin);
+                      newOrigin.GetName().c_str());
       }
       
     };
@@ -1228,7 +1247,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // Note that we decide to not notify of objects that merge (passive matched by pose), because the old ID in the
       // old origin is not in the current one.
       // DeleteLocatedObjectsByOrigin(oldOrigin);
-      _locatedObjects.erase(oldOrigin);
+      _locatedObjects.erase(oldOriginID);
     }
     
     // Now go through all the objects already in the origin we are switching _to_
@@ -1236,7 +1255,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // have delocalized since last being in this origin (which clears the PoseConfirmer)
     BlockWorldFilter filterNew;
     filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-    filterOld.AddAllowedOrigin(newOrigin);
+    filterOld.AddAllowedOrigin(newOriginID);
     
     ModifierFcn addToPoseConfirmer = [this](ObservableObject* object){
       _robot->GetObjectPoseConfirmer().AddInExistingPose(object);
@@ -1253,19 +1272,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // oldOrigin is the pointer/id of the map we were just building, and it's going away. It's the current map
       // newOrigin is the pointer/id of the map that is staying, it's the one we rejiggered to, and we haven't changed in a while
-      DEV_ASSERT(_navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(),
+      DEV_ASSERT(_navMemoryMaps.find(oldOriginID) != _navMemoryMaps.end(),
                  "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
-      DEV_ASSERT(_navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(),
+      DEV_ASSERT(_navMemoryMaps.find(newOriginID) != _navMemoryMaps.end(),
                  "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
-      DEV_ASSERT(oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
+      DEV_ASSERT(oldOriginID == _currentNavMemoryMapOriginID, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
 
       // before we merge the object information from the memory maps, apply rejiggering also to their
       // reported poses
-      UpdateOriginsOfObjectsReportedInMemMap(oldOrigin, newOrigin);
+      UpdateOriginsOfObjectsReportedInMemMap(oldOriginID, newOriginID);
 
       // grab the underlying memory map and merge them
-      INavMemoryMap* oldMap = _navMemoryMaps[oldOrigin].get();
-      INavMemoryMap* newMap = _navMemoryMaps[newOrigin].get();
+      INavMemoryMap* oldMap = _navMemoryMaps[oldOriginID].get();
+      INavMemoryMap* newMap = _navMemoryMaps[newOriginID].get();
       
       // COZMO-6184: the issue localizing to a zombie map was related to a cube being disconnected while we delocalized.
       // The issue has been fixed, but this code here would have prevented a crash and produce an error instead, so I
@@ -1275,29 +1294,29 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // error to identify the issue
         PRINT_NAMED_ERROR("BlockWorld.UpdateObjectOrigins.NullMapFound",
                           "Origin '%s' did not have a memory map. Creating empty",
-                          newOrigin->GetName().c_str());
+                          newOrigin.GetName().c_str());
         
         // create empty map since somehow we lost the one we had
         VizManager* vizMgr = _robot->GetContext()->GetVizManager();
         INavMemoryMap* emptyMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr, _robot);
         
         // set in the container of maps
-        _navMemoryMaps[newOrigin].reset(emptyMemoryMap);
+        _navMemoryMaps[newOriginID].reset(emptyMemoryMap);
         // set the pointer to this newly created instance
         newMap = emptyMemoryMap;
       }
 
       // continue the merge as we were going to do, so at least we don't lose the information we were just collecting
       Pose3d oldWrtNew;
-      const bool success = oldOrigin->GetWithRespectTo(*newOrigin, oldWrtNew);
+      const bool success = oldOrigin.GetWithRespectTo(newOrigin, oldWrtNew);
       DEV_ASSERT(success, "BlockWorld.UpdateObjectOrigins.BadOldWrtNull");
       newMap->Merge(oldMap, oldWrtNew);
       
       // switch back to what is becoming the new map
-      _currentNavMemoryMapOrigin = newOrigin;
+      _currentNavMemoryMapOriginID = newOriginID;
       
       // now we can delete what is become the old map, since we have merged its data into the new one
-      _navMemoryMaps.erase( oldOrigin ); // smart pointer will delete memory
+      _navMemoryMaps.erase( oldOriginID ); // smart pointer will delete memory
     }
     
     // Since object origins have changed we need to force a configuration
@@ -1316,11 +1335,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const bool isZombie = IsZombiePoseOrigin( originIt->first );
       if ( isZombie ) {
         PRINT_CH_INFO("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.DeletingOrigin", 
-                      "Deleting objects from (%p) because it was zombie", originIt->first);
+                      "Deleting objects from Origin %d because it was zombie", originIt->first);
         originIt = _locatedObjects.erase(originIt);
       } else {
         PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.KeepingOrigin", 
-                       "Origin (%p) is still good (keeping objects)", originIt->first);
+                       "Origin %d is still good (keeping objects)", originIt->first);
         ++originIt;
       }
     }
@@ -1330,12 +1349,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   const INavMemoryMap* BlockWorld::GetNavMemoryMap() const
   {
     // current map (if any) must match current robot origin
-    DEV_ASSERT((_currentNavMemoryMapOrigin == nullptr) || (_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin),
+    DEV_ASSERT((_currentNavMemoryMapOriginID == PoseOriginList::UnknownOriginID) ||
+               (_robot->GetPoseOriginList().GetCurrentOriginID() == _currentNavMemoryMapOriginID),
                "BlockWorld.GetNavMemoryMap.BadOrigin");
     
     const INavMemoryMap* curMap = nullptr;
-    if ( nullptr != _currentNavMemoryMapOrigin ) {
-      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+    if ( PoseOriginList::UnknownOriginID != _currentNavMemoryMapOriginID ) {
+      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOriginID);
       if ( matchPair != _navMemoryMaps.end() ) {
         curMap = matchPair->second.get();
       } else {
@@ -1349,8 +1369,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   INavMemoryMap* BlockWorld::GetNavMemoryMap()
   {
     INavMemoryMap* curMap = nullptr;
-    if ( nullptr != _currentNavMemoryMapOrigin ) {
-      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+    if ( PoseOriginList::UnknownOriginID != _currentNavMemoryMapOriginID ) {
+      auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOriginID);
       if ( matchPair != _navMemoryMaps.end() ) {
         curMap = matchPair->second.get();
       } else {
@@ -1366,14 +1386,15 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     ANKI_CPU_PROFILE("BlockWorld::UpdateRobotPoseInMemoryMap");
     
     // grab current robot pose
-    DEV_ASSERT(_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin, "BlockWorld.OnRobotPoseChanged.InvalidWorldOrigin");
+    DEV_ASSERT(_robot->GetPoseOriginList().GetCurrentOriginID() == _currentNavMemoryMapOriginID,
+               "BlockWorld.OnRobotPoseChanged.InvalidWorldOrigin");
     const Pose3d& robotPose = _robot->GetPose();
-    const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToOrigin();
+    const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
     
     // check if we have moved far enough that we need to resend
     const Point3f distThreshold(kRobotPositionChangeToReport_mm, kRobotPositionChangeToReport_mm, kRobotPositionChangeToReport_mm);
     const Radians angleThreshold( DEG_TO_RAD(kRobotRotationChangeToReport_deg) );
-    const bool isPrevSet = (_navMapReportedRobotPose.GetParent() != nullptr);
+    const bool isPrevSet = _navMapReportedRobotPose.HasParent();
     const bool isFarFromPrev = !isPrevSet || (!robotPoseWrtOrigin.IsSameAs(_navMapReportedRobotPose, distThreshold, angleThreshold));
       
     // if we need to add
@@ -1428,7 +1449,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::FlagGroundPlaneROIInterestingEdgesAsUncertain()
   {
     // get quad wrt robot
-    const Pose3d& curRobotPose = _robot->GetPose().GetWithRespectToOrigin();
+    const Pose3d& curRobotPose = _robot->GetPose().GetWithRespectToRoot();
     Quad3f groundPlaneWrtRobot;
     curRobotPose.ApplyTo(GroundPlaneROI::GetGroundQuad(), groundPlaneWrtRobot);
     
@@ -1463,8 +1484,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr)
+  void BlockWorld::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
   {
+    DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(worldOriginID),
+                   "BlockWorld.CreateLocalizedMemoryMap.BadWorldOriginID",
+                   "ID:%d", worldOriginID);
+    
     // Since we are going to create a new memory map, check if any of the existing ones have become a zombie
     // This could happen if either the current map never saw a localizable object, or if objects in previous maps
     // have been moved or deactivated, which invalidates them as localizable
@@ -1474,18 +1499,18 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const bool isZombie = IsZombiePoseOrigin( iter->first );
       if ( isZombie ) {
         // PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
-        LOG_EVENT("blockworld.memory_map.deleting_zombie_map", "%s", iter->first->GetName().c_str() );
+        LOG_EVENT("blockworld.memory_map.deleting_zombie_map", "%d", worldOriginID );
         iter = _navMemoryMaps.erase(iter);
         
         // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
         for( auto& posesForObjectIt : _navMapReportedPoses ) {
           OriginToPoseInMapInfo& posesPerOriginForObject = posesForObjectIt.second;
-          const Pose3d* zombieOrigin = iter->first;
-          posesPerOriginForObject.erase( zombieOrigin );
+          const PoseOriginID_t zombieOriginID = iter->first;
+          posesPerOriginForObject.erase( zombieOriginID );
         }
       } else {
         //PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
-        LOG_EVENT("blockworld.memory_map.keeping_alive_map", "%s", iter->first->GetName().c_str() );
+        LOG_EVENT("blockworld.memory_map.keeping_alive_map", "%d", worldOriginID );
         ++iter;
       }
     }
@@ -1495,14 +1520,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // if the origin is null, we would never merge the map, which could leak if a new one was created
     // do not support this by not creating one at all if the origin is null
-    DEV_ASSERT(nullptr != worldOriginPtr, "BlockWorld.CreateLocalizedMemoryMap.NullOrigin");
-    if ( nullptr != worldOriginPtr )
+    if ( PoseOriginList::UnknownOriginID != worldOriginID )
     {
       // create a new memory map in the given origin
       VizManager* vizMgr = _robot->GetContext()->GetVizManager();
       INavMemoryMap* navMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr, _robot);
-      _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(navMemoryMap)) );
-      _currentNavMemoryMapOrigin = worldOriginPtr;
+      _navMemoryMaps.emplace( std::make_pair(worldOriginID, std::unique_ptr<INavMemoryMap>(navMemoryMap)) );
+      _currentNavMemoryMapOriginID = worldOriginID;
     }
   }
 
@@ -1523,16 +1547,15 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         nextDrawTimeStamp = currentTimeInSeconds + kMemoryMapRenderRate_sec;
      
         size_t lastIndexNonCurrent = 0;
-        const auto& originList = _robot->GetPoseOriginList(); // required for NEW SCHEME below
       
         // rendering all current maps with indexHint
         for (const auto& memMapPair : _navMemoryMaps)
         {
-          const bool isCurrent = memMapPair.first == _currentNavMemoryMapOrigin;
+          const PoseOriginID_t originID = memMapPair.first;
+          
+          const bool isCurrent = (originID == _currentNavMemoryMapOriginID);
           size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
           memMapPair.second->DrawDebugProcessorInfo(indexHint);
-          
-          const uint32_t originID = originList.GetOriginID(memMapPair.first);
           memMapPair.second->BroadcastMemoryMapDraw(originID, indexHint);
         }
       }
@@ -1554,11 +1577,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       } while (FLT_LE(_nextMemoryMapBroadcastTimeStamp, currentTimeInSeconds));
 
       // Send only the current map
-      const auto& currentOriginMap = _navMemoryMaps.find(_currentNavMemoryMapOrigin);
+      const auto& currentOriginMap = _navMemoryMaps.find(_currentNavMemoryMapOriginID);
       if (currentOriginMap != _navMemoryMaps.end()) {
         // Look up and send the origin ID also
-        const auto& originList = _robot->GetPoseOriginList();
-        const uint32_t originID = originList.GetOriginID(currentOriginMap->first);
+        const PoseOriginID_t originID = currentOriginMap->first;
         if (originID != PoseOriginList::UnknownOriginID) {
           currentOriginMap->second->Broadcast(originID);
         }
@@ -1594,7 +1616,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
                                          const TimeStamp_t atTimestamp)
   {
-    const Pose3d* currFrame = &_robot->GetPose().FindOrigin();
+    const Pose3d& currFrame = _robot->GetWorldOrigin();
+    const PoseOriginID_t currFrameID = currFrame.GetID();
     
     // Construct a helper data structure for determining which objets we might
     // want to localize to
@@ -1683,7 +1706,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // other origins
       
       // Keep a list of objects matching this objSeen, by coordinate frame
-      std::map<const Pose3d*, ObservableObject*> matchingObjects;
+      std::map<PoseOriginID_t, ObservableObject*> matchingObjects;
       
       // Match active objects by type and inactive objects by pose. Regardless,
       // only look at objects in the same family with the same type.
@@ -1732,9 +1755,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         {
           assert(nullptr != objectFound);
           
-          const Pose3d* origin = &objectFound->GetPose().FindOrigin();
-          
-          if(origin == currFrame)
+          if(objectFound->GetPose().HasSameRootAs(currFrame))
           {
             // handle special case of seeing the object that we are carrying. We don't want to use it for localization
             // Note that if the object is observed at a different location than the lift, it will be moved to that
@@ -1756,14 +1777,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           
           // Check for duplicates (same type observed in the same coordinate frame)
           // and add to our map of matches by origin
-          auto iter = matchingObjects.find(origin);
+          const Pose3d& objectRoot = objectFound->GetPose().FindRoot();
+          const PoseOriginID_t objectOriginID = objectRoot.GetID();
+          DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(objectOriginID),
+                         "BlockWorld.AddAndUpdateObjects.ObjectRootNotAnOrigin", "ObjectID:%d Root:%s",
+                         objectFound->GetID().GetValue(), objectRoot.GetName().c_str());
+          auto iter = matchingObjects.find(objectOriginID);
           if(iter != matchingObjects.end()) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForUniqueObjectInSameFrame",
                                 "Observed unique object of type %s matches multiple existing objects of "
-                                "same type and in the same frame (%p).",
-                                EnumToString(objSeen->GetType()), origin);
+                                "same type and in the same frame (ID:%d).",
+                                EnumToString(objSeen->GetType()), objectOriginID);
           } else {
-            matchingObjects[origin] = objectFound;
+            matchingObjects[objectOriginID] = objectFound;
           }
         } // for each object found
         
@@ -1788,9 +1814,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         ObservableObject* matchingObject = GetLocatedObjectByID( objSeen->GetID() );
         
         if (nullptr != matchingObject) {
-          DEV_ASSERT(&matchingObject->GetPose().FindOrigin() == currFrame,
+          DEV_ASSERT(matchingObject->GetPose().HasSameRootAs(currFrame),
                      "BlockWorld.AddAndUpdateObjects.MatchedPassiveObjectInOtherCoordinateFrame");
-          matchingObjects[currFrame] = matchingObject;
+          matchingObjects[currFrameID] = matchingObject;
         }
         else
         {
@@ -1803,7 +1829,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // We know the object was confirmed, so we must have found the instance in the current origin
       ObservableObject* observedObject = nullptr;
       
-      auto currFrameMatchIter = matchingObjects.find(currFrame);
+      auto currFrameMatchIter = matchingObjects.find(currFrameID);
       if(currFrameMatchIter != matchingObjects.end())
       {
         observedObject = currFrameMatchIter->second;
@@ -1849,7 +1875,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       
       // ObservedObject should be set by now and should be in the current frame
       assert(observedObject != nullptr); // this REALLY shouldn't happen
-      DEV_ASSERT(&observedObject->GetPose().FindOrigin() == currFrame,
+      DEV_ASSERT(observedObject->GetPose().HasSameRootAs(currFrame),
                  "BlockWorld.AddAndUpdateObjects.ObservedObjectNotInCurrentFrame");
       
       // Add all observed markers of this object as occluders
@@ -2022,7 +2048,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return;
     }
     
-    auto originIter = _locatedObjects.find(_robot->GetWorldOrigin());
+    auto originIter = _locatedObjects.find(_robot->GetPoseOriginList().GetCurrentOriginID());
     if(originIter == _locatedObjects.end()) {
       // No objects relative to this origin: Nothing to do
       return;
@@ -2122,7 +2148,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         PRINT_NAMED_ERROR("BlockWorld.CheckForUnobservedObjects.ObjectNotInCameraPoseOrigin",
                           "Object %d (PosePath:%s)",
                           objectID.GetValue(),
-                          unobservedObject->GetPose().GetNamedPathToOrigin(false).c_str() );
+                          unobservedObject->GetPose().GetNamedPathToRoot(false).c_str() );
         continue;
       }
       
@@ -2185,7 +2211,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Check if this prox obstacle already exists
     std::vector<ObservableObject*> existingObjects;
-    auto originIter = _locatedObjects.find(_robot->GetWorldOrigin());
+    auto originIter = _locatedObjects.find(_robot->GetPoseOriginList().GetCurrentOriginID());
     if(originIter != _locatedObjects.end())
     {
       FindOverlappingObjects(markerlessObject.get(), originIter->second[ObjectFamily::MarkerlessObject], existingObjects);
@@ -2228,13 +2254,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       {
         // cliffs currently have extra data (for directionality)
         const Pose3d& robotPose = _robot->GetPose();
-        const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToOrigin();
+        const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
         NavMemoryMapQuadData_Cliff cliffData;
         Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
         cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
         
         // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
-        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
+        const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
       
         INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
@@ -2253,10 +2279,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       case ObjectType::ProxObstacle:
       {       
         NavMemoryMapQuadData_ProxObstacle proxData;
-        const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToOrigin().GetRotation() * X_AXIS_3D();
+        const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
         proxData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
         
-        const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
+        const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
         
         INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
@@ -2689,10 +2715,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     DEV_ASSERT(object->HasValidPose(), "BlockWorld.AddLocatedObject.NotAValidPoseState");
     DEV_ASSERT(object->GetID().IsSet(), "BlockWorld.AddLocatedObject.ObjectIDNotSet");
 
-    const PoseOrigin* objectOrigin = &object->GetPose().FindOrigin();
+    const PoseOriginID_t objectOriginID = object->GetPose().GetRootID();
     
     // allow adding only in current origin
-    DEV_ASSERT(objectOrigin == _robot->GetWorldOrigin(), "BlockWorld.AddLocatedObject.NotCurrentOrigin");
+    DEV_ASSERT(objectOriginID == _robot->GetPoseOriginList().GetCurrentOriginID(),
+               "BlockWorld.AddLocatedObject.NotCurrentOrigin");
     
     // hook activeID/factoryID if a connected object is available.
     // rsam: I would like to do this in a cleaner way, maybe just refactoring the code, but here seems fishy design-wise
@@ -2727,7 +2754,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
     // grab the current pointer and check it's empty (do not expect overwriting)
     std::shared_ptr<ObservableObject>& objectLocation =
-      _locatedObjects[objectOrigin][object->GetFamily()][object->GetType()][object->GetID()];
+      _locatedObjects[objectOriginID][object->GetFamily()][object->GetType()][object->GetID()];
     DEV_ASSERT(objectLocation == nullptr, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
     objectLocation = object; // store the new object, this increments refcount
 
@@ -2744,7 +2771,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                   object->GetPose().GetTranslation().x(),
                   object->GetPose().GetTranslation().y(),
                   object->GetPose().GetTranslation().z(),
-                  object->GetPose().FindOrigin().GetName().c_str());
+                  object->GetPose().FindRoot().GetName().c_str());
     
     // fire event to represent "first time an object has been seen in this origin"
     Util::sEventF("robot.object_located", {}, "%s", EnumToString(object->GetType()));
@@ -2834,8 +2861,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // it if the poses are close enough
         const int objectIdInt = objectID.GetValue();
         OriginToPoseInMapInfo& reportedPosesForObject = _navMapReportedPoses[objectIdInt];
-        const PoseOrigin* curOrigin = &object.GetPose().FindOrigin();
-        auto poseInNewOriginIter = reportedPosesForObject.find( curOrigin );
+        const PoseOrigin& curOrigin = object.GetPose().FindRoot();
+        const PoseOriginID_t curOriginID = curOrigin.GetID();
+        DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(curOriginID),
+                       "BlockWorld.OnObjectPoseChanged.ObjectOriginNotInOriginList",
+                       "ID:%d", curOriginID);
+        auto poseInNewOriginIter = reportedPosesForObject.find( curOriginID );
         if ( poseInNewOriginIter != reportedPosesForObject.end() )
         {
           // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
@@ -2852,7 +2883,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           
           // if it is far from previous (or previous was not in the map, remove-add)
           if ( isFarFromPrev ) {
-            RemoveObjectReportFromMemMap(object, curOrigin);
+            RemoveObjectReportFromMemMap(object, curOriginID);
             AddObjectReportToMemMap(object, object.GetPose());
           }
         }
@@ -2865,8 +2896,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       else if ( oldValid && !newValid )
       {
         // deleting an object, remove its report using oldOrigin (the origin it was removed from)
-        const PoseOrigin* oldOrigin = &oldPose->FindOrigin();
-        RemoveObjectReportFromMemMap(object, oldOrigin);
+        const PoseOriginID_t oldOriginID = oldPose->GetRootID();
+        RemoveObjectReportFromMemMap(object, oldOriginID);
       }
       else
       {
@@ -2903,8 +2934,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
     
     // find the memory map for the given origin
-    const PoseOrigin* origin = &newPose.FindOrigin();
-    auto matchPair = _navMemoryMaps.find(origin);
+    const PoseOriginID_t originID = newPose.GetRootID();
+    auto matchPair = _navMemoryMaps.find(originID);
     if ( matchPair != _navMemoryMaps.end() )
     {
       // in order to properly handle stacks, do not add the quad to the memory map for objects that are not
@@ -2918,17 +2949,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if ( isFloating )
         {
           // store in as a reported pose, but set as not in map (the pose value is not relevant)
-          _navMapReportedPoses[objectId][origin] = PoseInMapInfo(newPose, false);
+          _navMapReportedPoses[objectId][originID] = PoseInMapInfo(newPose, false);
         }
         else
         {
           // add to memory map flattened out wrt origin
-          Pose3d newPoseWrtOrigin = newPose.GetWithRespectToOrigin();
+          Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
           const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
           memoryMap->AddQuad(newQuad, addType);
           
           // store in as a reported pose
-          _navMapReportedPoses[objectId][origin] = PoseInMapInfo(newPoseWrtOrigin, true);
+          _navMapReportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
           
           // since we added an obstacle, any borders we saw while dropping it should not be interesting
           const float kScaledQuadToIncludeEdges = 2.0f;
@@ -2957,7 +2988,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::RemoveObjectReportFromMemMap(const ObservableObject& object, const Pose3d* origin)
+  void BlockWorld::RemoveObjectReportFromMemMap(const ObservableObject& object, PoseOriginID_t originID)
   {
     const int objectId = object.GetID().GetValue();
     const ObjectFamily objectFam = object.GetFamily();
@@ -2976,7 +3007,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     if ( originsForObjectIt != _navMapReportedPoses.end() )
     {
       OriginToPoseInMapInfo& infosPerOrigin = originsForObjectIt->second;
-      const OriginToPoseInMapInfo::iterator infosForOriginIt = infosPerOrigin.find(origin);
+      const OriginToPoseInMapInfo::iterator infosForOriginIt = infosPerOrigin.find(originID);
       if ( infosForOriginIt != infosPerOrigin.end() )
       {
         PoseInMapInfo& info = infosForOriginIt->second;
@@ -2985,11 +3016,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if ( info.isInMap )
         {
           // pose should be correct if it's in map (could be from an old origin if it's not in map)
-          DEV_ASSERT(infosForOriginIt->second.pose.GetParent() == origin,
+          DEV_ASSERT(infosForOriginIt->second.pose.IsChildOf(_robot->GetPoseOriginList().GetOriginByID(originID)),
                      "BlockWorld.RemoveObjectReportFromMemMap.PoseNotFlattenedOut");
           
           // find the memory map for the given origin
-          auto matchPair = _navMemoryMaps.find(origin);
+          auto matchPair = _navMemoryMaps.find(originID);
           if ( matchPair != _navMemoryMaps.end() )
           {
             INavMemoryMap* memoryMap = matchPair->second.get();
@@ -3015,7 +3046,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::UpdateOriginsOfObjectsReportedInMemMap(const Pose3d* curOrigin, const Pose3d* relocalizedOrigin)
+  void BlockWorld::UpdateOriginsOfObjectsReportedInMemMap(PoseOriginID_t curOriginID, PoseOriginID_t relocalizedOriginID)
   {
     // for every object in the current map, we have a decision to make. We are going to bring that memory map
     // into what is becoming the current one. That means also bringing the last reported pose of every object
@@ -3039,7 +3070,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
       // find the reported pose for this object in the current origin
       OriginToPoseInMapInfo& poseInfoByOriginForObj = pairIdToPoseInfoByOrigin.second;
-      const auto& matchInCurOrigin = poseInfoByOriginForObj.find(curOrigin);
+      const auto& matchInCurOrigin = poseInfoByOriginForObj.find(curOriginID);
       const bool isObjectReportedInCurrent = (matchInCurOrigin != poseInfoByOriginForObj.end());
       if ( isObjectReportedInCurrent )
       {
@@ -3050,21 +3081,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // but rather flag them as !isInMap.
         // Additionally we don't have to worry about the container we are iterating changing, since iterators are not
         // affected by changing a boolean, but are if we erased from it.
-        RemoveObjectReportFromMemMap(*object, relocalizedOrigin);
+        RemoveObjectReportFromMemMap(*object, relocalizedOriginID);
         
         // we are bringing over the current info into the relocalized origin, update the reported pose in the
         // relocalized origin to be that of the newest information
-        poseInfoByOriginForObj[relocalizedOrigin].isInMap = matchInCurOrigin->second.isInMap;
+        poseInfoByOriginForObj[relocalizedOriginID].isInMap = matchInCurOrigin->second.isInMap;
         if ( matchInCurOrigin->second.isInMap ) {
           // bring over the pose if it's in map (otherwise we don't care about the pose)
           // when we bring it, flatten out to the relocalized origin
-          DEV_ASSERT(relocalizedOrigin == &matchInCurOrigin->second.pose.FindOrigin(),
-                     "BlockWorld.UpdateObjectsReportedInMepMap.PoseDidNotHookGranpa");
-          poseInfoByOriginForObj[relocalizedOrigin].pose = matchInCurOrigin->second.pose.GetWithRespectToOrigin();
+          DEV_ASSERT(_robot->GetPoseOriginList().GetOriginByID(relocalizedOriginID).HasSameRootAs(matchInCurOrigin->second.pose),
+                     "BlockWorld.UpdateObjectsReportedInMepMap.PoseDidNotHookGrandpa");
+          poseInfoByOriginForObj[relocalizedOriginID].pose = matchInCurOrigin->second.pose.GetWithRespectToRoot();
         }
         // also, erase the current origin from the reported poses of this object, since we will never use it after this
         // Note this should not alter the iterators we are using for _navMapReportedPoses
-        poseInfoByOriginForObj.erase(curOrigin);
+        poseInfoByOriginForObj.erase(curOriginID);
       }
       else
       {
@@ -3079,7 +3110,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::ClearRobotToMarkersInMemMap(const ObservableObject* object)
   {
     // the newPose should be directly in the robot's origin
-    DEV_ASSERT(object->GetPose().GetParent() == _robot->GetWorldOrigin(),
+    DEV_ASSERT(object->GetPose().IsChildOf(_robot->GetWorldOrigin()),
                "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
 
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
@@ -3088,7 +3119,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // the bottom corners of the ground quad match the forward ones of the robot (robotQuad::xLeft). The names
     // cornerBR, cornerBL are the corners in the ground quads (BottomRight and BottomLeft).
     // Later on we will generate the top corners for the ground quad (cornerTL, corner TR)
-    const Quad2f& robotQuad = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin());
+    const Quad2f& robotQuad = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToRoot());
     Point3f cornerBR{ robotQuad[Quad::TopLeft   ].x(), robotQuad[Quad::TopLeft ].y(), 0};
     Point3f cornerBL{ robotQuad[Quad::BottomLeft].x(), robotQuad[Quad::BottomLeft].y(), 0};
   
@@ -3100,10 +3131,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // An observed marker. Assign the marker's bottom corners as the top corners for the ground quad
       // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
-      DEV_ASSERT(&observedMarkerIt->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
+      DEV_ASSERT(_robot->IsPoseInWorldOrigin(observedMarkerIt->GetPose()),
                  "BlockWorld.ClearVisionFromRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
       
-      const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToOrigin());
+      const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToRoot());
       Point3f cornerTL = markerCorners[Quad::BottomLeft];
       Point3f cornerTR = markerCorners[Quad::BottomRight];
       
@@ -3122,13 +3153,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
   }
   
-  void BlockWorld::OnRobotDelocalized(const Pose3d* newWorldOrigin)
+  void BlockWorld::OnRobotDelocalized(PoseOriginID_t newWorldOriginID)
   {
     // delete objects that have become useless since we delocalized last time
     DeleteObjectsFromZombieOrigins();
     
     // create a new memory map for this origin
-    CreateLocalizedMemoryMap(newWorldOrigin);
+    CreateLocalizedMemoryMap(newWorldOriginID);
     
     // deselect blockworld's selected object, if it has one
     DeselectCurrentObject();
@@ -3279,7 +3310,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // If we can't transfor the observedPose to the current origin, it's ok, that means that the timestamp
     // for the edges we just received is from before delocalizing, so we should discard it.
     Pose3d observedPose;
-    if ( !histState->GetPose().GetWithRespectTo( *_robot->GetWorldOrigin(), observedPose) ) {
+    if ( !histState->GetPose().GetWithRespectTo( _robot->GetWorldOrigin(), observedPose) ) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.AddVisionOverheadEdges.NotInThisWorld",
                     "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
       return RESULT_OK;
@@ -3880,12 +3911,16 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                         EnumToString(object->GetType()), object->GetID().GetValue(),
                         EnumToString(object->GetFamily()), EnumToString(objectsByFamily.first));
             
-            const Pose3d* origin = &object->GetPose().FindOrigin();
-            ANKI_VERIFY(objectsByOrigin.first == origin,
+            const Pose3d& origin = object->GetPose().FindRoot();
+            const PoseOriginID_t originID = origin.GetID();
+            ANKI_VERIFY(PoseOriginList::UnknownOriginID != originID,
+                        "BlockWorld.SanityCheckBookkeeping.ObjectWithUnknownOriginID",
+                        "Origin: %s", origin.GetName().c_str());
+            ANKI_VERIFY(objectsByOrigin.first == originID,
                         "BlockWorld.SanityCheckBookkeeping.MismatchedOrigin",
-                        "%s Object %d is in Origin:%s but is keyed by Origin:%s",
+                        "%s Object %d is in Origin:%d but is keyed by Origin:%d",
                         EnumToString(object->GetType()), object->GetID().GetValue(),
-                        origin->GetName().c_str(), objectsByOrigin.first->GetName().c_str());
+                        originID, objectsByOrigin.first);
             
           }
         }
@@ -3946,9 +3981,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // observed markers
       {
         // Sanity checks for robot's origin
-        DEV_ASSERT(_robot->GetPose().GetParent() == _robot->GetWorldOrigin(),
+        DEV_ASSERT(_robot->GetPose().IsChildOf(_robot->GetWorldOrigin()),
                    "BlockWorld.Update.RobotParentShouldBeOrigin");
-        DEV_ASSERT(&_robot->GetPose().FindOrigin() == _robot->GetWorldOrigin(),
+        DEV_ASSERT(_robot->IsPoseInWorldOrigin(_robot->GetPose()),
                    "BlockWorld.Update.BadRobotOrigin");
         
         // Keep the objects sorted by increasing distance from the robot.
@@ -4099,15 +4134,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // entirely if the block isn't in the same coordinate tree as the
     // robot.
     Pose3d objectPoseWrtRobotOrigin;
-    if(false == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
+    if(false == object->GetPose().GetWithRespectTo(_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
     {
       PRINT_NAMED_WARNING("BlockWorld.CheckForCollisionWithRobot.BadOrigin",
-                          "Could not get %s %d pose (origin: %s[%p]) w.r.t. robot origin (%s[%p])",
+                          "Could not get %s %d pose (origin: %s) w.r.t. robot origin (%s)",
                           EnumToString(object->GetType()), objectID.GetValue(),
-                          object->GetPose().FindOrigin().GetName().c_str(),
-                          &object->GetPose().FindOrigin(),
-                          _robot->GetWorldOrigin()->GetName().c_str(),
-                          _robot->GetWorldOrigin());
+                          object->GetPose().FindRoot().GetName().c_str(),
+                          _robot->GetWorldOrigin().GetName().c_str());
       return false;
     }
     
@@ -4129,7 +4162,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Check if the object's bounding box intersects the robot's
     const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
-    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin(),
+    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToRoot(),
                                                        ROBOT_BBOX_PADDING_FOR_OBJECT_COLLISION);
     
     const bool bboxIntersects = robotBBox.Intersects(objectBBox);
@@ -4154,7 +4187,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     const f32 robotBottom  = _robot->GetPose().GetTranslation().z();
     const f32 robotTop     = robotBottom + ROBOT_BOUNDING_Z;
-    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin());
+    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToRoot());
     
     filter.AddFilterFcn([this, atTimestamp, robotBottom, robotTop, &robotBBox](const ObservableObject* object) -> bool
                         {
@@ -4176,7 +4209,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                           }
                           
                           Pose3d objectPoseWrtRobotOrigin;
-                          if(true == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
+                          if(true == object->GetPose().GetWithRespectTo(_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
                           {
                             const f32  objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
                             const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
@@ -4271,7 +4304,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // 3. (a) for "onTop": bottom of candidate object must be "near" top of reference object
     //    (b) for "!onTop": top of canddiate object must be "near" bottom of reference object
     
-    const Pose3d refWrtOrigin = referenceObject.GetPose().GetWithRespectToOrigin();
+    const Pose3d refWrtOrigin = referenceObject.GetPose().GetWithRespectToRoot();
     const Quad2f refProjectedQuad = referenceObject.GetBoundingQuadXY(refWrtOrigin);
     
     // Find the point at the top middle of the object on bottom
@@ -4286,10 +4319,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       [&topOfObjectOnBottom, &refWrtOrigin, &refProjectedQuad, &zTolerance, &onTop](const ObservableObject* candidateObject) -> bool
       {
         // This should never happen: objects in blockworld should always have parents (and not be origins themselves)
-        DEV_ASSERT(nullptr != refWrtOrigin.GetParent(), "BlockWorld.FindLocatedObjectOnTopOfUnderneathHelper.NullParent");
+        DEV_ASSERT(refWrtOrigin.HasParent(), "BlockWorld.FindLocatedObjectOnTopOfUnderneathHelper.NullParent");
         
         Pose3d candidateWrtOrigin;
-        const bool inSameFrame = candidateObject->GetPose().GetWithRespectTo(*refWrtOrigin.GetParent(), candidateWrtOrigin);
+        const bool inSameFrame = candidateObject->GetPose().GetWithRespectTo(refWrtOrigin.GetParent(), candidateWrtOrigin);
         if(!inSameFrame)
         {
           return false;
@@ -4343,7 +4376,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       const u32 stackID = referenceObject.GetID().GetValue() + (onTop ? 250 : 500);
       if(nullptr != foundObject)
       {
-        Quad2f foundQuad = foundObject->GetBoundingQuadXY(foundObject->GetPose().GetWithRespectToOrigin());
+        Quad2f foundQuad = foundObject->GetBoundingQuadXY(foundObject->GetPose().GetWithRespectToRoot());
         
         // Get bounding box for the two object's projected bounding quads
         std::vector<Point2f> corners;
@@ -4357,7 +4390,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // compute maxRotatedAxis_zValue: the value of the axis that contributes the most in Z after the object
         // has been rotated (like we do in the actual code, this is just render)
         const Vec3f& foundObjSize = foundObject->GetSize();
-        const Vec3f& zCoordRotation = foundObject->GetPose().GetWithRespectToOrigin().GetRotation().GetRotationMatrix().GetRow(2);
+        const Vec3f& zCoordRotation = foundObject->GetPose().GetWithRespectToRoot().GetRotation().GetRotationMatrix().GetRow(2);
         const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * foundObjSize.x());
         const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * foundObjSize.y());
         const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * foundObjSize.z());
@@ -4548,7 +4581,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     filter.AddFilterFcn([minHeight, maxHeight, padding, &rectangles](const ObservableObject* object)
     {
       const Point3f rotatedSize( object->GetPose().GetRotation() * object->GetSize() );
-      const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+      const f32 objectCenter = object->GetPose().GetWithRespectToRoot().GetTranslation().z();
         
       const f32 objectTop = objectCenter + (0.5f * rotatedSize.z());
       const f32 objectBottom = objectCenter - (0.5f * rotatedSize.z());
@@ -4576,7 +4609,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Figure out height filters in world coordinates (because GetLocatedObjectBoundingBoxesXY()
     // uses heights of objects in world coordinates)
-    const Pose3d robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToOrigin();
+    const Pose3d robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToRoot();
     const f32 minHeight = robotPoseWrtOrigin.GetTranslation().z();
     const f32 maxHeight = minHeight + _robot->GetHeight();
     
@@ -4584,19 +4617,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool BlockWorld::IsZombiePoseOrigin(const Pose3d* origin) const
+  bool BlockWorld::IsZombiePoseOrigin(PoseOriginID_t originID) const
   {
-    // really, pass in an origin
-    DEV_ASSERT(nullptr != origin && origin->IsOrigin(), "BlockWorld.IsZombiePoseOrigin.NotAnOrigin");
+    // really, pass in a valid origin ID
+    DEV_ASSERT(_robot->GetPoseOriginList().ContainsOriginID(originID), "BlockWorld.IsZombiePoseOrigin.InvalidOriginID");
   
     // current world is not a zombie
-    const bool isCurrent = (origin == _robot->GetWorldOrigin());
+    const bool isCurrent = (originID == _robot->GetPoseOriginList().GetCurrentOriginID());
     if ( isCurrent ) {
       return false;
     }
     
     // check if there are any objects we can localize to
-    const bool hasLocalizableObjects = AnyRemainingLocalizableObjects(origin);
+    const bool hasLocalizableObjects = AnyRemainingLocalizableObjects(originID);
     const bool isZombie = !hasLocalizableObjects;
     return isZombie;
   }
@@ -4604,11 +4637,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BlockWorld::AnyRemainingLocalizableObjects() const
   {
-    return AnyRemainingLocalizableObjects(nullptr);
+    return AnyRemainingLocalizableObjects(PoseOriginList::UnknownOriginID);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool BlockWorld::AnyRemainingLocalizableObjects(const Pose3d* origin) const
+  bool BlockWorld::AnyRemainingLocalizableObjects(PoseOriginID_t originID) const
   {
     // Filter out anything that can't be used for localization 
     BlockWorldFilter filter;
@@ -4618,8 +4651,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Allow all origins if origin is nullptr or allow only the specified origin
     filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-    if(origin != nullptr) {
-      filter.AddAllowedOrigin(origin);
+    if(originID != PoseOriginList::UnknownOriginID) {
+      filter.AddAllowedOrigin(originID);
     }
     
     if(nullptr != FindLocatedObjectHelper(filter, nullptr, true)) {
@@ -4645,10 +4678,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     auto originIter = _locatedObjects.begin();
     while(originIter != _locatedObjects.end())
     {
-      const Pose3d* crntOrigin = originIter->first;
+      const PoseOriginID_t crntOriginID = originIter->first;
       auto& familyContainer = originIter->second;
       
-      if(filter.ConsiderOrigin(crntOrigin, _robot->GetWorldOrigin()))
+      if(filter.ConsiderOrigin(crntOriginID, _robot->GetPoseOriginList().GetCurrentOriginID()))
       {
         auto familyIter = familyContainer.begin();
         while(familyIter != familyContainer.end())
@@ -4676,8 +4709,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                   {
                     // This shouldn't happen, but warn if we encounter it (for debugging) and remove it from the container
                     PRINT_NAMED_WARNING("BlockWorld.DeleteLocatedObjects.NullObject",
-                                        "Deleting null object in origin %s with Family:%s Type:%s ID:%d",
-                                        crntOrigin->GetName().c_str(),
+                                        "Deleting null object in origin %d with Family:%s Type:%s ID:%d",
+                                        crntOriginID,
                                         EnumToString(crntFamily),
                                         EnumToString(crntType),
                                         crntID.GetValue());
@@ -4687,7 +4720,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                   else if(filter.ConsiderObject(object))
                   {
                     // clear objects in current origin (others should not be needed)
-                    const bool isCurrentOrigin = (crntOrigin == _robot->GetWorldOrigin());
+                    const bool isCurrentOrigin = (crntOriginID == _robot->GetPoseOriginList().GetCurrentOriginID());
                     if ( isCurrentOrigin )
                     {
                       ClearLocatedObjectHelper(object);

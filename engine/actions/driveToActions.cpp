@@ -233,7 +233,7 @@ namespace Anki {
         } else {
           
           Pose3d objectWrtRobotParent;
-          if(false == object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectWrtRobotParent)) {
+          if(false == object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), objectWrtRobotParent)) {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
             result = ActionResult::BAD_POSE;
@@ -357,7 +357,7 @@ namespace Anki {
         {
           // Check to see if we got close enough
           Pose3d objectPoseWrtRobotParent;
-          if(false == object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectPoseWrtRobotParent))
+          if(false == object->GetPose().GetWithRespectTo(_robot.GetPose().GetParent(), objectPoseWrtRobotParent))
           {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
@@ -676,7 +676,7 @@ namespace Anki {
         
         // Make the poses w.r.t. robot:
         for(auto & pose : _goalPoses) {
-          if(pose.GetWithRespectTo(*(_robot.GetWorldOrigin()), pose) == false) {
+          if(pose.GetWithRespectTo(_robot.GetWorldOrigin(), pose) == false) {
             // this means someone passed in a goal in a different origin than the robot.
             PRINT_NAMED_WARNING("DriveToPoseAction.Init.OriginMisMatch",
                                 "Could not get goal pose w.r.t. to robot origin.");

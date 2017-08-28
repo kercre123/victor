@@ -264,33 +264,34 @@ void CustomObject::AddFace(const FaceName whichFace, const CustomObjectMarker cu
     return;
   }
   
+  // NOTE: these poses intentionally have no parent. That is handled by AddMarker below.
   Pose3d facePose;
   switch(whichFace)
   {
     case FrontFace:
-      facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f},  nullptr);
+      facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-_size.x() * 0.5f, 0.f, 0.f});
       break;
       
     case LeftFace:
-      facePose = Pose3d(M_PI,      Z_AXIS_3D(), {0.f, _size.y() * 0.5f, 0.f},   nullptr);
+      facePose = Pose3d(M_PI,      Z_AXIS_3D(), {0.f, _size.y() * 0.5f, 0.f});
       break;
       
     case BackFace:
-      facePose = Pose3d(M_PI_2,    Z_AXIS_3D(), {_size.x() * 0.5f, 0.f, 0.f},   nullptr);
+      facePose = Pose3d(M_PI_2,    Z_AXIS_3D(), {_size.x() * 0.5f, 0.f, 0.f});
       break;
       
     case RightFace:
-      facePose = Pose3d(0.0f,      Z_AXIS_3D(), {0.f, -_size.y() * 0.5f, 0.f},  nullptr);
+      facePose = Pose3d(0.0f,      Z_AXIS_3D(), {0.f, -_size.y() * 0.5f, 0.f});
       break;
       
     case TopFace:
       // Rotate -90deg around X, then -90 around Z
-      facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, _size.z() * 0.5f},  nullptr);
+      facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, _size.z() * 0.5f});
       break;
       
     case BottomFace:
       // Rotate +90deg around X, then -90 around Z
-      facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -_size.z() * 0.5f}, nullptr);
+      facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -_size.z() * 0.5f});
       break;
       
     case NumFaces:
@@ -320,7 +321,7 @@ Point3f CustomObject::GetSameDistanceTolerance() const
 void CustomObject::Visualize(const ColorRGBA& color) const
 {
   DEV_ASSERT(nullptr != _vizManager, "CustomObject.Visualize.VizManagerNotSet");
-  Pose3d vizPose = GetPose().GetWithRespectToOrigin();
+  Pose3d vizPose = GetPose().GetWithRespectToRoot();
   _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
 }
 

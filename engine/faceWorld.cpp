@@ -211,13 +211,13 @@ namespace Cozmo {
     // Head pose is stored w.r.t. historical world origin, but needs its parent
     // set up to be the robot's world origin here:
     Pose3d headPoseWrtWorldOrigin;
-    const bool success = face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPoseWrtWorldOrigin);
+    const bool success = face.GetHeadPose().GetWithRespectTo(_robot.GetWorldOrigin(), headPoseWrtWorldOrigin);
     if(!success)
     {
       PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.MismatchedOrigins",
                        "Receveid observation of face %d from different origin (%s) than robot (%s). Ignoring",
-                       face.GetID(), face.GetHeadPose().FindOrigin().GetName().c_str(),
-                       _robot.GetWorldOrigin()->GetName().c_str());
+                       face.GetID(), face.GetHeadPose().FindRoot().GetName().c_str(),
+                       _robot.GetWorldOrigin().GetName().c_str());
       
       return RESULT_FAIL_ORIGIN_MISMATCH;
     }
@@ -584,7 +584,7 @@ namespace Cozmo {
     {
       if( !includeRecognizableOnly || faceEntry.face.GetID() > 0 )
       {
-        const bool isWrtRobotOrigin = (&faceEntry.face.GetHeadPose().FindOrigin() == _robot.GetWorldOrigin());
+        const bool isWrtRobotOrigin = _robot.IsPoseInWorldOrigin(faceEntry.face.GetHeadPose());
         if(isWrtRobotOrigin)
         {
           return true;
@@ -596,7 +596,7 @@ namespace Cozmo {
   }
  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::OnRobotDelocalized(const Pose3d* worldOrigin)
+  void FaceWorld::OnRobotDelocalized(PoseOriginID_t worldOriginID)
   {
     // Erase all face visualizations
     for(auto & pair : _faceEntries)
@@ -610,10 +610,15 @@ namespace Cozmo {
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  int FaceWorld::UpdateFaceOrigins(const Pose3d* oldOrigin, const Pose3d* newOrigin)
+  int FaceWorld::UpdateFaceOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t newOriginID)
   {
-    DEV_ASSERT(nullptr != oldOrigin, "FaceWorld.UpdateFaceOrigins.NullOldOrigin");
-    DEV_ASSERT(nullptr != newOrigin, "FaceWorld.UpdateFaceOrigins.NullNewOrigin");
+    DEV_ASSERT_MSG(_robot.GetPoseOriginList().ContainsOriginID(oldOriginID),
+                   "FaceWorld.UpdateFaceOrigins.InvalidOldOrigin", "ID:%d", oldOriginID);
+    DEV_ASSERT_MSG(_robot.GetPoseOriginList().ContainsOriginID(newOriginID),
+                   "FaceWorld.UpdateFaceOrigins.InvalidNewOrigin", "ID:%d", newOriginID);
+    
+    const Pose3d& oldOrigin = _robot.GetPoseOriginList().GetOriginByID(oldOriginID);
+    const Pose3d& newOrigin = _robot.GetPoseOriginList().GetOriginByID(newOriginID);
     
     s32 updateCount = 0;
     
@@ -623,14 +628,14 @@ namespace Cozmo {
       Vision::TrackedFace& face = pair.second.face;
       
       // If this entry's face is directly w.r.t. the old origin, flatten it to the new origin
-      if(face.GetHeadPose().GetParent() == oldOrigin)
+      if(oldOrigin.IsParentOf(face.GetHeadPose()))
       {
         Pose3d poseWrtNewOrigin;
-        const bool success = face.GetHeadPose().GetWithRespectTo(*newOrigin, poseWrtNewOrigin);
+        const bool success = face.GetHeadPose().GetWithRespectTo(newOrigin, poseWrtNewOrigin);
         if(success)
         {
           PRINT_CH_DEBUG(kLoggingChannelName, "FaceWorld.UpdateFaceOrigins.FlatteningFace",
-                         "Flattened FaceID:%d w.r.t. %s", pair.first, newOrigin->GetName().c_str());
+                         "Flattened FaceID:%d w.r.t. %s", pair.first, newOrigin.GetName().c_str());
           
           face.SetHeadPose(poseWrtNewOrigin);
           ++updateCount;
@@ -640,11 +645,11 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("FaceWorld.UpdateFaceOrigins.HeadPoseUpdateFailed",
                               "Head pose of FaceID:%d is w.r.t. to old origin %s but "
                               "failed to flatten to be w.r.t new origin %s",
-                              pair.first, oldOrigin->GetName().c_str(), newOrigin->GetName().c_str());
+                              pair.first, oldOrigin.GetName().c_str(), newOrigin.GetName().c_str());
         }
       }
       
-      if(face.GetHeadPose().GetParent() == newOrigin)
+      if(newOrigin.IsParentOf(face.GetHeadPose()))
       {
         // Draw everything in the new origin (but don't draw in the image since we're not actually observing it)
         const bool kDrawInImage = false;
@@ -655,14 +660,14 @@ namespace Cozmo {
     // Also update the lastObservedFace pose
     if(_lastObservedFaceTimeStamp > 0)
     {
-      if(_lastObservedFacePose.GetParent() == oldOrigin)
+      if(oldOrigin.IsParentOf(_lastObservedFacePose))
       {
-        const bool success = _lastObservedFacePose.GetWithRespectTo(*newOrigin, _lastObservedFacePose);
+        const bool success = _lastObservedFacePose.GetWithRespectTo(newOrigin, _lastObservedFacePose);
         if(!success)
         {
           PRINT_NAMED_WARNING("FaceWorld.UpdateFaceOrigins.UpdateLastObservedPoseFailed",
                               "Failed to flatten last observed pose from %s to %s",
-                              oldOrigin->GetName().c_str(), newOrigin->GetName().c_str());
+                              oldOrigin.GetName().c_str(), newOrigin.GetName().c_str());
         }
       }
     }
@@ -755,7 +760,7 @@ namespace Cozmo {
     
     if(_lastObservedFaceTimeStamp > 0)
     {
-      const bool lastPoseIsWrtRobotOrigin = (&_lastObservedFacePose.FindOrigin() == _robot.GetWorldOrigin());
+      const bool lastPoseIsWrtRobotOrigin = _robot.IsPoseInWorldOrigin(_lastObservedFacePose);
       
       // We have a last observed pose at all...
       if(lastPoseIsWrtRobotOrigin)
@@ -768,7 +773,7 @@ namespace Cozmo {
       {
         // Pose is not w.r.t. robot origin, but we're allowed to use it anyway.
         // Create a fake pose as if it were w.r.t. current robot origin.
-        poseWrtRobotOrigin = _lastObservedFacePose.GetWithRespectToOrigin();
+        poseWrtRobotOrigin = _lastObservedFacePose.GetWithRespectToRoot();
         poseWrtRobotOrigin.SetParent(_robot.GetWorldOrigin()); // Totally not true, but we're faking it!
         returnTime = _lastObservedFaceTimeStamp;
       }

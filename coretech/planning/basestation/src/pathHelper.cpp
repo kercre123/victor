@@ -54,8 +54,8 @@ Pose3d RelativePathLine::ExtendPath(const Pose3d& pose, Planning::Path& path) co
   f32 y_start = trans.y();
   
   //Calculate robot end position
-  Pose3d endPosition = Pose3d(0, Z_AXIS_3D(), {_distanceForward, 0.f,0.f}, &pose);
-  Pose3d endPositionOrigin = endPosition.GetWithRespectToOrigin();
+  Pose3d endPosition = Pose3d(0, Z_AXIS_3D(), {_distanceForward, 0.f,0.f}, pose);
+  Pose3d endPositionOrigin = endPosition.GetWithRespectToRoot();
   f32 x_end = endPositionOrigin.GetTranslation().x();
   f32 y_end = endPositionOrigin.GetTranslation().y();
   
@@ -96,17 +96,17 @@ Pose3d RelativePathArc::ExtendPath(const Pose3d& pose, Planning::Path& path) con
     startAngle -= M_PI_2;
   }
     
-  Pose3d arcCenterRobot = Pose3d(0, Z_AXIS_3D(), {0.f, radius, 0.f}, &pose);
-  Pose3d arcCenterOrigin = arcCenterRobot.GetWithRespectToOrigin();
+  Pose3d arcCenterRobot = Pose3d(0, Z_AXIS_3D(), {0.f, radius, 0.f}, pose);
+  Pose3d arcCenterOrigin = arcCenterRobot.GetWithRespectToRoot();
   f32 x_center = arcCenterOrigin.GetTranslation().x();
   f32 y_center = arcCenterOrigin.GetTranslation().y();
 
   path.AppendArc(x_center, y_center, fabs(radius), startAngle.ToFloat(), sweep, _targetSpeed, _accel, _decel);
   
   //Calculate new translation
-  Pose3d newRobotRotated = Pose3d(Radians(sweep), Z_AXIS_3D(), {0.f, 0.f, 0.f}, &arcCenterRobot);
-  Pose3d newRobotTranslated = Pose3d(0, Z_AXIS_3D(), {0.f, -radius, 0.f}, &newRobotRotated);
-  Pose3d newRobotOrigin = newRobotTranslated.GetWithRespectToOrigin();
+  Pose3d newRobotRotated = Pose3d(Radians(sweep), Z_AXIS_3D(), {0.f, 0.f, 0.f}, arcCenterRobot);
+  Pose3d newRobotTranslated = Pose3d(0, Z_AXIS_3D(), {0.f, -radius, 0.f}, newRobotRotated);
+  Pose3d newRobotOrigin = newRobotTranslated.GetWithRespectToRoot();
 
   //Create Ending Pose
   return newRobotOrigin;
@@ -152,8 +152,8 @@ Pose3d RelativePathTurn::ExtendPath(const Pose3d& pose, Planning::Path& path) co
   path.AppendPointTurn(x_start, y_start, zAxisRotation.ToFloat(), _targetRotSpeed, _rotAccel, _rotDecel, _angleTolerance, useShortestDistance);
   
   //Create Ending Pose
-  Pose3d newRobotRotated = Pose3d(rotRadians, Z_AXIS_3D(), {0.f, 0.f, 0.f}, &pose);
-  Pose3d newRobotOrigin = newRobotRotated.GetWithRespectToOrigin();
+  Pose3d newRobotRotated = Pose3d(rotRadians, Z_AXIS_3D(), {0.f, 0.f, 0.f}, pose);
+  Pose3d newRobotOrigin = newRobotRotated.GetWithRespectToRoot();
   return newRobotOrigin;
   
 }

@@ -244,7 +244,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
       
       Pose3d newTargetPose(RotationVector3d{},
                            newTranslation * (oldLength - kPossibleObjectViewingDist_mm),
-                           &robot.GetPose());
+                           robot.GetPose());
 
       action->AddAction(new DriveToPoseAction(robot, newTargetPose, false));
     }
@@ -252,8 +252,11 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
   else {
     PRINT_NAMED_WARNING("BehaviorLookAround.PossibleObject.NoTransform",
                         "Could not get pose of possible object W.R.T robot");
-    _lastPossibleObjectPose.Print();
-    _lastPossibleObjectPose.PrintNamedPathToOrigin(false);
+    if(ANKI_DEVELOPER_CODE)
+    {
+      _lastPossibleObjectPose.Print();
+      _lastPossibleObjectPose.PrintNamedPathToRoot(false);
+    }
   }
 
   // add a search action after driving / facing, in case we don't see the object

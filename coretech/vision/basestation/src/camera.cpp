@@ -109,7 +109,7 @@ namespace Anki {
       Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
       
       // Return Pose object w.r.t. the camera's pose
-      const Pose3d pose(rvec, translation, &(_pose));
+      const Pose3d pose(rvec, translation, _pose);
       
       return pose;
       

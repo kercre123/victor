@@ -175,7 +175,7 @@ namespace Anki {
       _prevPoseFrameId = _robot.GetPoseFrameID();
       _relocalizedCnt = 0;
       
-      DEV_ASSERT(_robot.GetPose().GetParent() == _robot.GetWorldOrigin(), "TurnInPlaceAction.Init.RobotOriginMismatch");
+      DEV_ASSERT(_robot.GetPose().IsChildOf(_robot.GetWorldOrigin()), "TurnInPlaceAction.Init.RobotOriginMismatch");
       
       _currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       
@@ -1374,15 +1374,13 @@ namespace Anki {
         }
         
         // A custom object's pose must be in the robot's origin to turn towards it
-        const Pose3d* objectOrigin = &_objectPtr->GetPose().FindOrigin();
-        const Pose3d* robotOrigin  = _robot.GetWorldOrigin();
-        if(objectOrigin != robotOrigin) {
+        if(!_robot.IsPoseInWorldOrigin(_objectPtr->GetPose())) {
           PRINT_NAMED_WARNING("TurnTowardsObjectAction.Init.CustomObjectNotInRobotFrame",
                               "Custom %s object %d in origin:%s vs. robot in origin:%s",
                               EnumToString(_objectPtr->GetType()),
                               _objectPtr->GetID().GetValue(),
-                              objectOrigin->GetName().c_str(),
-                              robotOrigin->GetName().c_str());
+                              _objectPtr->GetPose().FindRoot().GetName().c_str(),
+                              _robot.GetWorldOrigin().GetName().c_str());
           return ActionResult::BAD_POSE;
         }
         
@@ -1703,7 +1701,7 @@ namespace Anki {
         return ActionResult::BAD_POSE;
       }
       
-      if(_poseWrtRobot.GetParent() == nullptr) {
+      if(!_poseWrtRobot.HasParent()) {
         PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.AssumingRobotOriginAsParent", "");
         _poseWrtRobot.SetParent(_robot.GetWorldOrigin());
       }
@@ -1712,12 +1710,15 @@ namespace Anki {
         // TODO: It's possible this is just "normal" when dealing with delocalization, so possibly downgradable to Info later
         PRINT_NAMED_WARNING("TurnTowardsPoseAction.Init.PoseOriginFailure",
                             "Could not get pose (in frame %d) w.r.t. robot pose (in frame %d).",
-                            _robot.GetPoseOriginList().GetOriginID(&_poseWrtRobot.FindOrigin()),
-                            _robot.GetPoseOriginList().GetOriginID(_robot.GetWorldOrigin()));
+                            _poseWrtRobot.FindRoot().GetID(),
+                            _robot.GetPoseOriginList().GetCurrentOriginID());
         
-        _poseWrtRobot.Print();
-        _poseWrtRobot.PrintNamedPathToOrigin(false);
-        _robot.GetPose().PrintNamedPathToOrigin(false);
+        if(ANKI_DEVELOPER_CODE)
+        {
+          _poseWrtRobot.Print();
+          _poseWrtRobot.PrintNamedPathToRoot(false);
+          _robot.GetPose().PrintNamedPathToRoot(false);
+        }
         return ActionResult::BAD_POSE;
       }
       

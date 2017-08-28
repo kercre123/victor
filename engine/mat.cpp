@@ -72,8 +72,8 @@ namespace Anki {
     {
       // VizManager's cuboids are drawn around their center, so adjust the
       // vizPose to account for the fact that MatPieces' origins are on the top surface.
-      Pose3d vizPose = Pose3d(RotationMatrix3d(), {0.f, 0.f, -.5f*_size.z()}, &GetPose());
-      vizPose = vizPose.GetWithRespectToOrigin();
+      Pose3d vizPose = Pose3d(RotationMatrix3d(), {0.f, 0.f, -.5f*_size.z()}, GetPose());
+      vizPose = vizPose.GetWithRespectToRoot();
       _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
