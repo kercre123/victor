@@ -346,7 +346,7 @@ generated/cladCsharp/clad
 JLinkLog.txt
 *.lst
 robot/cube/lst/block.m51
-resources/config/basestation/AnkiLogStringTables.json
+resources/config/engine/AnkiLogStringTables.json
 coretech/generated
 resources/assets/voiceCommand/exports/base/
 unity/Cozmo/Assets/Resources/ThemeSystem/ThemesScriptableObj.asset
