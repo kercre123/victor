@@ -189,7 +189,7 @@ void RobotDataLoader::CollectAnimFiles()
 {
   // animations
   {
-    const std::vector<std::string> paths = {"assets/animations/", "config/engine/animations/"};
+    const std::vector<std::string> paths = {"assets/animations/", "config/basestation/animations/"};
     for (const auto& path : paths) {
       WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
         _jsonFiles[FileType::Animation].push_back(filename);
