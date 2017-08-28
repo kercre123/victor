@@ -70,7 +70,7 @@ TracePrinter::TracePrinter(Robot* robot)
   Util::Data::DataPlatform* dp = _robot->GetContextDataPlatform();
   if (dp) {
     Json::Value jsonDict;
-    const std::string jsonFilename = "config/engine/AnkiLogStringTables.json";
+    const std::string jsonFilename = "config/basestation/AnkiLogStringTables.json";
     bool success = dp->readAsJson(Util::Data::Scope::Resources, jsonFilename, jsonDict);
     if (!success)
     {

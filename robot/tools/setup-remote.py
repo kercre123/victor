@@ -4,7 +4,7 @@ import py2exe
 
 BUILD_DIR = "dist"
 DIST_PKG = "remote-dist.zip"
-STRING_TABLE_FILE = os.path.join("..", "resources", "config", "engine", "AnkiLogStringTables.json")
+STRING_TABLE_FILE = os.path.join("..", "resources", "config", "basestation", "AnkiLogStringTables.json")
 CLAD_DIR = os.path.join("generated", "cladPython")
 
 try:
@@ -31,9 +31,9 @@ setup(name="Remote",
 
 
 if not os.path.isdir(CLAD_DIR):
-    sys.exit("Please generate robot cladPython before trying to distribute")
+    sys.exit("Please generate robot cladPython before trying to destribute")
 if not os.path.isfile(STRING_TABLE_FILE):
-    sys.exit("Please generate the string table before trying to distribute")
+    sys.exit("Please generate the string table before trying to destribute")
 else:
     shutil.copy2(STRING_TABLE_FILE, BUILD_DIR)
 shutil.copytree("releases", os.path.join(BUILD_DIR, "releases"))
