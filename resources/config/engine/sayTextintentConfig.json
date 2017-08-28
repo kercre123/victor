@@ -58,12 +58,16 @@
   "Text" : {
     "durationTraits" : [
       {
-        "rangeMin" : 0.75
+        "rangeMin" : 0.75,
+        "rangeMax" : 1.0,
+        "stepSize" : 0.05
       }
     ],
     "pitchTraits" : [
       {
-        "rangeMin" : 0.0
+        "rangeMin" : -0.1,
+        "rangeMax" : 0.1,
+        "stepSize" : 0.05
       }
     ],
     "style" : "CozmoProcessing_Sentence"
