@@ -19,7 +19,7 @@ module.exports = class Body {
 		this.port.on('data', (data) => this.receive(data));
 		this.port.on('error', (err) => console.log(`ERROR: ${err}`));
 
-		this.send(PAYLOAD_ERASE);
+		this.send(PAYLOAD_MODE_CHANGE);
 	}
 
 	send(id, payload = Buffer.alloc(0)) {

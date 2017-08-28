@@ -150,7 +150,7 @@ void Comms::enqueue(PayloadId kind, const void* packet, int size) {
   txFifo_write = next;
 }
 
-static int dequeuePacket(void* out, int size) {
+static int dequeue(void* out, int size) {
   uint8_t* output = (uint8_t*) out;
   int transmitted = 0;
 
@@ -194,13 +194,13 @@ void Comms::tick(void) {
     outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
 
     DMA1_Channel3->CMAR = (uint32_t)&outboundPacket;
-    count = sizeof(outboundPacket);
+    count = sizeof(outboundPacket.sync);
   } else {
     DMA1_Channel3->CMAR = (uint32_t)&outboundPacket.tail;
     count = 0;
   }
 
-  count += dequeuePacket(&outboundPacket.tail, sizeof(outboundPacket.tail));
+  count += dequeue(&outboundPacket.tail, sizeof(outboundPacket.tail));
 
   // Fire out ourbound data
   if (count > 0) {
@@ -232,14 +232,29 @@ extern "C" void USART1_IRQHandler(void) {
     // Switch USART to DMA mode
     USART1->CR1 = (USART1->CR1 & ~USART_CR1_CMIE) | USART_CR1_RXNEIE;
     USART1->ICR = USART_ICR_CMCF;
+    
+    // Clear header for matching
     header_rx_index = 0;
+    inboundPacket.header.sync_bytes = 0;
   }
 
-  if (USART1->ISR & USART_ISR_RXNE) {
-    inboundPacket.header_raw[header_rx_index++] = USART1->RDR;
+  if (~USART1->ISR & USART_ISR_RXNE) {
+    return ;
   }
 
-  if (header_rx_index < sizeof(SpineMessageHeader)) {
+  inboundPacket.header_raw[header_rx_index++] = USART1->RDR;
+
+  const uint32_t mask = ~(~0 << (header_rx_index * 8));
+  const uint32_t expect = SYNC_HEAD_TO_BODY & mask;
+  const uint32_t receive = inboundPacket.header.sync_bytes & mask;
+
+  // Header mismatch
+  if (expect != receive) {
+    USART1->CR1 |= USART_CR1_CMIE;
+    return ;
+  }
+
+  if (header_rx_index < sizeof(inboundPacket.header)) {
     return ;
   }
 
@@ -277,15 +292,10 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
   // Clear our flag
   DMA1->IFCR = DMA_IFCR_CGIF5;
 
-  // Header is invalid
-  if (inboundPacket.header.sync_bytes != SYNC_HEAD_TO_BODY) {
-    return ;
-  }
-
   // Check the CRC
   static uint32_t foundCRC = crc(&inboundPacket.raw, inboundPacket.header.bytes_to_follow / sizeof (uint32_t));
   SpineMessageFooter* footer = (SpineMessageFooter*) &inboundPacket.raw[inboundPacket.header.bytes_to_follow];
-  
+
   if (foundCRC != footer->checksum) {
     return ;
   }
