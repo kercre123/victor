@@ -356,6 +356,8 @@ function getLocalNotificationData_(sheet) {
       var col8Data = data[row][8];
       var col9Data = data[row][9];
       var col10Data = data[row][10];
+      var col11Data = data[row][11];
+      var col12Data = data[row][12];
       // This is a new item; parse everything including the first string key
       var object = {};
       var active = col0Data;
@@ -370,6 +372,8 @@ function getLocalNotificationData_(sheet) {
       object["rangeEarly"]  = ParseTimeField(col8Data, firstDataRow + row, 8);
       object["rangeLate"]   = ParseTimeField(col9Data, firstDataRow + row, 9);
       object["minimumDuration"] = ParseTimeField(col10Data, firstDataRow + row, 10);
+      object["noEarlierThan"] = ParseTimeField(col11Data, firstDataRow + row, 11);
+      object["noLaterThan"] = ParseTimeField(col12Data, firstDataRow + row, 12);
       // Error checking for non-type-specific fields:
       if (isCellEmpty_(col0Data) ||  // Note that this cell becomes a Boolean, not a string
           typeof(col0Data) !== "boolean") {
@@ -391,6 +395,9 @@ function getLocalNotificationData_(sheet) {
           col6Data != "AfterAppClose" &&
           col6Data != "ClockTime") {
         return "Error in row " + (firstDataRow + row) + ": WhenType must be AfterAppOpen, AfterAppClose, ClockTime or NotApplicable";
+      }
+      if (object["noEarlierThan"] > object["noLaterThan"]) {
+        return "Error in row " + (firstDataRow + row) + ": NoEarlierThan must be a value less than NoLaterThan";
       }
       // Error checking for type-specific fields, AND package up the "UNION" fields
       var unionObject = {};
@@ -480,12 +487,12 @@ function ParseTimeField(str, row, col) {
     var h = parseInt(str.substring(0, colonIndex));
     var m = parseInt(str.substring(colonIndex + 1));
     var totalMinutes = (h * 60) + m;
-    if (totalMinutes < 0 || totalMinutes > (24 * 60)) {
+    if (totalMinutes < 0 || totalMinutes > ((24 * 60) - 1)) {
       return "Error in row " + row + ", col " + (col + 1) + ": Clock time must be in range 00:00 to 23:59";
     }
     return totalMinutes;
   }
-  // Parse a number with suffix "m", "h", "d", or "w" (default is "m")
+  // Parse a number with suffix "s", "m", "h", "d", or "w" (default is "m")
   var len = str.length;
   var number = 0;
   if (len > 0) {
@@ -500,8 +507,11 @@ function ParseTimeField(str, row, col) {
     else if (lastChar === 'h') {
       number = number * 60;
     }
+    else if (lastChar === 's') {
+      number = number / 60;
+    }
     else if (lastChar !== 'm') {
-      return "Error in row " + row + ", col " + (col + 1) + ": Invalid time duration suffix (must be m, h, d or w)";
+      return "Error in row " + row + ", col " + (col + 1) + ": Invalid time duration suffix (must be s, m, h, d or w)";
     }
   }
   return number;

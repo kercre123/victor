@@ -154,10 +154,8 @@ void LocalNotifications::Generate()
   {
     if (ShouldBeRegistered(config))
     {
-      const float duration_m = DetermineTimeToNotify(config, multipliers,
-                                                     timeSinceAppOpen_m, now);
-      const int secondsInFuture = static_cast<int>(duration_m * secondsPerMinute);
-
+      const int secondsInFuture = DetermineTimeToNotify(config, multipliers,
+                                                        timeSinceAppOpen_m, now);
 
       // Pick random string key among variants
       const int textKeyIndex = _rng->RandInt(static_cast<int>(config.textKeys.size()));
@@ -165,7 +163,8 @@ void LocalNotifications::Generate()
 
       if (kDumpLocalNotificationsWhenGenerated)
       {
-        const float duration_h = duration_m / secondsPerMinute;
+        const float duration_m = secondsInFuture * 60.0f;
+        const float duration_h = duration_m / 60.0f;
         const float duration_d = duration_h / 24.0f;
         const Time futureDateTime = now + seconds(secondsInFuture);
         const std::time_t futureTimeT = system_clock::to_time_t(futureDateTime);
@@ -261,11 +260,12 @@ bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config)
 }
 
 
-float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& config,
-                                                const NeedsMultipliers& multipliers,
-                                                const float timeSinceAppOpen_m,
-                                                const Time now) const
+int LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& config,
+                                              const NeedsMultipliers& multipliers,
+                                              const float timeSinceAppOpen_m,
+                                              const Time now) const
 {
+  using namespace std::chrono;
   float minutesInFuture = 0.0f;
 
   switch (config.notificationMainUnion.GetTag())
@@ -343,7 +343,33 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
     minutesInFuture = maxMinutes;
   }
 
-  return minutesInFuture;
+  int secondsInFuture = static_cast<int>(minutesInFuture * 60.0f);
+
+  // Enforce late-night time range filter:
+  // First, convert the target time into a clock time
+  const Time targetDateTime = now + seconds(secondsInFuture);
+  const std::time_t targetTimeT = system_clock::to_time_t(targetDateTime);
+  std::tm targetLocalTime;
+  localtime_r(&targetTimeT, &targetLocalTime);
+  const float timeOfDayInMinutes = (targetLocalTime.tm_hour * 60.0f) +
+                                    targetLocalTime.tm_min +
+                                   (targetLocalTime.tm_sec / 60.0f);
+  if (timeOfDayInMinutes < config.noEarlierThan)
+  {
+    // Target time is too early, so make it later (to when the window 'opens')
+    secondsInFuture += ((config.noEarlierThan - timeOfDayInMinutes) * 60.0f);
+  }
+  else if (timeOfDayInMinutes > config.noLaterThan)
+  {
+    // Target time is too late, so make it on the next day, when the window 'opens'
+    // First, add the time remaining until midnight
+    static const float midnightMinutes = (24.0f * 60.0f);
+    secondsInFuture += ((midnightMinutes - timeOfDayInMinutes) * 60.0f);
+    // Now add the time from midnight to when the window 'opens'
+    secondsInFuture += (config.noEarlierThan * 60.0f);
+  }
+
+  return secondsInFuture;
 }
 
 
