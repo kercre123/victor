@@ -635,11 +635,7 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   
 void BehaviorLookAround::HandleRobotOfftreadsStateChanged(const EngineToGameEvent& event, Robot& robot)
 {
-  const RobotOffTreadsStateChanged& msg = event.GetData().Get_RobotOffTreadsStateChanged();
-  if (robot.GetID() == msg.robotID)
-  {
-    ResetSafeRegion(robot);
-  }
+  ResetSafeRegion(robot);
 }
 
 void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, const Robot& robot)

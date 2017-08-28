@@ -107,7 +107,7 @@ namespace Cozmo {
     if(broadcast)
     {
       using namespace ExternalInterface;
-      _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceEntryIter->first, _robot.GetID())));
+      _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceEntryIter->first)));
     }
     
     EraseFaceViz(faceEntryIter->second);
@@ -494,7 +494,6 @@ namespace Cozmo {
       }
         
       _robot.Broadcast(MessageEngineToGame(RobotObservedFace(faceEntry->face.GetID(),
-                                                             _robot.GetID(),
                                                              faceEntry->face.GetTimeStamp(),
                                                              faceEntry->face.GetHeadPose().ToPoseStruct3d(_robot.GetPoseOriginList()),
                                                              CladRect(faceEntry->face.GetRect().GetX(),

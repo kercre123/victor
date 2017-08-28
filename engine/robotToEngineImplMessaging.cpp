@@ -1077,8 +1077,7 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
   
   // Forward on with EngineToGame event
   PRINT_NAMED_INFO("Robot.HandleRobotPoked","");
-  RobotInterface::RobotPoked payload = message.GetData().Get_robotPoked();
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked()));
 }
 
 void RobotToEngineImplMessaging::HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

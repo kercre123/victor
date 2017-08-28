@@ -813,12 +813,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& m
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg;
   
-  // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
-  // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
-  // decision then
-  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
-             "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
-  
   Pose3d obsPose( msg.pose, _robot.GetPoseOriginList() );
   
   // iterate objects we previously had and remove them if we think they belong to this object
@@ -833,12 +827,6 @@ template<>
 void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleObject& msg)
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg.possibleObject;
-
-  // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
-  // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
-  // decision then
-  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
-             "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
   
   Pose3d obsPose( msg.possibleObject.pose, _robot.GetPoseOriginList() );
   

@@ -145,8 +145,7 @@ namespace Cozmo {
         _robot.GetActionList().GetActionWatcher().GetSubActionResults(_subAction->GetTag(), subActionResults);
         
         using RCA = ExternalInterface::RobotCompletedAction;
-        RCA robotCompletedAction = RCA(_robot.GetID(),
-                                       _subAction->GetTag(),
+        RCA robotCompletedAction = RCA(_subAction->GetTag(),
                                        _subAction->GetType(),
                                        _subAction->GetState(),
                                        subActionResults,

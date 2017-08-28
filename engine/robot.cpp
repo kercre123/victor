@@ -521,7 +521,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     }
     
     _offTreadsState = _awaitingConfirmationTreadState;
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOffTreadsStateChanged(GetID(), _offTreadsState)));
+    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOffTreadsStateChanged(_offTreadsState)));
     PRINT_CH_INFO("RobotState", "Robot.OfftreadsState.TreadStateChanged", "TreadState changed to:%s", EnumToString(_offTreadsState));
     
     // Special case logic for returning to treads
@@ -717,7 +717,7 @@ void Robot::Delocalize(bool isCarryingObject)
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
-  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized(GetID())));
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized()));
       
 } // Delocalize()
     
@@ -2517,8 +2517,7 @@ void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
                                                visionComponent.GetMinCameraGain(),
                                                visionComponent.GetMaxCameraGain());
   
-  ExternalInterface::PerRobotSettings robotSettings(GetID(),
-                                                    GetHeadSerialNumber(),
+  ExternalInterface::PerRobotSettings robotSettings(GetHeadSerialNumber(),
                                                     GetBodySerialNumber(),
                                                     _modelNumber,
                                                     GetBodyHWVersion(),
@@ -3132,8 +3131,6 @@ void Robot::BroadcastEngineErrorCode(EngineErrorCode error)
 ExternalInterface::RobotState Robot::GetRobotState() const
 {
   ExternalInterface::RobotState msg;
-      
-  msg.robotID = GetID();
       
   msg.pose = GetPose().ToPoseStruct3d(GetPoseOriginList());
   if(msg.pose.originID == PoseOriginList::UnknownOriginID)

@@ -196,13 +196,12 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // Turn and look down in parallel:
         using namespace ExternalInterface;
         
-        const uint8_t kRobotID = 1;
         const uint32_t kIdTag = 1;
         const uint8_t kNumRetries = 0;
         const bool kIsParallel = true;
         const QueueActionPosition kPosition = QueueActionPosition::NOW;
         const std::vector<RobotActionUnion> kActions{
-          RobotActionUnion(TurnInPlace(DEG_TO_RAD(90), 0.f, 0.f, POINT_TURN_ANGLE_TOL, false, kRobotID)),
+          RobotActionUnion(TurnInPlace(DEG_TO_RAD(90), 0.f, 0.f, POINT_TURN_ANGLE_TOL, false)),
           RobotActionUnion(SetHeadAngle(MIN_HEAD_ANGLE, 100.f, 100.f, 0.f)),
         };
         

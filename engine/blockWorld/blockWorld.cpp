@@ -405,7 +405,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     filter.AddAllowedFamily(ObjectFamily::CustomObject);
     filter.AddAllowedType(ObjectType::CustomFixedObstacle);
     DeleteLocatedObjects(filter);
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedFixedCustomObjects>(_robot->GetID());
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedFixedCustomObjects>();
   }
   
   template<>
@@ -416,7 +416,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     filter.AddAllowedFamily(ObjectFamily::CustomObject);
     filter.AddIgnoreType(ObjectType::CustomFixedObstacle); // everything custom _except_ fixed obstacles
     DeleteLocatedObjects(filter);
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedCustomMarkerObjects>(_robot->GetID());
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedCustomMarkerObjects>();
   }
   
   template<>
@@ -426,7 +426,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
     filter.AddAllowedFamily(ObjectFamily::CustomObject);
     DeleteLocatedObjects(filter);
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllCustomObjects>(_robot->GetID());
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllCustomObjects>();
   };
   
   template<>
@@ -475,7 +475,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     ObjectID id = BlockWorld::CreateFixedCustomObject(newObjectPose, msg.xSize_mm, msg.ySize_mm, msg.zSize_mm);
     
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::CreatedFixedCustomObject>(_robot->GetID(), id);
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::CreatedFixedCustomObject>(id);
   };
 
   template<>
@@ -500,8 +500,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       success = (defineResult == RESULT_OK);
     }
     
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID(),
-                                                                                                          success);
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(success);
   };
   
   template<>
@@ -521,8 +520,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       success = (defineResult == RESULT_OK);
     }
     
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID(),
-                                                                                                          success);
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(success);
   };
   
   template<>
@@ -541,8 +539,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       success = (defineResult == RESULT_OK);
     }
     
-    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(_robot->GetID(),
-                                                                                                          success);
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::DefinedCustomObject>(success);
   };
   
   template<>
@@ -910,8 +907,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     using namespace ExternalInterface;
     
-    RobotObservedObject observation(_robot->GetID(),
-                                    observedObject->GetLastObservedTime(),
+    RobotObservedObject observation(observedObject->GetLastObservedTime(),
                                     observedObject->GetFamily(),
                                     observedObject->GetType(),
                                     observedObject->GetID(),
@@ -4791,7 +4787,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(*objectDeletedInfo._objectCopy, oldPosePtr, oldPoseState);
       
       // RobotDeletedLocatedObject
-      _robot->Broadcast(MessageEngineToGame(RobotDeletedLocatedObject(_robot->GetID(), deletedID)));
+      _robot->Broadcast(MessageEngineToGame(RobotDeletedLocatedObject(deletedID)));
       
       // delete the copy we made now, since it won't be useful anymore
       Util::SafeDelete(objectDeletedInfo._objectCopy);

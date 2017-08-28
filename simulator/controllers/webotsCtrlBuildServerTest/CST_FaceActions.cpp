@@ -62,7 +62,7 @@ namespace Anki {
           ExternalInterface::QueueSingleAction m;
           m.position = QueueActionPosition::AT_END;
           m.idTag = 2;
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false, 1));
+          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false));
           ExternalInterface::MessageGameToEngine message;
           message.Set_QueueSingleAction(m);
           SendMessage(message);
@@ -83,7 +83,7 @@ namespace Anki {
             ExternalInterface::QueueSingleAction m;
             m.position = QueueActionPosition::AT_END;
             m.idTag = 3;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false, 1));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -104,7 +104,7 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 10;
             // Turn towards the last face pose
-            m.action.Set_turnTowardsLastFacePose(ExternalInterface::TurnTowardsLastFacePose(M_PI_F, 0, 0, 0, 0, 0, 0, false, AnimationTrigger::Count, AnimationTrigger::Count, 1));
+            m.action.Set_turnTowardsLastFacePose(ExternalInterface::TurnTowardsLastFacePose(M_PI_F, 0, 0, 0, 0, 0, 0, false, AnimationTrigger::Count, AnimationTrigger::Count));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

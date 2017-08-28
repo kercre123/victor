@@ -935,7 +935,7 @@ void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object, bool prop
     // Still here for legacy purposes
     // Notify listeners if object is becoming Unknown
     using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
+    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(object->GetID().GetValue())));
   }
 
   // delete with the given filter
