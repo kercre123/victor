@@ -7,7 +7,7 @@
 #include "opto.h"
 #include "messages.h"
 
-#define DISABLE_TOF
+//#define DISABLE_TOF
 
 enum I2C_Op {
   I2C_DONE,

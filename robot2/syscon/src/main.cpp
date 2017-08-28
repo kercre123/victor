@@ -48,7 +48,7 @@ int main (void) {
   Comms::init();
   Motors::init();
   Encoders::init();
-  //Lights::init();
+  Lights::init();
   Touch::init();
 
   __enable_irq(); // Start firing interrupts
