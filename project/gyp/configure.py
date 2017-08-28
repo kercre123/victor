@@ -398,6 +398,11 @@ def main(scriptArgs):
     UtilLog.error("error creating generated/resources")
     return False
 
+  if subprocess.call(['mkdir', '-p',
+    os.path.join(projectRoot, 'resources/config/basestation')]) != 0 :
+    UtilLog.error("error creating resources/config/basestation")
+    return False
+
   fwFolders = [folder for folder in listdir(externalsPath) if "firmware" in folder]
   for fwFolder in fwFolders:
     if subprocess.call(['ln', '-s', '-f', '-n',
