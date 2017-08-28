@@ -212,6 +212,10 @@ void Comms::tick(void) {
 
 static int sizeOfInboundPayload(PayloadId id) {
   switch (id) {
+    case PAYLOAD_MODE_CHANGE:
+    case PAYLOAD_ERASE:
+    case PAYLOAD_VERSION:
+      return 0;
     case PAYLOAD_DATA_FRAME:
       return sizeof(HeadToBody);
     case PAYLOAD_CONT_DATA:
