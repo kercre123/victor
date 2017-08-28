@@ -47,10 +47,10 @@
 namespace Anki {
   namespace Cozmo {
 
-    static_assert(MOTOR_LEFT_WHEEL == RobotMotor_MOTOR_LEFT, "Robot/Spine CLAD Mimatch");
-    static_assert(MOTOR_RIGHT_WHEEL == RobotMotor_MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
-    static_assert(MOTOR_LIFT == RobotMotor_MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
-    static_assert(MOTOR_HEAD == RobotMotor_MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
+    static_assert(MOTOR_LEFT_WHEEL == MOTOR_LEFT, "Robot/Spine CLAD Mimatch");
+    static_assert(MOTOR_RIGHT_WHEEL == MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
+    static_assert(MOTOR_LIFT == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
+    static_assert(MOTOR_HEAD == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
 
 
     namespace { // "Private members"
@@ -63,7 +63,7 @@ namespace Anki {
       static const f32 HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
 
       //encoder counts -> mm or deg
-      static const f32 HAL_MOTOR_POSITION_SCALE[RobotMotor_MOTOR_COUNT] = {
+      static const f32 HAL_MOTOR_POSITION_SCALE[MOTOR_COUNT] = {
         ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Left Tread mm
         ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Right Tread mm
         (0.25 * 3.14159265359) / 149.7,    //Lift radians
@@ -92,9 +92,9 @@ namespace Anki {
 #endif
 
       struct {
-        s32 motorOffset[RobotMotor_MOTOR_COUNT];
-        CONSOLE_DATA(f32 motorSpeed[RobotMotor_MOTOR_COUNT]);
-        CONSOLE_DATA(f32 motorPower[RobotMotor_MOTOR_COUNT]);
+        s32 motorOffset[MOTOR_COUNT];
+        CONSOLE_DATA(f32 motorSpeed[MOTOR_COUNT]);
+        CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
     } // "private" namespace
@@ -111,8 +111,8 @@ namespace Anki {
 
     Result GetSpineDataFrame(void)
     {
-      SpineMessageHeader* hdr = (SpineMessageHeader*) hal_get_frame(PayloadId_PAYLOAD_DATA_FRAME);
-      if (hdr->payload_type != PayloadId_PAYLOAD_DATA_FRAME) {
+      SpineMessageHeader* hdr = (SpineMessageHeader*) hal_get_frame(PAYLOAD_DATA_FRAME);
+      if (hdr->payload_type != PAYLOAD_DATA_FRAME) {
         LOGE("Spine.c data corruption: payload does not match requested");
         return RESULT_FAIL_IO_UNSYNCHRONIZED;
       }
@@ -168,7 +168,7 @@ namespace Anki {
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
+      assert(motor < MOTOR_COUNT);
       SAVE_MOTOR_POWER(motor, power);
       headData_.motorPower[motor] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power;
     }
@@ -176,7 +176,7 @@ namespace Anki {
     // Reset the internal position of the specified motor to 0
     void HAL::MotorResetPosition(MotorID motor)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
+      assert(motor < MOTOR_COUNT);
       internalData_.motorOffset[motor] = bodyData_->motor[motor].position;
     }
 
@@ -185,7 +185,7 @@ namespace Anki {
     // Wheels are in mm/s, everything else is in degrees/s.
     f32 HAL::MotorGetSpeed(MotorID motor)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
+      assert(motor < MOTOR_COUNT);
 
       // Every frame, syscon sends the last detected speed as a two part number:
       // `delta` encoder counts, and `time` span for those counts.
@@ -202,7 +202,7 @@ namespace Anki {
     // Wheels are in mm since reset, everything else is in degrees.
     f32 HAL::MotorGetPosition(MotorID motor)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
+      assert(motor < MOTOR_COUNT);
       return (bodyData_->motor[motor].position - internalData_.motorOffset[motor]) * HAL_MOTOR_POSITION_SCALE[motor];
     }
 
@@ -273,7 +273,7 @@ namespace Anki {
         if (--repeater <= 0) {
           repeater = FRAMES_PER_RESPONSE;
           headData_.framecounter++;
-          hal_send_frame(PayloadId_PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
+          hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
         result =  GetSpineDataFrame();
 
@@ -335,7 +335,7 @@ namespace Anki {
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {
-      assert(cliff_id < DropSensor_DROP_SENSOR_COUNT);
+      assert(cliff_id < DROP_SENSOR_COUNT);
       return bodyData_->cliffSense[cliff_id];
     }
 
@@ -352,17 +352,17 @@ namespace Anki {
 
     bool HAL::BatteryIsCharging()
     {
-      return bodyData_->battery.flags & BatteryFlags_isCharging;
+      return bodyData_->battery.flags & isCharging;
     }
 
     bool HAL::BatteryIsOnCharger()
     {
-      return bodyData_->battery.flags & BatteryFlags_isOnCharger;
+      return bodyData_->battery.flags & isOnCharger;
     }
 
     bool HAL::BatteryIsChargerOOS()
     {
-      return bodyData_->battery.flags & BatteryFlags_chargerOOS;
+      return bodyData_->battery.flags & chargerOOS;
     }
 
     Result HAL::SetBlockLight(const u32 activeID, const u16* colors)
