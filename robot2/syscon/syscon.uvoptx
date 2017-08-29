@@ -176,6 +176,22 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
+          <LineNumber>297</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134231438</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>&lt;2&gt;.\src\comms.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\syscon\src/comms.cpp\297</Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
           <LineNumber>129</LineNumber>
           <EnabledFlag>0</EnabledFlag>
           <Address>134230526</Address>
@@ -194,17 +210,17 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s1</ItemText>
+          <ItemText>footer</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s2</ItemText>
+          <ItemText>inboundPacket</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>pdm_data</ItemText>
+          <ItemText>header</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
