@@ -32,7 +32,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
-#include "engine/visionModesHelpers.h"
+#include "engine/vision/visionModesHelpers.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

@@ -12,8 +12,10 @@
  **/
 
 #include "engine/rollingShutterCorrector.h"
-#include "engine/visionSystem.h"
+
 #include "engine/robot.h"
+#include "engine/vision/visionSystem.h"
+
 
 namespace Anki {
   namespace Cozmo {

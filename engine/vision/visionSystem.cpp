@@ -21,9 +21,9 @@
 #include "engine/cozmoContext.h"
 #include "engine/encodedImage.h"
 #include "engine/robot.h"
-#include "engine/visionModesHelpers.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
+#include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "anki/vision/basestation/cameraImagingPipeline.h"

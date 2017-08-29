@@ -31,8 +31,8 @@
 #include "engine/overheadEdge.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
-#include "engine/visionModeSchedule.h"
-#include "engine/visionPoseData.h"
+#include "engine/vision/visionModeSchedule.h"
+#include "engine/vision/visionPoseData.h"
 
 #include "anki/common/basestation/matlabInterface.h"
 

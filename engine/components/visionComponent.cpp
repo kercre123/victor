@@ -26,8 +26,8 @@
 #include "engine/petWorld.h"
 #include "engine/robot.h"
 #include "engine/robotStateHistory.h"
-#include "engine/visionModesHelpers.h"
-#include "engine/visionSystem.h"
+#include "engine/vision/visionModesHelpers.h"
+#include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
 
 #include "anki/vision/basestation/camera.h"

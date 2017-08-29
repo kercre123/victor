@@ -26,7 +26,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/robotToEngineImplMessaging.h"
-#include "engine/visionSystem.h"
+#include "engine/vision/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "gtest/gtest.h"

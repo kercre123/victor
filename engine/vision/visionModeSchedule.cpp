@@ -11,7 +11,7 @@
  **/
 
 
-#include "engine/visionModeSchedule.h"
+#include "engine/vision/visionModeSchedule.h"
 
 namespace Anki {
 namespace Cozmo {
