@@ -20,6 +20,8 @@ module.exports = class Body {
 		this.port.on('error', (err) => console.log(`ERROR: ${err}`));
 
 		this.send(PAYLOAD_MODE_CHANGE);
+
+		setInterval(() => this.send(PAYLOAD_VERSION), 1000);
 	}
 
 	send(id, payload = Buffer.alloc(0)) {

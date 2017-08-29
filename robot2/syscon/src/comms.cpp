@@ -227,17 +227,23 @@ static int sizeOfInboundPayload(PayloadId id) {
 
 extern "C" void USART1_IRQHandler(void) {
   static int header_rx_index;
-  
+
+  // Character match (used to mark the start of a packet)
   if (USART1->ISR & USART_ISR_CMF) {
-    // Switch USART to DMA mode
-    USART1->CR1 = (USART1->CR1 & ~USART_CR1_CMIE) | USART_CR1_RXNEIE;
     USART1->ICR = USART_ICR_CMCF;
-    
+    USART1->CR1 = (USART1->CR1 & ~USART_CR1_CMIE) | USART_CR1_RXNEIE;
+
     // Clear header for matching
     header_rx_index = 0;
     inboundPacket.header.sync_bytes = 0;
   }
 
+  // Flush overflows
+  if (USART1->ISR & USART_ISR_ORE) {
+    USART1->ICR = USART_ICR_ORECF;
+  }
+
+  // No data available
   if (~USART1->ISR & USART_ISR_RXNE) {
     return ;
   }
