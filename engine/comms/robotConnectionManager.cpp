@@ -72,7 +72,7 @@ void RobotConnectionManager::ConfigureReliableTransport()
   Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
   Util::ReliableConnection::SetTimeBetweenResendsInMS(33.3);
   Util::ReliableConnection::SetMaxTimeSinceLastSend( Util::ReliableConnection::GetTimeBetweenResendsInMS() - 1.0 );
-  Util::ReliableConnection::SetConnectionTimeoutInMS(15000.0);
+  Util::ReliableConnection::SetConnectionTimeoutInMS(5000.0);
   Util::ReliableConnection::SetPacketSeparationIntervalInMS(2.0);
   Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
   Util::ReliableConnection::SetSendSeparatePingMessages(false);

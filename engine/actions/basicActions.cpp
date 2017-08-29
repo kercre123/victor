@@ -160,7 +160,7 @@ namespace Anki {
                             GetTag(),
                             EnumToString(otState));
       }
-      return valid || true;
+      return valid;
     }
     
     ActionResult TurnInPlaceAction::Init()

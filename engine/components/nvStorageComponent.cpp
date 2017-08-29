@@ -747,14 +747,13 @@ void NVStorageComponent::LoadDataFromFiles()
     PRINT_NAMED_WARNING("FACTORY TAG", "%u", tagNum);
     
     if (!IsFactoryEntryTag(static_cast<NVEntryTag>(tagNum)) ||
-        !IsTagInFactoryBlock(tagNum) ||
         !IsPotentialFactoryEntryTag(tagNum)) {
       PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.InvalidTagValues", "0x%x", tagNum);
       continue;
     }
     
     // Read data from file
-    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kStoragePath + fileName);
+    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kStoragePath + "factory/" + fileName);
     if(file.empty())
     {
       PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.ReadFileFailed",

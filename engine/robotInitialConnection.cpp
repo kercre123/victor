@@ -215,13 +215,15 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   }
 
   RobotConnectionResult result;
+  
+#ifndef COZMO_V2
   if (robotIsSimulated) {
     result = RobotConnectionResult::Success;
   }
   else if (doForceFirmwareUpdate) {
     result = RobotConnectionResult::OutdatedFirmware;
   }
-  else if (kSkipFirmwareAutoUpdate || true) {
+  else if (kSkipFirmwareAutoUpdate) {
     result = RobotConnectionResult::Success;
   }
   else if (robotHasDevFirmware != appHasDevFirmware) {
@@ -239,6 +241,9 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
       result = RobotConnectionResult::Success;
     }
   }
+#else
+  result = RobotConnectionResult::Success;
+#endif
 
   OnNotified(result, robotVersion);
 }
@@ -262,11 +267,7 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
 
   // If the connection completed successfully, ask for the robot ID and send the success once we get it
   if (RobotConnectionResult::Success == result) {
-    PRINT_NAMED_WARNING("", "Subscribing to mfgID message");
-//    SendConnectionResponse(result, robotFwVersion);
     AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::mfgId, [this, result, robotFwVersion] (const AnkiEvent<RobotToEngine>& message) {
-      PRINT_NAMED_WARNING("", "Got mfgID message");
-    
       const auto& payload = message.GetData().Get_mfgId();
       _serialNumber = payload.esn;
       _bodyHWVersion = payload.hw_version;

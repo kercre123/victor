@@ -688,7 +688,7 @@ void camera_install_callback(camera_cb cb)
   user_frame_callback = cb;
 }
 
-#define DIM 2
+#define DIM 1
 #define X 640
 #define Y 360
 #define X6 214

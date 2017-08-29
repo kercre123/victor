@@ -250,8 +250,8 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     // this is probably the only place where we need this, otherwise please refactor to proper header
     const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
     if ( requiredUnlock != UnlockId::Count ) {
-//      PRINT_NAMED_INFO("IBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
-//                        GetIDStr().c_str(), requiredUnlockJson.asString().c_str() );
+      PRINT_NAMED_INFO("IBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
+                        GetIDStr().c_str(), requiredUnlockJson.asString().c_str() );
       _requiredUnlockId = requiredUnlock;
     } else {
       PRINT_NAMED_ERROR("IBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",

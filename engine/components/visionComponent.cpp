@@ -170,26 +170,26 @@ namespace Cozmo {
     }
     
     // Request face album data from the robot
-//    std::string faceAlbumName;
-//    JsonTools::GetValueOptional(config, "FaceAlbum", faceAlbumName);
-//    if(faceAlbumName.empty() || faceAlbumName == "robot") {
-//      result = LoadFaceAlbumFromRobot();
-//      if(RESULT_OK != result) {
-//        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromRobotFailed", "");
-//      }
-//    } else {
-//      // Erase all faces on the robot
-//      EraseAllFaces();
-//      
-//      std::list<Vision::LoadedKnownFace> loadedFaces;
-//      result = _visionSystem->LoadFaceAlbum(faceAlbumName, loadedFaces);
-//      BroadcastLoadedNamesAndIDs(loadedFaces);
-//      
-//      if(RESULT_OK != result) {
-//        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromFileFailed",
-//                            "AlbumFile: %s", faceAlbumName.c_str());
-//      }
-//    }
+    std::string faceAlbumName;
+    JsonTools::GetValueOptional(config, "FaceAlbum", faceAlbumName);
+    if(faceAlbumName.empty() || faceAlbumName == "robot") {
+      result = LoadFaceAlbumFromRobot();
+      if(RESULT_OK != result) {
+        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromRobotFailed", "");
+      }
+    } else {
+      // Erase all faces on the robot
+      EraseAllFaces();
+      
+      std::list<Vision::LoadedKnownFace> loadedFaces;
+      result = _visionSystem->LoadFaceAlbum(faceAlbumName, loadedFaces);
+      BroadcastLoadedNamesAndIDs(loadedFaces);
+      
+      if(RESULT_OK != result) {
+        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromFileFailed",
+                            "AlbumFile: %s", faceAlbumName.c_str());
+      }
+    }
     
     const f32 kCameraFrameRate_fps = 15.f;
     _dropStats.SetChannelName("VisionComponent");
@@ -431,7 +431,7 @@ namespace Cozmo {
       TimeStamp_t imageHistTimeStamp;
       
       Result lastResult = GetImageHistState(_robot, encodedImage.GetTimeStamp(), imageHistState, imageHistTimeStamp);
-      lastResult = RESULT_OK;
+
       if(lastResult == RESULT_FAIL_ORIGIN_MISMATCH)
       {
         // Don't print a warning for this case: we expect not to get pose history
@@ -934,7 +934,7 @@ namespace Cozmo {
       HistStateKey histStateKey;
       
       lastResult = _robot.GetStateHistory()->ComputeAndInsertStateAt(procResult.timestamp, t, &histStatePtr, &histStateKey, true);
-//      lastResult = RESULT_OK;
+
       if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
       {
         // Not finding pose information due to an origin mismatch is a normal thing
@@ -2302,15 +2302,12 @@ namespace Cozmo {
   void VisionComponent::CaptureAndSendImage()
   {
     // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::QVGA;
+    const ImageResolution expectedResolution = ImageResolution::NHD;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);
     int numRows = Vision::CameraResInfo[cameraRes].height;
     int numCols = Vision::CameraResInfo[cameraRes].width;
-    
-    numRows = 360;
-    numCols = 640;
 
     u8* buffer = nullptr;
     
@@ -2350,7 +2347,7 @@ namespace Cozmo {
       Result lastResult = SetNextImage(encodedImage);
       
       // Compress to jpeg and send to game and viz
-//      lastResult = CompressAndSendImage(imgRGB, 50);
+      lastResult = CompressAndSendImage(imgRGB, 50);
       DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
     }
   }

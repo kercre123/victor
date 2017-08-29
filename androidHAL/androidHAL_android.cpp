@@ -22,15 +22,12 @@
 #include "androidHAL/android/camera/camera_manager.h"
 #include "androidHAL/android/camera/image_reader.h"
 #include "androidHAL/android/camera/utils/native_debug.h"
+#include "androidHAL/android/proto_camera/victor_camera.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
 
-#include "androidHAL/android/proto_camera/victor_camera.h"
-
 #include <vector>
 #include <chrono>
-
-#include <fstream>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using androidHAL.cpp

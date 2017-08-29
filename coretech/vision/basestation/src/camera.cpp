@@ -100,10 +100,6 @@ namespace Anki {
       const CameraCalibration::DistortionCoeffs& distCoeffs = _calibration->GetDistortionCoeffs();
       cv::Mat_<f32> distortionCoeffs(1, (s32)distCoeffs.size(), const_cast<f32*>(distCoeffs.data()));
       
-      std::stringstream ss;
-      ss << distortionCoeffs;
-      PRINT_NAMED_WARNING("DISTORITON", "%s", ss.str().c_str());
-      
       cv::solvePnP(cvObjPoints, cvImagePoints,
                    calibMatrix.get_CvMatx_(), distortionCoeffs,
                    cvRvec, cvTranslation,

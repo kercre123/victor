@@ -286,9 +286,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
 #ifdef COZMO_V2
   AndroidHAL::getInstance();
-  #endif
-  
-  _behaviorMgr->DisableReactionsWithLock("robot", ReactionTriggerHelpers::kAffectAllArray);
+#endif
   
 } // Constructor: Robot
     
@@ -1309,14 +1307,13 @@ Result Robot::Update()
   AndroidHAL::getInstance()->Update();
   #endif
 
-  
-  #ifdef COZMO_V2
-  _visionComponent->CaptureAndSendImage();
-  #endif
-
   //////////// VisionComponent //////////  
   if(_visionComponent->GetCamera().IsCalibrated())
   {
+    #ifdef COZMO_V2
+    _visionComponent->CaptureAndSendImage();
+    #endif
+  
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();
     if(RESULT_OK != visionResult) {

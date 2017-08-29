@@ -42,7 +42,7 @@ CONSOLE_FUNC( SetConnectionTimeoutInMS, "Network", double timeoutInMS );
 NetTimeStamp ReliableConnection::sTimeBetweenPingsInMS = 250.0;
 NetTimeStamp ReliableConnection::sTimeBetweenResendsInMS = 50.0;
 NetTimeStamp ReliableConnection::sMaxTimeSinceLastSend = sTimeBetweenResendsInMS - 1.0;
-NetTimeStamp ReliableConnection::sConnectionTimeoutInMS = 15000.0;
+NetTimeStamp ReliableConnection::sConnectionTimeoutInMS = 5000.0;
 NetTimeStamp ReliableConnection::sPacketSeparationIntervalInMS = kNetTimeStampZero;
 NetTimeStamp ReliableConnection::sMinExpectedPacketAckTimeMS = 1.0;
 uint32_t ReliableConnection::sMaxPingRoundTripsToTrack = 20; // Smaller number means more recent & responsive but jittery value

@@ -658,8 +658,8 @@ IBehaviorPtr BehaviorContainer::AddToFactory(IBehaviorPtr newBehavior)
 
   if (addedNewEntry)
   {
-//    PRINT_NAMED_INFO("behaviorContainer::AddToFactory", "Added new behavior '%s' %p",
-//                     BehaviorIDToString(behaviorID), newBehavior.get());
+    PRINT_NAMED_INFO("behaviorContainer::AddToFactory", "Added new behavior '%s' %p",
+                     BehaviorIDToString(behaviorID), newBehavior.get());
   }
   else
   {
