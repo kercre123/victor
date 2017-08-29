@@ -64,7 +64,8 @@ namespace Anki {
   public:
    
     // Constructors:
-    Pose2d(); 
+    Pose2d();
+    Pose2d(const Transform2d& transform);
     Pose2d(const Radians &angle, const Point2f &translation);
     Pose2d(const Radians &angle, const float x, const float y);
     

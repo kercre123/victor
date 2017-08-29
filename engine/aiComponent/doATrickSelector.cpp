@@ -18,7 +18,11 @@
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robot.h"
+
+#include "util/helpers/boundedWhile.h"
+
 #include <set>
+
 namespace Anki{
 namespace Cozmo{
   

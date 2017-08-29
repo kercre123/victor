@@ -27,6 +27,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/pose.h"
 
 #include "clad/types/poseStructs.h"
 

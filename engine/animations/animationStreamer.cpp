@@ -36,6 +36,7 @@
 #include "clad/types/animationKeyFrames.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 

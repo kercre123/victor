@@ -14,7 +14,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/planning/shared/path.h"
 #include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 

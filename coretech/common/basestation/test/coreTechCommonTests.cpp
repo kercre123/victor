@@ -1,5 +1,6 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 

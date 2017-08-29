@@ -10,10 +10,10 @@
  *
  **/
 
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaPlannerContext.h"
 #include "util/global/globalDefinitions.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "xythetaPlanner_internal.h"

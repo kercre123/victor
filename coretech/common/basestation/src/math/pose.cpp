@@ -19,8 +19,18 @@ namespace Anki {
 #pragma mark -
 #pragma mark Pose2d Implementations
   
+  // Explicit instantiation of 2d and 3d poses
+  template class PoseBase<Pose2d,Transform2d>;
+  template class PoseBase<Pose3d,Transform3d>;
+  
   Pose2d::Pose2d()
   : Pose2d(0, {0.f, 0.f})
+  {
+    
+  }
+  
+  Pose2d::Pose2d(const Transform2d& transform)
+  : PoseBase<Pose2d,Transform2d>(transform)
   {
     
   }

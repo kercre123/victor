@@ -49,26 +49,26 @@ namespace Anki {
     //
     // Simple accessors:
     //
-    void SetName(const std::string& newName) { DEV_ASSERT(!IsNull(), "PoseBase.SetName.NullNode"); _node->SetName(newName); }
-    const std::string& GetName() const { DEV_ASSERT(!IsNull(), "PoseBase.GetName.NullNode"); return _node->GetName(); }
+    void SetName(const std::string& newName);
+    const std::string& GetName() const;
     
     // Get the ID assigned to this pose. IDs default to 0.
-    PoseID_t GetID() const { DEV_ASSERT(!IsNull(), "PoseBase.GetID.NullNode"); return _node->GetID(); }
+    PoseID_t GetID() const;
     
     // Set the ID for this pose. NOTE: ID is *not* copied with pose!
-    void SetID(PoseID_t newID) { DEV_ASSERT(!IsNull(), "PoseBase.SetID.NullNode"); _node->SetID(newID); }
+    void SetID(PoseID_t newID);
     
-    const TransformNd& GetTransform() const { DEV_ASSERT(!IsNull(), "PoseBase.GetTransformConst.NullNode"); return _node->GetTransform(); }
-    TransformNd& GetTransform() { DEV_ASSERT(!IsNull(), "PoseBase.GetTransform.NullNode"); return _node->GetTransform(); }
+    const TransformNd& GetTransform() const;
+    TransformNd& GetTransform();
     
     // Set / check parent relationships:
     void ClearParent();
     void SetParent(const PoseNd& otherPose);
 
     // "Roots" are the top of a pose tree and thus have no parent
-    bool     IsRoot()    const { return (IsNull() ? true : _node->IsRoot()); }
-    bool     HasParent() const { return (IsNull() ? false : _node->HasParent()); }
-    PoseID_t GetRootID() const { return (IsNull() ? 0 : _node->GetRootID()); } // NOTE: more efficient than FindRoot().GetID()
+    bool     IsRoot()    const;
+    bool     HasParent() const;
+    PoseID_t GetRootID() const; // NOTE: more efficient than FindRoot().GetID()
     
     // Note that HasSameRootAs will be true if this is other's root or vice versa (a root's root is itself)
     bool     HasSameRootAs(const PoseNd& otherPose)   const;
@@ -79,8 +79,8 @@ namespace Anki {
     
     // Check if given pose is this pose's parent (or vice versa)
     // Cheaper than calling this->GetParent and then comparing it to pose
-    bool IsChildOf(const PoseNd& otherPose) const  { return (IsNull() || otherPose.IsNull() ? false : _node->IsChildOf(*otherPose._node));  }
-    bool IsParentOf(const PoseNd& otherPose) const { return (IsNull() || otherPose.IsNull() ? false : _node->IsParentOf(*otherPose._node)); }
+    bool IsChildOf(const PoseNd& otherPose) const;
+    bool IsParentOf(const PoseNd& otherPose) const;
     
     // Composition with another PoseNd
     void   PreComposeWith(const PoseNd& other)  { GetTransform().PreComposeWith(other.GetTransform()); }
@@ -88,8 +88,8 @@ namespace Anki {
     PoseNd operator*(const PoseNd& other) const;
     
     // Inversion
-    void   Invert(void)           { GetTransform().Invert(); ClearParent(); }
-    PoseNd GetInverse(void) const { return GetTransform().GetInverse();     }
+    void   Invert(void);
+    PoseNd GetInverse(void) const;
   
     // Creates a new PoseNd around the underlying root/parent node
     // This is "cheap", but not "free". Consider using one of the above helpers for comparing relationships b/w poses.
@@ -139,9 +139,5 @@ namespace Anki {
   };
   
 } // namespace Anki
-
-
-// TODO: Ideally, we'd only need to include poseBase_impl.h from cpp files...
-#include "anki/common/basestation/math/poseBase_impl.h"
 
 #endif /* __Anki_Common_Math_PoseBase_H__ */

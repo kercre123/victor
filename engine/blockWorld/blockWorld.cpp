@@ -17,7 +17,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"

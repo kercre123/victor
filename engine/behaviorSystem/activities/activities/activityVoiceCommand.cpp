@@ -34,6 +34,7 @@
 #include "engine/voiceCommands/voiceCommandComponent.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
 namespace Anki {

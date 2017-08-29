@@ -40,13 +40,13 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/robot/config.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 

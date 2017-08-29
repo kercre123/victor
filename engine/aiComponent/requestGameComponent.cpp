@@ -23,6 +23,8 @@
 
 #include "anki/common/basestation/utils/timer.h"
 
+#include "util/helpers/boundedWhile.h"
+
 namespace Anki{
 namespace Cozmo{
 

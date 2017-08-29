@@ -11,7 +11,6 @@
 #include "engine/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/utilities.h"
 
 #include "util/logging/logging.h"

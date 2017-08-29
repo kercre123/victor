@@ -14,7 +14,6 @@
 #include "engine/robot.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"

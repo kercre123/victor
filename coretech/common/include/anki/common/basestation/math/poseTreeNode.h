@@ -15,8 +15,8 @@
 #ifndef __Anki_Common_Math_PoseTreeNode_H__
 #define __Anki_Common_Math_PoseTreeNode_H__
 
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "util/global/globalDefinitions.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/math/poseBase.h"
 

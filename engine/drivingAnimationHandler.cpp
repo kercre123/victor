@@ -24,6 +24,7 @@
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
+#include "util/helpers/boundedWhile.h"
 
 namespace Anki {
   namespace Cozmo {
