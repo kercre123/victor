@@ -70,7 +70,6 @@ message UiDeviceConnectionSuccess {
 
 message ConnectToRobot {
     uint_8 ipAddress[16],
-    uint_8 robotID,
     uint_8 isSimulated
 }
 

@@ -1054,51 +1054,44 @@ public class Robot : IRobot {
   }
 
   private void HandleActiveObjectMoved(ObjectMoved message) {
-    if (ID == message.robotID) {
-      ActiveObject objectStartedMoving = GetActiveObjectById((int)message.objectID);
-      if (objectStartedMoving != null) {
-        // Mark pose dirty and is moving if the new timestamp is newer or the same as the robot's current timestamp
-        if (message.timestamp >= objectStartedMoving.LastMovementMessageEngineTimestamp) {
-          objectStartedMoving.HandleStartedMoving(message);
-        }
-        else {
-          DAS.Error("Robot.HandleActiveObjectMoved", "Received old ObjectMoved message with timestamp " + message.timestamp
-          + " _after_ receiving a newer message with timestamp " + objectStartedMoving.LastMovementMessageEngineTimestamp + "!");
-        }
+    ActiveObject objectStartedMoving = GetActiveObjectById((int)message.objectID);
+    if (objectStartedMoving != null) {
+      // Mark pose dirty and is moving if the new timestamp is newer or the same as the robot's current timestamp
+      if (message.timestamp >= objectStartedMoving.LastMovementMessageEngineTimestamp) {
+        objectStartedMoving.HandleStartedMoving(message);
+      }
+      else {
+        DAS.Error("Robot.HandleActiveObjectMoved", "Received old ObjectMoved message with timestamp " + message.timestamp
+        + " _after_ receiving a newer message with timestamp " + objectStartedMoving.LastMovementMessageEngineTimestamp + "!");
       }
     }
   }
 
   private void HandleObservedObjectStoppedMoving(ObjectStoppedMoving message) {
-    if (ID == message.robotID) {
-      ActiveObject objectStoppedMoving = GetActiveObjectById((int)message.objectID);
-      if (objectStoppedMoving != null) {
-        // Mark is moving false if the new timestamp is newer or the same as the robot's current timestamp
-        if (message.timestamp >= objectStoppedMoving.LastMovementMessageEngineTimestamp) {
-          objectStoppedMoving.HandleStoppedMoving(message);
-        }
-        else {
-          DAS.Error("Robot.HandleObservedObjectStoppedMoving", "Received old ObjectStoppedMoving message with timestamp " + message.timestamp
-          + " _after_ receiving a newer message with timestamp " + objectStoppedMoving.LastMovementMessageEngineTimestamp + "!");
-        }
+    ActiveObject objectStoppedMoving = GetActiveObjectById((int)message.objectID);
+    if (objectStoppedMoving != null) {
+      // Mark is moving false if the new timestamp is newer or the same as the robot's current timestamp
+      if (message.timestamp >= objectStoppedMoving.LastMovementMessageEngineTimestamp) {
+        objectStoppedMoving.HandleStoppedMoving(message);
+      }
+      else {
+        DAS.Error("Robot.HandleObservedObjectStoppedMoving", "Received old ObjectStoppedMoving message with timestamp " + message.timestamp
+        + " _after_ receiving a newer message with timestamp " + objectStoppedMoving.LastMovementMessageEngineTimestamp + "!");
       }
     }
-
   }
 
 
   private void HandleObservedObjectUpAxisChanged(ObjectUpAxisChanged message) {
-    if (ID == message.robotID) {
-      ActiveObject objectUpAxisChanged = GetActiveObjectById((int)message.objectID);
-      if (objectUpAxisChanged != null) {
-        // Mark is moving false if the new timestamp is newer or the same as the robot's current timestamp
-        if (message.timestamp >= objectUpAxisChanged.LastUpAxisChangedMessageEngineTimestamp) {
-          objectUpAxisChanged.HandleUpAxisChanged(message);
-        }
-        else {
-          DAS.Error("Robot.HandleObservedObjectUpAxisChanged", "Received old ObjectUpAxis message with timestamp " + message.timestamp
-          + " _after_ receiving a newer message with timestamp " + objectUpAxisChanged.LastUpAxisChangedMessageEngineTimestamp + "!");
-        }
+    ActiveObject objectUpAxisChanged = GetActiveObjectById((int)message.objectID);
+    if (objectUpAxisChanged != null) {
+      // Mark is moving false if the new timestamp is newer or the same as the robot's current timestamp
+      if (message.timestamp >= objectUpAxisChanged.LastUpAxisChangedMessageEngineTimestamp) {
+        objectUpAxisChanged.HandleUpAxisChanged(message);
+      }
+      else {
+        DAS.Error("Robot.HandleObservedObjectUpAxisChanged", "Received old ObjectUpAxis message with timestamp " + message.timestamp
+        + " _after_ receiving a newer message with timestamp " + objectUpAxisChanged.LastUpAxisChangedMessageEngineTimestamp + "!");
       }
     }
   }
@@ -1115,11 +1108,9 @@ public class Robot : IRobot {
   }
 
   private void HandleActiveObjectTapped(ObjectTapped message) {
-    if (ID == message.robotID) {
-      ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
-      if (objectPoseUnknown != null) {
-        objectPoseUnknown.HandleObjectTapped(message);
-      }
+    ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
+    if (objectPoseUnknown != null) {
+      objectPoseUnknown.HandleObjectTapped(message);
     }
   }
 

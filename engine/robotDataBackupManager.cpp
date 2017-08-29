@@ -125,7 +125,7 @@ void RobotDataBackupManager::WriteBackupFile()
 void RobotDataBackupManager::RobotConnected(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
 {
   const RobotInterface::RobotAvailable& payload = msg.GetData().Get_robotAvailable();
-  const std::string serialNumber = std::to_string(payload.robotID);
+  const std::string serialNumber = std::to_string(payload.serialNumber);
   Json::Value stats;
   
   // Reads the json file statsForBackup and increments the connection count for this robot

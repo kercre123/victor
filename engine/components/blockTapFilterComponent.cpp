@@ -199,7 +199,6 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   
   // Update the ID to be the blockworld ID before broadcasting
   payload.objectID = tappedObject->GetID();
-  payload.robotID = _robot.GetID();
   // In the simulator, taps are soft and also webots doesn't simulate the phantom taps.
   if (!_enabled || !_robot.IsPhysical())
   {

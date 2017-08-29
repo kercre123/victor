@@ -64,7 +64,6 @@ message UiDeviceAvailable {
 }
 
 message RobotConnectionResponse {
-    uint_32 robotID,
     RobotConnectionResult result,
     uint_32 fwVersion,
     uint_32 serialNumber,
@@ -73,7 +72,6 @@ message RobotConnectionResponse {
 }
 
 message RobotDisconnected {
-    uint_32 robotID,
     float_32 timeSinceLastMsg_sec
 }
 

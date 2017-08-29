@@ -568,7 +568,7 @@ void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp
 {
   using namespace RobotInterface;
   RobotToEngine msg = RobotToEngine::CreateactiveObjectMoved(
-      ObjectMoved(timestamp, activeID, 1, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
+      ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
   AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(event, &robot);
 }

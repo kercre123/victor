@@ -711,7 +711,6 @@ namespace Anki {
       if(doForceAddRobot) {
         ExternalInterface::ConnectToRobot msg;
         msg.isSimulated = forcedRobotIsSim;
-        msg.robotID = forcedRobotId;
         std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
         std::string ipStr = forcedRobotIP;
         std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());

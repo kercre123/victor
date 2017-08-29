@@ -1514,8 +1514,10 @@ Result Robot::Update()
   GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin);
       
   // Full Webots CozmoBot model
-  GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
-      
+  if( IsPhysical() ) {
+    GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
+  }
+  
   // Robot bounding box
   static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
       
@@ -2381,7 +2383,7 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 Result Robot::SendSyncTime() const
 {
   Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(_ID,
+                                RobotInterface::SyncTime(
                                                          #ifdef COZMO_V2
                                                          AndroidHAL::getInstance()->GetTimeStamp(),
                                                          #else
