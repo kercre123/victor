@@ -402,12 +402,16 @@ public:
   const Pose3d&       GetLiftPose()     const { return _liftPose; } // At current lift position!
   const Pose3d&       GetLiftBasePose() const { return _liftBasePose; }
   const PoseFrameID_t GetPoseFrameID()  const { return _frameId; }
-  const Pose3d*       GetWorldOrigin()  const;
+  const Pose3d&       GetWorldOrigin()  const;
+  PoseOriginID_t      GetWorldOriginID()const;
   
   Pose3d              GetCameraPose(f32 atAngle) const;
   Pose3d              GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
 
   OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
+  
+  // Return whether the given pose is in the same origin as the robot's current origin
+  bool IsPoseInWorldOrigin(const Pose3d& pose) const;
   
   // Figure out the head angle to look at the given pose. Orientation of pose is
   // ignored. All that matters is its distance from the robot (in any direction)
@@ -811,7 +815,6 @@ protected:
   // Geometry / Pose
   std::unique_ptr<PoseOriginList> _poseOriginList;
  
-  Pose3d*        _worldOrigin;
   Pose3d         _pose;
   Pose3d         _driveCenterPose;
   PoseFrameID_t  _frameId                   = 0;
@@ -1045,11 +1048,11 @@ inline const RobotID_t Robot::GetID(void) const
 inline const Pose3d& Robot::GetPose(void) const
 {
   // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
-  ANKI_VERIFY(&_pose.FindOrigin() == GetWorldOrigin(),
+  ANKI_VERIFY(_pose.HasSameRootAs(GetWorldOrigin()), 
               "Robot.GetPose.PoseOriginNotWorldOrigin",
               "WorldOrigin: %s, Pose: %s",
-              GetWorldOrigin()->GetNamedPathToOrigin(false).c_str(),
-              _pose.GetNamedPathToOrigin(false).c_str());
+              GetWorldOrigin().GetNamedPathToRoot(false).c_str(),
+              _pose.GetNamedPathToRoot(false).c_str());
   
   return _pose;
 }
@@ -1057,11 +1060,11 @@ inline const Pose3d& Robot::GetPose(void) const
 inline const Pose3d& Robot::GetDriveCenterPose(void) const
 {
   // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
-  ANKI_VERIFY(&_driveCenterPose.FindOrigin() == GetWorldOrigin(),
+  ANKI_VERIFY(_driveCenterPose.HasSameRootAs(GetWorldOrigin()),
               "Robot.GetDriveCenterPose.PoseOriginNotWorldOrigin",
               "WorldOrigin: %s, Pose: %s",
-              GetWorldOrigin()->GetNamedPathToOrigin(false).c_str(),
-              _driveCenterPose.GetNamedPathToOrigin(false).c_str());
+              GetWorldOrigin().GetNamedPathToRoot(false).c_str(),
+              _driveCenterPose.GetNamedPathToRoot(false).c_str());
   
   return _driveCenterPose;
 }

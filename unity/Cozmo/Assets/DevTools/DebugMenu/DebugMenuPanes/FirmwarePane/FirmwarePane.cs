@@ -86,12 +86,12 @@ public class FirmwarePane : MonoBehaviour {
 
 
   private void OnFirmwareUpdateProgress(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message) {
-    _OutputText.text = "InProgress: Robot " + message.robotID + " Stage: " + message.stage + ":" + message.subStage + " " + message.percentComplete + "%"
+    _OutputText.text = "InProgress: Stage: " + message.stage + ":" + message.subStage + " " + message.percentComplete + "%"
     + "\nFwSig = " + message.fwSig;
   }
 
   private void OnFirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
-    _OutputText.text = "Complete: Robot " + message.robotID + " Result: " + message.result
+    _OutputText.text = "Complete: Result: " + message.result
     + "\nFwSig = " + message.fwSig;
   }
 

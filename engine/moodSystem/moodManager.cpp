@@ -263,7 +263,7 @@ void MoodManager::SendEmotionsToGame()
       emotionValues.push_back(emotion.GetValue());
     }
     
-    ExternalInterface::MoodState message(_robot->GetID(), std::move(emotionValues));
+    ExternalInterface::MoodState message(std::move(emotionValues));
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
   }
 }

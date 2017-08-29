@@ -126,7 +126,7 @@ void AutoGlobalLogger::Initialize(Util::IFormattedLoggerProvider* loggerProvider
     
     // load file config
     Json::Value consoleFilterConfig;
-    const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
+    const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
     if (!dataPlatform.readAsJson(Anki::Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
     {
       PRINT_NAMED_ERROR("AutoGlobalLogger.Initialize", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());

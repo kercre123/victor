@@ -52,6 +52,7 @@
 #include "clad/types/poseStructs.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 

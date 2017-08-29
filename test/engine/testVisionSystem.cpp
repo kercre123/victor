@@ -18,7 +18,7 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
-#include "engine/visionSystem.h"
+#include "engine/vision/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/vision/basestation/imageCache.h"

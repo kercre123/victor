@@ -13,7 +13,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToOnCharger.h"
@@ -104,7 +104,7 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
   
-  if(NeedId::Count == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+  if(NeedId::Count == robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
     SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   }
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));

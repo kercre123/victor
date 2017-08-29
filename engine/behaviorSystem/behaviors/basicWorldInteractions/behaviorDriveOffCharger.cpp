@@ -12,7 +12,7 @@
 #include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 
 #include "engine/actions/basicActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/charger.h"
@@ -99,7 +99,7 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersDriveOffChargerArray);
   
   _pushedIdleAnimation = false;
-  if(NeedId::Count == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+  if(NeedId::Count == robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
     robot.GetDrivingAnimationHandler().PushDrivingAnimations(
            {AnimationTrigger::DriveStartLaunch,
             AnimationTrigger::DriveLoopLaunch,

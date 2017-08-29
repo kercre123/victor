@@ -9,7 +9,7 @@
 #include "engine/robot.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
-#include "engine/visionSystem.h"
+#include "engine/vision/visionSystem.h"
 
 #include "anki/vision/basestation/faceTracker.h"
 

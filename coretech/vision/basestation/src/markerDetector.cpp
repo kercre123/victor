@@ -297,7 +297,6 @@ Result MarkerDetector::Detect(const Image& inputImageGray, std::list<ObservedMar
         detectionRects.emplace_back(quad);
       }
       
-      
       observedMarkers.emplace_back(inputImageGray.GetTimestamp(),
                                    crntMarker.markerType,
                                    quad, _camera);
@@ -305,7 +304,7 @@ Result MarkerDetector::Detect(const Image& inputImageGray, std::list<ObservedMar
   } // for(invertImage)
   
   return RESULT_OK;
-} // DetectMarkers()
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MarkerDetector::Parameters::Parameters()

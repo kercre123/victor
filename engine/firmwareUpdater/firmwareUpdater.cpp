@@ -281,7 +281,7 @@ void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComp
     {
       Robot* robot = it->second;
     
-      ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, fwSig, percentComplete);
+      ExternalInterface::FirmwareUpdateProgress message(_state, _subState, fwSig, percentComplete);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else
@@ -308,7 +308,7 @@ void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareU
       
       Util::sEventF("robot.firmware_upgrade_complete", {}, "%s", EnumToString(updateResult));
       
-      ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSig);
+      ExternalInterface::FirmwareUpdateComplete message(updateResult, fwSig);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else

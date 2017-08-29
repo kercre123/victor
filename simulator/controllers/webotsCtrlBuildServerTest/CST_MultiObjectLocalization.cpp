@@ -106,9 +106,9 @@ namespace Cozmo {
   : _kidnappedPose1( 0, Z_AXIS_3D(), {100.f, -175.f, 0.f})
   , _kidnappedPose2( 0, Z_AXIS_3D(), {100.f,  175.f, 0.f})
   , _kidnappedPose3( 0.47f, Z_AXIS_3D(),  {-56.74f, -90.0003f, 0.f})
-  , _poseA_actual(0, Z_AXIS_3D(), {100.f,   0.f, 22.f}, &_fakeOrigin)
-  , _poseB_actual(0, Z_AXIS_3D(), {100.f, -75.f, 22.f}, &_fakeOrigin)
-  , _poseC_actual(0, Z_AXIS_3D(), {100.f,  75.f, 22.f}, &_fakeOrigin)
+  , _poseA_actual(0, Z_AXIS_3D(), {100.f,   0.f, 22.f}, _fakeOrigin)
+  , _poseB_actual(0, Z_AXIS_3D(), {100.f, -75.f, 22.f}, _fakeOrigin)
+  , _poseC_actual(0, Z_AXIS_3D(), {100.f,  75.f, 22.f}, _fakeOrigin)
   , _objectPosesActual{&_poseA_actual, &_poseB_actual, &_poseC_actual}
   , _poseAngleThresh(DEG_TO_RAD(15.f))
   {

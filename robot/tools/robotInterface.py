@@ -8,7 +8,7 @@ import sys, os, time, re, struct, json
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
 ANKI_LOG_STRING_TABLE_LOCAL  = 'AnkiLogStringTables.json'
-ANKI_LOG_STRING_TABLE_GLOBAL = os.path.join('..', 'resources', 'config', 'basestation', 'AnkiLogStringTables.json')
+ANKI_LOG_STRING_TABLE_GLOBAL = os.path.join('..', 'resources', 'config', 'engine', 'AnkiLogStringTables.json')
 
 if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
     import subprocess

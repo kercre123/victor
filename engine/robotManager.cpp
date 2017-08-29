@@ -161,7 +161,7 @@ void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnect
     }
     if (!handledDisconnect) {
       _context->GetExternalInterface()->OnRobotDisconnected(withID);
-      _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
+      _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(0.0f)));
     }
 
     _context->GetNeedsManager()->OnRobotDisconnected();

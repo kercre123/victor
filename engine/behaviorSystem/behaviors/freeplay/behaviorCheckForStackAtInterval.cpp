@@ -116,7 +116,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(Robot& robo
   const ObservableObject* obj = GetKnownObject(robot, _knownBlockIndex);
   if ( nullptr != obj )
   {
-    Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
+    Pose3d ghostPose = obj->GetPose().GetWithRespectToRoot();
     ghostPose.SetTranslation({
       ghostPose.GetTranslation().x(),
       ghostPose.GetTranslation().y(),
@@ -153,7 +153,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(Robot& robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCheckForStackAtInterval::TransitionToReturnToSearch(Robot& robot)
 {
-  const Radians initialRobotRotation = _initialRobotPose.GetWithRespectToOrigin()
+  const Radians initialRobotRotation = _initialRobotPose.GetWithRespectToRoot()
                                            .GetRotation().GetAngleAroundZaxis();
   IActionRunner* action = new PanAndTiltAction(robot, initialRobotRotation, 0, true, false);
   StartActing(action, [this](){

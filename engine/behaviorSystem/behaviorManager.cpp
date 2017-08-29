@@ -88,7 +88,35 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
-}
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersUIRequestGame = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               true},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      true},
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersUIRequestGame),
+              "Reaction triggers duplicate or non-sequential");
+const char* kDisableReactionsUIRequestGameLock = "bm_ui_request_game_lock";
+  
+} // namespace
 
 /////////
 // Running/Resume implementation
@@ -237,6 +265,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _currentHighLevelActivity(HighLevelActivity::Count)
 , _uiRequestGameBehavior(nullptr)
 , _behaviorContainer(new BehaviorContainer(robot, robot.GetContext()->GetDataLoader()->GetBehaviorJsons()))
+, _hasActionQueuedOrSDKReactEnabled(false)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 , _behaviorThatSetLights(BehaviorClass::Wait)
@@ -679,6 +708,8 @@ bool BehaviorManager::SwitchToVoiceCommandBehavior(IBehaviorPtr nextBehavior)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SwitchToUIGameRequestBehavior()
 {
+  DisableReactionsWithLock(kDisableReactionsUIRequestGameLock, kAffectTriggersUIRequestGame);
+  
   BehaviorRunningAndResumeInfo newBehaviorInfo;
   newBehaviorInfo.SetCurrentBehavior(_uiRequestGameBehavior);
   SwitchToBehaviorBase(newBehaviorInfo);
@@ -835,9 +866,9 @@ Result BehaviorManager::Update(Robot& robot)
   GetCurrentActivity()->Update(robot);
   
   
-  // Make sure to clear the current flags if we are in a reactionary behavior
+  // Make sure to clear the current flags if Cozmo is off his treads
   // or if we've transitioned out of freeplay
-  if ((GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) ||
+  if ((robot.GetOffTreadsState() != OffTreadsState::OnTreads) ||
       (_currentHighLevelActivity != HighLevelActivity::Freeplay)) {
     EnsureRequestGameIsClear();
   }
@@ -1083,6 +1114,10 @@ void BehaviorManager::SelectUIRequestGameBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::EnsureRequestGameIsClear()
 {
+  if(_uiRequestGameBehavior != nullptr){
+    RemoveDisableReactionsLock(kDisableReactionsUIRequestGameLock);
+  }
+
   _robot.GetAIComponent().GetWhiteboard().SetCurrentGameRequestUIRequest(false);
   _uiRequestGameBehavior = nullptr;
   _shouldRequestGame = false;
@@ -1097,6 +1132,17 @@ BehaviorClass BehaviorManager::GetBehaviorClass(IBehaviorPtr behavior) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::CheckReactionTriggerStrategies()
 {
+  // Hack related to COZMO-14207 - Since we currently have no knowledge of
+  // whether Cozmo is starting up with a wakeup that we shouldn't react during
+  // or is in DEV webots/SDK mode, and to future proof future paths, don't
+  // react until the first action is queued, indicating that there has been time
+  // for any desired enables/disables to be put in place by whatever is controlling
+  // engine
+  _hasActionQueuedOrSDKReactEnabled |= !_robot.GetActionList().IsEmpty();
+  if(!_hasActionQueuedOrSDKReactEnabled){
+    return false;
+  }
+  
   // Check to see if any reaction triggers want to activate a behavior
   bool hasAlreadySwitchedThisTick = false;
   bool didSuccessfullySwitch = false;
@@ -1433,6 +1479,11 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
 {
+  // If SDK lock is being removed, ensure the special action queued/reaction
+  // tracker is set appropriately
+  const bool sdkDifferentParadigmLock = (lockID == "sdk");
+  _hasActionQueuedOrSDKReactEnabled |= sdkDifferentParadigmLock;
+  
   /// Iterate over all reaction triggers to see if they're affected by this request
   for(auto& entry: _reactionTriggerMap){
     const ReactionTrigger triggerEnum = entry.first;

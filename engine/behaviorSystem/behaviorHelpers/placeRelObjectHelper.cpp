@@ -200,7 +200,7 @@ void PlaceRelObjectHelper::MarkFailedToStackOrPlace(Robot& robot)
       
       const Pose3d& placingAtPose = Pose3d(Z_AXIS_3D(),
                                            {xOffset, yOffset, 0},
-                                           &placeRelObj->GetPose());
+                                           placeRelObj->GetPose());
       whiteboard.SetFailedToUse(*carryingObj,
                                 AIWhiteboard::ObjectActionFailure::PlaceObjectAt,
                                 placingAtPose);

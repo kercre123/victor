@@ -514,7 +514,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
   }
   
   const Point2f& pt = _lastLaserObservation.pointWrtRobot;
-  const Pose3d laserPointPose(0.f, Z_AXIS_3D(), {pt.x(), pt.y(), 0.f}, &robot.GetPose());
+  const Pose3d laserPointPose(0.f, Z_AXIS_3D(), {pt.x(), pt.y(), 0.f}, robot.GetPose());
   
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
     new TurnTowardsPoseAction(robot, laserPointPose, M_PI_F),

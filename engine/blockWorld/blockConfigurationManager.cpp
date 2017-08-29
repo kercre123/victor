@@ -228,9 +228,9 @@ void BlockConfigurationManager::UpdateLastConfigCheckBlockPoses(Robot& robot)
     const ObjectID& objectID = block->GetID();
     auto lastPoseMapIter = _objectIDToLastPoseConfigurationUpdateMap.find(objectID);
     if(lastPoseMapIter != _objectIDToLastPoseConfigurationUpdateMap.end()){
-      lastPoseMapIter->second = block->GetPose().GetWithRespectToOrigin();
+      lastPoseMapIter->second = block->GetPose().GetWithRespectToRoot();
     }else{
-      _objectIDToLastPoseConfigurationUpdateMap.insert(std::make_pair(objectID, block->GetPose().GetWithRespectToOrigin()));
+      _objectIDToLastPoseConfigurationUpdateMap.insert(std::make_pair(objectID, block->GetPose().GetWithRespectToRoot()));
     }
   }
 }

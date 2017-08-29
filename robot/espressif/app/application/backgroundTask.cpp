@@ -74,7 +74,7 @@ void RadioConnectionStateMachineUpdate()
       case 2:
       {
         RobotInterface::RobotAvailable idMsg;
-        idMsg.robotID = getSerialNumber();
+        idMsg.serialNumber = getSerialNumber();
         idMsg.hwRevision = getHardwareRevision();
         if (RobotInterface::SendMessage(idMsg)) doRTConnectPhase++;
         break;

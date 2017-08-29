@@ -24,6 +24,7 @@
 #include "clad/types/actionTypes.h"
 
 #include <map>
+#include <set>
 #include <vector>
 
 namespace Anki {
@@ -50,10 +51,10 @@ namespace Cozmo {
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
     // Called when robot delocalizes
-    void OnRobotDelocalized(const Pose3d* worldOrigin);
+    void OnRobotDelocalized(PoseOriginID_t worldOriginID);
     
     // Called when Robot rejiggers its pose. Returns number of faces updated
-    int UpdateFaceOrigins(const Pose3d* oldOrigin, const Pose3d* newOrigin);
+    int UpdateFaceOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t newOriginID);
 
     // create a smart face ID or update an existing ID from a raw ID (useful, for example for IDs from CLAD
     // messages)

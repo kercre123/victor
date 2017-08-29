@@ -50,12 +50,12 @@ struct PlanParameters
   std::vector<Pose3d> targetPoses;
 
   // the driver center pose and target poses all must share this origin for the plan to be valid
-  const Pose3d* commonOrigin = nullptr;
+  PoseOriginID_t commonOriginID = PoseOriginList::UnknownOriginID;
 };
 
 void PlanParameters::Reset() {
   targetPoses.clear();
-  commonOrigin = nullptr;
+  commonOriginID = PoseOriginList::UnknownOriginID;
 }
 
 PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoContext* context)
@@ -352,16 +352,13 @@ void PathComponent::HandlePossibleOriginChanges()
 
   // should always have valid origin since we're planning
   // TODO: COZMO-1637: Once we figure this out, switch these verifies back to dev_asserts for efficiency
-  ANKI_VERIFY(_currPlanParams->commonOrigin != nullptr,
-              "PathComponent.HandlePossibleOriginChanes.NullParamsOrigin", "");
+  ANKI_VERIFY(_currPlanParams->commonOriginID != PoseOriginList::UnknownOriginID,
+              "PathComponent.HandlePossibleOriginChanges.NullParamsOrigin", "");
   
-  ANKI_VERIFY(_currPlanParams->commonOrigin->IsOrigin(),
-              "PathComponent.HandlePossibleOriginChanes.OriginIsntAnOrigin", "");
-  
-  ANKI_VERIFY(_robot.GetPoseOriginList().GetOriginID(_currPlanParams->commonOrigin) != PoseOriginList::UnknownOriginID,
+  ANKI_VERIFY(_robot.GetPoseOriginList().ContainsOriginID(_currPlanParams->commonOriginID),
               "PathComponent.Update.CommonOriginNotInRobotPoseOriginList",
-              "OriginName: %s", _currPlanParams->commonOrigin->GetNamedPathToOrigin(false).c_str());
-
+              "ID:%d", _currPlanParams->commonOriginID);
+  
   // haveOriginsChanged: Check if the robot's origin has changed since planning. If no delocs, relocs, or
   // rejiggers have happened, our stored commonOrigin will be the robots world origin. Otherwise, we check
   // for origin rejiggering. If our stored origin was rejiggered, then it is no longer an origin itself. If
@@ -369,8 +366,10 @@ void PathComponent::HandlePossibleOriginChanges()
   // where this happens would be that the robot localizes to object 1 (origin A), get picked up and put down
   // (creating origin B), starts driving somewhere, and while driving sees object 1, which causes a rejigger
   // to origin A
-  const bool haveOriginsChanged = ( _currPlanParams->commonOrigin != _robot.GetWorldOrigin() );
-  const bool canAdjustOrigin = &_currPlanParams->commonOrigin->FindOrigin() == _robot.GetWorldOrigin();
+  const bool haveOriginsChanged = ( _currPlanParams->commonOriginID != _robot.GetPoseOriginList().GetCurrentOriginID() );
+  
+  const Pose3d& commonOrigin = _robot.GetPoseOriginList().GetOriginByID(_currPlanParams->commonOriginID);
+  const bool canAdjustOrigin = _robot.IsPoseInWorldOrigin(commonOrigin);
 
   if ( haveOriginsChanged && !canAdjustOrigin ) {
     // the origins changed and we can't rejigger our goal to the new origin (we probably delocalized),
@@ -398,7 +397,7 @@ void PathComponent::RejiggerTargetsAndReplan()
     return;
   }
   
-  _currPlanParams->commonOrigin = _robot.GetWorldOrigin();
+  _currPlanParams->commonOriginID = _robot.GetPoseOriginList().GetCurrentOriginID();
 
   if( _plannerActive ) {
     // no use carrying on with an old plan, if there is one going
@@ -413,13 +412,13 @@ void PathComponent::RejiggerTargetsAndReplan()
   // the rejigger into account
   bool rejiggerSuccess = true;
   for( auto& targetPose : _currPlanParams->targetPoses ) {
-    rejiggerSuccess &= targetPose.GetWithRespectTo(*_currPlanParams->commonOrigin, targetPose);
+    rejiggerSuccess &= targetPose.GetWithRespectTo(_robot.GetWorldOrigin(), targetPose);
   }
   
   if( ANKI_VERIFY(rejiggerSuccess, "PathComponent.Update.Rejigger",
                   "Rejiggering %zu target poses to new origin '%s' failed",
                   _currPlanParams->targetPoses.size(),
-                  _currPlanParams->commonOrigin ? _currPlanParams->commonOrigin->GetName().c_str() : "NULL") ) {
+                  _robot.GetWorldOrigin().GetName().c_str())) {
 
     const bool started = StartPlanner();
     if( started ) {
@@ -588,7 +587,7 @@ void PathComponent::HandlePlanComplete()
 void PathComponent::SelectPlannerHelper(const Pose3d& targetPose)
 {
   Pose2d target2d(targetPose);
-  Pose2d start2d(_robot.GetPose().GetWithRespectToOrigin());
+  Pose2d start2d(_robot.GetPose().GetWithRespectToRoot());
 
   float distSquared = pow(target2d.GetX() - start2d.GetX(), 2) + pow(target2d.GetY() - start2d.GetY(), 2);
 
@@ -733,41 +732,44 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
   _usingManualPathSpeed = useManualSpeed;
   _plannerSelectedPoseIndex = selectedPoseIndexPtr;
 
-  const Pose3d& driveCenterPose(_robot.GetDriveCenterPose());  
-
-  _currPlanParams->commonOrigin = &driveCenterPose.FindOrigin();
-  ANKI_VERIFY(_robot.GetPoseOriginList().GetOriginID(_currPlanParams->commonOrigin) != PoseOriginList::UnknownOriginID,
-              "PathComponent.StartDrivingToPose.CommonOriginNotInRobotPoseOriginList",
-              "OriginName: %s",
-              _currPlanParams->commonOrigin == nullptr ? "<null>" : _currPlanParams->commonOrigin->GetNamedPathToOrigin(false).c_str());
+  _currPlanParams->commonOriginID = _robot.GetPoseOriginList().GetCurrentOriginID();
   
-  if( !ANKI_VERIFY( _currPlanParams->commonOrigin != nullptr,
-                    "PathComponent.StartDrivingToPose.NullOrigin", "" ) ) {
+  const Pose3d& driveCenterPose = _robot.GetDriveCenterPose();
+  
+  // TODO: this is really a sanity check and is not "free". Disable or make ANKI_DEV_CODE once COZMO-1637 is sorted out
+  const Pose3d& driveCenterOrigin = driveCenterPose.FindRoot();
+  const PoseOriginID_t driveCenterOriginID = driveCenterOrigin.GetID();
+  if(!ANKI_VERIFY(_currPlanParams->commonOriginID == driveCenterOriginID,
+              "PathComponent.StartDrivingToPose.DriveCenterOriginMismatch",
+              "RobotOriginID:%d DriveCenterOrigin:%d(%s)",
+              _currPlanParams->commonOriginID, driveCenterOriginID, driveCenterOrigin.GetName().c_str())) {
     SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
     return RESULT_FAIL;
   }
-  if( !ANKI_VERIFY( _currPlanParams->commonOrigin == _robot.GetWorldOrigin(),
-                    "PathComponent.StartDrivingToPose.InconsistentOrigin", "" ) ) {
-    SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
-    return RESULT_FAIL;
-  }
-
+  
+  const Pose3d& commonOrigin = _robot.GetPoseOriginList().GetCurrentOrigin();
+  
   // Compute drive center pose for start pose and goal poses
   _currPlanParams->targetPoses.resize(poses.size());
   for (int i=0; i< poses.size(); ++i) {
-    _robot.ComputeDriveCenterPose(poses[i], _currPlanParams->targetPoses[i]);
+    Pose3d& targetPose_i = _currPlanParams->targetPoses[i];
+    
+    _robot.ComputeDriveCenterPose(poses[i], targetPose_i);
 
     // assure that all targets and the robot share an origin
-    if( _currPlanParams->commonOrigin != &_currPlanParams->targetPoses[i].FindOrigin() ) {
+    if(!_currPlanParams->targetPoses[i].HasSameRootAs(commonOrigin)) {
       PRINT_NAMED_WARNING("PathComponent.StartDrivingToPose.OriginMismatch",
-                          "robot origin %p does not match target pose %d origin %p",
-                          _currPlanParams->commonOrigin,
+                          "robot origin %s does not match target pose %d origin %s",
+                          commonOrigin.GetName().c_str(),
                           i,
-                          &_currPlanParams->targetPoses[i].FindOrigin());
-      _currPlanParams->commonOrigin->Print("Planner", "commonOrigin");
-      _currPlanParams->targetPoses[i].FindOrigin().Print("Planner", "targetOrigin");
-      _currPlanParams->targetPoses[i].PrintNamedPathToOrigin(false);
-
+                          targetPose_i.FindRoot().GetName().c_str());
+      
+      if(ANKI_DEVELOPER_CODE)
+      {
+        commonOrigin.Print("Planner", "commonOrigin");
+        targetPose_i.FindRoot().Print("Planner", "targetOrigin");
+        targetPose_i.PrintNamedPathToRoot(false);
+      }
       SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
       return RESULT_FAIL;
     }

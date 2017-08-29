@@ -668,7 +668,7 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.update_if_changed(build_config_final_path, build_config_temp_path)
 
         # Copy sensory voice recognition language data files from CTE to local folders to be used at runtime
-        voiceCommandLocalDir = os.path.join(GAME_ROOT, 'lib', 'anki', 'products-cozmo-assets', 'voiceCommand')
+        voiceCommandLocalDir = os.path.join(GAME_ROOT, 'resources', 'assets', 'voiceCommand')
         voiceRecogDataList = open(os.path.join(voiceCommandLocalDir, 'voice-recognition-data.txt')).read().splitlines()
 
         voiceCommandDataBaseDirSrc = os.path.join(CTE_ROOT, 'sensory', 'TrulyHandsfreeSDK', '4.4.23_noexpire', 'Data')

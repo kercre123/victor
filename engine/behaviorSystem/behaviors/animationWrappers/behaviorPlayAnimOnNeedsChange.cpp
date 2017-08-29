@@ -13,8 +13,8 @@
 
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
@@ -57,7 +57,7 @@ bool BehaviorPlayAnimOnNeedsChange::IsRunnableAnimSeqInternal(const Robot& robot
 void BehaviorPlayAnimOnNeedsChange::StopInternal(Robot& robot)
 {
   if(ShouldGetInBePlayed(robot)){
-    robot.GetAIComponent().GetWhiteboard().SetSevereNeedExpression(_params._need);
+    robot.GetAIComponent().GetSevereNeedsComponent().SetSevereNeedExpression(_params._need);
   }
 }
 
@@ -65,8 +65,8 @@ void BehaviorPlayAnimOnNeedsChange::StopInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPlayAnimOnNeedsChange::ShouldGetInBePlayed(const Robot& robot) const
 {
-  const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
-  const bool isSevereExpressed = (_params._need == whiteboard.GetSevereNeedExpression());
+  const SevereNeedsComponent& severeNeedsComponent = robot.GetAIComponent().GetNonConstSevereNeedsComponent();
+  const bool isSevereExpressed = (_params._need == severeNeedsComponent.GetSevereNeedExpression());
   
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool shouldSevereNeedBeExpressed =

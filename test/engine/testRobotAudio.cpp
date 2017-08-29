@@ -70,7 +70,7 @@ public:
   CannedAnimationContainer* CreateAnimationContainer()
   {
     const std::string animationFile = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                                      "config/basestation/animations/ANIMATION_TEST.json");
+                                                                                      "config/engine/animations/ANIMATION_TEST.json");
     Json::Value animDefs;
     const bool success = cozmoContext->GetDataPlatform()->readAsJson(animationFile, animDefs);
     EXPECT_TRUE(success);

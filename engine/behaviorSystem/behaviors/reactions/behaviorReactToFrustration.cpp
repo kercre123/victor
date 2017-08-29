@@ -119,14 +119,14 @@ void BehaviorReactToFrustration::AnimationComplete(Robot& robot)
     
     Pose3d randomPoseRot( DEG_TO_RAD(randomAngleDeg), Z_AXIS_3D(),
                           {0.0f, 0.0f, 0.0f},
-                          &robot.GetPose() );
+                          robot.GetPose() );
     Pose3d randomPoseRotAndTrans( 0.f, Z_AXIS_3D(),
                                   {randomDist_mm, 0.0f, 0.0f},
-                                  &randomPoseRot );
+                                  randomPoseRot );
 
     // TODO:(bn) motion profile?
     const bool kForceHeadDown = false;
-    DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToOrigin(), kForceHeadDown);
+    DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToRoot(), kForceHeadDown);
     StartActing(action); // finish behavior when we are done
   }
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedToFrustration);

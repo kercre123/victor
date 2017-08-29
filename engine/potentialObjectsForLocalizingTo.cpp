@@ -16,6 +16,8 @@
 
 #include "engine/potentialObjectsForLocalizingTo.h"
 
+#include "anki/common/basestation/math/poseOriginList.h"
+
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -50,7 +52,6 @@ static void VERBOSE_DEBUG_PRINT(const char* eventName, const char* description, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PotentialObjectsForLocalizingTo::PotentialObjectsForLocalizingTo(Robot& robot)
 : _robot(robot)
-, _currentWorldOrigin(_robot.GetWorldOrigin())
 , _kCanRobotLocalizeToObjects(ENABLE_BLOCK_BASED_LOCALIZATION &&
                               (_robot.GetLocalizedTo().IsUnknown() ||
                                _robot.HasMovedSinceBeingLocalized()))
@@ -119,7 +120,8 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
   };
   
   const TimeStamp_t obsTime = observedObject->GetLastObservedTime();
-  const PoseOrigin* matchedOrigin = &newPair.matchedObject->GetPose().FindOrigin();
+  
+  const bool isMatchedObjectInCurrentOrigin = _robot.IsPoseInWorldOrigin(newPair.matchedObject->GetPose());
   
   // Don't bother if the matched object doesn't pass these up-front checks:
   const bool couldUseForLocalization = CouldUseObjectForLocalization(matchedObject);
@@ -136,7 +138,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                         seeingFromTooFar);
     
     // Since we're not storing this pair, update pose if in the current frame
-    if(matchedOrigin == _currentWorldOrigin)
+    if(isMatchedObjectInCurrentOrigin)
     {
       const bool wasCameraMoving = _robot.GetMoveComponent().WasCameraMoving(obsTime);
       UseDiscardedObservation(newPair, wasCameraMoving);
@@ -163,7 +165,7 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
   // Check whether or not the robot had moved since the last time the matched object's pose was updated.
   // If it hasn't moved, then only localize if the observed object pose is nearly identical to the
   // matched object pose.
-  if(matchedOrigin == _currentWorldOrigin) {
+  if(isMatchedObjectInCurrentOrigin) {
     const TimeStamp_t lastObservedTime = _robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(matchedObject->GetID());
     const TimeStamp_t currObservedTime = obsTime;
     const HistRobotState *hrsMatched;
@@ -185,16 +187,20 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
     }
   }
   
-  auto iter = _pairMap.find(matchedOrigin);
+  const PoseOriginID_t matchedOriginID = newPair.matchedObject->GetPose().GetRootID();
+  DEV_ASSERT(_robot.GetPoseOriginList().ContainsOriginID(matchedOriginID),
+             "PotentialObjectsForLocalizingTo.Insert.ObjectOriginNotInList");
+ 
+  auto iter = _pairMap.find(matchedOriginID);
   if(iter == _pairMap.end()) {
     // This is the first match pair in its frame, just insert it
     VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.AddingNew",
                         "Adding %s %d in frame %p as new",
                         EnumToString(newPair.matchedObject->GetType()),
                         newPair.matchedObject->GetID().GetValue(),
-                        matchedOrigin);
+                        matchedOriginID);
                         
-    _pairMap[matchedOrigin] = std::move( newPair );
+    _pairMap[matchedOriginID] = std::move( newPair );
   }
   else
   {
@@ -209,12 +215,12 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           EnumToString(iter->second.matchedObject->GetType()),
                           iter->second.matchedObject->GetID().GetValue(),
                           iter->second.distance,
-                          matchedOrigin,
+                          matchedOriginID,
                           EnumToString(newPair.matchedObject->GetType()),
                           newPair.matchedObject->GetID().GetValue(),
                           newPair.distance);
       
-      if(iter->first == _currentWorldOrigin) {
+      if(iter->first == _robot.GetPoseOriginList().GetCurrentOriginID()) {
         UseDiscardedObservation(iter->second, wasCameraMoving);
       }
       std::swap(iter->second, newPair);
@@ -227,10 +233,10 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           "Ignoring %s %d in frame %p because d=%.1f is too large",
                           EnumToString(newPair.matchedObject->GetType()),
                           newPair.matchedObject->GetID().GetValue(),
-                          matchedOrigin,
+                          matchedOriginID,
                           newPair.distance);
       
-      if(matchedOrigin == _currentWorldOrigin) {
+      if(isMatchedObjectInCurrentOrigin) {
         UseDiscardedObservation(newPair, wasCameraMoving);
       }
     }
@@ -248,13 +254,15 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
     // No localization options, nothing to do
     return RESULT_OK;
   }
+ 
+  const PoseOriginID_t currentWorldOriginID = _robot.GetPoseOriginList().GetCurrentOriginID();
   
   // If we have more than 1 thing in the pair map or the only thing in the pair map
   // is from a different frame, then we have cross-frame localization options.
   const bool haveCrossFrameOptions = (_pairMap.size() > 1 ||
-                                      _pairMap.begin()->first != _currentWorldOrigin);
+                                      _pairMap.begin()->first != currentWorldOriginID);
   
-  auto currFrameIter = _pairMap.find(_currentWorldOrigin);
+  auto currFrameIter = _pairMap.find(currentWorldOriginID);
 
   Result localizeResult = RESULT_OK;
   
@@ -274,14 +282,14 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
     // If the current origin is not the first one we will use for localization, then
     // we will need to re-look it up by ID while localizing below since it will have
     // been rejiggered out of the current frame
-    const Pose3d* firstOrigin = &(pairsToLocalizeToByDist.begin()->second.matchedObject->GetPose().FindOrigin());
-    const bool recheckMatchObjectByID = _currentWorldOrigin != firstOrigin;
+    const PoseOriginID_t firstOriginID = pairsToLocalizeToByDist.begin()->second.matchedObject->GetPose().GetRootID();
+    const bool recheckMatchObjectByID = (currentWorldOriginID != firstOriginID);
     if( recheckMatchObjectByID )
     {
       DistanceTable::iterator distanceTableIt = pairsToLocalizeToByDist.begin();
       while ( distanceTableIt != pairsToLocalizeToByDist.end() ) {
-        const Pose3d* origin = &(distanceTableIt->second.matchedObject->GetPose().FindOrigin());
-        if ( origin == _currentWorldOrigin ) {
+        const PoseOriginID_t matchedOriginID = distanceTableIt->second.matchedObject->GetPose().GetRootID();
+        if ( matchedOriginID == currentWorldOriginID ) {
           distanceTableIt->second.matchedID = distanceTableIt->second.matchedObject->GetID();
           PRINT_CH_INFO("BlockWorld", "PotentialObjectsForLocalizingTo.LocalizeRobot.StoringMatchedObjectID",
                         "Match in current frame not farthest. Storing ID=%d to recheck when encountered while localizing.",

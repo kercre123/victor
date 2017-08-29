@@ -61,12 +61,15 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     textureImporter.textureType = TextureImporterType.Sprite;
     textureImporter.spriteImportMode = SpriteImportMode.Single;
 
-    if (ShouldPackSprite()) {
-      textureImporter.spritePackingTag = GenerateSpritePackingTag();
-    }
-    else {
-      textureImporter.spritePackingTag = null;
-    }
+    // COZMO-14363: Not packing sprites so that less memory will be loaded in at runtime for low-end
+    // devices at a small framerate hit.
+    //if (ShouldPackSprite()) {
+    //  textureImporter.spritePackingTag = GenerateSpritePackingTag();
+    //}
+    //else {
+    //  textureImporter.spritePackingTag = null;
+    //}
+    textureImporter.spritePackingTag = null;
 
     textureImporter.spritePixelsPerUnit = GetPixelsPerUnit();
     textureImporter.mipmapEnabled = false;

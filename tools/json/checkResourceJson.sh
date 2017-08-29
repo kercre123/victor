@@ -14,7 +14,7 @@ if [ ! -d $UTIL_DIR ]; then
     exit -1
 fi
 
-CHECK_DIR='lib/anki/products-cozmo-assets/'
+CHECK_DIR='resources/assets/'
 
 echo "Running json check (this should take a few seconds)..."
 

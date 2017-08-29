@@ -380,7 +380,7 @@ public class RobotEngineManager : MonoBehaviour {
     // expanded potentially add multiple robots.
     if (!_IsRobotConnected && message.result != RobotConnectionResult.ConnectionFailure) {
       _IsRobotConnected = true;
-      AddRobot((byte)message.robotID);
+      AddRobot(1); // only 1 is ever used for robotID
       CurrentRobot.FirmwareVersion = message.fwVersion;
       CurrentRobot.SerialNumber = message.serialNumber;
       CurrentRobot.BodyHWVersion = message.bodyHWVersion;
@@ -398,9 +398,9 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
-    DasTracker.Instance.TrackRobotDisconnected((byte)message.robotID);
-    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
-    RemoveRobot((byte)message.robotID);
+    DasTracker.Instance.TrackRobotDisconnected(1);
+    DAS.Event("RobotEngineManager.RobotDisconnected", "Robot 1 disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
+    RemoveRobot(1);
   }
 
   private void ProcessCLADVersionMismatch(Anki.Cozmo.ExternalInterface.EngineRobotCLADVersionMismatch message) {
@@ -513,7 +513,6 @@ public class RobotEngineManager : MonoBehaviour {
     int length = Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, ConnectToRobotMessage.ipAddress, 0);
     ConnectToRobotMessage.ipAddress[length] = 0;
 
-    ConnectToRobotMessage.robotID = (byte)robotID;
     ConnectToRobotMessage.isSimulated = RobotConnectionType == ConnectionType.Sim ? (byte)1 : (byte)0;
 
     Message.ConnectToRobot = ConnectToRobotMessage;
@@ -575,7 +574,6 @@ public class RobotEngineManager : MonoBehaviour {
 
     // mock connect message fire.
     Anki.Cozmo.ExternalInterface.RobotConnectionResponse connectedMessage = new Anki.Cozmo.ExternalInterface.RobotConnectionResponse();
-    connectedMessage.robotID = 1;
     connectedMessage.result = RobotConnectionResult.Success;
     _CallbackManager.MessageReceived(connectedMessage);
   }

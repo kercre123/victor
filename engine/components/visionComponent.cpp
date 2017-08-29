@@ -26,8 +26,8 @@
 #include "engine/petWorld.h"
 #include "engine/robot.h"
 #include "engine/robotStateHistory.h"
-#include "engine/visionModesHelpers.h"
-#include "engine/visionSystem.h"
+#include "engine/vision/visionModesHelpers.h"
+#include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
 
 #include "anki/vision/basestation/camera.h"
@@ -40,13 +40,13 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/robot/config.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
@@ -594,12 +594,13 @@ namespace Cozmo {
       // Get the robot origin w.r.t. the camera position with the camera at
       // the current head angle
       Pose3d robotPoseWrtCamera;
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-      bool result = robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
-      assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
-#else
-      robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
-#endif
+      {
+        const bool result = robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
+        // this really shouldn't fail! camera has to be in the robot's pose tree
+        DEV_ASSERT(result == true, "VisionComponent.PopulateGroundPlaneHomographyLUT.GetWrtFailed");
+#       pragma unused(result) // Avoid errors in release/shipping when assert compiles out
+      }
+ 
       const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
       const Vec3f&            T = robotPoseWrtCamera.GetTranslation();
       
@@ -627,6 +628,11 @@ namespace Cozmo {
   
   bool VisionComponent::LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const
   {
+    if(!ANKI_VERIFY(!_groundPlaneHomographyLUT.empty(), "VisionComponent.LookupGroundPlaneHomography.EmptyLUT", ""))
+    {
+      return false;
+    }
+    
     if(atHeadAngle > _groundPlaneHomographyLUT.rbegin()->first) {
       // Head angle too large
       return false;
@@ -774,7 +780,7 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.BadPose",
                               "Could not estimate pose of marker. Not visualizing.");
         } else {
-          if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+          if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindRoot(), markerPose) == true) {
             _robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
           } else {
             PRINT_NAMED_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.MarkerOriginNotCameraOrigin",
@@ -952,11 +958,11 @@ namespace Cozmo {
         return RESULT_OK;
       }
       
-      if(&histStatePtr->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
+      if(!_robot.IsPoseInWorldOrigin(histStatePtr->GetPose())) {
         PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.OldOrigin",
                       "Ignoring observed marker from origin %s (robot origin is %s)",
-                      histStatePtr->GetPose().FindOrigin().GetName().c_str(),
-                      _robot.GetWorldOrigin()->GetName().c_str());
+                      histStatePtr->GetPose().FindRoot().GetName().c_str(),
+                      _robot.GetWorldOrigin().GetName().c_str());
         return RESULT_OK;
       }
       

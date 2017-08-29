@@ -67,13 +67,13 @@ LOGv "Run copyResources.py"
     --platform android \
     --buildToolsPath tools/build/ \
     --externalAssetsPath EXTERNALS/cozmo-assets/ \
-    --animationGroupsPath lib/anki/products-cozmo-assets/animationGroupMaps/ \
-    --cubeAnimationGroupPath lib/anki/products-cozmo-assets/cubeAnimationGroupMaps/ \
-    --dailyGoalsPath lib/anki/products-cozmo-assets/DailyGoals/ \
-    --rewardedActionsPath lib/anki/products-cozmo-assets/RewardedActions/ \
+    --animationGroupsPath resources/assets/animationGroupMaps/ \
+    --cubeAnimationGroupPath resources/assets/cubeAnimationGroupMaps/ \
+    --dailyGoalsPath resources/assets/DailyGoals/ \
+    --rewardedActionsPath resources/assets/RewardedActions/ \
     --engineResourcesPath resources/config/ \
     --unityAssetsPath unity/Cozmo/Assets/StreamingAssets/ \
-    --voiceCommandResourcesPath lib/anki/products-cozmo-assets/voiceCommand/exports/ \
+    --voiceCommandResourcesPath resources/assets/voiceCommand/exports/ \
     --ttsResourcesPath generated/android/resources/tts/
 
     # Do not copy sound banks

@@ -97,12 +97,12 @@ TEST(ObjectInteractionInfoCache, BestObjectConsistency)
   
   // put the first cube close to the robot, and put the second cube much further away
   {
-    const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1, 0, 0}, &robot.GetPose());
+    const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1, 0, 0}, robot.GetPose());
     auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, obj1Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }
   {
-    const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1 *100, 0, 0}, &robot.GetPose());
+    const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1 *100, 0, 0}, robot.GetPose());
     auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, obj2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }
@@ -132,7 +132,7 @@ TEST(ObjectInteractionInfoCache, BestObjectConsistency)
     
   // Move object 2 in closer - object 1 should still be the best object because
   {
-    const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1/2, 0, 0}, &robot.GetPose());
+    const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1/2, 0, 0}, robot.GetPose());
     auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, obj2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }
