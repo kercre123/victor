@@ -562,6 +562,9 @@ namespace Anki {
         return ActionResult::BAD_OBJECT;
       }
       
+      // Only set cube lights if the dock object is a light cube
+      _shouldSetCubeLights = IsValidLightCube(dockObject->GetType(), false);
+
       PreActionPoseOutput preActionPoseOutput;
       
       if(_doNearPredockPoseCheck)
@@ -705,7 +708,7 @@ namespace Anki {
                       kReactionsToSuppressID,
                       *_reactionTriggersToSuppress);
       }
-      if(!_lightsSet)
+      if(_shouldSetCubeLights && !_lightsSet)
       {
         PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),

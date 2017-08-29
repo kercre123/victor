@@ -197,6 +197,8 @@ namespace Anki {
       f32 _preActionPoseAngleTolerance_rad;
       
       GetPossiblePosesFunc _getPossiblePosesFunc;
+      
+      bool _shouldSetCubeLights = false;
       bool _lightsSet = false;
       
     }; // DriveToObjectAction
@@ -317,6 +319,7 @@ namespace Anki {
       std::weak_ptr<IActionRunner> _turnTowardsObjectAction;
       std::weak_ptr<IActionRunner> _dockAction;
       ObjectID _objectID;
+      bool     _shouldSetCubeLights = false;
       bool     _lightsSet = false;
       f32      _preDockPoseDistOffsetX_mm = 0;
       PreDockCallback _preDockCallback;
