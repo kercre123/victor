@@ -76,7 +76,7 @@ namespace Anki {
       data = _imuDataArr[_imuLastReadIdx];
       return true;
     }
-
+ 
     void ProcessIMUEvents()
     {
       static int64_t lastAccTime, lastGyroTime;

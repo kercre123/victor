@@ -103,10 +103,10 @@ namespace Anki
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
 
-      // Fill provided frame buffer with image data if available
+      // Points provided frame to a buffer of image data if available
       // Returns true if image available
       // TODO: How fast will this be in hardware? Is image ready and waiting?
-      bool CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData);
+      bool CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData);
 
       ImageResolution CameraGetResolution() const {return _imageCaptureResolution;}
       

@@ -22,9 +22,10 @@
 #include "androidHAL/android/camera/camera_manager.h"
 #include "androidHAL/android/camera/image_reader.h"
 #include "androidHAL/android/camera/utils/native_debug.h"
-#include "androidHAL/android/fugly_camera/victor_camera.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
+
+#include "androidHAL/android/proto_camera/victor_camera.h"
 
 #include <vector>
 #include <chrono>
@@ -39,11 +40,8 @@ namespace Anki {
   namespace Cozmo {
     
     namespace { // "Private members"
-      CameraHandle _cameraHandle = nullptr;
-      uint8_t* _latestFrame = nullptr;
-      int _width = 0;
-      int _height = 0;
-      bool _copyingNewFrame = false;
+      // Pointer to the current (latest) frame the camera has given us
+      uint8_t* _currentFrame = nullptr;
     } // "private" namespace
 
 
@@ -90,7 +88,10 @@ namespace Anki {
     
     AndroidHAL::~AndroidHAL()
     {
-      DeleteCamera();
+      //      DeleteCamera(); 
+      camera_stop();
+      camera_cleanup();
+     
     }
 
     
@@ -148,68 +149,33 @@ namespace Anki {
       (void)status;   //to silence unused compiler warning
     }
 
-    int CameraCallback(const uint8_t* image, int width, int height)
+    int CameraCallback(uint8_t* image, int width, int height)
     {
-//      static TimeStamp_t lastFrame = AndroidHAL::getInstance()->GetTimeStamp();
-//      PRINT_NAMED_WARNING("FrameRate",
-//                          "%f",
-//                          (1000.f / (AndroidHAL::getInstance()->GetTimeStamp() - lastFrame)));
-//      lastFrame = AndroidHAL::getInstance()->GetTimeStamp();
-    
-      if(_latestFrame == nullptr)
-      {
-        _latestFrame = (uint8_t*)malloc(width*height*sizeof(image));
-        _width = width;
-        _height = height;
-      }
-      
-      _copyingNewFrame = true;
-      std::memcpy(_latestFrame, image, width*height);
-      _copyingNewFrame = false;
-      
+      DEV_ASSERT(image != nullptr, "AndroidHAL.CameraCallback.NullImage");
+      _currentFrame = image;
       return 0;
     }
 
     void AndroidHAL::InitCamera()
     {
       PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingInit", "");
-      
-      _cameraHandle = camera_alloc();
 
-      int res = camera_init(_cameraHandle);
+      int res = camera_init();
+      DEV_ASSERT(res == 0, "AndroidHAL.InitCamera.CameraInitFailed");
       
-      res = camera_start(_cameraHandle, &CameraCallback);
-      
-//      res = camera_set_exposure(_cameraHandle, 10000000);
-      
-//      res = camera_set_fps(_cameraHandle, 5);
-      // DeleteCamera();
-      
-      // _androidCamera = new NativeCamera(nullptr);
-      // ASSERT(_androidCamera, "Failed to Create CameraObject");
-      
-      // // Get image resolution info
-      // const int cameraRes = static_cast<const int>(_imageCaptureResolution);
-      // const int width = Vision::CameraResInfo[cameraRes].width;
-      // const int height = Vision::CameraResInfo[cameraRes].height;
-
-      // PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingCaptureSession", "%d x %d", width, height);
-      // ImageResolution_Android res {width, height, 0};
-      // _reader= new ImageReader(&res);
-      
-      // _androidCamera->CreateSession(_reader->GetNativeWindow());
-      // _androidCamera->Animate();
+      res = camera_start(&CameraCallback);
+      DEV_ASSERT(res == 0, "AndroidHAL.InitCamera.CameraStartFailed");
     }
 
     void AndroidHAL::DeleteCamera() {
       Util::SafeDelete(_androidCamera);
       Util::SafeDelete(_reader);
 
-      int res = camera_stop(_cameraHandle);
+      int res = camera_stop();
+      DEV_ASSERT(res == 0, "AndroidHAL.Delete.CameraStopFailed");
 
-      res = camera_cleanup(_cameraHandle);
-
-      free(_cameraHandle);
+      res = camera_cleanup();
+      DEV_ASSERT(res == 0, "AndroidHAL.Delete.CameraCleanupFailed");
     }
     
     Result AndroidHAL::Update()
@@ -244,13 +210,17 @@ namespace Anki {
       return;
     }
 
-    bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
+    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
       DEV_ASSERT(frame != NULL, "androidHAL.CameraGetFrame.NullFramePointer");
 
-      if(_latestFrame != nullptr && !_copyingNewFrame)
+      if(_currentFrame != nullptr)
       {
-        std::memcpy(frame, _latestFrame, _width*_height);
+        // Tell the camera we will be processing this frame
+        camera_set_processing_frame();
+        
+        frame = _currentFrame;
+        
         imageID = ++_imageFrameID;
 
         ImageImuData imu_meas(imageID,

@@ -2312,26 +2312,15 @@ namespace Cozmo {
     numRows = 360;
     numCols = 640;
 
-    const int bufferSize = numRows * numCols;
-    u8 buffer[bufferSize];
+    u8* buffer = nullptr;
     
     // Get image buffer
     // TODO: ImageImuData can be engine-only, non-clad, struct
     std::vector<ImageImuData> imuData;
     u32 imageId;
     
-    static int bo = 0;
-    bo++;
-    if (bo == 3 && AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData)) {
-      bo = 0;
-      static bool b = false;
-      static int s = 0;
-      if(!b)
-      {
-        b = true;
-        s = imageId;
-      }
-      
+    if(AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData))
+    {
       // Add IMU data to history
       for (const auto& data : imuData) {
         GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
@@ -2342,7 +2331,7 @@ namespace Cozmo {
       
       if(kDisplayUndistortedImages)
       {
-        Vision::ImageRGB imgUndistorted(numRows,numCols);
+        Vision::Image imgUndistorted(numRows,numCols);
         cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
                       _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
                       _camera.GetCalibration()->GetDistortionCoeffs());
@@ -2361,7 +2350,7 @@ namespace Cozmo {
       Result lastResult = SetNextImage(encodedImage);
       
       // Compress to jpeg and send to game and viz
-      lastResult = CompressAndSendImage(imgRGB, 50);
+//      lastResult = CompressAndSendImage(imgRGB, 50);
       DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
     }
   }
@@ -2534,7 +2523,7 @@ namespace Cozmo {
 #ifdef COZMO_V2
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
-          const std::vector<f32> distortionCoeffs = {{-0.07167206757206086,
+          const std::array<f32, 8> distortionCoeffs = {{-0.07167206757206086,
             -0.2198782133395603,
             0.001435740245449692,
             0.001523365725052927,
@@ -2549,6 +2538,19 @@ namespace Cozmo {
                                           200.0289589104854,
                                           0,
                                           distortionCoeffs);
+          
+          CameraCalibration calibMsg(362.8743258347415,
+                                     366.7335187649505,
+                                     302.279771069911,
+                                     200.0289589104854,
+                                     0,
+                                     360,
+                                     640,
+                                     distortionCoeffs);
+          u8 buf[calibMsg.Size()];
+          size_t size = calibMsg.Pack(buf, sizeof(buf));
+          
+          _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, size);
           
           SetCameraCalibration(calib);
 #endif

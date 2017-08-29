@@ -1,33 +1,41 @@
 cmake_minimum_required(VERSION 3.6)
 project(androidHAL)
 
-# HACK: fugly_camera
 if (ANDROID)
+ 
+ # This is a library which relies on some kernel headers.
+ # ... Because prototyping.
+ # They have been checked locally to the camera directory
+ 
+ add_library(proto_camera STATIC
+     android/proto_camera/victor_camera.h
+     android/proto_camera/victor_camera.c
+ )
+ 
+ target_include_directories(proto_camera
+ PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+ SYSTEM PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/android/proto_camera/inc>
+ )
 
-# This is a library generated from an object file that
-# comes from a pre-processed .c file... Because prototyping.
-# Since the .c file is pre-compiled with gcc instead of clang,
-# the easiest way we can actually use is by pre-compiling
-# the object file and making a lib out of it.
-# This is super fucking ugly, but it should let us get images into the engine
 
-add_library(fugly_camera STATIC
-    android/fugly_camera/victor_camera.h
-    android/fugly_camera/processed_victor_camera.o
-)
+ target_compile_definitions(proto_camera
+   PRIVATE
+   -DUSE_ION
+   -DAMSS_VERSION
+   -D_ANDROID_
+   -DCAMERA_ION_HEAP_ID=ION_IOMMU_HEAP_ID
+   -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_MM_HEAP
+   -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_IOMMU_HEAP
+   -DCAMERA_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
+   -DCAMERA_GRALLOC_CACHING_ID=0
+   -DNUM_RECORDING_BUFFERS=9
+ )
 
-target_include_directories(fugly_camera
-PUBLIC
-   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-)
-
-set_target_properties(fugly_camera PROPERTIES LINKER_LANGUAGE C)
-
+ set_target_properties(proto_camera PROPERTIES LINKER_LANGUAGE C)
+ 
 endif()
-#
-# end fugly_camera hack
-#
-
 
 include(anki_build_cxx_library)
 anki_build_cxx_library(androidHAL ${ANKI_SRCLIST_DIR} STATIC)
@@ -37,12 +45,12 @@ set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 if (ANDROID)
     set(PLATFORM_LIBS
-        fugly_camera
         android
         log
         GLESv2
         mediandk
-        camera2ndk)
+        camera2ndk
+        proto_camera)
 elseif (MACOSX)
     include(webots)
     set(PLATFORM_LIBS
