@@ -291,15 +291,22 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
   if(robot.HasExternalInterface()){
     using namespace ExternalInterface;
     
-    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                                                                    MessageEngineToGameTag::ObjectUpAxisChanged,
-                                                                    upAxisChangedCallback));
-    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                                                                    MessageEngineToGameTag::BehaviorObjectiveAchieved,
-                                                                    objectiveAchievedCallback));
-    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                                                                    MessageGameToEngineTag::RequestPyramidPreReqState,
-                                                                    requestPyramidPreReqState));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageEngineToGameTag::ObjectUpAxisChanged,
+                                      upAxisChangedCallback));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageEngineToGameTag::BehaviorObjectiveAchieved,
+                                      objectiveAchievedCallback));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageGameToEngineTag::RequestPyramidPreReqState,
+                                      requestPyramidPreReqState));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageEngineToGameTag::ObjectConnectionState,
+                                      [this, &robot] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+                                      {
+                                        HandleObjectConnectionStateChange(robot, event.GetData().Get_ObjectConnectionState());
+                                      }));
+    
   }
 }
   
@@ -358,6 +365,7 @@ void ActivityBuildPyramid::OnDeselectedInternal(Robot& robot)
     entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
   }
   SetCubeLights(_robot);
+  _pyramidCubePropertiesTrackers.clear();
   
   robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   
@@ -365,6 +373,18 @@ void ActivityBuildPyramid::OnDeselectedInternal(Robot& robot)
   // also mapped to another behavior group
   _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForFullPyramidProcess);
   _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForPyramidSetup);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityBuildPyramid::HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState)
+{
+  // If object disconnected, remove it from the properties tracker map
+  if(connectionState.connected){
+    UpdateStateTrackerForUnrecognizedID(connectionState.objectID);
+  }else{
+    _pyramidCubePropertiesTrackers.erase(connectionState.object_type);
+  }
 }
 
 
@@ -667,7 +687,7 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
-                                                                const IBehaviorPtr currentRunningBehavior)
+                                                           const IBehaviorPtr currentRunningBehavior)
 {
   // Run through all of the axis changes to find if thank you can run
   // and to update the pyramidCubeProperties tracking information
@@ -693,7 +713,8 @@ IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
       
       if(!rolledCubeHimself){
         _behaviorPyramidThankYou->SetTargetID(objectID);
-        if(_behaviorPyramidThankYou->IsRunnable(robot)){
+        if(_behaviorPyramidThankYou->IsRunning() ||
+           _behaviorPyramidThankYou->IsRunnable(robot)){
           bestBehavior = _behaviorPyramidThankYou;
         }
       }
@@ -1188,34 +1209,62 @@ void ActivityBuildPyramid::SetCubeLights(Robot& robot)
 {
   // Remove any lights that are currently set
   for(auto& entry: _pyramidCubePropertiesTrackers){
-    if(entry.second.GetCurrentLightTrigger() != entry.second.GetDesiredLightTrigger() ||
-       entry.second.GetDesiredLightModifier() != kEmptyObjectLights)
+    PyramidCubePropertiesTracker& props = entry.second;
+    
+    if(props.GetCurrentLightTrigger() != props.GetDesiredLightTrigger() ||
+       props.GetDesiredLightModifier() != kEmptyObjectLights)
     {
       const bool shouldSetForOnSide = IsPyramidHardSpark(robot) ||
-             !IsAnOnSideCubeLight(entry.second.GetDesiredLightTrigger());
-      const bool areLightsPlayingAlready = entry.second.GetCurrentLightTrigger() != CubeAnimationTrigger::Count;
-      const bool shouldLightsTransition = entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count;
+             !IsAnOnSideCubeLight(props.GetDesiredLightTrigger());
+      const bool areLightsPlayingAlready = props.GetCurrentLightTrigger() != CubeAnimationTrigger::Count;
+      const bool shouldLightsTransition = props.GetDesiredLightTrigger() != CubeAnimationTrigger::Count;
       
-      
-      if(!areLightsPlayingAlready && shouldSetForOnSide){
-        _robot.GetCubeLightComponent().PlayLightAnim(entry.second.GetObjectID(), entry.second.GetDesiredLightTrigger());
-      }
-      else if(shouldLightsTransition && shouldSetForOnSide)
-      {
-        _robot.GetCubeLightComponent().StopAndPlayLightAnim(entry.second.GetObjectID(),
-                                                            entry.second.GetCurrentLightTrigger(),
-                                                            entry.second.GetDesiredLightTrigger(),
-                                                            nullptr,
-                                                            true,
-                                                            entry.second.GetDesiredLightModifier());
+      bool lightUpdateSuccessful = false;
+      if(shouldLightsTransition && shouldSetForOnSide){
+        if(!areLightsPlayingAlready)
+        {
+          lightUpdateSuccessful = _robot.GetCubeLightComponent().PlayLightAnim(
+                                                       props.GetObjectID(),
+                                                       props.GetDesiredLightTrigger());
+          PRINT_CH_INFO("Behaviors", "ActivityBuildPyramid.SetCubeLights.PlayLights",
+                        "%s playing light trigger %s on object %d",
+                        lightUpdateSuccessful ? "Succeeded" : "Failed",
+                        CubeAnimationTriggerToString(props.GetDesiredLightTrigger()),
+                        props.GetObjectID().GetValue());
+          
+        }
+        else
+        {
+          lightUpdateSuccessful = _robot.GetCubeLightComponent().StopAndPlayLightAnim(
+                                                              props.GetObjectID(),
+                                                              props.GetCurrentLightTrigger(),
+                                                              props.GetDesiredLightTrigger(),
+                                                              nullptr,
+                                                              true,
+                                                              props.GetDesiredLightModifier());
+          PRINT_CH_INFO("Behaviors", "ActivityBuildPyramid.SetCubeLights.StopAndPlayLights",
+                        "%s stopping light trigger %s in order to play %s on object %d",
+                        lightUpdateSuccessful ? "Succeeded" : "Failed",
+                        CubeAnimationTriggerToString(props.GetCurrentLightTrigger()),
+                        CubeAnimationTriggerToString(props.GetDesiredLightTrigger()),
+                        props.GetObjectID().GetValue());
+        }
       }
       else
       {
-        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(entry.second.GetCurrentLightTrigger(),
-                                                                      entry.second.GetObjectID());
+        lightUpdateSuccessful = _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(
+                                                                      props.GetCurrentLightTrigger(),
+                                                                      props.GetObjectID());
+        PRINT_CH_INFO("Behaviors", "ActivityBuildPyramid.SetCubeLights.StoppingLights",
+                      "%s stopping light trigger %s on object %d",
+                      lightUpdateSuccessful ? "Succeeded" : "Failed",
+                      CubeAnimationTriggerToString(props.GetCurrentLightTrigger()),
+                      props.GetObjectID().GetValue());
       }
-      entry.second.SetCurrentLightTrigger(entry.second.GetDesiredLightTrigger());
-      entry.second.SetDesiredLightModifier(kEmptyObjectLights);
+      if(lightUpdateSuccessful){
+        props.SetCurrentLightTrigger(props.GetDesiredLightTrigger());
+        props.SetDesiredLightModifier(kEmptyObjectLights);
+      }
     }
   }
 }

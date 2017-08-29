@@ -34,6 +34,7 @@ class BehaviorBuildPyramid;
 class BehaviorPyramidThankYou;
 struct PyramidCubePropertiesTracker;
 class BehaviorRespondPossiblyRoll;
+struct ObjectConnectionState;
 struct ObjectLights;
   
 class ActivityBuildPyramid : public IActivity
@@ -74,7 +75,7 @@ private:
   IBehaviorChooser* _setupSimpleChooser;
   IBehaviorChooser* _buildSimpleChooser;
   
-  std::vector<Signal::SmartHandle> _eventHalders;
+  std::vector<Signal::SmartHandle> _eventHandlers;
   // Maps a light cube type (in case objectIDs are re-assigned for disconnected objects)
   // to knowledge about how we've altered the light/axis state
   std::map<ObjectType, PyramidCubePropertiesTracker> _pyramidCubePropertiesTrackers;
@@ -114,7 +115,7 @@ private:
   bool _forceLightMusicUpdate;
   float _timeRespondedRollStartedPreviously_s;
   
-  
+  void HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState);
   void UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid);
   bool IsPyramidHardSpark(Robot& robot);
   

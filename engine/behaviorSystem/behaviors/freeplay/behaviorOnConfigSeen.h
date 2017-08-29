@@ -50,6 +50,7 @@ private:
   
   int _animTriggerIndex;
   mutable float _lastRunnableCheck_s;
+  mutable float _lastTimeNewConfigSeen_s;
   
   
   void ReadJson(const Json::Value& config);
