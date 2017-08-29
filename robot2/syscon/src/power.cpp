@@ -32,11 +32,19 @@ static volatile bool ejectSystem = false;
 void Power::init(void) {
   POWER_EN::pull(PULL_UP);
 
-  nCHG_EN::reset();
+  nCHG_EN::set();
   nCHG_EN::mode(MODE_OUTPUT);
 
   nVDDs_EN::reset();
   nVDDs_EN::mode(MODE_OUTPUT);
+}
+
+void Power::setCharge(bool enable) {
+  if (enable) {
+    nCHG_EN::reset();
+  } else {
+    nCHG_EN::set();
+  }
 }
 
 void Power::stop(void) {

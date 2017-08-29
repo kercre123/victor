@@ -7,6 +7,7 @@ namespace Power {
   void eject(void);
   void enableClocking(void);
   void softReset(void);
+  void setCharge(bool enable);
 }
 
 #endif
