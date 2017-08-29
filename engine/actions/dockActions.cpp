@@ -17,7 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -903,7 +903,7 @@ namespace Anki {
     
     bool IDockAction::ShouldApplyDockingSquint()
     {
-      return !(NeedId::Energy == _robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression());
+      return !(NeedId::Energy == _robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression());
     }
 
     

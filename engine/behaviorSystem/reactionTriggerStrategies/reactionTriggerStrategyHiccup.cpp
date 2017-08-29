@@ -20,6 +20,7 @@
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
@@ -179,7 +180,7 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
   if(HasHiccups())
   {
     // Hiccups can't be cured by the player in severe Need state, so cure them
-    const auto expressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+    const auto expressedNeed = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
     if((expressedNeed == NeedId::Energy) ||
        (expressedNeed == NeedId::Repair)){
       CureHiccups(false);

@@ -2,9 +2,6 @@
   "activityID": "NeedsSevereLowPlayGetIn",
   "activityType": "NeedsExpression",
 
-  // leave reactions enabled for play (e.g. saw face, pet)
-  "disableReactionTriggers": false,
-
   "activityStrategy":
   {
     // runs when the needs brackets are severe, but the "severe needs expression" from the whiteboard isn't

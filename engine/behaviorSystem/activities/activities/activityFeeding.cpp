@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "engine/activeObject.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
@@ -240,7 +240,7 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
   _eatingComplete = false;
   SmartDisableReactionsWithLock(robot, GetIDStr(), kFeedingActivityAffectedArray);
   
-  const NeedId currentSevereExpression = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  const NeedId currentSevereExpression = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(currentSevereExpression == NeedId::Energy){
     SetupSevereAnims(robot);
   }else{
@@ -389,7 +389,7 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
 Result ActivityFeeding::Update(Robot& robot)
 {
   // Maintain appropriate music state and disables
-  const NeedId currentSevereExpression = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  const NeedId currentSevereExpression = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(!_severeBehaviorLocksSet &&
      (currentSevereExpression == NeedId::Energy)){
     SetupSevereAnims(robot);
@@ -859,8 +859,8 @@ void ActivityFeeding::SetActivityStage(Robot& robot,
 void ActivityFeeding::SetIdleForCurrentStage(Robot& robot)
 {
   // Set the appropriate idle
-  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-  const bool isNeedSevere = (NeedId::Energy == whiteboard.GetSevereNeedExpression());
+  const auto& severeNeedsComponent = robot.GetAIComponent().GetSevereNeedsComponent();
+  const bool isNeedSevere = (NeedId::Energy == severeNeedsComponent.GetSevereNeedExpression());
 
   AnimationTrigger desiredIdle = AnimationTrigger::Count;
 

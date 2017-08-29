@@ -265,6 +265,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _currentHighLevelActivity(HighLevelActivity::Count)
 , _uiRequestGameBehavior(nullptr)
 , _behaviorContainer(new BehaviorContainer(robot, robot.GetContext()->GetDataLoader()->GetBehaviorJsons()))
+, _hasActionQueuedOrSDKReactEnabled(false)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 , _behaviorThatSetLights(BehaviorClass::Wait)
@@ -1131,6 +1132,17 @@ BehaviorClass BehaviorManager::GetBehaviorClass(IBehaviorPtr behavior) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::CheckReactionTriggerStrategies()
 {
+  // Hack related to COZMO-14207 - Since we currently have no knowledge of
+  // whether Cozmo is starting up with a wakeup that we shouldn't react during
+  // or is in DEV webots/SDK mode, and to future proof future paths, don't
+  // react until the first action is queued, indicating that there has been time
+  // for any desired enables/disables to be put in place by whatever is controlling
+  // engine
+  _hasActionQueuedOrSDKReactEnabled |= !_robot.GetActionList().IsEmpty();
+  if(!_hasActionQueuedOrSDKReactEnabled){
+    return false;
+  }
+  
   // Check to see if any reaction triggers want to activate a behavior
   bool hasAlreadySwitchedThisTick = false;
   bool didSuccessfullySwitch = false;
@@ -1467,6 +1479,11 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
 {
+  // If SDK lock is being removed, ensure the special action queued/reaction
+  // tracker is set appropriately
+  const bool sdkDifferentParadigmLock = (lockID == "sdk");
+  _hasActionQueuedOrSDKReactEnabled |= sdkDifferentParadigmLock;
+  
   /// Iterate over all reaction triggers to see if they're affected by this request
   for(auto& entry: _reactionTriggerMap){
     const ReactionTrigger triggerEnum = entry.first;

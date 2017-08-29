@@ -14,7 +14,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/moodSystem/moodManager.h"
@@ -52,7 +52,7 @@ Result BehaviorReactToUnexpectedMovement::InitInternal(Robot& robot)
   
   AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
   
-  NeedId expressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  NeedId expressedNeed = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(expressedNeed == NeedId::Energy){
     reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Energy;
   }else if(expressedNeed == NeedId::Repair){

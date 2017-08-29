@@ -17,7 +17,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -348,7 +348,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
   StopActing(false);
   AnimationTrigger trigger = AnimationTrigger::FeedingInterrupted;
   
-  if(NeedId::Energy == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+  if(NeedId::Energy == robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
     trigger = AnimationTrigger::FeedingInterrupted_Severe;
   }
   StartActing(new TriggerLiftSafeAnimationAction(robot, trigger));
