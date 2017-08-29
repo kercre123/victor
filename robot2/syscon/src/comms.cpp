@@ -102,7 +102,7 @@ void Comms::init(void) {
   USART1->CR2 = (SYNC_HEAD_TO_BODY & 0xFF) << 24;
   USART1->CR1 = USART_CR1_RE
               | USART_CR1_TE
-              | USART_CR1_CMIE
+              | USART_CR1_RXNEIE
               | USART_CR1_UE;
 
   // Timer6 is used to fire off the DMA for outbound UART data
@@ -226,17 +226,7 @@ static int sizeOfInboundPayload(PayloadId id) {
 }
 
 extern "C" void USART1_IRQHandler(void) {
-  static int header_rx_index;
-
-  // Character match (used to mark the start of a packet)
-  if (USART1->ISR & USART_ISR_CMF) {
-    USART1->ICR = USART_ICR_CMCF;
-    USART1->CR1 = (USART1->CR1 & ~USART_CR1_CMIE) | USART_CR1_RXNEIE;
-
-    // Clear header for matching
-    header_rx_index = 0;
-    inboundPacket.header.sync_bytes = 0;
-  }
+  static int header_rx_index = 0;
 
   // Flush overflows
   if (USART1->ISR & USART_ISR_ORE) {
@@ -256,7 +246,7 @@ extern "C" void USART1_IRQHandler(void) {
 
   // Header mismatch
   if (expect != receive) {
-    USART1->CR1 |= USART_CR1_CMIE;
+    header_rx_index = 0;
     return ;
   }
 
@@ -264,21 +254,22 @@ extern "C" void USART1_IRQHandler(void) {
     return ;
   }
 
+  // Clear header for matching next time
+  header_rx_index = 0;
+
   // Payload is an incorrect size (ignore)
   if (inboundPacket.header.bytes_to_follow != sizeOfInboundPayload(inboundPacket.header.payload_type)) {
-    USART1->CR1 |= USART_CR1_CMIE;
     return ;
   }
 
   // Configure out receive buffer
-  USART1->CR1 &= ~USART_CR1_RXNEIE;
+  NVIC_DisableIRQ(USART1_IRQn);
   
   DMA1_Channel5->CPAR = (uint32_t)&USART1->RDR;
   DMA1_Channel5->CMAR = (uint32_t)inboundPacket.raw;
   DMA1_Channel5->CNDTR = sizeof(SpineMessageFooter) + inboundPacket.header.bytes_to_follow;
   DMA1_Channel5->CCR = DMA_CCR_MINC
                      | DMA_CCR_TCIE
-                     | DMA_CCR_CIRC
                      | DMA_CCR_EN
                      ;
 }
@@ -299,38 +290,35 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
   DMA1->IFCR = DMA_IFCR_CGIF5;
 
   // Check the CRC
-  static uint32_t foundCRC = crc(&inboundPacket.raw, inboundPacket.header.bytes_to_follow / sizeof (uint32_t));
+  uint32_t foundCRC = crc(inboundPacket.raw, inboundPacket.header.bytes_to_follow / sizeof (uint32_t));
   SpineMessageFooter* footer = (SpineMessageFooter*) &inboundPacket.raw[inboundPacket.header.bytes_to_follow];
 
-  if (foundCRC != footer->checksum) {
-    return ;
-  }
-
-  switch (inboundPacket.header.payload_type) {
-    case PAYLOAD_MODE_CHANGE:
-      missed_frames = 0;
-      applicationRunning = true;
-      break ;
-    case PAYLOAD_VERSION:
-      Comms::sendVersion();
-      break ;
-    case PAYLOAD_ERASE:
-      Flash::markForWipe();
-      break ;
-    case PAYLOAD_DATA_FRAME:
-      missed_frames = 0;
-      Motors::receive(&inboundPacket.headToBody);
-      Lights::receive(inboundPacket.headToBody.ledColors);
-      return ;
-    case PAYLOAD_CONT_DATA:
-      Contacts::forward(inboundPacket.contactData);
-      return ;
-    default:
-      break ;
+  if (foundCRC == footer->checksum) {
+    switch (inboundPacket.header.payload_type) {
+      case PAYLOAD_MODE_CHANGE:
+        missed_frames = 0;
+        applicationRunning = true;
+        break ;
+      case PAYLOAD_VERSION:
+        Comms::sendVersion();
+        break ;
+      case PAYLOAD_ERASE:
+        Flash::markForWipe();
+        break ;
+      case PAYLOAD_DATA_FRAME:
+        missed_frames = 0;
+        Motors::receive(&inboundPacket.headToBody);
+        Lights::receive(inboundPacket.headToBody.ledColors);
+        break ;
+      case PAYLOAD_CONT_DATA:
+        Contacts::forward(inboundPacket.contactData);
+        break ;
+      default:
+        break ;
+    }
   }
 
   // Switch back to interrupt mode
   DMA1_Channel5->CCR = 0;
-  USART1->ICR = USART_ICR_CMCF;
-  USART1->CR1 |= USART_CR1_CMIE;
+  NVIC_EnableIRQ(USART1_IRQn);
 }
