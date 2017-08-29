@@ -399,15 +399,15 @@ def main(scriptArgs):
     return False
 
   if subprocess.call(['mkdir', '-p',
-    os.path.join(projectRoot, 'resources/config/basestation')]) != 0 :
-    UtilLog.error("error creating resources/config/basestation")
+    os.path.join(projectRoot, 'resources/config/engine')]) != 0 :
+    UtilLog.error("error creating resources/config/engine")
     return False
 
   fwFolders = [folder for folder in listdir(externalsPath) if "firmware" in folder]
   for fwFolder in fwFolders:
     if subprocess.call(['ln', '-s', '-f', '-n',
       os.path.join(externalsPath, fwFolder, 'release'),
-      os.path.join(projectRoot, 'resources/config/basestation', fwFolder)]) != 0 :
+      os.path.join(projectRoot, 'resources/config/engine', fwFolder)]) != 0 :
       UtilLog.error("error symlinking firmware resources")
       return False
 
