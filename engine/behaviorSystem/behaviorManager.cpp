@@ -88,7 +88,35 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
-}
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersUIRequestGame = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               true},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      true},
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersUIRequestGame),
+              "Reaction triggers duplicate or non-sequential");
+const char* kDisableReactionsUIRequestGameLock = "bm_ui_request_game_lock";
+  
+} // namespace
 
 /////////
 // Running/Resume implementation
@@ -679,6 +707,8 @@ bool BehaviorManager::SwitchToVoiceCommandBehavior(IBehaviorPtr nextBehavior)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SwitchToUIGameRequestBehavior()
 {
+  DisableReactionsWithLock(kDisableReactionsUIRequestGameLock, kAffectTriggersUIRequestGame);
+  
   BehaviorRunningAndResumeInfo newBehaviorInfo;
   newBehaviorInfo.SetCurrentBehavior(_uiRequestGameBehavior);
   SwitchToBehaviorBase(newBehaviorInfo);
@@ -835,9 +865,9 @@ Result BehaviorManager::Update(Robot& robot)
   GetCurrentActivity()->Update(robot);
   
   
-  // Make sure to clear the current flags if we are in a reactionary behavior
+  // Make sure to clear the current flags if Cozmo is off his treads
   // or if we've transitioned out of freeplay
-  if ((GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) ||
+  if ((robot.GetOffTreadsState() != OffTreadsState::OnTreads) ||
       (_currentHighLevelActivity != HighLevelActivity::Freeplay)) {
     EnsureRequestGameIsClear();
   }
@@ -1083,6 +1113,10 @@ void BehaviorManager::SelectUIRequestGameBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::EnsureRequestGameIsClear()
 {
+  if(_uiRequestGameBehavior != nullptr){
+    RemoveDisableReactionsLock(kDisableReactionsUIRequestGameLock);
+  }
+
   _robot.GetAIComponent().GetWhiteboard().SetCurrentGameRequestUIRequest(false);
   _uiRequestGameBehavior = nullptr;
   _shouldRequestGame = false;
