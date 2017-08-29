@@ -269,6 +269,7 @@ robot/include/anki/cozmo/robot/version.h
 robot/fixture/anki*/Release
 robot/fixture/anki*/Debug
 robot/fixture/anki*/obj
+robot/fixture/anki*/bin
 
 buildMakefile
 

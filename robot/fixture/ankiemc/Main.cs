@@ -172,7 +172,12 @@ namespace AnkiLog
             if (dut == null || dut.Length == 0)
                 return false;
             // Set up parameters based on which "dut" we're using
-            double center = 2442, width = dut.Equals("head") ? 4 : 2, min = -100, max = 0, khz = 100, offset = 0;
+            double center = 2402, width = 2, min = -100, max = 0, khz = 100, offset = 0;
+            if (dut.Equals("head"))
+            {
+                width = 4;
+                center = 2462;
+            }
             int peakcount = 0, trig = 0, samples = 600;
             foreach (String line in m_config)
             {
