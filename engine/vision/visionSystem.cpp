@@ -1645,9 +1645,20 @@ namespace Cozmo {
         for(auto & corner : warpedCorners)
         {
           const int warpIndex = std::floor(corner.y() / (inputImageGray.GetNumRows() / _rollingShutterCorrector.GetNumDivisions()));
-          const auto& pixelShift = _rollingShutterCorrector.GetPixelShifts()[warpIndex];
+          DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
+                         "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
+                         warpIndex, corner.y());
+          
+          const Vec2f& pixelShift = _rollingShutterCorrector.GetPixelShifts().at(warpIndex);
           corner -= pixelShift;
+          
+          DEV_ASSERT(Util::IsFltGEZero(corner.x()) &&
+                     Util::IsFltGEZero(corner.y()) &&
+                     Util::IsFltLT(corner.x(), (f32)inputImageGray.GetNumCols()) &&
+                     Util::IsFltLT(corner.y(), (f32)inputImageGray.GetNumRows()),
+                     "VisionSystem.DetectMarkersWithCLAHE.RollingShutterWarpOOB");
         }
+        
         
         Vision::ObservedMarker warpedMarker(marker.GetTimeStamp(),
                                             marker.GetCode(),
