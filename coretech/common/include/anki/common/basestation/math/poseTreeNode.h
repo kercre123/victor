@@ -24,6 +24,16 @@
 #include <mutex>
 #include <set>
 
+// Make a separate define so we can easily dissociate "Dev" pose checks from debug/release/shipping decisions
+// (i.e., we may want to switch back to doing them only in Debug)
+#if defined(DEBUG)
+#  define DO_DEV_POSE_CHECKS     1
+#elif defined(SHIPPING)
+#  define DO_DEV_POSE_CHECKS     0
+#else // Release
+#  define DO_DEV_POSE_CHECKS     1
+#endif
+
 namespace Anki {
  
 template<class PoseNd, class TransformNd>
@@ -80,6 +90,10 @@ public:
   // Get the ID assigned to this pose. Initial (unset) ID is zero.
   PoseID_t              GetID() const { return _id; }
   
+  // Register/unregister as an "owner" of this node
+  void AddOwner()    { ++_ownerCount; }
+  void RemoveOwner();
+  
 private:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -90,6 +104,7 @@ private:
   std::shared_ptr<PoseTreeNode>   _parentPtr;
   std::string                     _name;
   PoseID_t                        _id = 0;
+  uint32_t                        _ownerCount = 0;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Dev methods
@@ -192,7 +207,7 @@ bool PoseBase<PoseNd,TransformNd>::PoseTreeNode::IsChildOf(const PoseTreeNode& o
   }
   
   const bool isChildOfOther = (_parentPtr.get() == &otherNode);
-  if(ANKI_DEV_CHEATS && isChildOfOther)
+  if(DO_DEV_POSE_CHECKS && isChildOfOther)
   {
     Dev_AssertIsValidParentPointer(_parentPtr.get(), this);
   }
@@ -209,7 +224,7 @@ bool PoseBase<PoseNd,TransformNd>::PoseTreeNode::IsParentOf(const PoseTreeNode& 
   }
   
   const bool isParentOfOther = (otherNode._parentPtr.get() == this);
-  if(ANKI_DEV_CHEATS && isParentOfOther)
+  if(DO_DEV_POSE_CHECKS && isParentOfOther)
   {
     Dev_AssertIsValidParentPointer(this, &otherNode);
   }
@@ -274,7 +289,7 @@ PoseID_t PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetRootID() const
 template<class PoseNd, class TransformNd>
 void PoseBase<PoseNd,TransformNd>::PoseTreeNode::SetParent(std::shared_ptr<PoseTreeNode> newParent)
 {
-  DEV_ASSERT(newParent.get() != this, "PoseBase.SetParent.ParentCannotBeSelf");
+  DEV_ASSERT(newParent.get() != this, "PoseBase.PoseTreeNode.SetParent.ParentCannotBeSelf");
   Dev_SwitchParent(_parentPtr.get(), newParent.get(), this);
   _parentPtr = newParent;
 }
@@ -328,7 +343,7 @@ std::string PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetNamedPathToRoot(bool 
   // call Dev_ helpers, which may also be calling this method
   BOUNDED_WHILE(1000, true)
   {
-    if(ANKI_DEV_CHEATS)
+    if(DO_DEV_POSE_CHECKS)
     {
       assert(validPoses != nullptr);
       if(validPoses->find(current) == validPoses->end())
@@ -386,7 +401,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_SwitchParent(const PoseTree
                                                                   const PoseTreeNode* newParent,
                                                                   const PoseTreeNode* child)
 {
-  if ( ANKI_DEV_CHEATS )
+  if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
     
@@ -443,7 +458,23 @@ template<class PoseNd, class TransformNd>
 void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(const PoseTreeNode* parent,
                                                                                 const PoseTreeNode* child)
 {
-  if ( ANKI_DEV_CHEATS )
+  // Note: (for now?) *always* doing this cheap check, even in shipping, but only aborting in Debug/Release
+  if(parent != nullptr && !PoseBase<PoseNd,TransformNd>::AreUnownedParentsAllowed())
+  {
+    if(!ANKI_VERIFY(parent->_ownerCount > 0,
+                    "PoseBase.Dev_AssertIsValidParentPointer.UnownedParent",
+                    "Pose %d(%s) has parent %d(%s) which is not owned by any PoseBase wrapper",
+                    child->_id, child->_name.c_str(), parent->_id, parent->_name.c_str()))
+    {
+      if( DO_DEV_POSE_CHECKS )
+      {
+        Anki::Util::sLogFlush();
+        Anki::Util::sAbort();
+      }
+    }
+  }
+  
+  if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
 
@@ -453,6 +484,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(
                      "PoseBase.Dev_AssertIsValidParentPointer.ChildNotAValidPose",
                      "This pose is bad. Not printing info because it's garbage, so I don't want to access it") )
     {
+      Anki::Util::sLogFlush();
       Anki::Util::sAbort();
     }
 
@@ -467,6 +499,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(
                   child == nullptr ? "(none)" : child->GetName().c_str(), child,
                   child == nullptr ? "(none)" : child->GetNamedPathToRoot(true).c_str()))
       {
+        Anki::Util::sLogFlush();
         Anki::Util::sAbort();
       }
       
@@ -478,6 +511,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(
                   child == nullptr ? "(none)" : child->GetName().c_str(), child,
                   child == nullptr ? "(none)" : child->GetNamedPathToRoot(true).c_str()))
       {
+        Anki::Util::sLogFlush();
         Anki::Util::sAbort();
       }
       
@@ -501,7 +535,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_AssertIsValidParentPointer(
 template<class PoseNd, class TransformNd>
 void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_PoseDestroyed(const PoseTreeNode* nodePtr)
 {
-  if ( ANKI_DEV_CHEATS )
+  if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
   
@@ -522,7 +556,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_PoseDestroyed(const PoseTre
 template<class PoseNd, class TransformNd>
 void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_PoseCreated(const PoseTreeNode* nodePtr)
 {
-  if ( ANKI_DEV_CHEATS )
+  if ( DO_DEV_POSE_CHECKS )
   {
     std::lock_guard<std::mutex> lock( Dev_GetMutex() );
   
@@ -537,8 +571,20 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::Dev_PoseCreated(const PoseTreeN
                 nodePtr->GetNamedPathToRoot(true).c_str());
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline void PoseBase<PoseNd,TransformNd>::PoseTreeNode::RemoveOwner()
+{
+  if(ANKI_VERIFY(_ownerCount > 0, "PoseBase.PoseTreeNode.RemoveOwner.ZeroOwners", ""))
+  {
+    --_ownerCount;
+  }
+}
 
   
 } // namespace Anki
+
+#undef DO_DEV_POSE_CHECKS
 
 #endif /* __Anki_Common_Math_PoseTreeNode_H__ */

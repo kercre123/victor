@@ -105,6 +105,14 @@ namespace Anki {
     std::string GetNamedPathToRoot(bool showTranslations) const;
     void        PrintNamedPathToRoot(bool showTranslations) const;
     
+    // An "unowned" parent can result when, for example, Pose A uses a temporary Pose B as its parent and then
+    // Pose B goes out of scope. No Pose actually "owns" the node inside Pose B, but Pose A still refers to it.
+    // If unowned parents are not allowed, then a parent will be ANKI_VERIFY'd to have an owner
+    // each time its node's GetParent() method is called. Normally, unowned parents are *not* allowed
+    // but this can be globally adjusted if desired (e.g. for unit tests).
+    static bool AreUnownedParentsAllowed();
+    static void AllowUnownedParents(bool tf);
+    
   protected:
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,12 +138,13 @@ namespace Anki {
     
     // Create a new Pose object which "wraps" an existing node
     class PoseTreeNode;
-    void WrapExistingNode(std::shared_ptr<PoseTreeNode> node) { _node = node; }
+    void WrapExistingNode(std::shared_ptr<PoseTreeNode> node) { _node = node; _node->AddOwner(); }
         
   private:
     
     std::shared_ptr<PoseTreeNode> _node;
     
+    static bool _areUnownedParentsAllowed;
   };
   
 } // namespace Anki

@@ -30,6 +30,9 @@
 
 namespace Anki {
   
+  template<class PoseNd, class TransformNd>
+  bool PoseBase<PoseNd,TransformNd>::_areUnownedParentsAllowed = false;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd, class TransformNd>
   PoseBase<PoseNd,TransformNd>::PoseBase()
@@ -42,6 +45,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const PoseNd& parentPose, const std::string& name)
   : _node(new PoseTreeNode(transform, parentPose._node, name))
   {
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -49,6 +53,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const std::string& name)
   : _node(new PoseTreeNode(transform, nullptr, name))
   {
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -56,6 +61,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const PoseNd& parentPose, const std::string& name)
   : _node(new PoseTreeNode(TransformNd(), parentPose._node, name))
   {
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -63,7 +69,10 @@ namespace Anki {
   template<class PoseNd, class TransformNd>
   PoseBase<PoseNd,TransformNd>::~PoseBase()
   {
-    
+    if(!IsNull())
+    {
+      _node->RemoveOwner();
+    }
   }
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -72,7 +81,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const PoseBase& other)
   : _node(new PoseTreeNode(*other._node)) // don't share Nodes with other! copy the contents!
   {
-    
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -83,12 +92,14 @@ namespace Anki {
     {
       if(other.IsNull())
       {
+        _node->RemoveOwner();
         _node.reset();
       }
       else
       {
         // don't share Nodes with other! assign the contents!
         *_node = *other._node;
+        _node->AddOwner();
       }
     }
     return *this;
@@ -448,6 +459,20 @@ namespace Anki {
     P_wrt_other.SetParent(toPose);
     
     return true;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::AreUnownedParentsAllowed()
+  {
+    return _areUnownedParentsAllowed;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::AllowUnownedParents(bool tf)
+  {
+    _areUnownedParentsAllowed = tf;
   }
   
 } // namespace Anki
