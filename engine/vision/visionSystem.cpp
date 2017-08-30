@@ -1638,6 +1638,7 @@ namespace Cozmo {
       
       // Instead of correcting the entire image only correct the quads
       // Apply the appropriate shift to each of the corners of the quad to get a shifted quad
+      bool allCornersInBounds = true;
       if(_doRollingShutterCorrection)
       {
         Quad2f warpedCorners(marker.GetImageCorners());
@@ -1651,21 +1652,29 @@ namespace Cozmo {
           
           const Vec2f& pixelShift = _rollingShutterCorrector.GetPixelShifts().at(warpIndex);
           corner -= pixelShift;
-          
-          DEV_ASSERT(Util::IsFltGEZero(corner.x()) &&
-                     Util::IsFltGEZero(corner.y()) &&
-                     Util::IsFltLT(corner.x(), (f32)inputImageGray.GetNumCols()) &&
-                     Util::IsFltLT(corner.y(), (f32)inputImageGray.GetNumRows()),
-                     "VisionSystem.DetectMarkersWithCLAHE.RollingShutterWarpOOB");
+
+          if(Util::IsFltLTZero(corner.x()) ||
+             Util::IsFltLTZero(corner.y()) ||
+             Util::IsFltGE(corner.x(), (f32)inputImageGray.GetNumCols()) ||
+             Util::IsFltGE(corner.y(), (f32)inputImageGray.GetNumRows()))
+          {
+            // Warped corner is outside image bounds. Just drop this entire marker. Technically, we could still
+            // probably estimate its pose just fine, but other things later may expect all corners to be in bounds
+            // so easier just not to risk it.
+            allCornersInBounds = false;
+            break; // no need to warp remaining corners once any one is OOB
+          }
         }
         
-        
-        Vision::ObservedMarker warpedMarker(marker.GetTimeStamp(),
-                                            marker.GetCode(),
-                                            warpedCorners,
-                                            marker.GetSeenBy());
-        
-        std::swap(marker, warpedMarker);
+        if(allCornersInBounds)
+        {
+          Vision::ObservedMarker warpedMarker(marker.GetTimeStamp(),
+                                              marker.GetCode(),
+                                              warpedCorners,
+                                              marker.GetSeenBy());
+          
+          std::swap(marker, warpedMarker);
+        }
       }
     }
     
