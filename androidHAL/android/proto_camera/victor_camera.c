@@ -689,7 +689,7 @@ void camera_install_callback(camera_cb cb)
 }
 
 
-#define DIM 1
+#define DIM 0
 #define X 640
 #define Y 360
 #define X6 214
