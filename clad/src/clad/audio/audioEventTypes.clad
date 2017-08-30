@@ -60,6 +60,7 @@ enum uint_32 EventGroupType
   Music,
   Robot_Sfx,
   Robot_Vo,
+  Sdk,
   Sfx,
   Ui,
 }
@@ -508,6 +509,17 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Word_Quick_Tap = 444948971,
   Play__Robot_Vo__Word_Speedtap_Excited = 2751243663,
   Play__Robot_Vo__Word_Speedtap_Request = 919083726,
+  Play__Sdk__Sfx_Cube_Connected = 1348118290,
+  Play__Sdk__Sfx_Cube_Light_Blue = 1471279738,
+  Play__Sdk__Sfx_Cube_Light_Generic = 2954005789,
+  Play__Sdk__Sfx_Cube_Light_Red = 1003135343,
+  Play__Sdk__Sfx_Cube_Light_Yellow = 2688904298,
+  Play__Sdk__Sfx_Game_End = 3133966309,
+  Play__Sdk__Sfx_Game_Lose = 338534481,
+  Play__Sdk__Sfx_Game_Win = 3215000236,
+  Play__Sdk__Sfx_Round_End = 1198938701,
+  Play__Sdk__Ui_Click = 3333714278,
+  Play__Sdk__Ui_Device_Notification = 681875134,
   Play__Sfx__Banner_Wipe = 3247701492,
   Play__Sfx__Code_Fragment_Collected = 2587766166,
   Play__Sfx__Code_Fragment_Released = 1918333736,
@@ -568,6 +580,7 @@ enum uint_32 GenericEvent
   Play__Sfx__Repair_Success_Complete = 3969829927,
   Play__Sfx__Repair_Success_Round = 1470861090,
   Play__Sfx__Repair_Tap_Arrow = 821377663,
+  Play__Sfx__Spark_Gain = 2596085903,
   Play__Sfx__Spark_Launch = 38276463,
   Play__Sfx__Spark_Success = 3587224415,
   Play__Ui__Attention_Device = 796149778,
@@ -1088,6 +1101,22 @@ enum uint_32 Robot_Vo
   Word_Speedtap_Request = 919083726,
 }
 
+enum uint_32 Sdk
+{
+  Invalid = 0,  // Use this to check for Invalid events
+  Sfx_Cube_Connected = 1348118290,
+  Sfx_Cube_Light_Blue = 1471279738,
+  Sfx_Cube_Light_Generic = 2954005789,
+  Sfx_Cube_Light_Red = 1003135343,
+  Sfx_Cube_Light_Yellow = 2688904298,
+  Sfx_Game_End = 3133966309,
+  Sfx_Game_Lose = 338534481,
+  Sfx_Game_Win = 3215000236,
+  Sfx_Round_End = 1198938701,
+  Ui_Click = 3333714278,
+  Ui_Device_Notification = 681875134,
+}
+
 enum uint_32 Sfx
 {
   Banner_Wipe = 3247701492,
@@ -1153,6 +1182,7 @@ enum uint_32 Sfx
   Repair_Success_Complete = 3969829927,
   Repair_Success_Round = 1470861090,
   Repair_Tap_Arrow = 821377663,
+  Spark_Gain = 2596085903,
   Spark_Launch = 38276463,
   Spark_Success = 3587224415,
 }
