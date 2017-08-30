@@ -8,7 +8,6 @@
 
 #include "power.h"
 #include "analog.h"
-#include "contacts.h"
 
 #include "common.h"
 #include "hardware.h"

@@ -80,7 +80,7 @@ void Analog::stop(void) {
 #ifndef BOOTLOADER
 #include "lights.h"
 
-static const int POWER_DOWN_TIME = 200 * 5;   // Shutdown
+static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
 static const int BUTTON_THRESHOLD = 0xD00;
 static const int BOUNCE_LENGTH = 3;
