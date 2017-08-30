@@ -48,6 +48,10 @@ GTEST_TEST(TestPoint, PointInitialization)
   EXPECT_EQ(p6[0], 3);
   EXPECT_EQ(p6[1], 6);
   
+  Point<2, float> p8 = {4.5, 3.7};
+  Point<2, int> p9 = {4, 3};
+  EXPECT_TRUE(p9 == p8.CastTo<int>());
+  
 }
 
 GTEST_TEST(TestPoint, DotProductAndLength)

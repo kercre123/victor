@@ -169,6 +169,15 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
+  template<typename T_other>
+  Point<N, T_other> Point<N,T>::CastTo() const
+  {
+    Point<N, T_other> to_cast;
+    to_cast.SetCast(*this);
+    return to_cast;
+  }
+  
+  template<PointDimType N, typename T>
   Point<N,T>& Point<N,T>::operator*= (const T value)
   {
     for(PointDimType i=0; i<N; ++i) {

@@ -254,13 +254,9 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
       foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
       
       // Zero out everything in the ratio image that's not inside the ground plane quad
-      {
-        // casting is explicit
-        Point2f tmp_point;
-        tmp_point.SetCast(boundingRect.GetTopLeft());
-        imgQuad -= tmp_point;
-      }
-
+      // casting is explicit
+      imgQuad -= boundingRect.GetTopLeft().CastTo<float>();
+      
       Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
                          groundPlaneForegroundMotion.GetNumCols());
       mask.FillWith(0);
@@ -292,12 +288,8 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
                                      (1.f - kMotionDetection_GroundCentroidPercentileX));
       
       // Move back to image coordinates from ROI coordinates
-      {
-        // casting is explicit
-        Point2f tmp_point;
-        tmp_point.SetCast(boundingRect.GetTopLeft());
-        groundPlaneCentroid += tmp_point;
-      }
+      // casting is explicit
+      groundPlaneCentroid += boundingRect.GetTopLeft().CastTo<float>();
       
       /* Experimental: Try computing moments in an overhead warped view of the ratio image
        groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);

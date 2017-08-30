@@ -81,7 +81,7 @@ namespace Anki {
     Point<N,T>& operator=(const T &value);
     Point<N,T>& operator=(const Point<N,T> &other);
     
-    // Casting has to be done via these explicit methods
+    // Assign and cast
     template<typename T_other>
     Point<N,T>& SetCast(const Point<N,T_other> &other);
     template<typename T_other>
@@ -92,6 +92,10 @@ namespace Anki {
     Point<N,T>& operator=(const T_other &value) = delete;
     template<typename T_other>
     Point<N,T>& operator=(const Point<N,T_other> &other) = delete;
+    
+    // Return a cast version of this
+    template<typename T_other>
+    Point<N, T_other> CastTo() const;
     
     // Accessors:
     T& operator[] (const PointDimType i);
