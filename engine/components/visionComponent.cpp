@@ -2536,19 +2536,6 @@ namespace Cozmo {
                                           0,
                                           distortionCoeffs);
           
-          CameraCalibration calibMsg(362.8743258347415,
-                                     366.7335187649505,
-                                     302.279771069911,
-                                     200.0289589104854,
-                                     0,
-                                     360,
-                                     640,
-                                     distortionCoeffs);
-          u8 buf[calibMsg.Size()];
-          size_t size = calibMsg.Pack(buf, sizeof(buf));
-          
-          _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, size);
-          
           SetCameraCalibration(calib);
 #endif
           

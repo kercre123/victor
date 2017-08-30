@@ -24,7 +24,6 @@
 #include "androidHAL/android/camera/utils/native_debug.h"
 #include "androidHAL/android/proto_camera/victor_camera.h"
 #include "anki/vision/CameraSettings.h"
-#include "anki/vision/basestation/image.h"
 
 #include <vector>
 #include <chrono>
@@ -221,8 +220,8 @@ namespace Anki {
         imageID = ++_imageFrameID;
 
         ImageImuData imu_meas(imageID,
-          0.f, 0.f, 0.f,
-          125);          // IMU data point for middle of this image
+                              0.f, 0.f, 0.f,
+                              125);          // IMU data point for middle of this image
 
         imuData.push_back(imu_meas);
 

@@ -266,7 +266,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
         
   if (nullptr != _context->GetDataPlatform())
   {
-    PRINT_NAMED_WARNING("", "Initing vision component");
     _visionComponent->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
   
@@ -285,6 +284,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #endif
 
 #ifdef COZMO_V2
+  // This will create the AndroidHAL instance if it doesn't yet exist
   AndroidHAL::getInstance();
 #endif
   
