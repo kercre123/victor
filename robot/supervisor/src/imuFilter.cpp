@@ -882,8 +882,7 @@ namespace Anki {
           
         // Compute head angle wrt to world horizontal plane
         const f32 headAngle = HeadController::GetAngleRad();  // TODO: Use encoders or accelerometer data? If encoders,
-                                                        // may need to use accelerometer data anyway for when it's on ramps.
-
+                                                              // may need to use accelerometer data anyway for when it's on ramps.
 
         // Compute rotation speeds in robot XY-plane.
         // https://www.chrobotics.com/library/understanding-euler-angles

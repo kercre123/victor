@@ -57,10 +57,10 @@ static uint32_t measurement_timing_budget_us;
 
 static const I2C_Operation* i2c_hold = (I2C_Operation*) 0xDEADFACE;
 static const I2C_Operation i2c_loop[] = {
-  { I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
-  { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
-  { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
-  { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
+  { I2C_REG_READ, 0, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[3]) },
+  { I2C_REG_READ, 1, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[2]) },
+  { I2C_REG_READ, 2, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[1]) },
+  { I2C_REG_READ, 3, DROP_SENSOR_ADDRESS, PS_DATA_0, TARGET(cliffSense[0]) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS, TARGET(tof_status) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 10, TARGET(tof_reading) },
   { I2C_REG_READ, 0, TOF_SENSOR_ADDRESS, RESULT_RANGE_STATUS + 6, TARGET(tof_signal_rate) },
