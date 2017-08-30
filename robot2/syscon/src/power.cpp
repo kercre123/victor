@@ -1,7 +1,6 @@
 #include "common.h"
 #include "hardware.h"
 
-#include "timer.h"
 #include "power.h"
 
 #include "contacts.h"
@@ -31,19 +30,26 @@ static const uint32_t APB2_CLOCKS = 0
 static volatile bool ejectSystem = false;
 
 void Power::init(void) {
-  nCHG_EN::reset();
+  POWER_EN::pull(PULL_UP);
+
+  nCHG_EN::set();
   nCHG_EN::mode(MODE_OUTPUT);
 
   nVDDs_EN::reset();
   nVDDs_EN::mode(MODE_OUTPUT);
 }
 
+void Power::setCharge(bool enable) {
+  if (enable) {
+    nCHG_EN::reset();
+  } else {
+    nCHG_EN::set();
+  }
+}
+
 void Power::stop(void) {
   nVDDs_EN::set();
   nCHG_EN::set();
-  
-  POWER_EN::mode(MODE_OUTPUT);
-  POWER_EN::reset();
 }
 
 void Power::enableClocking(void) {

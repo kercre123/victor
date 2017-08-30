@@ -1,5 +1,6 @@
 #include "vectors.h"
 #include "flash.h"
+#include "power.h"
 
 #include "stm32f0xx.h"
 
@@ -81,4 +82,14 @@ void Flash::writeFaultReason(FaultType reason) {
     writeFlash(&APP->faultCounter[i], &reason, sizeof(reason));
     return ;
   }
+}
+
+void Flash::markForWipe(void) {
+  // Mark the flash application space for deletion
+  for (int i = 0; i < MAX_FAULT_COUNT; i++) {
+    Flash::writeFaultReason(FAULT_USER_WIPE);
+  }
+  
+  // Let system know it needs to enter the bootloader for recovery
+  Power::softReset();
 }

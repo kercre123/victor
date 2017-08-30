@@ -36,8 +36,8 @@ void Touch::init(void) {
   CAP1I::alternate(2);
   CAP1I::mode(MODE_ALTERNATE);
 
-  CAP2I::alternate(2);
-  CAP2I::mode(MODE_ALTERNATE);
+  //CAP2I::alternate(2);
+  //CAP2I::mode(MODE_ALTERNATE);
 
   NVIC_EnableIRQ(TIM16_IRQn);
   NVIC_SetPriority(TIM16_IRQn, PRIORITY_TOUCH_SENSE);

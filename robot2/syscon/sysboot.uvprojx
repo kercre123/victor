@@ -273,7 +273,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x2000</Size>
+                <Size>0x3000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -332,9 +332,9 @@
             <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--gnu</MiscControls>
-              <Define>STM32F030X8</Define>
+              <Define>STM32F030X8,BOOTLOADER</Define>
               <Undefine></Undefine>
-              <IncludePath>common;schema;crypto;build</IncludePath>
+              <IncludePath>boot;common;schema;crypto;build</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -375,7 +375,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>src</GroupName>
+          <GroupName>boot</GroupName>
           <Files>
             <File>
               <FileName>main.cpp</FileName>
@@ -408,14 +408,29 @@
               <FilePath>.\boot\comms.cpp</FilePath>
             </File>
             <File>
-              <FileName>flash.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\flash.cpp</FilePath>
-            </File>
-            <File>
               <FileName>startup_stm32f030x8.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\boot\startup_stm32f030x8.s</FilePath>
+            </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\power.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>common</GroupName>
+          <Files>
+            <File>
+              <FileName>analog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\common\analog.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>flash.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\common\flash.cpp</FilePath>
             </File>
           </Files>
         </Group>

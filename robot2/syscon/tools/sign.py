@@ -33,10 +33,9 @@ FLASH_ADDRESS   = 0x08000000
 HEADER_LENGTH   = 16
 CERT_LENGTH     = 256
 FLASH_SIZE      = 0x10000
-STORAGE_SIZE    = 0x400
-IMAGE_BASE      = 0x2000
+IMAGE_BASE      = 0x3000
 
-PROGRAM_SIZE    = FLASH_SIZE - IMAGE_BASE - CERT_LENGTH - HEADER_LENGTH - STORAGE_SIZE
+PROGRAM_SIZE    = FLASH_SIZE - IMAGE_BASE - CERT_LENGTH - HEADER_LENGTH
 
 def rom_info(file):
     with open(file, "rb") as fo:
@@ -151,7 +150,7 @@ if __name__ == '__main__':
     version = str.encode(args.version[:15]) + b'\x00'
     axf_data = axf_data[:0x118] + version + axf_data[0x118+len(version):]
 
-    if axf_address < (FLASH_ADDRESS + IMAGE_BASE) or (axf_address + len(axf_data)) > (FLASH_ADDRESS + FLASH_SIZE - STORAGE_SIZE):
+    if axf_address < (FLASH_ADDRESS + IMAGE_BASE) or (axf_address + len(axf_data)) > (FLASH_ADDRESS + FLASH_SIZE):
         raise Exception("Image too large for flash")
 
     certificate = sign(axf_data[HEADER_LENGTH+CERT_LENGTH:], cert)

@@ -6,12 +6,19 @@
 
 #include "stm32f0xx.h"
 
+#include "power.h"
+#include "analog.h"
+#include "contacts.h"
+
 #include "common.h"
 #include "hardware.h"
 
 //#define DISABLE_WDOG
 
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
+
+static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
+static const uint16_t MAIN_EXEC_PERIOD = SYSTEM_CLOCK / MAIN_EXEC_PRESCALE / 200;        // 200hz (5ms period)
 
 bool validate(void) {
   // Elevate the watchdog kicker while a cert check is running
@@ -39,15 +46,9 @@ static bool boot_test(void) {
   return validate();
 }
 
-static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
-static const uint16_t MAIN_EXEC_PERIOD = SYSTEM_CLOCK / MAIN_EXEC_PRESCALE / 200;        // 200hz (5ms period)
-
 void timer_init(void) {
   // Start our cheese watchdog
   #ifndef DISABLE_WDOG
-  WWDG->SR = WWDG_SR_EWIF | 0x7F;
-  WWDG->CR = 0xFF;
-
   // Start the watchdog up
   IWDG->KR = 0xCCCC;
   IWDG->KR = 0x5555;
@@ -62,59 +63,44 @@ void timer_init(void) {
   TIM14->DIER = TIM_DIER_UIE;
   TIM14->CR1 = TIM_CR1_CEN;
 
+  NVIC_SetPriority(TIM14_IRQn, 0);
   NVIC_EnableIRQ(TIM14_IRQn);
-  NVIC_EnableIRQ(WWDG_IRQn);
+}
+
+extern "C" void SoftReset(void) {
+  NVIC_SystemReset();
 }
 
 extern "C" void TIM14_IRQHandler(void) {
   #ifndef DISABLE_WDOG
   IWDG->KR = 0xAAAA;
-  WWDG->CR = 0xFF;
   #endif
   TIM14->SR = 0;
 }
 
-extern "C" void WWDG_IRQHandler(void) {
-  Flash::writeFaultReason(FAULT_WATCHDOG);
-}
-
 int main(void) {
-  // Enable DMA, CRC, GPIO and USART1
-  RCC->AHBENR |= 0
-              | RCC_APB1ENR_WWDGEN
-              | RCC_AHBENR_CRCEN
-              | RCC_AHBENR_DMAEN
-              | RCC_AHBENR_GPIOAEN
-              | RCC_AHBENR_GPIOBEN
-              | RCC_AHBENR_GPIOCEN
-              | RCC_AHBENR_GPIOFEN;
-  RCC->APB1ENR |= RCC_APB1ENR_TIM14EN;
-  RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
-  // Start the watchdog up
+  Power::enableClocking();
   timer_init();
-
-  // Turn power on to the board
-  POWER_EN::pull(PULL_UP);
-  POWER_EN::mode(MODE_INPUT);
+  Analog::init();
+  Power::init();
 
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash
   // 2) Start recovery
   if (!boot_test()) {
+    // We need to run recovery
     Flash::eraseApplication();
-  }
 
-  if (APP->fingerPrint == COZMO_APPLICATION_FINGERPRINT) {
-    APP->visitorInit();
+    // Wait for firmware
+    Comms::run();
   }
-
-  Comms::run();
 
   // This flag is only set when DFU has validated the image
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
     NVIC_SystemReset();
   }
+
+  Analog::stop();
 
   StartApplication(APP->stackStart, APP->resetVector);
 }
