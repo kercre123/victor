@@ -35,6 +35,19 @@ GTEST_TEST(TestPoint, PointInitialization)
     EXPECT_EQ(p5[i], float(i+1));
   }
   
+  Point<2, int> p6;
+  p6 = {1, 2};
+  p6.SetCast(6.5);
+  for(int i=0; i<2; ++i) {
+    EXPECT_EQ(p6[i], 6);
+  }
+  
+  Point<2, float> p7;
+  p7 = {3.4, 6.7};
+  p6.SetCast(p7);
+  EXPECT_EQ(p6[0], 3);
+  EXPECT_EQ(p6[1], 6);
+  
 }
 
 GTEST_TEST(TestPoint, DotProductAndLength)

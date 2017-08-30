@@ -48,8 +48,6 @@ namespace Anki {
     // Constructors
     Point( void );
     
-    template<typename T_other>
-    Point(const Point<N,T_other>& pt);
     //Point(const std::array<T,N>& array); // Creates ambiguity with opencv Point3_ constructor below
     
     // Populate all dimensions with the same scalar value
@@ -80,9 +78,20 @@ namespace Anki {
 #endif
     
     // Assignment operator:
-    template<typename T_other>
-    Point<N,T>& operator=(const Point<N,T_other> &other);
     Point<N,T>& operator=(const T &value);
+    Point<N,T>& operator=(const Point<N,T> &other);
+    
+    // Casting has to be done via these explicit methods
+    template<typename T_other>
+    Point<N,T>& SetCast(const Point<N,T_other> &other);
+    template<typename T_other>
+    Point<N,T>& SetCast(const T_other &value);
+    
+    // Remove implicit casting
+    template<typename T_other>
+    Point<N,T>& operator=(const T_other &value) = delete;
+    template<typename T_other>
+    Point<N,T>& operator=(const Point<N,T_other> &other) = delete;
     
     // Accessors:
     T& operator[] (const PointDimType i);

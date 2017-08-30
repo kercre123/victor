@@ -40,14 +40,6 @@ namespace Anki {
     }
   }
   
-  template<PointDimType N, typename T>
-  template<typename T_other>
-  Point<N,T>::Point(const Point<N,T_other>& pt)
-  {
-    for(PointDimType i=0; i<N; ++i) {
-      this->data[i] = static_cast<T>(pt[i]);
-    }
-  }
   /*
    template<PointDimType N, typename T>
    Point<N,T>::Point(const std::array<T,N>& array)
@@ -140,10 +132,29 @@ namespace Anki {
   
   template<PointDimType N, typename T>
   template<typename T_other>
-  Point<N,T>& Point<N,T>::operator=(const Point<N,T_other> &other)
+  Point<N,T>& Point<N,T>::SetCast(const Point<N,T_other> &other)
   {
     for(PointDimType i=0; i<N; ++i) {
       this->data[i] = static_cast<T>(other[i]);
+    }
+    return *this;
+  }
+  
+  template<PointDimType N, typename T>
+  Point<N,T>& Point<N,T>::operator=(const Point<N,T> &other)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = other[i];
+    }
+    return *this;
+  }
+  
+  template<PointDimType N, typename T>
+  template<typename T_other>
+  Point<N,T>& Point<N,T>::SetCast(const T_other &value)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = static_cast<T>(value);
     }
     return *this;
   }
