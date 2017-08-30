@@ -857,9 +857,9 @@ namespace Anki {
               gyroMotionThresh_ = GYRO_MOTION_THRESHOLD;
             }
             else if ( ProxSensors::IsAnyCliffDetected() ||
-                      (ABS(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
-                      (ABS(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
-                      (ABS(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {
+                      (fabsf(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
+                      (fabsf(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
+                      (fabsf(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {
               // Bias filter saw evidence of motion by virtue of the fact that the filter value differs from
               // the input. Reset the counter.
               biasFiltCnt_ = 0;
