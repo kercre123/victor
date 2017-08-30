@@ -1,5 +1,5 @@
 /**
-* File: scoringBehaviorChooser.cpp
+* File: ScoringBSRunnableChooser.cpp
 *
 * Author: Lee
 * Created: 08/20/15
@@ -10,7 +10,7 @@
 * Copyright: Anki, Inc. 2015
 *
 **/
-#include "engine/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
@@ -44,36 +44,36 @@ namespace Cozmo {
 
   
 namespace{
-static const char* kScoreBonusForCurrentBehaviorKey = "scoreBonusForCurrentBehavior";
-static const char* kBehaviorsInChooserConfigKey     = "behaviors";
-static const char* kScoringConfigKey                = "scoring";
-
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ScoringBehaviorChooser::ScoringBehaviorChooser(Robot& robot, const Json::Value& config)
-:IBehaviorChooser(robot, config)
+ScoringBSRunnableChooser::ScoringBSRunnableChooser(Robot& robot, const Json::Value& config)
+:IBSRunnableChooser(robot, config)
 {
   ReloadFromConfig(robot, config);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ScoringBehaviorChooser::~ScoringBehaviorChooser()
+ScoringBSRunnableChooser::~ScoringBSRunnableChooser()
 {
   ClearBehaviors();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value& config)
+Result ScoringBSRunnableChooser::ReloadFromConfig(Robot& robot, const Json::Value& config)
 {
+  const char* kScoreBonusForCurrentBehaviorKey = "scoreBonusForCurrentBehavior";
+  const char* kBehaviorsInChooserConfigKey     = "behaviors";
+  const char* kScoringConfigKey                = "scoring";
+  
   // clear previous
   ClearBehaviors();
 
   // add behaviors to this chooser
   const Json::Value& behaviorsConfig = config[kBehaviorsInChooserConfigKey];
   DEV_ASSERT_MSG(!behaviorsConfig.isNull(),
-                 "ScoringBehaviorChooser.ReloadFromConfig.BehaviorsNotSpecified",
+                 "ScoringBSRunnableChooser.ReloadFromConfig.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorsConfig.isNull()){
     const BehaviorManager& behaviorManager = robot.GetBehaviorManager();
@@ -84,13 +84,13 @@ Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value&
 
       const Json::Value& scoringConfig = (behavior)[kScoringConfigKey];
       DEV_ASSERT_MSG(!scoringConfig.isNull(),
-                     "ScoringBehaviorChooser.ReloadFromConfig.ScoringNotSpecified",
+                     "ScoringBSRunnableChooser.ReloadFromConfig.ScoringNotSpecified",
                      "Scoring Information Not Provided For %s",
                      BehaviorIDToString(behaviorID));
       // Find the behavior name in the factory
       IBehaviorPtr scoredBehavior =  behaviorManager.FindBehaviorByID(behaviorID);
       DEV_ASSERT_MSG(scoredBehavior != nullptr,
-                     "ScoringBehaviorChooser.ReloadFromConfig.FailedToFindBehavior",
+                     "ScoringBSRunnableChooser.ReloadFromConfig.FailedToFindBehavior",
                      "Behavior not found: %s",
                      BehaviorIDToString(behaviorID));
       if(scoredBehavior != nullptr){
@@ -111,13 +111,13 @@ Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value&
     const bool scoreBonusLoadedOk = _scoreBonusForCurrentBehavior.ReadFromJson(scoreBonusJson);
     if ( !scoreBonusLoadedOk )
     {
-      PRINT_NAMED_WARNING("ScoringBehaviorChooser.ReadFromJson.BadScoreBonus",
+      PRINT_NAMED_WARNING("ScoringBSRunnableChooser.ReadFromJson.BadScoreBonus",
         "'%s' failed to read (%s)", kScoreBonusForCurrentBehaviorKey, scoreBonusJson.isNull() ? "Missing" : "Bad");
     }
   
     if (_scoreBonusForCurrentBehavior.GetNumNodes() == 0)
     {
-      PRINT_NAMED_WARNING("ScoringBehaviorChooser.ReadFromJson.EmptyScoreBonus", "Forcing to default (no bonuses)");
+      PRINT_NAMED_WARNING("ScoringBSRunnableChooser.ReadFromJson.EmptyScoreBonus", "Forcing to default (no bonuses)");
       _scoreBonusForCurrentBehavior.AddNode(0.0f, 0.0f); // no bonus for any X
     }
   }
@@ -130,14 +130,14 @@ Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float ScoringBehaviorChooser::ScoreBonusForCurrentBehavior(float runningDuration) const
+float ScoringBSRunnableChooser::ScoreBonusForCurrentBehavior(float runningDuration) const
 {
   const float minMargin = _scoreBonusForCurrentBehavior.EvaluateY(runningDuration);
   return minMargin;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ScoringBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ScoringBSRunnableChooser::GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   const float kRandomFactor = 0.1f;
   
@@ -241,14 +241,14 @@ IBehaviorPtr ScoringBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBeh
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ScoringBehaviorChooser::ClearBehaviors()
+void ScoringBSRunnableChooser::ClearBehaviors()
 {
   _idToScoredBehaviorMap.clear();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ScoringBehaviorChooser::TryAddBehavior(IBehaviorPtr behavior)
+Result ScoringBSRunnableChooser::TryAddBehavior(IBehaviorPtr behavior)
 {
   // try to add by behavior name
   BehaviorID behaviorID = behavior->GetID();
@@ -260,12 +260,12 @@ Result ScoringBehaviorChooser::TryAddBehavior(IBehaviorPtr behavior)
     // if we have an entry in our map under this name, it has to match the pointer in the factory, otherwise
     // who the hell are we pointing to?
     DEV_ASSERT(insertResult.first->second == behavior,
-      "ScoringBehaviorChooser.TryAddBehavior.DuplicateNameDifferentPointer" );
+      "ScoringBSRunnableChooser.TryAddBehavior.DuplicateNameDifferentPointer" );
   }
   else
   {
     // added to the map as expected
-    PRINT_NAMED_DEBUG("ScoringBehaviorChooser.TryAddBehavior.Addition",
+    PRINT_NAMED_DEBUG("ScoringBSRunnableChooser.TryAddBehavior.Addition",
       "Added behavior '%s' from factory", BehaviorIDToString(behaviorID));
   }
   
@@ -276,7 +276,7 @@ Result ScoringBehaviorChooser::TryAddBehavior(IBehaviorPtr behavior)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ScoringBehaviorChooser::FindBehaviorInTableByID(BehaviorID behaviorID)
+IBehaviorPtr ScoringBSRunnableChooser::FindBehaviorInTableByID(BehaviorID behaviorID)
 {
   IBehaviorPtr ret = nullptr;
   const auto& matchIt = _idToScoredBehaviorMap.find(behaviorID);
@@ -285,17 +285,7 @@ IBehaviorPtr ScoringBehaviorChooser::FindBehaviorInTableByID(BehaviorID behavior
   }
   return ret;
 }
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<IBehaviorPtr> ScoringBehaviorChooser::GetObjectTapBehaviors()
-{
-  std::vector<IBehaviorPtr> behaviors;
-  for(const auto& entry: _idToScoredBehaviorMap){
-    behaviors.push_back(entry.second);
-  }
-  return behaviors;
-}
-  
+
+
 } // namespace Cozmo
 } // namespace Anki

@@ -53,7 +53,7 @@ public:
   void HandleMessage(const T& msg);
 
 protected:
-  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;

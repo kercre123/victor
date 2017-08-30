@@ -1,21 +1,21 @@
 /**
- * File: behaviorChooserFactory
+ * File: bsRunnableChooserFactory
  *
  * Author: Raul
  * Created: 05/02/16
  *
- * Description: Exactly what it sounds like, a factory for behavior choosers.
+ * Description: Exactly what it sounds like, a factory for bsRunnable choosers.
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/bsRunnableChooserFactory.h"
 
 // behavior choosers
 #include "engine/behaviorSystem/activities/activities/activityFreeplay.h"
-#include "engine/behaviorSystem/behaviorChoosers/selectionBehaviorChooser.h"
-#include "engine/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
-#include "engine/behaviorSystem/behaviorChoosers/strictPriorityBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/selectionBSRunnableChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/strictPriorityBSRunnableChooser.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -29,37 +29,37 @@
 
 namespace Anki {
 namespace Cozmo {
-namespace BehaviorChooserFactory {
+namespace BSRunnableChooserFactory {
   
 namespace{
-static const char* const kChooserTypeConfigKey = "type";
-
+const char* const kChooserTypeConfigKey = "type";
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
-{
-  IBehaviorChooser* newChooser = nullptr;
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::unique_ptr<IBSRunnableChooser> CreateBSRunnableChooser(Robot& robot, const Json::Value& config)
+{
+  std::unique_ptr<IBSRunnableChooser> newChooser;
+  
   // extract type
   BehaviorChooserType type = BehaviorChooserTypeFromString(
-                                  JsonTools::ParseString(config, kChooserTypeConfigKey,
-                                  "BehaviorChooserFactory.CreateBehaviorChooser.NoTypeSpecified"));
+                               JsonTools::ParseString(config, kChooserTypeConfigKey,
+                                                      "BehaviorChooserFactory.CreateBehaviorChooser.NoTypeSpecified"));
   
   switch(type){
     case BehaviorChooserType::Scoring:
     {
-      newChooser = new ScoringBehaviorChooser(robot, config);
+      newChooser.reset(new ScoringBSRunnableChooser(robot, config));
       break;
     }
     case BehaviorChooserType::Selection:
     {
-      newChooser = new SelectionBehaviorChooser(robot, config);
+      newChooser.reset(new SelectionBSRunnableChooser(robot, config));
       break;
     }
     case BehaviorChooserType::StrictPriority:
     {
-      newChooser = new StrictPriorityBehaviorChooser(robot, config);
+      newChooser.reset(new StrictPriorityBSRunnableChooser(robot, config));
       break;
     }
   }
@@ -76,6 +76,7 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   
   return newChooser;
 }
+
 
 }; // namespace BehaviorChooserFactory
 } // namespace Cozmo

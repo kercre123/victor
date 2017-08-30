@@ -47,7 +47,7 @@ public:
   virtual void EatingInterrupted(Robot& robot) override;
   
 protected:
-  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
@@ -93,7 +93,7 @@ private:
   std::vector<Signal::SmartHandle> _eventHandlers;
   
   // Chooser which manages universal response behaviors
-  std::unique_ptr<IBehaviorChooser> _universalResponseChooser;
+  std::unique_ptr<IBSRunnableChooser> _universalResponseChooser;
   
   // Behaviors that the chooser calls directly
   IBehaviorPtr _searchingForFaceBehavior;

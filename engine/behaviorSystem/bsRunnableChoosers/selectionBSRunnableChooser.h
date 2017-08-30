@@ -1,5 +1,5 @@
 /**
- * File: selectionBehaviorChooser.h
+ * File: SelectionBSRunnableChooser.h
  *
  * Author: Lee Crippen
  * Created: 10/15/15
@@ -10,10 +10,10 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBSRunnableChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBSRunnableChooser_H__
 
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -31,12 +31,12 @@ namespace ExternalInterface {
 }
 template<typename T>class AnkiEvent;
   
-class SelectionBehaviorChooser : public IBehaviorChooser
+class SelectionBSRunnableChooser : public IBSRunnableChooser
 {
 public:
-  SelectionBehaviorChooser(Robot& robot, const Json::Value& config);
+  SelectionBSRunnableChooser(Robot& robot, const Json::Value& config);
   
-  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
   
   // events to notify the chooser when it becomes (in)active
   virtual void OnSelected() override;
@@ -61,9 +61,9 @@ private:
   // Whether or not the selected behavior is running
   bool _selectedBehaviorIsRunning = false;
   
-}; // class SelectionBehaviorChooser
+}; // class SelectionBSRunnableChooser
   
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_SelectionBehaviorChooser_H__
+#endif // __Cozmo_Basestation_SelectionBSRunnableChooser_H__

@@ -1,5 +1,5 @@
 /**
-* File: scoringBehaviorChooser.h
+* File: ScoringBSRunnableChooser.h
 *
 * Author: Lee
 * Created: 08/20/15, raul 05/03/16
@@ -11,10 +11,10 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBehaviorChooser_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBehaviorChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBSRunnableChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBSRunnableChooser_H__
 
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "anki/common/types.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -42,19 +42,19 @@ class Robot;
 template <typename Type> class AnkiEvent;
  
 // A simple implementation for choosing behaviors based on score only
-class ScoringBehaviorChooser : public IBehaviorChooser
+class ScoringBSRunnableChooser : public IBSRunnableChooser
 {
 public:
   // constructor/destructor
-  ScoringBehaviorChooser(Robot& robot, const Json::Value& config);
-  virtual ~ScoringBehaviorChooser();
+  ScoringBSRunnableChooser(Robot& robot, const Json::Value& config);
+  virtual ~ScoringBSRunnableChooser();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IBehaviorChooser API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -62,10 +62,6 @@ public:
   
   // adds a specific behavior to the table of behaviors if name doesn't exist, otherwise fail
   Result TryAddBehavior(IBehaviorPtr behavior);
-  
-  
-  // Used to access objectTapInteraction behaviors
-  std::vector<IBehaviorPtr> GetObjectTapBehaviors();
   
 protected:  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -99,4 +95,4 @@ protected:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_ScoringBehaviorChooser_H__
+#endif // __Cozmo_Basestation_ScoringBSRunnableChooser_H__

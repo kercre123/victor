@@ -1,5 +1,5 @@
 /**
-* File: strictPriorityBehaviorChooser.cpp
+* File: StrictPriorityBSRunnableChooser.cpp
 *
 * Author: Kevin M. Karol
 * Created: 05/18/2017
@@ -9,7 +9,7 @@
 * Copyright: Anki, Inc. 2017
 *
 **/
-#include "engine/behaviorSystem/behaviorChoosers/strictPriorityBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/strictPriorityBSRunnableChooser.h"
 
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
@@ -21,18 +21,17 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-static const char* kBehaviorsInChooserConfigKey     = "behaviors";
-
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrictPriorityBehaviorChooser::StrictPriorityBehaviorChooser(Robot& robot, const Json::Value& config)
-:IBehaviorChooser(robot, config)
+StrictPriorityBSRunnableChooser::StrictPriorityBSRunnableChooser(Robot& robot, const Json::Value& config)
+:IBSRunnableChooser(robot, config)
 {
+  const char* kBehaviorsInChooserConfigKey     = "behaviors";
   const Json::Value& behaviorArray = config[kBehaviorsInChooserConfigKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
-                 "StrictPriorityBehaviorChooser.BehaviorsNotSpecified",
+                 "StrictPriorityBSRunnableChooser.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorArray.isNull()){
     const BehaviorManager& behaviorManager = robot.GetBehaviorManager();
@@ -54,13 +53,13 @@ StrictPriorityBehaviorChooser::StrictPriorityBehaviorChooser(Robot& robot, const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrictPriorityBehaviorChooser::~StrictPriorityBehaviorChooser()
+StrictPriorityBSRunnableChooser::~StrictPriorityBSRunnableChooser()
 {
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr StrictPriorityBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr StrictPriorityBSRunnableChooser::GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   // Iterate through available behaviors, and return the first one that is runnable
   // since this is the highest priority behavior

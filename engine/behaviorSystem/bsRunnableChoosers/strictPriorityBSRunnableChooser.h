@@ -1,5 +1,5 @@
 /**
-* File: strictPriorityBehaviorChooser.h
+* File: StrictPriorityBSRunnableChooser.h
 *
 * Author: Kevin M. Karol
 * Created: 05/18/2017
@@ -10,10 +10,10 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_StrictPriorityBehaviorChooser_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_StrictPriorityBehaviorChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_StrictPriorityBSRunnableChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_StrictPriorityBSRunnableChooser_H__
 
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 
 
 namespace Json {
@@ -26,19 +26,19 @@ namespace Cozmo {
   
 class IBehavior;
   
-class StrictPriorityBehaviorChooser : public IBehaviorChooser
+class StrictPriorityBSRunnableChooser : public IBSRunnableChooser
 {
 public:
   // constructor/destructor
-  StrictPriorityBehaviorChooser(Robot& robot, const Json::Value& config);
-  virtual ~StrictPriorityBehaviorChooser();
+  StrictPriorityBSRunnableChooser(Robot& robot, const Json::Value& config);
+  virtual ~StrictPriorityBSRunnableChooser();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IBehaviorChooser API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
 private:
   std::vector<IBehaviorPtr> _behaviors;
@@ -47,4 +47,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_StrictPriorityBehaviorChooser_H__
+#endif // __Cozmo_Basestation_StrictPriorityBSRunnableChooser_H__

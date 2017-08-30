@@ -15,7 +15,7 @@
 
 
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 #include "json/json-forwards.h"
 #include "util/helpers/templateHelpers.h"
@@ -93,7 +93,7 @@ public:
 protected:
 
   // get next behavior by properly managing the sub-activities
-  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
   
 private:
 

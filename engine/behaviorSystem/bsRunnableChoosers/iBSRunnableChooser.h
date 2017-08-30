@@ -1,5 +1,5 @@
 /**
- * File: iBehaviorChooser.h
+ * File: IBSRunnableChooser.h
  *
  * Author: Lee
  * Created: 08/20/15, raul 05/03/16
@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
 #include "engine/behaviorSystem/behaviors/iBehavior_fwd.h"
+#include "engine/behaviorSystem/iBSRunnable.h"
 #include "anki/common/types.h"
 #include "util/helpers/noncopyable.h"
 #include <vector>
@@ -30,7 +31,7 @@ namespace Cozmo {
 class Robot;
 
 // Interface for the container and logic associated with holding and choosing behaviors
-class IBehaviorChooser : private Util::noncopyable
+class IBSRunnableChooser : public IBSRunnable, private Util::noncopyable
 {
 public:
 
@@ -39,28 +40,37 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // constructor/destructor
-  IBehaviorChooser(Robot& robot, const Json::Value& config){};
-  virtual ~IBehaviorChooser() {}
+  IBSRunnableChooser(Robot& robot, const Json::Value& config):IBSRunnable("chooser"){};
+  virtual ~IBSRunnableChooser() {}
   
-  // events to notify the chooser when it becomes (in)active
   virtual void OnSelected() {};
   virtual void OnDeselected() {};
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+  
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) = 0;
-
+  virtual IBehaviorPtr GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) = 0;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+protected:
+  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
+  // as a uniform interface across Activities and Behaviors, but they will be
+  // wired up in a seperate PR
+  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
+  virtual void EnteredActivatableScopeInternal() override {};
+  virtual BehaviorStatus UpdateInternal(Robot& robot) override { return BehaviorStatus::Complete;};
+  virtual bool WantsToBeActivatedInternal() override { return false;};
+  virtual void OnActivatedInternal() override {OnSelected();};
+  virtual void OnDeactivatedInternal() override {OnDeselected();};
+  virtual void LeftActivatableScopeInternal() override {};
   
-  // Used to access objectTapInteraction behaviors
-  std::vector<IBehaviorPtr> GetObjectTapBehaviors(){ return {};}
-  
-}; // class IBehaviorChooser
+}; // class IBSRunnableChooser
   
   
 } // namespace Cozmo

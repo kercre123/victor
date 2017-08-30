@@ -30,7 +30,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviorSystemManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
