@@ -50,6 +50,7 @@ void Power::setCharge(bool enable) {
 void Power::stop(void) {
   nVDDs_EN::set();
   nCHG_EN::set();
+  POWER_EN::pull(PULL_DOWN);
 }
 
 void Power::enableClocking(void) {
@@ -66,7 +67,9 @@ void Power::eject(void) {
 
   __disable_irq();
   NVIC->ICER[0]  = ~0;  // Disable all interrupts
-  stop();
+
+  // Power down accessessories
+  nVDDs_EN::set();
 
   // Disable our DMA channels
   DMA1_Channel1->CCR = 0;

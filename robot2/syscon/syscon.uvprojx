@@ -498,6 +498,11 @@
               <FileType>8</FileType>
               <FilePath>.\src\power.cpp</FilePath>
             </File>
+            <File>
+              <FileName>contacts.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\src\contacts.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -507,11 +512,6 @@
               <FileName>analog.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\common\analog.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>contacts.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\contacts.cpp</FilePath>
             </File>
             <File>
               <FileName>flash.cpp</FileName>
