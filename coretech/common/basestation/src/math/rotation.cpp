@@ -506,7 +506,9 @@ namespace Anki {
   
   Point3<float> Rotation3d::operator*(const Point3<float>& p) const
   {
-    return _q*p;
+    UnitQuaternion_<float> q_float;
+    q_float.SetCast(_q);
+    return q_float*p;
   }
   
   bool IsNearlyEqual(const Rotation3d& R1, const Rotation3d& R2, const f32 tolerance)
