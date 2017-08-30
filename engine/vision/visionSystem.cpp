@@ -1253,7 +1253,7 @@ namespace Cozmo {
           // original image.
           const bool success = SetEdgePosition(invH, i, bbox.GetY(), edgePoint);
           if(success) {
-            edgePoint.gradient = 0;
+            edgePoint.gradient = 0.0f;
             AddEdgePoint(edgePoint, foundBorder, candidateChains);
           }
         }
