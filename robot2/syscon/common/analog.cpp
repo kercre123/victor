@@ -86,11 +86,12 @@ static const int BUTTON_THRESHOLD = 0xD00;
 static const int BOUNCE_LENGTH = 3;
 
 bool Analog::button_pressed;
-static bool bouncy_button;
-static int bouncy_count;
-static int hold_count;
 
 void Analog::tick(void) {
+  static bool bouncy_button;
+  static int bouncy_count;
+  static int hold_count;
+
   // Debounce buttons
   bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
