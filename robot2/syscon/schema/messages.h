@@ -228,6 +228,8 @@ struct RangeData
   uint16_t rangeMM;
   uint16_t signalRate;
   uint16_t ambientRate;
+  uint16_t spadCount;
+  uint16_t spare2;
   uint32_t calibrationResult;
   
   /**** Cast to/from buffer, adjusting any padding. ****/
@@ -238,9 +240,9 @@ struct RangeData
   bool IsValid() const { return true; }
   
   /**** Serialized size, starting from GetBuffer(). ****/
-  static const uint32_t MAX_SIZE = 12;
-  static const uint32_t MIN_SIZE = 12;
-  inline uint32_t Size() const { return 12; }
+  static const uint32_t MAX_SIZE = 16;
+  static const uint32_t MIN_SIZE = 16;
+  inline uint32_t Size() const { return 16; }
   
 };
 
@@ -366,9 +368,9 @@ struct BodyToHead
   bool IsValid() const { return true; }
   
   /**** Serialized size, starting from GetBuffer(). ****/
-  static const uint32_t MAX_SIZE = 728;
-  static const uint32_t MIN_SIZE = 728;
-  inline uint32_t Size() const { return 728; }
+  static const uint32_t MAX_SIZE = 732;
+  static const uint32_t MIN_SIZE = 732;
+  inline uint32_t Size() const { return 732; }
   
 };
 
