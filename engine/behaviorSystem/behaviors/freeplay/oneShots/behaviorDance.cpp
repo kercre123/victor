@@ -21,6 +21,8 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/robot.h"
 
+#include "util/helpers/boundedWhile.h"
+
 namespace Anki {
 namespace Cozmo {
 

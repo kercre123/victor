@@ -277,7 +277,7 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   
   // Estimate the cliff's pose with respect to the robot frame of reference
   Pose3d cliffWrtRobot;
-  cliffWrtRobot.SetParent(&robotPoseAtCliff);
+  cliffWrtRobot.SetParent(robotPoseAtCliff);
   switch (cliffEvent.detectedFlags) {
     case (FL | FR):
       // Hit cliff straight-on
@@ -320,7 +320,7 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
   }
 
   // Compute the cliff pose with respect to the robot world origin
-  if (!cliffWrtRobot.GetWithRespectTo(*_robot.GetWorldOrigin(), cliffPose)) {
+  if (!cliffWrtRobot.GetWithRespectTo(_robot.GetWorldOrigin(), cliffPose)) {
     PRINT_NAMED_ERROR("CliffSensorComponent.ComputeCliffPose.OriginMismatch",
                       "cliffWrtRobot and robot.GetWorldOrigin() do not share the same origin!");
     return false;

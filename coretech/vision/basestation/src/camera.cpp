@@ -11,7 +11,6 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -109,7 +108,7 @@ namespace Anki {
       Vec3f translation(cvTranslation[0], cvTranslation[1], cvTranslation[2]);
       
       // Return Pose object w.r.t. the camera's pose
-      const Pose3d pose(rvec, translation, &(_pose));
+      const Pose3d pose(rvec, translation, _pose);
       
       return pose;
       

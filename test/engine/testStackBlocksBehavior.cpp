@@ -142,12 +142,12 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, ObjectID& objID1,
 
   // put two cubes in front of the robot
   {
-    const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {100, 0, 0}, &robot.GetPose());
+    const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {100, 0, 0}, robot.GetPose());
     auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, obj1Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }
   {
-    const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {100, 55, 0}, &robot.GetPose());
+    const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {100, 55, 0}, robot.GetPose());
     auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, obj2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }

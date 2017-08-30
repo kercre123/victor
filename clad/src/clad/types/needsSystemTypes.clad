@@ -257,6 +257,8 @@ structure LocalNotificationItem
   float_32          rangeEarly,
   float_32          rangeLate,
   float_32          minimumDuration,
+  float_32          noEarlierThan,
+  float_32          noLaterThan,
 }
 
 structure LocalNotificationConfig

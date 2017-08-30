@@ -9,7 +9,7 @@ public class PlatformUtil {
     // files on streamingAssetsPath directly
 
 #if UNITY_EDITOR
-    return Application.dataPath + "/../../../lib/anki/products-cozmo-assets";
+    return Application.dataPath + "/../../../resources/assets";
 #elif UNITY_IOS
     return Application.streamingAssetsPath;
 #elif UNITY_ANDROID

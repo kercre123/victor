@@ -11,7 +11,7 @@
 **/
 
 
-#include "engine/visionModesHelpers.h"
+#include "engine/vision/visionModesHelpers.h"
 #include "util/enums/stringToEnumMapper.hpp"
 
 

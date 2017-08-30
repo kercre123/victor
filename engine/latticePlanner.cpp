@@ -99,7 +99,7 @@ public:
     else {
       Json::Value mprims;
       const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources,
-                                                    "config/basestation/config/cozmo_mprim.json",
+                                                    "config/engine/cozmo_mprim.json",
                                                     mprims);
       if(success) {
         _context.env.Init(mprims);

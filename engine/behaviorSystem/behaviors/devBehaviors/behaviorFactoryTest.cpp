@@ -268,11 +268,14 @@ static const char* kBehaviorTestName = "Behavior factory test";
     _robotAngleAtPickup = 0;
     _robotAngleAfterBackup = 0;
     
+    DEV_ASSERT(robot.IsPoseInWorldOrigin(robot.GetPose()),
+               "BehaviorFactoryTest.InitInternal.BadRobotPoseOrigin");
+    
     // Set known poses
-    _camCalibPose = Pose3d(0, Z_AXIS_3D(), {-50, 0, 0}, &robot.GetPose().FindOrigin()); // Relative to cliff
-    _prePickupPose = Pose3d( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 100, 0}, &robot.GetPose().FindOrigin());
-    _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-90, 250, 22}, &robot.GetPose().FindOrigin());
-    _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
+    _camCalibPose = Pose3d(0, Z_AXIS_3D(), {-50, 0, 0}, robot.GetWorldOrigin()); // Relative to cliff
+    _prePickupPose = Pose3d( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 100, 0}, robot.GetWorldOrigin());
+    _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-90, 250, 22}, robot.GetWorldOrigin());
+    _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, robot.GetWorldOrigin());
 
     _numPlacementAttempts = 0;
     
@@ -1060,7 +1063,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         }
         
         // Update _camCalibPose parent since we delocalized since it was set
-        _camCalibPose.SetParent(&robot.GetPose().FindOrigin());
+        _camCalibPose.SetParent(robot.GetWorldOrigin());
         
         // Check that robot is in correct pose
         if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
@@ -1118,7 +1121,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
       case FactoryTestState::ComputeCameraCalibration:
       {
         // Update _expectedLightCubePose parent since we delocalized since it was set
-        _expectedLightCubePose.SetParent(&robot.GetPose().FindOrigin());
+        _expectedLightCubePose.SetParent(robot.GetWorldOrigin());
         // Turn towards block
         TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, _expectedLightCubePose, M_PI_2_F);
         StartActing(turnAction);

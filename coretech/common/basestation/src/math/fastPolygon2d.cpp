@@ -14,7 +14,7 @@
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "util/helpers/boundedWhile.h"
 
 #include <cmath>
 #include <cfloat>

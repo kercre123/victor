@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-//camera callback: called with captured `image` of `width` by `height` 8bit greyscale pixels
+// Camera callback: called with captured `image` of `width` by `height` 8bit greyscale pixels
 // (called from separate thread)
 typedef int(*camera_cb)(uint8_t* image, int width, int height);
 

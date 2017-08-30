@@ -285,7 +285,7 @@ void RobotToEngineImplMessaging::HandleRobotSetHeadID(const AnkiEvent<RobotInter
   
   const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
   const auto hwRev  = payload.hwRevision;
-  const auto headID = payload.robotID;
+  const auto headID = payload.serialNumber;
   
   // Set DAS Global on all messages
   char string_id[32] = {};
@@ -656,9 +656,9 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       PRINT_NAMED_WARNING(MAKE_EVENT_NAME("ActiveObjectInDifferentFramesWithDifferentIDs"),
                           "First object=%d in '%s'. This object=%d in '%s'.",
                           matchingObjects.front()->GetID().GetValue(),
-                          matchingObjects.front()->GetPose().FindOrigin().GetName().c_str(),
+                          matchingObjects.front()->GetPose().FindRoot().GetName().c_str(),
                           object->GetID().GetValue(),
-                          object->GetPose().FindOrigin().GetName().c_str());
+                          object->GetPose().FindRoot().GetName().c_str());
     }
     
     // We expect carried objects to move, so don't mark them as dirty/inaccurate.
@@ -706,7 +706,6 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = matchedObjectID;
-    payload.robotID = robot->GetID();
     
     if(!isDockingObject && !isCarryingObject)
     {
@@ -774,7 +773,6 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
   
   // Update the ID to be the blockworld ID before broadcasting
   payload.objectID = conObj->GetID();
-  payload.robotID = robot->GetID();
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
 }
 
@@ -1077,8 +1075,7 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
   
   // Forward on with EngineToGame event
   PRINT_NAMED_INFO("Robot.HandleRobotPoked","");
-  RobotInterface::RobotPoked payload = message.GetData().Get_robotPoked();
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked()));
 }
 
 void RobotToEngineImplMessaging::HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

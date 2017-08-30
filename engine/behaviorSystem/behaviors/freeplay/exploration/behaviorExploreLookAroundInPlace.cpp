@@ -231,7 +231,7 @@ void BehaviorExploreLookAroundInPlace::BeginStateMachine(Robot& robot)
     if( hasConeOfFocus ) {
       robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlace.FocusCone");
 
-      Point3f center = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+      Point3f center = robot.GetPose().GetWithRespectToRoot().GetTranslation();
       float theta = _initialBodyDirection.ToFloat();
       float halfTurn = 0.5f * DEG_TO_RAD(_configParams.behavior_AngleOfFocus_deg);
       const float coneLength_mm = 200.0f;

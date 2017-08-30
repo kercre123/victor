@@ -14,7 +14,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/components/cliffSensorComponent.h"
@@ -119,7 +119,7 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
       
       // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
-      NeedId expressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+      NeedId expressedNeed = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
       if((expressedNeed == NeedId::Energy) || (expressedNeed == NeedId::Repair)){
         callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
       }
@@ -189,7 +189,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
     
     // special animations for maintaining eye shape in severe need states
-    const NeedId severeExpressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+    const NeedId severeExpressedNeed = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
     if(NeedId::Energy == severeExpressedNeed){
       reactionAnim = AnimationTrigger::NeedsSevereLowEnergyCliffReact;
     }else if(NeedId::Repair == severeExpressedNeed){

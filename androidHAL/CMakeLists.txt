@@ -20,25 +20,25 @@ if (ANDROID)
  )
 
 
- target_compile_definitions(proto_camera
-   PRIVATE
-   -DUSE_ION
-   -DAMSS_VERSION
-   -D_ANDROID_
-   -DCAMERA_ION_HEAP_ID=ION_IOMMU_HEAP_ID
-   -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_MM_HEAP
-   -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_IOMMU_HEAP
-   -DCAMERA_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
-   -DCAMERA_GRALLOC_CACHING_ID=0
-   -DNUM_RECORDING_BUFFERS=9
- )
+target_compile_definitions(proto_camera
+  PRIVATE
+  -DUSE_ION
+  -DAMSS_VERSION
+  -D_ANDROID_
+  -DCAMERA_ION_HEAP_ID=ION_IOMMU_HEAP_ID
+  -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_MM_HEAP
+  -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_IOMMU_HEAP
+  -DCAMERA_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
+  -DCAMERA_GRALLOC_CACHING_ID=0
+  -DNUM_RECORDING_BUFFERS=9
+)
 
  set_target_properties(proto_camera PROPERTIES LINKER_LANGUAGE C)
  
-endif()
+ endif()
 
 include(anki_build_cxx_library)
-anki_build_cxx_library(androidHAL ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_cxx_library(androidHAL ${ANKI_SRCLIST_DIR})
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -69,7 +69,7 @@ PRIVATE
   cti_planning
   cti_messaging
   robot_clad # imageTypes.h
-  # platform
+# platform
 #PUBLIC
   # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}

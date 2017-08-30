@@ -688,6 +688,7 @@ void camera_install_callback(camera_cb cb)
   user_frame_callback = cb;
 }
 
+
 #define DIM 1
 #define X 640
 #define Y 360
@@ -764,14 +765,13 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
           goto EXIT;
      }
 
-     // find snapshot frame
 
+     // find snapshot frame
      if (user_frame_callback) {
           for (i = 0; i < bufs->num_bufs; i++) {
                if (bufs->bufs[i]->stream_id == m_stream->s_id) {
 
                     uint8_t* outbuf = (uint8_t*) raw_buffer[next_idx];
-                     
                     m_frame = bufs->bufs[i];
                     
                     downsample_frame((uint64_t (*)[X6])m_frame->buffer,
@@ -789,8 +789,6 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
                  
                     user_frame_callback(outbuf, X, Y);
                     frameid++;
-                 
-                    CDBG("%s: frame %d\n", __func__, frameid);
                }
           }
      }
@@ -1027,10 +1025,12 @@ int camera_start(camera_cb cb)
     return rc;
 }
 
+
 void camera_set_processing_frame()
 {
   processing_idx = potential_processing_idx;
 }
+
 
 int camera_stop()
 {

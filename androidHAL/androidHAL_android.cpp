@@ -25,6 +25,8 @@
 #include "androidHAL/android/proto_camera/victor_camera.h"
 #include "anki/vision/CameraSettings.h"
 
+#include "androidHAL/android/proto_camera/victor_camera.h"
+
 #include <vector>
 #include <chrono>
 

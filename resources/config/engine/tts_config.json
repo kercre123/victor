@@ -1,5 +1,5 @@
 //
-// resources/config/basestation/config/tts_config.json
+// resources/config/engine/tts_config.json
 //
 // Cozmo text-to-speech configuration params
 //
@@ -12,7 +12,7 @@
 //
 // These parameters determine the "base voice" used for each locale,
 // regardless of how a specific utterance will be used.  See
-//   resources/config/basestation/config/sayTextintentConfig.json
+//   resources/config/engine/sayTextintentConfig.json
 // for additional parameters that may be applied to a specific utterance.
 //
 {
@@ -86,7 +86,7 @@
     "ja":
     {
       "voice": "Sakura",
-      "speed": 30,
+      "speed": 80,
       "pitch": 100,
       "shaping": 115
     }

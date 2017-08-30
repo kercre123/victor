@@ -55,8 +55,6 @@ public class ObservableObject : IVisibleInCamera {
   /// </summary>
   public event LightChangedHandler OnLightsChanged;
 
-  public uint RobotID { get; private set; }
-
   public ObjectFamily Family { get; private set; }
 
   public ObjectType ObjectType { get; private set; }
@@ -272,7 +270,6 @@ public class ObservableObject : IVisibleInCamera {
     LastSeenEngineTimestamp = message.timestamp;
     _ConsecutiveVisionFramesNotSeen = 0;
 
-    RobotID = message.robotID;
     VizRect = new Rect(message.img_rect.x_topLeft, message.img_rect.y_topLeft, message.img_rect.width, message.img_rect.height);
 
     Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);

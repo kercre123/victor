@@ -21,9 +21,9 @@
 #include "engine/cozmoContext.h"
 #include "engine/encodedImage.h"
 #include "engine/robot.h"
-#include "engine/visionModesHelpers.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
+#include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "anki/vision/basestation/cameraImagingPipeline.h"
@@ -832,8 +832,8 @@ namespace Cozmo {
       
       // Make head pose w.r.t. the historical world origin
       Pose3d headPose = currentFace.GetHeadPose();
-      headPose.SetParent(&_poseData.cameraPose);
-      headPose = headPose.GetWithRespectToOrigin();
+      headPose.SetParent(_poseData.cameraPose);
+      headPose = headPose.GetWithRespectToRoot();
 
       currentFace.SetHeadPose(headPose);
     }
@@ -1108,8 +1108,9 @@ namespace Cozmo {
       Anki::Vec3f offsetBotBackPoint { LIFT_BACK_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - kHardwareFallSlackMargin_mm};
 
       // calculate the lift pose with respect to the poseStamp's origin
-      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.histState.GetPose(), "RobotLiftBase");
-      Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, &liftBasePose, "RobotLift");
+      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
+                                _poseData.histState.GetPose(), "RobotLiftBase");
+      Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, liftBasePose, "RobotLift");
       Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
       
       // calculate lift wrt camera
@@ -1352,8 +1353,8 @@ namespace Cozmo {
         }
         for( const auto& point : chain.points ) {
           // project the point to 3D
-          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), &_poseData.histState.GetPose(), "ChainPoint");
-          Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToOrigin();
+          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), _poseData.histState.GetPose(), "ChainPoint");
+          Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToRoot();
           // disabled 3D render
           // _vizManager->DrawSegment("kRenderEdgesInCameraView", pointWrtOrigin.GetTranslation(), pointWrtOrigin.GetTranslation() + Vec3f{0,0,30}, NamedColors::WHITE, false);
           
@@ -1644,9 +1645,20 @@ namespace Cozmo {
         for(auto & corner : warpedCorners)
         {
           const int warpIndex = std::floor(corner.y() / (inputImageGray.GetNumRows() / _rollingShutterCorrector.GetNumDivisions()));
-          const auto& pixelShift = _rollingShutterCorrector.GetPixelShifts()[warpIndex];
+          DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
+                         "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
+                         warpIndex, corner.y());
+          
+          const Vec2f& pixelShift = _rollingShutterCorrector.GetPixelShifts().at(warpIndex);
           corner -= pixelShift;
+          
+          DEV_ASSERT(Util::IsFltGEZero(corner.x()) &&
+                     Util::IsFltGEZero(corner.y()) &&
+                     Util::IsFltLT(corner.x(), (f32)inputImageGray.GetNumCols()) &&
+                     Util::IsFltLT(corner.y(), (f32)inputImageGray.GetNumRows()),
+                     "VisionSystem.DetectMarkersWithCLAHE.RollingShutterWarpOOB");
         }
+        
         
         Vision::ObservedMarker warpedMarker(marker.GetTimeStamp(),
                                             marker.GetCode(),
@@ -2073,9 +2085,10 @@ namespace Cozmo {
       {1.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT}, // Right in image
     };
     
-    const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.histState.GetPose(), "RobotLiftBase");
+    const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
+                              _poseData.histState.GetPose(), "RobotLiftBase");
     
-    Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &liftBasePose, "RobotLift");
+    Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, liftBasePose, "RobotLift");
     
     Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
     
@@ -2147,7 +2160,7 @@ namespace Cozmo {
       if(DRAW_TOOL_CODE_DEBUG)
       {
         Quad3f dotQuadRoi3dWrtWorld;
-        liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
+        liftPose.GetWithRespectToRoot().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
         dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
         _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)iDot, dotQuadRoi3dWrtWorld, NamedColors::RED);
         
@@ -2158,7 +2171,7 @@ namespace Cozmo {
           {dotWrtLift3d.x() + kDotWidth_mm*0.5f, dotWrtLift3d.y() + kDotWidth_mm*0.5f, dotWrtLift3d.z()},
         };
         Quad3f dotQuadWrtWorld;
-        liftPose.GetWithRespectToOrigin().ApplyTo(dotQuad3d, dotQuadWrtWorld);
+        liftPose.GetWithRespectToRoot().ApplyTo(dotQuad3d, dotQuadWrtWorld);
         dotQuadWrtWorld += Point3f(0,0,0.5f);
         _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9337+(u32)iDot, dotQuadWrtWorld, NamedColors::GREEN);
       }

@@ -53,6 +53,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
 #ifdef COZMO_V2

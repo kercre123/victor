@@ -27,7 +27,7 @@ public class DebugCube : MonoBehaviour {
 
   private void HandleTapButtonClicked() {
     if (_Cube != null) {
-	  _Cube.HandleObjectTapped(Singleton<Anki.Cozmo.ObjectTapped>.Instance.Initialize(0, (uint)_Cube.ID, _Cube.RobotID, 1, DefaultTapTime, DefaultTapNeg, DefaultTapPos));
+	  _Cube.HandleObjectTapped(Singleton<Anki.Cozmo.ObjectTapped>.Instance.Initialize(0, (uint)_Cube.ID, 1, DefaultTapTime, DefaultTapNeg, DefaultTapPos));
     }
   }
 

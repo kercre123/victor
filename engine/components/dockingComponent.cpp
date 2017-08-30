@@ -81,7 +81,7 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
   DEV_ASSERT(dockMarker != nullptr, "Robot.DockWithObject.InvalidMarker");
   
   // Dock marker has to be a child of the dock block
-  if(dockMarker->GetPose().GetParent() != &object->GetPose()) {
+  if(!dockMarker->GetPose().IsChildOf(object->GetPose())) {
     PRINT_NAMED_ERROR("Robot.DockWithObject.MarkerNotOnObject",
                       "Specified dock marker must be a child of the specified dock object.");
     return RESULT_FAIL;

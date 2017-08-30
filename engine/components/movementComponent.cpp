@@ -326,8 +326,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
         }
         
         // Create obstacle relative to robot at its new pose
-        obstaclePoseWrtRobot.SetParent(&_robot.GetPose());
-        const Pose3d& obstaclePose = obstaclePoseWrtRobot.GetWithRespectToOrigin();
+        obstaclePoseWrtRobot.SetParent(_robot.GetPose());
+        const Pose3d& obstaclePose = obstaclePoseWrtRobot.GetWithRespectToRoot();
 
         PRINT_NAMED_INFO("MovementComponent.CheckForUnexpectedMovement.AddingCollisionObstacle",
                          "Adding obstacle %s robot", debugStr);

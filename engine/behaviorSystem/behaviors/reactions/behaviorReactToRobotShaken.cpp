@@ -15,7 +15,7 @@
 
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
@@ -75,9 +75,9 @@ Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRobotShakenArray);
   
   // Clear severe needs expression since eyes are being re-set
-  if(robot.GetAIComponent().GetWhiteboard().HasSevereNeedExpression())
+  if(robot.GetAIComponent().GetSevereNeedsComponent().HasSevereNeedExpression())
   {
-    robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+    robot.GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
   }
   
   // Reset variables:

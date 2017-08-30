@@ -19,6 +19,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 
 namespace  Anki {
 namespace Cozmo {

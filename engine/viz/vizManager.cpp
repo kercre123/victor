@@ -155,7 +155,7 @@ namespace Anki {
     void VizManager::DrawRobot(const u32 robotID, const Pose3d& pose, const f32 headAngle, const f32 liftAngle) {
       ANKI_CPU_PROFILE("VizManager::DrawRobot");
       SendMessage(VizInterface::MessageViz(
-        VizInterface::SetRobot(robotID,
+        VizInterface::SetRobot(
           (float)MM_TO_M(pose.GetTranslation().x()),
           (float)MM_TO_M(pose.GetTranslation().y()),
           (float)MM_TO_M(pose.GetTranslation().z()),

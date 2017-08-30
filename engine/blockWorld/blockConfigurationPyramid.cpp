@@ -87,8 +87,8 @@ bool PyramidBase::BlocksFormPyramidBase(const Robot& robot, const ObservableObje
 
   // Pyramid base blocks have to be within a reasonable tolerence of each other
   // along the z axis
-  const Pose3d& basePoseWRTO   = baseBlock->GetPose().GetWithRespectToOrigin();
-  const Pose3d& staticPoseWRTO = staticBlock->GetPose().GetWithRespectToOrigin();
+  const Pose3d& basePoseWRTO   = baseBlock->GetPose().GetWithRespectToRoot();
+  const Pose3d& staticPoseWRTO = staticBlock->GetPose().GetWithRespectToRoot();
 
   const float heightDiff = std::fabs(basePoseWRTO.GetTranslation().z() -
                                      staticPoseWRTO.GetTranslation().z());
@@ -155,9 +155,9 @@ bool PyramidBase::GetBaseInteriorCorners(const Robot& robot,
   
   // find the two closest points - the map is automatically sorted by distance
   auto mapIter = poseMap.begin();
-  corner1 = (*mapIter).second.GetWithRespectToOrigin();
+  corner1 = (*mapIter).second.GetWithRespectToRoot();
   ++mapIter;
-  corner2 = (*mapIter).second.GetWithRespectToOrigin();
+  corner2 = (*mapIter).second.GetWithRespectToRoot();
   
   return true;
 }
@@ -175,8 +175,8 @@ bool PyramidBase::GetBaseInteriorMidpoint(const Robot& robot,
     return false;
   }
   
-  corner1 = corner1.GetWithRespectToOrigin();
-  corner2 = corner2.GetWithRespectToOrigin();
+  corner1 = corner1.GetWithRespectToRoot();
+  corner2 = corner2.GetWithRespectToRoot();
   
   const float edgeMiddleX = 0.5f * (corner1.GetTranslation().x() + corner2.GetTranslation().x());
   const float edgeMiddleY = 0.5f * (corner1.GetTranslation().y() + corner2.GetTranslation().y());
@@ -184,7 +184,7 @@ bool PyramidBase::GetBaseInteriorMidpoint(const Robot& robot,
   const float zSize = targetCube->GetDimInParentFrame<'Z'>();
   
   midPoint = Pose3d(0, Z_AXIS_3D(), {edgeMiddleX, edgeMiddleY, zSize},
-                    &robot.GetPose().FindOrigin());
+                    robot.GetPose().FindRoot());
   return true;
 }
 
@@ -210,11 +210,11 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
   }
   
   // Check that the block is above the static block
-  const Pose3d  staticWrtOrigin = staticBlock->GetPose().GetWithRespectToOrigin();
+  const Pose3d  staticWrtOrigin = staticBlock->GetPose().GetWithRespectToRoot();
   const Point3f rotatedBtmSize  = staticBlock->GetSizeInParentFrame(staticWrtOrigin);
   const float   staticBlockTopZ = staticWrtOrigin.GetTranslation().z() + (0.5f * std::abs(rotatedBtmSize.z()));
   
-  const Pose3d  topWrtOrigin    = targetObject->GetPose().GetWithRespectToOrigin();
+  const Pose3d  topWrtOrigin    = targetObject->GetPose().GetWithRespectToRoot();
   const float   rotatedTopZSize = targetObject->GetDimInParentFrame<'Z'>(topWrtOrigin);
   const float   topBlockBottomZ = topWrtOrigin.GetTranslation().z() - (0.5f * rotatedTopZSize);
   
@@ -240,7 +240,7 @@ const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const Observable
                                      {targetTrans.x(),
                                       targetTrans.y(),
                                       0},
-                                     &staticBlock->GetPose().FindOrigin());
+                                     staticBlock->GetPose().FindRoot());
   
   const bool topBlockCentered =
                targetObjectUnrotatedCenter.IsSameAs(staticBlockIdealCenter, distanceTolerance, M_PI) &&

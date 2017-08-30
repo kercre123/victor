@@ -25,12 +25,11 @@ static const int MAX_TRANSFER = 0x1000;
 #define FRAME_WIDTH     184 
 #define FRAME_HEIGHT    96 
 
-#define RSHIFT 0x20
+#define RSHIFT 0x1C
 
 static const INIT_SCRIPT init_scr[] = {
 	{ 0x11, 0 },
 	{ 0x36, 1, { 0x00 } },
-//	{ 0xB2, 5, { 0x0C, 0x0C, 0x00, 0x33, 0x33 } },
 	{ 0xB7, 1, { 0x56 } },
 	{ 0xBB, 1, { 0x18 } },
 	{ 0xC0, 1, { 0x2C } },
@@ -54,7 +53,8 @@ static const INIT_SCRIPT init_scr[] = {
 #define HIGH 1
 #define FALSE 0
 #define TRUE (!FALSE)
-#define OUTPUT "out"
+#define DIR_OUTPUT 1
+#define DIR_INPUT 0
 
 #define GPIO_LCD_WRX   110
 #define GPIO_LCD_RESET 96
@@ -72,6 +72,8 @@ GPIO CS_PIN;
 
 #define CS_PIN_EARLY 0
 
+/************* GPIO Interface ***************/
+
 void gpio_set_direction(GPIO gp, int isOutput)
 {
    char ioname[40];
@@ -88,9 +90,7 @@ void gpio_set_direction(GPIO gp, int isOutput)
 
 void gpio_set_value(GPIO gp, int value) {
    static const char* trigger[] = {"0","1"};
-//   if (gp.fd > 0)  {
-      write(gp.fd, trigger[value!=0], 1);
-//   }
+   write(gp.fd, trigger[value!=0], 1);
 }
 
 
@@ -124,18 +124,8 @@ void gpio_close(GPIO gp) {
    }
 }
 
-void wiringPiSetupGpio(void)
-{
-  DnC_PIN = gpio_create(GPIO_LCD_WRX, 1, 1);
-//  CS_PIN = gpio_create(14, 1, 1);
-  RESET_PIN = gpio_create(GPIO_LCD_RESET, 1, 1);
-   
-}
-#define digitalWrite gpio_set_value
 
-void pinMode(GPIO pin, const char* dir){
-   gpio_set_direction(pin, dir[0]=='o');
-}
+/************* CLOCK Interface ***************/
 
 uint64_t steady_clock_now(void) {
    struct timespec time;
@@ -149,8 +139,8 @@ static void MicroWait(long microsec)
     ;
   }
 }
-#define delay(x) MicroWait((x))
 
+/************* SPI Interface ***************/
 
 
 static int spi_fd;
@@ -166,92 +156,100 @@ void spi(int cmd, int bytes, const void* data) {
 	};
 
 	while (bytes > 0) {
-//     digitalWrite(CS_PIN, LOW);
      tr.len = (bytes > MAX_TRANSFER) ? MAX_TRANSFER : bytes;
 
-		digitalWrite(DnC_PIN, cmd ? LOW : HIGH);
+		gpio_set_value(DnC_PIN, cmd ? LOW : HIGH);
 		ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
 
 		bytes -= tr.len;
 		tr.tx_buf += tr.len;
-//  digitalWrite(CS_PIN, HIGH);
 	}
 }
 
-static void init() {
+
+/************ LCD Device Interface *************/
+
+static void lcd_device_init() {
 	int idx;
-  /* uint8_t SLEEP_IN=0x10; */
-
-  /* printf("OFF!?\n"); */
-  /* /\* NEW: Try sleep *\/ */
-  /* digitalWrite(CS_PIN, LOW); */
-  /* spi(TRUE, 1, &SLEEP_IN); */
-  /* digitalWrite(CS_PIN, HIGH); */
-  /* delay(1200); */
-
-  /* printf("ON!?\n"); */
   
 	for (idx = 0; init_scr[idx].cmd; idx++) {
-//     digitalWrite(CS_PIN, LOW);
 		spi(TRUE, 1, &init_scr[idx].cmd);
 		spi(FALSE, init_scr[idx].data_bytes, init_scr[idx].data);
-//    digitalWrite(CS_PIN, HIGH);
 	}
 }
+
+static void lcd_draw_frame(uint8_t* frame, int sz) {
+   static const uint8_t WRITE_RAM = 0x2C;
+   spi(TRUE, 1, &WRITE_RAM);
+   spi(FALSE, sz, frame);
+}
+
+int lcd_init(void) {
+  static const uint8_t    MODE = 0;
+
+  // IO Setup
+  DnC_PIN = gpio_create(GPIO_LCD_WRX, 1, 1);
+  RESET_PIN = gpio_create(GPIO_LCD_RESET, 1, 1);
+  
+  gpio_set_direction(DnC_PIN, DIR_OUTPUT);
+  gpio_set_direction(RESET_PIN, DIR_OUTPUT);
+
+  // SPI setup
+
+	spi_fd = open("/dev/spidev1.0", O_RDWR);
+	ioctl(spi_fd, SPI_IOC_RD_MODE, &MODE);
+  if (!spi_fd) {
+    printf("SPI OPEN ERROR!\n");
+    return -1;
+  }
+
+	// Send reset signal
+	MicroWait(50);
+	gpio_set_value(RESET_PIN, 0);
+	MicroWait(50);
+	gpio_set_value(RESET_PIN, 1);
+	MicroWait(50);
+
+  lcd_device_init();
+
+  return 0;
+}
+
+
+int lcd_shutdown(void) {
+  //todo: turn off screen?
+   static const uint8_t SLEEP = 0x10;
+   spi(TRUE, 1, &SLEEP);
+	close(spi_fd);
+}
+
+
+/*************** TEST CODE *********************/
 
 static void animate(const char* fn) {
 	uint16_t frame[FRAME_WIDTH * FRAME_HEIGHT];
 	FILE *fo = fopen(fn, "rb");
 
 	while (!feof(fo)) {
-		static const uint8_t WRITE_RAM = 0x2C;
-
 		fread(frame, 1, sizeof(frame), fo);
-//  digitalWrite(CS_PIN, LOW);
-		spi(TRUE, 1, &WRITE_RAM);
-		spi(FALSE, sizeof(frame), &frame);
-//  digitalWrite(CS_PIN, HIGH);
+    lcd_draw_frame((uint8_t*)frame, sizeof(frame));
 	}
   fclose(fo);
 }
 
-int main(int argc, char** argv) {
-	static const uint8_t    MODE = 0;
-	static const uint8_t    BITS = 8;
-
-  /* struct regulator* reg_k1; */
-  /* struct regulator* reg_k2; */
-
-  /* reg_k1 = regulator_get(dev, id); */
-  /* reg_k2 = regulator_get(dev, id); */
-
-  /* regulator_enable(reg_k1); */
-  /* regulator_enable(reg_k2); */
-  /* int current_limit = regulator_get_current_limit(reg_k1); */
-  /* regulator_set_current_limit(reg_k1, 10*1000, 20*1000 ); */
-  /* regulator_set_current_limit(reg_k2, 10*1000, 20*1000 ); */
-
-	wiringPiSetupGpio();
-//	pinMode(CS_PIN, OUTPUT);
-	pinMode(DnC_PIN, OUTPUT);
-	pinMode(RESET_PIN, OUTPUT);
-//	digitalWrite(CS_PIN,1);
-
-	spi_fd = open("/dev/spidev1.0", O_RDWR);
-	ioctl(spi_fd, SPI_IOC_RD_MODE, &MODE);
-  if (!spi_fd) { printf("ERROR!\n"); }
-
-	// Send reset signal
-//	digitalWrite(CS_PIN,1);
-	delay(50);
-	digitalWrite(RESET_PIN, 0);
-	delay(50);
-	digitalWrite(RESET_PIN, 1);
-	delay(50);
 
 #define ENDLESS 1
+
+
+int main(int argc, char** argv) {
+
+  int rc = lcd_init();
+  if (rc!=0)
+  {
+    return rc;
+  }
+  
 	// Start drawing stuff to the screen
-	init();
   if (argc>1) {
      do {
         animate(argv[1]);
@@ -262,12 +260,6 @@ int main(int argc, char** argv) {
      printf("Usage: %s <filename>\n", argv[0]);
   }
 
-  /* regulator_disable(reg_k1); */
-  /* regulator_disable(reg_k2); */
-  /* regulator_put(reg_k1); */
-  /* regulator_put(reg_k2); */
-
-	close(spi_fd);
-
+  lcd_shutdown();
 	return 0;
 }

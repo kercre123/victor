@@ -20,17 +20,17 @@
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
+#include "engine/animations/cozmo_anim_generated.h"
+#include "engine/animations/faceAnimationManager.h"
+#include "engine/animations/proceduralFace.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
-#include "engine/animations/faceAnimationManager.h"
-#include "engine/animations/proceduralFace.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "cozmo_anim_generated.h"
 #include "threadedPrintStressTester.h"
 #include "util/ankiLab/ankiLab.h"
 #include "util/console/consoleInterface.h"
@@ -189,7 +189,7 @@ void RobotDataLoader::CollectAnimFiles()
 {
   // animations
   {
-    const std::vector<std::string> paths = {"assets/animations/", "config/basestation/animations/"};
+    const std::vector<std::string> paths = {"assets/animations/", "config/engine/animations/"};
     for (const auto& path : paths) {
       WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
         _jsonFiles[FileType::Animation].push_back(filename);
@@ -199,14 +199,14 @@ void RobotDataLoader::CollectAnimFiles()
   
   // cube light animations
   {
-    WalkAnimationDir("config/basestation/lights/cubeLights", _cubeLightAnimFileTimestamps, [this] (const std::string& filename) {
+    WalkAnimationDir("config/engine/lights/cubeLights", _cubeLightAnimFileTimestamps, [this] (const std::string& filename) {
       _jsonFiles[FileType::CubeLightAnimation].push_back(filename);
     });
   }
   
   // backpack light animations
   {
-    WalkAnimationDir("config/basestation/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
+    WalkAnimationDir("config/engine/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
       _jsonFiles[FileType::BackpackLightAnimation].push_back(filename);
     });
   }
@@ -503,7 +503,7 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
 
 void RobotDataLoader::LoadEmotionEvents()
 {
-  const std::string emotionEventFolder = _platform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/emotionevents/");
+  const std::string emotionEventFolder = _platform->pathToResource(Util::Data::Scope::Resources, "config/engine/emotionevents/");
   auto eventFiles = Util::FileUtils::FilesInDirectory(emotionEventFolder, true, ".json", false);
   for (const std::string& filename : eventFiles) {
     Json::Value eventJson;
@@ -522,7 +522,7 @@ void RobotDataLoader::LoadEmotionEvents()
 
 void RobotDataLoader::LoadBehaviors()
 {
-  const std::string path =  "config/basestation/config/behaviorSystem/behaviors/";
+  const std::string path =  "config/engine/behaviorSystem/behaviors/";
 
   const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
@@ -552,7 +552,7 @@ void RobotDataLoader::LoadBehaviors()
   
 void RobotDataLoader::LoadActivities()
 {
-  const std::string path =  "config/basestation/config/behaviorSystem/activities/";
+  const std::string path =  "config/engine/behaviorSystem/activities/";
   
   const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
@@ -599,7 +599,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
   
   // Configuration for "lets play" game selection
   {
-    std::string jsonFilename = "config/basestation/config/game_request_weights.json";
+    std::string jsonFilename = "config/engine/game_request_weights.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _gameRequestWeights);
     if (!success)
     {
@@ -612,7 +612,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
   
   // Configuration for "do a trick" spark selection
   {
-    std::string jsonFilename = "config/basestation/config/voiceCommands/do_a_trick_weights.json";
+    std::string jsonFilename = "config/engine/voiceCommands/do_a_trick_weights.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _doATrickWeights);
     if (!success)
     {
@@ -627,7 +627,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 
 void RobotDataLoader::LoadReactionTriggerMap()
 {
-  const std::string filename = "config/basestation/config/behaviorSystem/reactionTrigger_behavior_map.json";
+  const std::string filename = "config/engine/behaviorSystem/reactionTrigger_behavior_map.json";
 
   Json::Value reactionJSON;
   const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
@@ -665,7 +665,7 @@ void RobotDataLoader::LoadRobotConfigs()
   ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadRobotConfigs");
   // mood config
   {
-    static const std::string jsonFilename = "config/basestation/config/mood_config.json";
+    static const std::string jsonFilename = "config/engine/mood_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotMoodConfig);
     if (!success)
     {
@@ -677,7 +677,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // activities config
   {
-    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/activities_config.json";
+    static const std::string jsonFilename = "config/engine/behaviorSystem/activities_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);
     if (!success)
     {
@@ -690,7 +690,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // victor behavior systems config
   {
-    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/behavior_system_config.json";
+    static const std::string jsonFilename = "config/engine/behaviorSystem/behavior_system_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _behaviorSystemConfig);
     if (!success)
     {
@@ -703,7 +703,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // Workout config
   {
-    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/workout_config.json";
+    static const std::string jsonFilename = "config/engine/behaviorSystem/workout_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
     if (!success)
     {
@@ -716,7 +716,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // vision config
   {
-    static const std::string jsonFilename = "config/basestation/config/vision_config.json";
+    static const std::string jsonFilename = "config/engine/vision_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotVisionConfig);
     if (!success)
     {
@@ -733,7 +733,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // needs system config
   {
-    static const std::string jsonFilename = "config/basestation/config/needs_config.json";
+    static const std::string jsonFilename = "config/engine/needs_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
     if (!success)
     {
@@ -745,7 +745,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // needs level (star rewards) config
   {
-    static const std::string jsonFilename = "config/basestation/config/needs_level_config.json";
+    static const std::string jsonFilename = "config/engine/needs_level_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
     if (!success)
     {
@@ -757,7 +757,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs system actions config
   {
-    static const std::string jsonFilename = "config/basestation/config/needs_action_config.json";
+    static const std::string jsonFilename = "config/engine/needs_action_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
     if (!success)
     {
@@ -769,7 +769,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs system decay config
   {
-    static const std::string jsonFilename = "config/basestation/config/needs_decay_config.json";
+    static const std::string jsonFilename = "config/engine/needs_decay_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
     if (!success)
     {
@@ -781,7 +781,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs "handlers" config (e.g. eye procedural glitches for low repair)
   {
-    static const std::string jsonFilename = "config/basestation/config/needs_handlers_config.json";
+    static const std::string jsonFilename = "config/engine/needs_handlers_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsHandlersConfig);
     if (!success)
     {
@@ -793,7 +793,7 @@ void RobotDataLoader::LoadRobotConfigs()
     
   // local notifications config
   {
-    static const std::string jsonFilename = "config/basestation/config/local_notification_config.json";
+    static const std::string jsonFilename = "config/engine/local_notification_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _localNotificationConfig);
     if (!success)
     {
@@ -805,7 +805,7 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // DAS event config
   {
-    static const std::string jsonFilename = "config/basestation/config/das_event_config.json";
+    static const std::string jsonFilename = "config/engine/das_event_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _dasEventConfig);
     if (!success)
     {
@@ -817,7 +817,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // Text-to-speech config
   {
-    static const std::string jsonFilename = "config/basestation/config/tts_config.json";
+    static const std::string jsonFilename = "config/engine/tts_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
     if (!success)
     {
@@ -844,7 +844,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // Inventory config
   {
-    static const std::string jsonFilename = "config/basestation/config/inventory_config.json";
+    static const std::string jsonFilename = "config/engine/inventory_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _inventoryConfig);
     if (!success)
     {

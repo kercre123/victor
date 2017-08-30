@@ -905,7 +905,7 @@
         '../../vision/include',
         # TODO: REMOVE THIS
         '<@(opencv_includes)',
-        '../../../include'
+        '../../..'
       ],
       'direct_dependent_settings': {
         'include_dirs': [
