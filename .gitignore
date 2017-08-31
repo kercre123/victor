@@ -285,6 +285,8 @@ robot/fixture/ankilog/Release
 robot/fixture/ankilog/Debug
 robot/fixture/ankilog/obj
 
+robot2/hal/dfu/dfu
+
 buildMakefile
 
 build_xcode_osx
