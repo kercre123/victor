@@ -303,7 +303,7 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
         Comms::sendVersion();
         break ;
       case PAYLOAD_ERASE:
-        Flash::markForWipe();
+        Power::softReset(true);
         break ;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;

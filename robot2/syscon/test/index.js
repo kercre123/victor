@@ -4,15 +4,6 @@ const Body = require("./board");
 
 const body = new Body("/dev/tty.usbserial-A504B5CN");
 
-/*
-Body.PAYLOAD_DATA_FRAME  = 0x6466;
-Body.PAYLOAD_CONT_DATA   = 0x6364;
-Body.PAYLOAD_MODE_CHANGE = 0x6d64;
-
-Body.PAYLOAD_VALIDATE    = 0x7374;
-Body.PAYLOAD_DFU_PACKET  = 0x6675;
-*/
-
 function* send() {
 	// Get current version
 	body.send(Body.PAYLOAD_VERSION);
@@ -41,8 +32,9 @@ function* send() {
 	body.send(Body.PAYLOAD_VALIDATE, payload);
 	yield null;
 
-	// Verify
-	body.send(Body.PAYLOAD_VERSION);
+	// Start running the application
+	body.send(Body.PAYLOAD_MODE_CHANGE);
+	yield null;
 }
 
 const flow = send();
@@ -50,6 +42,9 @@ flow.next();
 
 body.on('data', (info) => {
 	switch (info.id) {
+	case Body.PAYLOAD_DATA_FRAME:
+		body.send(Body.PAYLOAD_DATA_FRAME, Buffer.alloc(0x20));
+		return ;
 	case Body.PAYLOAD_ACK:
 		{
 			const value = info.data.readInt32LE(0);
