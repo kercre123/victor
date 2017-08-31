@@ -40,6 +40,9 @@ function onOpen() {
     {name: "Export JSON for MainConfig sheet", functionName: "exportMainConfigSheet"},
     {name: "Export JSON for ActionConfig sheet", functionName: "exportActionConfigSheet"},
     {name: "Export JSON for DecayConfig sheet", functionName: "exportDecayConfigSheet"},
+    {name: "Export JSON for DecayA sheet", functionName: "exportDecayASheet"},
+    {name: "Export JSON for DecayB sheet", functionName: "exportDecayBSheet"},
+    {name: "Export JSON for DecayC sheet", functionName: "exportDecayCSheet"},
     {name: "Export JSON for RewardsConfig sheet", functionName: "exportRewardsConfigSheet"},
     {name: "Export JSON for LocalNotificationConfig sheet", functionName: "exportLocalNotificationConfigSheet"},
 //  {name: "Configure export", functionName: "exportOptions"},
@@ -105,8 +108,23 @@ function rangeError(actionIdName, fieldName) {
 }
 
 function exportDecayConfigSheet(e) {
+  return exportGivenDecayConfigSheet(e, "DecayConfig");
+}
+
+function exportDecayASheet(e) {
+  return exportGivenDecayConfigSheet(e, "DecayA");
+}
+
+function exportDecayBSheet(e) {
+  return exportGivenDecayConfigSheet(e, "DecayB");
+}
+
+function exportDecayCSheet(e) {
+  return exportGivenDecayConfigSheet(e, "DecayC");
+}
+
+function exportGivenDecayConfigSheet(e, sheetName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetName = "DecayConfig";
   var sheet = ss.getSheetByName(sheetName);
   var data = getDecayData_(sheet);
   var json = makeJSON_(data, getExportOptions(e));
@@ -212,7 +230,7 @@ function getRowsOfKVPs_(sheet) {
 // Parse the decay config sheet
 function getDecayData_(sheet) {
   Logger.log("We're inside getDecayData_");
-  var dataRange = sheet.getRange(1, 1, sheet.getMaxRows(), 4);
+  var dataRange = sheet.getRange(2, 1, sheet.getMaxRows(), 4);
   var data = dataRange.getValues();
   var destObj = {};
   destObj["DecayRates"] = {};

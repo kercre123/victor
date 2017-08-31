@@ -779,6 +779,42 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
+  // needs system decay 'A' variation config
+  {
+    static const std::string jsonFilename = "config/engine/needs_decayA_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigA);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigAJsonNotFound",
+                        "Needs System Decay A Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs system decay 'B' variation config
+  {
+    static const std::string jsonFilename = "config/engine/needs_decayB_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigB);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigBJsonNotFound",
+                        "Needs System Decay B Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs system decay 'C' variation config
+  {
+    static const std::string jsonFilename = "config/engine/needs_decayC_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigC);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigCJsonNotFound",
+                        "Needs System Decay C Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
   // needs "handlers" config (e.g. eye procedural glitches for low repair)
   {
     static const std::string jsonFilename = "config/engine/needs_handlers_config.json";

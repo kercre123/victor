@@ -1,8 +1,8 @@
 {
     "meta": {
         "project_id": "cozmo",
-        "version": 0,
-        "revision": 0
+        "version": 2,
+        "revision": 1
     },
     "experiments": [
         {
@@ -22,6 +22,36 @@
                 {
                     "key": "treatment",
                     "pop_frac_pct": 50
+                }
+            ],
+            "audience_tags": [],
+            "forced_variations": []
+        },
+        {
+            "key": "unconnected_decay_rates",
+            "version": 0,
+            "activation_mode": "manual",
+            "start_time_utc_iso8601": "",
+            "stop_time_utc_iso8601": "",
+            "pause_time_utc_iso8601": "",
+            "resume_time_utc_iso8601": "",
+            "pop_frac_pct": 50,
+            "variations": [
+                {
+                    "key": "control",
+                    "pop_frac_pct": 25
+                },
+                {
+                    "key": "variationA",
+                    "pop_frac_pct": 25
+                },
+                {
+                    "key": "variationB",
+                    "pop_frac_pct": 25
+                },
+                {
+                    "key": "variationC",
+                    "pop_frac_pct": 25
                 }
             ],
             "audience_tags": [],

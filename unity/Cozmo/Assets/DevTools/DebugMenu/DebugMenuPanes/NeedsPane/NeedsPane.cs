@@ -32,6 +32,9 @@ public class NeedsPane : MonoBehaviour {
   [SerializeField]
   private Button _PassTimeApplyButton;
 
+  [SerializeField]
+  private Text _ABTestText;
+
   // Shortcut for  CONSOLE_VAR names
   private const string _kDebugGiveStarKey = "DebugGiveStar";
   private const string _kDebugPassTimeMinutesKey = "DebugPassTimeMinutes";
@@ -69,6 +72,7 @@ public class NeedsPane : MonoBehaviour {
     _LevelEnergyInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Energy].ToString("N6");
     _LevelPlayInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Play].ToString("N6");
     _LevelRepairInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Repair].ToString("N6");
+    _ABTestText.text = newNeedsState.unconnectedDecayTestVariation;
     // Remove so that it doesn't change past first init
     RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
   }

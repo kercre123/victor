@@ -59,7 +59,9 @@ public:
 
   void Init(const float currentTime_s, const Json::Value& inJson,
             const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-            const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+            const Json::Value& inDecayJson, const Json::Value& inDecayAJson,
+            const Json::Value& inDecayBJson, const Json::Value& inDecayCJson,
+            const Json::Value& inHandlersJson,
             const Json::Value& inLocalNotificationJson);
   void InitAfterConnection();
   void InitAfterSerialNumberAcquired(u32 serialNumber);
@@ -76,6 +78,7 @@ public:
   NeedsState& GetCurNeedsStateMutable();
   const NeedsState& GetCurNeedsState();
 
+  NeedsConfig& GetNeedsConfigMutable() { return _needsConfig; };
   const NeedsConfig& GetNeedsConfig() const { return _needsConfig; };
 
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
@@ -137,6 +140,8 @@ private:
   bool FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res);
 
   void InitAfterReadFromRobotAttempt();
+
+  void AttemptActivateDecayExperiment(u32 robotSerialNumber);
 
   void ApplyDecayAllNeeds(const bool connected);
   void ApplyDecayForTimeSinceLastDeviceWrite(const bool connected);
