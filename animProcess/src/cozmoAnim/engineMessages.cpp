@@ -191,7 +191,6 @@ namespace Messages {
       
       // Send RobotAvailable indicating sim robot
       RobotInterface::RobotAvailable idMsg;
-      idMsg.robotID = 0;
       idMsg.hwRevision = 0;
       RobotInterface::SendMessageToEngine(idMsg);
       

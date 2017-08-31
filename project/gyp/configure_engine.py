@@ -233,9 +233,7 @@ def main(scriptArgs):
   generator.processFolder(['engine', 'resources'],
                           ['project/gyp/cozmoEngine2.lst'],
                           ['engine/tools/*'])
-  generator.processFolder(['animProcess/src/cozmoAnim', 
-                           'robot/transport',
-                           'include', 'resources'],
+  generator.processFolder(['animProcess/src/cozmoAnim', 'robot/transport', 'resources'],
                           ['project/gyp/cozmoAnim.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c'])
   generator.processFolder(['androidHAL'],
