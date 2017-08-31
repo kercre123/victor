@@ -1049,6 +1049,329 @@ namespace Cozmo {
     
   } // anonymous namespace
   
+  Result VisionSystem::DetectOverheadEdges(const Vision::Image &image)
+  {
+    // if the ground plane is not currently visible, do not detect edges
+    if ( !_poseData.groundPlaneVisible )
+    {
+      OverheadEdgeFrame edgeFrame;
+      edgeFrame.timestamp = image.GetTimestamp();
+      edgeFrame.groundPlaneValid = false;
+      _currentResult.overheadEdges.push_back(std::move(edgeFrame));
+      return RESULT_OK;
+    }
+    
+    // if the lift is moving it's probably not a good idea to detect edges, it might be entering our view
+    // if we are carrying an object, it's also not probably a good idea, since we would most likely detect
+    // its edges (unless it's carrying high and we are looking down, but that requires modeling what
+    // objects can be carried here).
+    if ( _poseData.histState.WasLiftMoving() || _poseData.histState.WasCarryingObject() ) {
+      return RESULT_OK;
+    }
+    
+    // Get ROI around ground plane quad in image
+    const Matrix_3x3f& H = _poseData.groundPlaneHomography;
+    const GroundPlaneROI& roi = _poseData.groundPlaneROI;
+    Quad2f groundInImage;
+    roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), groundInImage);
+    
+    Anki::Rectangle<s32> bbox(groundInImage);
+    
+    // rsam: I tried to create a mask for the lift, calculating top and bottom sides of the lift and projecting
+    // onto camera plane. Turns out that physical robots have a lot of slack in the lift, so this projection,
+    // despite being correct on the paper, was not close to where the camera was seeing the lift.
+    // For this reason we have to completely prevent edge detection unless the lift is fairly up (beyond ground plane),
+    // or fairly low. Fairly up and fairly low are the parameters set here. Additionally, instead of trying to
+    // detect borders below the bottom margin line, if any of the margin lines are inside the projected quad, we stop
+    // edge detection altogether. This means that unless the lift is totally out of the ground plane, we will not
+    // do edge detection at all. Note: if this becomes a nuisance, we can revisit this and craft a better
+    // hardware slack margin, and try to detect edges below the lift when the lift is on the ground plane projection
+    // by shrinking bbox's top Y to liftBottomY
+    const bool kDebugRenderBboxVsLift = false;
+    
+    // virtual points in the lift to identify whether the lift is our camera view
+    float liftBotY = .0f;
+    float liftTopY = .0f;
+    bool isLiftTopInCamera = true;
+    bool isLiftBotInCamera = true;
+    {
+      // we only need to provide slack to the bottom edge (empirically), because of two reasons:
+      // 1) slack makes the lift fall with respect to its expected position, not lift even higher
+      // 2) the ground plane does not start at the robot, but in front of it, which accounts for the top of the lift
+      //    when the camera is pointing down. Once we start moving the lift up, the fall slack kicks in and gives
+      //    breathing room with respect to the top of
+      const float kHardwareFallSlackMargin_mm = LIFT_HARDWARE_FALL_SLACK_MM;
+      
+      // offsets we are going to calculate (point at the top and front of the lift, and at the bottom and back of the lift)
+      Anki::Vec3f offsetTopFrontPoint{LIFT_FRONT_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT };
+      Anki::Vec3f offsetBotBackPoint { LIFT_BACK_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - kHardwareFallSlackMargin_mm};
+      
+      // calculate the lift pose with respect to the poseStamp's origin
+      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
+                                _poseData.histState.GetPose(), "RobotLiftBase");
+      Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, liftBasePose, "RobotLift");
+      Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
+      
+      // calculate lift wrt camera
+      Pose3d liftPoseWrtCamera;
+      if ( false == liftPose.GetWithRespectTo(_poseData.cameraPose, liftPoseWrtCamera)) {
+        PRINT_NAMED_ERROR("VisionSystem.DetectOverheadEdges.PoseTreeError", "Could not get lift pose w.r.t. camera pose.");
+        return RESULT_FAIL;
+      }
+      
+      // project lift's top onto camera and store Y
+      Anki::Vec3f liftTopWrtCamera = liftPoseWrtCamera * offsetTopFrontPoint;
+      Anki::Point2f liftTopCameraPoint;
+      isLiftTopInCamera = _camera.Project3dPoint(liftTopWrtCamera, liftTopCameraPoint);
+      liftTopY = liftTopCameraPoint.y();
+      
+      // project lift's bot onto camera and store Y
+      Anki::Vec3f liftBotWrtCamera = liftPoseWrtCamera * offsetBotBackPoint;
+      Anki::Point2f liftBotCameraPoint;
+      isLiftBotInCamera = _camera.Project3dPoint(liftBotWrtCamera, liftBotCameraPoint);
+      liftBotY = liftBotCameraPoint.y();
+      
+      if ( kDebugRenderBboxVsLift )
+      {
+        _vizManager->DrawCameraOval(liftTopCameraPoint, 3, 3, NamedColors::YELLOW);
+        _vizManager->DrawCameraOval(liftBotCameraPoint, 3, 3, NamedColors::YELLOW);
+      }
+    }
+    
+    // render ground plane Y if needed
+    const int planeTopY = bbox.GetY();
+    const int planeBotY = bbox.GetYmax();
+    if ( kDebugRenderBboxVsLift ) {
+      _vizManager->DrawCameraOval(Anki::Point2f{120,planeTopY}, 3, 3, NamedColors::WHITE);
+      _vizManager->DrawCameraOval(Anki::Point2f{120,planeBotY}, 3, 3, NamedColors::WHITE);
+    }
+    
+    // check if the lift interferes with the edge detection, and if so, do not detect edges
+    const bool liftInterferesWithEdges = LiftInterferesWithEdges(isLiftTopInCamera, liftTopY, isLiftBotInCamera, liftBotY, planeTopY, planeBotY);
+    if ( liftInterferesWithEdges ) {
+      return RESULT_OK;
+    }
+    
+    // we are going to detect edges, grab relevant image
+    Vision::Image imageROI = image.GetROI(bbox);
+    
+    // Find edges in that ROI
+    // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
+    // in the middle to help detect soft edges
+    // (scaled such that each half has absolute sum of 1.0, so it's normalized)
+    Tic("EdgeDetection");
+    const SmallMatrix<7,5, f32> kernel{
+      0.0168,    0.0754,    0.1242,   0.0754,  0.0168,
+      0.0377,    0.1689,    0.2784,   0.1689,  0.0377,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      -0.0377,  -0.1689,   -0.2784,  -0.1689, -0.0377,
+      -0.0168,  -0.0754,   -0.1242,  -0.0754, -0.0168,
+    };
+    
+    /*
+     const SmallMatrix<7, 5, s16> kernel{
+     9,    39,    64,    39,     9,
+     19,    86,   143,    86,    19,
+     0,0,0,0,0,
+     0,0,0,0,0,
+     0,0,0,0,0,
+     -19,   -86,  -143,   -86,   -19,
+     -9,   -39,   -64,   -39,    -9
+     };
+     */
+    
+    Array2d<s16> edgeImgX(image.GetNumRows(), image.GetNumCols());
+    cv::filter2D(imageROI.get_CvMat_(), edgeImgX.GetROI(bbox).get_CvMat_(), CV_16S, kernel.get_CvMatx_());
+    Toc("EdgeDetection");
+    
+    Tic("GroundQuadEdgeMasking");
+    // Remove edges that aren't in the ground plane quad (as opposed to its bounding rectangle)
+    Vision::Image mask(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
+    mask.FillWith(255);
+    cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
+      groundInImage[Quad::CornerName::TopLeft].get_CvPoint_(),
+      groundInImage[Quad::CornerName::TopRight].get_CvPoint_(),
+      groundInImage[Quad::CornerName::BottomRight].get_CvPoint_(),
+      groundInImage[Quad::CornerName::BottomLeft].get_CvPoint_(),
+    }, 0);
+    
+    edgeImgX.SetMaskTo(mask, 0);
+    Toc("GroundQuadEdgeMasking");
+    
+    std::vector<OverheadEdgePointChain> candidateChains;
+    
+    // Find first strong edge in each column, in the ground plane mask, working
+    // upward from bottom.
+    // Note: looping only over the ROI portion of full image, but working in
+    //       full-image coordinates so that H directly applies
+    // Note: transposing so we can work along rows, which is more efficient.
+    //       (this also means using bbox.X for transposed rows and bbox.Y for transposed cols)
+    Tic("FindingGroundEdgePoints");
+    Matrix_3x3f invH;
+    H.GetInverse(invH);
+    Array2d<f32> edgeTrans(edgeImgX.get_CvMat_().t());
+    OverheadEdgePoint edgePoint;
+    for(s32 i=bbox.GetX(); i<bbox.GetXmax(); ++i)
+    {
+      bool foundBorder = false;
+      const f32* edgeTrans_i = edgeTrans.GetRow(i);
+      
+      // Right to left in transposed image ==> bottom to top in original image
+      for(s32 j=bbox.GetYmax()-1; j>=bbox.GetY(); --j)
+      {
+        const f32 & edgePixelX = edgeTrans_i[j];
+        if(edgePixelX > kEdgeThreshold )
+        {
+          // Project point onto ground plane
+          // Note that b/c we are working transposed, i is x and j is y in the
+          // original image.
+          const bool success = SetEdgePosition(invH, i, j, edgePoint);
+          if(success) {
+            edgePoint.gradient = {edgePixelX, edgePixelX, edgePixelX};
+            foundBorder = true;
+            AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          }
+          break; // only keep first edge found in each row (working right to left)
+        }
+      }
+      
+      // if we did not find border, report lack of border for this row
+      if ( !foundBorder )
+      {
+        const bool isInsideGroundQuad = (i >= groundInImage[Quad::TopLeft].x() &&
+                                         i <= groundInImage[Quad::TopRight].x());
+        
+        if(isInsideGroundQuad)
+        {
+          // Project point onto ground plane
+          // Note that b/c we are working transposed, i is x and j is y in the
+          // original image.
+          const bool success = SetEdgePosition(invH, i, bbox.GetY(), edgePoint);
+          if(success) {
+            edgePoint.gradient = 0.0f;
+            AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          }
+        }
+      }
+      
+    }
+    Toc("FindingGroundEdgePoints");
+    
+#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
+    if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
+    {
+      Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
+      
+      static const std::vector<ColorRGBA> lineColorList = {
+        NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+        NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
+      };
+      auto color = lineColorList.begin();
+      Vision::ImageRGB dispImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+      overheadImg.CopyTo(dispImg);
+      static const Anki::Point2f dispOffset(-roi.GetDist(), roi.GetWidthFar()*0.5f);
+      Quad2f tempQuad(roi.GetGroundQuad());
+      tempQuad += dispOffset;
+      dispImg.DrawQuad(tempQuad, NamedColors::RED, 1);
+      
+      for(auto & chain : candidateChains)
+      {
+        if(chain.points.size() >= kMinChainLength)
+        {
+          for(s32 i=1; i<chain.points.size(); ++i) {
+            Anki::Point2f startPoint(chain.points[i-1].position);
+            startPoint.y() = -startPoint.y();
+            startPoint += dispOffset;
+            Anki::Point2f endPoint(chain.points[i].position);
+            endPoint.y() = -endPoint.y();
+            endPoint += dispOffset;
+            dispImg.DrawLine(startPoint, endPoint, *color, 1);
+          }
+          ++color;
+          if(color == lineColorList.end()) {
+            color = lineColorList.begin();
+          }
+        }
+      }
+      Vision::Image dispEdgeImg(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
+      std::function<u8(const s16&)> fcn = [](const s16& pixelS16)
+      {
+        return u8(std::abs(pixelS16));
+      };
+                  
+      edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
+      
+      // Project edges on the ground back into image for display
+      for(auto & chain : candidateChains)
+      {
+        for(s32 i=0; i<chain.points.size(); ++i) {
+          const Anki::Point2f& groundPoint = chain.points[i].position;
+          Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
+          DEV_ASSERT(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
+          const f32 divisor = 1.f / temp.z();
+          dispEdgeImg.DrawCircle({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
+        }
+      }
+      dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
+      //dispImg.Display("OverheadImage", 1);
+      //dispEdgeImg.Display("OverheadEdgeImage");
+      _currentResult.debugImageRGBs.push_back({"OverheadImage", dispImg});
+      _currentResult.debugImageRGBs.push_back({"EdgeImage", dispEdgeImg});
+    } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
+    
+    // create edge frame info to send
+    OverheadEdgeFrame edgeFrame;
+    edgeFrame.timestamp = image.GetTimestamp();
+    edgeFrame.groundPlaneValid = true;
+    
+    roi.GetVisibleGroundQuad(H, image.GetNumCols(), image.GetNumRows(), edgeFrame.groundplane);
+    
+    // Copy only the chains with at least k points (less is considered noise)
+    for(auto& chain : candidateChains)
+    {
+      // filter chains that don't have a minimum number of points
+      if ( chain.points.size() >= kMinChainLength ) {
+        edgeFrame.chains.emplace_back( std::move(chain) );
+      }
+    }
+    candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
+    
+    // Transform border points into 3D, and into camera view and render
+    const bool kRenderEdgesInCameraView = false;
+    if ( kRenderEdgesInCameraView )
+    {
+      _vizManager->EraseSegments("kRenderEdgesInCameraView");
+      for( const auto& chain : edgeFrame.chains ) {
+        if ( !chain.isBorder ) {
+          continue;
+        }
+        for( const auto& point : chain.points ) {
+          // project the point to 3D
+          Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f), _poseData.histState.GetPose(), "ChainPoint");
+          Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToRoot();
+          // disabled 3D render
+          // _vizManager->DrawSegment("kRenderEdgesInCameraView", pointWrtOrigin.GetTranslation(), pointWrtOrigin.GetTranslation() + Vec3f{0,0,30}, NamedColors::WHITE, false);
+          
+          // project it back to 2D
+          Pose3d pointWrtCamera;
+          if ( pointWrtOrigin.GetWithRespectTo(_poseData.cameraPose, pointWrtCamera) )
+          {
+            Anki::Point2f pointInCameraView;
+            _camera.Project3dPoint(pointWrtCamera.GetTranslation(), pointInCameraView);
+            _vizManager->DrawCameraOval(pointInCameraView, 1, 1, NamedColors::BLUE);
+          }
+        }
+      }
+    }
+    
+    // put in mailbox
+    _currentResult.overheadEdges.push_back(std::move(edgeFrame));
+    
+    return RESULT_OK;
+  }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB &image)
   {
@@ -1864,9 +2187,17 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
     {
       Tic("TotalDetectingOverheadEdges");
-      // TODO: support color and grayscale edge detection (COZMO-10950)
-      // This call to GetRGB() will compute and cache a "colorized" gray version.
-      if((lastResult = DetectOverheadEdges(imageCache.GetRGB())) != RESULT_OK) {
+      
+      //The two DetectOverheadEdges function are basically the same, but one works on
+      //RGB images, the other on gray scale.
+      if (imageCache.HasColor()) {
+        lastResult = DetectOverheadEdges(imageCache.GetRGB());
+      }
+      else {
+        lastResult = DetectOverheadEdges(imageCache.GetGray());
+      }
+      
+      if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
       }

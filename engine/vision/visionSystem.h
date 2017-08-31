@@ -343,6 +343,7 @@ namespace Cozmo {
     Result DetectMotion(Vision::ImageCache& imageCache);
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);
+    Result DetectOverheadEdges(const Vision::Image& image);
     
     Result ReadToolCode(const Vision::Image& image);
     
