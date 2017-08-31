@@ -111,7 +111,11 @@ namespace Anki {
 
     Result GetSpineDataFrame(void)
     {
-      SpineMessageHeader* hdr = (SpineMessageHeader*) hal_get_frame(PAYLOAD_DATA_FRAME);
+      SpineMessageHeader* hdr = (SpineMessageHeader*) hal_get_frame(PAYLOAD_DATA_FRAME, 500);
+      if (!hdr) {
+        LOGE("Spine timeout!");
+        return RESULT_FAIL_IO_TIMEOUT;
+      }
       if (hdr->payload_type != PAYLOAD_DATA_FRAME) {
         LOGE("Spine.c data corruption: payload does not match requested");
         return RESULT_FAIL_IO_UNSYNCHRONIZED;
@@ -148,9 +152,14 @@ namespace Anki {
         hal_set_mode(RobotMode_RUN);
 
         printf("Waiting for Data Frame\n");
-        while (GetSpineDataFrame() != RESULT_OK) {
-          ; //spin on good frame
-        }
+        do {
+          Result result = GetSpineDataFrame();
+          //spin on good frame
+          if (result == RESULT_FAIL_IO_TIMEOUT) {
+            printf("Kicking the body again!");
+            hal_set_mode(RobotMode_RUN);
+          }
+        } while (result != RESULT_OK);
       }
 #else
       bodyData_ = &dummyBodyData_;
@@ -276,7 +285,7 @@ namespace Anki {
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
         result =  GetSpineDataFrame();
-
+        Result result = GetSpineDataFrame();
         PrintConsoleOutput();
       }
 #endif

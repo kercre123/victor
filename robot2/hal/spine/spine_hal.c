@@ -1,4 +1,4 @@
-/* #include <stdbool.h> */
+ /* #include <stdbool.h> */
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -115,10 +115,15 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 
 int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
 {
+
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
-    result = (errno == EAGAIN) ? 0 : result; //handle nonblocking no-data.
+    if (errno == EAGAIN) { //nonblocking no-data
+      usleep(1000); //wait a msec.
+      result = 0; //not an error
+    }
   }
+  int i;
   return result;
 }
 
@@ -244,7 +249,7 @@ SpineErr hal_init(const char* devicename, long baudrate)
 //Spins until valid frame header is recieved.
 const struct SpineMessageHeader* hal_read_frame()
 {
-//  static uint16_t loopcount = 0;
+  static uint16_t loopcount = 0;
   unsigned int index = 0;
 
   //spin here pulling single characters until whole sync rcvd
@@ -312,15 +317,30 @@ const struct SpineMessageHeader* hal_read_frame()
 
 
 //pulls off frames until it gets one of matching type
-const void* hal_get_frame(uint16_t type)
+
+const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
   const struct SpineMessageHeader* hdr;
   do {
     hdr = hal_read_frame();
+    if (timeout_ms>0 && --timeout_ms==0) {
+      LOGE("TIMEOUT in hal_get_frame() TIMEOUT");
+      return NULL;
+    }
   }
   while (!hdr || hdr->payload_type != type);
   return hdr;
 }
+
+const void* hal_wait_for_frame(uint16_t type)
+{
+  const void* ret;
+  do {
+    ret = hal_get_frame(type, 0xFFFFffff);
+  } while (!ret);
+  return ret;
+}
+
 
 void hal_send_frame(PayloadId type, const void* data, int len)
 {
