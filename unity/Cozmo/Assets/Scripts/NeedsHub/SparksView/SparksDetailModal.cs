@@ -298,9 +298,6 @@ namespace Cozmo.Needs.Sparks.UI {
       }
 
       StopSparkTrick(isDialogCleanup: false, doEngineCleanup: true);
-      if (OnSparkTrickEnded != null) {
-        OnSparkTrickEnded();
-      }
 
       if (_QuitConfirmAlertModal != null) {
         UIManager.CloseModal(_QuitConfirmAlertModal);
@@ -333,6 +330,9 @@ namespace Cozmo.Needs.Sparks.UI {
 
       if (!isDialogCleanup) {
         UpdateButtonState();
+      }
+      if (OnSparkTrickEnded != null) {
+        OnSparkTrickEnded();
       }
     }
 

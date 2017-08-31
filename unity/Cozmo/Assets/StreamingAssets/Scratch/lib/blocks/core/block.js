@@ -281,9 +281,11 @@ Blockly.Block.prototype.dispose = function(healStack) {
 
     // *** ANKI CHANGE ***
     // Put a green flag back on the workspace if no green flag is there.
-    setTimeout(function() {
-      window.ensureGreenFlagIsOnWorkspace();
-    }, 0);
+    if (!window.isVertical) {
+      setTimeout(function() {
+        window.ensureGreenFlagIsOnWorkspace();
+      }, 0);
+    }
   }
 };
 

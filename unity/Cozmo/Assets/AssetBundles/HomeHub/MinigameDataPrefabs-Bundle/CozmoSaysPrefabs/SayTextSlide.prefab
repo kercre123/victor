@@ -64,7 +64,7 @@ MonoBehaviour:
   _SayTextButton: {fileID: 114765092530201222}
   _TextInput: {fileID: 114407991599805524}
   _TextFieldInactiveColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 0.459}
-  _TextFieldActiveColor: {r: 0.03137255, g: 0.26666668, b: 0.32941177, a: 1}
+  _TextFieldActiveColor: {r: 0, g: 0.058823533, b: 0.21568629, a: 1}
   _TotalSparksLabel: {fileID: 114901274339204978}
   _SparkItemId: spark
   _SayCost: 0
@@ -1230,8 +1230,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4283712520
-  m_fontColor: {r: 0.03137255, g: 0.26666668, b: 0.32941177, a: 1}
+    rgba: 4281798400
+  m_fontColor: {r: 0, g: 0.058823533, b: 0.21568629, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -1931,8 +1931,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 2133996082
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 0.5}
+    rgba: 4287532686
+  m_fontColor: {r: 0.5588235, g: 0.5588235, b: 0.5588235, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}

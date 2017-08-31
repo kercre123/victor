@@ -242,8 +242,9 @@ void VizControllerImpl::SetRobotPose(CozmoBotVizParams *p,
 void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_SetRobot();
-  // Find robot by ID
-  uint8_t robotID = (uint8_t)payload.robotID;
+  
+  const uint8_t robotID = 1; // only ID ever used is 1
+  
   std::map<u8, u8>::iterator it = robotIDToVizBotIdxMap_.find(robotID);
   if (it == robotIDToVizBotIdxMap_.end()) {
     if (robotIDToVizBotIdxMap_.size() < vizBots_.size()) {
@@ -252,12 +253,12 @@ void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::
       robotIDToVizBotIdxMap_[robotID] = (uint8_t)robotIDToVizBotIdxMap_.size();
       it = robotIDToVizBotIdxMap_.end();
       it--;
-      printf("Registering vizBot for robot %d\n", robotID);
+      PRINT_NAMED_INFO("VizControllerImpl.ProcessVizSetRobotMessage.RegisteringRobot","Registering vizBot for robot %d\n", robotID);
     } else {
       // Print 'no more vizBots' message. Just once.
       static bool printedNoMoreVizBots = false;
       if (!printedNoMoreVizBots) {
-        PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizSetRobotMessage",
+        PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizSetRobotMessage.NoMoreVizBots",
           "RobotID %d not registered. No more available Viz bots. Add more to world file!",
           robotID);
         printedNoMoreVizBots = true;

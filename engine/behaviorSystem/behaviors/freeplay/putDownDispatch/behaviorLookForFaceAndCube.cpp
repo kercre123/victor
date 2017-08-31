@@ -110,7 +110,7 @@ Result BehaviorLookForFaceAndCube::InitInternal(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
 
-  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToOrigin().GetRotationAngle<'Z'>();
+  _startingBodyFacing_rad = robot.GetPose().GetWithRespectToRoot().GetRotationAngle<'Z'>();
   _currentSidePicksDone = 0;
   _currentState = State::S0FaceOnCenter;
   _verifiedFaces.clear();

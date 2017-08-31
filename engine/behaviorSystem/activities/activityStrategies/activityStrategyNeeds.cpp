@@ -14,7 +14,7 @@
 #include "engine/behaviorSystem/activities/activityStrategies/activityStrategyNeeds.h"
 
 #include "anki/common/basestation/jsonTools.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
@@ -71,7 +71,7 @@ bool ActivityStrategyNeeds::WantsToEndInternal(const Robot& robot, float lastTim
     // energy should want to end so that severe repair can take over
     if(_higherPriorityWantsToRunStrategy != nullptr){
       if(_higherPriorityWantsToRunStrategy->WantsToRun(robot)){
-        robot.GetAIComponent().GetNonConstWhiteboard().ClearSevereNeedExpression();
+        robot.GetAIComponent().GetNonConstSevereNeedsComponent().ClearSevereNeedExpression();
         return true;
       }
     }

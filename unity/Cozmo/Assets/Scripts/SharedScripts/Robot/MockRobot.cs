@@ -1170,4 +1170,7 @@ public class MockRobot : IRobot {
 
   public void DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
   }
+
+  public void DriveOffChargerContacts(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  }
 }

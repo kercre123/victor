@@ -245,7 +245,7 @@ namespace Anki {
             // Face the position (0,-100,0) wrt robot
             m.action.Set_turnTowardsPose(ExternalInterface::TurnTowardsPose(GetRobotPose().GetTranslation().x(),
                                                               GetRobotPose().GetTranslation().y() + -1000,
-                                                              NECK_JOINT_POSITION[2], M_PI_F, 0, 0, 0, 0, 0, 0, 1));
+                                                              NECK_JOINT_POSITION[2], M_PI_F, 0, 0, 0, 0, 0, 0));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -271,7 +271,7 @@ namespace Anki {
             // Face first matching light cube
             std::vector<s32> lightCubeIDs = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
             if (!lightCubeIDs.empty()) {
-              m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, 1, true, false));
+              m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, true, false));
               ExternalInterface::MessageGameToEngine message;
               message.Set_QueueSingleAction(m);
               SendMessage(message);

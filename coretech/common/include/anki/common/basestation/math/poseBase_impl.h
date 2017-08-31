@@ -4,11 +4,6 @@
  * Author: Andrew Stein (andrew)
  * Created: 6/19/2014
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
  * Description: Implements a base class for Pose2d and Pose3d to inherit from in
  *                order to share pose tree capabilities.
  *
@@ -19,224 +14,365 @@
 #ifndef _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 #define _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/basestation/math/matrix.h"
+#include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/quad.h"
+#include "anki/common/basestation/math/rotation.h"
+#include "anki/common/shared/radians.h"
+
+#include "anki/common/basestation/math/poseBase.h"
+#include "anki/common/basestation/math/poseTreeNode.h"
+
+#include "util/helpers/boundedWhile.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
-#include "anki/common/basestation/math/poseBase.h"
+
 
 namespace Anki {
- 
+  
+  template<class PoseNd, class TransformNd>
+  bool PoseBase<PoseNd,TransformNd>::_areUnownedParentsAllowed = false;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<class PoseNd>
-  PoseBase<PoseNd>::PoseBase()
-  : PoseBase<PoseNd>(nullptr, "") // note this calls another constructor, so do not notify of creation here
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>::PoseBase()
   {
+    // NOTE: does not create a PoseTreeNode at all: this does not "wrap" anything!
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<class PoseNd>
-  PoseBase<PoseNd>::PoseBase(const PoseNd* parentPose, const std::string& name)
-  : _parentPtr(nullptr)
-  , _name(name)
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const PoseNd& parentPose, const std::string& name)
+  : _node(new PoseTreeNode(transform, parentPose._node, name))
   {
-    // valid pose
-    Dev_PoseCreated(this);
+    _node->AddOwner();
+  }
   
-    // use accessors to set parent
-    SetParent(parentPose);
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const std::string& name)
+  : _node(new PoseTreeNode(transform, nullptr, name))
+  {
+    _node->AddOwner();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>::PoseBase(const PoseNd& parentPose, const std::string& name)
+  : _node(new PoseTreeNode(TransformNd(), parentPose._node, name))
+  {
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // destructor
-  template<class PoseNd>
-  PoseBase<PoseNd>::~PoseBase()
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>::~PoseBase()
   {
-    // clear parent to remove reference count
-    SetParent(nullptr);
-    
-    // notify we are destroyed
-    Dev_PoseDestroyed(this);
+    if(!IsNull())
+    {
+      _node->RemoveOwner();
+    }
   }
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // copy constructor
-  template<class PoseNd>
-  PoseBase<PoseNd>::PoseBase(const PoseBase& other)
-  : _parentPtr(nullptr)
-  , _name(other._name)
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>::PoseBase(const PoseBase& other)
+  : _node(new PoseTreeNode(*other._node)) // don't share Nodes with other! copy the contents!
   {
-    // valid pose
-    Dev_PoseCreated(this);
-  
-    // use accessors for parent switch
-    SetParent( other.GetParent() );
-
-    // copy rest
-    _name = other._name;
+    _node->AddOwner();
   }
-
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // assignment op
-  template<class PoseNd>
-  PoseBase<PoseNd>& PoseBase<PoseNd>::operator=(const PoseBase& other)
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>& PoseBase<PoseNd,TransformNd>::operator=(const PoseBase& other)
   {
-    // use accessors for parent switch
-    SetParent( other.GetParent() );
-    
-    // copy rest and return
-    _name = other._name;
+    if(this != &other)
+    {
+      if(other.IsNull())
+      {
+        _node->RemoveOwner();
+        _node.reset();
+      }
+      else
+      {
+        // don't share Nodes with other! assign the contents!
+        *_node = *other._node;
+        _node->AddOwner();
+      }
+    }
     return *this;
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<class PoseNd>
-  void PoseBase<PoseNd>::SetParent(const PoseNd* otherPose)
+  // rvalue constructor
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>::PoseBase(PoseBase&& other)
+  : _node(std::move(other._node))
   {
-    DEV_ASSERT(otherPose != this, "PoseBase.SetParent.ParentCannotBeSelf");
-    Dev_SwitchParent(_parentPtr, otherPose, this);
-    _parentPtr = otherPose;
+    
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // rvalue assignment
+  template<class PoseNd, class TransformNd>
+  PoseBase<PoseNd,TransformNd>& PoseBase<PoseNd,TransformNd>::operator=(PoseBase&& other)
+  {
+    if(this != &other)
+    {
+      std::swap(_node, other._node);
+    }
+    return *this;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::SetName(const std::string& newName)
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.SetName.NullNode");
+    _node->SetName(newName);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline const std::string& PoseBase<PoseNd,TransformNd>::GetName() const
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetName.NullNode");
+    return _node->GetName();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline PoseID_t PoseBase<PoseNd,TransformNd>::GetID() const
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetID.NullNode");
+    return _node->GetID();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::SetID(PoseID_t newID)
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.SetID.NullNode");
+    _node->SetID(newID);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline const TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform() const
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetTransformConst.NullNode");
+    return _node->GetTransform();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform()
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetTransform.NullNode");
+    return _node->GetTransform();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::IsRoot()    const
+  {
+    return (IsNull() ? true : _node->IsRoot());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::HasParent() const
+  {
+    return (IsNull() ? false : _node->HasParent());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline PoseID_t PoseBase<PoseNd,TransformNd>::GetRootID() const
+  {
+    return (IsNull() ? 0 : _node->GetRootID());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::IsChildOf(const PoseNd& otherPose) const
+  {
+    return (IsNull() || otherPose.IsNull() ? false : _node->IsChildOf(*otherPose._node));
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::IsParentOf(const PoseNd& otherPose) const
+  {
+    return (IsNull() || otherPose.IsNull() ? false : _node->IsParentOf(*otherPose._node));
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::Invert(void)
+  {
+    GetTransform().Invert();
+    ClearParent();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline PoseNd PoseBase<PoseNd,TransformNd>::GetInverse(void) const
+  {
+    return GetTransform().GetInverse();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  void PoseBase<PoseNd,TransformNd>::SetParent(const PoseNd& otherPose)
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.SetParent.NullNode");
+    DEV_ASSERT(&otherPose != this, "PoseBase.SetParent.ParentCannotBeSelf");
+    _node->SetParent(otherPose._node);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  void PoseBase<PoseNd,TransformNd>::ClearParent()
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.ClearParent.NullNode");
+    _node->SetParent(nullptr);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  void PoseBase<PoseNd,TransformNd>::PrintNamedPathToRoot(bool showTranslations) const
+  {
+    std::string str = GetNamedPathToRoot(showTranslations);
+    fprintf(stdout, "Path to root: %s\n", str.c_str());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  std::string PoseBase<PoseNd,TransformNd>::GetNamedPathToRoot(bool showTranslations) const
+  {
+    if(IsNull())
+    {
+      return "NullNode";
+    }
+    return _node->GetNamedPathToRoot(showTranslations);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  template<class PoseNd>
-  const PoseNd& PoseBase<PoseNd>::FindOrigin(const PoseNd& forPose) const
+  template<class PoseNd, class TransformNd>
+  bool PoseBase<PoseNd,TransformNd>::HasSameParentAs(const PoseNd& otherPose) const
   {
-    const PoseNd* originPose = &forPose;
-    BOUNDED_WHILE(1000, (!originPose->IsOrigin()))
-    {  
-      // The only way the current originPose's _parent is null is if it is an
-      // origin, which means we should have already exited the while loop.
-      DEV_ASSERT(originPose->GetParent() != nullptr, "PoseBase.FindOrigin.OriginHasNullParent");
-      originPose = originPose->GetParent();
+    if(IsNull() || otherPose.IsNull())
+    {
+      return false;
     }
     
-    return *originPose;
-    
-  } // FindOrigin()
-  
-  template<class PoseNd>
-  void PoseBase<PoseNd>::PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
-  {
-    std::string str = GetNamedPathToOrigin(startPose, showTranslations);
-    fprintf(stdout, "Path to origin: %s\n", str.c_str());
+    return _node->HasSameParentAs(*otherPose._node);
   }
   
-  template<class PoseNd>
-  std::string PoseBase<PoseNd>::GetNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  PoseNd PoseBase<PoseNd,TransformNd>::operator*(const PoseNd& other) const
   {
-    std::string str;
-
-    const PoseCPtrSet* validPoses = (ANKI_DEV_CHEATS ? &Dev_GetValidPoses() : nullptr);
-    
-    const PoseNd* current = &startPose;
-
-    // NOTE: Not using any methods like GetParent() or IsOrigin() here because those
-    // call Dev_ helpers, which may also be calling this method
-    BOUNDED_WHILE(1000, true)
-    {
-      if(ANKI_DEV_CHEATS)
-      {
-        assert(validPoses != nullptr);
-        if(validPoses->find(current) == validPoses->end())
-        {
-          // Stop as soon as we reach an invalid pose in the chain b/c it may be a garbage pointer
-          str += "[INVALID]";
-          return str;
-        }
-      }
-      
-      const std::string& name = current->GetName();
-      if(name.empty()) {
-        str += "(UNNAMED)";
-      } else {
-        str += name;
-      }
-      
-      if(showTranslations) {
-        str += current->GetTranslation().ToString();
-      }
-      
-      current = current->_parentPtr;
-      
-      if(nullptr == current)
-      {
-        // Reached origin (or end of the road anyway)
-        break;
-      }
-      
-      str += " -> ";
-    }
-    
-    return str;
-    
-  } // GetNamedPathToOrigin()
-  
-  
-  // Count number of steps to an origin node, by walking up
-  // the chain of _parents.
-  template<class PoseNd>
-  unsigned int PoseBase<PoseNd>::GetTreeDepth(const PoseNd* poseNd) const
-  {
-    unsigned int treeDepth = 1;
-    
-    const PoseNd* current = poseNd;
-    BOUNDED_WHILE(1000, (!current->IsOrigin()))
-    {
-      ++treeDepth;
-      current = current->GetParent();
-    }
-    
-    return treeDepth;
+    PoseNd newPose;
+    newPose.GetTransform() = (GetTransform() * other.GetTransform());
+    return newPose;
   }
   
-  template<class PoseNd>
-  bool PoseBase<PoseNd>::GetWithRespectTo(const PoseNd& fromPose, const PoseNd& toPose,
-                                          PoseNd& P_wrt_other) const
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  bool PoseBase<PoseNd,TransformNd>::HasSameRootAs(const PoseNd& otherPose) const
   {
+    if(IsNull() || otherPose.IsNull())
+    {
+      return false;
+    }
+    
+    return _node->HasSameRootAs(*otherPose._node);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  std::string PoseBase<PoseNd,TransformNd>::GetParentString() const
+  {
+    std::stringstream ss;
+    ss << "Parent:";
+    if(IsNull() || !HasParent())
+    {
+      ss << "NULL";
+    }
+    else
+    {
+      ss << _node->GetRawParentPtr()->GetName() << "(0x" << _node->GetRawParentPtr() << ")";
+    }
+    
+    return ss.str();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  PoseNd PoseBase<PoseNd,TransformNd>::FindRoot() const
+  {
+    PoseNd root;
+    
+    if(IsRoot())
+    {
+      root.WrapExistingNode(_node);
+    }
+    else
+    {
+      root.WrapExistingNode(_node->FindRoot());
+    }
+    
+    return root;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  PoseNd PoseBase<PoseNd,TransformNd>::GetParent() const
+  {
+    PoseNd parent; // Start out with "null" pose
+    if(!IsNull())
+    {
+      parent.WrapExistingNode(_node->GetParent());
+    }
+    return parent; // Likely uses RVO so no copy. TODO: Use move semantics instead?
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  bool PoseBase<PoseNd,TransformNd>::GetWithRespectTo(const PoseNd& fromPose, const PoseNd& toPose, PoseNd& P_wrt_other)
+  {
+    if(!ANKI_VERIFY(!fromPose.IsNull() && !toPose.IsNull() && !P_wrt_other.IsNull(),
+                    "PoseBase.GetWithRespectTo.NullInputPose", "FromNull:%s ToNull:%s WrtOtherNull:%s",
+                    fromPose.IsNull() ? "Y" : "N", toPose.IsNull() ? "Y" : "N", P_wrt_other.IsNull() ? "Y" : "N"))
+    {
+      return false;
+    }
+    
     if(&fromPose == &toPose) {
       // Asked for pose w.r.t. itself. Just return fromPose
       PRINT_NAMED_WARNING("PoseBase.GetWithRespectTo.FromEqualsTo",
                           "Pose w.r.t. itself requested.");
       P_wrt_other = fromPose;
-      P_wrt_other.SetParent(&toPose);
+      P_wrt_other.SetParent(toPose);
       return true;
     }
-    
-    const PoseBase<PoseNd>* fromOrigin = &fromPose.FindOrigin();
-    const PoseBase<PoseNd>* toOrigin   = &toPose.FindOrigin();
-    if(fromOrigin != toOrigin)
+
+    if(!fromPose._node->HasSameRootAs(*toPose._node))
     {
-      // We can get the transformation between two poses that are not WRT the
-      // same origin!
+      // We can't get the transformation between two poses that are not WRT the
+      // same root!
       return false;
     }
     
-    const PoseNd* from = &fromPose;
-    const PoseNd* to   = &toPose;
+    const PoseTreeNode* from = fromPose._node.get();
+    const PoseTreeNode* to   = toPose._node.get();
     
-    PoseNd P_from(fromPose);
-    
-    // "to" can get changed below, but we want to set the returned pose's
-    // _parent to it, so we keep a copy here.
-    const PoseNd *new_parent = to;
-    
-    /*
-     if(to == Pose<DIM>::World) {
-     
-     // Special (but common!) case: get with respect to the
-     // world pose.  Just chain together poses up to the root.
-     
-     while(from->_parent != POSE::World) {
-     P_from.PreComposeWith( *(from->_parent) );
-     from = from->_parent;
-     }
-     
-     P_wrt_other = &P_from;
-     
-     } else {
-     */
-    PoseNd P_to(toPose);
+    TransformNd T_from(fromPose._node->GetTransform());
+    TransformNd T_to(toPose._node->GetTransform());
     
     // First make sure we are pointing at two nodes of the same tree depth,
     // which is the only way they could possibly share the same _parent.
@@ -245,23 +381,24 @@ namespace Anki {
     // along the way. (NOTE: Only one of the following two while loops should
     // run, depending on which node is deeper in the tree)
     
-    int depthDiff = GetTreeDepth(from) - GetTreeDepth(to);
+    int depthDiff = from->GetTreeDepth() - to->GetTreeDepth();
     
     BOUNDED_WHILE(1000, depthDiff > 0)
     {
-      DEV_ASSERT(from->GetParent() != nullptr, "PoseBase.GetWithRespectTo.FromParentIsNull");
+      DEV_ASSERT(from->HasParent(), "PoseBase.GetWithRespectTo.FromParentIsNull");
       
-      P_from.PreComposeWith( *(from->GetParent()) );
-      from = from->GetParent();
+      T_from.PreComposeWith( from->GetParentTransform() );
+      from = from->GetRawParentPtr();
       
-      if(from->GetParent() == to) {
+      if(from->IsChildOf(*to))
+      {
         // We bumped into the "to" pose on the way up to the common _parent, so
         // we've got the the chained transform ready to go, and there's no
         // need to walk past the "to" pose, up to the common _parent, and right
         // back down, which would unnecessarily compose two more poses which
         // are the inverse of one another by construction.
-        P_from.SetParent(new_parent);
-        P_wrt_other = P_from;
+        std::swap(P_wrt_other._node->GetTransform(), T_from);
+        P_wrt_other.SetParent(toPose);
         return true;
       }
       
@@ -270,228 +407,73 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff < 0)
     {
-      DEV_ASSERT(to->GetParent() != nullptr, "PoseBase.GetWithRespectTo.ToParentIsNull");
+      DEV_ASSERT(to->HasParent(), "PoseBase.GetWithRespectTo.ToParentIsNull");
       
-      P_to.PreComposeWith( *(to->GetParent()) );
-      to = to->GetParent();
+      T_to.PreComposeWith( to->GetParentTransform() );
+      to = to->GetRawParentPtr();
       
-      if(to->GetParent() == from) {
+      if(to->IsChildOf(*from)) {
         // We bumped into the "from" pose on the way up to the common _parent,
         // so we've got the the (inverse of the) chained transform ready to
         // go, and there's no need to walk past the "from" pose, up to the
         // common _parent, and right back down, which would unnecessarily
         // compose two more poses which are the inverse of one another by
         // construction.
-        P_to.Invert();
-        P_to.SetParent(new_parent);
-        P_wrt_other = P_to;
+        T_to.Invert();
+        std::swap(P_wrt_other._node->GetTransform(), T_to);
+        P_wrt_other.SetParent(toPose);
         return true;
       }
       
       ++depthDiff;
     }
     
-    if(ANKI_DEVELOPER_CODE)
-    {
-      // Sanity check: Treedepths should now match:
-      DEV_ASSERT(depthDiff == 0, "PoseBase.GetWithRespectTo.NonZeroDepthDiff");
-      DEV_ASSERT(GetTreeDepth(to) == GetTreeDepth(from), "PoseBase.GetWithRespectTo.TreeDepthMismatch");
-    }
+    // Sanity check: Treedepths should now match:
+    DEV_ASSERT(depthDiff == 0, "PoseBase.GetWithRespectTo.NonZeroDepthDiff");
+    DEV_ASSERT(to->GetTreeDepth() == from->GetTreeDepth(), "PoseBase.GetWithRespectTo.TreeDepthMismatch");
     
     // Now that we are pointing to the nodes of the same depth, keep moving up
     // until those nodes have the same _parent, totalling up the transformations
     // along the way
-    BOUNDED_WHILE(1000, to->GetParent() != from->GetParent())
+    BOUNDED_WHILE(1000, (from != to) && !to->HasSameParentAs(*from))
     {
-      DEV_ASSERT(from->GetParent() != nullptr, "PoseBase.GetWithRespectTo.FromParentIsNull");
-      DEV_ASSERT(to->GetParent() != nullptr, "PoseBase.GetWithRespectTo.ToParentIsNull");
+      DEV_ASSERT(from->HasParent(), "PoseBase.GetWithRespectTo.FromParentIsNull");
+      DEV_ASSERT(to->HasParent(), "PoseBase.GetWithRespectTo.ToParentIsNull");
       
-      P_from.PreComposeWith( *(from->GetParent()) );
-      P_to.PreComposeWith( *(to->GetParent()) );
+      T_from.PreComposeWith( from->GetParentTransform() );
+      T_to.PreComposeWith( to->GetParentTransform() );
       
-      to = to->GetParent();
-      from = from->GetParent();
+      to = to->GetRawParentPtr();
+      from = from->GetRawParentPtr();
     }
     
     // Now compute the total transformation from this pose, up the "from" path
     // in the tree, to the common ancestor, and back down the "to" side to the
     // final other pose.
     //     P_wrt_other = P_to.inv * P_from;
-    P_wrt_other = P_to.GetInverse();
-    P_wrt_other *= P_from;
-    
-    // } // IF/ELSE other is the World pose
+    P_wrt_other._node->GetTransform() = T_to.GetInverse();
+    P_wrt_other._node->GetTransform() *= T_from;
     
     // The Pose we are about to return is w.r.t. the "other" pose provided (that
     // was the whole point of the exercise!), so set its _parent accordingly:
-    P_wrt_other.SetParent(new_parent);
+    P_wrt_other.SetParent(toPose);
     
     return true;
-    
-  } // GetWithRespectToHelper()
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<class PoseNd>
-  void PoseBase<PoseNd>::Dev_SwitchParent(const PoseNd* oldParent, const PoseNd* newParent, const PoseBase<PoseNd>* childBasePointer)
-  {
-    if ( ANKI_DEV_CHEATS )
-    {
-      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-      
-      const PoseNd* castedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
-      PoseCPtrSet& validPoses = Dev_GetValidPoses();
-    
-      // if there's an old parent, we have to tell it we are not a child anymore
-      if ( oldParent )
-      {
-        // if the parent is not a valid pose anymore it's not an error, we had a bad pointer but we are not using it,
-        // we are actually switching to a different one
-        auto match = validPoses.find(oldParent);
-        if ( match != validPoses.end() )
-        {
-          // if it's still a valid parent, we notify
-          const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(oldParent);
-          upCastedParent->_devChildrenPtrs.erase(castedChild);
-        }
-      }
-    
-      // if we have a new parent, add ourselves as a child
-      if ( newParent )
-      {
-        // check if it can be a parent
-        auto match = validPoses.find(newParent);
-        if ( match != validPoses.end() )
-        {
-          // make sure we were not there before
-          ANKI_VERIFY(newParent->_devChildrenPtrs.find(castedChild) == newParent->_devChildrenPtrs.end(),
-                     "PoseBase.Dev_SwitchParent.DuplicatedChildOfParent",
-                      "Child: '%s'(%p), Old parent '%s'(%p) path to origin: %s. "
-                      "New parent '%s'(%p) path to origin: %s.",
-                      childBasePointer->GetName().c_str(), childBasePointer,
-                      oldParent == nullptr ? "(none)" : oldParent->GetName().c_str(),
-                      oldParent,
-                      oldParent == nullptr ? "(none)" : GetNamedPathToOrigin(*oldParent, true).c_str(),
-                      newParent->GetName().c_str(), newParent, GetNamedPathToOrigin(*newParent, true).c_str());
-          
-          // add now
-          const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(newParent);
-          upCastedParent->_devChildrenPtrs.insert(castedChild);
-        }
-        else
-        {
-          // this pose can't be a parent, how did you get the pointer?!
-          ANKI_VERIFY(false, "PoseBase.Dev_SwitchParent.NewParentIsNotAValidPose",
-                      "New parent '%s'(%p) path to origin: %s",
-                      newParent->GetName().c_str(), newParent,
-                      GetNamedPathToOrigin(*newParent, true).c_str());
-        }
-      }
-    }
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<class PoseNd>
-  void PoseBase<PoseNd>::Dev_AssertIsValidParentPointer(const PoseNd* parent, const PoseBase<PoseNd>* childBasePointer)
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::AreUnownedParentsAllowed()
   {
-    if ( ANKI_DEV_CHEATS )
-    {
-      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-      const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
-
-      // a) child is a valid pose
-      PoseCPtrSet& validPoses = Dev_GetValidPoses();
-      if( !ANKI_VERIFY(validPoses.find(downCastedChild) != validPoses.end(),
-                       "PoseBase.Dev_AssertIsValidParentPointer.ChildNotAValidPose",
-                       "This pose is bad. Not printing info because it's garbage, so I don't want to access it") )
-      {
-        Anki::Util::sAbort();
-      }
-  
-      if ( nullptr != parent )
-      {
-        // if we have a parent, check that:
-        // b) the parent is a valid pose
-        if( !ANKI_VERIFY(validPoses.find(parent) != validPoses.end(),
-                    "PoseBase.Dev_AssertIsValidParentPointer.ParentNotAValidPose",
-                    "Path of parent '%s'(%p) to origin: %s. Path of child '%s'(%p) to origin: %s",
-                    parent->GetName().c_str(), parent, GetNamedPathToOrigin(*parent, true).c_str(),
-                    childBasePointer == nullptr ? "(none)" : childBasePointer->GetName().c_str(), childBasePointer,
-                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(childBasePointer), true).c_str()))
-        {
-          Anki::Util::sAbort();
-        }
-        
-        // c) we are a current child of it
-        const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(parent);
-        if( !ANKI_VERIFY(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
-                    "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent",
-                    "Path of parent '%s'(%p) to origin: %s. Path of child '%s'(%p) to origin: %s",
-                    parent->GetName().c_str(), parent, GetNamedPathToOrigin(*parent, true).c_str(),
-                    childBasePointer == nullptr ? "(none)" : childBasePointer->GetName().c_str(), childBasePointer,
-                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*downCastedChild, true).c_str()))
-        {
-          Anki::Util::sAbort();
-        }
-        
-        // Note on c): If you crash on c), it means that the child is pointing at this parent, and this parent
-        // is indeed a valid pose, but it is not a valid parent of this child. This can happen by this series of steps:
-        // Create pose A
-        // Create pose B
-        // Set A as B's parent
-        // Destroy A - note B's parent is a bad pointer
-        // Create C (C could get allocated in A's released pointer)
-        // Create D
-        // Set C as D's parent
-        // Try to use B's parent.
-        // -> In that case B's pointer says that it's a valid pose, however is not a valid child of C,
-        // B did not intend to point to C, and using B's parent pointer is an error
-      }
-    }
+    return _areUnownedParentsAllowed;
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<class PoseNd>
-  void PoseBase<PoseNd>::Dev_PoseDestroyed(const PoseBase<PoseNd>* basePointer)
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::AllowUnownedParents(bool tf)
   {
-    if ( ANKI_DEV_CHEATS )
-    {
-      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-    
-      // nonsense to ask for nullptr
-      assert( nullptr != basePointer );
-
-      // remove from validPoses and make sure we were a valid pose
-      PoseCPtrSet& validPoses = Dev_GetValidPoses();
-      const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
-      const size_t removedCount = validPoses.erase(castedSelf);
-      ANKI_VERIFY(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose",
-                  "Path from '%s'(%p) to origin: %s",
-                  basePointer->GetName().c_str(), basePointer,
-                  GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(basePointer), true).c_str());
-    }
+    _areUnownedParentsAllowed = tf;
   }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  template<class PoseNd>
-  void PoseBase<PoseNd>::Dev_PoseCreated(const PoseBase<PoseNd>* basePointer)
-  {
-    if ( ANKI_DEV_CHEATS )
-    {
-      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-    
-      // nonsense to ask for nullptr
-      assert( nullptr != basePointer );
-     
-      PoseCPtrSet& validPoses = Dev_GetValidPoses();
-      const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
-      const auto insertRetInfo = validPoses.insert(castedSelf);
-      ANKI_VERIFY(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer",
-                  "Path from '%s'(%p) to origin: %s",
-                  basePointer->GetName().c_str(), basePointer,
-                  GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(basePointer), true).c_str());
-    }
-  }
-  
   
 } // namespace Anki
 

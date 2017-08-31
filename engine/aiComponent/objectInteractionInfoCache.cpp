@@ -351,7 +351,7 @@ bool ObjectInteractionInfoCache::CanPickupNoAxisCheck(const ObservableObject* ob
   const bool recentlyFailed = whiteboard.DidFailToUse(object->GetID(),
                                            {{ ObjectActionFailure::PickUpObject, ObjectActionFailure::RollOrPopAWheelie }},
                                            DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
-                                           object->GetPose().GetWithRespectToOrigin(),
+                                           object->GetPose().GetWithRespectToRoot(),
                                            DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                                            DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
   
@@ -370,7 +370,7 @@ bool ObjectInteractionInfoCache::CanPickupAxisCheck(const ObservableObject* obje
   const bool forFreeplay = true;
   const bool isRollingUnlocked = _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube,forFreeplay);
   const bool upAxisOk = ! isRollingUnlocked ||
-  object->GetPose().GetWithRespectToOrigin().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+  object->GetPose().GetWithRespectToRoot().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
   
   return upAxisOk;
 }
@@ -517,7 +517,7 @@ bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck(const Observab
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectInteractionInfoCache::CanRollObjectDelegateAxisCheck(const ObservableObject* object) const
 {
-  const Pose3d p = object->GetPose().GetWithRespectToOrigin();
+  const Pose3d p = object->GetPose().GetWithRespectToRoot();
   return (CanRollObjectDelegateNoAxisCheck(object) &&
           (p.GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }

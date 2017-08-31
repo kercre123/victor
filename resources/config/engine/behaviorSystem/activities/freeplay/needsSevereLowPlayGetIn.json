@@ -1,0 +1,29 @@
+{
+  "activityID": "NeedsSevereLowPlayGetIn",
+  "activityType": "NeedsExpression",
+
+  "activityStrategy":
+  {
+    // runs when the needs brackets are severe, but the "severe needs expression" from the whiteboard isn't
+    // set (yet)
+    "type" : "SevereNeedTransition",
+    "wantsToRunStrategyConfig": {
+      "strategyType" : "ExpressNeedsTransition",
+      "need": "Play"
+    },
+      
+    // This one wants to end immediately, so it ends after the get-in animation is played
+    "activityShouldEndDurationSecs": 0.01
+  },
+  
+  "behaviorChooser" :
+  {
+    "type": "StrictPriority",
+    "behaviors": [
+      "DriveOffCharger",
+      "PutDownBlock",
+      "Needs_SevereLowPlayGetIn"
+    ]
+  }
+}
+

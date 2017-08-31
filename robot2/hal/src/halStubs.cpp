@@ -232,13 +232,12 @@ namespace Anki {
 
         // Send RobotAvailable indicating sim robot
         RobotInterface::RobotAvailable idMsg;
-        idMsg.robotID = 0;
         idMsg.hwRevision = 0;
         RobotInterface::SendMessage(idMsg);
 
         // send firmware info indicating simulated robot
         {
-          std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":0}"};
+          std::string firmwareJson{"{\"version\":0,\"time\":0}"};
           RobotInterface::FirmwareVersion msg;
           msg.RESRVED = 0;
           msg.json_length = firmwareJson.size() + 1;

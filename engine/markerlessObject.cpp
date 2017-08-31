@@ -14,7 +14,6 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
 namespace Anki {
@@ -87,7 +86,7 @@ namespace Anki {
     void MarkerlessObject::Visualize(const ColorRGBA& color) const
     {
       DEV_ASSERT(nullptr != _vizManager, "VizManager was not set for object we want to visualize");
-      Pose3d vizPose = GetPose().GetWithRespectToOrigin();
+      Pose3d vizPose = GetPose().GetWithRespectToRoot();
       _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
@@ -114,7 +113,7 @@ namespace Anki {
     {
       const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
       
-      const Pose3d& atPoseWrtOrigin = atPose.GetWithRespectToOrigin();
+      const Pose3d& atPoseWrtOrigin = atPose.GetWithRespectToRoot();
       const Rotation3d& R = atPoseWrtOrigin.GetRotation();
 
       Point3f paddedSize(_size);

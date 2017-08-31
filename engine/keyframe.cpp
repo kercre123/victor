@@ -17,6 +17,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "engine/animations/cozmo_anim_generated.h"
 #include "engine/animations/faceAnimationManager.h"
 #include "engine/keyframe.h"
 #include "engine/ledEncoding.h"
@@ -25,10 +26,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
-#include "cozmo_anim_generated.h"
 
 #include <opencv2/core.hpp>
-#include <cassert>
 
 
 bool has_any_digits(const std::string& s)

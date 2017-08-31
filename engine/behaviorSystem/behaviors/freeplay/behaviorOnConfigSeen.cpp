@@ -37,6 +37,7 @@ BehaviorOnConfigSeen::BehaviorOnConfigSeen(Robot& robot, const Json::Value& conf
 : IBehavior(robot, config)
 , _animTriggerIndex(0)
 , _lastRunnableCheck_s(0)
+, _lastTimeNewConfigSeen_s(0)
 {
   ReadJson(config);
 }
@@ -70,18 +71,16 @@ bool BehaviorOnConfigSeen::IsRunnableInternal(const Robot& robot) const
   const bool initialUpdateCheck = FLT_GE(currentTime - _lastRunnableCheck_s, kMaxIntervalBetweenRunnableCheck_s);
   _lastRunnableCheck_s = currentTime;
   
-  bool newConfigSeen = false;
-  
   for(auto& mapEntry: _configurationCountMap){
     const auto& configs = robot.GetBlockWorld().
                            GetBlockConfigurationManager().GetCacheByType(mapEntry.first);
     if(configs.ConfigurationCount() > mapEntry.second){
-      newConfigSeen = true;
+      _lastTimeNewConfigSeen_s = currentTime;
     }
     mapEntry.second = configs.ConfigurationCount();
   }
   
-  return newConfigSeen && !initialUpdateCheck;
+  return FLT_NEAR(_lastTimeNewConfigSeen_s, currentTime) && !initialUpdateCheck;
 }
 
 

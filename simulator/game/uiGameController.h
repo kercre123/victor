@@ -349,6 +349,9 @@ protected:
 
   PoseOriginList _poseOriginList;
   
+  // Pose to use as "actual" poses' origin
+  const Pose3d  _webotsOrigin;
+  
   // Robot state message convenience functions
   const Pose3d& GetRobotPose() const;
   const Pose3d& GetRobotPoseActual() const;

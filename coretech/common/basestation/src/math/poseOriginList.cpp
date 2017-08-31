@@ -12,19 +12,26 @@
  *
  **/
 
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseOrigin.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 
 namespace Anki
 {
+
+// Static initialization
+const PoseOriginID_t PoseOriginList::UnknownOriginID = 0;
   
+PoseOriginList::PoseOriginList()
+: _current{.originID = UnknownOriginID, .originPtr = nullptr}
+{
+
+}
+
 PoseOriginList::~PoseOriginList()
 {
-  for(auto & originAndIdPair : _origins)
-  {
-    Util::SafeDelete(originAndIdPair.second);
-  }
+
 }
 
 bool PoseOriginList::ContainsOriginID(PoseOriginID_t ID) const
@@ -33,72 +40,108 @@ bool PoseOriginList::ContainsOriginID(PoseOriginID_t ID) const
   return (iter != _origins.end());
 }
   
-PoseOriginID_t PoseOriginList::AddOrigin(PoseOrigin* origin)
+PoseOriginID_t PoseOriginList::AddNewOrigin()
 {
   PoseOriginID_t ID = _nextID;
   
-  AddOriginWithID(ID, origin);
-  
-  ++_nextID;
+  const bool success = AddOriginWithID(ID);
+  DEV_ASSERT_MSG(success, "PoseOriginList.AddNewOrigin.AddWithIDFailed", "ID:%d", ID);
+# pragma unused(success) // avoid unused var warnings in release/shipping
   
   return ID;
 }
 
-void PoseOriginList::AddOriginWithID(PoseOriginID_t ID, PoseOrigin* origin)
+bool PoseOriginList::AddOriginWithID(PoseOriginID_t ID)
 {
-  auto result = _origins.insert({ID, origin});
-  DEV_ASSERT_MSG(result.second, "PoseOriginList.AddOriginWithID.DuplicateID", "%d", ID);
-# pragma unused(result) // Prevent errors in non-Debug builds when DEV_ASSERT above is compiled out
+  const std::string name("Origin" + std::to_string(ID));
+  auto result = _origins.emplace(ID, std::unique_ptr<PoseOrigin>(new PoseOrigin(name)));
+  if(!result.second)
+  {
+    DEV_ASSERT_MSG(false, "PoseOriginList.AddOriginWithID.DuplicateID", "%d", ID);
+    return false;
+  }
   
-  _idLUT[origin] = ID;
-  
+  result.first->second->SetID(ID);
+  _current.originID  = ID;
+  _current.originPtr = result.first->second.get();
   _nextID = std::max(ID + 1, _nextID);
-}
   
-PoseOriginID_t PoseOriginList::GetOriginID(const PoseOrigin* origin) const
-{
-  auto iter = _idLUT.find(origin);
-  if(iter == _idLUT.end())
-  {
-    return UnknownOriginID;
-  }
-  else
-  {
-    return iter->second;
-  }
+  return true;
 }
 
-const PoseOrigin* PoseOriginList::GetOriginByID(PoseOriginID_t ID) const
+const PoseOrigin& PoseOriginList::GetOriginByID(PoseOriginID_t ID) const
 {
   auto iter = _origins.find(ID);
-  if(iter == _origins.end())
+  if(!ANKI_VERIFY(iter != _origins.end(), "PoseOriginList.GetOriginByID.BadID", "%d", ID))
   {
-    PRINT_NAMED_WARNING("PoseOriginList.GetOriginByID.BadOrigin",
-                        "No origin stored for ID=%u", ID);
-    return nullptr;
+    static const PoseOrigin DefaultOrigin;
+    return DefaultOrigin;
   }
-  else
-  {
-    // NOTE: Recall that the ID is the index+1 (because 0 == unknown)
-    return iter->second;
-  }
+  
+  DEV_ASSERT_MSG(nullptr != iter->second, "PoseOriginList.GetOriginByID.NullOrigin", "%d", ID);
+  
+  return *iter->second;
 }
 
-void PoseOriginList::Flatten(const PoseOrigin* worldOrigin)
+Result PoseOriginList::Rejigger(const PoseOrigin& newOrigin, const Transform3d& transform)
 {
+  const PoseOriginID_t newOriginID = newOrigin.GetID();
+  if(!ANKI_VERIFY(ContainsOriginID(newOriginID), "PoseOriginList.Rejigger.UnknownOrigin",
+                  "Pose ID:%d (%s) not known to PoseOriginList", newOriginID, newOrigin.GetName().c_str()))
+  {
+    return RESULT_FAIL;
+  }
+  
+  if(!ANKI_VERIFY(_current.originID != newOriginID, "PoseOriginList.Rejigger.NewOriginIsCurrent", "ID:%d", newOriginID))
+  {
+    return RESULT_FAIL;
+  }
+  
+  auto origIter = _origins.find(_current.originID);
+  auto newIter  = _origins.find(newOriginID);
+  
+  DEV_ASSERT_MSG(origIter != _origins.end(),
+                 "PoseOriginList.Rejigger.InvalidCurrentOriginID", "ID:%d", _current.originID);
+  DEV_ASSERT_MSG(newIter != _origins.end(),
+                 "PoseOriginList.Rejigger.InvalidNewOriginID", "ID:%d", newOriginID);
+  DEV_ASSERT_MSG(IsNearlyEqual(origIter->second->GetTranslation(), {0.f,0.f,0.f}),
+                 "PoseOriginList.Rejigger.CurrentOriginShouldBeIdentity",
+                 "Current origin (before rejigger) should be identity transform, not %s",
+                 origIter->second->GetTranslation().ToString().c_str());
+                                                                 
+  origIter->second->GetTransform() = transform;
+  origIter->second->SetParent(*newIter->second);
+  origIter->second->SetName( origIter->second->GetName() + "_REJ");
+  
+  assert(origIter->second->IsRoot() == false);
+  
+  _current.originPtr = newIter->second.get();
+  _current.originID  = newIter->first;
+  DEV_ASSERT_MSG(_current.originID == newOriginID, "PoseOriginList.Rejigger.BadFinalCurrentOriginID",
+                 "Expected:%d Got:%d", newOriginID, _current.originID);
+
+  return RESULT_OK;
+}
+  
+void PoseOriginList::Flatten(PoseOriginID_t worldOriginID)
+{
+  DEV_ASSERT_MSG(ContainsOriginID(worldOriginID), "PoseOriginList.Flatten.BadID", "ID:%d", worldOriginID);
+  
+  const Pose3d& worldOrigin = GetOriginByID(worldOriginID);
+  
   for(auto & originAndIdPair : _origins)
   {
-    Pose3d* origin = originAndIdPair.second;
+    Pose3d* origin = originAndIdPair.second.get();
     
     assert(origin != nullptr); // Should REALLY never happen
     
     // if this origin has a parent and it's not the world origin, we want to update
     // this origin to be a direct child of the world origin
-    if ( (origin->GetParent() != nullptr) && (origin->GetParent() != worldOrigin) )
+    if ( origin->HasParent() && (origin->IsChildOf(worldOrigin)) )
     {
       // get WRT current origin, and if we can (because our parent's origin is the current worldOrigin), then assign
       Pose3d iterWRTCurrentOrigin;
-      if ( origin->GetWithRespectTo(*worldOrigin, iterWRTCurrentOrigin) )
+      if ( origin->GetWithRespectTo(worldOrigin, iterWRTCurrentOrigin) )
       {
         const std::string& newName = origin->GetName() + "_FLT";
         *origin = iterWRTCurrentOrigin;

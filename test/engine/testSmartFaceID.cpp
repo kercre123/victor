@@ -26,7 +26,7 @@ using namespace Anki::Cozmo;
 void DeleteFace(Robot& robot, int faceID)
 {
   using namespace ExternalInterface;
-  robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceID, robot.GetID())));
+  robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceID)));
 }
 
 void ChangeFaceID(Robot& robot, int oldID, int newID)

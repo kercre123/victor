@@ -52,10 +52,10 @@ private:
 
   bool ShouldBeRegistered(const LocalNotificationItem& config) const;
 
-  float DetermineTimeToNotify(const LocalNotificationItem& config,
-                              const NeedsMultipliers& multipliers,
-                              const float timeSinceAppOpen_m,
-                              const Time now) const;
+  int DetermineTimeToNotify(const LocalNotificationItem& config,
+                            const NeedsMultipliers& multipliers,
+                            const float timeSinceAppOpen_m,
+                            const Time now) const;
   float CalculateMinutesInFuture(const LocalNotificationItem& config,
                                  const float timeSinceAppOpen_m,
                                  const Time now) const;

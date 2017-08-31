@@ -190,14 +190,12 @@ message PlaceRelObject {
 
 // PlayAnimation
 message PlayAnimation {
-    uint_8  robotID,
     uint_32 numLoops,
     string animationName
 }
 
 // PlayAnimationTrigger
 message PlayAnimationTrigger {
-  uint_8  robotID,
   uint_32 numLoops,
   AnimationTrigger trigger,
   bool    useLiftSafe,
@@ -215,7 +213,6 @@ message PlayAnimation_DEV {
 
 // PlayCubeAnimationTrigger
 message PlayCubeAnimationTrigger {
-  uint_8  robotID,
   uint_32 objectID,
   CubeAnimationTrigger trigger,
 }
@@ -322,7 +319,6 @@ message SetLiftHeight {
 //   Use objectID = u32_MAX to disable tracking.
 message TrackToFace {
     uint_32 faceID,
-    uint_8  robotID,
     bool    headOnly
 }
 
@@ -333,7 +329,6 @@ message TrackToFace {
 //   Use objectID = u32_MAX to disable tracking.
 message TrackToObject {
     uint_32 objectID,
-    uint_8  robotID,
     bool    headOnly
 }
 
@@ -366,15 +361,13 @@ message TurnInPlace {
     float_32 tol_rad = 0.0, // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
                             // Smaller values are ignored except 0 which is interpreted to mean
                             // default tolerance of POINT_TURN_ANGLE_TOL.
-    uint_8 isAbsolute,      // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
-    uint_8 robotID
+    uint_8 isAbsolute       // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
 }
 
 // TurnInPlaceAtSpeed
 message TurnInPlaceAtSpeed {
     float_32 speed_rad_per_sec,
-    float_32 accel_rad_per_sec2,
-    uint_8 robotID
+    float_32 accel_rad_per_sec2
 }
 
 // TurnTowardsFace
@@ -397,9 +390,7 @@ message TurnTowardsFace {
     // If sayName is false, both triggers are unused/ignored.
     bool             sayName = 0,
     AnimationTrigger namedTrigger,
-    AnimationTrigger unnamedTrigger,
-
-    uint_8   robotID
+    AnimationTrigger unnamedTrigger
 }
 
 // TurnTowardsImagePoint
@@ -437,9 +428,7 @@ message TurnTowardsLastFacePose {
     // If sayName is false, both triggers are unused/ignored.
     bool             sayName = 0,
     AnimationTrigger namedTrigger,
-    AnimationTrigger unnamedTrigger,
-
-    uint_8   robotID
+    AnimationTrigger unnamedTrigger
 }
 
 // TurnTowardsObject - Turns and tilts head to look at object in last known position
@@ -462,7 +451,6 @@ message TurnTowardsObject {
     float_32 tiltAccel_radPerSec2 = 0.0,
     float_32 tiltTolerance_rad = 0.0,
 
-    uint_8   robotID,
     bool   visuallyVerifyWhenDone,
     bool   headTrackWhenDone
 }
@@ -482,9 +470,7 @@ message TurnTowardsPose {
     float_32 panTolerance_rad = 0.0,
     float_32 maxTiltSpeed_radPerSec = 0.0,
     float_32 tiltAccel_radPerSec2 = 0.0,
-    float_32 tiltTolerance_rad = 0.0,
-
-    uint_8   robotID
+    float_32 tiltTolerance_rad = 0.0
 }
 
 // VisuallyVerifyFace

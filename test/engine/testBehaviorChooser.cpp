@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-#include "engine/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviorContainer.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
@@ -47,7 +47,7 @@ static const char* kTestBehavior3Json =
 "}";
 
 
-bool LoadTestBehaviors(Robot& testRobot, ScoringBehaviorChooser& behaviorChooser)
+bool LoadTestBehaviors(Robot& testRobot, ScoringBSRunnableChooser& behaviorChooser)
 {
   bool allAddedOk = true;
   BehaviorContainer& behaviorContainer = testRobot.GetBehaviorManager().GetBehaviorContainer();

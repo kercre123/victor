@@ -309,8 +309,7 @@ namespace Anki {
               
 #ifdef SIMULATOR
               RobotInterface::RobotAvailable msg;
-              msg.robotID = 0;
-              AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "RobotID: %d", 1, msg.robotID);
+              AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "", 0);
               RobotInterface::SendMessage(msg);
 #endif
               

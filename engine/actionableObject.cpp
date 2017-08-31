@@ -17,7 +17,6 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 
 #include "util/math/math.h"
 
@@ -35,7 +34,7 @@ namespace Anki {
                                                 const Pose3d* reachableFromPose,
                                                 const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
     {
-      const Pose3d checkPose = preActionPose.GetPose().GetWithRespectToOrigin();
+      const Pose3d checkPose = preActionPose.GetPose().GetWithRespectToRoot();
       
       bool isValid = true;
       
@@ -46,7 +45,7 @@ namespace Anki {
         // Pose should be at ground height or it's not reachable. Let the threshold
         // vary with the distance from the pre-action pose to the object.
         isValid = NEAR(checkPose.GetTranslation().z(),
-                       reachableFromPose->GetWithRespectToOrigin().GetTranslation().z(),
+                       reachableFromPose->GetWithRespectToRoot().GetTranslation().z(),
                        preActionPose.GetHeightTolerance());
       }
        */
@@ -68,8 +67,8 @@ namespace Anki {
         //   paths on other sides of the object unnecessarily.
         
         //   (Assumes obstacles are w.r.t. origin...)
-        Point2f xyStart(preActionPose.GetPose().GetWithRespectToOrigin().GetTranslation());
-        const Point2f xyEnd(preActionPose.GetMarker()->GetPose().GetWithRespectToOrigin().GetTranslation());
+        Point2f xyStart(preActionPose.GetPose().GetWithRespectToRoot().GetTranslation());
+        const Point2f xyEnd(preActionPose.GetMarker()->GetPose().GetWithRespectToRoot().GetTranslation());
         
         const f32 stepSize = 10.f; // 1cm
         Vec2f   stepVec(xyEnd);
@@ -206,8 +205,8 @@ namespace Anki {
                                       currentPose.GetPose().GetTranslation().y() + sinf(angle) * preActionPose.GetLineLength(),
                                       currentPose.GetPose().GetTranslation().z()};
             
-            Pose3d p = currentPose.GetPose().GetWithRespectToOrigin();
-            Pose3d robot = robotPose.GetWithRespectToOrigin();
+            Pose3d p = currentPose.GetPose().GetWithRespectToRoot();
+            Pose3d robot = robotPose.GetWithRespectToRoot();
             
             // x and y difference between the intersection point and the start of the preActionLine
             f32 x = 0;
@@ -297,7 +296,7 @@ namespace Anki {
           //       preaction poses we expect to visualize per object. Currently, hardcoded to 48 (4 dock and
           //       4 roll per side). We probably won't have more than this.
           _vizPreActionPoseHandles.emplace_back(_vizManager->DrawPreDockPose(poseID + GetID().GetValue()*48,
-                                                                             pose.GetPose().GetWithRespectToOrigin(),
+                                                                             pose.GetPose().GetWithRespectToRoot(),
                                                                              PreActionPose::GetVisualizeColor(actionType)));
           
           ++poseID;

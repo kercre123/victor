@@ -143,7 +143,7 @@ namespace Anki {
     
     Result BehaviorDockingTestSimple::InitInternal(Robot& robot)
     {
-      _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin());
+      _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
       
       robot.GetBehaviorManager().DisableReactionsWithLock(kBehaviorTestName,
                                                          ReactionTriggerHelpers::kAffectAllArray);
@@ -225,6 +225,9 @@ namespace Anki {
         return Status::Running;
       }
       
+      DEV_ASSERT(robot.IsPoseInWorldOrigin(robot.GetPose()),
+                 "BehaviorDockingTestSimple.UpdateInternal.BadRobotPoseOrigin");
+      
       switch(_currentState)
       {
         case State::Init:
@@ -245,7 +248,7 @@ namespace Anki {
           
           _blockObjectIDPickup.UnSet();
           
-          _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin());
+          _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
           
           _initialPreActionPoseAngle_rad = kInvalidAngle;
           
@@ -424,7 +427,7 @@ namespace Anki {
                   }
                 }
 
-                Pose3d p(angle, Z_AXIS_3D(), {x + randX, y + randY, kObstacleSize_mm.z() * 0.5f}, &robot.GetPose().FindOrigin());
+                Pose3d p(angle, Z_AXIS_3D(), {x + randX, y + randY, kObstacleSize_mm.z() * 0.5f}, robot.GetWorldOrigin());
               
                 robot.GetBlockWorld().CreateFixedCustomObject(p,
                                                               kObstacleSize_mm.x(),
@@ -680,7 +683,7 @@ namespace Anki {
             _numExtraAttemptsDueToFailure++;
           }
           
-          Pose3d p(Radians(angle + randA), Z_AXIS_3D(), {x + randX, y + randY, 0}, &robot.GetPose().FindOrigin());
+          Pose3d p(Radians(angle + randA), Z_AXIS_3D(), {x + randX, y + randY, 0}, robot.GetWorldOrigin());
           
           ICompoundAction* action = new CompoundActionSequential(robot);
           

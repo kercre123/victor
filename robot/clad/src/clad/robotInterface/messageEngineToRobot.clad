@@ -247,7 +247,6 @@ message ForceDelocalizeSimulatedRobot
 
 message SyncTime
 {
-  uint_32 robotID,
   uint_32 syncTime,
 
   // Other random things to send to robot on init

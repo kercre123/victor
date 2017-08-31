@@ -27,6 +27,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/observableObject.h"
 
+#include "util/helpers/boundedWhile.h"
 #include "util/math/math.h"
 
 namespace Anki {
@@ -153,9 +154,9 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     // blocks above
     auto currentBlock = object;
     auto nextBlock = currentBlock;
-    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*currentBlock,
-                                                                                 BlockWorld::kOnCubeStackHeightTolerance,
-                                                                                 blocksOnlyFilter))){
+    BOUNDED_WHILE(10,nullptr != (nextBlock = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*currentBlock,
+                                                                                            BlockWorld::kOnCubeStackHeightTolerance,
+                                                                                            blocksOnlyFilter))){
       // Blocks being carried by the robot are not part of a stack
       if(carryingObject.IsSet() &&
          (carryingObject == nextBlock->GetID())){
@@ -168,9 +169,9 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     // blocks below
     currentBlock = object;
     nextBlock = currentBlock;
-    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindLocatedObjectUnderneath(*currentBlock,
-                                                                                    BlockWorld::kOnCubeStackHeightTolerance,
-                                                                                    blocksOnlyFilter))){
+    BOUNDED_WHILE(10,nullptr != (nextBlock = robot.GetBlockWorld().FindLocatedObjectUnderneath(*currentBlock,
+                                                                                               BlockWorld::kOnCubeStackHeightTolerance,
+                                                                                               blocksOnlyFilter))){
       blocksBelowObject.push_back(nextBlock);
       currentBlock = nextBlock;
     }

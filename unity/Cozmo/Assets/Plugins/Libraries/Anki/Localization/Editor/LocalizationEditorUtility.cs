@@ -431,11 +431,11 @@ public static class LocalizationEditorUtility {
     string[] assetFilePaths = Directory.GetFiles("Assets/", "*.asset", SearchOption.AllDirectories);
     EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 3, totalDirectories), (float)3 / totalDirectories);
 
-    string[] productConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../lib/anki/products-cozmo-assets/",
+    string[] productConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../resources/assets/",
                                                          "*.json", SearchOption.AllDirectories);
     EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 4, totalDirectories), (float)4 / totalDirectories);
 
-    string[] basestationConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../resources/config/basestation/config",
+    string[] basestationConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../resources/config/engine",
                                                              "*.json", SearchOption.AllDirectories);
     EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 5, totalDirectories), (float)5 / totalDirectories);
 
@@ -596,7 +596,7 @@ public static class LocalizationEditorUtility {
           System.Threading.Thread.Sleep(_kSleepTime_ms);
           AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, _ApplicationDataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json");
           System.Threading.Thread.Sleep(_kSleepTime_ms);
-          AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, _ApplicationDataPath + "/../../../resources/config/basestation/config", "*.json");
+          AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, _ApplicationDataPath + "/../../../resources/config/engine", "*.json");
 
           if (pathsContainingKey.Count > 0) {
             LocKeyReference reference = new LocKeyReference();

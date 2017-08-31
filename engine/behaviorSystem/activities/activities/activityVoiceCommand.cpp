@@ -34,6 +34,7 @@
 #include "engine/voiceCommands/voiceCommandComponent.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -96,7 +97,7 @@ bool ActivityVoiceCommand::VCResponseData::WillStartRespondingToCommand()
   return (_currentResponseBehavior == nullptr) && !_respondToVCQueue.empty();
 }
 
-IBehaviorPtr ActivityVoiceCommand::VCResponseData::ChooseNextBehavior(const IBehaviorPtr currentBehavior)
+IBehaviorPtr ActivityVoiceCommand::VCResponseData::GetDesiredActiveBehavior(const IBehaviorPtr currentBehavior)
 {
   using namespace ::Anki::Cozmo::VoiceCommand;
 
@@ -276,7 +277,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivityVoiceCommand::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   IBehaviorPtr emptyPtr;
   
@@ -290,7 +291,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
   if(ANKI_VERIFY(_vcResponseData != nullptr,
                  "ActivityVoiceCommand.ChooseNextBehavior.NoResponseData",
                  "Respones data ptr is null")){
-    return _vcResponseData->ChooseNextBehavior(currentRunningBehavior);
+    return _vcResponseData->GetDesiredActiveBehavior(currentRunningBehavior);
   }
   
   return emptyPtr;
@@ -445,7 +446,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         
         Pose3d facePose;
         const TimeStamp_t timeLastFaceObserved = robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-        const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+        const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
         if(lastFaceInCurrentOrigin){
           const auto facesObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
           if(facesObserved.size() > 0){
@@ -484,7 +485,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
             responseQueue.push([this, &robot](const IBehaviorPtr currentBehavior){
               Pose3d facePose;
               robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-              const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+              const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
               if(lastFaceInCurrentOrigin){
                 return std::static_pointer_cast<IBehavior>(_driveToFaceBehavior);
               }else{

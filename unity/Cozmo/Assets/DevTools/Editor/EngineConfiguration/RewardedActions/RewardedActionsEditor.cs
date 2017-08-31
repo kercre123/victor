@@ -59,7 +59,7 @@ public class RewardedActionsEditor : EditorWindow {
     return maxId + 1;
   }
 
-  public static string sRewardedActionsDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/RewardedActions"; } }
+  public static string sRewardedActionsDirectory { get { return Application.dataPath + "/../../../resources/assets/RewardedActions"; } }
 
   public static string sCSVDirectory { get { return Environment.GetFolderPath(Environment.SpecialFolder.Desktop); } }
 

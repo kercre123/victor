@@ -14,7 +14,6 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/actionWatcher.h"
@@ -521,8 +520,7 @@ namespace Anki {
       ActionCompletedUnion acu;
       GetCompletionUnion(acu);
       
-      msg = ExternalInterface::RobotCompletedAction(_robot.GetID(),
-                                                    GetTag(),
+      msg = ExternalInterface::RobotCompletedAction(GetTag(),
                                                     GetType(),
                                                     GetState(),
                                                     subActionResults,

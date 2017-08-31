@@ -44,8 +44,8 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
   // At a Z height of 22mm, the cube sits flat on the floor since the origin of the cube is in the
   // middle of it.
   const int kCubeHeight_mm = 22;
-  const Pose3d kCubeObstructingPose = {0, {0, 0, 1}, {300, 0, kCubeHeight_mm}};
-  const Pose3d kRobotDestination = {0, {0, 0, 1}, {500, 0, 0}};
+  const Pose3d kCubeObstructingPose = {0, {0, 0, 1}, {300, 0, kCubeHeight_mm}, _webotsOrigin};
+  const Pose3d kRobotDestination = {0, {0, 0, 1}, {500, 0, 0}, _webotsOrigin};
 
   switch (_testState) {
     case TestState::Init:
@@ -119,19 +119,17 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       const Radians kAngleThreshold = DEG_TO_RAD(1);
 
       const Pose3d lightCubePoseActual = GetLightCubePoseActual(_lightCubeType);
-      Pose3d cubeObstructingPose(kCubeObstructingPose);
-      cubeObstructingPose.SetParent(&lightCubePoseActual);
-
-      const Pose3d robotPoseActual = GetRobotPose();
-      Pose3d robotDestination(kRobotDestination);
-      robotDestination.SetParent(&robotPoseActual);
-
-      CST_ASSERT(lightCubePoseActual.IsSameAs(cubeObstructingPose,
+      
+      CST_ASSERT(lightCubePoseActual.IsSameAs(kCubeObstructingPose,
                                               kDistanceThreshold, kAngleThreshold),
                  "The cube was moved when it should have been avoided by the robot.")
 
-      CST_ASSERT(robotPoseActual.IsSameAs(robotPoseActual, kDistanceThreshold, kAngleThreshold),
-                 "The robot didn't reach its destination.");
+      const Pose3d robotPoseActual = GetRobotPoseActual();
+      
+      CST_ASSERT(robotPoseActual.IsSameAs(kRobotDestination, kDistanceThreshold, kAngleThreshold),
+                 "The robot didn't reach its destination: expected " <<
+                 kRobotDestination.GetTranslation().ToString().c_str() <<
+                 ", got " << robotPoseActual.GetTranslation().ToString());
 
       _testState = TestState::Exit;
       break;

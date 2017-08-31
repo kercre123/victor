@@ -110,8 +110,8 @@ REGISTER_COZMO_SIM_TEST_CLASS(CST_CustomObjects);
 
 CST_CustomObjects::CST_CustomObjects()
 : kPoseOrigin(0, Z_AXIS_3D(), {0.f, 0.f, 0.f})
-, kKidnappedRobotPose(M_PI, Z_AXIS_3D(), {-104.f, 136.f, 0.f}, &kPoseOrigin)
-, _wallPose2(Radians(-2.15f), Z_AXIS_3D(), {60.f, 310.f, 60.f}, &kPoseOrigin)
+, kKidnappedRobotPose(M_PI, Z_AXIS_3D(), {-104.f, 136.f, 0.f}, kPoseOrigin)
+, _wallPose2(Radians(-2.15f), Z_AXIS_3D(), {60.f, 310.f, 60.f}, kPoseOrigin)
 {
   
 }
@@ -165,11 +165,11 @@ s32 CST_CustomObjects::UpdateSimInternal()
       _cubePose3     = GetPose3dOfNode(_cube3);
       _lightCubePose = GetPose3dOfNode(_lightCube);
       
-      _wallPose1.SetParent(&kPoseOrigin);
-      _cubePose1.SetParent(&kPoseOrigin);
-      _cubePose2.SetParent(&kPoseOrigin);
-      _cubePose3.SetParent(&kPoseOrigin);
-      _lightCubePose.SetParent(&kPoseOrigin);
+      _wallPose1.SetParent(kPoseOrigin);
+      _cubePose1.SetParent(kPoseOrigin);
+      _cubePose2.SetParent(kPoseOrigin);
+      _cubePose3.SetParent(kPoseOrigin);
+      _lightCubePose.SetParent(kPoseOrigin);
       
       // Define the custom objects
       DefineObjects();
@@ -196,13 +196,12 @@ s32 CST_CustomObjects::UpdateSimInternal()
         // Turn and look down in parallel:
         using namespace ExternalInterface;
         
-        const uint8_t kRobotID = 1;
         const uint32_t kIdTag = 1;
         const uint8_t kNumRetries = 0;
         const bool kIsParallel = true;
         const QueueActionPosition kPosition = QueueActionPosition::NOW;
         const std::vector<RobotActionUnion> kActions{
-          RobotActionUnion(TurnInPlace(DEG_TO_RAD(90), 0.f, 0.f, POINT_TURN_ANGLE_TOL, false, kRobotID)),
+          RobotActionUnion(TurnInPlace(DEG_TO_RAD(90), 0.f, 0.f, POINT_TURN_ANGLE_TOL, false)),
           RobotActionUnion(SetHeadAngle(MIN_HEAD_ANGLE, 100.f, 100.f, 0.f)),
         };
         

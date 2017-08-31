@@ -19,6 +19,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/animations/animationStreamer.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
@@ -65,8 +66,6 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
 CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
   
-const char* kSevereNeedStateLock = "AIWhiteboard_severe_need";
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
 {
@@ -112,8 +111,6 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 , _hasHiccups(false)
-, _isGameRequestUIRequest(false)
-, _severeNeedExpression(NeedId::Count)
 {
 }
 
@@ -134,7 +131,6 @@ void AIWhiteboard::Init()
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::NotifyCozmoWakeup>();
   }
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
@@ -144,16 +140,6 @@ void AIWhiteboard::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::Update()
 {
-  if( HasSevereNeedExpression() ) {
-    NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-    // If needs are paused or the current severeNeedExpression is no longer critical, clear the severe expression
-    if(!currNeedState.IsNeedAtBracket(_severeNeedExpression, NeedBracketId::Critical)){
-      PRINT_CH_INFO("AIWhiteboard", "SevereNeedsState.AutoClear",
-                    "Automatically clearing currently expressed severe needs state. Was '%s'",
-                    NeedIdToString(_severeNeedExpression));
-      ClearSevereNeedExpression();
-    }
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -179,12 +165,12 @@ void AIWhiteboard::OnRobotRelocalized()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 {
-  const Pose3d* worldOriginPtr = _robot.GetWorldOrigin();
+  const Pose3d& worldOrigin = _robot.GetWorldOrigin();
   // remove all objects inside clear quads
-  auto isObjectInsideQuad = [&quad, worldOriginPtr](const PossibleObject& possibleObj)
+  auto isObjectInsideQuad = [&quad, worldOrigin](const PossibleObject& possibleObj)
   {
     Pose3d relPose;
-    if ( possibleObj.pose.GetWithRespectTo(*worldOriginPtr, relPose) ) {
+    if ( possibleObj.pose.GetWithRespectTo(worldOrigin, relPose) ) {
       return quad.Contains( relPose.GetTranslation() );
     } else {
       return false;
@@ -213,15 +199,14 @@ void AIWhiteboard::FinishedSearchForPossibleCubeAtPose(ObjectType objectType, co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const
 {
-  #if ANKI_DEVELOPER_CODE
+  if(ANKI_DEVELOPER_CODE)
   {
     // all beacons should be in this world
     for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
                  "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
     }
   }
-  #endif
 
   outObjectList.clear();
   if ( !_beacons.empty() )
@@ -289,7 +274,7 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
     }
     DEV_ASSERT(beaconIsValid, "AIWhiteboard.FindCubesInBeacon.NotABeacon");
     DEV_ASSERT(beacon, "AIWhiteboard.FindCubesInBeacon.NullBeacon");
-    DEV_ASSERT(&beacon->GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+    DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon->GetPose() ),
                "AIWhiteboard.FindCubesInBeacon.BeaconNotInOrigin");
   }
   #endif
@@ -325,7 +310,7 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
   {
     // all beacons should be in this world
     for ( const auto& beacon : _beacons ) {
-      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose().FindRoot() ),
                  "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
     }
   }
@@ -682,12 +667,12 @@ void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObj
   possibleObjects.clear();
   
   // iterate all possible objects
-  const Pose3d* worldOriginPtr = _robot.GetWorldOrigin();
+  const Pose3d& worldOrigin = _robot.GetWorldOrigin();
   for( const auto& possibleObject : _possibleObjects )
   {
     // if we can obtain a pose with respect to the current origin, store that output (relative pose and type)
     Pose3d poseWRTOrigin;
-    if ( possibleObject.pose.GetWithRespectTo(*worldOriginPtr, poseWRTOrigin) )
+    if ( possibleObject.pose.GetWithRespectTo(worldOrigin, poseWRTOrigin) )
     {
       possibleObjects.emplace_back( poseWRTOrigin, possibleObject.type );
     }
@@ -789,8 +774,11 @@ void AIWhiteboard::RemovePossibleObjectsFromZombieMaps()
   PossibleObjectList::iterator iter = _possibleObjects.begin();
   while( iter != _possibleObjects.end() )
   {
-    const Pose3d* objOrigin = &(iter->pose.FindOrigin());
-    const bool isZombie = _robot.GetBlockWorld().IsZombiePoseOrigin(objOrigin);
+    const PoseOriginID_t objOriginID = iter->pose.GetRootID();
+    DEV_ASSERT_MSG(_robot.GetPoseOriginList().ContainsOriginID(objOriginID),
+                   "AIWhiteboard.RemovePossibleObjectsFromZombieMaps.ObjectOriginNotInOriginList",
+                   "ID:%d", objOriginID);
+    const bool isZombie = _robot.GetBlockWorld().IsZombiePoseOrigin(objOriginID);
     if ( isZombie ) {
       if ( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
         PRINT_CH_INFO("AIWhiteboard", "RemovePossibleObjectsFromZombieMaps", "Deleted possible object because it was zombie");
@@ -811,12 +799,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& m
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg;
   
-  // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
-  // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
-  // decision then
-  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
-             "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
-  
   Pose3d obsPose( msg.pose, _robot.GetPoseOriginList() );
   
   // iterate objects we previously had and remove them if we think they belong to this object
@@ -831,12 +813,6 @@ template<>
 void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleObject& msg)
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg.possibleObject;
-
-  // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
-  // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
-  // decision then
-  DEV_ASSERT(_robot.GetID() == possibleObject.robotID,
-             "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
   
   Pose3d obsPose( msg.possibleObject.pose, _robot.GetPoseOriginList() );
   
@@ -854,28 +830,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotOffTreadsStateCha
   const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
   if ( onTreads ) {
     _returnedToTreadsAtTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void AIWhiteboard::HandleMessage(const ExternalInterface::NotifyCozmoWakeup& msg)
-{
-  // Setup Cozmo's current expressed need state - on Init need state will be handled
-  // by game to play Cozmo's wakeup animation, so set the current expressed need
-  // here manually
-  NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool isRepairCritical =
-  currNeedState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical);
-  
-  const bool isEnergyCritical =
-  currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-  
-  if(isRepairCritical){
-    SetSevereNeedExpression(NeedId::Repair);
-  }else if(isEnergyCritical){
-    SetSevereNeedExpression(NeedId::Energy);
   }
 }
 
@@ -981,7 +935,7 @@ void AIWhiteboard::UpdatePossibleObjectRender()
 {
   if ( kBW_DebugRenderPossibleObjects )
   {
-    const Pose3d* worldOriginPtr = _robot.GetWorldOrigin();
+    const Pose3d& worldOrigin = _robot.GetWorldOrigin();
     _robot.GetContext()->GetVizManager()->EraseSegments("AIWhiteboard.PossibleObjects");
     for ( auto& possibleObjectIt : _possibleObjects )
     {
@@ -989,7 +943,7 @@ void AIWhiteboard::UpdatePossibleObjectRender()
       const Vec3f& zRenderOffset = (Z_AXIS_3D() * kBW_DebugRenderPossibleObjectsZ);
       
       Pose3d thisPose;
-      if ( possibleObjectIt.pose.GetWithRespectTo(*worldOriginPtr, thisPose))
+      if ( possibleObjectIt.pose.GetWithRespectTo(worldOrigin, thisPose))
       {
         const float kLen = kBW_PossibleObjectClose_mm;
         Quad3f quad3({ kLen,  kLen, 0},
@@ -1023,13 +977,13 @@ void AIWhiteboard::UpdateBeaconRender()
     for( const auto& beacon : _beacons )
     {
       // currently we don't support beacons from older origins (rsam: I will soon)
-      DEV_ASSERT(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+      DEV_ASSERT(_robot.IsPoseInWorldOrigin( beacon.GetPose() ),
                  "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
       
       // note that since we don't know what timeout behaviors use, we can only say that it ever failed
       ColorRGBA color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
       
-      Vec3f center = beacon.GetPose().GetWithRespectToOrigin().GetTranslation();
+      Vec3f center = beacon.GetPose().GetWithRespectToRoot().GetTranslation();
       center.z() += kBW_DebugRenderBeaconZ;
       _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
           center, beacon.GetRadius(), color, false);
@@ -1039,87 +993,6 @@ void AIWhiteboard::UpdateBeaconRender()
           center, beacon.GetRadius()-1.0f, color, false); // triple line (jane's request)
     }
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetSevereNeedExpression(NeedId need) {
-  PRINT_CH_DEBUG("AIWhiteboard",
-                 "AIWhiteboard.SevereNeedExpression.Set",
-                 "Set to %s (was %s)",
-                 NeedIdToString(need),
-                 NeedIdToString(_severeNeedExpression));
-
-  // shouldn't already be expressing a severe need, except in the case of Play, because there may not have
-  // been a get-out from play yet (e.g. play goes severe first, then hunger)
-  DEV_ASSERT(_severeNeedExpression == NeedId::Count || _severeNeedExpression == NeedId::Play,
-             "AIWhiteboard.SetSevereNeedExpression.ExpressionAlreadySet");
-  
-  //////
-  // Setup driving and idle animation maps based on need
-  //////
-  static const std::map<NeedId, AnimationTrigger> idleAnimation =
-     {{NeedId::Energy,AnimationTrigger::NeedsSevereLowEnergyIdle},
-      {NeedId::Repair,AnimationTrigger::NeedsSevereLowRepairIdle}};
-  
-  
-  struct DrivingAnimContainer{
-    DrivingAnimContainer(AnimationTrigger getIn, AnimationTrigger loop, AnimationTrigger getOut)
-    : _getIn(getIn)
-    , _loop(loop)
-    , _getOut(getOut){};
-    
-    AnimationTrigger _getIn;
-    AnimationTrigger _loop;
-    AnimationTrigger _getOut;
-  };
-  
-  static const DrivingAnimContainer energyDriving(
-                    AnimationTrigger::NeedsSevereLowEnergyDrivingStart,
-                    AnimationTrigger::NeedsSevereLowEnergyDrivingLoop,
-                    AnimationTrigger::NeedsSevereLowEnergyDrivingEnd);
-
-  static const DrivingAnimContainer repairDriving(
-                    AnimationTrigger::NeedsSevereLowRepairDrivingStart,
-                    AnimationTrigger::NeedsSevereLowRepairDrivingLoop,
-                    AnimationTrigger::NeedsSevereLowRepairDrivingEnd);
-  
-  const std::map<NeedId, DrivingAnimContainer> drivingAnimMap =
-    {{NeedId::Energy,energyDriving},{NeedId::Repair,repairDriving}};
-  
-  
-  const auto& drivingIter = drivingAnimMap.find(need);
-  if(drivingIter != drivingAnimMap.end()){
-    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({
-      drivingIter->second._getIn,
-      drivingIter->second._loop,
-      drivingIter->second._getOut},
-      kSevereNeedStateLock);
-  }
-  
-  const auto& idleIter = idleAnimation.find(need);
-  if(idleIter != idleAnimation.end()){
-    _robot.GetAnimationStreamer().PushIdleAnimation(idleIter->second,
-                                                    kSevereNeedStateLock);
-  }
-  
-  _severeNeedExpression = need;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::ClearSevereNeedExpression() {
-  PRINT_CH_DEBUG("AIWhiteboard",
-                 "AIWhiteboard.SevereNeedExpression.Clear",
-                 "Cleared. (was %s)",
-                 NeedIdToString(_severeNeedExpression));
-  
-  DEV_ASSERT(_severeNeedExpression != NeedId::Count,
-             "AIWhiteboard.ClearSevereNeedExpression.ExpressionNotSet");
-  
-  _robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(kSevereNeedStateLock);
-  _robot.GetAnimationStreamer().RemoveIdleAnimation(kSevereNeedStateLock);
-
-  _severeNeedExpression = NeedId::Count;
 }
 
 

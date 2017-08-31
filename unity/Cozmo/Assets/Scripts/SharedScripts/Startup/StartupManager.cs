@@ -36,6 +36,8 @@ public class StartupManager : MonoBehaviour {
   private const int _kMaxHDHeight = 1080;
   private const int _kMaxSDWidth = 1136;
   private const int _kMaxSDHeight = 640;
+  private const int _kSDThresholdMB = 200;
+  private const int _kHDDThresholdMB = 635;
 
   private const char _kVersionDelimiter = '.';
   private const int _kVersionNumbersToShow = 3;
@@ -417,8 +419,21 @@ public class StartupManager : MonoBehaviour {
       break;
     }
 #endif
+
+#if UNITY_IOS || UNITY_ANDROID
+    // Memory total in MB
+    int memoryLimitMB = SystemInfo.systemMemorySize;
+    if (memoryLimitMB <= _kSDThresholdMB) {
+      DAS.Event("App.ForceResolution.Memory", "SD", DASUtil.FormatExtraData(memoryLimitMB.ToString()));
+      variant = _kSDVariant;
+    }
+    else if (memoryLimitMB < _kHDDThresholdMB && variant == _kUHDVariant) {
+      DAS.Event("App.ForceResolution.Memory", "HD", DASUtil.FormatExtraData(memoryLimitMB.ToString()));
+      variant = _kHDVariant;
+    }
+#endif
     if (SystemInfo.deviceModel == "iPad2,5" || SystemInfo.deviceModel == "iPad2,6" || SystemInfo.deviceModel == "iPad2,7") {
-      DAS.Event("App.ForceResolution","detected iPad2,5 iPad2,6 iPad2,7");
+      DAS.Event("App.ForceResolution", "detected iPad2,5 iPad2,6 iPad2,7");
       variant = _kSDVariant;
     }
     return variant;

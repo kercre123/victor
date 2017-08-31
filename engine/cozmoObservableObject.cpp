@@ -76,12 +76,11 @@ void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, PoseStat
   
   // Every object's pose should always be able to find a path to a valid origin without crashing
   if(ANKI_DEV_CHEATS) {
-    const Pose3d* parent = GetPose().GetParent();
-    ANKI_VERIFY(GetPose().FindOrigin().IsOrigin(), "ObservableObject.SetPose.UnableToFindOrigin",
-                "%s %s ID:%d at %s with parent '%s'(%p)",
+    ANKI_VERIFY(GetPose().FindRoot().IsRoot(), "ObservableObject.SetPose.PoseRootIsNotRoot",
+                "%s %s ID:%d at %s with parent '%s'",
                 EnumToString(GetFamily()), EnumToString(GetType()), GetID().GetValue(),
                 GetPose().GetTranslation().ToString().c_str(),
-                parent == nullptr ? "(none)" : parent->GetName().c_str(), parent);
+                GetPose().GetParentString().c_str());
   }
 }
   

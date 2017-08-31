@@ -18,6 +18,7 @@
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/cleanupHelper.h"
 
 #include "json/json.h"
@@ -1503,7 +1504,7 @@ namespace Vision {
       {
         // Populate the debug info for the recognized face. Always put on the top match
         // Then add the first (top-scoring) album match for each face ID, until we've
-        // filled the debug list. Do this before checking for 2nd-best or calling
+        // filled the debug list Do this before checking for 2nd-best or calling
         // UpdateExistingUser because those could cause us to cull an album entry
         // associated with matchedID, which could result in GetFaceIDforAlbumEntry
         // to fail in this loop.

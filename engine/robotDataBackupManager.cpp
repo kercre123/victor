@@ -34,7 +34,7 @@ static const std::string kStatsForBackupFile = "statsForBackup.json";
 static const std::string kConnectionCountKey = "ConnectionCount";
 
 // Config file containing the tags that we want to backup
-static const std::string kBackupConfig = "config/basestation/config/backup_config.json";
+static const std::string kBackupConfig = "config/engine/backup_config.json";
 
 // File name of the backup file for the currently connected robot
 static std::string _fileName;
@@ -125,7 +125,7 @@ void RobotDataBackupManager::WriteBackupFile()
 void RobotDataBackupManager::RobotConnected(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
 {
   const RobotInterface::RobotAvailable& payload = msg.GetData().Get_robotAvailable();
-  const std::string serialNumber = std::to_string(payload.robotID);
+  const std::string serialNumber = std::to_string(payload.serialNumber);
   Json::Value stats;
   
   // Reads the json file statsForBackup and increments the connection count for this robot

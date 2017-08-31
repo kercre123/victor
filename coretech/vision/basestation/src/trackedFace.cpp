@@ -95,7 +95,7 @@ namespace Vision {
     ray *= camera.GetCalibration()->GetFocalLength_x() * DistanceBetweenEyes_mm / intraEyeDistance;
     
     _headPose.SetTranslation(ray);
-    _headPose.SetParent(&camera.GetPose());
+    _headPose.SetParent(camera.GetPose());
     
     return usedRealCenters;
   }

@@ -21,7 +21,7 @@
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/imageCache.h"
 
-#include "engine/visionPoseData.h"
+#include "engine/vision/visionPoseData.h"
 #include "engine/viz/vizManager.h"
 
 #include "util/console/consoleInterface.h"

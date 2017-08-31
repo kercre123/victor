@@ -69,7 +69,7 @@ private:
   // TODO: When COZMO-10389 cancels actions on re-jigger
   // it won't be necessary to store/check this value
   // Currently used to track when the block world origin changes
-  const Pose3d*                   _worldOriginAtStart;
+  PoseOriginID_t                  _worldOriginIDAtStart;
   
   void CheckInactiveStackHelpers(const Robot& robot);
   void UpdateActiveHelper(Robot& robot);

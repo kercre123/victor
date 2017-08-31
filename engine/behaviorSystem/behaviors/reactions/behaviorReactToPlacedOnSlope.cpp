@@ -14,7 +14,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/robot.h"
 
@@ -88,7 +88,7 @@ Result BehaviorReactToPlacedOnSlope::InitInternal(Robot& robot)
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToPerchedOnBlock;
     
     // special animations for maintaining eye shape in severe need states
-    const NeedId severeNeedExpressed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+    const NeedId severeNeedExpressed = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
     if(NeedId::Energy == severeNeedExpressed){
       reactionAnim = AnimationTrigger::NeedsSevereLowEnergySlopeReact;
     }else if(NeedId::Repair == severeNeedExpressed){

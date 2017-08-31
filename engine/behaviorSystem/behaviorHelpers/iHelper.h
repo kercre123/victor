@@ -18,6 +18,7 @@
 #include "engine/behaviorSystem/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "engine/behaviorSystem/behaviors/iBehavior_fwd.h"
+#include "engine/behaviorSystem/iBSRunnable.h"
 #include "clad/types/actionResults.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/userFacingResults.h"
@@ -31,7 +32,7 @@ class Robot;
 class IActionRunner;
 class BehaviorHelperFactory;
 
-class IHelper{
+class IHelper : IBSRunnable{
   // Enforce creation/interaction through HelperComponent
   friend class BehaviorHelperComponent;
   friend class BehaviorHelperFactory;
@@ -42,6 +43,17 @@ public:
   const std::string& GetName() const { return _name; }
   
 protected:
+  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
+  // as a uniform interface across Activities and Behaviors, but they will be
+  // wired up in a seperate PR
+  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
+  virtual void EnteredActivatableScopeInternal() override {};
+  virtual BehaviorStatus UpdateInternal(Robot& robot) override { return BehaviorStatus::Complete;};
+  virtual bool WantsToBeActivatedInternal() override { return false;};
+  virtual void OnActivatedInternal() override {};
+  virtual void OnDeactivatedInternal() override {};
+  virtual void LeftActivatableScopeInternal() override {};
+  
   using UserFacingActionResultMapFunc = std::function<UserFacingActionResult(ActionResult)>;
   
   struct DelegateProperties{

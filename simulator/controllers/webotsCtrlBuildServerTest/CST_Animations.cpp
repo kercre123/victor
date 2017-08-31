@@ -145,8 +145,8 @@ void CST_Animations::HandleRobotCompletedAction(const ExternalInterface::RobotCo
   {
     case RobotActionType::PLAY_ANIMATION:
     {
-      printf("Robot %d finished playing animation %s. [Tag=%d]\n",
-             msg.robotID, msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.idTag);
+      printf("Robot finished playing animation %s. [Tag=%d]\n",
+             msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.idTag);
       const bool isLastPlayedAnimation = msg.completionInfo.Get_animationCompleted().animationName.compare(_lastAnimPlayed) == 0;
       if (_testState == TestState::ExecutingAnimation && isLastPlayedAnimation){
         if(msg.result != ActionResult::SUCCESS){
