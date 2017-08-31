@@ -21,6 +21,7 @@
 #include "engine/components/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
@@ -1132,6 +1133,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::LogRawCliffData>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::LogRawProxData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
@@ -1646,6 +1648,20 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& 
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawProxData& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  
+  // We need a robot
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleLogRawProxData.InvalidRobotID", "Failed to find robot.");
+  } else {
+    robot->GetProxSensorComponent().StartLogging(msg.length_ms);
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)

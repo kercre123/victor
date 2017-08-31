@@ -5,6 +5,7 @@
 // ROBOT_CLAD_SHARED
 
 #include "clad/types/imu.clad"
+#include "clad/types/proxMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -89,7 +90,7 @@ structure RobotState
   float_32 batteryVoltage,
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 cliffDataRaw[4],
-  uint_16 distanceSensor_mm,
+  ProxSensorData proxData,
   int_8   currPathSegment, // -1 if not traversing a path
 }
 

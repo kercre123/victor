@@ -31,6 +31,7 @@ structure ProxSensorData {
   float_32 ambientIntensity, // the intensity of light (expressed in millions of counts per second) in ambient conditions (i.e. emitter turned off)
   float_32 spadCount,        // effective number of SPADs (Single-photon Avalanche Diodes) used for the measurement
   uint_16 distance_mm,       // reported distance in mm
+  uint_16 padding,
 }
 
 } // namespace Cozmo
