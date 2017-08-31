@@ -10,10 +10,11 @@ AR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
 # Specify all the flags below which you want to use for your compilation, For this simple example, we only need to specify the include directory path
 CFLAGS          := -I.
 CFLAGS          += -I../../generated/clad/robot
+CFLAGS          += -I../../syscon
 CFLAGS          += -DPLATFORM_ANDROID=1
 
 
-DEPS = ../spine/spine_hal.h ../spine/spine_crc.h
+DEPS = ../spine/spine_hal.h ../spine/spine_crc.h 
 SRCS = ../spine/spine_hal.c ../spine/spine_crc.c dfu.c
 OBJ = ../spine/spine_hal.o ../spine/spine_crc.o dfu.o
 
