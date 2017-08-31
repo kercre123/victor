@@ -6,7 +6,7 @@ namespace Power {
   void stop(void);
   void eject(void);
   void enableClocking(void);
-  void softReset(void);
+  void softReset(bool erase = false);
   void setCharge(bool enable);
 }
 
