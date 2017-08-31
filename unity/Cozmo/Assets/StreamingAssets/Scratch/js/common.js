@@ -107,6 +107,8 @@
         var challengesButton = document.querySelector('#challengesbutton');
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
+        var undo = document.querySelector('#undo');
+        var redo = document.querySelector('#redo');
 
         // TODO Temporary hack to make close button visible
         if (window.isVertical) {
@@ -135,6 +137,22 @@
               Challenges.show();
             });
             challengesButton.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
+        }
+        else {
+            undo.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.undo();
+            });
+            undo.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
+            redo.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.undo(true);
+            });
+            redo.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
         }

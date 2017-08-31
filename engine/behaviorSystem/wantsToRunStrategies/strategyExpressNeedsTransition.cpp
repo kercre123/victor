@@ -14,8 +14,8 @@
 #include "engine/behaviorSystem/wantsToRunStrategies/strategyExpressNeedsTransition.h"
 
 #include "anki/common/basestation/jsonTools.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
@@ -43,10 +43,10 @@ StrategyExpressNeedsTransition::StrategyExpressNeedsTransition(Robot& robot, con
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool StrategyExpressNeedsTransition::WantsToRunInternal(const Robot& robot) const
 {
-  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+  const auto& severeNeedsComponent = robot.GetAIComponent().GetSevereNeedsComponent();
 
   const bool inBracket = InRequiredNeedBracket(robot);  
-  const bool isBeingExpressed = whiteboard.GetSevereNeedExpression() == _need;
+  const bool isBeingExpressed = severeNeedsComponent.GetSevereNeedExpression() == _need;
 
   return inBracket && !isBeingExpressed;
 }

@@ -28,9 +28,10 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
-#include "engine/utils/cozmoFeatureGate.h"
+#include "engine/utils/cozmoExperiments.h"
 #include "engine/viz/vizManager.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "util/ankiLab/extLabInterface.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
@@ -70,6 +71,7 @@ static const float kNeedLevelStorageMultiplier = 100000.0f;
 static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
 static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequently than device saves
 
+static const std::string kUnconnectedDecayRatesExperimentKey = "unconnected_decay_rates";
 
 using namespace std::chrono;
 using Time = time_point<system_clock>;
@@ -187,6 +189,15 @@ namespace {
       g_DebugNeedsManager->DebugPassTimeMinutes(minutes);
     }
   }
+  void ForceDecayVariation( ConsoleFunctionContextRef context )
+  {
+    const char* experimentKey = kUnconnectedDecayRatesExperimentKey.c_str();
+    const char* variationKey = ConsoleArg_Get_String(context, "variationKey");
+    Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
+    context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
+
+    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(variationKey);
+  }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
   CONSOLE_FUNC( DebugCompleteDay, "Needs" );
@@ -201,6 +212,7 @@ namespace {
   CONSOLE_FUNC( DebugSetEnergyLevel, "Needs", float level );
   CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
   CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
+  CONSOLE_FUNC( ForceDecayVariation, "A/B Testing", const char* variationKey );
 };
 #endif
 
@@ -275,13 +287,15 @@ NeedsManager::~NeedsManager()
 
 void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                         const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+                        const Json::Value& inDecayJson, const Json::Value& inDecayAJson,
+                        const Json::Value& inDecayBJson, const Json::Value& inDecayCJson,
+                        const Json::Value& inHandlersJson,
                         const Json::Value& inLocalNotificationJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
   _needsConfig.Init(inJson);
-  _needsConfig.InitDecay(inDecayJson);
+  _needsConfig.InitDecay(inDecayJson, inDecayAJson, inDecayBJson, inDecayCJson);
   
   _starRewardsConfig = std::make_shared<StarRewardsConfig>();
   _starRewardsConfig->Init(inStarsJson);
@@ -365,6 +379,11 @@ void NeedsManager::InitInternal(const float currentTime_s)
     {
       // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
       _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
+
+      // Use robot serial number that we just pulled from device save in ReadFromDevice,
+      // to potentially activate the AB test for different unconnected decay rates
+
+      AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
 
       static const bool connected = false;
       ApplyDecayForTimeSinceLastDeviceWrite(connected);
@@ -533,6 +552,13 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
   if (useStateFromRobot)
   {
+    if (_previousRobotSerialNumber != _needsStateFromRobot._robotSerialNumber)
+    {
+      // If we're now connected to a different robot from the last connection, we
+      // need to re-activate the experiment, based on the new robot serial number
+      AttemptActivateDecayExperiment(_needsStateFromRobot._robotSerialNumber);
+    }
+
     const Time savedTimeLastDisconnect = _needsState._timeLastDisconnect;
     const Time savedTimeLastAppBackgrounded = _needsState._timeLastAppBackgrounded;
 
@@ -608,6 +634,28 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
 
   _localNotifications->Generate();
+}
+
+
+void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
+{
+  Util::AnkiLab::ActivateExperimentRequest request(kUnconnectedDecayRatesExperimentKey,
+                                                   std::to_string(robotSerialNumber));
+  std::string outVariationKey;
+  const auto assignmentStatus = _cozmoContext->GetExperiments()->ActivateExperiment(request, outVariationKey);
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
+                "Unconnected decay experiment activation assignment status is: %s",
+                EnumToString(assignmentStatus));
+  if (assignmentStatus == Util::AnkiLab::AssignmentStatus::Assigned ||
+      assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
+      assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
+                  "Assigned to variation: %s",
+                  outVariationKey.c_str());
+
+    _needsConfig.SetUnconnectedDecayTestVariation(outVariationKey);
+  }
 }
 
 
@@ -1485,10 +1533,13 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
     partIsDamaged.push_back(isDamaged);
   }
 
+  const std::string ABTestString = kUnconnectedDecayRatesExperimentKey + ": " +
+                                   _needsConfig.GetUnconnectedDecayTestVariation();
+
   ExternalInterface::NeedsState message(std::move(needLevels), std::move(needBrackets),
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,
                                         _needsState._numStarsAwarded, _needsState._numStarsForNextUnlock,
-                                        actionCausingTheUpdate);
+                                        actionCausingTheUpdate, std::move(ABTestString));
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 

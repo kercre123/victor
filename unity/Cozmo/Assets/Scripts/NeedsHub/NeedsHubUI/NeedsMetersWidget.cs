@@ -21,7 +21,7 @@ namespace Cozmo.Needs.UI {
     private NeedsMeter _PlayMeter;
 
     [SerializeField]
-    private CozmoImage _DimmedImage;
+    private GameObject _DimmedImage;
 
     [SerializeField]
     private float _InitialFillStaggerTime = 1f;
@@ -84,7 +84,7 @@ namespace Cozmo.Needs.UI {
       _PlayMeter.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Play).Value);
 
       //if we are isolating a meter, let's stick a dimmer behind it, covering the rest.
-      _DimmedImage.gameObject.SetActive(focusOnMeter != NeedId.Count);
+      _DimmedImage.SetActive(focusOnMeter != NeedId.Count);
       _DimmedImage.transform.SetAsLastSibling();
 
       switch (focusOnMeter) {
@@ -287,7 +287,7 @@ namespace Cozmo.Needs.UI {
 
     public void DimNeedMeters(List<NeedId> dimmedMeters) {
       bool dimming = (dimmedMeters != null && dimmedMeters.Count > 0);
-      _DimmedImage.gameObject.SetActive(dimming);
+      _DimmedImage.SetActive(dimming);
 
       if (dimming) {
         _DimmedImage.transform.SetAsLastSibling();

@@ -190,7 +190,7 @@ namespace Anki {
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
         }
-        robotState_.distanceSensor_mm = ProxSensors::GetRawProxValue();
+        robotState_.proxData = HAL::GetRawProxData();
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 

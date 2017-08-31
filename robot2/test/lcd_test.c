@@ -238,7 +238,7 @@ static void animate(const char* fn) {
 }
 
 
-#define ENDLESS 0
+#define ENDLESS 1
 
 
 int main(int argc, char** argv) {

@@ -56,6 +56,11 @@ static const std::string kPlayRangeKey = "playRange";
 static const std::string kCooldownSecsKey = "cooldownSecs";
 static const std::string kFreeplaySparksRewardWeight = "freeplaySparksRewardWeight";
 
+static const std::string kABTestDecayConfigControlKey = "control";
+static const std::string kABTestDecayConfigVariationAKey = "variationA";
+static const std::string kABTestDecayConfigVariationBKey = "variationB";
+static const std::string kABTestDecayConfigVariationCKey = "variationC";
+
 
 NeedsConfig::NeedsConfig()
 : _minNeedLevel(0.0f)
@@ -67,7 +72,9 @@ NeedsConfig::NeedsConfig()
 , _brokenPartThresholds()
 , _decayConnected()
 , _decayUnconnected()
+, _decayUnconnectedVariations()
 , _localNotificationMaxFutureMinutes(60 * 24 * 365 * 10)
+, _unconnectedDecayTestVariationKey("")
 {
 }
 
@@ -206,13 +213,36 @@ void NeedsConfig::Init(const Json::Value& json)
 }
 
 
-void NeedsConfig::InitDecay(const Json::Value& json)
+void NeedsConfig::InitDecay(const Json::Value& json,  const Json::Value& jsonA,
+                            const Json::Value& jsonB, const Json::Value& jsonC)
 {
+  // Connected decay
   InitDecayRates(json[kDecayRatesKey], kConnectedDecayRatesKey, _decayConnected);
-  InitDecayRates(json[kDecayRatesKey], kUnconnectedDecayRatesKey, _decayUnconnected);
-
   InitDecayModifiers(json[kDecayModifiersKey], kConnectedDecayModifiersKey, _decayConnected);
-  InitDecayModifiers(json[kDecayModifiersKey], kUnconnectedDecayModifiersKey, _decayUnconnected);
+
+  // Unconnected decay has four variations for AB testing
+  InitDecayRates(json[kDecayRatesKey], kUnconnectedDecayRatesKey,
+                 _decayUnconnectedVariations[kABTestDecayConfigControlKey]);
+  InitDecayModifiers(json[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
+                     _decayUnconnectedVariations[kABTestDecayConfigControlKey]);
+
+  InitDecayRates(jsonA[kDecayRatesKey], kUnconnectedDecayRatesKey,
+                 _decayUnconnectedVariations[kABTestDecayConfigVariationAKey]);
+  InitDecayModifiers(jsonA[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
+                     _decayUnconnectedVariations[kABTestDecayConfigVariationAKey]);
+
+  InitDecayRates(jsonB[kDecayRatesKey], kUnconnectedDecayRatesKey,
+                 _decayUnconnectedVariations[kABTestDecayConfigVariationBKey]);
+  InitDecayModifiers(jsonB[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
+                     _decayUnconnectedVariations[kABTestDecayConfigVariationBKey]);
+
+  InitDecayRates(jsonC[kDecayRatesKey], kUnconnectedDecayRatesKey,
+                 _decayUnconnectedVariations[kABTestDecayConfigVariationCKey]);
+  InitDecayModifiers(jsonC[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
+                     _decayUnconnectedVariations[kABTestDecayConfigVariationCKey]);
+
+  // Use the control group by default
+  SetUnconnectedDecayTestVariation(kABTestDecayConfigControlKey);
 }
 
 struct SortDecayRatesByThresholdDescending
@@ -307,6 +337,21 @@ float NeedsConfig::NeedLevelForNeedBracket(const NeedId needId, const NeedBracke
     return brackets[Util::numeric_cast<int>(bracketId)];
   }
   return 0.0f;
+}
+
+
+void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& variationKey)
+{
+  const auto& it = _decayUnconnectedVariations.find(variationKey);
+  DEV_ASSERT_MSG(it != _decayUnconnectedVariations.end(),
+                 "NeedsConfig.SetUnconnectedDecayTestVariation",
+                 "variationKey %s not found in loaded test config data", variationKey.c_str());
+  if (it != _decayUnconnectedVariations.end())
+  {
+    _decayUnconnected = it->second;
+
+    _unconnectedDecayTestVariationKey = variationKey;
+  }
 }
 
 

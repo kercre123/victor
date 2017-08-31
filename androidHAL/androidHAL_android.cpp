@@ -24,6 +24,8 @@
 #include "androidHAL/android/camera/utils/native_debug.h"
 #include "anki/vision/CameraSettings.h"
 
+#include "androidHAL/android/proto_camera/victor_camera.h"
+
 #include <vector>
 #include <chrono>
 
@@ -41,7 +43,15 @@ namespace Anki {
 
 #pragma mark --- Simulated Hardware Method Implementations ---
     
+
     
+    int victor_proto_camera_callback(const uint8_t* image, int width, int height)
+    {
+       // process camera image...
+       // NOTE: This callback may occur on a thread that is _not_ owned by the engine.
+       return 0;
+    }
+     
     // Definition of static field
     AndroidHAL* AndroidHAL::_instance = 0;
     
@@ -79,11 +89,18 @@ namespace Anki {
     {
       //InitIMU();
       //InitCamera();
+      camera_init();
+      camera_start(victor_proto_camera_callback);
+
+      
     }
     
     AndroidHAL::~AndroidHAL()
     {
-      DeleteCamera();
+      //      DeleteCamera(); 
+      camera_stop();
+      camera_cleanup();
+     
     }
 
     

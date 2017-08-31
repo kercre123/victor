@@ -74,11 +74,13 @@ CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     
 
 // Number of faces to consider "too many" and forced timeout when seeing that many
 CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
-CONSOLE_VAR(s32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 1.f);
+CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 2.f);
+CONSOLE_VAR(f32,               kEnrollFace_DefaultTooManyFacesRecentTime_sec,   CONSOLE_GROUP, 0.5f);
 
 static const char * const kLogChannelName = "FaceRecognizer";
 static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
 static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
+static const char * const kTooManyFacesRecentTimeKey = "tooManyFacesRecentTime_sec";
 
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArray = {
   {ReactionTrigger::CliffDetected,                true},
@@ -136,6 +138,7 @@ BehaviorEnrollFace::BehaviorEnrollFace(Robot &robot, const Json::Value& config)
   // FaceEnrollmentResult.
   _maxFacesVisible = config.get(kMaxFacesVisibleKey, kEnrollFace_DefaultMaxFacesVisible).asInt();
   _tooManyFacesTimeout_sec = config.get(kTooManyFacesTimeoutKey, kEnrollFace_DefaultTooManyFacesTimeout_sec).asFloat();
+  _tooManyFacesRecentTime_sec = config.get(kTooManyFacesRecentTimeKey, kEnrollFace_DefaultTooManyFacesRecentTime_sec).asFloat();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1014,7 +1017,7 @@ void BehaviorEnrollFace::UpdateFaceIDandTime(const Face* newFace)
 bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeStamp_t lastImgTime)
 {
   // Check if we've also seen too many within a recent time window
-  const TimeStamp_t multipleFaceTimeWindow_ms = Util::SecToMilliSec(_tooManyFacesTimeout_sec);
+  const TimeStamp_t multipleFaceTimeWindow_ms = Util::SecToMilliSec(_tooManyFacesRecentTime_sec);
   const TimeStamp_t recentTime = (lastImgTime > multipleFaceTimeWindow_ms ?
                                   lastImgTime - multipleFaceTimeWindow_ms :
                                   0); // Avoid unsigned math rollover

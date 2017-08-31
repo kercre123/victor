@@ -15,9 +15,6 @@
 
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
 
-#include "clad/types/needsSystemTypes.h"
-#include "json/json-forwards.h"
-
 namespace Anki {
 namespace Cozmo {
 
@@ -32,15 +29,6 @@ protected:
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
 
-private:
-
-  struct Params {
-    Params(const Json::Value& config);
-
-    bool _shouldDisableReactions = false;
-  };
-
-  const Params _params;
 };
 
 }

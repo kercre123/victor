@@ -320,17 +320,7 @@ Blockly.Flyout.prototype.setParentToolbox = function(toolbox) {
  * @return {number} The width of the flyout.
  */
 Blockly.Flyout.prototype.getWidth = function() {
-  // *** ANKI CHANGE ***
-  // For vertical, we want the width of the flyout to be wide enough for the blocks.
-  // The toolbox is the dimensions of blocklyToolboxDiv, which encompasses the category
-  // menu and is slimmer than the flyout.
-  if (window.isVertical) {
-    return this.DEFAULT_WIDTH;
-  }
-  else {
-    return this.parentToolbox_ ? this.parentToolbox_.getWidth() :
-        this.DEFAULT_WIDTH;
-  }
+  return this.DEFAULT_WIDTH;
 };
 
 /**

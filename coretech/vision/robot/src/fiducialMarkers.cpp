@@ -23,7 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <assert.h>
 
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR || RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
-#  include "anki/cozmo/robot/nearestNeighborLibraryData.h"
+#  include "engine/vision/nearestNeighborLibraryData.h"
 #endif 
 
 #define INITIALIZE_WITH_DEFINITION_TYPE 0

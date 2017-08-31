@@ -45,7 +45,7 @@ namespace Anki {
       const f32           GetLiftHeight_mm()               const;
       const u16           GetCliffData(unsigned int ind=0) const;
       const PoseFrameID_t GetFrameId()                     const {return _state.pose_frame_id;}
-      const u16           GetProxSensorVal_mm()            const {return _state.distanceSensor_mm;}
+      const u16           GetProxSensorVal_mm()            const {return _state.proxData.distance_mm;}
       
       const f32           GetLeftWheelSpeed_mmps()         const {return _state.lwheel_speed_mmps;}
       const f32           GetRightWheelSpeed_mmps()        const {return _state.rwheel_speed_mmps;}

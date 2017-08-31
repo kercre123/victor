@@ -24,6 +24,7 @@
 #include "clad/types/actionTypes.h"
 
 #include <map>
+#include <set>
 #include <vector>
 
 namespace Anki {

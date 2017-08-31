@@ -19,6 +19,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/animations/animationStreamer.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
@@ -65,8 +66,6 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
 CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
   
-const char* kSevereNeedStateLock = "AIWhiteboard_severe_need";
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
 {
@@ -112,8 +111,6 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 , _hasHiccups(false)
-, _isGameRequestUIRequest(false)
-, _severeNeedExpression(NeedId::Count)
 {
 }
 
@@ -134,7 +131,6 @@ void AIWhiteboard::Init()
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::NotifyCozmoWakeup>();
   }
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
@@ -144,16 +140,6 @@ void AIWhiteboard::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::Update()
 {
-  if( HasSevereNeedExpression() ) {
-    NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-    // If needs are paused or the current severeNeedExpression is no longer critical, clear the severe expression
-    if(!currNeedState.IsNeedAtBracket(_severeNeedExpression, NeedBracketId::Critical)){
-      PRINT_CH_INFO("AIWhiteboard", "SevereNeedsState.AutoClear",
-                    "Automatically clearing currently expressed severe needs state. Was '%s'",
-                    NeedIdToString(_severeNeedExpression));
-      ClearSevereNeedExpression();
-    }
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -849,28 +835,6 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotOffTreadsStateCha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void AIWhiteboard::HandleMessage(const ExternalInterface::NotifyCozmoWakeup& msg)
-{
-  // Setup Cozmo's current expressed need state - on Init need state will be handled
-  // by game to play Cozmo's wakeup animation, so set the current expressed need
-  // here manually
-  NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool isRepairCritical =
-  currNeedState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical);
-  
-  const bool isEnergyCritical =
-  currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-  
-  if(isRepairCritical){
-    SetSevereNeedExpression(NeedId::Repair);
-  }else if(isEnergyCritical){
-    SetSevereNeedExpression(NeedId::Energy);
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d& obsPose)
 {
   if( DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS ) {
@@ -1029,87 +993,6 @@ void AIWhiteboard::UpdateBeaconRender()
           center, beacon.GetRadius()-1.0f, color, false); // triple line (jane's request)
     }
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetSevereNeedExpression(NeedId need) {
-  PRINT_CH_DEBUG("AIWhiteboard",
-                 "AIWhiteboard.SevereNeedExpression.Set",
-                 "Set to %s (was %s)",
-                 NeedIdToString(need),
-                 NeedIdToString(_severeNeedExpression));
-
-  // shouldn't already be expressing a severe need, except in the case of Play, because there may not have
-  // been a get-out from play yet (e.g. play goes severe first, then hunger)
-  DEV_ASSERT(_severeNeedExpression == NeedId::Count || _severeNeedExpression == NeedId::Play,
-             "AIWhiteboard.SetSevereNeedExpression.ExpressionAlreadySet");
-  
-  //////
-  // Setup driving and idle animation maps based on need
-  //////
-  static const std::map<NeedId, AnimationTrigger> idleAnimation =
-     {{NeedId::Energy,AnimationTrigger::NeedsSevereLowEnergyIdle},
-      {NeedId::Repair,AnimationTrigger::NeedsSevereLowRepairIdle}};
-  
-  
-  struct DrivingAnimContainer{
-    DrivingAnimContainer(AnimationTrigger getIn, AnimationTrigger loop, AnimationTrigger getOut)
-    : _getIn(getIn)
-    , _loop(loop)
-    , _getOut(getOut){};
-    
-    AnimationTrigger _getIn;
-    AnimationTrigger _loop;
-    AnimationTrigger _getOut;
-  };
-  
-  static const DrivingAnimContainer energyDriving(
-                    AnimationTrigger::NeedsSevereLowEnergyDrivingStart,
-                    AnimationTrigger::NeedsSevereLowEnergyDrivingLoop,
-                    AnimationTrigger::NeedsSevereLowEnergyDrivingEnd);
-
-  static const DrivingAnimContainer repairDriving(
-                    AnimationTrigger::NeedsSevereLowRepairDrivingStart,
-                    AnimationTrigger::NeedsSevereLowRepairDrivingLoop,
-                    AnimationTrigger::NeedsSevereLowRepairDrivingEnd);
-  
-  const std::map<NeedId, DrivingAnimContainer> drivingAnimMap =
-    {{NeedId::Energy,energyDriving},{NeedId::Repair,repairDriving}};
-  
-  
-  const auto& drivingIter = drivingAnimMap.find(need);
-  if(drivingIter != drivingAnimMap.end()){
-    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({
-      drivingIter->second._getIn,
-      drivingIter->second._loop,
-      drivingIter->second._getOut},
-      kSevereNeedStateLock);
-  }
-  
-  const auto& idleIter = idleAnimation.find(need);
-  if(idleIter != idleAnimation.end()){
-    _robot.GetAnimationStreamer().PushIdleAnimation(idleIter->second,
-                                                    kSevereNeedStateLock);
-  }
-  
-  _severeNeedExpression = need;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::ClearSevereNeedExpression() {
-  PRINT_CH_DEBUG("AIWhiteboard",
-                 "AIWhiteboard.SevereNeedExpression.Clear",
-                 "Cleared. (was %s)",
-                 NeedIdToString(_severeNeedExpression));
-  
-  DEV_ASSERT(_severeNeedExpression != NeedId::Count,
-             "AIWhiteboard.ClearSevereNeedExpression.ExpressionNotSet");
-  
-  _robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(kSevereNeedStateLock);
-  _robot.GetAnimationStreamer().RemoveIdleAnimation(kSevereNeedStateLock);
-
-  _severeNeedExpression = NeedId::Count;
 }
 
 

@@ -16,8 +16,8 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 #include "engine/needsSystem/needsManager.h"
@@ -104,7 +104,7 @@ void BehaviorFeedingSearchForCube::TransitionToSecondSearchForFood(Robot& robot)
 void BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase(Robot& robot)
 {
   AnimationTrigger searchIdle = AnimationTrigger::FeedingIdleSearch_Normal;
-  if(robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression() == NeedId::Energy){
+  if(robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     searchIdle = AnimationTrigger::FeedingIdleSearch_Severe;
   }
   
@@ -124,7 +124,7 @@ void BehaviorFeedingSearchForCube::TransitionToMakeFoodRequest(Robot& robot)
   SET_STATE(MakeFoodRequest);
   
   AnimationTrigger reactionAnimation = AnimationTrigger::FeedingSearchRequest ;
-  if(robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression() == NeedId::Energy){
+  if(robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     reactionAnimation = AnimationTrigger::FeedingSearchRequest_Severe;
   }
   
@@ -142,7 +142,7 @@ void BehaviorFeedingSearchForCube::TransitionToFailedToFindCubeReaction(Robot& r
   SET_STATE(FailedToFindCubeReaction);
   
   AnimationTrigger reactionAnimation = AnimationTrigger::FeedingSearchFailure;
-  if(robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression() == NeedId::Energy){
+  if(robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() == NeedId::Energy){
     reactionAnimation = AnimationTrigger::FeedingSearchFailure_Severe;
   }
   

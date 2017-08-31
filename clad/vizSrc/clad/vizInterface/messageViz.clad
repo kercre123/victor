@@ -201,7 +201,6 @@ message EraseQuad
 // VizSetRobot
 message SetRobot
 {
-  uint_32 robotID,
   float_32 x_trans_m,
   float_32 y_trans_m,
   float_32 z_trans_m,

@@ -87,7 +87,7 @@ Blockly.Toolbox = function(workspace) {
  * Width of the toolbox, which changes only in vertical layout.
  * @type {number}
  */
-Blockly.Toolbox.prototype.width = 125;
+Blockly.Toolbox.prototype.width = 310;
 
 /**
  * Height of the toolbox, which changes only in horizontal layout.
@@ -226,8 +226,7 @@ Blockly.Toolbox.prototype.position = function() {
     } else {  // Left
       treeDiv.style.left = '0';
     }
-    treeDiv.style.height = this.getHeight() + 'px';
-    treeDiv.style.width = this.width + 'px';
+    treeDiv.style.height = '100%';
   }
   this.flyout_.position();
 };
@@ -300,7 +299,7 @@ Blockly.Toolbox.prototype.getClientRect = function() {
     y = toolboxRect.top - 1.25*this.flyout_.getHeight(); 
   }
 
-  var width = toolboxRect.width;
+  var width = this.getWidth();
   var height = toolboxRect.height;
 
   // Assumes that the toolbox is on the SVG edge.  If this changes
@@ -309,7 +308,7 @@ Blockly.Toolbox.prototype.getClientRect = function() {
     return new goog.math.Rect(-BIG_NUM, -BIG_NUM, BIG_NUM + x + width,
         2 * BIG_NUM);
   } else if (this.toolboxPosition == Blockly.TOOLBOX_AT_RIGHT) {
-    return new goog.math.Rect(x, -BIG_NUM, BIG_NUM + width, 2 * BIG_NUM);
+    return new goog.math.Rect(toolboxRect.right - width, -BIG_NUM, BIG_NUM + width, 2 * BIG_NUM);
   } else if (this.toolboxPosition == Blockly.TOOLBOX_AT_TOP) {
     return new goog.math.Rect(-BIG_NUM, -BIG_NUM, 2 * BIG_NUM,
         BIG_NUM + y + height);
@@ -401,25 +400,8 @@ Blockly.Toolbox.CategoryMenu.prototype.getHeight = function() {
  * Create the DOM for the category menu.
  */
 Blockly.Toolbox.CategoryMenu.prototype.createDom = function() {
-  /*
-  <table class="scratchCategoryMenu">
-  </table>
-  */
-
-  // *** ANKI CHANGE ***
-  // Use different scratchCategoryMenu css settings for vertical versus horizontal
-  // in order to set background color
-  if (!window.isVertical) {
-    this.table = goog.dom.createDom('table', 'scratchCategoryMenuHorizontal');
-  }
-  else {
-    this.table = goog.dom.createDom('table', 'scratchCategoryMenu');
-
-    // *** ANKI CHANGE ***
-    // Set height of category menu to be full height of tablet.
-    this.table.style.height = window.innerHeight + 'px';
-  }
-
+  this.table = goog.dom.createDom('div', this.parent_.horizontalLayout_ ?
+    'scratchCategoryMenuHorizontal' : 'scratchCategoryMenu');
   this.parentHtml_.appendChild(this.table);
 };
 
@@ -459,36 +441,16 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     }
   }
   else {
-    // *** ANKI CHANGE ***
-    // Display categories in one column.
-    for (var i = 0; i < categories.length; i += 1) {
-      child = categories[i];
-      var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
+    // Create a single column of categories
+    for (var i = 0; i < categories.length; i++) {
+      var child = categories[i];
+      var row = goog.dom.createDom('div', 'scratchCategoryMenuRow');
       this.table.appendChild(row);
       if (child) {
         this.categories_.push(new Blockly.Toolbox.Category(this, row,
             child));
       }
     }
-
-    // Create categories one row at a time.
-    // Note that this involves skipping around by `columnSeparator` in the DOM tree.
-    /*
-    var columnSeparator = Math.ceil(categories.length / 2);
-    for (var i = 0; i < columnSeparator; i += 1) {
-      child = categories[i];
-      var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
-      this.table.appendChild(row);
-      if (child) {
-        this.categories_.push(new Blockly.Toolbox.Category(this, row,
-            child));
-      }
-      if (categories[i + columnSeparator]) {
-        this.categories_.push(new Blockly.Toolbox.Category(this, row,
-            categories[i + columnSeparator]));
-      }
-    }
-    */
   }
   this.height_ = this.table.offsetHeight;
 };
@@ -562,34 +524,42 @@ Blockly.Toolbox.Category.prototype.createDom = function() {
   // Set up horizontal categories.
   if (!window.isVertical) {
     this.item_ = goog.dom.createDom('td',
-      {'class': 'scratchCategoryMenuItem'});
+      {'class': 'scratchCategoryMenuItemHorizontal'});
     this.bubble_ = goog.dom.createDom('div', {
       'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
       'scratchCategoryItemBubbleLTRHorizontal'}, this.name_.toUpperCase());
+
+    this.bubble_.style.backgroundColor = this.colour_;
+    this.bubble_.style.borderColor = this.secondaryColour_;
+
+    // *** ANKI CHANGE ***
+    if (window.innerWidth > window.TABLET_WIDTH) {
+      this.bubble_.style.fontSize = "14px";
+      this.bubble_.style.width = "130px";
+      this.bubble_.style.paddingTop = "7.5px";
+    }
+
+    this.item_.appendChild(this.bubble_);
+    this.parentHtml_.appendChild(this.item_);
+    Blockly.bindEvent_(this.item_, 'mousedown', toolbox,
+      toolbox.setSelectedItemFactory(this));
   }
   else {
-    this.item_ = goog.dom.createDom('td',
-        {'class': 'scratchCategoryMenuItemVertical'},
-        this.name_);
-    this.bubble_ = goog.dom.createDom('div', {
-      'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
-      'scratchCategoryItemBubbleLTR'});
+    this.item_ = goog.dom.createDom('div',
+      {'class': 'scratchCategoryMenuItem'});
+    this.label_ = goog.dom.createDom('div',
+      {'class': 'scratchCategoryMenuItemLabel'},
+      this.name_);
+    this.bubble_ = goog.dom.createDom('div',
+      {'class': 'scratchCategoryItemBubble'});
+    this.bubble_.style.backgroundColor = this.colour_;
+    this.bubble_.style.borderColor = this.secondaryColour_;
+    this.item_.appendChild(this.bubble_);
+    this.item_.appendChild(this.label_);
+    this.parentHtml_.appendChild(this.item_);
+    Blockly.bindEvent_(this.item_, 'mousedown', toolbox,
+      toolbox.setSelectedItemFactory(this));
   }
-
-  this.bubble_.style.backgroundColor = this.colour_;
-  this.bubble_.style.borderColor = this.secondaryColour_;
-
-  // *** ANKI CHANGE ***
-  if (!window.isVertical && window.innerWidth > window.TABLET_WIDTH) {
-    this.bubble_.style.fontSize = "14px";
-    this.bubble_.style.width = "130px";
-    this.bubble_.style.paddingTop = "7.5px";
-  }
-
-  this.item_.appendChild(this.bubble_);
-  this.parentHtml_.appendChild(this.item_);
-  Blockly.bindEvent_(this.item_, 'mousedown', toolbox,
-    toolbox.setSelectedItemFactory(this));
 };
 
 /**
@@ -597,10 +567,17 @@ Blockly.Toolbox.Category.prototype.createDom = function() {
  * @param {boolean} selected Whether this category is selected.
  */
 Blockly.Toolbox.Category.prototype.setSelected = function(selected) {
+  // *** ANKI CHANGE ***
+  // Preserves our old horizontal categories' selected appearance
+  var menuItemString = 'scratchCategoryMenuItem';
+  if (!window.isVertical) {
+    menuItemString = 'scratchCategoryMenuItemHorizontal';
+  }
+
   if (selected) {
-    this.item_.className = 'scratchCategoryMenuItem categorySelected';
+    this.item_.className = menuItemString +' categorySelected';
   } else {
-    this.item_.className = 'scratchCategoryMenuItem';
+    this.item_.className = menuItemString;
   }
 };
 

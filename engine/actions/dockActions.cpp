@@ -17,7 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
@@ -562,6 +562,9 @@ namespace Anki {
         return ActionResult::BAD_OBJECT;
       }
       
+      // Only set cube lights if the dock object is a light cube
+      _shouldSetCubeLights = IsValidLightCube(dockObject->GetType(), false);
+
       PreActionPoseOutput preActionPoseOutput;
       
       if(_doNearPredockPoseCheck)
@@ -705,7 +708,7 @@ namespace Anki {
                       kReactionsToSuppressID,
                       *_reactionTriggersToSuppress);
       }
-      if(!_lightsSet)
+      if(_shouldSetCubeLights && !_lightsSet)
       {
         PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
                       GetName().c_str(), GetTag(),
@@ -903,7 +906,7 @@ namespace Anki {
     
     bool IDockAction::ShouldApplyDockingSquint()
     {
-      return !(NeedId::Energy == _robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression());
+      return !(NeedId::Energy == _robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression());
     }
 
     

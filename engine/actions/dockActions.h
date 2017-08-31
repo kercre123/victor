@@ -278,6 +278,7 @@ namespace Anki {
       
       AnimationStreamer::Tag     _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       
+      bool _shouldSetCubeLights      = false;
       bool _lightsSet                = false;
       bool _visuallyVerifyObjectOnly = false;
       

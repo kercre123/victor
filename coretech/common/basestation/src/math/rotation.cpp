@@ -266,7 +266,8 @@ namespace Anki {
     const f32 halfAngle = angle.ToFloat() * 0.5f;
     const f32 q1 = std::cos(halfAngle);
     
-    assert(FLT_NEAR(axis.LengthSq(), 1.f));
+    DEV_ASSERT_MSG(FLT_NEAR(axis.LengthSq(), 1.f), "Rotation3d.Constructor.NonUnitAxisLength",
+                   "%s, Length=%f", axis.ToString().c_str(), axis.LengthSq());
     
     const f32 sinHalfAngle = std::sin(halfAngle);
     const f32 q2 = sinHalfAngle * axis[0];
@@ -505,7 +506,9 @@ namespace Anki {
   
   Point3<float> Rotation3d::operator*(const Point3<float>& p) const
   {
-    return _q*p;
+    UnitQuaternion_<float> q_float;
+    q_float.SetCast(_q);
+    return q_float*p;
   }
   
   bool IsNearlyEqual(const Rotation3d& R1, const Rotation3d& R2, const f32 tolerance)

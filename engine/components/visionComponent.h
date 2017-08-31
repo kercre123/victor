@@ -24,8 +24,8 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
-#include "engine/visionModeSchedule.h"
-#include "engine/visionPoseData.h"
+#include "engine/vision/visionModeSchedule.h"
+#include "engine/vision/visionPoseData.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/cameraParams.h"

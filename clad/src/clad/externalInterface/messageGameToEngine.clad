@@ -70,7 +70,6 @@ message UiDeviceConnectionSuccess {
 
 message ConnectToRobot {
     uint_8 ipAddress[16],
-    uint_8 robotID,
     uint_8 isSimulated
 }
 
@@ -1048,6 +1047,9 @@ message LogRawCliffData {
   uint_32 length_ms // length of time to record data for. Data will appear in <CACHE>/sensorData/cliffSensors
 }
 
+message LogRawProxData {
+  uint_32 length_ms // length of time to record data for. Data will appear in <CACHE>/sensorData/proxSensor
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // BlockPool

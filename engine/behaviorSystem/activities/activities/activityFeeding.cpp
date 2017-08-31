@@ -15,10 +15,10 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "engine/activeObject.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/bsRunnableChooserFactory.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
@@ -185,8 +185,11 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   ////////
   {
     const Json::Value& universalChooserJSON = config[kUniversalChooser];
-    _universalResponseChooser.reset(BehaviorChooserFactory::CreateBehaviorChooser(robot, universalChooserJSON));
-    DEV_ASSERT(_universalResponseChooser != nullptr, "ActivityFeeding.UniversalChooserNotSpecified");
+    _universalResponseChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(
+                                    robot,
+                                    universalChooserJSON);
+    DEV_ASSERT(_universalResponseChooser != nullptr,
+               "ActivityFeeding.UniversalChooserNotSpecified");
   }
   
   ////////
@@ -240,7 +243,7 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
   _eatingComplete = false;
   SmartDisableReactionsWithLock(robot, GetIDStr(), kFeedingActivityAffectedArray);
   
-  const NeedId currentSevereExpression = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  const NeedId currentSevereExpression = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(currentSevereExpression == NeedId::Energy){
     SetupSevereAnims(robot);
   }else{
@@ -357,13 +360,13 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   IBehaviorPtr bestBehavior;
 
   // First check for universal responses - eg drive off charger
   if(_universalResponseChooser){
-    bestBehavior = _universalResponseChooser->ChooseNextBehavior(robot, currentRunningBehavior);
+    bestBehavior = _universalResponseChooser->GetDesiredActiveBehavior(robot, currentRunningBehavior);
   }
   
   if(bestBehavior != nullptr){
@@ -389,7 +392,7 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
 Result ActivityFeeding::Update(Robot& robot)
 {
   // Maintain appropriate music state and disables
-  const NeedId currentSevereExpression = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  const NeedId currentSevereExpression = robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(!_severeBehaviorLocksSet &&
      (currentSevereExpression == NeedId::Energy)){
     SetupSevereAnims(robot);
@@ -524,7 +527,7 @@ void ActivityFeeding::UpdateCurrentStage(Robot& robot)
     case FeedingActivityStage::ReactingToSeeCharged:
     case FeedingActivityStage::ReactingToSeeCharged_Severe:
       // nothing to do for reacting states, just wait for behavior to finish which will automatically call
-      // TransitionToBestActivityStage in ChooseNextBehavior()
+      // TransitionToBestActivityStage in GetDesiredActiveBehavior()
       break;
   }
 }
@@ -859,8 +862,8 @@ void ActivityFeeding::SetActivityStage(Robot& robot,
 void ActivityFeeding::SetIdleForCurrentStage(Robot& robot)
 {
   // Set the appropriate idle
-  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-  const bool isNeedSevere = (NeedId::Energy == whiteboard.GetSevereNeedExpression());
+  const auto& severeNeedsComponent = robot.GetAIComponent().GetSevereNeedsComponent();
+  const bool isNeedSevere = (NeedId::Energy == severeNeedsComponent.GetSevereNeedExpression());
 
   AnimationTrigger desiredIdle = AnimationTrigger::Count;
 

@@ -1,5 +1,6 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 
@@ -175,7 +176,8 @@ TEST(PoseTest, PoseTreeValidity)
   Pose3d grandChild2("GrandKid2");
   {
     // Create temp pose parented to origin, with grandChild2 as its child.
-    // When this temp pose goes out of scope, grandChild2 should still have a path to origin.
+    // When this temp pose goes out of scope grandChild2 should still have a path to origin
+    // *iff* unowned parents are allowed
     Pose3d tempPose("Temp");
     tempPose.SetID(uniqueID++);
     tempID = tempPose.GetID();
@@ -183,8 +185,13 @@ TEST(PoseTest, PoseTreeValidity)
     grandChild2.SetParent(tempPose);
     tempPosePtr = &tempPose;
   }
-  // Forcibly nuke tempPose's memory just to be extra nasty
-  memset((void*)tempPosePtr, 0, sizeof(Pose3d));
+  ASSERT_FALSE(Pose3d::AreUnownedParentsAllowed());
+  ASSERT_DEATH(grandChild2.GetParent(), "");
+  
+  Pose3d::AllowUnownedParents(true); // Allow unowned parents for the purposes of the rest of this test
+  ASSERT_TRUE(Pose3d::AreUnownedParentsAllowed());
+  
+  memset((void*)tempPosePtr, 0, sizeof(Pose3d)); // Forcibly nuke tempPose's memory just to be extra nasty
   ASSERT_TRUE(grandChild2.HasSameRootAs(poseOrigin));
   ASSERT_EQ(grandChild2.GetParent().GetName(), "Temp");
   ASSERT_EQ(tempID, grandChild2.GetParent().GetID());

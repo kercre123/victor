@@ -78,7 +78,7 @@ Blockly.VerticalFlyout.prototype.autoClose = true;
  * The width of the flyout, if not otherwise specified.
  * @type {number}
  */
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = 300;
+Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = 250;
 
 /**
  * Size of a checkbox next to a variable reporter.
@@ -259,13 +259,11 @@ Blockly.VerticalFlyout.prototype.position = function() {
   this.width_ = this.getWidth();
 
   if (this.parentToolbox_) {
-    // *** ANKI CHANGE ***
-    // Position toolbox to right of category listing and starting at the top of the screen.
-    var x = Blockly.Toolbox.prototype.width;
+    var toolboxWidth = this.parentToolbox_.getWidth();
+    var categoryWidth = toolboxWidth - this.width_;
+    var x = this.toolboxPosition_ == Blockly.TOOLBOX_AT_RIGHT ?
+        targetWorkspaceMetrics.viewWidth : categoryWidth;
     var y = 0;
-    // var x = this.parentToolbox_.HtmlDiv.offsetLeft;
-    // var y = this.parentToolbox_.HtmlDiv.offsetTop +
-    //     this.parentToolbox_.getHeight();
   } else {
     var x = this.toolboxPosition_ == Blockly.TOOLBOX_AT_RIGHT ?
         targetWorkspaceMetrics.viewWidth - this.width_ : 0;
@@ -632,13 +630,10 @@ Blockly.VerticalFlyout.prototype.placeNewBlock_ = function(originBlock) {
     xyOld.x += scrollX / scale - scrollX;
   }
 
-  // *** ANKI CHANGE ***
-  // For us, the flyout is not offset from the main workspace window.
-  //
   // The main workspace has 0,0 at the top inside corner of the toolbox.
   // Need to take that into account now that the flyout is offset from there in
   // both directions.
-  /*
+  
   if (this.parentToolbox_) {
     // TODO (fenichel): fix these offsets to correctly deal with scaling
     // changes.
@@ -653,7 +648,7 @@ Blockly.VerticalFlyout.prototype.placeNewBlock_ = function(originBlock) {
       xyOld.x -= xOffset;
     }
   }
-  */
+  
 
   // Take into account that the flyout might have been scrolled vertically
   // (separately from the main workspace).

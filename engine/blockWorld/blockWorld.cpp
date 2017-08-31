@@ -17,7 +17,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
@@ -35,6 +34,7 @@
 #include "engine/components/cliffSensorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
@@ -2349,7 +2349,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                           "Large number of markerless objects to search through");
     }  
     
-    u16 distMeasurement_mm = _robot->GetForwardSensorValue();  
+    u16 distMeasurement_mm = _robot->GetProxSensorComponent().GetLatestDistance_mm();
     
     if (distMeasurement_mm >= kMinObsThreshold_mm) {     
       // Clear out any obstacles between the robot and ray if we have good signal strength 

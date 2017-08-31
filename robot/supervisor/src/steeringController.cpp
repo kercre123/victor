@@ -495,7 +495,7 @@ namespace Anki {
         // max acceleration (i.e. command target velocity)
         currLeftVel = targetLeftVel_;
       } else {
-        if (ABS(currLeftVel - targetLeftVel_) < ABS(leftAccelPerCycle_)) {
+        if (fabsf(currLeftVel - targetLeftVel_) < ABS(leftAccelPerCycle_)) {
           currLeftVel = targetLeftVel_;
         } else {
           currLeftVel += leftAccelPerCycle_;
@@ -506,7 +506,7 @@ namespace Anki {
         // max acceleration (i.e. command target velocity)
         currRightVel = targetRightVel_;
       } else {
-        if (ABS(currRightVel - targetRightVel_) < ABS(rightAccelPerCycle_)) {
+        if (fabsf(currRightVel - targetRightVel_) < ABS(rightAccelPerCycle_)) {
           currRightVel = targetRightVel_;
         } else {
           currRightVel += rightAccelPerCycle_;
@@ -722,7 +722,7 @@ namespace Anki {
           // Check if robot has stopped turning despite integral gain maxing out.
           // Something might be physically obstructing the robot from turning.
           if (fabsf(pointTurnAngleErrorSum_) == pointTurnMaxIntegralError_) {
-            if (pointTurnIntegralPowerMaxedStartTime_ == 0 || ABS((pointTurnIntegralPowerMaxedStartAngle_ - currAngle).ToFloat()) < POINT_TURN_STUCK_THRESHOLD_RAD) {
+            if (pointTurnIntegralPowerMaxedStartTime_ == 0 || fabsf((pointTurnIntegralPowerMaxedStartAngle_ - currAngle).ToFloat()) < POINT_TURN_STUCK_THRESHOLD_RAD) {
               pointTurnIntegralPowerMaxedStartTime_ = HAL::GetTimeStamp();
               pointTurnIntegralPowerMaxedStartAngle_ = currAngle;
             } else if (HAL::GetTimeStamp() - pointTurnIntegralPowerMaxedStartTime_ > POINT_TURN_STUCK_THRESHOLD_MS) {
@@ -765,7 +765,8 @@ namespace Anki {
         // Integral windup protection
         // Only accumulate integral error if we're close to the target angle
         if (absAngularDistToTarget < POINT_TURN_INTEGRATOR_THRESH_RAD) {
-          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
+          pointTurnAngleErrorSum_ = pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle;
+          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
         } else {
           pointTurnAngleErrorSum_ = 0.f;
         }
@@ -791,7 +792,8 @@ namespace Anki {
         
         // Only accumulate integral error if desired wheel speed is below max
         if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
-          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularSpeedError, -pointTurnSpeedMaxIntegralError_, pointTurnSpeedMaxIntegralError_);
+          pointTurnAngleErrorSum_ = pointTurnAngleErrorSum_ + angularSpeedError;
+          pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_, -pointTurnSpeedMaxIntegralError_, pointTurnSpeedMaxIntegralError_);
         }
         
         //AnkiDebug( 131, "PointTurnSpeed", 377, "des %f deg/s, meas: %f deg/s, arcVel %d mm/s, errorSum %f", 4, RAD_TO_DEG_F32(currDesiredAngularVel), RAD_TO_DEG_F32(currAngularSpeed), arcVel, pointTurnAngleErrorSum_ );

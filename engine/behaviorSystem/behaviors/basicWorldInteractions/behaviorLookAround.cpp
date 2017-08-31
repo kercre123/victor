@@ -13,7 +13,6 @@
 
 #include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorLookAround.h"
 
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/radians.h"
 #include "engine/actions/animActions.h"
@@ -26,6 +25,7 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "util/helpers/boundedWhile.h"
 #include <cmath>
 
 #define SAFE_ZONE_VIZ 0 // (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)

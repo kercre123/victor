@@ -383,7 +383,8 @@ namespace Anki {
       {
         // Half fov of camera at center horizontal.
         // 0.36 radians is roughly the half-FOV of the camera bounded by the lift posts.
-        const f32 HALF_FOV = MIN(0.5f*GetHorizontalFOV(), 0.36f);
+        f32 calcHalfFOV = 0.5f*GetHorizontalFOV();
+        const f32 HALF_FOV = MIN(calcHalfFOV, 0.36f);
 
         const f32 markerCenterX = markerPose.GetX();
         const f32 markerCenterY = markerPose.GetY();
@@ -492,7 +493,7 @@ namespace Anki {
           // Compute desired slope of lift height during approach.
           // The ending lift height is made smaller the heigher the block is so that the lift doesn't rise
           // above the block which it can if just using z_height
-          const f32 liftApproachSlope = (dockingErrSignalMsg_.z_height - ABS(dockingErrSignalMsg_.z_height-BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM)/10.f) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
+          const f32 liftApproachSlope = (dockingErrSignalMsg_.z_height - fabsf(dockingErrSignalMsg_.z_height-BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM)/10.f) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
 
           // Compute current estimated distance to marker
           f32 robotX, robotY;
@@ -1062,9 +1063,9 @@ namespace Anki {
         // something moved unexpectedly
         if(dockingMethod_ == DockingMethod::HYBRID_DOCKING && prev_blockPose_x_ != -1)
         {
-          if(ABS(prev_blockPose_x_ - blockPose_x) > DELTA_BLOCKPOSE_X_TOL_MM ||
-             ABS(prev_blockPose_y_ - blockPose_y) > DELTA_BLOCKPOSE_Y_TOL_MM ||
-             ABS(prev_blockPose_a_ - blockPose_a) > DELTA_BLOCKPOSE_A_TOL_RAD)
+          if(fabsf(prev_blockPose_x_ - blockPose_x) > DELTA_BLOCKPOSE_X_TOL_MM ||
+             fabsf(prev_blockPose_y_ - blockPose_y) > DELTA_BLOCKPOSE_Y_TOL_MM ||
+             fabsf(prev_blockPose_a_ - blockPose_a) > DELTA_BLOCKPOSE_A_TOL_RAD)
           {
             AnkiDebug( 322, "DockingController.SetRelDockPose.AcquireNewSignal", 579, "%f %f %f", 3,
                       prev_blockPose_x_ - blockPose_x,
@@ -1211,7 +1212,7 @@ namespace Anki {
           const Planning::Path& path = PathFollower::GetPath();
           for (u8 s=0; s< numPathSegments; ++s) {
             if (path.GetSegmentConstRef(s).GetType() == Planning::PST_ARC) {
-              f32 segSweepRad = ABS(path.GetSegmentConstRef(s).GetDef().arc.sweepRad);
+              f32 segSweepRad = fabsf(path.GetSegmentConstRef(s).GetDef().arc.sweepRad);
               if (segSweepRad > maxSegmentSweepRad) {
                 maxSegmentSweepRad = segSweepRad;
               }

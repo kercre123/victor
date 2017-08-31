@@ -225,30 +225,12 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool HasHiccups() const { return _hasHiccups; }
   void SetHasHiccups(bool hasHiccups) { _hasHiccups = hasHiccups; }
-  
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Needs states
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // Indicates which severe needs state is currently being _expressed_ in freeplay, or to Count if no severe
-  // states are being expressed. Note that this is different from the current values of the needs from the
-  // needs manager because the activity system usually takes some time to transition into / out of a given
-  // activity, so even though the current value may be critical for a need, the behavior system may still be
-  // expressing the previous state. This value will automatically be cleared to Count if the needs system says
-  // the given need is no longer critically low
-  NeedId GetSevereNeedExpression() const { return _severeNeedExpression; }
-  bool HasSevereNeedExpression() const { return _severeNeedExpression != NeedId::Count; }
-
-  void SetSevereNeedExpression(NeedId need);
-  void ClearSevereNeedExpression();
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracking Game Requests
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void SetCurrentGameRequestUIRequest(bool isUIRequest){_isGameRequestUIRequest = isUIRequest;}
   bool IsCurrentGameRequestUIRequest(){ return _isGameRequestUIRequest;}
-  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -346,12 +328,8 @@ private:
   
   // Whether or not Cozmo has the hiccups
   bool _hasHiccups;
-  
-  bool _isGameRequestUIRequest;
 
-  // current severe need based on activity expression (may differ from needs manager state)
-  NeedId _severeNeedExpression;
-  
+  bool _isGameRequestUIRequest;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

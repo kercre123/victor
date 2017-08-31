@@ -227,10 +227,10 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['engine', 'include', 'resources'],
+  generator.processFolder(['engine', 'resources'],
                           ['project/gyp/cozmoEngine.lst'],
                           ['engine/tools/*'])
-  generator.processFolder(['engine', 'include', 'resources'],
+  generator.processFolder(['engine', 'resources'],
                           ['project/gyp/cozmoEngine2.lst'],
                           ['engine/tools/*'])
   generator.processFolder(['animProcess/src/cozmoAnim', 

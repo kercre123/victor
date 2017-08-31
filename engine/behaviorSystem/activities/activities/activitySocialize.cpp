@@ -100,11 +100,11 @@ void ActivitySocialize::OnSelectedInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   IBehaviorPtr bestBehavior;
   
-  bestBehavior = IActivity::ChooseNextBehaviorInternal(robot, currentRunningBehavior);
+  bestBehavior = IActivity::GetDesiredActiveBehaviorInternal(robot, currentRunningBehavior);
   
   if(bestBehavior != nullptr) {
     if( bestBehavior != currentRunningBehavior ) {

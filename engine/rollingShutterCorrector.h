@@ -84,7 +84,7 @@ namespace Anki {
       // Shifts the image by the calculated pixel shifts
       Vision::Image WarpImage(const Vision::Image& img);
       
-      std::vector<Vec2f> GetPixelShifts() const { return _pixelShifts; }
+      const std::vector<Vec2f>& GetPixelShifts() const { return _pixelShifts; }
       int GetNumDivisions() const { return _rsNumDivisions; }
       
       static constexpr f32 timeBetweenFrames_ms = 65.0;

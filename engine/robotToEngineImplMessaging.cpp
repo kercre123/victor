@@ -285,7 +285,7 @@ void RobotToEngineImplMessaging::HandleRobotSetHeadID(const AnkiEvent<RobotInter
   
   const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
   const auto hwRev  = payload.hwRevision;
-  const auto headID = payload.robotID;
+  const auto headID = payload.serialNumber;
   
   // Set DAS Global on all messages
   char string_id[32] = {};
@@ -706,7 +706,6 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = matchedObjectID;
-    payload.robotID = robot->GetID();
     
     if(!isDockingObject && !isCarryingObject)
     {
@@ -774,7 +773,6 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
   
   // Update the ID to be the blockworld ID before broadcasting
   payload.objectID = conObj->GetID();
-  payload.robotID = robot->GetID();
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
 }
 

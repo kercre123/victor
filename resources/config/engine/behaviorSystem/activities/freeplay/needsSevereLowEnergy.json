@@ -2,9 +2,6 @@
   "activityID": "NeedsSevereLowEnergy",
   "activityType": "NeedsExpression",
 
-  // disable reactions that don't make sense in a severe needs state
-  "disableReactionTriggers": true,
-
   "activityStrategy":
   {
     "type" : "Needs",

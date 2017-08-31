@@ -18,6 +18,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/needsSystem/needsState.h"
 #include "engine/robot.h"
@@ -106,7 +107,7 @@ bool BehaviorExpressNeeds::IsRunnableInternal(const Robot& robot) const
 {
   if(_caresAboutExpressedState &&
      (_requiredBracket == NeedBracketId::Critical)){
-    if(_need != robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+    if(_need != robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
       return false;
     }
   }else{
@@ -159,7 +160,7 @@ Result BehaviorExpressNeeds::ResumeInternal(Robot& robot)
 void BehaviorExpressNeeds::StopInternal(Robot& robot)
 {
   if(_shouldClearExpressedState){
-    robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+    robot.GetAIComponent().GetSevereNeedsComponent().ClearSevereNeedExpression();
   }
 
 }

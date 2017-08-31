@@ -245,14 +245,16 @@ namespace Cozmo {
 
       private void PositionRadialEndCap(Image cap) {
         float totalAngle = 360f;
+        float angleOffset = 0f;
         if (_ImageFillMask.fillMethod == Image.FillMethod.Radial90) {
           totalAngle = 90f;
         }
         else if (_ImageFillMask.fillMethod == Image.FillMethod.Radial180) {
           totalAngle = 180;
+          angleOffset = ((Image.Origin180)_ImageFillMask.fillOrigin == Image.Origin180.Left) ? -180f : 0;
         }
         Vector3 eulers = cap.rectTransform.rotation.eulerAngles;
-        eulers.z = _ImageFillMask.fillAmount * totalAngle * (_ImageFillMask.fillClockwise ? -1f : 1f);
+        eulers.z = _ImageFillMask.fillAmount * totalAngle * (_ImageFillMask.fillClockwise ? -1f : 1f) + angleOffset;
         cap.rectTransform.eulerAngles = eulers;
         cap.gameObject.SetActive(true);
       }

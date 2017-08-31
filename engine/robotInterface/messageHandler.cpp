@@ -1,4 +1,4 @@
-/**
+  /**
 * File: messageHandler
 *
 * Author: damjan stulic
@@ -204,11 +204,12 @@ void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEn
   
 Result MessageHandler::AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg)
 {
+  // Note: robotID is always 1
 #ifdef COZMO_V2
-  int port = !connectMsg.isSimulated ? Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT : Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + connectMsg.robotID;
+  int port = !connectMsg.isSimulated ? Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT : Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + 1;
   PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", (const char*)connectMsg.ipAddress.data(), port);
 #else
-  int port = !connectMsg.isSimulated ? Anki::Cozmo::ROBOT_RADIO_BASE_PORT : Anki::Cozmo::ROBOT_RADIO_BASE_PORT + connectMsg.robotID;
+  int port = !connectMsg.isSimulated ? Anki::Cozmo::ROBOT_RADIO_BASE_PORT : Anki::Cozmo::ROBOT_RADIO_BASE_PORT + 1;
 #endif
   Anki::Util::TransportAddress address((const char*)connectMsg.ipAddress.data(), static_cast<uint16_t>(port));
   _robotConnectionManager->Connect(address);

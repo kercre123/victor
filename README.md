@@ -9,6 +9,18 @@ and follow [Unity Best Practices](https://github.com/anki/cozmo-one/wiki/Eng-Uni
 
 # Building cozmo-one
 
+### Submodules
+Fetch the submodules:
+
+```
+git submodule update --init --recursive
+```
+
+Alternatively when fetching the code:
+```
+git clone --recursive <git url>
+```
+
 ### Brew
 
 First install [brew](http://brew.sh/). Then use brew to install the following dependencies. Note that Apple's included Python can cause problems, so it's recommended to install through brew:

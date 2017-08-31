@@ -3,7 +3,6 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/robot/matlabInterface.h"
@@ -27,7 +26,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/robotToEngineImplMessaging.h"
-#include "engine/visionSystem.h"
+#include "engine/vision/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "gtest/gtest.h"
@@ -569,7 +568,7 @@ void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp
 {
   using namespace RobotInterface;
   RobotToEngine msg = RobotToEngine::CreateactiveObjectMoved(
-      ObjectMoved(timestamp, activeID, 1, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
+      ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
   AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(event, &robot);
 }

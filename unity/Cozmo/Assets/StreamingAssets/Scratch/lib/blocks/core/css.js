@@ -1139,40 +1139,56 @@ Blockly.Css.CONTENT = [
 
   // Used for vertical
   '.scratchCategoryMenu {',
+    'width: 60px;',
     'background-color: #ffffff;', // *** ANKI CHANGE ***
     //'background: $colour_toolbox;',
     'color: $colour_toolboxText;',
-    'font-size: .9em;',
+    'font-size: .7em;',
     'user-select: none;',
     '-webkit-user-select: none;',
     '-moz-user-select: none;',
     '-ms-user-select: none;',
   '}',
 
-  '.scratchCategoryRow {',
-    'width: 50%;',
+  '.scratchCategoryMenuRow {',
+  '}',
+
+  '.scratchCategoryMenu .scratchCategoryMenuRow + .scratchCategoryMenuRow:before {',
+    'display: block;',
+    'border-top: 1px solid #ddd;',
+    'content: "";',
+    'width: 60%;',
+    'margin: 4px auto;',
   '}',
 
   // *** ANKI CHANGE ***
   // Horizontal-specific version of scratchCategoryMenuItem
-  '.scratchCategoryMenuItem {',
+  '.scratchCategoryMenuItemHorizontal {',
     'padding: 2px;',
     'width: 25%;',
     'cursor: pointer;',
   '}',
 
-  // *** ANKI CHANGE ***
-  // Vertical-specific version of scratchCategoryMenuItem
-  '.scratchCategoryMenuItemVertical {',
-    'padding: 4px;',
-    'width: 50%;',
+  // Used by Anki for vertical only
+  '.scratchCategoryMenuItem {',
+    'padding: 6px 0px;',
     'cursor: pointer;',
+    'margin: 0px 2px;',
+    'text-align: center;',
   '}',
 
-  '.scratchCategoryMenuItem.categorySelected {',
-    'background: #ffffff;', // *** ANKI CHANGE ***
+  // *** ANKI CHANGE ***
+  // Used for horizontal only
+  '.scratchCategoryMenuItemHorizontal.categorySelected {',
+    'background: #ffffff;',
     //'background: $colour_toolboxSelected;',
     'border-radius: 16px;',
+  '}',
+
+  // Used by Anki for vertical only
+  '.scratchCategoryMenuItem.categorySelected {',
+    'background: $colour_toolboxSelected;',
+    'border-radius: 6px;',
   '}',
 
   // *** ANKI CHANGE ***
@@ -1192,13 +1208,12 @@ Blockly.Css.CONTENT = [
     'padding-top: 12px',
   '}',
 
-  '.scratchCategoryItemBubbleLTR {',
-    'width: 14px;',
-    'height: 14px;',
+  '.scratchCategoryItemBubble {',
+    'width: 16px;',
+    'height: 16px;',
     'border: 1px solid;',
-    'border-radius: 8px;',
-    'float: left;',
-    'margin-right: 8px;',
+    'border-radius: 100%;',
+    'margin: 0 auto 3px;',
   '}',
 
   '.scratchCategoryItemBubbleRTL {',

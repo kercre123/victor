@@ -20,6 +20,7 @@
 #include "engine/behaviorSystem/activities/activities/activityGatherCubes.h"
 #include "engine/behaviorSystem/activities/activities/activitySocialize.h"
 #include "engine/behaviorSystem/activities/activities/activitySparked.h"
+#include "engine/behaviorSystem/activities/activities/activityStrictPriority.h"
 #include "engine/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
 #include "engine/robot.h"
@@ -68,6 +69,11 @@ IActivity* CreateActivity(Robot& robot, ActivityType activityType, const Json::V
     case ActivityType::Sparked:
     {
       activityPtr = new ActivitySparked(robot, config);
+      break;
+    }
+    case ActivityType::StrictPriority:
+    {
+      activityPtr = new ActivityStrictPriority(robot, config);
       break;
     }
     case ActivityType::VoiceCommand:

@@ -37,7 +37,6 @@ message BackpackButton
 
 message RobotPoked
 {
-  uint_32 robotID
 }
 
 message RobotStopped

@@ -20,17 +20,17 @@
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/animationTransfer.h"
+#include "engine/animations/cozmo_anim_generated.h"
+#include "engine/animations/faceAnimationManager.h"
+#include "engine/animations/proceduralFace.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
-#include "engine/animations/faceAnimationManager.h"
-#include "engine/animations/proceduralFace.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "cozmo_anim_generated.h"
 #include "threadedPrintStressTester.h"
 #include "util/ankiLab/ankiLab.h"
 #include "util/console/consoleInterface.h"
@@ -775,6 +775,42 @@ void RobotDataLoader::LoadRobotConfigs()
     {
       PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
                         "Needs System Decay Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs system decay 'A' variation config
+  {
+    static const std::string jsonFilename = "config/engine/needs_decayA_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigA);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigAJsonNotFound",
+                        "Needs System Decay A Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs system decay 'B' variation config
+  {
+    static const std::string jsonFilename = "config/engine/needs_decayB_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigB);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigBJsonNotFound",
+                        "Needs System Decay B Json config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
+  // needs system decay 'C' variation config
+  {
+    static const std::string jsonFilename = "config/engine/needs_decayC_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigC);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigCJsonNotFound",
+                        "Needs System Decay C Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }

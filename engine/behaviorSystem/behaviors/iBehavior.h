@@ -17,6 +17,7 @@
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/behaviorSystem/iBSRunnable.h"
 #include "engine/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
@@ -84,7 +85,7 @@ struct BehaviorObjectiveAchieved;
 template<typename TYPE> class AnkiEvent;
 
 // Base Behavior Interface specification
-class IBehavior
+class IBehavior : IBSRunnable
 {
 protected:  
   friend class BehaviorContainer;
@@ -209,6 +210,16 @@ public:
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
 protected:
+  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
+  // as a uniform interface across Activities and Behaviors, but they will be
+  // wired up in a seperate PR
+  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
+  virtual void EnteredActivatableScopeInternal() override {};
+  virtual bool WantsToBeActivatedInternal() override { return false;};
+  virtual void OnActivatedInternal() override {};
+  virtual void OnDeactivatedInternal() override {};
+  virtual void LeftActivatableScopeInternal() override {};
+  
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
   inline void SetDebugStateName(const std::string& inName) {
@@ -228,7 +239,7 @@ protected:
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
   // return Running while IsActing, and Complete otherwise
-  virtual Status UpdateInternal(Robot& robot);
+  virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) { };
 
   Util::RandomGenerator& GetRNG() const;

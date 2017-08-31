@@ -21,6 +21,7 @@
 
 #include "clad/robotInterface/messageRobotToEngine.h"    //TODO: why do we still need these 2?
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/types/proxMessages.h"
 #include "clad/spine/spine_protocol.h"
 
 #define RADIO_IP "127.0.0.1"
@@ -241,13 +242,12 @@ namespace Anki {
 
         // Send RobotAvailable indicating sim robot
         RobotInterface::RobotAvailable idMsg;
-        idMsg.robotID = 0;
         idMsg.hwRevision = 0;
         RobotInterface::SendMessage(idMsg);
 
         // send firmware info indicating simulated robot
         {
-          std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":0}"};
+          std::string firmwareJson{"{\"version\":0,\"time\":0}"};
           RobotInterface::FirmwareVersion msg;
           msg.RESRVED = 0;
           msg.json_length = firmwareJson.size() + 1;
@@ -337,9 +337,16 @@ namespace Anki {
       return robotID_;
     }
 
-    u16 HAL::GetRawProxData()
+    ProxSensorData HAL::GetRawProxData()
     {
-      return FlipBytes(bodyData_->proximity.rangeMM);
+      ProxSensorData proxData;
+      proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
+      // Signal/Ambient Rate are fixed point 9.7, so convert to float:
+      proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
+      proxData.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
+      // SPAD count is fixed point 8.8, so convert to float:
+      proxData.spadCount = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
+      return proxData;
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)

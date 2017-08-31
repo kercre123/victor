@@ -14,13 +14,24 @@
 #ifndef _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 #define _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 
-#include "anki/common/basestation/utils/helpers/boundedWhile.h"
-#include "util/global/globalDefinitions.h"
-#include "util/logging/logging.h"
+#include "anki/common/basestation/math/matrix.h"
+#include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/quad.h"
+#include "anki/common/basestation/math/rotation.h"
+#include "anki/common/shared/radians.h"
+
 #include "anki/common/basestation/math/poseBase.h"
 #include "anki/common/basestation/math/poseTreeNode.h"
 
+#include "util/helpers/boundedWhile.h"
+#include "util/global/globalDefinitions.h"
+#include "util/logging/logging.h"
+
+
 namespace Anki {
+  
+  template<class PoseNd, class TransformNd>
+  bool PoseBase<PoseNd,TransformNd>::_areUnownedParentsAllowed = false;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd, class TransformNd>
@@ -34,6 +45,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const PoseNd& parentPose, const std::string& name)
   : _node(new PoseTreeNode(transform, parentPose._node, name))
   {
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -41,6 +53,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const std::string& name)
   : _node(new PoseTreeNode(transform, nullptr, name))
   {
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -48,6 +61,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const PoseNd& parentPose, const std::string& name)
   : _node(new PoseTreeNode(TransformNd(), parentPose._node, name))
   {
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,7 +69,10 @@ namespace Anki {
   template<class PoseNd, class TransformNd>
   PoseBase<PoseNd,TransformNd>::~PoseBase()
   {
-    
+    if(!IsNull())
+    {
+      _node->RemoveOwner();
+    }
   }
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -64,7 +81,7 @@ namespace Anki {
   PoseBase<PoseNd,TransformNd>::PoseBase(const PoseBase& other)
   : _node(new PoseTreeNode(*other._node)) // don't share Nodes with other! copy the contents!
   {
-    
+    _node->AddOwner();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -75,12 +92,14 @@ namespace Anki {
     {
       if(other.IsNull())
       {
+        _node->RemoveOwner();
         _node.reset();
       }
       else
       {
         // don't share Nodes with other! assign the contents!
         *_node = *other._node;
+        _node->AddOwner();
       }
     }
     return *this;
@@ -105,6 +124,104 @@ namespace Anki {
       std::swap(_node, other._node);
     }
     return *this;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::SetName(const std::string& newName)
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.SetName.NullNode");
+    _node->SetName(newName);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline const std::string& PoseBase<PoseNd,TransformNd>::GetName() const
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetName.NullNode");
+    return _node->GetName();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline PoseID_t PoseBase<PoseNd,TransformNd>::GetID() const
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetID.NullNode");
+    return _node->GetID();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::SetID(PoseID_t newID)
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.SetID.NullNode");
+    _node->SetID(newID);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline const TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform() const
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetTransformConst.NullNode");
+    return _node->GetTransform();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform()
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetTransform.NullNode");
+    return _node->GetTransform();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::IsRoot()    const
+  {
+    return (IsNull() ? true : _node->IsRoot());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::HasParent() const
+  {
+    return (IsNull() ? false : _node->HasParent());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline PoseID_t PoseBase<PoseNd,TransformNd>::GetRootID() const
+  {
+    return (IsNull() ? 0 : _node->GetRootID());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::IsChildOf(const PoseNd& otherPose) const
+  {
+    return (IsNull() || otherPose.IsNull() ? false : _node->IsChildOf(*otherPose._node));
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::IsParentOf(const PoseNd& otherPose) const
+  {
+    return (IsNull() || otherPose.IsNull() ? false : _node->IsParentOf(*otherPose._node));
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::Invert(void)
+  {
+    GetTransform().Invert();
+    ClearParent();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline PoseNd PoseBase<PoseNd,TransformNd>::GetInverse(void) const
+  {
+    return GetTransform().GetInverse();
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -342,6 +459,20 @@ namespace Anki {
     P_wrt_other.SetParent(toPose);
     
     return true;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::AreUnownedParentsAllowed()
+  {
+    return _areUnownedParentsAllowed;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline void PoseBase<PoseNd,TransformNd>::AllowUnownedParents(bool tf)
+  {
+    _areUnownedParentsAllowed = tf;
   }
   
 } // namespace Anki
