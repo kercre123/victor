@@ -284,6 +284,12 @@ Blockly.hideChaff = function(opt_allowToolbox) {
         workspace.toolbox_.flyout_ &&
         workspace.toolbox_.flyout_.autoClose) {
       workspace.toolbox_.clearSelection();
+
+      // *** ANKI CHANGE ***
+      // Hides the flyout when the workspace background is clicked
+      if (window.isVertical) {
+        workspace.toolbox_.flyout_.hide();
+      }
     }
   }
 };
