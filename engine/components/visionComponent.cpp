@@ -2330,7 +2330,9 @@ namespace Cozmo {
       }
       
       // Create ImageRGB object from image buffer
-      Vision::Image imgRGB(numRows, numCols, buffer);
+      Vision::ImageRGB imgRGB(numRows, numCols, buffer);
+      
+      imgRGB.Save("/data/misc/camera/test/" + std::to_string(imageId) + ".png");
       
       if(kDisplayUndistortedImages)
       {
