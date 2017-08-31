@@ -114,5 +114,5 @@ fi  # if not SKIP_LIBS
 $ADB shell -x "
 export LD_LIBRARY_PATH=/data/local/tmp
 cd /data/local/tmp
-nice -n -20 ./cozmoAnim
+nice -n -19 ./cozmoAnim
 "

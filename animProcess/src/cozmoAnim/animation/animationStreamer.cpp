@@ -15,8 +15,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "cozmoAnim/animation/animationStreamer.h"
-#include "cozmoAnim/animation/faceAnimationManager.h"
-#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
+//#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 //#include "anki/cozmo/basestation/audio/robotAudioClient.h"
@@ -77,8 +76,11 @@ namespace Cozmo {
     
     SetDefaultParams();
     
-//    SetupHandlers(_context->GetExternalInterface());
+    // TODO: Restore ability to subscribe to messages here?
+    //       It's currently hard to do with CPPlite messages.
+    // SetupHandlers(_context->GetExternalInterface());
     
+    // TODO: Hook up neutral face
 //    // Set up the neutral face to use when resetting procedural animations
 //    const std::string neutralFaceAnimGroupName = _context->GetRobotManager()->GetAnimationForTrigger(NeutralFaceTrigger);
 //    const AnimationGroup* group = _animationGroups.GetAnimationGroup(neutralFaceAnimGroupName);
@@ -307,7 +309,10 @@ namespace Cozmo {
     return lastResult;
   }
   
+  // Sends message to robot if track is unlocked and deletes it.
+  //
   // TODO: Take in EngineToRobot& instead of ptr?
+  //       i.e. Why doesn't KeyFrame::GetStreamMessage() return a ref?
   bool AnimationStreamer::SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track)
   {
     bool res = false;
@@ -352,22 +357,6 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
-//    AnimKeyFrame::FaceImage faceImageMsg;
-//    Result rleResult = FaceAnimationManager::CompressRLE(ProceduralFaceDrawer::DrawFace(procFace), faceImageMsg.image);
-//    
-//    if(RESULT_OK != rleResult) {
-//      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessageHelper",
-//                        "Failed to get RLE frame from procedural face.");
-//    } else {
-//      if(DEBUG_ANIMATION_STREAMING) {
-//        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace",
-//                          "Streaming ProceduralFaceKeyFrame at t=%dms.",
-//                          _streamingTime_ms - _startTime_ms);
-//      }
-//      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
-//    }
-
-
     Vision::ImageRGB faceImg = ProceduralFaceDrawer::DrawFace(procFace);
     
     // Draws frame to face display
@@ -564,12 +553,7 @@ namespace Cozmo {
        deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-    
-    // Add more stuff to the send buffer. Note that we are not counting individual
-    // keyframes here, but instead _audio_ keyframes (with which we will buffer
-    // any co-timed keyframes from other tracks).
-    
-    //while ( ShouldProcessAnimationFrame(anim, _startTime_ms, _streamingTime_ms) )
+    // Send keyframes at appropriates times
     if (anim->HasFramesLeft())
     {
       
@@ -704,79 +688,6 @@ namespace Cozmo {
     return lastResult;
   } // UpdateStream()
   
-  
-  bool AnimationStreamer::ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
-  {
-    bool result = false;
-    /*
-    if ( _sendBuffer.empty() ) {
-      
-      // There are animation frames, but no audio to play
-      if ( anim->HasFramesLeft() && !_audioClient.HasAnimation() ) {
-        result = true;
-      }
-      // There is audio to play
-      else if ( _audioClient.HasAnimation() ) {
-        // Update the RobotAudioAnimation object
-        _audioClient.GetCurrentAnimation()->Update(startTime_ms, streamingTime_ms);
-        // Check if audio is ready to proceed.
-        result = _audioClient.UpdateAnimationIsReady( startTime_ms, streamingTime_ms );
-        
-        // If audio takes too long abort animation
-        if ( !result ) {
-          // Watch for Audio time outs
-          
-          const auto state = _audioClient.GetCurrentAnimation()->GetAnimationState();
-          if ( state == Audio::RobotAudioAnimation::AnimationState::Preparing ) {
-            // Don't start timer until the Audio Animation has started posting audio events
-            return false;
-          }
-          
-          if ( _audioBufferingTime_ms == 0 ) {
-            _audioBufferingTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-          }
-          else {
-            if ( (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms) > kAnimationAudioAllowedBufferTime_ms ) {
-              PRINT_NAMED_WARNING("AnimationStreamer.ShouldProcessAnimationFrame",
-                                  "Abort animation '%s' timed out after %d ms, audio event @ %d, buffer State %s",
-                                  anim->GetName().c_str(),
-                                  (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms),
-                                  (streamingTime_ms - startTime_ms),
-                                  Audio::RobotAudioAnimation::GetStringForAnimationState( _audioClient.GetCurrentAnimation()->GetAnimationState() ).c_str() );
-              
-              if (kFullAnimationAbortOnAudioTimeout) {
-                // Abort the entire animation
-                Abort();
-              }
-              else {
-                // Abort only the animation audio
-                _audioClient.GetCurrentAnimation()->AbortAnimation();
-                _audioClient.ClearCurrentAnimation();
-              }
-            }
-          }
-          
-          if (DEBUG_ANIMATION_STREAMING_AUDIO) {
-            PRINT_NAMED_INFO("AnimationStreamer.ShouldProcessAnimationFrame",
-                             "Audio Animation Is NOT Ready | buffering time: %d ms",
-                             (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms));
-          }
-        }
-        else {
-          // Audio is streaming
-          _audioBufferingTime_ms = 0;
-
-          if (DEBUG_ANIMATION_STREAMING_AUDIO) {
-            PRINT_NAMED_INFO("AnimationStreamer.ShouldProcessAnimationFrame",
-                             "Audio Animation IS Ready");
-          }
-        }
-      }
-    }
-    */
-    return result;
-  }
-
   
   Result AnimationStreamer::Update()
   {

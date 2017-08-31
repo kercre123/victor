@@ -158,7 +158,7 @@ private:
   std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
 
 }; // class RobotManager
-  
+
 } // namespace Cozmo
 } // namespace Anki
 

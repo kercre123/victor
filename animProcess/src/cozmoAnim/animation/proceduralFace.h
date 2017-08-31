@@ -15,7 +15,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
-//#include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/logging/logging.h"
 #include <array>
@@ -42,10 +42,8 @@ class ScanlineDistorter;
 class ProceduralFace
 {
 public:
-//  static const int WIDTH  = FaceAnimationManager::IMAGE_WIDTH;
-//  static const int HEIGHT = FaceAnimationManager::IMAGE_HEIGHT;
-  static const int WIDTH  = 128;
-  static const int HEIGHT = 64;
+  static const int WIDTH  = FaceDisplay::FACE_DISPLAY_WIDTH;
+  static const int HEIGHT = FaceDisplay::FACE_DISPLAY_HEIGHT;
   
   // Nominal positions/sizes for everything (these are things that aren't
   // parameterized at dynamically, but could be if we want)

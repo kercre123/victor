@@ -41,7 +41,11 @@ namespace Cozmo {
   //
   // IAnimationStreamer declares an abstract interface common to all implementations of an animation
   // streamer component. All methods are pure virtual and must be implemented by the interface provider.
-  //  
+  //
+  
+  // TODO: Restore HasSettableParameters ability to work with EngineToRobot messages?
+  //       If not, create a SetLiveIdleAnimationParameters E2R message.
+  
 //  class IAnimationStreamer :
 //    public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   class IAnimationStreamer

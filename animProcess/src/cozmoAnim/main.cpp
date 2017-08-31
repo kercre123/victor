@@ -39,6 +39,7 @@ int main(void)
   Anki::Util::gLoggerProvider = &loggerProvider;
 
   
+  // TODO: Load DataPlatform paths from json or however engine does it
   /*
   const char* configuration_data = "{}";
   
@@ -60,8 +61,9 @@ int main(void)
   
   
   // Check /data/data/com.anki.cozmoengine/files/assets/current for the hash of the assets directory to use
+  std::string rootDir = "/data/data/com.anki.cozmoengine";
   std::string assetHash;
-  std::string assetHashFileName = "/data/data/com.anki.cozmoengine/files/assets/current";
+  std::string assetHashFileName = rootDir + "/files/assets/current";
   std::ifstream assetHashFile(assetHashFileName.c_str());
   if (assetHashFile.is_open()) {
     getline(assetHashFile, assetHash);
@@ -73,11 +75,10 @@ int main(void)
   }
   
   
-  std::string filesPath = "/data/local/tmp";
-  std::string cachePath = "/data/local/tmp";
+  std::string filesPath = rootDir + "/files/output";
+  std::string cachePath = rootDir + "/cache";
   std::string externalPath = "/data/local/tmp";
-  std::string resourcesPath = "/data/data/com.anki.cozmoengine/files/assets/" + assetHash + "/cozmo_resources";
-  std::string resourcesBasePath = "/data/local/tmp";
+  std::string resourcesPath = rootDir + "/files/assets/" + assetHash + "/cozmo_resources";
   
   
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
@@ -92,8 +93,7 @@ int main(void)
   auto timeOffset = start;
   
   while (1) {
-    
-    //BaseStationTime_t currTime_ns = std::chrono::duration<BaseStationTime_t, std::chrono::nanoseconds>(start - timeOffset);
+
     std::chrono::nanoseconds currTime_ns = start - timeOffset;
     cozmoAnim.Update(currTime_ns.count());
     

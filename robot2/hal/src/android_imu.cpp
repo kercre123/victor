@@ -168,27 +168,27 @@ namespace Anki {
     }
 
 
-    bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
+    bool HAL::IMUReadData(HAL::IMU_DataStructure &imuData)
     {
 #if IMU_INTERFACE == ANDROID_IMU
-      while (PopIMU(IMUData)) {}; // Just to pop queue
+      while (PopIMU(imuData)) {}; // Just to pop queue
       static TimeStamp_t lastIMURead = 0;
       TimeStamp_t now = HAL::GetTimeStamp();
       if (now - lastIMURead > 4) {
         // TEMP HACK: Send 0s because on my Nexus 5x, the gyro values are kinda crazy.
-        IMUData.acc_x = 0.f;
-        IMUData.acc_y = 0.f;
-        IMUData.acc_z = 9800.f;
-        IMUData.rate_x = 0.f;
-        IMUData.rate_y = 0.f;
-        IMUData.rate_z = 0.f;
+        imuData.acc_x = 0.f;
+        imuData.acc_y = 0.f;
+        imuData.acc_z = 9800.f;
+        imuData.rate_x = 0.f;
+        imuData.rate_y = 0.f;
+        imuData.rate_z = 0.f;
 
         lastIMURead = now;
         return true;
       }
       return false;
 #else
-      return PopIMU(IMUData);
+      return PopIMU(imuData);
 #endif
     }
 

@@ -901,6 +901,9 @@ namespace Anki {
       
       
       // ==== V2 Animation ======
+      // TODO: If these messages are specified by a specific range in the clad file,
+      // we can make it so that some of these handlers don't have to be defined here since
+      // they're meant to be handled by the animation process
       void Process_playAnim(RobotInterface::PlayAnim const& msg)
       {
         // Nothing to do here

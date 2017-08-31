@@ -1,10 +1,9 @@
 
 #include "cozmoAnim/cozmoContext.h"
+#include "cozmoAnim/robotDataLoader.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-//#include "anki/cozmo/basestation/audio/cozmoAudioController.h"
-#include "cozmoAnim/robotDataLoader.h"
-//#include "audioEngine/multiplexer/audioMultiplexer.h"
+
 #include "util/cpuProfiler/cpuThreadId.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
@@ -24,7 +23,7 @@ public:
 CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
   , _random(new Anki::Util::RandomGenerator())
-  , _dataLoader(new RobotDataLoader(dataPlatform))
+  , _dataLoader(new RobotDataLoader(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
 

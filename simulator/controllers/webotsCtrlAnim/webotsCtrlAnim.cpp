@@ -11,7 +11,6 @@
 #include "../shared/ctrlCommonInitialization.h"
 #include "util/logging/logging.h"
 #include "util/logging/channelFilter.h"
-//#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "json/json.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -76,7 +75,7 @@ int main(int argc, char **argv)
     
     // load file config
     Json::Value consoleFilterConfig;
-    const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
+    const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
     if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
     {
       PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
@@ -107,8 +106,8 @@ int main(int argc, char **argv)
   Json::Value config;
 
   if (!dataPlatform.readAsJson(Util::Data::Scope::Resources,
-                               "config/basestation/config/configuration.json", config)) {
-    PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConfig", "Failed to parse Json file config/basestation/config/configuration.json");
+                               "config/engine/configuration.json", config)) {
+    PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConfig", "Failed to parse Json file config/engine/configuration.json");
   }
 
 //  if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
@@ -124,14 +123,6 @@ int main(int argc, char **argv)
 //    config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
 //  }
 
-  
-//  int numUIDevicesToWaitFor = 1;
-//  webots::Field* numUIsField = engineSupervisor.getSelf()->getField("numUIDevicesToWaitFor");
-//  if (numUIsField) {
-//    numUIDevicesToWaitFor = numUIsField->getSFInt32();
-//  } else {
-//    PRINT_NAMED_WARNING("webotsCtrlAnim.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
-//  }
   
 //  config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
 //  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;

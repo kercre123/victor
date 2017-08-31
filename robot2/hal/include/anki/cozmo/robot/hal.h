@@ -124,7 +124,7 @@ namespace Anki
        * y-axis points out of cozmo's left
        * z-axis points out the top of cozmo's head
        */
-      bool IMUReadData(IMU_DataStructure &IMUData);
+      bool IMUReadData(IMU_DataStructure &imuData);
 
 /************************************************************************
  * \section Motors

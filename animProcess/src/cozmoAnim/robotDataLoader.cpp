@@ -18,7 +18,7 @@
 
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
-//#include "anki/cozmo/basestation/cozmoContext.h"
+#include "cozmoAnim/cozmoContext.h"
 //#include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 #include "cozmo_anim_generated.h"
@@ -41,19 +41,12 @@ namespace {
 namespace Anki {
 namespace Cozmo {
 
-//RobotDataLoader::RobotDataLoader(const CozmoContext* context)
-//: _context(context)
-//, _platform(_context->GetDataPlatform())
-//, _cannedAnimations(new CannedAnimationContainer())
-//{
-//}
-  
-RobotDataLoader::RobotDataLoader(const Util::Data::DataPlatform* dataPlatform)
-: _platform(dataPlatform)
+RobotDataLoader::RobotDataLoader(const CozmoContext* context)
+: _context(context)
+, _platform(_context->GetDataPlatform())
 , _cannedAnimations(new CannedAnimationContainer())
 {
 }
-  
 
 RobotDataLoader::~RobotDataLoader()
 {
@@ -110,7 +103,7 @@ void RobotDataLoader::CollectAnimFiles()
 {
   // animations
   {
-    const std::vector<std::string> paths = {"assets/animations/", "config/basestation/animations/"};
+    const std::vector<std::string> paths = {"assets/animations/", "config/engine/animations/"};
     for (const auto& path : paths) {
       WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
         _jsonFiles[FileType::Animation].push_back(filename);

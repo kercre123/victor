@@ -35,13 +35,6 @@ namespace CozmoAnim {
 namespace Anki {
 namespace Cozmo {
 
-// Forward declaration
-namespace RobotInterface {
-struct EngineToRobot;
-//  enum class EngineToRobotTag : uint8_t;
-}
-//class Robot;
-
 namespace Animations {
 
 // Templated class for storing/accessing various "tracks", which

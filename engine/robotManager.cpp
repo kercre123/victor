@@ -255,7 +255,7 @@ bool RobotManager::UpdateFirmware()
 void RobotManager::UpdateAllRobots()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
-  
+
   //for (auto &r : _robots) {
   for(auto r = _robots.begin(); r != _robots.end(); ) {
     // Call update

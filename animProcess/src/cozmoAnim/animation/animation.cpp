@@ -20,7 +20,6 @@
 #include "util/logging/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "cozmo_anim_generated.h"
-//#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
 

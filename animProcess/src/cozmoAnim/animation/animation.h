@@ -34,14 +34,7 @@ using AnimationTag = uint8_t;
 
 static const AnimationTag NotAnimatingTag  = 0;
 static const AnimationTag IdleAnimationTag = 255;
-  
 
-// Forward declaration
-//namespace RobotInterface {
-//class EngineToRobot;
-//enum class EngineToRobotTag : uint8_t;
-//}
-//class Robot;
 
 class Animation
 {

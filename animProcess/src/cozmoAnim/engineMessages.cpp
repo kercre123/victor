@@ -130,7 +130,8 @@ namespace Messages {
     switch(msg.tag)
     {
       // TODO: If this switch block becomes huge, we can auto-generate it with an emitter.
-      //       Most messages will be ignored though so it probably shouldn't be necessary.
+      //       Most E2R messages will be ignored here though so it probably shouldn't be necessary.
+      //       OR the emitter could be smart and only create the switch for messages in a specific range of tags.
       //#include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
         
       case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_lockAnimTracks:

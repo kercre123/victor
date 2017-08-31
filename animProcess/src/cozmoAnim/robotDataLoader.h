@@ -40,8 +40,7 @@ class CozmoContext;
 class RobotDataLoader : private Util::noncopyable
 {
 public:
-  //RobotDataLoader(const CozmoContext* context);
-  RobotDataLoader(const Util::Data::DataPlatform* dataPlatform);
+  RobotDataLoader(const CozmoContext* context);
   ~RobotDataLoader();
 
   // loads all data excluding configs, using DispatchWorker to parallelize.
@@ -77,7 +76,7 @@ private:
                         const std::function<void(const std::string& filePath)>& walkFunc);
 
 
-//  const CozmoContext* const _context;
+  const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
   enum FileType {

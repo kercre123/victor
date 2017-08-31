@@ -230,7 +230,7 @@ namespace Cozmo {
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
   
-  // Belongs somewhere else?
+  // TODO: Move to a config file for animation process
   const s32 ANIM_TIME_STEP = 33; //ms
   
   /***************************************************************************

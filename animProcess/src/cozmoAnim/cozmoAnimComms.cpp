@@ -19,8 +19,6 @@
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 
-// TODO: Fix underscore
-
 
 namespace Anki {
 namespace Cozmo {
@@ -30,13 +28,13 @@ namespace CozmoAnimComms {
       const size_t RECV_BUFFER_SIZE = 1024 * 4;
 
       // For comms with engine
-      UdpServer server;
+      UdpServer _server;
 
       // For comms with robot
       UdpClient _robotClient;
       
       u8 recvBuf_[RECV_BUFFER_SIZE];
-      size_t recvBufSize_ = 0;
+      size_t _recvBufSize = 0;
     }
 
 
@@ -52,7 +50,7 @@ namespace CozmoAnimComms {
     
     // Setup engine comms
     printf("InitComms.StartListeningPort: %d\n", ANIM_PROCESS_SERVER_BASE_PORT + robotID);
-    if (!server.StartListening(ANIM_PROCESS_SERVER_BASE_PORT + robotID)) {
+    if (!_server.StartListening(ANIM_PROCESS_SERVER_BASE_PORT + robotID)) {
       printf("InitComms.UDPServerFailed\n");
       assert(false);
     }
@@ -62,14 +60,14 @@ namespace CozmoAnimComms {
 
   bool EngineIsConnected(void)
   {
-    return server.HasClient();
+    return _server.HasClient();
   }
 
   
   void DisconnectEngine(void)
   {
-    server.DisconnectClient();
-    recvBufSize_ = 0;
+    _server.DisconnectClient();
+    _recvBufSize = 0;
   }
 
   void UpdateEngineCommsState(u8 wifi)
@@ -79,9 +77,9 @@ namespace CozmoAnimComms {
 
   bool SendPacketToEngine(const void *buffer, const u32 length)
   {
-    if (server.HasClient()) {
+    if (_server.HasClient()) {
 
-      u32 bytesSent = server.Send((char*)buffer, length);
+      u32 bytesSent = _server.Send((char*)buffer, length);
       if (bytesSent < length) {
         printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
         DisconnectEngine();
@@ -101,18 +99,18 @@ namespace CozmoAnimComms {
 //    int dataSize;
 //
 //    // Read available data
-//    const size_t tempSize = RECV_BUFFER_SIZE - recvBufSize_;
+//    const size_t tempSize = RECV_BUFFER_SIZE - _recvBufSize;
 //    assert(tempSize < std::numeric_limits<int>::max());
-//    dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
+//    dataSize = _server.Recv((char*)&recvBuf_[_recvBufSize], static_cast<int>(tempSize));
 //    if (dataSize > 0) {
-//      recvBufSize_ += dataSize;
+//      _recvBufSize += dataSize;
 //    }
 //    else if (dataSize < 0) {
 //      // Something went wrong
 //      DisconnectEngine();
 //    }
 //
-//    return recvBufSize_;
+//    return _recvBufSize;
 //
 //  } // RadioGetNumBytesAvailable()
 //
@@ -140,17 +138,14 @@ namespace CozmoAnimComms {
 //  }
 
 
-  // TODO: would be nice to implement this in a way that is not specific to
-  //       hardware vs. simulated radio receivers, and just calls lower-level
-  //       radio functions.
   u32 GetNextPacketFromEngine(u8* buffer)
   {
     u32 retVal = 0;
 
     // Read available datagram
-    int dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
+    int dataLen = _server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
     if (dataLen > 0) {
-      recvBufSize_ = dataLen;
+      _recvBufSize = dataLen;
     }
     else if (dataLen < 0) {
       // Something went wrong
@@ -168,8 +163,6 @@ namespace CozmoAnimComms {
     return retVal;
   }
 
-
-  
   
   void DisconnectRobot() {
     _robotClient.Disconnect();
@@ -202,7 +195,7 @@ namespace CozmoAnimComms {
     // Read available datagram
     int dataLen = _robotClient.Recv((char*)buffer, max_length);
     if (dataLen > 0) {
-      recvBufSize_ = dataLen;
+      _recvBufSize = dataLen;
     }
     else if (dataLen < 0) {
       // Something went wrong

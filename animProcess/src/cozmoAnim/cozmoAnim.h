@@ -14,20 +14,18 @@
 #include "json/json.h"
 
 #include "anki/common/types.h"
-//#include "anki/types.h"
-
 
 #include <memory>
 
 
 namespace Anki {
   
-  // Forward declaration:
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
+// Forward declaration:
+namespace Util {
+namespace Data {
+  class DataPlatform;
+}
+}
   
 namespace Cozmo {
   
@@ -51,8 +49,6 @@ protected:
   
   bool               _isInitialized = false;
   Json::Value        _config;
-
-  virtual Result InitInternal();
   
   std::unique_ptr<CozmoContext>       _context;
   std::unique_ptr<AnimationStreamer>  _animationStreamer;

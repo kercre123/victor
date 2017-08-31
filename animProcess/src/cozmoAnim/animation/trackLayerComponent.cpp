@@ -18,19 +18,18 @@
 #include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 //#include "anki/cozmo/basestation/components/desiredFaceDistortionComponent.h"
 #include "cozmoAnim/cozmoContext.h"
-//#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
 
+// TODO: Restore audio glitch
 //CONSOLE_VAR(bool, kGenerateGlitchAudio, "ProceduralAnims", false);
 bool kGenerateGlitchAudio = false;
 
 TrackLayerComponent::TrackLayerComponent(const CozmoContext* context)
-: // _context(context)
-_audioLayerManager(new AudioLayerManager(*context->GetRandom()))
+: _audioLayerManager(new AudioLayerManager(*context->GetRandom()))
 , _backpackLayerManager(new BackpackLayerManager(*context->GetRandom()))
 , _faceLayerManager(new FaceLayerManager(*context->GetRandom()))
 , _lastProceduralFace(new ProceduralFace())
@@ -50,6 +49,7 @@ void TrackLayerComponent::Init()
 
 void TrackLayerComponent::Update()
 {
+  // TODO: Restore glitch ability via messaging from engine
   /*
   auto& desiredGlitchComponent = _context->GetNeedsManager()->GetDesiredFaceDistortionComponent();
   const float desiredGlitchDegree = desiredGlitchComponent.GetCurrentDesiredDistortion();

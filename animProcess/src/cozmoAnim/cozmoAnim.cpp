@@ -2,7 +2,8 @@
  * File:          cozmoAnim.cpp
  * Date:          6/26/2017
  *
- * Description:   (See header file.)
+ * Description:   A platform-independent container for spinning up all the pieces
+ *                required to run Cozmo Animation Process.
  *
  * Author: Kevin Yoon
  *
@@ -69,61 +70,16 @@ Result CozmoAnimEngine::Init(const Json::Value& config) {
   }
 
   _config = config;
-  
-//  if(!_config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
-//    PRINT_NAMED_ERROR("CozmoEngine.Init", "No AdvertisingHostIP defined in Json config.");
-//    return RESULT_FAIL;
-//  }
-//  
-//  if(!_config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
-//    PRINT_NAMED_ERROR("CozmoEngine.Init", "No RobotAdvertisingPort defined in Json config.");
-//    return RESULT_FAIL;
-//  }
-//  
-//  if(!_config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
-//    PRINT_NAMED_ERROR("CozmoEngine.Init", "No UiAdvertisingPort defined in Json config.");
-//    return RESULT_FAIL;
-//  }
-  
-//  Result lastResult = _uiMsgHandler->Init(_context.get(), _config);
-//  if (RESULT_OK != lastResult)
-//  {
-//    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UIMessageHandler");
-//    return lastResult;
-//  }
-  
 
   _context->GetDataLoader()->LoadNonConfigData();
     
   Messages::Init(_animationStreamer.get());
-  
-  
-  Result lastResult = InitInternal();
-  if(lastResult != RESULT_OK) {
-    PRINT_NAMED_ERROR("CozmoAnimEngine.Init", "Failed calling internal init.");
-    return lastResult;
-  }
   
   PRINT_NAMED_INFO("CozmoAnimEngine.Init.Success","");
   _isInitialized = true;
 
   return RESULT_OK;
 }
-
-//template<>
-//void CozmoAnim::HandleMessage(const ExternalInterface::StartEngine& msg)
-//{
-//  //_context->SetRandomSeed(msg.random_seed);
-//  //_context->SetLocale(msg.locale);
-//  
-//  if (EngineState::Running == _engineState) {
-//    PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.StartEngine.AlreadyStarted", "");
-//    return;
-//  }
-//  
-//  SetEngineState(EngineState::WaitingForUIDevices);
-//}
-  
 
 Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
 {
@@ -162,53 +118,6 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   
   _animationStreamer->Update();
   
-  
-//  // Handle UI
-//  Result lastResult = _uiMsgHandler->Update();
-//  if (RESULT_OK != lastResult)
-//  {
-//    PRINT_NAMED_ERROR("CozmoAnimEngine.Update", "Error updating UIMessageHandler");
-//    return lastResult;
-//  }
-  
-//  switch (_engineState)
-//  {
-//    case EngineState::Stopped:
-//    {
-//      break;
-//    }
-//    case EngineState::WaitingForUIDevices:
-//    {
-//      if (_uiMsgHandler->HasDesiredNumUiDevices()) {
-//        SetEngineState(EngineState::LoadingData);
-//      }
-//      break;
-//    }
-//    case EngineState::LoadingData:
-//    {
-//      float currentLoadingDone = 0.0f;
-//      if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
-//      {
-//        _context->GetRobotManager()->BroadcastAvailableAnimations();
-//        SetEngineState(EngineState::Running);
-//      }
-//      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
-//      break;
-//    }
-//    case EngineState::Running:
-//    {
-//      break;
-//    }
-//    default:
-//      PRINT_NAMED_ERROR("CozmoAnimEngine.Update.UnexpectedState","Running Update in an unexpected state!");
-//  }
-  
-  // Tick Audio Controller after all messages have been processed
-//  const auto audioMux = _context->GetAudioMultiplexer();
-//  if (audioMux != nullptr) {
-//    audioMux->UpdateAudioController();
-//  }
-  
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
@@ -223,33 +132,6 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 
-  return RESULT_OK;
-}
-
-
-
-//void CozmoAnimEngine::SetEngineState(EngineState newState)
-//{
-//  EngineState oldState = _engineState;
-//  if (oldState == newState)
-//  {
-//    return;
-//  }
-//  
-//  _engineState = newState;
-//  
-//  // TODO: Send some kind of AnimProcess state update to engine
-////  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdateEngineState>(oldState, newState);
-//  
-//  Anki::Util::sEventF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
-//}
-  
-Result CozmoAnimEngine::InitInternal()
-{
-  // Setup Audio Controller
-  {
-  }
-  
   return RESULT_OK;
 }
 

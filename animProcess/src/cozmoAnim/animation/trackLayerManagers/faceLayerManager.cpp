@@ -5,7 +5,8 @@
  * Created: 05/16/2017
  *
  * Description: Specific track layer manager for ProceduralFaceKeyFrames
- *              Handles procedural face layering, which includes things like KeepAlive, *              look-ats while turning, blinks, and repair glitches.
+ *              Handles procedural face layering, which includes things like KeepAlive, 
+ *              look-ats while turning, blinks, and repair glitches.
  *
  * Copyright: Anki, Inc. 2017
  *

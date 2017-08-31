@@ -133,8 +133,6 @@ private:
                              TimeStamp_t streamTime_ms,
                              LayeredKeyFrames& layeredKeyFrames,
                              bool storeFace);
-
-//  const CozmoContext* _context = nullptr;
   
   std::unique_ptr<AudioLayerManager>    _audioLayerManager;
   std::unique_ptr<BackpackLayerManager> _backpackLayerManager;

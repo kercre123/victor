@@ -87,9 +87,9 @@ void AnimationComponent::Update()
 }
  
 
+// Doles animations (the max number that can be doled per tic) to game if requested
 void AnimationComponent::DoleAvailableAnimations()
 {
-  // If not already doling, dole animations
   if (_isDolingAnims) {
     u32 numAnimsDoledThisTic = 0;
 

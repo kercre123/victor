@@ -66,7 +66,6 @@ public:
   
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
 
-  
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   //AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioServer.get(); }
@@ -82,12 +81,12 @@ public:
 private:
   // This is passed in and held onto, but not owned by the context (yet.
   // It really should be, and that refactoring will have to happen soon).
-  Util::Data::DataPlatform*                               _dataPlatform = nullptr;
+  Util::Data::DataPlatform*                      _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
-  //std::unique_ptr<AudioMultiplexer>                     _audioServer;
-  std::unique_ptr<Util::RandomGenerator>                _random;
-  std::unique_ptr<RobotDataLoader>                      _dataLoader;
+  //std::unique_ptr<AudioMultiplexer>              _audioServer;
+  std::unique_ptr<Util::RandomGenerator>         _random;
+  std::unique_ptr<RobotDataLoader>               _dataLoader;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;
