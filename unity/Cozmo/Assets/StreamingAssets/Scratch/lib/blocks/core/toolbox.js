@@ -87,7 +87,8 @@ Blockly.Toolbox = function(workspace) {
  * Width of the toolbox, which changes only in vertical layout.
  * @type {number}
  */
-Blockly.Toolbox.prototype.width = 310;
+// NOTE: this constant works in conjunction with Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH.
+Blockly.Toolbox.prototype.width = 400;
 
 /**
  * Height of the toolbox, which changes only in horizontal layout.
@@ -108,8 +109,15 @@ Blockly.Toolbox.prototype.init = function() {
    * HTML container for the Toolbox menu.
    * @type {Element}
    */
+
+  // *** ANKI CHANGE ***
+  var toolboxDiv = 'blocklyToolboxDiv';
+  if (window.isVertical) {
+    toolboxDiv = 'blocklyToolboxDivVertical';
+  }
+  
   this.HtmlDiv =
-      goog.dom.createDom(goog.dom.TagName.DIV, 'blocklyToolboxDiv');
+      goog.dom.createDom(goog.dom.TagName.DIV, toolboxDiv); // *** ANKI CHANGE ***
   this.HtmlDiv.setAttribute('dir', workspace.RTL ? 'RTL' : 'LTR');
   svg.parentNode.insertBefore(this.HtmlDiv, svg);
 

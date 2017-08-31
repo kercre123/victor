@@ -78,7 +78,8 @@ Blockly.VerticalFlyout.prototype.autoClose = true;
  * The width of the flyout, if not otherwise specified.
  * @type {number}
  */
-Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = 250;
+ // NOTE: this constant works in conjunction with Blockly.Toolbox.prototype.width.
+Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH = 340;
 
 /**
  * Size of a checkbox next to a variable reporter.

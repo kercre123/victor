@@ -699,7 +699,22 @@ Blockly.Css.CONTENT = [
 
   /* Category tree in Toolbox. */
   '.blocklyToolboxDiv {',
-    'background-color: #535252;', // ANKI CHANGE ***
+    'background-color: #535252;', // *** ANKI CHANGE ***
+    //'background-color: $colour_toolbox;',
+    'color: $colour_toolboxText;',
+    'overflow-x: visible;',
+    'overflow-y: auto;',
+    'position: absolute;',
+    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'z-index: 40;', /* so blocks go over toolbox when dragging */
+  '}',
+
+  // *** ANKI CHANGE ***
+  /* Category tree in Toolbox. */
+  '.blocklyToolboxDivVertical {',
+    'top: 100px;',
+    'background-color: #535252;', // *** ANKI CHANGE ***
     //'background-color: $colour_toolbox;',
     'color: $colour_toolboxText;',
     'overflow-x: visible;',
@@ -1145,6 +1160,7 @@ Blockly.Css.CONTENT = [
     'color: $colour_toolboxText;',
     'font-size: .7em;',
     'user-select: none;',
+    'text-transform: uppercase;',
     '-webkit-user-select: none;',
     '-moz-user-select: none;',
     '-ms-user-select: none;',

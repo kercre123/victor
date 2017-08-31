@@ -199,6 +199,92 @@
               <block type="cozmo_play_animation_from_dropdown"></block>
             </category>
             
+            <category name="Events" colour="#f4b606" secondaryColour="0">
+              <block type="event_whenflagclicked"></block>
+              <block type="cozmo_event_on_face"></block>
+              <block type="cozmo_event_on_happy_face"></block>
+              <block type="cozmo_event_on_sad_face"></block>
+              <block type="cozmo_event_on_see_cube"></block>
+              <block type="cozmo_event_on_cube_tap"></block>
+              <block type="cozmo_event_on_cube_moved"></block>
+
+              <block type="event_whengreaterthan">
+                <value name="VALUE">
+                  <shadow type="math_number">
+                    <field name="NUM">10</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="event_whenbroadcastreceived">
+              </block>
+              <block type="event_broadcast">
+                <value name="BROADCAST_OPTION">
+                  <shadow type="event_broadcast_menu"></shadow>
+                </value>
+              </block>
+              <block type="event_broadcastandwait">
+                <value name="BROADCAST_OPTION">
+                  <shadow type="event_broadcast_menu"></shadow>
+                </value>
+              </block>            
+            </category>
+
+            <category name="Control" colour="#e5580a" secondaryColour="0">
+              <block type="control_forever"></block>
+              <block type="control_if"></block>
+              <block type="control_if_else"></block>
+              <block type="control_wait" id="control_wait">
+                  <value name="DURATION">
+                      <shadow type="math_positive_number">
+                          <field name="NUM">1</field>
+                      </shadow>
+                  </value>
+              </block>
+              <block type="control_wait_until"></block>
+              <block type="control_repeat">
+                  <value name="TIMES">
+                      <shadow type="math_whole_number_with_validator">
+                          <field name="NUM">4</field>
+                      </shadow>
+                  </value>
+              </block>
+              <block type="control_repeat_until"></block>
+              <block type="control_stop"></block>
+            </category>
+            
+            <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
+              <!-- Cozmo -->
+              <block type="cozmo_vert_get_position_3d"></block>
+              <block type="cozmo_vert_get_pitch"></block>
+              <block type="cozmo_vert_get_roll"></block>
+              <block type="cozmo_vert_get_yaw"></block>
+              <block type="cozmo_vert_get_lift_height"></block>
+              <block type="cozmo_vert_get_head_angle"></block>
+              <!-- Faces -->
+              <block type="cozmo_vert_face_get_is_visible"></block>
+              <block type="cozmo_vert_face_get_name"></block>
+              <block type="cozmo_vert_face_get_position_2d"></block>
+              <block type="cozmo_vert_face_get_position_3d"></block>
+              <block type="cozmo_vert_face_get_expression"></block>
+              <!-- Cubes -->
+              <block type="cozmo_vert_cube_get_is_visible"></block>
+              <block type="cozmo_vert_cube_get_position_2d"></block>
+              <block type="cozmo_vert_cube_get_position_3d"></block>
+              <block type="cozmo_vert_cube_get_pitch"></block>
+              <block type="cozmo_vert_cube_get_roll"></block>
+              <block type="cozmo_vert_cube_get_yaw"></block>
+              <!-- Device -->
+              <block type="cozmo_vert_device_get_pitch"></block>
+              <block type="cozmo_vert_device_get_roll"></block>
+              <block type="cozmo_vert_device_get_yaw"></block>
+              <!--Other-->
+              <block type="sensing_current" id="sensing_current">
+                <value name="CURRENTMENU">
+                  <shadow type="sensing_currentmenu"></shadow>
+                </value>
+              </block>
+            </category>
+
             <category name="Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_clear"></block>
                 <block type="cozmo_vert_cozmoface_display"></block>
@@ -325,92 +411,6 @@
                       </shadow>
                   </value>
                 </block>
-            </category>
-
-            <category name="Events" colour="#f4b606" secondaryColour="0">
-              <block type="event_whenflagclicked"></block>
-              <block type="cozmo_event_on_face"></block>
-              <block type="cozmo_event_on_happy_face"></block>
-              <block type="cozmo_event_on_sad_face"></block>
-              <block type="cozmo_event_on_see_cube"></block>
-              <block type="cozmo_event_on_cube_tap"></block>
-              <block type="cozmo_event_on_cube_moved"></block>
-
-              <block type="event_whengreaterthan">
-                <value name="VALUE">
-                  <shadow type="math_number">
-                    <field name="NUM">10</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="event_whenbroadcastreceived">
-              </block>
-              <block type="event_broadcast">
-                <value name="BROADCAST_OPTION">
-                  <shadow type="event_broadcast_menu"></shadow>
-                </value>
-              </block>
-              <block type="event_broadcastandwait">
-                <value name="BROADCAST_OPTION">
-                  <shadow type="event_broadcast_menu"></shadow>
-                </value>
-              </block>            
-            </category>
-
-            <category name="Control" colour="#e5580a" secondaryColour="0">
-              <block type="control_forever"></block>
-              <block type="control_if"></block>
-              <block type="control_if_else"></block>
-              <block type="control_wait" id="control_wait">
-                  <value name="DURATION">
-                      <shadow type="math_positive_number">
-                          <field name="NUM">1</field>
-                      </shadow>
-                  </value>
-              </block>
-              <block type="control_wait_until"></block>
-              <block type="control_repeat">
-                  <value name="TIMES">
-                      <shadow type="math_whole_number_with_validator">
-                          <field name="NUM">4</field>
-                      </shadow>
-                  </value>
-              </block>
-              <block type="control_repeat_until"></block>
-              <block type="control_stop"></block>
-            </category>
-            
-            <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
-              <!-- Cozmo -->
-              <block type="cozmo_vert_get_position_3d"></block>
-              <block type="cozmo_vert_get_pitch"></block>
-              <block type="cozmo_vert_get_roll"></block>
-              <block type="cozmo_vert_get_yaw"></block>
-              <block type="cozmo_vert_get_lift_height"></block>
-              <block type="cozmo_vert_get_head_angle"></block>
-              <!-- Faces -->
-              <block type="cozmo_vert_face_get_is_visible"></block>
-              <block type="cozmo_vert_face_get_name"></block>
-              <block type="cozmo_vert_face_get_position_2d"></block>
-              <block type="cozmo_vert_face_get_position_3d"></block>
-              <block type="cozmo_vert_face_get_expression"></block>
-              <!-- Cubes -->
-              <block type="cozmo_vert_cube_get_is_visible"></block>
-              <block type="cozmo_vert_cube_get_position_2d"></block>
-              <block type="cozmo_vert_cube_get_position_3d"></block>
-              <block type="cozmo_vert_cube_get_pitch"></block>
-              <block type="cozmo_vert_cube_get_roll"></block>
-              <block type="cozmo_vert_cube_get_yaw"></block>
-              <!-- Device -->
-              <block type="cozmo_vert_device_get_pitch"></block>
-              <block type="cozmo_vert_device_get_roll"></block>
-              <block type="cozmo_vert_device_get_yaw"></block>
-              <!--Other-->
-              <block type="sensing_current" id="sensing_current">
-                <value name="CURRENTMENU">
-                  <shadow type="sensing_currentmenu"></shadow>
-                </value>
-              </block>
             </category>
 
             <category name="Operators" colour="#40BF4A" secondaryColour="0">
