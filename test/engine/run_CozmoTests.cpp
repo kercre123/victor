@@ -882,9 +882,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_EQ(RESULT_OK, lastResult);
   lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
-// Do not add object 3 so that we need to confirm it later
-//  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-//  ASSERT_EQ(RESULT_OK, lastResult);
+  // Do not add object 3 so that we need to confirm it later
+  //  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  //  ASSERT_EQ(RESULT_OK, lastResult);
   
   // Observe a face
   const Vision::FaceID_t faceID = 123;
@@ -907,9 +907,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   }
   
   fakeTime += 10;
-
+  
   // - - - Delocalize
-
+  
   const bool isCarryingObject = false;
   robot.Delocalize(isCarryingObject);
   ++fakeTime;
@@ -923,15 +923,15 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   
   // See all objects from close so they all have unconfirmed observations
   lastResult = ObserveMarkerHelper(1,
-    {{obj1Code, closeCorners}, {obj2Code, closeCorners}, {obj3Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   {{obj1Code, closeCorners}, {obj2Code, closeCorners}, {obj3Code, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // now see each cube separately
   
   // 1 will rejigger
   lastResult = ObserveMarkerHelper(1,{{obj1Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // Should have face again because we are back in its coordinate frame
@@ -951,12 +951,12 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   
   // Add 1 confirmation for 2 and 3
   lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
-
+  
   // still should have 1 and 2, but not 3
   obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
   ASSERT_NE(obj1Ptr, nullptr);
@@ -964,13 +964,13 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_NE(obj2Ptr, nullptr);
   obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
   ASSERT_EQ(obj3Ptr, nullptr);
-
+  
   // Add 1 confirmation for 2 and 3
   lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // now 3 should be added (assumes we need 2 visual observations to confirm)
@@ -980,6 +980,177 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_NE(obj2Ptr, nullptr);
   obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
   ASSERT_NE(obj3Ptr, nullptr);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(BlockWorld, RejiggerAndFlatten)
+{
+  // See object 1 in origin A
+  // Delocalize, now in origin B
+  // See object 2 in origin B
+  // Delocalize, now in origin C
+  // Create pose w.r.t. C
+  // See object 2 again, now in origin B
+  // See object 1 again, now in origin A
+  // C should now be flattened w.r.t. A
+  // Receiving a state message referencing old origin C should not cause issues
+  
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  {
+    // no connected objects either
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
+  
+  // Fake a state message update for robot
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  
+  // For faking observations of blocks
+  const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
+  const Block_Cube1x1 obj2Cube(ObjectType::Block_LIGHTCUBE2);
+
+  const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  // Connect to some cubes
+  
+  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ObjectType::Block_LIGHTCUBE1);
+  ASSERT_TRUE(connObj1.IsSet());
+  
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ObjectType::Block_LIGHTCUBE2);
+  ASSERT_TRUE(connObj2.IsSet());
+  
+  // - - - See all objects from close so that their poses are Known and we can localize to them
+  const Quad2f closeCorners{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  VisionProcessingResult procResult;
+  TimeStamp_t fakeTime = 10;
+  
+  const PoseOriginID_t originA = robot.GetWorldOriginID();
+  
+  ASSERT_EQ(1, robot.GetPoseOriginList().GetSize());
+  
+  // See object 1
+  const s32 kNumObservations = 5; // After seeing at least 2 times, should be Known
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should be localized to object 1, still in originA
+  ASSERT_EQ(connObj1, robot.GetLocalizedTo());
+  ASSERT_EQ(originA, robot.GetWorldOriginID());
+  
+  // Delocalize
+  const bool isCarryingObject = false;
+  robot.Delocalize(isCarryingObject);
+  ++fakeTime;
+  
+  const PoseOriginID_t originB = robot.GetWorldOriginID();
+  ASSERT_NE(originA, originB);
+  ASSERT_EQ(2, robot.GetPoseOriginList().GetSize());
+  ASSERT_NE(connObj1, robot.GetLocalizedTo());
+  
+  // See object 2
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should now be localized to object 2, still in origin B
+  ASSERT_EQ(connObj2, robot.GetLocalizedTo());
+  ASSERT_EQ(originB, robot.GetWorldOriginID());
+  
+  // Delocalize again
+  robot.Delocalize(isCarryingObject);
+  ++fakeTime;
+  
+  const PoseOriginID_t originC = robot.GetWorldOriginID();
+  ASSERT_NE(originA, originC);
+  ASSERT_NE(originB, originC);
+  ASSERT_NE(connObj2, robot.GetLocalizedTo());
+  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
+  
+  // Create some arbitrary pose in this origin
+  const Pose3d somePose(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 200.f, 300.f}, robot.GetWorldOrigin());
+  
+  // See object 2 again, should be back in originB
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  ASSERT_EQ(originB, robot.GetWorldOriginID());
+  ASSERT_EQ(connObj2, robot.GetLocalizedTo());
+  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
+  
+  // After rejigger, origin C should now have B as its parent
+  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originB)));
+  
+  // "Move" the robot so it will relocalize
+  lastResult = FakeRobotMovement(robot, stateMsg, fakeTime);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // See object 1 again, should be back in origin A
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  ASSERT_EQ(originA, robot.GetWorldOriginID());
+  ASSERT_EQ(connObj1, robot.GetLocalizedTo());
+  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
+  
+  // We should have flattened C to be w.r.t. A now. B will be rejiggered to be parented to A as well.
+  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
+  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originB).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
+  
+  // Our arbitrary pose should still have a valid parent
+  ASSERT_EQ(originC, somePose.GetParent().GetID());
+  ASSERT_EQ(originA, somePose.GetRootID());
+  
+  // Getting robot state will create a PoseStruct3d, which should work just fine, even after rejiggering/flattening
+  ASSERT_EQ(originA, robot.GetRobotState().pose.originID);
+  
+  // Receive state message with pose information referencing old origin C
+  stateMsg.pose_origin_id = originC;
+  stateMsg.timestamp = fakeTime;
+  
+  // Using that message should still be kosher
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  ASSERT_EQ(originA, robot.GetPose().GetRootID());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -133,18 +133,18 @@ void PoseOriginList::Flatten(PoseOriginID_t worldOriginID)
   {
     Pose3d* origin = originAndIdPair.second.get();
     
-    assert(origin != nullptr); // Should REALLY never happen
+    DEV_ASSERT(origin != nullptr, "PoseOriginList.Flatten.NullOrigin"); // Should REALLY never happen
     
     // if this origin has a parent and it's not the world origin, we want to update
     // this origin to be a direct child of the world origin
-    if ( origin->HasParent() && (origin->IsChildOf(worldOrigin)) )
+    if ( origin->HasParent() && !origin->IsChildOf(worldOrigin) )
     {
-      // get WRT current origin, and if we can (because our parent's origin is the current worldOrigin), then assign
-      Pose3d iterWRTCurrentOrigin;
-      if ( origin->GetWithRespectTo(worldOrigin, iterWRTCurrentOrigin) )
+      // get WRT current origin, and store directly in place (we need to avoid creating a new Pose3d because we
+      // don't want poses stored in the PoseOriginList to ever be deleted (which affects their ownership
+      // of internal PoseTreeNodes)
+      if ( origin->GetWithRespectTo(worldOrigin, *origin) )
       {
         const std::string& newName = origin->GetName() + "_FLT";
-        *origin = iterWRTCurrentOrigin;
         origin->SetName( newName );
       }
     }
