@@ -360,9 +360,6 @@ namespace Cozmo {
     Vision::ImageRGB faceImg = ProceduralFaceDrawer::DrawFace(procFace);
     
     // Draws frame to face display
-    // TODO: Currently resizing from V1 dimensions to V2 dimensions, but should eventually generate the face
-    //       directly to V2 dimensions the first time.
-    faceImg.Resize(FaceDisplay::FACE_DISPLAY_HEIGHT, FaceDisplay::FACE_DISPLAY_WIDTH);
     cv::Mat img565;
     cv::cvtColor(faceImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
     FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));

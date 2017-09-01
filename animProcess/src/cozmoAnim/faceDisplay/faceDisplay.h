@@ -46,10 +46,10 @@ namespace Anki
       //
       //      Vision::ImageRGB testImg;
       //      testImg.Load("testPattern.jpg");
-      //      testImg.Resize(AndroidHAL::FACE_DISPLAY_HEIGHT, AndroidHAL::FACE_DISPLAY_WIDTH);
+      //      testImg.Resize(FaceDisplay::FACE_DISPLAY_HEIGHT, FaceDisplay::FACE_DISPLAY_WIDTH);
       //      cv::Mat img565;
       //      cv::cvtColor(testImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
-      //      AndroidHAL::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
+      //      FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
       void FaceDraw(u16* frame);
 
       // Print text to face display

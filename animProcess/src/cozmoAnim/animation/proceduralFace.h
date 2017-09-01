@@ -42,16 +42,22 @@ class ScanlineDistorter;
 class ProceduralFace
 {
 public:
+
   static const int WIDTH  = FaceDisplay::FACE_DISPLAY_WIDTH;
   static const int HEIGHT = FaceDisplay::FACE_DISPLAY_HEIGHT;
   
   // Nominal positions/sizes for everything (these are things that aren't
   // parameterized at dynamically, but could be if we want)
-  static constexpr s32   NominalEyeHeight       = 40;
-  static constexpr s32   NominalEyeWidth        = 30;
-  static constexpr s32   NominalLeftEyeX        = 32;
-  static constexpr s32   NominalRightEyeX       = 96;
-  static constexpr s32   NominalEyeY            = 32;
+  
+  // These values are based off of V1 parameters but scaled up by a ratio of V2 dimensions : V1 dimensions (roughly 1.43x)
+  // V1 width: 128   New: 184  => 1.43x increase
+  // V1 height: 64   New:  96  => 1.5x  increase
+  static constexpr s32   NominalEyeHeight       = 57;  // V1: 40;
+  static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
+  static constexpr s32   NominalEyeSpacing      = 91;  // V1: 64;
+  static constexpr s32   NominalLeftEyeX        = (WIDTH - NominalEyeSpacing)/2;
+  static constexpr s32   NominalRightEyeX       = NominalLeftEyeX + NominalEyeSpacing;
+  static constexpr s32   NominalEyeY            = HEIGHT/2;
   
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
