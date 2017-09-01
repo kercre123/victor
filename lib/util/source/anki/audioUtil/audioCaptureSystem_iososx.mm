@@ -15,8 +15,14 @@
 
 #import <AudioToolbox/AudioToolbox.h>
 
+//
+// Audio capture is OFF unless enabled by configuration (project/gyp/voice-recognition.gypi)
+//
+#if !defined(VC_AUDIOCAPTURE_FUNCTIONALITY)
+#define VC_AUDIOCAPTURE_FUNCTIONALITY 0
+#endif
 
-#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
+#if VC_AUDIOCAPTURE_FUNCTIONALITY && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 #define IPHONE_TYPE 1
 #else
 #define IPHONE_TYPE 0
