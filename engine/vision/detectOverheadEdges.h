@@ -39,8 +39,8 @@ public:
   Result Detect(Vision::ImageCache& imageCache);
 
 private:
-  template<typename ImageType, typename PixelType>
-  Result DetectHelper(const ImageType &image,
+  template<typename ImageTraitType>
+  Result DetectHelper(const typename ImageTraitType::ImageType &image,
                       const VisionPoseData *crntPoseData,
                       VisionProcessingResult *currentResult);
 

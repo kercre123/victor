@@ -33,6 +33,24 @@ bool LiftInterferesWithEdges(bool isLiftTopInCamera, float liftTopY,
 void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder,
                   std::vector<OverheadEdgePointChain>& imageChains );
 
+bool checkThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold);
+
+bool checkThreshold(f32 pixel, f32 threshold);
+
+struct ImageRGBTrait {
+  typedef Vision::ImageRGB ImageType;
+  typedef Vision::PixelRGB_<s16> SPixelType;
+  typedef Vision::PixelRGB_<f32> FPixelType;
+  typedef Vision::PixelRGB UPixelType;
+};
+
+struct ImageGrayTrait {
+  typedef Vision::Image ImageType;
+  typedef s16 SPixelType;
+  typedef f32 FPixelType;
+  typedef u8 UPixelType;
+};
+
 }
 
 Result OverheadEdgesDetect::Detect(Anki::Vision::ImageCache & imageCache) {
@@ -40,11 +58,10 @@ Result OverheadEdgesDetect::Detect(Anki::Vision::ImageCache & imageCache) {
   return RESULT_OK;
 }
 
-template<typename ImageType, typename PixelType>
-Result OverheadEdgesDetect::DetectHelper(const ImageType &image,
+template<typename ImageTraitType>
+Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageType &image,
                                          const VisionPoseData *crntPoseData,
-                                         VisionProcessingResult *currentResult
-)
+                                         VisionProcessingResult *currentResult)
 {
   // if the ground plane is not currently visible, do not detect edges
   if (!crntPoseData->groundPlaneVisible) {
@@ -149,7 +166,7 @@ Result OverheadEdgesDetect::DetectHelper(const ImageType &image,
   }
 
   // we are going to detect edges, grab relevant image
-  Vision::Image imageROI = image.GetROI(bbox);
+  typename ImageTraitType::ImageType imageROI = image.GetROI(bbox);
 
   // Find edges in that ROI
   // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
@@ -178,7 +195,7 @@ Result OverheadEdgesDetect::DetectHelper(const ImageType &image,
    };
    */
 
-  Array2d<s16> edgeImgX(image.GetNumRows(), image.GetNumCols());
+  Array2d<typename ImageTraitType::SPixelType> edgeImgX(image.GetNumRows(), image.GetNumCols());
   cv::filter2D(imageROI.get_CvMat_(), edgeImgX.GetROI(bbox).get_CvMat_(), CV_16S, kernel.get_CvMatx_());
   _visionSystem->Toc("EdgeDetection");
 
@@ -207,22 +224,37 @@ Result OverheadEdgesDetect::DetectHelper(const ImageType &image,
   _visionSystem->Tic("FindingGroundEdgePoints");
   Matrix_3x3f invH;
   H.GetInverse(invH);
-  Array2d<f32> edgeTrans(edgeImgX.get_CvMat_().t());
+  Array2d<typename ImageTraitType::FPixelType> edgeTrans(edgeImgX.get_CvMat_().t());
   OverheadEdgePoint edgePoint;
-  for (s32 i = bbox.GetX(); i < bbox.GetXmax(); ++i) {
+  for (s32 i = bbox.GetX(); i < bbox.GetXmax(); ++i)
+  {
     bool foundBorder = false;
-    const f32 *edgeTrans_i = edgeTrans.GetRow(i);
+    const typename ImageTraitType::FPixelType *edgeTrans_i = edgeTrans.GetRow(i);
 
     // Right to left in transposed image ==> bottom to top in original image
     for (s32 j = bbox.GetYmax() - 1; j >= bbox.GetY(); --j) {
-      const f32 &edgePixelX = edgeTrans_i[j];
-      if (edgePixelX > _kEdgeThreshold) {
+      const typename ImageTraitType::FPixelType &edgePixelX = edgeTrans_i[j];
+
+      if (checkThreshold(edgePixelX, _kEdgeThreshold)) {
         // Project point onto ground plane
         // Note that b/c we are working transposed, i is x and j is y in the
         // original image.
         const bool success = SetEdgePosition(invH, i, j, edgePoint);
         if (success) {
-          edgePoint.gradient = {edgePixelX, edgePixelX, edgePixelX};
+
+          // TODO here the behavior changes according to the type
+          // TODO for image RGB it's: edgePoint.gradient = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()};
+
+          struct {
+            Vec3f operator()(const f32 pixel) {
+              return Vec3f(pixel, pixel, pixel);
+            };
+            Vec3f operator()(const Vision::PixelRGB_<f32>& pixel) {
+              return Vec3f(pixel.r(), pixel.g(), pixel.b());
+            };
+          } getGradient;
+
+          edgePoint.gradient = getGradient(edgePixelX);
           foundBorder = true;
           AddEdgePoint(edgePoint, foundBorder, candidateChains);
         }
@@ -250,7 +282,7 @@ Result OverheadEdgesDetect::DetectHelper(const ImageType &image,
   }
   _visionSystem->Toc("FindingGroundEdgePoints");
 
-#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 1 //TEMP TEMP TEMP PUT BACK TO 0
+  #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 1 //TEMP TEMP TEMP PUT BACK TO 0
   if (DRAW_OVERHEAD_IMAGE_EDGES_DEBUG) {
     Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
 
@@ -283,11 +315,31 @@ Result OverheadEdgesDetect::DetectHelper(const ImageType &image,
         }
       }
     }
-    Vision::Image dispEdgeImg(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
-    std::function<u8(const s16 &)> fcn = [](const s16 &pixelS16) {
-      return u8(std::abs(pixelS16));
-    };
+    typename ImageTraitType::ImageType dispEdgeImg(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
 
+    struct {
+      Vision::PixelRGB operator()(const Vision::PixelRGB_<s16>& pixelS16) {
+        return Vision::PixelRGB((u8)std::abs(pixelS16.r()),
+                                (u8)std::abs(pixelS16.g()),
+                                (u8)std::abs(pixelS16.b()));
+      }
+      u8 operator()(const s16& pixelS16) {
+        return u8(std::abs(pixelS16));
+      }
+    } __fcn;
+
+    // TODO Need an external templated function here. Code for RBG image:
+    //       std::function<Vision::PixelRGB(const Vision::PixelRGB_<s16>&)> fcn = [](const Vision::PixelRGB_<s16>& pixelS16)
+    //{
+    //  return Vision::PixelRGB((u8)std::abs(pixelS16.r()),
+    //                          (u8)std::abs(pixelS16.g()),
+    //                          (u8)std::abs(pixelS16.b()));
+    //};
+//   std::function<u8(const s16 &)> fcn = [](const s16 &pixelS16) {
+//      return u8(std::abs(pixelS16));
+//    };
+
+    std::function<typename ImageTraitType::UPixelType(const typename ImageTraitType::SPixelType&)> fcn = __fcn;
     edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
 
     // Project edges on the ground back into image for display
@@ -501,7 +553,29 @@ void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector
   newCurrentChain.points.emplace_back( pointInfo );
 }
 
+bool checkThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold) {
+  return std::abs(pixel.r()) > threshold ||
+         std::abs(pixel.g()) > threshold ||
+         std::abs(pixel.b()) > threshold;
+}
+
+bool checkThreshold(f32 pixel, f32 threshold) {
+  return std::abs(pixel) > threshold;
+}
+
 } // anonymous namespace
+
+// Explicit instantiation of DetectHelper() method for Gray and RGB images
+template
+Result OverheadEdgesDetect::DetectHelper<ImageGrayTrait>(const Vision::Image &image,
+                                                             const VisionPoseData *crntPoseData,
+                                                             VisionProcessingResult *currentResult
+);
+template
+Result OverheadEdgesDetect::DetectHelper<ImageRGBTrait>(const Vision::ImageRGB &image,
+                                                                                   const VisionPoseData *crntPoseData,
+                                                                                   VisionProcessingResult *currentResult
+);
 
 }
 }
