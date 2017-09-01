@@ -17,11 +17,11 @@
 
 
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
+#include "cozmoAnim/animation/cozmo_anim_generated.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "cozmoAnim/cozmoContext.h"
 //#include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "cozmoAnim/animation/proceduralFace.h"
-#include "cozmo_anim_generated.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"

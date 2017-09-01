@@ -14,12 +14,12 @@
  **/
 
 #include "cozmoAnim/animation/animation.h"
+#include "cozmoAnim/animation/cozmo_anim_generated.h"
 //#include "cozmoAnim/animation/proceduralFace.h"
 //#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "cozmo_anim_generated.h"
 
 #define DEBUG_ANIMATIONS 0
 

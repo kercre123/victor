@@ -10,6 +10,7 @@
  *
  **/
 
+#include "cozmoAnim/animation/cozmo_anim_generated.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 #include "cozmoAnim/animation/scanlineDistorter.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -17,7 +18,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "util/helpers/templateHelpers.h"
 
-#include "cozmo_anim_generated.h"
 
 namespace Anki {
 namespace Cozmo {

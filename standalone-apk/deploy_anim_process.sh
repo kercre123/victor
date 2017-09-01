@@ -112,7 +112,7 @@ fi  # if not SKIP_LIBS
 
 # Shell into android device and execute robot process
 $ADB shell -x "
-export LD_LIBRARY_PATH=/data/local/tmp
+export LD_LIBRARY_PATH=/data/data/com.anki.cozmoengine/lib
 cd /data/local/tmp
 nice -n -19 ./cozmoAnim
 "

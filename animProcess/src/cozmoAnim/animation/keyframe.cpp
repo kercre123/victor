@@ -17,6 +17,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "cozmoAnim/animation/cozmo_anim_generated.h"
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/keyframe.h"
 #include "cozmoAnim/ledEncoding.h"
@@ -24,7 +25,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
-#include "cozmo_anim_generated.h"
 
 #include <opencv2/core.hpp>
 #include <cassert>
