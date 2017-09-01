@@ -285,7 +285,6 @@ namespace Anki {
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
         result =  GetSpineDataFrame();
-        Result result = GetSpineDataFrame();
         PrintConsoleOutput();
       }
 #endif
