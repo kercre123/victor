@@ -11,7 +11,6 @@
  **/
 
 #include <coretech/vision/include/anki/vision/basestation/imageCache.h>
-#include "overheadEdge.h"
 #include "coretech/common/include/anki/common/types.h"
 #include "overheadEdgesDetector.h"
 #include "engine/vision/visionPoseData.h"
