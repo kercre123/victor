@@ -10,9 +10,10 @@
  * Copyright: Anki, Inc. 2017
  **/
 
+#include <coretech/vision/include/anki/vision/basestation/imageCache.h>
 #include "overheadEdge.h"
 #include "coretech/common/include/anki/common/types.h"
-#include "detectOverheadEdges.h"
+#include "overheadEdgesDetector.h"
 #include "engine/vision/visionPoseData.h"
 #include "visionSystem.h"
 #include "engine/viz/vizManager.h"
@@ -53,13 +54,30 @@ struct ImageGrayTrait {
 
 }
 
-Result OverheadEdgesDetect::Detect(Anki::Vision::ImageCache & imageCache) {
+OverheadEdgesDetector::OverheadEdgesDetector(const Vision::Camera &camera, VizManager *vizManager,
+                                         VisionSystem* visionSystem, f32 kEdgeThreshold, u32 kMinChainLength) :
+                      _camera(camera),
+                      _vizManager(vizManager),
+                      _visionSystem(visionSystem),
+                      _kEdgeThreshold(kEdgeThreshold),
+                      _kMinChainLength(kMinChainLength)
+{
 
-  return RESULT_OK;
+}
+
+Result OverheadEdgesDetector::Detect(Anki::Vision::ImageCache &imageCache, const VisionPoseData *crntPoseData,
+                                   VisionProcessingResult *currentResult) {
+
+  if (imageCache.HasColor()) {
+    return DetectHelper<ImageRGBTrait>(imageCache.GetRGB(), crntPoseData, currentResult);
+  }
+  else {
+    return DetectHelper<ImageGrayTrait>(imageCache.GetGray(), crntPoseData, currentResult);
+  }
 }
 
 template<typename ImageTraitType>
-Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageType &image,
+Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageType &image,
                                          const VisionPoseData *crntPoseData,
                                          VisionProcessingResult *currentResult)
 {
@@ -126,7 +144,7 @@ Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageTyp
 
     // calculate lift wrt camera
     Pose3d liftPoseWrtCamera;
-    if (false == liftPose.GetWithRespectTo(crntPoseData->cameraPose, liftPoseWrtCamera)) {
+    if (! liftPose.GetWithRespectTo(crntPoseData->cameraPose, liftPoseWrtCamera)) {
       PRINT_NAMED_ERROR("VisionSystem.DetectOverheadEdges.PoseTreeError",
                         "Could not get lift pose w.r.t. camera pose.");
       return RESULT_FAIL;
@@ -242,9 +260,7 @@ Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageTyp
         const bool success = SetEdgePosition(invH, i, j, edgePoint);
         if (success) {
 
-          // TODO here the behavior changes according to the type
-          // TODO for image RGB it's: edgePoint.gradient = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()};
-
+          //type dependent code, use anonymous struct and overload
           struct {
             Vec3f operator()(const f32 pixel) {
               return Vec3f(pixel, pixel, pixel);
@@ -282,7 +298,7 @@ Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageTyp
   }
   _visionSystem->Toc("FindingGroundEdgePoints");
 
-  #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 1 //TEMP TEMP TEMP PUT BACK TO 0
+  #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
   if (DRAW_OVERHEAD_IMAGE_EDGES_DEBUG) {
     Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
 
@@ -317,6 +333,7 @@ Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageTyp
     }
     typename ImageTraitType::ImageType dispEdgeImg(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
 
+    // The behavior depends omn the type of the pixel, so anonym struct and overload
     struct {
       Vision::PixelRGB operator()(const Vision::PixelRGB_<s16>& pixelS16) {
         return Vision::PixelRGB((u8)std::abs(pixelS16.r()),
@@ -328,17 +345,7 @@ Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageTyp
       }
     } __fcn;
 
-    // TODO Need an external templated function here. Code for RBG image:
-    //       std::function<Vision::PixelRGB(const Vision::PixelRGB_<s16>&)> fcn = [](const Vision::PixelRGB_<s16>& pixelS16)
-    //{
-    //  return Vision::PixelRGB((u8)std::abs(pixelS16.r()),
-    //                          (u8)std::abs(pixelS16.g()),
-    //                          (u8)std::abs(pixelS16.b()));
-    //};
-//   std::function<u8(const s16 &)> fcn = [](const s16 &pixelS16) {
-//      return u8(std::abs(pixelS16));
-//    };
-
+    //still needs to create an std::function here, the compiler doesn't get it
     std::function<typename ImageTraitType::UPixelType(const typename ImageTraitType::SPixelType&)> fcn = __fcn;
     edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
 
@@ -376,7 +383,7 @@ Result OverheadEdgesDetect::DetectHelper(const typename ImageTraitType::ImageTyp
   candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
 
   // Transform border points into 3D, and into camera view and render
-  const bool kRenderEdgesInCameraView = true; //TEMP TEMP TEMP Put back to false
+  const bool kRenderEdgesInCameraView = false;
   if (kRenderEdgesInCameraView) {
     _vizManager->EraseSegments("kRenderEdgesInCameraView");
     for (const auto &chain : edgeFrame.chains) {
@@ -567,12 +574,12 @@ bool checkThreshold(f32 pixel, f32 threshold) {
 
 // Explicit instantiation of DetectHelper() method for Gray and RGB images
 template
-Result OverheadEdgesDetect::DetectHelper<ImageGrayTrait>(const Vision::Image &image,
+Result OverheadEdgesDetector::DetectHelper<ImageGrayTrait>(const Vision::Image &image,
                                                              const VisionPoseData *crntPoseData,
                                                              VisionProcessingResult *currentResult
 );
 template
-Result OverheadEdgesDetect::DetectHelper<ImageRGBTrait>(const Vision::ImageRGB &image,
+Result OverheadEdgesDetector::DetectHelper<ImageRGBTrait>(const Vision::ImageRGB &image,
                                                                                    const VisionPoseData *crntPoseData,
                                                                                    VisionProcessingResult *currentResult
 );

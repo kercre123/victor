@@ -13,7 +13,7 @@
 #ifndef __Anki_Cozmo_Basestation_DetectOverheadEdges_H__
 #define __Anki_Cozmo_Basestation_DetectOverheadEdges_H__
 
-#include "detectOverheadEdges.h"
+#include "overheadEdgesDetector.h"
 #include "anki/common/types.h"
 #include "anki/vision/basestation/image.h"
 #include "visionSystem.h"
@@ -32,11 +32,17 @@ namespace Cozmo {
 struct VisionPoseData;
 class VizManager;
 
-class OverheadEdgesDetect{
-
+class OverheadEdgesDetector {
 
 public:
-  Result Detect(Vision::ImageCache& imageCache);
+  OverheadEdgesDetector(const Vision::Camera& camera,
+                      VizManager* vizManager,
+                      VisionSystem* visionSystem,
+                      f32 kEdgeThreshold = 50.0f,
+                      u32 kMinChainLength = 3 );
+
+  Result Detect(Anki::Vision::ImageCache &imageCache, const VisionPoseData *crntPoseData,
+                  VisionProcessingResult *currentResult);
 
 private:
   template<typename ImageTraitType>
