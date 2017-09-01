@@ -76,6 +76,7 @@ namespace Cozmo {
   class EncodedImage;
   class LaserPointDetector;
   class MotionDetector;
+  class OverheadEdgesDetector;
   class Robot;
   class VizManager;
   
@@ -297,6 +298,7 @@ namespace Cozmo {
     std::unique_ptr<Vision::MarkerDetector> _markerDetector;
     std::unique_ptr<LaserPointDetector>     _laserPointDetector;
     std::unique_ptr<MotionDetector>         _motionDetector;
+    std::unique_ptr<OverheadEdgesDetector>   _overheadEdgeDetector;
     
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
@@ -341,9 +343,6 @@ namespace Cozmo {
     
     // Will use color if not empty, or gray otherwise
     Result DetectMotion(Vision::ImageCache& imageCache);
-    
-    Result DetectOverheadEdges(const Vision::ImageRGB& image);
-    Result DetectOverheadEdges(const Vision::Image& image);
     
     Result ReadToolCode(const Vision::Image& image);
     
