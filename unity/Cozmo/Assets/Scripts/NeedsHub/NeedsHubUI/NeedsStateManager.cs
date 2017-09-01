@@ -31,6 +31,16 @@ namespace Cozmo.Needs {
     public static NeedsStateManager Instance { get; private set; }
 
     private NeedsState _LatestStateFromEngine;
+#if UNITY_EDITOR
+    public NeedsState LatestStateFromEngine {
+      get {
+        if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+          return _LatestStateFromEngine;
+        }
+        return null;
+      }
+    }
+#endif
 
     private NeedsState _CurrentDisplayState;
 
@@ -154,6 +164,19 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.Message.SetNeedsPauseStates = pauseStatesMessage;
       RobotEngineManager.Instance.SendMessage();
     }
+
+#if UNITY_EDITOR
+    public void MockHandleNeedsStateFromEngine(NeedsState newNeedsState) {
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        StartCoroutine(DelayedMockHandleNeedsStateFromEngine(newNeedsState));
+      }
+    }
+
+    private System.Collections.IEnumerator DelayedMockHandleNeedsStateFromEngine(NeedsState newNeedsState) {
+      yield return new WaitForSeconds(2f);
+      HandleNeedsStateFromEngine(newNeedsState);
+    }
+#endif
 
     private void HandleNeedsStateFromEngine(NeedsState newNeedsState) {
       bool needsValueChanged = false;
