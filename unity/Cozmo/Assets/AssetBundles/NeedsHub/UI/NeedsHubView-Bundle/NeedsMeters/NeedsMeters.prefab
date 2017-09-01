@@ -227,6 +227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224820331911312056}
   - component: {fileID: 114368467319558020}
+  - component: {fileID: 114006640401118754}
   m_Layer: 5
   m_Name: RepairMeter
   m_TagString: Untagged
@@ -313,6 +314,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224193560664327910}
   - component: {fileID: 114973322785546770}
+  - component: {fileID: 114918323836346714}
   m_Layer: 5
   m_Name: PlayMeter
   m_TagString: Untagged
@@ -521,6 +523,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224230667691260826}
   - component: {fileID: 114801614314902778}
+  - component: {fileID: 114822307993060088}
   m_Layer: 5
   m_Name: EnergyMeter
   m_TagString: Untagged
@@ -745,6 +748,30 @@ MonoBehaviour:
   _LinkedComponentId: NavHub_Container_BG_Normal
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114006640401118754
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1270116495021636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93986465be2c54b068ca7d7827869c0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HeaderLocKeys:
+  - tooltip.needstate.repair.header
+  _BodyLocKeys:
+  - tooltip.needstate.repair.0
+  - tooltip.needstate.repair.1
+  - tooltip.needstate.repair.2
+  - tooltip.needstate.repair.3
+  _HitArea: {fileID: 1433859837597530}
+  _PreferredDir: 2
+  _ToolTipEnabled: 1
+  _ShowBodyIndex: 0
+  _ShowHeaderIndex: 0
+  _NeedId: 0
 --- !u!114 &114053057569827888
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -979,7 +1006,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1160,7 +1187,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1804,7 +1831,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.78431374}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2044,6 +2071,30 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114822307993060088
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1721077742060632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93986465be2c54b068ca7d7827869c0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HeaderLocKeys:
+  - tooltip.needstate.energy.header
+  _BodyLocKeys:
+  - tooltip.needstate.energy.0
+  - tooltip.needstate.energy.1
+  - tooltip.needstate.energy.2
+  - tooltip.needstate.energy.3
+  _HitArea: {fileID: 1103024201730344}
+  _PreferredDir: 2
+  _ToolTipEnabled: 1
+  _ShowBodyIndex: 0
+  _ShowHeaderIndex: 0
+  _NeedId: 1
 --- !u!114 &114833207910872378
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2135,6 +2186,30 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114918323836346714
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1340022323209856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93986465be2c54b068ca7d7827869c0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HeaderLocKeys:
+  - tooltip.needstate.play.header
+  _BodyLocKeys:
+  - tooltip.needstate.play.0
+  - tooltip.needstate.play.1
+  - tooltip.needstate.play.2
+  - tooltip.needstate.play.3
+  _HitArea: {fileID: 1655408491460438}
+  _PreferredDir: 2
+  _ToolTipEnabled: 1
+  _ShowBodyIndex: 0
+  _ShowHeaderIndex: 0
+  _NeedId: 2
 --- !u!114 &114928158177844780
 MonoBehaviour:
   m_ObjectHideFlags: 1

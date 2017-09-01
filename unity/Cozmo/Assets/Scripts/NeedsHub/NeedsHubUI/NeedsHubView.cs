@@ -261,14 +261,22 @@ namespace Cozmo.Needs.UI {
       if (repairBracket == NeedBracketId.Critical) {
         _FeedButton.Interactable = false;
         _SparksButton.Interactable = false;
+        // Enable the tooltip, since the tooltip shouldn't guess why the button was disabled ( onboarding or modals etc )
+        // Tell it the reason.
+        TooltipManager.Instance.SetToolTipMessage(_FeedButton.gameObject, (int)NeedId.Repair);
+        TooltipManager.Instance.SetToolTipMessage(_SparksButton.gameObject, (int)NeedId.Repair);
       }
       else if (energyBracket == NeedBracketId.Critical) {
         _FeedButton.Interactable = true;
         _SparksButton.Interactable = false;
+        TooltipManager.Instance.SetToolTipEnabled(_FeedButton.gameObject, false);
+        TooltipManager.Instance.SetToolTipMessage(_SparksButton.gameObject, (int)NeedId.Energy);
       }
       else {
         _FeedButton.Interactable = true;
         _SparksButton.Interactable = true;
+        TooltipManager.Instance.SetToolTipEnabled(_FeedButton.gameObject, false);
+        TooltipManager.Instance.SetToolTipEnabled(_SparksButton.gameObject, false);
       }
     }
 

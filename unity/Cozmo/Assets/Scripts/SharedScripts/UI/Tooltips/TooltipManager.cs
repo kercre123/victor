@@ -1,0 +1,85 @@
+using UnityEngine;
+
+namespace Cozmo.UI {
+  public class TooltipManager : MonoBehaviour {
+
+    [SerializeField]
+    private TooltipWidget _TooltipPrefab;
+
+    [SerializeField]
+    private float _TooltipShowTime_Sec = 5.0f;
+
+    private static TooltipManager _Instance;
+
+    private TooltipWidget _CurrToolTip;
+
+    private void Awake() {
+      _Instance = this;
+    }
+
+    private void OnDestroy() {
+      CancelInvoke();
+    }
+
+    public static TooltipManager Instance {
+      get {
+        if (_Instance == null) {
+          string stackTrace = System.Environment.StackTrace;
+          DAS.Error("TooltipManager.NullInstance", "Do not access TooltipManager until start");
+          DAS.Debug("TooltipManager.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
+          HockeyApp.ReportStackTrace("TooltipManager.NullInstance", stackTrace);
+        }
+        return _Instance;
+      }
+      private set {
+        if (_Instance != null) {
+          DAS.Error("TooltipManager.DuplicateInstance", "UIManager Instance already exists");
+        }
+        _Instance = value;
+      }
+    }
+
+    private void Update() {
+      if (_CurrToolTip != null && _CurrToolTip.IsInited) {
+        if (Input.GetMouseButtonDown(0)) {
+          HideToolTip();
+        }
+      }
+    }
+
+    public void ShowToolTip(string header, string body, Transform parentTransform, Vector2 localPos, TooltipWidget.CaretPosition preferredDir) {
+      HideToolTip();
+      // Destroyed everytime to prevent one frame pops from previous layouts
+      // If it becomes a perf problem, offset for a frame.
+      GameObject go = UIManager.CreateUIElement(_TooltipPrefab, parentTransform);
+      _CurrToolTip = go.GetComponent<TooltipWidget>();
+      _CurrToolTip.Init(header, body, localPos, preferredDir);
+      Invoke("HideToolTip", _TooltipShowTime_Sec);
+    }
+
+    private void HideToolTip() {
+      if (_CurrToolTip != null) {
+        Destroy(_CurrToolTip.gameObject);
+        _CurrToolTip = null;
+        CancelInvoke("HideToolTip");
+      }
+    }
+
+    public void SetToolTipEnabled(GameObject go, bool isEnabled) {
+      TooltipGenericBaseDataComponent tooltipData = go.GetComponent<TooltipGenericBaseDataComponent>();
+      if (tooltipData != null) {
+        tooltipData.SetTooltipEnabled(isEnabled);
+      }
+    }
+
+    public void SetToolTipMessage(GameObject go, int messageID) {
+      TooltipGenericBaseDataComponent tooltipData = go.GetComponent<TooltipGenericBaseDataComponent>();
+      if (tooltipData != null) {
+        tooltipData.SetTooltipEnabled(true);
+        tooltipData.SetShowBodyIndex(messageID);
+      }
+    }
+
+  }
+
+}

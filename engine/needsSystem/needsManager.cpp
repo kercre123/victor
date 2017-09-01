@@ -331,6 +331,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeDeviceNeedsData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotNeedsData>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetStarStatus>();
   }
 
   InitInternal(currentTime_s);
@@ -1154,7 +1155,42 @@ void NeedsManager::SendTimeSinceBackgroundedDasEvent()
                        std::to_string(secsSinceLastBackgrounded).c_str());
   }
 }
-
+  
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::GetStarStatus& msg)
+{
+  bool givenStarToday = true;
+  // Now see if they've already received the star award today:
+  const std::time_t lastStarTime = system_clock::to_time_t( _needsState._timeLastStarAwarded );
+  std::tm lastLocalTime;
+  localtime_r(&lastStarTime, &lastLocalTime);
+  
+  const std::time_t nowTimeT = system_clock::to_time_t( system_clock::now() );
+  std::tm nowLocalTime;
+  localtime_r(&nowTimeT, &nowLocalTime);
+  
+  // Is it past midnight (a different day-of-year (0-365), or a different year)
+  if (nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
+  {
+    givenStarToday = false;
+  }
+  
+  std::tm t;
+  localtime_r(&nowTimeT, &t);
+  // Todays time, reset to last midnight
+  t.tm_sec = t.tm_min = t.tm_hour = 0;
+  time_t lastMidnightTimeT = mktime(&t);
+  system_clock::time_point lastMidnightTimePoint = system_clock::from_time_t(lastMidnightTimeT);
+  // We need midnight tomorrow, not tonight.
+  time_t timeToNextDay = system_clock::to_time_t(lastMidnightTimePoint + hours(24));
+  
+  time_t timeRemainingToNextDay_s = timeToNextDay - nowTimeT;
+  
+  // Send the time to game...
+  ExternalInterface::StarStatus message((int)(timeRemainingToNextDay_s),givenStarToday);
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
 
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
@@ -1677,7 +1713,7 @@ void NeedsManager::StartFullnessCooldownForNeed(const NeedId needId)
   }
 }
 
-
+  
 bool NeedsManager::UpdateStarsState(const bool cheatGiveStar)
 {
   bool starAwarded = false;

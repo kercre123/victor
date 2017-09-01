@@ -542,6 +542,11 @@ message StarUnlocked {
   int_32      currentStars,
 }
 
+message StarStatus {
+  int_32      timeToNextDay_s,
+  bool        completedToday,
+}
+
 message WantsNeedsOnboarding {
   int_32 onboardingStageCompleted
 }
