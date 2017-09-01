@@ -141,6 +141,112 @@ init: function() {
   }
 };
 
+// FOR DEVELOPER PROTOTYPING ONLY
+// This block isn't intended to ship
+Blockly.Blocks['cozmo_play_animation_by_name'] = {
+  /**
+    * Dev-only Block to make Cozmo play a specific animation by name
+    * @this Blockly.Block
+  */
+init: function() {
+  this.jsonInit({
+    "id": "cozmo_play_animation_by_name",
+    "message0": "play anim: %1 with %2, %3, %4",
+    "args0": [
+        {
+          "type": "input_value",
+          "name": "ANIM_NAME",
+          "check": "String"
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_WHEELS",
+          "options": [
+              ['wheels', 'false'],
+              ['no wheels', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_HEAD",
+          "options": [
+              ['head', 'false'],
+              ['no head', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_LIFT",
+          "options": [
+              ['lift', 'false'],
+              ['no lift', 'true'],    
+            ]
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
+// FOR DEVELOPER PROTOTYPING ONLY
+// This block isn't intended to ship
+Blockly.Blocks['cozmo_play_animation_by_triggername'] = {
+  /**
+    * Dev-only Block to make Cozmo play a specific animation by name
+    * @this Blockly.Block
+  */
+init: function() {
+  this.jsonInit({
+    "id": "cozmo_play_animation_by_triggername",
+    "message0": "play animtrigger: %1 with %2, %3, %4",
+    "args0": [
+        {
+          "type": "input_value",
+          "name": "TRIGGER_NAME",
+          "check": "String"
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_WHEELS",
+          "options": [
+              ['wheels', 'false'],
+              ['no wheels', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_HEAD",
+          "options": [
+              ['head', 'false'],
+              ['no head', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_LIFT",
+          "options": [
+              ['lift', 'false'],
+              ['no lift', 'true'],    
+            ]
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_dock_with_cube'] = {
   /**
    * Block to tell Cozmo to dock with a cube that he can see, if any.

@@ -26,6 +26,10 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_drive_backward: this.driveBackward,
         cozmo_drive_backward_fast: this.driveBackwardFast,
         cozmo_play_animation_from_dropdown: this.playAnimationFromDropdown,
+        // Begin temporary dev-only blocks prototyping
+        cozmo_play_animation_by_name: this.playAnimationByName,
+        cozmo_play_animation_by_triggername: this.playAnimationByTriggerName,
+        // End temporary dev-only blocks prototyping
         cozmo_happy_animation: this.playHappyAnimation,
         cozmo_victory_animation: this.playVictoryAnimation,
         cozmo_unhappy_animation: this.playUnhappyAnimation,
@@ -215,6 +219,31 @@ Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function(args, util) {
         return this.playAnimationHelperVertical(args, util, animName);
     }
 };
+
+// ============================================================
+// Begin temporary dev-only blocks prototyping
+Scratch3CozmoBlocks.prototype.playNamedAnimationHelper = function(args, util, commandName, animName) {
+    var requestId = this._getRequestId();
+    var shouldIgnoreBodyTrack = Cast.toBoolean(args.IGNORE_WHEELS);
+    var shouldIgnoreHead = Cast.toBoolean(args.IGNORE_HEAD);
+    var shouldIgnoreLift = Cast.toBoolean(args.IGNORE_LIFT);
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: commandName, argString: animName, argBool: shouldIgnoreBodyTrack, argBool2: shouldIgnoreHead, argBool3: shouldIgnoreLift});
+
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.playAnimationByName = function(args, util) {
+    var animName = Cast.toString(args.ANIM_NAME);
+    return this.playNamedAnimationHelper(args, util, "cozVertPlayNamedAnim", animName);
+};
+
+Scratch3CozmoBlocks.prototype.playAnimationByTriggerName = function(args, util) {    
+    var triggerName = Cast.toString(args.TRIGGER_NAME);
+    return this.playNamedAnimationHelper(args, util, "cozVertPlayNamedTriggerAnim", triggerName);
+};
+// End temporary dev-only blocks prototyping
+// ============================================================
 
 Scratch3CozmoBlocks.prototype.playHappyAnimation = function(args, util) {
     return this.playAnimationHelper(args, util, "happy");
