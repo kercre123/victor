@@ -202,8 +202,22 @@ Blockly.Css.CONTENT = [
     'z-index: 50;', /* Display above the toolbox */
   '}',
 
-  /*
+
   // *** ANKI CHANGE ***
+  '.blocklyTooltipDiv {',
+    'background-color: #ffffff;',
+    'border: 1px solid #000000;',
+    'border-radius: 3px;',
+    'color: #000;',
+    'display: none;',
+    'font-family: "Avenir Next";',
+    'font-size: 14pt;',
+    'padding: 4px;',
+    'position: absolute;',
+    'z-index: 100000;',
+  '}',
+
+  /*
   '.blocklyTooltipDiv {',
     'background-color: #ffffc7;',
     'border: 1px solid #ddc;',
@@ -609,26 +623,48 @@ Blockly.Css.CONTENT = [
     'fill-opacity: .8;', // *** ANKI CHANGE ***
   '}',
 
+  // *** ANKI CHANGE ***
+  // Hide the main workspace scrollbar.
+  // Fixes bug on horizontal where flyout and main workspace scrollbars overlap.
+  '.blocklyMainWorkspaceScrollbar {',
+    'display: none !important;',
+  '}',
+
+  /*
   '.blocklyMainWorkspaceScrollbar {',
     'z-index: 20;',
   '}',
+  */
 
   '.blocklyFlyoutScrollbar {',
     'z-index: 30;',
   '}',
 
+  // *** ANKI CHANGE ***
+  '.blocklyScrollbarHorizontal {',
+    'position: absolute;',
+    'outline: none;',
+    'z-index: 30;',
+  '}',
+
+  // *** ANKI CHANGE ***
+  '.blocklyScrollbarVertical {',
+    'display: none !important;',
+  '}',
+
+/*
   '.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {',
     'position: absolute;',
     'outline: none;',
-    'z-index: 30;', // *** ANKI CHANGE ***
   '}',
+*/
 
   '.blocklyScrollbarBackground {',
-    'opacity: 0;',
+    'opacity: 0.2;', // *** ANKI CHANGE ***
   '}',
 
   '.blocklyScrollbarHandle {',
-    'fill: $colour_scrollbar;',
+    'fill: #817e7e', // *** ANKI CHANGE ***
   '}',
 
   '.blocklyScrollbarBackground:hover+.blocklyScrollbarHandle,',

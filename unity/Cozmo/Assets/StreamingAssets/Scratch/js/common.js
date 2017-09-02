@@ -104,11 +104,8 @@
 
         // DOM event handlers
         var closeButton = document.querySelector('#closebutton');
-        var challengesButton = document.querySelector('#challengesbutton');
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
-        var undo = document.querySelector('#undo');
-        var redo = document.querySelector('#redo');
 
         closeButton.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
@@ -125,6 +122,8 @@
         });
 
         if (!window.isVertical) {
+            var challengesButton = document.querySelector('#challengesbutton');
+
             challengesButton.addEventListener('click', function () {
               // show challenges dialog
               Scratch.workspace.playAudio('click');
@@ -135,6 +134,9 @@
             });
         }
         else {
+            var undo = document.querySelector('#undo');
+            var redo = document.querySelector('#redo');
+            
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 Scratch.workspace.undo();

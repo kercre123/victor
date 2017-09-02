@@ -87,8 +87,10 @@ Blockly.Toolbox = function(workspace) {
  * Width of the toolbox, which changes only in vertical layout.
  * @type {number}
  */
-// NOTE: this constant works in conjunction with Blockly.VerticalFlyout.prototype.DEFAULT_WIDTH.
-Blockly.Toolbox.prototype.width = 400;
+// *** ANKI CHANGE ***
+// Width of the toolbox. msintov, 9/1/17
+Blockly.Toolbox.prototype.width = 60;
+//Blockly.Toolbox.prototype.width = 250;
 
 /**
  * Height of the toolbox, which changes only in horizontal layout.
@@ -308,6 +310,11 @@ Blockly.Toolbox.prototype.getClientRect = function() {
   }
 
   var width = this.getWidth();
+  // *** ANKI CHANGE ***
+  if (window.isVertical) {
+    // The deletion area for the toolbox should be just slightly wider than the width of the toolbox, thus the padding to getWidth(). msintov, 9/1/17
+    width = this.getWidth() + 20;
+  }
   var height = toolboxRect.height;
 
   // Assumes that the toolbox is on the SVG edge.  If this changes

@@ -261,7 +261,13 @@ Blockly.VerticalFlyout.prototype.position = function() {
 
   if (this.parentToolbox_) {
     var toolboxWidth = this.parentToolbox_.getWidth();
-    var categoryWidth = toolboxWidth - this.width_;
+
+    // *** ANKI CHANGE ***
+    // categoryWidth is used to set the x value of the flyout.
+    // We want the flyout positioned immediately to the right of the categories. - msintov, 9/1/17
+    var categoryWidth = toolboxWidth;
+    //var categoryWidth = toolboxWidth - this.width_;
+
     var x = this.toolboxPosition_ == Blockly.TOOLBOX_AT_RIGHT ?
         targetWorkspaceMetrics.viewWidth : categoryWidth;
     var y = 0;
