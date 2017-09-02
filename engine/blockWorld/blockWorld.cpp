@@ -4386,7 +4386,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // compute maxRotatedAxis_zValue: the value of the axis that contributes the most in Z after the object
         // has been rotated (like we do in the actual code, this is just render)
         const Vec3f& foundObjSize = foundObject->GetSize();
-        const Vec3f& zCoordRotation = foundObject->GetPose().GetWithRespectToRoot().GetRotation().GetRotationMatrix().GetRow(2);
+        const Vec3f zCoordRotation = foundObject->GetPose().GetWithRespectToRoot().GetRotation().GetRotationMatrix().GetRow(2);
         const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * foundObjSize.x());
         const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * foundObjSize.y());
         const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * foundObjSize.z());
