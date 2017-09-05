@@ -133,6 +133,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraSettings>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
 
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
@@ -2330,7 +2331,19 @@ namespace Cozmo {
       }
       
       // Create ImageRGB object from image buffer
-      Vision::Image imgRGB(numRows, numCols, buffer);
+      Vision::ImageRGB imgRGB(numRows, numCols, buffer);
+      
+      if(_imageSaveMode == ImageSendMode::SingleShot)
+      {
+        const std::string path = "/data/misc/camera/test/" + std::to_string(imageId) + ".png";
+        PRINT_CH_INFO("VisionComponent",
+                      "VisionComponent.CaptureAndSendImage.SavingImage",
+                      "Saving image to %s",
+                      path.c_str());
+        
+        imgRGB.Save(path);
+        _imageSaveMode = ImageSendMode::Off;
+      }
       
       if(kDisplayUndistortedImages)
       {
@@ -2452,6 +2465,15 @@ namespace Cozmo {
   }
   
   template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  {
+    if(payload.mode == ImageSendMode::SingleShot)
+    {
+      _imageSaveMode = payload.mode;
+    }
+  }
+  
+  template<>
   void VisionComponent::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
   {
     if (msg.result == RobotConnectionResult::Success)
@@ -2490,11 +2512,13 @@ namespace Cozmo {
             // 6 == BODY_VER_1v5c and anything less is an older version
             // We never verified the computed distortion coefficients of 1.0 or 1.5 robots at the factory
             // so as far as we know they are garbage so ignore them.
+            #ifndef COZMO_V2
             if(_robot.GetBodyHWVersion() <= 6)
             {
               PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.IgnoringDistCoeffs", "");
               payload.distCoeffs.fill(0);
             }
+            #endif
             
             // Convert calibration data in payload to a shared CameraCalibration object
             auto calib = std::make_shared<Vision::CameraCalibration>(payload.nrows,
@@ -2526,19 +2550,17 @@ namespace Cozmo {
 #ifdef COZMO_V2
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
-          const std::array<f32, 8> distortionCoeffs = {{-0.07167206757206086,
-            -0.2198782133395603,
-            0.001435740245449692,
-            0.001523365725052927,
-            0.1341471670512819,
+
+          // Inverted Box
+          const std::array<f32, 8> distortionCoeffs = {{-0.03822904514363595, -0.2964213946476391, -0.00181089972406104, 0.001866070303033584, 0.1803429725181202,
             0, 0, 0}};
-            
+
           auto calib = std::make_shared<Vision::CameraCalibration>(360,
                                           640,
-                                          362.8743258347415,
-                                          366.7335187649505,
-                                          302.279771069911,
-                                          200.0289589104854,
+                                          364.7223064012286,
+                                          366.1693698832141,
+                                          310.6264440545544,
+                                          196.6729350209868,
                                           0,
                                           distortionCoeffs);
           

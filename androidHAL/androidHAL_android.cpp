@@ -86,10 +86,7 @@ namespace Anki {
     
     AndroidHAL::~AndroidHAL()
     {
-      //      DeleteCamera(); 
-      camera_stop();
-      camera_cleanup();
-     
+      DeleteCamera();
     }
 
     
