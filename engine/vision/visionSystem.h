@@ -298,8 +298,8 @@ namespace Cozmo {
     std::unique_ptr<Vision::MarkerDetector> _markerDetector;
     std::unique_ptr<LaserPointDetector>     _laserPointDetector;
     std::unique_ptr<MotionDetector>         _motionDetector;
-    std::unique_ptr<OverheadEdgesDetector>   _overheadEdgeDetector;
-    
+    std::unique_ptr<OverheadEdgesDetector>  _overheadEdgeDetector;
+
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
     const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;

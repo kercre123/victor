@@ -1393,7 +1393,7 @@ namespace Cozmo {
     {
       Tic("TotalDetectingOverheadEdges");
 
-      lastResult = _overheadEdgeDetector->Detect(imageCache, &_poseData, &_currentResult);
+      lastResult = _overheadEdgeDetector->Detect(imageCache, _poseData, _currentResult);
       
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");

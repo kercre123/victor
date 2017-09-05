@@ -10,12 +10,8 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#include <coretech/vision/include/anki/vision/basestation/imageCache.h>
-#include "coretech/common/include/anki/common/types.h"
 #include "overheadEdgesDetector.h"
-#include "engine/vision/visionPoseData.h"
-#include "visionSystem.h"
-#include "engine/viz/vizManager.h"
+#include "coretech/vision/include/anki/vision/basestation/imageCache.h"
 #include "engine/robot.h"
 
 namespace Anki {
@@ -27,24 +23,28 @@ namespace {
 inline bool SetEdgePosition(const Matrix_3x3f &invH,
                             s32 i, s32 j,
                             OverheadEdgePoint &edgePoint);
+
 bool LiftInterferesWithEdges(bool isLiftTopInCamera, float liftTopY,
                              bool isLiftBotInCamera, float liftBotY,
                              int planeTopY, int planeBotY);
+
 void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder,
                   std::vector<OverheadEdgePointChain>& imageChains );
 
-bool checkThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold);
+bool CheckThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold);
 
-bool checkThreshold(f32 pixel, f32 threshold);
+bool CheckThreshold(f32 pixel, f32 threshold);
 
-struct ImageRGBTrait {
+struct ImageRGBTrait
+{
   typedef Vision::ImageRGB ImageType;
   typedef Vision::PixelRGB_<s16> SPixelType;
   typedef Vision::PixelRGB_<f32> FPixelType;
   typedef Vision::PixelRGB UPixelType;
 };
 
-struct ImageGrayTrait {
+struct ImageGrayTrait
+{
   typedef Vision::Image ImageType;
   typedef s16 SPixelType;
   typedef f32 FPixelType;
@@ -54,19 +54,17 @@ struct ImageGrayTrait {
 }
 
 OverheadEdgesDetector::OverheadEdgesDetector(const Vision::Camera &camera, VizManager *vizManager,
-                                         VisionSystem* visionSystem, f32 kEdgeThreshold, u32 kMinChainLength) :
-                      _camera(camera),
-                      _vizManager(vizManager),
-                      _visionSystem(visionSystem),
-                      _kEdgeThreshold(kEdgeThreshold),
-                      _kMinChainLength(kMinChainLength)
+                                             _camera(camera),
+                                             _vizManager(vizManager),
+                                             _kEdgeThreshold(edgeThreshold),
+                                             _kMinChainLength(minChainLength)
 {
 
 }
 
-Result OverheadEdgesDetector::Detect(Anki::Vision::ImageCache &imageCache, const VisionPoseData *crntPoseData,
-                                   VisionProcessingResult *currentResult) {
-
+Result OverheadEdgesDetector::Detect(Anki::Vision::ImageCache &imageCache, const VisionPoseData &crntPoseData,
+                                     VisionProcessingResult &currentResult)
+{
   if (imageCache.HasColor()) {
     return DetectHelper<ImageRGBTrait>(imageCache.GetRGB(), crntPoseData, currentResult);
   }
@@ -77,15 +75,15 @@ Result OverheadEdgesDetector::Detect(Anki::Vision::ImageCache &imageCache, const
 
 template<typename ImageTraitType>
 Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageType &image,
-                                         const VisionPoseData *crntPoseData,
-                                         VisionProcessingResult *currentResult)
+                                           const VisionPoseData &crntPoseData,
+                                           VisionProcessingResult &currentResult)
 {
   // if the ground plane is not currently visible, do not detect edges
-  if (!crntPoseData->groundPlaneVisible) {
+  if (!crntPoseData.groundPlaneVisible) {
     OverheadEdgeFrame edgeFrame;
     edgeFrame.timestamp = image.GetTimestamp();
     edgeFrame.groundPlaneValid = false;
-    currentResult->overheadEdges.push_back(std::move(edgeFrame));
+    currentResult.overheadEdges.push_back(std::move(edgeFrame));
     return RESULT_OK;
   }
 
@@ -93,13 +91,13 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   // if we are carrying an object, it's also not probably a good idea, since we would most likely detect
   // its edges (unless it's carrying high and we are looking down, but that requires modeling what
   // objects can be carried here).
-  if (crntPoseData->histState.WasLiftMoving() || crntPoseData->histState.WasCarryingObject()) {
+  if (crntPoseData.histState.WasLiftMoving() || crntPoseData.histState.WasCarryingObject()) {
     return RESULT_OK;
   }
 
   // Get ROI around ground plane quad in image
-  const Matrix_3x3f &H = crntPoseData->groundPlaneHomography;
-  const GroundPlaneROI &roi = crntPoseData->groundPlaneROI;
+  const Matrix_3x3f &H = crntPoseData.groundPlaneHomography;
+  const GroundPlaneROI &roi = crntPoseData.groundPlaneROI;
   Quad2f groundInImage;
   roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), groundInImage);
 
@@ -137,13 +135,13 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
 
     // calculate the lift pose with respect to the poseStamp's origin
     const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
-                              crntPoseData->histState.GetPose(), "RobotLiftBase");
+                              crntPoseData.histState.GetPose(), "RobotLiftBase");
     Pose3d liftPose(0, Y_AXIS_3D(), {0.f, 0.f, 0.f}, liftBasePose, "RobotLift");
-    Robot::ComputeLiftPose(crntPoseData->histState.GetLiftAngle_rad(), liftPose);
+    Robot::ComputeLiftPose(crntPoseData.histState.GetLiftAngle_rad(), liftPose);
 
     // calculate lift wrt camera
     Pose3d liftPoseWrtCamera;
-    if (! liftPose.GetWithRespectTo(crntPoseData->cameraPose, liftPoseWrtCamera)) {
+    if (! liftPose.GetWithRespectTo(crntPoseData.cameraPose, liftPoseWrtCamera)) {
       PRINT_NAMED_ERROR("VisionSystem.DetectOverheadEdges.PoseTreeError",
                         "Could not get lift pose w.r.t. camera pose.");
       return RESULT_FAIL;
@@ -252,7 +250,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     for (s32 j = bbox.GetYmax() - 1; j >= bbox.GetY(); --j) {
       const typename ImageTraitType::FPixelType &edgePixelX = edgeTrans_i[j];
 
-      if (checkThreshold(edgePixelX, _kEdgeThreshold)) {
+      if (CheckThreshold(edgePixelX, _kEdgeThreshold)) {
         // Project point onto ground plane
         // Note that b/c we are working transposed, i is x and j is y in the
         // original image.
@@ -332,7 +330,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     }
     typename ImageTraitType::ImageType dispEdgeImg(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
 
-    // The behavior depends omn the type of the pixel, so anonym struct and overload
+    // The behavior depends on the type of the pixel, so anonym struct and overload
     struct {
       Vision::PixelRGB operator()(const Vision::PixelRGB_<s16>& pixelS16) {
         return Vision::PixelRGB((u8)std::abs(pixelS16.r()),
@@ -342,10 +340,10 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
       u8 operator()(const s16& pixelS16) {
         return u8(std::abs(pixelS16));
       }
-    } __fcn;
+    } fcn_struct;
 
     //still needs to create an std::function here, the compiler doesn't get it
-    std::function<typename ImageTraitType::UPixelType(const typename ImageTraitType::SPixelType&)> fcn = __fcn;
+    std::function<typename ImageTraitType::UPixelType(const typename ImageTraitType::SPixelType&)> fcn = fcn_struct;
     edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
 
     // Project edges on the ground back into image for display
@@ -361,8 +359,8 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
     //dispImg.Display("OverheadImage", 1);
     //dispEdgeImg.Display("OverheadEdgeImage");
-    currentResult->debugImageRGBs.push_back({"OverheadImage", dispImg});
-    currentResult->debugImageRGBs.push_back({"EdgeImage", dispEdgeImg});
+    currentResult.debugImageRGBs.push_back({"OverheadImage", dispImg});
+    currentResult.debugImageRGBs.push_back({"EdgeImage", dispEdgeImg});
   } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
 
   // create edge frame info to send
@@ -392,14 +390,14 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
       for (const auto &point : chain.points) {
         // project the point to 3D
         Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f),
-                         crntPoseData->histState.GetPose(), "ChainPoint");
+                         crntPoseData.histState.GetPose(), "ChainPoint");
         Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToRoot();
         // disabled 3D render
         // _vizManager->DrawSegment("kRenderEdgesInCameraView", pointWrtOrigin.GetTranslation(), pointWrtOrigin.GetTranslation() + Vec3f{0,0,30}, NamedColors::WHITE, false);
 
         // project it back to 2D
         Pose3d pointWrtCamera;
-        if (pointWrtOrigin.GetWithRespectTo(crntPoseData->cameraPose, pointWrtCamera)) {
+        if (pointWrtOrigin.GetWithRespectTo(crntPoseData.cameraPose, pointWrtCamera)) {
           Anki::Point2f pointInCameraView;
           _camera.Project3dPoint(pointWrtCamera.GetTranslation(), pointInCameraView);
           _vizManager->DrawCameraOval(pointInCameraView, 1, 1, NamedColors::BLUE);
@@ -409,7 +407,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   }
 
   // put in mailbox
-  currentResult->overheadEdges.push_back(std::move(edgeFrame));
+  currentResult.overheadEdges.push_back(std::move(edgeFrame));
 
   return RESULT_OK;
 }
@@ -528,7 +526,8 @@ void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector
       if ( isBorder == currentChain.isBorder )
       {
         // they do, is the new point close enough to the last point in the current chain?
-        const f32 distToPrevPoint = ComputeDistanceBetween(pointInfo.position, imageChains.back().points.back().position);
+        const f32 distToPrevPoint = ComputeDistanceBetween(pointInfo.position,
+                                                           imageChains.back().points.back().position);
         if ( distToPrevPoint <= kMaxDistBetweenEdges_mm )
         {
           // it is close, this point should be added to the current chain
@@ -559,13 +558,15 @@ void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector
   newCurrentChain.points.emplace_back( pointInfo );
 }
 
-bool checkThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold) {
+bool CheckThreshold(Vision::PixelRGB_<f32> pixel, f32 threshold)
+{
   return std::abs(pixel.r()) > threshold ||
          std::abs(pixel.g()) > threshold ||
          std::abs(pixel.b()) > threshold;
 }
 
-bool checkThreshold(f32 pixel, f32 threshold) {
+bool CheckThreshold(f32 pixel, f32 threshold)
+{
   return std::abs(pixel) > threshold;
 }
 
@@ -574,14 +575,13 @@ bool checkThreshold(f32 pixel, f32 threshold) {
 // Explicit instantiation of DetectHelper() method for Gray and RGB images
 template
 Result OverheadEdgesDetector::DetectHelper<ImageGrayTrait>(const Vision::Image &image,
-                                                             const VisionPoseData *crntPoseData,
-                                                             VisionProcessingResult *currentResult
-);
+                                                           const VisionPoseData &crntPoseData,
+                                                           VisionProcessingResult &currentResult);
+
 template
 Result OverheadEdgesDetector::DetectHelper<ImageRGBTrait>(const Vision::ImageRGB &image,
-                                                                                   const VisionPoseData *crntPoseData,
-                                                                                   VisionProcessingResult *currentResult
-);
+                                                          const VisionPoseData &crntPoseData,
+                                                          VisionProcessingResult &currentResult);
 
-}
-}
+} //namespace Cozmo
+} //namespace Anki
