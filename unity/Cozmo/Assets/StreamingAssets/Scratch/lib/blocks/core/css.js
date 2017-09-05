@@ -907,8 +907,10 @@ Blockly.Css.CONTENT = [
 
   '.blocklyWidgetDiv .goog-palette-colorswatch {',
     'position: relative;',
-    'height: 13px;',
-    'width: 15px;',
+    'height: 26px;', // *** ANKI CHANGE ***
+    'width: 30px;',  // *** ANKI CHANGE ***
+//    'height: 13px;',
+//    'width: 15px;',
   '}',
 
   '.blocklyWidgetDiv .goog-palette-cell-hover .goog-palette-colorswatch {',

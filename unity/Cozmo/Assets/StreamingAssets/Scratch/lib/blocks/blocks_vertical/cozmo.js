@@ -9,45 +9,6 @@ goog.require('Blockly.Blocks');
 
 goog.require('Blockly.Colours');
 
-// ========================================================================================================================
-// Horizontal block clones, calling the same methods, just with text instead of image icons
-// ========================================================================================================================
-
-Blockly.Blocks['dropdown_cozmo_setcolor'] = {
-  /**
-   * Block for set color drop-down (used for shadow).
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldIconMenu([
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_coral.svg',
-            value: 'coral', width: 48, height: 48, alt: 'Coral'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_orange.svg',
-            value: 'orange', width: 48, height: 48, alt: 'Orange'},            
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_yellow.svg',
-              value: 'yellow', width: 48, height: 48, alt: 'Yellow'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_green.svg',
-            value: 'green', width: 48, height: 48, alt: 'Green'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_blue.svg',
-            value: 'blue', width: 48, height: 48, alt: 'Blue'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_purple.svg',
-            value: 'purple', width: 48, height: 48, alt: 'Purple'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_white.svg',
-              value: 'white', width: 48, height: 48, alt: 'White'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_black.svg',
-              value: 'off', width: 48, height: 48, alt: 'Off'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_mystery.svg',
-              value: 'mystery', width: 48, height: 48, alt: 'Mystery'}
-        ]), 'CHOICE');
-    this.setOutput(true);
-    this.setColour(Blockly.Colours.looks.primary,
-      Blockly.Colours.looks.secondary,
-      Blockly.Colours.looks.tertiary
-    );
-  }
-};
-
 Blockly.Blocks['cozmo_vert_setbackpackcolor'] = {
   /**
    * Block to set color of LED
