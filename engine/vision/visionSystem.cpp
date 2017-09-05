@@ -117,7 +117,7 @@ namespace Cozmo {
   , _markerDetector(new Vision::MarkerDetector(_camera))
   , _laserPointDetector(new LaserPointDetector(_vizManager))
   , _motionDetector(new MotionDetector(_camera, _vizManager))
-  , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, this))
+  , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
   , _clahe(cv::createCLAHE())
   {
     DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
