@@ -248,7 +248,7 @@ namespace Anki {
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
-#ifdef SIMULATOR
+#ifndef TARGET_K02
           TestModeController::Start(TestMode::TM_NONE);
           AnimationController::EnableTracks( EnumToUnderlyingType(AnimTrackFlag::ALL_TRACKS));
 #endif
@@ -272,10 +272,12 @@ namespace Anki {
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
-#ifdef SIMULATOR
-        if(AnimationController::Update() != RESULT_OK) {
-          AnkiWarn( 230, "CozmoBot.Main.AnimationControllerUpdateFailed", 305, "", 0);
-          AnimationController::Clear();
+#ifndef TARGET_K02
+        if (Messages::ReceivedInit()) {
+          if(AnimationController::Update() != RESULT_OK) {
+            AnkiWarn( 230, "CozmoBot.Main.AnimationControllerUpdateFailed", 305, "", 0);
+            AnimationController::Clear();
+          }
         }
 #endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
@@ -317,9 +319,11 @@ namespace Anki {
               waitForFirstMotorCalibAfterConnect_ = false;
               
 #ifdef SIMULATOR
+#ifndef COZMO_V2
               RobotInterface::RobotAvailable msg;
               AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "", 0);
               RobotInterface::SendMessage(msg);
+#endif
 #endif
               
               mode_ = WAITING;

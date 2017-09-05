@@ -189,14 +189,17 @@ namespace Messages {
     static bool wasConnected = false;
     if (!wasConnected && CozmoAnimComms::EngineIsConnected()) {
       
-      // Send RobotAvailable indicating sim robot
       RobotInterface::RobotAvailable idMsg;
       idMsg.hwRevision = 0;
       RobotInterface::SendMessageToEngine(idMsg);
       
-      // send firmware info indicating simulated robot
+      // send firmware info indicating simulated or physical robot type
       {
+#ifdef SIMULATOR
         std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":0}"};
+#else
+        std::string firmwareJson{"{\"version\":0,\"time\":0}"};
+#endif
         RobotInterface::FirmwareVersion msg;
         msg.RESRVED = 0;
         msg.json_length = firmwareJson.size() + 1;

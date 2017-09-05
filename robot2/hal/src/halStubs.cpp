@@ -234,8 +234,11 @@ namespace Anki {
     }
 
 
+    // TODO: This is now being handled in animation process
+    //       Is there still a need to maintain connection state in robot process?
     Result HAL::MonitorConnectionState(void)
     {
+      /*
       // Send block connection state when engine connects
       static bool wasConnected = false;
       if (!wasConnected && HAL::RadioIsConnected()) {
@@ -245,7 +248,7 @@ namespace Anki {
         idMsg.hwRevision = 0;
         RobotInterface::SendMessage(idMsg);
 
-        // send firmware info indicating simulated robot
+        // send firmware info indicating physical robot
         {
           std::string firmwareJson{"{\"version\":0,\"time\":0}"};
           RobotInterface::FirmwareVersion msg;
@@ -260,7 +263,7 @@ namespace Anki {
       else if (wasConnected && !HAL::RadioIsConnected()) {
         wasConnected = false;
       }
-
+      */
       return RESULT_OK;
 
     } // step()
@@ -293,7 +296,7 @@ namespace Anki {
 #if IMU_WORKING
       ProcessIMUEvents();
 #endif
-      MonitorConnectionState();
+      //MonitorConnectionState();
       return result;
     }
 
