@@ -23,6 +23,7 @@ namespace Anki {
 namespace Vision {
 class Camera;
 class ImageCache;
+class Profiler;
 }
 
 namespace Cozmo {
@@ -35,6 +36,7 @@ class OverheadEdgesDetector {
 public:
   OverheadEdgesDetector(const Vision::Camera& camera,
                         VizManager* vizManager,
+                        Vision::Profiler* profiler,
                         f32 edgeThreshold = 50.0f,
                         u32 minChainLength = 3 );
 
@@ -49,6 +51,7 @@ private:
 
   const Vision::Camera&   _camera;
   VizManager*             _vizManager = nullptr;
+  Vision::Profiler*       _profiler = nullptr;
   const f32               _kEdgeThreshold = 50.0f;
   const u32               _kMinChainLength = 3;
 

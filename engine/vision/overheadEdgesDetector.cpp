@@ -54,8 +54,10 @@ struct ImageGrayTrait
 }
 
 OverheadEdgesDetector::OverheadEdgesDetector(const Vision::Camera &camera, VizManager *vizManager,
+                                             Vision::Profiler* profiler, f32 edgeThreshold, u32 minChainLength) :
                                              _camera(camera),
                                              _vizManager(vizManager),
+                                             _profiler(profiler),
                                              _kEdgeThreshold(edgeThreshold),
                                              _kMinChainLength(minChainLength)
 {
@@ -187,7 +189,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
   // in the middle to help detect soft edges
   // (scaled such that each half has absolute sum of 1.0, so it's normalized)
-  _visionSystem->Tic("EdgeDetection");
+  _profiler->Tic("EdgeDetection");
   const SmallMatrix<7, 5, f32> kernel{
       0.0168, 0.0754, 0.1242, 0.0754, 0.0168,
       0.0377, 0.1689, 0.2784, 0.1689, 0.0377,
@@ -212,9 +214,9 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
 
   Array2d<typename ImageTraitType::SPixelType> edgeImgX(image.GetNumRows(), image.GetNumCols());
   cv::filter2D(imageROI.get_CvMat_(), edgeImgX.GetROI(bbox).get_CvMat_(), CV_16S, kernel.get_CvMatx_());
-  _visionSystem->Toc("EdgeDetection");
+  _profiler->Toc("EdgeDetection");
 
-  _visionSystem->Tic("GroundQuadEdgeMasking");
+  _profiler->Tic("GroundQuadEdgeMasking");
   // Remove edges that aren't in the ground plane quad (as opposed to its bounding rectangle)
   Vision::Image mask(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
   mask.FillWith(255);
@@ -226,7 +228,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   }, 0);
 
   edgeImgX.SetMaskTo(mask, 0);
-  _visionSystem->Toc("GroundQuadEdgeMasking");
+  _profiler->Toc("GroundQuadEdgeMasking");
 
   std::vector<OverheadEdgePointChain> candidateChains;
 
@@ -236,7 +238,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   //       full-image coordinates so that H directly applies
   // Note: transposing so we can work along rows, which is more efficient.
   //       (this also means using bbox.X for transposed rows and bbox.Y for transposed cols)
-  _visionSystem->Tic("FindingGroundEdgePoints");
+  _profiler->Tic("FindingGroundEdgePoints");
   Matrix_3x3f invH;
   H.GetInverse(invH);
   Array2d<typename ImageTraitType::FPixelType> edgeTrans(edgeImgX.get_CvMat_().t());
@@ -293,7 +295,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     }
 
   }
-  _visionSystem->Toc("FindingGroundEdgePoints");
+  _profiler->Toc("FindingGroundEdgePoints");
 
   #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
   if (DRAW_OVERHEAD_IMAGE_EDGES_DEBUG) {
