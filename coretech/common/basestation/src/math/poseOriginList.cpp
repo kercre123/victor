@@ -120,6 +120,11 @@ Result PoseOriginList::Rejigger(const PoseOrigin& newOrigin, const Transform3d& 
   DEV_ASSERT_MSG(_current.originID == newOriginID, "PoseOriginList.Rejigger.BadFinalCurrentOriginID",
                  "Expected:%d Got:%d", newOriginID, _current.originID);
 
+  if(ANKI_DEV_CHEATS)
+  {
+    SanityCheckOwnership();
+  }
+  
   return RESULT_OK;
 }
   
@@ -149,6 +154,35 @@ void PoseOriginList::Flatten(PoseOriginID_t worldOriginID)
       }
     }
   }
+  
+  if(ANKI_DEV_CHEATS)
+  {
+    SanityCheckOwnership();
+  }
+}
+  
+bool PoseOriginList::SanityCheckOwnership() const
+{
+  bool allPosesOwned = true;
+  for(auto const& originAndIdPair : _origins)
+  {
+    auto const& origin = originAndIdPair.second;
+    allPosesOwned &= ANKI_VERIFY(origin->IsOwned(),
+                                 "PoseOriginList.SanityCheckOwnership.UnownedOrigin",
+                                 "Pose %d(%s) is unowned", origin->GetID(), origin->GetName().c_str());
+    
+    if(origin->HasParent())
+    {
+      const Pose3d& parent = origin->GetParent();
+      allPosesOwned &= ANKI_VERIFY(parent.IsOwned(),
+                                   "PoseOriginList.SanityCheckOwnership.OriginHasUnownedParent",
+                                   "Pose %d(%s)'s parent %d(%s) is unowned",
+                                   origin->GetID(), origin->GetName().c_str(),
+                                   parent.GetID(), parent.GetName().c_str());
+    }
+  }
+  
+  return allPosesOwned;
 }
   
 } // namespace Anki

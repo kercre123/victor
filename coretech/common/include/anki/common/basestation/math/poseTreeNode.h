@@ -93,6 +93,7 @@ public:
   // Register/unregister as an "owner" of this node
   void AddOwner()    { ++_ownerCount; }
   void RemoveOwner();
+  bool IsOwned() const { return (_ownerCount > 0); }
   
 private:
   

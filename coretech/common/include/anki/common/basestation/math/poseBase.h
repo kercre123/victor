@@ -115,6 +115,7 @@ namespace Anki {
     // but this can be globally adjusted if desired (e.g. for unit tests).
     static bool AreUnownedParentsAllowed();
     static void AllowUnownedParents(bool tf);
+    bool IsOwned() const;
     
   protected:
     

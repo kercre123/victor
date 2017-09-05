@@ -1078,6 +1078,8 @@ TEST(BlockWorld, RejiggerAndFlatten)
   ASSERT_EQ(connObj1, robot.GetLocalizedTo());
   ASSERT_EQ(originA, robot.GetWorldOriginID());
   
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
   // Delocalize
   const bool isCarryingObject = false;
   robot.Delocalize(isCarryingObject);
@@ -1088,6 +1090,8 @@ TEST(BlockWorld, RejiggerAndFlatten)
   ASSERT_EQ(2, robot.GetPoseOriginList().GetSize());
   ASSERT_NE(connObj1, robot.GetLocalizedTo());
   
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
   // See object 2
   lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
@@ -1095,6 +1099,8 @@ TEST(BlockWorld, RejiggerAndFlatten)
   // Should now be localized to object 2, still in origin B
   ASSERT_EQ(connObj2, robot.GetLocalizedTo());
   ASSERT_EQ(originB, robot.GetWorldOriginID());
+  
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
   
   // Delocalize again
   robot.Delocalize(isCarryingObject);
@@ -1106,6 +1112,8 @@ TEST(BlockWorld, RejiggerAndFlatten)
   ASSERT_NE(connObj2, robot.GetLocalizedTo());
   ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
   
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
   // Create some arbitrary pose in this origin
   const Pose3d somePose(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 200.f, 300.f}, robot.GetWorldOrigin());
   
@@ -1116,6 +1124,8 @@ TEST(BlockWorld, RejiggerAndFlatten)
   ASSERT_EQ(originB, robot.GetWorldOriginID());
   ASSERT_EQ(connObj2, robot.GetLocalizedTo());
   ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
+  
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
   
   // After rejigger, origin C should now have B as its parent
   ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originB)));
@@ -1135,6 +1145,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
   // We should have flattened C to be w.r.t. A now. B will be rejiggered to be parented to A as well.
   ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
   ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originB).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
   
   // Our arbitrary pose should still have a valid parent
   ASSERT_EQ(originC, somePose.GetParent().GetID());
