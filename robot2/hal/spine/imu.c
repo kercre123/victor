@@ -331,9 +331,9 @@ int imu_manage(struct IMURawData* data)
               data->gyro[0]*IMU_GYRO_SCALE_DPS,
               data->gyro[1]*IMU_GYRO_SCALE_DPS,
               data->gyro[2]*IMU_GYRO_SCALE_DPS,
-              data->acc[0]*IMU_ACC_SCALE_G,
-              data->acc[1]*IMU_ACC_SCALE_G,
-              data->acc[2]*IMU_ACC_SCALE_G,
+              data->acc[0]*IMU_ACCEL_SCALE_G,
+              data->acc[1]*IMU_ACCEL_SCALE_G,
+              data->acc[2]*IMU_ACCEL_SCALE_G,
               IMU_TEMP_RAW_TO_C(data->temperature)
           );
        }
