@@ -753,13 +753,10 @@ namespace Anki {
       //timeStamp_ = t;
     };
 
-    void HAL::SetLED(LEDId led_id, u16 color) {
+    void HAL::SetLED(LEDId led_id, u32 color) {
       #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
-        leds_[led_id]->set( ((color & LED_ENC_IR) ? LED_IR : 0) |
-                           (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << (16 + 3)) |
-                           (((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT) << ( 8 + 3)) |
-                           (((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT) << ( 0 + 3)));
+        leds_[led_id]->set( color )
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }

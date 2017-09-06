@@ -123,6 +123,7 @@ enum {
   LED_COUNT   = 15,
 };
 typedef uint32_t LedIndexes;
+#define LED_CHANEL_CT 3  //RGB
 
 struct MotorPower
 {
