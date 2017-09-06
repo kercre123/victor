@@ -70,12 +70,7 @@ Blockly.FieldColour.prototype.columns_ = 0;
  */
 Blockly.FieldColour.prototype.init = function(block) {
   Blockly.FieldColour.superClass_.init.call(this, block);
-
-  // *** ANKI CHANGE ***
-  // Set initial value to red
-  // TODO Set initial color to a randomly selected one from our palette
-  this.setValue('#ff0000');
-  //this.setValue(this.getValue());
+  this.setValue(this.getValue());
 };
 
 /**
