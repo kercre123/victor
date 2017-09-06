@@ -60,7 +60,7 @@ public:
   void Init(const float currentTime_s, const Json::Value& inJson,
             const Json::Value& inStarsJson, const Json::Value& inActionsJson,
             const Json::Value& inDecayJson, const Json::Value& inDecayAJson,
-            const Json::Value& inDecayBJson, const Json::Value& inDecayCJson,
+            const Json::Value& inDecayBJson,
             const Json::Value& inHandlersJson,
             const Json::Value& inLocalNotificationJson);
   void InitAfterConnection();

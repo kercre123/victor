@@ -42,7 +42,6 @@ function onOpen() {
     {name: "Export JSON for DecayConfig sheet", functionName: "exportDecayConfigSheet"},
     {name: "Export JSON for DecayA sheet", functionName: "exportDecayASheet"},
     {name: "Export JSON for DecayB sheet", functionName: "exportDecayBSheet"},
-    {name: "Export JSON for DecayC sheet", functionName: "exportDecayCSheet"},
     {name: "Export JSON for RewardsConfig sheet", functionName: "exportRewardsConfigSheet"},
     {name: "Export JSON for LocalNotificationConfig sheet", functionName: "exportLocalNotificationConfigSheet"},
 //  {name: "Configure export", functionName: "exportOptions"},
@@ -117,10 +116,6 @@ function exportDecayASheet(e) {
 
 function exportDecayBSheet(e) {
   return exportGivenDecayConfigSheet(e, "DecayB");
-}
-
-function exportDecayCSheet(e) {
-  return exportGivenDecayConfigSheet(e, "DecayC");
 }
 
 function exportGivenDecayConfigSheet(e, sheetName) {

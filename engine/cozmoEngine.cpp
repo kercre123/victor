@@ -239,7 +239,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
                                     _context->GetDataLoader()->GetRobotNeedsDecayConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsDecayConfigA(),
                                     _context->GetDataLoader()->GetRobotNeedsDecayConfigB(),
-                                    _context->GetDataLoader()->GetRobotNeedsDecayConfigC(),
                                     _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
                                     _context->GetDataLoader()->GetLocalNotificationConfig());
 
