@@ -511,7 +511,9 @@ public class OnboardingManager : MonoBehaviour {
     if (lastPhase == OnboardingPhases.InitialSetup && _NeedsHubView != null) {
       _NeedsHubView.OnboardingSkipped();
     }
-    HubWorldBase.Instance.StartFreeplay();
+    if (HubWorldBase.Instance != null) {
+      HubWorldBase.Instance.StartFreeplay();
+    }
   }
 
   public void DebugSkipOne() {
