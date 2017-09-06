@@ -137,6 +137,7 @@ enum {
   LED_COUNT   = 15,
 };
 typedef uint32_t LedIndexes;
+#define LED_CHANEL_CT 3  //RGB
 
 #ifdef CLAD_DEBUG
 const char* LedIndexesToString(LedIndexes m);
