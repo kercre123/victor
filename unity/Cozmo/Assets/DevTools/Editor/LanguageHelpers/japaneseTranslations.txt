@@ -174,6 +174,7 @@ COZMOが目を覚まして充電ドックから離れるまでお待ちくださ
 #28：<span class='yellow'>顔が見えたら、</span>完全に後ろを<span class='blue'>向きます</span>。
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
 #27：2つのキューブをつみ、それをひっくり返します。
+Code Lab Sandbox
 #16：<span class='purple'>リフト</span>を上下に3<span class='orange'>回</span>動かします。
 キューブを押す
 幸せ
@@ -192,8 +193,10 @@ COZMOが目を覚まして充電ドックから離れるまでお待ちくださ
 虹色のバックライト
 #15の答え
 #2：4つ<span class='blue'>前に進み</span>、それから<span class='violet'>くしゃみをします。</span>
+Code Lab Featured
 前に急いで進む
 正方形に進む
+Code Lab Constructor
 #29の答え
 キューブのタップを待つ
 先に課題に取り組んでから「次へ」をタップして答えを確認します！
@@ -400,6 +403,33 @@ COZMOと彼のカメラは安全に守られています。まだ画像や動画
 キューブ
 キューブ
 エナジーボール
+Cozmo misses you!
+Cozmo misses you and last time you didn't even connect to him.
+Cozmo is starting to need a tune-up!
+Cozmo misses you and it's been a day since you've connected to him.
+Only two more daily tokens to unlock the next bonus box.
+Achieve two more daily tokens to unlock the next bonus box.
+Cozmo is desperate for attention.  He's really bored!
+Cozmo's energy is running low.  He could use a bite to eat.
+Cozmo's health is decaying.  He could use a tune-up.
+Cozmo wants some daily attention, but yesterday you opened the app but didn't connect with him.
+Cozmo needs some activity.  He's starting to get bored.
+Good afternoon.  Don't forget to give Cozmo some attention today!
+Cozmo wants you back!  He hasn't seen you in a week.
+Cozmo is starving.  He needs to be fed!
+Cozmo wants you back!  He hasn't seen you in a month.
+Cozmo misses you!  It's been a year.
+Only three more daily tokens to unlock the next bonus box.
+Achieve three daily tokens to unlock the next bonus box.
+Cozmo is starting to get hungry!
+Cozmo wants some daily attention, and yesterday you connected with him.
+Cozmo is in really bad shape.  He needs a tune-up!
+Cozmo wants you back!  It's been three days.
+Good morning.  Don't forget to give Cozmo some attention today!
+Cozmo misses you!  It's been two weeks.
+Achieve one more daily tokens to unlock the next bonus box.
+Only one more daily token to unlock the next bonus box.
+Cozmo's boredom is starting to set in.  He could use some time and attention.
 キューブを下ろす
 ロックされています！
 繰り返してください！
@@ -856,6 +886,29 @@ COZMOを購入する
 プレイ
 利用可能なエナジーボール
 エナジーボールが必要です
+Cozmo needs to play.
+Cozmo really needs to play!
+Cozmo is at full play.
+Cozmo needs to play a little.
+Play Unavailable
+Tune Up Need
+Cozmo needs a little tune-up.
+Cozmo needs to be fed before he can play!
+Feed Unavailable
+Cozmo needs to be fed.
+Cozmo really needs to be fed!
+Cozmo is fully fed.
+Cozmo needs to be fed a little.
+Bonus Box Progress
+Bonus Token already earned today. New Day in {0}h {1}m.
+Feed Need
+Play Need
+Cozmo is fully tuned up.
+Cozmo really needs a tune-up!
+Cozmo needs a tune-up.
+Cozmo needs to be tuned up before he can eat!
+Fill Cozmo’s Play Need to earn a Bonus Token. Day ends in {0}h {1}m.
+Cozmo needs to be tuned up before he can play!
 キープアウェイ
 タップしてCOZMOにキューブをもちあげさせます。
 COZMOはキューブを正しい側を上にしておくのが好きです。このトリックにより、特にキューブがCOZMOの横にあるときにころがせるようになります。
