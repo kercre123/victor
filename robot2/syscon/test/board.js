@@ -1,4 +1,5 @@
 const SerialPort = require("serialport");
+const EventEmitter = require("events");
 const crc = require("./crc");
 
 
@@ -11,17 +12,15 @@ const PAYLOAD_ERASE       = 0x7878;
 const PAYLOAD_VALIDATE    = 0x7374;
 const PAYLOAD_DFU_PACKET  = 0x6675;
 
-module.exports = class Body {
+class Body extends EventEmitter {
 	constructor(target) {
+		super();
+
 		this.port = new SerialPort(target, { baudRate: 3000000 });
 		this.payload = Buffer.alloc(0);
 
 		this.port.on('data', (data) => this.receive(data));
 		this.port.on('error', (err) => console.log(`ERROR: ${err}`));
-
-		this.send(PAYLOAD_MODE_CHANGE);
-
-		setInterval(() => this.send(PAYLOAD_VERSION), 1000);
 	}
 
 	send(id, payload = Buffer.alloc(0)) {
@@ -72,20 +71,17 @@ module.exports = class Body {
 			}
 
 			this.payload = this.payload.slice(size);
-
-			switch (payloadID) {
-			case PAYLOAD_ACK:
-			case PAYLOAD_DATA_FRAME:
-			case PAYLOAD_CONT_DATA:
-			case PAYLOAD_MODE_CHANGE:
-			case PAYLOAD_VERSION:
-			case PAYLOAD_ERASE:
-			case PAYLOAD_VALIDATE:
-			case PAYLOAD_DFU_PACKET:
-			default:
-				console.log(payloadID.toString(16), target);
-				break ;
-			}
+			this.emit('data', { id: payloadID, data: target } );
 		} while (this.payload.length > 0);
 	}
 }
+module.exports = Body;
+
+Body.PAYLOAD_DATA_FRAME  = 0x6466;
+Body.PAYLOAD_CONT_DATA   = 0x6364;
+Body.PAYLOAD_MODE_CHANGE = 0x6d64;
+Body.PAYLOAD_VERSION     = 0x7276;
+Body.PAYLOAD_ACK         = 0x6b61;
+Body.PAYLOAD_ERASE       = 0x7878;
+Body.PAYLOAD_VALIDATE    = 0x7374;
+Body.PAYLOAD_DFU_PACKET  = 0x6675;

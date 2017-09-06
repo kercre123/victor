@@ -136,6 +136,7 @@ private:
   TimeStamp_t               _lastFaceSeenTime_ms;
   
   s32                       _maxFacesVisible;
+  f32                       _tooManyFacesRecentTime_sec;
   f32                       _tooManyFacesTimeout_sec;
   f32                       _startedSeeingMultipleFaces_sec;
   f32                       _startTime_sec;

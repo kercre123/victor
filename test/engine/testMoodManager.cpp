@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "engine/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviorContainer.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
@@ -468,7 +468,7 @@ TEST(MoodManager, BehaviorScoring)
   
   Json::Value chooserConfig;
   chooserConfig["behaviors"] = "";
-  ScoringBehaviorChooser behaviorChooser(testRobot, chooserConfig);
+  ScoringBSRunnableChooser behaviorChooser(testRobot, chooserConfig);
   
   behaviorChooser.TryAddBehavior(testBehaviorReqHappy);
   behaviorChooser.TryAddBehavior(testBehaviorReqCalm);
@@ -487,7 +487,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.16666666f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -501,7 +501,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.0f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -515,7 +515,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.5f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqCalm);
   }
 
@@ -535,7 +535,7 @@ TEST(MoodManager, BehaviorScoring)
 
     for (uint32_t i=0; i < kNumTests; ++i)
     {
-      IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+      IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(testRobot, nullptr);
       if (behaviorChosen == testBehaviorReqHappy)
       {
         ++behaviorCountHappy;

@@ -191,12 +191,16 @@ namespace Anki {
     // to lose all the information along the chain from the pose up to its origin
     const Pose3d flattenedPose = GetWithRespectToRoot();
     
+    const PoseOriginID_t originID = flattenedPose.GetRootID();
+    ANKI_VERIFY(originList.ContainsOriginID(originID),
+                "Pose3d.ToPoseStruct3d.UnknownOrigin", "ID:%d", originID);
+    
     const Vec3f& T = flattenedPose.GetTranslation();
     const UnitQuaternion& Q = flattenedPose.GetRotation().GetQuaternion();
     
-    const PoseOriginID_t originID = flattenedPose.GetParent().GetID();
-    ANKI_VERIFY(originList.ContainsOriginID(originID),
-                "Pose3d.ToPoseStruct3d.UnknownOrigin", "ID:%d", originID);
+    ANKI_VERIFY(IsRoot() || flattenedPose.GetParent().GetID() == originID,
+                "Pose3d.ToPoseStruct3d.BadParent", "ParentID:%d OriginID:%d",
+                flattenedPose.GetParent().GetID(), originID);
     
     PoseStruct3d poseStruct(T.x(), T.y(), T.z(), Q.w(), Q.x(), Q.y(), Q.z(), originID);
     

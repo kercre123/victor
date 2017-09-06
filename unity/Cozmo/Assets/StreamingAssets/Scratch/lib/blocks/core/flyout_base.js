@@ -251,6 +251,12 @@ Blockly.Flyout.prototype.createDom = function(tagName) {
   // hide/show code will set up proper visibility and size later.
   this.svgGroup_ = Blockly.utils.createSvgElement(tagName,
       {'class': 'blocklyFlyout', 'style' : 'display: none'}, null);
+
+  // *** ANKI CHANGE ***
+  if (window.isVertical) {
+    this.svgGroup_.style.top = 100;
+  }
+
   this.svgBackground_ = Blockly.utils.createSvgElement('path',
       {'class': 'blocklyFlyoutBackground'}, this.svgGroup_);
   this.svgGroup_.appendChild(this.workspace_.createDom());
@@ -320,17 +326,7 @@ Blockly.Flyout.prototype.setParentToolbox = function(toolbox) {
  * @return {number} The width of the flyout.
  */
 Blockly.Flyout.prototype.getWidth = function() {
-  // *** ANKI CHANGE ***
-  // For vertical, we want the width of the flyout to be wide enough for the blocks.
-  // The toolbox is the dimensions of blocklyToolboxDiv, which encompasses the category
-  // menu and is slimmer than the flyout.
-  if (window.isVertical) {
-    return this.DEFAULT_WIDTH;
-  }
-  else {
-    return this.parentToolbox_ ? this.parentToolbox_.getWidth() :
-        this.DEFAULT_WIDTH;
-  }
+  return this.DEFAULT_WIDTH;
 };
 
 /**

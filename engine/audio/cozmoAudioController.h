@@ -20,6 +20,12 @@
 
 #define HijackAudioPlugInDebugLogs 0
 
+// Forward declarations
+namespace Anki {
+  namespace Util {
+    class Locale;
+  }
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -52,8 +58,10 @@ public:
   
   // Handle when the app is goes in and out of Focus
   void AppIsInFocus( const bool inFocus );
-  
-  
+
+  // Set locale preference
+  void SetLocale(const Anki::Util::Locale& locale);
+
 private:
   // Configure plugins & robot buffers
   void SetupPlugins();

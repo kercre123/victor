@@ -75,10 +75,12 @@ namespace Anki {
   template<QuadDimType N, typename T>
   Quadrilateral<N,T>::Quadrilateral(const Quadrilateral<N+1,T>& quad)
   {
-    (*this)[Quad::TopLeft]     = quad[Quad::TopLeft];
-    (*this)[Quad::TopRight]    = quad[Quad::TopRight];
-    (*this)[Quad::BottomLeft]  = quad[Quad::BottomLeft];
-    (*this)[Quad::BottomRight] = quad[Quad::BottomRight];
+
+    (*this)[Quad::TopLeft] = Point<N,T>(quad[Quad::TopLeft]);
+    (*this)[Quad::TopRight] = Point<N,T>(quad[Quad::TopRight]);
+    (*this)[Quad::BottomLeft] = Point<N,T>(quad[Quad::BottomLeft]);
+    (*this)[Quad::BottomRight] = Point<N,T>(quad[Quad::BottomRight]);
+    
   }
   
 

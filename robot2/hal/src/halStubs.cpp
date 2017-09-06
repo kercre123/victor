@@ -22,6 +22,8 @@
 #include "clad/robotInterface/messageRobotToEngine.h"    //TODO: why do we still need these 2?
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "schema/messages.h"
+#include "clad/types/proxMessages.h"
+
 
 #define RADIO_IP "127.0.0.1"
 
@@ -52,7 +54,12 @@ namespace Anki {
     static_assert(MOTOR_LIFT == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
     static_assert(MOTOR_HEAD == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
 
-
+          /********** BEGIN TEMP FIXUP **************/
+#define TEMPORARY_HEAD_GEAR_RATIO_REDUCTION 4.0  //TODO: fix when hw changes
+#define TEMPORARY_RIGHT_TREAD_MOTOR_SIGN_REVERSAL -1.0 //TODO: fix when syscon changes    
+#define TEMPORARY_TREAD_MOTOR_POWER_FIXUP    ((motor == MOTOR_RIGHT) ? -1 : 1)
+      /********** ENDOF TEMP FIXUP **************/
+    
     namespace { // "Private members"
 
       //map power -1.0 .. 1.0 to -32767 to 32767
@@ -65,9 +72,9 @@ namespace Anki {
       //encoder counts -> mm or deg
       static const f32 HAL_MOTOR_POSITION_SCALE[MOTOR_COUNT] = {
         ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Left Tread mm
-        ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Right Tread mm
+        ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43 * TEMPORARY_RIGHT_TREAD_MOTOR_SIGN_REVERSAL), //Right Tread mm
         (0.25 * 3.14159265359) / 149.7,    //Lift radians
-        (0.25 * 3.14159265359) / 348.77,   //Head radians
+        (0.25/TEMPORARY_HEAD_GEAR_RATIO_REDUCTION * 3.14159265359) / 348.77,   //Head radians
       };
 
       s32 robotID_ = -1;
@@ -93,7 +100,6 @@ namespace Anki {
 
       struct {
         s32 motorOffset[MOTOR_COUNT];
-        CONSOLE_DATA(f32 motorSpeed[MOTOR_COUNT]);
         CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
@@ -111,7 +117,11 @@ namespace Anki {
 
     Result GetSpineDataFrame(void)
     {
-      SpineMessageHeader* hdr = (SpineMessageHeader*) hal_get_frame(PAYLOAD_DATA_FRAME);
+      SpineMessageHeader* hdr = (SpineMessageHeader*) hal_get_frame(PAYLOAD_DATA_FRAME, 500);
+      if (!hdr) {
+        LOGE("Spine timeout!");
+        return RESULT_FAIL_IO_TIMEOUT;
+      }
       if (hdr->payload_type != PAYLOAD_DATA_FRAME) {
         LOGE("Spine.c data corruption: payload does not match requested");
         return RESULT_FAIL_IO_UNSYNCHRONIZED;
@@ -148,9 +158,14 @@ namespace Anki {
         hal_set_mode(RobotMode_RUN);
 
         printf("Waiting for Data Frame\n");
-        while (GetSpineDataFrame() != RESULT_OK) {
-          ; //spin on good frame
-        }
+        do {
+          Result result = GetSpineDataFrame();
+          //spin on good frame
+          if (result == RESULT_FAIL_IO_TIMEOUT) {
+            printf("Kicking the body again!");
+            hal_set_mode(RobotMode_RUN);
+          }
+        } while (result != RESULT_OK);
       }
 #else
       bodyData_ = &dummyBodyData_;
@@ -170,7 +185,8 @@ namespace Anki {
     {
       assert(motor < MOTOR_COUNT);
       SAVE_MOTOR_POWER(motor, power);
-      headData_.motorPower[motor] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power;
+      headData_.motorPower[motor] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * TEMPORARY_TREAD_MOTOR_POWER_FIXUP;
+      
     }
 
     // Reset the internal position of the specified motor to 0
@@ -214,7 +230,7 @@ namespace Anki {
         printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
         printf("raw = %d ", bodyData_->motor[MOTOR_OF_INTEREST].position);
         printf("pos = %f ", HAL::MotorGetPosition(MOTOR_OF_INTEREST));
-        printf("spd = %f ", internalData_.motorSpeed[MOTOR_OF_INTEREST]);
+        printf("spd = %f ", HAL::MotorGetSpeed(MOTOR_OF_INTEREST));
         printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
         printf("cliff = %d %d% d% d ",bodyData_->cliffSense[0],bodyData_->cliffSense[1],bodyData_->cliffSense[2],bodyData_->cliffSense[3]);
         printf("prox = %d %d ",bodyData_->proximity.rangeStatus, bodyData_->proximity.rangeMM);
@@ -232,7 +248,6 @@ namespace Anki {
 
         // Send RobotAvailable indicating sim robot
         RobotInterface::RobotAvailable idMsg;
-        idMsg.robotID = 0;
         idMsg.hwRevision = 0;
         RobotInterface::SendMessage(idMsg);
 
@@ -276,7 +291,6 @@ namespace Anki {
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
         result =  GetSpineDataFrame();
-
         PrintConsoleOutput();
       }
 #endif
@@ -328,9 +342,16 @@ namespace Anki {
       return robotID_;
     }
 
-    u16 HAL::GetRawProxData()
+    ProxSensorData HAL::GetRawProxData()
     {
-      return FlipBytes(bodyData_->proximity.rangeMM);
+      ProxSensorData proxData;
+      proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
+      // Signal/Ambient Rate are fixed point 9.7, so convert to float:
+      proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
+      proxData.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
+      // SPAD count is fixed point 8.8, so convert to float:
+      proxData.spadCount = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
+      return proxData;
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)

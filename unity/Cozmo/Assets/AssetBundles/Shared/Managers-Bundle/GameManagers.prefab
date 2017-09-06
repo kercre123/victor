@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &187916
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 470864}
+  - component: {fileID: 11410250}
+  - component: {fileID: 114361022454736516}
+  m_Layer: 0
+  m_Name: GameManagers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &470864
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 187916}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &11410250
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 187916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 356f72b8dda834c49bc0a6027dafc8e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _RewardConfig: {fileID: 11400000, guid: 22fefc389e51549978a4a7e6cad25f48, type: 2}
+  NewDifficultyUnlock: -1
+  NewSkillChange: 0
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _RewardConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 691488c0cef66496fadbd30e8205c096,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: ExperienceID
+      value: experience
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: ActionRewardID
+      value: experience
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 187916}
+  m_IsPrefabParent: 1
+--- !u!114 &114361022454736516
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 187916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cf17c1e495c7476ea5b23aa170bc0b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _TooltipPrefab: {fileID: 114901523654011268, guid: 4ed76da1f74e6475f83c0bce6cbf7228,
+    type: 2}
+  _TooltipShowTime_Sec: 3

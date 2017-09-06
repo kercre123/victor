@@ -120,6 +120,11 @@ Result PoseOriginList::Rejigger(const PoseOrigin& newOrigin, const Transform3d& 
   DEV_ASSERT_MSG(_current.originID == newOriginID, "PoseOriginList.Rejigger.BadFinalCurrentOriginID",
                  "Expected:%d Got:%d", newOriginID, _current.originID);
 
+  if(ANKI_DEV_CHEATS)
+  {
+    SanityCheckOwnership();
+  }
+  
   return RESULT_OK;
 }
   
@@ -133,22 +138,51 @@ void PoseOriginList::Flatten(PoseOriginID_t worldOriginID)
   {
     Pose3d* origin = originAndIdPair.second.get();
     
-    assert(origin != nullptr); // Should REALLY never happen
+    DEV_ASSERT(origin != nullptr, "PoseOriginList.Flatten.NullOrigin"); // Should REALLY never happen
     
     // if this origin has a parent and it's not the world origin, we want to update
     // this origin to be a direct child of the world origin
-    if ( origin->HasParent() && (origin->IsChildOf(worldOrigin)) )
+    if ( origin->HasParent() && !origin->IsChildOf(worldOrigin) )
     {
-      // get WRT current origin, and if we can (because our parent's origin is the current worldOrigin), then assign
-      Pose3d iterWRTCurrentOrigin;
-      if ( origin->GetWithRespectTo(worldOrigin, iterWRTCurrentOrigin) )
+      // get WRT current origin, and store directly in place (we need to avoid creating a new Pose3d because we
+      // don't want poses stored in the PoseOriginList to ever be deleted (which affects their ownership
+      // of internal PoseTreeNodes)
+      if ( origin->GetWithRespectTo(worldOrigin, *origin) )
       {
         const std::string& newName = origin->GetName() + "_FLT";
-        *origin = iterWRTCurrentOrigin;
         origin->SetName( newName );
       }
     }
   }
+  
+  if(ANKI_DEV_CHEATS)
+  {
+    SanityCheckOwnership();
+  }
+}
+  
+bool PoseOriginList::SanityCheckOwnership() const
+{
+  bool allPosesOwned = true;
+  for(auto const& originAndIdPair : _origins)
+  {
+    auto const& origin = originAndIdPair.second;
+    allPosesOwned &= ANKI_VERIFY(origin->IsOwned(),
+                                 "PoseOriginList.SanityCheckOwnership.UnownedOrigin",
+                                 "Pose %d(%s) is unowned", origin->GetID(), origin->GetName().c_str());
+    
+    if(origin->HasParent())
+    {
+      const Pose3d& parent = origin->GetParent();
+      allPosesOwned &= ANKI_VERIFY(parent.IsOwned(),
+                                   "PoseOriginList.SanityCheckOwnership.OriginHasUnownedParent",
+                                   "Pose %d(%s)'s parent %d(%s) is unowned",
+                                   origin->GetID(), origin->GetName().c_str(),
+                                   parent.GetID(), parent.GetName().c_str());
+    }
+  }
+  
+  return allPosesOwned;
 }
   
 } // namespace Anki

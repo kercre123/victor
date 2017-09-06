@@ -54,7 +54,7 @@ public:
   void HandleMessage(const T& msg);
   
 protected:  
-  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
   
 
   
@@ -80,7 +80,7 @@ private:
     void ClearResponseQueue();
     
     // Return the behavior to run based on the response queue
-    IBehaviorPtr ChooseNextBehavior(const IBehaviorPtr currentBehavior);
+    IBehaviorPtr GetDesiredActiveBehavior(const IBehaviorPtr currentBehavior);
     
   private:
     ChooseNextBehaviorQueue        _respondToVCQueue;

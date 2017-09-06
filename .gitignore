@@ -239,9 +239,9 @@ TAGS
 .subtreeconfig
 
 #symlinks
-resources/config/basestation/firmware
-resources/config/basestation/old_firmware
-resources/config/basestation/firmware_*
+resources/config/engine/firmware
+resources/config/engine/old_firmware
+resources/config/engine/firmware_*
 
 # Misc
 *.bak

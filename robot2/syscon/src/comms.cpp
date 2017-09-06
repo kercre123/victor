@@ -241,11 +241,10 @@ extern "C" void USART1_IRQHandler(void) {
   inboundPacket.header_raw[header_rx_index++] = USART1->RDR;
 
   const uint32_t mask = ~(~0 << (header_rx_index * 8));
-  const uint32_t expect = SYNC_HEAD_TO_BODY & mask;
-  const uint32_t receive = inboundPacket.header.sync_bytes & mask;
+  const uint32_t diff = (SYNC_HEAD_TO_BODY ^ inboundPacket.header.sync_bytes) & mask;
 
   // Header mismatch
-  if (expect != receive) {
+  if (diff) {
     header_rx_index = 0;
     return ;
   }
@@ -286,13 +285,16 @@ void Comms::sendVersion(void) {
 }
 
 extern "C" void DMA1_Channel4_5_IRQHandler(void) {
-  // Clear our flag
-  DMA1->IFCR = DMA_IFCR_CGIF5;
-
   // Check the CRC
   uint32_t foundCRC = crc(inboundPacket.raw, inboundPacket.header.bytes_to_follow / sizeof (uint32_t));
   SpineMessageFooter* footer = (SpineMessageFooter*) &inboundPacket.raw[inboundPacket.header.bytes_to_follow];
 
+  // Switch back to interrupt mode
+  DMA1_Channel5->CCR = 0;
+  DMA1->IFCR = DMA_IFCR_CGIF5;
+  NVIC_EnableIRQ(USART1_IRQn);
+
+  // Process our packet
   if (foundCRC == footer->checksum) {
     switch (inboundPacket.header.payload_type) {
       case PAYLOAD_MODE_CHANGE:
@@ -303,7 +305,7 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
         Comms::sendVersion();
         break ;
       case PAYLOAD_ERASE:
-        Flash::markForWipe();
+        Power::softReset(true);
         break ;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;
@@ -317,8 +319,4 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
         break ;
     }
   }
-
-  // Switch back to interrupt mode
-  DMA1_Channel5->CCR = 0;
-  NVIC_EnableIRQ(USART1_IRQn);
 }

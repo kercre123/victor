@@ -909,6 +909,9 @@ message MoodMessage {
 // Needs
 ///////////////////////////////////////////////////////////////////////////////
 
+message ContinueInitializingNeedsManager {
+}
+
 message GetNeedsState {
 }
 
@@ -965,6 +968,9 @@ message WipeRobotNeedsData {
 // Wipes all needs data on the device
 message WipeDeviceNeedsData {
   bool reinitializeNeeds
+}
+
+message GetStarStatus {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1047,6 +1053,9 @@ message LogRawCliffData {
   uint_32 length_ms // length of time to record data for. Data will appear in <CACHE>/sensorData/cliffSensors
 }
 
+message LogRawProxData {
+  uint_32 length_ms // length of time to record data for. Data will appear in <CACHE>/sensorData/proxSensor
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // BlockPool

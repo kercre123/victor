@@ -34,6 +34,7 @@ class BehaviorBuildPyramid;
 class BehaviorPyramidThankYou;
 struct PyramidCubePropertiesTracker;
 class BehaviorRespondPossiblyRoll;
+struct ObjectConnectionState;
 struct ObjectLights;
   
 class ActivityBuildPyramid : public IActivity
@@ -52,7 +53,7 @@ public:
   };
   
 protected:
-  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
@@ -70,11 +71,11 @@ private:
   Robot& _robot;
   
   // Scored behavior choosers that take over when strict priority isn't necessary
-  IBehaviorChooser* _activeBehaviorChooser; // One of the two choosers from below
-  IBehaviorChooser* _setupSimpleChooser;
-  IBehaviorChooser* _buildSimpleChooser;
+  IBSRunnableChooser*                  _activeBehaviorChooser; // One of the two choosers from below
+  std::unique_ptr<IBSRunnableChooser>  _setupSimpleChooser;
+  std::unique_ptr<IBSRunnableChooser>  _buildSimpleChooser;
   
-  std::vector<Signal::SmartHandle> _eventHalders;
+  std::vector<Signal::SmartHandle> _eventHandlers;
   // Maps a light cube type (in case objectIDs are re-assigned for disconnected objects)
   // to knowledge about how we've altered the light/axis state
   std::map<ObjectType, PyramidCubePropertiesTracker> _pyramidCubePropertiesTrackers;
@@ -114,7 +115,7 @@ private:
   bool _forceLightMusicUpdate;
   float _timeRespondedRollStartedPreviously_s;
   
-  
+  void HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState);
   void UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid);
   bool IsPyramidHardSpark(Robot& robot);
   

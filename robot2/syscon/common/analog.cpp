@@ -108,7 +108,7 @@ void Analog::tick(void) {
     } else if (hold_count < POWER_WIPE_TIME) {
       Lights::disable();
     } else {
-      Flash::markForWipe();
+      Power::softReset(true);
     }
   } else {
     if (hold_count >= POWER_DOWN_TIME) {

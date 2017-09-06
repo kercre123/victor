@@ -26,8 +26,8 @@
 #include "engine/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "engine/behaviorSystem/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
-#include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/bsRunnableChooserFactory.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviorContainer.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
@@ -734,7 +734,7 @@ void BehaviorManager::ChooseNextScoredBehaviorAndSwitch()
  
   // ask the current activity for the next behavior
   IBehaviorPtr nextBehavior = GetCurrentActivity()->
-        ChooseNextBehavior(_robot, GetRunningAndResumeInfo().GetCurrentBehavior());
+        GetDesiredActiveBehavior(_robot, GetRunningAndResumeInfo().GetCurrentBehavior());
   if(nextBehavior != GetRunningAndResumeInfo().GetCurrentBehavior()){
     BehaviorRunningAndResumeInfo scoredInfo;
     scoredInfo.SetCurrentBehavior(nextBehavior);
@@ -877,7 +877,7 @@ Result BehaviorManager::Update(Robot& robot)
   _highLevelActivityMap[HighLevelActivity::VoiceCommand]->Update(robot);
   // Identify whether there is a voice command-response behavior we want to be running
   IBehaviorPtr voiceCommandBehavior = _highLevelActivityMap[HighLevelActivity::VoiceCommand]->
-                 ChooseNextBehavior(robot, GetRunningAndResumeInfo().GetCurrentBehavior());
+                 GetDesiredActiveBehavior(robot, GetRunningAndResumeInfo().GetCurrentBehavior());
   
   if ((voiceCommandBehavior == nullptr) && _shouldRequestGame){
     // Set IBehaviorPtr for requested game

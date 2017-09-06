@@ -2,6 +2,8 @@
 #include "hardware.h"
 
 #include "power.h"
+#include "vectors.h"
+#include "flash.h"
 
 #include "contacts.h"
 
@@ -27,6 +29,7 @@ static const uint32_t APB2_CLOCKS = 0
               | RCC_APB2ENR_ADC1EN
               ;
 
+static volatile bool eraseSystem = false;
 static volatile bool ejectSystem = false;
 
 void Power::init(void) {
@@ -58,12 +61,20 @@ void Power::enableClocking(void) {
   RCC->APB2ENR |= APB2_CLOCKS;
 }
 
-void Power::softReset(void) {
+void Power::softReset(bool erase) {
+  eraseSystem = erase;
   ejectSystem = true;
 }
 
 void Power::eject(void) {
   if (!ejectSystem) return ;
+
+  if (eraseSystem) {
+    // Mark the flash application space for deletion
+    for (int i = 0; i < MAX_FAULT_COUNT; i++) {
+      Flash::writeFaultReason(FAULT_USER_WIPE);
+    }
+  }
 
   __disable_irq();
   NVIC->ICER[0]  = ~0;  // Disable all interrupts

@@ -673,7 +673,7 @@ namespace Anki {
             static bool up = false;
 
             // As long as the lift is moving reset the counter
-            f32 rotSpeed_radPerSec = ABS(LiftController::GetAngularVelocity());
+            f32 rotSpeed_radPerSec = fabsf(LiftController::GetAngularVelocity());
             if (rotSpeed_radPerSec > 0.1f) {
               ticCnt_ = 0;
             }

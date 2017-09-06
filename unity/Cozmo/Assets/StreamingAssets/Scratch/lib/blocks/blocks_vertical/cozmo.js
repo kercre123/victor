@@ -9,45 +9,6 @@ goog.require('Blockly.Blocks');
 
 goog.require('Blockly.Colours');
 
-// ========================================================================================================================
-// Horizontal block clones, calling the same methods, just with text instead of image icons
-// ========================================================================================================================
-
-Blockly.Blocks['dropdown_cozmo_setcolor'] = {
-  /**
-   * Block for set color drop-down (used for shadow).
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldIconMenu([
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_coral.svg',
-            value: 'coral', width: 48, height: 48, alt: 'Coral'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_orange.svg',
-            value: 'orange', width: 48, height: 48, alt: 'Orange'},            
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_yellow.svg',
-              value: 'yellow', width: 48, height: 48, alt: 'Yellow'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_green.svg',
-            value: 'green', width: 48, height: 48, alt: 'Green'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_blue.svg',
-            value: 'blue', width: 48, height: 48, alt: 'Blue'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_purple.svg',
-            value: 'purple', width: 48, height: 48, alt: 'Purple'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_white.svg',
-              value: 'white', width: 48, height: 48, alt: 'White'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_black.svg',
-              value: 'off', width: 48, height: 48, alt: 'Off'},
-          {src: Blockly.mainWorkspace.options.pathToMedia + 'icons/set-led_mystery.svg',
-              value: 'mystery', width: 48, height: 48, alt: 'Mystery'}
-        ]), 'CHOICE');
-    this.setOutput(true);
-    this.setColour(Blockly.Colours.looks.primary,
-      Blockly.Colours.looks.secondary,
-      Blockly.Colours.looks.tertiary
-    );
-  }
-};
-
 Blockly.Blocks['cozmo_vert_setbackpackcolor'] = {
   /**
    * Block to set color of LED
@@ -128,6 +89,167 @@ init: function() {
               ['lift', 'false'],
               ['no lift', 'true'],    
             ]
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
+// FOR DEVELOPER PROTOTYPING ONLY
+// This block isn't intended to ship
+Blockly.Blocks['cozmo_play_animation_by_name'] = {
+  /**
+    * Dev-only Block to make Cozmo play a specific animation by name
+    * @this Blockly.Block
+  */
+init: function() {
+  this.jsonInit({
+    "id": "cozmo_play_animation_by_name",
+    "message0": "play anim: %1 with %2, %3, %4",
+    "args0": [
+        {
+          "type": "input_value",
+          "name": "ANIM_NAME",
+          "check": "String"
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_WHEELS",
+          "options": [
+              ['wheels', 'false'],
+              ['no wheels', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_HEAD",
+          "options": [
+              ['head', 'false'],
+              ['no head', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_LIFT",
+          "options": [
+              ['lift', 'false'],
+              ['no lift', 'true'],    
+            ]
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
+// FOR DEVELOPER PROTOTYPING ONLY
+// This block isn't intended to ship
+Blockly.Blocks['cozmo_play_animation_by_triggername'] = {
+  /**
+    * Dev-only Block to make Cozmo play a specific animation by name
+    * @this Blockly.Block
+  */
+init: function() {
+  this.jsonInit({
+    "id": "cozmo_play_animation_by_triggername",
+    "message0": "play animtrigger: %1 with %2, %3, %4",
+    "args0": [
+        {
+          "type": "input_value",
+          "name": "TRIGGER_NAME",
+          "check": "String"
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_WHEELS",
+          "options": [
+              ['wheels', 'false'],
+              ['no wheels', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_HEAD",
+          "options": [
+              ['head', 'false'],
+              ['no head', 'true'],    
+            ]
+        },
+        {
+          "type": "field_dropdown",
+          "name": "IGNORE_LIFT",
+          "options": [
+              ['lift', 'false'],
+              ['no lift', 'true'],    
+            ]
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_sound_sounds_menu'] = {
+  /**
+   * Sound effects drop-down menu.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "%1",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "SOUND_MENU",
+            "options": [
+              ['select', 'select'],
+              ['win', 'win'],
+              ['lose', 'lose']
+            ]
+          }
+        ],
+        "inputsInline": true,
+        "output": "String",
+        "colour": Blockly.Colours.actions.primary,
+        "colourSecondary": Blockly.Colours.actions.secondary,
+        "colourTertiary": Blockly.Colours.actions.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_sound_play'] = {
+  /**
+   * Block to play sound.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "play sound %1",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "SOUND_MENU"
         }
       ],
       "inputsInline": true,
