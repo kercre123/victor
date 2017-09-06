@@ -10,6 +10,7 @@ enum uint_32 GameObjectType
   Default,
   UI,
   SFX,
+  CodeLab,
   Aria,
   Cozmo_OnDevice,
   CozmoBus_1,

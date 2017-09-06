@@ -27,6 +27,7 @@
         <script src="./lib/blocks/blocks_vertical/event.js"></script>
         <script src="./lib/blocks/blocks_vertical/operators.js"></script>
         <script src="./lib/blocks/blocks_vertical/cozmo.js"></script>
+        <script src="./lib/blocks/blocks_vertical/sound.js"></script>
         <script src="./lib/blocks/blocks_vertical/sensing.js"></script>
         -->
         <!-- BOTTOM UNCOMPRESSED FILES -->
@@ -213,6 +214,11 @@
                 </value>
               </block>
               <!--End temporary dev-only blocks prototyping-->
+              <block type="cozmo_sound_play" id="sound_play">
+                <value name="SOUND_MENU">
+                  <shadow type="cozmo_sound_sounds_menu"></shadow>
+                </value>
+              </block>
             </category>
             
             <category name="Events" colour="#f4b606" secondaryColour="0">

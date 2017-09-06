@@ -70,6 +70,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
         cozmo_vert_set_cube_light_corner: this.verticalSetCubeLightCorner,
         cozmo_vert_cube_anim: this.verticalCubeAnim,
+        cozmo_sound_play: this.verticalPlaySound,
         // Draw (on Cozmo's face)
         cozmo_vert_cozmoface_clear: this.verticalCozmoFaceClear,
         cozmo_vert_cozmoface_display: this.verticalCozmoFaceDisplay,
@@ -638,6 +639,11 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function(args, util) {
     var cubeAnim = Cast.toString(args.ANIM_SELECT);
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({requestId: -1, command: "cozVertCubeAnimation", argUInt: colorHex, argUInt2: cubeIndex, argString: cubeAnim});
+};
+
+Scratch3CozmoBlocks.prototype.verticalPlaySound = function(args, util) {
+    var soundSelection = Cast.toString(args.SOUND_MENU);
+    window.Unity.call({requestId: -1, command: "cozVertSoundEffects", argString: soundSelection});
 };
 
 // Drawing on Cozmo's Face

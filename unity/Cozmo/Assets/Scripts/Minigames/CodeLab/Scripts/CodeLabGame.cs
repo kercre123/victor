@@ -1125,6 +1125,27 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
         TurnInPlaceVertical(angle, speed, inProgressScratchBlock.CompletedTurn);
       }
+      else if (scratchRequest.command == "cozVertSoundEffects") {
+        string soundToPlay = scratchRequest.argString;
+        Anki.AudioMetaData.GameEvent.Codelab audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Invalid;
+        switch (soundToPlay) {
+        case "select":
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light;
+          break;
+        case "win":
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Win;
+          break;
+        case "lose":
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Lose;
+          break;
+        }
+
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
+        GameAudioClient.PostCodeLabEvent(audioEvent,
+                                          Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                          (callbackInfo) => { /* callback */ });
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
       else if (scratchRequest.command == "cozVertDrive") {
         float dist_mm = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;

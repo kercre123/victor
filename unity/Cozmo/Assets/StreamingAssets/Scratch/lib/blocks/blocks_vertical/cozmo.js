@@ -208,6 +208,61 @@ init: function() {
   }
 };
 
+Blockly.Blocks['cozmo_sound_sounds_menu'] = {
+  /**
+   * Sound effects drop-down menu.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit(
+      {
+        "message0": "%1",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "SOUND_MENU",
+            "options": [
+              ['select', 'select'],
+              ['win', 'win'],
+              ['lose', 'lose']
+            ]
+          }
+        ],
+        "inputsInline": true,
+        "output": "String",
+        "colour": Blockly.Colours.actions.primary,
+        "colourSecondary": Blockly.Colours.actions.secondary,
+        "colourTertiary": Blockly.Colours.actions.tertiary,
+        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      });
+  }
+};
+
+Blockly.Blocks['cozmo_sound_play'] = {
+  /**
+   * Block to play sound.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "play sound %1",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "SOUND_MENU"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_dock_with_cube'] = {
   /**
    * Block to tell Cozmo to dock with a cube that he can see, if any.
