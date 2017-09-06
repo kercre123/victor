@@ -198,7 +198,7 @@ void AnimationComponent::HandleEndOfMessage(const AnkiEvent<RobotInterface::Robo
 {
   const auto & payload = message.GetData().Get_endOfMessage();
   if (payload.messageType == MessageType::AnimationAvailable) {
-    PRINT_CH_INFO("AnimationComponent", "EndOfMessage.AnimationAvailable", "");
+    PRINT_CH_INFO("AnimationComponent", "EndOfMessage.AnimationAvailable", "%zu animations received", _animNameToID.size());
     _isInitialized = true;
   }
 }

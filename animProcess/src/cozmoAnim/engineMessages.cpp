@@ -56,8 +56,7 @@ namespace Messages {
     
     AnimationStreamer* _animStreamer = nullptr;
     
-    // TODO: Seems like there's some reliable transport setting we could adjust to make this bigger.
-    const u32 kMaxNumAvailableAnimsToReportPerTic = 10;
+    const u32 kMaxNumAvailableAnimsToReportPerTic = 100;
     
     // The last AnimID that was sent to engine in response to RequestAvailableAnimations.
     // If negative, it means we're not currently doling.
@@ -111,7 +110,7 @@ namespace Messages {
         ++numAnimsDoledThisTic;
       }
       if (it == animIDToNameMap.end()) {
-        PRINT_NAMED_INFO("EngineMessages.DoleAvailableAnimations.Done", "");
+        PRINT_NAMED_INFO("EngineMessages.DoleAvailableAnimations.Done", "%zu anims doled", animIDToNameMap.size());
         _isDolingAnims = false;
         
         EndOfMessage msg;
