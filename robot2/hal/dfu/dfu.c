@@ -205,7 +205,7 @@ int main(int argc, const char* argv[])
 
   SendData(gImgFilep, 0);
 
-  dprint("requestig validation\n");
+  dprint("requesting validation\n");
   if (SendCommand(PayloadId_PAYLOAD_VALIDATE, NULL, 0, 0) == NULL) {
     error_exit(app_VALIDATION_ERROR, "Image Validation Failed");
   }

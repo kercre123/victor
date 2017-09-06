@@ -53,7 +53,7 @@ static struct HalGlobals {
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
 #endif
 
-#define EXTENDED_SPINE_DEBUG 0
+#define EXTENDED_SPINE_DEBUG 1
 #if EXTENDED_SPINE_DEBUG
 #define spine_debug_x spine_debug
 #else
@@ -204,7 +204,7 @@ static int spine_sync(const uint8_t* buf, unsigned int idx)
     struct SpineMessageHeader* candidate = (struct SpineMessageHeader*)buf;
     int expected_len = get_payload_len(candidate->payload_type, dir_READ);
     if (expected_len < 0 || (expected_len != candidate->bytes_to_follow)) {
-      LOGI("spine_header %x %x %x : %d", candidate->sync_bytes,
+      LOGE("spine_header %x %x %x : %d", candidate->sync_bytes,
            candidate->payload_type,
            candidate->bytes_to_follow,
            expected_len);
@@ -306,7 +306,8 @@ const struct SpineMessageHeader* hal_read_frame()
     return NULL;
   }
 
-  spine_debug_x("found frame!\r");
+  spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
+  spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
   return ((struct SpineMessageHeader*)gHal.inbuffer);
 }
 
