@@ -904,7 +904,12 @@ message ClearNotificationCache {
 
 message CacheNotificationToSchedule {
   int_32 secondsInFuture,
-  string textKey
+  string textKey,
+  bool   persist,
+}
+
+message NotificationTextKeys {
+  string textKeys[uint_16],
 }
 
 ///////////////////////////////////////////////////////////////////////////////
