@@ -97,7 +97,15 @@ public class OnboardingManager : MonoBehaviour {
 
       // This is sent when needs manager connects to a robot, lets us know if it's an "old robot" that can skip onboarding.
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding>(HandleGetWantsNeedsOnboarding);
+      DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset += HandleSaveDataReset;
     }
+  }
+
+  private void HandleSaveDataReset() {
+    // In the event after this disconnect you connect to yet another device, we still want you to have default sparks
+    Instance.GiveStartingInventory();
+    Instance.FirstTime = true;
+    Instance._LastOnboardingPhaseCompletedRobot = 0;
   }
 
   public int GetCurrStageInPhase(OnboardingPhases phase) {

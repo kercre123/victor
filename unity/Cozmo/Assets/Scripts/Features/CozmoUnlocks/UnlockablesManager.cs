@@ -268,6 +268,10 @@ public class UnlockablesManager : MonoBehaviour {
 
   private void HandleSaveDataReset() {
     _UnlocksLoaded = false;
+    List<UnlockId> keys = new List<Anki.Cozmo.UnlockId>(_UnlockablesState.Keys);
+    foreach (UnlockId key in keys) {
+      _UnlockablesState[key] = false;
+    }
   }
 
   // Do not clear unlock slots until they have been played once.
