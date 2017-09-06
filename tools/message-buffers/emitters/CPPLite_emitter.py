@@ -316,16 +316,6 @@ class HEnumEmitter(BaseEmitter):
         self.emitFooter(node, globals)
         self.emitSuffix(node, globals)
         
-    #def emitHeader(self, node, globals):
-    #    self.output.write(textwrap.dedent('''\
-    #        // ENUM {enum_name}
-    #        enum {{
-    #        ''').format(**globals));
-    
-    #def emitFooter(self, node, globals):
-    #    self.output.write('};\n')
-    #    self.output.write('typedef {enum_storage_type} {enum_name};\n\n'.format(**globals))
-    
     def emitHeader(self, node, globals):
         if (node.cpp_class):
             self.output.write(textwrap.dedent('''\

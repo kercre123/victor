@@ -367,7 +367,3 @@ void Receiver_OnDisconnect(ReliableConnection* connection)
   Anki::Cozmo::CozmoAnimComms::UpdateEngineCommsState(0);
 }
 
-//int Anki::Cozmo::Messages::RadioQueueAvailable()
-//{
-//  return ReliableConnection_GetReliableQueueAvailable(&Anki::Cozmo::connection);
-//}

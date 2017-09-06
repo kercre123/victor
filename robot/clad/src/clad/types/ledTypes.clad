@@ -13,11 +13,12 @@ enum uint_8 BackpackLightLayer {
 }
 
 // Health / direction bar on the top of the backpack
+// TODO: Need to sync with HAL::LEDId
 enum uint_8 LEDId {
-  LED_BACKPACK_0 = 0,  // TODO: Need to sync with HAL::LEDId
-  LED_BACKPACK_1,
-  LED_BACKPACK_2,
-  LED_BACKPACK_3,
+  LED_BACKPACK_0 = 0, // This light is reserved as system indicator
+  LED_BACKPACK_1,     // Maps to V1 FRONT
+  LED_BACKPACK_2,     // Maps to V1 MIDDLE
+  LED_BACKPACK_3,     // Maps to V1 BACK
 
   NUM_BACKPACK_LEDS
 }

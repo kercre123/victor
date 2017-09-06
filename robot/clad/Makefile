@@ -128,11 +128,10 @@ hashes:
 
 nrf: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 
-k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
+# sendToEngine and sendToRobot helpers are Victor-specific
+k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h $(ROBOT_TO_ENGINE_UNION)_sendToEngine_helper.h $(ENGINE_TO_ROBOT_UNION)_sendToRobot_helper.h
 
 esp: cpp $(ENGINE_TO_ROBOT_UNION)_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
-
-anim: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_sendToEngine_helper.h $(ENGINE_TO_ROBOT_UNION)_sendToRobot_helper.h
 
 lightCube: $(LIGHT_CUBE_UNION)_declarations.def $(LIGHT_CUBE_UNION)_send_helper.h $(LIGHT_CUBE_UNION)_switch.def
 

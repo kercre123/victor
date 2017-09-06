@@ -55,7 +55,7 @@ all: sim app esp k02 nrf
 
 dev: AnkiLog nrf k02 esp $(BUILD_TYPE_HEADER) cppcheck
 
-dev2: AnkiLog k02 anim $(BUILD_TYPE_HEADER)
+dev2: AnkiLog k02 $(BUILD_TYPE_HEADER)
 
 ota: $(OTA_FILE)
 	if test -e build/app/robot.map; then mv build/app/robot.map $(BUILD_DIR)/robot.map; fi
@@ -87,9 +87,6 @@ nrf: $(PUBLIC_KEYS_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
 k02: $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_TABLE_JSON)
-	make $@ -C clad -j4
-
-anim: $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
 k02_fix:

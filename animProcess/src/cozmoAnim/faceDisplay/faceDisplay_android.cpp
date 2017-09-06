@@ -295,7 +295,6 @@ namespace Anki {
       FaceDraw(frame);
     }
     
-    // TODO: Pass in array of fixed size. Typedef?
     void FaceDisplay::FaceDraw(u16* frame)
     {
       lcd_draw_frame((u8*)frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
