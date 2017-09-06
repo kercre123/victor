@@ -82,9 +82,9 @@
     "translation": "Bonus Box Progress"
   },
   "tooltip.bonusbar.body.daycomplete": {
-    "translation": "Bonus Token already earned today. New Day in {0}h {1}m."
+    "translation": "Play Token already earned today. New Day in {0}h {1}m."
   },
   "tooltip.bonusbar.body.dayincomplete": {
-    "translation": "Fill Cozmo’s Play Need to earn a Bonus Token. Day ends in {0}h {1}m."
+    "translation": "Fill Cozmo’s Play Need to earn a Play Token. Day ends in {0}h {1}m."
   }
 }

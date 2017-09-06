@@ -13,12 +13,17 @@ namespace Cozmo.UI {
 
     private TooltipWidget _CurrToolTip;
 
-    private void Awake() {
+    private void Start() {
       _Instance = this;
+
+      // Destroy listener on disconnect
+      BaseView.BaseViewClosed += HandleBaseViewClosed;
     }
 
     private void OnDestroy() {
       CancelInvoke();
+
+      BaseView.BaseViewClosed -= HandleBaseViewClosed;
     }
 
     public static TooltipManager Instance {
@@ -33,10 +38,14 @@ namespace Cozmo.UI {
       }
       private set {
         if (_Instance != null) {
-          DAS.Error("TooltipManager.DuplicateInstance", "UIManager Instance already exists");
+          DAS.Error("TooltipManager.DuplicateInstance", "TooltipManager Instance already exists");
         }
         _Instance = value;
       }
+    }
+
+    private void HandleBaseViewClosed(BaseView view) {
+      HideToolTip();
     }
 
     private void Update() {

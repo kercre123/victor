@@ -6,6 +6,13 @@ namespace Cozmo.UI {
     [SerializeField]
     private Anki.Cozmo.NeedId _NeedId;
 
+    protected override void HandlePointerDown(UnityEngine.EventSystems.BaseEventData data) {
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        return;
+      }
+      base.HandlePointerDown(data);
+    }
+
     protected override string GetBodyString() {
       // Get only based on which need ID
       Needs.NeedsValue needsVal = Needs.NeedsStateManager.Instance.GetCurrentDisplayValue(_NeedId);
