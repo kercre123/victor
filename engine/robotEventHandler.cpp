@@ -21,6 +21,7 @@
 #include "engine/components/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
@@ -98,11 +99,34 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjec
                                              msg.checkDestinationFree);
 }
 
+using AnimTrackFlagType = std::underlying_type<AnimTrackFlag>::type;
+std::underlying_type<AnimTrackFlag>::type GetIgnoreTracks(bool ignoreBodyTrack, bool ignoreHeadTrack, bool ignoreLiftTrack)
+{
+  AnimTrackFlagType ignoreTracks = Util::EnumToUnderlying(AnimTrackFlag::NO_TRACKS);
+  
+  if (ignoreBodyTrack)
+  {
+    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
+  }
+  if (ignoreHeadTrack)
+  {
+    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::HEAD_TRACK);
+  }
+  if (ignoreLiftTrack)
+  {
+    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::LIFT_TRACK);
+  }
+  
+  return ignoreTracks;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimation& msg)
 {
-  return new PlayAnimationAction(robot, msg.animationName, msg.numLoops);
+  AnimTrackFlagType ignoreTracks = GetIgnoreTracks(msg.ignoreBodyTrack, msg.ignoreHeadTrack, msg.ignoreLiftTrack);
+  const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
+  return new PlayAnimationAction(robot, msg.animationName, msg.numLoops, kInterruptRunning, ignoreTracks);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -835,21 +859,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimationTrigger& msg)
 {
   IActionRunner* newAction = nullptr;
-  std::underlying_type<AnimTrackFlag>::type ignoreTracks = Util::EnumToUnderlying(AnimTrackFlag::NO_TRACKS);
-  
-  if(msg.ignoreBodyTrack)
-  {
-    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
-  }
-  if(msg.ignoreHeadTrack)
-  {
-    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::HEAD_TRACK);
-  }
-  if(msg.ignoreLiftTrack)
-  {
-    ignoreTracks |= Util::EnumToUnderlying(AnimTrackFlag::LIFT_TRACK);
-  }
-  
+  AnimTrackFlagType ignoreTracks = GetIgnoreTracks(msg.ignoreBodyTrack, msg.ignoreHeadTrack, msg.ignoreLiftTrack);
   const bool kInterruptRunning = true; // TODO: expose this option in CLAD?
   
   if( msg.useLiftSafe ) {
@@ -1132,6 +1142,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::LogRawCliffData>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::LogRawProxData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
@@ -1646,6 +1657,20 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawCliffData& 
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::LogRawProxData& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  
+  // We need a robot
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleLogRawProxData.InvalidRobotID", "Failed to find robot.");
+  } else {
+    robot->GetProxSensorComponent().StartLogging(msg.length_ms);
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)

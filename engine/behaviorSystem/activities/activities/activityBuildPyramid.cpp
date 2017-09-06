@@ -19,8 +19,8 @@
 #include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
 #include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 #include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorPyramidThankYou.h"
-#include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/bsRunnableChooserFactory.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -179,8 +179,6 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
 : IActivity(robot, config)
 , _robot(robot)
 , _activeBehaviorChooser(nullptr)
-, _setupSimpleChooser(nullptr)
-, _buildSimpleChooser(nullptr)
 , _chooserPhase(ChooserPhase::None)
 , _lastUprightBlockCount(-1)
 , _pyramidObjectiveAchieved(false)
@@ -252,9 +250,9 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
   const Json::Value& simpleChooserJSON = config[kSetupChooserConfigKey];
   const Json::Value& buildChooserJSON  = config[kBuildChooserConfigKey];
   
-  _setupSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, simpleChooserJSON);
-  _buildSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, buildChooserJSON);
-  _activeBehaviorChooser = _setupSimpleChooser;
+  _setupSimpleChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(robot, simpleChooserJSON);
+  _buildSimpleChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(robot, buildChooserJSON);
+  _activeBehaviorChooser = _setupSimpleChooser.get();
   
   /////////
   // Setup callbacks to update cube light patterns/phase
@@ -291,15 +289,22 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
   if(robot.HasExternalInterface()){
     using namespace ExternalInterface;
     
-    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                                                                    MessageEngineToGameTag::ObjectUpAxisChanged,
-                                                                    upAxisChangedCallback));
-    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                                                                    MessageEngineToGameTag::BehaviorObjectiveAchieved,
-                                                                    objectiveAchievedCallback));
-    _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                                                                    MessageGameToEngineTag::RequestPyramidPreReqState,
-                                                                    requestPyramidPreReqState));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageEngineToGameTag::ObjectUpAxisChanged,
+                                      upAxisChangedCallback));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageEngineToGameTag::BehaviorObjectiveAchieved,
+                                      objectiveAchievedCallback));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageGameToEngineTag::RequestPyramidPreReqState,
+                                      requestPyramidPreReqState));
+    _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+                                      MessageEngineToGameTag::ObjectConnectionState,
+                                      [this, &robot] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+                                      {
+                                        HandleObjectConnectionStateChange(robot, event.GetData().Get_ObjectConnectionState());
+                                      }));
+    
   }
 }
   
@@ -311,8 +316,6 @@ ActivityBuildPyramid::~ActivityBuildPyramid()
   _behaviorRespondPossiblyRoll = nullptr;
   _behaviorBuildPyramidBase = nullptr;
   _behaviorBuildPyramid = nullptr;
-  Util::SafeDelete(_setupSimpleChooser);
-  Util::SafeDelete(_buildSimpleChooser);
 }
 
 
@@ -358,6 +361,7 @@ void ActivityBuildPyramid::OnDeselectedInternal(Robot& robot)
     entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);
   }
   SetCubeLights(_robot);
+  _pyramidCubePropertiesTrackers.clear();
   
   robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   
@@ -369,16 +373,28 @@ void ActivityBuildPyramid::OnDeselectedInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityBuildPyramid::HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState)
+{
+  // If object disconnected, remove it from the properties tracker map
+  if(connectionState.connected){
+    UpdateStateTrackerForUnrecognizedID(connectionState.objectID);
+  }else{
+    _pyramidCubePropertiesTrackers.erase(connectionState.object_type);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityBuildPyramid::UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid)
 {
   // Order matters
   if(settingUpPyramid){
-    _activeBehaviorChooser = _setupSimpleChooser;
+    _activeBehaviorChooser = _setupSimpleChooser.get();
     // The setup phase has its own acknowledgments
     _robot.GetBehaviorManager().DisableReactionsWithLock(kLockForPyramidSetup,
                                                          kAffectPyramidSetupArray);
   }else{
-    _activeBehaviorChooser = _buildSimpleChooser;
+    _activeBehaviorChooser = _buildSimpleChooser.get();
     _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForPyramidSetup);
   }
 }
@@ -568,7 +584,7 @@ void ActivityBuildPyramid::UpdatePyramidAssignments(const std::shared_ptr<Behavi
 //////////////////////////////////////////////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivityBuildPyramid::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
   
@@ -621,7 +637,7 @@ IBehaviorPtr ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, cons
 IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorSetup(Robot& robot,
                                                           const IBehaviorPtr currentRunningBehavior)
 {
-  return _activeBehaviorChooser->ChooseNextBehavior(robot, currentRunningBehavior);
+  return _activeBehaviorChooser->GetDesiredActiveBehavior(robot, currentRunningBehavior);
 }
 
 
@@ -658,7 +674,7 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
     
   }else{
     UpdatePyramidAssignments(nullptr);
-    bestBehavior = _buildSimpleChooser->ChooseNextBehavior(robot, currentRunningBehavior);
+    bestBehavior = _buildSimpleChooser->GetDesiredActiveBehavior(robot, currentRunningBehavior);
   }
   
   return bestBehavior;
@@ -667,7 +683,7 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
-                                                                const IBehaviorPtr currentRunningBehavior)
+                                                           const IBehaviorPtr currentRunningBehavior)
 {
   // Run through all of the axis changes to find if thank you can run
   // and to update the pyramidCubeProperties tracking information
@@ -693,7 +709,8 @@ IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
       
       if(!rolledCubeHimself){
         _behaviorPyramidThankYou->SetTargetID(objectID);
-        if(_behaviorPyramidThankYou->IsRunnable(robot)){
+        if(_behaviorPyramidThankYou->IsRunning() ||
+           _behaviorPyramidThankYou->IsRunnable(robot)){
           bestBehavior = _behaviorPyramidThankYou;
         }
       }
@@ -1188,34 +1205,62 @@ void ActivityBuildPyramid::SetCubeLights(Robot& robot)
 {
   // Remove any lights that are currently set
   for(auto& entry: _pyramidCubePropertiesTrackers){
-    if(entry.second.GetCurrentLightTrigger() != entry.second.GetDesiredLightTrigger() ||
-       entry.second.GetDesiredLightModifier() != kEmptyObjectLights)
+    PyramidCubePropertiesTracker& props = entry.second;
+    
+    if(props.GetCurrentLightTrigger() != props.GetDesiredLightTrigger() ||
+       props.GetDesiredLightModifier() != kEmptyObjectLights)
     {
       const bool shouldSetForOnSide = IsPyramidHardSpark(robot) ||
-             !IsAnOnSideCubeLight(entry.second.GetDesiredLightTrigger());
-      const bool areLightsPlayingAlready = entry.second.GetCurrentLightTrigger() != CubeAnimationTrigger::Count;
-      const bool shouldLightsTransition = entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count;
+             !IsAnOnSideCubeLight(props.GetDesiredLightTrigger());
+      const bool areLightsPlayingAlready = props.GetCurrentLightTrigger() != CubeAnimationTrigger::Count;
+      const bool shouldLightsTransition = props.GetDesiredLightTrigger() != CubeAnimationTrigger::Count;
       
-      
-      if(!areLightsPlayingAlready && shouldSetForOnSide){
-        _robot.GetCubeLightComponent().PlayLightAnim(entry.second.GetObjectID(), entry.second.GetDesiredLightTrigger());
-      }
-      else if(shouldLightsTransition && shouldSetForOnSide)
-      {
-        _robot.GetCubeLightComponent().StopAndPlayLightAnim(entry.second.GetObjectID(),
-                                                            entry.second.GetCurrentLightTrigger(),
-                                                            entry.second.GetDesiredLightTrigger(),
-                                                            nullptr,
-                                                            true,
-                                                            entry.second.GetDesiredLightModifier());
+      bool lightUpdateSuccessful = false;
+      if(shouldLightsTransition && shouldSetForOnSide){
+        if(!areLightsPlayingAlready)
+        {
+          lightUpdateSuccessful = _robot.GetCubeLightComponent().PlayLightAnim(
+                                                       props.GetObjectID(),
+                                                       props.GetDesiredLightTrigger());
+          PRINT_CH_INFO("Behaviors", "ActivityBuildPyramid.SetCubeLights.PlayLights",
+                        "%s playing light trigger %s on object %d",
+                        lightUpdateSuccessful ? "Succeeded" : "Failed",
+                        CubeAnimationTriggerToString(props.GetDesiredLightTrigger()),
+                        props.GetObjectID().GetValue());
+          
+        }
+        else
+        {
+          lightUpdateSuccessful = _robot.GetCubeLightComponent().StopAndPlayLightAnim(
+                                                              props.GetObjectID(),
+                                                              props.GetCurrentLightTrigger(),
+                                                              props.GetDesiredLightTrigger(),
+                                                              nullptr,
+                                                              true,
+                                                              props.GetDesiredLightModifier());
+          PRINT_CH_INFO("Behaviors", "ActivityBuildPyramid.SetCubeLights.StopAndPlayLights",
+                        "%s stopping light trigger %s in order to play %s on object %d",
+                        lightUpdateSuccessful ? "Succeeded" : "Failed",
+                        CubeAnimationTriggerToString(props.GetCurrentLightTrigger()),
+                        CubeAnimationTriggerToString(props.GetDesiredLightTrigger()),
+                        props.GetObjectID().GetValue());
+        }
       }
       else
       {
-        _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(entry.second.GetCurrentLightTrigger(),
-                                                                      entry.second.GetObjectID());
+        lightUpdateSuccessful = _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(
+                                                                      props.GetCurrentLightTrigger(),
+                                                                      props.GetObjectID());
+        PRINT_CH_INFO("Behaviors", "ActivityBuildPyramid.SetCubeLights.StoppingLights",
+                      "%s stopping light trigger %s on object %d",
+                      lightUpdateSuccessful ? "Succeeded" : "Failed",
+                      CubeAnimationTriggerToString(props.GetCurrentLightTrigger()),
+                      props.GetObjectID().GetValue());
       }
-      entry.second.SetCurrentLightTrigger(entry.second.GetDesiredLightTrigger());
-      entry.second.SetDesiredLightModifier(kEmptyObjectLights);
+      if(lightUpdateSuccessful){
+        props.SetCurrentLightTrigger(props.GetDesiredLightTrigger());
+        props.SetDesiredLightModifier(kEmptyObjectLights);
+      }
     }
   }
 }

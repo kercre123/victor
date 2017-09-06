@@ -20,7 +20,7 @@
 #include "engine/behaviorSystem/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/behaviorSystem/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 #include "engine/behaviorSystem/activities/activities/activityFactory.h"
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/events/animationTriggerHelpers.h"
@@ -359,7 +359,7 @@ Result ActivitySparked::Update(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   const BehaviorManager& mngr = robot.GetBehaviorManager();
   
@@ -467,10 +467,10 @@ IBehaviorPtr ActivitySparked::SelectNextSparkInternalBehavior(Robot& robot, cons
   // If the spark has specified an alternate chooser, call
   // its choose next behavior here
   if(_subActivityDelegate == nullptr){
-    bestBehavior = IActivity::ChooseNextBehaviorInternal(robot, currentRunningBehavior);
+    bestBehavior = IActivity::GetDesiredActiveBehaviorInternal(robot, currentRunningBehavior);
   }else{
     bestBehavior = _subActivityDelegate->
-                      ChooseNextBehavior(robot,currentRunningBehavior);
+                      GetDesiredActiveBehavior(robot,currentRunningBehavior);
   }
   
   return bestBehavior;

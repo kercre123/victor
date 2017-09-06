@@ -28,6 +28,7 @@ using namespace std::chrono;
 
 NeedsState::NeedsState()
 : _timeLastWritten(Time())
+, _timeCreated(Time())
 , _timeLastDisconnect(Time())
 , _timeLastAppBackgrounded(Time())
 , _timeLastAppUnBackgrounded(system_clock::now())
@@ -61,9 +62,11 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
   Reset();
 
   _timeLastWritten           = Time();  // ('never')
+  _timeCreated               = system_clock::now();
   _timeLastDisconnect        = Time();  // ('never')
   _timeLastAppBackgrounded   = Time();  // ('never')
   _timeLastAppUnBackgrounded = system_clock::now();
+
   _timesOpenedSinceLastDisconnect = 0;
 
   _needsConfig = &needsConfig;

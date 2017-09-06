@@ -1,0 +1,90 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "tooltip.needstate.energy.header": {
+    "translation": "Feed Need"
+  },
+  "tooltip.needstate.energy.0": {
+    "translation": "Cozmo is fully fed."
+  },
+  "tooltip.needstate.energy.1": {
+    "translation": "Cozmo needs to be fed a little."
+  },
+  "tooltip.needstate.energy.2": {
+    "translation": "Cozmo needs to be fed."
+  },
+  "tooltip.needstate.energy.3": {
+    "translation": "Cozmo really needs to be fed!"
+  },
+  "tooltip.needstate.repair.header": {
+    "translation": "Tune Up Need"
+  },
+  "tooltip.needstate.repair.0": {
+    "translation": "Cozmo is fully tuned up."
+  },
+  "tooltip.needstate.repair.1": {
+    "translation": "Cozmo needs a little tune-up."
+  },
+  "tooltip.needstate.repair.2": {
+    "translation": "Cozmo needs a tune-up."
+  },
+  "tooltip.needstate.repair.3": {
+    "translation": "Cozmo really needs a tune-up!"
+  },
+  "tooltip.needstate.play.header": {
+    "translation": "Play Need"
+  },
+  "tooltip.needstate.play.0": {
+    "translation": "Cozmo is at full play."
+  },
+  "tooltip.needstate.play.1": {
+    "translation": "Cozmo needs to play a little."
+  },
+  "tooltip.needstate.play.2": {
+    "translation": "Cozmo needs to play."
+  },
+  "tooltip.needstate.play.3": {
+    "translation": "Cozmo really needs to play!"
+  },
+  "tooltip.needsbutton.energy.header": {
+    "translation": "Feed Unavailable"
+  },
+  "tooltip.needsbutton.energy.repaircritical": {
+    "translation": "Cozmo needs to be tuned up before he can eat!"
+  },
+  "tooltip.needsbutton.play.header": {
+    "translation": "Play Unavailable"
+  },
+  "tooltip.needsbutton.play.repaircritical": {
+    "translation": "Cozmo needs to be tuned up before he can play!"
+  },
+  "tooltip.needsbutton.play.feedcritical": {
+    "translation": "Cozmo needs to be fed before he can play!"
+  },
+  "tooltip.bonusbar.header": {
+    "translation": "Bonus Box Progress"
+  },
+  "tooltip.bonusbar.body.daycomplete": {
+    "translation": "Play Token already earned today. New Day in {0}h {1}m."
+  },
+  "tooltip.bonusbar.body.dayincomplete": {
+    "translation": "Fill Cozmo’s Play Need to earn a Play Token. Day ends in {0}h {1}m."
+  }
+}

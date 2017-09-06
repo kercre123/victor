@@ -93,6 +93,9 @@ namespace Anki {
   
     // Creates a new PoseNd around the underlying root/parent node
     // This is "cheap", but not "free". Consider using one of the above helpers for comparing relationships b/w poses.
+    // NOTE: These return by value, not reference. Do not store references to members in line! I.e., never do:
+    //   const Foo& = somePose.GetWithRespectToRoot().GetFoo(); // Foo will immediately be invalidated
+    // Either store "somePoseWrtRoot" and then get Foo& from it, or make Foo a copy.
     PoseNd FindRoot()  const;
     PoseNd GetParent() const;
     
@@ -112,6 +115,7 @@ namespace Anki {
     // but this can be globally adjusted if desired (e.g. for unit tests).
     static bool AreUnownedParentsAllowed();
     static void AllowUnownedParents(bool tf);
+    bool IsOwned() const;
     
   protected:
     

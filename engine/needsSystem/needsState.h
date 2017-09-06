@@ -99,13 +99,19 @@ public:
 
   // Serialization versions; increment this when the format of the serialization changes
   // This is stored in the serialized file
-  // Note that changing format of robot storage serialization will be more difficult,
-  // because it serializes a CLAD structure, so for backward compatibility we'd have
-  // to preserve older versions of that CLAD structure.
-  static const int kDeviceStorageVersion = 4;
-  static const int kRobotStorageVersion = 4;
+  // Note that changing format of robot storage serialization is a bit more difficult,
+  // because it serializes a CLAD structure, so for backward compatibility have to
+  // preserve older versions of that CLAD structure.
+  static const int kDeviceStorageVersion = 5;
+  static const int kRobotStorageVersion = 5;
 
   Time _timeLastWritten;
+
+  // Creation time:  Used for AB test to identify new users.  This is the time
+  // when the needs system was first saved to a device (or robot), OR the time
+  // when onboarding was completed, when it has been completed
+  // Note:  Introduced in 2.0.1; 2.0.0 users will have this initialized with zero
+  Time _timeCreated;
 
   // Time of last disconnect:  This is for DAS purposes, to find out 'how long has
   // the user left Cozmo disconnected.'  We can't really store this on the robot,

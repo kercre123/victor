@@ -857,9 +857,9 @@ namespace Anki {
               gyroMotionThresh_ = GYRO_MOTION_THRESHOLD;
             }
             else if ( ProxSensors::IsAnyCliffDetected() ||
-                      (ABS(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
-                      (ABS(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
-                      (ABS(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {
+                      (fabsf(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
+                      (fabsf(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
+                      (fabsf(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {
               // Bias filter saw evidence of motion by virtue of the fact that the filter value differs from
               // the input. Reset the counter.
               biasFiltCnt_ = 0;
@@ -882,8 +882,7 @@ namespace Anki {
           
         // Compute head angle wrt to world horizontal plane
         const f32 headAngle = HeadController::GetAngleRad();  // TODO: Use encoders or accelerometer data? If encoders,
-                                                        // may need to use accelerometer data anyway for when it's on ramps.
-
+                                                              // may need to use accelerometer data anyway for when it's on ramps.
 
         // Compute rotation speeds in robot XY-plane.
         // https://www.chrobotics.com/library/understanding-euler-angles

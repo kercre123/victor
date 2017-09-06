@@ -20,8 +20,8 @@
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/activities/activityStrategies/activityStrategyFactory.h"
 #include "engine/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
-#include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/bsRunnableChooserFactory.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -60,7 +60,8 @@ static const std::string kIdleLockPrefix              = "Activity_";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IActivity::IActivity(Robot& robot, const Json::Value& config)
-: _driveStartAnimTrigger(AnimationTrigger::Count)
+: IBSRunnable(ActivityIDToString(ExtractActivityIDFromConfig(config)))
+, _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
 , _driveEndAnimTrigger(AnimationTrigger::Count)
 , _idleAnimTrigger(AnimationTrigger::Count)
@@ -192,16 +193,16 @@ void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
   _behaviorChooserPtr.reset();
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   if(!chooserConfig.isNull()){
-    IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);
-    _behaviorChooserPtr.reset( newChooser );
+    _behaviorChooserPtr = BSRunnableChooserFactory::CreateBSRunnableChooser
+                              (robot, chooserConfig);
   }
 
   // configure the interlude behavior chooser, to specify behaviors that can run in between other behaviors.
   _interludeBehaviorChooserPtr.reset();
   const Json::Value& interludeChooserConfig = config[kInterludeBehaviorChooserConfigKey];
   if( !interludeChooserConfig.isNull() ) {
-    IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, interludeChooserConfig);
-    _interludeBehaviorChooserPtr.reset(newChooser);
+    _interludeBehaviorChooserPtr = BSRunnableChooserFactory::CreateBSRunnableChooser
+                                       (robot, interludeChooserConfig);
   }
     
   // strategy
@@ -319,7 +320,7 @@ void IActivity::OnDeselected(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr IActivity::GetDesiredActiveBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
 
   // if an interlude behavior was chosen and is still running, return that
@@ -331,7 +332,7 @@ IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr curr
     _lastChosenInterludeBehavior.reset();
   }
 
-  IBehaviorPtr ret = ChooseNextBehaviorInternal(robot, currentRunningBehavior);
+  IBehaviorPtr ret = GetDesiredActiveBehaviorInternal(robot, currentRunningBehavior);
 
   const bool hasInterludeChooser = _interludeBehaviorChooserPtr != nullptr;
   const bool switchingBehaviors = ret != currentRunningBehavior;
@@ -344,7 +345,7 @@ IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr curr
   if( hasInterludeChooser && switchingBehaviors ) {
     // if we are changing behaviors, give the interlude chooser an opportunity to run something. Pass in the
     // behavior that we would otherwise choose (The one that would run next) as "current"
-    _lastChosenInterludeBehavior = _interludeBehaviorChooserPtr->ChooseNextBehavior(robot, ret);
+    _lastChosenInterludeBehavior = _interludeBehaviorChooserPtr->GetDesiredActiveBehavior(robot, ret);
     if(_lastChosenInterludeBehavior != nullptr) {
       PRINT_CH_INFO("Behaviors", "IActivity.ChooseInterludeBehavior",
                     "Activity %s is inserting interlude %s between behaviors %s and %s",
@@ -360,7 +361,7 @@ IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr curr
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr IActivity::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr IActivity::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   IBehaviorPtr ret;
   if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
@@ -368,7 +369,7 @@ IBehaviorPtr IActivity::ChooseNextBehaviorInternal(Robot& robot, const IBehavior
                  "ChooseNextBehaviorInternal called without behavior chooser overwritten")){
     // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
     // note we pass
-    IBehaviorPtr ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);
+    IBehaviorPtr ret = _behaviorChooserPtr->GetDesiredActiveBehavior(robot, currentRunningBehavior);
     return ret;
   }
   

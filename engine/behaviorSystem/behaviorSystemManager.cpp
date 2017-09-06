@@ -18,6 +18,7 @@
 #include "engine/behaviorSystem/activities/activities/activityFactory.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/behaviorContainer.h"
+#include "engine/behaviorSystem/iBSRunnable.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/viz/vizManager.h"
@@ -238,7 +239,7 @@ void BehaviorSystemManager::UpdateActiveBehavior(Robot& robot)
   DEV_ASSERT(_baseActivity != nullptr, "BehaviorSystem.GetDesiredActiveBehavior.MissingBaseActivity");
   // ask the current activity for the next behavior
   IBehaviorPtr nextBehavior = _baseActivity->
-        ChooseNextBehavior(robot, GetRunningInfo().GetCurrentBehavior());
+        GetDesiredActiveBehavior(robot, GetRunningInfo().GetCurrentBehavior());
   if(nextBehavior != GetRunningInfo().GetCurrentBehavior()){
     BehaviorRunningInfo scoredInfo;
     scoredInfo.SetCurrentBehavior(nextBehavior);

@@ -34,6 +34,7 @@
 #include "engine/components/cliffSensorComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
@@ -2348,7 +2349,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                           "Large number of markerless objects to search through");
     }  
     
-    u16 distMeasurement_mm = _robot->GetForwardSensorValue();  
+    u16 distMeasurement_mm = _robot->GetProxSensorComponent().GetLatestDistance_mm();
     
     if (distMeasurement_mm >= kMinObsThreshold_mm) {     
       // Clear out any obstacles between the robot and ray if we have good signal strength 
@@ -4385,7 +4386,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // compute maxRotatedAxis_zValue: the value of the axis that contributes the most in Z after the object
         // has been rotated (like we do in the actual code, this is just render)
         const Vec3f& foundObjSize = foundObject->GetSize();
-        const Vec3f& zCoordRotation = foundObject->GetPose().GetWithRespectToRoot().GetRotation().GetRotationMatrix().GetRow(2);
+        const Vec3f zCoordRotation = foundObject->GetPose().GetWithRespectToRoot().GetRotation().GetRotationMatrix().GetRow(2);
         const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * foundObjSize.x());
         const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * foundObjSize.y());
         const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * foundObjSize.z());

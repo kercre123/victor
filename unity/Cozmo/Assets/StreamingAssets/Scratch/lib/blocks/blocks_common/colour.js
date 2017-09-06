@@ -51,7 +51,10 @@ Blockly.Blocks['colour_picker'] = {
         {
           "type": "field_colour",
           "name": "COLOUR",
-          "colour": randomColour()
+
+          // *** ANKI CHANGE ***
+          "colour": '#ff0000' // TODO Set initial color to a randomly selected one from our palette
+          //"colour": randomColour()
         }
       ],
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,

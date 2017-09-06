@@ -422,7 +422,7 @@ namespace Anki {
         // Check if already at desired height
         if (inPosition_ &&
             (Height2Rad(newDesiredHeight) == desiredAngle_) &&
-            (ABS((desiredAngle_ - currentAngle_).ToFloat()) < LIFT_ANGLE_TOL) ) {
+            (fabsf((desiredAngle_ - currentAngle_).ToFloat()) < LIFT_ANGLE_TOL) ) {
           #if(DEBUG_LIFT_CONTROLLER)
           AnkiDebug( 16, "LiftController", 145, "Already at desired height %f", 1, newDesiredHeight);
           #endif
@@ -520,7 +520,7 @@ namespace Anki {
       // Returns true if a protection action was triggered.
       bool MotorBurnoutProtection() {
         
-        if (ABS(power_ - ANTI_GRAVITY_POWER_BIAS) < BURNOUT_POWER_THRESH || bracing_) {
+        if (fabsf(power_ - ANTI_GRAVITY_POWER_BIAS) < BURNOUT_POWER_THRESH || bracing_) {
           potentialBurnoutStartTime_ms_ = 0;
           return false;
         }

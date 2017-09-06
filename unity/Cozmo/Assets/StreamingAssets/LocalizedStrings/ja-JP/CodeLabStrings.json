@@ -366,6 +366,15 @@
   "codeLab.projects.confirmDeleteProject.confirmPrompt" : {
     "translation" : "このプロジェクトを本当に削除してよろしいですか？"
   },
+  "codeLab.projects.featuredTab.title" : {
+    "translation" : "Code Lab Featured"
+  },
+  "codeLab.projects.sandboxTab.title" : {
+    "translation" : "Code Lab Sandbox"
+  },
+  "codeLab.projects.constructorTab.title" : {
+    "translation" : "Code Lab Constructor"
+  },
   "codeLabSampleProject_DriveInSquare.projectName" : {
     "translation" : "正方形に進む"
   },

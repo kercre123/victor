@@ -73,6 +73,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Required for crash reporting</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Enable microphone access to talk to Cozmo</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UIApplicationExitsOnSuspend</key>

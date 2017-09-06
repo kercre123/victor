@@ -73,7 +73,6 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 #endif
 
 // Language & locale helpers
-static Language GetLanguage(const CozmoContext* ctx);
 static ExternalLanguage GetExternalLanguage(Language language);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -91,8 +90,8 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
   {
     DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoContext.IsNull");
     
-    const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
-    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
+    const Util::Data::DataPlatform* dataPlatform = context->GetDataPlatform();
+    const std::string assetPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "sound/" );
     
     bool hasJNI = false;
 #ifdef ANDROID
@@ -182,8 +181,8 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
       }
     }
 #else
-    // iOS & Mac Platfroms
-    // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
+    // iOS & Mac Platforms
+    // Note: We only have 1 file at the moment this will change when we break up assets for RAMS
     std::string zipAssets = assetPath + "AudioAssets.zip";
     if (Util::FileUtils::FileExists(zipAssets)) {
       config.pathToZipFiles.push_back(std::move(zipAssets));
@@ -250,10 +249,10 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
     RegisterCladGameObjectsWithAudioController();
     
     // Set GameState::External_Language to match current locale
-    const Language language = GetLanguage(context);
-    const GameState::External_Language stateId = GetExternalLanguage(language);
-    const GameState::StateGroupType stateGroupId = GameState::StateGroupType::External_Language;
-    SetState(static_cast<AudioStateGroupId>(stateGroupId), static_cast<AudioStateId>(stateId));
+    const auto * locale = context->GetLocale();
+    if (nullptr != locale) {
+      SetLocale(*locale);
+    }
   }
 }
 
@@ -340,7 +339,17 @@ void CozmoAudioController::AppIsInFocus( const bool inFocus )
   PostAudioEvent(static_cast<const AudioEventId>(event));
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::SetLocale(const Anki::Util::Locale& locale)
+{
+  // Set GameState::External_Language to match preference
+  PRINT_CH_INFO(kLogChannelName, "CozmoAudioController.SetLocale", "locale=%s", locale.GetLocaleString().c_str());
+
+  const auto stateId = GetExternalLanguage(locale.GetLanguage());
+  const auto stateGroupId = GameState::StateGroupType::External_Language;
+  SetState(static_cast<AudioStateGroupId>(stateGroupId), static_cast<AudioStateId>(stateId));
+}
+
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CozmoAudioController::SetupPlugins()
@@ -568,17 +577,6 @@ void CozmoAudioController::PrintPlugInLog() {
   _plugInLog.clear();
 }
 #endif
-
-// Get language for given context
-static Language GetLanguage(const CozmoContext* ctx)
-{
-  // If context provides locale, return language from locale
-  if (ctx != nullptr && ctx->GetLocale() != nullptr) {
-    return ctx->GetLocale()->GetLanguage();
-  }
-  // Otherwise return default
-  return Language::en;
-}
 
 // Get external language for given language
 static ExternalLanguage GetExternalLanguage(Language language)

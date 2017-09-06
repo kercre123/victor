@@ -28,9 +28,10 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
-#include "engine/utils/cozmoFeatureGate.h"
+#include "engine/utils/cozmoExperiments.h"
 #include "engine/viz/vizManager.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "util/ankiLab/extLabInterface.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
@@ -54,6 +55,7 @@ static const std::string kPartIsDamagedKey = "PartIsDamaged";
 static const std::string kCurNeedsUnlockLevelKey = "CurNeedsUnlockLevel";
 static const std::string kNumStarsAwardedKey = "NumStarsAwarded";
 static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
+static const std::string kTimeCreatedKey = "TimeCreated";
 static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
 static const std::string kTimeLastDisconnectKey = "TimeLastDisconnect";
 static const std::string kTimeLastAppBackgroundedKey = "TimeLastAppBackgrounded";
@@ -70,6 +72,7 @@ static const float kNeedLevelStorageMultiplier = 100000.0f;
 static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
 static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequently than device saves
 
+static const std::string kUnconnectedDecayRatesExperimentKey = "unconnected_decay_rates";
 
 using namespace std::chrono;
 using Time = time_point<system_clock>;
@@ -187,6 +190,15 @@ namespace {
       g_DebugNeedsManager->DebugPassTimeMinutes(minutes);
     }
   }
+  void ForceDecayVariation( ConsoleFunctionContextRef context )
+  {
+    const char* experimentKey = kUnconnectedDecayRatesExperimentKey.c_str();
+    const char* variationKey = ConsoleArg_Get_String(context, "variationKey");
+    Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
+    context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
+
+    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(variationKey);
+  }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
   CONSOLE_FUNC( DebugCompleteDay, "Needs" );
@@ -201,6 +213,7 @@ namespace {
   CONSOLE_FUNC( DebugSetEnergyLevel, "Needs", float level );
   CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
   CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
+  CONSOLE_FUNC( ForceDecayVariation, "A/B Testing", const char* variationKey );
 };
 #endif
 
@@ -275,13 +288,15 @@ NeedsManager::~NeedsManager()
 
 void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                         const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
+                        const Json::Value& inDecayJson, const Json::Value& inDecayAJson,
+                        const Json::Value& inDecayBJson,
+                        const Json::Value& inHandlersJson,
                         const Json::Value& inLocalNotificationJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
   _needsConfig.Init(inJson);
-  _needsConfig.InitDecay(inDecayJson);
+  _needsConfig.InitDecay(inDecayJson, inDecayAJson, inDecayBJson);
   
   _starRewardsConfig = std::make_shared<StarRewardsConfig>();
   _starRewardsConfig->Init(inStarsJson);
@@ -302,24 +317,27 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
   {
     auto helper = MakeAnkiEventUtil(*_cozmoContext->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetNeedsLevels>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ContinueInitializingNeedsManager>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetDamagedParts>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsActionWhitelist>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterOnboardingComplete>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseState>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetNeedsLevels>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterOnboardingComplete>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsActionWhitelist>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseState>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeDeviceNeedsData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotNeedsData>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetStarStatus>();
   }
 
-  InitInternal(currentTime_s);
+  // InitInternal will be called shortly after this, based on a GTE message that is sent
+  // after we receive another GTE message that has the saved AB test assignments
 }
 
 
@@ -525,6 +543,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _needsState._timeLastAppBackgrounded = Time();
 
       // Notify the game, so it can put up a dialog to notify the user
+      // (We actually never implemented that UI as of 9/1/2017)
       ExternalInterface::ConnectedToDifferentRobot message;
       const auto& extInt = _cozmoContext->GetExternalInterface();
       extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
@@ -608,6 +627,38 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
 
   _localNotifications->Generate();
+}
+
+
+void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
+{
+  // Call this first to set the audience tags based on current data.
+  // Note that in ActivateExperiment, if there was already an assigned
+  // variation, we'll use that assignment and ignore the audience tags
+  _cozmoContext->GetExperiments()->GetAudienceTags().CalculateQualifiedTags();
+
+  Util::AnkiLab::ActivateExperimentRequest request(kUnconnectedDecayRatesExperimentKey,
+                                                   std::to_string(robotSerialNumber));
+  std::string outVariationKey;
+  const auto assignmentStatus = _cozmoContext->GetExperiments()->ActivateExperiment(request, outVariationKey);
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
+                "Unconnected decay experiment activation assignment status is: %s",
+                EnumToString(assignmentStatus));
+  if (assignmentStatus == Util::AnkiLab::AssignmentStatus::Assigned ||
+      assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
+      assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
+                  "Experiment %s: assigned to variation: %s",
+                  kUnconnectedDecayRatesExperimentKey.c_str(),
+                  outVariationKey.c_str());
+
+    _needsConfig.SetUnconnectedDecayTestVariation(outVariationKey);
+  }
+  else
+  {
+    _needsConfig.SetUnconnectedDecayTestVariation(_needsConfig.kABTestDecayConfigControlKey);
+  }
 }
 
 
@@ -1106,7 +1157,48 @@ void NeedsManager::SendTimeSinceBackgroundedDasEvent()
                        std::to_string(secsSinceLastBackgrounded).c_str());
   }
 }
+  
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::GetStarStatus& msg)
+{
+  bool givenStarToday = true;
+  // Now see if they've already received the star award today:
+  const std::time_t lastStarTime = system_clock::to_time_t( _needsState._timeLastStarAwarded );
+  std::tm lastLocalTime;
+  localtime_r(&lastStarTime, &lastLocalTime);
+  
+  const std::time_t nowTimeT = system_clock::to_time_t( system_clock::now() );
+  std::tm nowLocalTime;
+  localtime_r(&nowTimeT, &nowLocalTime);
+  
+  // Is it past midnight (a different day-of-year (0-365), or a different year)
+  if (nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
+  {
+    givenStarToday = false;
+  }
+  
+  std::tm t;
+  localtime_r(&nowTimeT, &t);
+  // Todays time, reset to last midnight
+  t.tm_sec = t.tm_min = t.tm_hour = 0;
+  time_t lastMidnightTimeT = mktime(&t);
+  system_clock::time_point lastMidnightTimePoint = system_clock::from_time_t(lastMidnightTimeT);
+  // We need midnight tomorrow, not tonight.
+  time_t timeToNextDay = system_clock::to_time_t(lastMidnightTimePoint + hours(24));
+  
+  time_t timeRemainingToNextDay_s = timeToNextDay - nowTimeT;
+  
+  // Send the time to game...
+  ExternalInterface::StarStatus message((int)(timeRemainingToNextDay_s),givenStarToday);
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
 
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::ContinueInitializingNeedsManager& msg)
+{
+  InitInternal(_currentTime_s);
+}
 
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
@@ -1485,10 +1577,13 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
     partIsDamaged.push_back(isDamaged);
   }
 
+  const std::string ABTestString = kUnconnectedDecayRatesExperimentKey + ": " +
+                                   _needsConfig.GetUnconnectedDecayTestVariation();
+
   ExternalInterface::NeedsState message(std::move(needLevels), std::move(needBrackets),
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,
                                         _needsState._numStarsAwarded, _needsState._numStarsForNextUnlock,
-                                        actionCausingTheUpdate);
+                                        actionCausingTheUpdate, std::move(ABTestString));
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 
@@ -1548,6 +1643,15 @@ void NeedsManager::SendNeedsPauseStatesToGame()
 void NeedsManager::ApplyDecayAllNeeds(const bool connected)
 {
   const DecayConfig& config = connected ? _needsConfig._decayConnected : _needsConfig._decayUnconnected;
+
+  if (!connected)
+  {
+    // Before we apply unconnected decay, activate (or re-activate) the experiment
+    // for alternate decay rates.  This covers the issue of the user backgrounding
+    // the app, then the experiment end date passes, then the user un-backgrounds
+    // the app...in that case we want to make sure the experiment is ended
+    AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
+  }
 
   _needsState.SetPrevNeedsBrackets();
 
@@ -1626,7 +1730,7 @@ void NeedsManager::StartFullnessCooldownForNeed(const NeedId needId)
   }
 }
 
-
+  
 bool NeedsManager::UpdateStarsState(const bool cheatGiveStar)
 {
   bool starAwarded = false;
@@ -1917,6 +2021,9 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
   const auto time_s = duration_cast<seconds>(_needsState._timeLastWritten.time_since_epoch()).count();
   state[kDateTimeKey] = Util::numeric_cast<Json::LargestInt>(time_s);
 
+  const auto timeCreated_s = duration_cast<seconds>(_needsState._timeCreated.time_since_epoch()).count();
+  state[kTimeCreatedKey] = Util::numeric_cast<Json::LargestInt>(timeCreated_s);
+
   const auto timeLastDisconnect_s = duration_cast<seconds>(_needsState._timeLastDisconnect.time_since_epoch()).count();
   state[kTimeLastDisconnectKey] = Util::numeric_cast<Json::LargestInt>(timeLastDisconnect_s);
 
@@ -2036,6 +2143,17 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
     _needsState._forceNextSong = UnlockId::Invalid;
   }
 
+  if (versionLoaded >= 5)
+  {
+    const seconds durationSinceEpochCreated_s(state[kTimeCreatedKey].asLargestInt());
+    _needsState._timeCreated = time_point<system_clock>(durationSinceEpochCreated_s);
+  }
+  else
+  {
+    // For older versions, sensible default
+    _needsState._timeCreated = Time();
+  }
+
   if (versionLoaded < NeedsState::kDeviceStorageVersion)
   {
     versionUpdated = true;
@@ -2104,10 +2222,13 @@ void NeedsManager::StartWriteToRobot()
   const auto timeLastStarAwarded_s = duration_cast<seconds>(_needsState._timeLastStarAwarded.time_since_epoch()).count();
   const auto timeLastStarAwarded = Util::numeric_cast<uint64_t>(timeLastStarAwarded_s);
 
+  const auto timeCreated_s = duration_cast<seconds>(_needsState._timeCreated.time_since_epoch()).count();
+  const auto timeCreated = Util::numeric_cast<uint64_t>(timeCreated_s);
+
   NeedsStateOnRobot stateForRobot(NeedsState::kRobotStorageVersion, timeLastWritten, curNeedLevels,
                                   _needsState._curNeedsUnlockLevel, _needsState._numStarsAwarded,
                                   partIsDamaged, timeLastStarAwarded, _robotOnboardingStageCompleted,
-                                  _needsState._forceNextSong);
+                                  _needsState._forceNextSong, timeCreated);
 
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
@@ -2230,11 +2351,6 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
         stateOnRobot.numStarsAwarded = stateOnRobot_v01.numStarsAwarded;
         for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
           stateOnRobot.partIsDamaged[i] = stateOnRobot_v01.partIsDamaged[i];
-
-        // Version 2 added this variable:
-        stateOnRobot.timeLastStarAwarded = 0;
-        // Version 3 added this variable
-        stateOnRobot.onboardingStageCompleted = 0;
         break;
       }
       case 2:
@@ -2251,8 +2367,6 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
         for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
           stateOnRobot.partIsDamaged[i] = stateOnRobot_v02.partIsDamaged[i];
         stateOnRobot.timeLastStarAwarded = stateOnRobot_v02.timeLastStarAwarded;
-        // Version 3 added this variable
-        stateOnRobot.onboardingStageCompleted = 0;
         break;
       }
       case 3:
@@ -2270,8 +2384,24 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
           stateOnRobot.partIsDamaged[i] = stateOnRobot_v03.partIsDamaged[i];
         stateOnRobot.timeLastStarAwarded = stateOnRobot_v03.timeLastStarAwarded;
         stateOnRobot.onboardingStageCompleted = stateOnRobot_v03.onboardingStageCompleted;
-        // Version 4 added this variable
-        stateOnRobot.forceNextSong = UnlockId::Invalid;
+        break;
+      }
+      case 4: // (First version shipped to the wild, in Cozmo 2.0.0)
+      {
+        NeedsStateOnRobot_v04 stateOnRobot_v04;
+        stateOnRobot_v04.Unpack(data, size);
+
+        stateOnRobot.version = NeedsState::kRobotStorageVersion;
+        stateOnRobot.timeLastWritten = stateOnRobot_v04.timeLastWritten;
+        for (int i = 0; i < MAX_NEEDS; i++)
+          stateOnRobot.curNeedLevel[i] = stateOnRobot_v04.curNeedLevel[i];
+        stateOnRobot.curNeedsUnlockLevel = stateOnRobot_v04.curNeedsUnlockLevel;
+        stateOnRobot.numStarsAwarded = stateOnRobot_v04.numStarsAwarded;
+        for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
+          stateOnRobot.partIsDamaged[i] = stateOnRobot_v04.partIsDamaged[i];
+        stateOnRobot.timeLastStarAwarded = stateOnRobot_v04.timeLastStarAwarded;
+        stateOnRobot.onboardingStageCompleted = stateOnRobot_v04.onboardingStageCompleted;
+        stateOnRobot.forceNextSong = stateOnRobot_v04.forceNextSong;
         break;
       }
       default:
@@ -2280,6 +2410,26 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
                        "Version %d found on robot but not supported", versionLoaded);
         break;
       }
+    }
+    if (versionLoaded < 2)
+    {
+      // Version 2 added this variable:
+      stateOnRobot.timeLastStarAwarded = 0;
+    }
+    if (versionLoaded < 3)
+    {
+      // Version 3 added this variable
+      stateOnRobot.onboardingStageCompleted = 0;
+    }
+    if (versionLoaded < 4)
+    {
+      // Version 4 added this variable
+      stateOnRobot.forceNextSong = UnlockId::Invalid;
+    }
+    if (versionLoaded < 5)
+    {
+      // Version 5 added this variable
+      stateOnRobot.timeCreated = 0;
     }
   }
 
@@ -2309,6 +2459,9 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
 
   _needsStateFromRobot._forceNextSong = stateOnRobot.forceNextSong;
 
+  const seconds durationSinceEpochCreated_s(stateOnRobot.timeCreated);
+  _needsStateFromRobot._timeCreated = time_point<system_clock>(durationSinceEpochCreated_s);
+
   // Other initialization for things that do not come from storage:
   _needsStateFromRobot._robotSerialNumber = _robot->GetBodySerialNumber();
   _needsStateFromRobot._needsConfig = &_needsConfig;
@@ -2316,6 +2469,7 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
   _needsStateFromRobot._rng = _cozmoContext->GetRandom();
   _needsStateFromRobot.SetNeedsBracketsDirty();
   _needsStateFromRobot.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
+
   _robotOnboardingStageCompleted = stateOnRobot.onboardingStageCompleted;
   
   return true;

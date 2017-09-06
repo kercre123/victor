@@ -105,7 +105,7 @@ std::string GetFirmwareFilename(FirmwareType type, int version)
       folder = "firmware_" + std::to_string(version);
       break;
   }
-  return std::string{"config/basestation/"} + folder + "/cozmo.safe";
+  return std::string{"config/engine/"} + folder + "/cozmo.safe";
 }
 
 void FirmwareUpdater::LoadHeader(FirmwareType type, int verison, const JsonCallback& callback)

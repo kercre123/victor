@@ -847,7 +847,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
     }
   }
   
-  const Vec3f& beaconCenter = beacon->GetPose().GetWithRespectToRoot().GetTranslation();
+  const Vec3f beaconCenter = beacon->GetPose().GetWithRespectToRoot().GetTranslation();
   LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), robot, recentFailureCooldown_sec);
 
   const int kMaxRow = beacon->GetRadius() / locCalc.GetLocationOffset();
