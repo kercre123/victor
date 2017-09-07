@@ -8,7 +8,7 @@ public static class SceneOpener {
     EditorSceneManager.OpenScene("Assets/Scenes/Bootstrap.unity", OpenSceneMode.Single);
   }
 
-  [MenuItem("Cozmo/Scenes/Open UI Sandbox Scene %#2")]
+  [MenuItem("Cozmo/Scenes/Open NeedsHub Scene %#2")]
   public static void OpenNeedsHubScene() {
     EditorSceneManager.OpenScene("Assets/AssetBundles/NeedsHub/NeedsHubScene-Bundle/NeedsHub.unity", OpenSceneMode.Single);
   }

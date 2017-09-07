@@ -28,6 +28,10 @@
 
 namespace Anki {
 namespace Cozmo {
+
+namespace {
+static const int kNumQueueSizeStatsToSendToDas = 4000;
+}
   
 RobotConnectionManager::RobotConnectionManager(RobotManager* robotManager)
 : _currentConnectionData(new RobotConnectionData())
@@ -89,10 +93,31 @@ void RobotConnectionManager::Update()
   {
     _reliableTransport->Update();
   }
-  
+
+  // Update queue stats before processing messages so we get stats about how big the queue was prior to it
+  // being cleared
+  if( _queueSizeAccumulator.GetNum() >= kNumQueueSizeStatsToSendToDas ) {
+    SendAndResetQueueStats();
+  }  
+
   ProcessArrivedMessages();
 }
-  
+
+void RobotConnectionManager::SendAndResetQueueStats()
+{
+  // s_val: min:mean:max as ints
+  // data: num
+  Util::sEventF("cozmo_engine.robot_msg_queue.recent_incoming_size",
+                {{DDATA, std::to_string( _queueSizeAccumulator.GetNum() ).c_str()}},
+                "%d:%d:%d",
+                (int)std::round(_queueSizeAccumulator.GetMin()),
+                (int)std::round(_queueSizeAccumulator.GetMean()),
+                (int)std::round(_queueSizeAccumulator.GetMax()));
+
+  // clear accumulator so we only send recent stats
+  _queueSizeAccumulator.Clear();
+}
+
 void RobotConnectionManager::Connect(const Util::TransportAddress& address)
 {
   _currentConnectionData->Clear();
@@ -107,6 +132,11 @@ void RobotConnectionManager::DisconnectCurrent()
 {
   _reliableTransport->Disconnect(_currentConnectionData->GetAddress());
   _currentConnectionData->QueueConnectionDisconnect();
+  
+  // send connection stats data if there is any
+  if( _queueSizeAccumulator.GetNum() > 0 ) {
+    SendAndResetQueueStats();
+  }
 }
   
 bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
@@ -137,6 +167,8 @@ void RobotConnectionManager::ProcessArrivedMessages()
       _queuedTimes_ms.AddStat(timeQueued_ms);
     }
 #endif
+
+    _queueSizeAccumulator += _currentConnectionData->GetIncomingQueueSize();
     
     if (RobotConnectionMessageType::Data == nextMessage.GetType())
     {

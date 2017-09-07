@@ -93,6 +93,8 @@ public:
   const Json::Value& GetStarRewardsConfig() const        { return _starRewardsConfig; }
   const Json::Value& GetRobotNeedsActionsConfig() const  { return _needsActionConfig; }
   const Json::Value& GetRobotNeedsDecayConfig() const    { return _needsDecayConfig; }
+  const Json::Value& GetRobotNeedsDecayConfigA() const   { return _needsDecayConfigA; }
+  const Json::Value& GetRobotNeedsDecayConfigB() const   { return _needsDecayConfigB; }
   const Json::Value& GetRobotNeedsHandlersConfig() const { return _needsHandlersConfig; }
   const Json::Value& GetLocalNotificationConfig() const  { return _localNotificationConfig; }
   const Json::Value& GetTextToSpeechConfig() const       { return _textToSpeechConfig; }
@@ -175,6 +177,8 @@ private:
   Json::Value _starRewardsConfig;
   Json::Value _needsActionConfig;
   Json::Value _needsDecayConfig;
+  Json::Value _needsDecayConfigA;
+  Json::Value _needsDecayConfigB;
   Json::Value _needsHandlersConfig;
   Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;

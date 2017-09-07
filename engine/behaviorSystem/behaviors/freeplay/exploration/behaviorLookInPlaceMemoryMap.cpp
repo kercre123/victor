@@ -333,7 +333,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   const Vec3f& sectorNormal = rotateAbsAroundUp * kFwdVector;
   
   // from robot current pose towards
-  const Point3f& robotLocation = robot.GetPose().GetWithRespectToRoot().GetTranslation();
+  const Point3f robotLocation = robot.GetPose().GetWithRespectToRoot().GetTranslation();
   const Point3f& from3D = robotLocation + sectorNormal * minDist;
   const Point3f& to3D   = robotLocation + sectorNormal * maxDist;
   
@@ -514,7 +514,7 @@ void BehaviorLookInPlaceMemoryMap::UpdateSectorRender(Robot& robot)
       const float maxDist = MaxCircleDist();
       
       // render rings
-      const Point3f& renderCenter = (robot.GetPose().GetWithRespectToRoot().GetTranslation()) + Vec3f{0,0,15.0f}; // z offset to render above mem map
+      const Point3f renderCenter = (robot.GetPose().GetWithRespectToRoot().GetTranslation()) + Vec3f{0,0,15.0f}; // z offset to render above mem map
       robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,
         renderCenter, minDist, needCheckColor, false, kSectorsPerLocation);
       robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments(debugId,

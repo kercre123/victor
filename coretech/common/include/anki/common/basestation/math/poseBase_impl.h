@@ -475,6 +475,16 @@ namespace Anki {
     _areUnownedParentsAllowed = tf;
   }
   
+  template<class PoseNd, class TransformNd>
+  inline bool PoseBase<PoseNd,TransformNd>::IsOwned() const
+  {
+    if(IsNull())
+    {
+      return false;
+    }
+    return _node->IsOwned();
+  }
+  
 } // namespace Anki
 
 #endif // _ANKICORETECH_MATH_POSEBASE_IMPL_H_

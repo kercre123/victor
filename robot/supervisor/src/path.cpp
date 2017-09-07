@@ -293,7 +293,7 @@ namespace Anki
         radDiff = (line_theta_ - angle).ToFloat();
 
         // Compute distance to end of segment
-        distToEnd = ABS(seg->endPt_y - y);
+        distToEnd = fabsf(seg->endPt_y - y);
 
 
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
@@ -320,7 +320,7 @@ namespace Anki
         radDiff = (line_theta_ - angle).ToFloat();
 
         // Compute distance to end of segment
-        distToEnd = ABS(seg->endPt_x - x);
+        distToEnd = fabsf(seg->endPt_x - x);
 
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
         // and the robot is closer to the end point than it is to the start point,
@@ -365,7 +365,7 @@ namespace Anki
         // Compute distance to end of segment
         f32 dxToEnd = seg->endPt_x - x_intersect;
         f32 dyToEnd = seg->endPt_y - y_intersect;
-        distToEnd = ABS( sqrtf(dxToEnd * dxToEnd + dyToEnd * dyToEnd) );
+        distToEnd = fabsf( sqrtf(dxToEnd * dxToEnd + dyToEnd * dyToEnd) );
 
         // Did we pass the current segment?
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
@@ -431,7 +431,7 @@ namespace Anki
       }
 
       // Compute distance to end of segment
-      f32 distToEnd = ABS((Radians(seg->startRad + seg->sweepRad) - theta_line).ToFloat() * seg->radius);
+      f32 distToEnd = fabsf((Radians(seg->startRad + seg->sweepRad) - theta_line).ToFloat() * seg->radius);
 
 
       // Did we pass the current segment?
@@ -654,12 +654,12 @@ namespace Anki
         case RSR:
           sign1 = 1.0;
           sign2 = 1.0;
-          minCircleDist = ABS(r1 - r2);
+          minCircleDist = fabsf(r1 - r2);
           break;
         case LSL:
           sign1 = -1.0;
           sign2 = -1.0;
-          minCircleDist = ABS(r1 - r2);
+          minCircleDist = fabsf(r1 - r2);
           break;
         case RSL:
           sign1 = 1.0;
@@ -1039,10 +1039,12 @@ namespace Anki
 
         if (sweepRad > 0) {
           // sweeping CCW
-          sweep = MIN( ABS((limitAngle - currAngle).ToFloat()), sweepRadLeft);
+          f32 diff = fabsf((limitAngle - currAngle).ToFloat());
+          sweep = MIN( diff, sweepRadLeft);
         } else {
           // sweeping CW
-          sweep = MAX( -ABS((limitAngle - currAngle).ToFloat()), -sweepRadLeft);
+          f32 diff = -fabsf((limitAngle - currAngle).ToFloat());
+          sweep = MAX( diff, -sweepRadLeft);
         }
 
         if(!NEAR_ZERO(sweep)) {

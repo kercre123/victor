@@ -29,6 +29,7 @@
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #include "anki/types.h"
 #include "clad/types/motorTypes.h"
+#include "clad/types/proxMessages.h"
 
 
 //#TODO: static assert that MotorTypes matches spine_protocol
@@ -170,7 +171,7 @@ namespace Anki
       } CliffID; //TODO: assert matches DropSensor, or use directly
       
       /// Face proximity sensor
-      u16 GetRawProxData();
+      ProxSensorData GetRawProxData();
 
       /// Cliff sensors
       u16 GetRawCliffData(const CliffID cliff_id);
@@ -248,11 +249,19 @@ namespace Anki
         LED_COUNT
       } LEDId;
 
+      enum {
+         LED_RED_SHIFT= 8,
+         LED_GRN_SHIFT= 16,
+         LED_BLU_SHIFT= 24,
+         LED_CHANNEL_MASK= 0xFF
+      };
+      
+
       /** Set LED to specific color, includes backpack, headlight and backpack IR
        * @param[in] led_id The LED to Set
-       * @param[in] color 16 bit packed color value 5 bits red, 5 bits green, 5 bits blue, 1 bit ir (if present)
+       * @param[in] color 32 bit RGBA
        */
-      void SetLED(const LEDId led_id, const u16 color);
+      void SetLED(const LEDId led_id, const u32 color);
       
 /************************************************************************
  * \section Accessory Interface

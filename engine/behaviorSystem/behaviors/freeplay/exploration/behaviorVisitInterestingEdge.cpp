@@ -408,7 +408,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
   // process them and see if we can pick one
   if ( !interestingRegions.empty() )
   {
-    const Vec3f& robotLoc = robot.GetPose().GetWithRespectToRoot().GetTranslation();
+    const Vec3f robotLoc = robot.GetPose().GetWithRespectToRoot().GetTranslation();
 
     // define what a small region is in order to discard them as noise
     const float memMapPrecision_mm = robot.GetBlockWorld().GetNavMemoryMap()->GetContentPrecisionMM();
@@ -474,7 +474,7 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const 
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   DEV_ASSERT(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
   
-  const Vec3f& fromRobot = robot.GetPose().GetWithRespectToRoot().GetTranslation();
+  const Vec3f fromRobot = robot.GetPose().GetWithRespectToRoot().GetTranslation();
   const Vec3f& toGoal    = goalPosition; // assumed wrt origin
   
   // unforunately the goal (border point) can be inside InterestingEdge; this happens for diagonal edges.

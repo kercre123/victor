@@ -190,7 +190,8 @@ NeedsActionId IBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& confi
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-: _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
+: IBSRunnable(BehaviorIDToString(ExtractBehaviorIDFromConfig(config)))
+, _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _robot(robot)
 , _lastRunTime_s(0.0f)
 , _startedRunningTime_s(0.0f)

@@ -17,8 +17,8 @@
 #include "engine/activeObject.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/bsRunnableChooserFactory.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
@@ -185,8 +185,11 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   ////////
   {
     const Json::Value& universalChooserJSON = config[kUniversalChooser];
-    _universalResponseChooser.reset(BehaviorChooserFactory::CreateBehaviorChooser(robot, universalChooserJSON));
-    DEV_ASSERT(_universalResponseChooser != nullptr, "ActivityFeeding.UniversalChooserNotSpecified");
+    _universalResponseChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(
+                                    robot,
+                                    universalChooserJSON);
+    DEV_ASSERT(_universalResponseChooser != nullptr,
+               "ActivityFeeding.UniversalChooserNotSpecified");
   }
   
   ////////
@@ -357,13 +360,13 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   IBehaviorPtr bestBehavior;
 
   // First check for universal responses - eg drive off charger
   if(_universalResponseChooser){
-    bestBehavior = _universalResponseChooser->ChooseNextBehavior(robot, currentRunningBehavior);
+    bestBehavior = _universalResponseChooser->GetDesiredActiveBehavior(robot, currentRunningBehavior);
   }
   
   if(bestBehavior != nullptr){
@@ -524,7 +527,7 @@ void ActivityFeeding::UpdateCurrentStage(Robot& robot)
     case FeedingActivityStage::ReactingToSeeCharged:
     case FeedingActivityStage::ReactingToSeeCharged_Severe:
       // nothing to do for reacting states, just wait for behavior to finish which will automatically call
-      // TransitionToBestActivityStage in ChooseNextBehavior()
+      // TransitionToBestActivityStage in GetDesiredActiveBehavior()
       break;
   }
 }

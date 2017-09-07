@@ -104,6 +104,9 @@ namespace Anki {
     bool GetWithRespectTo(const Pose2d& otherPose, Pose2d& newPoseWrtOtherPose) const;
     
     // Get pose with respect to its origin
+    // NOTE: This returns by value, not reference. Do not store references to its members in line! I.e., never do:
+    //   const Foo& = somePose.GetWithRespectToRoot().GetFoo(); // Foo will immediately be invalidated
+    // Either store "somePoseWrtRoot" and then get Foo& from it, or make Foo a copy.
     Pose2d GetWithRespectToRoot() const;
 
     void Print(const std::string& channel = DEFAULT_CHANNEL_NAME, const std::string& eventName = "Pose3d.Print") const;
@@ -232,6 +235,9 @@ namespace Anki {
                           Pose3d& newPoseWrtOtherPose) const;
     
     // Get pose with respect to its origin
+    // NOTE: This returns by value, not reference. Do not store references to its members in line! I.e., never do:
+    //   const Foo& = somePose.GetWithRespectToRoot().GetFoo(); // Foo will immediately be invalidated
+    // Either store "somePoseWrtRoot" and then get Foo& from it, or make Foo a copy.
     Pose3d GetWithRespectToRoot() const;
     
     // Check to see if two poses are the same.  Return true if so.

@@ -147,7 +147,22 @@ Blockly.FieldColour.COLOURS = goog.ui.ColorPicker.SIMPLE_GRID_COLORS;
 /**
  * Number of columns in the palette.
  */
-Blockly.FieldColour.COLUMNS = 7;
+// *** ANKI CHANGE ***
+Blockly.FieldColour.COLUMNS = 3;
+//Blockly.FieldColour.COLUMNS = 7;
+
+// *** ANKI CHANGE ***
+Blockly.FieldColour.ANKI_COLORS = [
+      '#ff0000', // red
+      '#ff6600', // orange
+      '#ffff00', // yellow
+      '#00ff00', // green
+      '#66ffff', // light blue
+      '#3333ff', // dark blue
+      '#ff00ff', // purple
+      '#ffffff', // white
+      '#000000'  // black/off
+];
 
 /**
  * Set a custom colour grid for this field.
@@ -181,6 +196,11 @@ Blockly.FieldColour.prototype.showEditor_ = function() {
   // Create the palette using Closure.
   var picker = new goog.ui.ColorPicker();
   picker.setSize(this.columns_ || Blockly.FieldColour.COLUMNS);
+
+  // *** ANKI CHANGE ***
+  var ankiColors = Blockly.FieldColour.ANKI_COLORS;
+  this.setColours(ankiColors);
+
   picker.setColors(this.colours_ || Blockly.FieldColour.COLOURS);
 
   // Position the palette to line up with the field.

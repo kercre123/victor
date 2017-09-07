@@ -1022,8 +1022,13 @@ Blockly.WorkspaceSvg.prototype.recordDeleteAreas = function() {
   } else {
     this.deleteAreaTrash_ = null;
   }
-  if (this.flyout_) {
-    this.deleteAreaToolbox_ = this.flyout_.getClientRect();
+
+  // *** ANKI CHANGE ***
+  // Only take flyout size into account when flyout is visible. msintov, 9/1/17
+  if (this.getFlyout() && this.getFlyout().isVisible()) {
+    this.deleteAreaToolbox_ = this.getFlyout().getClientRect();
+  //if (this.flyout_) {
+  //  this.deleteAreaToolbox_ = this.flyout_.getClientRect();
   } else if (this.toolbox_) {
     this.deleteAreaToolbox_ = this.toolbox_.getClientRect();
   } else {

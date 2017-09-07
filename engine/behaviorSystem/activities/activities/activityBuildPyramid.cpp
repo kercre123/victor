@@ -19,8 +19,8 @@
 #include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
 #include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 #include "engine/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorPyramidThankYou.h"
-#include "engine/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
-#include "engine/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/bsRunnableChooserFactory.h"
+#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -179,8 +179,6 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
 : IActivity(robot, config)
 , _robot(robot)
 , _activeBehaviorChooser(nullptr)
-, _setupSimpleChooser(nullptr)
-, _buildSimpleChooser(nullptr)
 , _chooserPhase(ChooserPhase::None)
 , _lastUprightBlockCount(-1)
 , _pyramidObjectiveAchieved(false)
@@ -252,9 +250,9 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
   const Json::Value& simpleChooserJSON = config[kSetupChooserConfigKey];
   const Json::Value& buildChooserJSON  = config[kBuildChooserConfigKey];
   
-  _setupSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, simpleChooserJSON);
-  _buildSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, buildChooserJSON);
-  _activeBehaviorChooser = _setupSimpleChooser;
+  _setupSimpleChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(robot, simpleChooserJSON);
+  _buildSimpleChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(robot, buildChooserJSON);
+  _activeBehaviorChooser = _setupSimpleChooser.get();
   
   /////////
   // Setup callbacks to update cube light patterns/phase
@@ -318,8 +316,6 @@ ActivityBuildPyramid::~ActivityBuildPyramid()
   _behaviorRespondPossiblyRoll = nullptr;
   _behaviorBuildPyramidBase = nullptr;
   _behaviorBuildPyramid = nullptr;
-  Util::SafeDelete(_setupSimpleChooser);
-  Util::SafeDelete(_buildSimpleChooser);
 }
 
 
@@ -393,12 +389,12 @@ void ActivityBuildPyramid::UpdateActiveBehaviorGroup(Robot& robot, bool settingU
 {
   // Order matters
   if(settingUpPyramid){
-    _activeBehaviorChooser = _setupSimpleChooser;
+    _activeBehaviorChooser = _setupSimpleChooser.get();
     // The setup phase has its own acknowledgments
     _robot.GetBehaviorManager().DisableReactionsWithLock(kLockForPyramidSetup,
                                                          kAffectPyramidSetupArray);
   }else{
-    _activeBehaviorChooser = _buildSimpleChooser;
+    _activeBehaviorChooser = _buildSimpleChooser.get();
     _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForPyramidSetup);
   }
 }
@@ -588,7 +584,7 @@ void ActivityBuildPyramid::UpdatePyramidAssignments(const std::shared_ptr<Behavi
 //////////////////////////////////////////////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivityBuildPyramid::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
   
@@ -641,7 +637,7 @@ IBehaviorPtr ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, cons
 IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorSetup(Robot& robot,
                                                           const IBehaviorPtr currentRunningBehavior)
 {
-  return _activeBehaviorChooser->ChooseNextBehavior(robot, currentRunningBehavior);
+  return _activeBehaviorChooser->GetDesiredActiveBehavior(robot, currentRunningBehavior);
 }
 
 
@@ -678,7 +674,7 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
     
   }else{
     UpdatePyramidAssignments(nullptr);
-    bestBehavior = _buildSimpleChooser->ChooseNextBehavior(robot, currentRunningBehavior);
+    bestBehavior = _buildSimpleChooser->GetDesiredActiveBehavior(robot, currentRunningBehavior);
   }
   
   return bestBehavior;

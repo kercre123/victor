@@ -63,9 +63,6 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private NeedsRewardModal _RewardModalPrefab;
 
-    [SerializeField]
-    private Button _AddStarDebugButton = null;
-
     #endregion //Serialized Fields
 
     #region Non-serialized Fields
@@ -86,14 +83,6 @@ namespace Cozmo.Needs.UI {
 
     // Some events will go here on clicking, etc...
     private void Start() {
-      if (_AddStarDebugButton != null) {
-#if UNITY_EDITOR
-        _AddStarDebugButton.gameObject.SetActive(true);
-#else
-        _AddStarDebugButton.gameObject.SetActive(false);
-#endif
-      }
-
       UpdateStars(DataPersistenceManager.Instance.DisplayedStars, false);
 
       // Make really sure we have up to date info
@@ -307,10 +296,6 @@ namespace Cozmo.Needs.UI {
 
       //storing the latest displayed value persistently
       DataPersistenceManager.Instance.DisplayedStars = count;
-    }
-
-    public void HackToTestStarWhileWatchingPlayWindow() {
-      RobotEngineManager.Instance.RunDebugConsoleFuncMessage("DebugGiveStar", "");
     }
 
     #endregion //Misc Helper Methods

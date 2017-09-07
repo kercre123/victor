@@ -23,6 +23,7 @@
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
+#include "engine/components/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -160,7 +161,8 @@ void AIComponent::CheckForSuddenObstacle()
   
   varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
 
-  f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - _robot.GetForwardSensorValue()) / kObsSampleWindow_ms;
+  const u16 latestDistance_mm = _robot.GetProxSensorComponent().GetLatestDistance_mm();
+  f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_ms;
 
   
   // only trigger if sensor is changing faster than the robot speed, robot is

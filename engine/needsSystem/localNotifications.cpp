@@ -16,6 +16,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/localNotifications.h"
 #include "engine/needsSystem/needsManager.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "anki/common/basestation/jsonTools.h"
 
 #include "util/console/consoleInterface.h"
@@ -132,6 +133,16 @@ void LocalNotifications::SetPaused(const bool pausing)
 
 void LocalNotifications::Generate()
 {
+  // Hide until generated...
+  if( _context != nullptr )
+  {
+    // Note this will still mean permissions are asked for, just local notifications aren't sent.
+    if( !_context->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::LocalNotifications))
+    {
+      return;
+    }
+  }
+  
   using namespace std::chrono;
 
   const auto& extInt = _context->GetExternalInterface();

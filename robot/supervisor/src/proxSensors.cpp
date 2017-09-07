@@ -89,7 +89,7 @@ namespace Anki {
       u16 GetRawProxValue()
       {
         #ifdef COZMO_V2
-        return HAL::GetRawProxData();
+        return HAL::GetRawProxData().distance_mm;
         #else
         return 0;
         #endif // COZMO_V2

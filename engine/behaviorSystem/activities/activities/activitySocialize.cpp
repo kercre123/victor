@@ -100,11 +100,11 @@ void ActivitySocialize::OnSelectedInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   IBehaviorPtr bestBehavior;
   
-  bestBehavior = IActivity::ChooseNextBehaviorInternal(robot, currentRunningBehavior);
+  bestBehavior = IActivity::GetDesiredActiveBehaviorInternal(robot, currentRunningBehavior);
   
   if(bestBehavior != nullptr) {
     if( bestBehavior != currentRunningBehavior ) {
@@ -155,7 +155,7 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
         bestBehavior = nullptr;
         _state = State::None;
       }
-      else {
+      else if( _findFacesBehavior->IsRunning() || _findFacesBehavior->IsRunnable(robot) ) {
         bestBehavior = _findFacesBehavior;
       }
       break;
@@ -169,7 +169,9 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
       }
       else {
         // go back to find, but don't reset search count
-        bestBehavior = _findFacesBehavior;
+        if( _findFacesBehavior->IsRunning() || _findFacesBehavior->IsRunnable(robot) ) {
+          bestBehavior = _findFacesBehavior;
+        }        
         _state = State::FindingFaces;
       }
       break;
@@ -215,7 +217,9 @@ IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const I
       }
       
       if( nullptr != _playingBehavior && needsToPlay ) {
-        bestBehavior = _playingBehavior;
+        // should be runnable since it was just selected in the code above
+        DEV_ASSERT( _playingBehavior->IsRunnable(robot), "ActivitySocialize.PlayingBehavior.NotRunnable");        
+        bestBehavior = _playingBehavior; 
         _lastNumTimesPlayStarted = _playingBehavior->GetNumTimesBehaviorStarted();
         _state = State::Playing;
       }

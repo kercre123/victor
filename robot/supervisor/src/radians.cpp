@@ -191,7 +191,7 @@ namespace Anki {
   
   bool Radians::IsNear(const Radians& other, const Radians& epsilon) const
   {
-    return ABS((radians_ - other).ToFloat()) < ABS(epsilon.ToFloat());
+    return fabsf((radians_ - other).ToFloat()) < fabsf(epsilon.ToFloat());
   }
 
   // Assignment operators

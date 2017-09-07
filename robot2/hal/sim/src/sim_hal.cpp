@@ -753,13 +753,10 @@ namespace Anki {
       //timeStamp_ = t;
     };
 
-    void HAL::SetLED(LEDId led_id, u16 color) {
+    void HAL::SetLED(LEDId led_id, u32 color) {
       #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
-        leds_[led_id]->set( ((color & LED_ENC_IR) ? LED_IR : 0) |
-                           (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << (16 + 3)) |
-                           (((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT) << ( 8 + 3)) |
-                           (((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT) << ( 0 + 3)));
+        leds_[led_id]->set( color )
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }
@@ -798,10 +795,16 @@ namespace Anki {
       return robotID_;
     }
     
-    u16 HAL::GetRawProxData()
+    ProxSensorData HAL::GetRawProxData()
     {
-      const u16 val = static_cast<u16>( proxCenter_->getValue() );
-      return val;
+      ProxSensorData proxData;
+      proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
+      // Note: These fields are spoofed with simple defaults for now, but should be computed
+      // to reflect the actual behavior of the sensor once we do some more testing with it.
+      proxData.signalIntensity = 25.f;
+      proxData.ambientIntensity = 0.25f;
+      proxData.spadCount = 90.f;
+      return proxData;
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)

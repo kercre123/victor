@@ -59,6 +59,9 @@ public:
   
   void Flatten(PoseOriginID_t wrtOrigin);
   
+  // ANKI_VERIFY that each origin is still "owned". Return false if not.
+  bool SanityCheckOwnership() const;
+  
 private:
   
   // Make sure PoseOriginID_t and PoseID_t always match

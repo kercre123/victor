@@ -22,6 +22,8 @@
 #include "clad/robotInterface/messageRobotToEngine.h"    //TODO: why do we still need these 2?
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "schema/messages.h"
+#include "clad/types/proxMessages.h"
+
 
 #define RADIO_IP "127.0.0.1"
 
@@ -331,8 +333,17 @@ namespace Anki {
       //      RobotInterface::SendMessage(msg);
     };
 
-    void HAL::SetLED(LEDId led_id, u16 color)
+
+    void HAL::SetLED(LEDId led_id, u32 color)
     {
+      assert(led_id >= 0 && led_id <= LED_COUNT);
+      
+      uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
+      uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
+      uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
+      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_RED] = r;
+      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_GREEN] = g;
+      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_BLUE] = b;
     }
 
     u32 HAL::GetID()
@@ -340,9 +351,16 @@ namespace Anki {
       return robotID_;
     }
 
-    u16 HAL::GetRawProxData()
+    ProxSensorData HAL::GetRawProxData()
     {
-      return FlipBytes(bodyData_->proximity.rangeMM);
+      ProxSensorData proxData;
+      proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
+      // Signal/Ambient Rate are fixed point 9.7, so convert to float:
+      proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
+      proxData.ambientIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.ambientRate)) / 128.f;
+      // SPAD count is fixed point 8.8, so convert to float:
+      proxData.spadCount = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
+      return proxData;
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)

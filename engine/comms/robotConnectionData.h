@@ -41,6 +41,9 @@ public:
   void PushArrivedMessage(const uint8_t* buffer, uint32_t numBytes, const Util::TransportAddress& address);
   void Clear();
   void QueueConnectionDisconnect();
+
+  // Return the current size of the incoming message queue in bytes
+  uint32_t GetIncomingQueueSize();
   
   Util::TransportAddress GetAddress() const { return _address; };
   void SetAddress(const Util::TransportAddress& address) { _address = address; }
@@ -50,8 +53,14 @@ public:
 private:
   State                                   _currentState = State::Disconnected;
   std::deque<RobotConnectionMessageData>  _arrivedMessages;
+  uint32_t                                _queueSize = 0;
+  uint32_t                                _maxQueueSize = 0;
   std::mutex                              _messageMutex;
   Util::TransportAddress                  _address;
+  bool                                    _hasSizeWarning = false;
+
+  // call after updating _queueSize to do some logging
+  void UpdateQueueSizeStatistics();
 };
 
 } // end namespace Cozmo

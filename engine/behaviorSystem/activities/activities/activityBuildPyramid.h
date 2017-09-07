@@ -53,7 +53,7 @@ public:
   };
   
 protected:
-  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
+  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
@@ -71,9 +71,9 @@ private:
   Robot& _robot;
   
   // Scored behavior choosers that take over when strict priority isn't necessary
-  IBehaviorChooser* _activeBehaviorChooser; // One of the two choosers from below
-  IBehaviorChooser* _setupSimpleChooser;
-  IBehaviorChooser* _buildSimpleChooser;
+  IBSRunnableChooser*                  _activeBehaviorChooser; // One of the two choosers from below
+  std::unique_ptr<IBSRunnableChooser>  _setupSimpleChooser;
+  std::unique_ptr<IBSRunnableChooser>  _buildSimpleChooser;
   
   std::vector<Signal::SmartHandle> _eventHandlers;
   // Maps a light cube type (in case objectIDs are re-assigned for disconnected objects)
