@@ -12,8 +12,6 @@
 
 #include "engine/animations/trackLayerManagers/backpackLayerManager.h"
 
-#include "engine/ledEncoding.h"
-
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
 
@@ -46,7 +44,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   track.AddKeyFrameToBack(frame);
   
   // Turn middle light on
-  lights.colors[(int)LEDId::LED_BACKPACK_2] = ENCODED_COLOR(NamedColors::RED);
+  lights.colors[(int)LEDId::LED_BACKPACK_2] = NamedColors::RED;
   frame.SetLights(lights);
   frame.SetTriggerTime(kGlitchLightDelay_ms);
   frame.SetDuration(kGlitchLightDuration_ms);
@@ -64,7 +62,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   
   // Middle light plus a random light
   int rand = GetRNG().RandInt((int)backpackLightsToPickFrom.size());
-  lights.colors[backpackLightsToPickFrom[rand]] = ENCODED_COLOR(NamedColors::RED);
+  lights.colors[backpackLightsToPickFrom[rand]] = NamedColors::RED;
   frame.SetLights(lights);
   frame.SetTriggerTime(kGlitchLightDuration_ms + kGlitchLightDelay_ms);
   track.AddKeyFrameToBack(frame);
@@ -77,7 +75,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   
   // Previous random light plus another random light
   rand = GetRNG().RandInt((int)backpackLightsToPickFrom.size());
-  lights.colors[backpackLightsToPickFrom[rand]] = ENCODED_COLOR(NamedColors::RED);
+  lights.colors[backpackLightsToPickFrom[rand]] = NamedColors::RED;
   frame.SetLights(lights);
   frame.SetTriggerTime((kGlitchLightDuration_ms*2) + kGlitchLightDelay_ms);
   track.AddKeyFrameToBack(frame);

@@ -609,12 +609,8 @@ namespace Cozmo {
       if(SendIfTrackUnlocked(liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::LIFT_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
       }
-      
-//      // TODO: This can just send message directly up to engine
-//      if(SendIfTrackUnlocked(eventTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::EVENT_TRACK)) {
-//        DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
-//      }
 
+      // Send AnimationEvent directly up to engine if it's time to play one
       if (eventTrack.HasFramesLeft() &&
           eventTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
       {

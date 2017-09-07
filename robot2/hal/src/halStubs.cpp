@@ -18,6 +18,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine_hal.h"
+#include "../../syscon/schema/messages.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"    //TODO: why do we still need these 2?
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -334,14 +335,17 @@ namespace Anki {
 
     void HAL::SetLED(LEDId led_id, u32 color)
     {
-      assert(led_id >= 0 && led_id <= LED_COUNT);
+      assert(led_id >= 0 && led_id < LED_COUNT);
+      
+      // Mapping is reversed in syscon
+      u32 led_id_rev = LED_COUNT - led_id - 1;
       
       uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
       uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
       uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
-      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_RED] = r;
-      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_GREEN] = g;
-      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_BLUE] = b;
+      headData_.ledColors[led_id_rev * LED_CHANEL_CT + Spine::LED0_RED] = r;
+      headData_.ledColors[led_id_rev * LED_CHANEL_CT + Spine::LED0_GREEN] = g;
+      headData_.ledColors[led_id_rev * LED_CHANEL_CT + Spine::LED0_BLUE] = b;
     }
 
     u32 HAL::GetID()
@@ -393,7 +397,7 @@ namespace Anki {
       return bodyData_->battery.flags & BatteryFlags_chargerOOS;
     }
 
-    Result HAL::SetBlockLight(const u32 activeID, const u16* colors)
+    Result HAL::SetBlockLight(const u32 activeID, const u32* colors)
     {
       // Not implemented in HAL in V2
       return RESULT_OK;

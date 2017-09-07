@@ -767,7 +767,7 @@ namespace Anki {
     void HAL::SetLED(LEDId led_id, u32 color) {
       #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
-        leds_[led_id]->set( color )
+        leds_[led_id]->set( color >> 8 ); // RGBA -> 0RGB
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }
@@ -859,7 +859,7 @@ namespace Anki {
     void DisableIRQ() {}
     }
 
-    Result HAL::SetBlockLight(const u32 activeID, const u16* colors)
+    Result HAL::SetBlockLight(const u32 activeID, const u32* colors)
     {
       BlockMessages::LightCubeMessage m;
       m.tag = BlockMessages::LightCubeMessage::Tag_setCubeLights;

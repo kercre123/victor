@@ -20,7 +20,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/ledEncoding.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -167,11 +166,14 @@ void BodyLightComponent::HandleMessage(const ExternalInterface::SetHeadlight& ms
 
 Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& lights)
 {
+  // Convert MS to LED FRAMES
+  #define MS_TO_LED_FRAMES(ms)  (ms == std::numeric_limits<u32>::max() ? std::numeric_limits<u8>::max() : (((ms)+29)/30))
+  
   std::array<Anki::Cozmo::LightState, (int)LEDId::NUM_BACKPACK_LEDS> lightStates;
   for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i)
   {
-    lightStates[i].onColor  = ENCODED_COLOR(lights.onColors[i]);
-    lightStates[i].offColor = ENCODED_COLOR(lights.offColors[i]);
+    lightStates[i].onColor  = lights.onColors[i];
+    lightStates[i].offColor = lights.offColors[i];
     lightStates[i].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
     lightStates[i].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
     lightStates[i].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
@@ -183,8 +185,8 @@ Result BodyLightComponent::SetBackpackLightsInternal(const BackpackLights& light
     {
       PRINT_CH_DEBUG("BodyLightComponent", "BodyLightComponent.SetBackpackLightsInternal",
                      "0x%x 0x%x %u %u %u %u %d",
-                     ENCODED_COLOR(lights.onColors[i]),
-                     ENCODED_COLOR(lights.offColors[i]),
+                     lights.onColors[i],
+                     lights.offColors[i],
                      MS_TO_LED_FRAMES(lights.onPeriod_ms[i]),
                      MS_TO_LED_FRAMES(lights.offPeriod_ms[i]),
                      MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]),

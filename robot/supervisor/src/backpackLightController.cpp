@@ -93,7 +93,7 @@ namespace BackpackLightController {
     TimeStamp_t currentTime = HAL::GetTimeStamp();
     for(int i=0; i<(int)LEDId::NUM_BACKPACK_LEDS; ++i)
     {
-      u16 newColor;
+      u32 newColor;
       bool colorUpdated = false;
       colorUpdated = GetCurrentLEDcolor(_ledParams[(int)_layer].lights[i], currentTime, _ledPhases[i], newColor);
 

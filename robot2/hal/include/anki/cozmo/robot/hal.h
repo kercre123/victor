@@ -250,9 +250,9 @@ namespace Anki
       } LEDId;
 
       enum {
-         LED_RED_SHIFT= 8,
+         LED_RED_SHIFT= 24,
          LED_GRN_SHIFT= 16,
-         LED_BLU_SHIFT= 24,
+         LED_BLU_SHIFT= 8,
          LED_CHANNEL_MASK= 0xFF
       };
       
@@ -287,9 +287,9 @@ namespace Anki
       
       /** Set the color of each LED on the accessory
        * @param[in] activeID Accessory slot to update
-       * @param[in] colors an array of 4 16 bit packed color values
+       * @param[in] colors an array of 4 32-bit RGBA color values
        */
-      Result SetBlockLight(const u32 activeID, const u16 colors[4]);
+      Result SetBlockLight(const u32 activeID, const u32 colors[4]);
       
       /// Enable or disable streaming accelerometer data from object at activeID
       Result StreamObjectAccel(const u32 activeID, const bool enable);

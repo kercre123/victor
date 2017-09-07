@@ -20,7 +20,6 @@
 #include "cozmoAnim/animation/cozmo_anim_generated.h"
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/keyframe.h"
-#include "cozmoAnim/ledEncoding.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/helpers/quoteMacro.h"
@@ -685,8 +684,8 @@ if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
                     animNameDebug.c_str(), QUOTE(__NAME__));            \
   return RESULT_FAIL;                                                   \
 }                                                                       \
-_streamMsg.lights[__LED_NAME__].onColor = ENCODED_COLOR(color); \
-_streamMsg.lights[__LED_NAME__].offColor = ENCODED_COLOR(color); \
+_streamMsg.lights[__LED_NAME__].onColor = color; \
+_streamMsg.lights[__LED_NAME__].offColor = color; \
 _streamMsg.lights[__LED_NAME__].onFrames = 0; \
 _streamMsg.lights[__LED_NAME__].offFrames = 0; \
 _streamMsg.lights[__LED_NAME__].transitionOnFrames = 0; \

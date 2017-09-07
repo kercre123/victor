@@ -20,7 +20,6 @@
 #include "engine/animations/cozmo_anim_generated.h"
 #include "engine/animations/faceAnimationManager.h"
 #include "engine/keyframe.h"
-#include "engine/ledEncoding.h"
 #include "engine/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -708,7 +707,7 @@ if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
                     animNameDebug.c_str(), QUOTE(__NAME__));            \
   return RESULT_FAIL;                                                   \
 }                                                                       \
-_streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
+_streamMsg.colors[__LED_NAME__] = color; } while(0)
 
       GET_COLOR_FROM_JSON(Back, (int)LEDId::LED_BACKPACK_3);
       GET_COLOR_FROM_JSON(Front, (int)LEDId::LED_BACKPACK_1);

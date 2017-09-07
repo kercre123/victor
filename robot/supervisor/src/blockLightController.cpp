@@ -35,7 +35,7 @@ namespace BlockLightController {
     TimeStamp_t _ledPhases[MAX_NUM_CUBES][NUM_CUBE_LEDS];
 
     // Messages to be sent to each block
-    uint16_t _blockMsg[MAX_NUM_CUBES][NUM_CUBE_LEDS];
+    uint32_t _blockMsg[MAX_NUM_CUBES][NUM_CUBE_LEDS];
     
     struct Rotation
     {
@@ -64,7 +64,7 @@ namespace BlockLightController {
   void ApplyLEDParams(u8 blockID, TimeStamp_t currentTime)
   {
     bool blockLEDsUpdated = false;
-    uint16_t* m = _blockMsg[blockID];
+    uint32_t* m = _blockMsg[blockID];
     
     if(_rotations[blockID].rotationPeriod > 0 &&
        TIMESTAMP_TO_FRAMES(currentTime - _rotations[blockID].lastRotation) > _rotations[blockID].rotationPeriod)
@@ -78,7 +78,7 @@ namespace BlockLightController {
     }
 
     for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
-      u16 newColor;
+      u32 newColor;
       if (GetCurrentLEDcolor(_ledParams[blockID][i], currentTime, _ledPhases[blockID][i], newColor)) {
         m[(i + _rotations[blockID].rotationOffset) % NUM_CUBE_LEDS] = newColor;   // Currently, onColor is the only thing that matters in this message.
         blockLEDsUpdated = true;

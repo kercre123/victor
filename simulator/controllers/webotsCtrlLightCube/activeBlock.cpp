@@ -154,11 +154,12 @@ namespace {
 // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
 // to make it suitable for webots LED 24bit RGB color
 inline void SetLED_helper(u32 index, u32 rgbaColor) {
-  led_[index]->set(rgbaColor);
+  
+  led_[index]->set(rgbaColor >> 8); // rgba -> 0rgb
 
-  double red = (rgbaColor & 0x00ff0000) >> 16;  // get first byte
-  double green = (rgbaColor & 0x0000ff00) >> 8;  // second byte
-  double blue = (rgbaColor & 0x000000ff);  // third byte
+  double red = (rgbaColor & (u32)LEDColor::LED_RED) >> (u32)LEDColorShift::LED_RED_SHIFT;
+  double green = (rgbaColor & (u32)LEDColor::LED_GREEN) >> (u32)LEDColorShift::LED_GRN_SHIFT;
+  double blue = (rgbaColor & (u32)LEDColor::LED_BLUE) >> (u32)LEDColorShift::LED_BLU_SHIFT;
   double betterColor[3] = {red, green, blue};
   if (ledColorField_) {
     ledColorField_->setMFVec3f(index, betterColor);
@@ -193,12 +194,7 @@ void Process_setCubeLights(const CubeLights& msg)
   
   // Set lights immediately
   for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {
-    // The color in the CLAD structure LightState is 16 bits structed as the following in binary:
-    // irrrrrgggggbbbbb, that's 1 bit for infrared, 5 bits for red, green, blue, respectively.
-    const u32 newColor = ((msg.lights[i].onColor & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_RED)) << (16 - 10 + 3)) |
-                         ((msg.lights[i].onColor & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_GRN)) << ( 8 -  5 + 3)) |
-                         ((msg.lights[i].onColor & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_BLU)) << ( 0 -  0 + 3));
-    SetLED_helper(i, newColor);
+    SetLED_helper(i, msg.lights[i].onColor);
   }
   
 }

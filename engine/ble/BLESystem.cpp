@@ -78,10 +78,10 @@ void BLESystem::OnVehicleConnected(const UUIDBytes& vehicleId)
   
   Util::Dispatch::After(_queue, std::chrono::milliseconds(15000), [vehicleId, this] {
     Anki::Cozmo::LightState bluLight{};
-    bluLight.onColor = (uint16_t) Anki::Cozmo::LEDColorEncoded::LED_ENC_BLU;
+    bluLight.onColor = (uint32_t)Anki::Cozmo::LEDColor::LED_BLUE;
     bluLight.onFrames = bluLight.offFrames = 0x02;
     Anki::Cozmo::LightState redLight{};
-    redLight.onColor = (uint16_t) Anki::Cozmo::LEDColorEncoded::LED_ENC_RED;
+    redLight.onColor = (uint32_t)Anki::Cozmo::LEDColor::LED_RED;
     redLight.onFrames = redLight.offFrames = 0x02;
 
     Anki::Cozmo::RobotInterface::BackpackLightsMiddle lightsData{};
