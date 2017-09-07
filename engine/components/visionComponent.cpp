@@ -2347,7 +2347,7 @@ namespace Cozmo {
       
       if(kDisplayUndistortedImages)
       {
-        Vision::Image imgUndistorted(numRows,numCols);
+        Vision::ImageRGB imgUndistorted(numRows,numCols);
         cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
                       _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
                       _camera.GetCalibration()->GetDistortionCoeffs());

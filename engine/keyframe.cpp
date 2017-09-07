@@ -752,9 +752,9 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
-//        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
-//                      "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
-//                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
+                      "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed,
                                 -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
                                 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -765,9 +765,9 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-//        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
-//                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-//                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
+                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
     }
@@ -780,9 +780,9 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       //       speed limit should look like between straight and point turns so
       //       just using straight limit for now as a sanity check.
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-//        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
-//                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-//                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
+                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
     }

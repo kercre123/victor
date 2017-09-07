@@ -233,32 +233,6 @@ namespace Anki {
       }
 
       return false;
-
-      // if (_reader && _reader->IsReady()) {
-      //   u32 dataLength;
-      //   _reader->GetLatestRGBImage(frame, dataLength);
-      //   imageID = ++_imageFrameID;
-        
-      //   // --------------------------------------------------------------------
-      //   // TEMP: Image-imu sync isn't implemented yet so, just fake the imu data for now.
-      //   // See sim_hal::IMUGetCameraTime() for explanation of line2Number
-      //   ImageImuData imu_meas(imageID,
-      //                         0.f, 0.f, 0.f,
-      //                         125);          // IMU data point for middle of this image
-
-      //   imuData.push_back(imu_meas);
-        
-      //   // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
-      //   imu_meas.imageId = imageID + 1;
-      //   imu_meas.line2Number = 1;
-      //   imuData.push_back(imu_meas);
-      //   // --------------------------------------------------------------------
-
-      //   return true;
-      // }
-      
-      // return false;
-
     } // CameraGetFrame()
     
     
