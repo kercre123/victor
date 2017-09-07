@@ -55,9 +55,6 @@ namespace Anki {
     static_assert(MOTOR_LIFT == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
     static_assert(MOTOR_HEAD == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
 
-          /********** BEGIN TEMP FIXUP **************/
-#define TEMPORARY_TREAD_MOTOR_POWER_FIXUP    ((motor == MOTOR_RIGHT) ? -1 : 1)
-      /********** ENDOF TEMP FIXUP **************/
     
     namespace { // "Private members"
 
