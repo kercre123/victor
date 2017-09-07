@@ -65,6 +65,7 @@ namespace Cozmo {
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
   
   CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
+  CONSOLE_VAR(bool, kEnableColorImages,          "Vision.General", false);
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
@@ -914,6 +915,17 @@ namespace Cozmo {
                                                                    imageMean)));
         }
       }
+    }
+    
+    // Switch color mode if console var has changed
+    if(ANKI_DEV_CHEATS && (_enableColorImages != kEnableColorImages))
+    {
+      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.UpdateAllResults.ConsoleVarColorModeSwitch",
+                     "Switching color mode from %s to %s based on console var change",
+                     _enableColorImages ? "ON" : "OFF",
+                     kEnableColorImages ? "ON" : "OFF");
+      
+      EnableColorImages(kEnableColorImages);
     }
     
     if(anyFailures) {
