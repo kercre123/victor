@@ -756,7 +756,7 @@ namespace Anki {
     void HAL::SetLED(LEDId led_id, u32 color) {
       #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
-        leds_[led_id]->set( color )
+        leds_[led_id]->set( color );
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }
