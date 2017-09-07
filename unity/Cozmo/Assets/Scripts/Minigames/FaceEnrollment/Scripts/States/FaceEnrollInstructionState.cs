@@ -186,7 +186,7 @@ namespace FaceEnrollment {
       };
 
       // we didn't succeed so let's show an error to the user saying why
-      UIManager.OpenAlert(errorAlertData, errorAlertPriorityData, errorAlertCreated);
+      UIManager.OpenAlert(errorAlertData, errorAlertPriorityData, errorAlertCreated, null, null, false);
     }
 
     private void HandleSuccessfulEnrollment(Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted faceEnrollmentCompleted) {
