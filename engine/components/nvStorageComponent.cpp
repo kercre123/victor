@@ -729,7 +729,8 @@ void NVStorageComponent::LoadDataFromFiles()
     _tagDataMap[tagNum].assign(file.data(), file.data() + file.size());
   }
   
-  
+  // TODO: For now load factory related nvstorage files from the "factory" subdirectory. Will probably
+  // be moved to some read only place
   fileList = Util::FileUtils::FilesInDirectory(_kStoragePath + "factory/", false, _kNVDataFileExtension);
   
   for (auto& fileName : fileList) {
@@ -744,8 +745,6 @@ void NVStorageComponent::LoadDataFromFiles()
       PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.InvalidFileName", "%s", fileName.c_str());
       continue;
     }
-    
-    PRINT_NAMED_WARNING("FACTORY TAG", "%u", tagNum);
     
     if (!IsFactoryEntryTag(static_cast<NVEntryTag>(tagNum)) ||
         !IsPotentialFactoryEntryTag(tagNum)) {

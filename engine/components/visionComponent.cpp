@@ -2551,7 +2551,8 @@ namespace Cozmo {
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
 
-          // Inverted Box
+          // Calibration computed from Inverted Box target using one of the proto robots
+          // Should be close enough for other robots without calibration to use
           const std::array<f32, 8> distortionCoeffs = {{-0.03822904514363595, -0.2964213946476391, -0.00181089972406104, 0.001866070303033584, 0.1803429725181202,
             0, 0, 0}};
 

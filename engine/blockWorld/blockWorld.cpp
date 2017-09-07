@@ -2379,7 +2379,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         Vec3f dist(distMeasurement_mm + .5f * tempObstacle.GetSize().x(),0,0);
         Pose3d obsPose(0, Z_AXIS_3D(), dist);
         
-//        AddProxObstacle(_robot->GetPose()*obsPose);
+        AddProxObstacle(_robot->GetPose()*obsPose);
       }
     }
   }
