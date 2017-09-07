@@ -941,7 +941,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       ScratchRequest scratchRequest = null;
       try {
-        DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+        //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
 
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
