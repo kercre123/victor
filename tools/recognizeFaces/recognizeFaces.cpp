@@ -716,11 +716,12 @@ int main(int argc, char* argv[])
   config["FaceRecognition"]["RunMode"] = "synchronous";
   
   const std::string dataPath(cozmoContext.GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                             "/config/basestation/vision"));
+                                                                             "/config/engine/vision"));
   Vision::FaceTracker faceTracker(dataPath, config);
   
-           // Default input path for "canned" modes
-           std::string inputPath("/Users/andrew/Dropbox (Anki, Inc)/FaceVideos");
+  // Default input path for "canned" modes
+  std::string inputPath("/Users/andrew/Dropbox (Anki, Inc)/FaceVideos");
+  
   // Run specified mode
   if(runMode == "LiveEnroll") {
     std::string albumName("LiveAlbum");
