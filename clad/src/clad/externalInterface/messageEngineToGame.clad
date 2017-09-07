@@ -512,7 +512,8 @@ message NeedsState {
   int_32        curNeedsUnlockLevel,
   int_32        numStarsAwarded,
   int_32        numStarsForNextUnlock,
-  NeedsActionId actionCausingTheUpdate
+  NeedsActionId actionCausingTheUpdate,
+  string        unconnectedDecayTestVariation,
 }
 
 message NeedsPauseState {
@@ -539,6 +540,11 @@ message StarUnlocked {
   int_32      unlockLevel,
   int_32      maxStarsForLevel,
   int_32      currentStars,
+}
+
+message StarStatus {
+  int_32      timeToNextDay_s,
+  bool        completedToday,
 }
 
 message WantsNeedsOnboarding {
@@ -898,7 +904,12 @@ message ClearNotificationCache {
 
 message CacheNotificationToSchedule {
   int_32 secondsInFuture,
-  string textKey
+  string textKey,
+  bool   persist,
+}
+
+message NotificationTextKeys {
+  string textKeys[uint_16],
 }
 
 ///////////////////////////////////////////////////////////////////////////////

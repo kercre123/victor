@@ -798,10 +798,16 @@ namespace Anki {
       return robotID_;
     }
     
-    u16 HAL::GetRawProxData()
+    ProxSensorData HAL::GetRawProxData()
     {
-      const u16 val = static_cast<u16>( proxCenter_->getValue() );
-      return val;
+      ProxSensorData proxData;
+      proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
+      // Note: These fields are spoofed with simple defaults for now, but should be computed
+      // to reflect the actual behavior of the sensor once we do some more testing with it.
+      proxData.signalIntensity = 25.f;
+      proxData.ambientIntensity = 0.25f;
+      proxData.spadCount = 90.f;
+      return proxData;
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)

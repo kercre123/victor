@@ -45,44 +45,6 @@ button:focus {
     font-family: 'Avenir Next';
 }
 
-.blocklyMainBackground {
-    stroke: none !important;
-}
-
-.blocklyFlyoutScrollbar {
-    z-index: 30;
-}
-
-.blocklyScrollbarHorizontal {
-    position: absolute;
-    outline: none;
-}
-
-.blocklyScrollbarVertical {
-    display: none !important;
-}
-
-.blocklyScrollbarBackground {
-    opacity: 0.2;
-}
-
-.blocklyScrollbarHandle {
-    fill: #817e7e;
-}
-
-.blocklyTooltipDiv {
-    background-color: #ffffff;
-    border: 1px solid #000000;
-    border-radius: 3px;
-    color: #000;
-    display: none;
-    font-family: "Avenir Next";
-    font-size: 14pt;
-    padding: 4px;
-    position: absolute;
-    z-index: 100000; /* big value for bootstrap3 compatibility */
-}
-
 /**
   * Close button
   */

@@ -32,6 +32,9 @@ public class NeedsPane : MonoBehaviour {
   [SerializeField]
   private Button _PassTimeApplyButton;
 
+  [SerializeField]
+  private Text _ABTestText;
+
   // Shortcut for  CONSOLE_VAR names
   private const string _kDebugGiveStarKey = "DebugGiveStar";
   private const string _kDebugPassTimeMinutesKey = "DebugPassTimeMinutes";
@@ -59,6 +62,15 @@ public class NeedsPane : MonoBehaviour {
     RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
     RobotEngineManager.Instance.Message.GetNeedsState = new GetNeedsState();
     RobotEngineManager.Instance.SendMessage();
+
+#if UNITY_EDITOR
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+      NeedsState newNeedsState = NeedsStateManager.Instance.LatestStateFromEngine;
+      _LevelEnergyInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Energy].ToString("N6");
+      _LevelPlayInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Play].ToString("N6");
+      _LevelRepairInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Repair].ToString("N6");
+    }
+#endif
   }
 
   void OnDestroy() {
@@ -69,6 +81,7 @@ public class NeedsPane : MonoBehaviour {
     _LevelEnergyInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Energy].ToString("N6");
     _LevelPlayInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Play].ToString("N6");
     _LevelRepairInput.text = newNeedsState.curNeedLevel[(int)Anki.Cozmo.NeedId.Repair].ToString("N6");
+    _ABTestText.text = newNeedsState.unconnectedDecayTestVariation;
     // Remove so that it doesn't change past first init
     RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
   }
@@ -130,8 +143,41 @@ public class NeedsPane : MonoBehaviour {
   }
 
   private void HandleSetNeedsMeterLevelsTap() {
-    RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugSetEnergyLevelKey, _LevelEnergyInput.text);
-    RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugSetPlayLevelKey, _LevelPlayInput.text);
-    RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugSetRepairLevelKey, _LevelRepairInput.text);
+    if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
+      RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugSetEnergyLevelKey, _LevelEnergyInput.text);
+      RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugSetPlayLevelKey, _LevelPlayInput.text);
+      RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugSetRepairLevelKey, _LevelRepairInput.text);
+    }
+#if UNITY_EDITOR
+    else {
+      float[] newLevels = new float[3];
+      float energyInput;
+      float.TryParse(_LevelEnergyInput.text, out energyInput);
+      float energy = Mathf.Clamp(energyInput, 0f, 1f);
+
+      float playInput;
+      float.TryParse(_LevelPlayInput.text, out playInput);
+      float play = Mathf.Clamp(playInput, 0f, 1f);
+
+      float repairInput;
+      float.TryParse(_LevelRepairInput.text, out repairInput);
+      float repair = Mathf.Clamp(repairInput, 0f, 1f);
+
+      newLevels[(int)Anki.Cozmo.NeedId.Energy] = energy;
+      newLevels[(int)Anki.Cozmo.NeedId.Play] = play;
+      newLevels[(int)Anki.Cozmo.NeedId.Repair] = repair;
+
+      NeedsState currentEngineState = NeedsStateManager.Instance.LatestStateFromEngine;
+      NeedsState newEngineState = new NeedsState(newLevels,
+                                                 currentEngineState.curNeedBracket, // TODO Handle changing brackets
+                                                 currentEngineState.partIsDamaged,
+                                                 currentEngineState.curNeedsUnlockLevel,
+                                                 currentEngineState.numStarsAwarded,
+                                                 currentEngineState.numStarsForNextUnlock,
+                                                 Anki.Cozmo.NeedsActionId.NoAction,
+                                                 null);
+      NeedsStateManager.Instance.MockHandleNeedsStateFromEngine(newEngineState);
+    }
+#endif
   }
 }

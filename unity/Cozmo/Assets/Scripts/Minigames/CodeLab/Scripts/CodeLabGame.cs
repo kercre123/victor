@@ -900,6 +900,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       case "cozmoChallengesClose":
         _SessionState.OnChallengesClose();
         return true;
+      case "cozmoDASLog":
+        DAS.Warn(scratchRequest.argString, scratchRequest.argString2);
+        return true;
       default:
         return false;
       }
@@ -938,7 +941,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       ScratchRequest scratchRequest = null;
       try {
-        DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+        //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
 
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
@@ -1122,6 +1125,27 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
         TurnInPlaceVertical(angle, speed, inProgressScratchBlock.CompletedTurn);
       }
+      else if (scratchRequest.command == "cozVertSoundEffects") {
+        string soundToPlay = scratchRequest.argString;
+        Anki.AudioMetaData.GameEvent.Codelab audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Invalid;
+        switch (soundToPlay) {
+        case "select":
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Cube_Light;
+          break;
+        case "win":
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Win;
+          break;
+        case "lose":
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Sfx_Game_Lose;
+          break;
+        }
+
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
+        GameAudioClient.PostCodeLabEvent(audioEvent,
+                                          Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                          (callbackInfo) => { /* callback */ });
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
       else if (scratchRequest.command == "cozVertDrive") {
         float dist_mm = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
@@ -1193,6 +1217,41 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
         robot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
         _RequiresResetToNeutralFace = true;
+      }
+      else if ((scratchRequest.command == "cozVertPlayNamedAnim") || (scratchRequest.command == "cozVertPlayNamedTriggerAnim")) {
+        // These are dev/prototyping only blocks while we figure out the list of animations to expose
+        bool ignoreBodyTrack = scratchRequest.argBool;
+        bool ignoreHeadTrack = scratchRequest.argBool2;
+        bool ignoreLiftTrack = scratchRequest.argBool3;
+        bool startedAnim = false;
+        if (scratchRequest.command == "cozVertPlayNamedTriggerAnim") {
+          try {
+            AnimationTrigger animationTrigger = (AnimationTrigger)Enum.Parse(typeof(AnimationTrigger), scratchRequest.argString);
+
+            robot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, QueueActionPosition.IN_PARALLEL,
+                                       ignoreBodyTrack: ignoreBodyTrack, ignoreHeadTrack: ignoreHeadTrack, ignoreLiftTrack: ignoreLiftTrack);
+            startedAnim = true;
+          }
+          catch (ArgumentException) {
+            DAS.Warn("CodeLab.InvalidTrigger", "Failed to convert '" + scratchRequest.argString + "' to AnimationTrigger");
+          }
+        }
+        else {
+          // Unity doesn't currently maintain a list of possible animations, so we just blindly request it
+          // if animation doesn't exist, then nothing will play, and block should complete next frame.
+          string animationName = scratchRequest.argString;
+          robot.SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(1, animationName, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack),
+                                      inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+          startedAnim = true;
+        }
+
+        if (startedAnim) {
+          _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
+          _RequiresResetToNeutralFace = true;
+        }
+        else {
+          inProgressScratchBlock.AdvanceToNextBlock(false);
+        }
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left

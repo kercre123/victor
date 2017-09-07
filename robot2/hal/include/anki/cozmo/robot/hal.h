@@ -29,6 +29,7 @@
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #include "anki/types.h"
 #include "clad/types/motorTypes.h"
+#include "clad/types/proxMessages.h"
 
 
 //#TODO: static assert that MotorTypes matches spine_protocol
@@ -170,7 +171,7 @@ namespace Anki
       } CliffID; //TODO: assert matches DropSensor, or use directly
       
       /// Face proximity sensor
-      u16 GetRawProxData();
+      ProxSensorData GetRawProxData();
 
       /// Cliff sensors
       u16 GetRawCliffData(const CliffID cliff_id);

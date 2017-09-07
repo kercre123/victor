@@ -26,6 +26,10 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_drive_backward: this.driveBackward,
         cozmo_drive_backward_fast: this.driveBackwardFast,
         cozmo_play_animation_from_dropdown: this.playAnimationFromDropdown,
+        // Begin temporary dev-only blocks prototyping
+        cozmo_play_animation_by_name: this.playAnimationByName,
+        cozmo_play_animation_by_triggername: this.playAnimationByTriggerName,
+        // End temporary dev-only blocks prototyping
         cozmo_happy_animation: this.playHappyAnimation,
         cozmo_victory_animation: this.playVictoryAnimation,
         cozmo_unhappy_animation: this.playUnhappyAnimation,
@@ -66,6 +70,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_dock_with_cube_by_id: this.verticalDockWithCubeById,
         cozmo_vert_set_cube_light_corner: this.verticalSetCubeLightCorner,
         cozmo_vert_cube_anim: this.verticalCubeAnim,
+        cozmo_sound_play: this.verticalPlaySound,
         // Draw (on Cozmo's face)
         cozmo_vert_cozmoface_clear: this.verticalCozmoFaceClear,
         cozmo_vert_cozmoface_display: this.verticalCozmoFaceDisplay,
@@ -215,6 +220,31 @@ Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function(args, util) {
         return this.playAnimationHelperVertical(args, util, animName);
     }
 };
+
+// ============================================================
+// Begin temporary dev-only blocks prototyping
+Scratch3CozmoBlocks.prototype.playNamedAnimationHelper = function(args, util, commandName, animName) {
+    var requestId = this._getRequestId();
+    var shouldIgnoreBodyTrack = Cast.toBoolean(args.IGNORE_WHEELS);
+    var shouldIgnoreHead = Cast.toBoolean(args.IGNORE_HEAD);
+    var shouldIgnoreLift = Cast.toBoolean(args.IGNORE_LIFT);
+    var commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call({requestId: requestId, command: commandName, argString: animName, argBool: shouldIgnoreBodyTrack, argBool2: shouldIgnoreHead, argBool3: shouldIgnoreLift});
+
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.playAnimationByName = function(args, util) {
+    var animName = Cast.toString(args.ANIM_NAME);
+    return this.playNamedAnimationHelper(args, util, "cozVertPlayNamedAnim", animName);
+};
+
+Scratch3CozmoBlocks.prototype.playAnimationByTriggerName = function(args, util) {    
+    var triggerName = Cast.toString(args.TRIGGER_NAME);
+    return this.playNamedAnimationHelper(args, util, "cozVertPlayNamedTriggerAnim", triggerName);
+};
+// End temporary dev-only blocks prototyping
+// ============================================================
 
 Scratch3CozmoBlocks.prototype.playHappyAnimation = function(args, util) {
     return this.playAnimationHelper(args, util, "happy");
@@ -609,6 +639,11 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function(args, util) {
     var cubeAnim = Cast.toString(args.ANIM_SELECT);
     var colorHex = this._getColorIntFromColorObject(Cast.toRgbColorObject(args.COLOR));
     window.Unity.call({requestId: -1, command: "cozVertCubeAnimation", argUInt: colorHex, argUInt2: cubeIndex, argString: cubeAnim});
+};
+
+Scratch3CozmoBlocks.prototype.verticalPlaySound = function(args, util) {
+    var soundSelection = Cast.toString(args.SOUND_MENU);
+    window.Unity.call({requestId: -1, command: "cozVertSoundEffects", argString: soundSelection});
 };
 
 // Drawing on Cozmo's Face

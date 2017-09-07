@@ -102,9 +102,19 @@ void CozmoContext::SetRandomSeed(uint32_t seed)
   
 void CozmoContext::SetLocale(const std::string& localeString)
 {
+  using Locale = Anki::Util::Locale;
+  using CozmoAudioController = Anki::Cozmo::Audio::CozmoAudioController;
+
   if (!localeString.empty()) {
-    Anki::Util::Locale locale = Anki::Util::Locale::LocaleFromString(localeString);
-    _locale.reset(new Anki::Util::Locale(locale));
+    Locale locale = Locale::LocaleFromString(localeString);
+    _locale.reset(new Locale(locale));
+
+    // Update audio controller to use new locale preference
+    auto * audioController = (_audioServer ? _audioServer->GetAudioController() : NULL);
+    auto * cozmoAudioController = dynamic_cast<CozmoAudioController*>(audioController);
+    if (nullptr != cozmoAudioController) {
+      cozmoAudioController->SetLocale(*_locale);
+    }
   }
 }
 

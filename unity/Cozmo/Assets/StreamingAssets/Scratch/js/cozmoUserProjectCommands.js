@@ -164,6 +164,8 @@
     }
 
     window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
+        var startTime = performance.now()
+
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
 
         // TODO: Special case to fix localized text for intruder sample project. Rip out and revisit post-2.0.0.
@@ -190,10 +192,15 @@
             projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y);
         }
 
+        var startBlocklyTime = performance.now()
         openBlocklyXML(projectXML);
+        var blocklyXmlTime = (performance.now() - startBlocklyTime) * 0.001;
         setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
         window.startSaveProjectTimer();
+        
+        var loadTime = (performance.now() - startTime) * 0.001;
+        window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s - " + blocklyXmlTime.toFixed(3) + "s in openBlocklyXML()");
     }
 
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {

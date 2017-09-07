@@ -444,7 +444,7 @@ namespace Anki {
                 }
               }
             }
-            else if (action_ == DA_RAMP_ASCEND && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
+            else if (action_ == DA_RAMP_ASCEND && (fabsf(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
             {
               DockingController::StopDocking();
               SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
@@ -678,7 +678,7 @@ namespace Anki {
           }
           case TRAVERSE_RAMP:
           {
-            if ( ABS(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
+            if ( fabsf(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
               #if(DEBUG_PAP_CONTROLLER)
               AnkiDebug( 14, "PAP", 135, "IDLE (from TRAVERSE_RAMP)\n", 0);
               #endif

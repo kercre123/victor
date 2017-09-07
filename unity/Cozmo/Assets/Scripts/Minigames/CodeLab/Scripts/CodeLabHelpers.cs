@@ -45,6 +45,7 @@ namespace CodeLab {
     public int requestId { get; set; }
     public string command { get; set; }
     public string argString { get; set; }
+    public string argString2 { get; set; }
     public string argUUID { get; set; }
     public int argInt { get; set; }
     public uint argUInt { get; set; }

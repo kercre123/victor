@@ -25,23 +25,57 @@ window.Unity = {
 
 
 if (gEnableSdkConnection) {
+    var _updateInterval = null;
+
+    function startUpdateSdk() {
+        if (_updateInterval == null) {
+            console.log("UpdateSDK.startUpdateSdk.Starting")
+            _updateInterval = setInterval(updateSdk , 10);
+        }
+        else {
+            console.log("UpdateSDK.startUpdateSdk.AlreadyRunning!")
+        }
+    }
+
+    function endUpdateSdk()
+    {
+        if (_updateInterval != null) {
+            console.log("UpdateSDK.endUpdateSdk.Ending")
+            clearInterval(_updateInterval);
+            _updateInterval = null;
+        }
+    }
+
     function updateSdk()
     {
-        if (gEnableSdkConnection) {
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == XMLHttpRequest.DONE) {
-                    // Handle each response in turn?
-                    if (xhr.responseText != "OK") {
-                        eval(xhr.responseText);
-                    }
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                if (xhr.status != 200) {
+                    console.log("UpdateSDK.BadStatus: '" + xhr.status + "' - cancelling update");
+                    endUpdateSdk();
+                }
+                else if (xhr.responseText != "OK") {
+                    // TODO - encode multiple commands in one response to lower latency / allow higher command rate
+                    eval(xhr.responseText);
                 }
             }
+        }
 
+        xhr.onerror = function(e) {
+            console.log("UpdateSDK.OnError: Error - no/bad response from server");
+            endUpdateSdk();
+        }
+
+        if (gEnableSdkConnection && (_updateInterval != null)) {
             xhr.open("POST", "poll_sdk", true);
             xhr.send( null );
         }
     }
 
-    setInterval(updateSdk , 10);
+    startUpdateSdk();
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "sdk_page_loaded", true);
+    xhr.send( null );
 }

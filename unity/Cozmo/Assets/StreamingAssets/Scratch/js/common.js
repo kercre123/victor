@@ -1,6 +1,41 @@
 (function () {
     const Scratch = window.Scratch = window.Scratch || {};
 
+    addLeadingZeros = function(inNum, desiredLength) {
+        var paddedString = "" + inNum;
+        while (paddedString.length < desiredLength) {
+            paddedString = "0" + paddedString;
+        }
+        return paddedString;
+    }
+
+    getTimeStamp = function() {
+        var now = new Date();
+        var milliseconds = now;
+        // Adjust to local time (offset is in minutes)
+        milliseconds -= (now.getTimezoneOffset() * 60000);
+
+        var seconds = Math.floor(milliseconds / 1000);
+        milliseconds -= (seconds * 1000);
+
+        var minutes = Math.floor(seconds / 60);
+        seconds -= (minutes * 60)
+        
+        var hours = Math.floor(minutes / 60);
+        minutes -= (hours * 60);
+        
+        var days = Math.floor(hours / 24);
+        hours -= (days * 24)
+
+        timeStamp = addLeadingZeros(hours, 2) + ":" + addLeadingZeros(minutes,2) + ":" + addLeadingZeros(seconds, 2) + "." + addLeadingZeros(milliseconds,3);
+        return timeStamp;
+    }
+
+    window.cozmoDASLog = function(eventName, messageContents) {
+        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        window.Unity.call({command: "cozmoDASLog", argString: eventName, argString2: messageContents});
+    }    
+    
     /**
      * Window "onload" handler.
      * @return {void}
@@ -104,17 +139,8 @@
 
         // DOM event handlers
         var closeButton = document.querySelector('#closebutton');
-        var challengesButton = document.querySelector('#challengesbutton');
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
-        var undo = document.querySelector('#undo');
-        var redo = document.querySelector('#redo');
-
-        // TODO Temporary hack to make close button visible
-        if (window.isVertical) {
-            var close = document.querySelector('#close');
-            close.style.left = 410 + "px";
-        }
 
         closeButton.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
@@ -131,6 +157,8 @@
         });
 
         if (!window.isVertical) {
+            var challengesButton = document.querySelector('#challengesbutton');
+
             challengesButton.addEventListener('click', function () {
               // show challenges dialog
               Scratch.workspace.playAudio('click');
@@ -141,6 +169,9 @@
             });
         }
         else {
+            var undo = document.querySelector('#undo');
+            var redo = document.querySelector('#redo');
+            
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 Scratch.workspace.undo();
@@ -215,6 +246,7 @@
      * @return {void}
      */
     function bindExtensionHandler () {
+        // TODO What does this method do? scratch-blocks doesn't have this code.
         if (typeof webkit === 'undefined') return;
         if (typeof webkit.messageHandlers === 'undefined') return;
         if (typeof webkit.messageHandlers.extensions === 'undefined') return;

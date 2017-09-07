@@ -51,6 +51,7 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
+#include "engine/components/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -191,6 +192,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _dockingComponent(new DockingComponent(*this))
   , _carryingComponent(new CarryingComponent(*this))
   , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
+  , _proxSensorComponent(std::make_unique<ProxSensorComponent>(*this))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, _pose, "RobotNeck")
@@ -819,9 +821,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
-  
-  // Update forward distanceSensor_mm
-  SetForwardSensorValue(msg.distanceSensor_mm);
+
+  // Update prox sensor component
+  _proxSensorComponent->Update(msg);
 
   // update current path segment in the path component
   _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);
@@ -3200,7 +3202,7 @@ RobotState Robot::GetDefaultRobotState()
                          5.f, //float batteryVoltage,
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
-                         0, //uint16_t distanceSensor_mm
+                         ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
                          -1); //int8_t currPathSegment
   
   return state;

@@ -191,7 +191,10 @@ message PlaceRelObject {
 // PlayAnimation
 message PlayAnimation {
     uint_32 numLoops,
-    string animationName
+    string animationName,
+    bool    ignoreBodyTrack=0,
+    bool    ignoreHeadTrack=0,
+    bool    ignoreLiftTrack=0
 }
 
 // PlayAnimationTrigger

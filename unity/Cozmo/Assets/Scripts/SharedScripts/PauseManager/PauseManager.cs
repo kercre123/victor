@@ -3,6 +3,7 @@ using Cozmo.UI;
 using System;
 using DataPersistence;
 using Cozmo.ConnectionFlow;
+using Cozmo.Notifications;
 
 namespace Cozmo {
   public class PauseManager : MonoBehaviour {
@@ -205,6 +206,9 @@ namespace Cozmo {
 
         // Let the engine know that we're being unpaused
         RobotEngineManager.Instance.SendGameBeingPaused(false);
+
+        // Clear out all local notifications
+        NotificationsManager.Instance.ClearNotificationCache();
 
         // If the go to sleep dialog is open, the user has selected sleep and there's no turning back, so don't wake up Cozmo
         if (!IsGoToSleepDialogOpen) {

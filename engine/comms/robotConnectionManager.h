@@ -58,6 +58,13 @@ public:
   void SetReliableTransportRunMode(bool isSync);
   
 private:
+  void SendAndResetQueueStats();
+  
+  void HandleDataMessage(RobotConnectionMessageData& nextMessage);
+  void HandleConnectionResponseMessage(RobotConnectionMessageData& nextMessage);
+  void HandleDisconnectMessage(RobotConnectionMessageData& nextMessage);
+  void HandleConnectionRequestMessage(RobotConnectionMessageData& nextMessage);
+
   std::unique_ptr<RobotConnectionData>      _currentConnectionData;
   std::unique_ptr<Util::UDPTransport>       _udpTransport;
   std::unique_ptr<Util::ReliableTransport>  _reliableTransport;
@@ -67,11 +74,9 @@ private:
 #if TRACK_INCOMING_PACKET_LATENCY
   Util::Stats::RecentStatsAccumulator _queuedTimes_ms = 100; // how many ms between packet arriving and it being passed onto game
 #endif // TRACK_INCOMING_PACKET_LATENCY
-  
-  void HandleDataMessage(RobotConnectionMessageData& nextMessage);
-  void HandleConnectionResponseMessage(RobotConnectionMessageData& nextMessage);
-  void HandleDisconnectMessage(RobotConnectionMessageData& nextMessage);
-  void HandleConnectionRequestMessage(RobotConnectionMessageData& nextMessage);
+
+  // track how large the incoming message queue gets in bytes
+  Util::Stats::StatsAccumulator _queueSizeAccumulator;
 };
 
 } // end namespace Cozmo

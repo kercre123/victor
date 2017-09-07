@@ -22,7 +22,7 @@ namespace Anki {
       [System.Serializable]
       public struct AudioEventParameter {
 
-        public static AudioEventParameter InvalidEvent = new AudioEventParameter(AudioMetaData.GameEvent.GenericEvent.Invalid, 
+        public static AudioEventParameter InvalidEvent = new AudioEventParameter(AudioMetaData.GameEvent.GenericEvent.Invalid,
                                                                                  AudioMetaData.GameEvent.EventGroupType.GenericEvent);
 
         public static AudioEventParameter DefaultClick = new AudioEventParameter(AudioMetaData.GameEvent.GenericEvent.Play__Ui__Click_General,
@@ -129,6 +129,13 @@ namespace Anki {
                                           CallbackHandler handler = null) {
           UnityAudioClient client = UnityAudioClient.Instance;
           return client.PostEvent((AudioMetaData.GameEvent.GenericEvent)audioEvent, AudioMetaData.GameObjectType.SFX, callbackFlag, handler);
+        }
+
+        static public ushort PostCodeLabEvent(AudioMetaData.GameEvent.Codelab audioEvent,
+                                              AudioEngine.Multiplexer.AudioCallbackFlag callbackFlag = AudioEngine.Multiplexer.AudioCallbackFlag.EventNone,
+                                              CallbackHandler handler = null) {
+          UnityAudioClient client = UnityAudioClient.Instance;
+          return client.PostEvent((AudioMetaData.GameEvent.GenericEvent)audioEvent, AudioMetaData.GameObjectType.CodeLab, callbackFlag, handler);
         }
 
         static public ushort PostAnnouncerVOEvent(AudioMetaData.GameEvent.GenericEvent audioEvent,
@@ -247,7 +254,7 @@ namespace Anki {
           client.PostMusicState((AudioMetaData.GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
         }
 
-       
+
         // Game Helpers
         static public void SetMusicRoundState(int round) {
           AudioMetaData.SwitchState.Gameplay_Round roundState = AudioMetaData.SwitchState.Gameplay_Round.Invalid;

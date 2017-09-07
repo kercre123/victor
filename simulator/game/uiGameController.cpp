@@ -1591,6 +1591,15 @@ namespace Anki {
       message.Set_LogRawCliffData(m);
       SendMessage(message);
     }
+    
+    void UiGameController::SendLogProxDataRequest(const u32 length_ms)
+    {
+      ExternalInterface::LogRawProxData m;
+      m.length_ms = length_ms;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_LogRawProxData(m);
+      SendMessage(message);
+    }
 
     void UiGameController::SendAnimation(const char* animName, u32 numLoops, bool throttleMessages)
     {
@@ -1674,7 +1683,7 @@ namespace Anki {
       ExternalInterface::QueueSingleAction msg;
       msg.idTag = ++_queueActionIdTag;
       msg.position = pos;
-      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(numLoops, animName));
+      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(numLoops, animName, false, false, false));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);

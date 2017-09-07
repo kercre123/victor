@@ -98,6 +98,7 @@ class PathComponent;
 class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
+class ProxSensorComponent;
 
 namespace Audio {
 class RobotAudioClient;
@@ -310,6 +311,9 @@ public:
   inline const CliffSensorComponent& GetCliffSensorComponent() const { return *_cliffSensorComponent; }
   inline       CliffSensorComponent& GetCliffSensorComponent()       { return *_cliffSensorComponent; }
   
+  inline const ProxSensorComponent& GetProxSensorComponent() const { return *_proxSensorComponent; }
+  inline       ProxSensorComponent& GetProxSensorComponent()       { return *_proxSensorComponent; }
+  
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
   
@@ -488,21 +492,7 @@ public:
   EncodedImage& GetEncodedImage() { return _encodedImage; }
   
   bool IsPickedUp() const { return _isPickedUp; }
-  
-  /*
-  // =========== Proximity Sensors ===========
-  u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
-  bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
-
-  // Pose of where objects are assumed to be with respect to robot pose when
-  // obstacles are detected by proximity sensors
-  static const Pose3d ProxDetectTransform[NUM_PROX];
-  */
-  
-  // sets distance detected by forward proximity sensor
-  void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
-  u16  GetForwardSensorValue() const       { return _forwardSensorValue_mm; }
-    
+      
   // =========== IMU Data =============
   
   // Returns pointer to robot accelerometer readings in mm/s^2 with respect to head frame.
@@ -802,15 +792,10 @@ protected:
   std::unique_ptr<DockingComponent>       _dockingComponent;
   std::unique_ptr<CarryingComponent>      _carryingComponent;
   std::unique_ptr<CliffSensorComponent>   _cliffSensorComponent;
+  std::unique_ptr<ProxSensorComponent>    _proxSensorComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
-
-  /*
-  // Proximity sensors
-  std::array<u8,   NUM_PROX>  _proxVals;
-  std::array<bool, NUM_PROX>  _proxBlocked;
-  */
   
   // Geometry / Pose
   std::unique_ptr<PoseOriginList> _poseOriginList;
@@ -871,7 +856,6 @@ protected:
   u32              _lastSentImageID          = 0;
   u8               _enabledAnimTracks        = (u8)AnimTrackFlag::ALL_TRACKS;
   bool             _isPickedUp               = false;
-  u16              _forwardSensorValue_mm    = 0;
   bool             _isOnChargerPlatform      = false;
   bool             _isCliffReactionDisabled  = false;
   bool             _isBodyInAccessoryMode    = true;
