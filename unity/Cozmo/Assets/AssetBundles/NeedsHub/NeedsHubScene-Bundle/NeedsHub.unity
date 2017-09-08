@@ -721,20 +721,6 @@ Transform:
 GameObject:
   m_PrefabParentObject: {fileID: 187916, guid: d5e69beea2e6b491a8471937da58a483, type: 2}
   m_PrefabInternal: {fileID: 1290490494}
---- !u!114 &1290490497
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1290490496}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3cf17c1e495c7476ea5b23aa170bc0b7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _TooltipPrefab: {fileID: 114901523654011268, guid: 4ed76da1f74e6475f83c0bce6cbf7228,
-    type: 2}
-  _TooltipShowTime_Sec: 3
 --- !u!1001 &1601653686
 Prefab:
   m_ObjectHideFlags: 0
