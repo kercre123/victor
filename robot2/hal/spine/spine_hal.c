@@ -57,7 +57,7 @@ typedef  enum {
 } EventType;
 
 static struct SpineEvent_t{
-   uint32_t time;
+   uint64_t time;
    EventType type;
 } EventLOG[MAX_EVENTS];
 static uint32_t EventCount=0;
@@ -79,11 +79,11 @@ void DumpEvents()
       LOGD("Dumping EVENT FILE: %p\n",fp);
       for (i= EventCount; i< MAX_EVENTS;i++)
       {
-         fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
+         fprintf(fp, "%llu, %d\n", EventLOG[i].time, EventLOG[i].type);
       }
       for (i=0;i<EventCount;i++)
       {
-         fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
+         fprintf(fp, "%llu, %d\n", EventLOG[i].time, EventLOG[i].type);
       }
       fclose(fp);
    }
