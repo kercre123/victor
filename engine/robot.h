@@ -410,7 +410,7 @@ public:
   PoseOriginID_t      GetWorldOriginID()const;
   
   Pose3d              GetCameraPose(f32 atAngle) const;
-  Pose3d              GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+  Transform3d         GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
 
   OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   

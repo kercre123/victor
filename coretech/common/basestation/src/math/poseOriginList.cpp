@@ -31,7 +31,17 @@ PoseOriginList::PoseOriginList()
 
 PoseOriginList::~PoseOriginList()
 {
-
+  // Ignore whether unowned parents are allowed so we can delete
+  // pose origins without worrying about the ordering here (since
+  // an origin that's a parent of another "origin", thanks to rejiggering
+  // might get deleted before its child)
+  const bool wereAllowed = Pose3d::AreUnownedParentsAllowed();
+  Pose3d::AllowUnownedParents(true);
+  for(auto & origin : _origins)
+  {
+    origin.second.reset();
+  }
+  Pose3d::AllowUnownedParents(wereAllowed);
 }
 
 bool PoseOriginList::ContainsOriginID(PoseOriginID_t ID) const

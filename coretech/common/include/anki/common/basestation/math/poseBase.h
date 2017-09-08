@@ -116,6 +116,7 @@ namespace Anki {
     static bool AreUnownedParentsAllowed();
     static void AllowUnownedParents(bool tf);
     bool IsOwned() const;
+    uint32_t GetNodeOwnerCount() const; // mostly useful for unit tests
     
   protected:
     

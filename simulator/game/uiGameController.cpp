@@ -75,6 +75,7 @@ namespace Anki {
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
       _robotPose = CreatePoseHelper(msg.pose);
+      _robotPose.SetName("RobotPose");
 
       // if localization has changed, update VizOrigin to the robot automatically
       // to better match the offsets
@@ -851,6 +852,7 @@ namespace Anki {
       }
       
       _robotPoseActual = GetPose3dOfNode(_robotNode);
+      _robotPoseActual.SetName("RobotPoseActual");
       
       // if it's the first time that we set the proper pose for the robot, update the visualization origin to
       // the robot, since debug render expects to be centered around the robot

@@ -594,14 +594,13 @@ namespace Cozmo {
     {
       // Get the robot origin w.r.t. the camera position with the camera at
       // the current head angle
+      const Pose3d& cameraPose = _robot.GetCameraPose(headAngle_rad); // need to store the camera pose so it can be parent
       Pose3d robotPoseWrtCamera;
-      {
-        const bool result = robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
-        // this really shouldn't fail! camera has to be in the robot's pose tree
-        DEV_ASSERT(result == true, "VisionComponent.PopulateGroundPlaneHomographyLUT.GetWrtFailed");
-#       pragma unused(result) // Avoid errors in release/shipping when assert compiles out
-      }
- 
+      const bool result = robotPose.GetWithRespectTo(cameraPose, robotPoseWrtCamera);
+      // this really shouldn't fail! camera has to be in the robot's pose tree
+      DEV_ASSERT(result == true, "VisionComponent.PopulateGroundPlaneHomographyLUT.GetWrtFailed");
+#     pragma unused(result) // Avoid errors in release/shipping when assert compiles out
+      
       const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
       const Vec3f&            T = robotPoseWrtCamera.GetTranslation();
       
@@ -1431,8 +1430,8 @@ namespace Cozmo {
       return;
     }
     
-    const Pose3d& liftPoseWrtCamera = _robot.GetLiftPoseWrtCamera(histState.GetLiftAngle_rad(),
-                                                                  histState.GetHeadAngle_rad());
+    const Transform3d& liftPoseWrtCamera = _robot.GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
+                                                                            histState.GetHeadAngle_rad());
     
     const f32 padding = _robot.IsPhysical() ? LIFT_HARDWARE_FALL_SLACK_MM : 0.f;
     std::vector<Point3f> liftCrossBar{

@@ -2580,9 +2580,6 @@ Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) cons
       
 } // GetBoundingBoxXY()
     
-  
-    
-    
 f32 Robot::GetHeight() const
 {
   return std::max(ROBOT_BOUNDING_Z, GetLiftHeight() + LIFT_HEIGHT_ABOVE_GRIPPER);
@@ -2593,7 +2590,7 @@ f32 Robot::GetLiftHeight() const
   return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
 }
     
-Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
+Transform3d Robot::GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
 {
   Pose3d liftPose(_liftPose);
   ComputeLiftPose(atLiftAngle, liftPose);
@@ -2601,11 +2598,12 @@ Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
   Pose3d camPose = GetCameraPose(atHeadAngle);
       
   Pose3d liftPoseWrtCam;
-  bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
+  const bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
   
-  DEV_ASSERT(result, "Lift and camera poses should be in same pose tree");
-      
-  return liftPoseWrtCam;
+  DEV_ASSERT(result, "Robot.GetLiftTransformWrtCamera.LiftWrtCamPoseFailed");
+# pragma unused(result)
+  
+  return liftPoseWrtCam.GetTransform();
 }
     
 f32 Robot::ConvertLiftHeightToLiftAngleRad(f32 height_mm)

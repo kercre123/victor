@@ -302,6 +302,19 @@ namespace Anki {
       bool IsPoseTooHigh(const Pose3d& poseWrtRobot, float heightMultiplier,
                          float heightTol, float offsetFraction) const;
       
+    private:
+      // NOTE: Declaring pose _first_ because markers use it as a parent and
+      //       therefore it needs to be destroyed _after_ the markers whose
+      //       poses refer to it to avoid triggering ownership assertions.
+      
+      // Force setting of pose through SetPose() to keep pose name updated
+      Pose3d _pose;
+      f32    _lastSetPoseDistance = -1.f;
+      
+      // Don't allow a copy constuctor, because it won't handle fixing the
+      // marker pointers and pose parents
+      //ObservableObject(const ObservableObject& other);
+      
     protected:
       
       // Canonical corners are properties of each derived class and define the
@@ -327,16 +340,6 @@ namespace Anki {
       // Helper for GetDimInParentFraem / GetSizeInParentFrame
       template<char AXIS>
       f32 GetDimInParentFrame(const RotationMatrix3d& Rmat) const;
-      
-    private:
-      // Force setting of pose through SetPose() to keep pose name updated
-      Pose3d _pose;
-      f32    _lastSetPoseDistance = -1.f;
-      
-      // Don't allow a copy constuctor, because it won't handle fixing the
-      // marker pointers and pose parents
-      //ObservableObject(const ObservableObject& other);
-      
     };
   
     
