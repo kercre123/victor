@@ -38,6 +38,21 @@
 #define STR(s)  #s
 #define DEFNAME(s) STR(s)
 
+/******** TEMP SPINE LOGGING ***********/
+static uint64_t seltime;
+extern "C" void DumpEvents();
+#define EVENT_LOG_DURATION_SEC 10
+#define START_SPINE_EVENT_LOG(time)  seltime=(time)
+#define DUMP_SPINE_EVENTS_MAYBE(time) if ((time)>= seltime+(EVENT_LOG_DURATION_SEC*1000))DumpEvents()
+
+// #define DUMP_SPINE_EVENTS_MAYBE(time) do{\
+//     printf("? %u > %llu\n", time, seltime+(EVENT_LOG_DURATION_SEC*1000));\
+//     DUMP_SPINE_EVENTS_MAYBE_X(time);\
+//   }while(0);
+    
+
+/***************************************/
+
 
 #if REALTIME_CONSOLE_OUTPUT > 0
 #define SAVE_MOTOR_POWER(motor, power)  internalData_.motorPower[motor]=power
@@ -197,6 +212,8 @@ namespace Anki {
       }
       printf("Hal Init Success\n");
 
+      START_SPINE_EVENT_LOG(HAL::GetTimeStamp());
+
       return RESULT_OK;
     }  // Init()
 
@@ -319,6 +336,8 @@ namespace Anki {
       ProcessIMUEvents();
 #endif
       MonitorConnectionState();
+
+      DUMP_SPINE_EVENTS_MAYBE(now);
       return result;
     }
 
