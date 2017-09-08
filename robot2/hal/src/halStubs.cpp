@@ -178,7 +178,7 @@ namespace Anki {
           Result result = GetSpineDataFrame();
           //spin on good frame
           if (result == RESULT_FAIL_IO_TIMEOUT) {
-            printf("Kicking the body again!");
+            printf("Kicking the body again!\n");
             hal_set_mode(RobotMode_RUN);
           }
         } while (result != RESULT_OK);
@@ -186,6 +186,10 @@ namespace Anki {
 #else
       bodyData_ = &dummyBodyData_;
 #endif
+
+      assert(bodyData_ != nullptr);
+      printf("Body Data: %p", bodyData_);
+      
 
       MotorID m;
       for (m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {

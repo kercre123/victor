@@ -53,7 +53,7 @@ static struct HalGlobals {
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
 #endif
 
-#define EXTENDED_SPINE_DEBUG 0
+#define EXTENDED_SPINE_DEBUG 1
 #if EXTENDED_SPINE_DEBUG
 #define spine_debug_x spine_debug
 #else
@@ -356,6 +356,7 @@ const struct SpineMessageHeader* hal_read_frame()
 
 const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
+  timeout_ms *= 5;
   const struct SpineMessageHeader* hdr;
   do {
     hdr = hal_read_frame();
