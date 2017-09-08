@@ -37,7 +37,7 @@
   },
   {
     "feature": "Laser",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "Singing",

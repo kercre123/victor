@@ -46,6 +46,7 @@ enum int_32 SparkableThings
   PopAWheelie,
   WorkoutWithCubes,
   RollCube,
+  TrackLaser,
 
 }
 
@@ -77,7 +78,8 @@ enum_concept uint_32 GetSparkCosts[SparkableThings]
   KnockOverStack   = 6,
   PopAWheelie      = 6,
   WorkoutWithCubes = 8,
-  RollCube         = 4
+  RollCube         = 4,
+  TrackLaser       = 8
 }
 
 } // namespace Cozmo
