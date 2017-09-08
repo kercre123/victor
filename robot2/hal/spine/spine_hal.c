@@ -72,16 +72,21 @@ void LogEvent(EventType type)
 void DumpEvents()
 {
    int i;
-   FILE* fp = fopen("event.log","w+");
-   for (i= EventCount; i< MAX_EVENTS;i++)
-   {
-      fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
+   static FILE* fp = NULL;
+   
+   if (!fp) {
+      fp = fopen("event.log","w+");
+      LOGD("Dumping EVENT FILE: %p\n",fp);
+      for (i= EventCount; i< MAX_EVENTS;i++)
+      {
+         fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
+      }
+      for (i=0;i<EventCount;i++)
+      {
+         fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
+      }
+      fclose(fp);
    }
-   for (i=0;i<EventCount;i++)
-   {
-      fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
-   }
-   fclose(fp);
 }
       
 

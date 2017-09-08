@@ -40,8 +40,16 @@
 /******** TEMP SPINE LOGGING ***********/
 static uint64_t seltime;
 extern "C" void DumpEvents();
+#define EVENT_LOG_DURATION_SEC 10
 #define START_SPINE_EVENT_LOG(time)  seltime=(time)
-#define DUMP_SPINE_EVENTS_MAYBE(time) if ((time)-seltime>(16*1000000))DumpEvents()
+#define DUMP_SPINE_EVENTS_MAYBE(time) if ((time)>= seltime+(EVENT_LOG_DURATION_SEC*1000))DumpEvents()
+
+// #define DUMP_SPINE_EVENTS_MAYBE(time) do{\
+//     printf("? %u > %llu\n", time, seltime+(EVENT_LOG_DURATION_SEC*1000));\
+//     DUMP_SPINE_EVENTS_MAYBE_X(time);\
+//   }while(0);
+    
+
 /***************************************/
 
 
