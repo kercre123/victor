@@ -105,7 +105,7 @@ std::string GetFirmwareFilename(FirmwareType type, int version)
       folder = "firmware_" + std::to_string(version);
       break;
   }
-  return std::string{"config/basestation/"} + folder + "/cozmo.safe";
+  return std::string{"config/engine/"} + folder + "/cozmo.safe";
 }
 
 void FirmwareUpdater::LoadHeader(FirmwareType type, int verison, const JsonCallback& callback)
@@ -281,7 +281,7 @@ void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComp
     {
       Robot* robot = it->second;
     
-      ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, fwSig, percentComplete);
+      ExternalInterface::FirmwareUpdateProgress message(_state, _subState, fwSig, percentComplete);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else
@@ -308,7 +308,7 @@ void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareU
       
       Util::sEventF("robot.firmware_upgrade_complete", {}, "%s", EnumToString(updateResult));
       
-      ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSig);
+      ExternalInterface::FirmwareUpdateComplete message(updateResult, fwSig);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else

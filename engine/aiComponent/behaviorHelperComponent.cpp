@@ -71,7 +71,7 @@ bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
   }
   
   PushHelperOntoStackAndUpdate(robot, handleToRun);
-  _worldOriginAtStart = robot.GetWorldOrigin();
+  _worldOriginIDAtStart = robot.GetWorldOriginID();
   return true;
 }
 
@@ -131,9 +131,9 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
     auto activeIter = _helperStack.end();
     activeIter--;
     // TODO: COZMO-10389 - return to base helper if origin changes
-    bool blockWorldOriginChange = robot.GetWorldOrigin() != _worldOriginAtStart;
+    bool blockWorldOriginChange = (robot.GetWorldOriginID() != _worldOriginIDAtStart);
     if(blockWorldOriginChange){
-      _worldOriginAtStart = robot.GetWorldOrigin();
+      _worldOriginIDAtStart = robot.GetWorldOriginID();
     }
     while(!_helperStack.empty() &&
           activeIter != _helperStack.end()){

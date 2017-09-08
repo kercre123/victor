@@ -21,7 +21,9 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/requestGameComponent.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
+#include "engine/components/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -51,6 +53,7 @@ AIComponent::AIComponent(Robot& robot)
 , _requestGameComponent(new RequestGameComponent(robot))
 , _doATrickSelector(new DoATrickSelector(robot))
 , _freeplayDataTracker( new FreeplayDataTracker() )
+, _severeNeedsComponent( new SevereNeedsComponent(robot))
 {
 }
 
@@ -71,6 +74,9 @@ Result AIComponent::Init()
   // initialize whiteboard
   assert( _whiteboard );
   _whiteboard->Init();
+  
+  assert(_severeNeedsComponent);
+  _severeNeedsComponent->Init();
 
   // initialize workout component
   if( context) {
@@ -95,6 +101,7 @@ Result AIComponent::Update()
   _aiInformationAnalyzer->Update(_robot);
 
   _whiteboard->Update();
+  _severeNeedsComponent->Update();
   
   _behaviorHelperComponent->Update(_robot);
 
@@ -154,7 +161,8 @@ void AIComponent::CheckForSuddenObstacle()
   
   varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
 
-  f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - _robot.GetForwardSensorValue()) / kObsSampleWindow_ms;
+  const u16 latestDistance_mm = _robot.GetProxSensorComponent().GetLatestDistance_mm();
+  f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_ms;
 
   
   // only trigger if sensor is changing faster than the robot speed, robot is

@@ -140,6 +140,8 @@ structure RangeData {      //raw values from sensor
   uint_16 rangeMM,
   uint_16 signalRate,      //fixed point 9.7
   uint_16 ambientRate,     //fixed point 9.7
+  uint_16 spadCount,       //fixed point 8.8
+  uint_16 spare2,
   uint_32 calibrationResult,
 }
 

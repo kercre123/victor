@@ -11,7 +11,6 @@
 #include "engine/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/utilities.h"
 
 #include "util/logging/logging.h"
@@ -224,10 +223,10 @@ namespace Anki {
         }
       }
     
-      if(state.GetPose().GetParent() != nullptr && !state.GetPose().GetParent()->IsOrigin()) {
+      if(state.GetPose().HasParent() && !state.GetPose().GetParent().IsRoot()) {
         PRINT_NAMED_ERROR("RobotStateHistory.AddRawOdomState.NonFlattenedPose",
                           "Pose object inside pose stamp should be flattened (%s)",
-                          state.GetPose().GetNamedPathToOrigin(false).c_str());
+                          state.GetPose().GetNamedPathToRoot(false).c_str());
         return RESULT_FAIL;
       }
       
@@ -247,10 +246,10 @@ namespace Anki {
     Result RobotStateHistory::AddVisionOnlyState(const TimeStamp_t t,
                                                 const HistRobotState& state)
     {
-      if(state.GetPose().GetParent() != nullptr && !state.GetPose().GetParent()->IsOrigin()) {
+      if(state.GetPose().HasParent() && !state.GetPose().GetParent().IsRoot()) {
         PRINT_NAMED_ERROR("RobotStateHistory.AddVisionOnlyState.NonFlattenedPose",
                           "Pose object inside pose stamp should be flattened (%s)",
-                          state.GetPose().GetNamedPathToOrigin(false).c_str());
+                          state.GetPose().GetNamedPathToRoot(false).c_str());
         return RESULT_FAIL;
       }
 
@@ -410,8 +409,8 @@ namespace Anki {
           PRINT_NAMED_INFO("RobotStateHistory.GetRawStateAt.MisMatchedOrigins",
                             "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
                            t_request,
-                           prev_it->second.GetPose().FindOrigin().GetName().c_str(),
-                           it->second.GetPose().FindOrigin().GetName().c_str());
+                           prev_it->second.GetPose().FindRoot().GetName().c_str(),
+                           it->second.GetPose().FindRoot().GetName().c_str());
           
           // they asked us for a t_request that is between two origins. We can't interpolate or decide which origin is
           // "right" for you, so, we are going to fail
@@ -536,7 +535,7 @@ namespace Anki {
         // Special case: no intermediate frames to chain through. The total transformation
         // is just going from p0 to p1.
         Pose3d p1_wrt_p0_parent;
-        const bool inSameOrigin = state1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), pTransform);
+        const bool inSameOrigin = state1.GetPose().GetWithRespectTo(p0_it->second.GetPose().GetParent(), pTransform);
         DEV_ASSERT(inSameOrigin, "RobotStateHistory.ComputeStateAt.FailedGetWRT1");
         pTransform *= p0_it->second.GetPose().GetInverse();
       }
@@ -558,15 +557,15 @@ namespace Anki {
             // to have the same frame ID and origin.
             --pMid1; // (temporarily) move back to last pose in same frame as pMid0
             DEV_ASSERT(pMid0->second.GetFrameId() == pMid1->second.GetFrameId(),
-                         "RobotStateHistory.ComputeStateAt.MismatchedIntermediateFrameIDs");
-            DEV_ASSERT(&pMid0->second.GetPose().FindOrigin() == &pMid1->second.GetPose().FindOrigin(),
-                         "RobotStateHistory.ComputeStateAt.MismatchedIntermediateOrigins");
+                       "RobotStateHistory.ComputeStateAt.MismatchedIntermediateFrameIDs");
+            DEV_ASSERT(pMid0->second.GetPose().HasSameRootAs(pMid1->second.GetPose()),
+                       "RobotStateHistory.ComputeStateAt.MismatchedIntermediateOrigins");
 
             // Get pMid0 and pMid1 w.r.t. the same parent and store in the intermediate
             // transformation pMidTransform, which is going to hold the transformation
             // from pMid0 to pMid1
             Pose3d pMidTransform;
-            const bool inSameOrigin = pMid1->second.GetPose().GetWithRespectTo(*pMid0->second.GetPose().GetParent(), pMidTransform);
+            const bool inSameOrigin = pMid1->second.GetPose().GetWithRespectTo(pMid0->second.GetPose().GetParent(), pMidTransform);
             DEV_ASSERT(inSameOrigin, "RobotStateHistory.ComputeStateAt.FailedGetWRT2");
             
             // pMidTransform = pMid1 * pMid0^(-1)

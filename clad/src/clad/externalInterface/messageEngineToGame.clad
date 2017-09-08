@@ -64,7 +64,6 @@ message UiDeviceAvailable {
 }
 
 message RobotConnectionResponse {
-    uint_32 robotID,
     RobotConnectionResult result,
     uint_32 fwVersion,
     uint_32 serialNumber,
@@ -73,7 +72,6 @@ message RobotConnectionResponse {
 }
 
 message RobotDisconnected {
-    uint_32 robotID,
     float_32 timeSinceLastMsg_sec
 }
 
@@ -145,7 +143,6 @@ structure CameraConfig {
 
 // All settings that are static and unique for a given robot
 message PerRobotSettings {
-  uint_32 robotID,
   uint_32 serialNumberHead,
   uint_32 serialNumberBody,
   uint_32 modelNumber,
@@ -175,23 +172,19 @@ message RobotState {
     int_32   localizedToObjectID,   // Will be -1 if not localized to any object
     uint_32  lastImageTimeStamp,    // Last image processed by the vision system
     uint_32  status,                // See RobotStatusFlag in robotStatusAndActions.clad
-    uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
-    uint_8   robotID
+    uint_8   gameStatus             // See GameStatusFlag in cozmoTypes.h
 }
 
 message RobotDelocalized {
-    uint_8   robotID
 }
 
 message RobotPoked {
-    uint_8   robotID
 }
 
 message RobotStopped {
 }
 
 message RobotOffTreadsStateChanged {
-    uint_8   robotID,
     OffTreadsState treadsState
 }
 
@@ -260,7 +253,6 @@ message RobotProcessedImage {
 //  with specified ID/Type/Family was seen at a particular location in the image
 //  and the world
 message RobotObservedObject {
-    uint_32       robotID,
     uint_32       timestamp,
     ObjectFamily  objectFamily,
     ObjectType    objectType,
@@ -280,7 +272,6 @@ message RobotObservedPossibleObject {
 // RobotObservedFace
 message RobotObservedFace {
     int_32        faceID,         // negative: tracked but not recognized; positive: recognized face
-    uint_32       robotID,
     uint_32       timestamp,
     PoseStruct3d  pose,
     CladRect      img_rect,       // position in image coords
@@ -351,8 +342,7 @@ message RobotObservedLaserPoint {
 
 // RobotDeletedFace - sent when an _observed_ face has been deleted (e.g. if not seen for too long)
 message RobotDeletedFace {
-    int_32  faceID,
-    uint_32 robotID
+    int_32  faceID
 }
 
 // RobotDeletedLocatedObject: This message is broadcasted when we delete an object from the current origin. It's intended
@@ -360,40 +350,33 @@ message RobotDeletedFace {
 // Note the robot might be able to "bring back" a location for the object by relocalizing to a previously known
 // object.
 message RobotDeletedLocatedObject {
-    uint_32 robotID,
     uint_32 objectID
 }
 
 // RobotDeletedAllCustomObjects
 message RobotDeletedAllCustomObjects {
-    uint_32 robotID
 }
 
 // RobotDeletedFixedCustomObjects
 message RobotDeletedFixedCustomObjects {
-    uint_32 robotID
 }
 
 // RobotDeletedCustomMarkerObjects
 message RobotDeletedCustomMarkerObjects {
-    uint_32 robotID
 }
 
 // CreatedFixedCustomObject
 message CreatedFixedCustomObject {
-    uint_32 robotID,
     uint_32 objectID
 }
 
 // DefinedCustomObject
 message DefinedCustomObject {
-    uint_32 robotID,
     bool success     // false if the last custom object definition failed (e.g. due to duplicate marker already in use)
 }
 
 // RobotMarkedObjectPoseUnknown
 message RobotMarkedObjectPoseUnknown {
-    uint_32 robotID,
     uint_32 objectID
 }
 
@@ -470,7 +453,6 @@ message RobotCompletedFactoryDotTest {
 // RobotCompletedAction
 // TODO: Add action type, more informative result codes...
 message RobotCompletedAction {
-    uint_32 robotID,
     uint_32 idTag,                          // The identifier of the specific action that completed
     RobotActionType  actionType,            // see actionTypes.clad
     ActionResult  result,                   //  "
@@ -516,7 +498,6 @@ message AnimationEvent {
 ///////////////////////////////////////////////////////////////////////////////
 
 message MoodState {
-  uint_8  robotID,
   float_32 emotionValues[uint_8]
 }
 
@@ -531,7 +512,8 @@ message NeedsState {
   int_32        curNeedsUnlockLevel,
   int_32        numStarsAwarded,
   int_32        numStarsForNextUnlock,
-  NeedsActionId actionCausingTheUpdate
+  NeedsActionId actionCausingTheUpdate,
+  string        unconnectedDecayTestVariation,
 }
 
 message NeedsPauseState {
@@ -558,6 +540,11 @@ message StarUnlocked {
   int_32      unlockLevel,
   int_32      maxStarsForLevel,
   int_32      currentStars,
+}
+
+message StarStatus {
+  int_32      timeToNextDay_s,
+  bool        completedToday,
 }
 
 message WantsNeedsOnboarding {
@@ -736,7 +723,6 @@ message NVStorageOpResult {
 ///////////////////////////////////////////////////////////////////////////////
 
 message FirmwareUpdateProgress {
-  uint_32 robotID,
   FirmwareUpdateStage stage,
   FirmwareUpdateSubStage subStage,
   string  fwSig,
@@ -744,7 +730,6 @@ message FirmwareUpdateProgress {
 }
 
 message FirmwareUpdateComplete {
-  uint_32 robotID,
   FirmwareUpdateResult  result,
   string  fwSig
 }
@@ -919,7 +904,12 @@ message ClearNotificationCache {
 
 message CacheNotificationToSchedule {
   int_32 secondsInFuture,
-  string textKey
+  string textKey,
+  bool   persist,
+}
+
+message NotificationTextKeys {
+  string textKeys[uint_16],
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -71,7 +71,7 @@ def run(args):
 
   animGroupArray = getAllAnimGroups(animGroupPath)
 
-  animationTriggerMapFilename = projectRoot + "/lib/anki/products-cozmo-assets/animationGroupMaps/AnimationTriggerMap.json"
+  animationTriggerMapFilename = projectRoot + "/resources/assets/animationGroupMaps/AnimationTriggerMap.json"
 
   animationTriggerCladFilename = projectRoot + "/clad/src/clad/types/animationTrigger.clad"
 

@@ -345,6 +345,7 @@ namespace Anki {
         printf("           Cancel current action:  Alt+q\n");
         printf("         Update controller gains:  k\n");
         printf("        Request cliff sensor log:  c\n");
+        printf("         Request prox sensor log:  Shift+d\n");
         printf("                 Request IMU log:  o\n");
         printf("           Toggle face detection:  f\n");
         printf(" Assign userName to current face:  Shift+f\n");
@@ -904,9 +905,8 @@ namespace Anki {
                   ExternalInterface::ForceDelocalizeRobot delocMsg;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
                 } else if(shiftKeyPressed) {
-                  
-                  // FREE KEY COMBO!!!
-                  
+                  // Shift+D = Log raw prox data
+                  SendLogProxDataRequest(2000);
                 } else if(altKeyPressed) {
 
                   // FREE KEY COMBO!!!
@@ -1754,7 +1754,6 @@ namespace Anki {
                   
                 } else if(shiftKeyPressed) {
                   ExternalInterface::TurnTowardsObject msg;
-                  msg.robotID = 1;
                   msg.objectID = std::numeric_limits<u32>::max(); // HACK to tell game to use blockworld's "selected" object
                   msg.panTolerance_rad = DEG_TO_RAD(5);
                   msg.maxTurnAngle_rad = DEG_TO_RAD(90);
@@ -2289,7 +2288,6 @@ namespace Anki {
                     ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
                     turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
                     turnTowardsPose.maxTurnAngle_rad = M_PI;
-                    turnTowardsPose.robotID = 1;
                     turnTowardsPose.sayName = true;
                     SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
                   }
@@ -2299,7 +2297,6 @@ namespace Anki {
                     turnTowardsFace.faceID = faceID;
                     turnTowardsFace.panTolerance_rad = DEG_TO_RAD(10);
                     turnTowardsFace.maxTurnAngle_rad = M_PI;
-                    turnTowardsFace.robotID = 1;
                     SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsFace)));
                   }
                     

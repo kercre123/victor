@@ -23,7 +23,25 @@ else
 	LOCAL_LDLIBS += -llog 
 endif
 
-all: test
+#android arm build toolchain
+ANDROID_NDK_ROOT:=~/.anki/android/ndk-repository/android-ndk-r15b
+
+ANDROID_ARM_TOOLS_ROOT:=../../generated/android/tools/arm
+ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
+# Compilation Tools
+ARMCC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc
+ARMCPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++
+ARMAR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
+
+
+
+$(ANDROID_ARM_TOOLS_ROOT):
+	$(ANDROID_NDK_ROOT)/build/tools/make_standalone_toolchain.py --arch arm --install-dir $(ANDROID_ARM_TOOLS_ROOT) --api 24
+
+lcd_test:  $(ANDROID_ARM_TOOLS_ROOT) lcd_test.c
+	$(ARMCC) -pie -llog lcd_test.c -o lcd_test
+
+
 
 app: 
 	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) *.cpp

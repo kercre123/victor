@@ -44,7 +44,7 @@ namespace Cozmo {
     // object families, types, and IDs to decide whether to continue.
     // An object cannot be in an ignore list and either the allowed list must be
     // empty or the object must be in it in order to pass.
-    bool ConsiderOrigin(const PoseOrigin* objectOrigin, const PoseOrigin* robotOrigin) const;
+    bool ConsiderOrigin(PoseOriginID_t objectOriginID, PoseOriginID_t robotOriginID) const;
     bool ConsiderFamily(ObjectFamily family) const;
     bool ConsiderType(ObjectType type) const;
     bool ConsiderObject(const ObservableObject* object) const; // Checks ID and runs FilterFcn(object)
@@ -53,27 +53,27 @@ namespace Cozmo {
     void SetIgnoreIDs(std::set<ObjectID>&& IDs);
     void SetIgnoreTypes(std::set<ObjectType>&& types);
     void SetIgnoreFamilies(std::set<ObjectFamily>&& families);
-    void SetIgnoreOrigins(std::set<const PoseOrigin*>&& origins);
+    void SetIgnoreOrigins(std::set<PoseOriginID_t>&& originIDs);
     
     // Add to the existing set of IDs, types, or families
     void AddIgnoreID(const ObjectID& ID);
     void AddIgnoreIDs(const std::set<ObjectID>& IDs);
     void AddIgnoreType(ObjectType type);
     void AddIgnoreFamily(ObjectFamily family);
-    void AddIgnoreOrigin(const PoseOrigin* origin);
+    void AddIgnoreOrigin(PoseOriginID_t originID);
     
     // Set the entire set of IDs, types, or families to be allowed in one go.
     void SetAllowedIDs(std::set<ObjectID>&& IDs);
     void SetAllowedTypes(std::set<ObjectType>&& types);
     void SetAllowedFamilies(std::set<ObjectFamily>&& families);
-    void SetAllowedOrigins(std::set<const PoseOrigin*>&& origins);
+    void SetAllowedOrigins(std::set<PoseOriginID_t>&& originIDs);
     
     // Add to the existing set of IDs, types, or families
     void AddAllowedID(const ObjectID& ID);
     void AddAllowedIDs(const std::set<ObjectID>& IDs);
     void AddAllowedType(ObjectType type);
     void AddAllowedFamily(ObjectFamily family);
-    void AddAllowedOrigin(const PoseOrigin* origin);
+    void AddAllowedOrigin(PoseOriginID_t originID);
     
     // Set the filtering function used at the object level
     // NOTE: Default filter requires object to have poseState != Unknown
@@ -104,7 +104,7 @@ namespace Cozmo {
     std::set<ObjectID>             _ignoreIDs,      _allowedIDs;
     std::set<ObjectType>           _ignoreTypes,    _allowedTypes;
     std::set<ObjectFamily>         _ignoreFamilies, _allowedFamilies;
-    std::set<const PoseOrigin*>    _ignoreOrigins,  _allowedOrigins;
+    std::set<PoseOriginID_t>       _ignoreOrigins,  _allowedOrigins;
     
     std::list<FilterFcn>    _filterFcns;
     
@@ -119,7 +119,7 @@ namespace Cozmo {
   
 # pragma mark - Inlined Implementations
   
-  inline void BlockWorldFilter::SetIgnoreOrigins(std::set<const PoseOrigin*>&& origins) {
+  inline void BlockWorldFilter::SetIgnoreOrigins(std::set<PoseOriginID_t>&& origins) {
     _ignoreOrigins = origins;
   }
   
@@ -147,7 +147,7 @@ namespace Cozmo {
     _allowedFamilies = families;
   }
   
-  inline void BlockWorldFilter::SetAllowedOrigins(std::set<const PoseOrigin*>&& origins) {
+  inline void BlockWorldFilter::SetAllowedOrigins(std::set<PoseOriginID_t>&& origins) {
     _allowedOrigins = origins;
   }
   
@@ -200,16 +200,16 @@ namespace Cozmo {
     _allowedFamilies.insert(family);
   }
   
-  inline void BlockWorldFilter::AddAllowedOrigin(const PoseOrigin* origin) {
-    assert(_ignoreOrigins.count(origin) == 0); // Should not be in both lists
+  inline void BlockWorldFilter::AddAllowedOrigin(PoseOriginID_t originID) {
+    assert(_ignoreOrigins.count(originID) == 0); // Should not be in both lists
     SetOriginMode(OriginMode::Custom);
-    _allowedOrigins.insert(origin);
+    _allowedOrigins.insert(originID);
   }
   
-  inline void BlockWorldFilter::AddIgnoreOrigin(const PoseOrigin* origin) {
-    assert(_allowedOrigins.count(origin) == 0); // Should not be in both lists
+  inline void BlockWorldFilter::AddIgnoreOrigin(PoseOriginID_t originID) {
+    assert(_allowedOrigins.count(originID) == 0); // Should not be in both lists
     SetOriginMode(OriginMode::Custom);
-    _ignoreOrigins.insert(origin);
+    _ignoreOrigins.insert(originID);
   }
 
   template<class T>
@@ -221,7 +221,7 @@ namespace Cozmo {
     return consider;
   }
   
-  inline bool BlockWorldFilter::ConsiderOrigin(const PoseOrigin* objectOrigin, const PoseOrigin* robotOrigin) const
+  inline bool BlockWorldFilter::ConsiderOrigin(PoseOriginID_t objectOrigin, PoseOriginID_t robotOrigin) const
   {
     switch(_originMode)
     {

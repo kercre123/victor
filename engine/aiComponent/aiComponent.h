@@ -32,6 +32,7 @@ class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
 class RequestGameComponent;
 class Robot;
+class SevereNeedsComponent;
 class WorkoutComponent;
   
 class AIComponent : private Util::noncopyable
@@ -81,6 +82,10 @@ public:
 
   inline FreeplayDataTracker& GetFreeplayDataTracker()  { assert(_freeplayDataTracker); return *_freeplayDataTracker; }  
   
+  inline const SevereNeedsComponent& GetSevereNeedsComponent() const  { assert(_severeNeedsComponent); return *_severeNeedsComponent; }
+  inline SevereNeedsComponent& GetSevereNeedsComponent()  { assert(_severeNeedsComponent); return *_severeNeedsComponent; }
+  inline SevereNeedsComponent& GetNonConstSevereNeedsComponent() const { assert(_severeNeedsComponent); return *_severeNeedsComponent; }
+
   
   ////////////////////////////////////////////////////////////////////////////////
   // Update and init
@@ -137,7 +142,10 @@ private:
   std::unique_ptr<DoATrickSelector>    _doATrickSelector;
 
   // component for tracking freeplay DAS data
-  std::unique_ptr<FreeplayDataTracker> _freeplayDataTracker;  
+  std::unique_ptr<FreeplayDataTracker> _freeplayDataTracker;
+  
+  // component for tracking severe needs states
+  std::unique_ptr<SevereNeedsComponent> _severeNeedsComponent;
 
 };
 

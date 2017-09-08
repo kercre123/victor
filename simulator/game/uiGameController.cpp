@@ -65,8 +65,7 @@ namespace Anki {
     {
       if(!_poseOriginList.ContainsOriginID( poseStruct.originID ))
       {
-        PoseOrigin* newOrigin = new PoseOrigin();
-        _poseOriginList.AddOriginWithID(poseStruct.originID, newOrigin);
+        _poseOriginList.AddOriginWithID(poseStruct.originID);
       }
       
       Pose3d pose = Pose3d(poseStruct, _poseOriginList);
@@ -141,7 +140,7 @@ namespace Anki {
     
     void UiGameController::HandleRobotDeletedLocatedObjectBase(ExternalInterface::RobotDeletedLocatedObject const& msg)
     {
-      PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot %d reported deleting object %d", msg.robotID, msg.objectID);
+      PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot reported deleting object %d", msg.objectID);
       
       _objectIDToPoseMap.erase(msg.objectID);
       _objectIDToFamilyTypeMap.erase(msg.objectID);
@@ -216,8 +215,8 @@ namespace Anki {
         case RobotActionType::PICKUP_OBJECT_LOW:
         {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
-          printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                 msg.robotID, ActionResultToString(msg.result),
+          printf("Robot %s picking up stack of %d objects with IDs: ",
+                 ActionResultToString(msg.result),
                  info.numObjects);
           for(int i=0; i<info.numObjects; ++i) {
             printf("%d ", info.objectIDs[i]);
@@ -230,8 +229,8 @@ namespace Anki {
         case RobotActionType::PLACE_OBJECT_LOW:
         {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
-          printf("Robot %d %s placing stack of %d objects with IDs: ",
-                 msg.robotID, ActionResultToString(msg.result),
+          printf("Robot %s placing stack of %d objects with IDs: ",
+                 ActionResultToString(msg.result),
                  info.numObjects);
           for(int i=0; i<info.numObjects; ++i) {
             printf("%d ", info.objectIDs[i]);
@@ -243,15 +242,15 @@ namespace Anki {
         case RobotActionType::PLAY_ANIMATION:
         {
           const AnimationCompleted info = msg.completionInfo.Get_animationCompleted();
-          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d finished playing animation %s. [Tag=%d]",
-                 msg.robotID, info.animationName.c_str(), msg.idTag);
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot finished playing animation %s. [Tag=%d]",
+                 info.animationName.c_str(), msg.idTag);
         }
           break;
           
         default:
         {
-          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d completed %s action with tag=%d: %s.",
-                 msg.robotID, EnumToString(msg.actionType), msg.idTag, ActionResultToString(msg.result));
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot completed %s action with tag=%d: %s.",
+                 EnumToString(msg.actionType), msg.idTag, ActionResultToString(msg.result));
         }
       }
       
@@ -470,7 +469,8 @@ namespace Anki {
     
   
     UiGameController::UiGameController(s32 step_time_ms)
-    : _firstRobotPoseUpdate( true )
+    : _webotsOrigin("WebotsOrigin")
+    , _firstRobotPoseUpdate( true )
     , _doAutoBlockPool(true)
     , _isBlockPoolInitialized(false)
     {
@@ -481,6 +481,7 @@ namespace Anki {
       _robotPose.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
       _robotPoseActual.SetRotation(0, Z_AXIS_3D());
+      _robotPoseActual.SetParent(_webotsOrigin);
       
       _lastObservedObject.Reset();
     }
@@ -710,7 +711,6 @@ namespace Anki {
       if(doForceAddRobot) {
         ExternalInterface::ConnectToRobot msg;
         msg.isSimulated = forcedRobotIsSim;
-        msg.robotID = forcedRobotId;
         std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
         std::string ipStr = forcedRobotIP;
         std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
@@ -1001,7 +1001,7 @@ namespace Anki {
       m.idTag = ++_queueActionIdTag;
       m.position = queueActionPosition;
       m.numRetries = 1;
-      m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( angle_rad, speed_radPerSec, accel_radPerSec2, tol_rad, isAbsolute, 1 ));
+      m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( angle_rad, speed_radPerSec, accel_radPerSec2, tol_rad, isAbsolute ));
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(m);
       SendMessage(message);
@@ -1022,7 +1022,6 @@ namespace Anki {
     void UiGameController::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
       ExternalInterface::TurnInPlaceAtSpeed m;
-      m.robotID = 1;
       m.speed_rad_per_sec = speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
       ExternalInterface::MessageGameToEngine message;
@@ -1213,7 +1212,6 @@ namespace Anki {
     void UiGameController::SendTrackToObject(const u32 objectID, bool headOnly)
     {
       ExternalInterface::TrackToObject m;
-      m.robotID = 1;
       m.objectID = objectID;
       m.headOnly = headOnly;
       
@@ -1225,7 +1223,6 @@ namespace Anki {
     void UiGameController::SendTrackToFace(const u32 faceID, bool headOnly)
     {
       ExternalInterface::TrackToFace m;
-      m.robotID = 1;
       m.faceID = faceID;
       m.headOnly = headOnly;
       
@@ -1594,6 +1591,15 @@ namespace Anki {
       message.Set_LogRawCliffData(m);
       SendMessage(message);
     }
+    
+    void UiGameController::SendLogProxDataRequest(const u32 length_ms)
+    {
+      ExternalInterface::LogRawProxData m;
+      m.length_ms = length_ms;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_LogRawProxData(m);
+      SendMessage(message);
+    }
 
     void UiGameController::SendAnimation(const char* animName, u32 numLoops, bool throttleMessages)
     {
@@ -1605,7 +1611,6 @@ namespace Anki {
         PRINT_NAMED_INFO("SendAnimation", "sending %s", animName);
         ExternalInterface::PlayAnimation m;
         //m.animationID = animId;
-        m.robotID = 1;
         m.animationName = animName;
         m.numLoops = numLoops;
         ExternalInterface::MessageGameToEngine message;
@@ -1624,7 +1629,7 @@ namespace Anki {
       if(!throttleMessages || _supervisor.getTime() > lastSendTime_sec + 0.5f)
       {
         PRINT_NAMED_INFO("SendAnimationGroup", "sending %s", animName);
-        ExternalInterface::PlayAnimationTrigger m(1,1,AnimationTriggerFromString(animName),false,false,false,false);
+        ExternalInterface::PlayAnimationTrigger m(1,AnimationTriggerFromString(animName),false,false,false,false);
         ExternalInterface::MessageGameToEngine message;
         message.Set_PlayAnimationTrigger(m);
         SendMessage(message);
@@ -1678,7 +1683,7 @@ namespace Anki {
       ExternalInterface::QueueSingleAction msg;
       msg.idTag = ++_queueActionIdTag;
       msg.position = pos;
-      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(1, numLoops, animName));
+      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(numLoops, animName, false, false, false));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);
@@ -2066,9 +2071,9 @@ namespace Anki {
         Pose3d newEnginePose = newPose;
         Pose3d cpyRobotPose = _robotPoseActual;
         
-        enginePose.SetParent(&origin);
-        newEnginePose.SetParent(&origin);
-        cpyRobotPose.SetParent(&origin);
+        enginePose.SetParent(origin);
+        newEnginePose.SetParent(origin);
+        cpyRobotPose.SetParent(origin);
         
         if (enginePose.GetWithRespectTo(cpyRobotPose, newEnginePose)) {
           SetNodePose(_robotEngineNode, newPose*newEnginePose);
@@ -2163,6 +2168,8 @@ namespace Anki {
         static_cast<f32>(orientationActual[8])
       } );
 
+      pose.SetParent(_webotsOrigin);
+      
       return pose;
     }
 

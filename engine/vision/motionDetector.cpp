@@ -21,7 +21,7 @@
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/imageCache.h"
 
-#include "engine/visionPoseData.h"
+#include "engine/vision/visionPoseData.h"
 #include "engine/viz/vizManager.h"
 
 #include "util/console/consoleInterface.h"
@@ -254,7 +254,9 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
       foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
       
       // Zero out everything in the ratio image that's not inside the ground plane quad
-      imgQuad -= boundingRect.GetTopLeft();
+      // casting is explicit
+      imgQuad -= boundingRect.GetTopLeft().CastTo<float>();
+      
       Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
                          groundPlaneForegroundMotion.GetNumCols());
       mask.FillWith(0);
@@ -286,7 +288,8 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
                                      (1.f - kMotionDetection_GroundCentroidPercentileX));
       
       // Move back to image coordinates from ROI coordinates
-      groundPlaneCentroid += boundingRect.GetTopLeft();
+      // casting is explicit
+      groundPlaneCentroid += boundingRect.GetTopLeft().CastTo<float>();
       
       /* Experimental: Try computing moments in an overhead warped view of the ratio image
        groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);

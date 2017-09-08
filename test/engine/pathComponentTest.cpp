@@ -83,7 +83,7 @@ TEST_F(PathComponentTest, BasicPlan)
   EXPECT_STATUS_EQ(_pathComponent->GetDriveToPoseStatus(), ERobotDriveToPoseStatus::Ready)
     << "status should start out as READY";
 
-  Pose3d goal( 0, Z_AXIS_3D(), Vec3f(200,0,0), &(_robot->GetPose()) );
+  Pose3d goal( 0, Z_AXIS_3D(), Vec3f(200,0,0), _robot->GetPose() );
 
   _pathComponent->StartDrivingToPose( { goal } );
 
@@ -155,7 +155,7 @@ TEST_F(PathComponentTest, AbortPlanBug)
   EXPECT_STATUS_EQ(_pathComponent->GetDriveToPoseStatus(), ERobotDriveToPoseStatus::Ready)
     << "status should start out as READY";
 
-  Pose3d goal( 0, Z_AXIS_3D(), Vec3f(200,0,0), &(_robot->GetPose()) );
+  Pose3d goal( 0, Z_AXIS_3D(), Vec3f(200,0,0), _robot->GetPose() );
 
   _pathComponent->StartDrivingToPose( { goal } );
 
@@ -244,7 +244,7 @@ TEST_F(PathComponentTest, AbortPlanComplex)
   EXPECT_STATUS_EQ(_pathComponent->GetDriveToPoseStatus(), ERobotDriveToPoseStatus::Ready)
     << "status should start out as READY";
 
-  Pose3d goal( 0, Z_AXIS_3D(), Vec3f(200,0,0), &(_robot->GetPose()) );
+  Pose3d goal( 0, Z_AXIS_3D(), Vec3f(200,0,0), _robot->GetPose() );
 
   _pathComponent->StartDrivingToPose( { goal } );
 
@@ -286,7 +286,7 @@ TEST_F(PathComponentTest, AbortPlanComplex)
     << "path should have been aborted (test bug)";
 
   // now start a new path
-  Pose3d goal2( 0, Z_AXIS_3D(), Vec3f(0,200,0), &(_robot->GetPose()) );
+  Pose3d goal2( 0, Z_AXIS_3D(), Vec3f(0,200,0), _robot->GetPose() );
   _pathComponent->StartDrivingToPose( { goal2 } );
 
   EXPECT_STATUS_EQ(_pathComponent->GetDriveToPoseStatus(), ERobotDriveToPoseStatus::ComputingPath);

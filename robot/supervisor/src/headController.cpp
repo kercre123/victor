@@ -335,7 +335,7 @@ namespace HeadController {
       // Check if already at desired angle
       if (inPosition_ &&
           (angle == desiredAngle_) &&
-          (ABS((desiredAngle_ - currentAngle_).ToFloat()) < HEAD_ANGLE_TOL) ) {
+          (fabsf((desiredAngle_ - currentAngle_).ToFloat()) < HEAD_ANGLE_TOL) ) {
         #if(DEBUG_HEAD_CONTROLLER)
         AnkiDebug( 7, "HeadController", 93, "Already at desired angle %f degrees", 1, RAD_TO_DEG_F32(angle));
         #endif

@@ -205,16 +205,21 @@ namespace Anki {
         FileUtil.DeleteFileOrDirectory(assetFolder);
         Directory.CreateDirectory(assetFolder);
 
+        //
         // Copy engine resources
-        // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
-        // the 'animationGroupMaps', and 'behaviors' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
+        //
+        // The 'animations' and 'animationGroups' directories come from 
+        //   ../../EXTERNALS/cozmo-assets (SVN) 
+        // while the 'animationGroupMaps' and 'behaviors' directories come from 
+        //   '../../resources/assets/' (Git)
+        //
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", assetFolder + "/assets");
         FileUtil.DeleteFileOrDirectory(assetFolder + "/assets/.svn");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/assets/animationGroupMaps",
                                                    assetFolder + "/assets/animationGroupMaps");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/cubeAnimationGroupMaps",
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/assets/cubeAnimationGroupMaps",
                                                    assetFolder + "/assets/cubeAnimationGroupMaps");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/assets/RewardedActions",
                                                    assetFolder + "/assets/RewardedActions");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
 

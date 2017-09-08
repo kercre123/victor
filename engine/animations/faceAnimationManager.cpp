@@ -366,7 +366,7 @@ namespace Cozmo {
       } else {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                           "Requested frame number %d is invalid. "
-                          "Only %lu frames available in animatino %s.",
+                          "Only %lu frames available in animation %s.",
                           frameNum, (unsigned long)animIter->second.GetNumFrames(),
                           animName.c_str());
         return nullptr;
@@ -453,8 +453,8 @@ namespace Cozmo {
         }
       }
 
-      // Will next column use column encoding
-      bool column = !packed[x] || (x < IMAGE_WIDTH && packed[x] == packed[x-1]);
+      // Will next column use column encoding?
+      const bool column = (x < IMAGE_WIDTH) && (!packed[x] || packed[x] == packed[x-1]);
 
       if (!pattern && column) {
         continue ;

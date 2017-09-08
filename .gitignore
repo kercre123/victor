@@ -239,9 +239,9 @@ TAGS
 .subtreeconfig
 
 #symlinks
-resources/config/basestation/firmware
-resources/config/basestation/old_firmware
-resources/config/basestation/firmware_*
+resources/config/engine/firmware
+resources/config/engine/old_firmware
+resources/config/engine/firmware_*
 
 # Misc
 *.bak
@@ -346,9 +346,9 @@ generated/cladCsharp/clad
 JLinkLog.txt
 *.lst
 robot/cube/lst/block.m51
-resources/config/basestation/AnkiLogStringTables.json
+resources/config/engine/AnkiLogStringTables.json
 coretech/generated
-lib/anki/products-cozmo-assets/voiceCommand/exports/base/
+resources/assets/voiceCommand/exports/base/
 unity/Cozmo/Assets/Resources/ThemeSystem/ThemesScriptableObj.asset
 unity/metaReport*.txt
 
@@ -371,5 +371,6 @@ unity/Cozmo/Assets/StreamingAssets/Scratch/LocalizedStrings.meta
 unity/Cozmo/Assets/StreamingAssets/Scratch/fonts
 unity/Cozmo/Assets/StreamingAssets/Scratch/fonts.meta
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/closure-library
+unity/Cozmo/Assets/StreamingAssets/Scratch/lib/closure-library.meta
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map.meta

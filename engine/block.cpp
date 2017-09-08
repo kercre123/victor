@@ -14,7 +14,6 @@
 #include "engine/robot.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -79,32 +78,33 @@ namespace Cozmo {
     
     // The poses here are based on the Marker's canonical pose being in the
     // X-Z plane
+    // NOTE: these poses intentionally have no parent. That is handled by AddMarker below.
     switch(whichFace)
     {
       case FRONT_FACE:
-        facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-halfDepth, 0.f, 0.f},  nullptr);
+        facePose = Pose3d(-M_PI_2_F, Z_AXIS_3D(), {-halfDepth, 0.f, 0.f});
         break;
         
       case LEFT_FACE:
-        facePose = Pose3d(M_PI,    Z_AXIS_3D(), {0.f, halfWidth, 0.f},   nullptr);
+        facePose = Pose3d(M_PI,    Z_AXIS_3D(), {0.f, halfWidth, 0.f});
         break;
         
       case BACK_FACE:
-        facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {halfDepth, 0.f, 0.f},   nullptr);
+        facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {halfDepth, 0.f, 0.f});
         break;
         
       case RIGHT_FACE:
-        facePose = Pose3d(0,       Z_AXIS_3D(), {0.f, -halfWidth, 0.f},  nullptr);
+        facePose = Pose3d(0,       Z_AXIS_3D(), {0.f, -halfWidth, 0.f});
         break;
         
       case TOP_FACE:
         // Rotate -90deg around X, then -90 around Z
-        facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, halfHeight},  nullptr);
+        facePose = Pose3d(2.09439510f, {-0.57735027f, 0.57735027f, -0.57735027f}, {0.f, 0.f, halfHeight});
         break;
         
       case BOTTOM_FACE:
         // Rotate +90deg around X, then -90 around Z
-        facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -halfHeight}, nullptr);
+        facePose = Pose3d(2.09439510f, {0.57735027f, -0.57735027f, -0.57735027f}, {0.f, 0.f, -halfHeight});
         break;
         
       default:
@@ -149,7 +149,7 @@ namespace Cozmo {
               Pose3d preDockPose(M_PI_2 + kBlockPreDockPoseOffset.GetAngle().ToFloat(),
                                  Z_AXIS_3D(),
                                  {kBlockPreDockPoseOffset.GetX() , -kBlockPreDockPoseOffset.GetY(), -halfHeight},
-                                 &marker.GetPose());
+                                 marker.GetPose());
               
               preDockPose.RotateBy(Rvec);
               
@@ -170,7 +170,7 @@ namespace Cozmo {
               Pose3d preDockPose(M_PI_2 + M_PI_4 + kBlockPreDockPoseOffset.GetAngle().ToFloat(),
                                  Z_AXIS_3D(),
                                  {flipPreActionPoseDist + halfWidth, -flipPreActionPoseDist, -halfHeight},
-                                 &marker.GetPose());
+                                 marker.GetPose());
               
               preDockPose.RotateBy(Rvec);
               
@@ -191,7 +191,7 @@ namespace Cozmo {
             Pose3d prePlaceOnGroundPose(M_PI_2,
                                         Z_AXIS_3D(),
                                         Point3f{0.f, -DefaultPrePlaceOnGroundDistance, -halfHeight},
-                                        &marker.GetPose());
+                                        marker.GetPose());
             
             prePlaceOnGroundPose.RotateBy(Rvec);
             
@@ -208,7 +208,7 @@ namespace Cozmo {
             Pose3d prePlaceRelativePose(M_PI_2,
                                         Z_AXIS_3D(),
                                         Point3f{0.f, -PLACE_RELATIVE_MIN_PREDOCK_POSE_DISTANCE_MM, -halfHeight},
-                                        &marker.GetPose());
+                                        marker.GetPose());
             
             prePlaceRelativePose.RotateBy(Rvec);
             
@@ -225,7 +225,7 @@ namespace Cozmo {
               Pose3d preDockPose(M_PI_2 + kBlockPreDockPoseOffset.GetAngle().ToFloat(),
                                  Z_AXIS_3D(),
                                  {kBlockPreDockPoseOffset.GetX() , -kBlockPreDockPoseOffset.GetY(), -halfHeight},
-                                 &marker.GetPose());
+                                 marker.GetPose());
               
               preDockPose.RotateBy(Rvec);
               
@@ -310,7 +310,7 @@ namespace Cozmo {
   {
     const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
     
-    const Pose3d atPoseWrtOrigin = atPose.GetWithRespectToOrigin();
+    const Pose3d atPoseWrtOrigin = atPose.GetWithRespectToRoot();
     const Rotation3d& R = atPoseWrtOrigin.GetRotation();
 
     Point3f paddedSize(_size);
@@ -473,7 +473,7 @@ namespace Cozmo {
     //for(FaceName whichFace = FIRST_FACE; whichFace < NUM_FACES; ++whichFace) {
     for(auto marker = _markers.begin(); marker != _markers.end(); ++marker) {
       //const Vision::KnownMarker& marker = _markers[whichFace];
-      Pose3d poseWrtOrigin = marker->GetPose().GetWithRespectToOrigin();
+      Pose3d poseWrtOrigin = marker->GetPose().GetWithRespectToRoot();
       const f32 currentDotProd = DotProduct(marker->ComputeNormal(poseWrtOrigin), Z_AXIS_3D());
       if(currentDotProd > maxDotProd) {
         //topFace = whichFace;
@@ -499,7 +499,7 @@ namespace Cozmo {
   
   void Block::Visualize(const ColorRGBA& color) const
   {
-    Pose3d vizPose = GetPose().GetWithRespectToOrigin();
+    Pose3d vizPose = GetPose().GetWithRespectToRoot();
     _vizHandle = _vizManager->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
   }
   

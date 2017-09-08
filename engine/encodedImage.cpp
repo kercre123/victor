@@ -12,6 +12,7 @@
 #include "engine/encodedImage.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/common/basestation/array2d_impl.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -92,13 +93,13 @@ namespace Cozmo {
     // If image ID has changed, then start over.
     if (chunk.imageId != _imgID)
     {
-      _imgID           = chunk.imageId;
+      _imgID = chunk.imageId;
       
-      if(chunk.resolution != ImageResolution::QVGA &&
-         chunk.resolution != ImageResolution::NHD)
+      if(chunk.resolution != DEFAULT_IMAGE_RESOLUTION)
       {
         PRINT_NAMED_WARNING("EncodedImage.AddChunk.BadResolution",
-                            "Expecting QVGA resolution, got %s",
+                            "Expecting %s resolution, got %s",
+                            EnumToString(DEFAULT_IMAGE_RESOLUTION),
                             EnumToString(chunk.resolution));
         return false;
       }

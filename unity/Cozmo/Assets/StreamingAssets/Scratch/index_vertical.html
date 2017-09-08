@@ -27,6 +27,7 @@
         <script src="./lib/blocks/blocks_vertical/event.js"></script>
         <script src="./lib/blocks/blocks_vertical/operators.js"></script>
         <script src="./lib/blocks/blocks_vertical/cozmo.js"></script>
+        <script src="./lib/blocks/blocks_vertical/sound.js"></script>
         <script src="./lib/blocks/blocks_vertical/sensing.js"></script>
         -->
         <!-- BOTTOM UNCOMPRESSED FILES -->
@@ -49,7 +50,7 @@
 
         <!-- CSS Styles -->
         <link rel="stylesheet" href="./css/normalize.css">
-        <link rel="stylesheet" href="./css/common.css">
+        <link rel="stylesheet" href="./css/common_vertical.css">
 	</head>
 
 	<body>
@@ -97,7 +98,7 @@
                       </shadow>
                   </value>
                   <value name="OFFSET_ANGLE">
-                      <shadow type="math_number">
+                      <shadow type="math_angle">
                           <field name="NUM">0.0</field>
                       </shadow>
                   </value>
@@ -115,7 +116,7 @@
                       </shadow>
                   </value>
                   <value name="NEW_ANGLE">
-                      <shadow type="math_number">
+                      <shadow type="math_angle">
                           <field name="NUM">0.0</field>
                       </shadow>
                   </value>
@@ -123,7 +124,7 @@
               
               <block type="cozmo_vert_turn">
                   <value name="ANGLE">
-                      <shadow type="math_number">
+                      <shadow type="math_angle">
                           <field name="NUM">90</field>
                       </shadow>
                   </value>
@@ -197,11 +198,140 @@
             </category>
             <category name="Animations" colour="#a03c87" secondaryColour="0">
               <block type="cozmo_play_animation_from_dropdown"></block>
+              <!--Begin temporary dev-only blocks prototyping-->
+              <block type="cozmo_play_animation_by_name">
+                <value name="ANIM_NAME">
+                    <shadow type="text">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+              </block>
+              <block type="cozmo_play_animation_by_triggername">
+                <value name="TRIGGER_NAME">
+                    <shadow type="text">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+              </block>
+              <!--End temporary dev-only blocks prototyping-->
+              <block type="cozmo_sound_play" id="sound_play">
+                <value name="SOUND_MENU">
+                  <shadow type="cozmo_sound_sounds_menu"></shadow>
+                </value>
+              </block>
             </category>
             
+            <category name="Events" colour="#f4b606" secondaryColour="0">
+              <block type="event_whenflagclicked"></block>
+              <block type="cozmo_event_on_face"></block>
+              <block type="cozmo_event_on_happy_face"></block>
+              <block type="cozmo_event_on_sad_face"></block>
+              <block type="cozmo_event_on_see_cube"></block>
+              <block type="cozmo_event_on_cube_tap"></block>
+              <block type="cozmo_event_on_cube_moved"></block>
+
+              <block type="event_whengreaterthan">
+                <value name="VALUE">
+                  <shadow type="math_number">
+                    <field name="NUM">10</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="event_whenbroadcastreceived">
+              </block>
+              <block type="event_broadcast">
+                <value name="BROADCAST_OPTION">
+                  <shadow type="event_broadcast_menu"></shadow>
+                </value>
+              </block>
+              <block type="event_broadcastandwait">
+                <value name="BROADCAST_OPTION">
+                  <shadow type="event_broadcast_menu"></shadow>
+                </value>
+              </block>            
+            </category>
+
+            <category name="Control" colour="#e5580a" secondaryColour="0">
+              <block type="control_forever"></block>
+              <block type="control_if"></block>
+              <block type="control_if_else"></block>
+              <block type="control_wait" id="control_wait">
+                  <value name="DURATION">
+                      <shadow type="math_positive_number">
+                          <field name="NUM">1</field>
+                      </shadow>
+                  </value>
+              </block>
+              <block type="control_wait_until"></block>
+              <block type="control_repeat">
+                  <value name="TIMES">
+                      <shadow type="math_whole_number_with_validator">
+                          <field name="NUM">4</field>
+                      </shadow>
+                  </value>
+              </block>
+              <block type="control_repeat_until"></block>
+              <block type="control_stop"></block>
+            </category>
+            
+            <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
+              <!-- Cozmo -->
+              <block type="cozmo_vert_get_position_3d"></block>
+              <block type="cozmo_vert_get_pitch"></block>
+              <block type="cozmo_vert_get_roll"></block>
+              <block type="cozmo_vert_get_yaw"></block>
+              <block type="cozmo_vert_get_lift_height"></block>
+              <block type="cozmo_vert_get_head_angle"></block>
+              <!-- Faces -->
+              <block type="cozmo_vert_face_get_is_visible"></block>
+              <block type="cozmo_vert_face_get_name"></block>
+              <block type="cozmo_vert_face_get_position_2d"></block>
+              <block type="cozmo_vert_face_get_position_3d"></block>
+              <block type="cozmo_vert_face_get_expression"></block>
+              <!-- Cubes -->
+              <block type="cozmo_vert_cube_get_is_visible"></block>
+              <block type="cozmo_vert_cube_get_position_2d"></block>
+              <block type="cozmo_vert_cube_get_position_3d"></block>
+              <block type="cozmo_vert_cube_get_pitch"></block>
+              <block type="cozmo_vert_cube_get_roll"></block>
+              <block type="cozmo_vert_cube_get_yaw"></block>
+              <!-- Device -->
+              <block type="cozmo_vert_device_get_pitch"></block>
+              <block type="cozmo_vert_device_get_roll"></block>
+              <block type="cozmo_vert_device_get_yaw"></block>
+              <!--Other-->
+              <block type="sensing_current" id="sensing_current">
+                <value name="CURRENTMENU">
+                  <shadow type="sensing_currentmenu"></shadow>
+                </value>
+              </block>
+            </category>
+
             <category name="Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_clear"></block>
-                <block type="cozmo_vert_cozmoface_display"></block>                
+                <block type="cozmo_vert_cozmoface_display"></block>
+                <block type="cozmo_vert_cozmoface_draw_text">
+                  <value name="TEXT">
+                      <shadow type="text">
+                          <field name="TEXT">text</field>
+                      </shadow>
+                  </value>
+                  <value name="X1">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="Y1">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="SCALE">
+                      <shadow type="math_positive_number">
+                          <field name="NUM">1.0</field>
+                      </shadow>
+                  </value>
+                </block>                
                 <block type="cozmo_vert_cozmoface_draw_line">
                   <value name="X1">
                       <shadow type="math_number">
@@ -303,115 +433,6 @@
                       </shadow>
                   </value>
                 </block>
-                <block type="cozmo_vert_cozmoface_draw_text">
-                  <value name="TEXT">
-                      <shadow type="text">
-                          <field name="TEXT">text</field>
-                      </shadow>
-                  </value>
-                  <value name="X1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="Y1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="SCALE">
-                      <shadow type="math_positive_number">
-                          <field name="NUM">1.0</field>
-                      </shadow>
-                  </value>
-                </block>
-                
-            </category>
-
-            <category name="Events" colour="#f4b606" secondaryColour="0">
-              <block type="event_whenflagclicked"></block>
-              <block type="cozmo_event_on_face"></block>
-              <block type="cozmo_event_on_happy_face"></block>
-              <block type="cozmo_event_on_sad_face"></block>
-              <block type="cozmo_event_on_see_cube"></block>
-              <block type="cozmo_event_on_cube_tap"></block>
-              <block type="cozmo_event_on_cube_moved"></block>
-
-              <block type="event_whengreaterthan">
-                <value name="VALUE">
-                  <shadow type="math_number">
-                    <field name="NUM">10</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="event_whenbroadcastreceived">
-              </block>
-              <block type="event_broadcast">
-                <value name="BROADCAST_OPTION">
-                  <shadow type="event_broadcast_menu"></shadow>
-                </value>
-              </block>
-              <block type="event_broadcastandwait">
-                <value name="BROADCAST_OPTION">
-                  <shadow type="event_broadcast_menu"></shadow>
-                </value>
-              </block>            
-            </category>
-
-            <category name="Control" colour="#e5580a" secondaryColour="0">
-              <block type="control_forever"></block>
-              <block type="control_if"></block>
-              <block type="control_if_else"></block>
-              <block type="control_wait" id="control_wait">
-                  <value name="DURATION">
-                      <shadow type="math_positive_number">
-                          <field name="NUM">1</field>
-                      </shadow>
-                  </value>
-              </block>
-              <block type="control_wait_until"></block>
-              <block type="control_repeat">
-                  <value name="TIMES">
-                      <shadow type="math_whole_number_with_validator">
-                          <field name="NUM">4</field>
-                      </shadow>
-                  </value>
-              </block>
-              <block type="control_repeat_until"></block>
-              <block type="control_stop"></block>
-            </category>
-            
-            <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
-              <!-- Cozmo -->
-              <block type="cozmo_vert_get_position_3d"></block>
-              <block type="cozmo_vert_get_pitch"></block>
-              <block type="cozmo_vert_get_roll"></block>
-              <block type="cozmo_vert_get_yaw"></block>
-              <block type="cozmo_vert_get_lift_height"></block>
-              <block type="cozmo_vert_get_head_angle"></block>
-              <!-- Faces -->
-              <block type="cozmo_vert_face_get_is_visible"></block>
-              <block type="cozmo_vert_face_get_name"></block>
-              <block type="cozmo_vert_face_get_position_2d"></block>
-              <block type="cozmo_vert_face_get_position_3d"></block>
-              <block type="cozmo_vert_face_get_expression"></block>
-              <!-- Cubes -->
-              <block type="cozmo_vert_cube_get_is_visible"></block>
-              <block type="cozmo_vert_cube_get_position_2d"></block>
-              <block type="cozmo_vert_cube_get_position_3d"></block>
-              <block type="cozmo_vert_cube_get_pitch"></block>
-              <block type="cozmo_vert_cube_get_roll"></block>
-              <block type="cozmo_vert_cube_get_yaw"></block>
-              <!-- Device -->
-              <block type="cozmo_vert_device_get_pitch"></block>
-              <block type="cozmo_vert_device_get_roll"></block>
-              <block type="cozmo_vert_device_get_yaw"></block>
-              <!--Other-->
-              <block type="sensing_current" id="sensing_current">
-                <value name="CURRENTMENU">
-                  <shadow type="sensing_currentmenu"></shadow>
-                </value>
-              </block>
             </category>
 
             <category name="Operators" colour="#40BF4A" secondaryColour="0">
@@ -578,65 +599,6 @@
             
             <category name="Data" colour="#FF8C1A" secondaryColour="0" custom="VARIABLE">
             </category>
-
-            <category name="Lists" colour="#cc6699" secondaryColour="0">
-              <block type="data_listcontents"></block>
-              <block type="data_addtolist">
-                <value name="ITEM">
-                  <shadow type="text">
-                    <field name="TEXT">thing</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="data_deleteoflist">
-                <value name="INDEX">
-                  <shadow type="data_listindexall">
-                    <field name="INDEX">1</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="data_insertatlist">
-                <value name="INDEX">
-                  <shadow type="data_listindexrandom">
-                    <field name="INDEX">1</field>
-                  </shadow>
-                </value>
-                <value name="ITEM">
-                  <shadow type="text">
-                    <field name="TEXT">thing</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="data_replaceitemoflist">
-                <value name="INDEX">
-                  <shadow type="data_listindexrandom">
-                    <field name="INDEX">1</field>
-                  </shadow>
-                </value>
-                <value name="ITEM">
-                  <shadow type="text">
-                    <field name="TEXT">thing</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="data_itemoflist">
-                <value name="INDEX">
-                  <shadow type="data_listindexrandom">
-                    <field name="INDEX">1</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="data_lengthoflist"></block>
-              <block type="data_listcontainsitem">
-                <value name="ITEM">
-                  <shadow type="text">
-                    <field name="TEXT">thing</field>
-                  </shadow>
-                </value>
-              </block>
-              <block type="data_showlist"></block>
-              <block type="data_hidelist"></block>
-            </category>
         </xml>
 
         <!-- Blocks -->
@@ -654,6 +616,16 @@
             <div class="primary">
                 <span id="app-title"></span><br>
                 <span id="app-title-subtext"></span>
+            </div>
+        </div>
+
+        <!-- Undo/Redo -->
+        <div id="undoRedo">
+            <div class="undo">
+                <button id="undo" />
+            </div>
+            <div class="redo">
+                <button id="redo" />
             </div>
         </div>
 

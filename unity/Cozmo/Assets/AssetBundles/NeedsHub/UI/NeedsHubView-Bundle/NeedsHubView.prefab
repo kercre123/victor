@@ -341,6 +341,7 @@ GameObject:
   - component: {fileID: 114566856538031404}
   - component: {fileID: 222148595325300954}
   - component: {fileID: 114390532411497734}
+  - component: {fileID: 114275443705605884}
   m_Layer: 5
   m_Name: StarBar
   m_TagString: Untagged
@@ -407,6 +408,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224685039714158826}
   - component: {fileID: 114407009027686870}
+  - component: {fileID: 114958022272908036}
   m_Layer: 5
   m_Name: PlayButton
   m_TagString: Untagged
@@ -599,24 +601,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &1531180775656922
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 5
-  m_Component:
-  - component: {fileID: 224010541272035546}
-  - component: {fileID: 222371022136128536}
-  - component: {fileID: 114081320141102452}
-  - component: {fileID: 114581230522602540}
-  m_Layer: 5
-  m_Name: TestStarAddButton
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
 --- !u!1 &1534327956049676
 GameObject:
   m_ObjectHideFlags: 0
@@ -1044,6 +1028,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224952305956987926}
   - component: {fileID: 114261238547696976}
+  - component: {fileID: 114133681923803878}
   m_Layer: 5
   m_Name: FeedButton
   m_TagString: Untagged
@@ -1255,33 +1240,6 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 1
---- !u!114 &114081320141102452
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1531180775656922}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
 --- !u!114 &114084850859748042
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1494,6 +1452,26 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114133681923803878
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1992120268362962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37d045e3f24514816ad449c1dc89a6f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HeaderLocKeys:
+  - tooltip.needsbutton.energy.header
+  _BodyLocKeys:
+  - tooltip.needsbutton.energy.repaircritical
+  _HitArea: {fileID: 1992120268362962}
+  _PreferredDir: 3
+  _ToolTipEnabled: 0
+  _ShowBodyIndex: 0
+  _ShowHeaderIndex: 0
 --- !u!114 &114227092655652644
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1842,6 +1820,27 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114275443705605884
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1271737826841820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4652f0e19d71b416899cd351cb86384e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HeaderLocKeys:
+  - tooltip.bonusbar.header
+  _BodyLocKeys:
+  - tooltip.bonusbar.body.dayincomplete
+  - tooltip.bonusbar.body.daycomplete
+  _HitArea: {fileID: 1743943994046548}
+  _PreferredDir: 0
+  _ToolTipEnabled: 1
+  _ShowBodyIndex: 0
+  _ShowHeaderIndex: 0
 --- !u!114 &114316734217344020
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2837,7 +2836,6 @@ MonoBehaviour:
   _CrateDuration_sec: 1
   _RewardModalPrefab: {fileID: 114384868453747056, guid: 5f46ab2cc797f43498a5b4e4250bb425,
     type: 2}
-  _AddStarDebugButton: {fileID: 114581230522602540}
 --- !u!114 &114576719197559344
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2868,58 +2866,6 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
---- !u!114 &114581230522602540
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1531180775656922}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1392445389, guid: f70555f144d8491a825f0804e09c671c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Navigation:
-    m_Mode: 3
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 114081320141102452}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 114566856538031404}
-        m_MethodName: HackToTestStarWhileWatchingPlayWindow
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
-      Culture=neutral, PublicKeyToken=null
 --- !u!114 &114583169788534876
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3642,6 +3588,27 @@ MonoBehaviour:
   _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
+--- !u!114 &114958022272908036
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1369949814964782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37d045e3f24514816ad449c1dc89a6f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HeaderLocKeys:
+  - tooltip.needsbutton.play.header
+  _BodyLocKeys:
+  - tooltip.needsbutton.play.repaircritical
+  - tooltip.needsbutton.play.feedcritical
+  _HitArea: {fileID: 1369949814964782}
+  _PreferredDir: 3
+  _ToolTipEnabled: 0
+  _ShowBodyIndex: 0
+  _ShowHeaderIndex: 0
 --- !u!114 &114966243064350592
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3914,12 +3881,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1352684546206936}
---- !u!222 &222371022136128536
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1531180775656922}
 --- !u!222 &222383669223119880
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -4094,24 +4055,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1431329169657178}
---- !u!224 &224010541272035546
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1531180775656922}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 224761106986502990}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224015635361897042
 RectTransform:
   m_ObjectHideFlags: 1
@@ -4956,7 +4899,6 @@ RectTransform:
   - {fileID: 224900077748273808}
   - {fileID: 224282739073296420}
   - {fileID: 224112869421590676}
-  - {fileID: 224010541272035546}
   m_Father: {fileID: 224039583023915882}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -26,7 +26,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 
 namespace Anki {
   
@@ -470,20 +470,20 @@ namespace Anki {
     
     PlayNeedsGetOutAnimIfNeeded::~PlayNeedsGetOutAnimIfNeeded()
     {
-      auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
-      if(whiteboard.HasSevereNeedExpression() && !_hasClearedExpression){
-        whiteboard.ClearSevereNeedExpression();
+      auto& severeNeedsComponent = _robot.GetAIComponent().GetSevereNeedsComponent();
+      if(severeNeedsComponent.HasSevereNeedExpression() && !_hasClearedExpression){
+        severeNeedsComponent.ClearSevereNeedExpression();
       }
     }
 
     ActionResult PlayNeedsGetOutAnimIfNeeded::Init()
     {
-      const auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+      const auto& severeNeedsComponent = _robot.GetAIComponent().GetSevereNeedsComponent();
 
-      if( whiteboard.HasSevereNeedExpression() ) {
+      if( severeNeedsComponent.HasSevereNeedExpression() ) {
         AnimationTrigger animTrigger = AnimationTrigger::Count;        
 
-        switch( whiteboard.GetSevereNeedExpression() ) {
+        switch( severeNeedsComponent.GetSevereNeedExpression() ) {
           case NeedId::Repair: {
             animTrigger = AnimationTrigger::NeedsSevereLowRepairForceGetOut;
             break;
@@ -539,8 +539,8 @@ namespace Anki {
         if( !_hasClearedExpression && PlayAnimationAction::HasAnimStartedPlaying() ) {
           // even in the case of an interruption, we will jump to the last anim keyframe, so clear the
           // expression now
-          auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
-          whiteboard.ClearSevereNeedExpression();
+          auto& severeNeedsComponent = _robot.GetAIComponent().GetSevereNeedsComponent();
+          severeNeedsComponent.ClearSevereNeedExpression();
           _hasClearedExpression = true;
         }
           

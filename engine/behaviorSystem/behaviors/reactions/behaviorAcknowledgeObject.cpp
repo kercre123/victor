@@ -291,7 +291,7 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const ObservableObject* obj, float zOffset)
 {
-  Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
+  Pose3d ghostPose = obj->GetPose().GetWithRespectToRoot();
   ghostPose.SetTranslation({
     ghostPose.GetTranslation().x(),
     ghostPose.GetTranslation().y(),

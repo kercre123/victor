@@ -24,7 +24,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const Pose3d kExpectedCubePose = Pose3d(0, Z_AXIS_3D(), {309, 0, 22}, nullptr);
+static const Pose3d kExpectedCubePose = Pose3d(0, Z_AXIS_3D(), {309, 0, 22}, "");
 
 // Rotation ambiguities for observed blocks.
 // We only care that the block is upright.

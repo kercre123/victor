@@ -290,7 +290,7 @@ void BehaviorBuildPyramidBase::UpdateBlockPlacementOffsets(f32& xOffset, f32& yO
       Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
       Pose3d potentialPose(0, Z_AXIS_3D(),
                            {entry.first, entry.second, -blockSize.z()},
-                           &zRotatedPose);
+                           zRotatedPose);
       f32 newDistSquared;
       ComputeDistanceSQBetween(_robot.GetPose(), potentialPose, newDistSquared);
       
@@ -324,10 +324,10 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
   const Point3f rotatedSize = placingObject->GetSizeInParentFrame();
   
   const Pose3d zRotatedPose = object->GetZRotatedPointAboveObjectCenter(0.f);
-  const Pose3d placePose(0, Z_AXIS_3D(), {rotatedSize.x(), rotatedSize.y(), 0}, &zRotatedPose);
+  const Pose3d placePose(0, Z_AXIS_3D(), {rotatedSize.x(), rotatedSize.y(), 0}, zRotatedPose);
   
   ObservableObject* closestObject =
-    _robot.GetBlockWorld().FindLocatedObjectClosestTo(placePose.GetWithRespectToOrigin(), rotatedSize, filter);
+    _robot.GetBlockWorld().FindLocatedObjectClosestTo(placePose.GetWithRespectToRoot(), rotatedSize, filter);
   return (closestObject == nullptr);
 }
 

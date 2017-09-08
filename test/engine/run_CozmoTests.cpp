@@ -3,7 +3,6 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/robot/matlabInterface.h"
@@ -27,7 +26,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/robotToEngineImplMessaging.h"
-#include "engine/visionSystem.h"
+#include "engine/vision/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "gtest/gtest.h"
@@ -48,7 +47,7 @@ TEST(DataPlatform, ReadWrite)
   Json::Value config;
   const bool readSuccess = cozmoContext->GetDataPlatform()->readAsJson(
     Anki::Util::Data::Scope::Resources,
-    "config/basestation/config/configuration.json",
+    "config/engine/configuration.json",
     config);
   EXPECT_TRUE(readSuccess);
 
@@ -348,7 +347,7 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
   {
     stateMsg.timestamp = fakeTime;
     stateMsg.pose_frame_id = robot.GetPoseFrameID();
-    stateMsg.pose_origin_id = robot.GetPoseOriginList().GetOriginID(robot.GetWorldOrigin());
+    stateMsg.pose_origin_id = robot.GetPoseOriginList().GetCurrentOriginID();
     Result lastResult = robot.UpdateFullRobotState(stateMsg);
     if(RESULT_OK != lastResult)
     {
@@ -569,7 +568,7 @@ void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp
 {
   using namespace RobotInterface;
   RobotToEngine msg = RobotToEngine::CreateactiveObjectMoved(
-      ObjectMoved(timestamp, activeID, 1, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
+      ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive ) );
   AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(event, &robot);
 }
@@ -883,9 +882,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_EQ(RESULT_OK, lastResult);
   lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
-// Do not add object 3 so that we need to confirm it later
-//  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-//  ASSERT_EQ(RESULT_OK, lastResult);
+  // Do not add object 3 so that we need to confirm it later
+  //  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  //  ASSERT_EQ(RESULT_OK, lastResult);
   
   // Observe a face
   const Vision::FaceID_t faceID = 123;
@@ -908,9 +907,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   }
   
   fakeTime += 10;
-
+  
   // - - - Delocalize
-
+  
   const bool isCarryingObject = false;
   robot.Delocalize(isCarryingObject);
   ++fakeTime;
@@ -924,15 +923,15 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   
   // See all objects from close so they all have unconfirmed observations
   lastResult = ObserveMarkerHelper(1,
-    {{obj1Code, closeCorners}, {obj2Code, closeCorners}, {obj3Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   {{obj1Code, closeCorners}, {obj2Code, closeCorners}, {obj3Code, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // now see each cube separately
   
   // 1 will rejigger
   lastResult = ObserveMarkerHelper(1,{{obj1Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // Should have face again because we are back in its coordinate frame
@@ -952,12 +951,12 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   
   // Add 1 confirmation for 2 and 3
   lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
-
+  
   // still should have 1 and 2, but not 3
   obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
   ASSERT_NE(obj1Ptr, nullptr);
@@ -965,13 +964,13 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_NE(obj2Ptr, nullptr);
   obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
   ASSERT_EQ(obj3Ptr, nullptr);
-
+  
   // Add 1 confirmation for 2 and 3
   lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
-    fakeTime, robot, stateMsg, procResult);
+                                   fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // now 3 should be added (assumes we need 2 visual observations to confirm)
@@ -981,6 +980,188 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   ASSERT_NE(obj2Ptr, nullptr);
   obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
   ASSERT_NE(obj3Ptr, nullptr);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(BlockWorld, RejiggerAndFlatten)
+{
+  // See object 1 in origin A
+  // Delocalize, now in origin B
+  // See object 2 in origin B
+  // Delocalize, now in origin C
+  // Create pose w.r.t. C
+  // See object 2 again, now in origin B
+  // See object 1 again, now in origin A
+  // C should now be flattened w.r.t. A
+  // Receiving a state message referencing old origin C should not cause issues
+  
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindLocatedMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  {
+    // no connected objects either
+    std::vector<ActiveObject*> activeObjects;
+    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    ASSERT_TRUE(activeObjects.empty());
+  }
+  
+  // Fake a state message update for robot
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+  
+  // For faking observations of blocks
+  const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
+  const Block_Cube1x1 obj2Cube(ObjectType::Block_LIGHTCUBE2);
+
+  const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  // Connect to some cubes
+  
+  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ObjectType::Block_LIGHTCUBE1);
+  ASSERT_TRUE(connObj1.IsSet());
+  
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, 101, ObjectType::Block_LIGHTCUBE2);
+  ASSERT_TRUE(connObj2.IsSet());
+  
+  // - - - See all objects from close so that their poses are Known and we can localize to them
+  const Quad2f closeCorners{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  VisionProcessingResult procResult;
+  TimeStamp_t fakeTime = 10;
+  
+  const PoseOriginID_t originA = robot.GetWorldOriginID();
+  
+  ASSERT_EQ(1, robot.GetPoseOriginList().GetSize());
+  
+  // See object 1
+  const s32 kNumObservations = 5; // After seeing at least 2 times, should be Known
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should be localized to object 1, still in originA
+  ASSERT_EQ(connObj1, robot.GetLocalizedTo());
+  ASSERT_EQ(originA, robot.GetWorldOriginID());
+  
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
+  // Delocalize
+  const bool isCarryingObject = false;
+  robot.Delocalize(isCarryingObject);
+  ++fakeTime;
+  
+  const PoseOriginID_t originB = robot.GetWorldOriginID();
+  ASSERT_NE(originA, originB);
+  ASSERT_EQ(2, robot.GetPoseOriginList().GetSize());
+  ASSERT_NE(connObj1, robot.GetLocalizedTo());
+  
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
+  // See object 2
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should now be localized to object 2, still in origin B
+  ASSERT_EQ(connObj2, robot.GetLocalizedTo());
+  ASSERT_EQ(originB, robot.GetWorldOriginID());
+  
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
+  // Delocalize again
+  robot.Delocalize(isCarryingObject);
+  ++fakeTime;
+  
+  const PoseOriginID_t originC = robot.GetWorldOriginID();
+  ASSERT_NE(originA, originC);
+  ASSERT_NE(originB, originC);
+  ASSERT_NE(connObj2, robot.GetLocalizedTo());
+  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
+  
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
+  // Create some arbitrary pose in this origin
+  const Pose3d somePose(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 200.f, 300.f}, robot.GetWorldOrigin());
+  
+  // See object 2 again, should be back in originB
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  ASSERT_EQ(originB, robot.GetWorldOriginID());
+  ASSERT_EQ(connObj2, robot.GetLocalizedTo());
+  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
+  
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
+  // After rejigger, origin C should now have B as its parent
+  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originB)));
+  
+  // "Move" the robot so it will relocalize
+  lastResult = FakeRobotMovement(robot, stateMsg, fakeTime);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // See object 1 again, should be back in origin A
+  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  ASSERT_EQ(originA, robot.GetWorldOriginID());
+  ASSERT_EQ(connObj1, robot.GetLocalizedTo());
+  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
+  
+  // We should have flattened C to be w.r.t. A now. B will be rejiggered to be parented to A as well.
+  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
+  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originB).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
+  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
+  
+  // Our arbitrary pose should still have a valid parent
+  ASSERT_EQ(originC, somePose.GetParent().GetID());
+  ASSERT_EQ(originA, somePose.GetRootID());
+  
+  // Getting robot state will create a PoseStruct3d, which should work just fine, even after rejiggering/flattening
+  ASSERT_EQ(originA, robot.GetRobotState().pose.originID);
+  
+  // Receive state message with pose information referencing old origin C
+  stateMsg.pose_origin_id = originC;
+  stateMsg.timestamp = fakeTime;
+  
+  // Using that message should still be kosher
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  ASSERT_EQ(originA, robot.GetPose().GetRootID());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1252,14 +1433,14 @@ TEST(BlockWorld, CubeStacks)
     Vec3f trans1{100,0,0};
     Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
     Rotation3d rotX1 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
-    const Pose3d object1Pose(rotZ1 * rotX1, trans1, &robot.GetPose() );
+    const Pose3d object1Pose(rotZ1 * rotX1, trans1, robot.GetPose() );
     lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, lastResult);
 
     Vec3f trans2{100,0,0};
     Rotation3d rotZ2 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
     Rotation3d rotX2 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
-    const Pose3d object2Pose(rotZ2 * rotX2, trans2, &robot.GetPose() );
+    const Pose3d object2Pose(rotZ2 * rotX2, trans2, robot.GetPose() );
     lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, lastResult);
 
@@ -1279,7 +1460,7 @@ TEST(BlockWorld, CubeStacks)
     {
       for(auto & btmTrans : TestBottomTranslations)
       {
-        const Pose3d bottomPose(Rotation3d(btmRot1) * Rotation3d(btmRot2), btmTrans, &robot.GetPose() );
+        const Pose3d bottomPose(Rotation3d(btmRot1) * Rotation3d(btmRot2), btmTrans, robot.GetPose() );
         
         lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
         ASSERT_EQ(RESULT_OK, lastResult);
@@ -1290,7 +1471,7 @@ TEST(BlockWorld, CubeStacks)
           {
             for(auto & topTrans : TestTopTranslations)
             {
-              const Pose3d topPose(Rotation3d(topRot1) * Rotation3d(topRot2), topTrans, &robot.GetPose() );
+              const Pose3d topPose(Rotation3d(topRot1) * Rotation3d(topRot2), topTrans, robot.GetPose() );
               
               // For help debugging when there are failures:
               //bottomPose.Print("Unnamed", "Bottom");
@@ -1310,7 +1491,7 @@ TEST(BlockWorld, CubeStacks)
             
             for(auto & nextToTrans : TestNextToTranslations)
             {
-              const Pose3d nextToPose(Rotation3d(topRot1) * Rotation3d(topRot2), nextToTrans, &robot.GetPose());
+              const Pose3d nextToPose(Rotation3d(topRot1) * Rotation3d(topRot2), nextToTrans, robot.GetPose());
               
               lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, nextToPose, object1);
               ASSERT_EQ(RESULT_OK, lastResult);
@@ -1329,11 +1510,11 @@ TEST(BlockWorld, CubeStacks)
   
   
   // Put Object 2 above Object 1, but too high, so this Find should fail:
-  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, &robot.GetPose() );
+  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, robot.GetPose() );
   lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, &robot.GetPose());
+  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, robot.GetPose());
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, tooHighPose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
@@ -1356,7 +1537,7 @@ TEST(BlockWorld, CubeStacks)
   
   // Put Object 2 at the right height to be on top of Object 1,
   // but move it off to the side so that the quads don't intersect
-  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, &robot.GetPose());
+  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, robot.GetPose());
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
@@ -1412,11 +1593,11 @@ TEST(BlockWorld, UnobserveCubeStack)
   Vec3f testTopTranslation{175.f, 0.f,  66.f};
   
   Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
-  const Pose3d object1Pose(rotZ1, testBottomTranslation, &robot.GetPose() );
+  const Pose3d object1Pose(rotZ1, testBottomTranslation, robot.GetPose() );
   lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, lastResult);
 
-  const Pose3d object2Pose(rotZ1, testTopTranslation, &robot.GetPose() );
+  const Pose3d object2Pose(rotZ1, testTopTranslation, robot.GetPose() );
   lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, lastResult);
 
@@ -1874,7 +2055,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     }
     
     const RotationVector3d randRot = {rotation, dominantAxis};
-    return Pose3d(randRot, {0,0,0}, &pose);
+    return Pose3d(randRot, {0,0,0}, pose);
   };
   
   
@@ -1886,8 +2067,8 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   };
   
   auto getRandRotatedRestingFlatPose = [&getRandRotationRestingFlat, &getRandomZRotation](const Pose3d& pose){
-    const Pose3d partialRot(getRandRotationRestingFlat(), {0,0,0}, &pose);
-    Pose3d wrtOrigin = Pose3d(getRandomZRotation(partialRot), {0,0,0}, &partialRot).GetWithRespectToOrigin();
+    const Pose3d partialRot(getRandRotationRestingFlat(), {0,0,0}, pose);
+    Pose3d wrtOrigin = Pose3d(getRandomZRotation(partialRot), {0,0,0}, partialRot).GetWithRespectToRoot();
     return wrtOrigin;
   };
   
@@ -1923,7 +2104,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
   robot.UpdateFullRobotState(stateMsg);
   // for calling robot update
   std::list<Vision::ObservedMarker> emptyMarkersList;
-  const Pose3d robotPose = robot.GetPose().GetWithRespectToOrigin();
+  const Pose3d robotPose = robot.GetPose().GetWithRespectToRoot();
     //////////
   //// Create Blocks
   //////////
@@ -1981,7 +2162,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     const float ob1X = randGen.RandDblInRange(xMinGrid, xMaxGrid);
     const float ob1Y = randGen.RandDblInRange(yMinGrid, yMaxGrid);
     const float ob1Z = firstBlockOnGround ? object1->GetSize().z()/2 : object1->GetSize().z()*5;
-    ob1Pose = Pose3d(0, Z_AXIS_3D(), {ob1X, ob1Y, ob1Z}, &robotPose);
+    ob1Pose = Pose3d(0, Z_AXIS_3D(), {ob1X, ob1Y, ob1Z}, robotPose);
     
     
     static const float secondBlockNotInStackMultiplier = 10;
@@ -2011,7 +2192,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
       
       ob2Pose = Pose3d(0, Z_AXIS_3D(), {xOffsetOb2 + ob1Pose.GetTranslation().x(),
                                         yOffsetOb2 + ob1Pose.GetTranslation().y(),
-                                        zOffsetOb2 + ob1Pose.GetTranslation().z()}, &robotPose);
+                                        zOffsetOb2 + ob1Pose.GetTranslation().z()}, robotPose);
     }
     
     // set up third block pose
@@ -2035,9 +2216,9 @@ TEST(BlockWorldTest, BlockConfigurationManager)
 
         ob3Pose = Pose3d(0, Z_AXIS_3D(), {xOffsetOb3 + ob1Pose.GetTranslation().x(),
                                           yOffsetOb3 + ob1Pose.GetTranslation().y(),
-                                          zOffsetOb3 + ob1Pose.GetTranslation().z()}, &robotPose);
+                                          zOffsetOb3 + ob1Pose.GetTranslation().z()}, robotPose);
       }else{
-        ob3Pose = Pose3d(0, Z_AXIS_3D(), {xMaxGrid*2, yMaxGrid*2, 0}, &robotPose);
+        ob3Pose = Pose3d(0, Z_AXIS_3D(), {xMaxGrid*2, yMaxGrid*2, 0}, robotPose);
       }
     }
     
@@ -2078,28 +2259,28 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
                      useThirdBlock, thirdBlockInStack);
             
     fprintf(stdout, "Ob1 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().x(),
-            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().y(),
-            finalOb1Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG(finalOb1Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            finalOb1Pose.GetWithRespectToRoot().GetTranslation().x(),
+            finalOb1Pose.GetWithRespectToRoot().GetTranslation().y(),
+            finalOb1Pose.GetWithRespectToRoot().GetTranslation().z(),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb1Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob2 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().x(),
-            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().y(),
-            finalOb2Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG(finalOb2Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            finalOb2Pose.GetWithRespectToRoot().GetTranslation().x(),
+            finalOb2Pose.GetWithRespectToRoot().GetTranslation().y(),
+            finalOb2Pose.GetWithRespectToRoot().GetTranslation().z(),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb2Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     fprintf(stdout, "Ob3 x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().x(),
-            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().y(),
-            finalOb3Pose.GetWithRespectToOrigin().GetTranslation().z(),
-            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-            RAD_TO_DEG(finalOb3Pose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+            finalOb3Pose.GetWithRespectToRoot().GetTranslation().x(),
+            finalOb3Pose.GetWithRespectToRoot().GetTranslation().y(),
+            finalOb3Pose.GetWithRespectToRoot().GetTranslation().z(),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+            RAD_TO_DEG(finalOb3Pose.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
     
     ASSERT_EQ(stackShouldExist, stacks.ConfigurationCount() > 0);
     
@@ -2156,8 +2337,8 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
   
   for(int i = 0; i < pyramidTestRepetitionCount; i++){
     for(const float staticOrientation: orientationList){
-      Pose3d staticPose = Pose3d(getRandRotationRestingFlat(), {0,0, blockHeightCenter}, &robotPose);
-      Pose3d staticPoseFinal = rotateForWorldZ(staticPose, staticOrientation).GetWithRespectToOrigin();
+      Pose3d staticPose = Pose3d(getRandRotationRestingFlat(), {0,0, blockHeightCenter}, robotPose);
+      Pose3d staticPoseFinal = rotateForWorldZ(staticPose, staticOrientation).GetWithRespectToRoot();
       
       setPoseHelper(staticBlock,  staticPoseFinal);
       
@@ -2167,8 +2348,8 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
           const float yBaseOffset = baseOffset.second;
 
           const Pose3d basePose = Pose3d(getRandRotationRestingFlat(),
-                            {xBaseOffset, yBaseOffset, blockHeightCenter}, &robotPose);
-          Pose3d basePoseFinal = rotateForWorldZ(basePose, baseBlockOrientaiton).GetWithRespectToOrigin();
+                            {xBaseOffset, yBaseOffset, blockHeightCenter}, robotPose);
+          Pose3d basePoseFinal = rotateForWorldZ(basePose, baseBlockOrientaiton).GetWithRespectToRoot();
           setPoseHelper(baseBlock, basePoseFinal);
           
           // build the configuration cache
@@ -2177,20 +2358,20 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
           const auto& bases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache();
           
           fprintf(stdout, "staticBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
-                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
-                  staticPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  staticPoseFinal.GetWithRespectToRoot().GetTranslation().x(),
+                  staticPoseFinal.GetWithRespectToRoot().GetTranslation().y(),
+                  staticPoseFinal.GetWithRespectToRoot().GetTranslation().z(),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(staticPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           fprintf(stdout, "baseBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
-                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
-                  basePoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                  RAD_TO_DEG(basePoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                  basePoseFinal.GetWithRespectToRoot().GetTranslation().x(),
+                  basePoseFinal.GetWithRespectToRoot().GetTranslation().y(),
+                  basePoseFinal.GetWithRespectToRoot().GetTranslation().z(),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                  RAD_TO_DEG(basePoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
           
           ASSERT_TRUE(bases.ConfigurationCount() == 1);
           
@@ -2200,8 +2381,8 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             
             const Pose3d topPose = Pose3d(getRandRotationRestingFlat(),
                                           {xTopOffset, yTopOffset, blockHeightCenter + staticBlock->GetSize().z()},
-                                          &robotPose);
-            Pose3d topPoseFinal = rotateForWorldZ(topPose, topBlockOrientiation).GetWithRespectToOrigin();
+                                          robotPose);
+            Pose3d topPoseFinal = rotateForWorldZ(topPose, topBlockOrientiation).GetWithRespectToRoot();
             setPoseHelper(topBlock, topPoseFinal);
             
             // build a full pyramid, and then re-build the cache
@@ -2212,12 +2393,12 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             
             
             fprintf(stdout, "Top block pose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
-                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().x(),
-                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().y(),
-                    topPoseFinal.GetWithRespectToOrigin().GetTranslation().z(),
-                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundXaxis().ToFloat()),
-                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundYaxis().ToFloat()),
-                    RAD_TO_DEG(topPoseFinal.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToFloat()));
+                    topPoseFinal.GetWithRespectToRoot().GetTranslation().x(),
+                    topPoseFinal.GetWithRespectToRoot().GetTranslation().y(),
+                    topPoseFinal.GetWithRespectToRoot().GetTranslation().z(),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundXaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundYaxis().ToFloat()),
+                    RAD_TO_DEG(topPoseFinal.GetWithRespectToRoot().GetRotation().GetAngleAroundZaxis().ToFloat()));
 
             
             ASSERT_TRUE(pyramids.ConfigurationCount() == 1);
@@ -2227,7 +2408,7 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             ASSERT_TRUE(basesShouldBeEmpty.ConfigurationCount() == 0);
           }
           // re-set the top block's pose
-          Pose3d farOffPose(0, Z_AXIS_3D(), {0, 500, 500}, &robotPose);
+          Pose3d farOffPose(0, Z_AXIS_3D(), {0, 500, 500}, robotPose);
           setPoseHelper(topBlock, farOffPose);
 
         }
@@ -2423,9 +2604,9 @@ TEST(ActionableObject, PreActionPoseCaching)
   using namespace Cozmo;
 
   const Pose3d origin(Rotation3d(0, {0,0,1}), {0,0,0});
-  const Pose3d robotPose(Rotation3d(0, {0,0,1}), {0,0,0}, &origin);
-  const Pose3d cubePose1(Rotation3d(0, {0,0,1}), {10,10,0}, &origin);
-  const Pose3d cubePose2(Rotation3d(0, {0,0,1}), {20,20,0}, &origin);
+  const Pose3d robotPose(Rotation3d(0, {0,0,1}), {0,0,0}, origin);
+  const Pose3d cubePose1(Rotation3d(0, {0,0,1}), {10,10,0}, origin);
+  const Pose3d cubePose2(Rotation3d(0, {0,0,1}), {20,20,0}, origin);
 
   ActiveCube cube(ObjectType::Block_LIGHTCUBE1);
   cube.InitPose(cubePose1, PoseState::Known);
@@ -2645,7 +2826,7 @@ TEST(Localization, UnexpectedMovement)
   // different from the robot's world origin
   FakeUnexpectedMovement(stateMsg, robot, fakeTime);
   
-  ASSERT_EQ(robot.GetWorldOrigin(), &robot.GetPose().FindOrigin());
+  ASSERT_TRUE(robot.IsPoseInWorldOrigin(robot.GetPose()));
 }
 
 #define CONFIGROOT "ANKICONFIGROOT"

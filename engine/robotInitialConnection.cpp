@@ -303,8 +303,7 @@ void RobotInitialConnection::SendConnectionResponse(RobotConnectionResult result
   _notified = true;
   ClearSignalHandles();
 
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id,
-                                                                            result,
+  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{result,
                                                                             robotFwVersion,
                                                                             _serialNumber,
                                                                             _bodyHWVersion,

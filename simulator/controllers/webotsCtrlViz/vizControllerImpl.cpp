@@ -242,8 +242,9 @@ void VizControllerImpl::SetRobotPose(CozmoBotVizParams *p,
 void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_SetRobot();
-  // Find robot by ID
-  uint8_t robotID = (uint8_t)payload.robotID;
+  
+  const uint8_t robotID = 1; // only ID ever used is 1
+  
   std::map<u8, u8>::iterator it = robotIDToVizBotIdxMap_.find(robotID);
   if (it == robotIDToVizBotIdxMap_.end()) {
     if (robotIDToVizBotIdxMap_.size() < vizBots_.size()) {
@@ -252,12 +253,12 @@ void VizControllerImpl::ProcessVizSetRobotMessage(const AnkiEvent<VizInterface::
       robotIDToVizBotIdxMap_[robotID] = (uint8_t)robotIDToVizBotIdxMap_.size();
       it = robotIDToVizBotIdxMap_.end();
       it--;
-      printf("Registering vizBot for robot %d\n", robotID);
+      PRINT_NAMED_INFO("VizControllerImpl.ProcessVizSetRobotMessage.RegisteringRobot","Registering vizBot for robot %d\n", robotID);
     } else {
       // Print 'no more vizBots' message. Just once.
       static bool printedNoMoreVizBots = false;
       if (!printedNoMoreVizBots) {
-        PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizSetRobotMessage",
+        PRINT_NAMED_WARNING("VizControllerImpl.ProcessVizSetRobotMessage.NoMoreVizBots",
           "RobotID %d not registered. No more available Viz bots. Add more to world file!",
           robotID);
         printedNoMoreVizBots = true;
@@ -685,9 +686,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
           cliffDetected ? "CLIFF DETECTED" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Dist: %3u mm (%s)",
-          payload.state.distanceSensor_mm,
-          payload.state.distanceSensor_mm < FORWARD_RANGE_SENSOR_MAX_DISTANCE_MM ? "OBJ DETECTED" : "CLEAR");
+  const auto& proxData = payload.state.proxData;
+  sprintf(txt, "Dist: %4u mm, signalStrength: %7.2f (%s)",
+          proxData.distance_mm,
+          proxData.signalIntensity / proxData.spadCount,
+          proxData.distance_mm < FORWARD_RANGE_SENSOR_MAX_DISTANCE_MM ? "OBJ DETECTED" : "CLEAR");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DIST, Anki::NamedColors::GREEN, txt);
 
 #else

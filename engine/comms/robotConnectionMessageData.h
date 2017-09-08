@@ -14,6 +14,7 @@
 
 #include "util/transport/netTimeStamp.h"
 #include "util/transport/transportAddress.h"
+#include "util/math/numericCast.h"
 
 #include <vector>
 #include <cstdint>
@@ -62,6 +63,11 @@ public:
   RobotConnectionMessageType GetType() const { return _messageType; }
   // Allows access to the stored data for std::move purposes, so is non-const
   std::vector<uint8_t>& GetData() { return _rawMessageData; }
+
+  // Returns the size in bytes of the raw message data plus overhead
+  uint32_t GetMemorySize() const { return Util::numeric_cast<uint32_t>(
+      _rawMessageData.capacity() * sizeof(decltype(_rawMessageData)::value_type) + sizeof(*this) ); }
+  
   const Util::TransportAddress& GetAddress() const { return _address; }
 #if TRACK_INCOMING_PACKET_LATENCY
   Util::NetTimeStamp GetTimeReceived() const { return _timeReceived_ms; }

@@ -128,6 +128,12 @@ Blockly.Tooltip.DIV = null;
  * Create the tooltip div and inject it onto the page.
  */
 Blockly.Tooltip.createDom = function() {
+  // *** ANKI CHANGE***
+  if (window.isVertical) {
+    // Show no tooltips in vertical
+    return;
+  }
+
   if (Blockly.Tooltip.DIV) {
     return;  // Already created.
   }

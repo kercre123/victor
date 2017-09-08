@@ -711,7 +711,6 @@ static void UpdatePropTaps(uint8_t id, int shocks, uint8_t tapTime, int8_t tapNe
     m.timestamp = g_dataToHead.timestamp;
     m.numTaps = count;
     m.objectID = id;
-    m.robotID = 0;
     m.tapTime = tapTime;
     m.tapNeg = tapNeg;
     m.tapPos = tapPos;
@@ -839,7 +838,6 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
     ObjectMoved m;
     m.timestamp = g_dataToHead.timestamp;
     m.objectID = id;
-    m.robotID = 0;
     m.accel.x = -az;   // Flipped for the same reason idxToUpAxis is flipped
     m.accel.y = -ax;
     m.accel.z = ay;
@@ -860,7 +858,6 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
     ObjectStoppedMoving m;
     m.timestamp = g_dataToHead.timestamp;
     m.objectID = id;
-    m.robotID = 0;
     RobotInterface::SendMessage(m);
     target->isMoving = false;
   }

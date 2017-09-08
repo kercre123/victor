@@ -17,13 +17,15 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "engine/visionSystem.h"
+#include "engine/vision/visionSystem.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/imgproc.hpp"
 
 #include "util/console/consoleInterface.h"
 #include "util/helpers/cleanupHelper.h"
+
+#include <set>
 
 #define BLEACHER_CALIB_MARKER_SIZE_MM 15.f
 #define BLEACHER_CALIB_TARGET_FACE_SIZE_MM 20.f

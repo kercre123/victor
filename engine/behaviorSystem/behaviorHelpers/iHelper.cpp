@@ -59,7 +59,8 @@ IHelper::IHelper(const std::string& name,
                  Robot& robot,
                  IBehavior& behavior,
                  BehaviorHelperFactory& helperFactory)
-:_status(IBehavior::Status::Complete)
+: IBSRunnable(name)
+, _status(IBehavior::Status::Complete)
 , _name(name)
 , _hasStarted(false)
 , _onSuccessFunction(nullptr)

@@ -68,6 +68,7 @@ _TOPLEVEL=`$GIT rev-parse --show-toplevel`
 _SMARTLING_PULL_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-pull.sh
 _GENERATE_SDF_SCRIPT=${_TOPLEVEL}/tools/smartling/generateSDFfromTranslations.py
 _STRIP_SPECIAL_CHARACTERS=${_TOPLEVEL}/tools/smartling/smartling-strip-special-characters.py
+_CHECK_JSON_KEYS=${_TOPLEVEL}/tools/smartling/smartling-check-json-keys.py
 _UNITY_PROJECT_DIR=${_TOPLEVEL}/unity/Cozmo/
 _TRANSLATED_ASSETS_DIR=Assets/StreamingAssets/LocalizedStrings/ja-JP
 _ASSET_BUNDLES_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/AssetBundles
@@ -85,6 +86,11 @@ fi
 $PYTHON3 $_STRIP_SPECIAL_CHARACTERS --localized-strings-dir $_LOCALIZED_STRINGS_DIR || exit_status=$?
 if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem stripping zero width spaces. Check build log!" "danger" $exit_status
+fi
+
+output=$($PYTHON3 $_CHECK_JSON_KEYS --localized-strings-dir $_LOCALIZED_STRINGS_DIR) || exit_status=$?
+if [ $exit_status -ne 0 ]; then
+    send_slack_message "The following files had JSON key issues:\n${output}" "danger" $exit_status
 fi
 
 $PYTHON $_GENERATE_SDF_SCRIPT --project-dir $_UNITY_PROJECT_DIR --translated-json-asset-dir $_TRANSLATED_ASSETS_DIR \

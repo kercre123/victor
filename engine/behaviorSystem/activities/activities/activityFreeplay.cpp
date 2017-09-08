@@ -485,7 +485,7 @@ void ActivityFreeplay::CalculateDesiredActivityFromObjects()
   // check if we have discovered new faces since we delocalized (last face's origin should be current)
   Pose3d lastFacePose;
   const TimeStamp_t lastFaceSeenTimestamp = _robot.GetFaceWorld().GetLastObservedFace(lastFacePose);
-  const bool hasNewFace = (lastFaceSeenTimestamp>0) && ((&lastFacePose.FindOrigin()) == _robot.GetWorldOrigin());
+  const bool hasNewFace = (lastFaceSeenTimestamp>0) && _robot.IsPoseInWorldOrigin(lastFacePose);
 
   // check if we have discovered new cubes since we delocalized (any not unknown in current origin)
   BlockWorldFilter cubeFilter;
@@ -513,7 +513,7 @@ void ActivityFreeplay::CalculateDesiredActivityFromObjects()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
+IBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   // returned variable
   IBehaviorPtr chosenBehavior = nullptr;
@@ -583,7 +583,7 @@ IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IB
   {
     // pick behavior
     DEV_ASSERT(nullptr!=_currentActivityPtr, "ActivityFreeplay.CurrentActivityCantBeNull");
-    chosenBehavior = _currentActivityPtr->ChooseNextBehavior(robot, currentRunningBehavior);
+    chosenBehavior = _currentActivityPtr->GetDesiredActiveBehavior(robot, currentRunningBehavior);
     hasChosenBehavior = true;
 
     // if the picked behavior is not good, we want a new activity too
@@ -656,7 +656,7 @@ IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IB
       // we wanted to check if there was a better one, so do it now
       if ( _currentActivityPtr )
       {
-        chosenBehavior = _currentActivityPtr->ChooseNextBehavior(robot, currentRunningBehavior);
+        chosenBehavior = _currentActivityPtr->GetDesiredActiveBehavior(robot, currentRunningBehavior);
         
         // if the first behavior chosen is null/None, the activity conditions to start didn't handle the current situation.
         // The activity will be asked to leave next frame if it continues to pick null/None.

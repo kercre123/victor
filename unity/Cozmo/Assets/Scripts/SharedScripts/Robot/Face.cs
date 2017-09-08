@@ -13,8 +13,6 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
   public int ID { get; private set; }
 
-  public uint RobotID { get; private set; }
-
   public Vector3? VizWorldPosition { get { return WorldPosition; } }
 
   public Vector3 WorldPosition { get; private set; }
@@ -100,7 +98,6 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   }
 
   public void UpdateInfo(G2U.RobotObservedFace message) {
-    RobotID = message.robotID;
     ID = message.faceID;
 
     Name = message.name;

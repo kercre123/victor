@@ -32,16 +32,17 @@
         <div class="left_panel">
             <h1>Code Lab Dev Menu</h1>
 
+            <button id="toggleCameraFeed" onClick="toggleCameraFeed(this)"
+                    style="font-size: 14px">Enable Cozmo Camera Feed</button>
+            <p />
+
+            <img src="cozmoImage" id="cozmoImageId" onError="onUpdateImageError()"
+                 width=0, height=0>
+            <p />
+
             <button id="enableDevConnectionId" onClick="sendGameToGameMessage(this, 'EnableGameToGame', null)"
                     style="font-size: 14px">Enable Dev Connection</button>
             <p />
-
-            <button id="allowOnChargerId" onClick="sendGameToGameMessage(this, 'AllowOnCharger', null)"
-                    style="font-size: 14px">Allow On Charger</button>
-
-            <button id="quitOnChargerId" onClick="sendGameToGameMessage(this, 'QuitOnCharger', null)"
-                    style="font-size: 14px">Quit On Charger</button>
-            (Quit = Default)
 
             <h2>Upload to device cache:</h2>
             <button id="deleteCacheButtonId" onClick="postHttpRequest('DeleteCache', null)"
@@ -115,13 +116,17 @@
             xhr.send(dataSet);
         }
 
+        var _updateDebugInfoInterval = null;
         function updateDebugInfo()
         {
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == XMLHttpRequest.DONE) {
-                    if (xhr.responseText != "")
-                    {
+                    if (xhr.status != 200) {
+                        console.log("updateDebugInfo.BadStatus: '" + xhr.status + "' - cancelling update");
+                        clearInterval(_updateDebugInfoInterval);
+                        _updateDebugInfoInterval = null;
+                    } else if (xhr.responseText != "") {
                         var divElement = document.getElementById("DebugInfoId");
                         divElement.innerHTML += xhr.responseText;
                         divElement.scrollTop = divElement.scrollHeight;
@@ -132,7 +137,7 @@
             xhr.open("POST", "GetDebugInfo", true);
             xhr.send( null );
         }
-        setInterval(updateDebugInfo, 250); // repeat every X ms
+        _updateDebugInfoInterval = setInterval(updateDebugInfo, 250); // repeat every X ms
 
         function sendGameToGameMessage(button, method_name, textSrcId)
         {
@@ -141,6 +146,45 @@
                 param_text = document.getElementById(textSrcId).value;
             }
             postHttpRequest('CallGameToGame', {method_name, param_text})
+        }
+
+        var gCameraInterval = null;
+        function onUpdateImageError()
+        {
+            console.log("Error loading image - cancelling update");
+            if (gCameraInterval != null)
+            {
+                toggleCameraFeed(document.getElementById("toggleCameraFeed"))
+            }
+        }
+
+        function updateImage()
+        {
+            // Note: Firefox ignores the no_store and still caches, needs the "?UID" suffix to fool it
+            document.getElementById("cozmoImageId").src="cozmoImage?" + (new Date()).getTime();
+        }
+
+        function toggleCameraFeed(button)
+        {
+            if (gCameraInterval == null)
+            {
+                gCameraInterval = setInterval(updateImage , 90); // repeat every X ms
+                var enabled = true;
+                postHttpRequest("EnableCameraFeed", {enabled});
+                button.firstChild.data = "Disable Cozmo Camera Feed"
+                document.getElementById("cozmoImageId").width=480
+                document.getElementById("cozmoImageId").height=360
+            }
+            else
+            {
+                clearInterval(gCameraInterval);
+                gCameraInterval = null;
+                var enabled = false;
+                postHttpRequest("EnableCameraFeed", {enabled});
+                button.firstChild.data = "Enable Cozmo Camera Feed"
+                document.getElementById("cozmoImageId").width=0
+                document.getElementById("cozmoImageId").height=0
+            }
         }
 
     </script>

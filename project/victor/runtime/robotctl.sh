@@ -66,7 +66,7 @@ function start_program()
     export LD_LIBRARY_PATH="${LIB_PATH}"
 
     cd ${SCRIPT_PATH}
-    exec_background nice -n 20 ${BIN_PATH}/${PROGRAM_EXE}
+    exec_background nice -n -20 ${BIN_PATH}/${PROGRAM_EXE}
     echo $!
 }
 

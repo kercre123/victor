@@ -15,6 +15,8 @@ public class ImageReceiver : IDisposable {
 
   private Texture2D _ReceivedImage;
 
+  private ImageEncoding _CurrentEncoding;
+
   public Texture2D Image { get { return _ReceivedImage; } }
 
   public readonly string Name;
@@ -80,6 +82,15 @@ public class ImageReceiver : IDisposable {
     if (imageChunk.chunkId == 0) {
       _MemStream.Seek(0, SeekOrigin.Begin);
       _MemStream.SetLength(0);
+      _CurrentEncoding = imageChunk.imageEncoding;
+
+      // If the encoding is MiniGray then first byte of the image is whether or not the image is in color
+      // (The encoding is hard coded deep within firmware code and can't easily be changed so this is a workaround)
+      // If it is in color then update the current encoding so we do the right kind of decode once we 
+      // receive the last chunk below.
+      if (imageChunk.data[0] != 0 && _CurrentEncoding == ImageEncoding.JPEGMinimizedGray) {
+        _CurrentEncoding = ImageEncoding.JPEGMinimizedColor;
+      }
     }
 
     var dims = ImageResolutionTable.GetDimensions(imageChunk.resolution);
@@ -96,7 +107,7 @@ public class ImageReceiver : IDisposable {
         }
       }
 
-      switch (imageChunk.imageEncoding) {
+      switch (_CurrentEncoding) {
       case ImageEncoding.JPEGColor:
       case ImageEncoding.JPEGColorHalfWidth:
       case ImageEncoding.JPEGGray:
@@ -105,6 +116,15 @@ public class ImageReceiver : IDisposable {
       case ImageEncoding.JPEGMinimizedGray: // This is what the robot is sending
         ImageUtil.MinimizedGreyToJpeg(_MemStream, _MemStream2, dims.Height, dims.Width);
         _ReceivedImage.LoadImage(_MemStream2.GetBuffer());
+        break;
+      case ImageEncoding.JPEGMinimizedColor:
+        // Minimized color images are half width
+        ImageUtil.MinimizedColorToJpeg (_MemStream, _MemStream2, dims.Height, dims.Width / 2);
+        if (!_ReceivedImage.LoadImage (_MemStream2.GetBuffer ())) {
+          DAS.Warn ("ProcessImageChunk.JPEGMinimizedColor.LoadImageFailed", "");
+        }
+        // NOTE: We do NOT resize the image here even though it is half width because
+        //       the texture renderer will magically stretch it for us and it will look fine.
         break;
       case ImageEncoding.RawGray:
         for (int i = 0; i < _MemStream.Length; i++) {

@@ -13,10 +13,12 @@ namespace Cozmo.Notifications {
     private struct Notification {
       public int SecondsInFuture { get; private set; }
       public string TextKey { get; private set; }
+      public bool Persist { get; private set; }
 
-      public Notification(int secondsInFuture, string textKey) {
+      public Notification(int secondsInFuture, string textKey, bool persist) {
         SecondsInFuture = secondsInFuture;
         TextKey = textKey;
+        Persist = persist;
       }
     }
 
@@ -46,11 +48,17 @@ namespace Cozmo.Notifications {
     }
 
     private void HandleClearNotificationCache(ClearNotificationCache notificationMessage) {
+      // Remove all except those marked to persist
+      _NotificationCache.RemoveAll(x => !x.Persist);
+    }
+
+    public void ClearNotificationCache() {
       _NotificationCache.Clear();
     }
 
-    private void HandleCacheNotificationToSchedule(CacheNotificationToSchedule notificationMessage) {
-      _NotificationCache.Add(new Notification(notificationMessage.secondsInFuture, notificationMessage.textKey));
+    public void HandleCacheNotificationToSchedule(CacheNotificationToSchedule notificationMessage) {
+      _NotificationCache.Add(new Notification(notificationMessage.secondsInFuture, notificationMessage.textKey,
+                                              notificationMessage.persist));
     }
 
     private void CancelAllNotifications() {
@@ -63,8 +71,8 @@ namespace Cozmo.Notifications {
       foreach (var notification in _NotificationCache) {
         UTNotifications.Manager.Instance.ScheduleNotification(
           notification.SecondsInFuture,
+          "Cozmo",
           Localization.GetWithArgs(notification.TextKey),
-          "",
           _NotifId++
         );
       }

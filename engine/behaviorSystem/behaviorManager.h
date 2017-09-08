@@ -345,6 +345,10 @@ private:
   // that fire as reactions to events
   std::map<ReactionTrigger,TriggerBehaviorInfo> _reactionTriggerMap;
   
+  // Don't react to anything until at least one action has been queued
+  // or the SDK has requested that reactions become enabled
+  bool _hasActionQueuedOrSDKReactEnabled;
+  
   // time at which last chooser was selected
   float _lastChooserSwitchTime;
 

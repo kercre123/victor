@@ -17,6 +17,7 @@ enum uint_8 ActivityType {
   PlaypenTest,
   Socialize,
   Sparked,
+  StrictPriority,
   VoiceCommand,
   NeedsExpression,
   Count
@@ -55,6 +56,7 @@ enum uint_8 ActivityID {
   SparksRollBlock,
   SparksStackBlock,
   SparksWorkout,
+  StrictPriorityFreeplay,
   VoiceCommand
 }
 

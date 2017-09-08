@@ -3,22 +3,29 @@ using UnityEditor;
 using System.IO;
 
 /// <summary>
-/// Sets Cozmo default import settings for sprites in AssetBundles/Art folder
-/// for textures located in Packed or Unpacked folders.
-/// If in a Packed folder, will also update the packing tag to an atlas based on 
-/// parent bundle folder's name.
+/// Sets Cozmo default import settings for sprites in AssetBundles/Art folder.
 /// If in a bundle folder suffixed by -UHD, will generate mirror assets in
 /// other bundle folders in the same position with the same name in -HD and -SD 
-/// but at half and quarter width (1/4 and 1/16 memory) size, respectively.
+/// but at a smaller size.
 /// </summary>
 public class SpriteAssetPostProcessor : AssetPostprocessor {
 
   private const string _kNeedsHubParentFolder = "AssetBundles/NeedsHub/Art";
   private const string _kHomeHubParentFolder = "AssetBundles/HomeHub/Art";
+
+  // Originally Packed indicated assets that would go into Atlases 
+  // Now nothing is packed; these folders will take on project-wide settings
+  // for all UI sprites
   private const string _kPackSpriteFolderName = "Packed";
   private const string _kUnpackSpriteFolderName = "Unpacked";
+
+  // Sets project-wide settings for textures for use in materials
   private const string _kTexturesFolderName = "Textures";
+  // Same as above, except sets wrap mode to "repeat" instead of "clamp"
   private const string _kRepeatTexturesFolderName = "RepeatTextures";
+
+  // Keeps all the same import settings as UHD asset, but still downsizes correctly
+  private const string _kCustomFolderName = "Custom";
 
   private const string _kUHDBundleTag = "UHD";
   private const string _kHDBundleTag = "HD";
@@ -40,13 +47,16 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
 
   private void OnPreprocessTexture() {
     if (IsUISprite()) {
-      PostprocessUISprite();
+      PreprocessUISprite();
     }
     else if (IsTexture()) {
-      PostprocessTexture(useRepeatSetting: false);
+      PreprocessTexture(useRepeatSetting: false);
     }
     else if (IsRepeatTexture()) {
-      PostprocessTexture(useRepeatSetting: true);
+      PreprocessTexture(useRepeatSetting: true);
+    }
+    else if (IsCustomTexture()) {
+      PreprocessCustomGraphic();
     }
     else {
       Debug.Log("Detected texture import at " + assetPath + " but was not part of 'Packed', 'Unpacked', or 'Textures' folder in"
@@ -54,19 +64,22 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     }
   }
 
-  private void PostprocessUISprite() {
+  private void PreprocessUISprite() {
     Debug.Log("Detected texture import at " + assetPath + ". Setting default values.");
 
     TextureImporter textureImporter = (TextureImporter)assetImporter;
     textureImporter.textureType = TextureImporterType.Sprite;
     textureImporter.spriteImportMode = SpriteImportMode.Single;
 
-    if (ShouldPackSprite()) {
-      textureImporter.spritePackingTag = GenerateSpritePackingTag();
-    }
-    else {
-      textureImporter.spritePackingTag = null;
-    }
+    // COZMO-14363: Not packing sprites so that less memory will be loaded in at runtime for low-end
+    // devices at a small framerate hit.
+    //if (ShouldPackSprite()) {
+    //  textureImporter.spritePackingTag = GenerateSpritePackingTag();
+    //}
+    //else {
+    //  textureImporter.spritePackingTag = null;
+    //}
+    textureImporter.spritePackingTag = null;
 
     textureImporter.spritePixelsPerUnit = GetPixelsPerUnit();
     textureImporter.mipmapEnabled = false;
@@ -105,17 +118,26 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     return ppu;
   }
 
-  private Vector4 GetBorderFromUHDSprite(out bool uhdSpriteIsFullRect) {
-    uhdSpriteIsFullRect = false;
-    Vector4 border = Vector4.one;
+  private string GetUHDAssetPath() {
     string uhdAssetPath = null;
-    float borderScale = 1f;
     if (IsHDAsset()) {
       uhdAssetPath = assetPath.Replace(_kHDBundleTag, _kUHDBundleTag);
-      borderScale = _kHDScaleFactor;
     }
     else if (IsSDAsset()) {
       uhdAssetPath = assetPath.Replace(_kSDBundleTag, _kUHDBundleTag);
+    }
+    return uhdAssetPath;
+  }
+
+  private Vector4 GetBorderFromUHDSprite(out bool uhdSpriteIsFullRect) {
+    uhdSpriteIsFullRect = false;
+    Vector4 border = Vector4.one;
+    string uhdAssetPath = GetUHDAssetPath();
+    float borderScale = 1f;
+    if (IsHDAsset()) {
+      borderScale = _kHDScaleFactor;
+    }
+    else if (IsSDAsset()) {
       borderScale = _kSDScaleFactor;
     }
 
@@ -139,7 +161,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     return border;
   }
 
-  private void PostprocessTexture(bool useRepeatSetting) {
+  private void PreprocessTexture(bool useRepeatSetting) {
     Debug.Log("Detected texture import at " + assetPath + ". Setting default values.");
 
     TextureImporter textureImporter = (TextureImporter)assetImporter;
@@ -153,8 +175,27 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
   }
 
+  private void PreprocessCustomGraphic() {
+    if (!IsUHDAsset()) {
+      string uhdAssetPath = GetUHDAssetPath();
+
+      // Copy over texture settings from UHD assets
+      TextureImporter uhdTextureImporter = AssetImporter.GetAtPath(uhdAssetPath) as TextureImporter;
+      if (uhdTextureImporter != null) {
+        TextureImporterSettings uhdTis = new TextureImporterSettings();
+        uhdTextureImporter.ReadTextureSettings(uhdTis);
+
+        TextureImporter textureImporter = (TextureImporter)assetImporter;
+        textureImporter.SetTextureSettings(uhdTis);
+        textureImporter.spritePixelsPerUnit = GetPixelsPerUnit();
+
+        // TODO: Handle downsizing borders for sliced sprites
+      }
+    }
+  }
+
   private void OnPostprocessTexture(Texture2D texture) {
-    if (IsUISprite() || IsTexture() || IsRepeatTexture()) {
+    if (IsUISprite() || IsTexture() || IsRepeatTexture() || IsCustomTexture()) {
       if (IsUHDAsset()) {
         Debug.Log("Detected UHD texture import at " + assetPath + ". Creating smaller versions in HD and SD folders.");
         CreateCopyOfTexture(texture, _kHDScaleFactor, _kHDBundleTag);
@@ -243,8 +284,14 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     return InHubParentFolder(assetPath) && assetPath.Contains(_kTexturesFolderName)
                     && assetPath.EndsWith(_kGraphicSuffix) && !assetPath.Contains(_kRepeatTexturesFolderName);
   }
+
   private bool IsRepeatTexture() {
     return InHubParentFolder(assetPath) && assetPath.Contains(_kRepeatTexturesFolderName)
+                    && assetPath.EndsWith(_kGraphicSuffix);
+  }
+
+  private bool IsCustomTexture() {
+    return InHubParentFolder(assetPath) && assetPath.Contains(_kCustomFolderName)
                     && assetPath.EndsWith(_kGraphicSuffix);
   }
 }

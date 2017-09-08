@@ -16,6 +16,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/localNotifications.h"
 #include "engine/needsSystem/needsManager.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "anki/common/basestation/jsonTools.h"
 
 #include "util/console/consoleInterface.h"
@@ -91,6 +92,7 @@ void LocalNotifications::Init(const Json::Value& json, Util::RandomGenerator* rn
   auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::NotificationsManagerReady>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestNotificationTextKeys>();
 
 #if ANKI_DEV_CHEATS
   g_DebugLocalNotifications = this;
@@ -103,6 +105,24 @@ void LocalNotifications::HandleMessage(const ExternalInterface::NotificationsMan
   // Generate all appropriate notifications on app start
   Generate();
 }
+
+template<>
+void LocalNotifications::HandleMessage(const ExternalInterface::RequestNotificationTextKeys& msg)
+{
+  ExternalInterface::NotificationTextKeys message;
+
+  for (const auto& config : _localNotificationConfig.items)
+  {
+    for (const auto& textKey : config.textKeys)
+    {
+      message.textKeys.push_back(textKey);
+    }
+  }
+
+  const auto& extInt = _context->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+
 
 void LocalNotifications::Update(const float currentTime_s)
 {
@@ -132,6 +152,16 @@ void LocalNotifications::SetPaused(const bool pausing)
 
 void LocalNotifications::Generate()
 {
+  // Hide until generated...
+  if( _context != nullptr )
+  {
+    // Note this will still mean permissions are asked for, just local notifications aren't sent.
+    if( !_context->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::LocalNotifications))
+    {
+      return;
+    }
+  }
+  
   using namespace std::chrono;
 
   const auto& extInt = _context->GetExternalInterface();
@@ -154,10 +184,8 @@ void LocalNotifications::Generate()
   {
     if (ShouldBeRegistered(config))
     {
-      const float duration_m = DetermineTimeToNotify(config, multipliers,
-                                                     timeSinceAppOpen_m, now);
-      const int secondsInFuture = static_cast<int>(duration_m * secondsPerMinute);
-
+      const int secondsInFuture = DetermineTimeToNotify(config, multipliers,
+                                                        timeSinceAppOpen_m, now);
 
       // Pick random string key among variants
       const int textKeyIndex = _rng->RandInt(static_cast<int>(config.textKeys.size()));
@@ -165,7 +193,8 @@ void LocalNotifications::Generate()
 
       if (kDumpLocalNotificationsWhenGenerated)
       {
-        const float duration_h = duration_m / secondsPerMinute;
+        const float duration_m = secondsInFuture * 60.0f;
+        const float duration_h = duration_m / 60.0f;
         const float duration_d = duration_h / 24.0f;
         const Time futureDateTime = now + seconds(secondsInFuture);
         const std::time_t futureTimeT = system_clock::to_time_t(futureDateTime);
@@ -179,9 +208,11 @@ void LocalNotifications::Generate()
                       textKey.c_str());
       }
 
+      static const bool kPersist = false;
+      ExternalInterface::CacheNotificationToSchedule msg(secondsInFuture, textKey, kPersist);
       const auto& extInt = _context->GetExternalInterface();
-      extInt->Broadcast(ExternalInterface::MessageEngineToGame
-                        (ExternalInterface::CacheNotificationToSchedule(secondsInFuture, textKey)));
+      extInt->Broadcast(ExternalInterface::MessageEngineToGame(
+                        std::move(msg)));
     }
   }
 
@@ -261,11 +292,12 @@ bool LocalNotifications::ShouldBeRegistered(const LocalNotificationItem& config)
 }
 
 
-float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& config,
-                                                const NeedsMultipliers& multipliers,
-                                                const float timeSinceAppOpen_m,
-                                                const Time now) const
+int LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& config,
+                                              const NeedsMultipliers& multipliers,
+                                              const float timeSinceAppOpen_m,
+                                              const Time now) const
 {
+  using namespace std::chrono;
   float minutesInFuture = 0.0f;
 
   switch (config.notificationMainUnion.GetTag())
@@ -343,7 +375,33 @@ float LocalNotifications::DetermineTimeToNotify(const LocalNotificationItem& con
     minutesInFuture = maxMinutes;
   }
 
-  return minutesInFuture;
+  int secondsInFuture = static_cast<int>(minutesInFuture * 60.0f);
+
+  // Enforce late-night time range filter:
+  // First, convert the target time into a clock time
+  const Time targetDateTime = now + seconds(secondsInFuture);
+  const std::time_t targetTimeT = system_clock::to_time_t(targetDateTime);
+  std::tm targetLocalTime;
+  localtime_r(&targetTimeT, &targetLocalTime);
+  const float timeOfDayInMinutes = (targetLocalTime.tm_hour * 60.0f) +
+                                    targetLocalTime.tm_min +
+                                   (targetLocalTime.tm_sec / 60.0f);
+  if (timeOfDayInMinutes < config.noEarlierThan)
+  {
+    // Target time is too early, so make it later (to when the window 'opens')
+    secondsInFuture += ((config.noEarlierThan - timeOfDayInMinutes) * 60.0f);
+  }
+  else if (timeOfDayInMinutes > config.noLaterThan)
+  {
+    // Target time is too late, so make it on the next day, when the window 'opens'
+    // First, add the time remaining until midnight
+    static const float midnightMinutes = (24.0f * 60.0f);
+    secondsInFuture += ((midnightMinutes - timeOfDayInMinutes) * 60.0f);
+    // Now add the time from midnight to when the window 'opens'
+    secondsInFuture += (config.noEarlierThan * 60.0f);
+  }
+
+  return secondsInFuture;
 }
 
 

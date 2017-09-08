@@ -202,9 +202,9 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(object->GetID()),
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForBlockWorldObjects");
   // this method is only called for instances in the current origin, not in other origins (would not make sense to clients)
-  DEV_ASSERT( &object->GetPose().FindOrigin() == _robot.GetWorldOrigin(),
+  DEV_ASSERT( _robot.IsPoseInWorldOrigin(object->GetPose()),
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForCurrentOriginCurrent");
-  DEV_ASSERT( !ObservableObject::IsValidPoseState(newPoseState) || (&newPose.FindOrigin() == _robot.GetWorldOrigin()),
+  DEV_ASSERT( !ObservableObject::IsValidPoseState(newPoseState) || _robot.IsPoseInWorldOrigin(newPose),
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForCurrentOriginNew");
   
   // if setting an invalid pose, we want to destroy the located copy of this object in its origin
@@ -254,7 +254,7 @@ void ObjectPoseConfirmer::SetPoseStateHelper(ObservableObject* object, PoseState
     // this method can change poseStates in other origins (arguably this should not be the case, but we
     // support it atm because we need to change other instances to Dirty when they move, etc). In that
     // case do not notify
-    const bool isInCurOrigin = (&object->GetPose().FindOrigin() == _robot.GetWorldOrigin());
+    const bool isInCurOrigin = _robot.IsPoseInWorldOrigin(object->GetPose());
     if ( isInCurOrigin )
     {
       // broadcast the poseState change
@@ -601,8 +601,8 @@ Result ObjectPoseConfirmer::AddRobotRelativeObservation(ObservableObject* object
              "ObjectPoseConfirmer.AddRobotRelativeObservation.RelativePoseStateNotValid");
 
   Pose3d poseWrtOrigin(poseRelToRobot);
-  poseWrtOrigin.SetParent(&_robot.GetPose());
-  poseWrtOrigin = poseWrtOrigin.GetWithRespectToOrigin();
+  poseWrtOrigin.SetParent(_robot.GetPose());
+  poseWrtOrigin = poseWrtOrigin.GetWithRespectToRoot();
   
   // When we add a relative observation we can be adding an observation for a new object (that doesn't exist
   // in the BlockWorld), or for an existing one, depending on the case, we do different things
@@ -711,7 +711,7 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
   // Sanity checks
   DEV_ASSERT(objectID.IsSet(),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.UnSetObjectID");
-  DEV_ASSERT(newPoseWrtLift.GetParent() == &_robot.GetLiftPose(),
+  DEV_ASSERT(newPoseWrtLift.IsChildOf(_robot.GetLiftPose()),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.PoseNotWrtLift");
   DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(objectID),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.NotTheObjectInBlockWorldForID");
@@ -795,7 +795,7 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& obj
     const bool isCopy = (&object != locatedObject);
     DEV_ASSERT(newStateInvalid == isCopy, "ObjectPoseConfirmer.BroadcastObjectPoseChanged.ObjectCopyExpectedOnlyIfInvalid");
     // we broadcast only current origin
-    DEV_ASSERT(newStateInvalid || (&object.GetPose().FindOrigin() == _robot.GetWorldOrigin()),
+    DEV_ASSERT(newStateInvalid || _robot.IsPoseInWorldOrigin(object.GetPose()),
               "ObjectPoseConfirmer.BroadcastObjectPoseChanged.BroadcastNotInCurrentOrigin");
   }
 
@@ -818,7 +818,7 @@ void ObjectPoseConfirmer::BroadcastObjectPoseStateChanged(const ObservableObject
              "ObjectPoseConfirmer.BroadcastObjectPoseStateChanged.InvalidObjectID");
   
   // we broadcast only current origin
-  DEV_ASSERT(!object.HasValidPose() || (&object.GetPose().FindOrigin() == _robot.GetWorldOrigin()),
+  DEV_ASSERT(!object.HasValidPose() || _robot.IsPoseInWorldOrigin(object.GetPose()),
              "ObjectPoseConfirmer.BroadcastObjectPoseStateChanged.BroadcastNotInCurrentOrigin");
   
   // only if it changes
@@ -935,7 +935,7 @@ void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object, bool prop
     // Still here for legacy purposes
     // Notify listeners if object is becoming Unknown
     using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
+    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(object->GetID().GetValue())));
   }
 
   // delete with the given filter

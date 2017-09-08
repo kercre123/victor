@@ -97,10 +97,9 @@ public:
   
 protected:
   
-  // Make SetPose and SetPoseParent protected and friend ObjectPoseConfirmer so only it can
+  // Make SetPose protected and friend ObjectPoseConfirmer so only it can
   // update objects' poses
   virtual void SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState) override;
-  using Vision::ObservableObject::SetPoseParent;
   using Vision::ObservableObject::SetPoseState;
   friend ObjectPoseConfirmer;
   

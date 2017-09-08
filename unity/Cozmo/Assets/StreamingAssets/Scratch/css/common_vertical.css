@@ -1,0 +1,348 @@
+/**
+ * Global
+ */
+html {
+    font-family: 'Avenir Next';
+}
+
+body {
+    background: #535252;
+
+    /* make text on page unselectable */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+button {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:focus {
+    outline: none;
+}
+
+/**
+ * Toolbox
+ */
+#toolbox {
+    display: none;
+}
+
+/**
+ * Blockly
+ */
+#blocks {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Avenir Next';
+}
+
+/**
+  * Close button
+  */
+
+
+#close {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#close .primary {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 15px;
+}
+
+#close .primary button {
+    display: block;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    background-color: transparent;
+    background-image: url('../images/ui/close.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#close .primary button:active {
+    background-position:0px -72px;
+}
+
+/**
+ * projecttext
+ */
+#projecttext {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 175px;
+    z-index: 1;
+    pointer-events: none;
+    text-align: right;
+}
+
+#projecttext .primary {
+    display: block;
+    position: absolute;
+    top: 25px;
+    width: 98%;
+    text-align: right;
+    height: 200px;
+}
+
+#projecttext .primary #app-title {
+    display: inline-block;
+    font-weight: bold;
+    font-size: 32px;
+    background-color: #525253;
+    color: #1fadda;
+    max-width: calc(100vw - 210px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: hidden;
+    padding: 0 5px;
+}
+#projecttext .primary #app-title.long-title {
+  font-size: 24px;
+}
+
+#projecttext .primary #app-title-subtext {
+    display: inline-block;
+    color: #c0bfbf;
+    font-size: 20px;
+    background-color: #525253;
+    padding: 0 5px;
+}
+
+/**
+ * Navigation
+ */
+#navigation {
+    display: block;
+    position: absolute;
+    top: calc(100% - 400px);
+    left: 0;
+    width: 100%;
+    height: 200px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#navigation .greenflag {
+    display: block;
+    position: absolute;
+    left: calc(100% - 90px);
+}
+
+#navigation .greenflag button {
+    display: block;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    background-color: transparent;
+    background-image: url('../images/ui/greenflag.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#navigation .greenflag button:active {
+    background-position:0px -72px;
+}
+
+#navigation .greenflag button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+#navigation .stop {
+    display: block;
+    position: absolute;
+    left: calc(100% - 90px);
+    top: 75px;
+}
+
+#navigation .stop button {
+    display: block;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    background-color: transparent;
+    background-image: url('../images/ui/stop.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#navigation .stop button:active {
+    background-position:0px -72px;
+}
+
+#navigation .stop button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+/**
+ * undoRedo
+ */
+#undoRedo {
+    display: block;
+    position: absolute;
+    top: calc(100% - 240px);
+    left: 0;
+    width: 100%;
+    height: 58px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#undoRedo .undo {
+    display: block;
+    position: absolute;
+    left: calc(100% - 70px);
+}
+
+#undoRedo .undo button {
+    display: block;
+    position: relative;
+    width: 29px;
+    height: 29px;
+    background-color: transparent;
+    background-image: url('../lib/blocks/media/turnleft_arrow.png');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#undoRedo .undo button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+#undoRedo .redo {
+    display: block;
+    position: absolute;
+    left: calc(100% - 70px);
+    top: 45px;
+}
+
+#undoRedo .redo button {
+    display: block;
+    position: relative;
+    width: 29px;
+    height: 29px;
+    background-color: transparent;
+    background-image: url('../lib/blocks/media/turnright_arrow.png');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#undoRedo .redo button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+
+
+@media only screen and (max-width: 799px) {
+    #navigation {
+        top: calc(100% - 250px);
+    }
+
+    #close .primary {
+        display: block;
+        position: absolute;
+        top: 5px;
+        left: 5px;
+    }
+
+    #close .primary button {
+        width:44px;
+        height:44px;
+    }
+
+    #close .primary button:active {
+        background-position:0px -44px;
+    }
+
+    #projecttext {
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 200px;
+    }
+
+    #projecttext .primary {
+        top: 10px;
+        width: 98%;
+        height: 60px;
+    }
+
+
+    #projecttext .primary #app-title {
+        margin-top: 3px;
+        font-size: 20px;
+        max-width: calc(100vw - 120px);
+    }
+    #projecttext .primary #app-title.long-title {
+      font-size: 16px;
+    }
+
+    #projecttext .primary #app-title-subtext {
+        font-size: 15px;
+    }
+
+
+
+    #navigation .greenflag {
+        left: calc(100% - 55px);
+        top: calc(100% - 170px);;
+    }
+
+    #navigation .greenflag button {
+        width:44px;
+        height:44px;
+    }
+
+    #navigation .greenflag button:active {
+        background-position:0px -44px;
+    }
+
+    #navigation .stop {
+        left: calc(100% - 55px);
+        top: calc(100% - 125px);;
+    }
+
+    #navigation .stop button {
+        width:44px;
+        height:44px;
+    }
+
+    #navigation .stop button:active {
+        background-position:0px -44px;
+    }
+}

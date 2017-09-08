@@ -16,8 +16,8 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/audio/behaviorAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
@@ -190,7 +190,8 @@ NeedsActionId IBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& confi
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-: _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
+: IBSRunnable(BehaviorIDToString(ExtractBehaviorIDFromConfig(config)))
+, _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _robot(robot)
 , _lastRunTime_s(0.0f)
 , _startedRunningTime_s(0.0f)
@@ -581,7 +582,7 @@ bool IBehavior::IsRunnableBase(const Robot& robot) const
 
   // check if a severe needs state is required
   if( _requiredSevereNeed != NeedId::Count &&
-      _requiredSevereNeed != robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression() ) {
+      _requiredSevereNeed != robot.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression() ) {
     // not in the correct state
     return false;
   }
