@@ -13,9 +13,11 @@ namespace Cozmo {
     public static event InventoryValueChangedHandler ItemCountSet;
     public static event InventoryValueChangedHandler ItemCountUpdated;
 
+    private static readonly int kMaxInventoryLimit = 999;
+
     public int InventoryCap {
       get {
-        return ItemDataConfig.Instance.MaxInventoryLimit;
+        return kMaxInventoryLimit;
       }
     }
     /// <summary>
