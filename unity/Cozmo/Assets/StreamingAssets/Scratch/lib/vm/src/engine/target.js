@@ -4,6 +4,7 @@ const Blocks = require('./blocks');
 const Variable = require('../engine/variable');
 const List = require('../engine/list');
 const uid = require('../util/uid');
+const {Map} = require('immutable');
 
 /**
  * @fileoverview
@@ -11,17 +12,25 @@ const uid = require('../util/uid');
  * Examples include sprites/clones or potentially physical-world devices.
  */
 
-/**
- * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
- * @constructor
- */
 class Target extends EventEmitter {
-    constructor (blocks) {
+
+    /**
+     * @param {Runtime} runtime Reference to the runtime.
+     * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
+     * @constructor
+     */
+    constructor (runtime, blocks) {
         super();
 
         if (!blocks) {
             blocks = new Blocks();
         }
+
+        /**
+         * Reference to the runtime.
+         * @type {Runtime}
+         */
+        this.runtime = runtime;
         /**
          * A unique ID for this target.
          * @type {string}
@@ -71,26 +80,38 @@ class Target extends EventEmitter {
 
     /**
      * Look up a variable object, and create it if one doesn't exist.
-     * Search begins for local variables; then look for globals.
-     * @param {!string} name Name of the variable.
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
      * @return {!Variable} Variable object.
      */
-    lookupOrCreateVariable (name) {
+    lookupOrCreateVariable (id, name) {
+        const variable = this.lookupVariableById(id);
+        if (variable) return variable;
+        // No variable with this name exists - create it locally.
+        const newVariable = new Variable(id, name, 0, false);
+        this.variables[id] = newVariable;
+        return newVariable;
+    }
+
+    /**
+     * Look up a variable object.
+     * Search begins for local variables; then look for globals.
+     * @param {string} id Id of the variable.
+     * @param {string} name Name of the variable.
+     * @return {!Variable} Variable object.
+     */
+    lookupVariableById (id) {
         // If we have a local copy, return it.
-        if (this.variables.hasOwnProperty(name)) {
-            return this.variables[name];
+        if (this.variables.hasOwnProperty(id)) {
+            return this.variables[id];
         }
         // If the stage has a global copy, return it.
         if (this.runtime && !this.isStage) {
             const stage = this.runtime.getTargetForStage();
-            if (stage.variables.hasOwnProperty(name)) {
-                return stage.variables[name];
+            if (stage.variables.hasOwnProperty(id)) {
+                return stage.variables[id];
             }
         }
-        // No variable with this name exists - create it locally.
-        const newVariable = new Variable(name, 0, false);
-        this.variables[name] = newVariable;
-        return newVariable;
     }
 
     /**
@@ -115,6 +136,62 @@ class Target extends EventEmitter {
         const newList = new List(name, []);
         this.lists[name] = newList;
         return newList;
+    }
+
+    /**
+     * Creates a variable with the given id and name and adds it to the
+     * dictionary of variables.
+     * @param {string} id Id of variable
+     * @param {string} name Name of variable.
+     */
+    createVariable (id, name) {
+        if (!this.variables.hasOwnProperty(id)) {
+            const newVariable = new Variable(id, name, 0,
+                false);
+            this.variables[id] = newVariable;
+        }
+    }
+
+    /**
+     * Renames the variable with the given id to newName.
+     * @param {string} id Id of renamed variable.
+     * @param {string} newName New name for the variable.
+     */
+    renameVariable (id, newName) {
+        if (this.variables.hasOwnProperty(id)) {
+            const variable = this.variables[id];
+            if (variable.id === id) {
+                variable.name = newName;
+
+                if (this.runtime) {
+                    const blocks = this.runtime.monitorBlocks;
+                    blocks.changeBlock({
+                        id: id,
+                        element: 'field',
+                        name: 'VARIABLE',
+                        value: id
+                    }, this.runtime);
+                    this.runtime.requestUpdateMonitor(Map({
+                        id: id,
+                        params: blocks._getBlockParams(blocks.getBlock(variable.id))
+                    }));
+                }
+
+            }
+        }
+    }
+
+    /**
+     * Removes the variable with the given id from the dictionary of variables.
+     * @param {string} id Id of renamed variable.
+     */
+    deleteVariable (id) {
+        if (this.variables.hasOwnProperty(id)) {
+            delete this.variables[id];
+            if (this.runtime) {
+                this.runtime.requestRemoveMonitor(id);
+            }
+        }
     }
 
     /**

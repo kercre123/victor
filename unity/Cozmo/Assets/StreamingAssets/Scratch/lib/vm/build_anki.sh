@@ -20,8 +20,8 @@ echo npm install:
 npm install
 
 # If dist/web/scratch-vm*.js is not emitted, use npm run build, per Ray Schamp. - msintov, 9/7/17
-#echo npm run build:
-#npm run build
+echo npm run build:
+npm run build
 
 if [ $ENABLE_NODE_MODULE_CACHING != 0 ]
 then

@@ -1,17 +1,20 @@
 const log = require('../util/log');
 const MathUtil = require('../util/math-util');
+const StringUtil = require('../util/string-util');
 const Target = require('../engine/target');
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
- * @param {!Sprite} sprite Reference to the parent sprite.
- * @param {Runtime} runtime Reference to the runtime.
- * @constructor
  */
 class RenderedTarget extends Target {
+    /**
+     * @param {!Sprite} sprite Reference to the parent sprite.
+     * @param {Runtime} runtime Reference to the runtime.
+     * @constructor
+     */
     constructor (sprite, runtime) {
-        super(sprite.blocks);
-        this.runtime = runtime;
+        super(runtime, sprite.blocks);
+
         /**
          * Reference to the sprite that this is a render of.
          * @type {!Sprite}
@@ -19,7 +22,7 @@ class RenderedTarget extends Target {
         this.sprite = sprite;
         /**
          * Reference to the global renderer for this VM, if one exists.
-         * @type {?RenderWebGLWorker}
+         * @type {?RenderWebGL}
          */
         this.renderer = null;
         if (this.runtime) {
@@ -228,6 +231,9 @@ class RenderedTarget extends Target {
         if (this.isStage) {
             return;
         }
+        if (!isFinite(direction)) {
+            return;
+        }
         // Keep direction between -179 and +180.
         this.direction = MathUtil.wrapClamp(direction, -179, 180);
         if (this.renderer) {
@@ -390,6 +396,28 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Add a costume, taking care to avoid duplicate names.
+     * @param {!object} costumeObject Object representing the costume.
+     */
+    addCostume (costumeObject) {
+        const usedNames = this.sprite.costumes.map(costume => costume.name);
+        costumeObject.name = StringUtil.unusedName(costumeObject.name, usedNames);
+        this.sprite.costumes.push(costumeObject);
+    }
+
+    /**
+     * Rename a costume, taking care to avoid duplicate names.
+     * @param {int} costumeIndex - the index of the costume to be renamed.
+     * @param {string} newName - the desired new name of the costume (will be modified if already in use).
+     */
+    renameCostume (costumeIndex, newName) {
+        const usedNames = this.sprite.costumes
+            .filter((costume, index) => costumeIndex !== index)
+            .map(costume => costume.name);
+        this.sprite.costumes[costumeIndex].name = StringUtil.unusedName(newName, usedNames);
+    }
+
+    /**
      * Delete a costume by index.
      * @param {number} index Costume index to be deleted
      */
@@ -410,6 +438,28 @@ class RenderedTarget extends Target {
         }
 
         this.runtime.requestTargetsUpdate(this);
+    }
+
+    /**
+     * Add a sound, taking care to avoid duplicate names.
+     * @param {!object} soundObject Object representing the sound.
+     */
+    addSound (soundObject) {
+        const usedNames = this.sprite.sounds.map(sound => sound.name);
+        soundObject.name = StringUtil.unusedName(soundObject.name, usedNames);
+        this.sprite.sounds.push(soundObject);
+    }
+
+    /**
+     * Rename a sound, taking care to avoid duplicate names.
+     * @param {int} soundIndex - the index of the sound to be renamed.
+     * @param {string} newName - the desired new name of the sound (will be modified if already in use).
+     */
+    renameSound (soundIndex, newName) {
+        const usedNames = this.sprite.sounds
+            .filter((sound, index) => soundIndex !== index)
+            .map(sound => sound.name);
+        this.sprite.sounds[soundIndex].name = StringUtil.unusedName(newName, usedNames);
     }
 
     /**
@@ -730,7 +780,6 @@ class RenderedTarget extends Target {
         newClone.effects = JSON.parse(JSON.stringify(this.effects));
         newClone.variables = JSON.parse(JSON.stringify(this.variables));
         newClone.lists = JSON.parse(JSON.stringify(this.lists));
-        newClone._customState = JSON.parse(JSON.stringify(this._customState));
         newClone.initDrawable();
         newClone.updateAllDrawableProperties();
         // Place behind the current target.
@@ -832,6 +881,8 @@ class RenderedTarget extends Target {
      */
     dispose () {
         this.runtime.changeCloneCounter(-1);
+        this.runtime.stopForTarget(this);
+        this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
             this.renderer.destroyDrawable(this.drawableID);
             if (this.visible) {

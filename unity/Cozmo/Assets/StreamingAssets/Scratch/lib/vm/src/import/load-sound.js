@@ -24,14 +24,17 @@ const loadSound = function (sound, runtime) {
     return runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
         .then(soundAsset => {
             sound.assetId = soundAsset.assetId;
-            sound.assetType = runtime.storage.AssetType.Sound;
+            sound.dataFormat = ext;
             return runtime.audioEngine.decodeSound(Object.assign(
                 {},
                 sound,
                 {data: soundAsset.data}
             ));
         })
-        .then(() => sound);
+        .then(soundId => {
+            sound.soundId = soundId;
+            return sound;
+        });
 };
 
 module.exports = loadSound;

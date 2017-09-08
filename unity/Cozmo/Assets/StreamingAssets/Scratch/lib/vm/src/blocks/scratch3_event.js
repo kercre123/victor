@@ -42,6 +42,9 @@ class Scratch3EventBlocks {
             event_whenbroadcastreceived: {
                 restartExistingThreads: true
             },
+
+            // *** ANKI CHANGE ***
+            // Add Cozmo-specific hat blocks
             cozmo_event_on_face: {
                 restartExistingThreads: false
             },

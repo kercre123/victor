@@ -29,11 +29,7 @@ class Scratch3SoundBlocks {
             currentInstrument: 0,
             effects: {
                 pitch: 0,
-                pan: 0,
-                echo: 0,
-                reverb: 0,
-                fuzz: 0,
-                robot: 0
+                pan: 0
             }
         };
     }
@@ -55,24 +51,20 @@ class Scratch3SoundBlocks {
         return {min: 0, max: 100};
     }
 
-     /** The minimum and maximum tempo values, in bpm.
+    /** The minimum and maximum tempo values, in bpm.
      * @type {{min: number, max: number}}
      */
     static get TEMPO_RANGE () {
         return {min: 20, max: 500};
     }
 
-     /** The minimum and maximum values for each sound effect.
+    /** The minimum and maximum values for each sound effect.
      * @type {{effect:{min: number, max: number}}}
      */
     static get EFFECT_RANGE () {
         return {
-            pitch: {min: -600, max: 600},       // -5 to 5 octaves
-            pan: {min: -100, max: 100},         // 100% left to 100% right
-            echo: {min: 0, max: 100},           // 0 to max (75%) feedback
-            reverb: {min: 0, max: 100},         // wet/dry: 0 to 100% wet
-            fuzz: {min: 0, max: 100},           // wed/dry: 0 to 100% wet
-            robot: {min: 0, max: 600}           // 0 to 5 octaves
+            pitch: {min: -600, max: 600}, // -5 to 5 octaves
+            pan: {min: -100, max: 100} // 100% left to 100% right
         };
     }
 
@@ -121,18 +113,18 @@ class Scratch3SoundBlocks {
     playSound (args, util) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
-            const md5 = util.target.sprite.sounds[index].md5;
+            const soundId = util.target.sprite.sounds[index].soundId;
             if (util.target.audioPlayer === null) return;
-            util.target.audioPlayer.playSound(md5);
+            util.target.audioPlayer.playSound(soundId);
         }
     }
 
     playSoundAndWait (args, util) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
-            const md5 = util.target.sprite.sounds[index].md5;
+            const soundId = util.target.sprite.sounds[index].soundId;
             if (util.target.audioPlayer === null) return;
-            return util.target.audioPlayer.playSound(md5);
+            return util.target.audioPlayer.playSound(soundId);
         }
     }
 
@@ -143,18 +135,20 @@ class Scratch3SoundBlocks {
             return -1;
         }
 
-        let index;
-
-        // try to convert to a number and use that as an index
-        const num = parseInt(soundName, 10);
-        if (!isNaN(num)) {
-            index = MathUtil.wrapClamp(num, 0, len - 1);
+        // look up by name first
+        const index = this.getSoundIndexByName(soundName, util);
+        if (index !== -1) {
             return index;
         }
 
-        // return the index for the sound of that name
-        index = this.getSoundIndexByName(soundName, util);
-        return index;
+        // then try using the sound name as a 1-indexed index
+        const oneIndexedIndex = parseInt(soundName, 10);
+        if (!isNaN(oneIndexedIndex)) {
+            return MathUtil.wrapClamp(oneIndexedIndex - 1, 0, len - 1);
+        }
+
+        // could not be found as a name or converted to index, return -1
+        return -1;
     }
 
     getSoundIndexByName (soundName, util) {
@@ -189,7 +183,7 @@ class Scratch3SoundBlocks {
         let drum = Cast.toNumber(args.DRUM);
         drum -= 1; // drums are one-indexed
         if (typeof this.runtime.audioEngine === 'undefined') return;
-        drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums);
+        drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
         let beats = Cast.toNumber(args.BEATS);
         beats = this._clampBeats(beats);
         if (util.target.audioPlayer === null) return;
@@ -212,7 +206,7 @@ class Scratch3SoundBlocks {
         let instNum = Cast.toNumber(args.INSTRUMENT);
         instNum -= 1; // instruments are one-indexed
         if (typeof this.runtime.audioEngine === 'undefined') return;
-        instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments);
+        instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments - 1);
         soundState.currentInstrument = instNum;
         return this.runtime.audioEngine.instrumentPlayer.loadInstrument(soundState.currentInstrument);
     }
