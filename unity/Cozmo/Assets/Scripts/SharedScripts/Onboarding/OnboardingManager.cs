@@ -250,6 +250,8 @@ public class OnboardingManager : MonoBehaviour {
       // in the event they've ever booted the app before, or it's an old robot.
       // Skip the holding on charger phase because it is the worst and only should be a problem
       // for fresh from factory robots
+      DAS.Info("onboarding.InitialSetup", "FirstTime: " + FirstTime + "RobotCompleted: " +
+                  _LastOnboardingPhaseCompletedRobot + " isOldRobot: " + IsOldRobot());
       if (!FirstTime || IsOldRobot()) {
         startStage = 1;
       }

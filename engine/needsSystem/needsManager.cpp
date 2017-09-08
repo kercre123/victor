@@ -1277,7 +1277,17 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsActionWhitelis
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComplete& msg)
 {
-  bool forceWriteToRobot = false;
+  if( msg.onboardingStage < _robotOnboardingStageCompleted )
+  {
+    // only complete resets are allowed...
+    PRINT_NAMED_WARNING("NeedsManager.HandleMessage.RegisterOnboardingComplete",
+                        "Negative onboarding progress %d -> %d is not allowed",
+                        _robotOnboardingStageCompleted, msg.onboardingStage);
+    return;
+  }
+  PRINT_CH_INFO(kLogChannelName, "RegisterOnboardingComplete",
+                "OnboardingStageCompleted: %d, finalStage: %d",
+                _robotOnboardingStageCompleted, msg.finalStage);
 
   _robotOnboardingStageCompleted = msg.onboardingStage;
 
@@ -1307,11 +1317,11 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
     // s_val: Unused
     // data: Unused
     Anki::Util::sEvent("needs.onboarding_completed", {}, "");
-
-    forceWriteToRobot = true;
   }
 
-  PossiblyStartWriteToRobot(forceWriteToRobot);
+  // onboarding phases are very important for not having to repeat view the charging screen so force write.
+  // we also know that they take several seconds to complete so won't be spammy.
+  PossiblyStartWriteToRobot(true);
 }
 
 template<>
@@ -1949,6 +1959,9 @@ void NeedsManager::SendStarUnlockedToGame()
 
 void NeedsManager::SendNeedsOnboardingToGame()
 {
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendNeedsOnboardingToGame",
+                "OnboardingStageCompleted %d",
+                _robotOnboardingStageCompleted);
   ExternalInterface::WantsNeedsOnboarding message(_robotOnboardingStageCompleted);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
