@@ -45,6 +45,46 @@ static struct HalGlobals {
 } gHal;
 
 
+/****** SPINE DEBUG STUFF ****************/
+extern uint64_t steady_clock_now(void);
+
+#define MAX_EVENTS 0x1000
+typedef  enum {
+   event_READ,
+   event_SYNC,
+   event_FRAME,
+   event_SEND,
+} EventType;
+
+static struct SpineEvent_t{
+   uint32_t time;
+   EventType type;
+} EventLOG[MAX_EVENTS];
+static uint32_t EventCount=0;
+
+void LogEvent(EventType type)
+{
+   EventLOG[EventCount].time = steady_clock_now();
+   EventLOG[EventCount].type = type;
+   EventCount = (EventCount+1)&(MAX_EVENTS-1);
+}
+
+void DumpEvents()
+{
+   int i;
+   FILE* fp = fopen("event.log","w+");
+   for (i= EventCount; i< MAX_EVENTS;i++)
+   {
+      fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
+   }
+   for (i=0;i<EventCount;i++)
+   {
+      fprintf(fp, "%u, %d\n", EventLOG[i].time, EventLOG[i].type);
+   }
+   fclose(fp);
+}
+      
+
 /************* Error Handling *****************/
 #define spine_error(code, fmt, args...)   (LOGE( fmt, ##args)?(code):(code))
 #ifdef CONSOLE_DEBUG_PRINTF
@@ -230,6 +270,7 @@ static int spine_sync(const uint8_t* buf, unsigned int idx)
       //  buf already contains good tag. So just return the number of matches
       return match;
     }
+    else { LogEvent(event_SYNC); }
   }
   return idx;
 }
@@ -251,6 +292,8 @@ const struct SpineMessageHeader* hal_read_frame()
 {
   static uint16_t loopcount = 0;
   unsigned int index = 0;
+
+  LogEvent(event_READ);
 
   //spin here pulling single characters until whole sync rcvd
   while (index < SPINE_HEADER_LEN) {
@@ -310,7 +353,8 @@ const struct SpineMessageHeader* hal_read_frame()
     spine_debug("\n%u dropped bytes\n", dropped_bytes);
     return NULL;
   }
-
+  LogEvent(event_FRAME);
+  
   spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
   spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
   return ((struct SpineMessageHeader*)gHal.inbuffer);
@@ -345,6 +389,7 @@ const void* hal_wait_for_frame(uint16_t type)
 
 void hal_send_frame(PayloadId type, const void* data, int len)
 {
+   LogEvent(event_SEND);
   const uint8_t* hdr = spine_construct_header(type, len);
   crc_t crc = calc_crc(data, len);
   if (hdr) {
