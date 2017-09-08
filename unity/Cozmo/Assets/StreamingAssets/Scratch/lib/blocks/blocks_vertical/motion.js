@@ -25,6 +25,7 @@ goog.provide('Blockly.Blocks.motion');
 goog.require('Blockly.Blocks');
 goog.require('Blockly.Colours');
 goog.require('Blockly.constants');
+goog.require('Blockly.ScratchBlocks.VerticalExtensions');
 
 
 Blockly.Blocks['motion_movesteps'] = {
@@ -41,13 +42,8 @@ Blockly.Blocks['motion_movesteps'] = {
           "name": "STEPS"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -63,22 +59,17 @@ Blockly.Blocks['motion_turnright'] = {
       "args0": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "/turnright_arrow.png",
-          "width": 16,
-          "height": 16
+          "src": Blockly.mainWorkspace.options.pathToMedia + "rotate-right.svg",
+          "width": 24,
+          "height": 24
         },
         {
           "type": "input_value",
           "name": "DEGREES"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -94,22 +85,17 @@ Blockly.Blocks['motion_turnleft'] = {
       "args0": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "/turnleft_arrow.png",
-          "width": 16,
-          "height": 16
+          "src": Blockly.mainWorkspace.options.pathToMedia + "rotate-left.svg",
+          "width": 24,
+          "height": 24
         },
         {
           "type": "input_value",
           "name": "DEGREES"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -128,13 +114,8 @@ Blockly.Blocks['motion_pointindirection'] = {
           "name": "DIRECTION"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -157,12 +138,10 @@ Blockly.Blocks['motion_pointtowards_menu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
         "colour": Blockly.Colours.motion.secondary,
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["output_string"]
       });
   }
 };
@@ -181,13 +160,8 @@ Blockly.Blocks['motion_pointtowards'] = {
           "name": "TOWARDS"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -211,12 +185,10 @@ Blockly.Blocks['motion_goto_menu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
         "colour": Blockly.Colours.motion.secondary,
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["output_string"]
       });
   }
 };
@@ -239,13 +211,8 @@ Blockly.Blocks['motion_gotoxy'] = {
           "name": "Y"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -264,13 +231,8 @@ Blockly.Blocks['motion_goto'] = {
           "name": "TO"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -297,13 +259,58 @@ Blockly.Blocks['motion_glidesecstoxy'] = {
           "name": "Y"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
+      "extensions": ["colours_motion", "shape_statement"]
+    });
+  }
+};
+
+Blockly.Blocks['motion_glideto_menu'] = {
+  /**
+   * Glide to drop-down menu
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "TO",
+          "options": [
+            ['mouse-pointer', '_mouse_'],
+            ['random position', '_random_']
+          ]
+        }
+      ],
+      "colour": Blockly.Colours.motion.secondary,
       "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "colourTertiary": Blockly.Colours.motion.tertiary,
+      "extensions": ["output_string"]
+    });
+  }
+};
+
+Blockly.Blocks['motion_glideto'] = {
+  /**
+   * Block to glide to a menu item
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "glide %1 secs to %2",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "SECS"
+        },
+        {
+          "type": "input_value",
+          "name": "TO"
+        }
+      ],
+      "category": Blockly.Categories.motion,
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -322,13 +329,8 @@ Blockly.Blocks['motion_changexby'] = {
           "name": "DX"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -347,13 +349,8 @@ Blockly.Blocks['motion_setx'] = {
           "name": "X"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -372,13 +369,8 @@ Blockly.Blocks['motion_changeyby'] = {
           "name": "DY"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -397,13 +389,8 @@ Blockly.Blocks['motion_sety'] = {
           "name": "Y"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -416,12 +403,8 @@ Blockly.Blocks['motion_ifonedgebounce'] = {
   init: function() {
     this.jsonInit({
       "message0": "if on edge, bounce",
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -445,12 +428,8 @@ Blockly.Blocks['motion_setrotationstyle'] = {
           ]
         }
       ],
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "extensions": ["colours_motion", "shape_statement"]
     });
   }
 };
@@ -463,13 +442,9 @@ Blockly.Blocks['motion_xposition'] = {
   init: function() {
     this.jsonInit({
       "message0": "x position",
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_motion", "output_number"]
     });
   }
 };
@@ -482,13 +457,9 @@ Blockly.Blocks['motion_yposition'] = {
   init: function() {
     this.jsonInit({
       "message0": "y position",
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_motion", "output_number"]
     });
   }
 };
@@ -501,13 +472,9 @@ Blockly.Blocks['motion_direction'] = {
   init: function() {
     this.jsonInit({
       "message0": "direction",
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_motion", "output_number"]
     });
   }
 };

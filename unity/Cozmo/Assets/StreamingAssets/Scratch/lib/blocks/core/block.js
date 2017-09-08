@@ -182,7 +182,7 @@ Blockly.Block = function(workspace, prototypeName, opt_id) {
   /** @type {boolean|undefined} */
   this.inputsInlineDefault = this.inputsInline;
   if (Blockly.Events.isEnabled()) {
-    Blockly.Events.fire(new Blockly.Events.Create(this));
+    Blockly.Events.fire(new Blockly.Events.BlockCreate(this));
   }
   // Bind an onchange function, if it exists.
   if (goog.isFunction(this.onchange)) {
@@ -235,7 +235,7 @@ Blockly.Block.prototype.dispose = function(healStack) {
   }
   this.unplug(healStack);
   if (Blockly.Events.isEnabled()) {
-    Blockly.Events.fire(new Blockly.Events.Delete(this));
+    Blockly.Events.fire(new Blockly.Events.BlockDelete(this));
   }
   Blockly.Events.disable();
 
@@ -438,6 +438,14 @@ Blockly.Block.prototype.getSurroundParent = function() {
  */
 Blockly.Block.prototype.getNextBlock = function() {
   return this.nextConnection && this.nextConnection.targetBlock();
+};
+
+/**
+ * Return the previous statement block directly connected to this block.
+ * @return {Blockly.Block} The previous statement block or null.
+ */
+Blockly.Block.prototype.getPreviousBlock = function() {
+  return this.previousConnection && this.previousConnection.targetBlock();
 };
 
 /**
@@ -957,7 +965,7 @@ Blockly.Block.prototype.setOutput = function(newBoolean, opt_check) {
  */
 Blockly.Block.prototype.setInputsInline = function(newBoolean) {
   if (this.inputsInline != newBoolean) {
-    Blockly.Events.fire(new Blockly.Events.Change(
+    Blockly.Events.fire(new Blockly.Events.BlockChange(
         this, 'inline', null, this.inputsInline, newBoolean));
     this.inputsInline = newBoolean;
   }
@@ -996,7 +1004,7 @@ Blockly.Block.prototype.getInputsInline = function() {
  */
 Blockly.Block.prototype.setDisabled = function(disabled) {
   if (this.disabled != disabled) {
-    Blockly.Events.fire(new Blockly.Events.Change(
+    Blockly.Events.fire(new Blockly.Events.BlockChange(
         this, 'disabled', null, this.disabled, disabled));
     this.disabled = disabled;
   }
@@ -1033,7 +1041,7 @@ Blockly.Block.prototype.isCollapsed = function() {
  */
 Blockly.Block.prototype.setCollapsed = function(collapsed) {
   if (this.collapsed_ != collapsed) {
-    Blockly.Events.fire(new Blockly.Events.Change(
+    Blockly.Events.fire(new Blockly.Events.BlockChange(
         this, 'collapsed', null, this.collapsed_, collapsed));
     this.collapsed_ = collapsed;
   }
@@ -1124,18 +1132,7 @@ Blockly.Block.prototype.jsonInit = function(json) {
 
   // Set basic properties of block.
   if (json['colour'] !== undefined) {
-    // TODO: Consider a helper function here.
-    var rawValue = json['colour'];
-    var primary = goog.isString(rawValue) ?
-        Blockly.utils.replaceMessageReferences(rawValue) : rawValue;
-    rawValue = json['colourSecondary'];
-    var secondary = goog.isString(rawValue) ?
-        Blockly.utils.replaceMessageReferences(rawValue) : rawValue;
-    rawValue = json['colourTertiary'];
-    var tertiary = goog.isString(rawValue) ?
-        Blockly.utils.replaceMessageReferences(rawValue) : rawValue;
-
-    this.setColour(primary, secondary, tertiary);
+    this.setColourFromJson_(json);
   }
 
   // Interpolate the message blocks.
@@ -1228,6 +1225,39 @@ Blockly.Block.prototype.mixin = function(mixinObj, opt_disableCheck) {
     }
   }
   goog.mixin(this, mixinObj);
+};
+
+/**
+ * Set the colour of the block from strings or string table references.
+ * @param {string|?} primary Primary colour, which may be a string that contains
+ *     string table references.
+ * @param {string|?} secondary Secondary colour, which may be a string that
+ *     contains string table references.
+ * @param {string|?} tertiary Tertiary colour, which may be a string that
+ *     contains string table references.
+ * @private
+ */
+Blockly.Block.prototype.setColourFromRawValues_ = function(primary, secondary,
+    tertiary) {
+  primary = goog.isString(primary) ?
+      Blockly.utils.replaceMessageReferences(primary) : primary;
+  secondary = goog.isString(secondary) ?
+      Blockly.utils.replaceMessageReferences(secondary) : secondary;
+  tertiary = goog.isString(tertiary) ?
+      Blockly.utils.replaceMessageReferences(tertiary) : tertiary;
+
+  this.setColour(primary, secondary, tertiary);
+};
+
+/**
+ * Set the colour of the block from JSON, replacing message references as
+ * needed.
+ * @param {!Object} json Structured data describing the block.
+ * @private
+ */
+Blockly.Block.prototype.setColourFromJson_ = function(json) {
+  this.setColourFromRawValues_(json['colour'], json['colourSecondary'],
+      json['colourTertiary']);
 };
 
 /**
@@ -1445,7 +1475,8 @@ Blockly.Block.newFieldTextInputFromJson_ = function(options) {
  */
 Blockly.Block.newFieldVariableFromJson_ = function(options) {
   var varname = Blockly.utils.replaceMessageReferences(options['variable']);
-  return new Blockly.FieldVariable(varname);
+  var variableTypes = options['variableTypes'];
+  return new Blockly.FieldVariable(varname, null, variableTypes);
 };
 
 /**
@@ -1607,7 +1638,7 @@ Blockly.Block.prototype.getCommentText = function() {
  */
 Blockly.Block.prototype.setCommentText = function(text) {
   if (this.comment != text) {
-    Blockly.Events.fire(new Blockly.Events.Change(
+    Blockly.Events.fire(new Blockly.Events.BlockChange(
         this, 'comment', null, this.comment, text || ''));
     this.comment = text;
   }
@@ -1697,7 +1728,7 @@ Blockly.Block.prototype.getRelativeToSurfaceXY = function() {
  */
 Blockly.Block.prototype.moveBy = function(dx, dy) {
   goog.asserts.assert(!this.parentBlock_, 'Block has parent.');
-  var event = new Blockly.Events.Move(this);
+  var event = new Blockly.Events.BlockMove(this);
   this.xy_.translate(dx, dy);
   event.recordNew();
   Blockly.Events.fire(event);

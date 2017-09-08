@@ -238,7 +238,7 @@ Blockly.VerticalFlyout.prototype.setMetrics_ = function(xyRatio) {
   this.workspace_.translate(this.workspace_.scrollX + metrics.absoluteLeft,
       this.workspace_.scrollY + metrics.absoluteTop);
 
-  this.clipRect_.setAttribute('height', metrics.viewHeight + 'px');
+  this.clipRect_.setAttribute('height', Math.max(0, metrics.viewHeight) + 'px');
   this.clipRect_.setAttribute('width', metrics.viewWidth + 'px');
 };
 
@@ -277,8 +277,13 @@ Blockly.VerticalFlyout.prototype.position = function() {
     var y = 0;
   }
 
+  // *** ANKI CHANGE ***
+  // Top of flyout is positioned 100 px down from top.
+  // TODO Revisit when we revise position for phones.
+  y = 100;
+
   // Record the height for Blockly.Flyout.getMetrics_
-  this.height_ = targetWorkspaceMetrics.viewHeight - y;
+  this.height_ = Math.max(0, targetWorkspaceMetrics.viewHeight - y);
 
   this.setBackgroundPath_(this.width_, this.height_);
 
@@ -513,6 +518,7 @@ Blockly.VerticalFlyout.prototype.createRect_ = function(block, x, y,
  */
 Blockly.VerticalFlyout.prototype.createCheckbox_ = function(block, cursorX,
      cursorY, blockHW) {
+  var checkboxState = Blockly.VerticalFlyout.getCheckboxState(block.id);
   var svgRoot = block.getSvgRoot();
   var extraSpace = this.CHECKBOX_SIZE + this.CHECKBOX_MARGIN;
   var width = this.RTL ? this.getWidth() / this.workspace_.scale - extraSpace : cursorX;
@@ -534,7 +540,12 @@ Blockly.VerticalFlyout.prototype.createCheckbox_ = function(block, cursorX,
       'class': 'blocklyFlyoutCheckboxPath',
       'd': this.CHECKMARK_PATH
     }, checkboxGroup);
-  var checkboxObj = {svgRoot: checkboxGroup, clicked: false, block: block};
+  var checkboxObj = {svgRoot: checkboxGroup, clicked: checkboxState, block: block};
+
+  if (checkboxState) {
+    Blockly.utils.addClass((checkboxObj.svgRoot), 'checked');
+  }
+
   block.flyoutCheckbox = checkboxObj;
   this.workspace_.getCanvas().insertBefore(checkboxGroup, svgRoot);
   this.checkboxes_.push(checkboxObj);
@@ -550,23 +561,40 @@ Blockly.VerticalFlyout.prototype.createCheckbox_ = function(block, cursorX,
  */
 Blockly.VerticalFlyout.prototype.checkboxClicked_ = function(checkboxObj) {
   return function(e) {
-    var oldValue = checkboxObj.clicked;
-    var newValue = !oldValue;
-    checkboxObj.clicked = newValue;
-
-    if (checkboxObj.clicked) {
-      Blockly.utils.addClass((checkboxObj.svgRoot), 'checked');
-    } else {
-      Blockly.utils.removeClass((checkboxObj.svgRoot), 'checked');
-    }
-
-    Blockly.Events.fire(new Blockly.Events.Change(
-        checkboxObj.block, 'checkbox', null, oldValue, newValue));
-
+    this.setCheckboxState(checkboxObj.block.id, !checkboxObj.clicked);
     // This event has been handled.  No need to bubble up to the document.
     e.stopPropagation();
     e.preventDefault();
-  };
+  }.bind(this);
+};
+
+/**
+ * Set the state of a checkbox by block ID.
+ * @param {string} blockId ID of the block whose checkbox should be set
+ * @param {boolean} value Value to set the checkbox to.
+ * @public
+ */
+Blockly.VerticalFlyout.prototype.setCheckboxState = function(blockId, value) {
+  for (var i = 0; i < this.checkboxes_.length; i++) {
+    var checkboxObj = this.checkboxes_[i];
+    if (checkboxObj.block.id === blockId) {
+      if (checkboxObj.clicked === value) return;
+
+      var oldValue = checkboxObj.clicked;
+      checkboxObj.clicked = value;
+
+      if (checkboxObj.clicked) {
+        Blockly.utils.addClass((checkboxObj.svgRoot), 'checked');
+      } else {
+        Blockly.utils.removeClass((checkboxObj.svgRoot), 'checked');
+      }
+
+      Blockly.Events.fire(new Blockly.Events.Change(
+          checkboxObj.block, 'checkbox', null, oldValue, value));
+
+      return;
+    }
+  }
 };
 
 /**
@@ -598,100 +626,6 @@ Blockly.VerticalFlyout.prototype.isDragTowardWorkspace = function(currentDragDel
     }
   }
   return draggingTowardWorkspace;
-};
-
-/**
- * Copy a block from the flyout to the workspace and position it correctly.
- * @param {!Blockly.Block} originBlock The flyout block to copy.
- * @return {!Blockly.Block} The new block in the main workspace.
- * @private
- */
-Blockly.VerticalFlyout.prototype.placeNewBlock_ = function(originBlock) {
-  var targetWorkspace = this.targetWorkspace_;
-  var svgRootOld = originBlock.getSvgRoot();
-  if (!svgRootOld) {
-    throw 'originBlock is not rendered.';
-  }
-  // Figure out where the original block is on the screen, relative to the upper
-  // left corner of the main workspace.
-  // In what coordinates?  Pixels?
-  var xyOld = Blockly.utils.getInjectionDivXY_(svgRootOld);
-
-  // Take into account that the flyout might have been scrolled horizontally
-  // (separately from the main workspace).
-  // Generally a no-op in vertical mode but likely to happen in horizontal
-  // mode.
-  // var scrollX = this.workspace_.scrollX;
-  var scale = this.workspace_.scale;
-  // xyOld.x += scrollX / scale - scrollX;
-
-  var targetMetrics = targetWorkspace.getMetrics();
-
-  // If the flyout is on the right side, (0, 0) in the flyout is offset to
-  // the right of (0, 0) in the main workspace.  Add an offset to take that
-  // into account.
-  var scrollX = 0;
-  if (this.toolboxPosition_ == Blockly.TOOLBOX_AT_RIGHT) {
-    scrollX = targetMetrics.viewWidth - this.width_;
-    // Scale the scroll (getSvgXY_ did not do this).
-    xyOld.x += scrollX / scale - scrollX;
-  }
-
-  // The main workspace has 0,0 at the top inside corner of the toolbox.
-  // Need to take that into account now that the flyout is offset from there in
-  // both directions.
-  
-  if (this.parentToolbox_) {
-    // TODO (fenichel): fix these offsets to correctly deal with scaling
-    // changes.
-    xyOld.y += (this.parentToolbox_.getHeight()) /
-        targetWorkspace.scale -
-        (this.parentToolbox_.getHeight());
-    var xOffset = this.parentToolbox_.getWidth() / targetWorkspace.scale -
-        this.parentToolbox_.getWidth();
-    if (this.toolboxPosition_ == Blockly.TOOLBOX_AT_RIGHT) {
-      xyOld.x += xOffset;
-    } else {
-      xyOld.x -= xOffset;
-    }
-  }
-  
-
-  // Take into account that the flyout might have been scrolled vertically
-  // (separately from the main workspace).
-  var scrollY = this.workspace_.scrollY;
-  xyOld.y += scrollY / scale - scrollY;
-
-  // Create the new block by cloning the block in the flyout (via XML).
-  var xml = Blockly.Xml.blockToDom(originBlock);
-  // The target workspace would normally resize during domToBlock, which will
-  // lead to weird jumps.  Save it for terminateDrag.
-  targetWorkspace.setResizesEnabled(false);
-  var block = Blockly.Xml.domToBlock(xml, targetWorkspace);
-  var svgRootNew = block.getSvgRoot();
-  if (!svgRootNew) {
-    throw 'block is not rendered.';
-  }
-  // Figure out where the new block got placed on the screen, relative to the
-  // upper left corner of the workspace.  This may not be the same as the
-  // original block because the flyout's origin may not be the same as the
-  // main workspace's origin.
-  var xyNew = Blockly.utils.getInjectionDivXY_(svgRootNew);
-
-  // Scale the scroll (getSvgXY_ did not do this).
-  xyNew.x +=
-      targetWorkspace.scrollX / targetWorkspace.scale - targetWorkspace.scrollX;
-  xyNew.y +=
-      targetWorkspace.scrollY / targetWorkspace.scale - targetWorkspace.scrollY;
-
-  // Move the new block to where the old block is.
-  var dx = ((scale * xyOld.x) - (targetWorkspace.scale * xyNew.x)) /
-      targetWorkspace.scale;
-  var dy = ((scale * xyOld.y) - (targetWorkspace.scale * xyNew.y)) /
-      targetWorkspace.scale;
-  block.moveBy(dx, dy);
-
-  return block;
 };
 
 /**
@@ -727,4 +661,14 @@ Blockly.VerticalFlyout.prototype.getClientRect = function() {
 Blockly.VerticalFlyout.prototype.reflowInternal_ = function(/* blocks */) {
   // This is a no-op because the flyout is a fixed size.
   return;
+};
+
+/**
+ * Gets the checkbox state for a block
+ * @param {string} blockId The ID of the block in question.
+ * @return {boolean} Whether the block is checked.
+ * @public
+ */
+Blockly.VerticalFlyout.getCheckboxState = function(/* blockId */) {
+  return false;
 };

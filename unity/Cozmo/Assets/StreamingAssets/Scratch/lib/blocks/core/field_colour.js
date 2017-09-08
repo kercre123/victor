@@ -101,16 +101,14 @@ Blockly.FieldColour.prototype.getValue = function() {
 Blockly.FieldColour.prototype.setValue = function(colour) {
   if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
       this.colour_ != colour) {
-    Blockly.Events.fire(new Blockly.Events.Change(
+    Blockly.Events.fire(new Blockly.Events.BlockChange(
         this.sourceBlock_, 'field', this.name, this.colour_, colour));
   }
   this.colour_ = colour;
   if (this.sourceBlock_) {
-    this.sourceBlock_.setColour(
-      colour,
-      this.sourceBlock_.getColourSecondary(),
-      this.sourceBlock_.getColourTertiary()
-    );
+    // Set the primary, secondary and tertiary colour to this value.
+    // The renderer expects to be able to use the secondary color as the fill for a shadow.
+    this.sourceBlock_.setColour(colour, colour, colour);
   }
 };
 

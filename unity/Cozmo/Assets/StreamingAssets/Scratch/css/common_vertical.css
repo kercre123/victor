@@ -229,7 +229,7 @@ button:focus {
     width: 29px;
     height: 29px;
     background-color: transparent;
-    background-image: url('../lib/blocks/media/turnleft_arrow.png');
+    background-image: url('../lib/blocks/media/rotate-left.svg');
     background-size: cover;
     pointer-events: auto;
     border: 0;
@@ -254,7 +254,7 @@ button:focus {
     width: 29px;
     height: 29px;
     background-color: transparent;
-    background-image: url('../lib/blocks/media/turnright_arrow.png');
+    background-image: url('../lib/blocks/media/rotate-right.svg');
     background-size: cover;
     pointer-events: auto;
     border: 0;
