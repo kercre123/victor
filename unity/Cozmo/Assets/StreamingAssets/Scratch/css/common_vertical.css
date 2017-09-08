@@ -85,6 +85,81 @@ button:focus {
 }
 
 /**
+ * Glossary buton
+ */
+#glossary-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#glossary-button .primary {
+    position: absolute;
+    top: 20px;
+    left: 100px;
+}
+
+#glossary-button .primary button {
+    display: block;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    background-color: transparent;
+    background-image: url('../images/ui/glossary.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#glossary-button .primary button:active {
+    background-position: 0 -54px;
+}
+
+
+
+/**
+  * Challenges button
+  */
+
+#challenges {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#challenges .primary {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 90px;
+}
+
+#challenges .primary button {
+    display: block;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    background-color: transparent;
+    background-image: url('../images/ui/challenges.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#challenges .primary button:active {
+    background-position:0px -72px;
+}
+
+/**
  * projecttext
  */
 #projecttext {
@@ -286,6 +361,39 @@ button:focus {
     }
 
     #close .primary button:active {
+        background-position:0px -44px;
+    }
+
+    #glossary-button .primary {
+        display: block;
+        position: absolute;
+        top: 11px;
+        left: 55px;
+    }
+
+    #glossary-button .primary button {
+        width: 34px;
+        height: 34px;
+    }
+
+    #glossary-button .primary button:active {
+        background-position:0px -34px;
+    }
+
+
+    #challenges .primary {
+        display: block;
+        position: absolute;
+        top: 5px;
+        left: 55px;
+    }
+
+    #challenges .primary button {
+        width:44px;
+        height:44px;
+    }
+
+    #challenges .primary button:active {
         background-position:0px -44px;
     }
 

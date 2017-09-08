@@ -24,10 +24,10 @@
       challenge['BlockCategory'] = getBlockIconColor(challenge['BlockIcon']);
 
       if (challenge.Template === "Question") {
-        html += _populateTemplate(questionTemplate, challenge);
+        html += window._populateTemplate(questionTemplate, challenge);
       } else {
         // "Answer" category
-        html += _populateTemplate(answerTemplate, challenge);
+        html += window._populateTemplate(answerTemplate, challenge);
       }
     }
 
@@ -41,32 +41,6 @@
     }
   }
 
-  /**
-   * Render template and substitute keys
-   * @param {String} template - simple template language
-   * @param {Object} map - key/values to substitute into the template
-   */
-  function _populateTemplate(template, map) {
-    var rendered = template;
-
-    // replace keys in template text surrounded by two curly braces, like {{KeyName}}
-    for (var key in map) {
-      var regex = new RegExp('\\{\\{' + key + '\\}\\}', 'g');
-
-      // if key ends in "Key", assume it's a translation key and look up the translation
-      var value = (key.match("Key$")) ? $t(map[key]) : map[key];
-      if (typeof value === 'object') {
-        // replace value with translation
-        value = value.translation;
-      }
-
-      // substitute values into the template
-      rendered = rendered.replace(regex, value);
-    }
-
-    // return the rendered template with the substituted values
-    return rendered;
-  }
 
   /**
    * register event handlders

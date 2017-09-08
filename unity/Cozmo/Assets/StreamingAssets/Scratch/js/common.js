@@ -156,6 +156,7 @@
             e.preventDefault();
         });
 
+
         if (!window.isVertical) {
             var challengesButton = document.querySelector('#challengesbutton');
 
@@ -171,7 +172,7 @@
         else {
             var undo = document.querySelector('#undo');
             var redo = document.querySelector('#redo');
-            
+
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 Scratch.workspace.undo();
@@ -185,6 +186,15 @@
             });
             redo.addEventListener('touchmove', function (e) {
                 e.preventDefault();
+            });
+
+            var glossaryButton = document.querySelector('#glossarybutton');
+            glossaryButton.addEventListener('click', function(){
+              Scratch.workspace.playAudio('click');
+              Glossary.open();
+            });
+            glossaryButton.addEventListener('touchmove', function (e) {
+              e.preventDefault();
             });
         }
 
@@ -239,7 +249,7 @@
             var cozmoSaysText = document.getElementById("cozmo_says_text");
             cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
         }
-    }
+    };
 
     /**
      * Binds the extension interface to `window.extensions`.
