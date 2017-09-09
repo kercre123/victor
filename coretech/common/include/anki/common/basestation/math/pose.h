@@ -77,13 +77,17 @@ namespace Anki {
     Pose2d(const Pose3d& pose3d);
 
     // Accessors:
-    float          GetX()           const { return GetTransform().GetX();           }
-    float          GetY()           const { return GetTransform().GetY();           }
-    const Radians& GetAngle()       const { return GetTransform().GetAngle();       }
-    const Point2f& GetTranslation() const { return GetTransform().GetTranslation(); }
-    const Point3f& GetPlaneOrigin() const { return _planeOrigin;                    }
-    const Vec3f&   GetPlaneNormal() const { return _planeNormal;                    }
-
+    float          GetX()           const  { return GetTransform().GetX();           }
+    float          GetY()           const  { return GetTransform().GetY();           }
+    const Radians& GetAngle()       const& { return GetTransform().GetAngle();       }
+    const Point2f& GetTranslation() const& { return GetTransform().GetTranslation(); }
+    const Point3f& GetPlaneOrigin() const& { return _planeOrigin;                    }
+    const Vec3f&   GetPlaneNormal() const& { return _planeNormal;                    }
+    Radians        GetAngle()       &&     { return GetTransform().GetAngle();       }
+    Point2f        GetTranslation() &&     { return GetTransform().GetTranslation(); }
+    Point3f        GetPlaneOrigin() &&     { return _planeOrigin;                    }
+    Vec3f          GetPlaneNormal() &&     { return _planeNormal;                    }
+    
     void  SetPlaneOrigin(const Point3f &origin) { _planeOrigin = origin; }
     void  SetPlaneNormal(const Vec3f   &normal) { _planeNormal = normal; _planeNormal.MakeUnitLength(); }
 
@@ -181,8 +185,11 @@ namespace Anki {
     PoseStruct3d ToPoseStruct3d(const PoseOriginList& originList) const;
     
     // Accessors:
-    const Rotation3d&       GetRotation()       const { return GetTransform().GetRotation();    }
-    const Vec3f&            GetTranslation()    const { return GetTransform().GetTranslation(); }
+    //   Note: we return by value for Rvalues to avoid keeping references to temporary poses' members
+    const Rotation3d&       GetRotation()       const& { return GetTransform().GetRotation();    }
+    Rotation3d              GetRotation()       &&     { return GetTransform().GetRotation();    }
+    const Vec3f&            GetTranslation()    const& { return GetTransform().GetTranslation(); }
+    Vec3f                   GetTranslation()    &&     { return GetTransform().GetTranslation(); }
     
     RotationMatrix3d        GetRotationMatrix() const { return GetRotation().GetRotationMatrix(); }
     RotationVector3d        GetRotationVector() const { return GetRotation().GetRotationVector(); }

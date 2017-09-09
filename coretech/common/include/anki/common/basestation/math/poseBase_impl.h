@@ -175,7 +175,7 @@ namespace Anki {
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd, class TransformNd>
-  inline const TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform() const
+  inline TransformNd const& PoseBase<PoseNd,TransformNd>::GetTransform() const&
   {
     DEV_ASSERT(!IsNull(), "PoseBase.GetTransformConst.NullNode");
     return _node->GetTransform();
@@ -183,9 +183,17 @@ namespace Anki {
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd, class TransformNd>
-  inline TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform()
+  inline TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform() &
   {
     DEV_ASSERT(!IsNull(), "PoseBase.GetTransform.NullNode");
+    return _node->GetTransform();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline TransformNd PoseBase<PoseNd,TransformNd>::GetTransform() &&
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetTransformRvalue.NullNode");
     return _node->GetTransform();
   }
   

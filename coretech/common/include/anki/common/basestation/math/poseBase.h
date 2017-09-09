@@ -58,8 +58,9 @@ namespace Anki {
     // Set the ID for this pose. NOTE: ID is *not* copied with pose!
     void SetID(PoseID_t newID);
     
-    const TransformNd& GetTransform() const;
-    TransformNd& GetTransform();
+    TransformNd const& GetTransform() const&;
+    TransformNd &      GetTransform() &;
+    TransformNd        GetTransform() &&;
     
     // Set / check parent relationships:
     void ClearParent();
