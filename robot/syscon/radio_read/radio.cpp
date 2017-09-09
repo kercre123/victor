@@ -489,7 +489,7 @@ void Radio::prepare(void* userdata) {
     if (g_tomyMode)
     {
       tx_state._reserved[1] = 'T';
-      tx_state._reserved[2] = RF_PWR0|PLL_LOCK|CONT_WAVE; // PWR1=-6dBm, PWR0=-12dBm
+      tx_state._reserved[2] = RF_PWR1|PLL_LOCK|CONT_WAVE; // PWR1=-6dBm, PWR0=-12dBm
       tx_state._reserved[3] = 2;  // 2400+x MHz
     } else {
       tx_state._reserved[1] = 0;

@@ -385,7 +385,7 @@
             this.MaximumSize = new System.Drawing.Size(644, 436);
             this.MinimumSize = new System.Drawing.Size(644, 436);
             this.Name = "Main";
-            this.Text = "ANKI EMC v11";
+            this.Text = "ANKI EMC v12";
             this.tabPage1.ResumeLayout(false);
             this.tabs.ResumeLayout(false);
             this.ResumeLayout(false);
