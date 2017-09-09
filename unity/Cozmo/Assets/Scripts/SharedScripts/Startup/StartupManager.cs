@@ -74,6 +74,11 @@ public class StartupManager : MonoBehaviour {
   private GameObject _AndroidPermissionPrefab;
   private GameObject _AndroidPermissionInstance;
 
+  // DO NOT REMOVE WITHOUT TESTING A PLAY STORE BUILD OF ANDROID!!!!
+  // Everything used in the android permissions must be directly referenced.
+  [SerializeField]
+  private TMPro.TMP_Settings _TMPSettingsDirectReference;
+
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _LoadingVersionLabel;
 
