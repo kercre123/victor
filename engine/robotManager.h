@@ -131,6 +131,8 @@ public:
   bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::RobotToEngineTag msgType) const;
   bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::EngineToRobotTag msgType) const;
 
+  void ReadLabAssignmentsFromRobot(u32 serialNumber) const;
+  
   void ConnectRobotToNeedsManager(u32 serialNumber) const;
   
   const std::set<AnimationTrigger>& GetDasBlacklistedAnimationTriggers() const { return _dasBlacklistedAnimationTriggers; }

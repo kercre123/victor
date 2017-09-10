@@ -282,15 +282,14 @@ public class RobotEngineManager : MonoBehaviour {
       BlockPoolTracker = new Cozmo.BlockPool.BlockPoolTracker(this);
     }
 
+    // pterry 2017-09-07:  Disabling, because we're now serializing the lab assignments on the
+    // engine side.  This is because we need them earlier than we can get them here, at least
+    // for the first Cozmo experiment, which requires the lab assignments on init of needs
+    // manager (which init happens in a constructor for the whole engine.)
     // Send A/B test data to engine
-    var defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
-    Message.StoredLabAssignments = new StoredLabAssignments(defaultProfile.LabAssignments.ToArray());
-    SendMessage();
-
-    // Now tell NeedsManager it can finish initializing, now that it has the lab assignments
-    // (our first Cozmo AB test requires us having any saved lab assignments right away)
-    Message.ContinueInitializingNeedsManager = new ContinueInitializingNeedsManager();
-    SendMessage();
+    //var defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    //Message.StoredLabAssignments = new StoredLabAssignments(defaultProfile.LabAssignments.ToArray());
+    //SendMessage();
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -338,9 +337,6 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.BehaviorObjectiveAchieved:
       ProcessBehaviorObjectiveAchieved(message.BehaviorObjectiveAchieved);
-      break;
-    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.UpdatedAssignments:
-      ProcessUpdatedAssignments(message.UpdatedAssignments);
       break;
     }
 
@@ -430,10 +426,6 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ProcessBehaviorObjectiveAchieved(Anki.Cozmo.ExternalInterface.BehaviorObjectiveAchieved message) {
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayBehaviorSuccess, message.behaviorObjective));
-  }
-
-  private void ProcessUpdatedAssignments(Anki.Cozmo.ExternalInterface.UpdatedAssignments message) {
-    DataPersistence.DataPersistenceManager.Instance.HandleUpdatedAssignments(message);
   }
 
   public void StartEngine(string locale) {

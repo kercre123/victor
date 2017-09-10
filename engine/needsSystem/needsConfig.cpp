@@ -11,10 +11,13 @@
  **/
 
 
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsConfig.h"
 #include "engine/robot.h"
-#include "anki/common/basestation/jsonTools.h"
 #include "clad/types/needsSystemTypes.h"
+#include "util/fileUtils/fileUtils.h"
 #include <assert.h>
 
 
@@ -56,11 +59,8 @@ static const std::string kPlayRangeKey = "playRange";
 static const std::string kCooldownSecsKey = "cooldownSecs";
 static const std::string kFreeplaySparksRewardWeight = "freeplaySparksRewardWeight";
 
-static const std::string kABTestDecayConfigVariationAKey = "variationA";
-static const std::string kABTestDecayConfigVariationBKey = "variationB";
 
-
-NeedsConfig::NeedsConfig()
+NeedsConfig::NeedsConfig(const CozmoContext* cozmoContext)
 : _minNeedLevel(0.0f)
 , _maxNeedLevel(1.0f)
 , _decayPeriod(60.0f)
@@ -70,9 +70,9 @@ NeedsConfig::NeedsConfig()
 , _brokenPartThresholds()
 , _decayConnected()
 , _decayUnconnected()
-, _decayUnconnectedVariations()
 , _localNotificationMaxFutureMinutes(60 * 24 * 365 * 10)
-, _unconnectedDecayTestVariationKey("")
+, _cozmoContext(cozmoContext)
+, _unconnectedDecayTestVariationKey("Unknown")
 {
 }
 
@@ -211,31 +211,13 @@ void NeedsConfig::Init(const Json::Value& json)
 }
 
 
-void NeedsConfig::InitDecay(const Json::Value& json, const Json::Value& jsonA,
-                            const Json::Value& jsonB)
+void NeedsConfig::InitDecay(const Json::Value& json)
 {
-  // Connected decay
-  InitDecayRates(json[kDecayRatesKey], kConnectedDecayRatesKey, _decayConnected);
-  InitDecayModifiers(json[kDecayModifiersKey], kConnectedDecayModifiersKey, _decayConnected);
+  InitDecayRates(json[kDecayRatesKey], kConnectedDecayRatesKey,   _decayConnected);
+  InitDecayRates(json[kDecayRatesKey], kUnconnectedDecayRatesKey, _decayUnconnected);
 
-  // Unconnected decay has three variations for AB testing
-  InitDecayRates(json[kDecayRatesKey], kUnconnectedDecayRatesKey,
-                 _decayUnconnectedVariations[kABTestDecayConfigControlKey]);
-  InitDecayModifiers(json[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
-                     _decayUnconnectedVariations[kABTestDecayConfigControlKey]);
-
-  InitDecayRates(jsonA[kDecayRatesKey], kUnconnectedDecayRatesKey,
-                 _decayUnconnectedVariations[kABTestDecayConfigVariationAKey]);
-  InitDecayModifiers(jsonA[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
-                     _decayUnconnectedVariations[kABTestDecayConfigVariationAKey]);
-
-  InitDecayRates(jsonB[kDecayRatesKey], kUnconnectedDecayRatesKey,
-                 _decayUnconnectedVariations[kABTestDecayConfigVariationBKey]);
-  InitDecayModifiers(jsonB[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
-                     _decayUnconnectedVariations[kABTestDecayConfigVariationBKey]);
-
-  // Use the control group by default
-  SetUnconnectedDecayTestVariation(kABTestDecayConfigControlKey);
+  InitDecayModifiers(json[kDecayModifiersKey], kConnectedDecayModifiersKey,   _decayConnected);
+  InitDecayModifiers(json[kDecayModifiersKey], kUnconnectedDecayModifiersKey, _decayUnconnected);
 }
 
 struct SortDecayRatesByThresholdDescending
@@ -333,18 +315,35 @@ float NeedsConfig::NeedLevelForNeedBracket(const NeedId needId, const NeedBracke
 }
 
 
-void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& variationKey)
+void NeedsConfig::SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey)
 {
-  const auto& it = _decayUnconnectedVariations.find(variationKey);
-  DEV_ASSERT_MSG(it != _decayUnconnectedVariations.end(),
-                 "NeedsConfig.SetUnconnectedDecayTestVariation",
-                 "variationKey %s not found in loaded test config data", variationKey.c_str());
-  if (it != _decayUnconnectedVariations.end())
-  {
-    _decayUnconnected = it->second;
+  _unconnectedDecayTestVariationKey = variationKey;
 
-    _unconnectedDecayTestVariationKey = variationKey;
+  // We copy one of the experiment's variation files over the file that is read at app start-up
+  const std::string srcFile  = baseFilename + "_" + variationKey + ".json";
+  const std::string destFile = baseFilename + ".json";
+  const auto srcFileFull  = _cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, srcFile);
+  const auto destFileFull = _cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, destFile);
+
+  const bool success = Util::FileUtils::CopyFile(destFileFull, srcFileFull);
+
+  if (!ANKI_VERIFY(success, "NeedsConfig.SetUnconnectedDecayTestVariation",
+                  "Failed to copy file %s to %s", srcFileFull.c_str(), destFileFull.c_str()))
+  {
+    return;
   }
+
+  // Then re-initialize the decay config
+  Json::Value decayJson;
+  const bool parseSuccess = _cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, srcFile, decayJson);
+
+  if (!ANKI_VERIFY(parseSuccess, "NeedsConfig.SetUnconnectedDecayTestVariation",
+                   "Failed to parse file %s", srcFile.c_str()))
+  {
+    return;
+  }
+
+  InitDecay(decayJson);
 }
 
 

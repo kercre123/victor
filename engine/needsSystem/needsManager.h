@@ -50,18 +50,15 @@ enum class RobotStorageState
   Writing
 };
 
-
 class NeedsManager
 {
 public:
   explicit NeedsManager(const CozmoContext* cozmoContext);
   ~NeedsManager();
 
-  void Init(const float currentTime_s, const Json::Value& inJson,
+  void Init(const float currentTime_s,      const Json::Value& inJson,
             const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-            const Json::Value& inDecayJson, const Json::Value& inDecayAJson,
-            const Json::Value& inDecayBJson,
-            const Json::Value& inHandlersJson,
+            const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
             const Json::Value& inLocalNotificationJson);
   void InitAfterConnection();
   void InitAfterSerialNumberAcquired(u32 serialNumber);
@@ -98,6 +95,8 @@ public:
 
   bool IsPendingSparksRewardMsg() const { return _pendingSparksRewardMsg; }
   void SparksRewardCommunicatedToUser();
+
+  static inline const std::string GetDecayConfigBaseFilename() { return "config/engine/needs_decay_config"; }
 
   static const char* kLogChannelName;
 

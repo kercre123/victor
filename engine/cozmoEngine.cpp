@@ -122,10 +122,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::StoredLabAssignments>();
 
   auto handler = [this] (const std::vector<Util::AnkiLab::AssignmentDef>& assignments) {
-    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdatedAssignments>(assignments);
+    _context->GetExperiments()->WriteLabAssignmentsToRobot(assignments);
   };
   _signalHandles.emplace_back(_context->GetExperiments()->GetAnkiLab()
                               .ActiveAssignmentsUpdatedSignal().ScopedSubscribe(handler));
@@ -237,8 +236,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
                                     _context->GetDataLoader()->GetStarRewardsConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsActionsConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsDecayConfig(),
-                                    _context->GetDataLoader()->GetRobotNeedsDecayConfigA(),
-                                    _context->GetDataLoader()->GetRobotNeedsDecayConfigB(),
                                     _context->GetDataLoader()->GetRobotNeedsHandlersConfig(),
                                     _context->GetDataLoader()->GetLocalNotificationConfig());
 
@@ -331,17 +328,6 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
   {
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
     _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
-  }
-}
-
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::StoredLabAssignments& msg)
-{
-  using namespace Util::AnkiLab;
-  AnkiLab& lab = _context->GetExperiments()->GetAnkiLab();
-
-  for (const auto& assignment : msg.assignments) {
-    (void) lab.RestoreActiveExperiment(assignment.experiment_key, assignment.user_id, assignment.variation_key);
   }
 }
 

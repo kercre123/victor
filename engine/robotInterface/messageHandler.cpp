@@ -222,6 +222,11 @@ const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
   return _robotConnectionManager->GetQueuedTimes_ms();
 }
 
+void MessageHandler::ReadLabAssignmentsFromRobot(u32 serialNumber) const
+{
+  _robotManager->ReadLabAssignmentsFromRobot(serialNumber);
+}
+
 void MessageHandler::ConnectRobotToNeedsManager(u32 serialNumber) const
 {
   _robotManager->ConnectRobotToNeedsManager(serialNumber);

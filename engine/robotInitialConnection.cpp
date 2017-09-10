@@ -288,6 +288,8 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       
       SendConnectionResponse(result, robotFwVersion);
 
+      _robotMessageHandler->ReadLabAssignmentsFromRobot(_serialNumber);
+      
       _robotMessageHandler->ConnectRobotToNeedsManager(_serialNumber);
     }));
     
