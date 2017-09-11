@@ -40,6 +40,11 @@ namespace CozmoAnim {
 }
 
 namespace Anki {
+  
+  namespace Vision {
+    class ImageRGB;
+  }
+  
 namespace Cozmo {
   
   // Forward declaration
@@ -48,9 +53,6 @@ namespace Cozmo {
   //enum class EngineToRobotTag : uint8_t;
   }
   
-  //class Robot;
-  class IRobotMessageHandler;
-    
   // IKeyFrame defines an abstract interface for all KeyFrames below.
   class IKeyFrame
   {
@@ -241,26 +243,22 @@ namespace Cozmo {
     
 
   // A FaceAnimationKeyFrame is for streaming a set of images to display on the
-  // robot's face. It is a cross between an AudioKeyFrame and an ImageKeyFrame.
-  // Like an ImageKeyFrame, it populates single messages with RLE-compressed
-  // data for display on the face display. Like an AudioKeyFrame, it will
-  // return a non-NULL message each time GetStreamMessage() is called until there
-  // are no more frames left in the animation.
+  // robot's face. It will return a non-NULL message each time GetStreamMessage()
+  // is called until there are no more frames left in the animation.
   class FaceAnimationKeyFrame : public IKeyFrame
   {
   public:
     FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
-    FaceAnimationKeyFrame(const AnimKeyFrame::FaceImage& faceImageMsg, const std::string& faceAnimName = "", const bool isSingleFrame = false)
-    : _animName(faceAnimName)
-    , _faceImageMsg(faceImageMsg)
-    , _isSingleFrame(isSingleFrame)
-    { }
     
     Result DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug);
 
     Result Process(const std::string& animNameDebug);
 
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    // The face image isn't actually returned via this function since the
+    // message does not go to robot process. Instead, images are grabbed via GetFaceImage().
+    // TODO: Is it better to create a wrapper EngineToRobot message so that we don't have
+    //       to duplicate keyframe checking logic in animationStreamer?
+    virtual RobotInterface::EngineToRobot* GetStreamMessage() override {return nullptr;}
     
     static const std::string& GetClassName() {
       static const std::string ClassName("FaceAnimationKeyFrame");
@@ -270,7 +268,10 @@ namespace Cozmo {
     virtual bool IsDone() override;
     
     const std::string& GetName() const { return _animName; }
-    const AnimKeyFrame::FaceImage& GetFaceImage() const { return _faceImageMsg; }
+    
+    // This function actually retrieves image data and increments the frame count so that it will
+    // retrieve the next image on the next call.
+    const Vision::ImageRGB* GetFaceImage();
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
@@ -280,10 +281,9 @@ namespace Cozmo {
     
   private:
     std::string  _animName;
-    AnimKeyFrame::FaceImage _faceImageMsg;
+    const Vision::ImageRGB*  _faceImg;
     
     s32   _curFrame = 0;
-    bool  _isSingleFrame = false;
     
   }; // class FaceAnimationKeyFrame
   

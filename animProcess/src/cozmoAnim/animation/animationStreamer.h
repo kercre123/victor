@@ -17,6 +17,7 @@
 #define __Anki_Cozmo_AnimationStreamer_H__
 
 #include "anki/common/types.h"
+#include "anki/vision/basestation/image.h"
 #include "cozmoAnim/animation/animation.h"
 #include "cozmoAnim/animation/track.h"
 #include "clad/types/liveIdleAnimationParameters.h"
@@ -188,6 +189,7 @@ namespace Cozmo {
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
     void BufferFaceToSend(const ProceduralFace& procFace);
+    void BufferFaceToSend(const Vision::ImageRGB& image);
     
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();

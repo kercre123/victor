@@ -338,12 +338,24 @@ namespace Cozmo {
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
     Vision::ImageRGB faceImg = ProceduralFaceDrawer::DrawFace(procFace);
+    BufferFaceToSend(faceImg);
+  }
+  
+  void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB& faceImg)
+  {
+    ANKI_VERIFY(faceImg.GetNumCols() == FaceDisplay::FACE_DISPLAY_WIDTH &&
+                faceImg.GetNumRows() == FaceDisplay::FACE_DISPLAY_HEIGHT,
+                "AnimationStreamer.BufferFaceToSend.InvalidImageSize",
+                "Got %d x %d. Expected %d x %d",
+                faceImg.GetNumCols(), faceImg.GetNumRows(),
+                FaceDisplay::FACE_DISPLAY_WIDTH, FaceDisplay::FACE_DISPLAY_HEIGHT);
     
     // Draws frame to face display
     cv::Mat img565;
     cv::cvtColor(faceImg.get_CvMat_(), img565, cv::COLOR_RGB2BGR565);
     FaceDisplay::getInstance()->FaceDraw(reinterpret_cast<u16*>(img565.ptr()));
   }
+
   
   Result AnimationStreamer::EnableBackpackAnimationLayer(bool enable)
   {
@@ -601,8 +613,20 @@ namespace Cozmo {
       
       // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
       // like idles, keep alive, or normal animated faces)
-      if(SendIfTrackUnlocked(faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::FACE_IMAGE_TRACK)) {
-        DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+      if(faceAnimTrack.HasFramesLeft() && !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK)) {
+        auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
+        if(faceKeyFrame.IsTimeToPlay(_streamingTime_ms - _startTime_ms))
+        {
+          const auto faceImgPtr = faceKeyFrame.GetFaceImage();
+          if (faceImgPtr != nullptr) {
+            DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+            BufferFaceToSend(*faceImgPtr);
+          }
+          
+          if(faceKeyFrame.IsDone()) {
+            faceAnimTrack.MoveToNextKeyFrame();
+          }
+        }
       }
       else if(!faceAnimTrack.HasFramesLeft() && layeredKeyFrames.haveFaceKeyFrame)
       {

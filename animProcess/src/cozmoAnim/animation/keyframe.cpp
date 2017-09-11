@@ -294,52 +294,29 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       // Note the dynamic check for num frames, since (in the case of streaming
       // procedural animations) the number of keyframes could be increasing
       // while we're playing and thus isn't known up front.
-      //return !_isSingleFrame && (_curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName));
-      
-      (void)_isSingleFrame;
-      return true;
+      return (_curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName));
     }
     
-    RobotInterface::EngineToRobot* FaceAnimationKeyFrame::GetStreamMessage()
+    const Vision::ImageRGB* FaceAnimationKeyFrame::GetFaceImage()
     {
-      // Populate the message with the next chunk of audio data and send it out
-      /*
       if(!IsDone()) 
       {
-        const std::vector<u8>* rleFrame;
-        if (_isSingleFrame) {
-          rleFrame = &_faceImageMsg.image;
-        }
-        else {
-          rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
-        }
+        _faceImg = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
         
-        if(rleFrame == nullptr) {
+        if(_faceImg == nullptr) {
           PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
                             "Failed to get frame %d from animation %s",
                             _curFrame, _animName.c_str());
           return nullptr;
         }
         
-        if(rleFrame->empty()) {
-          // No face in this frame, return nullptr so we don't stream anything to
-          // the robot, but don't complain because this is not an error.
-          // Still increment the frame counter.
-          ++_curFrame;
-          return nullptr;
-        }
-        
-        // copy std vector
-        _faceImageMsg.image = *rleFrame;
         ++_curFrame;
         
-        return new RobotInterface::EngineToRobot(AnimKeyFrame::FaceImage(_faceImageMsg));
+        return _faceImg;
       } else {
         _curFrame = 0;
         return nullptr;
       }
-       */
-      return nullptr;
     }
     
 #pragma mark -

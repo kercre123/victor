@@ -18,10 +18,10 @@
 
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/animation/cozmo_anim_generated.h"
+#include "cozmoAnim/animation/faceAnimationManager.h"
+#include "cozmoAnim/animation/proceduralFace.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "cozmoAnim/cozmoContext.h"
-//#include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "cozmoAnim/animation/proceduralFace.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -294,11 +294,11 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 
 void RobotDataLoader::LoadFaceAnimations()
 {
-//  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
-//  if (IsCustomAnimLoadEnabled())
-//  {
-//    FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
-//  }
+  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
+  if (IsCustomAnimLoadEnabled())
+  {
+    FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
+  }
 }
 
 

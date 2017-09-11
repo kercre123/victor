@@ -1,6 +1,4 @@
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
-
-#include "cozmoAnim/animation/keyframe.h"
 #include "cozmoAnim/animation/scanlineDistorter.h"
 
 #include "anki/common/basestation/array2d_impl.h"

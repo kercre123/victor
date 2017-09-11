@@ -17,6 +17,8 @@
 #include <unordered_map>
 
 #include "anki/common/types.h"
+#include "anki/vision/basestation/image.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
 
 namespace Anki {
   
@@ -27,18 +29,15 @@ namespace Anki {
   }
   }
   
-  namespace Vision {
-    class Image;
-  }
-  
 namespace Cozmo {
 
   // NOTE: this is a singleton class
   class FaceAnimationManager
   {
   public:
-    static const s32 IMAGE_WIDTH = 128;
-    static const s32 IMAGE_HEIGHT = 64;
+    
+    static const s32 IMAGE_WIDTH = FaceDisplay::FACE_DISPLAY_WIDTH;
+    static const s32 IMAGE_HEIGHT = FaceDisplay::FACE_DISPLAY_HEIGHT;
     static const std::string ProceduralAnimName;
     
     // Get a pointer to the singleton instance
@@ -49,14 +48,14 @@ namespace Cozmo {
 
     // Get a pointer to an RLE-compressed frame for the given animation.
     // Returns nullptr if animation or frame do not exist.
-    const std::vector<u8>* GetFrame(const std::string& animName, u32 frameNum) const;
+    const Vision::ImageRGB* GetFrame(const std::string& animName, u32 frameNum) const;
     
     // Return the total number of frames in the given animation. Returns 0 if the
     // animation doesn't exist.
     u32  GetNumFrames(const std::string& animName);
     
     // Ability to add keyframes at runtime, for procedural face streaming
-    Result AddImage(const std::string& animName, const Vision::Image& faceImg, u32 holdTime_ms = 0);
+    Result AddImage(const std::string& animName, const Vision::ImageRGB& faceImg, u32 holdTime_ms = 0);
     
     // Remove all frames from an existing animation
     Result ClearAnimation(const std::string& animName);
@@ -67,14 +66,6 @@ namespace Cozmo {
     // Get the total number of available animations
     size_t GetNumAvailableAnimations() const;
     
-    // Convert back and forth between an OpenCV image and our compressed RLE format:
-    static Result CompressRLE(const Vision::Image& image, std::vector<u8>& rleData);
-    static void   DrawFaceRLE(const std::vector<u8>& rleData, Vision::Image& outImg);
-    
-    // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
-    // to be called each time we blink.
-    static void SwitchInterlacing();
-    
   protected:
     
     // Protected default constructor for singleton.
@@ -84,16 +75,14 @@ namespace Cozmo {
 
     struct AvailableAnim {
       time_t lastLoadedTime;
-      std::vector< std::pair<std::vector<u8>, std::vector<u8>> > rleFrames;
-      size_t GetNumFrames() const { return rleFrames.size(); }
+      std::vector< Vision::ImageRGB > frames;
+      size_t GetNumFrames() const { return frames.size(); }
     };
     
     AvailableAnim* GetAnimationByName(const std::string& name);
     void LoadAnimationImageFrames(const std::string& animationFolder, const std::string& animName);
     
     std::unordered_map<std::string, AvailableAnim> _availableAnimations;
-    
-    static u8 _firstScanLine;
     
   }; // class FaceAnimationManager
   
@@ -119,10 +108,6 @@ namespace Cozmo {
   // Get the total number of available animations
   inline size_t FaceAnimationManager::GetNumAvailableAnimations() const {
     return _availableAnimations.size();
-  }
-  
-  inline void FaceAnimationManager::SwitchInterlacing() {
-    _firstScanLine = 1 - _firstScanLine;
   }
   
 } // namespace Cozmo
