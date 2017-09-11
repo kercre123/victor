@@ -1,4 +1,13 @@
 ----------------
+Release j104.7
+----------------
+
+Firmware:
+-radio-jrl.bin: (rev 13) Increase EMCUBE power to -6dBm in JRL fixture.
+
+Clean rebuild to fix bugs.
+
+----------------
 Release v104.6
 ----------------
 
@@ -21,6 +30,7 @@ roll back to standard xsfcc.bin firmware (from experimental -12dBm).
 
 -----[j104.6]
 -link radio-jrl.bin (rev 12) over std radio.bin (rev 11)
+Note: released j104.6 not working? EL reported failures. Display showed v104.6...
 
 ----------------
 Release v104.5

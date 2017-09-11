@@ -22,11 +22,11 @@
 #include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 104;
-u8 g_fixtureReleaseRev = 6; //'ver.rev' e.g. 104.2
+u8 g_fixtureReleaseRev = 7; //'ver.rev' e.g. 104.2
 #define BUILD_INFO "MP v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 1
+#define NOT_FOR_FACTORY 0
 
 #ifdef FCC
   const bool fcc = true;
