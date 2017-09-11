@@ -931,11 +931,6 @@ namespace Anki {
         BackpackLightController::SetParams(msg);
       }
       
-      void Process_enableLiveTwitching(RobotInterface::EnableLiveTwitching const& msg)
-      {
-        // Nothing to do here
-      }
-      
       void Process_requestAvailableAnimations(RobotInterface::RequestAvailableAnimations const& msg)
       {
         // Nothing to do here

@@ -148,13 +148,6 @@ namespace Messages {
         break;
       }
         
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiveTwitching:
-      {
-        PRINT_NAMED_INFO("EngineMessages.ProcessMessage.EnableLiveTwitching", "%d", msg.enableLiveTwitching.enable);
-        _animStreamer->EnableLiveTwitching(msg.enableLiveTwitching.enable);
-        break;
-      }
-        
       case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
       {
         PRINT_NAMED_INFO("EngineMessages.RequestAvailableAnimations", "");

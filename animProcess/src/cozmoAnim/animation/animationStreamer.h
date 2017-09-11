@@ -127,8 +127,6 @@ namespace Cozmo {
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
     bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
     
-    void EnableLiveTwitching(bool on)      { _isLiveTwitchEnabled = on; }
-    
   private:
     
     // Initialize the streaming of an animation with a given tag
@@ -180,7 +178,6 @@ namespace Cozmo {
     Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
-    TimeStamp_t _timeSpentIdling_ms = 0;
 
     std::string _lastPlayedAnimationId;
 
@@ -239,9 +236,6 @@ namespace Cozmo {
     bool SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track);
     
     Tag _tag;
-
-    
-    Util::RandomGenerator& _rng;
     
     // For track locking
     u8 _lockedTracks;
@@ -253,8 +247,6 @@ namespace Cozmo {
     // For live animation
     std::map<LiveIdleAnimationParameter, f32> _liveAnimParams;
 
-    Animation      _liveAnimation;
-    bool           _isLiveTwitchEnabled  = false;
     s32            _bodyMoveDuration_ms  = 0;
     s32            _liftMoveDuration_ms  = 0;
     s32            _headMoveDuration_ms  = 0;

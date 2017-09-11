@@ -60,15 +60,11 @@ namespace Cozmo {
   , _context(context)
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))
-  , _rng(*_context->GetRandom())
   , _lockedTracks(0)
   , _tracksInUse(0)
-  , _liveAnimation("ProceduralLive")
 //  , _audioClient( audioClient )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
-  {
-    _liveAnimation.SetIsLive(true);
-    
+  {    
     DEV_ASSERT(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
     
     SetDefaultParams();
@@ -281,10 +277,7 @@ namespace Cozmo {
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
       // duration so it doesn't pop.
-      // (Special case: allow KeepAlive to play on top of the "Live" idle.)
-      if(anim != &_liveAnimation) {
-        _trackLayerComponent->RemoveKeepFaceAlive(3*IKeyFrame::SAMPLE_LENGTH_MS);
-      }
+      _trackLayerComponent->RemoveKeepFaceAlive(3*IKeyFrame::SAMPLE_LENGTH_MS);
     }
     return lastResult;
   }
@@ -718,13 +711,12 @@ namespace Cozmo {
     //       first animation of any kind is sent.
     const bool haveStreamingAnimation = _streamingAnimation != nullptr;
     const bool haveStreamedAnything   = _lastStreamTime > 0.f;
-    const bool usingLiveIdle          = _idleAnimation == &_liveAnimation;
     const bool haveIdleAnimation      = _idleAnimation != nullptr;
     const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > _longEnoughSinceLastStreamTimeout_s;
     
     if(!haveStreamingAnimation &&
        haveStreamedAnything &&
-       (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))
+       (!haveIdleAnimation && longEnoughSinceStream))
     {
       // If we were interrupted from streaming an animation and we've met all the
       // conditions to even be in this function, then we should make sure we've
@@ -738,7 +730,6 @@ namespace Cozmo {
     }
     
     if(_streamingAnimation != nullptr) {
-      _timeSpentIdling_ms = 0;
       
       if(IsFinished(_streamingAnimation)) {
         
@@ -778,42 +769,7 @@ namespace Cozmo {
       }
     } // if(_streamingAnimation != nullptr)
     
-    else if (_isLiveTwitchEnabled) {
-      
-      // If not streaming animation is set, do live animation
-      _idleAnimation = &_liveAnimation;
 
-      // Update the live animation's keyframes
-      lastResult = UpdateLiveAnimation();
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("AnimationStreamer.Update.LiveUpdateFailed",
-                          "Failed updating live animation from current robot state.");
-        return lastResult;
-      }
-      
-      if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have
-        if(DEBUG_ANIMATION_STREAMING) {
-          PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
-                           "(Re-)Initializing idle animation: '%s'.",
-                           _idleAnimation->GetName().c_str());
-        }
-        
-        // Just finished playing a loop, or we weren't just idling. Either way,
-        // (re-)init the animation so it can be played (again)
-        InitStream(_idleAnimation, IdleAnimationTag);
-        _isIdling = true;
-        
-        // To avoid streaming faceLayers set true and start streaming idle animation next Update() tick.
-        streamUpdated = true;
-      }
-      else {
-        // This is just an idle animation, so we don't want to save the face to the robot
-        lastResult = UpdateStream(_idleAnimation, false);
-        streamUpdated = true;
-        _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      }
-      _timeSpentIdling_ms += ANIM_TIME_STEP;
-    }
 
     
     // If we didn't do any streaming above, but we've still got layers to stream
@@ -870,133 +826,6 @@ namespace Cozmo {
 #   undef SET_DEFAULT
 
   } // SetDefaultParams()
-  
-  Result AnimationStreamer::UpdateLiveAnimation()
-  {
-#   define GET_PARAM(__TYPE__, __NAME__) (static_cast<__TYPE__>(_liveAnimParams[LiveIdleAnimationParameter::__NAME__]))
-    
-    Result lastResult = RESULT_OK;
-   
-    // Don't start wiggling until we've been idling for a bit and make sure we
-    // are not picking or placing
-    if(_isLiveTwitchEnabled &&
-       _timeSpentIdling_ms >= GET_PARAM(s32, TimeBeforeWiggleMotions_ms)
-       // && !robot.GetDockingComponent().IsPickingOrPlacing()   // TODO: If picking and place, need to lock these tracks
-       )
-    {
-      // If wheels are available, add a little random movement to keep Cozmo looking alive
-      const bool wheelsAvailable = !IsTrackLocked((u8)AnimTrackFlag::BODY_TRACK);
-      const bool timeToMoveBody = (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0;
-      if(wheelsAvailable && timeToMoveBody)
-      {
-        _bodyMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementDurationMin_ms),
-                                                   GET_PARAM(s32, BodyMovementDurationMax_ms));
-        s16 speed = _rng.RandIntInRange(-GET_PARAM(s32, BodyMovementSpeedMinMax_mmps),
-                                         GET_PARAM(s32, BodyMovementSpeedMinMax_mmps));
-
-        // Drive straight sometimes, turn in place the rest of the time
-        s16 curvature = std::numeric_limits<s16>::max(); // drive straight
-        if(_rng.RandDblInRange(0., 1.) > GET_PARAM(f32, BodyMovementStraightFraction)) {
-          curvature = 0;
-          
-          // If turning in place, look in the direction of the turn
-          const s32 x = (speed < 0 ? -1.f : 1.f) * _rng.RandIntInRange(0, ProceduralFace::WIDTH/6);
-          const s32 y = _rng.RandIntInRange(-ProceduralFace::HEIGHT/6, ProceduralFace::HEIGHT/6);
-          if(DEBUG_ANIMATION_STREAMING) {
-            PRINT_NAMED_DEBUG("AnimationStreamer.UpdateLiveAnimation.EyeLeadTurn",
-                              "Point turn eye shift (%d,%d)", x, y);
-          }
-          
-          _trackLayerComponent->AddOrUpdateEyeShift(_liveIdleTurnEyeShiftTag,
-                                                    "LiveIdleTurn",
-                                                    x, y,
-                                                    IKeyFrame::SAMPLE_LENGTH_MS,
-                                                    ProceduralFace::WIDTH/2, ProceduralFace::HEIGHT/2);
-        }
-        else if(_liveIdleTurnEyeShiftTag != NotAnimatingTag)
-        {
-          _trackLayerComponent->RemoveEyeShift(_liveIdleTurnEyeShiftTag);
-          _liveIdleTurnEyeShiftTag = NotAnimatingTag;
-        }
-        
-        if(DEBUG_ANIMATION_STREAMING) {
-          PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",
-                           "Speed=%d, curvature=%d, duration=%d",
-                           speed, curvature, _bodyMoveDuration_ms);
-        }
-        
-        if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(BodyMotionKeyFrame(speed, curvature, _bodyMoveDuration_ms))) {
-          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddBodyMotionKeyFrameFailed", "");
-          return RESULT_FAIL;
-        }
-        
-        _bodyMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementSpacingMin_ms),
-                                                  GET_PARAM(s32, BodyMovementSpacingMax_ms));
-        
-      } else {
-        _bodyMoveDuration_ms -= ANIM_TIME_STEP;
-      }
-      
-      // If lift is available, add a little random movement to keep Cozmo looking alive
-      const bool liftIsAvailable = !IsTrackLocked((u8)AnimTrackFlag::LIFT_TRACK);
-      const bool timeToMoveLIft = (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0;
-      if(liftIsAvailable && timeToMoveLIft) //  && !robot.GetCarryingComponent().IsCarryingObject())   // TODO Engine should lock lift track after pickup
-      {
-        _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
-                                                   GET_PARAM(s32, LiftMovementDurationMax_ms));
-        
-        if(DEBUG_ANIMATION_STREAMING) {
-          PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.LiftTwitch",
-                           "duration=%d", _liftMoveDuration_ms);
-        }
-        LiftHeightKeyFrame kf(GET_PARAM(u8, LiftHeightMean_mm),
-                              GET_PARAM(u8, LiftHeightVariability_mm),
-                              _liftMoveDuration_ms);
-        if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(kf)) {
-          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddLiftHeightKeyFrameFailed", "");
-          return RESULT_FAIL;
-        }
-        
-        _liftMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementSpacingMin_ms),
-                                                  GET_PARAM(s32, LiftMovementSpacingMax_ms));
-        
-      } else {
-        _liftMoveDuration_ms -= ANIM_TIME_STEP;
-      }
-      
-      // If head is available, add a little random movement to keep Cozmo looking alive
-      const bool headIsAvailable = !IsTrackLocked((u8)AnimTrackFlag::HEAD_TRACK);
-      const bool timeToMoveHead = (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0;
-      if(headIsAvailable && timeToMoveHead)
-      {
-        _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
-                                                   GET_PARAM(s32, HeadMovementDurationMax_ms));
-        const s8 currentAngle_deg = 10; // static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
-                                        // TODO: Hard coded for now, but should we actually maintain some robot state here for this?
-
-        if(DEBUG_ANIMATION_STREAMING) {
-          PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
-                           "duration=%d", _headMoveDuration_ms);
-        }
-        HeadAngleKeyFrame kf(currentAngle_deg, GET_PARAM(u8, HeadAngleVariability_deg), _headMoveDuration_ms);
-        if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(kf)) {
-          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddHeadAngleKeyFrameFailed", "");
-          return RESULT_FAIL;
-        }
-        
-        _headMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementSpacingMin_ms),
-                                                  GET_PARAM(s32, HeadMovementSpacingMax_ms));
-        
-      } else {
-        _headMoveDuration_ms -= ANIM_TIME_STEP;
-      }
-      
-    } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
-    
-    return lastResult;
-#   undef GET_PARAM
-     
-  } // UpdateLiveAnimation()
   
   bool AnimationStreamer::IsIdleAnimating() const
   {

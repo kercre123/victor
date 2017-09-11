@@ -435,11 +435,6 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
-message EnableLiveTwitching
-{
-  bool enable
-}
-
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -574,7 +569,7 @@ union EngineToRobot
   BLE::DataReceived             bleDataReceived             = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   SetBackpackLights             setBackpackLights           = 0x8A,   // V2
-  EnableLiveTwitching           enableLiveTwitching         = 0x8B,   // V2
+  //       FREE SLOT                                        = 0x8B,
   RequestAvailableAnimations    requestAvailableAnimations  = 0x8C,   // V2
   AbortAnimation                abortAnimation              = 0x8D,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x8E,
