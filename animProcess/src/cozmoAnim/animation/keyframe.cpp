@@ -644,7 +644,10 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     
     BodyMotionKeyFrame::BodyMotionKeyFrame()
     {
-      _stopMsg.speed = 0;
+      _streamMsg.accel = 0.f;
+      
+      _stopMsg.speed = 0.f;
+      _stopMsg.accel = 0.f;
     }
     
     BodyMotionKeyFrame::BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms)
@@ -714,6 +717,9 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       if (has_any_digits(radiusStr)) {
         SafeNumericCast(std::atoi(radiusStr.c_str()), _streamMsg.curvatureRadius_mm, animNameDebug.c_str());
         CheckTurnSpeed(animNameDebug);
+        if (_streamMsg.curvatureRadius_mm == 0) {
+          _streamMsg.accel = 50.f;  // 50 was used in V1 for point turns
+        }
       } else {
         Result lastResult = ProcessRadiusString(radiusStr, animNameDebug);
         if(lastResult != RESULT_OK) {
@@ -743,6 +749,9 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       } else {
         GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, radius_mm, streamMsg.curvatureRadius_mm);
         CheckTurnSpeed(animNameDebug);
+        if (_streamMsg.curvatureRadius_mm == 0) {
+          _streamMsg.accel = 50.f;  // 50 was used in V1 for point turns
+        }
       }
       
       return RESULT_OK;
@@ -752,9 +761,11 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     {
       if(radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
         _streamMsg.curvatureRadius_mm = 0;
+        _streamMsg.accel = 50.f;  // 50 is what was used on V1 for point turns
         CheckRotationSpeed(animNameDebug);
       } else if(radiusStr == "STRAIGHT") {
         _streamMsg.curvatureRadius_mm = std::numeric_limits<s16>::max();
+        _streamMsg.accel = 0.f;   // 0 is what was used on V1 for non point turns
         CheckStraightSpeed(animNameDebug);
       } else {
         PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
