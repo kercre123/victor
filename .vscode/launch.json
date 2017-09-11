@@ -2,56 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "cozmoengined",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceRoot}/_build/android/Debug/bin/cozmoengined",
-            "additionalSOLibSearchPath": "${workspaceRoot}/_build/android/Debug/lib",
-            "stopAtEntry": false,
-            "osx": {
-                "MIMode": "lldb"
-            },
-            "cwd": "${workspaceRoot}/_build/android/Debug/bin",
-            "environment": [
-                {
-                    "name": "LD_LIBRARY_PATH",
-                    "value": "/data/data/com.anki.cozmoengine/lib"
-                },
-                {
-                    "name": "COZMO_ENGINE_CONFIG",
-                    "value": "/data/data/com.anki.cozmoengine/config/engine_config.json"
-                }
-            ],
-            "setupCommands": [
-                {
-                    "text": "platform select remote-android",
-                    "description": "platform remote-android",
-                    "ignoreFailures": false
-                },
-                {
-                    "text": "platform connect connect://localhost:55001",
-                    "description": "platform connect",
-                    "ignoreFailures": false
-                },
-                {
-                    "text": "env",
-                    "description": "dump environment",
-                    "ignoreFailures": false
-                },
-                {
-                    "text": "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
-                    "description": "set LD_LIBRARY_PATH",
-                    "ignoreFailures": false
-                },
-                {
-                    "text": "target create cozmoengined",
-                    "description": "set LD_LIBRARY_PATH",
-                    "ignoreFailures": false
-                }
-            ]
-        },
-        {
-            "name": "lldb cozmoengine",
+            "name": "engine:debug",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceRoot}/_build/android/Debug/bin/cozmoengined",
@@ -63,7 +14,25 @@
             "initCommands": [
                 "platform select remote-android",
                 "platform connect connect://localhost:55001",
+                "platform shell killall cozmoengined || true",
                 "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+            ]
+        },
+        {
+            "name": "engine:release",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/android/Release/bin/cozmoengined",
+            "env": {
+                "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib",
+                "COZMO_ENGINE_CONFIG": "/data/data/com.anki.cozmoengine/config/engine_config.json"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "platform shell killall cozmoengined || true",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib",
             ]
         }
     ]
