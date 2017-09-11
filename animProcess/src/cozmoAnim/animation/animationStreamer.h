@@ -19,7 +19,6 @@
 #include "anki/common/types.h"
 #include "cozmoAnim/animation/animation.h"
 #include "cozmoAnim/animation/track.h"
-//#include "anki/cozmo/basestation/utils/hasSettableParameters.h"
 #include "clad/types/liveIdleAnimationParameters.h"
 
 #include <list>
@@ -42,12 +41,6 @@ namespace Cozmo {
   // IAnimationStreamer declares an abstract interface common to all implementations of an animation
   // streamer component. All methods are pure virtual and must be implemented by the interface provider.
   //
-  
-  // TODO: Restore HasSettableParameters ability to work with EngineToRobot messages?
-  //       If not, create a SetLiveIdleAnimationParameters E2R message.
-  
-//  class IAnimationStreamer :
-//    public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   class IAnimationStreamer
   {
   public:
@@ -56,7 +49,6 @@ namespace Cozmo {
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     
     IAnimationStreamer()
-      //: HasSettableParameters(interface)
     {
     }
     
@@ -86,8 +78,6 @@ namespace Cozmo {
   class AnimationStreamer : public IAnimationStreamer
   {
   public:
-    
-    //static const AnimationTrigger NeutralFaceTrigger;
     
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
     static const Tag NotAnimatingTag = ::Anki::Cozmo::NotAnimatingTag;
@@ -119,8 +109,6 @@ namespace Cozmo {
     const Animation* GetCannedAnimation(const std::string& name) const;
     const CannedAnimationContainer& GetCannedAnimationContainer() const { return _animationContainer; }
 
-    // Required by HasSettableParameters:
-//    virtual void SetDefaultParams() override;
     void SetDefaultParams();
     
     // Overload of SetParam from base class. Mostly just calls base class method.

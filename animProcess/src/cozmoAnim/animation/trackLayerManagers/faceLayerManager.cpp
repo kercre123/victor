@@ -16,8 +16,6 @@
 
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/scanlineDistorter.h"
-//#include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
-//#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/console/consoleInterface.h"

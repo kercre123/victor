@@ -55,9 +55,6 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
   } // namespace
   
-//  const AnimationTrigger AnimationStreamer::NeutralFaceTrigger = AnimationTrigger::NeutralFace;
-  
-  
   AnimationStreamer::AnimationStreamer(const CozmoContext* context) //, Audio::RobotAudioClient& audioClient)
   : IAnimationStreamer()
   , _context(context)
@@ -80,40 +77,23 @@ namespace Cozmo {
     //       It's currently hard to do with CPPlite messages.
     // SetupHandlers(_context->GetExternalInterface());
     
-    // TODO: Hook up neutral face
-//    // Set up the neutral face to use when resetting procedural animations
-//    const std::string neutralFaceAnimGroupName = _context->GetRobotManager()->GetAnimationForTrigger(NeutralFaceTrigger);
-//    const AnimationGroup* group = _animationGroups.GetAnimationGroup(neutralFaceAnimGroupName);
-//    if(group == nullptr || group->IsEmpty()) {
-//      PRINT_NAMED_ERROR("AnimationStreamer.Constructor.BadNeutralAnimGroup",
-//                        "Neutral animation group %s for trigger %s is empty or null",
-//                        neutralFaceAnimGroupName.c_str(), EnumToString(NeutralFaceTrigger));
-//    }
-//    else
-//    {
-//      if(group->GetNumAnimations() > 1)
-//      {
-//        PRINT_NAMED_WARNING("AnimationStreamer.Constructor.MultipleNeutralFaceAnimations",
-//                            "Neutral face animation group %s has %zu animations instead of one. "
-//                            "Using first.", neutralFaceAnimGroupName.c_str(),
-//                            group->GetNumAnimations());
-//      }
-//      
-//      const std::string neutralFaceAnimName = group->GetFirstAnimationName();
-//      _neutralFaceAnimation = _animationContainer.GetAnimation(neutralFaceAnimName);
-//      if (nullptr != _neutralFaceAnimation)
-//      {
-//        auto frame = _neutralFaceAnimation->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-//        ProceduralFace::SetResetData(frame->GetFace());
-//      }
-//      else
-//      {
-//        PRINT_NAMED_ERROR("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
-//                          "Could not find expected neutral face animation file called %s",
-//                          neutralFaceAnimName.c_str());
-//      }
-//    }
     
+    // Set neutral face
+    const std::string neutralFaceAnimName = "anim_neutral_eyes_01";
+    _neutralFaceAnimation = _animationContainer.GetAnimation(neutralFaceAnimName);
+    if (nullptr != _neutralFaceAnimation)
+    {
+      auto frame = _neutralFaceAnimation->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+      ProceduralFace::SetResetData(frame->GetFace());
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
+                        "Could not find expected neutral face animation file called %s",
+                        neutralFaceAnimName.c_str());
+    }
+
+  
     // Do this after the ProceduralFace class has set to use the right neutral face
     _trackLayerComponent->Init();
   }

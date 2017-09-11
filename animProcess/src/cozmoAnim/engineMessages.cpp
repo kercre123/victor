@@ -105,7 +105,7 @@ namespace Messages {
         snprintf(msg.name, sizeof(msg.name), "%s", it->second.c_str());
         SendMessageToEngine(msg);
         
-        PRINT_NAMED_INFO("AvailableAnim", "[%d]: %s", msg.id, msg.name);
+        //PRINT_NAMED_INFO("AvailableAnim", "[%d]: %s", msg.id, msg.name);
 
         ++numAnimsDoledThisTic;
       }
