@@ -385,7 +385,17 @@ namespace AnkiLog
                 int* deviceIDs = stackalloc int[1024];
                 deviceIDs[0] = -1;
                 int numFound = 0, status = 0;
-                status = DEVICE_Search(ref numFound, deviceIDs, buf1, buf2);
+
+                lblPeaks.Text = "Searching for RSA306B...";
+                lblPeaks.BackColor = Color.Gray;
+                try {
+                    status = DEVICE_Search(ref numFound, deviceIDs, buf1, buf2);
+                } catch(Exception e) {
+                    lblPeaks.Text = "RSA306B DLL Error";
+                    lblPeaks.BackColor = Color.Red;
+                    throw e;
+                }
+
                 Console.WriteLine("Search: " + numFound + " - " + deviceIDs[0]);
                 if (0 == numFound)
                 {
@@ -437,6 +447,23 @@ namespace AnkiLog
         private void ReadConfig()
         {
             String path = Application.StartupPath + "\\ankiemc.ini";
+
+            if (!File.Exists(path))
+                using (FileStream fs = File.Create(path))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        /*/add some default settings
+                        sw.WriteLine("dut-center=2402;");
+                        sw.WriteLine("dut-width=2;");
+                        sw.WriteLine("dut-min=-100;");
+                        sw.WriteLine("dut-max=0;");
+                        sw.WriteLine("dut-khz=100;");
+                        sw.WriteLine("dut-offset=0;");
+                        */
+                    }
+                }
+
             if (File.Exists(path))
                 m_config = File.ReadAllText(path).Split('\n');
             else
