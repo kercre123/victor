@@ -34,6 +34,22 @@
                 "platform shell killall cozmoengined || true",
                 "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Release/lib",
             ]
+        },
+        {
+            "name": "lldb test_engine",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/mac/Debug/bin/test_engine",
+            "env": {
+                "GTEST_FILTER": "-BlockWorld*:-Localization*",
+                "ANKIWORKROOT": "_build/tmp",
+                "ANKICONFIGROOT": "_build/mac/Debug/assets/cozmo_resources",
+                "DYLD_LIBRARY_PATH": "_build/mac/Debug/lib:/Applications/Webots.app/lib"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/mac/Debug/lib",
+            ]
         }
     ]
 }

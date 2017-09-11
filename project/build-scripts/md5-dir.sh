@@ -68,15 +68,30 @@ find . -not -name '.' -print | sed -e 's/^\.\///g' > $RESOURCES_FILE
 
 IFS=$'\n'       # make newlines the only separator
 set -f          # disable globbing
+
+# process files in batches
+BATCH_MAX_COUNT=256
+FILE_COUNT=0
+
 MD5_FILELIST=()
+echo "" > "${HASHES_FILE}"
+
 for i in $(cat < "$RESOURCES_FILE"); do
   if [ -f "$i" ]; then
     MD5_FILELIST+=("$i")
+    FILE_COUNT=$((FILE_COUNT+1))
+  fi
+  if [ $FILE_COUNT -ge $BATCH_MAX_COUNT ]; then
+    # calculate hashes of for each file in the list
+    md5 -q "${MD5_FILELIST[@]}" >> "${HASHES_FILE}"
+    MD5_FILELIST=()
+    FILE_COUNT=0
   fi
 done
 
-# calculate hashes of for each file in the list
-md5 -q "${MD5_FILELIST[@]}" > "${HASHES_FILE}"
+if [ ${#MD5_FILELIST[@]} -gt 0 ]; then
+  md5 -q "${MD5_FILELIST[@]}" >> "${HASHES_FILE}"
+fi
 
 # combine all filenames and hashes
 CONTENTS_FILE="/tmp/resources.contentshash_${SESSION_KEY}.txt"

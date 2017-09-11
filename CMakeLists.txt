@@ -15,6 +15,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 99)
 
+set(SYMBOL_VISIBILITY_FLAGS "")
+
+set(ANKI_PLATFORM_NAME "unknown")
+if (ANDROID)
+  set(ANKI_PLATFORM_NAME "android")
+  set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
+elseif(MACOSX)
+  set(ANKI_PLATFORM_NAME "mac")
+endif()
+
 add_compile_options(
     $<$<CONFIG:Debug>:-O0>
     $<$<CONFIG:Release>:-Os>
@@ -66,7 +76,10 @@ import(coretech "coretech")
 add_subdirectory("clad")
 add_subdirectory("androidHAL")
 add_subdirectory("robot")
-add_subdirectory("robot2")
+
+if (ANDROID)
+    add_subdirectory("robot2")
+endif()
 
 import(cozmo_engine "engine")
 target_include_directories(cozmo_engine PRIVATE
@@ -80,3 +93,7 @@ if (ANDROID)
     include(android-ndk-stl-config)
 endif()
 
+if (MACOSX)
+    add_subdirectory("test")
+    add_subdirectory("simulator") # webots
+endif()

@@ -81,7 +81,7 @@ shift $(($OPTIND - 1))
 if [ ! -d "${TOPLEVEL}/generated" ] || [ ! -d "${TOPLEVEL}/EXTERNALS" ]; then
     echo "Missing ${TOPLEVEL}/generated or ${TOPLEVEL}/EXTERNALS"
     echo "Attempting to run configure.py" 
-    ${TOPLEVEL}/configure.py -2 -p android generate
+    ${TOPLEVEL}/configure.py -2 -p ${PLATFORM}  generate
 fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
@@ -127,19 +127,21 @@ if [ $CONFIGURE -eq 1 ]; then
     fi
     ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE -o ${GEN_SRC_DIR} \
         androidHAL/BUILD.in \
-        engine/BUILD.in \
+        clad/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \
         coretech/vision/clad/BUILD.in \
         coretech/planning/BUILD.in \
         coretech/messaging/BUILD.in \
+        engine/BUILD.in \
         lib/util/source/anki/util/BUILD.in \
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \
         robot2/BUILD.in \
-        clad/BUILD.in
+        simulator/BUILD.in \
+        test/BUILD.in
 
     if [ $GEN_SRC_ONLY -eq 1 ]; then
         exit 0
@@ -174,7 +176,6 @@ if [ $CONFIGURE -eq 1 ]; then
             -DANDROID_PLATFORM=android-24
             -DANDROID_STL=c++_shared
             -DANDROID_CPP_FEATURES='rtti exceptions'
-            -DBUILD_SHARED_LIBS=1
         )
     else
         echo "unknown platform: ${PLATFORM}"
@@ -185,6 +186,7 @@ if [ $CONFIGURE -eq 1 ]; then
         ${VERBOSE_ARG} \
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
+        -DBUILD_SHARED_LIBS=1 \
         "${PLATFORM_ARGS[@]}"
         
 fi

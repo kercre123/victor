@@ -1,5 +1,5 @@
 /**
-* File: BLECozmoController_ios
+* File: BLECozmoController_iososx
 *
 * Author: Lee Crippen
 * Created: 04/26/16
@@ -10,7 +10,7 @@
 *
 **/
 
-#include "engine/ble/BLECozmoController_ios.h"
+#include "engine/ble/BLECozmoController_iososx.h"
 #include "engine/ble/BLESystem.h"
 #include "engine/ble/IBLECozmoResponder.h"
 

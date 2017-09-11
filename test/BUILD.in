@@ -1,9 +1,13 @@
 cxx_project(
-    name = 'cozmo_engine',
-    srcs = cxx_src_glob(['.'],
+    name = 'test_engine',
+    srcs = cxx_src_glob(['engine'],
                         excludes = [
                             '**/android/*',
-                            'tools/**/*',
+                            'latticePlannerTest.cpp',
+                            'minAnglePlannerTest.cpp',
+                            'pathComponentTest.cpp',
+                            'run_RobotPoseHistoryTest.cpp',
+                            'testActionList.cpp'
                         ]),
     platform_srcs = [
         ('android', glob([

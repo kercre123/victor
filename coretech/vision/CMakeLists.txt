@@ -26,6 +26,7 @@ target_link_libraries(cti_vision
 target_compile_options(cti_vision
 PRIVATE
   -Os
+  ${SYMBOL_VISIBILITY_FLAGS}
 )
 
 set_property(TARGET cti_vision PROPERTY CXX_STANDARD 11)

@@ -5,9 +5,11 @@ project(cti_common)
 include(anki_build_cxx_library)
 anki_build_cxx_library(cti_common ${ANKI_SRCLIST_DIR} STATIC)
 
-target_compile_definitions(cti_common PRIVATE
-    -DCORETECH_BASESTATION
+target_compile_definitions(cti_common 
+PUBLIC
     -DANKICORETECH_USE_OPENCV=1
+PRIVATE
+    -DCORETECH_BASESTATION
     -DANKICORETECH_EMBEDDED_USE_OPENCV=1)
 
 target_include_directories(cti_common PUBLIC
@@ -22,6 +24,7 @@ target_include_directories(cti_common PUBLIC
 target_compile_options(cti_common
 PRIVATE
   -Os
+  ${SYMBOL_VISIBILITY_FLAGS}
 )
 
 set_property(TARGET cti_common PROPERTY CXX_STANDARD 11)

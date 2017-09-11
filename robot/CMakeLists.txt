@@ -15,8 +15,19 @@ configure_file(build_type.h.in ${CMAKE_CURRENT_SOURCE_DIR}/generated/build_type.
 
 add_subdirectory(clad)
 
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+set(PLATFORM_COMPILE_DEFS "")
+set(PLATFORM_FLAGS "")
+if (MACOSX)
+  find_library(FOUNDATION Foundation)
+  set(PLATFORM_COMPILE_DEFS
+    SIMULATOR
+  )
+endif()
+
 #
-# HACK
+# HACK #1
 #
 # halstub is defined here, because supervisor depends on it, even though
 # the source file lives in robot2. This will be cleaned up after we fork
@@ -30,7 +41,6 @@ target_link_libraries(halstub
 PRIVATE
     robot_interface
     robot_clad_cpplite
-    ${PLATFORM_LIBS}
 )
 
 target_include_directories(halstub
@@ -39,37 +49,87 @@ PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/generated/clad/robot>
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/sim/include>
 )
 
 target_compile_definitions(halstub
 PRIVATE
-    -DCOZMO_ROBOT
+    COZMO_ROBOT
 )
 
 
+# HACK #2 - supervisor build on mac requires files in 
+# robot2/ and simulator/ folders. At least the ones in robot2 (sim_hal)
+# also depend on files in supervisor :-(
+# Rather than break the circular dependency now, we just 
+# include those sources when building for mac
+
+set(PLATFORM_SRCS "")
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+set(PLATFORM_COMPILE_DEFS "")
+set(PLATFORM_FLAGS "")
+if (ANDROID)
+    set(PLATFORM_LIBS
+        halstub
+    )
+elseif (MACOSX)
+    include(webots)
+
+    set(PLATFORM_LIBS
+        util
+        cti_messaging
+        ${WEBOTS_LIBS}
+    )
+    set(PLATFORM_INCLUDES
+        # FIXME gross: ("simulator/robot/sim_overlayDisplay.h")
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/robot2/hal/include
+        ${CMAKE_SOURCE_DIR}/robot2/hal/sim/include
+    )
+    set(PLATFORM_COMPILE_DEFS
+        SIMULATOR
+    )
+    set(PLATFORM_SRCS
+        ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_hal.cpp
+        ${CMAKE_SOURCE_DIR}/robot2/hal/sim/src/sim_radio.cpp
+        ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
+    )
+endif()
+
+
 include(anki_build_cxx_library)
-anki_build_cxx_library(supervisor ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_cxx_library(supervisor ${ANKI_SRCLIST_DIR} STATIC
+    ${PLATFORM_SRCS}
+)
 
 target_link_libraries(supervisor
 PRIVATE
-    halstub
     robot_interface
     robot_clad_cpplite
+    cti_common_robot
+    ${PLATFORM_LIBS}
 )
 
 target_compile_definitions(supervisor
 PRIVATE
-    -DCOZMO_ROBOT
-    -DCORETECH_ROBOT
-    -DCOZMO_V2
-    -D_DEBUG
+    COZMO_ROBOT
+    CORETECH_ROBOT
+    COZMO_V2
+    _DEBUG
+    ${PLATFORM_COMPILE_DEFS}
     #-DUSING_ANDROID_PHONE # Uncomment if deploying on non-Cozmo android device
 )
 
 target_include_directories(supervisor
     PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/supervisor/src>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generated>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generated/clad>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/robot>
+    PUBLIC
+    ${PLATFORM_INCLUDES}
 )
+
+

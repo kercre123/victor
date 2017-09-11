@@ -6,7 +6,9 @@ if (ANDROID)
   set(PLATFORM_SUFFIX "android")
   set(TEXT2SPEECH_LIB_PATH "${TEXT2SPEECH_HOME}/AcapelaTTS_for_Android_V1.612/sdk/armeabi-v7a")
 elseif (MACOSX)
-  set(TEXT2SPEECH_LIB_PATH "${TEXT2SPEECH_HOME}/AcapelaTTS_for_Mac_V9.450")
+  # TTS (libacatts.dylib) should not be linked directly on mac
+  # set(TEXT2SPEECH_LIB_PATH "${TEXT2SPEECH_HOME}/AcapelaTTS_for_Mac_V9.450")
+  set(TEXT2SPEECH_INCLUDE_PATH "${TEXT2SPEECH_HOME}/AcapelaTTS_for_Mac_V9.450/SDK/Include")
 endif()
 
 set(TEXT2SPEECH_LIBS
@@ -14,13 +16,20 @@ set(TEXT2SPEECH_LIBS
 )
 
 foreach(LIB ${TEXT2SPEECH_LIBS})
-  add_library(${LIB} SHARED IMPORTED)
-  set(LIB_PATH "${TEXT2SPEECH_LIB_PATH}/lib${LIB}${PLATFORM_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-  set_target_properties(${LIB} PROPERTIES
-    IMPORTED_LOCATION
-    ${LIB_PATH}
-    INTERFACE_INCLUDE_DIRECTORIES
-    "${TEXT2SPEECH_INCLUDE_PATH}")
+  if (TEXT2SPEECH_LIB_PATH)
+      add_library(${LIB} SHARED IMPORTED)
+      set(LIB_PATH "${TEXT2SPEECH_LIB_PATH}/lib${LIB}${PLATFORM_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+      set_target_properties(${LIB} PROPERTIES
+        IMPORTED_LOCATION
+        ${LIB_PATH}
+        INTERFACE_INCLUDE_DIRECTORIES
+        "${TEXT2SPEECH_INCLUDE_PATH}")
+  else()
+      add_library(${LIB} INTERFACE IMPORTED)
+      set_target_properties(${LIB} PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES
+        "${TEXT2SPEECH_INCLUDE_PATH}")
+  endif()
 endforeach()
 
 macro(copy_tts_android_libs)

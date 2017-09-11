@@ -12,7 +12,7 @@
 
 #include "engine/ble/BLESystem.h"
 #ifdef __APPLE__
-#include "engine/ble/BLECozmoController_ios.h"
+#include "engine/ble/BLECozmoController_iososx.h"
 #elif defined (ANDROID)
 #include "engine/ble/BLECozmoController_android.h"
 #else

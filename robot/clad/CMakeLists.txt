@@ -43,8 +43,8 @@ add_library(robot_clad_cpplite STATIC
 
 target_include_directories(robot_clad_cpplite
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/generated/clad>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/generated/clad/robot>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
 )
 
 #target_link_libraries(robot_clad_cpplite

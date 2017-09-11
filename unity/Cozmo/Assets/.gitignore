@@ -15,6 +15,7 @@ smcs.rsp
 smcs.rsp.meta
 mcs.rsp
 mcs.rsp.meta
+Scripts/Generated
 Scripts/Generated.meta
 
 StreamingAssets/AssetBundles/*

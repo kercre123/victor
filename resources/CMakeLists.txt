@@ -23,6 +23,17 @@ set(ASSET_TARGETS
     cozmo_resources_config
     cozmo_bundle)
 
+# Bundle test assets on OSX
+if (MACOSX)
+    anki_build_copy_assets(
+        TARGET cozmo_resources_test
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources"
+    )
+
+    list(APPEND ASSET_TARGETS cozmo_resources_test)
+endif(MACOSX)
+
 set(RESOURCE_LIST_FILE "${CMAKE_BINARY_DIR}/assets/resources.txt")
 set(LIST_DIR_EXE ${CMAKE_SOURCE_DIR}/project/build-scripts/list-dir.sh)
 add_custom_command(
