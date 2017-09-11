@@ -1,5 +1,5 @@
 /**
- * File: navMemoryMapQuadData_Cliff.h
+ * File: memoryMapData_Cliff.h
  *
  * Author: Raul
  * Date:   08/02/2016
@@ -8,7 +8,7 @@
  *
  * Copyright: Anki, Inc. 2016
  **/
-#include "engine/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
+#include "memoryMapData_Cliff.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 
@@ -16,26 +16,26 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMemoryMapQuadData_Cliff::NavMemoryMapQuadData_Cliff()
-: INavMemoryMapQuadData(NavMemoryMapTypes::EContentType::Cliff)
+MemoryMapData_Cliff::MemoryMapData_Cliff()
+: MemoryMapData(MemoryMapTypes::EContentType::Cliff)
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-INavMemoryMapQuadData* NavMemoryMapQuadData_Cliff::Clone() const
+MemoryMapData* MemoryMapData_Cliff::Clone() const
 {
-  return new NavMemoryMapQuadData_Cliff(*this);
+  return new MemoryMapData_Cliff(*this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMemoryMapQuadData_Cliff::Equals(const INavMemoryMapQuadData* other) const
+bool MemoryMapData_Cliff::Equals(const MemoryMapData* other) const
 {
   if ( other == nullptr || other->type != type ) {
     return false;
   }
 
-  const NavMemoryMapQuadData_Cliff* castPtr = static_cast<const NavMemoryMapQuadData_Cliff*>( other );
+  const MemoryMapData_Cliff* castPtr = static_cast<const MemoryMapData_Cliff*>( other );
   const bool near = IsNearlyEqual( directionality, castPtr->directionality );
   return near;
 }

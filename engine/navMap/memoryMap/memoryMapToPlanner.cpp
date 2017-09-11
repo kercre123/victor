@@ -1,5 +1,5 @@
 /**
- * File: navMemoryMapToPlanner.cpp
+ * File: memoryMapToPlanner.cpp
  *
  * Author: Raul
  * Date:   04/25/2017
@@ -8,7 +8,7 @@
  *
  * Copyright: Anki, Inc. 2017
  **/
-#include "engine/navMemoryMap/navMemoryMapToPlanner.h"
+#include "memoryMapToPlanner.h"
 
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h" // only for debug render
@@ -171,7 +171,7 @@ void ComputeConvexHull_GrahamScan(std::vector<Point2f>& points, Poly2f& outConve
 }; // end namespace (annonymous for local access / helpers)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TranslateMapRegionToPolys(const INavMemoryMap::BorderRegionVector& regions, std::vector<Poly2f>& convexHulls, const float minRegionArea_m2)
+void TranslateMapRegionToPolys(const INavMap::BorderRegionVector& regions, std::vector<Poly2f>& convexHulls, const float minRegionArea_m2)
 {
   ANKI_CPU_PROFILE("TranslateMapRegionToPolys");
 
@@ -223,50 +223,50 @@ void TestNavMemoryMapToPlanner(Robot& robot)
   const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
 
   // Configuration of memory map to check for obstacles
-  constexpr NavMemoryMapTypes::FullContentArray typesToCalculateBordersWithInterestingEdges =
+  constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithInterestingEdges =
   {
-    {NavMemoryMapTypes::EContentType::Unknown               , true},
-    {NavMemoryMapTypes::EContentType::ClearOfObstacle       , true},
-    {NavMemoryMapTypes::EContentType::ClearOfCliff          , true},
-    {NavMemoryMapTypes::EContentType::ObstacleCube          , true},
-    {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
-    {NavMemoryMapTypes::EContentType::ObstacleCharger       , true},
-    {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
-    {NavMemoryMapTypes::EContentType::ObstacleProx          , true},
-    {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
-    {NavMemoryMapTypes::EContentType::Cliff                 , true},
-    {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
-    {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true}
+    {MemoryMapTypes::EContentType::Unknown               , true},
+    {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+    {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+    {MemoryMapTypes::EContentType::ObstacleCube          , true},
+    {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+    {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+    {MemoryMapTypes::EContentType::ObstacleProx          , true},
+    {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+    {MemoryMapTypes::EContentType::Cliff                 , true},
+    {MemoryMapTypes::EContentType::InterestingEdge       , false},
+    {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
   };
-  static_assert(NavMemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithInterestingEdges),
+  static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithInterestingEdges),
     "This array does not define all types once and only once.");
   
-  constexpr NavMemoryMapTypes::FullContentArray typesToCalculateBordersWithNotInterestingEdges =
+  constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithNotInterestingEdges =
   {
-    {NavMemoryMapTypes::EContentType::Unknown               , true},
-    {NavMemoryMapTypes::EContentType::ClearOfObstacle       , true},
-    {NavMemoryMapTypes::EContentType::ClearOfCliff          , true},
-    {NavMemoryMapTypes::EContentType::ObstacleCube          , true},
-    {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
-    {NavMemoryMapTypes::EContentType::ObstacleCharger       , true},
-    {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
-    {NavMemoryMapTypes::EContentType::ObstacleProx          , true},
-    {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
-    {NavMemoryMapTypes::EContentType::Cliff                 , true},
-    {NavMemoryMapTypes::EContentType::InterestingEdge       , true},
-    {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
+    {MemoryMapTypes::EContentType::Unknown               , true},
+    {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+    {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+    {MemoryMapTypes::EContentType::ObstacleCube          , true},
+    {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+    {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+    {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+    {MemoryMapTypes::EContentType::ObstacleProx          , true},
+    {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+    {MemoryMapTypes::EContentType::Cliff                 , true},
+    {MemoryMapTypes::EContentType::InterestingEdge       , true},
+    {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
   };
-  static_assert(NavMemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithNotInterestingEdges),
+  static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithNotInterestingEdges),
     "This array does not define all types once and only once.");
 
-  INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
 
   // calculate regions
   // rsam to Brad: this is what doesn't support N:M calculations, only 1:N
-  INavMemoryMap::BorderRegionVector interestingRegions;
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToCalculateBordersWithInterestingEdges, interestingRegions);
-  INavMemoryMap::BorderRegionVector notInterestingRegions;
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::NotInterestingEdge, typesToCalculateBordersWithNotInterestingEdges, notInterestingRegions);
+  INavMap::BorderRegionVector interestingRegions;
+  memoryMap->CalculateBorders(MemoryMapTypes::EContentType::InterestingEdge, typesToCalculateBordersWithInterestingEdges, interestingRegions);
+  INavMap::BorderRegionVector notInterestingRegions;
+  memoryMap->CalculateBorders(MemoryMapTypes::EContentType::NotInterestingEdge, typesToCalculateBordersWithNotInterestingEdges, notInterestingRegions);
 
   // Translate border regions into convex hull polygons
   std::vector<Poly2f> cHullsInteresting;

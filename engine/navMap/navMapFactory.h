@@ -1,5 +1,5 @@
 /**
- * File: navMemoryMapFactory.h
+ * File: navMapFactory.h
  *
  * Author: Raul
  * Date:   03/11/2016
@@ -9,17 +9,19 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_NAV_MEMORY_MAP_FACTORY_H
-#define ANKI_COZMO_NAV_MEMORY_MAP_FACTORY_H
+#ifndef ANKI_COZMO_NAV_MAP_FACTORY_H
+#define ANKI_COZMO_NAV_MAP_FACTORY_H
 
-#include "engine/navMemoryMap/iNavMemoryMap.h"
+#include "iNavMap.h"
+
+class Robot;
 
 namespace Anki {
 namespace Cozmo {
-namespace NavMemoryMapFactory {
+namespace NavMapFactory {
 
 // creates the proper nav memory map (through default, config, etc)
-INavMemoryMap* CreateDefaultNavMemoryMap(VizManager* vizManager, Robot* robot);
+INavMap* CreateMemoryMap(VizManager* vizManager, Robot* robot);
   
 } // namespace
 } // namespace

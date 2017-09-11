@@ -1,21 +1,21 @@
 /**
- * File: navMeshQuadTreeProcessor.h
+ * File: quadTreeProcessor.h
  *
  * Author: Raul
  * Date:   01/13/2016
  *
- * Description: Class for processing a navMeshQuadTree. It relies on the navMeshQuadTree and navMeshQuadTreeNodes to
+ * Description: Class for processing a quadTree. It relies on the quadTree and quadTreeNodes to
  * share the proper information for the Processor.
  *
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_NAV_MESH_QUAD_TREE_PROCESSOR_H
-#define ANKI_COZMO_NAV_MESH_QUAD_TREE_PROCESSOR_H
+#ifndef ANKI_COZMO_QUAD_TREE_PROCESSOR_H
+#define ANKI_COZMO_QUAD_TREE_PROCESSOR_H
 
-#include "navMeshQuadTreeTypes.h"
+#include "quadTreeTypes.h"
 
-#include "engine/navMemoryMap/navMemoryMapTypes.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/viz/vizManager.h"
 
 #include "util/helpers/templateHelpers.h"
@@ -26,12 +26,12 @@
 
 namespace Anki {
 namespace Cozmo {
-
-class NavMeshQuadTreeNode;
-using namespace NavMeshQuadTreeTypes;
+  
+class QuadTreeNode;
+using namespace QuadTreeTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class NavMeshQuadTreeProcessor
+class QuadTreeProcessor
 {
 public:
 
@@ -40,20 +40,20 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  NavMeshQuadTreeProcessor(VizManager* vizManager);
+  QuadTreeProcessor(VizManager* vizManager);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Notifications from nodes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // set root
-  void SetRoot(NavMeshQuadTreeNode* node);
+  void SetRoot(QuadTreeNode* node);
 
   // notification when the content type changes for the given node
-  void OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent);
+  void OnNodeContentTypeChanged(const QuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent);
 
   // notification when a node is going to be removed entirely
-  void OnNodeDestroyed(const NavMeshQuadTreeNode* node);
+  void OnNodeDestroyed(const QuadTreeNode* node);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Processing
@@ -69,7 +69,7 @@ public:
   bool HasBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const;
 
   // retrieve the borders for the given combination of content types
-  void GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderRegionVector& outBorders);
+  void GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, MemoryMapTypes::BorderRegionVector& outBorders);
   
   // returns true if the given ray collides with the given type (any quads of the given type)
   bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, ENodeContentTypePackedType types) const;
@@ -106,10 +106,10 @@ private:
   struct BorderWaypoint {
     BorderWaypoint()
       : from(nullptr), to(nullptr), direction(EDirection::Invalid), isEnd(false), isSeed(false) {}
-    BorderWaypoint(const NavMeshQuadTreeNode* f, const NavMeshQuadTreeNode* t, EDirection dir, bool end)
+    BorderWaypoint(const QuadTreeNode* f, const QuadTreeNode* t, EDirection dir, bool end)
       : from(f), to(t), direction(dir), isEnd(end), isSeed(false) {}
-    const NavMeshQuadTreeNode* from;  // inner quad
-    const NavMeshQuadTreeNode* to;    // outer quad
+    const QuadTreeNode* from;  // inner quad
+    const QuadTreeNode* to;    // outer quad
     EDirection direction; // neighbor 4-direction between from and to
     bool isEnd; // true if this is the last waypoint of a border, for example when the obstacle finishes
     bool isSeed; // just a flag for debugging. True if this waypoint was the first in a border
@@ -142,8 +142,8 @@ private:
   static Vec3f CalculateBorderWaypointCenter(const BorderWaypoint& waypoint);
 
   // given 3d points and their neighbor directions, calculate a 3D border segment definition (line + normal)
-  static NavMemoryMapTypes::BorderSegment MakeBorderSegment(const Point3f& origin, const Point3f& dest,
-                                                            const NavMemoryMapTypes::BorderSegment::DataType& data,
+  static MemoryMapTypes::BorderSegment MakeBorderSegment(const Point3f& origin, const Point3f& dest,
+                                                            const MemoryMapTypes::BorderSegment::DataType& data,
                                                             EDirection firstEDirection,
                                                             EDirection lastEDirection);
   
@@ -162,7 +162,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // adds border information
-  void AddBorderWaypoint(const NavMeshQuadTreeNode* from, const NavMeshQuadTreeNode* to, EDirection dir);
+  void AddBorderWaypoint(const QuadTreeNode* from, const QuadTreeNode* to, EDirection dir);
   
   // flags the last border waypoint as finishing a border, so that it doesn't connect with the next one
   void FinishBorder();
@@ -182,7 +182,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // checks if the given node or any of its children collides with the given ray and matches the type
-  bool HasCollisionRayWithTypes(const NavMeshQuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo,
+  bool HasCollisionRayWithTypes(const QuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo,
     ENodeContentTypePackedType types) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -197,7 +197,7 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  using NodeSet = std::unordered_set<const NavMeshQuadTreeNode*>;
+  using NodeSet = std::unordered_set<const QuadTreeNode*>;
   using NodeSetPerType = std::unordered_map<ENodeContentType, NodeSet, Anki::Util::EnumHasher>;
   using BorderMap = std::map<BorderKeyType, BorderCombination>;
 
@@ -212,7 +212,7 @@ private:
   BorderCombination* _currentBorderCombination;
   
   // pointer to the root of the tree
-  NavMeshQuadTreeNode* _root;
+  QuadTreeNode* _root;
   
   // true if there have been changes since last drawn
   mutable bool _contentGfxDirty;

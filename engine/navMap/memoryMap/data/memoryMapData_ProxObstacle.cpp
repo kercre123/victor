@@ -1,5 +1,5 @@
 /**
- * File: navMemoryMapQuadData_ProxObstacle.h
+ * File: memoryMapData_ProxObstacle.h
  *
  * Author: Michael Willett
  * Date:   2017-07-31
@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2017
  **/
  
-#include "engine/navMemoryMap/quadData/navMemoryMapQuadData_ProxObstacle.h"
+#include "memoryMapData_ProxObstacle.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 
@@ -17,26 +17,26 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMemoryMapQuadData_ProxObstacle::NavMemoryMapQuadData_ProxObstacle()
-: INavMemoryMapQuadData(NavMemoryMapTypes::EContentType::ObstacleProx)
+MemoryMapData_ProxObstacle::MemoryMapData_ProxObstacle()
+: MemoryMapData(MemoryMapTypes::EContentType::ObstacleProx)
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-INavMemoryMapQuadData* NavMemoryMapQuadData_ProxObstacle::Clone() const
+MemoryMapData* MemoryMapData_ProxObstacle::Clone() const
 {
-  return new NavMemoryMapQuadData_ProxObstacle(*this);
+  return new MemoryMapData_ProxObstacle(*this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMemoryMapQuadData_ProxObstacle::Equals(const INavMemoryMapQuadData* other) const
+bool MemoryMapData_ProxObstacle::Equals(const MemoryMapData* other) const
 {
   if ( other == nullptr || other->type != type ) {
     return false;
   }
 
-  const NavMemoryMapQuadData_ProxObstacle* castPtr = static_cast<const NavMemoryMapQuadData_ProxObstacle*>( other );
+  const MemoryMapData_ProxObstacle* castPtr = static_cast<const MemoryMapData_ProxObstacle*>( other );
   const bool near = IsNearlyEqual( directionality, castPtr->directionality );
   return near;
 }

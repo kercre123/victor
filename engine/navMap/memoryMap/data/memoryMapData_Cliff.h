@@ -1,18 +1,18 @@
 /**
- * File: navMemoryMapQuadData_ProxObstacle.h
+ * File: memoryMapData_Cliff.h
  *
- * Author: Michael Willett
- * Date:   2017-07-31
+ * Author: Raul
+ * Date:   08/02/2016
  *
- * Description: Data for obstacle quads.
+ * Description: Data for Cliff quads.
  *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef ANKI_COZMO_NAV_MEMORY_MAP_QUAD_DATA_PROX_OBSTACLE_H
-#define ANKI_COZMO_NAV_MEMORY_MAP_QUAD_DATA_PROX_OBSTACLE_H
+#ifndef ANKI_COZMO_MEMORY_MAP_DATA_CLIFF_H
+#define ANKI_COZMO_MEMORY_MAP_DATA_CLIFF_H
 
-#include "iNavMemoryMapQuadData.h"
+#include "memoryMapData.h"
 
 #include "anki/common/basestation/math/point.h"
 
@@ -20,24 +20,24 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// NavMemoryMapQuadData_ProxObstacle
+// NavMemoryMapQuadData_Cliff
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-struct NavMemoryMapQuadData_ProxObstacle : public INavMemoryMapQuadData
+struct MemoryMapData_Cliff : public MemoryMapData
 {
   // constructor
-  NavMemoryMapQuadData_ProxObstacle();
+  MemoryMapData_Cliff();
   
   // create a copy of self (of appropriate subclass) and return it
-  virtual INavMemoryMapQuadData* Clone() const override;
+  MemoryMapData* Clone() const;
   
   // compare to INavMemoryMapQuadData and return bool if the data stored is the same
-  virtual bool Equals(const INavMemoryMapQuadData* other) const override;
+  bool Equals(const MemoryMapData* other) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
-  Vec2f directionality; // direction we presume for the collision (based off robot pose when detected)
+  Vec2f directionality; // direction we presume for the cliff (from detection)
 };
  
 } // namespace

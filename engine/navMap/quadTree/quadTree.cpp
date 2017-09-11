@@ -1,5 +1,5 @@
 /**
- * File: navMeshQuadTree.cpp
+ * File: quadTree.cpp
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -8,8 +8,8 @@
  *
  * Copyright: Anki, Inc. 2015
  **/
-#include "navMeshQuadTree.h"
-#include "navMeshQuadTreeTypes.h"
+#include "quadTree.h"
+#include "quadTreeTypes.h"
 
 #include "engine/viz/vizManager.h"
 #include "engine/robot.h"
@@ -34,8 +34,8 @@ namespace Cozmo {
   
 class Robot;
 
-CONSOLE_VAR(bool, kRenderNavMeshQuadTree         , "NavMeshQuadTree", true);
-CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
+CONSOLE_VAR(bool, kRenderQuadTree      , "QuadTree", true);
+CONSOLE_VAR(bool, kRenderLastAddedQuad , "QuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -49,10 +49,10 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager, Robot* robot)
+QuadTree::QuadTree(VizManager* vizManager, Robot* robot)
 : _gfxDirty(true)
 , _processor(vizManager)
-, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)  // Note the root is created at z=1
+, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr)  // Note the root is created at z=1
 , _vizManager(vizManager)
 , _robot(robot)
 {
@@ -60,7 +60,7 @@ NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager, Robot* robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTree::~NavMeshQuadTree()
+QuadTree::~QuadTree()
 {
   // we are destroyed, stop our rendering
   ClearDraw();
@@ -69,7 +69,7 @@ NavMeshQuadTree::~NavMeshQuadTree()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::DrawDebugProcessorInfo(size_t mapIdxHint) const
+void QuadTree::DrawDebugProcessorInfo(size_t mapIdxHint) const
 {
   // draw the processor information
   if ( mapIdxHint == 0 ) {
@@ -78,12 +78,12 @@ void NavMeshQuadTree::DrawDebugProcessorInfo(size_t mapIdxHint) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::ClearDraw() const
+void QuadTree::ClearDraw() const
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::ClearDraw");
+  ANKI_CPU_PROFILE("QuadTree::ClearDraw");
   
   std::stringstream instanceId;
-  instanceId << "New_NavMeshQuadTree_" << this;
+  instanceId << "New_QuadTree_" << this;
   _vizManager->EraseQuadVector(instanceId.str());
   
   _gfxDirty = true;
@@ -93,7 +93,7 @@ void NavMeshQuadTree::ClearDraw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float NavMeshQuadTree::GetContentPrecisionMM() const
+float QuadTree::GetContentPrecisionMM() const
 {
   // return the length of the smallest quad allowed
   const float minSide_mm = kQuadTreeInitialRootSideLength / (1 << kQuadTreeInitialMaxDepth); // 1 << x = pow(2,x)
@@ -101,9 +101,9 @@ float NavMeshQuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent, int shiftAllowedCount)
+void QuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::AddQuad");
+  ANKI_CPU_PROFILE("QuadTree::AddQuad");
   
   {
     // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect that case
@@ -118,9 +118,9 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
       std::isnan(quad.GetBottomRight().x()) ||
       std::isnan(quad.GetBottomRight().y());
     if ( isNaNQuad ) {
-      PRINT_NAMED_ERROR("NavMeshQuadTree.AddQuad.NaNQuad",
+      PRINT_NAMED_ERROR("QuadTree.AddQuad.NaNQuad",
         "Quad is not valid, at least one coordinate is NaN.");
-      Util::sDumpCallstack("NavMeshQuadTree::AddQuad");
+      Util::sDumpCallstack("QuadTree::AddQuad");
       return;
     }
   }
@@ -128,7 +128,7 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
   // render approx last quad added
   if ( kRenderLastAddedQuad )
   {
-    ANKI_CPU_PROFILE("NavMeshQuadTree::AddQuad.Render");
+    ANKI_CPU_PROFILE("QuadTree::AddQuad.Render");
     
     ColorRGBA color = Anki::NamedColors::WHITE;
     const float z = 70.0f;
@@ -136,10 +136,10 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
     Point3f topRight = {quad[Quad::CornerName::TopRight].x(), quad[Quad::CornerName::TopRight].y(), z};
     Point3f bottomLeft = {quad[Quad::CornerName::BottomLeft].x(), quad[Quad::CornerName::BottomLeft].y(), z};
     Point3f bottomRight = {quad[Quad::CornerName::BottomRight].x(), quad[Quad::CornerName::BottomRight].y(), z};
-    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topLeft, topRight, color, true);
-    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", topRight, bottomRight, color, false);
-    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", bottomRight, bottomLeft, color, false);
-    _vizManager->DrawSegment("NavMeshQuadTree::AddQuad", bottomLeft, topLeft, color, false);
+    _vizManager->DrawSegment("QuadTree::AddQuad", topLeft, topRight, color, true);
+    _vizManager->DrawSegment("QuadTree::AddQuad", topRight, bottomRight, color, false);
+    _vizManager->DrawSegment("QuadTree::AddQuad", bottomRight, bottomLeft, color, false);
+    _vizManager->DrawSegment("QuadTree::AddQuad", bottomLeft, topLeft, color, false);
   }
 
   // if the root does not contain the quad, expand
@@ -147,9 +147,9 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
   {
     // if we are 'adding' a removal quad, do not expand, since it would be useless to expand or shift to try
     // to remove data.
-    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    const bool isRemovingContent = QuadTreeTypes::IsRemovalType(nodeContent.type);
     if ( isRemovingContent ) {
-      PRINT_NAMED_INFO("NavMeshQuadTree.AddQuad.RemovalQuadNotContained",
+      PRINT_NAMED_INFO("QuadTree.AddQuad.RemovalQuadNotContained",
         "Quad is not fully contained in root, removal does not cause expansion.");
     }
     else
@@ -163,9 +163,9 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent, int shiftAllowedCount)
+void QuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::AddLine");
+  ANKI_CPU_PROFILE("QuadTree::AddLine");
   
   {
     // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect here
@@ -176,9 +176,9 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
       std::isnan(to.x()  ) ||
       std::isnan(to.y()  );
     if ( isNaNLine ) {
-      PRINT_NAMED_ERROR("NavMeshQuadTree.AddLine.NaNQuad",
+      PRINT_NAMED_ERROR("QuadTree.AddLine.NaNQuad",
         "Line is not valid, at least one coordinate is NaN.");
-      Util::sDumpCallstack("NavMeshQuadTree::AddLine");
+      Util::sDumpCallstack("QuadTree::AddLine");
       return;
     }
   }
@@ -188,9 +188,9 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
   {
     // if we are 'adding' a removal line, do not expand, since it would be useless to expand or shift to try
     // to remove data.
-    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    const bool isRemovingContent = QuadTreeTypes::IsRemovalType(nodeContent.type);
     if ( isRemovingContent ) {
-      PRINT_NAMED_INFO("NavMeshQuadTree.AddLine.RemovalLineFromNotContained",
+      PRINT_NAMED_INFO("QuadTree.AddLine.RemovalLineFromNotContained",
         "Line 'from' point is not fully contained in root, removal does not cause expansion.");
     }
     else
@@ -204,9 +204,9 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
   {
     // if we are 'adding' a removal line, do not expand, since it would be useless to expand or shift to try
     // to remove data.
-    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    const bool isRemovingContent = QuadTreeTypes::IsRemovalType(nodeContent.type);
     if ( isRemovingContent ) {
-      PRINT_NAMED_INFO("NavMeshQuadTree.AddLine.RemovalLineToNotContained",
+      PRINT_NAMED_INFO("QuadTree.AddLine.RemovalLineToNotContained",
         "Line 'to' point is not fully contained in root, removal does not cause expansion.");
     }
     else
@@ -220,9 +220,9 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent, int shiftAllowedCount)
+void QuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::AddTriangle");
+  ANKI_CPU_PROFILE("QuadTree::AddTriangle");
   
   {
     // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect here if
@@ -235,9 +235,9 @@ void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& node
       std::isnan(tri[2].x()) ||
       std::isnan(tri[2].y());
     if ( isNaNTri ) {
-      PRINT_NAMED_ERROR("NavMeshQuadTree.AddTriangle.NaNQuad",
+      PRINT_NAMED_ERROR("QuadTree.AddTriangle.NaNQuad",
         "Triangle is not valid, at least one coordinate is NaN.");
-      Util::sDumpCallstack("NavMeshQuadTree::AddTriangle");
+      Util::sDumpCallstack("QuadTree::AddTriangle");
       return;
     }
   }
@@ -247,9 +247,9 @@ void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& node
   {
     // if we are 'adding' a removal triangle, do not expand, since it would be useless to expand or shift to try
     // to remove data.
-    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    const bool isRemovingContent = QuadTreeTypes::IsRemovalType(nodeContent.type);
     if ( isRemovingContent ) {
-      PRINT_NAMED_INFO("NavMeshQuadTree.AddTriangle.RemovalTriangleNotContained",
+      PRINT_NAMED_INFO("QuadTree.AddTriangle.RemovalTriangleNotContained",
         "Triangle is not fully contained in root, removal does not cause expansion.");
     }
     else
@@ -263,18 +263,18 @@ void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& node
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeContent, int shiftAllowedCount)
+void QuadTree::AddPoint(const Point2f& point, const NodeContent& nodeContent, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::AddPoint");
+  ANKI_CPU_PROFILE("QuadTree::AddPoint");
   
   // if the root does not contain the point, we need to expand in that direction
   if ( !_root.Contains( point ) )
   {
     // if we are 'adding' a removal point, do not expand, since it would be useless to expand or shift to try
     // to remove data.
-    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    const bool isRemovingContent = QuadTreeTypes::IsRemovalType(nodeContent.type);
     if ( isRemovingContent ) {
-      PRINT_NAMED_INFO("NavMeshQuadTree.AddPoint.RemovalPointNotContained",
+      PRINT_NAMED_INFO("QuadTree.AddPoint.RemovalPointNotContained",
         "Point is not contained in root, removal does not cause expansion.");
     }
     else
@@ -288,14 +288,14 @@ void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeCont
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transform)
+void QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
 {
   // TODO rsam for the future, when we merge with transform, poses or directions stored as extra info are invalid
   // since they were wrt a previous origin!
   Pose2d transform2d(transform);
 
   // obtain all leaf nodes from the map we are merging from
-  NavMeshQuadTreeNode::NodeCPtrVector leafNodes;
+  QuadTreeNode::NodeCPtrVector leafNodes;
   other._root.AddSmallestDescendantsDepthFirst(leafNodes);
   
   // note regarding quad size limit: when we merge one map into another, this map can expand or shift the root
@@ -348,9 +348,9 @@ void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transfor
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Expand(const Quad2f& quadToCover, int shiftAllowedCount)
+void QuadTree::Expand(const Quad2f& quadToCover, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByQuad");
+  ANKI_CPU_PROFILE("QuadTree::ExpandByQuad");
   
   // allow expanding several times until the quad fits in the tree, as long as we can expand, we keep trying,
   // relying on the root to tell us if we reached a limit
@@ -397,7 +397,7 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover, int shiftAllowedCount)
   // the quad should be contained, if it's not, we have reached the limit of expansions and shifts, and the quad does not
   // fit, which will cause information loss
   if ( !quadFitsInMap ) {
-    PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByQuad.InsufficientExpansion",
+    PRINT_NAMED_ERROR("QuadTree.ExpandByQuad.InsufficientExpansion",
       "Quad caused expansion, but expansion was not enough QuadCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
       quadToCover.ComputeCentroid().x(), quadToCover.ComputeCentroid().y(),
       _root.GetCenter().x(), _root.GetCenter().y(),
@@ -409,9 +409,9 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover, int shiftAllowedCount)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Expand(const Point2f& pointToInclude, int shiftAllowedCount)
+void QuadTree::Expand(const Point2f& pointToInclude, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByPoint");
+  ANKI_CPU_PROFILE("QuadTree::ExpandByPoint");
   
   // allow expanding several times until the point fits in the tree, as long as we can expand, we keep trying,
   // relying on the root to tell us if we reached a limit
@@ -456,7 +456,7 @@ void NavMeshQuadTree::Expand(const Point2f& pointToInclude, int shiftAllowedCoun
   // the point should be contained, if it's not, we have reached the limit of expansions and shifts, and the point does not
   // fit, which will cause information loss
   if ( !pointInMap ) {
-    PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByPoint.InsufficientExpansion",
+    PRINT_NAMED_ERROR("QuadTree.ExpandByPoint.InsufficientExpansion",
       "Point caused expansion, but expansion was not enough Point(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
       pointToInclude.x(), pointToInclude.y(), _root.GetCenter().x(), _root.GetCenter().y(), _root.GetSideLen() );
   }
@@ -466,9 +466,9 @@ void NavMeshQuadTree::Expand(const Point2f& pointToInclude, int shiftAllowedCoun
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover, int shiftAllowedCount)
+void QuadTree::Expand(const Triangle2f& triangleToCover, int shiftAllowedCount)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByTriangle");
+  ANKI_CPU_PROFILE("QuadTree::ExpandByTriangle");
   
   // allow expanding several times until the triangle fits in the tree, as long as we can expand, we keep trying,
   // relying on the root to tell us if we reached a limit
@@ -515,7 +515,7 @@ void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover, int shiftAllowed
   // the point should be contained, if it's not, we have reached the limit of expansions and shifts, and the point does not
   // fit, which will cause information loss
   if ( !triangleInMap ) {
-    PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByTriangle.InsufficientExpansion",
+    PRINT_NAMED_ERROR("QuadTree.ExpandByTriangle.InsufficientExpansion",
       "Triangle caused expansion, but expansion was not enough TriCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
       triangleToCover.GetCentroid().x(), triangleToCover.GetCentroid().y(),
       _root.GetCenter().x(), _root.GetCenter().y(),
@@ -527,9 +527,9 @@ void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover, int shiftAllowed
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Broadcast(uint32_t originID) const
+void QuadTree::Broadcast(uint32_t originID) const
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTree::Broadcast");
+  ANKI_CPU_PROFILE("QuadTree::Broadcast");
   
   using namespace ExternalInterface;
   
@@ -539,20 +539,20 @@ void NavMeshQuadTree::Broadcast(uint32_t originID) const
   _robot->Broadcast(MessageEngineToGame(std::move(msgBegin)));
 
   // Ask root to add quad info to be sent (do a DFS of entire tree)
-  NavMeshQuadTreeNode::QuadInfoVector quadInfoVector;
+  QuadTreeNode::QuadInfoVector quadInfoVector;
   _root.AddQuadsToSend(quadInfoVector);
 
   // Now send these packets in clad message(s), respecting the clad message size limit
   const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
   const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
   const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
-  size_t quadsPerMessage = kMaxBufferForQuads / sizeof(NavMeshQuadTreeNode::QuadInfoVector::value_type);
+  size_t quadsPerMessage = kMaxBufferForQuads / sizeof(QuadTreeNode::QuadInfoVector::value_type);
   size_t remainingQuads = quadInfoVector.size();
   
-  DEV_ASSERT(quadsPerMessage > 0, "NavMeshQuadTree.Broadcast.InvalidQuadsPerMessage");
+  DEV_ASSERT(quadsPerMessage > 0, "QuadTree.Broadcast.InvalidQuadsPerMessage");
   
   // We can't initialize messages with a range of vectors, so we have to create copies
-  NavMeshQuadTreeNode::QuadInfoVector partQuadInfos;
+  QuadTreeNode::QuadInfoVector partQuadInfos;
   partQuadInfos.reserve( quadsPerMessage );
   
   // while we have quads to send
@@ -576,11 +576,11 @@ void NavMeshQuadTree::Broadcast(uint32_t originID) const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const
+void QuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const
 {
-  if ( _gfxDirty && kRenderNavMeshQuadTree )
+  if ( _gfxDirty && kRenderQuadTree )
   {
-    ANKI_CPU_PROFILE("NavMeshQuadTree::BroadcastMemoryMapDraw");
+    ANKI_CPU_PROFILE("QuadTree::BroadcastMemoryMapDraw");
     
     _gfxDirty = false;
     
@@ -604,26 +604,26 @@ void NavMeshQuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHin
     }
     
     std::stringstream instanceId;
-    instanceId << "New_NavMeshQuadTree_" << this;
+    instanceId << "New_QuadTree_" << this;
     ExternalInterface::MemoryMapInfo info(_root.GetLevel(), _root.GetSideLen(), rootCenter.x(), rootCenter.y(), adjustedZ, instanceId.str());
     MemoryMapMessageDebugVizBegin msgBegin(originID, info);
     _robot->Broadcast(MessageViz(std::move(msgBegin)));
     
     // Ask root to add quad info to be sent (do a DFS of entire tree)
-    NavMeshQuadTreeNode::QuadInfoDebugVizVector quadInfoVector;
+    QuadTreeNode::QuadInfoDebugVizVector quadInfoVector;
     _root.AddQuadsToSendDebugViz(quadInfoVector);
     
     // Now send these packets in clad message(s), respecting the clad message size limit
     const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
     const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
     const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
-    size_t quadsPerMessage = kMaxBufferForQuads / sizeof(NavMeshQuadTreeNode::QuadInfoVector::value_type);
+    size_t quadsPerMessage = kMaxBufferForQuads / sizeof(QuadTreeNode::QuadInfoVector::value_type);
     size_t remainingQuads = quadInfoVector.size();
     
-    DEV_ASSERT(quadsPerMessage > 0, "NavMeshQuadTree.BroadcastMemoryMapDraw.InvalidQuadsPerMessage");
+    DEV_ASSERT(quadsPerMessage > 0, "QuadTree.BroadcastMemoryMapDraw.InvalidQuadsPerMessage");
     
     // We can't initialize messages with a range of vectors, so we have to create copies
-    NavMeshQuadTreeNode::QuadInfoDebugVizVector partQuadInfos;
+    QuadTreeNode::QuadInfoDebugVizVector partQuadInfos;
     partQuadInfos.reserve(quadsPerMessage);
     
     // while we have quads to send

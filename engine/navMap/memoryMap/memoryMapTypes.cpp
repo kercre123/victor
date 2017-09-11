@@ -8,17 +8,17 @@
  *
  * Copyright: Anki, Inc. 2015
  **/
-#include "engine/navMemoryMap/navMemoryMapTypes.h"
+#include "memoryMapTypes.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
-namespace NavMemoryMapTypes {
+namespace MemoryMapTypes {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ExpectsAdditionalData(EContentType type)
 {
-  DEV_ASSERT(type != EContentType::_Count, "NavMemoryMapTypes.ExpectsAdditionalData.UsingControlTypeIsNotAllowed");
+  DEV_ASSERT(type != EContentType::_Count, "MemoryMapTypes.ExpectsAdditionalData.UsingControlTypeIsNotAllowed");
   
   // using switch to force at compilation type to decide on new types
   switch(type)

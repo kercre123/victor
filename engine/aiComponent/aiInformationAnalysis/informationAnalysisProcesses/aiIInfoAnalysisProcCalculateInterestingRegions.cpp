@@ -13,7 +13,7 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/navMemoryMap/iNavMemoryMap.h"
+#include "engine/navMap/iNavMap.h"
 #include "engine/robot.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -29,22 +29,22 @@ namespace
 {
 
 // Configuration of memory map to check for interesting regions
-constexpr NavMemoryMapTypes::FullContentArray typesToExploreInterestingBordersFrom =
+constexpr MemoryMapTypes::FullContentArray typesToExploreInterestingBordersFrom =
 {
-  {NavMemoryMapTypes::EContentType::Unknown               , true },
-  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , true },
-  {NavMemoryMapTypes::EContentType::ClearOfCliff          , true },
-  {NavMemoryMapTypes::EContentType::ObstacleCube          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCharger       , false},
-  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-  {NavMemoryMapTypes::EContentType::ObstacleProx          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
-  {NavMemoryMapTypes::EContentType::Cliff                 , false},
-  {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
-  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
+  {MemoryMapTypes::EContentType::Unknown               , true },
+  {MemoryMapTypes::EContentType::ClearOfObstacle       , true },
+  {MemoryMapTypes::EContentType::ClearOfCliff          , true },
+  {MemoryMapTypes::EContentType::ObstacleCube          , false},
+  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleCharger       , false},
+  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {MemoryMapTypes::EContentType::ObstacleProx          , false},
+  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
+  {MemoryMapTypes::EContentType::Cliff                 , false},
+  {MemoryMapTypes::EContentType::InterestingEdge       , false},
+  {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
 };
-static_assert(NavMemoryMapTypes::IsSequentialArray(typesToExploreInterestingBordersFrom),
+static_assert(MemoryMapTypes::IsSequentialArray(typesToExploreInterestingBordersFrom),
   "This array does not define all types once and only once.");
 
 };
@@ -55,17 +55,17 @@ void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyz
   ANKI_CPU_PROFILE("InfoAnalysisProcCalculateInterestingRegions");
   
   // calculate regions
-  INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  INavMemoryMap::BorderRegionVector visionEdges, proxEdges;
+  INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  INavMap::BorderRegionVector visionEdges, proxEdges;
   
   analyzer._interestingRegions.clear();
   
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToExploreInterestingBordersFrom, visionEdges);
+  memoryMap->CalculateBorders(MemoryMapTypes::EContentType::InterestingEdge, typesToExploreInterestingBordersFrom, visionEdges);
   if (!visionEdges.empty()) {
    analyzer._interestingRegions.insert(end(analyzer._interestingRegions), begin(visionEdges), end(visionEdges));
   }
                        
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleProx, typesToExploreInterestingBordersFrom, proxEdges);
+  memoryMap->CalculateBorders(MemoryMapTypes::EContentType::ObstacleProx, typesToExploreInterestingBordersFrom, proxEdges);
   if (!proxEdges.empty()) {
     analyzer._interestingRegions.insert(end(analyzer._interestingRegions), begin(proxEdges), end(proxEdges));
   }

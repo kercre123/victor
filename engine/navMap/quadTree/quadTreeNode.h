@@ -1,5 +1,5 @@
 /**
- * File: navMeshQuadTreeNode.h
+ * File: quadTreeNode.h
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -12,19 +12,17 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef ANKI_COZMO_NAV_MESH_QUAD_TREE_NODE_H
-#define ANKI_COZMO_NAV_MESH_QUAD_TREE_NODE_H
+#ifndef ANKI_COZMO_QUAD_TREE_NODE_H
+#define ANKI_COZMO_QUAD_TREE_NODE_H
 
-#include "navMeshQuadTreeTypes.h"
+#include "quadTreeTypes.h"
 
 #include "engine/viz/vizManager.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/navMemoryMap/navMemoryMapTypes.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/triangle.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -34,20 +32,20 @@
 namespace Anki {
 namespace Cozmo {
 
-class NavMeshQuadTreeProcessor;
-using namespace NavMeshQuadTreeTypes;
+class QuadTreeProcessor;
+using namespace QuadTreeTypes;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class NavMeshQuadTreeNode : private Util::noncopyable
+class QuadTreeNode : private Util::noncopyable
 {
 public:
-  friend class NavMeshQuadTreeProcessor;
+  friend class QuadTreeProcessor;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  using NodeCPtrVector = std::vector<const NavMeshQuadTreeNode*>;
+  using NodeCPtrVector = std::vector<const QuadTreeNode*>;
 
   struct SegmentLineEquation {
     const Point2f& from;
@@ -91,19 +89,19 @@ public:
 
   // Crete node
   // it will allow subdivision as long as level is greater than 0
-  NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, NavMeshQuadTreeNode* parent);
+  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent);
   
   // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
   // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
   // assumption that the processor(s) will be destroyed at the same time than nodes are, except in the case of
   // nodes that are merged into their parents, or when we shift the root, in which cases we do notify the processor.
   // Alternatively processors would store weak_ptr, but no need for the moment given the above assumption.
-  // ~NavMeshQuadTreeNode();
+  // ~QuadTreeNode();
   
   // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
   // which is annoying
-  NavMeshQuadTreeNode(const NavMeshQuadTreeNode&&) = delete;
-  NavMeshQuadTreeNode& operator=(const NavMeshQuadTreeNode&&) = delete;
+  QuadTreeNode(const QuadTreeNode&&) = delete;
+  QuadTreeNode& operator=(const QuadTreeNode&&) = delete;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -117,6 +115,7 @@ public:
   // consider using the concrete checks if you are going to do GetContentType() == X, in case the meaning of that
   // comparison changes
   ENodeContentType GetContentType() const { return _content.type; }
+  std::shared_ptr<const MemoryMapData> GetData() const { return _content.data; }
   bool IsContentTypeUnknown() const { return _content.type == ENodeContentType::Unknown; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
@@ -132,7 +131,7 @@ public:
   
   // return the unique_ptr for our child at the given index. If no child is present at the given index, it returns
   // a null pointer
-  const std::unique_ptr<NavMeshQuadTreeNode>& GetChildAt(size_t index) const;
+  const std::unique_ptr<QuadTreeNode>& GetChildAt(size_t index) const;
   
   // return number of current children
   size_t GetNumChildren() const { return _childrenPtr.size(); }
@@ -142,34 +141,34 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // processes the given quad within the tree and appropriately stores the content in the quad tree where the quad overlaps
-  bool AddContentQuad(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddContentQuad(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor);
   
   // processes the given line within the tree and appropriately stores the content in the quad tree where the line collides
-  bool AddContentLine(const Point2f& from, const Point2f& to, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddContentLine(const Point2f& from, const Point2f& to, const NodeContent& detectedContent, QuadTreeProcessor& processor);
   
   // processes the given triangle within the tree and appropriately stores the content in the quad tree where the line collides
-  bool AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, QuadTreeProcessor& processor);
   
   // processes the given point within the tree and appropriately stores the content in the quad tree where the point resides
-  bool AddContentPoint(const Point2f& point, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddContentPoint(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor);
 
   // moves this node's center towards the required points, so that they can be included in this node
   // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
-  bool ShiftRoot(const std::vector<Point2f>& requiredPoints, NavMeshQuadTreeProcessor& processor);
+  bool ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
   // on a root node. Such responsibility lies in the caller, not in this node
   // Returns true if successfully expanded, false otherwise
   // maxRootLevel: it won't upgrade if the root is already higher level than the specified
-  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, NavMeshQuadTreeProcessor& processor);
+  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor);
  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // find the neighbor of the same or higher level in the given direction
-  const NavMeshQuadTreeNode* FindSingleNeighbor(EDirection direction) const;
+  const QuadTreeNode* FindSingleNeighbor(EDirection direction) const;
 
   // find the group of smallest neighbors with whom this node shares a border.
   // they would be children of the same level neighbor. This is normally useful when our neighbor is subdivided but
@@ -214,7 +213,7 @@ private:
   enum class EContentOverlap { Partial, Total };
   
   // container for each node's children
-  using ChildrenVector = std::vector< std::unique_ptr<NavMeshQuadTreeNode> >;
+  using ChildrenVector = std::vector< std::unique_ptr<QuadTreeNode> >;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Collision checks
@@ -228,38 +227,38 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // checks if the given point is contained in the quad, and properly acts, delegating on children if needed
-  bool AddPoint_Recursive(const Point2f& point, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddPoint_Recursive(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor);
 
   // setup precomputes common variables that the recursive method is going to use
   bool AddTriangle_Setup(const Triangle2f& quad,
                          const NodeContent& detectedContent,
-                         NavMeshQuadTreeProcessor& processor);
+                         QuadTreeProcessor& processor);
 
   // checks how the given triangle affects this node, and properly acts, delegating on children if needed
   bool AddTriangle_Recursive(const Triangle2f& triangle,
                              const TriangleSegmentArray& triangleSegments,
                              const NodeContent& detectedContent,
-                             NavMeshQuadTreeProcessor& processor);
+                             QuadTreeProcessor& processor);
   
   // checks how the given line affects this node, and properly acts, delegating on children if needed
-  bool AddLine_Recursive(const SegmentLineEquation& segmentLine, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddLine_Recursive(const SegmentLineEquation& segmentLine, const NodeContent& detectedContent, QuadTreeProcessor& processor);
  
   // old implementation (slow) of AddQuad
   // checks how the given quad affects this node, and properly acts, delegating on children if needed
-  bool AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  bool AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor);
   
   // new implementation (fast) of AddQuad
   // setup precomputes common variables that the recursive method is going to use
   bool AddQuad_NewSetup(const Quad2f &quad,
                         const NodeContent& detectedContent,
-                        NavMeshQuadTreeProcessor& processor);
+                        QuadTreeProcessor& processor);
   
   // new implementation (fast) of AddQuad
   // checks how the given quad affects this node, and properly acts, delegating on children if needed
   bool AddQuad_NewRecursive(const Quad2f& quad,
                             const QuadSegmentArray& nonAAQuadSegments,
                             const NodeContent& detectedContent,
-                            NavMeshQuadTreeProcessor& processor);
+                            QuadTreeProcessor& processor);
   
   // return true if this quad can subdivide
   bool CanSubdivide() const { return _level > 0; }
@@ -279,27 +278,27 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // subdivide/merge children
-  void Subdivide(NavMeshQuadTreeProcessor& processor);
-  void Merge(const NodeContent& newContent, NavMeshQuadTreeProcessor& processor);
-  void ClearDescendants(NavMeshQuadTreeProcessor& processor);
+  void Subdivide(QuadTreeProcessor& processor);
+  void Merge(const NodeContent& newContent, QuadTreeProcessor& processor);
+  void ClearDescendants(QuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
-  void TryAutoMerge(NavMeshQuadTreeProcessor& processor);
+  void TryAutoMerge(QuadTreeProcessor& processor);
   
   // sets the content type to the detected one.
   // try checks por priority first, then calls force
-  void TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap, NavMeshQuadTreeProcessor& processor);
+  void TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap, QuadTreeProcessor& processor);
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  void ForceSetDetectedContentType(const NodeContent& detectedContent, QuadTreeProcessor& processor);
   
   // sets a new parent to this node. Used on expansions
-  void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }
+  void ChangeParent(const QuadTreeNode* newParent) { _parent = newParent; }
   
   // swaps children and content with 'otherNode', updating the children's parent pointer
-  void SwapChildrenAndContent(NavMeshQuadTreeNode* otherNode, NavMeshQuadTreeProcessor& processor);
+  void SwapChildrenAndContent(QuadTreeNode* otherNode, QuadTreeProcessor& processor);
   
   // read the note in destructor on why we manually destroy nodes when they are removed
-  static void DestroyNodes(ChildrenVector& nodes, NavMeshQuadTreeProcessor& processor);
+  static void DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
@@ -309,7 +308,7 @@ private:
   static const MoveInfo* GetDestination(EQuadrant from, EDirection direction);
   
   // get the child in the given quadrant, or null if this node is not subdivided
-  const NavMeshQuadTreeNode* GetChild(EQuadrant quadrant) const;
+  const QuadTreeNode* GetChild(EQuadrant quadrant) const;
 
   // iterate until we reach the nodes that have a border in the given direction, and add them to the vector
   // NOTE: this method is expected to NOT clear the vector before adding descendants
@@ -322,14 +321,14 @@ private:
   // NOTE: try to minimize padding in these attributes
 
   // children when subdivided. Can be empty or have 4 nodes
-  std::vector< std::unique_ptr<NavMeshQuadTreeNode> > _childrenPtr;
+  std::vector< std::unique_ptr<QuadTreeNode> > _childrenPtr;
 
   // coordinates of this quad
   Point3f _center;
   float   _sideLen;
 
   // parent node
-  const NavMeshQuadTreeNode* _parent;
+  const QuadTreeNode* _parent;
 
   // our level
   uint8_t _level;
@@ -344,7 +343,7 @@ private:
   
 namespace QTOptimizations{
   bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
-                          const NavMeshQuadTreeNode::SegmentLineEquation& line,
+                          const QuadTreeNode::SegmentLineEquation& line,
                           bool& doesLineCrossQuad);
   
   

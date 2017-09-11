@@ -1,5 +1,5 @@
 /**
- * File: navMeshQuadTreeNode.cpp
+ * File: quadTreeNode.cpp
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -11,8 +11,8 @@
  *
  * Copyright: Anki, Inc. 2015
 **/
-#include "navMeshQuadTreeNode.h"
-#include "navMeshQuadTreeProcessor.h"
+#include "quadTreeNode.h"
+#include "quadTreeProcessor.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "util/math/math.h"
@@ -87,13 +87,13 @@ ExternalInterface::ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(ENode
   
 } // namespace
 
-static_assert( !std::is_copy_assignable<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
-static_assert( !std::is_copy_constructible<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
-static_assert( !std::is_move_assignable<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
-static_assert( !std::is_move_constructible<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
+static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
+static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
+static_assert( !std::is_move_assignable<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
+static_assert( !std::is_move_constructible<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, NavMeshQuadTreeNode* parent)
+QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent)
 : _center(center)
 , _sideLen(sideLength)
 , _parent(parent)
@@ -101,11 +101,11 @@ NavMeshQuadTreeNode::NavMeshQuadTreeNode(const Point3f &center, float sideLength
 , _quadrant(quadrant)
 , _content(ENodeContentType::Invalid)
 {
-  DEV_ASSERT(_quadrant <= EQuadrant::Root, "NavMeshQuadTreeNode.Constructor.InvalidQuadrant");
+  DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::Contains(const Quad2f& quad) const
+bool QuadTreeNode::Contains(const Quad2f& quad) const
 {
   // this should be using the new faster checks. It's only called from outside during expansion atm though, so
   // not worth changing atm (no way of testing speed impact)
@@ -114,7 +114,7 @@ bool NavMeshQuadTreeNode::Contains(const Quad2f& quad) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::Contains(const Point2f& point) const
+bool QuadTreeNode::Contains(const Point2f& point) const
 {
   // this should be using the new faster checks. It's only called from outside during expansion atm though, so
   // not worth changing atm (no way of testing speed impact)
@@ -123,7 +123,7 @@ bool NavMeshQuadTreeNode::Contains(const Point2f& point) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::Contains(const Triangle2f& tri) const
+bool QuadTreeNode::Contains(const Triangle2f& tri) const
 {
   // this should be using the new faster checks. It's only called from outside during expansion atm though, so
   // not worth changing atm (no way of testing speed impact)
@@ -133,7 +133,7 @@ bool NavMeshQuadTreeNode::Contains(const Triangle2f& tri) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Quad3f NavMeshQuadTreeNode::MakeQuad() const
+Quad3f QuadTreeNode::MakeQuad() const
 {
   const float halfLen = _sideLen * 0.5f;
   Quad3f ret
@@ -147,7 +147,7 @@ Quad3f NavMeshQuadTreeNode::MakeQuad() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Quad2f NavMeshQuadTreeNode::MakeQuadXY(const float padding_mm) const
+Quad2f QuadTreeNode::MakeQuadXY(const float padding_mm) const
 {
   const float halfLen = (_sideLen * 0.5f) + padding_mm;
   Quad2f ret
@@ -161,25 +161,25 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY(const float padding_mm) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::unique_ptr<NavMeshQuadTreeNode>& NavMeshQuadTreeNode::GetChildAt(size_t index) const
+const std::unique_ptr<QuadTreeNode>& QuadTreeNode::GetChildAt(size_t index) const
 {
   if ( index < _childrenPtr.size() ) {
     return _childrenPtr[index];
   }
   else
   {
-    PRINT_NAMED_ERROR("NavMeshQuadTreeNode.GetChildAt.InvalidIndex",
+    PRINT_NAMED_ERROR("QuadTreeNode.GetChildAt.InvalidIndex",
       "Index %zu is greater than number of children %zu. Returning null",
       index, _childrenPtr.size());
-    static std::unique_ptr<NavMeshQuadTreeNode> nullPtr;
+    static std::unique_ptr<QuadTreeNode> nullPtr;
     return nullPtr;
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddContentPoint(const Point2f& point, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddContentPoint(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddContentPoint");
+  ANKI_CPU_PROFILE("QuadTreeNode::AddContentPoint");
   
   // set up optimized triangle checks
   bool changed = AddPoint_Recursive(point, detectedContent, processor);
@@ -187,9 +187,9 @@ bool NavMeshQuadTreeNode::AddContentPoint(const Point2f& point, const NodeConten
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddContentTriangle");
+  ANKI_CPU_PROFILE("QuadTreeNode::AddContentTriangle");
   
   // set up optimized triangle checks
   bool changed = AddTriangle_Setup(tri, detectedContent, processor);
@@ -197,10 +197,10 @@ bool NavMeshQuadTreeNode::AddContentTriangle(const Triangle2f& tri, const NodeCo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddContentLine(const Point2f& from, const Point2f& to,
-  const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddContentLine(const Point2f& from, const Point2f& to,
+  const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddContentLine");
+  ANKI_CPU_PROFILE("QuadTreeNode::AddContentLine");
 
   // add line recursively
   SegmentLineEquation segmentLine(from, to);
@@ -209,9 +209,9 @@ bool NavMeshQuadTreeNode::AddContentLine(const Point2f& from, const Point2f& to,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddContentQuad(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddContentQuad(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddContentQuad");
+  ANKI_CPU_PROFILE("QuadTreeNode::AddContentQuad");
   
   // delegate on optimized implementation (under testing)
   bool changed = AddQuad_NewSetup(quad, detectedContent, processor);
@@ -219,9 +219,9 @@ bool NavMeshQuadTreeNode::AddContentQuad(const Quad2f& quad, const NodeContent& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  // ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddQuad_OldRecursive"); // recursive functions don't properly show averages
+  // ANKI_CPU_PROFILE("QuadTreeNode::AddQuad_OldRecursive"); // recursive functions don't properly show averages
   
   // if we won't gain any new info, no need to process
   const bool isSameInfo = _content == detectedContent;
@@ -303,7 +303,7 @@ bool NavMeshQuadTreeNode::AddQuad_OldRecursive(const Quad2f& quad, const NodeCon
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTreeProcessor& processor)
 {
   bool xPlusAxisReq  = false;
   bool xMinusAxisReq = false;
@@ -322,13 +322,13 @@ bool NavMeshQuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, 
   
   // can't shift +x and -x at the same time
   if ( xPlusAxisReq && xMinusAxisReq ) {
-    PRINT_NAMED_WARNING("NavMeshQuadTreeNode.ShiftRoot.CantShiftPMx", "Current root size can't accomodate given points");
+    PRINT_NAMED_WARNING("QuadTreeNode.ShiftRoot.CantShiftPMx", "Current root size can't accomodate given points");
     return false;
   }
 
   // can't shift +y and -y at the same time
   if ( yPlusAxisReq && yMinusAxisReq ) {
-    PRINT_NAMED_WARNING("NavMeshQuadTreeNode.ShiftRoot.CantShiftPMy", "Current root size can't accomodate given points");
+    PRINT_NAMED_WARNING("QuadTreeNode.ShiftRoot.CantShiftPMy", "Current root size can't accomodate given points");
     return false;
   }
 
@@ -337,7 +337,7 @@ bool NavMeshQuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, 
   const bool yShift = yPlusAxisReq || yMinusAxisReq;
   if ( !xShift && !yShift ) {
     // this means all points are contained in this node, we shouldn't be here
-    PRINT_NAMED_ERROR("NavMeshQuadTreeNode.ShiftRoot.AllPointsIn", "We don't need to shift");
+    PRINT_NAMED_ERROR("QuadTreeNode.ShiftRoot.AllPointsIn", "We don't need to shift");
     return false;
   }
 
@@ -351,15 +351,15 @@ bool NavMeshQuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, 
   if ( !_childrenPtr.empty() )
   {
     // save my old children so that we can swap them with the new ones
-    std::vector< std::unique_ptr<NavMeshQuadTreeNode> > oldChildren;
+    std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
     std::swap(oldChildren, _childrenPtr);
     
     // create new children
     const float chHalfLen = rootHalfLen*0.5f;
-    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
-    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
-    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
-    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
 
     // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
     using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
@@ -478,10 +478,10 @@ bool NavMeshQuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor)
 {
   DEV_ASSERT(!NEAR_ZERO(direction.x()) || !NEAR_ZERO(direction.y()),
-             "NavMeshQuadTreeNode.UpgradeRootLevel.InvalidDirection");
+             "QuadTreeNode.UpgradeRootLevel.InvalidDirection");
   
   // reached expansion limit
   if ( _level == std::numeric_limits<uint8_t>::max() || _level >= maxRootLevel) {
@@ -489,7 +489,7 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t max
   }
 
   // save my old children to store in the child that is taking my spot
-  std::vector< std::unique_ptr<NavMeshQuadTreeNode> > oldChildren;
+  std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
   std::swap(oldChildren, _childrenPtr);
 
   const bool xPlus = FLT_GE_ZERO(direction.x());
@@ -501,17 +501,17 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t max
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
   if      ( !xPlus &&  yPlus ) { childIdx = 1; }
   else if (  xPlus && !yPlus ) { childIdx = 2; }
   else if (  xPlus &&  yPlus ) { childIdx = 3; }
-  NavMeshQuadTreeNode& childTakingMyPlace = *_childrenPtr[childIdx];
+  QuadTreeNode& childTakingMyPlace = *_childrenPtr[childIdx];
   
   // we have to set the new first level children as Unknown, since they are initialized as Invalid
   // except the child that takes my place, since that one is going to inherit my content
@@ -547,7 +547,7 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t max
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
+void QuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
 {
   // if we have children, delegate on them, otherwise add data about ourselves
   if ( _childrenPtr.empty() )
@@ -565,7 +565,7 @@ void NavMeshQuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector) const
+void QuadTreeNode::AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector) const
 {
   // if we have children, delegate on them, otherwise add data about ourselves
   if ( _childrenPtr.empty() )
@@ -583,18 +583,18 @@ void NavMeshQuadTreeNode::AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInf
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
+void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(CanSubdivide() && !IsSubdivided(), "NavMeshQuadTreeNode.Subdivide.InvalidSubdivide");
-  DEV_ASSERT(_level > 0, "NavMeshQuadTreeNode.Subdivide.InvalidLevel");
+  DEV_ASSERT(CanSubdivide() && !IsSubdivided(), "QuadTreeNode.Subdivide.InvalidSubdivide");
+  DEV_ASSERT(_level > 0, "QuadTreeNode.Subdivide.InvalidLevel");
   
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
@@ -608,9 +608,9 @@ void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::Merge(const NodeContent& newContent, NavMeshQuadTreeProcessor& processor)
+void QuadTreeNode::Merge(const NodeContent& newContent, QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(IsSubdivided(), "NavMeshQuadTreeNode.Merge.InvalidState");
+  DEV_ASSERT(IsSubdivided(), "QuadTreeNode.Merge.InvalidState");
 
   // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
   ClearDescendants(processor);
@@ -620,7 +620,7 @@ void NavMeshQuadTreeNode::Merge(const NodeContent& newContent, NavMeshQuadTreePr
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::ClearDescendants(NavMeshQuadTreeProcessor& processor)
+void QuadTreeNode::ClearDescendants(QuadTreeProcessor& processor)
 {
   // iterate all children recursively destroying their children
   for ( auto& childPtr : _childrenPtr ) {
@@ -633,7 +633,7 @@ void NavMeshQuadTreeNode::ClearDescendants(NavMeshQuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
+bool QuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
 {
   // TODO To guarantee that the future doesn't break this, we should require a matrix of old vs new to be fully
   // specified here. Some values however depend on overlap, so we could not cache / make const
@@ -709,7 +709,7 @@ bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContent
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::CanOverrideSelfAndChildrenWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
+bool QuadTreeNode::CanOverrideSelfAndChildrenWithContent(ENodeContentType newContentType, EContentOverlap overlap) const
 {
   // ask us
   if ( !CanOverrideSelfWithContent(newContentType, overlap) ) {
@@ -729,9 +729,9 @@ bool NavMeshQuadTreeNode::CanOverrideSelfAndChildrenWithContent(ENodeContentType
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::TryAutoMerge(NavMeshQuadTreeProcessor& processor)
+void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(IsSubdivided(), "NavMeshQuadTreeNode.TryAutoMerge.NotSubdivided");
+  DEV_ASSERT(IsSubdivided(), "QuadTreeNode.TryAutoMerge.NotSubdivided");
 
   // check if all children classified the same content
   ENodeContentType childType = _childrenPtr[0]->GetContentType();
@@ -762,8 +762,8 @@ void NavMeshQuadTreeNode::TryAutoMerge(NavMeshQuadTreeProcessor& processor)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap,
-  NavMeshQuadTreeProcessor& processor)
+void QuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent, EContentOverlap overlap,
+  QuadTreeProcessor& processor)
 {
   // if we don't want to override with the new content, do not call ForceSet
   if ( !CanOverrideSelfWithContent(detectedContent.type, overlap) ) {
@@ -775,7 +775,7 @@ void NavMeshQuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedC
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
   const ENodeContentType oldcontent = _content.type;
 
@@ -802,7 +802,7 @@ void NavMeshQuadTreeNode::ForceSetDetectedContentType(const NodeContent& detecte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::SwapChildrenAndContent(NavMeshQuadTreeNode* otherNode, NavMeshQuadTreeProcessor& processor )
+void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode, QuadTreeProcessor& processor )
 {
   // swap children
   std::swap(_childrenPtr, otherNode->_childrenPtr);
@@ -825,7 +825,7 @@ void NavMeshQuadTreeNode::SwapChildrenAndContent(NavMeshQuadTreeNode* otherNode,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::DestroyNodes(ChildrenVector& nodes, NavMeshQuadTreeProcessor& processor)
+void QuadTreeNode::DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor)
 {
   // iterate all nodes in vector
   for( auto& node : nodes )
@@ -839,7 +839,7 @@ void NavMeshQuadTreeNode::DestroyNodes(ChildrenVector& nodes, NavMeshQuadTreePro
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const NavMeshQuadTreeNode::MoveInfo* NavMeshQuadTreeNode::GetDestination(EQuadrant from, EDirection direction)
+const QuadTreeNode::MoveInfo* QuadTreeNode::GetDestination(EQuadrant from, EDirection direction)
 {
   static MoveInfo quadrantAndDirection[4][4] =
   {
@@ -872,8 +872,8 @@ const NavMeshQuadTreeNode::MoveInfo* NavMeshQuadTreeNode::GetDestination(EQuadra
     }
   };
   
-  DEV_ASSERT(from <= EQuadrant::Root, "NavMeshQuadTreeNode.GetDestination.InvalidQuadrant");
-  DEV_ASSERT(direction <= EDirection::West, "NavMeshQuadTreeNode.GetDestination.InvalidDirection");
+  DEV_ASSERT(from <= EQuadrant::Root, "QuadTreeNode.GetDestination.InvalidQuadrant");
+  DEV_ASSERT(direction <= EDirection::West, "QuadTreeNode.GetDestination.InvalidDirection");
   
   // root can't move, for any other, apply the table
   const size_t fromIdx = std::underlying_type<EQuadrant>::type( from );
@@ -883,9 +883,9 @@ const NavMeshQuadTreeNode::MoveInfo* NavMeshQuadTreeNode::GetDestination(EQuadra
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const NavMeshQuadTreeNode* NavMeshQuadTreeNode::GetChild(EQuadrant quadrant) const
+const QuadTreeNode* QuadTreeNode::GetChild(EQuadrant quadrant) const
 {
-  const NavMeshQuadTreeNode* ret =
+  const QuadTreeNode* ret =
     ( _childrenPtr.empty() ) ?
     ( nullptr ) :
     ( _childrenPtr[(std::underlying_type<EQuadrant>::type)quadrant].get() );
@@ -893,7 +893,7 @@ const NavMeshQuadTreeNode* NavMeshQuadTreeNode::GetChild(EQuadrant quadrant) con
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& descendants) const
+void QuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& descendants) const
 {
   if ( !IsSubdivided() ) {
     descendants.push_back( this );
@@ -931,12 +931,12 @@ void NavMeshQuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDir
       break;
       case EDirection::Invalid:
       {
-        DEV_ASSERT(false, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidDirection");
+        DEV_ASSERT(false, "QuadTreeNode.AddSmallDescendants.InvalidDirection");
       }
     }
     
-    DEV_ASSERT(firstChild != EQuadrant::Invalid, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidFirstChild");
-    DEV_ASSERT(secondChild != EQuadrant::Invalid, "NavMeshQuadTreeNode.AddSmallDescendants.InvalidSecondChild");
+    DEV_ASSERT(firstChild != EQuadrant::Invalid, "QuadTreeNode.AddSmallDescendants.InvalidFirstChild");
+    DEV_ASSERT(secondChild != EQuadrant::Invalid, "QuadTreeNode.AddSmallDescendants.InvalidSecondChild");
     
     _childrenPtr[(std::underlying_type<EQuadrant>::type)firstChild ]->AddSmallestDescendants(direction, iterationDirection, descendants);
     _childrenPtr[(std::underlying_type<EQuadrant>::type)secondChild]->AddSmallestDescendants(direction, iterationDirection, descendants);
@@ -944,9 +944,9 @@ void NavMeshQuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDir
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const NavMeshQuadTreeNode* NavMeshQuadTreeNode::FindSingleNeighbor(EDirection direction) const
+const QuadTreeNode* QuadTreeNode::FindSingleNeighbor(EDirection direction) const
 {
-  const NavMeshQuadTreeNode* neighbor = nullptr;
+  const QuadTreeNode* neighbor = nullptr;
 
   // find where we land by moving in that direction
   const MoveInfo* moveInfo = GetDestination(_quadrant, direction);
@@ -956,15 +956,15 @@ const NavMeshQuadTreeNode* NavMeshQuadTreeNode::FindSingleNeighbor(EDirection di
     if ( moveInfo->sharesParent )
     {
       // if so, it's a sibling
-      DEV_ASSERT(_parent, "NavMeshQuadTreeNode.FindSingleNeighbor.InvalidParent");
+      DEV_ASSERT(_parent, "QuadTreeNode.FindSingleNeighbor.InvalidParent");
       neighbor = _parent->GetChild( moveInfo->neighborQuadrant );
-      DEV_ASSERT(neighbor, "NavMeshQuadTreeNode.FindSingleNeighbor.InvalidNeighbor");
+      DEV_ASSERT(neighbor, "QuadTreeNode.FindSingleNeighbor.InvalidNeighbor");
     }
     else
     {
       // otherwise, find our parent's neighbor and get the proper child that would be next to us
       // note our parent can return null if we are on the border
-      const NavMeshQuadTreeNode* parentNeighbor = _parent->FindSingleNeighbor(direction);
+      const QuadTreeNode* parentNeighbor = _parent->FindSingleNeighbor(direction);
       neighbor = parentNeighbor ? parentNeighbor->GetChild( moveInfo->neighborQuadrant ) : nullptr;
       // if the parentNeighbor was not subdivided, then he is our neighbor
       neighbor = neighbor ? neighbor : parentNeighbor;
@@ -975,10 +975,10 @@ const NavMeshQuadTreeNode* NavMeshQuadTreeNode::FindSingleNeighbor(EDirection di
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddSmallestNeighbors(EDirection direction,
+void QuadTreeNode::AddSmallestNeighbors(EDirection direction,
   EClockDirection iterationDirection, NodeCPtrVector& neighbors) const
 {
-  const NavMeshQuadTreeNode* firstNeighbor = FindSingleNeighbor(direction);
+  const QuadTreeNode* firstNeighbor = FindSingleNeighbor(direction);
   if ( nullptr != firstNeighbor )
   {
     // direction and iterationDirection are with respect to the node, but the descendants with respect
@@ -992,7 +992,7 @@ void NavMeshQuadTreeNode::AddSmallestNeighbors(EDirection direction,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const
+void QuadTreeNode::AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const
 {
   if ( !IsSubdivided() ) {
     descendants.emplace_back(this);
@@ -1064,7 +1064,7 @@ inline bool Contains(const Point2f& min, const Point2f& max, const Point2f& poin
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline bool IntersectsX(const float atX,
   const float minY, const float maxY,
-  const NavMeshQuadTreeNode::SegmentLineEquation& line )
+  const QuadTreeNode::SegmentLineEquation& line )
 {
   if ( line.isXAligned )
   {
@@ -1097,7 +1097,7 @@ inline bool IntersectsX(const float atX,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline bool IntersectsY(const float atY,
   const float minX, const float maxX,
-  const NavMeshQuadTreeNode::SegmentLineEquation& line)
+  const QuadTreeNode::SegmentLineEquation& line)
 {
   if ( line.isYAligned )
   {
@@ -1173,7 +1173,7 @@ inline bool IsPointInAAQuad(const Quad2f& aaQuad, const Point2f& pt)
 // it also stores in isAAQuadContainedInNonAAQuad whether the axisAligned quad is fully inside the nonAA one.
 __attribute__ ((used))
 inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const Quad2f& nonAAQuad,
-  const NavMeshQuadTreeNode::QuadSegmentArray& nonAAQuadSegments,
+  const QuadTreeNode::QuadSegmentArray& nonAAQuadSegments,
   bool& isAAQuadContainedInNonAAQuad)
 {
   assert(IsStandardAA(axisAlignedQuad));
@@ -1194,7 +1194,7 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const Quad2f& nonA
   }
   
   // iterate all segments from the nonAAQuad
-  for(const NavMeshQuadTreeNode::SegmentLineEquation& curLine : nonAAQuadSegments)
+  for(const QuadTreeNode::SegmentLineEquation& curLine : nonAAQuadSegments)
   {
     // if any segment intersects with the AA lines, the quads intersect
     const bool segmentIntersects =
@@ -1233,7 +1233,7 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const Quad2f& nonA
 __attribute__ ((used))
 inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
   const Triangle2f& triangle,
-  const NavMeshQuadTreeNode::TriangleSegmentArray& triSegments,
+  const QuadTreeNode::TriangleSegmentArray& triSegments,
   bool& isQuadContainedInTriangle)
 {
   assert(IsStandardAA(axisAlignedQuad));
@@ -1253,7 +1253,7 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
   }
   
   // iterate all segments from the triangle
-  for(const NavMeshQuadTreeNode::SegmentLineEquation& curLine : triSegments)
+  for(const QuadTreeNode::SegmentLineEquation& curLine : triSegments)
   {
     // if any segment intersects with the AA lines, the quads intersect
     const bool segmentIntersects =
@@ -1291,7 +1291,7 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
 // doesLineCrossQuad: true if the line crosses the quad (two intersections), false if one end stays inside the quad
 __attribute__ ((used))
 inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
-  const NavMeshQuadTreeNode::SegmentLineEquation& line,
+  const QuadTreeNode::SegmentLineEquation& line,
   bool& doesLineCrossQuad)
 {
   assert(IsStandardAA(axisAlignedQuad));
@@ -1330,7 +1330,7 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
 using namespace QTOptimizations;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::ContainsOrOverlapsQuad(const Quad2f& inQuad) const
+bool QuadTreeNode::ContainsOrOverlapsQuad(const Quad2f& inQuad) const
 {
   // get my quad
   const Quad2f& myQuad = MakeQuadXY();
@@ -1349,7 +1349,7 @@ bool NavMeshQuadTreeNode::ContainsOrOverlapsQuad(const Quad2f& inQuad) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddQuad_NewSetup(const Quad2f &quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddQuad_NewSetup(const Quad2f &quad, const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
   // break the quad into segments to fast-compute m and b for them
   QuadSegmentArray nonAAQuadSegments = {
@@ -1364,12 +1364,12 @@ bool NavMeshQuadTreeNode::AddQuad_NewSetup(const Quad2f &quad, const NodeContent
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
+bool QuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
   const QuadSegmentArray& nonAAQuadSegments,
   const NodeContent& detectedContent,
-  NavMeshQuadTreeProcessor& processor)
+  QuadTreeProcessor& processor)
 {
-  // ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddQuad_NewRecursive"); // recursive functions don't properly show averages
+  // ANKI_CPU_PROFILE("QuadTreeNode::AddQuad_NewRecursive"); // recursive functions don't properly show averages
   
   // if we won't gain any new info, no need to process
   const bool isSameInfo = _content == detectedContent;
@@ -1449,9 +1449,9 @@ bool NavMeshQuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddTriangle_Setup(const Triangle2f& triangle,
+bool QuadTreeNode::AddTriangle_Setup(const Triangle2f& triangle,
   const NodeContent& detectedContent,
-  NavMeshQuadTreeProcessor& processor)
+  QuadTreeProcessor& processor)
 {
   // break the quad into segments to fast-compute m and b for them
   TriangleSegmentArray triangleSegments = {
@@ -1465,12 +1465,12 @@ bool NavMeshQuadTreeNode::AddTriangle_Setup(const Triangle2f& triangle,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
+bool QuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
   const TriangleSegmentArray& triangleSegments,
   const NodeContent& detectedContent,
-  NavMeshQuadTreeProcessor& processor)
+  QuadTreeProcessor& processor)
 {
-  // ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddTriangle_Recursive"); // recursive functions don't properly show averages
+  // ANKI_CPU_PROFILE("QuadTreeNode::AddTriangle_Recursive"); // recursive functions don't properly show averages
 
   // if we won't gain any new info, no need to process
   const bool isSameInfo = _content == detectedContent;
@@ -1552,10 +1552,10 @@ bool NavMeshQuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLine,
-  const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLine,
+  const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  // ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddLine_Recursive"); // recursive functions don't properly show averages
+  // ANKI_CPU_PROFILE("QuadTreeNode::AddLine_Recursive"); // recursive functions don't properly show averages
   
   // if we won't gain any new info, no need to process
   const bool isSameInfo = _content == detectedContent;
@@ -1623,10 +1623,10 @@ bool NavMeshQuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NavMeshQuadTreeNode::AddPoint_Recursive(const Point2f& point,
-  const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+bool QuadTreeNode::AddPoint_Recursive(const Point2f& point,
+  const NodeContent& detectedContent, QuadTreeProcessor& processor)
 {
-  // ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddPoint_Recursive"); // recursive functions don't properly show averages
+  // ANKI_CPU_PROFILE("QuadTreeNode::AddPoint_Recursive"); // recursive functions don't properly show averages
   
   // if we won't gain any new info, no need to process
   const bool isSameInfo = _content == detectedContent;

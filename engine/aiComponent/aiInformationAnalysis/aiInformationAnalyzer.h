@@ -17,7 +17,7 @@
 // processes
 #include "informationAnalysisProcesses/aiInfoAnalysisProcCalculateInterestingRegions.h"
 
-#include "engine/navMemoryMap/iNavMemoryMap.h"
+#include "engine/navMap/iNavMap.h"
 
 #include <map>
 #include <set>
@@ -79,7 +79,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // returns the last detected interesting regions
-  const INavMemoryMap::BorderRegionVector& GetDetectedInterestingRegions() const { return _interestingRegions; }
+  const INavMap::BorderRegionVector& GetDetectedInterestingRegions() const { return _interestingRegions; }
 
 private:
 
@@ -123,7 +123,7 @@ private:
   ProcessInfoTable _processes;
   
   // storage for interesting regions process
-  INavMemoryMap::BorderRegionVector _interestingRegions;
+  INavMap::BorderRegionVector _interestingRegions;
 };
 
 } // namespace Cozmo

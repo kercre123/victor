@@ -1,5 +1,5 @@
 /**
- * File: navMeshQuadTree.h
+ * File: quadTree.h
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -9,13 +9,13 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef ANKI_COZMO_NAV_MESH_QUAD_TREE_H
-#define ANKI_COZMO_NAV_MESH_QUAD_TREE_H
+#ifndef ANKI_COZMO_QUAD_TREE_H
+#define ANKI_COZMO_QUAD_TREE_H
 
-#include "navMeshQuadTreeNode.h"
-#include "navMeshQuadTreeProcessor.h"
+#include "quadTreeNode.h"
+#include "quadTreeProcessor.h"
 
-#include "engine/navMemoryMap/navMemoryMapTypes.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/triangle.h"
 
@@ -25,7 +25,7 @@ namespace Cozmo {
 class Robot;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class NavMeshQuadTree
+class QuadTree
 {
 public:
 
@@ -34,8 +34,8 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  NavMeshQuadTree(VizManager* vizManager, Robot* robot);
-  ~NavMeshQuadTree();
+  QuadTree(VizManager* vizManager, Robot* robot);
+  ~QuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
@@ -68,8 +68,8 @@ public:
   float GetContentPrecisionMM() const;
 
   // return the Processor associated to this QuadTree for queries
-  NavMeshQuadTreeProcessor& GetProcessor() { return _processor; }
-  const NavMeshQuadTreeProcessor& GetProcessor() const { return _processor; }
+  QuadTreeProcessor& GetProcessor() { return _processor; }
+  const QuadTreeProcessor& GetProcessor() const { return _processor; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Operations
@@ -84,7 +84,7 @@ public:
   void AddPoint(const Point2f& point, const NodeContent& nodeContent, int shiftAllowedCount);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
-  void Merge(const NavMeshQuadTree& other, const Pose3d& transform);
+  void Merge(const QuadTree& other, const Pose3d& transform);
   
 private:
 
@@ -106,10 +106,10 @@ private:
   mutable bool _gfxDirty;
 
   // processor for this quadtree
-  NavMeshQuadTreeProcessor _processor;
+  QuadTreeProcessor _processor;
 
   // current root of the tree. It expands as needed
-  NavMeshQuadTreeNode _root;
+  QuadTreeNode _root;
   
   VizManager* _vizManager;
   Robot*      _robot;

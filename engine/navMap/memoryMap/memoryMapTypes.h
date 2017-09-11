@@ -1,16 +1,16 @@
 /**
- * File: navMemoryMapTypes.h
+ * File: memoryMapTypes.h
  *
  * Author: Raul
  * Date:   01/11/2016
  *
- * Description: Type definitions for the navMemoryMap.
+ * Description: Type definitions for the MemoryMap.
  *
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef ANKI_COZMO_NAV_MEMORY_MAP_TYPES_H
-#define ANKI_COZMO_NAV_MEMORY_MAP_TYPES_H
+#ifndef ANKI_COZMO_MEMORY_MAP_TYPES_H
+#define ANKI_COZMO_MEMORY_MAP_TYPES_H
 
 #include "anki/common/basestation/math/point.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
@@ -23,9 +23,9 @@
 namespace Anki {
 namespace Cozmo {
 
-struct INavMemoryMapQuadData;
+class MemoryMapData;
 
-namespace NavMemoryMapTypes {
+namespace MemoryMapTypes {
 
 // content detected in the map
 enum class EContentType : uint8_t {
@@ -44,13 +44,13 @@ enum class EContentType : uint8_t {
   _Count // Flag, not a type
 };
 
-// this function returns true if the given content type expects additional data (iNavMemoryMapQuadData), false otherwise
+// this function returns true if the given content type expects additional data (MemoryMapData), false otherwise
 bool ExpectsAdditionalData(EContentType type);
 
 // each segment in a border region
 struct BorderSegment
 {
-  using DataType = std::shared_ptr<const INavMemoryMapQuadData>;
+  using DataType = std::shared_ptr<const MemoryMapData>;
   BorderSegment() : from{}, to{}, normal{}, extraData(nullptr) {}
   BorderSegment(const Point3f& f, const Point3f& t, const Vec3f& n, const DataType& data) :
     from(f), to(t), normal(n), extraData(data) {}
@@ -94,7 +94,7 @@ using BorderRegionVector = std::vector<BorderRegion>;
 using FullContentArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EContentType, bool>;
 using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequentialArray to this namespace
 
-} // namespace NavMemoryMapTypes
+} // namespace MemoryMapTypes
 } // namespace Cozmo
 } // namespace Anki
 

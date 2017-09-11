@@ -1,10 +1,10 @@
 /**
- * File: navMeshQuadTreeTypes.h
+ * File: quadTreeTypes.h
  *
  * Author: Raul
  * Date:   01/13/2016
  *
- * Description: Type definitions for navMeshQuadTree.
+ * Description: Type definitions for QuadTree.
  *
  * Copyright: Anki, Inc. 2016
  **/
@@ -20,9 +20,9 @@
 namespace Anki {
 namespace Cozmo {
 
-struct INavMemoryMapQuadData;
+class MemoryMapData;
 
-namespace NavMeshQuadTreeTypes {
+namespace QuadTreeTypes {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Types
@@ -59,7 +59,7 @@ struct NodeContent {
   bool operator!=(const NodeContent& other) const;
   
   ENodeContentType type;
-  std::shared_ptr<const INavMemoryMapQuadData> data;
+  std::shared_ptr<const MemoryMapData> data;
 };
 
 // position with respect to the parent
@@ -95,13 +95,13 @@ const char* ENodeContentTypeToString(ENodeContentType nodeContentType);
 bool IsRemovalType(ENodeContentType type);
 
 // return the opposite direction to the one given (eg: North vs South, West vs East)
-inline NavMeshQuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);
+inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);
 
 // return the opposite clock direction to the one given (eg: CW vs CCW)
-inline NavMeshQuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir);
+inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir);
 
 // iterate directions in the specified rotation/clock direction
-inline NavMeshQuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir );
+inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir );
 
 // EDirection to String
 const char* EDirectionToString(EDirection dir);
@@ -110,21 +110,21 @@ const char* EDirectionToString(EDirection dir);
 Vec3f EDirectionToNormalVec3f(EDirection dir);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline NavMeshQuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
+inline QuadTreeTypes::EDirection GetOppositeDirection(EDirection dir)
 {
   const EDirection ret = (EDirection)(((std::underlying_type<EDirection>::type)dir + 2) % 4);
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline NavMeshQuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir)
+inline QuadTreeTypes::EClockDirection GetOppositeClockDirection(EClockDirection dir)
 {
   const EClockDirection ret = (dir == EClockDirection::CW) ? EClockDirection::CCW : EClockDirection::CW;
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline NavMeshQuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir )
+inline QuadTreeTypes::EDirection GetNextDirection(EDirection dir, EClockDirection iterationDir )
 {
   EDirection next;
   if ( iterationDir == EClockDirection::CW ) {

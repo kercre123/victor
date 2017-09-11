@@ -1,19 +1,19 @@
 /**
- * File: navMemoryMapQuadTree.h
+ * File: memoryMap.h
  *
  * Author: Raul
  * Date:   12/09/2015
  *
- * Description: Map of the space navigated by the robot with some memory features (like decay = forget).
+ * Description: QuadTree map of the space navigated by the robot with some memory features (like decay = forget).
  *
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef ANKI_COZMO_NAV_MEMORY_MAP_H
-#define ANKI_COZMO_NAV_MEMORY_MAP_H
+#ifndef ANKI_COZMO_MEMORY_MAP_H
+#define ANKI_COZMO_MEMORY_MAP_H
 
-#include "engine/navMemoryMap/iNavMemoryMap.h"
-#include "navMeshQuadTree.h"
+#include "engine/navMap/iNavMap.h"
+#include "engine/navMap/quadTree/quadTree.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -21,18 +21,18 @@ namespace Cozmo {
 class VizManager;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class NavMemoryMapQuadTree : public INavMemoryMap
+class MemoryMap : public INavMap
 {
 public:
 
-  using EContentType = NavMemoryMapTypes::EContentType;
-  using FullContentArray = NavMemoryMapTypes::FullContentArray;
+  using EContentType = MemoryMapTypes::EContentType;
+  using FullContentArray = MemoryMapTypes::FullContentArray;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  NavMemoryMapQuadTree(VizManager* vizManager, Robot* robot);
-  virtual ~NavMemoryMapQuadTree() {}
+  MemoryMap(VizManager* vizManager, Robot* robot);
+  virtual ~MemoryMap() {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // From INavMemoryMap
@@ -42,7 +42,7 @@ public:
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not
   // expected to provide support for merging other subclasses, but only other instances from the same
   // subclass
-  virtual void Merge(const INavMemoryMap* other, const Pose3d& transform) override;
+  virtual void Merge(const INavMap* other, const Pose3d& transform) override;
   
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet) override;
@@ -94,19 +94,19 @@ protected:
 
   // add a quad with the specified content
   virtual void AddQuadInternal(const Quad2f& quad, EContentType type) override;
-  virtual void AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content) override;
+  virtual void AddQuadInternal(const Quad2f& quad, const MemoryMapData& content) override;
   
   // add a line with the specified content
   virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type) override;
-  virtual void AddLineInternal(const Point2f& from, const Point2f& to, const INavMemoryMapQuadData& content) override;
+  virtual void AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content) override;
   
   // add a triangle with the specified content
   virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type) override;
-  virtual void AddTriangleInternal(const Triangle2f& tri, const INavMemoryMapQuadData& content) override;
+  virtual void AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content) override;
   
   // add a point with the specified content
   virtual void AddPointInternal(const Point2f& point, EContentType type) override;
-  virtual void AddPointInternal(const Point2f& point, const INavMemoryMapQuadData& content) override;
+  virtual void AddPointInternal(const Point2f& point, const MemoryMapData& content) override;
 
 private:
 
@@ -115,11 +115,11 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // underlaying nav mesh representation
-  NavMeshQuadTree _navMesh;
+  QuadTree _quadTree;
   
 }; // class
   
 } // namespace
 } // namespace
 
-#endif // ANKI_COZMO_NAV_MEMORY_MAP_H
+#endif // ANKI_COZMO_MEMORY_MAP_H
