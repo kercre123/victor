@@ -735,4 +735,27 @@ public class StartupManager : MonoBehaviour {
     return true;
   }
 #endif
+
+  protected void LoadCodelabFromRawJson(string data) {
+
+    if (CodeLab.CodeLabGame.IsRawStringValidCodelab(data)) {
+      DataPersistence.CodeLabProject recievedProject = CodeLab.CodeLabGame.CreateProjectFromJsonString(data);
+      DAS.Info("Codelab.OpenCodelabFile.RecievedFromPlatform", "");
+
+      if (recievedProject != null) {
+        if (CodeLab.CodeLabGame.AddExternalProject(recievedProject)) {
+          DAS.Info("Codelab.OpenCodelabFile.LoadedSuccessfully", "size=" + data.Length);
+        }
+        else {
+          DAS.Error("Codelab.OpenCodelabFile.Error.AddProjectToList", "Could not add generated project from platform; size=" + data.Length);
+        }
+      }
+      else {
+        DAS.Error("Codelab.OpenCodelabFile.Error.ProjectCreationError", "Could not generate a project from platform; size=" + data.Length);
+      }
+    }
+    else {
+      DAS.Error("Codelab.OpenCodelabFile.Error.RecievedBadJson", "Recieved improperly formatted raw json; size=" + data.Length);
+    }
+  }
 }

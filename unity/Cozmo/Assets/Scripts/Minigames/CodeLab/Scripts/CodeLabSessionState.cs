@@ -19,6 +19,11 @@ namespace CodeLab {
   }
 
   public class ProjectStats {
+    public enum EventCategory {
+      updated_user_project = 0,
+      loaded_from_file,
+    }
+
     private Guid _ProjectUUID = Guid.Empty;
     public int NumBlocks = 0;
     public int NumConnections = 0;
@@ -75,11 +80,11 @@ namespace CodeLab {
       }
     }
 
-    public void PostPendingChanges() {
+    public void PostPendingChanges(EventCategory category) {
       if (HasPendingChanges) {
-        SessionState.DAS_Event("robot.code_lab.updated_user_project.blocks", NumBlocks.ToString(), DASUtil.FormatExtraData(NumConnections.ToString()));
-        SessionState.DAS_Event("robot.code_lab.updated_user_project.repeat", NumRepeat.ToString(), DASUtil.FormatExtraData(NumForever.ToString()));
-        SessionState.DAS_Event("robot.code_lab.updated_user_project.green_flags", NumGreenFlags.ToString());
+        SessionState.DAS_Event("robot.code_lab." + category.ToString() + ".blocks", NumBlocks.ToString(), DASUtil.FormatExtraData(NumConnections.ToString()));
+        SessionState.DAS_Event("robot.code_lab." + category.ToString() + ".repeat", NumRepeat.ToString(), DASUtil.FormatExtraData(NumForever.ToString()));
+        SessionState.DAS_Event("robot.code_lab." + category.ToString() + ".green_flags", NumGreenFlags.ToString());
         HasPendingChanges = false;
       }
     }
@@ -247,7 +252,7 @@ namespace CodeLab {
     }
 
     public void StartProgram() {
-      _ProjectStats.PostPendingChanges();
+      _ProjectStats.PostPendingChanges(CodeLab.ProjectStats.EventCategory.updated_user_project);
       _ProgramState.StartProgram(_CurrentGrammar);
       ++_NumProgramsRun;
       ++_NumProgramsRunInMode;

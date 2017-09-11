@@ -123,6 +123,28 @@ void tryExecuteBackgroundTransfers()
   return didHandleURL;
 }
 
+-(BOOL)handleOpenedFileURL:(NSURL *)filename {
+  NSError *error;
+  NSString *fullText = [NSString stringWithContentsOfURL:filename encoding:NSUTF8StringEncoding error:&error];
+
+  if( fullText == nil ) {
+    Unity_DAS_Event("Codelab.iOS.handleOpenedFileURL.FileParseError", [[error localizedDescription] UTF8String], nullptr, nullptr, 0);
+  }
+  else {
+    NSUInteger codeLength = [fullText length];
+    NSString* eventString = [@"size=" stringByAppendingString:[NSString stringWithFormat:@"%llu", (unsigned long long)codeLength]];
+    Unity_DAS_Event("Codelab.iOS.handleOpenedFileURL", [eventString UTF8String], nullptr, nullptr, 0);
+
+    UnitySendMessage("StartupManager", "LoadCodelabFromRawJson", [fullText UTF8String]);
+  }
+  return YES;
+}
+
+- (BOOL)application:(UIApplication*)application openFile:(NSString *)filename
+{
+  return [self handleOpenedFileURL:[NSURL URLWithString:filename]];
+}
+
 // Handle URLs launched while app is running; copied from OD
 - (BOOL)application:(UIApplication*)application openURL:(NSURL*)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation
 {
@@ -138,8 +160,15 @@ void tryExecuteBackgroundTransfers()
   return didHandleURL;
 }
 
-- (BOOL)canHandleURL:(NSURL *)URL {
+- (BOOL)canHandleURLAsDemo:(NSURL *)URL {
   if ( [URL.scheme isEqualToString:@"cozmo"] ) {
+    return YES;
+  }
+  return NO;
+}
+ 
+- (BOOL)canHandleURLAsCodelab:(NSURL *)URL {
+  if ( [URL.scheme isEqualToString:@"file"] || [URL.scheme isEqualToString:@"content"] ) {
     return YES;
   }
   return NO;
@@ -159,7 +188,7 @@ void tryExecuteBackgroundTransfers()
   //    }
   //  }
   //
-  if ( [self canHandleURL:URL]) {
+  if ( [self canHandleURLAsDemo:URL]) {
     NSLog(@"Processing Launch URL");
     if ( [URL.host isEqualToString:@"settings"]) {
       if ( [URL.path isEqualToString:@"/demo"] ) {
@@ -183,6 +212,10 @@ void tryExecuteBackgroundTransfers()
     }
   }
   
+  if ( [self canHandleURLAsCodelab:URL] ) {
+    [self handleOpenedFileURL:URL];
+  }
+
   return NO;
 }
 

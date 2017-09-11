@@ -62,6 +62,10 @@ namespace CodeLab {
     private bool _IsDrivingOffCharger = false;
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
+    private static readonly string kCodelabPrefix = "CODELAB:";
+    private static readonly long kMaximumDescriptionLength = 1000; // assuming any file title over 1000 characters is suspect
+    private static readonly long kMaximumCodelabDataLength = 10000000; // assuming any file over 10 Mb is suspect
+
 
     private CubeColors[] _CubeLightColors = { new CubeColors(),
                                      new CubeColors(),
@@ -1774,6 +1778,70 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       SharedMinigameView.HideSpinnerWidget();
 
       _WebViewObjectComponent.SetVisibility(true);
+    }
+
+    public static bool IsRawStringValidCodelab(string data) {
+      return data.Length > kCodelabPrefix.Length && data.Substring(0, kCodelabPrefix.Length) == kCodelabPrefix;
+    }
+
+    public static DataPersistence.CodeLabProject CreateProjectFromJsonString(string rawData) {
+      if (!IsRawStringValidCodelab(rawData)) {
+        DAS.Error("Codelab.OnAppLoadedFromData.BadHeader", "Attempting to load codelab file with improper prefix");
+      }
+      else {
+        try {
+          string pastPrefixString = rawData.Substring(kCodelabPrefix.Length);
+          string unescapedString = WWW.UnEscapeURL(pastPrefixString);
+
+          DataPersistence.CodeLabProject project = JsonConvert.DeserializeObject<DataPersistence.CodeLabProject>(unescapedString);
+          DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+
+          // @TODO: Deal with changes in versionNum, check minimum version number
+
+          if (defaultProfile == null) {
+            DAS.Error("Codelab.OnAppLoadedFromData.NullDefaultProfile", "In creating new Code Lab project from external data, defaultProfile is null");
+          }
+          else if (defaultProfile.CodeLabProjects == null) {
+            DAS.Error("Codelab.OnAppLoadedFromData.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
+          }
+          else if (project.ProjectName.Length > kMaximumDescriptionLength) {
+            DAS.Error("Codelab.OnAppLoadedFromData.BadFileName.Length", "new project's name is unreasonably long " + project.ProjectName.Length.ToString());
+          }
+          else if (project.ProjectXML.Length > kMaximumCodelabDataLength) {
+            DAS.Error("Codelab.OnAppLoadedFromData.BadFileData.Length", "new project's internal data is unreasonably long " + project.ProjectXML.Length.ToString());
+          }
+          else {
+            // Create new project with the XML stored in projectXML.
+            while (defaultProfile.CodeLabProjects.Find(p => p.ProjectName == project.ProjectName) != null) {
+              string name = StringUtil.GenerateNextUniqueName(project.ProjectName);
+              project.ProjectName = name;
+            }
+
+            return project;
+          }
+        }
+        catch (NullReferenceException) {
+          DAS.Error("Codelab.OnAppLoadedFromData.NullReferenceException", "NullReferenceException in creating new Code Lab project from external data");
+        }
+      }
+      return null;
+    }
+
+    public static bool AddExternalProject(DataPersistence.CodeLabProject project) {
+
+      DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+      if (defaultProfile == null) {
+        DAS.Error("Codelab.AddExternalProject.NullDefaultProfile", "In adding external Code Lab project, defaultProfile is null");
+        return false;
+      }
+
+      defaultProfile.CodeLabProjects.Add(project);
+
+      ProjectStats stats = new ProjectStats();
+      stats.Update(project);
+      stats.PostPendingChanges(ProjectStats.EventCategory.loaded_from_file);
+
+      return true;
     }
   }
 }

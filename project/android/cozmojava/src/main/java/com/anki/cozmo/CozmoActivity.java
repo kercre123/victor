@@ -1,8 +1,10 @@
 package com.anki.cozmo;
 
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.util.Log;
 
 import android.support.v4.app.ActivityCompat;
@@ -53,6 +55,21 @@ public class CozmoActivity extends HackUnityPlayerActivity implements ActivityCo
     if (HOCKEY_APP_ID.length() > 0) {
       installBreakpad(NativeCrashManager.getDumpsDirectory(this) + File.separator
                       + APP_RUN_ID + NativeCrashManager.DMP_EXTENSION);
+    }
+
+    Intent intent = getIntent();
+    if (intent != null) {
+      onNewIntent(intent);
+    }
+  }
+
+  @Override
+  protected void onNewIntent(Intent intent) {
+    String action = intent.getAction();
+    Uri uri = intent.getData();
+    if (Intent.ACTION_VIEW.equals(action) && uri != null) {
+      ContentResolver resolver = getContentResolver();
+      CozmoCodelabIO.openCodelabFileFromURI(resolver, uri);
     }
   }
 
