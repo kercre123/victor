@@ -500,6 +500,42 @@ Supervisor {
               ]
             } # BACKPACK_GROUP
 
+            # Touch sensor (upper side of the back. For when pet from above)
+            # Works by receiving on a specific channel that is only emitted
+            # by the hand object proto
+            Receiver {
+              name                "touchSensorUpper"
+              translation         -0.003 0 0.025
+              type                "radio"             # for penetrating obstacles (aka other cozmo components)
+              aperture            3.14159             # full half sphere of detection
+              channel             84                  # arbitrarily chosen
+              signalStrengthNoise 0.1
+              directionNoise      0.1
+            }
+            
+            # Visualization of the Touch Sensor receiver (a small disc on the back)
+            # intersecting this with the hand object will trigger touch measurements
+            #
+            # Transform {
+            #   translation -0.003 0 0.025 # same position as the Receiver position
+            #   rotation 1 0 0 1.5707963
+            #   children [
+            #     Shape {
+            #       geometry Cylinder {
+            #         bottom FALSE
+            #         top TRUE
+            #         side FALSE
+            #         height 0.01   # arbitrarily chosen
+            #         radius 0.005  # half the emitter range (hand)
+            #       }
+            #       appearance Appearance {
+            #         material Material {
+            #           diffuseColor 0.5 0 0.5  # purple
+            #         }
+            #       }
+            #     }
+            #   ]
+            # }
 
             %{ if not fields.vizMode.value then }% # BackpackLights
             #Backpack lights (directional)

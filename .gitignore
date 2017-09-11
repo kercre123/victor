@@ -57,6 +57,8 @@ simulator/controllers/webotsCtrlKeyboard/resources
 #
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
 #
+simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter
+#
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
