@@ -56,8 +56,7 @@ namespace Cozmo {
   } // namespace
   
   AnimationStreamer::AnimationStreamer(const CozmoContext* context) //, Audio::RobotAudioClient& audioClient)
-  : IAnimationStreamer()
-  , _context(context)
+  : _context(context)
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)

@@ -38,47 +38,13 @@ namespace Cozmo {
 //    class RobotAudioClient;
 //  }  
   
-  //
-  // IAnimationStreamer declares an abstract interface common to all implementations of an animation
-  // streamer component. All methods are pure virtual and must be implemented by the interface provider.
-  //
-  class IAnimationStreamer
+  
+  class AnimationStreamer
   {
   public:
     
     using Tag = AnimationTag;
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
-    
-    IAnimationStreamer()
-    {
-    }
-    
-    // Sets an animation to be streamed and how many times to stream it.
-    // Use numLoops = 0 to play the animation indefinitely.
-    // Returns a tag you can use to monitor whether the robot is done playing this
-    // animation.
-    // If interruptRunning == true, any currently-streaming animation will be aborted.
-    // Actual streaming occurs on calls to Update().
-    virtual Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) = 0;
-    
-    // If any animation is set for streaming and isn't done yet, stream it.
-    virtual Result Update() = 0;
-    
-    virtual const Animation* GetStreamingAnimation() const = 0;
-    
-    // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
-    // and there is no idle animation
-    virtual void SetKeepFaceAliveLastStreamTimeout(const f32 time_s) = 0;
-    virtual void ResetKeepFaceAliveLastStreamTimeout() = 0;
-    
-    virtual TrackLayerComponent* GetTrackLayerComponent() { return nullptr; }
-    virtual const TrackLayerComponent* GetTrackLayerComponent() const { return nullptr; }
-    
-  };
-  
-  class AnimationStreamer : public IAnimationStreamer
-  {
-  public:
     
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
     static const Tag NotAnimatingTag = ::Anki::Cozmo::NotAnimatingTag;
@@ -94,18 +60,18 @@ namespace Cozmo {
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
     Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
-    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) override;
+    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
     
     Tag SetStreamingAnimation(u32 animID, u32 numLoops = 1, bool interruptRunning = true);
     
     // If any animation is set for streaming and isn't done yet, stream it.
-    Result Update() override;
+    Result Update();
      
     // Returns true if the idle animation is playing
     bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
-    const Animation* GetStreamingAnimation() const override { return _streamingAnimation; }
+    const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
     const Animation* GetCannedAnimation(const std::string& name) const;
     const CannedAnimationContainer& GetCannedAnimationContainer() const { return _animationContainer; }
@@ -117,12 +83,12 @@ namespace Cozmo {
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
     // and there is no idle animation
-    void SetKeepFaceAliveLastStreamTimeout(const f32 time_s) override
+    void SetKeepFaceAliveLastStreamTimeout(const f32 time_s)
       { _longEnoughSinceLastStreamTimeout_s = time_s; }
-    void ResetKeepFaceAliveLastStreamTimeout() override;
+    void ResetKeepFaceAliveLastStreamTimeout();
     
-    virtual TrackLayerComponent* GetTrackLayerComponent() override { return _trackLayerComponent.get(); }
-    virtual const TrackLayerComponent* GetTrackLayerComponent() const override { return _trackLayerComponent.get(); }
+    TrackLayerComponent* GetTrackLayerComponent() { return _trackLayerComponent.get(); }
+    const TrackLayerComponent* GetTrackLayerComponent() const { return _trackLayerComponent.get(); }
 
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
     bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
