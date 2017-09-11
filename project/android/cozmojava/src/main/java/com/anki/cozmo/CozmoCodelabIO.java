@@ -1,9 +1,12 @@
 package com.anki.cozmo;
 
 import android.content.ContentResolver;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Environment;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
 
@@ -67,5 +70,50 @@ public final class CozmoCodelabIO
         }
       }
     }
+  }
+
+  private static File combinePaths(String... paths) {
+    File file = new File(paths[0]);
+
+    for (int i = 1; i < paths.length ; i++) {
+        file = new File(file, paths[i]);
+    }
+
+    return file;
+  }
+
+  public static File generateFileWithNameAndText(final String projectNameString, final String projectContentString) {
+
+    File result = null;
+    try{
+      File targetDirectory = new File( Environment.getExternalStorageDirectory(), combinePaths( "Android", "data", "com.anki.cozmo" ).getPath() );
+      String fileName = projectNameString.replaceAll(" ", "_").toLowerCase() + ".codelab";
+      File temp = new File(targetDirectory, fileName);
+
+      if( temp.exists() ) {
+        if( !temp.delete() ) {
+          DAS.Error("Codelab.Android.generateFileWithNameAndText.DeleteFileError", "Failed to delete duplicate temp file in upload to google drive");
+        }
+      }
+
+      if( !temp.createNewFile() ) {
+        DAS.Error("Codelab.Android.generateFileWithNameAndText.CreateFileError", "Failed to create a temp file to upload to google drive");
+      }
+      else if( !temp.exists() || !temp.canRead() ) {
+        DAS.Error("Codelab.Android.generateFileWithNameAndText.CreatedFileReadable", "Created temp file is not readable");
+      }
+      else {
+        temp.deleteOnExit();
+
+        java.io.BufferedWriter out = new java.io.BufferedWriter(new java.io.FileWriter(temp));
+        out.write(projectContentString);
+        out.close();
+
+        result = temp;
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return result;
   }
 }

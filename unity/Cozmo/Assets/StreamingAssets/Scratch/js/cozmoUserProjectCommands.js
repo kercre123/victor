@@ -163,6 +163,13 @@
         window.Unity.call({requestId: -1, command: "cozmoSaveUserProject", argString: xmlText, argUUID: window.cozmoProjectUUID});
     }
 
+    window.exportCozmoProject = function() {
+        var promiseSaveProject = window.promiseWaitForSaveProject();
+        promiseSaveProject.then(function(result) {
+            window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID});
+        });
+    }
+
     window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
         var startTime = performance.now()
 

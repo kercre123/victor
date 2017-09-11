@@ -22,7 +22,6 @@ namespace CodeLab {
   }
 
   public class CodeLabGame : GameBase {
-
     // When the webview is opened to display the Code Lab workspace,
     // we can display one of the following projects.
     private enum RequestToOpenProjectOnWorkspace {
@@ -55,6 +54,12 @@ namespace CodeLab {
     private Queue<ScratchRequest> _queuedScratchRequests = new Queue<ScratchRequest>();
 
     private CodeLabCozmoFaceDisplay _CozmoFaceDisplay = new CodeLabCozmoFaceDisplay();
+
+#if !UNITY_EDITOR
+#if UNITY_ANDROID
+    private AndroidJavaObject _CozmoAndroidActivity;
+#endif
+#endif
 
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
@@ -194,7 +199,13 @@ namespace CodeLab {
 #if UNITY_EDITOR || UNITY_IOS
       string path = Application.streamingAssetsPath + pathToFile;
 #elif UNITY_ANDROID
-string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
+      string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
+#endif
+
+#if !UNITY_EDITOR
+#if UNITY_ANDROID
+      _CozmoAndroidActivity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
+#endif
 #endif
 
       string json = File.ReadAllText(path);
@@ -844,6 +855,39 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       LoadURL("extra/projects.html");
     }
 
+    private void OnCozmoExportProject(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnCozmoExportProject.Called", "User intends to share project");
+
+      string projectUUID = scratchRequest.argUUID;
+
+      if (String.IsNullOrEmpty(projectUUID)) {
+        DAS.Error("Codelab.OnCozmoExportProject.BadUUID", "Attempt to export project with no project UUID specified.");
+      }
+      else {
+        CodeLabProject projectToExport = FindUserProjectWithUUID(projectUUID);
+
+        System.Action<string, string> sendFileCall = null;
+
+#if !UNITY_EDITOR
+#if UNITY_IPHONE
+        sendFileCall = (string name, string json) => IOS_Settings.ExportCodelabFile(name, json);
+#elif UNITY_ANDROID
+        sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call("exportCodelabFile", name, json);
+#else
+        sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
+#endif
+#else
+        sendFileCall = (string name, string json) => {
+          Debug.LogWarning("Unity Editor does not implement sharing codelab project");
+        };
+#endif
+
+        string projectJsonString = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
+
+        sendFileCall(projectToExport.ProjectName, projectJsonString);
+      }
+    }
+
     private bool HandleNonBlockScratchRequest(ScratchRequest scratchRequest) {
       // Handle any Scratch requests that don't need an InProgressScratchBlock initializing
       switch (scratchRequest.command) {
@@ -903,6 +947,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return true;
       case "cozmoChallengesClose":
         _SessionState.OnChallengesClose();
+        return true;
+      case "cozmoExportProject":
+        OnCozmoExportProject(scratchRequest);
         return true;
       case "cozmoDASLog":
         DAS.Warn(scratchRequest.argString, scratchRequest.argString2);

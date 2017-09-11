@@ -170,6 +170,7 @@
             });
         }
         else {
+            var exportbutton = document.querySelector('#exportbutton');
             var undo = document.querySelector('#undo');
             var redo = document.querySelector('#redo');
 
@@ -185,6 +186,17 @@
                 Scratch.workspace.undo(true);
             });
             redo.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
+
+            exportbutton.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                vm.stopAll();
+                clearInterval(window.saveProjectTimerId);
+
+                window.exportCozmoProject();
+            });
+            exportbutton.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
 
