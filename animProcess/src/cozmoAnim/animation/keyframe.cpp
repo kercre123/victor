@@ -247,55 +247,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
     
 #pragma mark -
-#pragma mark FaceImageKeyFrame
-    //
-    // FaceImageKeyFrame
-    //
-    
-    Result FaceImageKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
-    {
-      GET_MEMBER_FROM_JSON(jsonRoot, imageID);
-      
-      return RESULT_OK;
-    }
-    
-    RobotInterface::EngineToRobot* FaceImageKeyFrame::GetStreamMessage()
-    {
-      /*
-      // TODO: Fill the message for streaming using the imageID
-      // memcpy(_streamMsg.image, LoadFaceImage(_imageID);
-      
-      // For now, just put some stuff for display in there, using a few hard-coded
-      // patterns depending on ID
-      _streamMsg.image.clear();
-      if(_imageID == 0) {
-        // All black
-        _streamMsg.image.push_back(0);
-      } else if(_imageID == 1) {
-        // All blue
-        _streamMsg.image.push_back(64); // Switch to blue
-        _streamMsg.image.push_back(63); // Fill lines
-        _streamMsg.image.push_back(0);  // Done
-      } else {
-        // Draw "programmer art" face until we get real assets
-
-        _streamMsg.image = { 24, 64+24,   // Start 24 lines down and 24 pixels right
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          0 };
-      }
-       */
-      
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::FaceImage(_streamMsg));
-    }
-    
-#pragma mark -
 #pragma mark FaceAnimationKeyFrame
     
     Result FaceAnimationKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)

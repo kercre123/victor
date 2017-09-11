@@ -239,39 +239,7 @@ namespace Cozmo {
     
   }; // class RobotAudioKeyFrame
     
-    
-  // A FaceImageKeyFrame stores a reference to a particular image / sprite to
-  // be displayed on the robot's LED face display. When its GetStreamMessage()
-  // is requested, it looks up the actual RLE-compressed image matching the
-  // reference in the KeyFrame and fills the streamed message with it.
-  
-  // Deprecated
-  class FaceImageKeyFrame : public IKeyFrame
-  {
-  public:
-    FaceImageKeyFrame() { }
-    
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
-    static const std::string& GetClassName() {
-      static const std::string ClassName("FaceImageKeyFrame");
-      return ClassName;
-    }
-    
-    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
-    
-  protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
-    // The FaceImageKeyFrame keyframes are NOT supported by FlatBuffers (yet)
-    
-  private:
-    u32 _imageID;
-    
-    AnimKeyFrame::FaceImage _streamMsg;
-    
-  }; // class FaceImageKeyFrame
-  
-  
+
   // A FaceAnimationKeyFrame is for streaming a set of images to display on the
   // robot's face. It is a cross between an AudioKeyFrame and an ImageKeyFrame.
   // Like an ImageKeyFrame, it populates single messages with RLE-compressed
