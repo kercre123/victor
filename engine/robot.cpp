@@ -59,7 +59,6 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/ramp.h"
@@ -517,8 +516,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                         "t=%dms, duration=%dms",
                         GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
-
-      _context->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Fall);
     }
     
     _offTreadsState = _awaitingConfirmationTreadState;

@@ -33,6 +33,7 @@
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/needsSystem/needsManager.h"
 #include "engine/pathPlanner.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -104,11 +105,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::printText,                      &RobotToEngineImplMessaging::HandlePrint);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::pickAndPlaceResult,             &RobotToEngineImplMessaging::HandlePickAndPlaceResult);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectAvailable,         &RobotToEngineImplMessaging::HandleActiveObjectAvailable);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectAvailable,          &RobotToEngineImplMessaging::HandleActiveObjectAvailable);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectConnectionState,    &RobotToEngineImplMessaging::HandleActiveObjectConnectionState);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectMoved,              &RobotToEngineImplMessaging::HandleActiveObjectMoved);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectStopped,            &RobotToEngineImplMessaging::HandleActiveObjectStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectUpAxisChanged,      &RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::fallingEvent,                   &RobotToEngineImplMessaging::HandleFallingEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::goalPose,                       &RobotToEngineImplMessaging::HandleGoalPose);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
@@ -776,6 +778,34 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
 }
 
+void RobotToEngineImplMessaging::HandleFallingEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto& msg = message.GetData().Get_fallingEvent();
+  
+  PRINT_NAMED_INFO("Robot.HandleFallingEvent.FallingEvent",
+                   "timestamp: %u, duration (ms): %u, intensity %.1f",
+                   msg.timestamp,
+                   msg.duration_ms,
+                   msg.impactIntensity);
+  
+  // If the impact intensity was high enough, register a fall event to the needs manager
+  const f32 needsActionIntensityThreshold = 1000.f;
+  if (msg.impactIntensity > needsActionIntensityThreshold) {
+    robot->GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Fall);
+  }
+  
+  // DAS Event: "robot.falling_event"
+  // s_val: Impact intensity
+  // data: Freefall duration in milliseconds
+  const int impactIntensity_int = std::round(msg.impactIntensity);
+  Util::sEvent("robot.falling_event",                              // 'event'
+               {{DDATA, std::to_string(msg.duration_ms).c_str()}}, // 'data'
+               std::to_string(impactIntensity_int).c_str());       // 's_val'
+  
+  // TODO: Beam this up to game?
+  // robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
+}
+  
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleGoalPose");
