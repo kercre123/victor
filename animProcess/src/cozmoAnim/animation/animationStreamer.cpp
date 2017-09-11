@@ -503,7 +503,6 @@ namespace Cozmo {
     // Grab references to some of the tracks
     // Some tracks are managed by the TrackLayerComponent
     auto & robotAudioTrack  = anim->GetTrack<RobotAudioKeyFrame>();
-    auto & deviceAudioTrack = anim->GetTrack<DeviceAudioKeyFrame>();
     auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
     auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
     auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
@@ -521,15 +520,7 @@ namespace Cozmo {
       robotAudioTrack.GetCurrentKeyFrame();
       robotAudioTrack.MoveToNextKeyFrame();
     }
-    
-    // Is it time to play device audio? (using actual basestation time)
-    if(deviceAudioTrack.HasFramesLeft() &&
-       deviceAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
-    {
-       deviceAudioTrack.GetCurrentKeyFrame().PlayOnDevice();
-       deviceAudioTrack.MoveToNextKeyFrame();
-    }
-    
+        
     // Send keyframes at appropriates times
     if (anim->HasFramesLeft())
     {

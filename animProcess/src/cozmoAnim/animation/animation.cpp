@@ -275,8 +275,8 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
       addResult = _faceAnimTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == EventKeyFrame::GetClassName()) {
       addResult = _eventTrack.AddKeyFrameToBack(jsonFrame, name);
-    } else if(frameName == DeviceAudioKeyFrame::GetClassName()) {
-      addResult = _deviceAudioTrack.AddKeyFrameToBack(jsonFrame, name);
+    } else if(frameName == "DeviceAudioKeyFrame") {
+      // Deprecated V1 keyframe. Do nothing.
     } else if(frameName == RobotAudioKeyFrame::GetClassName()) {
       addResult = _robotAudioTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
@@ -330,11 +330,6 @@ Animations::Track<EventKeyFrame>& Animation::GetTrack() {
 }
 
 template<>
-Animations::Track<DeviceAudioKeyFrame>& Animation::GetTrack() {
-  return _deviceAudioTrack;
-}
-
-template<>
 Animations::Track<RobotAudioKeyFrame>& Animation::GetTrack() {
   return _robotAudioTrack;
 }
@@ -381,7 +376,6 @@ _liftTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _faceAnimTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _proceduralFaceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _eventTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
-_deviceAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _backpackLightsTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _bodyPosTrack.__METHOD__(__VA_ARGS__)  __COMBINE_WITH__  \
@@ -448,7 +442,6 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   _bodyPosTrack.AppendTrack(appendAnim.GetTrack<BodyMotionKeyFrame>(), animOffest_ms);
   _recordHeadingTrack.AppendTrack(appendAnim.GetTrack<RecordHeadingKeyFrame>(), animOffest_ms);
   _turnToRecordedHeadingTrack.AppendTrack(appendAnim.GetTrack<TurnToRecordedHeadingKeyFrame>(), animOffest_ms);
-  _deviceAudioTrack.AppendTrack(appendAnim.GetTrack<DeviceAudioKeyFrame>(), animOffest_ms);
   _robotAudioTrack.AppendTrack(appendAnim.GetTrack<RobotAudioKeyFrame>(), animOffest_ms);
 }
 
@@ -458,7 +451,6 @@ uint32_t Animation::GetLastKeyFrameTime_ms()
   // Get Last keyframe of every track to find the last one in time_ms
   TimeStamp_t lastFrameTime_ms = 0;
   
-  lastFrameTime_ms = CompareLastFrameTime<DeviceAudioKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<RobotAudioKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<HeadAngleKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<LiftHeightKeyFrame>(lastFrameTime_ms);
@@ -480,7 +472,6 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms()
   // Get Last keyframe of every track to find the last one in time_ms
   TimeStamp_t lastFrameTime_ms = 0;
   
-  lastFrameTime_ms = CompareLastFrameEndTime<DeviceAudioKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<RobotAudioKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<HeadAngleKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<LiftHeightKeyFrame>(lastFrameTime_ms);

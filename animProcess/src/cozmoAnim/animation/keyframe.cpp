@@ -565,31 +565,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
     
 #pragma mark -
-#pragma mark DeviceAudioKeyFrame
-    //
-    // DeviceAudioKeyFrame
-    //
-    
-    Result DeviceAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
-    {
-      GET_MEMBER_FROM_JSON(jsonRoot, audioName);
-      
-      return RESULT_OK;
-    }
-    
-    RobotInterface::EngineToRobot* DeviceAudioKeyFrame::GetStreamMessage()
-    {
-      // Device audio is not streamed to the robot, by definition, so it always
-      // returns nullptr
-      return nullptr;
-    }
-    
-    void DeviceAudioKeyFrame::PlayOnDevice()
-    {
-      // TODO: Replace with real call to wwise or something
-    }
-    
-#pragma mark -
 #pragma mark EventKeyFrame
     //
     // EventKeyFrame

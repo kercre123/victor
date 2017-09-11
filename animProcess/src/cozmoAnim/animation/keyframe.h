@@ -186,37 +186,8 @@ namespace Cozmo {
     RobotInterface::SetLiftHeight _streamLiftMsg;
     
   }; // class LiftHeightKeyFrame
-    
-    
-  // A DeviceAudioKeyFrame references a single "sound" to be played on the
-  // device directly. It is not streamed at all, and thus its GetStreamMessage()
-  // method always returns nullptr.
-  class DeviceAudioKeyFrame : public IKeyFrame
-  {
-  public:
-    DeviceAudioKeyFrame() { }
-    
-    // Play sound on device
-    void PlayOnDevice();
-    
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
-    static const std::string& GetClassName() {
-      static const std::string ClassName("DeviceAudioKeyFrame");
-      return ClassName;
-    }
-    
-    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
-    
-  protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
-    // The DeviceAudioKeyFrame keyframes are NOT supported by FlatBuffers (yet)
-    
-  private:
-    std::string _audioName;
-    
-  }; // class DeviceAudioKeyFrame
-    
+
+
   // A RobotAudioKeyFrame references a single "sound" which is made of lots
   // of "samples" to be individually streamed to the robot.
   class RobotAudioKeyFrame : public IKeyFrame
