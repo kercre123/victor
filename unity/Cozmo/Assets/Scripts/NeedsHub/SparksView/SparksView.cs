@@ -162,6 +162,13 @@ namespace Cozmo.Needs.Sparks.UI {
       }
     }
 
+    private void OnApplicationPause(bool pauseState) {
+      if (pauseState && _IsDisablingTouches) {
+        CancelInvoke();
+        ReenableTouches();
+      }
+    }
+
     private void HandleNeedSevereAlertClosed() {
       // Emulate a back button press to return back to NeedsHubView
       HandleBackButtonPressed();

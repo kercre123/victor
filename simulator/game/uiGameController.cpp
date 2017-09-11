@@ -1683,7 +1683,7 @@ namespace Anki {
       ExternalInterface::QueueSingleAction msg;
       msg.idTag = ++_queueActionIdTag;
       msg.position = pos;
-      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(numLoops, animName));
+      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(numLoops, animName, false, false, false));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);

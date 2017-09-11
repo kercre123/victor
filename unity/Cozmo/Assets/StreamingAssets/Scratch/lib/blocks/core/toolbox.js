@@ -87,7 +87,10 @@ Blockly.Toolbox = function(workspace) {
  * Width of the toolbox, which changes only in vertical layout.
  * @type {number}
  */
-Blockly.Toolbox.prototype.width = 310;
+// *** ANKI CHANGE ***
+// Width of the toolbox. msintov, 9/1/17
+Blockly.Toolbox.prototype.width = 60;
+//Blockly.Toolbox.prototype.width = 250;
 
 /**
  * Height of the toolbox, which changes only in horizontal layout.
@@ -108,8 +111,15 @@ Blockly.Toolbox.prototype.init = function() {
    * HTML container for the Toolbox menu.
    * @type {Element}
    */
+
+  // *** ANKI CHANGE ***
+  var toolboxDiv = 'blocklyToolboxDiv';
+  if (window.isVertical) {
+    toolboxDiv = 'blocklyToolboxDivVertical';
+  }
+  
   this.HtmlDiv =
-      goog.dom.createDom(goog.dom.TagName.DIV, 'blocklyToolboxDiv');
+      goog.dom.createDom(goog.dom.TagName.DIV, toolboxDiv); // *** ANKI CHANGE ***
   this.HtmlDiv.setAttribute('dir', workspace.RTL ? 'RTL' : 'LTR');
   svg.parentNode.insertBefore(this.HtmlDiv, svg);
 
@@ -300,6 +310,11 @@ Blockly.Toolbox.prototype.getClientRect = function() {
   }
 
   var width = this.getWidth();
+  // *** ANKI CHANGE ***
+  if (window.isVertical) {
+    // The deletion area for the toolbox should be just slightly wider than the width of the toolbox, thus the padding to getWidth(). msintov, 9/1/17
+    width = this.getWidth() + 20;
+  }
   var height = toolboxRect.height;
 
   // Assumes that the toolbox is on the SVG edge.  If this changes

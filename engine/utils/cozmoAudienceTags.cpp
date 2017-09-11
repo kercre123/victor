@@ -13,8 +13,10 @@
 #include "engine/utils/cozmoAudienceTags.h"
 
 #include "engine/cozmoContext.h"
+#include "engine/needsSystem/needsManager.h"
 #include "util/environment/locale.h"
 #include "util/string/stringUtils.h"
+#include <chrono>
 
 namespace Anki {
 namespace Cozmo {
@@ -22,6 +24,22 @@ namespace Cozmo {
 CozmoAudienceTags::CozmoAudienceTags(const CozmoContext* context)
 {
   // Define audience tags that will be used in Cozmo and provide handlers to determine if they apply
+
+  // first day user
+  // NOTE:  This works for manually-started experiments, but not for automatic experiments.  This is
+  // because we're calling this handler from AutoActivateExperiments from constructors, that is
+  // happening well before we get to initialize the needs manager and read the 'time created' from
+  // device.
+  auto firstDayUserHandler = [context] {
+    using namespace std::chrono;
+    const auto& needsState = context->GetNeedsManager()->GetCurNeedsState();
+    const int64_t creationSec = duration_cast<seconds>(needsState._timeCreated.time_since_epoch()).count();
+    const int64_t currentTime = seconds(std::time(nullptr)).count();
+    const bool firstDayUser = currentTime >= creationSec && (currentTime - creationSec < 60 * 60 * 24);
+    return firstDayUser;
+  };
+
+  RegisterTag("app_user_d0", firstDayUserHandler);
 
   auto localeLanguageHandler = [context] {
     Util::Locale* locale = context->GetLocale();

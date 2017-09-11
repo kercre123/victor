@@ -104,17 +104,8 @@
 
         // DOM event handlers
         var closeButton = document.querySelector('#closebutton');
-        var challengesButton = document.querySelector('#challengesbutton');
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
-        var undo = document.querySelector('#undo');
-        var redo = document.querySelector('#redo');
-
-        // TODO Temporary hack to make close button visible
-        if (window.isVertical) {
-            var close = document.querySelector('#close');
-            close.style.left = 410 + "px";
-        }
 
         closeButton.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
@@ -131,6 +122,8 @@
         });
 
         if (!window.isVertical) {
+            var challengesButton = document.querySelector('#challengesbutton');
+
             challengesButton.addEventListener('click', function () {
               // show challenges dialog
               Scratch.workspace.playAudio('click');
@@ -141,6 +134,9 @@
             });
         }
         else {
+            var undo = document.querySelector('#undo');
+            var redo = document.querySelector('#redo');
+            
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 Scratch.workspace.undo();
@@ -215,6 +211,7 @@
      * @return {void}
      */
     function bindExtensionHandler () {
+        // TODO What does this method do? scratch-blocks doesn't have this code.
         if (typeof webkit === 'undefined') return;
         if (typeof webkit.messageHandlers === 'undefined') return;
         if (typeof webkit.messageHandlers.extensions === 'undefined') return;

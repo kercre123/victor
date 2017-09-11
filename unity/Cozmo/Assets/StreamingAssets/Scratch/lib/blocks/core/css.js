@@ -202,8 +202,22 @@ Blockly.Css.CONTENT = [
     'z-index: 50;', /* Display above the toolbox */
   '}',
 
-  /*
+
   // *** ANKI CHANGE ***
+  '.blocklyTooltipDiv {',
+    'background-color: #ffffff;',
+    'border: 1px solid #000000;',
+    'border-radius: 3px;',
+    'color: #000;',
+    'display: none;',
+    'font-family: "Avenir Next";',
+    'font-size: 14pt;',
+    'padding: 4px;',
+    'position: absolute;',
+    'z-index: 100000;',
+  '}',
+
+  /*
   '.blocklyTooltipDiv {',
     'background-color: #ffffc7;',
     'border: 1px solid #ddc;',
@@ -609,26 +623,48 @@ Blockly.Css.CONTENT = [
     'fill-opacity: .8;', // *** ANKI CHANGE ***
   '}',
 
+  // *** ANKI CHANGE ***
+  // Hide the main workspace scrollbar.
+  // Fixes bug on horizontal where flyout and main workspace scrollbars overlap.
+  '.blocklyMainWorkspaceScrollbar {',
+    'display: none !important;',
+  '}',
+
+  /*
   '.blocklyMainWorkspaceScrollbar {',
     'z-index: 20;',
   '}',
+  */
 
   '.blocklyFlyoutScrollbar {',
     'z-index: 30;',
   '}',
 
+  // *** ANKI CHANGE ***
+  '.blocklyScrollbarHorizontal {',
+    'position: absolute;',
+    'outline: none;',
+    'z-index: 30;',
+  '}',
+
+  // *** ANKI CHANGE ***
+  '.blocklyScrollbarVertical {',
+    'display: none !important;',
+  '}',
+
+/*
   '.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {',
     'position: absolute;',
     'outline: none;',
-    'z-index: 30;', // *** ANKI CHANGE ***
   '}',
+*/
 
   '.blocklyScrollbarBackground {',
-    'opacity: 0;',
+    'opacity: 0.2;', // *** ANKI CHANGE ***
   '}',
 
   '.blocklyScrollbarHandle {',
-    'fill: $colour_scrollbar;',
+    'fill: #817e7e', // *** ANKI CHANGE ***
   '}',
 
   '.blocklyScrollbarBackground:hover+.blocklyScrollbarHandle,',
@@ -656,25 +692,40 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyAngleCircle {',
-    'stroke: #444;',
+    'stroke: ' + Blockly.Colours.motion.tertiary + ';',
     'stroke-width: 1;',
-    'fill: #ddd;',
-    'fill-opacity: .8;',
+    'fill: ' + Blockly.Colours.motion.secondary + ';',
   '}',
 
-  '.blocklyAngleMarks {',
-    'stroke: #444;',
+  '.blocklyAngleCenterPoint {',
+    'stroke: #fff;',
     'stroke-width: 1;',
+    'fill: #fff;',
+  '}',
+
+  '.blocklyAngleDragHandle {',
+    'stroke: #fff;',
+    'stroke-width: 5;',
+    'stroke-opacity: 0.25;',
+    'fill: #fff;',
+    'cursor: pointer;',
+  '}',
+
+
+  '.blocklyAngleMarks {',
+    'stroke: #fff;',
+    'stroke-width: 1;',
+    'stroke-opacity: 0.5;',
   '}',
 
   '.blocklyAngleGauge {',
-    'fill: #f88;',
-    'fill-opacity: .8;',
+    'fill: #fff;',
+    'fill-opacity: 0.20;',
   '}',
 
   '.blocklyAngleLine {',
-    'stroke: #f00;',
-    'stroke-width: 2;',
+    'stroke: #fff;',
+    'stroke-width: 1;',
     'stroke-linecap: round;',
     'pointer-events: none;',
   '}',
@@ -699,7 +750,22 @@ Blockly.Css.CONTENT = [
 
   /* Category tree in Toolbox. */
   '.blocklyToolboxDiv {',
-    'background-color: #535252;', // ANKI CHANGE ***
+    'background-color: #535252;', // *** ANKI CHANGE ***
+    //'background-color: $colour_toolbox;',
+    'color: $colour_toolboxText;',
+    'overflow-x: visible;',
+    'overflow-y: auto;',
+    'position: absolute;',
+    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'z-index: 40;', /* so blocks go over toolbox when dragging */
+  '}',
+
+  // *** ANKI CHANGE ***
+  /* Category tree in Toolbox. */
+  '.blocklyToolboxDivVertical {',
+    'top: 100px;',
+    'background-color: #535252;', // *** ANKI CHANGE ***
     //'background-color: $colour_toolbox;',
     'color: $colour_toolboxText;',
     'overflow-x: visible;',
@@ -841,8 +907,10 @@ Blockly.Css.CONTENT = [
 
   '.blocklyWidgetDiv .goog-palette-colorswatch {',
     'position: relative;',
-    'height: 13px;',
-    'width: 15px;',
+    'height: 26px;', // *** ANKI CHANGE ***
+    'width: 30px;',  // *** ANKI CHANGE ***
+//    'height: 13px;',
+//    'width: 15px;',
   '}',
 
   '.blocklyWidgetDiv .goog-palette-cell-hover .goog-palette-colorswatch {',
@@ -1145,6 +1213,7 @@ Blockly.Css.CONTENT = [
     'color: $colour_toolboxText;',
     'font-size: .7em;',
     'user-select: none;',
+    'text-transform: uppercase;',
     '-webkit-user-select: none;',
     '-moz-user-select: none;',
     '-ms-user-select: none;',

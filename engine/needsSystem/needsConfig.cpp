@@ -56,10 +56,8 @@ static const std::string kPlayRangeKey = "playRange";
 static const std::string kCooldownSecsKey = "cooldownSecs";
 static const std::string kFreeplaySparksRewardWeight = "freeplaySparksRewardWeight";
 
-static const std::string kABTestDecayConfigControlKey = "control";
 static const std::string kABTestDecayConfigVariationAKey = "variationA";
 static const std::string kABTestDecayConfigVariationBKey = "variationB";
-static const std::string kABTestDecayConfigVariationCKey = "variationC";
 
 
 NeedsConfig::NeedsConfig()
@@ -213,14 +211,14 @@ void NeedsConfig::Init(const Json::Value& json)
 }
 
 
-void NeedsConfig::InitDecay(const Json::Value& json,  const Json::Value& jsonA,
-                            const Json::Value& jsonB, const Json::Value& jsonC)
+void NeedsConfig::InitDecay(const Json::Value& json, const Json::Value& jsonA,
+                            const Json::Value& jsonB)
 {
   // Connected decay
   InitDecayRates(json[kDecayRatesKey], kConnectedDecayRatesKey, _decayConnected);
   InitDecayModifiers(json[kDecayModifiersKey], kConnectedDecayModifiersKey, _decayConnected);
 
-  // Unconnected decay has four variations for AB testing
+  // Unconnected decay has three variations for AB testing
   InitDecayRates(json[kDecayRatesKey], kUnconnectedDecayRatesKey,
                  _decayUnconnectedVariations[kABTestDecayConfigControlKey]);
   InitDecayModifiers(json[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
@@ -235,11 +233,6 @@ void NeedsConfig::InitDecay(const Json::Value& json,  const Json::Value& jsonA,
                  _decayUnconnectedVariations[kABTestDecayConfigVariationBKey]);
   InitDecayModifiers(jsonB[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
                      _decayUnconnectedVariations[kABTestDecayConfigVariationBKey]);
-
-  InitDecayRates(jsonC[kDecayRatesKey], kUnconnectedDecayRatesKey,
-                 _decayUnconnectedVariations[kABTestDecayConfigVariationCKey]);
-  InitDecayModifiers(jsonC[kDecayModifiersKey], kUnconnectedDecayModifiersKey,
-                     _decayUnconnectedVariations[kABTestDecayConfigVariationCKey]);
 
   // Use the control group by default
   SetUnconnectedDecayTestVariation(kABTestDecayConfigControlKey);

@@ -31,10 +31,6 @@ void Timer::init(void) {
   NVIC_EnableIRQ(TIM14_IRQn);
 }
 
-extern "C" void WWDG_IRQHandler(void) {
-  Flash::writeFaultReason(FAULT_WATCHDOG);
-}
-
 extern "C" void TIM14_IRQHandler(void) {
   if (TIM14->SR & TIM_SR_UIF) {
     Timer::clock++;

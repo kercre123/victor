@@ -803,18 +803,6 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
-  // needs system decay 'C' variation config
-  {
-    static const std::string jsonFilename = "config/engine/needs_decayC_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigC);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigCJsonNotFound",
-                        "Needs System Decay C Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
-    }
-  }
-
   // needs "handlers" config (e.g. eye procedural glitches for low repair)
   {
     static const std::string jsonFilename = "config/engine/needs_handlers_config.json";

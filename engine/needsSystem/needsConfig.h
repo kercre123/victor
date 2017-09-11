@@ -71,8 +71,8 @@ public:
   NeedsConfig();
 
   void Init(const Json::Value& json);
-  void InitDecay(const Json::Value& json,  const Json::Value& jsonA,
-                 const Json::Value& jsonB, const Json::Value& jsonC);
+  void InitDecay(const Json::Value& json, const Json::Value& jsonA,
+                 const Json::Value& jsonB);
 
   float NeedLevelForNeedBracket(const NeedId needId, const NeedBracketId bracketId) const;
 
@@ -101,6 +101,8 @@ public:
   ABTestDecayConfigs _decayUnconnectedVariations;
 
   float _localNotificationMaxFutureMinutes;
+
+  const std::string kABTestDecayConfigControlKey = "control";
 
 private:
   void InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);

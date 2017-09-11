@@ -2,7 +2,7 @@
     "meta": {
         "project_id": "cozmo",
         "version": 2,
-        "revision": 1
+        "revision": 0
     },
     "experiments": [
         {
@@ -31,30 +31,28 @@
             "key": "unconnected_decay_rates",
             "version": 0,
             "activation_mode": "manual",
-            "start_time_utc_iso8601": "",
-            "stop_time_utc_iso8601": "",
+            "start_time_utc_iso8601": "2017-09-21T00:00:00Z",
+            "stop_time_utc_iso8601": "2017-11-02T00:00:00Z",
             "pause_time_utc_iso8601": "",
             "resume_time_utc_iso8601": "",
-            "pop_frac_pct": 50,
+            "pop_frac_pct": 100,
             "variations": [
                 {
                     "key": "control",
-                    "pop_frac_pct": 25
+                    "pop_frac_pct": 34
                 },
                 {
                     "key": "variationA",
-                    "pop_frac_pct": 25
+                    "pop_frac_pct": 33
                 },
                 {
                     "key": "variationB",
-                    "pop_frac_pct": 25
-                },
-                {
-                    "key": "variationC",
-                    "pop_frac_pct": 25
+                    "pop_frac_pct": 33
                 }
             ],
-            "audience_tags": [],
+            "audience_tags": [
+                "app_user_d0"
+            ],
             "forced_variations": []
         }
     ]

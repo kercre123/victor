@@ -346,15 +346,14 @@ namespace Cozmo.Repair.UI {
     }
 
     private void UpdateInterruptModal() {
-      if (_CurrentModalState == RepairModalState.TUNE_UP) {
-        if (_RobotOffTreadsState == OffTreadsState.OnTreads) {
-          if (_InterruptedAlert != null) {
-            _InterruptedAlert.CloseDialog();
-          }
-        }
-        else {
-          ShowDontMoveCozmoAlert(_RobotOffTreadsState);
-        }
+      if ((_RobotOffTreadsState == OffTreadsState.OnTreads) &&
+        (_InterruptedAlert != null)) {
+        _InterruptedAlert.CloseDialog();
+      }
+
+      if ((_CurrentModalState == RepairModalState.TUNE_UP) &&
+          (_RobotOffTreadsState != OffTreadsState.OnTreads)) {
+        ShowDontMoveCozmoAlert(_RobotOffTreadsState);
       }
     }
 

@@ -286,6 +286,11 @@ public class RobotEngineManager : MonoBehaviour {
     var defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
     Message.StoredLabAssignments = new StoredLabAssignments(defaultProfile.LabAssignments.ToArray());
     SendMessage();
+
+    // Now tell NeedsManager it can finish initializing, now that it has the lab assignments
+    // (our first Cozmo AB test requires us having any saved lab assignments right away)
+    Message.ContinueInitializingNeedsManager = new ContinueInitializingNeedsManager();
+    SendMessage();
   }
 
   private void Disconnected(DisconnectionReason reason) {

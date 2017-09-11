@@ -21,17 +21,7 @@ namespace Cozmo {
       private CozmoImage _ImageBurst = null;
 
       [SerializeField]
-      private ParticleSystem _ConstantParticles = null;
-
-      [SerializeField]
-      private ParticleSystem _StartBurstParticles = null;
-
-      // 0 - 6 based on our quality level
-      [SerializeField]
-      private int[] _MinParticles = { 2, 5, 10, 15, 20, 20 };
-
-      [SerializeField]
-      private int[] _MaxParticles = { 10, 50, 80, 200, 300, 500 };
+      private NeedsMeterParticleScroller _ConstantParticles = null;
 
       [SerializeField]
       private float _MaskFillMin = 0f;
@@ -168,12 +158,6 @@ namespace Cozmo {
         _BurstTimer = 0f;
         _AnimStartValue = CurrentValue;
         _TargetValue = target;
-        if (_StartBurstParticles != null) {
-          var ps = _StartBurstParticles.main;
-          int lvl = PerformanceManager.Instance.GetQualitySetting();
-          ps.maxParticles = _MaxParticles[lvl];
-          _StartBurstParticles.Play();
-        }
       }
 
       public void SetValueInstant(float target) {
@@ -296,11 +280,7 @@ namespace Cozmo {
           SetBurstColor(_OffColor);
           // The "simple" prefabs don't have particles.
           if (_ConstantParticles != null) {
-            var emissionMod = _ConstantParticles.emission;
-            int lvl = PerformanceManager.Instance.GetQualitySetting();
-            var ps = _ConstantParticles.main;
-            ps.maxParticles = _MaxParticles[lvl];
-            emissionMod.rateOverTime = Mathf.RoundToInt(Mathf.Lerp(_MinParticles[lvl], _MaxParticles[lvl], currentValue));
+            _ConstantParticles.FillValue = _ImageFillMask.fillAmount;
           }
           if (_TargetValue > currentValue) {
             _ImageFillGlow.color = _IncreasingColor;
