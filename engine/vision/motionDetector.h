@@ -68,8 +68,8 @@ private:
   s32 RatioTest(const Vision::Image& image,    Vision::Image& ratio12);
   s32 RatioTest(const Vision::ImageRGB& image, Vision::Image& ratio12);
   
-  void SetPrevImage(const Vision::Image& image);
-  void SetPrevImage(const Vision::ImageRGB& image);
+  void SetPrevImage(const Vision::Image &image, bool wasBlurred);
+  void SetPrevImage(const Vision::ImageRGB &image, bool wasBlurred);
   
   template<class ImageType>
   bool HavePrevImage() const;
@@ -83,6 +83,8 @@ private:
   
   Vision::ImageRGB _prevImageRGB;
   Vision::Image    _prevImageGray;
+  bool _wasPrevImageRGBBlurred = false;
+  bool _wasPrevImageGrayBlurred = false;
   
   TimeStamp_t   _lastMotionTime = 0;
   
