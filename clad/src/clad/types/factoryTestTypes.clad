@@ -105,6 +105,25 @@ enum uint_8 FactoryTestResultCode {
   NVSTORAGE_ERASE_FAILED,
   PARSE_HEADER_FAILED,
   ONE_POINT_ZERO_FIRMWARE,
+  UNKNOWN_BODY_COLOR,
+
+  // Victor specific error codes
+  WRITE_TO_LOG_FAILED,
+  BEHAVIOR_NOT_RUNNABLE,
+  NOT_SEEING_CALIB_TARGET_TIMEOUT,
+  UNEXPECTED_ON_CHARGER,
+  HEAD_MOTOR_DISABLED,
+  LIFT_MOTOR_DISABLED,
+  MOTOR_DISABLED,
+  UNEXPECTED_MOVEMENT_DETECTED,
+  ACTION_FAILED,
+  FRONT_CLIFFS_NOT_DETECTED,
+  BACK_CLIFFS_NOT_DETECTED,
+  FRONT_CLIFFS_NOT_UNDETECTED,
+  BACK_CLIFFS_NOT_UNDETECTED,
+  CUBE_HEIGHT_TOO_LOW,
+  CUBE_HEIGHT_TOO_HIGH,
+  DISTORTION_VALUES_OOR,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
@@ -129,6 +148,13 @@ structure IMUInfo {
 
 structure CliffSensorValue {
   uint_16 val
+}
+
+structure CliffSensorValues {
+  uint_16 FR,
+  uint_16 FL,
+  uint_16 BR,
+  uint_16 BL
 }
 
 structure PoseData {

@@ -38,6 +38,14 @@
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorLiftLoadTest.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriveForwards.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenEndChecks.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenInitChecks.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenMotorCalibration.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenPickupCube.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenReadToolCode.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "engine/behaviorSystem/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
@@ -516,6 +524,46 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::PlayAnimOnNeedsChange:
     {
       newBehavior = IBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenCameraCalibration:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenCameraCalibration(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenMotorCalibration:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenMotorCalibration(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenDriftCheck:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenDriftCheck(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenDriveForwards:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenDriveForwards(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenPickupCube:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenPickupCube(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenInitChecks:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenInitChecks(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenReadToolCode:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenReadToolCode(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenEndChecks:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenEndChecks(robot, config));
       break;
     }
     

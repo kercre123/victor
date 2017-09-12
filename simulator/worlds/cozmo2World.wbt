@@ -50,4 +50,5 @@ WebotsKeyboardController {
   translation 0.288125 0.0208444 0.08
 }
 CozmoVizDisplay {
+  streamResolution "NHD"
 }

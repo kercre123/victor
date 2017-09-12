@@ -1,0 +1,86 @@
+#VRML_SIM V8.5 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.018574606 0.56726589 0.82332521 3.2309132
+  position -0.18405648 1.1786501 0.62937741
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+FactoryTestFixtureFloor {
+  slotCenterX -0.08
+  xSize 0.5
+  ySize 0.2
+}
+DEF Cozmo_1 CozmoBot2 {
+  translation -0.15969854 0 0.00029056594
+  name "CozmoBot_1"
+  filterLogs TRUE
+}
+WebotsKeyboardController {
+  robotVolume 0
+  behaviorName "lookAround"
+  userName "Billy"
+  filterLogs TRUE
+  translation -0.38 0 0.08
+  autoConnect FALSE
+}
+CozmoVizDisplay {
+  filterLogs TRUE
+  streamResolution "NHD"
+}
+Transform {
+  translation 0.048875267 0.071 -0.10667824
+  rotation 0 -1 0 0.99483767
+  children [
+    Transform {
+      translation 0.1 -0.1244 0.208
+      rotation 0 0 1 0.78540031
+      children [
+        CalibrationMarkerStructure {
+          translation 0 -0.02 0.03
+          numCubes 6
+          listOfMarkers "\"\", \"customSDK/SDK_3Circles.png\", \"\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"\", \"symbols/arrow.png\",\"\","
+        }
+        CalibrationMarkerStructure {
+          translation 0 -0.04 0.05
+          numCubes 7
+          listOfMarkers "\"\", \"customSDK/SDK_5Hexagons.png\", \"\", \"customSDK/SDK_3Triangles.png\", \"customSDK/SDK_4Triangles.png\", \"customSDK/SDK_5Triangles.png\", \"symbols/bullseye2.png\", \"symbols/star5.png, \"lightCubes/lightCubeK_top.png\", \"lightCubes/lightCubeJ_front.png, \"customSDK/SDK_2Circles.png\", \"\",\"customSDK/SDK_4Hexagons.png\",\"\","
+        }
+        CalibrationMarkerStructure {
+          translation 0 -0.06 0.07
+          numCubes 8
+          listOfMarkers "\"\", \"customSDK/SDK_2Triangles.png\", \"\", \"lightCubes/lightCubeJ_bottom.png\", \"\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"customSDK/SDK_3Hexagons.png\", \"lightCubes/lightCubeJ_back.png\", \"\",\"customSDK/SDK_4Circles.png\",\"\","
+        }
+        CalibrationMarkerStructure {
+          listOfMarkers "\"\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"\","
+        }
+      ]
+      rotationStep 0.01
+    }
+  ]
+}
+LightCube {
+  translation 0.15 0 0.022
+}
+CozmoChargerSimple {
+  translation -0.23 0 0
+}

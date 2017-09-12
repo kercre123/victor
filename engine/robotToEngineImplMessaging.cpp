@@ -809,7 +809,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   }
   
   // Stop whatever we were doing
-  robot->GetBehaviorManager().RequestCurrentBehaviorEndImmediately("HandleRobotStopped");
+//  robot->GetBehaviorManager().RequestCurrentBehaviorEndImmediately("HandleRobotStopped");
   robot->GetActionList().Cancel();
   
   // Forward on with EngineToGame event

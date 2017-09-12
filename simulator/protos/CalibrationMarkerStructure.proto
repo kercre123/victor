@@ -1,0 +1,65 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO CalibrationMarkerStructure[
+  field SFString name "CalibrationMarkerStructure"
+
+  field SFVec3f       translation  0 0 0.010
+  field SFRotation    rotation     0 0 1 0
+
+  field SFFloat numCubes 5
+
+  field SFString listOfMarkers "\"customSDK/SDK_2Circles.png\", \"customSDK/SDK_3Circles.png\", \"customSDK/SDK_4Circles.png\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"customSDK/SDK_3Hexagons.png\", \"customSDK/SDK_4Hexagons.png\", \"customSDK/SDK_5Hexagons.png\", \"customSDK/SDK_2Triangles.png\", \"customSDK/SDK_3Triangles.png\", \"customSDK/SDK_4Triangles.png\", \"customSDK/SDK_5Triangles.png\", \"dice/dice1.png\", \"dice/dice2.png\", \"dice/dice3.png\", \"dice/dice4.png\", \"dice/dice5.png\", \"dice/dice6.png\", \"letters/1.png\", \"letters/2.png\", \"letters/3.png\", \"letters/4.png\", \"letters/5.png\", \"letters/6.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeJ_back.png\", \"lightCubes/lightCubeJ_bottom.png\", \"lightCubes/lightCubeJ_front.png\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"lightCubes/lightCubeK_top.png\","
+
+]
+{
+Solid {
+
+  name IS name
+
+  translation IS translation
+  rotation IS rotation
+
+  children [
+
+    %{ 
+      markers = {}
+      str, sep = fields.listOfMarkers.value, ","
+      fields1 = {}
+      str:gsub("([^"..sep.."]*)"..sep, function(c)
+         table.insert(fields1, c)
+      end)
+      for i,v in ipairs(fields1) do
+         table.insert(markers, v)
+      end
+
+      x = 0.0
+      y = 0.0
+      for i=0,fields.numCubes.value*2 - 1,2 do 
+    }%
+
+    # Right
+    Block1x1_NotActive {
+      translation %{=x}% %{=y}% 0
+      blockColor 1 1 1
+      markerImg_front %{=markers[i+1]}%
+      markerImg_left %{=markers[i+2]}%
+      width 0.020
+      markerWidth 0.015
+    }
+
+    %{ 
+        x = x + 0.020
+        y = y + 0.020
+      end 
+    }%
+
+
+  ] # Solid Children
+
+  physics NULL
+
+} # Parent Solid
+
+
+} # PROTO
+

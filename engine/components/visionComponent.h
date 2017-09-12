@@ -192,10 +192,10 @@ struct DockingErrorSignal;
     
     // Get jpeg compressed data of calibration images
     // dotsFoundMask has bits set to 1 wherever the corresponding calibration image was found to contain a valid target
-    std::list<std::vector<u8> > GetCalibrationImageJpegData(u8* dotsFoundMask = nullptr);
+    std::list<std::vector<u8> > GetCalibrationImageJpegData(u8* dotsFoundMask = nullptr) const;
     
     // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
-    Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p);
+    Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
     
     // Tool code images
     Result ClearToolCodeImages();    
@@ -420,7 +420,7 @@ struct DockingErrorSignal;
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration() {
-    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,-1, -1));
+    StoreNextImageForCameraCalibration(Rectangle<s32>(-1,-1,0,0));
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI) {

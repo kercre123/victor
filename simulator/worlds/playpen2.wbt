@@ -1,0 +1,56 @@
+#VRML_SIM V8.5 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.41356225 0.45546182 0.7883659 4.3871548
+  position -0.85694209 0.075808554 0.60801118
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+}
+BlockWorldComms {
+  filterLogs TRUE
+}
+DEF Cozmo_1 CozmoBot {
+  name "CozmoBot_1"
+  filterLogs TRUE
+}
+WebotsKeyboardController {
+  robotVolume 0
+  behaviorName "lookAround"
+  userName "Billy"
+  filterLogs TRUE
+  autoConnect FALSE
+}
+CozmoVizDisplay {
+  filterLogs TRUE
+}
+Transform {
+  rotation 0 1 0 -0.6108652382
+  children [
+  CalibrationFixtureSquare {
+    translation 0.16 0 0.04
+    rotation 0.28108464 0.67859835 -0.67859833 5.1871285
+  }
+  ]
+}

@@ -37,6 +37,7 @@
 #include <cmath>
 #include <array>
 
+#include <sstream>
 
 namespace Anki {
   
@@ -87,15 +88,21 @@ namespace Anki {
   template<QuadDimType N, typename T>
   inline void Quadrilateral<N,T>::Print(void) const
   {
+    std::stringstream ss;
     using namespace Quad;
     CoreTechPrint("Quad: ");
+    ss << "Quad: ";
     for(CornerName i=FirstCorner; i<NumCorners; ++i) {
       CoreTechPrint("(");
+      ss << "(";
       for (u8 p = 0; p < N; ++p) {
         CoreTechPrint(" %f", (*this)[i][p]);
+        ss << " " <<(*this)[i][p];
       }
       CoreTechPrint(")\n");
+      ss << ")\n";
     }
+    PRINT_NAMED_WARNING("", "%s", ss.str().c_str());
   }
   
   template<QuadDimType N, typename T>

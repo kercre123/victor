@@ -13,6 +13,14 @@
       "type" : "Simple"
     }
   },
+  {
+    "activityID" : "PlaypenTest",
+    "highLevelID" : "PlaypenTest",
+    "activityType" : "PlaypenTest",
+    "activityStrategy": {
+      "type" : "Simple"
+    }
+  },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
     "activityID" : "MeetCozmo",

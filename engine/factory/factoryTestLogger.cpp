@@ -283,6 +283,18 @@ namespace Cozmo {
     return AppendCliffSensorValue("CliffOnGround", data);
   }
   
+  bool FactoryTestLogger::AppendCliffValuesOnFrontDrop(const CliffSensorValues& data) {
+    return AppendCliffSensorValues("CliffsOnFrontDrop", data);
+  }
+  
+  bool FactoryTestLogger::AppendCliffValuesOnBackDrop(const CliffSensorValues& data) {
+    return AppendCliffSensorValues("CliffsOnBackDrop", data);
+  }
+  
+  bool FactoryTestLogger::AppendCliffValuesOnGround(const CliffSensorValues& data) {
+    return AppendCliffSensorValues("CliffsOnGround", data);
+  }
+  
   bool FactoryTestLogger::AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data)
   {
     std::stringstream ss;
@@ -295,6 +307,27 @@ namespace Cozmo {
       << "\nval: " << data.val;
     }
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CliffSensorValue", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
+  bool FactoryTestLogger::AppendCliffSensorValues(const std::string& readingName, const CliffSensorValues& data)
+  {
+    std::stringstream ss;
+    if (_exportJson) {
+      Json::Value& node = _json[readingName];
+      node["FR"] = data.FR;
+      node["FL"] = data.FL;
+      node["BR"] = data.BR;
+      node["BL"] = data.BL;
+      ss << "[" << readingName<< "]\n" << node;
+    } else {
+      ss << "\n[" << readingName << "]"
+      << "\nFR: " << data.FR
+      << "\nFL: " << data.FL
+      << "\nBR: " << data.BR
+      << "\nBL: " << data.BL;
+    }
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.CliffSensorValues", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
       
@@ -429,7 +462,7 @@ namespace Cozmo {
     }
     
     // Get directories inside CurrentGameLog. There should only ever be one.
-    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "");
+    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger");
     std::vector<std::string> dirs;
     Util::FileUtils::ListAllDirectories(srcDir, dirs);
 
@@ -444,6 +477,13 @@ namespace Cozmo {
     
     srcDir = Util::FileUtils::FullFilePath({srcDir, dirs.front(), "print"});
     std::vector<std::string> engineLogFiles = Util::FileUtils::FilesInDirectory(srcDir, true, ".log", true);
+
+    if(engineLogFiles.empty())
+    {
+      PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.NoEngineLogsFound",
+                          "Did not find any engine logs in directory %s",
+                          srcDir.c_str());
+    }
 
     bool res = true;
     for (auto f : engineLogFiles) {

@@ -1,0 +1,179 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO Calibration2 [
+  field SFVec3f       translation  0 0 0
+  field SFRotation    rotation     0 0 1 0
+]
+{
+Transform {
+
+  translation IS translation
+  rotation IS rotation
+
+  children [
+    Solid {
+      translation 0 0 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 1.0 0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0.02 -0.02 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 0 1.0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0.02 0.02 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1.0 0 0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0.02 -0.02 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 0 1.0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0 0.02 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1.0 0 0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0 -0.02 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 0 1.0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0.02 0 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 1.0 0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0.04 0 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 1.0 0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0.04 -0.02 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0 0 1.0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+    Solid {
+      translation 0.04 0.02 0
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1.0 0 0
+            }
+          }
+          geometry Sphere {
+            radius 0.005
+            subdivision 5
+          }
+        }
+      ]
+    }
+  ]
+
+}
+
+
+} # PROTO

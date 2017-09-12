@@ -51,9 +51,9 @@ function CreatePrintableCodeSheet(varargin)
 %
 % Example Usage:
 %
-% Windows: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials'}, 'outsideBorderWidth', [], 'codeSpacing', 5, 'numPerCode', 2, 'nameFilter', '*.*');
+% Windows: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'Z:/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', 'Z:/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', 'Z:/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials'}, 'outsideBorderSize', [], 'codeSpacing', 5, 'numPerCode', 2, 'nameFilter', '*.*');
 %
-% OSX: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials'}, 'outsideBorderWidth', [], 'codeSpacing', 5, 'numPerCode', 2, 'nameFilter', '*.*');
+% OSX: VisionMarkerTrained.CreatePrintableCodeSheet('markerImageDir', {'~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/', '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials', '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials'}, 'outsideBorderSize', [], 'codeSpacing', 5, 'numPerCode', 2, 'nameFilter', '*.*');
 %
 % ------------
 % Andrew Stein
@@ -125,8 +125,10 @@ fnames = repmat(fnames(:), [numPerCode 1]);
 numRows = floor( (pageHeight - 2*marginSpacing + codeSpacing)/(markerSize(2) + codeSpacing) );
 numCols = floor( (pageWidth  - 2*marginSpacing + codeSpacing)/(markerSize(1) + codeSpacing) );
 
-xcenters = linspace(marginSpacing+markerSize(1)/2, pageWidth-marginSpacing-markerSize(1)/2, numCols)/10;
-ycenters = linspace(marginSpacing+markerSize(2)/2, pageHeight-marginSpacing-markerSize(2)/2,numRows)/10;
+% xcenters = linspace(marginSpacing+markerSize(1)/2, pageWidth-marginSpacing-markerSize(1)/2, numCols)/10;
+% ycenters = linspace(marginSpacing+markerSize(2)/2, pageHeight-marginSpacing-markerSize(2)/2,numRows)/10;
+xcenters = (15:30:30*4)/10
+ycenters = (15:30:30*4)/10
 
 [xgrid,ygrid] = meshgrid(xcenters,ycenters);
 xgrid = xgrid';

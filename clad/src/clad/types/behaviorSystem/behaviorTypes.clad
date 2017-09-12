@@ -52,6 +52,16 @@ enum uint_8 BehaviorClass {
   PlayAnimOnNeedsChange,
   PlayAnimWithFace,
   PlayArbitraryAnim,
+
+  PlaypenCameraCalibration,
+  PlaypenDriftCheck,
+  PlaypenDriveForwards,
+  PlaypenInitChecks,
+  PlaypenEndChecks,
+  PlaypenMotorCalibration,
+  PlaypenPickupCube,
+  PlaypenReadToolCode,
+
   PopAWheelie,
   PounceOnMotion,
   PutDownBlock,
@@ -167,6 +177,16 @@ enum uint_8 BehaviorID {
   NothingToDo_Idle,
   OnboardingShowCube,
   PlayArbitraryAnim,
+
+  PlaypenCameraCalibration,
+  PlaypenDriftCheck,
+  PlaypenDriveForwards,
+  PlaypenEndChecks,
+  PlaypenInitChecks,
+  PlaypenMotorCalibration,
+  PlaypenPickupCube,
+  PlaypenReadToolCode,
+
   PopAWheelie,
   PounceOnMotion_Socialize,
   PounceOnMotion_VoiceCommand,

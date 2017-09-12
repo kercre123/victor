@@ -43,7 +43,7 @@ ActiveCube::ActiveCube(ObjectType type)
     for(auto & marker : markerList) {
       uniqueCodes.insert(marker.GetCode());
     }
-    DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
+//    DEV_ASSERT(uniqueCodes.size() == markerList.size(), "ActiveCube.Constructor.InvalidMarkerList");
   }
 }
 

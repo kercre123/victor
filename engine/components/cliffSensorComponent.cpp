@@ -103,7 +103,11 @@ void CliffSensorComponent::SendCliffDetectThresholdToRobot(const u16 thresh)
 
 u16 CliffSensorComponent::GetCliffDataRaw(unsigned int ind) const
 {
-  DEV_ASSERT(ind < GetNumCliffSensors(), "CliffSensorComponent.GetCliffDataRaw.InvalidIndex");
+  if(ind >= GetNumCliffSensors())
+  {
+    PRINT_NAMED_ERROR("CliffSensorComponent.GetCliffDataRaw.InvalidIndex", "");
+    ind = 0;
+  }
   
   return _cliffDataRaw[ind];
 }

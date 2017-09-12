@@ -1805,16 +1805,23 @@ namespace Anki {
 
               case (s32)'@':
               {
-                static bool enable = true;
-                ExternalInterface::SendAvailableObjects msg;
-                msg.enable = enable;
-                
-                LOG_INFO("SendAvailableObjects", "enable: %d", enable);
-                ExternalInterface::MessageGameToEngine msgWrapper;
-                msgWrapper.Set_SendAvailableObjects(msg);
-                SendMessage(msgWrapper);
-                
-                enable = !enable;
+                if(altKeyPressed)
+                {
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::PlaypenTest)));
+                }
+                else
+                {
+                  static bool enable = true;
+                  ExternalInterface::SendAvailableObjects msg;
+                  msg.enable = enable;
+                  
+                  LOG_INFO("SendAvailableObjects", "enable: %d", enable);
+                  ExternalInterface::MessageGameToEngine msgWrapper;
+                  msgWrapper.Set_SendAvailableObjects(msg);
+                  SendMessage(msgWrapper);
+                  
+                  enable = !enable;
+                }
                 break;
               }
               case (s32)'#':
@@ -1828,8 +1835,11 @@ namespace Anki {
               case (s32)'$':
               {
                 if(altKeyPressed) {
+                  SendMoveHeadToAngle(DEG_TO_RAD(23), 100, 100);
+                  SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, 100, 100);
                   SendClearCalibrationImages();
                 } else {
+                  LOG_INFO("", "Saving image");
                   SendSaveCalibrationImage();
                 }
                 break;

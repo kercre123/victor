@@ -18,6 +18,7 @@
 #include "engine/behaviorSystem/activities/activities/activityFeeding.h"
 #include "engine/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "engine/behaviorSystem/activities/activities/activityGatherCubes.h"
+#include "engine/behaviorSystem/activities/activities/activityPlaypenTest.h"
 #include "engine/behaviorSystem/activities/activities/activitySocialize.h"
 #include "engine/behaviorSystem/activities/activities/activitySparked.h"
 #include "engine/behaviorSystem/activities/activities/activityStrictPriority.h"
@@ -59,6 +60,11 @@ IActivity* CreateActivity(Robot& robot, ActivityType activityType, const Json::V
     case ActivityType::GatherCubes:
     {
       activityPtr = new ActivityGatherCubes(robot, config);
+      break;
+    }
+    case ActivityType::PlaypenTest:
+    {
+      activityPtr = new ActivityPlaypenTest(robot, config);
       break;
     }
     case ActivityType::Socialize:

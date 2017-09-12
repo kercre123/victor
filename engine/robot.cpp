@@ -2396,8 +2396,9 @@ Result Robot::SendSyncTime() const
     result = SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::InitController()));
   }
   if(result == RESULT_OK) {
+    // Note: Resolution is ignored in this message
     result = SendMessage(RobotInterface::EngineToRobot(
-                           RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::QVGA)));
+                           RobotInterface::ImageRequest(ImageSendMode::Stream, DEFAULT_IMAGE_RESOLUTION)));
         
     // Reset pose on connect
     PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");

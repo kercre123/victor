@@ -919,11 +919,11 @@ namespace Anki {
       AnkiConditionalErrorAndReturn(frame != NULL, 190, "SimHAL.CameraGetFrame.NullFramePointer", 494, "NULL frame pointer provided to CameraGetFrame(), check "
                                     "to make sure the image allocation succeeded.", 0);
 
-#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
+//#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
       static u32 lastFrameTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
       u32 currentTime_ms = static_cast<u32>(webotRobot_.getTime()*1000.0);
       AnkiConditionalWarn(currentTime_ms - lastFrameTime_ms > headCam_->getSamplingPeriod(), 191, "SimHAL.CameraGetFrame", 495, "Image requested too soon -- new frame may not be ready yet.", 0);
-#endif
+//#endif
 
       const u8* image = headCam_->getImage();
 
