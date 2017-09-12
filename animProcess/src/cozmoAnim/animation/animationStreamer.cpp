@@ -39,7 +39,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
-#define DEBUG_ANIMATION_STREAMING 1
+#define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
 namespace Anki {
