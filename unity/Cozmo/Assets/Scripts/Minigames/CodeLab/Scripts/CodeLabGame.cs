@@ -182,6 +182,9 @@ namespace CodeLab {
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
+      // TODO: Turn on when we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
+      //_SessionState.SetGrammarMode(GrammarMode.None);
+
       DAS.Debug("Loading Webview", "");
       UIManager.Instance.ShowTouchCatcher();
 
@@ -212,9 +215,6 @@ namespace CodeLab {
       _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
 
       RobotEngineManager.Instance.AddCallback<GameToGame>(HandleGameToGame);
-      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
-      }
 
       LoadWebView();
     }
@@ -459,10 +459,11 @@ namespace CodeLab {
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        // TODO: Once we have UI support for selecting horizontal / vertical this setting will come from elsewhere
+        // TODO: Delete these 3 lines once we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
         bool useVertical = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseVerticalGrammarCodelab;
         GrammarMode grammarMode = useVertical ? GrammarMode.Vertical : GrammarMode.Horizontal;
         _SessionState.StartSession(grammarMode);
+
         robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count, kCodeLabGameDrivingAnimLock);
         robot.EnterSDKMode(false);
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
@@ -696,11 +697,12 @@ namespace CodeLab {
       }
     }
 
-    private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest) {
+    private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest, bool showVerticalProjects) {
       DAS.Info("Codelab.OnGetCozmoUserAndSampleProjectLists", "");
 
+      // TODO: Remove this line once we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
       // Check which projects we want to display: vertical or horizontal.
-      bool showVerticalProjects = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
+      showVerticalProjects = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
 
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
@@ -909,7 +911,7 @@ namespace CodeLab {
         RaiseChallengeQuit();
         return true;
       case "getCozmoUserAndSampleProjectLists":
-        OnGetCozmoUserAndSampleProjectLists(scratchRequest);
+        OnGetCozmoUserAndSampleProjectLists(scratchRequest, scratchRequest.argBool);
         return true;
       case "cozmoSetChallengeBookmark":
         OnSetChallengeBookmark(scratchRequest);
@@ -922,15 +924,15 @@ namespace CodeLab {
         return true;
       case "cozmoRequestToOpenUserProject":
         SessionState.DAS_Event("robot.code_lab.open_user_project", "");
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString);
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString, scratchRequest.argBool);
         return true;
       case "cozmoRequestToOpenSampleProject":
         SessionState.DAS_Event("robot.code_lab.open_sample_project", scratchRequest.argString);
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString, scratchRequest.argBool);
         return true;
       case "cozmoRequestToCreateProject":
         SessionState.DAS_Event("robot.code_lab.create_project", "");
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null, scratchRequest.argBool);
         return true;
       case "cozmoDeleteUserProject":
         OnCozmoDeleteUserProject(scratchRequest);
@@ -1504,17 +1506,35 @@ namespace CodeLab {
       }
     }
 
-    private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
+    private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID, bool isVertical) {
       DAS.Info("Codelab.OpenCodeLabProject", "request=" + request + ", UUID=" + projectUUID);
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
       ShowGettingReadyScreen();
+
+      // TODO Remove this if/else stmt we have removed DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         LoadURL(kVerticalIndexFilename);
       }
       else {
         LoadURL(kHorizontalIndexFilename);
       }
+
+      // TODO Turn on once we have removed DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
+      /*
+      if (!isVertical) {
+        _SessionState.StartSession(GrammarMode.Horizontal);
+
+        LoadURL(kHorizontalIndexFilename);
+      }
+      else {
+        _SessionState.StartSession(GrammarMode.Vertical);
+
+        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
+
+        LoadURL(kVerticalIndexFilename);
+      }
+      */
     }
 
     // Display blue "Cozmo is getting ready to play" while the Scratch workspace is finishing setup
