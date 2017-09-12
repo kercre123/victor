@@ -56,19 +56,25 @@ namespace Cozmo {
   // the drive center is the location between the two wheels)
   const f32 DRIVE_CENTER_OFFSET = -20.f;
   
-  // Length of the forward range sensor (with respect to origin)
-  const u16 FORWARD_RANGE_SENSOR_MIN_DISTANCE_MM = 25;
-  const u16 FORWARD_RANGE_SENSOR_MAX_DISTANCE_MM = 410;
+  // Length of the forward range sensor (with respect to the sensor's origin)
+  const u16 kProxSensorMinDistance_mm = 25;
+  const u16 kProxSensorMaxDistance_mm = 410;
+  
+  // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
+  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.f);    // Angle that the prox sensor is tilted (upward is positive)
+  const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f}; // With respect to robot origin
+  const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);     // Full Field of View (FOV) of the sensor cone
   
   // The height of the lift at various configurations
   // Actual limit in proto is closer to 20.4mm, but there is a weird
   // issue with moving the lift when it is at a limit. The lift arm
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
-  const f32 LIFT_HEIGHT_LOWDOCK  = 32.f;
-  const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
-  const f32 LIFT_HEIGHT_CARRY    = 92.f;
-  const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
+  const f32 LIFT_HEIGHT_LOWDOCK               = 32.f; // For interfacing with a cube that is on the ground.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 39.f; // TODO: Confirm this on a real robot. At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
+  const f32 LIFT_HEIGHT_HIGHDOCK              = 76.f; // For interfacing with a cube that is stacked on top of another cube.
+  const f32 LIFT_HEIGHT_CARRY                 = 92.f; // Cube carrying height.
+  const f32 LIFT_HEIGHT_LOW_ROLL              = 68.f; // For rolling a cube that is on the ground.
   
   // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
   const f32 LIFT_ARM_LENGTH = 66.f;
