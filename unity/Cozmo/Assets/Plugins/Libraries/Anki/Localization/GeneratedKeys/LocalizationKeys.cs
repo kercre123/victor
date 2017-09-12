@@ -259,6 +259,9 @@ public static class LocalizationKeys {
   public const string kCodeLabProjectsConfirmDeleteProjectConfirmButtonLabelText = "codeLab.projects.confirmDeleteProject.confirmButton.labelText";
   public const string kCodeLabProjectsConfirmDeleteProjectCancelButtonLabelText = "codeLab.projects.confirmDeleteProject.cancelButton.labelText";
   public const string kCodeLabProjectsConfirmDeleteProjectConfirmPrompt = "codeLab.projects.confirmDeleteProject.confirmPrompt";
+  public const string kCodeLabProjectsFeaturedTabTitle = "codeLab.projects.featuredTab.title";
+  public const string kCodeLabProjectsSandboxTabTitle = "codeLab.projects.sandboxTab.title";
+  public const string kCodeLabProjectsConstructorTabTitle = "codeLab.projects.constructorTab.title";
   public const string kCodeLabSampleProject_DriveInSquareProjectName = "codeLabSampleProject_DriveInSquare.projectName";
   public const string kCodeLabSampleProject_RainbowBackpackProjectName = "codeLabSampleProject_RainbowBackpack.projectName";
   public const string kCodeLabSampleProject_DrivingAndSneezingProjectName = "codeLabSampleProject_DrivingAndSneezing.projectName";
@@ -312,6 +315,177 @@ public static class LocalizationKeys {
   public const string kCodeLabHorizontalCategoryAnimations = "codeLabHorizontal.Category.Animations";
   public const string kCodeLabHorizontalCategoryEvents = "codeLabHorizontal.Category.Events";
   public const string kCodeLabHorizontalCategoryControl = "codeLabHorizontal.Category.Control";
+  public const string kCodeLabGlossaryCategoriesDrive = "codeLabGlossary.categories.drive";
+  public const string kCodeLabGlossaryCategoriesActions = "codeLabGlossary.categories.actions";
+  public const string kCodeLabGlossaryCategoriesAnimations = "codeLabGlossary.categories.animations";
+  public const string kCodeLabGlossaryCategoriesEvents = "codeLabGlossary.categories.events";
+  public const string kCodeLabGlossaryCategoriesControl = "codeLabGlossary.categories.control";
+  public const string kCodeLabGlossaryCategoriesSensors = "codeLabGlossary.categories.sensors";
+  public const string kCodeLabGlossaryCategoriesOperators = "codeLabGlossary.categories.operators";
+  public const string kCodeLabGlossaryCategoriesData = "codeLabGlossary.categories.data";
+  public const string kCodeLabGlossaryGlossary_title = "codeLabGlossary.glossary_title";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_drive = "codeLabGlossary.block_definitions.title.cozmo_vert_drive";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_drive = "codeLabGlossary.block_definitions.description.cozmo_vert_drive";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_wheels_speed = "codeLabGlossary.block_definitions.title.cozmo_vert_wheels_speed";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_wheels_speed = "codeLabGlossary.block_definitions.description.cozmo_vert_wheels_speed";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_stop_motor = "codeLabGlossary.block_definitions.title.cozmo_vert_stop_motor";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_stop_motor = "codeLabGlossary.block_definitions.description.cozmo_vert_stop_motor";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_path_offset = "codeLabGlossary.block_definitions.title.cozmo_vert_path_offset";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_path_offset = "codeLabGlossary.block_definitions.description.cozmo_vert_path_offset";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_path_to = "codeLabGlossary.block_definitions.title.cozmo_vert_path_to";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_path_to = "codeLabGlossary.block_definitions.description.cozmo_vert_path_to";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_turn = "codeLabGlossary.block_definitions.title.cozmo_vert_turn";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_turn = "codeLabGlossary.block_definitions.description.cozmo_vert_turn";
+  public const string kCodeLabGlossaryBlock_definitionsTitle = "codeLabGlossary.block_definitions.title.";
+  public const string kCodeLabGlossaryBlock_definitionsDescription = "codeLabGlossary.block_definitions.description.";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_dock_with_cube_by_id = "codeLabGlossary.block_definitions.title.cozmo_vert_dock_with_cube_by_id";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_dock_with_cube_by_id = "codeLabGlossary.block_definitions.description.cozmo_vert_dock_with_cube_by_id";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_set_liftheight = "codeLabGlossary.block_definitions.title.cozmo_vert_set_liftheight";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_set_liftheight = "codeLabGlossary.block_definitions.description.cozmo_vert_set_liftheight";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_move_lift = "codeLabGlossary.block_definitions.title.cozmo_vert_move_lift";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_move_lift = "codeLabGlossary.block_definitions.description.cozmo_vert_move_lift";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_set_headangle = "codeLabGlossary.block_definitions.title.cozmo_vert_set_headangle";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_set_headangle = "codeLabGlossary.block_definitions.description.cozmo_vert_set_headangle";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_setbackpackcolor = "codeLabGlossary.block_definitions.title.cozmo_vert_setbackpackcolor";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_setbackpackcolor = "codeLabGlossary.block_definitions.description.cozmo_vert_setbackpackcolor";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_says = "codeLabGlossary.block_definitions.title.cozmo_says";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_says = "codeLabGlossary.block_definitions.description.cozmo_says";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_set_cube_light_corner = "codeLabGlossary.block_definitions.title.cozmo_vert_set_cube_light_corner";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_set_cube_light_corner = "codeLabGlossary.block_definitions.description.cozmo_vert_set_cube_light_corner";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_anim = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_anim";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_anim = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_anim";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_play_animation_from_dropdown = "codeLabGlossary.block_definitions.title.cozmo_play_animation_from_dropdown";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_play_animation_from_dropdown = "codeLabGlossary.block_definitions.description.cozmo_play_animation_from_dropdown";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_clear = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_clear";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_clear = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_clear";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_display = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_display";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_display = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_display";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_draw_text = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_text";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_draw_text = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_draw_line = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_draw_line = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_fill_rect = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_fill_rect = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_draw_rect = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_draw_rect = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_draw_circle = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_draw_circle = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cozmoface_fill_circle = "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cozmoface_fill_circle = "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle";
+  public const string kCodeLabGlossaryBlock_definitionsTitleEvent_whenflagclicked = "codeLabGlossary.block_definitions.title.event_whenflagclicked";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionEvent_whenflagclicked = "codeLabGlossary.block_definitions.description.event_whenflagclicked";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_event_on_face = "codeLabGlossary.block_definitions.title.cozmo_event_on_face";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_face = "codeLabGlossary.block_definitions.description.cozmo_event_on_face";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_event_on_happy_face = "codeLabGlossary.block_definitions.title.cozmo_event_on_happy_face";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_happy_face = "codeLabGlossary.block_definitions.description.cozmo_event_on_happy_face";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_event_on_sad_face = "codeLabGlossary.block_definitions.title.cozmo_event_on_sad_face";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_sad_face = "codeLabGlossary.block_definitions.description.cozmo_event_on_sad_face";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_event_on_see_cube = "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_see_cube = "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_event_on_cube_tap = "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_tap";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_cube_tap = "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_tap";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_event_on_cube_moved = "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_moved";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_cube_moved = "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_moved";
+  public const string kCodeLabGlossaryBlock_definitionsTitleEvent_whengreaterthan = "codeLabGlossary.block_definitions.title.event_whengreaterthan";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionEvent_whengreaterthan = "codeLabGlossary.block_definitions.description.event_whengreaterthan";
+  public const string kCodeLabGlossaryBlock_definitionsTitleEvent_whenbroadcastreceived = "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionEvent_whenbroadcastreceived = "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived";
+  public const string kCodeLabGlossaryBlock_definitionsTitleEvent_broadcast = "codeLabGlossary.block_definitions.title.event_broadcast";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionEvent_broadcast = "codeLabGlossary.block_definitions.description.event_broadcast";
+  public const string kCodeLabGlossaryBlock_definitionsTitleEvent_broadcastandwait = "codeLabGlossary.block_definitions.title.event_broadcastandwait";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionEvent_broadcastandwait = "codeLabGlossary.block_definitions.description.event_broadcastandwait";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_wait = "codeLabGlossary.block_definitions.title.control_wait";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_wait = "codeLabGlossary.block_definitions.description.control_wait";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_repeat = "codeLabGlossary.block_definitions.title.control_repeat";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_repeat = "codeLabGlossary.block_definitions.description.control_repeat";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_forever = "codeLabGlossary.block_definitions.title.control_forever";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_forever = "codeLabGlossary.block_definitions.description.control_forever";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_if = "codeLabGlossary.block_definitions.title.control_if";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_if = "codeLabGlossary.block_definitions.description.control_if";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_if_else = "codeLabGlossary.block_definitions.title.control_if_else";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_if_else = "codeLabGlossary.block_definitions.description.control_if_else";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_wait_until = "codeLabGlossary.block_definitions.title.control_wait_until";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_wait_until = "codeLabGlossary.block_definitions.description.control_wait_until";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_repeat_until = "codeLabGlossary.block_definitions.title.control_repeat_until";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_repeat_until = "codeLabGlossary.block_definitions.description.control_repeat_until";
+  public const string kCodeLabGlossaryBlock_definitionsTitleControl_stop = "codeLabGlossary.block_definitions.title.control_stop";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionControl_stop = "codeLabGlossary.block_definitions.description.control_stop";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_position_3d = "codeLabGlossary.block_definitions.title.cozmo_vert_get_position_3d";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_position_3d = "codeLabGlossary.block_definitions.description.cozmo_vert_get_position_3d";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_pitch = "codeLabGlossary.block_definitions.title.cozmo_vert_get_pitch";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_pitch = "codeLabGlossary.block_definitions.description.cozmo_vert_get_pitch";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_roll = "codeLabGlossary.block_definitions.title.cozmo_vert_get_roll";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_roll = "codeLabGlossary.block_definitions.description.cozmo_vert_get_roll";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_yaw = "codeLabGlossary.block_definitions.title.cozmo_vert_get_yaw";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_yaw = "codeLabGlossary.block_definitions.description.cozmo_vert_get_yaw";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_lift_height = "codeLabGlossary.block_definitions.title.cozmo_vert_get_lift_height";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_lift_height = "codeLabGlossary.block_definitions.description.cozmo_vert_get_lift_height";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_get_head_angle = "codeLabGlossary.block_definitions.title.cozmo_vert_get_head_angle";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_get_head_angle = "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_is_visible = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_is_visible = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_is_visible";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_name = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_name";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_name = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_name";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_position_2d = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_position_2d";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_position_2d = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_position_2d";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_position_3d = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_position_3d";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_position_3d = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_position_3d";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_face_get_expression = "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_expression";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_face_get_expression = "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_expression";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_is_visible = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_is_visible";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_get_is_visible = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_is_visible";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_position_2d = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_position_2d";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_get_position_2d = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_position_2d";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_position_3d = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_position_3d";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_get_position_3d = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_position_3d";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_pitch = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_pitch";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_get_pitch = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_pitch";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_roll = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_roll";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_get_roll = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_roll";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_cube_get_yaw = "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_yaw";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_cube_get_yaw = "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_yaw";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_device_get_pitch = "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_pitch";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_device_get_pitch = "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_pitch";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_device_get_roll = "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_roll";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_device_get_roll = "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_roll";
+  public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_vert_device_get_yaw = "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_yaw";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_vert_device_get_yaw = "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_yaw";
+  public const string kCodeLabGlossaryBlock_definitionsTitleSensing_current = "codeLabGlossary.block_definitions.title.sensing_current";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionSensing_current = "codeLabGlossary.block_definitions.description.sensing_current";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_add = "codeLabGlossary.block_definitions.title.operator_add";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_add = "codeLabGlossary.block_definitions.description.operator_add";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_subtract = "codeLabGlossary.block_definitions.title.operator_subtract";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_subtract = "codeLabGlossary.block_definitions.description.operator_subtract";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_multiply = "codeLabGlossary.block_definitions.title.operator_multiply";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_multiply = "codeLabGlossary.block_definitions.description.operator_multiply";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_divide = "codeLabGlossary.block_definitions.title.operator_divide";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_divide = "codeLabGlossary.block_definitions.description.operator_divide";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_random = "codeLabGlossary.block_definitions.title.operator_random";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_random = "codeLabGlossary.block_definitions.description.operator_random";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_lt = "codeLabGlossary.block_definitions.title.operator_lt";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_lt = "codeLabGlossary.block_definitions.description.operator_lt";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_equals = "codeLabGlossary.block_definitions.title.operator_equals";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_equals = "codeLabGlossary.block_definitions.description.operator_equals";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_gt = "codeLabGlossary.block_definitions.title.operator_gt";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_gt = "codeLabGlossary.block_definitions.description.operator_gt";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_and = "codeLabGlossary.block_definitions.title.operator_and";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_and = "codeLabGlossary.block_definitions.description.operator_and";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_or = "codeLabGlossary.block_definitions.title.operator_or";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_or = "codeLabGlossary.block_definitions.description.operator_or";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_not = "codeLabGlossary.block_definitions.title.operator_not";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_not = "codeLabGlossary.block_definitions.description.operator_not";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_join = "codeLabGlossary.block_definitions.title.operator_join";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_join = "codeLabGlossary.block_definitions.description.operator_join";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_letter_of = "codeLabGlossary.block_definitions.title.operator_letter_of";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_letter_of = "codeLabGlossary.block_definitions.description.operator_letter_of";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_length = "codeLabGlossary.block_definitions.title.operator_length";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_length = "codeLabGlossary.block_definitions.description.operator_length";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_mod = "codeLabGlossary.block_definitions.title.operator_mod";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_mod = "codeLabGlossary.block_definitions.description.operator_mod";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_round = "codeLabGlossary.block_definitions.title.operator_round";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_round = "codeLabGlossary.block_definitions.description.operator_round";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_mathop = "codeLabGlossary.block_definitions.title.operator_mathop";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_mathop = "codeLabGlossary.block_definitions.description.operator_mathop";
 
   #endregion
 
@@ -435,6 +609,38 @@ public static class LocalizationKeys {
   public const string kItemTreatPlural = "item.treat.plural";
   public const string kItemCubeSingular = "item.cube.singular";
   public const string kItemCubePlural = "item.cube.plural";
+
+  #endregion
+
+  #region LocalNotificationStrings
+
+  public const string kLocalNotifComeBackGeneralPeriod1d01 = "LocalNotif.ComeBackGeneral.Period.1d.01";
+  public const string kLocalNotifComeBackGeneralPeriodDC1d01 = "LocalNotif.ComeBackGeneral.Period.DC.1d.01";
+  public const string kLocalNotifComeBackGeneralPeriodDNC1d01 = "LocalNotif.ComeBackGeneral.Period.DNC.1d.01";
+  public const string kLocalNotifComeBackGeneralNextAM01 = "LocalNotif.ComeBackGeneral.NextAM.01";
+  public const string kLocalNotifComeBackGeneralNextPM01 = "LocalNotif.ComeBackGeneral.NextPM.01";
+  public const string kLocalNotifComeBackGeneralPeriod3d01 = "LocalNotif.ComeBackGeneral.Period.3d.01";
+  public const string kLocalNotifComeBackGeneralPeriod7d01 = "LocalNotif.ComeBackGeneral.Period.7d.01";
+  public const string kLocalNotifComeBackGeneralPeriod14d01 = "LocalNotif.ComeBackGeneral.Period.14d.01";
+  public const string kLocalNotifComeBackGeneralPeriod30d01 = "LocalNotif.ComeBackGeneral.Period.30d.01";
+  public const string kLocalNotifComeBackGeneralPeriod365d01 = "LocalNotif.ComeBackGeneral.Period.365d.01";
+  public const string kLocalNotifDailyPreReminderDC01 = "LocalNotif.DailyPreReminder.DC.01";
+  public const string kLocalNotifDailyPreReminderDNC01 = "LocalNotif.DailyPreReminder.DNC.01";
+  public const string kLocalNotifNeedBracketRepairWarning01 = "LocalNotif.NeedBracket.Repair.Warning.01";
+  public const string kLocalNotifNeedBracketRepairCritical01 = "LocalNotif.NeedBracket.Repair.Critical.01";
+  public const string kLocalNotifNeedBracketEnergyWarning01 = "LocalNotif.NeedBracket.Energy.Warning.01";
+  public const string kLocalNotifNeedBracketEnergyCritical01 = "LocalNotif.NeedBracket.Energy.Critical.01";
+  public const string kLocalNotifNeedBracketPlayWarning01 = "LocalNotif.NeedBracket.Play.Warning.01";
+  public const string kLocalNotifNeedBracketPlayCritical01 = "LocalNotif.NeedBracket.Play.Critical.01";
+  public const string kLocalNotifNeedLevelRepairDecaying01 = "LocalNotif.NeedLevel.Repair.Decaying.01";
+  public const string kLocalNotifNeedLevelEnergyDecaying01 = "LocalNotif.NeedLevel.Energy.Decaying.01";
+  public const string kLocalNotifNeedLevelPlayDecaying01 = "LocalNotif.NeedLevel.Play.Decaying.01";
+  public const string kLocalNotifTokens3ToGo01 = "LocalNotif.Tokens.3.ToGo.01";
+  public const string kLocalNotifTokens3ToGo02 = "LocalNotif.Tokens.3.ToGo.02";
+  public const string kLocalNotifTokens2ToGo01 = "LocalNotif.Tokens.2.ToGo.01";
+  public const string kLocalNotifTokens2ToGo02 = "LocalNotif.Tokens.2.ToGo.02";
+  public const string kLocalNotifTokens1ToGo01 = "LocalNotif.Tokens.1.ToGo.01";
+  public const string kLocalNotifTokens1ToGo02 = "LocalNotif.Tokens.1.ToGo.02";
 
   #endregion
 
@@ -678,6 +884,7 @@ public static class LocalizationKeys {
   public const string kOnboardingTokensIntroPart1 = "onboarding.TokensIntro.Part1";
   public const string kOnboardingTokensIntroPart2 = "onboarding.TokensIntro.Part2";
   public const string kOnboardingButtonEnd = "onboarding.button.end";
+  public const string kOnboardingNotificationprepromptBody = "onboarding.notificationpreprompt.body";
 
   #endregion
 
@@ -798,6 +1005,8 @@ public static class LocalizationKeys {
   public const string kSettingsModalTitle = "settings.modalTitle";
   public const string kSettingsSdkPanelSdkUrlPreface = "settings.sdkPanel.sdkUrl.preface";
   public const string kSettingsSdkPanelSdkUrlAddress = "settings.sdkPanel.sdkUrl.address";
+  public const string kSettingsAcknowledgementsPanelDataCollectionTitle = "settings.acknowledgementsPanel.dataCollectionTitle";
+  public const string kSettingsNotificationpanelTitle = "settings.notificationpanel.title";
 
   #endregion
 
@@ -809,6 +1018,7 @@ public static class LocalizationKeys {
   public const string kButtonCancel = "button.cancel";
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
+  public const string kButtonMaybeLater = "button.maybeLater";
   public const string kButtonContinue = "button.continue";
   public const string kButtonOkay = "button.okay";
   public const string kButtonAgain = "button.again";
@@ -894,6 +1104,34 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region TooltipStrings
+
+  public const string kTooltipNeedstateEnergyHeader = "tooltip.needstate.energy.header";
+  public const string kTooltipNeedstateEnergy0 = "tooltip.needstate.energy.0";
+  public const string kTooltipNeedstateEnergy1 = "tooltip.needstate.energy.1";
+  public const string kTooltipNeedstateEnergy2 = "tooltip.needstate.energy.2";
+  public const string kTooltipNeedstateEnergy3 = "tooltip.needstate.energy.3";
+  public const string kTooltipNeedstateRepairHeader = "tooltip.needstate.repair.header";
+  public const string kTooltipNeedstateRepair0 = "tooltip.needstate.repair.0";
+  public const string kTooltipNeedstateRepair1 = "tooltip.needstate.repair.1";
+  public const string kTooltipNeedstateRepair2 = "tooltip.needstate.repair.2";
+  public const string kTooltipNeedstateRepair3 = "tooltip.needstate.repair.3";
+  public const string kTooltipNeedstatePlayHeader = "tooltip.needstate.play.header";
+  public const string kTooltipNeedstatePlay0 = "tooltip.needstate.play.0";
+  public const string kTooltipNeedstatePlay1 = "tooltip.needstate.play.1";
+  public const string kTooltipNeedstatePlay2 = "tooltip.needstate.play.2";
+  public const string kTooltipNeedstatePlay3 = "tooltip.needstate.play.3";
+  public const string kTooltipNeedsbuttonEnergyHeader = "tooltip.needsbutton.energy.header";
+  public const string kTooltipNeedsbuttonEnergyRepaircritical = "tooltip.needsbutton.energy.repaircritical";
+  public const string kTooltipNeedsbuttonPlayHeader = "tooltip.needsbutton.play.header";
+  public const string kTooltipNeedsbuttonPlayRepaircritical = "tooltip.needsbutton.play.repaircritical";
+  public const string kTooltipNeedsbuttonPlayFeedcritical = "tooltip.needsbutton.play.feedcritical";
+  public const string kTooltipBonusbarHeader = "tooltip.bonusbar.header";
+  public const string kTooltipBonusbarBodyDaycomplete = "tooltip.bonusbar.body.daycomplete";
+  public const string kTooltipBonusbarBodyDayincomplete = "tooltip.bonusbar.body.dayincomplete";
+
+  #endregion
+
   #region UnlockStrings
 
   public const string kUnlockableOSNotSupportedTitle = "unlockable.OSNotSupported.Title";
@@ -960,6 +1198,8 @@ public static class LocalizationKeys {
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kUnlockableGuardDogTitle = "unlockable.GuardDog.Title";
   public const string kUnlockableGuardDogDescription = "unlockable.GuardDog.Description";
+  public const string kUnlockableTrackLaserTitle = "unlockable.TrackLaser.Title";
+  public const string kUnlockableTrackLaserDescription = "unlockable.TrackLaser.Description";
   public const string kSparksSparked = "sparks.Sparked";
   public const string kSparksSparkCozmo = "sparks.SparkCozmo";
   public const string kSparksSpark = "sparks.Spark";

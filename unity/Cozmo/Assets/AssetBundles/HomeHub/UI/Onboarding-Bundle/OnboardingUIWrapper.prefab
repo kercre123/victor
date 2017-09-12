@@ -55,6 +55,9 @@ MonoBehaviour:
     - {fileID: 114043675915146996, guid: 061f7d489f548474f9a597503191dbd4, type: 2}
   - onboardingPrefab:
     - {fileID: 11442482, guid: 671e06d41525d4f1cb371e797547ed21, type: 2}
+  - onboardingPrefab: []
+  - onboardingPrefab:
+    - {fileID: 114551040891425426, guid: 9c02f6022db5d4614a1838758e4e28ef, type: 2}
 --- !u!224 &22408034
 RectTransform:
   m_ObjectHideFlags: 1

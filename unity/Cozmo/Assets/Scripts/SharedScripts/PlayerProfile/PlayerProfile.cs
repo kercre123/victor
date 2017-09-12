@@ -51,6 +51,9 @@ namespace DataPersistence {
 
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
 
+    public bool OSNotificationsPermissionsPromptShown;
+    public System.DateTime LastTimeAskedAboutNotifications;
+
     public Anki.Util.AnkiLab.AssignmentDef[] LabAssignments;
 
     public static int kSaveVersionCurrent = 2;
@@ -86,6 +89,13 @@ namespace DataPersistence {
       NewStarLevels = new List<Anki.Cozmo.ExternalInterface.StarLevelCompleted>();
       PreviousTags = new List<string>();
       LabAssignments = new Anki.Util.AnkiLab.AssignmentDef[0];
+#if UNITY_ANDROID && !UNITY_EDITOR
+      OSNotificationsPermissionsPromptShown = true;
+#else
+      OSNotificationsPermissionsPromptShown = false;
+#endif
+      LastTimeAskedAboutNotifications = System.DateTime.Now;
+
     }
   }
 }

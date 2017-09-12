@@ -29,7 +29,8 @@ namespace Cozmo.Notifications {
       _NotifId = 0;
       _NotificationCache = new List<Notification>();
 
-      UTNotifications.Manager.Instance.Initialize(false);
+      // Since initalizing will pop up permissions on iOS, don't allow until our preprompt has been shown.
+      InitNotificationsIfAllowed();
       CancelAllNotifications();
 
       RobotEngineManager.Instance.AddCallback<ClearNotificationCache>(HandleClearNotificationCache);
@@ -39,6 +40,16 @@ namespace Cozmo.Notifications {
     public void Init() {
       Cozmo.PauseManager.Instance.OnPauseStateChanged += HandlePauseStateChanged;
       RobotEngineManager.Instance.SendNotificationsManagerReady();
+    }
+
+    public void InitNotificationsIfAllowed() {
+      // on platforms that don't require a prompt ( android ) this will always be true.
+      // on platforms that require a prompt ( iOS ) this is set by either our settings menu notification panel, 
+      //              or first time onboarding, or the weekly repeat of that same onboarding.
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown) {
+        // causes the actual system prompt and sets up UTNotifications
+        UTNotifications.Manager.Instance.Initialize(false);
+      }
     }
 
     private void HandlePauseStateChanged(bool isPaused) {
@@ -62,10 +73,15 @@ namespace Cozmo.Notifications {
     }
 
     private void CancelAllNotifications() {
-      UTNotifications.Manager.Instance.CancelAllNotifications();
+      if (UTNotifications.Manager.Instance.IsInitialized()) {
+        UTNotifications.Manager.Instance.CancelAllNotifications();
+      }
     }
 
     private void ScheduleAllNotifications() {
+      if (!UTNotifications.Manager.Instance.IsInitialized()) {
+        return;
+      }
       CancelAllNotifications();
 
       foreach (var notification in _NotificationCache) {

@@ -158,5 +158,8 @@
   },
   "onboarding.button.end": {
     "translation": "COMPLETE"
+  },
+  "onboarding.notificationpreprompt.body": {
+    "translation": "Would you like Cozmo to send you messages when he needs you?"
   }
 }
