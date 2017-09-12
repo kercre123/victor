@@ -99,7 +99,7 @@
                 wheel: false,
                 startScale: startScale,
                 maxScale: 2,
-                minScale: 0.5,
+                minScale: 0.35,
                 scaleSpeed: 1.1
             }
         });
@@ -219,6 +219,7 @@
         });
         stop.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
+            window.Unity.call({command: "cozmoStopSign"});
             vm.stopAll();
         });
         stop.addEventListener('touchmove', function (e) {

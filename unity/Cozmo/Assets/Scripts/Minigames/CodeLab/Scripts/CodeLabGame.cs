@@ -901,6 +901,14 @@ namespace CodeLab {
         return true;
       case "cozmoGreenFlag":
         OnGreenFlagClicked();
+        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+          StartVerticalHatBlockListeners();
+        }
+        return true;
+      case "cozmoStopSign":
+        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+          StopVerticalHatBlockListeners();
+        }
         return true;
       case "cozmoStopAll":
         OnStopAll();
@@ -1761,8 +1769,6 @@ namespace CodeLab {
       Invoke("UnhideWebView", delayInSeconds);
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-        StartVerticalHatBlockListeners();
-
         //in Vertical, disable cubes illuminating blue when Cozmo sees them
         RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
       }
