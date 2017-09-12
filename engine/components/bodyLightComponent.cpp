@@ -55,7 +55,7 @@ BodyLightComponent::BodyLightComponent(Robot& robot, const CozmoContext* context
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
   }
   
-  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 4, "BodyLightComponent.WrongNumBackpackLights");
+  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BodyLightComponent.WrongNumBackpackLights");
 }
 
 void BodyLightComponent::UpdateChargingLightConfig()
@@ -216,13 +216,13 @@ const char* BodyLightComponent::StateToString(const BackpackLightsState& state) 
 const BackpackLights& BodyLightComponent::GetOffBackpackLights()
 {
   static const BackpackLights kBackpackLightsOff = {
-    .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{0,0,0,0}},
-    .offPeriod_ms           = {{0,0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0,0}},
-    .offset                 = {{0,0,0,0}}
+    .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .onPeriod_ms            = {{0,0,0}},
+    .offPeriod_ms           = {{0,0,0}},
+    .transitionOnPeriod_ms  = {{0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0}},
+    .offset                 = {{0,0,0}}
   };
 
   return kBackpackLightsOff;

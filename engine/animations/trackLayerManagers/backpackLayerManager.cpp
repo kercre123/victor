@@ -44,7 +44,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   track.AddKeyFrameToBack(frame);
   
   // Turn middle light on
-  lights.colors[(int)LEDId::LED_BACKPACK_2] = NamedColors::RED;
+  lights.colors[(int)LEDId::LED_BACKPACK_MIDDLE] = NamedColors::RED;
   frame.SetLights(lights);
   frame.SetTriggerTime(kGlitchLightDelay_ms);
   frame.SetDuration(kGlitchLightDuration_ms);
@@ -52,12 +52,8 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   
   // Can pick random lights from everything except for middle lights
   std::vector<int> backpackLightsToPickFrom = {{
-//    (int)LEDId::LED_BACKPACK_BACK,
-//    (int)LEDId::LED_BACKPACK_FRONT,
-//    (int)LEDId::LED_BACKPACK_LEFT,
-//    (int)LEDId::LED_BACKPACK_RIGHT
-    (int)LEDId::LED_BACKPACK_1,
-    (int)LEDId::LED_BACKPACK_3
+    (int)LEDId::LED_BACKPACK_BACK,
+    (int)LEDId::LED_BACKPACK_FRONT,
   }};
   
   // Middle light plus a random light
@@ -71,7 +67,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   backpackLightsToPickFrom.erase(backpackLightsToPickFrom.begin() + rand);
   
   // Clear middle light
-  lights.colors[(int)LEDId::LED_BACKPACK_2] = 0;
+  lights.colors[(int)LEDId::LED_BACKPACK_MIDDLE] = 0;
   
   // Previous random light plus another random light
   rand = GetRNG().RandInt((int)backpackLightsToPickFrom.size());

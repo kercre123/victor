@@ -93,23 +93,23 @@ namespace Anki {
     static const u32 kExpectedNumPreDockPoses = 1;
     
     static const BackpackLights passLights = {
-      .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
-      .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-      .onPeriod_ms            = {{1000,1000,1000,1000}},
-      .offPeriod_ms           = {{100,100,100,100}},
-      .transitionOnPeriod_ms  = {{450,450,450,450}},
-      .transitionOffPeriod_ms = {{450,450,450,450}},
-      .offset                 = {{0,0,0,0}}
+      .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
+      .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+      .onPeriod_ms            = {{1000,1000,1000}},
+      .offPeriod_ms           = {{100,100,100}},
+      .transitionOnPeriod_ms  = {{450,450,450}},
+      .transitionOffPeriod_ms = {{450,450,450}},
+      .offset                 = {{0,0,0}}
     };
     
     static const BackpackLights failLights = {
-      .onColors               = {{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED}},
-      .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-      .onPeriod_ms            = {{500,500,500,500}},
-      .offPeriod_ms           = {{500,500,500,500}},
-      .transitionOnPeriod_ms  = {{0,0,0,0}},
-      .transitionOffPeriod_ms = {{0,0,0,0}},
-      .offset                 = {{0,0,0,0}}
+      .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
+      .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+      .onPeriod_ms            = {{500,500,500}},
+      .offPeriod_ms           = {{500,500,500}},
+      .transitionOnPeriod_ms  = {{0,0,0}},
+      .transitionOffPeriod_ms = {{0,0,0}},
+      .offset                 = {{0,0,0}}
     };
     
     BehaviorDockingTestSimple::BehaviorDockingTestSimple(Robot& robot, const Json::Value& config)

@@ -444,10 +444,9 @@ namespace Anki {
       }
 
       // Lights
-      leds_[LED_BACKPACK_0] = webotRobot_.getLED("backpackLED0");
-      leds_[LED_BACKPACK_1] = webotRobot_.getLED("backpackLED1");
-      leds_[LED_BACKPACK_2] = webotRobot_.getLED("backpackLED2");
-      leds_[LED_BACKPACK_3] = webotRobot_.getLED("backpackLED3");
+      leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("backpackLED1");
+      leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
+      leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("backpackLED3");
 
       isInitialized = true;
       return RESULT_OK;

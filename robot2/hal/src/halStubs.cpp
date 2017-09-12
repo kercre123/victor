@@ -345,16 +345,14 @@ namespace Anki {
     {
       assert(led_id >= 0 && led_id < LED_COUNT);
       
-      // Mapping is reversed in syscon
-      u32 led_id_rev = LED_COUNT - led_id - 1;
+      u32 ledIdx = (u32)led_id;
       
       uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
       uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
       uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
-      headData_.ledColors[led_id_rev * LED_CHANEL_CT + LED0_RED] = r;
-      headData_.ledColors[led_id_rev * LED_CHANEL_CT + LED0_GREEN] = g;
-      headData_.ledColors[led_id_rev * LED_CHANEL_CT + LED0_BLUE] = b;
-      assert(led_id >= 0 && led_id <= LED_COUNT);
+      headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_RED] = r;
+      headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_GREEN] = g;
+      headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_BLUE] = b;
     }
 
     u32 HAL::GetID()

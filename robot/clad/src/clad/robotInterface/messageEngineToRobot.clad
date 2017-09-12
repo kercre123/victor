@@ -431,7 +431,7 @@ message TurnToRecordedHeading
 
 message SetBackpackLights
 {
-  LightState lights[4],
+  LightState lights[3],
   uint_8 layer = 0      // 0 is BPL_USER
 }
 

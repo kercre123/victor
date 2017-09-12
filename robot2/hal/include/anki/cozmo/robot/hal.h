@@ -242,10 +242,9 @@ namespace Anki
       /// LED identifiers
       typedef enum
       {
-        LED_BACKPACK_0 = 0, ///< Forward-most LED
-        LED_BACKPACK_1,
-        LED_BACKPACK_2,
-        LED_BACKPACK_3,
+        LED_BACKPACK_FRONT = 0,
+        LED_BACKPACK_MIDDLE,
+        LED_BACKPACK_BACK,
         LED_COUNT
       } LEDId;
 
