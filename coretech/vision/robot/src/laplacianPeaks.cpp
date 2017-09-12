@@ -134,7 +134,7 @@ namespace Anki
               assert(index>=0 && index<used.size());
               used[index] = (u8)true;
 #             if DRAW_LINE_FITS
-              blankImg.DrawPoint(Point2f(pBoundary[index].x, pBoundary[index].y), colorList[numLinesFit], 2);
+              blankImg.DrawLine(Point2f(pBoundary[index].x, pBoundary[index].y), Point2f(pBoundary[index].x, pBoundary[index].y),colorList[numLinesFit], 2);
 #             endif
               
               if(lineFits[numLinesFit].switched) {
@@ -218,7 +218,7 @@ namespace Anki
               corners.push_back(cv::Point_<f32>(xInt, yInt));
               
 #             if DRAW_LINE_FITS
-              blankImg.DrawPoint(Point2f(xInt,yInt), NamedColors::BLUE, 3);
+              blankImg.DrawLine(Point2f(xInt,yInt), Point2f(xInt,yInt), NamedColors::BLUE, 3);
 #             endif
             }
           } // for(s32 jLine=0; jLine<4; jLine++)
@@ -289,15 +289,24 @@ namespace Anki
       blankImg.FillWith(Vision::PixelRGB(0,0,0));
 #     endif
       
+      // Center point of the boundary (average of all pixel coordinates making up the boundary)
+      Point<u32> boundaryCenter(0,0);
+      
       // Copy the boundary to a f32 openCV array
       cv::Mat_<f32> boundaryCv(2, boundaryLength);
       const Point<s16> * restrict pBoundary = boundary.Pointer(0);
       f32 * restrict pBoundaryCv0 = boundaryCv.ptr<f32>(0,0);
       f32 * restrict pBoundaryCv1 = boundaryCv.ptr<f32>(1,0);
       for(s32 i=0; i<boundaryLength; i++) {
-        pBoundaryCv0[i] = pBoundary[i].y; // Note that order is (y,x)
-        pBoundaryCv1[i] = pBoundary[i].x;
+        const s16 x = pBoundary[i].x;
+        const s16 y = pBoundary[i].y;
+        pBoundaryCv0[i] = y; // Note that order is (y,x)
+        pBoundaryCv1[i] = x;
+        boundaryCenter.x += x;
+        boundaryCenter.y += y;
       }
+      boundaryCenter.x /= boundaryLength;
+      boundaryCenter.y /= boundaryLength;
       
       // Create a DoG filter kernel
       s32 ksize = static_cast<s32>(ceilf((((sigma - 0.8f)/0.3f) + 1.0f)*2.0f + 1.0f) ); // Equation from opencv docs
@@ -447,12 +456,13 @@ namespace Anki
           if(pLabels[i] == iBin) {
             boundaryIndex.push_back(i);
 #           if DRAW_LINE_FITS
-            blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[iBin], 2);
+            blankImg.DrawLine(Point2f(pBoundary[i].x, pBoundary[i].y), Point2f(pBoundary[i].x, pBoundary[i].y),colorList[iBin], 2);
 #           endif
           } else if(pLabels[i] == -1) {
 #           if DRAW_LINE_FITS
             // Show ignored points in dark gray
-            blankImg.DrawPoint(Point2f(pBoundary[i].x, pBoundary[i].y), colorList[4], 2);
+            blankImg.DrawLine(Point2f(pBoundary[i].x, pBoundary[i].y), Point2f(pBoundary[i].x, pBoundary[i].y),colorList[4], 2);
+            
 #           endif
           }
         }
@@ -557,7 +567,16 @@ namespace Anki
         } // if(numSide > 1) ... else
       } // for(s32 iBin=0; iBin<4; iBin++)
       
-      std::vector<cv::Point_<f32> > corners;
+#if DRAW_LINE_FITS
+      blankImg.DrawLine(Point2f(boundaryCenter.x, boundaryCenter.y), Point2f(boundaryCenter.x, boundaryCenter.y), NamedColors::CYAN, 3);
+#endif
+      
+      // Vector of the corners of the boundary as well as their squared distance from the center of the boundary
+      struct Corner {
+        cv::Point2f point;
+        u32         distToCenterSq;
+      };
+      std::vector<Corner> corners;
       
       if(didFitFourLines) {
         for(s32 iLine=0; iLine<4; iLine++) {
@@ -581,22 +600,30 @@ namespace Anki
             }
             
             if(xInt >= 0 && xInt < imageWidth && yInt >= 0 && yInt < imageHeight) {
-              corners.push_back(cv::Point_<f32>(xInt, yInt));
+              const u32 distToCenter = std::pow(xInt - boundaryCenter.x, 2) + std::pow(yInt - boundaryCenter.y, 2);
+              corners.push_back({cv::Point_<f32>(xInt, yInt), distToCenter});
               
 #             if DRAW_LINE_FITS
-              blankImg.DrawPoint(Point2f(xInt,yInt), NamedColors::BLUE, 3);
+              blankImg.DrawLine(Point2f(xInt,yInt), Point2f(xInt,yInt), NamedColors::BLUE, 3);
 #             endif
             }
           } // for(s32 jLine=0; jLine<4; jLine++)
         } // for(s32 iLine=0; iLine<4; iLine++)
       } // if(didFitFourLines)
       
-      if(corners.size() == 4) {
+      // Sort corners by distance to boundary center
+      const size_t numToSort = (corners.size() < 4 ? corners.size() : 4);
+      std::partial_sort(corners.begin(), corners.begin() + numToSort, corners.end(), [](Corner i, Corner j) {
+        return (i.distToCenterSq < j.distToCenterSq);
+      });
+      
+      if(corners.size() >= 4) {
+        // Use the four closest corners to the boundary center
         Quadrilateral<f32> quad(
-          Point<f32>(corners[0].x, corners[0].y),
-          Point<f32>(corners[1].x, corners[1].y),
-          Point<f32>(corners[2].x, corners[2].y),
-          Point<f32>(corners[3].x, corners[3].y));
+          Point<f32>(corners[0].point.x, corners[0].point.y),
+          Point<f32>(corners[1].point.x, corners[1].point.y),
+          Point<f32>(corners[2].point.x, corners[2].point.y),
+          Point<f32>(corners[3].point.x, corners[3].point.y));
         
         Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
         
