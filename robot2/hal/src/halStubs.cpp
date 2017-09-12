@@ -16,6 +16,7 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/hal_config.h"
+#include "anki/cozmo/robot/event_trace.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine_hal.h"
@@ -39,10 +40,6 @@
 #define DEFNAME(s) STR(s)
 
 /******** TEMP SPINE LOGGING ***********/
-static uint64_t seltime;
-extern "C" void DumpEvents();
-#define EVENT_LOG_DURATION_SEC 10
-#define START_SPINE_EVENT_LOG(time)  seltime=(time)
 #define DUMP_SPINE_EVENTS_MAYBE(time) if ((time)>= seltime+(EVENT_LOG_DURATION_SEC*1000))DumpEvents()
 
 // #define DUMP_SPINE_EVENTS_MAYBE(time) do{\
@@ -212,8 +209,6 @@ namespace Anki {
       }
       printf("Hal Init Success\n");
 
-      START_SPINE_EVENT_LOG(HAL::GetTimeStamp());
-
       return RESULT_OK;
     }  // Init()
 
@@ -337,7 +332,7 @@ namespace Anki {
 #endif
       MonitorConnectionState();
 
-      DUMP_SPINE_EVENTS_MAYBE(now);
+      EventTraceManage();
       return result;
     }
 

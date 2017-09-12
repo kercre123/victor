@@ -1,7 +1,9 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/robot/event_trace.h"
+
+
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -153,6 +155,7 @@ namespace Anki {
       {
         START_TIME_PROFILE(CozmoBotMain, TOTAL);
         START_TIME_PROFILE(CozmoBot, HAL);
+        EventTrace(event_STEPMAIN);
 
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
