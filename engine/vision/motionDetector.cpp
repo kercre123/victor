@@ -91,17 +91,22 @@ bool MotionDetector::HavePrevImage<Vision::Image>() const
   return !_prevImageGray.IsEmpty();
 }
 
-void MotionDetector::SetPrevImage(const Vision::Image &image)
+void MotionDetector::SetPrevImage(const Vision::Image &image, bool wasBlurred)
 {
   image.CopyTo(_prevImageGray);
+  _wasPrevImageGrayBlurred = wasBlurred;
+  _wasPrevImageRGBBlurred = false;
   _prevImageRGB = Vision::ImageRGB();
 }
 
-void MotionDetector::SetPrevImage(const Vision::ImageRGB &image)
+void MotionDetector::SetPrevImage(const Vision::ImageRGB &image, bool wasBlurred)
 {
   image.CopyTo(_prevImageRGB);
+  _wasPrevImageRGBBlurred = wasBlurred;
+  _wasPrevImageGrayBlurred = false;
   _prevImageGray = Vision::Image();
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static inline f32 ratioTestHelper(u8 value1, u8 value2)
@@ -216,19 +221,52 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
                                                     kMotionDetection_MaxPoseChange_mm);
   
   //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
-  
+
+  //Often this will be false
   const bool longEnoughSinceLastMotion = ((image.GetTimestamp() - _lastMotionTime) > kMotionDetection_LastMotionDelay_ms);
-  
+  bool blurHappened = false;
+
   if(headSame && poseSame &&
      HavePrevImage<ImageType>() &&
      !crntPoseData.histState.WasCameraMoving() &&
      longEnoughSinceLastMotion)
   {
+    // Remove noise here before motion detection
+    // TODO Make this a changeable value
+    int kGaussianBlurFilterSize = 21;
+    const cv::Mat& imageCV = image.get_CvMat_();
+    cv::GaussianBlur(imageCV, imageCV,
+                     cv::Size(kGaussianBlurFilterSize, kGaussianBlurFilterSize), 0);
+    blurHappened = true;
+
+    // If the previous image hadn't been blurred before, do it now
+    if (std::is_same<ImageType, Vision::Image>::value) {
+      if (!_wasPrevImageGrayBlurred) {
+        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                      "Blurring the previous image Grey");
+        cv::GaussianBlur(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(),
+                         cv::Size(kGaussianBlurFilterSize, kGaussianBlurFilterSize), 0);
+      }
+    }
+    else if (std::is_same<ImageType, Vision::ImageRGB>::value) {
+      if (!_wasPrevImageRGBBlurred) {
+        cv::GaussianBlur(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(),
+                         cv::Size(kGaussianBlurFilterSize, kGaussianBlurFilterSize), 0);
+        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                      "Blurring the previous image RGB");
+      }
+    }
+    else {
+      PRINT_NAMED_ERROR("MotionDetector.DetectMotion.FoundCentroid",
+                        "Not know type for image???");
+    }
+
     Vision::Image foregroundMotion(image.GetNumRows(), image.GetNumCols());
     s32 numAboveThresh = RatioTest(image, foregroundMotion);
-    
-    static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
-    cv::morphologyEx(foregroundMotion.get_CvMat_(), foregroundMotion.get_CvMat_(), cv::MORPH_OPEN, kernel);
+
+    // Remove noise
+//    static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
+//    cv::morphologyEx(foregroundMotion.get_CvMat_(), foregroundMotion.get_CvMat_(), cv::MORPH_OPEN, kernel);
     
     Point2f centroid(0.f,0.f); // Not Embedded::
     Point2f groundPlaneCentroid(0.f,0.f);
@@ -238,7 +276,8 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     f32 imgRegionArea    = 0.f;
     f32 groundRegionArea = 0.f;
     if(numAboveThresh > minArea) {
-      imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionDetection_CentroidPercentileX, kMotionDetection_CentroidPercentileY);
+      imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionDetection_CentroidPercentileX,
+                                  kMotionDetection_CentroidPercentileY);
     }
     
     // Get centroid of all the motion within the ground plane, if we have one to reason about
@@ -452,7 +491,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
   } // if(headSame && poseSame)
   
   // Store a copy of the current image for next time (at correct resolution!)
-  SetPrevImage(image);
+  SetPrevImage(image, blurHappened);
   
   return RESULT_OK;
   
