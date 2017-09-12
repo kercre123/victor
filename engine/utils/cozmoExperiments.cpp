@@ -123,12 +123,13 @@ bool CozmoExperiments::RestoreLoadedActiveExperiments(const u8* data, const size
     // The tag doesn't exist on the robot indicating the robot is new or has been wiped
     if (res == NVStorage::NVResult::NV_NOT_FOUND)
     {
-      PRINT_CH_INFO("Unnamed", "CozmoExperiments.RestoreLoadedActiveExperiments",
-                    "No lab assignments data on robot");
+      PRINT_NAMED_INFO("CozmoExperiments.RestoreLoadedActiveExperiments",
+                       "No lab assignments data on robot");
     }
     else
     {
-      PRINT_NAMED_ERROR("NeedsManager.FinishReadFromRobot.ReadFailedFinish", "Read failed with %s", EnumToString(res));
+      PRINT_NAMED_ERROR("CozmoExperiments.RestoreLoadedActiveExperiments.ReadFailedFinish",
+                        "Read failed with %s", EnumToString(res));
     }
     return false;
   }
