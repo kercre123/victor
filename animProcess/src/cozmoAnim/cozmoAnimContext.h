@@ -29,19 +29,22 @@ namespace Util {
 }
 
 
-//namespace AudioEngine {
-//namespace Multiplexer {
-//class AudioMultiplexer;
-//}
-//}
+namespace AudioEngine {
+namespace Multiplexer {
+class AudioMultiplexer;
+}
+}
 
 namespace Cozmo {
   
 class RobotDataLoader;
 class ThreadIDInternal;
   
+namespace Audio {
+class VictorAudioController;
+}
 namespace RobotInterface {
-  class MessageHandler;
+class MessageHandler;
 }
   
 } // namespace Cozmo
@@ -57,7 +60,7 @@ namespace Cozmo {
   
 class CozmoAnimContext : private Util::noncopyable
 {
-  //using AudioMultiplexer = AudioEngine::Multiplexer::AudioMultiplexer;
+  using AudioMultiplexer = AudioEngine::Multiplexer::AudioMultiplexer;
   
 public:
   CozmoAnimContext(Util::Data::DataPlatform* dataPlatform);
@@ -68,7 +71,8 @@ public:
 
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
-  //AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioServer.get(); }
+  Audio::VictorAudioController*         GetAudioController() const; // Can return nullptr
+  AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   
   void SetRandomSeed(uint32_t seed);
 
@@ -84,7 +88,7 @@ private:
   Util::Data::DataPlatform*                      _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
-  //std::unique_ptr<AudioMultiplexer>              _audioServer;
+  std::unique_ptr<AudioMultiplexer>              _audioMux;
   std::unique_ptr<Util::RandomGenerator>         _random;
   std::unique_ptr<RobotDataLoader>               _dataLoader;
 

@@ -41,7 +41,7 @@ public:
   using MuxCallbackIdType = AudioEngine::Multiplexer::AudioMuxClient::CallbackIdType;
   virtual MuxCallbackIdType PostEvent( const AudioMetaData::GameEvent::GenericEvent event,
                                        const AudioMetaData::GameObjectType gameObject,
-                                       const AudioEngine::Multiplexer::AudioMuxClient::CallbackFunc& callback = nullptr ) override;
+                                       const AudioEngine::Multiplexer::AudioMuxClient::CallbackFunc&& callback = nullptr ) override;
   
   virtual void StopAllEvents( const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid ) override;
   
@@ -64,6 +64,8 @@ public:
 
 protected:
   
+  // TODO: Need to override HandleCallbackEvent for all callback types !!!!
+
   AudioEngineMessageHandler* _messageHandler = nullptr;
   std::vector<Signal::SmartHandle> _signalHandles;
 

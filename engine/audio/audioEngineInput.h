@@ -41,7 +41,12 @@ public:
   
   AudioEngineMessageHandler* GetMessageHandler() const { return _messageHandler; }
   
-  virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const override;
+  virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallbackDuration&& callbackMessage ) const override;
+  virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallbackMarker&& callbackMessage ) const override;
+  virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const override;
+  virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const override;
+
+//  virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const override;
   
   
 private:

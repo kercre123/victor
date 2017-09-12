@@ -365,7 +365,7 @@ namespace Anki {
               }
             };
             
-            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj, callback);
+            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj, std::move( callback ) );
           }
           else {
             _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);

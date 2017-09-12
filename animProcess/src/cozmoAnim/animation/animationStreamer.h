@@ -34,9 +34,9 @@ namespace Cozmo {
   class CozmoAnimContext;
   class TrackLayerComponent;
   
-//  namespace Audio {
-//    class RobotAudioClient;
-//  }  
+  namespace Audio {
+    class AnimationAudioClient;
+  }
   
   
   class AnimationStreamer
@@ -220,7 +220,7 @@ namespace Cozmo {
     s32            _liftMoveSpacing_ms   = 0;
     s32            _headMoveSpacing_ms   = 0;
     
-//    Audio::RobotAudioClient& _audioClient;
+    std::unique_ptr<Audio::AnimationAudioClient> _audioClient;
     
     // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
     // idle animation

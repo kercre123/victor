@@ -1,0 +1,93 @@
+/*
+ * File: animationAudioClinet.h
+ *
+ * Author: Jordan Rivas
+ * Created: 09/12/17
+ *
+ * Description: Animation Audio Client is the interface to perform animation audio specific tasks. Provided a
+ *              RobotAudioKeyFrame to handle the necessary audio functionality for that frame. It also provides an
+ *              interface to abort animation audio and update (a.k.a. “tick”) the Audio Engine each frame.
+ *
+ * Copyright: Anki, Inc. 2017
+ */
+
+
+#ifndef __Anki_Cozmo_AnimationAudioClinet_H__
+#define __Anki_Cozmo_AnimationAudioClinet_H__
+
+
+#include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioGameObjectTypes.h"
+#include "clad/audio/audioParameterTypes.h"
+#include "clad/audio/audioStateTypes.h"
+#include "clad/audio/audioSwitchTypes.h"
+#include <set>
+#include <mutex>
+
+
+namespace Anki {
+namespace AudioEngine {
+struct AudioCallbackInfo;
+}
+namespace Util {
+class RandomGenerator;
+}
+namespace Cozmo {
+class RobotAudioKeyFrame;
+
+namespace Audio {
+class VictorAudioController;
+
+
+class AnimationAudioClient {
+
+public:
+
+  static const char* kAudioLogChannelName;
+
+  AnimationAudioClient( VictorAudioController* audioController, Util::RandomGenerator* randomGenerator );
+
+  ~AnimationAudioClient();
+  
+  // Tick Audio Engine each animation frame
+  void Update() const;
+
+  // Perform functionality for frame
+  void PlayAudioKeyFrame(const RobotAudioKeyFrame& keyFrame);
+  
+  // Stop all animation audio
+  void StopCozmoEvent();
+  
+  // Check if there is an event being performed
+  bool HasActiveEvents() const;
+
+
+private:
+  
+  using AnimPlayId = uint32_t;
+  
+  VictorAudioController*  _audioController = nullptr;
+  Util::RandomGenerator*  _randomGenerator = nullptr;
+  std::set<AnimPlayId>    _activeEvents;
+  mutable std::mutex      _lock;
+  
+  // Perform an event
+  AnimPlayId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event );
+
+  // Update parameters for a event play id
+  bool SetCozmoEventParameter( AnimPlayId playId, AudioMetaData::GameParameter::ParameterType parameter, float value ) const;
+  
+  // Perform Event callback, used by "PostCozmoEvent()"
+  void CozmoEventCallback( const AudioEngine::AudioCallbackInfo& callbackInfo );
+  
+  // Track current playing events
+  void AddActiveEvent( AnimPlayId playId );
+  void RemoveActiveEvent( AnimPlayId playId );
+};
+
+
+}
+}
+}
+
+#endif /* __Anki_Cozmo_AnimationAudioClinet_H__ */

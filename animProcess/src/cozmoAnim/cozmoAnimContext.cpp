@@ -1,5 +1,9 @@
 
 #include "cozmoAnim/cozmoAnimContext.h"
+
+#include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "cozmoAnim/audio/victorAudioController.h"
+
 #include "cozmoAnim/robotDataLoader.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -30,7 +34,7 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr != dataPlatform)
   {
-//    _audioServer.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::CozmoAudioController(this)));
+    _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::VictorAudioController(this)));
   }
 }
 
@@ -45,6 +49,14 @@ CozmoAnimContext::~CozmoAnimContext()
 
 }
 
+
+Audio::VictorAudioController* CozmoContext::GetAudioController() const
+{
+  if (_audioMux.get() != nullptr) {
+    return dynamic_cast<Audio::VictorAudioController*>( _audioMux->GetAudioController() );
+  }
+  return nullptr;
+}
 
 void CozmoAnimContext::SetRandomSeed(uint32_t seed)
 {

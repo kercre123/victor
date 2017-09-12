@@ -79,9 +79,33 @@ void AudioUnityInput::HandleGameEvents(const AnkiEvent<ExternalInterface::Messag
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityInput::PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const
+//void AudioUnityInput::PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const
+//{
+////  const ExternalInterface::MessageEngineToGame msg( (AudioEngine::Multiplexer::AudioCallback( callbackMessage)) );
+////  _externalInterface.Broadcast( std::move( msg ) );
+//}
+
+void AudioUnityInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackDuration&& callbackMessage ) const
 {
-  const ExternalInterface::MessageEngineToGame msg( (AudioEngine::Multiplexer::AudioCallback( callbackMessage)) );
+  const ExternalInterface::MessageEngineToGame msg( (AudioEngine::Multiplexer::AudioCallbackDuration(std::move( callbackMessage ))) );
+  _externalInterface.Broadcast( std::move( msg ) );
+}
+
+void AudioUnityInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackMarker&& callbackMessage ) const
+{
+  const ExternalInterface::MessageEngineToGame msg( (AudioEngine::Multiplexer::AudioCallbackMarker(std::move(callbackMessage))) );
+  _externalInterface.Broadcast( std::move( msg ) );
+}
+
+void AudioUnityInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const
+{
+  const ExternalInterface::MessageEngineToGame msg( (AudioEngine::Multiplexer::AudioCallbackComplete(std::move( callbackMessage ))) );
+  _externalInterface.Broadcast( std::move( msg ) );
+}
+
+void AudioUnityInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const
+{
+  const ExternalInterface::MessageEngineToGame msg( (AudioEngine::Multiplexer::AudioCallbackError(std::move( callbackMessage ))) );
   _externalInterface.Broadcast( std::move( msg ) );
 }
 
