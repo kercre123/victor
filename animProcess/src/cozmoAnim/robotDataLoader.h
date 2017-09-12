@@ -60,8 +60,6 @@ public:
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
   
   CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
-
-  bool IsCustomAnimLoadEnabled() const;
   
 private:
   void CollectAnimFiles();
@@ -87,9 +85,6 @@ private:
   // animation data
   std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
   TimestampMap _animFileTimestamps;
-
-  std::string _test_anim;
-
   
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;

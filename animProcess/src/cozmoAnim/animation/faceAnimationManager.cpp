@@ -223,11 +223,11 @@ namespace Cozmo {
         continue;
       }
       if(img.GetNumRows() != IMAGE_HEIGHT || img.GetNumCols() != IMAGE_WIDTH) {
-        PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir.Resizing",
-                         "Image in %s is %dx%d instead of %dx%d.",
-                         fullFilename.c_str(),
-                         img.GetNumCols(), img.GetNumRows(),
-                         IMAGE_WIDTH, IMAGE_HEIGHT);
+//        PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir.Resizing",
+//                         "Image in %s is %dx%d instead of %dx%d.",
+//                         fullFilename.c_str(),
+//                         img.GetNumCols(), img.GetNumRows(),
+//                         IMAGE_WIDTH, IMAGE_HEIGHT);
         
         img.Resize(IMAGE_HEIGHT, IMAGE_WIDTH);
       }

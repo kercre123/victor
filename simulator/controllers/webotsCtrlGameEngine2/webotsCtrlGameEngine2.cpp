@@ -121,7 +121,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    PRINT_CH_INFO("LOG", "webotsCtrlGameEngine.main", "Console will not be filtered due to program args");
+    PRINT_NAMED_INFO("webotsCtrlGameEngine.main.noFilter", "Console will not be filtered due to program args");
   }
 
   // Instantiate supervisor and pass to AndroidHAL

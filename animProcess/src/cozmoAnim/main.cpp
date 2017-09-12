@@ -33,10 +33,10 @@ int main(void)
 {
   
   // - create and set logger
-  Anki::Util::PrintfLoggerProvider loggerProvider;
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
-  Anki::Util::gLoggerProvider = &loggerProvider;
+  Util::PrintfLoggerProvider loggerProvider;
+  loggerProvider.SetMinLogLevel(Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  loggerProvider.SetMinToStderrLevel(Util::ILoggerProvider::LOG_LEVEL_WARN);
+  Util::gLoggerProvider = &loggerProvider;
 
   
   // TODO: Load DataPlatform paths from json or however engine does it
@@ -70,7 +70,7 @@ int main(void)
     assetHashFile.close();
     PRINT_NAMED_INFO("main.AssetHashFound", "%s", assetHash.c_str());
   } else {
-    PRINT_NAMED_WARNING("main.AssetHashFileNotFound", "%s not found", assetHashFileName.c_str());
+    PRINT_NAMED_ERROR("main.AssetHashFileNotFound", "%s not found", assetHashFileName.c_str());
     exit(-1);
   }
   
@@ -81,7 +81,7 @@ int main(void)
   std::string resourcesPath = rootDir + "/files/assets/" + assetHash + "/cozmo_resources";
   
   
-  Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
+  Util::Data::DataPlatform* dataPlatform = new Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
   
   // Create and init CozmoAnim
   CozmoAnimEngine cozmoAnim(dataPlatform);
@@ -90,7 +90,7 @@ int main(void)
   cozmoAnim.Init(dummyJson);
   
   auto start = std::chrono::steady_clock::now();
-  auto timeOffset = start;
+  const auto timeOffset = start;
   
   while (1) {
 

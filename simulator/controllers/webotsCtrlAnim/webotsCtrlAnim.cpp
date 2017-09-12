@@ -55,17 +55,17 @@ int main(int argc, char **argv)
   // Unfortunately, CozmoAPI does not properly receive a const DataPlatform, and that change
   // is too big of a change, since it involves changing down to the context, so create a non-const platform
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
-  Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlAnim");
+  Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlAnim");
   
   
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);
-  Anki::Util::MultiFormattedLoggerProvider loggerProvider({
+  Util::MultiFormattedLoggerProvider loggerProvider({
     printfLoggerProvider
   });
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  Anki::Util::gLoggerProvider = &loggerProvider;
-  Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
+  Util::gLoggerProvider = &loggerProvider;
+  Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
   
   // - console filter for logs
   if ( params.filterLog )
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    PRINT_CH_INFO("LOG", "webotsCtrlAnim.main", "Console will not be filtered due to program args");
+    PRINT_NAMED_INFO("webotsCtrlAnim.main.noFilter", "Console will not be filtered due to program args");
   }
 
   // Start with a step so that we can attach to the process here for debugging
@@ -109,24 +109,6 @@ int main(int argc, char **argv)
                                "config/engine/configuration.json", config)) {
     PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConfig", "Failed to parse Json file config/engine/configuration.json");
   }
-
-//  if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
-//    config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
-//  }
-//  if(!config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
-//    config[AnkiUtil::kP_VIZ_HOST_IP] = VIZ_HOST_IP;
-//  }
-//  if(!config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
-//    config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = ROBOT_ADVERTISING_PORT;
-//  }
-//  if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
-//    config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
-//  }
-
-  
-//  config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
-//  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
-//  config[AnkiUtil::kP_NUM_SDK_DEVICES_TO_WAIT_FOR] = 1;
   
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
@@ -151,7 +133,7 @@ int main(int argc, char **argv)
     
   } // while still stepping
 
-  Anki::Util::gLoggerProvider = nullptr;
+  Util::gLoggerProvider = nullptr;
   return 0;
 }
 

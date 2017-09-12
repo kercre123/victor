@@ -15,9 +15,6 @@
 
 #include "anki/common/types.h"
 
-#include <memory>
-
-
 namespace Anki {
   
 // Forward declaration:

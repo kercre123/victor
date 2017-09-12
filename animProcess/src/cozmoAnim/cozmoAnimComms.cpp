@@ -24,18 +24,14 @@ namespace Anki {
 namespace Cozmo {
 namespace CozmoAnimComms {
 
-    namespace { // "Private members"
-      const size_t RECV_BUFFER_SIZE = 1024 * 4;
+namespace { // "Private members"
 
-      // For comms with engine
-      UdpServer _server;
+  // For comms with engine
+  UdpServer _server;
 
-      // For comms with robot
-      UdpClient _robotClient;
-      
-      u8 recvBuf_[RECV_BUFFER_SIZE];
-      size_t _recvBufSize = 0;
-    }
+  // For comms with robot
+  UdpClient _robotClient;
+}
 
 
   Result InitComms()
@@ -67,7 +63,6 @@ namespace CozmoAnimComms {
   void DisconnectEngine(void)
   {
     _server.DisconnectClient();
-    _recvBufSize = 0;
   }
 
   void UpdateEngineCommsState(u8 wifi)
@@ -81,7 +76,7 @@ namespace CozmoAnimComms {
 
       u32 bytesSent = _server.Send((char*)buffer, length);
       if (bytesSent < length) {
-        printf("ERROR: Failed to send msg contents (%d bytes sent)\n", bytesSent);
+        printf("ERROR: Failed to send msg contents (%d of %d bytes sent)\n", bytesSent, length);
         DisconnectEngine();
         return false;
       }
@@ -93,74 +88,17 @@ namespace CozmoAnimComms {
   }
 
 
-//  size_t RadioGetNumBytesAvailable(void)
-//  {
-//    // Check for incoming data and add it to receive buffer
-//    int dataSize;
-//
-//    // Read available data
-//    const size_t tempSize = RECV_BUFFER_SIZE - _recvBufSize;
-//    assert(tempSize < std::numeric_limits<int>::max());
-//    dataSize = _server.Recv((char*)&recvBuf_[_recvBufSize], static_cast<int>(tempSize));
-//    if (dataSize > 0) {
-//      _recvBufSize += dataSize;
-//    }
-//    else if (dataSize < 0) {
-//      // Something went wrong
-//      DisconnectEngine();
-//    }
-//
-//    return _recvBufSize;
-//
-//  } // RadioGetNumBytesAvailable()
-//
-//
-//  s32 HAL::RadioPeekChar(u32 offset)
-//  {
-//    if(RadioGetNumBytesAvailable() <= offset) {
-//      return -1;
-//    }
-//
-//    return static_cast<s32>(recvBuf_[offset]);
-//  }
-//
-//  s32 HAL::RadioGetChar(void) { return RadioGetChar(0); }
-//
-//  s32 HAL::RadioGetChar(u32 timeout)
-//  {
-//    u8 c;
-//    if(RadioGetData(&c, sizeof(u8)) == RESULT_OK) {
-//      return static_cast<s32>(c);
-//    }
-//    else {
-//      return -1;
-//    }
-//  }
-
-
-  u32 GetNextPacketFromEngine(u8* buffer)
+  u32 GetNextPacketFromEngine(u8* buffer, u32 max_length)
   {
-    u32 retVal = 0;
-
     // Read available datagram
-    int dataLen = _server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
-    if (dataLen > 0) {
-      _recvBufSize = dataLen;
-    }
-    else if (dataLen < 0) {
+    int dataLen = _server.Recv((char*)buffer, max_length);
+    if (dataLen < 0) {
       // Something went wrong
       DisconnectEngine();
-      return retVal;
-    }
-    else {
-      return retVal;
+      return 0;
     }
 
-    // Copy message contents to buffer
-    std::memcpy((void*)buffer, recvBuf_, dataLen);
-    retVal = dataLen;
-
-    return retVal;
+    return dataLen;
   }
 
   
@@ -190,17 +128,12 @@ namespace CozmoAnimComms {
   // TODO: Return s32?
   u32 GetNextPacketFromRobot(u8* buffer, u32 max_length)
   {
-    u32 retVal = 0;
-    
     // Read available datagram
     int dataLen = _robotClient.Recv((char*)buffer, max_length);
-    if (dataLen > 0) {
-      _recvBufSize = dataLen;
-    }
-    else if (dataLen < 0) {
+    if (dataLen < 0) {
       // Something went wrong
       DisconnectRobot();
-      return retVal;
+      return 0;
     }
     
     return dataLen;

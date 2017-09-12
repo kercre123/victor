@@ -183,7 +183,7 @@ namespace Anki {
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
-      auto m = EnumToUnderlyingType(motor);
+      const auto m = EnumToUnderlyingType(motor);
       assert(m < MOTOR_COUNT);
       SAVE_MOTOR_POWER(m, power);
       headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * TEMPORARY_TREAD_MOTOR_POWER_FIXUP;
@@ -193,7 +193,7 @@ namespace Anki {
     // Reset the internal position of the specified motor to 0
     void HAL::MotorResetPosition(MotorID motor)
     {
-      auto m = EnumToUnderlyingType(motor);
+      const auto m = EnumToUnderlyingType(motor);
       assert(m < MOTOR_COUNT);
       internalData_.motorOffset[m] = bodyData_->motor[m].position;
     }
@@ -203,7 +203,7 @@ namespace Anki {
     // Wheels are in mm/s, everything else is in degrees/s.
     f32 HAL::MotorGetSpeed(MotorID motor)
     {
-      auto m = EnumToUnderlyingType(motor);
+      const auto m = EnumToUnderlyingType(motor);
       assert(m < MOTOR_COUNT);
 
       // Every frame, syscon sends the last detected speed as a two part number:
@@ -221,7 +221,7 @@ namespace Anki {
     // Wheels are in mm since reset, everything else is in degrees.
     f32 HAL::MotorGetPosition(MotorID motor)
     {
-      auto m = EnumToUnderlyingType(motor);
+      const auto m = EnumToUnderlyingType(motor);
       assert(m < MOTOR_COUNT);
       return (bodyData_->motor[m].position - internalData_.motorOffset[m]) * HAL_MOTOR_POSITION_SCALE[m];
     }
@@ -345,7 +345,7 @@ namespace Anki {
     {
       assert(led_id >= 0 && led_id < LED_COUNT);
       
-      u32 ledIdx = (u32)led_id;
+      const u32 ledIdx = (u32)led_id;
       
       uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
       uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;

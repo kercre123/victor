@@ -137,15 +137,14 @@ namespace Messages {
       {
         PRINT_NAMED_INFO("EngineMessages.ProcessMessage.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
         _animStreamer->SetLockedTracks(msg.lockAnimTracks.whichTracks);
-        break;
+        return;
       }
         
       case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
       {
         PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim", "%d", msg.playAnim.animID);
         _animStreamer->SetStreamingAnimation(msg.playAnim.animID, msg.playAnim.numLoops);
-
-        break;
+        return;
       }
         
       case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
@@ -162,12 +161,14 @@ namespace Messages {
         } else {
           PRINT_NAMED_WARNING("EngineMessages.RequestAvailableAnimations.AlreadyDoling", "");
         }
-        break;
+        return;
       }
-
+        
+      default:
+        break;
     }
 
-    // Send message along to robot
+    // Send message along to robot if it wasn't handled here
     CozmoAnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
 
   } // ProcessMessage()
@@ -222,7 +223,7 @@ namespace Messages {
 
     //ReliableConnection_printState(&connection);
 
-    while((dataLen = CozmoAnimComms::GetNextPacketFromEngine(pktBuffer_)) > 0)
+    while((dataLen = CozmoAnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
     {
       s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
       if (res < 0)

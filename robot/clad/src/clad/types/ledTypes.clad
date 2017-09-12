@@ -22,7 +22,7 @@ enum uint_8 LEDId {
   NUM_BACKPACK_LEDS
 }
 
-// The color format is identical to HTML Hex Triplets (RGB)
+// The color format is identical to HTML Hex Triplets (RGBA)
 enum uint_32 LEDColor {
   LED_CURRENT_COLOR = 0xffffffff, // Don't change color: leave as is
   LED_OFF =   0x00000000,
