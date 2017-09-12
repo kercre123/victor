@@ -61,7 +61,10 @@ private:
                       const VisionPoseData&   prevPoseData,
                       std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
                       DebugImageList<Vision::ImageRGB>& debugImageRGBs);
-  
+
+  // Returns the number of times the ratio between the pixels in image and the pixels
+  // in the previous image is above a threshold. The corresponding pixels in ratio12
+  // will be set to 255
   s32 RatioTest(const Vision::Image& image,    Vision::Image& ratio12);
   s32 RatioTest(const Vision::ImageRGB& image, Vision::Image& ratio12);
   
