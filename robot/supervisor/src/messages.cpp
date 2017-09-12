@@ -192,6 +192,8 @@ namespace Anki {
         }
         robotState_.proxData = HAL::GetRawProxData();
         
+        robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
+        
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
         robotState_.status = 0;

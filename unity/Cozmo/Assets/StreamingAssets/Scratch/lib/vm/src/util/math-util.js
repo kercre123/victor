@@ -65,8 +65,4 @@ class MathUtil {
     }
 }
 
-MathUtil.map = function (n, sMin, sMax, tMin, tMax) {
-    return (n - sMin) / (sMax - sMin) * (tMax - tMin) + tMin
-};
-
 module.exports = MathUtil;

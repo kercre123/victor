@@ -84,6 +84,7 @@ enum int_32 UnlockId
   Singing_MussIDenn              = 62,
 
   GuardDog                       = 63,
+  TrackLaser                     = 64,
 
   // ADD NEW UNLOCKS HERE
 

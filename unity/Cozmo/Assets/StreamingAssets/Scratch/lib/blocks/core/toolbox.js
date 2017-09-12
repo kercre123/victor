@@ -90,7 +90,7 @@ Blockly.Toolbox = function(workspace) {
 // *** ANKI CHANGE ***
 // Width of the toolbox. msintov, 9/1/17
 Blockly.Toolbox.prototype.width = 60;
-//Blockly.Toolbox.prototype.width = 250;
+//Blockly.Toolbox.prototype.width = 310;
 
 /**
  * Height of the toolbox, which changes only in horizontal layout.
@@ -126,7 +126,6 @@ Blockly.Toolbox.prototype.init = function() {
   // Clicking on toolbox closes popups.
   Blockly.bindEventWithChecks_(this.HtmlDiv, 'mousedown', this,
       function(e) {
-        Blockly.DropDownDiv.hide();
         if (Blockly.utils.isRightButton(e) || e.target == this.HtmlDiv) {
           // Close flyout.
           Blockly.hideChaff(false);
@@ -246,24 +245,6 @@ Blockly.Toolbox.prototype.position = function() {
  */
 Blockly.Toolbox.prototype.clearSelection = function() {
   this.setSelectedItem(null);
-};
-
-/**
- * Adds styles on the toolbox indicating blocks will be deleted.
- * @package
- */
-Blockly.Toolbox.prototype.addDeleteStyle = function() {
-  Blockly.utils.addClass(/** @type {!Element} */ (this.HtmlDiv),
-                         'blocklyToolboxDelete');
-};
-
-/**
- * Remove styles from the toolbox that indicate blocks will be deleted.
- * @package
- */
-Blockly.Toolbox.prototype.removeDeleteStyle = function() {
-  Blockly.utils.removeClass(/** @type {!Element} */ (this.HtmlDiv),
-                            'blocklyToolboxDelete');
 };
 
 /**

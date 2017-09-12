@@ -29,7 +29,11 @@ elseif (MACOSX)
     ${ROUTING_HTTP_LIBS}
     ${WEBOTS_LIBS}
   )
-  set(PLATFORM_COMPILE_DEFS -DSIMULATOR)
+  set(PLATFORM_COMPILE_DEFS
+      SIMULATOR
+      THF_FUNCTIONALITY=1
+      VC_AUDIOCAPTURE_FUNCTIONALITY=1
+  )
   set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
@@ -41,15 +45,14 @@ PUBLIC
   util
   cti_common
   robot_interface
-PRIVATE
-  util_audio
   audio_engine
   audio_multiplexer
+  engine_clad
+PRIVATE
+  util_audio
   ble_cozmo
   DAS 
   androidHAL
-# generated code
-  engine_clad
 # cti
   cti_common
   cti_vision
@@ -68,7 +71,7 @@ PRIVATE
 )
 
 target_compile_options(cozmo_engine PRIVATE
-  -fvisibility=hidden
+  ${SYMBOL_VISIBILITY_FLAGS}
   "${PLATFORM_FLAGS}"
 )
 
@@ -103,4 +106,7 @@ if(ANDROID)
   )
 endif()
 
-add_subdirectory(tools)
+if (ANDROID)
+  # TODO: support tools on mac
+  add_subdirectory(tools)
+endif(ANDROID)

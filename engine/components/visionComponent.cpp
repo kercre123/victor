@@ -65,6 +65,7 @@ namespace Cozmo {
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
   
   CONSOLE_VAR(bool, kDisplayProcessedImagesOnly, "Vision.General", true);
+  CONSOLE_VAR(bool, kEnableColorImages,          "Vision.General", false);
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
@@ -593,14 +594,13 @@ namespace Cozmo {
     {
       // Get the robot origin w.r.t. the camera position with the camera at
       // the current head angle
+      const Pose3d& cameraPose = _robot.GetCameraPose(headAngle_rad); // need to store the camera pose so it can be parent
       Pose3d robotPoseWrtCamera;
-      {
-        const bool result = robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
-        // this really shouldn't fail! camera has to be in the robot's pose tree
-        DEV_ASSERT(result == true, "VisionComponent.PopulateGroundPlaneHomographyLUT.GetWrtFailed");
-#       pragma unused(result) // Avoid errors in release/shipping when assert compiles out
-      }
- 
+      const bool result = robotPose.GetWithRespectTo(cameraPose, robotPoseWrtCamera);
+      // this really shouldn't fail! camera has to be in the robot's pose tree
+      DEV_ASSERT(result == true, "VisionComponent.PopulateGroundPlaneHomographyLUT.GetWrtFailed");
+#     pragma unused(result) // Avoid errors in release/shipping when assert compiles out
+      
       const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
       const Vec3f&            T = robotPoseWrtCamera.GetTranslation();
       
@@ -914,6 +914,17 @@ namespace Cozmo {
                                                                    imageMean)));
         }
       }
+    }
+    
+    // Switch color mode if console var has changed
+    if(ANKI_DEV_CHEATS && (_enableColorImages != kEnableColorImages))
+    {
+      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.UpdateAllResults.ConsoleVarColorModeSwitch",
+                     "Switching color mode from %s to %s based on console var change",
+                     _enableColorImages ? "ON" : "OFF",
+                     kEnableColorImages ? "ON" : "OFF");
+      
+      EnableColorImages(kEnableColorImages);
     }
     
     if(anyFailures) {
@@ -1419,8 +1430,8 @@ namespace Cozmo {
       return;
     }
     
-    const Pose3d& liftPoseWrtCamera = _robot.GetLiftPoseWrtCamera(histState.GetLiftAngle_rad(),
-                                                                  histState.GetHeadAngle_rad());
+    const Transform3d& liftPoseWrtCamera = _robot.GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
+                                                                            histState.GetHeadAngle_rad());
     
     const f32 padding = _robot.IsPhysical() ? LIFT_HARDWARE_FALL_SLACK_MM : 0.f;
     std::vector<Point3f> liftCrossBar{

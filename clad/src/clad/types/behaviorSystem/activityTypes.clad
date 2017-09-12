@@ -55,6 +55,7 @@ enum uint_8 ActivityID {
   SparksStackBlock,
   SparksWorkout,
   StrictPriorityFreeplay,
+  SparksTrackLaser,
   VoiceCommand
 }
 

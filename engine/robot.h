@@ -99,6 +99,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class TouchSensorComponent;
 class AnimationComponent;
 
 namespace Audio {
@@ -318,6 +319,9 @@ public:
   inline const AnimationComponent& GetAnimationComponent() const { return *_animationComponent; }
   inline       AnimationComponent& GetAnimationComponent()       { return *_animationComponent; }
   
+  inline const TouchSensorComponent& GetTouchSensorComponent() const { return *_touchSensorComponent; }
+  inline       TouchSensorComponent& GetTouchSensorComponent()       { return *_touchSensorComponent; }
+  
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
   
@@ -414,7 +418,7 @@ public:
   PoseOriginID_t      GetWorldOriginID()const;
   
   Pose3d              GetCameraPose(f32 atAngle) const;
-  Pose3d              GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+  Transform3d         GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
 
   OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
@@ -797,6 +801,7 @@ protected:
   std::unique_ptr<CarryingComponent>      _carryingComponent;
   std::unique_ptr<CliffSensorComponent>   _cliffSensorComponent;
   std::unique_ptr<ProxSensorComponent>    _proxSensorComponent;
+  std::unique_ptr<TouchSensorComponent>   _touchSensorComponent;
   std::unique_ptr<AnimationComponent>     _animationComponent;
 
   // Hash to not spam debug messages

@@ -142,10 +142,16 @@ namespace Anki {
         u16 sentIMUDataMsgs_ = 0;
 #endif
 
-        // Falling
+        // ==== Falling detection ===
         bool falling_ = false;
         bool bracingEnabled_ = true;
-
+        bool fallStarted_ = false;               // Indicates that falling is detected by accelerometer, but not necessarily for long enough to trigger falling_ flag
+        TimeStamp_t fallStartedTime_ = 0;        // timestamp of when freefall started
+        TimeStamp_t freefallDuration_ = 0;       // approximate duration of freefall
+        float fallDetectMaxHighPassAccel_ = 0.f; // The maximum experienced high-pass filtered accelerometer magnitude during a falling event
+        TimeStamp_t braceStartedTime_ = 0;
+        // === End of Falling detection ===
+        
         // N-side down
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
 
@@ -283,6 +289,15 @@ namespace Anki {
           LiftController::StartCalibrationRoutine(true);
           HeadController::StartCalibrationRoutine(true);
         }
+      }
+      
+      void ResetFallingVars() {
+        falling_ = false;
+        fallStarted_ = false;
+        fallStartedTime_ = 0;
+        freefallDuration_ = 0;
+        fallDetectMaxHighPassAccel_ = 0.f;
+        braceStartedTime_ = 0;
       }
 
       void ResetPickupVars() {
@@ -442,44 +457,53 @@ namespace Anki {
         // Fall detection timing:
         const TimeStamp_t now = HAL::GetTimeStamp();
         const TimeStamp_t fallDetectionTimeout_ms = 150; // fallStarted flag must be set for this long in order for 'bracing' to occur.
-        static TimeStamp_t fallStartedTime = 0;
         
         // "Bracing manuever" timing
         const TimeStamp_t bracingTime_ms = 250; // this much time (minimum) is allowed for the bracing maneuver to complete.
-        static TimeStamp_t braceStartedTime = 0;
-        
-        // Indicates that falling is detected by accelerometer,
-        //  but not necessarily for long enough to trigger falling_ flag
-        static bool fallStarted = false;
         
         if (falling_) {
-          // Wait for robot to stop moving and bracing to complete, then unbrace.
-          // Check for high-freq activity on x-axis (this could easily be any other axis since the threshold is so small)
-          // to determine when the robot is definitely no longer moving.
-          if ((accelMagnitudeSqrd_ > FALLING_THRESH_HIGH_MMPS2_SQRD) &&
-              (accel_robot_frame_high_pass[0] < STOPPED_TUMBLING_THRESH) &&
-              (now - braceStartedTime > bracingTime_ms))
-          {
-            fallStarted = false;
-            falling_ = false;
-            UnbraceAfterImpact();
+          // Update the maximum experienced HP-filtered accelerometer value (take max of all three axes)
+          for (int i=0 ; i<3 ; i++) {
+            fallDetectMaxHighPassAccel_ = MAX(fallDetectMaxHighPassAccel_, fabsf(accel_robot_frame_high_pass[i]));
+          }
+          if (accelMagnitudeSqrd_ > FALLING_THRESH_HIGH_MMPS2_SQRD) {
+            // Estimating time in freefall: Consider the freefall finished
+            // once the accelMagnitude rises above the upper threshold
+            if (freefallDuration_ == 0) {
+              freefallDuration_ = now - fallStartedTime_;
+            }
+            // Wait for robot to stop moving and bracing to complete, then unbrace.
+            // Check for high-freq activity on x-axis (this could easily be any other axis since the threshold is so small)
+            // to determine when the robot is definitely no longer moving.
+            if((fabsf(accel_robot_frame_high_pass[0]) < STOPPED_TUMBLING_THRESH) &&
+               (now - braceStartedTime_ > bracingTime_ms)) {
+              // Send the FallingEvent message:
+              RobotInterface::FallingEvent msg;
+              msg.timestamp = fallStartedTime_;
+              msg.duration_ms = freefallDuration_;
+              msg.impactIntensity = fallDetectMaxHighPassAccel_;
+              RobotInterface::SendMessage(msg);
+              
+              ResetFallingVars();
+              UnbraceAfterImpact();
+            }
           }
         }
         else { // 'falling_' flag not set
-          if (fallStarted) {
+          if (fallStarted_) {
             // If fallStarted has been set for long enough, set the global falling flag and brace.
-            if (now - fallStartedTime > fallDetectionTimeout_ms) {
+            if (now - fallStartedTime_ > fallDetectionTimeout_ms) {
               falling_ = true;
-              braceStartedTime = now;
+              braceStartedTime_ = now;
               BraceForImpact();
             } else {
               // only clear the flag if aMag rises above the higher threshold.
-              fallStarted = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) && ProxSensors::IsAnyCliffDetected();
+              fallStarted_ = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) && ProxSensors::IsAnyCliffDetected();
             }
           } else { // not fallStarted
             if ((accelMagnitudeSqrd_ < FALLING_THRESH_LOW_MMPS2_SQRD) && ProxSensors::IsAnyCliffDetected()) {
-              fallStarted = true;
-              fallStartedTime = now;
+              fallStarted_ = true;
+              fallStartedTime_ = now;
             }
           }
         }

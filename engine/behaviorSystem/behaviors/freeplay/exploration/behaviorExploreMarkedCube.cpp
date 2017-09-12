@@ -35,21 +35,21 @@
 //
 //// This is the configuration of memory map types that this behavior checks against. If a type
 //// is set to true, it means that if they are a border to a marked cube, we will explore that marked cube
-//constexpr NavMemoryMapTypes::FullContentArray typesToExploreFrom =
+//constexpr MemoryMapTypes::FullContentArray typesToExploreFrom =
 //{
-//  {NavMemoryMapTypes::EContentType::Unknown               , true },
-//  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-//  {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-//  {NavMemoryMapTypes::EContentType::ObstacleCube          , false},
-//  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-//  {NavMemoryMapTypes::EContentType::ObstacleCharger       , false},
-//  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-//  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
-//  {NavMemoryMapTypes::EContentType::Cliff                 , false},
-//  {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
-//  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
+//  {MemoryMapTypes::EContentType::Unknown               , true },
+//  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+//  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+//  {MemoryMapTypes::EContentType::ObstacleCube          , false},
+//  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+//  {MemoryMapTypes::EContentType::ObstacleCharger       , false},
+//  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+//  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
+//  {MemoryMapTypes::EContentType::Cliff                 , false},
+//  {MemoryMapTypes::EContentType::InterestingEdge       , false},
+//  {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
 //};
-//static_assert(NavMemoryMapTypes::IsSequentialArray(typesToExploreFrom),
+//static_assert(MemoryMapTypes::IsSequentialArray(typesToExploreFrom),
 //  "This array does not define all types once and only once.");
 //  
 //};
@@ -78,7 +78,7 @@
 //  if ( nullptr == memoryMap ) {
 //    return false;
 //  }
-//  const bool hasBorders = memoryMap->HasBorders(NavMemoryMapTypes::EContentType::ObstacleCube, typesToExploreFrom);
+//  const bool hasBorders = memoryMap->HasBorders(MemoryMapTypes::EContentType::ObstacleCube, typesToExploreFrom);
 //  return hasBorders;
 //}
 //  
@@ -99,7 +99,7 @@
 //    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
 //    for ( const auto& bG : borderGoals )
 //    {
-//      const NavMemoryMapTypes::Border& b = bG.borderInfo;
+//      const MemoryMapTypes::Border& b = bG.borderInfo;
 //      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", b.from, b.to, Anki::NamedColors::RED, false, 60.0f);
 //      Vec3f centerLine = (b.from + b.to)*0.5f;
 //      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorExploreMarkedCube::InitInternal", centerLine, centerLine+b.normal*20.0f, Anki::NamedColors::CYAN, false, 60.0f);
@@ -195,7 +195,7 @@
 //  // grab borders
 //  INavMemoryMap::BorderVector borders;
 //  INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-//  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::ObstacleCube, typesToExploreFrom, borders);
+//  memoryMap->CalculateBorders(MemoryMapTypes::EContentType::ObstacleCube, typesToExploreFrom, borders);
 //  if ( !borders.empty() )
 //  {
 //    outGoals.reserve(kEmcMaxBorderGoals);

@@ -9,10 +9,13 @@
 TEST(PoseTest, ConstructionAndAssignment)
 {
   using namespace Anki;
+
+  Pose3d::AllowUnownedParents(true);
   
   const Pose3d origin;
   Pose3d P_orig(DEG_TO_RAD(30), Z_AXIS_3D(), {100.f, 200.f, 300.f}, origin, "Original");
   P_orig.SetID(42);
+  EXPECT_EQ(1, P_orig.GetNodeOwnerCount());
   
   // Test copy constructor
   {
@@ -22,6 +25,8 @@ TEST(PoseTest, ConstructionAndAssignment)
     EXPECT_TRUE(P_copy.HasSameRootAs(P_orig));
     EXPECT_NE(P_orig.GetID(), P_copy.GetID()); // IDs are NOT copied!
     EXPECT_EQ(P_orig.GetName() + "_COPY", P_copy.GetName());
+    EXPECT_EQ(1, P_copy.GetNodeOwnerCount());
+    EXPECT_EQ(1, P_orig.GetNodeOwnerCount());
   }
   
   // Test assignment
@@ -33,6 +38,8 @@ TEST(PoseTest, ConstructionAndAssignment)
     EXPECT_TRUE(P_copy.HasSameRootAs(P_orig));
     EXPECT_NE(P_orig.GetID(), P_copy.GetID()); // IDs are NOT copied!
     EXPECT_EQ(P_orig.GetName() + "_COPY", P_copy.GetName());
+    EXPECT_EQ(1, P_copy.GetNodeOwnerCount());
+    EXPECT_EQ(1, P_orig.GetNodeOwnerCount());
   }
   
   // Test rvalue constructor
@@ -46,6 +53,7 @@ TEST(PoseTest, ConstructionAndAssignment)
     EXPECT_TRUE(P_move.HasSameRootAs(P_orig));
     EXPECT_EQ(123, P_move.GetID()); // IDs *are* moved!
     EXPECT_EQ("Original2", P_move.GetName());
+    EXPECT_EQ(1, P_move.GetNodeOwnerCount());
   }
   
   // Test rvalue assignment
@@ -60,7 +68,9 @@ TEST(PoseTest, ConstructionAndAssignment)
     EXPECT_TRUE(P_move.HasSameRootAs(P_orig));
     EXPECT_EQ(123, P_move.GetID()); // IDs *are* moved!
     EXPECT_EQ("Original2", P_move.GetName());
+    EXPECT_EQ(1, P_move.GetNodeOwnerCount());
   }
+  
 }
 
 TEST(PoseTest, RotateBy)
@@ -119,10 +129,21 @@ TEST(PoseTest, PoseTreeValidity)
   Pose3d poseOrigin("Origin");
   PoseOriginID_t uniqueID = 1;
   poseOrigin.SetID(uniqueID++);
+  ASSERT_EQ(1, poseOrigin.GetNodeOwnerCount());
   
   Pose3d child1("Child1");
   child1.SetParent(poseOrigin);
   child1.SetID(uniqueID++);
+  ASSERT_EQ(1, child1.GetNodeOwnerCount());
+  
+  {
+    // This will wrpa the same underlying PoseTreeNode as the origin, but
+    // is a separate wrapper. Thus the owner count increases by 1.
+    Pose3d tempParent = child1.GetParent();
+    ASSERT_EQ(2, poseOrigin.GetNodeOwnerCount());
+  }
+  // Once tempParent destructs, we're back to a single wrapper around the origin's underlying node.
+  ASSERT_EQ(1, poseOrigin.GetNodeOwnerCount());
   
   ASSERT_TRUE(child1.IsChildOf(poseOrigin));
   ASSERT_TRUE(poseOrigin.IsParentOf(child1));
@@ -171,6 +192,15 @@ TEST(PoseTest, PoseTreeValidity)
   ASSERT_TRUE(grandChild1.HasSameRootAs(child2));
   ASSERT_EQ(poseOrigin.GetID(), grandChild1.GetRootID());
   
+  {
+    // This will wrpa the same underlying PoseTreeNode as the origin, but
+    // is a separate wrapper. Thus the owner count increases by 1.
+    const Pose3d tempRoot = grandChild1.FindRoot();
+    ASSERT_EQ(2, poseOrigin.GetNodeOwnerCount());
+  }
+  // Once tempRoot destructs, we're back to a single wrapper around the origin's underlying node.
+  ASSERT_EQ(1, poseOrigin.GetNodeOwnerCount());
+  
   PoseID_t tempID = 0;
   Pose3d* tempPosePtr = nullptr;
   Pose3d grandChild2("GrandKid2");
@@ -184,8 +214,9 @@ TEST(PoseTest, PoseTreeValidity)
     tempPose.SetParent(poseOrigin);
     grandChild2.SetParent(tempPose);
     tempPosePtr = &tempPose;
+    Pose3d::AllowUnownedParents(true); // Allow unowned to allow the tempPose going out of scope not to cause an abort
   }
-  ASSERT_FALSE(Pose3d::AreUnownedParentsAllowed());
+  Pose3d::AllowUnownedParents(false); // GetParent call should abort b/c parent is unowned
   ASSERT_DEATH(grandChild2.GetParent(), "");
   
   Pose3d::AllowUnownedParents(true); // Allow unowned parents for the purposes of the rest of this test
@@ -196,6 +227,8 @@ TEST(PoseTest, PoseTreeValidity)
   ASSERT_EQ(grandChild2.GetParent().GetName(), "Temp");
   ASSERT_EQ(tempID, grandChild2.GetParent().GetID());
   ASSERT_EQ(poseOrigin.GetID(), grandChild2.GetRootID());
+  
+  ASSERT_EQ(1, poseOrigin.GetNodeOwnerCount());
 }
 
 TEST(PoseOriginList, IDs)

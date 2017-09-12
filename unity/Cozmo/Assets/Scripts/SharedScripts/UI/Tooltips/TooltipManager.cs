@@ -9,6 +9,15 @@ namespace Cozmo.UI {
     [SerializeField]
     private float _TooltipShowTime_Sec = 5.0f;
 
+    [SerializeField]
+    private Vector2 _MinBorderSpaceToEdge;
+
+    public Vector2 MinBorderSpaceToEdge {
+      get {
+        return _MinBorderSpaceToEdge;
+      }
+    }
+
     private static TooltipManager _Instance;
 
     private TooltipWidget _CurrToolTip;

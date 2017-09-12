@@ -393,11 +393,11 @@ Blockly.BlockSvg.FIELD_DEFAULT_CORNER_RADIUS = 4 * Blockly.BlockSvg.GRID_UNIT;
 Blockly.BlockSvg.MAX_DISPLAY_LENGTH = Infinity;
 
 /**
- * Minimum X of inputs on the first row of blocks with no previous connection.
+ * Minimum X of inputs and fields for blocks with a previous connection.
  * Ensures that inputs will not overlap with the top notch of blocks.
  * @const
  */
-Blockly.BlockSvg.NO_PREVIOUS_INPUT_X_MIN = 12 * Blockly.BlockSvg.GRID_UNIT;
+Blockly.BlockSvg.INPUT_AND_FIELD_MIN_X = 12 * Blockly.BlockSvg.GRID_UNIT;
 
 /**
  * Vertical padding around inline elements.
@@ -477,7 +477,8 @@ Blockly.BlockSvg.prototype.updateColour = function() {
   this.svgPath_.setAttribute('stroke', strokeColour);
 
   // Render block fill
-  var fillColour = (this.isGlowingBlock_) ? this.getColourSecondary() : this.getColour();
+  var fillColour = (this.isGlowingBlock_ || this.isShadow()) ?
+      this.getColourSecondary() : this.getColour();
   this.svgPath_.setAttribute('fill', fillColour);
 
   // Render opacity
@@ -622,24 +623,44 @@ Blockly.BlockSvg.prototype.renderFields_ =
     if (!root) {
       continue;
     }
+    // In blocks with a notch, fields should be bumped to a min X,
+    // to avoid overlapping with the notch. Label and image fields are
+    // excluded.
+    if (this.previousConnection && !(field instanceof Blockly.FieldLabel) &&
+        !(field instanceof Blockly.FieldImage)) {
+      cursorX = this.RTL ?
+        Math.min(cursorX, -Blockly.BlockSvg.INPUT_AND_FIELD_MIN_X) :
+        Math.max(cursorX, Blockly.BlockSvg.INPUT_AND_FIELD_MIN_X);
+    }
     // Offset the field upward by half its height.
     // This vertically centers the fields around cursorY.
     var yOffset = -field.getSize().height / 2;
+    var translateX, translateY;
+    var scale = '';
     if (this.RTL) {
       cursorX -= field.renderSep + field.renderWidth;
-      root.setAttribute('transform',
-          'translate(' + cursorX + ',' + (cursorY + yOffset) + ')');
+      translateX = cursorX;
+      translateY = cursorY + yOffset;
       if (field.renderWidth) {
         cursorX -= Blockly.BlockSvg.SEP_SPACE_X;
       }
     } else {
-      root.setAttribute('transform',
-          'translate(' + (cursorX + field.renderSep) + ',' + (cursorY + yOffset) + ')');
+      translateX = cursorX + field.renderSep;
+      translateY = cursorY + yOffset;
       if (field.renderWidth) {
         cursorX += field.renderSep + field.renderWidth +
             Blockly.BlockSvg.SEP_SPACE_X;
       }
     }
+    if (this.RTL &&
+        field instanceof Blockly.FieldImage &&
+        field.getFlipRTL()) {
+      scale = 'scale(-1 1)';
+      translateX += field.renderWidth;
+    }
+    root.setAttribute('transform',
+      'translate(' + translateX + ', ' + translateY + ') ' + scale
+    );
     // Fields are invisible on insertion marker.
     if (this.isInsertionMarker()) {
       root.setAttribute('display', 'none');
@@ -1115,22 +1136,23 @@ Blockly.BlockSvg.prototype.renderDrawRight_ = function(steps,
         fieldY += row.height / 2;
 
         // Align inline field rows (left/right/centre).
-        if (input.align != Blockly.ALIGN_LEFT) {
-          var fieldRightX = inputRows.rightEdge - input.fieldWidth -
-              (2 * Blockly.BlockSvg.SEP_SPACE_X);
-          if (input.align == Blockly.ALIGN_RIGHT) {
-            fieldX += fieldRightX;
-          } else if (input.align == Blockly.ALIGN_CENTRE) {
-            fieldX += fieldRightX / 2;
-          }
+        if (input.align === Blockly.ALIGN_RIGHT) {
+          fieldX += inputRows.rightEdge - input.fieldWidth -
+            (2 * Blockly.BlockSvg.SEP_SPACE_X);
+        } else if (input.align === Blockly.ALIGN_CENTRE) {
+          fieldX = Math.max(
+            inputRows.rightEdge / 2 - input.fieldWidth / 2,
+            fieldX
+          );
         }
 
         cursorX = this.renderFields_(input.fieldRow, fieldX, fieldY);
         if (input.type == Blockly.INPUT_VALUE) {
           // Create inline input connection.
-          if (y === 0 && this.previousConnection) {
-            // Force inputs to be past the notch
-            cursorX = Math.max(cursorX, Blockly.BlockSvg.NO_PREVIOUS_INPUT_X_MIN);
+          // In blocks with a notch, inputs should be bumped to a min X,
+          // to avoid overlapping with the notch.
+          if (this.previousConnection) {
+            cursorX = Math.max(cursorX, Blockly.BlockSvg.INPUT_AND_FIELD_MIN_X);
           }
           if (this.RTL) {
             connectionX = connectionsXY.x - cursorX;

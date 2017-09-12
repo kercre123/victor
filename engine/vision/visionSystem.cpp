@@ -134,7 +134,7 @@ namespace Cozmo {
     std::string dataPath("");
     if(_context->GetDataPlatform() != nullptr) {
       dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                             Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
+                                                             Util::FileUtils::FullFilePath({"config", "engine", "vision"}));
     } else {
       PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
                           "Initializing VisionSystem with no data platform.");

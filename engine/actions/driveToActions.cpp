@@ -305,14 +305,12 @@ namespace Anki {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
                             "Robot %d's block world does not have an ActionableObject with ID=%d.",
                             _robot.GetID(), _objectID.GetValue());
-        result = ActionResult::BAD_OBJECT;
+        return ActionResult::BAD_OBJECT;
       }
-      else
-      {
-        // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
-        result = InitHelper(object);
-      } // if/else object==nullptr
-      
+
+      // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
+      result = InitHelper(object);
+
       // Only set cube lights if the dock object is a light cube
       _shouldSetCubeLights = IsValidLightCube(object->GetType(), false);
       

@@ -10,7 +10,11 @@ cxx_project(
                             '**/*_android.cpp',
                             '**/android/*.cpp',
                          ])),
-        ('mac', glob(['**/*_ios*.mm']))
+        ('mac', glob([
+                        '**/*_iososx*.mm',
+                        '**/*_osx.mm',
+                        '**/*_osx.cpp',
+                     ]))
     ],
     headers = cxx_header_glob(['.'],
                               excludes = ['**/android/*']),
@@ -19,6 +23,9 @@ cxx_project(
                             '**/*_android.h',
                             '**/android/*.h',
                          ])),
-        ('mac', glob(['**/*_ios*.h'])),
+        ('mac', glob([
+                        '**/*_ios*.h',
+                        '**/*_osx.h',
+                     ])),
     ]
 )

@@ -72,9 +72,17 @@ namespace Anki {
     if(!IsNull())
     {
       _node->RemoveOwner();
+      if(!_node->IsOwned() && !AreUnownedParentsAllowed())
+      {
+        // Trying to diagnose COZMO-10891: if this was the last owner, the node should have use_count==1
+        ANKI_VERIFY(_node.use_count() == 1,
+                    "PoseBase.Destructor.NotLastOwner",
+                    "Removing pose %d(%s)'s node's last known owner, but it still has use_count=%u",
+                    GetID(), GetName().c_str(), (uint32_t)_node.use_count());
+      }
     }
   }
-    
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // copy constructor
   template<class PoseNd, class TransformNd>
@@ -93,13 +101,20 @@ namespace Anki {
       if(other.IsNull())
       {
         _node->RemoveOwner();
+        if(!_node->IsOwned() && !AreUnownedParentsAllowed())
+        {
+          // Trying to diagnose COZMO-10891: if this was the last owner, the node should have use_count==1
+          ANKI_VERIFY(_node.use_count() == 1,
+                      "PoseBase.AssignmentOperator.NotLastOwner",
+                      "Removing pose %d(%s)'s node's last known owner, but it still has use_count=%u",
+                      GetID(), GetName().c_str(), (uint32_t)_node.use_count());
+        }
         _node.reset();
       }
       else
       {
-        // don't share Nodes with other! assign the contents!
+        // don't share Nodes with other! assign the contents! note that there's no new owner of _node here!
         *_node = *other._node;
-        _node->AddOwner();
       }
     }
     return *this;
@@ -160,7 +175,7 @@ namespace Anki {
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd, class TransformNd>
-  inline const TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform() const
+  inline TransformNd const& PoseBase<PoseNd,TransformNd>::GetTransform() const&
   {
     DEV_ASSERT(!IsNull(), "PoseBase.GetTransformConst.NullNode");
     return _node->GetTransform();
@@ -168,9 +183,17 @@ namespace Anki {
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   template<class PoseNd, class TransformNd>
-  inline TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform()
+  inline TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform() &
   {
     DEV_ASSERT(!IsNull(), "PoseBase.GetTransform.NullNode");
+    return _node->GetTransform();
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<class PoseNd, class TransformNd>
+  inline TransformNd PoseBase<PoseNd,TransformNd>::GetTransform() &&
+  {
+    DEV_ASSERT(!IsNull(), "PoseBase.GetTransformRvalue.NullNode");
     return _node->GetTransform();
   }
   
@@ -230,6 +253,13 @@ namespace Anki {
   {
     DEV_ASSERT(!IsNull(), "PoseBase.SetParent.NullNode");
     DEV_ASSERT(&otherPose != this, "PoseBase.SetParent.ParentCannotBeSelf");
+    if(!AreUnownedParentsAllowed())
+    {
+      ANKI_VERIFY(otherPose.IsOwned(),
+                  "PoseBase.SetParent.UnownedParent",
+                  "Setting parent of %d(%s) to unowned pose %d(%s)",
+                  GetID(), GetName().c_str(), otherPose.GetID(), otherPose.GetName().c_str());
+    }
     _node->SetParent(otherPose._node);
   }
   
@@ -483,6 +513,16 @@ namespace Anki {
       return false;
     }
     return _node->IsOwned();
+  }
+  
+  template<class PoseNd, class TransformNd>
+  inline uint32_t PoseBase<PoseNd,TransformNd>::GetNodeOwnerCount() const
+  {
+    if(IsNull())
+    {
+      return 0;
+    }
+    return _node->GetOwnerCount();
   }
   
 } // namespace Anki

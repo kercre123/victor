@@ -29,6 +29,7 @@
 #include "engine/components/bodyLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
+#include "engine/needsSystem/needsManager.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "threadedPrintStressTester.h"
@@ -769,36 +770,20 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // needs system decay config
   {
-    static const std::string jsonFilename = "config/engine/needs_decay_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
+    const std::string jsonFilename = NeedsManager::GetDecayConfigBaseFilename() + ".json";
+    // For our unconnected_decay_rates experiment, look for this file in the saved files folder first
+    Util::Data::Scope scope = Util::Data::Scope::Persistent;
+    std::string fullPathFilename = _platform->pathToResource(scope, jsonFilename);
+    if (!Util::FileUtils::FileExists(fullPathFilename))
+    {
+      // If not found, fall back to looking for it in the resources
+      scope = Util::Data::Scope::Resources;
+    }
+    const bool success = _platform->readAsJson(scope, jsonFilename, _needsDecayConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
                         "Needs System Decay Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
-    }
-  }
-
-  // needs system decay 'A' variation config
-  {
-    static const std::string jsonFilename = "config/engine/needs_decayA_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigA);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigAJsonNotFound",
-                        "Needs System Decay A Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
-    }
-  }
-
-  // needs system decay 'B' variation config
-  {
-    static const std::string jsonFilename = "config/engine/needs_decayB_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfigB);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigBJsonNotFound",
-                        "Needs System Decay B Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }

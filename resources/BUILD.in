@@ -24,6 +24,16 @@ asset_project(
            ),
 )
 
+
+asset_project(
+    name = 'cozmo_resources_test',
+    srcs = glob([
+                'test/**/*',
+                ],
+           ),
+)
+
+
 asset_project(
     name = 'cozmo_bundle',
     srcs = subdir_glob([

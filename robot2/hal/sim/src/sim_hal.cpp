@@ -41,6 +41,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 #include "messages.h"
 #include "wheelController.h"
 
@@ -147,6 +148,9 @@ namespace Anki {
       // Emitter / receiver for block communication
       webots::Receiver *objectDiscoveryReceiver_;
       webots::Emitter *blockCommsEmitter_;
+
+      // Upper Touch Sensor (for petting)
+      webots::Receiver *backpackTouchSensorReceiver_;
 
       struct ActiveObjectSlotInfo {
         u32 assignedFactoryID;
@@ -408,6 +412,9 @@ namespace Anki {
       objectDiscoveryReceiver_->enable(TIME_STEP);
       
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
+
+      backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
+      backpackTouchSensorReceiver_->enable(TIME_STEP);
       
       char receiverName[32];
       for (int i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
@@ -818,6 +825,35 @@ namespace Anki {
       return proxData;
     }
 
+    u16 HAL::GetButtonState(const ButtonID button_id)
+    {
+      switch(button_id) {
+        case BUTTON_CAPACITIVE:
+        {
+          double signalStrength = 0.0;
+
+          while(backpackTouchSensorReceiver_->getQueueLength() > 0) {
+            signalStrength = backpackTouchSensorReceiver_->getSignalStrength();
+            backpackTouchSensorReceiver_->nextPacket();
+          }
+
+          // XXX rescale the signal strength to fit within a u16 (to match real sensor)
+          u16 ss = Util::numeric_cast_clamped<u16>(signalStrength);
+          return ss;
+        }
+
+        // no need to simulate these button press types
+        case BUTTON_POWER: { return 0; }
+        default: 
+        {
+          AnkiError( 1234, "sim_hal.GetButtonState.UnexpectedButtonType", 648, "Button ID=%d does not have a sensible return value", 1, button_id);
+          return 0; 
+        }
+      }
+
+      return 0;
+    }
+
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {
       if (cliff_id == HAL::CLIFF_COUNT) {
@@ -1028,7 +1064,6 @@ namespace Anki {
         
         objectDiscoveryReceiver_->nextPacket();
       }
-      
       
       // Pass along block-moved messages to basestation
       // TODO: Make block comms receiver checking into a HAL function at some point

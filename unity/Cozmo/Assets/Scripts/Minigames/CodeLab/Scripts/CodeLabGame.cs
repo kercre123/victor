@@ -22,7 +22,6 @@ namespace CodeLab {
   }
 
   public class CodeLabGame : GameBase {
-
     // When the webview is opened to display the Code Lab workspace,
     // we can display one of the following projects.
     private enum RequestToOpenProjectOnWorkspace {
@@ -56,12 +55,22 @@ namespace CodeLab {
 
     private CodeLabCozmoFaceDisplay _CozmoFaceDisplay = new CodeLabCozmoFaceDisplay();
 
+#if !UNITY_EDITOR
+#if UNITY_ANDROID
+    private AndroidJavaObject _CozmoAndroidActivity;
+#endif
+#endif
+
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
     private bool _IsDrivingOffCharger = false;
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
+    private static readonly string kCodelabPrefix = "CODELAB:";
+    private static readonly long kMaximumDescriptionLength = 1000; // assuming any file title over 1000 characters is suspect
+    private static readonly long kMaximumCodelabDataLength = 10000000; // assuming any file over 10 Mb is suspect
+
 
     private CubeColors[] _CubeLightColors = { new CubeColors(),
                                      new CubeColors(),
@@ -173,6 +182,9 @@ namespace CodeLab {
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
+      // TODO: Turn on when we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
+      //_SessionState.SetGrammarMode(GrammarMode.None);
+
       DAS.Debug("Loading Webview", "");
       UIManager.Instance.ShowTouchCatcher();
 
@@ -190,16 +202,19 @@ namespace CodeLab {
 #if UNITY_EDITOR || UNITY_IOS
       string path = Application.streamingAssetsPath + pathToFile;
 #elif UNITY_ANDROID
-string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
+      string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
+#endif
+
+#if !UNITY_EDITOR
+#if UNITY_ANDROID
+      _CozmoAndroidActivity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
+#endif
 #endif
 
       string json = File.ReadAllText(path);
       _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
 
       RobotEngineManager.Instance.AddCallback<GameToGame>(HandleGameToGame);
-      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
-      }
 
       LoadWebView();
     }
@@ -444,10 +459,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        // TODO: Once we have UI support for selecting horizontal / vertical this setting will come from elsewhere
+        // TODO: Delete these 3 lines once we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
         bool useVertical = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseVerticalGrammarCodelab;
         GrammarMode grammarMode = useVertical ? GrammarMode.Vertical : GrammarMode.Horizontal;
         _SessionState.StartSession(grammarMode);
+
         robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count, kCodeLabGameDrivingAnimLock);
         robot.EnterSDKMode(false);
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
@@ -681,11 +697,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
-    private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest) {
+    private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest, bool showVerticalProjects) {
       DAS.Info("Codelab.OnGetCozmoUserAndSampleProjectLists", "");
 
+      // TODO: Remove this line once we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
       // Check which projects we want to display: vertical or horizontal.
-      bool showVerticalProjects = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
+      showVerticalProjects = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
 
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
@@ -840,6 +857,39 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       LoadURL("extra/projects.html");
     }
 
+    private void OnCozmoExportProject(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnCozmoExportProject.Called", "User intends to share project");
+
+      string projectUUID = scratchRequest.argUUID;
+
+      if (String.IsNullOrEmpty(projectUUID)) {
+        DAS.Error("Codelab.OnCozmoExportProject.BadUUID", "Attempt to export project with no project UUID specified.");
+      }
+      else {
+        CodeLabProject projectToExport = FindUserProjectWithUUID(projectUUID);
+
+        System.Action<string, string> sendFileCall = null;
+
+#if !UNITY_EDITOR
+#if UNITY_IPHONE
+        sendFileCall = (string name, string json) => IOS_Settings.ExportCodelabFile(name, json);
+#elif UNITY_ANDROID
+        sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call("exportCodelabFile", name, json);
+#else
+        sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
+#endif
+#else
+        sendFileCall = (string name, string json) => {
+          Debug.LogWarning("Unity Editor does not implement sharing codelab project");
+        };
+#endif
+
+        string projectJsonString = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
+
+        sendFileCall(projectToExport.ProjectName, projectJsonString);
+      }
+    }
+
     private bool HandleNonBlockScratchRequest(ScratchRequest scratchRequest) {
       // Handle any Scratch requests that don't need an InProgressScratchBlock initializing
       switch (scratchRequest.command) {
@@ -851,6 +901,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return true;
       case "cozmoGreenFlag":
         OnGreenFlagClicked();
+        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+          StartVerticalHatBlockListeners();
+        }
+        return true;
+      case "cozmoStopSign":
+        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+          StopVerticalHatBlockListeners();
+        }
         return true;
       case "cozmoStopAll":
         OnStopAll();
@@ -861,7 +919,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         RaiseChallengeQuit();
         return true;
       case "getCozmoUserAndSampleProjectLists":
-        OnGetCozmoUserAndSampleProjectLists(scratchRequest);
+        OnGetCozmoUserAndSampleProjectLists(scratchRequest, scratchRequest.argBool);
         return true;
       case "cozmoSetChallengeBookmark":
         OnSetChallengeBookmark(scratchRequest);
@@ -874,15 +932,15 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return true;
       case "cozmoRequestToOpenUserProject":
         SessionState.DAS_Event("robot.code_lab.open_user_project", "");
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString);
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString, scratchRequest.argBool);
         return true;
       case "cozmoRequestToOpenSampleProject":
         SessionState.DAS_Event("robot.code_lab.open_sample_project", scratchRequest.argString);
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString, scratchRequest.argBool);
         return true;
       case "cozmoRequestToCreateProject":
         SessionState.DAS_Event("robot.code_lab.create_project", "");
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null, scratchRequest.argBool);
         return true;
       case "cozmoDeleteUserProject":
         OnCozmoDeleteUserProject(scratchRequest);
@@ -899,6 +957,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return true;
       case "cozmoChallengesClose":
         _SessionState.OnChallengesClose();
+        return true;
+      case "cozmoExportProject":
+        OnCozmoExportProject(scratchRequest);
         return true;
       case "cozmoDASLog":
         DAS.Warn(scratchRequest.argString, scratchRequest.argString2);
@@ -941,7 +1002,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       ScratchRequest scratchRequest = null;
       try {
-        DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
+        //DAS.Info("CodeLabGame.WebViewCallback.Data", "WebViewCallback - JSON from JavaScript: " + logJSONStringFromJS);
 
         scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
       }
@@ -1453,17 +1514,35 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
-    private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
+    private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID, bool isVertical) {
       DAS.Info("Codelab.OpenCodeLabProject", "request=" + request + ", UUID=" + projectUUID);
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
       ShowGettingReadyScreen();
+
+      // TODO Remove this if/else stmt we have removed DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         LoadURL(kVerticalIndexFilename);
       }
       else {
         LoadURL(kHorizontalIndexFilename);
       }
+
+      // TODO Turn on once we have removed DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
+      /*
+      if (!isVertical) {
+        _SessionState.StartSession(GrammarMode.Horizontal);
+
+        LoadURL(kHorizontalIndexFilename);
+      }
+      else {
+        _SessionState.StartSession(GrammarMode.Vertical);
+
+        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
+
+        LoadURL(kVerticalIndexFilename);
+      }
+      */
     }
 
     // Display blue "Cozmo is getting ready to play" while the Scratch workspace is finishing setup
@@ -1690,8 +1769,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       Invoke("UnhideWebView", delayInSeconds);
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-        StartVerticalHatBlockListeners();
-
         //in Vertical, disable cubes illuminating blue when Cozmo sees them
         RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
       }
@@ -1774,6 +1851,70 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       SharedMinigameView.HideSpinnerWidget();
 
       _WebViewObjectComponent.SetVisibility(true);
+    }
+
+    public static bool IsRawStringValidCodelab(string data) {
+      return data.Length > kCodelabPrefix.Length && data.Substring(0, kCodelabPrefix.Length) == kCodelabPrefix;
+    }
+
+    public static DataPersistence.CodeLabProject CreateProjectFromJsonString(string rawData) {
+      if (!IsRawStringValidCodelab(rawData)) {
+        DAS.Error("Codelab.OnAppLoadedFromData.BadHeader", "Attempting to load codelab file with improper prefix");
+      }
+      else {
+        try {
+          string pastPrefixString = rawData.Substring(kCodelabPrefix.Length);
+          string unescapedString = WWW.UnEscapeURL(pastPrefixString);
+
+          DataPersistence.CodeLabProject project = JsonConvert.DeserializeObject<DataPersistence.CodeLabProject>(unescapedString);
+          DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+
+          // @TODO: Deal with changes in versionNum, check minimum version number
+
+          if (defaultProfile == null) {
+            DAS.Error("Codelab.OnAppLoadedFromData.NullDefaultProfile", "In creating new Code Lab project from external data, defaultProfile is null");
+          }
+          else if (defaultProfile.CodeLabProjects == null) {
+            DAS.Error("Codelab.OnAppLoadedFromData.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
+          }
+          else if (project.ProjectName.Length > kMaximumDescriptionLength) {
+            DAS.Error("Codelab.OnAppLoadedFromData.BadFileName.Length", "new project's name is unreasonably long " + project.ProjectName.Length.ToString());
+          }
+          else if (project.ProjectXML.Length > kMaximumCodelabDataLength) {
+            DAS.Error("Codelab.OnAppLoadedFromData.BadFileData.Length", "new project's internal data is unreasonably long " + project.ProjectXML.Length.ToString());
+          }
+          else {
+            // Create new project with the XML stored in projectXML.
+            while (defaultProfile.CodeLabProjects.Find(p => p.ProjectName == project.ProjectName) != null) {
+              string name = StringUtil.GenerateNextUniqueName(project.ProjectName);
+              project.ProjectName = name;
+            }
+
+            return project;
+          }
+        }
+        catch (NullReferenceException) {
+          DAS.Error("Codelab.OnAppLoadedFromData.NullReferenceException", "NullReferenceException in creating new Code Lab project from external data");
+        }
+      }
+      return null;
+    }
+
+    public static bool AddExternalProject(DataPersistence.CodeLabProject project) {
+
+      DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+      if (defaultProfile == null) {
+        DAS.Error("Codelab.AddExternalProject.NullDefaultProfile", "In adding external Code Lab project, defaultProfile is null");
+        return false;
+      }
+
+      defaultProfile.CodeLabProjects.Add(project);
+
+      ProjectStats stats = new ProjectStats();
+      stats.Update(project);
+      stats.PostPendingChanges(ProjectStats.EventCategory.loaded_from_file);
+
+      return true;
     }
   }
 }

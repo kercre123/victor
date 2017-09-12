@@ -984,10 +984,25 @@
           }, # end controller DevLog
 
           {
+            'target_name': 'webotsCtrlHandEmitter',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(webots_includes)'
+            ],
+            'sources': [
+              '../../simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter.cpp',
+              ],
+            'libraries': [
+              'libCppController.dylib',
+            ],
+          }, # end controller Hand Emitter
+
+          {
             'target_name': 'webotsControllers',
             'type': 'none',
             'dependencies': [
               'webotsCtrlKeyboard',
+              'webotsCtrlHandEmitter',
               'webotsCtrlBuildServerTest',
               'webotsCtrlGameEngine2',
               'webotsCtrlAnim',
@@ -1026,6 +1041,21 @@
                   '--link_target', '<(cozmo_engine_path)/resources/config',
                   '--link_name', '../../simulator/controllers/webotsCtrlKeyboard/resources/config',
                   '--create_folder', '../../simulator/controllers/webotsCtrlKeyboard/resources'
+                ],
+              },
+
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # webotsCtrlHandEmitter
+              # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+              # controller binary
+              {
+                'action_name': 'create_symlink_webotsCtrlHandEmitter',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlHandEmitter',
+                  '--link_name', '../../simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter'
                 ],
               },
 

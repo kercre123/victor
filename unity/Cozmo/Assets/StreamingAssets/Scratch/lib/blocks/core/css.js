@@ -456,8 +456,8 @@ Blockly.Css.CONTENT = [
   /*
   '.blocklyDragging>.blocklyPath,',
   '.blocklyDragging>.blocklyPathLight {',
-    'fill-opacity: .8;',
-    'stroke-opacity: .8;',
+    'fill-opacity: 1.0;',
+    'stroke-opacity: 1.0;',
   '}',
   */
 
@@ -544,7 +544,7 @@ Blockly.Css.CONTENT = [
     Don't allow users to select text.  It gets annoying when trying to
     drag a block and selected text moves instead.
   */
-  '.blocklySvg text, .blocklyBlockDragSurface text {',
+  '.blocklySvg text, .blocklyBlockDragSurface text, .blocklyFlyout text, .blocklyToolboxDiv text {',
     'user-select: none;',
     '-moz-user-select: none;',
     '-webkit-user-select: none;',
@@ -866,6 +866,10 @@ Blockly.Css.CONTENT = [
     'font-size: 16px;',
     'padding: 0 3px;',
     'vertical-align: middle;',
+  '}',
+
+  '.blocklyToolboxDelete .blocklyTreeLabel {',
+    'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',
   '}',
 
   '.blocklyTreeSelected .blocklyTreeLabel {',
@@ -1285,13 +1289,12 @@ Blockly.Css.CONTENT = [
     'margin: 0 auto 3px;',
   '}',
 
-  '.scratchCategoryItemBubbleRTL {',
-    'width: 14px;',
-    'height: 14px;',
+  '.scratchCategoryItemBubble {',
+    'width: 16px;',
+    'height: 16px;',
     'border: 1px solid;',
-    'border-radius: 8px;',
-    'float: right;',
-    'margin-left: 8px;',
+    'border-radius: 100%;',
+    'margin: 0 auto 3px;',
   '}',
 
   '.scratchCategoryMenuItem:hover {',

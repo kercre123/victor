@@ -146,6 +146,7 @@
       { "activityID" : "SparksBuildPyramid", "activityPriority"   : 0 },
       { "activityID" : "SparksFistBump", "activityPriority"       : 0 },
       { "activityID" : "SparksGatherCubes", "activityPriority"    : 0 },
+      { "activityID" : "SparksTrackLaser", "activityPriority"     : 0 },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Needs activities
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

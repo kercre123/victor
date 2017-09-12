@@ -77,5 +77,78 @@ void CozmoExperiments::AutoActivateExperiments(const std::string& userId)
   (void) _lab.AutoActivateExperimentsForUser(userId, tags);
 }
 
+void CozmoExperiments::WriteLabAssignmentsToRobot(const std::vector<Util::AnkiLab::AssignmentDef>& assignments)
+{
+  LabAssignments labAssignments;
+  for (const auto& assignment : assignments)
+  {
+    LabAssignment labAssignment(assignment.GetExperiment_key(), assignment.GetVariation_key());
+    labAssignments.labAssignments.push_back(std::move(labAssignment));
+  }
+
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  if (robot != nullptr)
+  {
+    std::vector<u8> assignmentsVec(labAssignments.Size());
+    labAssignments.Pack(assignmentsVec.data(), labAssignments.Size());
+    if (!robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_LabAssignments,
+                                              assignmentsVec.data(), assignmentsVec.size()))
+    {
+      PRINT_NAMED_ERROR("CozmoExperiments.WriteLabAssignmentsToRobot.Failed", "Write failed");
+    }
+  }
+}
+
+void CozmoExperiments::ReadLabAssignmentsFromRobot(const u32 serialNumber)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  if (robot != nullptr)
+  {
+    if (!robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_LabAssignments,
+                                             [this, serialNumber](u8* data, size_t size, NVStorage::NVResult res)
+                                             {
+                                               (void) RestoreLoadedActiveExperiments(data, size, res, serialNumber);
+                                             }))
+    {
+      PRINT_NAMED_ERROR("CozmoExperiments.ReadLabAssignmentsFromRobot.Failed", "Read failed");
+    }
+  }
+}
+
+bool CozmoExperiments::RestoreLoadedActiveExperiments(const u8* data, const size_t size,
+                                                      const NVStorage::NVResult res, u32 serialNumber)
+{
+  if (res < NVStorage::NVResult::NV_OKAY)
+  {
+    // The tag doesn't exist on the robot indicating the robot is new or has been wiped
+    if (res == NVStorage::NVResult::NV_NOT_FOUND)
+    {
+      PRINT_NAMED_INFO("CozmoExperiments.RestoreLoadedActiveExperiments",
+                       "No lab assignments data on robot");
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("CozmoExperiments.RestoreLoadedActiveExperiments.ReadFailedFinish",
+                        "Read failed with %s", EnumToString(res));
+    }
+    return false;
+  }
+
+  LabAssignments labAssignments;
+  labAssignments.Unpack(data, size);
+
+  // We've just loaded any active assignments from the robot; so now apply them
+  using namespace Util::AnkiLab;
+  AnkiLab& lab = GetAnkiLab();
+
+  const std::string userId = std::to_string(serialNumber);
+
+  for (const auto& assignment : labAssignments.labAssignments)
+  {
+    (void) lab.RestoreActiveExperiment(assignment.experiment_key, userId, assignment.variation_key);
+  }
+  return true;
+}
+
 }
 }

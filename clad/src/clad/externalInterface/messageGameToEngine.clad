@@ -909,9 +909,6 @@ message MoodMessage {
 // Needs
 ///////////////////////////////////////////////////////////////////////////////
 
-message ContinueInitializingNeedsManager {
-}
-
 message GetNeedsState {
 }
 
@@ -980,6 +977,9 @@ message GetStarStatus {
 message NotificationsManagerReady {
 }
 
+message RequestNotificationTextKeys {
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -1013,10 +1013,6 @@ message InventoryRequestGet {
 // Request engine to send data like device id, app run id, etc
 message RequestDeviceData {
 
-}
-
-message StoredLabAssignments {
-  Anki::Util::AnkiLab::AssignmentDef assignments[uint_16]
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -24,9 +24,9 @@ public class FirmwarePane : MonoBehaviour {
 
   public static string GetFirmwareDir() {
 #if UNITY_EDITOR
-    return Application.dataPath + "/../../../resources/config/basestation";
+    return Application.dataPath + "/../../../resources/config/engine";
 #elif UNITY_IOS || UNITY_ANDROID
-    return PlatformUtil.GetResourcesFolder() + "/config/basestation";
+    return PlatformUtil.GetResourcesFolder() + "/config/engine";
 #else
     return null;
 #endif

@@ -366,6 +366,8 @@ namespace Anki {
                                                              const Radians& angleThresh,
                                                              const char* debugStr) const
     {
+      const PoseOrigin fakeOrigin; // declare before any poses that use it as parent so it destructs last!
+      
       Pose3d objectPoseWrtRobot;
       
       if(RESULT_OK != GetObjectPose(objectID, objectPoseWrtRobot))
@@ -398,11 +400,9 @@ namespace Anki {
         return false;
       }
       
-      
       // Assuming the two object poses are w.r.t. the same robot, make them share
       // a common origin and see if the represent the same pose relative to that common
       // origin
-      const PoseOrigin fakeOrigin;
       objectPoseWrtRobot.SetParent(fakeOrigin);
       actualObjectPoseWrtRobot.SetParent(fakeOrigin);
       

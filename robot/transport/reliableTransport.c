@@ -42,6 +42,16 @@ void FacePrintf(const char *format, ...);
 #define printClear() (void)0
 #endif
 
+//
+// When building for simulator, use memmove() instead of memcpy() to satisfy xcode address sanitizer.
+// When building for robot, use memcpy() because it does the right thing.
+//
+#if defined(SIMULATOR)
+#define MEMMOVE memmove
+#else
+#define MEMMOVE memcpy
+#endif
+
 static uint32_t reliableTransport_timeoutMicroseconds;
 
 /// Utility function to print the state of a connection object
@@ -354,8 +364,8 @@ uint8_t ICACHE_FLASH_ATTR UpdateLastAckedMessage(ReliableConnection* connection,
     connection->numPendingReliableMessages -= updated;
     if (connection->numPendingReliableMessages != 0)
     {
-      memcpy((void*)(connection->pendingMessages), (void*)(connection->pendingMessages + numBytesAcked), connection->pendingReliableBytes);
-      memcpy((void*)(connection->pendingMsgMeta),  (void*)(connection->pendingMsgMeta  + updated),       (connection->numPendingReliableMessages * sizeof(PendingReliableMessageMetaData)));
+      MEMMOVE((void*)(connection->pendingMessages), (void*)(connection->pendingMessages + numBytesAcked), connection->pendingReliableBytes);
+      MEMMOVE((void*)(connection->pendingMsgMeta),  (void*)(connection->pendingMsgMeta  + updated),       (connection->numPendingReliableMessages * sizeof(PendingReliableMessageMetaData)));
     }
   }
   return updated;

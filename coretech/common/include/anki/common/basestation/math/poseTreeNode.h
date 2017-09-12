@@ -40,7 +40,7 @@ template<class PoseNd, class TransformNd>
 class PoseBase<PoseNd,TransformNd>::PoseTreeNode
 {
 public:
-  PoseTreeNode(const TransformNd& tform, std::shared_ptr<PoseTreeNode> parent, const std::string& name);
+  PoseTreeNode(const TransformNd& tform, const std::shared_ptr<PoseTreeNode>& parent, const std::string& name);
   PoseTreeNode(const PoseTreeNode& other);
   
   ~PoseTreeNode();
@@ -77,9 +77,9 @@ public:
   // Just get parent's transform without mucking with shared pointers
   const TransformNd&    GetParentTransform() const { return _parentPtr->GetTransform(); }
   
-  std::shared_ptr<PoseTreeNode> GetParent() const;
-  void                          SetParent(std::shared_ptr<PoseTreeNode> parent);
-  const PoseTreeNode*           GetRawParentPtr() const;
+  const std::shared_ptr<PoseTreeNode>& GetParent() const;
+  void                                 SetParent(const std::shared_ptr<PoseTreeNode>& parent);
+  const PoseTreeNode*                  GetRawParentPtr() const;
   
   const std::string&    GetName() const { return _name; }
   void                  SetName(const std::string& name) { _name = name; }
@@ -90,10 +90,12 @@ public:
   // Get the ID assigned to this pose. Initial (unset) ID is zero.
   PoseID_t              GetID() const { return _id; }
   
-  // Register/unregister as an "owner" of this node
-  void AddOwner()    { ++_ownerCount; }
-  void RemoveOwner();
-  bool IsOwned() const { return (_ownerCount > 0); }
+  // Register/unregister as an "owner" of this node: i.e. that this node is "wrapped" by one or more
+  // PoseBase objects (as opposed to simply having a shared_ptr hanging on to it somewhere)
+  void      AddOwner()            { ++_ownerCount; }
+  void      RemoveOwner();
+  bool      IsOwned()       const { return (_ownerCount > 0); }
+  uint32_t  GetOwnerCount() const { return _ownerCount; }
   
 private:
   
@@ -147,7 +149,7 @@ private:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class PoseNd, class TransformNd>
 PoseBase<PoseNd,TransformNd>::PoseTreeNode::PoseTreeNode(const TransformNd& tform,
-                                                         std::shared_ptr<PoseTreeNode> parent,
+                                                         const std::shared_ptr<PoseTreeNode>& parent,
                                                          const std::string& name)
 : _transform(tform)
 , _name(name)
@@ -288,7 +290,7 @@ PoseID_t PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetRootID() const
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class PoseNd, class TransformNd>
-void PoseBase<PoseNd,TransformNd>::PoseTreeNode::SetParent(std::shared_ptr<PoseTreeNode> newParent)
+void PoseBase<PoseNd,TransformNd>::PoseTreeNode::SetParent(const std::shared_ptr<PoseTreeNode>& newParent)
 {
   DEV_ASSERT(newParent.get() != this, "PoseBase.PoseTreeNode.SetParent.ParentCannotBeSelf");
   Dev_SwitchParent(_parentPtr.get(), newParent.get(), this);
@@ -297,7 +299,7 @@ void PoseBase<PoseNd,TransformNd>::PoseTreeNode::SetParent(std::shared_ptr<PoseT
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class PoseNd, class TransformNd>
-std::shared_ptr<typename PoseBase<PoseNd,TransformNd>::PoseTreeNode> PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetParent() const
+const std::shared_ptr<typename PoseBase<PoseNd,TransformNd>::PoseTreeNode>& PoseBase<PoseNd,TransformNd>::PoseTreeNode::GetParent() const
 {
   Dev_AssertIsValidParentPointer(_parentPtr.get(), this);
   return _parentPtr;
@@ -580,6 +582,17 @@ inline void PoseBase<PoseNd,TransformNd>::PoseTreeNode::RemoveOwner()
   if(ANKI_VERIFY(_ownerCount > 0, "PoseBase.PoseTreeNode.RemoveOwner.ZeroOwners", ""))
   {
     --_ownerCount;
+    
+    // COZMO-10891: We can probably remove this once this ticket is figured out.
+    // In our usage, only PoseOrigins in the PoseOriginList have IDs and are named OriginNN.
+    // Those origins should never get deleted, so they should always be owned. Flag if this is not the case.
+    if(_ownerCount == 0 && !AreUnownedParentsAllowed())
+    {
+      ANKI_VERIFY(GetID() == 0,
+                  "PoseBase.PoseTreeNode.RemoveOwner.ZeroOwnersWithID",
+                  "Pose %s has non-zero ID=%d but just had its last owner removed",
+                  GetName().c_str(), GetID());
+    }
   }
 }
 

@@ -9,7 +9,6 @@ if [ -z ${ANKI_BUILD_UNITY_EXE+x} ]; then
 	ANKI_BUILD_UNITY_EXE=/Applications/Unity/Unity.app/Contents/MacOS/Unity
 fi
 
-
 if [ -z ${UNITY_TIMEOUT+x} ]; then
     UNITY_TIMEOUT=12000
 fi
@@ -18,8 +17,6 @@ if [ -z ${DATA_LOCATION+x} ]; then
     DATA_LOCATION="$HOME/Library/Application Support/Anki/Cozmo"
 fi
 
-
-
 if [ $# -eq 0 ]
   then
     LANGUAGE=""
@@ -27,9 +24,8 @@ if [ $# -eq 0 ]
   	LANGUAGE="$1"
 fi
 
-
 echo "**********INFO: Installing Scripts and Profile..."
-rm -rf "${DATA_LOCATION}/*_Results.log"
+rm -f "${DATA_LOCATION}"/*_Results.log
 rm -rf "${DATA_LOCATION}/SaveData.json"
 rm -rf "${DATA_LOCATION}/SaveData.json.bak"
 echo ${DATA_LOCATION}/

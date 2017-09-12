@@ -66,35 +66,36 @@ const execute = function (sequencer, thread) {
      * or after a promise resolves.
      * @param {*} resolvedValue Value eventually returned from the primitive.
      */
-     // @todo move this to callback attached to the thread when we have performance
-     // metrics (dd)
+    // @todo move this to callback attached to the thread when we have performance
+    // metrics (dd)
     const handleReport = function (resolvedValue) {
         thread.pushReportedValue(resolvedValue);
         if (isHat) {
             // Hat predicate was evaluated.
             if (runtime.getIsEdgeActivatedHat(opcode)) {
                 // If this is an edge-activated hat, only proceed if
-                // the value is true and used to be false.
-                const oldEdgeValue = runtime.updateEdgeActivatedValue(
-                    currentBlockId,
-                    resolvedValue
-                );
-                const edgeWasActivated = !oldEdgeValue && resolvedValue;
-                if (!edgeWasActivated) {
-                    sequencer.retireThread(thread);
+                // the value is true and used to be false, or the stack was activated
+                // explicitly via stack click
+                if (!thread.stackClick) {
+                    const oldEdgeValue = runtime.updateEdgeActivatedValue(
+                        currentBlockId,
+                        resolvedValue
+                    );
+                    const edgeWasActivated = !oldEdgeValue && resolvedValue;
+                    if (!edgeWasActivated) {
+                        sequencer.retireThread(thread);
+                    }
                 }
-            } else {
+            } else if (!resolvedValue) {
                 // Not an edge-activated hat: retire the thread
                 // if predicate was false.
-                if (!resolvedValue) {
-                    sequencer.retireThread(thread);
-                }
+                sequencer.retireThread(thread);
             }
         } else {
             // In a non-hat, report the value visually if necessary if
             // at the top of the thread stack.
             if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-                if (thread.showVisualReport) {
+                if (thread.stackClick) {
                     runtime.visualReport(currentBlockId, resolvedValue);
                 }
                 if (thread.updateMonitor) {
@@ -137,7 +138,11 @@ const execute = function (sequencer, thread) {
     // Add all fields on this block to the argValues.
     for (const fieldName in fields) {
         if (!fields.hasOwnProperty(fieldName)) continue;
-        argValues[fieldName] = fields[fieldName].value;
+        if (fieldName === 'VARIABLE') {
+            argValues[fieldName] = fields[fieldName].id;
+        } else {
+            argValues[fieldName] = fields[fieldName].value;
+        }
     }
 
     // Recursively evaluate input blocks.

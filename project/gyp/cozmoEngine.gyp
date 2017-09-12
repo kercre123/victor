@@ -1513,7 +1513,7 @@
                 'cp',
                 '-R',
                 '<(face_library_path)/Demo/models',
-                '../../resources/config/basestation/vision/faciometric',
+                '../../resources/config/engine/vision/faciometric',
               ],
             },
           ],

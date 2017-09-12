@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json;
 
 namespace DataPersistence {
   public class CodeLabProject {
@@ -27,6 +28,14 @@ namespace DataPersistence {
       ProjectName = projectName;
       ProjectXML = projectXML;
       IsVertical = isVertical;
+    }
+
+    public string GetSerializedJson() {
+      string result = JsonConvert.SerializeObject(this, Formatting.Indented, new JsonSerializerSettings {
+        TypeNameHandling = TypeNameHandling.Auto,
+        MissingMemberHandling = MissingMemberHandling.Ignore
+      });
+      return result;
     }
   }
 }

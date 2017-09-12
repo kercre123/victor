@@ -1,6 +1,41 @@
 (function () {
     const Scratch = window.Scratch = window.Scratch || {};
 
+    addLeadingZeros = function(inNum, desiredLength) {
+        var paddedString = "" + inNum;
+        while (paddedString.length < desiredLength) {
+            paddedString = "0" + paddedString;
+        }
+        return paddedString;
+    }
+
+    getTimeStamp = function() {
+        var now = new Date();
+        var milliseconds = now;
+        // Adjust to local time (offset is in minutes)
+        milliseconds -= (now.getTimezoneOffset() * 60000);
+
+        var seconds = Math.floor(milliseconds / 1000);
+        milliseconds -= (seconds * 1000);
+
+        var minutes = Math.floor(seconds / 60);
+        seconds -= (minutes * 60)
+        
+        var hours = Math.floor(minutes / 60);
+        minutes -= (hours * 60);
+        
+        var days = Math.floor(hours / 24);
+        hours -= (days * 24)
+
+        timeStamp = addLeadingZeros(hours, 2) + ":" + addLeadingZeros(minutes,2) + ":" + addLeadingZeros(seconds, 2) + "." + addLeadingZeros(milliseconds,3);
+        return timeStamp;
+    }
+
+    window.cozmoDASLog = function(eventName, messageContents) {
+        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        window.Unity.call({command: "cozmoDASLog", argString: eventName, argString2: messageContents});
+    }    
+    
     /**
      * Window "onload" handler.
      * @return {void}
@@ -64,7 +99,7 @@
                 wheel: false,
                 startScale: startScale,
                 maxScale: 2,
-                minScale: 0.5,
+                minScale: 0.35,
                 scaleSpeed: 1.1
             }
         });
@@ -121,6 +156,7 @@
             e.preventDefault();
         });
 
+
         if (!window.isVertical) {
             var challengesButton = document.querySelector('#challengesbutton');
 
@@ -134,9 +170,10 @@
             });
         }
         else {
+            var exportbutton = document.querySelector('#exportbutton');
             var undo = document.querySelector('#undo');
             var redo = document.querySelector('#redo');
-            
+
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 Scratch.workspace.undo();
@@ -151,6 +188,26 @@
             redo.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
+
+            exportbutton.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                vm.stopAll();
+                clearInterval(window.saveProjectTimerId);
+
+                window.exportCozmoProject();
+            });
+            exportbutton.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
+
+            var glossaryButton = document.querySelector('#glossarybutton');
+            glossaryButton.addEventListener('click', function(){
+              Scratch.workspace.playAudio('click');
+              Glossary.open();
+            });
+            glossaryButton.addEventListener('touchmove', function (e) {
+              e.preventDefault();
+            });
         }
 
         greenFlag.addEventListener('click', function () {
@@ -162,6 +219,7 @@
         });
         stop.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
+            window.Unity.call({command: "cozmoStopSign"});
             vm.stopAll();
         });
         stop.addEventListener('touchmove', function (e) {
@@ -204,7 +262,7 @@
             var cozmoSaysText = document.getElementById("cozmo_says_text");
             cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
         }
-    }
+    };
 
     /**
      * Binds the extension interface to `window.extensions`.

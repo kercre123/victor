@@ -97,7 +97,15 @@ public class OnboardingManager : MonoBehaviour {
 
       // This is sent when needs manager connects to a robot, lets us know if it's an "old robot" that can skip onboarding.
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding>(HandleGetWantsNeedsOnboarding);
+      DataPersistence.DataPersistenceManager.Instance.OnSaveDataReset += HandleSaveDataReset;
     }
+  }
+
+  private void HandleSaveDataReset() {
+    // In the event after this disconnect you connect to yet another device, we still want you to have default sparks
+    Instance.GiveStartingInventory();
+    Instance.FirstTime = true;
+    Instance._LastOnboardingPhaseCompletedRobot = 0;
   }
 
   public int GetCurrStageInPhase(OnboardingPhases phase) {
@@ -242,6 +250,8 @@ public class OnboardingManager : MonoBehaviour {
       // in the event they've ever booted the app before, or it's an old robot.
       // Skip the holding on charger phase because it is the worst and only should be a problem
       // for fresh from factory robots
+      DAS.Info("onboarding.InitialSetup", "FirstTime: " + FirstTime + "RobotCompleted: " +
+                  _LastOnboardingPhaseCompletedRobot + " isOldRobot: " + IsOldRobot());
       if (!FirstTime || IsOldRobot()) {
         startStage = 1;
       }
@@ -511,7 +521,9 @@ public class OnboardingManager : MonoBehaviour {
     if (lastPhase == OnboardingPhases.InitialSetup && _NeedsHubView != null) {
       _NeedsHubView.OnboardingSkipped();
     }
-    HubWorldBase.Instance.StartFreeplay();
+    if (HubWorldBase.Instance != null) {
+      HubWorldBase.Instance.StartFreeplay();
+    }
   }
 
   public void DebugSkipOne() {

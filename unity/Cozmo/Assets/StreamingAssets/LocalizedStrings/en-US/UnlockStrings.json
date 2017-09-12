@@ -210,6 +210,12 @@
   "unlockable.GuardDog.Description": {
     "translation": "When Cozmo’s Cubes are close together, he might take a nap while guarding them. Carefully turn his Cubes upside-down without waking him."
   },
+  "unlockable.TrackLaser.Title": {
+    "translation": "Laser Chaser"
+  },
+  "unlockable.TrackLaser.Description": {
+    "translation": "Follow that laser! With this Trick, shine a laser pointer in front of Cozmo and he will let you lead the way."
+  },
   "sparks.Sparked": {
     "translation": "Cozmo is sparked:"
   },

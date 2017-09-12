@@ -39,6 +39,14 @@ message RobotPoked
 {
 }
 
+// This message indicates that the robot experienced a freefall event
+message FallingEvent {
+  uint_32 timestamp,       // When the fall started (as a robot timestamp)
+  uint_32 duration_ms,     // The approximate freefall duration
+  float_32 impactIntensity // A measure of how 'hard' the impact was (this is computed as the
+                           // maximum experienced high-pass filtered accelerometer value)
+}
+
 message RobotStopped
 {
   uint_8 reason  // reserved for later in case we need reasons
@@ -121,7 +129,7 @@ union RobotToEngine {
   PotentialCliff             potentialCliff         = 0xC1,
   SyncTimeAck                syncTimeAck            = 0xC2,
   RobotPoked                 robotPoked             = 0xC3,
-//          FREE SLOT!!!                            = 0xC4,
+  FallingEvent               fallingEvent           = 0xC4,
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
   PathFollowingEvent         pathFollowingEvent     = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,

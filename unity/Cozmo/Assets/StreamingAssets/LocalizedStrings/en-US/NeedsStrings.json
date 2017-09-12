@@ -49,7 +49,7 @@
     "translation": "Cozmo is fully fed!"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt": {
-    "translation": "Cozmo can't be fed because he can't hear his cubes"
+    "translation": "Cozmo can't be fed because he can't hear his Cubes"
   },
   "needs.NeedsEnergyModal.CubeHelp.Propmt.Button": {
     "translation": "RECONNECT CUBES"

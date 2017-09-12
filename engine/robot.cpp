@@ -54,13 +54,13 @@
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/ramp.h"
@@ -194,6 +194,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _carryingComponent(new CarryingComponent(*this))
   , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
   , _proxSensorComponent(std::make_unique<ProxSensorComponent>(*this))
+  , _touchSensorComponent(std::make_unique<TouchSensorComponent>(*this))
   , _animationComponent(std::make_unique<AnimationComponent>(*this, _context))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
@@ -519,8 +520,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                         "t=%dms, duration=%dms",
                         GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
-
-      _context->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Fall);
     }
     
     _offTreadsState = _awaitingConfirmationTreadState;
@@ -826,6 +825,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 
   // Update prox sensor component
   _proxSensorComponent->Update(msg);
+  
+  _touchSensorComponent->Update(msg);
 
   // update current path segment in the path component
   _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);
@@ -2585,9 +2586,6 @@ Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) cons
       
 } // GetBoundingBoxXY()
     
-  
-    
-    
 f32 Robot::GetHeight() const
 {
   return std::max(ROBOT_BOUNDING_Z, GetLiftHeight() + LIFT_HEIGHT_ABOVE_GRIPPER);
@@ -2598,7 +2596,7 @@ f32 Robot::GetLiftHeight() const
   return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
 }
     
-Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
+Transform3d Robot::GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
 {
   Pose3d liftPose(_liftPose);
   ComputeLiftPose(atLiftAngle, liftPose);
@@ -2606,11 +2604,12 @@ Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
   Pose3d camPose = GetCameraPose(atHeadAngle);
       
   Pose3d liftPoseWrtCam;
-  bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
+  const bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
   
-  DEV_ASSERT(result, "Lift and camera poses should be in same pose tree");
-      
-  return liftPoseWrtCam;
+  DEV_ASSERT(result, "Robot.GetLiftTransformWrtCamera.LiftWrtCamPoseFailed");
+# pragma unused(result)
+  
+  return liftPoseWrtCam.GetTransform();
 }
     
 f32 Robot::ConvertLiftHeightToLiftAngleRad(f32 height_mm)
@@ -3208,6 +3207,7 @@ RobotState Robot::GetDefaultRobotState()
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
+                         0, // touch intensity value when not touched (from capacitive touch sensor)
                          -1); //int8_t currPathSegment
   
   return state;

@@ -1,4 +1,6 @@
-# Copyright (c) 2016 Anki, Inc.
+#!/usr/bin/env python3
+
+# Copyright (c) 2017 Anki, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -96,10 +98,11 @@ def walk_directory(f, path, exportedRootPath):
                 entryText = '    <Compile Include=\"' + relativeRoot + file + '" />\n'
                 f.write(entryText)
 
-def generate_project(file_path, source_path):
+def generate_project(file_path, source_paths):
     with open(file_path, 'w') as f:
         f.write(headerText)
-        walk_directory(f, source_path, 'clad')
+        for source_path, exported_path in source_paths:
+            walk_directory(f, source_path, exported_path)
         f.write(footerText)
         f.close()
 
@@ -121,5 +124,7 @@ def inject_clad_version(file_path):
         modified_content = versionFileText.replace('CLAD_VERSION', clad_version)
         f.write(modified_content)
 
-generate_project(os.path.join(here, 'csharp_clad', 'cladcsharp.csproj'), os.path.join(here, 'csharp_clad', 'clad'))
+generate_project(os.path.join(here, 'csharp_clad', 'cladcsharp.csproj'),
+    [(os.path.join(here, 'csharp_clad', 'clad'), 'clad'),
+    (os.path.join(here, 'csharp_clad', 'util'), 'util')])
 inject_clad_version(os.path.join(here, 'csharp_clad', 'version.cs'))

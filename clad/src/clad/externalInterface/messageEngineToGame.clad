@@ -892,10 +892,6 @@ message ResponseLocale {
   string locale
 }
 
-message UpdatedAssignments {
-  Anki::Util::AnkiLab::AssignmentDef assignments[uint_16]
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Notifications
 ///////////////////////////////////////////////////////////////////////////////
@@ -905,7 +901,12 @@ message ClearNotificationCache {
 
 message CacheNotificationToSchedule {
   int_32 secondsInFuture,
-  string textKey
+  string textKey,
+  bool   persist,
+}
+
+message NotificationTextKeys {
+  string textKeys[uint_16],
 }
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"

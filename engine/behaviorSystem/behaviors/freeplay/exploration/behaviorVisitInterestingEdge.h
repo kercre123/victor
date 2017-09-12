@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorVisitInterestingEdge_H__
 
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
-#include "engine/navMemoryMap/iNavMemoryMap.h"
+#include "engine/navMap/iNavMap.h"
 
 #include "anki/common/basestation/math/pose.h"
 
@@ -134,8 +134,8 @@ private:
   
   // score/distance associated with a border region
   struct BorderRegionScore {
-    using BorderRegion  = NavMemoryMapTypes::BorderRegion;
-    using BorderSegment = NavMemoryMapTypes::BorderSegment;
+    using BorderRegion  = MemoryMapTypes::BorderRegion;
+    using BorderSegment = MemoryMapTypes::BorderSegment;
     BorderRegionScore(const BorderRegion* rPtr, const size_t idx, float dSQ);
     // is valid if any field is set (we trust all are valid when set)
     inline bool IsValid() const { return borderRegionPtr && !borderRegionPtr->segments.empty(); }
@@ -205,8 +205,8 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // debug render functions
-  void RenderDiscardedRegion(const Robot& robot, const NavMemoryMapTypes::BorderRegion& region) const;
-  void RenderAcceptedRegion(const Robot& robot, const NavMemoryMapTypes::BorderRegion& region) const;
+  void RenderDiscardedRegion(const Robot& robot, const MemoryMapTypes::BorderRegion& region) const;
+  void RenderAcceptedRegion(const Robot& robot, const MemoryMapTypes::BorderRegion& region) const;
   void RenderChosenGoal(const Robot& robot, const BorderRegionScore& bestGoal) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

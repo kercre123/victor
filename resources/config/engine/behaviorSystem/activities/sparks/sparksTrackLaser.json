@@ -1,0 +1,22 @@
+{
+  "activityID" : "SparksTrackLaser",
+  "activityType" : "Sparked",
+  "requireSpark":"TrackLaser",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "behaviorChooser" :
+  {
+    "type" : "StrictPriority",
+    "behaviors" : [
+      "DriveOffCharger",
+      "VC_TrackLaser"
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 80,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "LaserTracked",
+  "softSparkTrigger": "SoftSparkUpgradeTracks"
+}

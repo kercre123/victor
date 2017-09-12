@@ -28,6 +28,7 @@ goog.provide('Blockly.BlockSvg');
 
 goog.require('Blockly.Block');
 goog.require('Blockly.ContextMenu');
+goog.require('Blockly.Grid');
 goog.require('Blockly.RenderedConnection');
 goog.require('Blockly.Touch');
 goog.require('Blockly.utils');
@@ -378,7 +379,7 @@ Blockly.BlockSvg.prototype.moveBy = function(dx, dy) {
   goog.asserts.assert(!this.parentBlock_, 'Block has parent.');
   var eventsEnabled = Blockly.Events.isEnabled();
   if (eventsEnabled) {
-    var event = new Blockly.Events.Move(this);
+    var event = new Blockly.Events.BlockMove(this);
   }
   var xy = this.getRelativeToSurfaceXY();
   this.translate(xy.x + dx, xy.y + dy);
@@ -482,11 +483,11 @@ Blockly.BlockSvg.prototype.snapToGrid = function() {
   if (this.isInFlyout) {
     return;  // Don't move blocks around in a flyout.
   }
-  if (!this.workspace.options.gridOptions ||
-      !this.workspace.options.gridOptions['snap']) {
+  var grid = this.workspace.getGrid();
+  if (!grid || !grid.shouldSnap()) {
     return;  // Config says no snapping.
   }
-  var spacing = this.workspace.options.gridOptions['spacing'];
+  var spacing = grid.getSpacing();
   var half = spacing / 2;
   var xy = this.getRelativeToSurfaceXY();
   var dx = Math.round((xy.x - half) / spacing) * spacing + half - xy.x;
@@ -618,9 +619,15 @@ Blockly.BlockSvg.prototype.tab = function(start, forward) {
   var target = list[forward ? i + 1 : i - 1];
   if (!target) {
     // Ran off of list.
-    var parent = this.getParent();
-    if (parent) {
-      parent.tab(this, forward);
+    // If there is an output, tab up to that block.
+    var outputBlock = this.outputConnection && this.outputConnection.targetBlock();
+    if (outputBlock) {
+      outputBlock.tab(this, forward);
+    } else { // Otherwise, go to next / previous block, depending on value of `forward`
+      var block = forward ? this.getNextBlock() : this.getPreviousBlock();
+      if (block) {
+        block.tab(this, forward);
+      }
     }
   } else if (target instanceof Blockly.Field) {
     target.showEditor_();
@@ -654,6 +661,92 @@ Blockly.BlockSvg.prototype.showHelp_ = function() {
 };
 
 /**
+ * Creates a callback function for a click on the "duplicate" context menu
+ * option in Scratch Blocks.  The block is duplicated and attached to the mouse,
+ * which acts as though it were pressed and mid-drag.  Clicking the mouse
+ * releases the new dragging block.
+ * @return {Function} A callback function that duplicates the block and starts a
+ *     drag.
+ * @private
+ */
+Blockly.BlockSvg.prototype.duplicateAndDragCallback_ = function() {
+  var oldBlock = this;
+  return function(e) {
+    // Give the context menu a chance to close.
+    setTimeout(function() {
+      var ws = oldBlock.workspace;
+      var svgRootOld = oldBlock.getSvgRoot();
+      if (!svgRootOld) {
+        throw new Error('oldBlock is not rendered.');
+      }
+
+      // Create the new block by cloning the block in the flyout (via XML).
+      var xml = Blockly.Xml.blockToDom(oldBlock);
+      // The target workspace would normally resize during domToBlock, which
+      // will lead to weird jumps.
+      // Resizing will be enabled when the drag ends.
+      ws.setResizesEnabled(false);
+
+      // Using domToBlock instead of domToWorkspace means that the new block
+      // will be placed at position (0, 0) in main workspace units.
+      var newBlock = Blockly.Xml.domToBlock(xml, ws);
+
+      // Scratch-specific: Give shadow dom new IDs to prevent duplicating on paste
+      Blockly.utils.changeObscuredShadowIds(newBlock);
+
+      var svgRootNew = newBlock.getSvgRoot();
+      if (!svgRootNew) {
+        throw new Error('newBlock is not rendered.');
+      }
+
+      // The position of the old block in workspace coordinates.
+      var oldBlockPosWs = oldBlock.getRelativeToSurfaceXY();
+
+      // Place the new block as the same position as the old block.
+      // TODO: Offset by the difference between the mouse position and the upper
+      // left corner of the block.
+      newBlock.moveBy(oldBlockPosWs.x, oldBlockPosWs.y);
+
+      // The position of the old block in pixels relative to the main
+      // workspace's origin.
+      var oldBlockPosPixels = oldBlockPosWs.scale(ws.scale);
+
+      // The offset in pixels between the main workspace's origin and the upper left
+      // corner of the injection div.
+      var mainOffsetPixels = ws.getOriginOffsetInPixels();
+
+      // The position of the old block in pixels relative to the upper left corner
+      // of the injection div.
+      var finalOffsetPixels = goog.math.Coordinate.sum(mainOffsetPixels,
+          oldBlockPosPixels);
+
+      var injectionDiv = ws.getInjectionDiv();
+      // Bounding rect coordinates are in client coordinates, meaning that they
+      // are in pixels relative to the upper left corner of the visible browser
+      // window.  These coordinates change when you scroll the browser window.
+      var boundingRect = injectionDiv.getBoundingClientRect();
+
+      // e is not a real mouseEvent/touchEvent/pointerEvent.  It's an event
+      // created by the context menu and doesn't have the correct coordinates.
+      // But it does have some information that we need.
+      var fakeEvent = {
+        clientX: finalOffsetPixels.x + boundingRect.left,
+        clientY: finalOffsetPixels.y + boundingRect.top,
+        type: 'mousedown',
+        preventDefault: function() {
+          e.preventDefault();
+        },
+        stopPropagation: function() {
+          e.stopPropagation();
+        },
+        target: e.target
+      };
+      ws.startDragWithFakeEvent(fakeEvent, newBlock);
+    }, 0);
+  };
+};
+
+/**
  * Show the context menu for this block.
  * @param {!Event} e Mouse event.
  * @private
@@ -671,9 +764,7 @@ Blockly.BlockSvg.prototype.showContextMenu_ = function(e) {
     var duplicateOption = {
       text: Blockly.Msg.DUPLICATE_BLOCK,
       enabled: true,
-      callback: function() {
-        Blockly.duplicate_(block);
-      }
+      callback: block.duplicateAndDragCallback_()
     };
     menuOptions.push(duplicateOption);
 
@@ -728,10 +819,9 @@ Blockly.BlockSvg.prototype.showContextMenu_ = function(e) {
   menuOptions.push(helpOption);
 
   // Allow the block to add or modify menuOptions.
-  if (this.customContextMenu && !block.isInFlyout) {
+  if (this.customContextMenu) {
     this.customContextMenu(menuOptions);
   }
-
   Blockly.ContextMenu.show(e, menuOptions, this.RTL);
   Blockly.ContextMenu.currentBlock = this;
 };
@@ -910,7 +1000,9 @@ Blockly.BlockSvg.prototype.dispose = function(healStack, animate) {
  * Play some UI effects (sound, animation) when disposing of a block.
  */
 Blockly.BlockSvg.prototype.disposeUiEffect = function() {
+  // *** ANKI CHANGE ***
   this.workspace.playAudio('delete');
+  //this.workspace.getAudioManager().play('delete');
 
   var xy = this.workspace.getSvgXY(/** @type {!Element} */ (this.svgGroup_));
   // Deeply clone the current block.
@@ -930,7 +1022,9 @@ Blockly.BlockSvg.prototype.disposeUiEffect = function() {
  * Play some UI effects (sound) after a connection has been established.
  */
 Blockly.BlockSvg.prototype.connectionUiEffect = function() {
+  // *** ANKI CHANGE ***
   this.workspace.playAudio('click');
+  //this.workspace.getAudioManager().play('click');
 };
 
 /**

@@ -12,7 +12,7 @@
         <script src="./lib/blocks/blocks_compressed.js"></script>
         <script src="./lib/blocks/blocks_compressed_vertical.js"></script>
         <!-- BOTTOM COMPRESSED FILES -->
- 
+
         <!-- TOP UNCOMPRESSED FILES -->
         <!-- NOTE: When updating lib/blocks/*, use these files instead of the above compressed files -->
         <!-- to see your changes immediately. When using these uncompressed files (either in browser -->
@@ -22,6 +22,7 @@
         <script src="./lib/blocks/blocks_common/colour.js"></script>
         <script src="./lib/blocks/blocks_common/math.js"></script>
         <script src="./lib/blocks/blocks_common/text.js"></script>
+        <script src="./lib/blocks/blocks_vertical/vertical_extensions.js"></script>
         <script src="./lib/blocks/blocks_vertical/control.js"></script>
         <script src="./lib/blocks/blocks_vertical/data.js"></script>
         <script src="./lib/blocks/blocks_vertical/event.js"></script>
@@ -30,6 +31,7 @@
         <script src="./lib/blocks/blocks_vertical/sound.js"></script>
         <script src="./lib/blocks/blocks_vertical/sensing.js"></script>
         -->
+
         <!-- BOTTOM UNCOMPRESSED FILES -->
 
         <script src="./lib/blocks/media/sounds.js"></script>
@@ -40,17 +42,19 @@
         <script src="./js/CozmoSaveLoadAPI.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
+        <script src="./extra/glossary.js"></script>
 
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
         <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
         <!-- <script src="./lib/vm/dist/web/scratch-vm.js"></script> -->
 
         <script src="./extra/extra-common.js"></script>
-        <script src="./LocalizedStrings/en-US/CodeLabStrings.js"></script>
+        <script src="./extra/localize.js"></script>
 
         <!-- CSS Styles -->
-        <link rel="stylesheet" href="./css/normalize.css">
+        <link rel="stylesheet" href="./css/normalize.css"/>
         <link rel="stylesheet" href="./css/common_vertical.css">
+        <link rel="stylesheet" href="./extra/glossary.css"/>
 	</head>
 
 	<body>
@@ -121,7 +125,7 @@
                       </shadow>
                   </value>
               </block>
-              
+
               <block type="cozmo_vert_turn">
                   <value name="ANGLE">
                       <shadow type="math_angle">
@@ -137,7 +141,7 @@
               <block type="cozmo_vert_dock_with_cube_by_id"></block>
             </category>
             <category name="Actions" colour="#5e3dfc" secondaryColour="0">
-            
+
               <block type="cozmo_vert_set_liftheight">
                   <value name="HEIGHT_RATIO">
                       <shadow type="math_number">
@@ -220,7 +224,7 @@
                 </value>
               </block>
             </category>
-            
+
             <category name="Events" colour="#f4b606" secondaryColour="0">
               <block type="event_whenflagclicked"></block>
               <block type="cozmo_event_on_face"></block>
@@ -230,13 +234,6 @@
               <block type="cozmo_event_on_cube_tap"></block>
               <block type="cozmo_event_on_cube_moved"></block>
 
-              <block type="event_whengreaterthan">
-                <value name="VALUE">
-                  <shadow type="math_number">
-                    <field name="NUM">10</field>
-                  </shadow>
-                </value>
-              </block>
               <block type="event_whenbroadcastreceived">
               </block>
               <block type="event_broadcast">
@@ -248,7 +245,7 @@
                 <value name="BROADCAST_OPTION">
                   <shadow type="event_broadcast_menu"></shadow>
                 </value>
-              </block>            
+              </block>
             </category>
 
             <category name="Control" colour="#e5580a" secondaryColour="0">
@@ -273,7 +270,7 @@
               <block type="control_repeat_until"></block>
               <block type="control_stop"></block>
             </category>
-            
+
             <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
               <!-- Cozmo -->
               <block type="cozmo_vert_get_position_3d"></block>
@@ -306,7 +303,6 @@
                 </value>
               </block>
             </category>
-
             <category name="Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_clear"></block>
                 <block type="cozmo_vert_cozmoface_display"></block>
@@ -331,7 +327,7 @@
                           <field name="NUM">1.0</field>
                       </shadow>
                   </value>
-                </block>                
+                </block>
                 <block type="cozmo_vert_cozmoface_draw_line">
                   <value name="X1">
                       <shadow type="math_number">
@@ -566,6 +562,18 @@
                   </shadow>
                   </value>
               </block>
+              <block type="operator_contains" id="operator_contains">
+                <value name="STRING1">
+                  <shadow type="text">
+                    <field name="TEXT">cozmo</field>
+                  </shadow>
+                </value>
+                <value name="STRING2">
+                  <shadow type="text">
+                    <field name="TEXT">coz</field>
+                  </shadow>
+                </value>
+              </block>
               <block type="operator_mod">
                   <value name="NUM1">
                   <shadow type="math_number">
@@ -596,7 +604,7 @@
                   </value>
               </block>
             </category>
-            
+
             <category name="Data" colour="#FF8C1A" secondaryColour="0" custom="VARIABLE">
             </category>
         </xml>
@@ -608,6 +616,20 @@
         <div id="close">
             <div class="primary">
                 <button id="closebutton" />
+            </div>
+        </div>
+
+        <!-- Export -->
+        <div id="exportbtn">
+            <div class="primary">
+                <button id="exportbutton" />
+            </div>
+        </div>
+
+        <!-- Glossary -->
+        <div id="glossary-button">
+            <div class="primary">
+                <button id="glossarybutton"></button>
             </div>
         </div>
 
@@ -635,8 +657,27 @@
                 <button id="greenflag" />
             </div>
             <div class="stop">
-                <button id="stop" />
+                <button id="stop"/>
             </div>
+        </div>
+
+        <div id="glossary-modal">
+          <div class="modal-background" data-type="close-glossary"></div>
+          <div id="glossary">
+            <div class="hd">
+              <button class="close-button" data-type="close-glossary">
+                <img src="./extra/images/icon_closeButton.svg"/>
+              </button>
+              <div id="glossary-title"></div>
+            </div>
+            <div class="bd">
+              <div id="glossary-categories"></div>
+              <div id="definitions-outer">
+                <div id="definitions"></div>
+              </div>
+              <div id="glossary-block-rendering-workspace"></div>
+            </div>
+          </div>
         </div>
 	</body>
 </html>

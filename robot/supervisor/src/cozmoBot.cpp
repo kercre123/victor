@@ -139,7 +139,6 @@ namespace Anki {
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 226, "CozmoBot.InitFail.LiftController", 305, "", 0);
 
-
 #ifdef COZMO_V2
         // Calibrate motors
         LiftController::StartCalibrationRoutine(1);
@@ -266,7 +265,6 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, IMU);
         IMUFilter::Update();
         ProxSensors::Update();
-
 
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates

@@ -105,11 +105,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _LoadingBar: {fileID: 0}
   _LoadingBarLabel: {fileID: 0}
-  _HomeHubData:
-    AssetBundlesToLoad:
-    - main_scene
-    MainSceneAssetBundleName: main_scene
-    MainSceneName: HomeHub
   _NeedsHubData:
     AssetBundlesToLoad:
     - needs_hub_scene
@@ -123,6 +118,8 @@ MonoBehaviour:
   - VizManager
   _LoadingCanvas: {fileID: 0}
   _AndroidPermissionPrefab: {fileID: 155414, guid: 75db25c32349545d1b369bdf95d35477,
+    type: 2}
+  _TMPSettingsDirectReference: {fileID: 11400000, guid: 69ed5bac41eebaa4c97e9d2a4168c54f,
     type: 2}
   _LoadingVersionLabel: {fileID: 0}
   _LoadingDeviceIdLabel: {fileID: 0}

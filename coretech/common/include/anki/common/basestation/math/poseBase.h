@@ -58,8 +58,9 @@ namespace Anki {
     // Set the ID for this pose. NOTE: ID is *not* copied with pose!
     void SetID(PoseID_t newID);
     
-    const TransformNd& GetTransform() const;
-    TransformNd& GetTransform();
+    TransformNd const& GetTransform() const&;
+    TransformNd &      GetTransform() &;
+    TransformNd        GetTransform() &&;
     
     // Set / check parent relationships:
     void ClearParent();
@@ -116,6 +117,7 @@ namespace Anki {
     static bool AreUnownedParentsAllowed();
     static void AllowUnownedParents(bool tf);
     bool IsOwned() const;
+    uint32_t GetNodeOwnerCount() const; // mostly useful for unit tests
     
   protected:
     

@@ -90,6 +90,7 @@ window.onload = function () {
 
     // Attach scratch-blocks events to VM.
     workspace.addChangeListener(vm.blockListener);
+    workspace.addChangeListener(vm.variableListener);
     const flyoutWorkspace = workspace.getFlyout().getWorkspace();
     flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
     flyoutWorkspace.addChangeListener(vm.monitorBlockListener);
@@ -287,10 +288,10 @@ window.onload = function () {
         vm.setTurboMode(turboOn);
     });
     document.getElementById('compatmode').addEventListener('change',
-    () => {
-        const compatibilityMode = document.getElementById('compatmode').checked;
-        vm.setCompatibilityMode(compatibilityMode);
-    });
+        () => {
+            const compatibilityMode = document.getElementById('compatmode').checked;
+            vm.setCompatibilityMode(compatibilityMode);
+        });
     const tabBlockExplorer = document.getElementById('tab-blockexplorer');
     const tabThreadExplorer = document.getElementById('tab-threadexplorer');
     const tabRenderExplorer = document.getElementById('tab-renderexplorer');

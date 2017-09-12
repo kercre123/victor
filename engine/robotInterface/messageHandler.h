@@ -77,6 +77,8 @@ public:
   
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
+  void ReadLabAssignmentsFromRobot(u32 serialNumber) const;
+
   void ConnectRobotToNeedsManager(u32 serialNumber) const;
 
 protected:

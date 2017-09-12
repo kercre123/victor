@@ -5,8 +5,10 @@ cxx_project(
                                     'android/**/*',
                                     'matlabVisionProcessor.*',
                                     'matlabVisualization.*',
-                                    'nvStorage.*']),
-    platform_srcs = [],
+                                    '*nvStorage.*',
+                                    'sim_hal.*']),
+    platform_srcs = [
+    ],
     headers = cxx_header_glob(['supervisor/src/*.h', 'transport/src/*.h']),
     platform_headers = []
 )

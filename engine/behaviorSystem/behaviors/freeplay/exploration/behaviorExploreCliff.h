@@ -81,8 +81,8 @@
 //  // score/distance associated with a border
 //  struct BorderScore {
 //    BorderScore() : borderInfo(), distanceSQ(0) {}
-//    BorderScore(const NavMemoryMapTypes::Border& b, float dSQ) : borderInfo(b), distanceSQ(dSQ) {}
-//    NavMemoryMapTypes::Border borderInfo;
+//    BorderScore(const MemoryMapTypes::Border& b, float dSQ) : borderInfo(b), distanceSQ(dSQ) {}
+//    MemoryMapTypes::Border borderInfo;
 //    float distanceSQ;
 //  };
 //  

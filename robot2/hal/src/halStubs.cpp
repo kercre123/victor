@@ -373,6 +373,12 @@ namespace Anki {
       proxData.spadCount = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
       return proxData;
     }
+    
+    u16 HAL::GetButtonState(const ButtonID button_id)
+    {
+      // TODO(agm) ask adam about this
+      return 0;
+    }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {

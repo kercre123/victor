@@ -43,25 +43,15 @@ class CozmoContext;
 class DesiredFaceDistortionComponent;
 class LocalNotifications;
 
-enum class RobotStorageState
-{
-  Inactive = 0,
-  Reading,
-  Writing
-};
-
-
 class NeedsManager
 {
 public:
   explicit NeedsManager(const CozmoContext* cozmoContext);
   ~NeedsManager();
 
-  void Init(const float currentTime_s, const Json::Value& inJson,
+  void Init(const float currentTime_s,      const Json::Value& inJson,
             const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-            const Json::Value& inDecayJson, const Json::Value& inDecayAJson,
-            const Json::Value& inDecayBJson,
-            const Json::Value& inHandlersJson,
+            const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
             const Json::Value& inLocalNotificationJson);
   void InitAfterConnection();
   void InitAfterSerialNumberAcquired(u32 serialNumber);
@@ -99,6 +89,8 @@ public:
   bool IsPendingSparksRewardMsg() const { return _pendingSparksRewardMsg; }
   void SparksRewardCommunicatedToUser();
 
+  static inline const std::string GetDecayConfigBaseFilename() { return "config/engine/needs_decay_config"; }
+
   static const char* kLogChannelName;
 
   // Handle various message types
@@ -134,7 +126,7 @@ private:
   static inline const std::string GetNurtureFolder() { return "nurture/"; }
 
   void PossiblyStartWriteToRobot(bool ignoreCooldown = false);
-  void StartWriteToRobot();
+  void StartWriteToRobot(const Time time);
   void FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime);
   bool StartReadFromRobot();
   bool FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res);
@@ -228,7 +220,7 @@ private:
 
   const std::string kPathToSavedStateFile;
 
-  RobotStorageState _robotStorageState = RobotStorageState::Inactive;
+  bool          _pendingReadFromRobot = false;
 
   // component to figure out what the current face distortion level should be
   // This gets instantiated when Init is called

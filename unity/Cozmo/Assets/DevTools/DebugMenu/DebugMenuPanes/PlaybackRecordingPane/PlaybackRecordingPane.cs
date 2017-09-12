@@ -100,7 +100,7 @@ namespace Cozmo.UI {
       if (!UInt32.TryParse(_NumPlayTimes.GetComponentInChildren<Text>().text, out numPlayTimes)) {
         numPlayTimes = 1;
       }
-      Anki.Core.UI.Automation.Automation.Instance.PlayFile(filename, "", numPlayTimes);
+      Anki.Core.UI.Automation.Automation.Instance.PlayFile(filename, numPlayTimes);
       DebugMenuManager.Instance.CloseDebugMenuDialog();
     }
 

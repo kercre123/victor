@@ -92,6 +92,7 @@ void LocalNotifications::Init(const Json::Value& json, Util::RandomGenerator* rn
   auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::NotificationsManagerReady>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestNotificationTextKeys>();
 
 #if ANKI_DEV_CHEATS
   g_DebugLocalNotifications = this;
@@ -104,6 +105,24 @@ void LocalNotifications::HandleMessage(const ExternalInterface::NotificationsMan
   // Generate all appropriate notifications on app start
   Generate();
 }
+
+template<>
+void LocalNotifications::HandleMessage(const ExternalInterface::RequestNotificationTextKeys& msg)
+{
+  ExternalInterface::NotificationTextKeys message;
+
+  for (const auto& config : _localNotificationConfig.items)
+  {
+    for (const auto& textKey : config.textKeys)
+    {
+      message.textKeys.push_back(textKey);
+    }
+  }
+
+  const auto& extInt = _context->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+
 
 void LocalNotifications::Update(const float currentTime_s)
 {
@@ -189,9 +208,11 @@ void LocalNotifications::Generate()
                       textKey.c_str());
       }
 
+      static const bool kPersist = false;
+      ExternalInterface::CacheNotificationToSchedule msg(secondsInFuture, textKey, kPersist);
       const auto& extInt = _context->GetExternalInterface();
-      extInt->Broadcast(ExternalInterface::MessageEngineToGame
-                        (ExternalInterface::CacheNotificationToSchedule(secondsInFuture, textKey)));
+      extInt->Broadcast(ExternalInterface::MessageEngineToGame(
+                        std::move(msg)));
     }
   }
 

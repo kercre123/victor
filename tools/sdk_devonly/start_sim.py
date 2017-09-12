@@ -81,11 +81,11 @@ def start_sim(coz_conn):
     coz_conn.send_msg(connect_robot_msg)
 
 
-def run(coz_conn):
+def run(coz_conn: cozmo.conn.CozmoConnection):
     global _options
 
     start_sim(coz_conn)
-    coz = coz_conn.wait_for_robot()
+    coz = coz_conn.wait_for_robot()  # type: cozmo.robot.Robot
 
     if _options.enter_sdk_mode:
         # EnterSdkMode is banned from SDK connection, so must first enable

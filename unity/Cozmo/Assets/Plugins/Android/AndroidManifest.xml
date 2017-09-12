@@ -7,6 +7,40 @@
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
+      <!-- Certain android apps send a 'file' scheme intent when a file is selected.
+           We are able in this case to check against the file's extension.
+           Example: Opening via third party file explorer app -->
+      <intent-filter android:label="Open with Cozmo">
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:mimeType="*/*" android:host="*"/>
+        <data android:scheme="file"/>
+        <!-- PathPattern is a regex like construct, where ".*" means match any character
+             and '\\.' is the double escaped '.' before the extension rather than indicating a path.
+             note that extra .'s in the pathname will not be matched (i.e. "my.file.codelab").
+
+             There is a workaround where one can simply specify a ton of pathpatterns to match
+             (i.e.: ".*\\..*\\..*\\.codelab", etc) to deal with all the dots in for example:
+              "http://www.site.com/file.codelab" -->
+        <data android:pathPattern=".*\\.codelab"/>
+        <data android:pathPattern=".*\\..*\\.codelab"/>
+        <data android:pathPattern=".*\\..*\\..*\\.codelab"/>
+        <data android:pathPattern=".*\\..*\\..*\\..*\\.codelab"/>
+        <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.codelab"/>
+        <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.codelab"/>
+        <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.codelab"/>
+      </intent-filter>
+      <!-- Certain android apps send a 'content' scheme intent when a file is selected.
+           Example: Opening an email attachment
+           @TODO: find out how to mask these against codelab files directly -->
+      <intent-filter android:label="Open Codelab File">
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:mimeType="*/*"/>
+        <data android:scheme="content"/>
+      </intent-filter>
     </activity>
     <!-- UTNotifications common -->
     <receiver android:name="universal.tools.notifications.AlarmBroadcastReceiver" />

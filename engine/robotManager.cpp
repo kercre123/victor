@@ -20,6 +20,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
 #include "engine/robotToEngineImplMessaging.h"
+#include "engine/utils/cozmoExperiments.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -372,6 +373,11 @@ bool RobotManager::ShouldFilterMessage(const RobotID_t robotId, const RobotInter
     return false;
   }
   return iter->second.ShouldFilterMessage(msgType);
+}
+
+void RobotManager::ReadLabAssignmentsFromRobot(u32 serialNumber) const
+{
+  _context->GetExperiments()->ReadLabAssignmentsFromRobot(serialNumber);
 }
 
 void RobotManager::ConnectRobotToNeedsManager(u32 serialNumber) const

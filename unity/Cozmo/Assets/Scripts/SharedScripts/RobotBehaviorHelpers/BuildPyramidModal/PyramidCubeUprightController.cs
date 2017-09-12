@@ -38,7 +38,7 @@ namespace Cozmo.Upgrades {
     }
 
     private void Update() {
-      if (!_ReopenModalCooldownStartTimestamp.IsNear(kDontCheckModalTimestamp, float.Epsilon)){
+      if (!Mathf.Approximately(_ReopenModalCooldownStartTimestamp, kDontCheckModalTimestamp)){
         bool isTimeToReopenModal = 
                (_ReopenModalCooldown_sec <= (Time.time - _ReopenModalCooldownStartTimestamp)
                && (!_AreCubesUpright));

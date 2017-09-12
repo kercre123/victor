@@ -41,17 +41,32 @@ namespace Cozmo.UI {
         return;
       }
       PointerEventData ped = data as PointerEventData;
-      Vector2 localCursor = ped.position;
-      RectTransformUtility.ScreenPointToLocalPointInRectangle(UIManager.GetUICanvas().GetComponent<RectTransform>(), ped.position, ped.pressEventCamera, out localCursor);
+      Vector2 borderSize = TooltipManager.Instance.MinBorderSpaceToEdge;
+      Vector2 clampedPos = new Vector2(Mathf.Clamp(ped.position.x, borderSize.x, Screen.width - borderSize.x),
+                                      Mathf.Clamp(ped.position.y, borderSize.y, Screen.height - borderSize.y));
+      Vector2 localCursor = new Vector2(clampedPos.x, clampedPos.y);
+      RectTransformUtility.ScreenPointToLocalPointInRectangle(UIManager.GetUICanvas().GetComponent<RectTransform>(), clampedPos, ped.pressEventCamera, out localCursor);
+      DAS.Event("tooltip.show", GetBodyLocKey());
       TooltipManager.Instance.ShowToolTip(GetHeaderString(), GetBodyString(), UIManager.GetUICanvas().transform, localCursor, _PreferredDir);
     }
 
+    // Base classes should override if need formatting
     protected virtual string GetHeaderString() {
-      return _ShowHeaderIndex < _HeaderLocKeys.Length ? Localization.Get(_HeaderLocKeys[_ShowHeaderIndex]) : string.Empty;
+      string headerLocKey = GetHeaderLocKey();
+      return headerLocKey == string.Empty ? string.Empty : Localization.Get(headerLocKey);
     }
 
     protected virtual string GetBodyString() {
-      return _ShowBodyIndex < _BodyLocKeys.Length ? Localization.Get(_BodyLocKeys[_ShowBodyIndex]) : string.Empty;
+      string bodyLocKey = GetBodyLocKey();
+      return bodyLocKey == string.Empty ? string.Empty : Localization.Get(bodyLocKey);
+    }
+
+    protected virtual string GetHeaderLocKey() {
+      return _ShowHeaderIndex < _HeaderLocKeys.Length ? _HeaderLocKeys[_ShowHeaderIndex] : string.Empty;
+    }
+
+    protected virtual string GetBodyLocKey() {
+      return _ShowBodyIndex < _BodyLocKeys.Length ? _BodyLocKeys[_ShowBodyIndex] : string.Empty;
     }
 
     // public API for toggling state

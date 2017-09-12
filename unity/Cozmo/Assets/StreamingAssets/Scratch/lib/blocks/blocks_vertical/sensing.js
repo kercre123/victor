@@ -25,6 +25,7 @@ goog.provide('Blockly.Blocks.sensing');
 goog.require('Blockly.Blocks');
 goog.require('Blockly.Colours');
 goog.require('Blockly.constants');
+goog.require('Blockly.ScratchBlocks.VerticalExtensions');
 
 
 Blockly.Blocks['sensing_touchingobject'] = {
@@ -41,13 +42,8 @@ Blockly.Blocks['sensing_touchingobject'] = {
           "name": "TOUCHINGOBJECTMENU"
         }
       ],
-      "inputsInline": true,
-      "output": "Boolean",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_HEXAGONAL
+      "extensions": ["colours_sensing", "output_boolean"]
     });
   }
 };
@@ -71,12 +67,7 @@ Blockly.Blocks['sensing_touchingobjectmenu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -95,13 +86,8 @@ Blockly.Blocks['sensing_touchingcolor'] = {
           "name": "COLOR"
         }
       ],
-      "inputsInline": true,
-      "output": "Boolean",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_HEXAGONAL
+      "extensions": ["colours_sensing", "output_boolean"]
     });
   }
 };
@@ -124,13 +110,8 @@ Blockly.Blocks['sensing_coloristouchingcolor'] = {
           "name": "COLOR2"
         }
       ],
-      "inputsInline": true,
-      "output": "Boolean",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_HEXAGONAL
+      "extensions": ["colours_sensing", "output_boolean"]
     });
   }
 };
@@ -150,11 +131,7 @@ Blockly.Blocks['sensing_distanceto'] = {
         }
       ],
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -177,12 +154,7 @@ Blockly.Blocks['sensing_distancetomenu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -201,12 +173,8 @@ Blockly.Blocks['sensing_askandwait'] = {
           "name": "QUESTION"
         }
       ],
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary
+      "extensions": ["colours_sensing", "shape_statement"]
     });
   }
 };
@@ -220,12 +188,8 @@ Blockly.Blocks['sensing_answer'] = {
     this.jsonInit({
       "message0": "answer",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -244,13 +208,8 @@ Blockly.Blocks['sensing_keypressed'] = {
           "name": "KEY_OPTION"
         }
       ],
-      "inputsInline": true,
-      "output": "Boolean",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_HEXAGONAL
+      "extensions": ["colours_sensing", "output_boolean"]
     });
   }
 };
@@ -314,12 +273,7 @@ Blockly.Blocks['sensing_keyoptions'] = {
           ]
         }
       ],
-      "inputsInline": true,
-      "output": "String",
-      "colour": Blockly.Colours.sensing.secondary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      "extensions": ["colours_sensing", "output_string"]
     });
   }
 };
@@ -332,13 +286,8 @@ Blockly.Blocks['sensing_mousedown'] = {
   init: function() {
     this.jsonInit({
       "message0": "mouse down?",
-      "inputsInline": true,
-      "output": "Boolean",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_HEXAGONAL
+      "extensions": ["colours_sensing", "output_boolean"]
     });
   }
 };
@@ -352,11 +301,7 @@ Blockly.Blocks['sensing_mousex'] = {
     this.jsonInit({
       "message0": "mouse x",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -370,11 +315,7 @@ Blockly.Blocks['sensing_mousey'] = {
     this.jsonInit({
       "message0": "mouse y",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -388,12 +329,8 @@ Blockly.Blocks['sensing_loudness'] = {
     this.jsonInit({
       "message0": "loudness",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -416,14 +353,9 @@ Blockly.Blocks['sensing_videoon'] = {
           "name": "VIDEOONMENU2"
         }
       ],
-      "inputsInline": true,
-      "output": "Number",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -447,12 +379,7 @@ Blockly.Blocks['sensing_videoonmenuone'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -474,12 +401,7 @@ Blockly.Blocks['sensing_videoonmenutwo'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -498,12 +420,8 @@ Blockly.Blocks['sensing_videotoggle'] = {
           "name": "VIDEOTOGGLEMENU"
         }
       ],
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary
+      "extensions": ["colours_sensing", "shape_statement"]
     });
   }
 };
@@ -528,12 +446,7 @@ Blockly.Blocks['sensing_videotogglemenu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -552,12 +465,8 @@ Blockly.Blocks['sensing_setvideotransparency'] = {
           "name": "TRANSPARENCY"
         }
       ],
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary
+      "extensions": ["colours_sensing", "shape_statement"]
     });
   }
 };
@@ -571,12 +480,8 @@ Blockly.Blocks['sensing_timer'] = {
     this.jsonInit({
       "message0": "timer",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -589,12 +494,8 @@ Blockly.Blocks['sensing_resettimer'] = {
   init: function() {
     this.jsonInit({
       "message0": "reset timer",
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary
+      "extensions": ["colours_sensing", "shape_statement"]
     });
   }
 };
@@ -625,12 +526,7 @@ Blockly.Blocks['sensing_of_property_menu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -654,12 +550,7 @@ Blockly.Blocks['sensing_of_object_menu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -685,11 +576,9 @@ Blockly.Blocks['sensing_of'] = {
       ],
       "output": true,
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_sensing"]
     });
   }
 };
@@ -708,14 +597,9 @@ Blockly.Blocks['sensing_current'] = {
           "name": "CURRENTMENU"
         }
       ],
-      "inputsInline": true,
-      "output": "Number",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -744,12 +628,7 @@ Blockly.Blocks['sensing_currentmenu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.sensing.secondary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["colours_sensing", "output_string"]
       });
   }
 };
@@ -763,11 +642,7 @@ Blockly.Blocks['sensing_dayssince2000'] = {
     this.jsonInit({
       "message0": "days since 2000",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };
@@ -781,12 +656,8 @@ Blockly.Blocks['sensing_username'] = {
     this.jsonInit({
       "message0": "username",
       "category": Blockly.Categories.sensing,
-      "colour": Blockly.Colours.sensing.primary,
-      "colourSecondary": Blockly.Colours.sensing.secondary,
-      "colourTertiary": Blockly.Colours.sensing.tertiary,
-      "output": "Number",
-      "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-      "checkboxInFlyout": true
+      "checkboxInFlyout": true,
+      "extensions": ["colours_sensing", "output_number"]
     });
   }
 };

@@ -197,7 +197,7 @@ namespace {
     Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
     context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
 
-    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(variationKey);
+    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(g_DebugNeedsManager->GetDecayConfigBaseFilename(), variationKey);
   }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
@@ -222,7 +222,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _robot(nullptr)
 , _needsState()
 , _needsStateFromRobot()
-, _needsConfig()
+, _needsConfig(cozmoContext)
 , _actionsConfig()
 , _starRewardsConfig()
 , _localNotifications(new LocalNotifications(cozmoContext, *this))
@@ -252,7 +252,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _pausedDurRemainingPeriodicDecay(0.0f)
 , _signalHandles()
 , kPathToSavedStateFile((cozmoContext->GetDataPlatform() != nullptr ? cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
-, _robotStorageState(RobotStorageState::Inactive)
+, _pendingReadFromRobot(false)
 , _faceDistortionComponent(new DesiredFaceDistortionComponent(*this))
 , _pendingSparksRewardMsg(false)
 , _sparksRewardMsg()
@@ -286,17 +286,15 @@ NeedsManager::~NeedsManager()
 }
 
 
-void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
+void NeedsManager::Init(const float currentTime_s,      const Json::Value& inJson,
                         const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-                        const Json::Value& inDecayJson, const Json::Value& inDecayAJson,
-                        const Json::Value& inDecayBJson,
-                        const Json::Value& inHandlersJson,
+                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson,
                         const Json::Value& inLocalNotificationJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
   _needsConfig.Init(inJson);
-  _needsConfig.InitDecay(inDecayJson, inDecayAJson, inDecayBJson);
+  _needsConfig.InitDecay(inDecayJson);
   
   _starRewardsConfig = std::make_shared<StarRewardsConfig>();
   _starRewardsConfig->Init(inStarsJson);
@@ -317,7 +315,6 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
   {
     auto helper = MakeAnkiEventUtil(*_cozmoContext->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ContinueInitializingNeedsManager>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetDamagedParts>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetNeedsLevels>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
@@ -336,8 +333,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetStarStatus>();
   }
 
-  // InitInternal will be called shortly after this, based on a GTE message that is sent
-  // after we receive another GTE message that has the saved AB test assignments
+  InitInternal(currentTime_s);
 }
 
 
@@ -419,6 +415,8 @@ void NeedsManager::InitAfterConnection()
 {
   _robot = _cozmoContext->GetRobotManager()->GetFirstRobot();
 
+  _pendingReadFromRobot = true;
+
   _connectionOccurredThisAppRun = true;
 }
 
@@ -444,6 +442,11 @@ void NeedsManager::InitAfterSerialNumberAcquired(u32 serialNumber)
 
 void NeedsManager::InitAfterReadFromRobotAttempt()
 {
+  // By this time we've finished reading the stored lab assignments from the
+  // robot, and immediately after that, the needs state.  So now we can
+  // attempt to activate the experiment
+  AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
+
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
 
@@ -622,8 +625,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     {
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to robot");
     }
-    _timeLastWrittenToRobot = now;
-    StartWriteToRobot();
+    StartWriteToRobot(now);
   }
 
   _localNotifications->Generate();
@@ -648,16 +650,16 @@ void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
       assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
       assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
   {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.AttemptActivateDecayExperiment",
                   "Experiment %s: assigned to variation: %s",
                   kUnconnectedDecayRatesExperimentKey.c_str(),
                   outVariationKey.c_str());
 
-    _needsConfig.SetUnconnectedDecayTestVariation(outVariationKey);
+    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(), outVariationKey);
   }
   else
   {
-    _needsConfig.SetUnconnectedDecayTestVariation(_needsConfig.kABTestDecayConfigControlKey);
+    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(), _needsConfig.kABTestDecayConfigControlKey);
   }
 }
 
@@ -1157,7 +1159,8 @@ void NeedsManager::SendTimeSinceBackgroundedDasEvent()
                        std::to_string(secsSinceLastBackgrounded).c_str());
   }
 }
-  
+
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetStarStatus& msg)
 {
@@ -1192,12 +1195,6 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetStarStatus& msg)
   ExternalInterface::StarStatus message((int)(timeRemainingToNextDay_s),givenStarToday);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-}
-
-template<>
-void NeedsManager::HandleMessage(const ExternalInterface::ContinueInitializingNeedsManager& msg)
-{
-  InitInternal(_currentTime_s);
 }
 
 template<>
@@ -1277,7 +1274,17 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsActionWhitelis
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComplete& msg)
 {
-  bool forceWriteToRobot = false;
+  if( msg.onboardingStage < _robotOnboardingStageCompleted )
+  {
+    // only complete resets are allowed...
+    PRINT_NAMED_WARNING("NeedsManager.HandleMessage.RegisterOnboardingComplete",
+                        "Negative onboarding progress %d -> %d is not allowed",
+                        _robotOnboardingStageCompleted, msg.onboardingStage);
+    return;
+  }
+  PRINT_CH_INFO(kLogChannelName, "RegisterOnboardingComplete",
+                "OnboardingStageCompleted: %d, finalStage: %d",
+                _robotOnboardingStageCompleted, msg.finalStage);
 
   _robotOnboardingStageCompleted = msg.onboardingStage;
 
@@ -1307,11 +1314,11 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
     // s_val: Unused
     // data: Unused
     Anki::Util::sEvent("needs.onboarding_completed", {}, "");
-
-    forceWriteToRobot = true;
   }
 
-  PossiblyStartWriteToRobot(forceWriteToRobot);
+  // onboarding phases are very important for not having to repeat view the charging screen so force write.
+  // we also know that they take several seconds to complete so won't be spammy.
+  PossiblyStartWriteToRobot(true);
 }
 
 template<>
@@ -1488,7 +1495,6 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotNeedsData& ms
                                              }))
   {
     PRINT_NAMED_ERROR("NeedsManager.WipeRobotNeedsData.EraseFailed", "Erase failed");
-    _robotStorageState = RobotStorageState::Inactive;
   }
 }
 
@@ -1516,13 +1522,12 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
   if (msg.isPaused)
   {
     // When backgrounding, we'll also write to robot if connected
-    if (_robotStorageState == RobotStorageState::Inactive)
+    if (_robot != nullptr)
     {
-      if (_robot != nullptr)
-      {
-        _timeLastWrittenToRobot = _needsState._timeLastWritten;
-        StartWriteToRobot();
-      }
+      // We pass in the time that was just set in SetPaused (above), when we
+      // wrote to device; this way, we're setting the robot save's 'time last
+      // written' to the EXACT SAME time
+      StartWriteToRobot(_needsState._timeLastWritten);
     }
 
     SendNeedsLevelsDasEvent("app_background");
@@ -1533,6 +1538,13 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
   else
   {
     // When un-backgrounding, apply decay for the time we were backgrounded
+
+    // Attempt to set the experiment variation for unconnected decay; this
+    // is to cover the case where the user backgrounds the app, and then
+    // the experiment's end date passes; in that case we want to switch
+    // back to the normal unconnected decay rates
+    AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
+
     const bool connected = (_robot == nullptr ? false : true);
     ApplyDecayForTimeSinceLastDeviceWrite(connected);
 
@@ -1643,15 +1655,6 @@ void NeedsManager::SendNeedsPauseStatesToGame()
 void NeedsManager::ApplyDecayAllNeeds(const bool connected)
 {
   const DecayConfig& config = connected ? _needsConfig._decayConnected : _needsConfig._decayUnconnected;
-
-  if (!connected)
-  {
-    // Before we apply unconnected decay, activate (or re-activate) the experiment
-    // for alternate decay rates.  This covers the issue of the user backgrounding
-    // the app, then the experiment end date passes, then the user un-backgrounds
-    // the app...in that case we want to make sure the experiment is ended
-    AttemptActivateDecayExperiment(_needsState._robotSerialNumber);
-  }
 
   _needsState.SetPrevNeedsBrackets();
 
@@ -1949,6 +1952,9 @@ void NeedsManager::SendStarUnlockedToGame()
 
 void NeedsManager::SendNeedsOnboardingToGame()
 {
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendNeedsOnboardingToGame",
+                "OnboardingStageCompleted %d",
+                _robotOnboardingStageCompleted);
   ExternalInterface::WantsNeedsOnboarding message(_robotOnboardingStageCompleted);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
@@ -2168,9 +2174,6 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
 
 void NeedsManager::PossiblyStartWriteToRobot(bool ignoreCooldown /* = false */)
 {
-  if (_robotStorageState != RobotStorageState::Inactive)
-    return;
-
   if (_robot == nullptr)
     return;
 
@@ -2179,29 +2182,32 @@ void NeedsManager::PossiblyStartWriteToRobot(bool ignoreCooldown /* = false */)
   const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
   if (ignoreCooldown || secsSinceLastSave > kMinimumTimeBetweenRobotSaves_sec)
   {
-    _timeLastWrittenToRobot = now;
-    StartWriteToRobot();
+    StartWriteToRobot(now);
   }
 }
 
-void NeedsManager::StartWriteToRobot()
+void NeedsManager::StartWriteToRobot(const Time time)
 {
   if (_robot == nullptr)
-    return;
-
-  if (!ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartWriteToRobot.RobotStorageConflict",
-              "Attempting to write to robot but state is %d", _robotStorageState))
   {
     return;
   }
 
-  if (_robotStorageState != RobotStorageState::Inactive)
+  // If we're reading from the robot, don't start a write operation, because
+  // the data we're writing will soon be replaced.  This can happen, e.g.,
+  // when robot has just connected (and thus we start reading), and user
+  // backgrounds the app
+  if (_pendingReadFromRobot)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot",
+                  "Aborting writing needs state to robot, because we are reading needs state from robot");
     return;
+  }
+
+  _timeLastWrittenToRobot = time;
 
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Writing to robot...");
   const auto startTime = system_clock::now();
-
-  _robotStorageState = RobotStorageState::Writing;
 
   const auto time_s = duration_cast<seconds>(_timeLastWrittenToRobot.time_since_epoch()).count();
   const auto timeLastWritten = Util::numeric_cast<uint64_t>(time_s);
@@ -2239,16 +2245,12 @@ void NeedsManager::StartWriteToRobot()
                                            }))
   {
     PRINT_NAMED_ERROR("NeedsManager.StartWriteToRobot.WriteFailed", "Write failed");
-    _robotStorageState = RobotStorageState::Inactive;
   }
 }
 
+
 void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime)
 {
-  ANKI_VERIFY(_robotStorageState == RobotStorageState::Writing, "NeedsManager.FinishWriteToRobot.RobotStorageConflict",
-              "Robot storage state should be Writing but instead is %d", _robotStorageState);
-  _robotStorageState = RobotStorageState::Inactive;
-
   const auto endTime = system_clock::now();
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
@@ -2257,48 +2259,33 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
   {
     PRINT_NAMED_ERROR("NeedsManager.FinishWriteToRobot.WriteFailed", "Write failed with %s", EnumToString(res));
   }
-  else
-  {
-    // The write was successful
-    // Send a message to the game to indicate write was completed??
-    //const auto& extInt = _cozmoContext->GetExternalInterface();
-    //extInt->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RequestSetUnlockResult(id, unlocked)));
-  }
 }
 
 
 bool NeedsManager::StartReadFromRobot()
 {
-  if (!ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartReadFromRobot.RobotStorageConflict",
-              "Attempting to read from robot but state is %d", _robotStorageState))
-  {
-    return false;
-  }
-
-  _robotStorageState = RobotStorageState::Reading;
-
   if (!_robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
                                           [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
+                                            _pendingReadFromRobot = false;
+
                                             _robotHadValidNeedsData = FinishReadFromRobot(data, size, res);
 
                                             InitAfterReadFromRobotAttempt();
                                           }))
   {
     PRINT_NAMED_ERROR("NeedsManager.StartReadFromRobot.ReadFailed", "Failed to start read of needs system robot storage");
-    _robotStorageState = RobotStorageState::Inactive;
+
+    _pendingReadFromRobot = false;
     return false;
   }
 
   return true;
 }
 
+
 bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res)
 {
-  ANKI_VERIFY(_robotStorageState == RobotStorageState::Reading, "NeedsManager.FinishReadFromRobot.RobotStorageConflict",
-              "Robot storage state should be Reading but instead is %d", _robotStorageState);
-  _robotStorageState = RobotStorageState::Inactive;
-
   if (res < NVStorage::NVResult::NV_OKAY)
   {
     // The tag doesn't exist on the robot indicating the robot is new or has been wiped

@@ -34,7 +34,13 @@ if [ $RUNNING -ne 0 ]; then
         $ADB push "${LLDB_DIST}/libc++_shared.so" "${APP_ROOT}/lib/lldb-server/" 
     fi
     echo "starting lldb-server on port $IP_ADDR:$PORT"
-    $ADB shell "cd ${APP_ROOT}/bin && LD_LIBRARY_PATH=${APP_ROOT}/lib/lldb-server nohup ${LLDB_SERVER} platform --server --listen *:$PORT" &
+    $ADB shell "cd ${APP_ROOT}/bin && LD_LIBRARY_PATH=${APP_ROOT}/lib/lldb-server nohup ${LLDB_SERVER} platform --server --listen *:$PORT" </dev/null >/dev/null 2>&1 &
+    if [ $? -eq 0 ]; then
+        echo "lldb-server started"
+    else
+        echo "error: lldb-server failed to start"
+        exit 1
+    fi
 else
     echo "lldb-server running on $IP_ADDR"
 fi
