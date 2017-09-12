@@ -16,10 +16,7 @@ class SpineEvent:
         self.duration += duration/1e6
         self.time = time/1e6
 
-EventNames = ['READ','SYNC','FRAME','SEND']
-#EventTags = ['R','Wait','Rcv','Run']
-EventTags = EventNames
-EventColors = ['red','orange','yellow','green']
+EventColors = ['red','orange','yellow','green','blue','cyan','violet']
 YSCALE = 10
 
     
@@ -31,9 +28,10 @@ if __name__ == '__main__':
     print("args==",args)
 
     events=[]
+    EventNames = args.eventfile.readline().split(',')
+    EventTags = EventNames
     datareader = csv.reader(args.eventfile )
-    print(args.eventfile)
-    print(datareader)
+
     last_time = 0;
     next_duration = 0
     for line in datareader:
@@ -42,12 +40,11 @@ if __name__ == '__main__':
             base_time = timestamp
         else:
             duration = timestamp - last_time;
-            if events and eventid == events[-1].id:
-                next_duration += duration
-                #                events[-1].merge(duration, timestamp-base_time)
-            else:
-                events.append(SpineEvent(eventid, duration+next_duration, timestamp-base_time))
-                next_duration = 0
+            # if events and eventid == events[-1].id:
+            #     next_duration += duration
+            # else:
+            events.append(SpineEvent(eventid, duration+next_duration, timestamp-base_time))
+            # next_duration = 0
         last_time = timestamp;
 
 
@@ -74,14 +71,11 @@ if __name__ == '__main__':
     t = 0;
     xs= []
     ys=[]
-    
-    for e in events:
-        if e.id == 3:
-            delta = e.time - t;
-            t = e.time
-            xs.append(t)
-            ys.append(delta) #-e.duration)
-#            deltas.append((t,))
+    for e in [ev for ev in events if ev.id == 3]:
+        delta = e.time - t;
+        t = e.time
+        xs.append(t)
+        ys.append(delta)
 
     pyplot.plot(xs,ys)
 
@@ -94,27 +88,13 @@ if __name__ == '__main__':
             period.append(start)
             start+=1000/195.0
     
-#    print(period)
     ys=[YSCALE*2 for v in period]
     pyplot.plot(period, ys, marker='*')
 
-#    pyplot.show()
-
-    # data = [[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0],
-    #         [0, 0, 2, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0], 
-    #         [0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 3, 0, 3]]
-#    data = [[3,0],[4,1],[7,2],[8.1,3],[11.5,0]]
 
     data = [[e.time,e.id] for e in events]
 
-#    ax.axes.get_yaxis().set_visible()
-#    ax.set_aspect(1)
 
-    def avg(a, b):
-        return (a + b) / 2.0
-
-
-    
     lastt = 0
     for pair in data:
         time,event = pair
@@ -122,7 +102,6 @@ if __name__ == '__main__':
         lastt = time
         y1 = np.array([YSCALE*event, YSCALE*event])
         y2 = y1+YSCALE
-#        print(x1,y1,y2)
         pyplot.fill_between(x1, y1, y2=y2, color=EventColors[event])
 
     LabelNum = 0
@@ -133,9 +112,9 @@ if __name__ == '__main__':
         LabelNum = LabelNum+1
         return r
 
-    
-    labels = [NextLabel(item) for item in ax.get_yticklabels()]
-    print(labels)
+    ax.set_yticks([(0.5+i)*YSCALE for i,v in enumerate(EventNames)])
+    print(ax.get_yticklabels())
+    labels = EventNames #[NextLabel(item) for item in ax.get_yticklabels()]
     ax.set_yticklabels(labels)        
 
     pyplot.ylim(len(EventNames)*YSCALE, 0)
