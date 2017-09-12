@@ -453,14 +453,29 @@ namespace AnkiLog
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
-                        /*/add some default settings
-                        sw.WriteLine("dut-center=2402;");
-                        sw.WriteLine("dut-width=2;");
-                        sw.WriteLine("dut-min=-100;");
-                        sw.WriteLine("dut-max=0;");
-                        sw.WriteLine("dut-khz=100;");
-                        sw.WriteLine("dut-offset=0;");
-                        */
+                        //add some default settings
+                        sw.WriteLine("; Set cube, head, and body test limits in this file");
+                        sw.WriteLine("; Units are MHz and dB");
+                        sw.WriteLine("");
+                        sw.WriteLine("cube-center=2402");
+                        sw.WriteLine("cube-width=2");
+                        sw.WriteLine("cube-min=-1 ; set this value with calibrated limit");
+                        sw.WriteLine("cube-max=0  ; set this value with calibrated limit");
+                        sw.WriteLine("cube-khz=100");
+                        sw.WriteLine("cube-samples=600");
+                        sw.WriteLine("");
+                        sw.WriteLine("body-center=2402");
+                        sw.WriteLine("body-width=2");
+                        sw.WriteLine("body-min=-1 ; set this value with calibrated limit");
+                        sw.WriteLine("body-max=0  ; set this value with calibrated limit");
+                        sw.WriteLine("body-khz=100");
+                        sw.WriteLine("body-samples=600");
+                        sw.WriteLine("");
+                        sw.WriteLine("head-center=2462 ; Ch 11");
+                        sw.WriteLine("head-width=4");
+                        sw.WriteLine("head-min=-1 ; set this value with calibrated limit");
+                        sw.WriteLine("head-max=0  ; set this value with calibrated limit");
+                        sw.WriteLine("head-samples=600");
                     }
                 }
 
