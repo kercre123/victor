@@ -10,7 +10,7 @@ void big_init(big_num_t& num) {
 }
 
 // Cheapo function for reducing used count
-static inline void bit_reduce(big_num_t& num) {
+static void bit_reduce(big_num_t& num) {
   while (num.used > 0 && num.digits[num.used-1] == 0) {
     num.used--;
   }

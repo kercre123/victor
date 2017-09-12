@@ -134,6 +134,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraSettings>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
 
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
@@ -951,7 +952,7 @@ namespace Cozmo {
       HistStateKey histStateKey;
       
       lastResult = _robot.GetStateHistory()->ComputeAndInsertStateAt(procResult.timestamp, t, &histStatePtr, &histStateKey, true);
-      
+
       if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
       {
         // Not finding pose information due to an origin mismatch is a normal thing
@@ -982,7 +983,9 @@ namespace Cozmo {
       assert(procResult.timestamp == t);
       
       // If we were moving too fast at timestamp t then don't queue this marker
-      if(WasRotatingTooFast(t, DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)))
+      if(WasRotatingTooFast(t,
+                            DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
+                            DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)))
       {
         return RESULT_OK;
       }
@@ -1499,6 +1502,15 @@ namespace Cozmo {
         }
         break;
         
+      case 360:
+        if (captureWidth!=640) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::NHD;
+        }
+        break;
+
+        
       default:
         result = RESULT_FAIL;
     }
@@ -1514,7 +1526,9 @@ namespace Cozmo {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
     
-    cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+    if(img.GetNumChannels() == 3) {
+      cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+    }
     
     std::vector<u8> compressedBuffer;
     cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
@@ -2306,22 +2320,22 @@ namespace Cozmo {
   void VisionComponent::CaptureAndSendImage()
   {
     // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::QVGA;
+    const ImageResolution expectedResolution = ImageResolution::NHD;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);
-    const int numRows = Vision::CameraResInfo[cameraRes].height;
-    const int numCols = Vision::CameraResInfo[cameraRes].width;
-    
-    const int bufferSize = numRows * numCols * 3;
-    u8 buffer[bufferSize];
+    int numRows = Vision::CameraResInfo[cameraRes].height;
+    int numCols = Vision::CameraResInfo[cameraRes].width;
+
+    u8* buffer = nullptr;
     
     // Get image buffer
     // TODO: ImageImuData can be engine-only, non-clad, struct
     std::vector<ImageImuData> imuData;
     u32 imageId;
-    if (AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData)) {
-      
+    
+    if(AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData))
+    {
       // Add IMU data to history
       for (const auto& data : imuData) {
         GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
@@ -2329,6 +2343,18 @@ namespace Cozmo {
       
       // Create ImageRGB object from image buffer
       Vision::ImageRGB imgRGB(numRows, numCols, buffer);
+      
+      if(_imageSaveMode == ImageSendMode::SingleShot)
+      {
+        const std::string path = "/data/misc/camera/test/" + std::to_string(imageId) + ".png";
+        PRINT_CH_INFO("VisionComponent",
+                      "VisionComponent.CaptureAndSendImage.SavingImage",
+                      "Saving image to %s",
+                      path.c_str());
+        
+        imgRGB.Save(path);
+        _imageSaveMode = ImageSendMode::Off;
+      }
       
       if(kDisplayUndistortedImages)
       {
@@ -2450,6 +2476,15 @@ namespace Cozmo {
   }
   
   template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
+  {
+    if(payload.mode == ImageSendMode::SingleShot)
+    {
+      _imageSaveMode = payload.mode;
+    }
+  }
+  
+  template<>
   void VisionComponent::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
   {
     if (msg.result == RobotConnectionResult::Success)
@@ -2488,11 +2523,13 @@ namespace Cozmo {
             // 6 == BODY_VER_1v5c and anything less is an older version
             // We never verified the computed distortion coefficients of 1.0 or 1.5 robots at the factory
             // so as far as we know they are garbage so ignore them.
+            #ifndef COZMO_V2
             if(_robot.GetBodyHWVersion() <= 6)
             {
               PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.IgnoringDistCoeffs", "");
               payload.distCoeffs.fill(0);
             }
+            #endif
             
             // Convert calibration data in payload to a shared CameraCalibration object
             auto calib = std::make_shared<Vision::CameraCalibration>(payload.nrows,
@@ -2524,12 +2561,21 @@ namespace Cozmo {
 #ifdef COZMO_V2
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
-          std::array<float,8> distCoeffs{{0.2f,0.1f,0.05f,0.025f,0.f,0.f,0.f,0.f}};
-          auto calib = std::make_shared<Vision::CameraCalibration>(240, 320,
-                                                                   280, 280,
-                                                                   160, 120,
-                                                                   0,
-                                                                   distCoeffs);
+
+          // Calibration computed from Inverted Box target using one of the proto robots
+          // Should be close enough for other robots without calibration to use
+          const std::array<f32, 8> distortionCoeffs = {{-0.03822904514363595, -0.2964213946476391, -0.00181089972406104, 0.001866070303033584, 0.1803429725181202,
+            0, 0, 0}};
+
+          auto calib = std::make_shared<Vision::CameraCalibration>(360,
+                                          640,
+                                          364.7223064012286,
+                                          366.1693698832141,
+                                          310.6264440545544,
+                                          196.6729350209868,
+                                          0,
+                                          distortionCoeffs);
+          
           SetCameraCalibration(calib);
 #endif
           

@@ -189,6 +189,9 @@ Supervisor {
       %{ elseif fields.streamResolution.value == "CVGA" then }%
       width 400
       height 296
+      %{ elseif fields.streamResolution.value == "NHD" then }%
+      width 640
+      height 360
       %{ end }%
     }
   ]

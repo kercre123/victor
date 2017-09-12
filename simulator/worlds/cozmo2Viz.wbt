@@ -35,13 +35,14 @@ DEF CozmoViz_1 CozmoBot2 {
   vizMode TRUE
 }
 CozmoVizDisplay {
+  streamResolution "NHD"
 }
 WebotsKeyboardController{
   
   # To connect to a V2 Cozmo, uncomment both of these fields and 
   # update to the IP address of the robot.
-  # forcedRobotIP "192.168.X.X"
-  # engineIP      "192.168.X.X"
+  forcedRobotIP "192.168.1.121"
+  engineIP      "192.168.1.121"
   
   redirectViz            TRUE
   forcedRobotIsSimulated FALSE

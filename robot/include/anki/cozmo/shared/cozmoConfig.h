@@ -32,7 +32,7 @@ namespace Cozmo {
   const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
   const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
   
-  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
+  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);
   const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 44.5f);
   
   const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);

@@ -728,7 +728,43 @@ void NVStorageComponent::LoadDataFromFiles()
     
     PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.LoadDataFromFiles.LoadingData", "Tag 0x%x, data size = %zu bytes", tagNum, file.size());
     _tagDataMap[tagNum].assign(file.data(), file.data() + file.size());
-  }  
+  }
+  
+  // TODO: For now load factory related nvstorage files from the "factory" subdirectory. Will probably
+  // be moved to some read only place
+  fileList = Util::FileUtils::FilesInDirectory(_kStoragePath + "factory/", false, _kNVDataFileExtension);
+  
+  for (auto& fileName : fileList) {
+    
+    // Remove extension
+    const std::string tagStr = fileName.substr(0, fileName.find_last_of("."));
+    
+    // Check for valid fileName (Must be numeric and a valid tag)
+    char *end;
+    u32 tagNum = static_cast<u32>(strtoul(tagStr.c_str(), &end, 16));
+    if (tagNum <= 0) {
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.InvalidFileName", "%s", fileName.c_str());
+      continue;
+    }
+    
+    if (!IsFactoryEntryTag(static_cast<NVEntryTag>(tagNum)) ||
+        !IsPotentialFactoryEntryTag(tagNum)) {
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.InvalidTagValues", "0x%x", tagNum);
+      continue;
+    }
+    
+    // Read data from file
+    std::vector<u8> file = Util::FileUtils::ReadFileAsBinary(_kStoragePath + "factory/" + fileName);
+    if(file.empty())
+    {
+      PRINT_NAMED_ERROR("NVStorageComponent.LoadFactoryDataFromFiles.ReadFileFailed",
+                        "Unable to read nvStorage entry file %s", fileName.c_str());
+      continue;
+    }
+    
+    PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.LoadFactoryDataFromFiles.LoadingData", "Tag 0x%x, data size = %zu bytes", tagNum, file.size());
+    _tagDataMap[tagNum].assign(file.data(), file.data() + file.size());
+  }
 }
   
 void NVStorageComponent::Update()
