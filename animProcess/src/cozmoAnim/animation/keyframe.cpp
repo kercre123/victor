@@ -687,6 +687,8 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
 
     Result BodyMotionKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug)
     {
+      Result res = RESULT_OK;
+      
       SafeNumericCast(bodyKeyframe->durationTime_ms(), _durationTime_ms, animNameDebug.c_str());
       SafeNumericCast(bodyKeyframe->speed(),           _streamMsg.speed, animNameDebug.c_str());
 
@@ -698,17 +700,16 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
           _streamMsg.accel = 50.f;  // 50 was used in V1 for point turns
         }
       } else {
-        Result lastResult = ProcessRadiusString(radiusStr, animNameDebug);
-        if(lastResult != RESULT_OK) {
-          return lastResult;
-        }
+        res = ProcessRadiusString(radiusStr, animNameDebug);
       }
 
-      return RESULT_OK;
+      return res;
     }
 
     Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
+      Result res = RESULT_OK;
+      
       GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed, streamMsg.speed);
       
@@ -719,10 +720,7 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
         return RESULT_FAIL;
       } else if(jsonRoot["radius_mm"].isString()) {
         const std::string& radiusStr = jsonRoot["radius_mm"].asString();
-        Result lastResult = ProcessRadiusString(radiusStr, animNameDebug);
-        if(lastResult != RESULT_OK) {
-          return lastResult;
-        }
+        res = ProcessRadiusString(radiusStr, animNameDebug);
       } else {
         GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, radius_mm, streamMsg.curvatureRadius_mm);
         CheckTurnSpeed(animNameDebug);
@@ -731,7 +729,7 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
         }
       }
       
-      return RESULT_OK;
+      return res;
     }
     
     Result BodyMotionKeyFrame::ProcessRadiusString(const std::string& radiusStr, const std::string& animNameDebug)
@@ -740,6 +738,10 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
         _streamMsg.curvatureRadius_mm = 0;
         _streamMsg.accel = 50.f;  // 50 is what was used on V1 for point turns
         CheckRotationSpeed(animNameDebug);
+        
+        // Convert speed to radians from degrees
+        _streamMsg.speed = DEG_TO_RAD(_streamMsg.speed);
+        
       } else if(radiusStr == "STRAIGHT") {
         _streamMsg.curvatureRadius_mm = std::numeric_limits<s16>::max();
         _streamMsg.accel = 0.f;   // 0 is what was used on V1 for non point turns
