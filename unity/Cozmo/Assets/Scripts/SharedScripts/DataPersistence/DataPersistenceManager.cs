@@ -177,7 +177,7 @@ namespace DataPersistence {
         if (lastSession != null && lastSession.Date == DataPersistenceManager.Today) {
           return lastSession;
         }
-        return null;
+        return StartNewSession();
       }
     }
 
