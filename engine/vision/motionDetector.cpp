@@ -73,19 +73,18 @@ namespace {
 class MotionDetector::ImageRegionSelector
 {
 public:
-
   ImageRegionSelector(int width, int height, float horizontalSize, float verticalSize,
                       float increaseFactor, float decreaseFactor, float maxValue) :
       _topID(increaseFactor, decreaseFactor, maxValue),
-      _LeftID(increaseFactor, decreaseFactor, maxValue),
-      _RightID(increaseFactor, decreaseFactor, maxValue)
+      _leftID(increaseFactor, decreaseFactor, maxValue),
+      _rightID(increaseFactor, decreaseFactor, maxValue)
   {
     assert(horizontalSize <= 0.5);
     assert(verticalSize <= 0.5);
 
     _leftMargin = width * horizontalSize;
     _rightMargin = width - _leftMargin;
-    _upperMargin = height * (1.0f - verticalSize);
+    _upperMargin = height * verticalSize;
 
   }
 
@@ -95,11 +94,11 @@ public:
   }
   float getLeftResponse() const
   {
-    return _LeftID.Value();
+    return _leftID.Value();
   }
   float getRightResponse() const
   {
-    return _RightID.Value();
+    return _rightID.Value();
   }
 
   void Update(const cv::Point &point,
@@ -115,37 +114,33 @@ public:
     if (y <= _upperMargin) {
       topActivated = true;
       _topID.Update(value);
-      _RightID.Decay();
-      _LeftID.Decay();
+    }
+    else {
+      _topID.Decay();
     }
     //left and right are not in exclusion with top
     //left
     if (x <= _leftMargin) {
-      if (! topActivated) {
-        _topID.Decay();
-      }
-      _RightID.Decay();
-      _LeftID.Update(value);
+      _rightID.Decay();
+      _leftID.Update(value);
     }
       //right
     else if (x >= _rightMargin) {
-      if (! topActivated) {
-        _topID.Decay();
-      }
-      _RightID.Update(value);
-      _LeftID.Decay();
+      _rightID.Update(value);
+      _leftID.Decay();
 
     }
-    else { //they all go down
-      Decay();
+    else { //they both go down
+      _rightID.Decay();
+      _leftID.Decay();
     }
 
   }
 
   void Decay() {
     _topID.Decay();
-    _RightID.Decay();
-    _LeftID.Decay();
+    _rightID.Decay();
+    _leftID.Decay();
   }
 
 
@@ -165,12 +160,9 @@ private:
     float Update(float value = 0)
     {
       _value = _value + _increaseFactor * value - _decreaseFactor;
-      if (_value < 0) {
-        _value = 0;
-      }
-      else if (_value > _maxValue) {
-        _value = _maxValue;
-      }
+
+      _value = Util::Clamp(_value, 0.0f, _maxValue);
+
       return _value;
     }
 
@@ -196,8 +188,8 @@ private:
   float _upperMargin;
 
   ImpulseDecay _topID;
-  ImpulseDecay _LeftID;
-  ImpulseDecay _RightID;
+  ImpulseDecay _leftID;
+  ImpulseDecay _rightID;
 };
 
 static const char * const kLogChannelName = "VisionSystem";
@@ -211,7 +203,6 @@ MotionDetector::MotionDetector(const Vision::Camera& camera, VizManager* vizMana
 {
   DEV_ASSERT(kMotionDetection_MinBrightness > 0, "MotionDetector.Constructor.MinBrightnessIsZero");
 
-  // TODO make these proper parameters
 }
 
 // Need to do this for the pimpl implementation of ImageRegionSelector
@@ -358,7 +349,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
   if (_regionSelector == nullptr) {
     const float kHorizontalSize = 0.3;
     const float kVerticalSize = 0.3;
-    const float kIncreaseFactor = 0.001;
+    const float kIncreaseFactor = 0.01;
     const float kDecreaseFactor = 1.0;
     const float kMaxValue = 10.0;
 
@@ -422,6 +413,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     DetectPeripheralMotion(foregroundMotion, debugImageRGBs);
 
     // Remove noise
+    // Not necessary anymore, doing Gaussian blur above
 //    static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
 //    cv::morphologyEx(foregroundMotion.get_CvMat_(), foregroundMotion.get_CvMat_(), cv::MORPH_OPEN, kernel);
     
@@ -436,9 +428,6 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
       imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionDetection_CentroidPercentileX,
                                   kMotionDetection_CentroidPercentileY);
     }
-
-    // TODO remove this code and export to a new function. Separate so that in case ground plane is not visible, then
-    // call the other attention grabbing motion
 
     // Get centroid of all the motion within the ground plane, if we have one to reason about
     if(crntPoseData.groundPlaneVisible && prevPoseData.groundPlaneVisible)
@@ -696,26 +685,24 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
         return out.str();
       };
 
-      int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
-      double fontScale = 1;
-      int thickness = 2;
+      float scale = 0.5;
       {
         float value = _regionSelector->getTopResponse();
         std::string text = to_string_with_precision(value, 3);
-        cv::Point origin(imageToDisplay.GetNumCols()/2 - 10, 30);
-        cv::putText(imageToDisplay.get_CvMat_(), text, origin, fontFace, fontScale, cv::Scalar(0, 0, 255), thickness);
+        Anki::Point2f origin(imageToDisplay.GetNumCols()/2 - 10, 30);
+        imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
       {
         float value = _regionSelector->getRightResponse();
         std::string text = to_string_with_precision(value, 3);
-        cv::Point origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
-        cv::putText(imageToDisplay.get_CvMat_(), text, origin, fontFace, fontScale, cv::Scalar(0, 0, 255), thickness);
+        Anki::Point2f origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
+        imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
       {
         float value = _regionSelector->getLeftResponse();
         std::string text = to_string_with_precision(value, 3);
-        cv::Point origin(10, imageToDisplay.GetNumRows()/2);
-        cv::putText(imageToDisplay.get_CvMat_(), text, origin, fontFace, fontScale, cv::Scalar(0, 0, 255), thickness);
+        Anki::Point2f origin(10, imageToDisplay.GetNumRows()/2);
+        imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
     }
 
