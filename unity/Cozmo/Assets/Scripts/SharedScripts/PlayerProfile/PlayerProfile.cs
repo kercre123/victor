@@ -53,6 +53,7 @@ namespace DataPersistence {
 
     public bool OSNotificationsPermissionsPromptShown;
     public System.DateTime LastTimeAskedAboutNotifications;
+    public int NumTimesNotificationPermissionReminded;
 
     public Anki.Util.AnkiLab.AssignmentDef[] LabAssignments;
 
@@ -94,6 +95,7 @@ namespace DataPersistence {
 #else
       OSNotificationsPermissionsPromptShown = false;
 #endif
+      NumTimesNotificationPermissionReminded = 0;
       LastTimeAskedAboutNotifications = System.DateTime.Now;
 
     }

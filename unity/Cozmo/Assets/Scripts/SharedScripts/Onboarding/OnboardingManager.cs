@@ -69,6 +69,9 @@ public class OnboardingManager : MonoBehaviour {
   [SerializeField]
   private int _NotificationOnboardingReminder_Days = 7;
 
+  [SerializeField]
+  private int _NotificationOnboardingRepeatTimesMax = 3;
+
   private const string kOnboardingManagerIdleLock = "onboarding_manager_idle";
 
 #if UNITY_EDITOR
@@ -209,11 +212,17 @@ public class OnboardingManager : MonoBehaviour {
     }
     else if (!DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown) {
       PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
-      TimeSpan lastSpammed = DateTime.Now - profile.LastTimeAskedAboutNotifications;
-      // it's been a week, you might have changed your mind, and start when opening animation is done.
-      if (lastSpammed.TotalDays > _NotificationOnboardingReminder_Days) {
-        DAS.Event("notifications.weeklyreminder", "");
-        profile.OnboardingStages.Remove(OnboardingPhases.NotificationsPermission);
+      // we've shown you notifications onboarding once, but you never got to the OS prompt, reset onboarding 
+      // every week for 3 times to remind you.
+      if (!IsOnboardingRequired(OnboardingPhases.NotificationsPermission) &&
+          profile.NumTimesNotificationPermissionReminded < _NotificationOnboardingRepeatTimesMax) {
+        TimeSpan lastSpammed = DateTime.Now - profile.LastTimeAskedAboutNotifications;
+        // it's been a week, you might have changed your mind, and start when opening animation is done.
+        if (lastSpammed.TotalDays > _NotificationOnboardingReminder_Days) {
+          DAS.Event("notifications.weeklyreminder", "");
+          profile.NumTimesNotificationPermissionReminded++;
+          profile.OnboardingStages.Remove(OnboardingPhases.NotificationsPermission);
+        }
       }
     }
     _NeedsHubView.DialogOpenAnimationFinished += HandleNeedsViewOpenAnimationCompleted;
