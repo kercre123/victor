@@ -608,6 +608,11 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // so that we can use the exact same timestamp in StartWriteToRobot below
     _needsState._timeLastWritten = now;
     WriteToDevice(false);
+
+    // Set this flag to true because we now have valid needs data on the device,
+    // and we're done using the flag.  If we later disconnect and then reconnect
+    // (in the same app run), we want this flag to be accurate
+    _deviceHadValidNeedsData = true;
   }
 
   if (needToWriteToRobot)
