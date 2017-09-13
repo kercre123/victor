@@ -100,6 +100,12 @@ message WiFiFlashID
   uint_32 chip_id
 }
 
+message AudioInput
+{
+  int_16  data[320], // 80 samples of audio 4 channels
+  uint_32 sequenceID
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -169,6 +175,7 @@ union RobotToEngine {
   ImageImuData               imageGyro              = 0xF4,
   ObjectAccel                objectAccel            = 0xF5,
   AnimationAvailable         animationAvailable     = 0xF6,   // V2: sent from anim process
+  AudioInput                 audioInput             = 0xF7
 }
 
 

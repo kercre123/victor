@@ -40,6 +40,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
+#include "audioUtil/audioCaptureSystem.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "messages.h"
@@ -188,6 +189,14 @@ namespace Anki {
       u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
       bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
       
+      // AudioInput
+      // Use the mac mic as input with AudioCaptureSystem
+      constexpr uint32_t kSamplesPerChunk = 80;
+      AudioUtil::AudioCaptureSystem audioCaptureSystem_(kSamplesPerChunk);
+      
+      uint32_t audioInputSequenceID_ = 0;
+      std::deque<Anki::Cozmo::RobotInterface::AudioInput> audioInputData_{};
+      std::mutex audioInputMutex_;
 
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -263,6 +272,49 @@ namespace Anki {
             leds_[LED_BACKPACK_BACK]->set(0x0);
           }
           #endif
+        }
+      }
+      
+      void AudioInputCallback(const AudioUtil::AudioSample* data, uint32_t numSamples)
+      {
+        std::lock_guard<std::mutex> lock(audioInputMutex_);
+        audioInputData_.resize(audioInputData_.size() + 1);
+        auto& newData = audioInputData_.back();
+        
+        constexpr int kNumChannels = 4;
+        for (int j=0; j<kSamplesPerChunk; j++)
+        {
+          auto* sampleStart = newData.data + (j * kNumChannels);
+          const auto sample = data[j];
+          
+          for(int i=0; i<kNumChannels; ++i)
+          {
+            sampleStart[i] = sample;
+          }
+        }
+        newData.sequenceID = audioInputSequenceID_++;
+      }
+      
+      void AudioInputUpdate()
+      {
+        // Check if our sim mic thread has delivered more audio for us to send out
+        while(audioInputMutex_.try_lock())
+        {
+          if (audioInputData_.empty())
+          {
+            audioInputMutex_.unlock();
+            break;
+          }
+            
+          SendMessage(audioInputData_.front());
+          audioInputData_.pop_front();
+          if (audioInputData_.empty())
+          {
+            audioInputMutex_.unlock();
+            break;
+          }
+          
+          audioInputMutex_.unlock();
         }
       }
 
@@ -447,6 +499,11 @@ namespace Anki {
       leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("backpackLED1");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
       leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("backpackLED3");
+      
+      // Audio Input
+      audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
+      audioCaptureSystem_.Init();
+      audioCaptureSystem_.StartRecording();
 
       isInitialized = true;
       return RESULT_OK;
@@ -675,6 +732,7 @@ namespace Anki {
         MotorUpdate();
         RadioUpdate();
         AudioUpdate();
+        AudioInputUpdate();
         ActiveObjectsUpdate();
 
         /*

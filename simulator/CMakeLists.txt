@@ -137,6 +137,7 @@ anki_build_cxx_executable(webotsCtrlRobot2 ${ANKI_SRCLIST_DIR})
 target_link_libraries(webotsCtrlRobot2
 PRIVATE
   util
+  util_audio
   kazmath  
   cti_common
   cti_common_robot  

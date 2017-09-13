@@ -278,6 +278,13 @@ namespace Anki {
 
     } // step()
 
+    void ForwardAudioInput(void)
+    {
+      // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
+      // laid correctly.
+      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+      RobotInterface::SendMessage(*latestAudioInput);
+    }
 
     Result HAL::Step(void)
     {
@@ -306,6 +313,7 @@ namespace Anki {
       ProcessIMUEvents();
 #endif
       //MonitorConnectionState();
+      ForwardAudioInput();
       return result;
     }
 
