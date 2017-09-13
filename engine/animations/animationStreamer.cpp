@@ -229,6 +229,18 @@ namespace Cozmo {
     }
     else
     {
+      if(_streamingAnimation->IsLive())
+      {
+        // We cannot loop a "live" animation: its keyframes are deleted as they are played
+        if(!ANKI_VERIFY(numLoops == 1,
+                        "AnimationStreamer.SetStreamingAnimation.LoopingLiveAnimation",
+                        "Animation %s is marked 'live' but numLoops=%d. Clamping to 1.",
+                        _streamingAnimation->GetName().c_str(), numLoops))
+        {
+          numLoops = 1;
+        }
+      }
+
       _lastPlayedAnimationId = _streamingAnimation->GetName();
       
       IncrementTagCtr();
