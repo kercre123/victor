@@ -693,9 +693,10 @@ void camera_install_callback(camera_cb cb)
 #define X 640
 #define Y 360
 #define X6 214
-// A raw frame is 720x214 where each element is 64 bits and contains 6 pixels (each pixel is 10bits)
-// The least significant bits contain the left-most pixel so the 4 most significant bits are unused
-// A raw frame is in a 2x2 bayer format
+// A raw frame is 720x214 where each element is 64 bits and contains 6 color channels
+// (each color channel is 10bits)
+// The least significant bits contain the left-most color channel so the 4 most significant bits are unused
+// A raw frame is in a 2x2 bayer format, each 2x2 area will become one pixel in the output image
 //
 // R G R G ...
 // G B G B ...

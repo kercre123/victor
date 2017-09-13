@@ -13,6 +13,7 @@
 #include "schema/messages.h"
 #include "spine_crc.h"
 #include "spine_hal.h"
+#include "anki/cozmo/robot/event_trace.h"
 
 
 typedef uint32_t crc_t;
@@ -46,49 +47,6 @@ static struct HalGlobals {
 
 
 /****** SPINE DEBUG STUFF ****************/
-extern uint64_t steady_clock_now(void);
-
-#define MAX_EVENTS 0x1000
-typedef  enum {
-   event_READ,
-   event_SYNC,
-   event_FRAME,
-   event_SEND,
-} EventType;
-
-static struct SpineEvent_t{
-   uint64_t time;
-   EventType type;
-} EventLOG[MAX_EVENTS];
-static uint32_t EventCount=0;
-
-void LogEvent(EventType type)
-{
-   EventLOG[EventCount].time = steady_clock_now();
-   EventLOG[EventCount].type = type;
-   EventCount = (EventCount+1)&(MAX_EVENTS-1);
-}
-
-void DumpEvents()
-{
-   int i;
-   static FILE* fp = NULL;
-   
-   if (!fp) {
-      fp = fopen("event.log","w+");
-      LOGD("Dumping EVENT FILE: %p\n",fp);
-      for (i= EventCount; i< MAX_EVENTS;i++)
-      {
-         fprintf(fp, "%llu, %d\n", EventLOG[i].time, EventLOG[i].type);
-      }
-      for (i=0;i<EventCount;i++)
-      {
-         fprintf(fp, "%llu, %d\n", EventLOG[i].time, EventLOG[i].type);
-      }
-      fclose(fp);
-   }
-}
-      
 
 /************* Error Handling *****************/
 #define spine_error(code, fmt, args...)   (LOGE( fmt, ##args)?(code):(code))
@@ -275,7 +233,7 @@ static int spine_sync(const uint8_t* buf, unsigned int idx)
       //  buf already contains good tag. So just return the number of matches
       return match;
     }
-    else { LogEvent(event_SYNC); }
+    else { EventTrace(event_SYNC); }
   }
   return idx;
 }
@@ -333,15 +291,20 @@ int hal_resync_partial(int start_offset, int len) {
 //Spins until valid frame header is recieved.
 const struct SpineMessageHeader* hal_read_frame()
 {
-  static unsigned int index = 0;
+  EventTrace(event_READSTART);
 
-  LogEvent(event_READ);
+  static unsigned int index = 0;
 
   //spin here pulling single characters until whole sync rcvd
   while (index < SPINE_HEADER_LEN) {
 
     int rslt = hal_serial_read(gHal.inbuffer + index, 1);
     if (rslt > 0) {
+      if(index == 0)
+      {
+        EventTrace(event_READEND);
+      }
+    
       index = spine_sync(gHal.inbuffer, index);
     }
     else if (rslt < 0) {
@@ -354,6 +317,7 @@ const struct SpineMessageHeader* hal_read_frame()
     }
   } //endwhile
 
+  EventTrace(event_FRAMESTART);
 
   //At this point we have a valid message header. (spine_sync rejects bad lengths and payloadTypes)
   // Collect the right number of bytes.
@@ -392,7 +356,7 @@ const struct SpineMessageHeader* hal_read_frame()
     index = hal_resync_partial(SPINE_HEADER_LEN, total_message_length);
     return NULL;
   }
-  LogEvent(event_FRAME);
+  EventTrace(event_FRAMEEND);
   
   spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
   spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
@@ -430,7 +394,7 @@ const void* hal_wait_for_frame(uint16_t type)
 
 void hal_send_frame(PayloadId type, const void* data, int len)
 {
-   LogEvent(event_SEND);
+   EventTrace(event_SENDSTART);
   const uint8_t* hdr = spine_construct_header(type, len);
   crc_t crc = calc_crc(data, len);
   if (hdr) {
@@ -438,6 +402,7 @@ void hal_send_frame(PayloadId type, const void* data, int len)
     hal_serial_send(data, len);
     hal_serial_send((uint8_t*)&crc, sizeof(crc));
   }
+  EventTrace(event_SENDEND);
 }
 
 void hal_set_mode(int new_mode)
