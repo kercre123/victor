@@ -17,6 +17,7 @@ function usage() {
     echo "  -f                      force-run filelist updates and cmake configure before building"
     echo "  -d                      DEBUG: generate file lists and exit"
     echo "  -x [CMAKE_EXE]          path to cmake executable"
+    echo "  -C                      generate build config and exit without building"
 }
 
 #
@@ -25,13 +26,15 @@ function usage() {
 VERBOSE=0
 CONFIGURE=0
 GEN_SRC_ONLY=0
+RUN_BUILD=1
 CMAKE_EXE="${HOME}/.anki/cmake/dist/3.8.1/CMake.app/Contents/bin/cmake"
 
 CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
 
-while getopts ":x:b:c:p:g:hvfd" opt; do
+
+while getopts ":x:c:p:g:hvfdC" opt; do
     case $opt in
         h)
             usage
@@ -42,6 +45,10 @@ while getopts ":x:b:c:p:g:hvfd" opt; do
             ;;
         f)
             CONFIGURE=1
+            ;;
+        C)
+            CONFIGURE=1
+            RUN_BUILD=0
             ;;
         d)
             CONFIGURE=1
@@ -88,20 +95,25 @@ if [ ! -d "${TOPLEVEL}/generated" ] || [ ! -d "${TOPLEVEL}/EXTERNALS" ]; then
 fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
-: ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
 
 # For non-ninja builds, add generator type fo build dir
 BUILD_SYSTEM_TAG=""
-if [ ${CMAKE_GENERATOR} == "Ninja" ]; then
-    if [ ! -f "${BUILD_DIR}/build.ninja" ]; then
-        CONFIGURE=1
-    fi
-elif [ ${CMAKE_GENERATOR} == "Xcode" ]; then  
+if [ ${CMAKE_GENERATOR} != "Ninja" ]; then
     BUILD_SYSTEM_TAG="-${CMAKE_GENERATOR}"
-    if [ ! -f "${BUILD_DIR}/cozmo.xcodeproj" ]; then
+fi
+: ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
+
+#declare -A PROJECT_MAP
+PROJECT_MAP["Ninja"]="build.ninja"
+PROJECT_MAP["Xcode"]="cozmo.xcodeproj"
+
+if [ ${PROJECT_MAP[${CMAKE_GENERATOR}]+_} ]; then
+    # found
+    if [ ! -e "${BUILD_DIR}/${PROJECT_MAP[${CMAKE_GENERATOR}]}" ]; then
         CONFIGURE=1
     fi
 else
+    # not found
     echo "Unsupported CMake generator: ${CMAKE_GENERATOR}"
     exit 1
 fi
@@ -194,6 +206,10 @@ if [ $CONFIGURE -eq 1 ]; then
         -DBUILD_SHARED_LIBS=1 \
         "${PLATFORM_ARGS[@]}"
         
+fi
+
+if [ $RUN_BUILD -ne 1 ]; then
+    exit 0
 fi
 
 # Use shake (http://shakebuild.com/) to execute ninja files (if available)
