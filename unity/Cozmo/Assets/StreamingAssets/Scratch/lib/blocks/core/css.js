@@ -749,6 +749,7 @@ Blockly.Css.CONTENT = [
   '}',
 
   /* Category tree in Toolbox. */
+  // Horizontal only
   '.blocklyToolboxDiv {',
     'background-color: #535252;', // *** ANKI CHANGE ***
     //'background-color: $colour_toolbox;',
@@ -767,7 +768,7 @@ Blockly.Css.CONTENT = [
     'top: 100px;',
     'background-color: #535252;', // *** ANKI CHANGE ***
     //'background-color: $colour_toolbox;',
-    'color: $colour_toolboxText;',
+    //'color: $colour_toolboxText;', // *** ANKI CHANGE ***
     'overflow-x: visible;',
     'overflow-y: auto;',
     'position: absolute;',
@@ -1211,27 +1212,47 @@ Blockly.Css.CONTENT = [
 
   // Used for vertical
   '.scratchCategoryMenu {',
-    'width: 60px;',
-    'background-color: #ffffff;', // *** ANKI CHANGE ***
-    //'background: $colour_toolbox;',
-    'color: $colour_toolboxText;',
-    'font-size: .7em;',
-    'user-select: none;',
-    'text-transform: uppercase;',
-    '-webkit-user-select: none;',
-    '-moz-user-select: none;',
-    '-ms-user-select: none;',
+    // *** ANKI CHANGE ***
+    'font-size: .8em;',
+    'list-style-type: none;',
+    'cursor: pointer;',
+    'width: 80px;',
+    'padding: 0px 0px 0px 10px;',
+    'background: #bcbdbe;',
+    // 'background: $colour_toolbox;',
+    // 'color: $colour_toolboxText;',
+    // 'font-size: .7em;',
+    // 'user-select: none;',
+    // 'text-transform: uppercase;',
+    // '-webkit-user-select: none;',
+    // '-moz-user-select: none;',
+    // '-ms-user-select: none;',
   '}',
 
   '.scratchCategoryMenuRow {',
   '}',
 
+  // Added by Anki.
+  '.scratchCategoryMenuRowVertical {',
+    //'margin: 2px;', // *** ANKI CHANGE ***
+    'text-transform: uppercase;',
+    'font-size: .8em;',
+    'list-style-type: none;',
+    'cursor: pointer;',
+    'line-height: 1.2em;', // *** ANKI CHANGE ***
+    'margin: 0;',
+    //'padding: 14px 20px 10px 0;', // *** ANKI CHANGE ***
+    'border-bottom: 1px solid #afb1b1;',
+    'background-image: radial-gradient(circle at bottom, #b0b1b2 0%, #bcbdbe 60%);',
+  '}',
+
   '.scratchCategoryMenu .scratchCategoryMenuRow + .scratchCategoryMenuRow:before {',
-    'display: block;',
-    'border-top: 1px solid #ddd;',
-    'content: "";',
-    'width: 60%;',
-    'margin: 4px auto;',
+    //*** ANKI CHANGE ***
+    // 'display: block;',
+    // 'border-top: 1px solid #ddd;',
+    // 'content: "";',
+    // 'width: 60%;',
+    // 'margin: 4px auto;',
   '}',
 
   // *** ANKI CHANGE ***
@@ -1244,10 +1265,10 @@ Blockly.Css.CONTENT = [
 
   // Used by Anki for vertical only
   '.scratchCategoryMenuItem {',
-    'padding: 6px 0px;',
+    'padding: 6px 0px 2px 0px;',  // *** ANKI CHANGE ***
+    //'padding: 6px 0px;',
     'cursor: pointer;',
-    'margin: 0px 2px;',
-    'text-align: center;',
+    //'margin: 0px 2px;', // *** ANKI CHANGE ***
   '}',
 
   // *** ANKI CHANGE ***
@@ -1260,8 +1281,24 @@ Blockly.Css.CONTENT = [
 
   // Used by Anki for vertical only
   '.scratchCategoryMenuItem.categorySelected {',
-    'background: $colour_toolboxSelected;',
-    'border-radius: 6px;',
+    'position: relative;',
+    // 'background: $colour_toolboxSelected;',
+    // 'border-radius: 6px;',
+  '}',
+
+  // Added by Anki to show arrow selector
+  '.scratchCategoryMenuItem.categorySelected::before {',
+    'content: "";',
+    'position: absolute;',
+    'top: 11px;',
+    'right: 0px;',
+    'left: 69.5px;',
+    'display: inline-block;',
+    'width: 0;',
+    'height: 0;',
+    'border-top: 10px solid transparent;',
+    'border-bottom: 10px solid transparent;',
+    'border-right:10px solid #7d7d7d;',
   '}',
 
   // *** ANKI CHANGE ***
@@ -1281,20 +1318,19 @@ Blockly.Css.CONTENT = [
     'padding-top: 12px',
   '}',
 
+  // Used by Anki only for vertical
   '.scratchCategoryItemBubble {',
-    'width: 16px;',
-    'height: 16px;',
-    'border: 1px solid;',
-    'border-radius: 100%;',
-    'margin: 0 auto 3px;',
-  '}',
-
-  '.scratchCategoryItemBubble {',
-    'width: 16px;',
-    'height: 16px;',
-    'border: 1px solid;',
-    'border-radius: 100%;',
-    'margin: 0 auto 3px;',
+    // *** ANKI CHANGE ***
+    'display: block;',
+    'width: 1.4em;',
+    'height: 1.4em;',
+    'border-radius: 5px;',
+    'margin: 0 8px 3px 0;',
+    // 'width: 16px;',
+    // 'height: 16px;',
+    // 'border: 1px solid;',
+    // 'border-radius: 100%;',
+    // 'margin: 0 auto 3px;',
   '}',
 
   '.scratchCategoryMenuItem:hover {',

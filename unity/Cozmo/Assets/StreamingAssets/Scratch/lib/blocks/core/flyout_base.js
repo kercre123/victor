@@ -252,6 +252,11 @@ Blockly.Flyout.prototype.createDom = function(tagName) {
 
   this.svgBackground_ = Blockly.utils.createSvgElement('path',
       {'class': 'blocklyFlyoutBackground'}, this.svgGroup_);
+
+  if (window.isVertical) {
+    this.svgBackground_.style.fill = "#7d7d7d";
+  }
+
   this.svgGroup_.appendChild(this.workspace_.createDom());
   return this.svgGroup_;
 };

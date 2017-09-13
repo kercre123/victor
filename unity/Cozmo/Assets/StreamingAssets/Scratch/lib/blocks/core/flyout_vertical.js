@@ -278,9 +278,11 @@ Blockly.VerticalFlyout.prototype.position = function() {
   }
 
   // *** ANKI CHANGE ***
-  // Top of flyout is positioned 100 px down from top.
-  // TODO Revisit when we revise position for phones.
+  // Top of flyout is positioned down from top.
   y = 100;
+  if (window.innerWidth < window.TABLET_WIDTH) {
+    y = 60;
+  }
 
   // Record the height for Blockly.Flyout.getMetrics_
   this.height_ = Math.max(0, targetWorkspaceMetrics.viewHeight - y);

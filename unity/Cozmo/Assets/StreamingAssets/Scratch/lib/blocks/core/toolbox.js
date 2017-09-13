@@ -88,8 +88,8 @@ Blockly.Toolbox = function(workspace) {
  * @type {number}
  */
 // *** ANKI CHANGE ***
-// Width of the toolbox. msintov, 9/1/17
-Blockly.Toolbox.prototype.width = 60;
+// Width of the toolbox. Matches scratchCategoryMenu plus padding in css.js. msintov, 9/1/17
+Blockly.Toolbox.prototype.width = 90;
 //Blockly.Toolbox.prototype.width = 310;
 
 /**
@@ -120,6 +120,13 @@ Blockly.Toolbox.prototype.init = function() {
   
   this.HtmlDiv =
       goog.dom.createDom(goog.dom.TagName.DIV, toolboxDiv); // *** ANKI CHANGE ***
+
+  // *** ANKI CHANGE ***
+  // Move toolbox down different amount for phones.
+    if (window.isVertical && window.innerWidth < window.TABLET_WIDTH) {
+    this.HtmlDiv.style.top = "60px";
+  }
+
   this.HtmlDiv.setAttribute('dir', workspace.RTL ? 'RTL' : 'LTR');
   svg.parentNode.insertBefore(this.HtmlDiv, svg);
 
@@ -440,7 +447,7 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     // Create a single column of categories
     for (var i = 0; i < categories.length; i++) {
       var child = categories[i];
-      var row = goog.dom.createDom('div', 'scratchCategoryMenuRow');
+      var row = goog.dom.createDom('div', 'scratchCategoryMenuRowVertical');
       this.table.appendChild(row);
       if (child) {
         this.categories_.push(new Blockly.Toolbox.Category(this, row,
