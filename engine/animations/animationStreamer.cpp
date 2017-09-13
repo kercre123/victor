@@ -19,7 +19,7 @@
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/animations/proceduralFaceDrawer.h"
-#include "engine/audio/robotAudioClient.h"
+//#include "engine/audio/robotAudioClient.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
@@ -65,8 +65,7 @@ namespace Cozmo {
   const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
   
   
-  AnimationStreamer::AnimationStreamer(const CozmoContext* context,
-                                       Audio::RobotAudioClient& audioClient)
+  AnimationStreamer::AnimationStreamer(const CozmoContext* context) //,Audio::RobotAudioClient& audioClient)
   : IAnimationStreamer(context->GetExternalInterface())
   , _context(context)
   , _animationContainer(_context->GetRobotManager()->GetCannedAnimations())
@@ -74,7 +73,7 @@ namespace Cozmo {
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _rng(*_context->GetRandom())
   , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
-  , _audioClient( audioClient )
+//  , _audioClient( audioClient ) 
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   {
     _liveAnimation.SetIsLive(true);
@@ -294,7 +293,7 @@ namespace Cozmo {
                        type,
                        anim->GetName().c_str(),
                        anim->HasFramesLeft(),
-                       _audioClient.AnimationIsComplete(),
+                       false, //_audioClient.AnimationIsComplete(),
                        _startOfAnimationSent,
                        _endOfAnimationSent,
                        ToString(_sendBuffer).c_str());
@@ -303,10 +302,10 @@ namespace Cozmo {
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
 
-      if (_audioClient.HasAnimation()) {
-        _audioClient.GetCurrentAnimation()->AbortAnimation();
-      }
-      _audioClient.ClearCurrentAnimation();
+//      if (_audioClient.HasAnimation()) {
+//        _audioClient.GetCurrentAnimation()->AbortAnimation();
+//      }
+//      _audioClient.ClearCurrentAnimation();
     }
   } // Abort()
 
@@ -454,7 +453,7 @@ namespace Cozmo {
       _startOfAnimationSent = false;
       
       // Prep sound
-      _audioClient.CreateAudioAnimation( anim );
+//      _audioClient.CreateAudioAnimation( anim );
       
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
@@ -561,41 +560,41 @@ namespace Cozmo {
                                          TimeStamp_t streamingTime_ms,
                                          AnimKeyFrame::AudioSample& rawAudio_out)
   {
-    using namespace Audio;
+//    using namespace Audio;
     
     bool haveAudio = false;
     
-    if(_audioClient.HasAnimation())
-    {
-      RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
-      
-      RobotInterface::EngineToRobot* audioMsg = nullptr;
-      audioAnimation->PopRobotAudioMessage( audioMsg, startTime_ms, streamingTime_ms );
-      // Have an animation and audio so send the audio
-      if(nullptr != audioMsg)
-      {
-        rawAudio_out = std::move(audioMsg->Get_animAudioSample());
-        delete audioMsg;
-        haveAudio = true;
-
-        if(DEBUG_ANIMATION_STREAMING_AUDIO)
-        {
-          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
-                           "Has Animation and Audio Message");
-        }
-      }
-      // Have an animation but no audio so send silence
-      else
-      {
-        if(DEBUG_ANIMATION_STREAMING_AUDIO)
-        {
-          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
-                           "Has Animation Insert Silence");
-        }
-      }
-    }
+//    if(_audioClient.HasAnimation())
+//    {
+//      RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
+//      
+//      RobotInterface::EngineToRobot* audioMsg = nullptr;
+//      audioAnimation->PopRobotAudioMessage( audioMsg, startTime_ms, streamingTime_ms );
+//      // Have an animation and audio so send the audio
+//      if(nullptr != audioMsg)
+//      {
+//        rawAudio_out = std::move(audioMsg->Get_animAudioSample());
+//        delete audioMsg;
+//        haveAudio = true;
+//
+//        if(DEBUG_ANIMATION_STREAMING_AUDIO)
+//        {
+//          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
+//                           "Has Animation and Audio Message");
+//        }
+//      }
+//      // Have an animation but no audio so send silence
+//      else
+//      {
+//        if(DEBUG_ANIMATION_STREAMING_AUDIO)
+//        {
+//          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
+//                           "Has Animation Insert Silence");
+//        }
+//      }
+//    }
     // No animation so send silence
-    else
+//    else
     {
       if(DEBUG_ANIMATION_STREAMING_AUDIO)
       {
@@ -949,12 +948,12 @@ namespace Cozmo {
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
-        _audioClient.AnimationIsComplete() &&
+        true && //_audioClient.AnimationIsComplete() &&
         _sendBuffer.empty() &&
         _startOfAnimationSent &&
         !_endOfAnimationSent)
     {      
-       _audioClient.ClearCurrentAnimation();
+//       _audioClient.ClearCurrentAnimation();
       lastResult = SendEndOfAnimation(robot);
     }
     
@@ -967,28 +966,28 @@ namespace Cozmo {
     bool result = false;
     if ( _sendBuffer.empty() ) {
       
-      // There are animation frames, but no audio to play
-      if ( anim->HasFramesLeft() && !_audioClient.HasAnimation() ) {
-        result = true;
-      }
-      // There is audio to play
-      else if ( _audioClient.HasAnimation() ) {
-        // Update the RobotAudioAnimation object
-        _audioClient.GetCurrentAnimation()->Update(startTime_ms, streamingTime_ms);
-        // Check if audio is ready to proceed.
-        result = _audioClient.UpdateAnimationIsReady( startTime_ms, streamingTime_ms );
-        
-        // If audio takes too long abort animation
-        if ( !result ) {
-          // Watch for Audio time outs
-          
-          const auto state = _audioClient.GetCurrentAnimation()->GetAnimationState();
-          if ( state == Audio::RobotAudioAnimation::AnimationState::Preparing ) {
-            // Don't start timer until the Audio Animation has started posting audio events
-            return false;
-          }
-        }
-      }
+//      // There are animation frames, but no audio to play
+//      if ( anim->HasFramesLeft() && !_audioClient.HasAnimation() ) {
+//        result = true;
+//      }
+//      // There is audio to play
+//      else if ( _audioClient.HasAnimation() ) {
+//        // Update the RobotAudioAnimation object
+//        _audioClient.GetCurrentAnimation()->Update(startTime_ms, streamingTime_ms);
+//        // Check if audio is ready to proceed.
+//        result = _audioClient.UpdateAnimationIsReady( startTime_ms, streamingTime_ms );
+//        
+//        // If audio takes too long abort animation
+//        if ( !result ) {
+//          // Watch for Audio time outs
+//          
+//          const auto state = _audioClient.GetCurrentAnimation()->GetAnimationState();
+//          if ( state == Audio::RobotAudioAnimation::AnimationState::Preparing ) {
+//            // Don't start timer until the Audio Animation has started posting audio events
+//            return false;
+//          }
+//        }
+//      }
     }
     
     return result;

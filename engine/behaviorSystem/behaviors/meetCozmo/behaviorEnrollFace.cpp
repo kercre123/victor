@@ -15,7 +15,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/trackFaceAction.h"
 #include "engine/actions/sayTextAction.h"
-#include "engine/audio/robotAudioClient.h"
+//#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cliffSensorComponent.h"
@@ -710,7 +710,7 @@ void BehaviorEnrollFace::TransitionToSayingName(Robot& robot)
       if(_useMusic)
       {
         // NOTE: it will be up to the caller to stop this music
-        robot.GetRobotAudioClient()->PostMusicState((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
+//        robot.GetRobotAudioClient()->PostMusicState((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
       }
       
       {

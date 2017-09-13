@@ -16,7 +16,7 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
-#include "engine/audio/robotAudioClient.h"
+//#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
@@ -355,20 +355,19 @@ namespace Anki {
         {
           if (_waitUntilDone) {
             
-            
-            const  Audio::AudioEngineClient::CallbackFunc callback = [this] ( const AudioEngine::Multiplexer::AudioCallback& callback )
-            {
-              const  AudioEngine::Multiplexer::AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
-              if ( AudioEngine::Multiplexer::AudioCallbackInfoTag::callbackComplete == tag ||
-                   AudioEngine::Multiplexer::AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
-                _isCompleted = true;
-              }
-            };
-            
-            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj, std::move( callback ) );
+//            const  Audio::AudioEngineClient::CallbackFunc callback = [this] ( const AudioEngine::Multiplexer::AudioCallback& callback )
+//            {
+//              const  AudioEngine::Multiplexer::AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
+//              if ( AudioEngine::Multiplexer::AudioCallbackInfoTag::callbackComplete == tag ||
+//                   AudioEngine::Multiplexer::AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
+//                _isCompleted = true;
+//              }
+//            };
+//            
+//            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj, std::move( callback ) );
           }
           else {
-            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
+//            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
             _isCompleted = true;
           }
         }
@@ -376,7 +375,7 @@ namespace Anki {
           
         case AudioActionType::StopEvents:
         {
-          _robot.GetRobotAudioClient()->StopAllEvents(_gameObj);
+//          _robot.GetRobotAudioClient()->StopAllEvents(_gameObj);
           _isCompleted = true;
         }
           break;
@@ -384,15 +383,15 @@ namespace Anki {
         case AudioActionType::SetState:
         {
           // FIXME: This is temp until we add boot process which will start music at launch
-          if (AudioMetaData::GameState::StateGroupType::Music == _stateGroup) {
-            static bool didStartMusic = false;
-            if (!didStartMusic) {
-              _robot.GetRobotAudioClient()->PostEvent( static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::Music::Play), AudioMetaData::GameObjectType::Default );
-              didStartMusic = true;
-            }
-          }
-          
-          _robot.GetRobotAudioClient()->PostGameState(_stateGroup, _state);
+//          if (AudioMetaData::GameState::StateGroupType::Music == _stateGroup) {
+//            static bool didStartMusic = false;
+//            if (!didStartMusic) {
+//              _robot.GetRobotAudioClient()->PostEvent( static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::Music::Play), AudioMetaData::GameObjectType::Default );
+//              didStartMusic = true;
+//            }
+//          }
+//          
+//          _robot.GetRobotAudioClient()->PostGameState(_stateGroup, _state);
           _isCompleted = true;
         }
           break;

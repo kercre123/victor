@@ -80,7 +80,7 @@ namespace Messages {
   
 // #pragma mark --- Messages Method Implementations ---
 
-  Result Init(AnimationStreamer* animStreamer, Audio::EngineAudioInput* audioInput)
+  Result Init(AnimationStreamer& animStreamer, Audio::EngineAudioInput* audioInput)
   {
     
     // Setup robot and engine sockets

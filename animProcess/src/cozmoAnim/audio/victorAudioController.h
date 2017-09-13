@@ -14,7 +14,7 @@
 namespace Anki {
 namespace Cozmo {
 // Forward declaration
-class CozmoContext;
+class CozmoAnimContext;
 
 namespace Audio {
 
@@ -23,7 +23,7 @@ class VictorAudioController : public AudioEngine::AudioEngineController
 
 public:
 
-  VictorAudioController( const CozmoContext* context );
+  VictorAudioController( const CozmoAnimContext* context );
 
   virtual ~VictorAudioController();
 

@@ -15,11 +15,10 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/audio/audioEngineMessageHandler.h"
-#include "engine/audio/audioEngineInput.h"
-#include "engine/audio/audioUnityInput.h"
-#include "engine/audio/cozmoAudioController.h"
-#include "engine/audio/robotAudioClient.h"
+//#include "engine/audio/audioEngineInput.h"
+//#include "engine/audio/audioUnityInput.h"
+//#include "engine/audio/cozmoAudioController.h"
+//#include "engine/audio/robotAudioClient.h"
 #include "engine/ble/BLESystem.h"
 #include "engine/debug/cladLoggerProvider.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -440,10 +439,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   }
   
   // Tick Audio Controller after all messages have been processed
-  const auto audioMux = _context->GetAudioMultiplexer();
-  if (audioMux != nullptr) {
-    audioMux->UpdateAudioController();
-  }
+//  const auto audioMux = _context->GetAudioMultiplexer();
+//  if (audioMux != nullptr) {
+//    audioMux->UpdateAudioController();
+//  }
   
 #if ENABLE_CE_RUN_TIME_DIAGNOSTICS
   {
@@ -579,16 +578,16 @@ void CozmoEngine::SetEngineState(EngineState newState)
   
 Result CozmoEngine::InitInternal()
 {
-  // Setup Audio Controller
-  {
-    using namespace Audio;
-    // Setup Unity Audio Input
-    auto audioMux = _context->GetAudioMultiplexer();
-    if (audioMux) {
-      AudioUnityInput *unityInput = new AudioUnityInput( *_context->GetExternalInterface() );
-      audioMux->RegisterInput( unityInput );
-    }
-  }
+//  // Setup Audio Controller
+//  {
+//    using namespace Audio;
+//    // Setup Unity Audio Input
+//    auto audioMux = _context->GetAudioMultiplexer();
+//    if (audioMux) {
+//      AudioUnityInput *unityInput = new AudioUnityInput( *_context->GetExternalInterface() );
+//      audioMux->RegisterInput( unityInput );
+//    }
+//  }
   
   // Archive factory test logs
   FactoryTestLogger factoryTestLogger;
@@ -619,18 +618,18 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
   } else {
     PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
     
-    // Setup Audio Multiplexer with Robot Audio Input
-    using namespace Audio;
-    AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();
-    AudioEngineInput* engineInput = new AudioEngineInput( engineMessageHandler );
-    // Transfer ownership of Input to Audio Multiplexer
-    auto audioMux = _context->GetAudioMultiplexer();
-    if (audioMux) {
-      audioMux->RegisterInput( engineInput );
-    }
-    
-    // Set Robot Audio Client Message Handler to link to Input and Robot Audio Buffer ( Audio played on Robot )
-    robot->GetRobotAudioClient()->SetMessageHandler( engineInput->GetMessageHandler() );
+//    // Setup Audio Multiplexer with Robot Audio Input
+//    using namespace Audio;
+//    AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();
+//    AudioEngineInput* engineInput = new AudioEngineInput( engineMessageHandler );
+//    // Transfer ownership of Input to Audio Multiplexer
+//    auto audioMux = _context->GetAudioMultiplexer();
+//    if (audioMux) {
+//      audioMux->RegisterInput( engineInput );
+//    }
+//    
+//    // Set Robot Audio Client Message Handler to link to Input and Robot Audio Buffer ( Audio played on Robot )
+//    robot->GetRobotAudioClient()->SetMessageHandler( engineInput->GetMessageHandler() );
   }
   
   return lastResult;
@@ -727,11 +726,11 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg
   _isGamePaused = msg.isPaused;
   
   // Update Audio
-  const auto audioMux = _context->GetAudioMultiplexer();
-  if (nullptr != audioMux) {
-    auto audioCtrl = static_cast<Audio::CozmoAudioController*>( audioMux->GetAudioController() );
-    audioCtrl->AppIsInFocus(!_isGamePaused);
-  }
+//  const auto audioMux = _context->GetAudioMultiplexer();
+//  if (nullptr != audioMux) {
+//    auto audioCtrl = static_cast<Audio::CozmoAudioController*>( audioMux->GetAudioController() );
+//    audioCtrl->AppIsInFocus(!_isGamePaused);
+//  }
 }
   
 template<>

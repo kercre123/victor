@@ -14,8 +14,8 @@
 
 
 #include "engine/audio/behaviorAudioClient.h"
-#include "engine/audio/cozmoAudioController.h"
-#include "engine/audio/robotAudioClient.h"
+//#include "engine/audio/cozmoAudioController.h"
+//#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/workoutComponent.h"
@@ -167,11 +167,11 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
   }
   
   // Update audio engine
-  if (_isActive && roundState != Gameplay_Round::Invalid) {
-    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
-                                                  static_cast<GenericSwitch>(roundState),
-                                                  kMusicGameObject);
-  }
+//  if (_isActive && roundState != Gameplay_Round::Invalid) {
+//    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+//                                                  static_cast<GenericSwitch>(roundState),
+//                                                  kMusicGameObject);
+//  }
   return true;
 }
 
@@ -179,27 +179,27 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::UpdateActivityMusicState(ActivityID activityID)
 {
-  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
-                "RobotAudioClient.SetFreeplayMusic",
-                "ActivityName '%s'", ActivityIDToString(activityID));
-  
-  // Search for freeplay goal state
-  const auto it = freeplayStateMap.find(activityID);
-  if ( it != freeplayStateMap.end() ) {
-    // Found State, update audio (and reset round)
-    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
-                                                  static_cast<const GenericSwitch>(Gameplay_Round::Round_00),
-                                                  AudioMetaData::GameObjectType::Default);
-    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
-                                                  static_cast<const GenericSwitch>(it->second),
-                                                  AudioMetaData::GameObjectType::Default);
-  }
-  else
-  {
-    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
-                  "RobotAudioClient.UpdateActivityMusicState.NoFreeplayMusic",
-                  "No freeplay music for ActivityName '%s'", ActivityIDToString(activityID));
-  }
+//  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+//                "RobotAudioClient.SetFreeplayMusic",
+//                "ActivityName '%s'", ActivityIDToString(activityID));
+//  
+//  // Search for freeplay goal state
+//  const auto it = freeplayStateMap.find(activityID);
+//  if ( it != freeplayStateMap.end() ) {
+//    // Found State, update audio (and reset round)
+//    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+//                                                  static_cast<const GenericSwitch>(Gameplay_Round::Round_00),
+//                                                  AudioMetaData::GameObjectType::Default);
+//    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
+//                                                  static_cast<const GenericSwitch>(it->second),
+//                                                  AudioMetaData::GameObjectType::Default);
+//  }
+//  else
+//  {
+//    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+//                  "RobotAudioClient.UpdateActivityMusicState.NoFreeplayMusic",
+//                  "No freeplay music for ActivityName '%s'", ActivityIDToString(activityID));
+//  }
 }
   
   
@@ -210,27 +210,27 @@ bool BehaviorAudioClient::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
                                                const AudioMetaData::SwitchState::Sparked sparkedState,
                                                const int round)
 {
-  _activeSparkMusicID = behaviorUnlockId;
-
-  if (_activeSparkMusicID == UnlockId::Invalid) {
-    _isActive = false;
-    return false;
-  }
-
-  _isActive = true;
-  UpdateBehaviorRound(_activeSparkMusicID, round);
-
-  // Post Switch state for Sparked Behavior
-  if (sparkedState != Sparked::Invalid) {
-    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Sparked,
-                                                  static_cast<GenericSwitch>(sparkedState),
-                                                  kMusicGameObject);
-  }
-  
-  // Post Music state for Sparked Behavior
-  if (musicState != AudioMetaData::GameState::Music::Invalid) {
-    _robot.GetRobotAudioClient()->PostMusicState(static_cast<AudioMetaData::GameState::GenericState>(musicState));
-  }
+//  _activeSparkMusicID = behaviorUnlockId;
+//
+//  if (_activeSparkMusicID == UnlockId::Invalid) {
+//    _isActive = false;
+//    return false;
+//  }
+//
+//  _isActive = true;
+//  UpdateBehaviorRound(_activeSparkMusicID, round);
+//
+//  // Post Switch state for Sparked Behavior
+//  if (sparkedState != Sparked::Invalid) {
+//    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Sparked,
+//                                                  static_cast<GenericSwitch>(sparkedState),
+//                                                  kMusicGameObject);
+//  }
+//  
+//  // Post Music state for Sparked Behavior
+//  if (musicState != AudioMetaData::GameState::Music::Invalid) {
+//    _robot.GetRobotAudioClient()->PostMusicState(static_cast<AudioMetaData::GameState::GenericState>(musicState));
+//  }
   return true;
 }
 
@@ -307,38 +307,38 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateEvent)
 {
-  using AE = AudioMetaData::GameEvent::GenericEvent;
-  
-  if(_isCubeInLift != stateEvent.isCubeInLift){
-    _isCubeInLift = stateEvent.isCubeInLift;
-    
-    if(_isCubeInLift){
-      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Lift_Cube, kMusicGameObject);
-    }else{
-      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Lift_Cube, kMusicGameObject);
-    }
-  }
-  
-  if(_isRequestingGame != stateEvent.isRequestingGame){
-    _isRequestingGame = stateEvent.isRequestingGame;
-
-    if(_isRequestingGame){
-      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Request_Game, kMusicGameObject);
-    }else{
-      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Request_Game, kMusicGameObject);
-    }
-  }
-  
-  
-  if(_stackExists != (stateEvent.tallestStackHeight > 1)){
-    _stackExists = (stateEvent.tallestStackHeight > 1);
-    
-    if(_stackExists){
-      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Cubes_Stacked, kMusicGameObject);
-    }else{
-      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Cubes_Stacked, kMusicGameObject);
-    }
-  }
+//  using AE = AudioMetaData::GameEvent::GenericEvent;
+//  
+//  if(_isCubeInLift != stateEvent.isCubeInLift){
+//    _isCubeInLift = stateEvent.isCubeInLift;
+//    
+//    if(_isCubeInLift){
+//      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Lift_Cube, kMusicGameObject);
+//    }else{
+//      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Lift_Cube, kMusicGameObject);
+//    }
+//  }
+//  
+//  if(_isRequestingGame != stateEvent.isRequestingGame){
+//    _isRequestingGame = stateEvent.isRequestingGame;
+//
+//    if(_isRequestingGame){
+//      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Request_Game, kMusicGameObject);
+//    }else{
+//      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Request_Game, kMusicGameObject);
+//    }
+//  }
+//  
+//  
+//  if(_stackExists != (stateEvent.tallestStackHeight > 1)){
+//    _stackExists = (stateEvent.tallestStackHeight > 1);
+//    
+//    if(_stackExists){
+//      _robot.GetRobotAudioClient()->PostEvent(AE::Play__Cue_World_Event__Cubes_Stacked, kMusicGameObject);
+//    }else{
+//      _robot.GetRobotAudioClient()->PostEvent(AE::Stop__Cue_World_Event__Cubes_Stacked, kMusicGameObject);
+//    }
+//  }
 }
 
   
@@ -383,32 +383,32 @@ void BehaviorAudioClient::HandleSparkUpdates(const UnlockId& sparkID, const int 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
-  // Update the Guard Dog music mood/round if appropriate
-  if (currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog) {
-    // Change the freeplay mood to GuardDog if not already active
-    if (GetActiveBehaviorStage() != BehaviorStageTag::GuardDog) {
-      _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
-                                                    static_cast<const GenericSwitch>(Freeplay_Mood::Guard_Dog),
-                                                    AudioMetaData::GameObjectType::Default);
-    }
-    
-    // Update the GuardDog round if needed
-    if(currPublicStateStruct.currentGuardDogStage != _prevGuardDogStage) {
-      const auto round = Util::EnumToUnderlying(currPublicStateStruct.currentGuardDogStage);
-      DEV_ASSERT_MSG(round < kGameplayRoundMap.size(),
-                     "RobotAudioClient.HandleRobotPublicState.InvalidRound",
-                     "round: %d", round);
-      
-      _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
-                                                    static_cast<const GenericSwitch>(kGameplayRoundMap[round]),
-                                                    AudioMetaData::GameObjectType::Default);
-      
-      _prevGuardDogStage = currPublicStateStruct.currentGuardDogStage;
-    }
-  } else if (GetActiveBehaviorStage() != BehaviorStageTag::GuardDog) {
-    // reset GuardDog stuff
-    _prevGuardDogStage = GuardDogStage::Count;
-  }
+//  // Update the Guard Dog music mood/round if appropriate
+//  if (currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog) {
+//    // Change the freeplay mood to GuardDog if not already active
+//    if (GetActiveBehaviorStage() != BehaviorStageTag::GuardDog) {
+//      _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
+//                                                    static_cast<const GenericSwitch>(Freeplay_Mood::Guard_Dog),
+//                                                    AudioMetaData::GameObjectType::Default);
+//    }
+//    
+//    // Update the GuardDog round if needed
+//    if(currPublicStateStruct.currentGuardDogStage != _prevGuardDogStage) {
+//      const auto round = Util::EnumToUnderlying(currPublicStateStruct.currentGuardDogStage);
+//      DEV_ASSERT_MSG(round < kGameplayRoundMap.size(),
+//                     "RobotAudioClient.HandleRobotPublicState.InvalidRound",
+//                     "round: %d", round);
+//      
+//      _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+//                                                    static_cast<const GenericSwitch>(kGameplayRoundMap[round]),
+//                                                    AudioMetaData::GameObjectType::Default);
+//      
+//      _prevGuardDogStage = currPublicStateStruct.currentGuardDogStage;
+//    }
+//  } else if (GetActiveBehaviorStage() != BehaviorStageTag::GuardDog) {
+//    // reset GuardDog stuff
+//    _prevGuardDogStage = GuardDogStage::Count;
+//  }
 }
 
 
@@ -429,44 +429,43 @@ void BehaviorAudioClient::HandleDancingUpdates(const BehaviorStageStruct& currPu
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
-  const bool stageOrRoundChanged = (GetActiveBehaviorStage() != BehaviorStageTag::Feeding) ||
-                                     (_prevFeedingStage != currPublicStateStruct.currentFeedingStage);
-  
-  if((currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Feeding) &&
-     stageOrRoundChanged){
-    _prevFeedingStage =  currPublicStateStruct.currentFeedingStage;
-    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
-                                                  static_cast<const GenericSwitch>(kGameplayRoundMap[_round]),
-                                                  AudioMetaData::GameObjectType::Default);
-  }
+//  const bool stageOrRoundChanged = (GetActiveBehaviorStage() != BehaviorStageTag::Feeding) ||
+//                                     (_prevFeedingStage != currPublicStateStruct.currentFeedingStage);
+//  
+//  if((currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Feeding) &&
+//     stageOrRoundChanged){
+//    _prevFeedingStage =  currPublicStateStruct.currentFeedingStage;
+//    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+//                                                  static_cast<const GenericSwitch>(kGameplayRoundMap[_round]),
+//                                                  AudioMetaData::GameObjectType::Default);
+//  }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleNeedsUpdates(const NeedsLevels& needsLevel)
 {
-  using AGO = AudioMetaData::GameObjectType;
-  if(!FLT_NEAR(needsLevel.energy, _needsLevel.energy)){
-    _needsLevel.energy = needsLevel.energy;
-    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
-                                                _needsLevel.energy,
-                                                AGO::Invalid);
-  }
-  
-  if(!FLT_NEAR(needsLevel.repair, _needsLevel.repair)){
-    _needsLevel.repair = needsLevel.repair;
-    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Repair,
-                                                _needsLevel.repair,
-                                                AGO::Invalid);
-  }
-  
-  if(!FLT_NEAR(needsLevel.play, _needsLevel.play)){
-    _needsLevel.play = needsLevel.play;
-    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Play,
-                                                _needsLevel.play,
-                                                AGO::Invalid);
-  }
-  
+//  using AGO = AudioMetaData::GameObjectType;
+//  if(!FLT_NEAR(needsLevel.energy, _needsLevel.energy)){
+//    _needsLevel.energy = needsLevel.energy;
+//    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
+//                                                _needsLevel.energy,
+//                                                AGO::Invalid);
+//  }
+//  
+//  if(!FLT_NEAR(needsLevel.repair, _needsLevel.repair)){
+//    _needsLevel.repair = needsLevel.repair;
+//    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Repair,
+//                                                _needsLevel.repair,
+//                                                AGO::Invalid);
+//  }
+//  
+//  if(!FLT_NEAR(needsLevel.play, _needsLevel.play)){
+//    _needsLevel.play = needsLevel.play;
+//    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Play,
+//                                                _needsLevel.play,
+//                                                AGO::Invalid);
+//  }
 }
 
 
@@ -493,20 +492,20 @@ void BehaviorAudioClient::SetActiveBehaviorStage(BehaviorStageTag stageTag)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleDimMusicForActivity(const RobotPublicState& stateEvent)
 {
-  using AE = AudioMetaData::GameEvent::GenericEvent;
-  if(_prevActivity != stateEvent.currentActivity)
-  {
-    if(stateEvent.currentActivity == ActivityID::Singing)
-    {
-      _robot.GetRobotAudioClient()->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_On),
-                                              kMusicGameObject);
-    }
-    else if(_prevActivity == ActivityID::Singing)
-    {
-      _robot.GetRobotAudioClient()->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_Off),
-                                              kMusicGameObject);
-    }
-  }
+//  using AE = AudioMetaData::GameEvent::GenericEvent;
+//  if(_prevActivity != stateEvent.currentActivity)
+//  {
+//    if(stateEvent.currentActivity == ActivityID::Singing)
+//    {
+//      _robot.GetRobotAudioClient()->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_On),
+//                                              kMusicGameObject);
+//    }
+//    else if(_prevActivity == ActivityID::Singing)
+//    {
+//      _robot.GetRobotAudioClient()->PostEvent(static_cast<AE>(AudioMetaData::GameEvent::App::Music_Dim_Off),
+//                                              kMusicGameObject);
+//    }
+//  }
 }
 
   

@@ -45,7 +45,7 @@ CozmoAnimContext::~CozmoAnimContext()
 }
 
 
-Audio::VictorAudioController* CozmoContext::GetAudioController() const
+Audio::VictorAudioController* CozmoAnimContext::GetAudioController() const
 {
   if (_audioMux.get() != nullptr) {
     return dynamic_cast<Audio::VictorAudioController*>( _audioMux->GetAudioController() );
@@ -71,7 +71,7 @@ bool CozmoAnimContext::IsMainThread() const
 }
 
 
-void CozmoContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
+void CozmoAnimContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
 {
   // Only set up the audio server if we have a real dataPlatform
   if (nullptr == dataPlatform) {

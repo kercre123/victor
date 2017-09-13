@@ -36,7 +36,7 @@ namespace Messages {
   // manually in messages.cpp).
   //#include "clad/robotInterface/messageEngineToRobot_declarations.def"
 
-  Result Init(AnimationStreamer* animStreamer, Audio::EngineAudioInput* audioInput);
+  Result Init(AnimationStreamer& animStreamer, Audio::EngineAudioInput* audioInput);
 
   void Update();
   

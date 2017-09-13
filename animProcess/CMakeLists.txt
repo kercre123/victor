@@ -34,7 +34,7 @@ PRIVATE
   robot_interface
   robot_transport
   audio_engine
-  audio_multiplexer
+  audio_multiplexer_robot
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 

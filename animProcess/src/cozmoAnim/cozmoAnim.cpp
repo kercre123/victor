@@ -78,7 +78,7 @@ Result CozmoAnimEngine::Init() {
   auto regId = audioMux->RegisterInput( new Audio::EngineAudioInput() );
   
   // Setup Engine Message
-  Messages::Init( _animationStreamer.get(),
+  Messages::Init( *_animationStreamer,
                   static_cast<Audio::EngineAudioInput*>(audioMux->GetInput( regId )) );
   
   

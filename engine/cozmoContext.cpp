@@ -2,7 +2,6 @@
 #include "engine/cozmoContext.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "engine/audio/cozmoAudioController.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robotDataLoader.h"
@@ -50,11 +49,6 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _threadIdHolder(new ThreadIDInternal)
 {
 
-  // Only set up the audio server if we have a real dataPlatform
-  if (nullptr != dataPlatform)
-  {
-    _audioServer.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::CozmoAudioController(this)));
-  }
   #if USE_DAS
   _dasTransferTask->Init(_transferQueueMgr.get());
   #endif
@@ -102,19 +96,20 @@ void CozmoContext::SetRandomSeed(uint32_t seed)
   
 void CozmoContext::SetLocale(const std::string& localeString)
 {
+  // TODO: Fix this - JMR
   using Locale = Anki::Util::Locale;
-  using CozmoAudioController = Anki::Cozmo::Audio::CozmoAudioController;
+//  using CozmoAudioController = Anki::Cozmo::Audio::CozmoAudioController;
 
   if (!localeString.empty()) {
     Locale locale = Locale::LocaleFromString(localeString);
     _locale.reset(new Locale(locale));
 
     // Update audio controller to use new locale preference
-    auto * audioController = (_audioServer ? _audioServer->GetAudioController() : NULL);
-    auto * cozmoAudioController = dynamic_cast<CozmoAudioController*>(audioController);
-    if (nullptr != cozmoAudioController) {
-      cozmoAudioController->SetLocale(*_locale);
-    }
+//    auto * audioController = (_audioServer ? _audioServer->GetAudioController() : NULL);
+//    auto * cozmoAudioController = dynamic_cast<CozmoAudioController*>(audioController);
+//    if (nullptr != cozmoAudioController) {
+//      cozmoAudioController->SetLocale(*_locale);
+//    }
   }
 }
 

@@ -21,7 +21,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/audio/robotAudioClient.h"
+//#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
@@ -348,10 +348,10 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
   robot->SetPhysicalRobot(robotIsPhysical);
   
   // Update robot audio output source
-  auto outputSource = (robotIsPhysical && !ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE) ?
-                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot :
-                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnDevice;
-  robot->GetRobotAudioClient()->SetOutputSource(outputSource);
+//  auto outputSource = (robotIsPhysical && !ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE) ?
+//                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot :
+//                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnDevice;
+//  robot->GetRobotAudioClient()->SetOutputSource(outputSource);
 }
   
 

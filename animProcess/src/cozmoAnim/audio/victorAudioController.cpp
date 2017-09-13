@@ -17,7 +17,7 @@
 //#include "clad/audio/audioParameterTypes.h"
 //#include "clad/audio/audioStateTypes.h"
 
-#include "cozmoAnim/cozmoContext.h"
+#include "cozmoAnim/cozmoAnimContext.h"
 
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
@@ -26,10 +26,6 @@
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
 #include <sstream>
-
-#ifdef ANDROID
-#include "util/jni/jniUtils.h"
-#endif
 
 
 // Allow the build to include/exclude the audio libs
@@ -65,12 +61,12 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-VictorAudioController::VictorAudioController( const CozmoContext* context )
+VictorAudioController::VictorAudioController( const CozmoAnimContext* context )
 {
 
 #if USE_AUDIO_ENGINE
   {
-    DEV_ASSERT(nullptr != context, "VictorAudioController.VictorAudioController.CozmoContext.IsNull");
+    DEV_ASSERT(nullptr != context, "VictorAudioController.VictorAudioController.CozmoAnimContext.IsNull");
 
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     

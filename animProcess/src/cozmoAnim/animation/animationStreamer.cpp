@@ -56,7 +56,7 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
   } // namespace
   
-  AnimationStreamer::AnimationStreamer(const CozmoContext* context)
+  AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context)
   : _context(context)
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))
