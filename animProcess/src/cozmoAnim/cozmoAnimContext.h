@@ -94,6 +94,8 @@ private:
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;
+  
+  void InitAudio(Util::Data::DataPlatform* dataPlatform);
 };
   
 

@@ -1050,6 +1050,14 @@ namespace Anki {
       void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals&) {
         // Handled on the NRF
       }
+      
+      
+      // V2 Audio message stubbed
+      void Process_postAudioEvent(Anki::AudioEngine::Multiplexer::PostAudioEvent const&) { /*Nothing to do*/ }
+      void Process_postAudioGameState(Anki::AudioEngine::Multiplexer::PostAudioGameState const&) { /*Nothing to do*/ }
+      void Process_postAudioParameter(Anki::AudioEngine::Multiplexer::PostAudioParameter const&) { /*Nothing to do*/ }
+      void Process_stopAllAudioEvents(Anki::AudioEngine::Multiplexer::StopAllAudioEvents const&) { /*Nothing to do*/ }
+      void Process_postAudioSwitchState(Anki::AudioEngine::Multiplexer::PostAudioSwitchState const&) { /*Nothing to do*/ }
 
 #endif // simulator
 

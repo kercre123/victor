@@ -50,19 +50,6 @@ message AudioCallbackError
   CallbackErrorType callbackError,
 }
 
-//union AudioCallbackInfo
-//{
-//  AudioCallbackDuration   callbackDuration,
-//  AudioCallbackMarker     callbackMarker,
-//  AudioCallbackComplete   callbackComplete,
-//  AudioCallbackError      callbackError,
-//}
-
-//message AudioCallback
-//{
-//  uint_16 callbackId = 0,
-//  AudioCallbackInfo callbackInfo,
-//}
 
 } // Multiplexer
 } // AudioEngine

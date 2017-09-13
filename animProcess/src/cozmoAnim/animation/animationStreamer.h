@@ -49,7 +49,7 @@ namespace Cozmo {
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
     static const Tag NotAnimatingTag = ::Anki::Cozmo::NotAnimatingTag;
     
-    AnimationStreamer(const CozmoAnimContext* context); //, Audio::RobotAudioClient& audioClient);
+    AnimationStreamer(const CozmoContext* context);
     
     ~AnimationStreamer();
     

@@ -13,9 +13,11 @@
 #include "cozmoAnim/cozmoAnim.h"
 #include "cozmoAnim/engineMessages.h"
 #include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/audio/engineAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
-#include "anki/common/basestation/utils/timer.h"
 #include "cozmoAnim/robotDataLoader.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
@@ -70,8 +72,16 @@ Result CozmoAnimEngine::Init() {
   }
 
   _context->GetDataLoader()->LoadNonConfigData();
-    
-  Messages::Init(*_animationStreamer);
+  
+  // Create and seetup EngineAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
+  auto* audioMux = _context->GetAudioMultiplexer();
+  auto regId = audioMux->RegisterInput( new Audio::EngineAudioInput() );
+  
+  // Setup Engine Message
+  Messages::Init( _animationStreamer.get(),
+                  static_cast<Audio::EngineAudioInput*>(audioMux->GetInput( regId )) );
+  
+  
   
   PRINT_NAMED_INFO("CozmoAnimEngine.Init.Success","");
   _isInitialized = true;

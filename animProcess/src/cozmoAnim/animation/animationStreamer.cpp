@@ -56,7 +56,7 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
   } // namespace
   
-  AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context) //, Audio::RobotAudioClient& audioClient)
+  AnimationStreamer::AnimationStreamer(const CozmoContext* context)
   : _context(context)
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))
@@ -523,9 +523,7 @@ namespace Cozmo {
     if (robotAudioTrack.HasFramesLeft() &&
         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
     {
-      // TODO: Play via wwise
       _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame() );
-
       robotAudioTrack.MoveToNextKeyFrame();
     }
 

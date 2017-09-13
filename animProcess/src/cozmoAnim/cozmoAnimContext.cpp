@@ -30,12 +30,7 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   , _dataLoader(new RobotDataLoader(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
-
-  // Only set up the audio server if we have a real dataPlatform
-  if (nullptr != dataPlatform)
-  {
-    _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::VictorAudioController(this)));
-  }
+  InitAudio(_dataPlatform);
 }
 
 
@@ -69,11 +64,25 @@ void CozmoAnimContext::SetMainThread()
   _threadIdHolder->_id = Util::GetCurrentThreadId();
 }
 
+
 bool CozmoAnimContext::IsMainThread() const
 {
   return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }
 
+
+void CozmoContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
+{
+  // Only set up the audio server if we have a real dataPlatform
+  if (nullptr == dataPlatform) {
+    // Create a dummy Audio Multiplexer
+    _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer( nullptr ));
+    return;
+  }
+  // Init Audio Base: Audio Engine & Multiplexer
+  _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::VictorAudioController(this)));
+  // Audio Mux Input setup is in cozmoAnim.cpp & engineMessages.cpp
+}
   
 } // namespace Cozmo
 } // namespace Anki

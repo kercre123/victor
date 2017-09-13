@@ -28,7 +28,7 @@ class AudioEngineMessageHandler
 {
 public:
   
-  void Broadcast( const AudioEngine::Multiplexer::MessageAudioClient& message);
+  void Broadcast( const AudioEngine::Multiplexer::MessageAudioClient& message );
   
   template<typename T, typename ...Args>
   void BroadcastToAudioClient(Args&& ...args)
@@ -36,7 +36,7 @@ public:
     Broadcast(AudioEngine::Multiplexer::MessageAudioClient(T(std::forward<Args>(args)...)));
   }
   
-  using SubscribeFunc = std::function<void(const AnkiEvent<AudioEngine::Multiplexer::MessageAudioClient>&)>;
+  using SubscribeFunc = std::function<void( const AnkiEvent<AudioEngine::Multiplexer::MessageAudioClient>& )>;
   Signal::SmartHandle Subscribe( const AudioEngine::Multiplexer::MessageAudioClientTag& tagType,
                                  SubscribeFunc messageHandler );
 

@@ -583,9 +583,9 @@ Result CozmoEngine::InitInternal()
   {
     using namespace Audio;
     // Setup Unity Audio Input
-    AudioUnityInput *unityInput = new AudioUnityInput( *_context->GetExternalInterface() );
     auto audioMux = _context->GetAudioMultiplexer();
     if (audioMux) {
+      AudioUnityInput *unityInput = new AudioUnityInput( *_context->GetExternalInterface() );
       audioMux->RegisterInput( unityInput );
     }
   }

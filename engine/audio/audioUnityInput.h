@@ -42,8 +42,6 @@ public:
   virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const override;
   virtual void PostCallback( const AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const override;
 
-//  void PostCallback( const AudioEngine::Multiplexer::AudioCallback& callbackMessage ) const override;
-  
 
 private:
   
