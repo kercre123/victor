@@ -52,6 +52,7 @@ target_link_libraries(robot_supervisor
 PRIVATE
     halstub
     supervisor
+    robot_transport
     spine
     robot_interface
     robot_clad_cpplite
@@ -73,6 +74,7 @@ target_include_directories(robot_supervisor
 PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/generated>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/robot>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot2/hal>
 )

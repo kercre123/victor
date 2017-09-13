@@ -70,11 +70,18 @@ import(audio "lib/audio")
 import(ble_cozmo "lib/BLECozmo")
 import(DAS "lib/das-client")
 
+# BRC-TODO: Make this top-level include into an "interface"
+# lib so that other target can depend on it, instead of manually injecting
+# include dirs
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 import(coretech "coretech")
 add_subdirectory("clad")
 add_subdirectory("androidHAL")
+add_subdirectory("animProcess")
+target_include_directories(victor_anim PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+)
 add_subdirectory("robot")
 
 if (ANDROID)

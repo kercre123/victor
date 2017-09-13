@@ -98,25 +98,9 @@ function(generate_clad_cpplite)
         "--max-message-size" "1400"
         "${genclad_FLAGS}")
 
-    set(CLAD_CPP_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPP_declarations_emitter.py")
-    set(CLAD_CPP_DECL_EXTS "_declarations.def")
-    set(CLAD_CPP_DECL_FLAGS "")
-
-    set(CLAD_CPP_SWITCH "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPPLite_switch_emitter.py")
-    set(CLAD_CPP_SWITCH_EXTS "_switch.def")
-    set(CLAD_CPP_SWITCH_FLAGS "")
-
-    set(CLAD_CPP_SEND_HELPER "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPPLite_send_helper_emitter.py")
-    set(CLAD_CPP_SEND_HELPER_EXTS "_send_helper.def")
-    set(CLAD_CPP_SEND_HELPER_FLAGS "")
-
-    set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
-    set(CLAD_HASH_EXTS "_hash.h")
-    set(CLAD_HASH_FLAGS "")
-
-    set(EMITTERS ${CLAD_CPP} ${CLAD_CPP_DECL} ${CLAD_CPP_SWITCH} ${CLAD_CPP_SEND_HELPER})
-    set(EXTS CLAD_CPP_EXTS CLAD_CPP_DECL_EXTS CLAD_CPP_SWITCH_EXTS CLAD_CPP_SEND_HELPER_EXTS)
-    set(FLAGS CLAD_CPP_FLAGS CLAD_CPP_DECL_FLAGS CLAD_CPP_SWITCH_FLAGS CLAD_CPP_SEND_HELPER_FLAGS)
+    set(EMITTERS ${CLAD_CPP})
+    set(EXTS CLAD_CPP_EXTS)
+    set(FLAGS CLAD_CPP_FLAGS)
     list(LENGTH EMITTERS EMITTER_COUNT)
     math(EXPR EMITTER_COUNT "${EMITTER_COUNT} - 1")
 
