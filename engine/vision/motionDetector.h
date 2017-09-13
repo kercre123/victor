@@ -69,7 +69,7 @@ private:
                       DebugImageList<Vision::ImageRGB>& debugImageRGBs);
 
   Result DetectPeripheralMotion(const Vision::Image &inputImage,
-                                  DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs);
+                                DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs);
 
   // Returns the number of times the ratio between the pixels in image and the pixels
   // in the previous image is above a threshold. The corresponding pixels in ratio12
