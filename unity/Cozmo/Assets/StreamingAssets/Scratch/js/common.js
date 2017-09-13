@@ -170,9 +170,12 @@
             });
         }
         else {
-            var exportbutton = document.querySelector('#exportbutton');
             var undo = document.querySelector('#undo');
             var redo = document.querySelector('#redo');
+            var zoomIn = document.querySelector('#zoomIn');
+            var zoomOut = document.querySelector('#zoomOut');
+            var zoomReset = document.querySelector('#zoomReset');
+            var exportbutton = document.querySelector('#exportbutton');
 
             undo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
@@ -181,12 +184,48 @@
             undo.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
+
             redo.addEventListener('click', function () {
                 Scratch.workspace.playAudio('click');
                 Scratch.workspace.undo(true);
             });
             redo.addEventListener('touchmove', function (e) {
                 e.preventDefault();
+            });
+
+            // All zoom button implementation code below taken from zoom_controls.js
+            zoomIn.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.markFocused();
+                Scratch.workspace.zoomCenter(1);
+                Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+            });
+            zoomIn.addEventListener('touchmove', function (e) {
+                e.stopPropagation();  // Don't start a workspace scroll.
+                e.preventDefault();  // Stop double-clicking from selecting text.
+            });
+
+            zoomOut.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.markFocused();
+                Scratch.workspace.zoomCenter(-1);
+                Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+              });
+            zoomOut.addEventListener('touchmove', function (e) {
+                e.stopPropagation();  // Don't start a workspace scroll.
+                e.preventDefault();  // Stop double-clicking from selecting text.
+            });
+
+            zoomReset.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                Scratch.workspace.markFocused();
+                Scratch.workspace.setScale(workspace.options.zoomOptions.startScale);
+                Scratch.workspace.scrollCenter();
+                Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
+            });
+            zoomReset.addEventListener('touchmove', function (e) {
+                e.stopPropagation();  // Don't start a workspace scroll.
+                e.preventDefault();  // Stop double-clicking from selecting text.
             });
 
             exportbutton.addEventListener('click', function () {

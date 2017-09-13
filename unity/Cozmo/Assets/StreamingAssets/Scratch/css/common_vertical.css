@@ -64,15 +64,15 @@ button:focus {
 #close .primary {
     display: block;
     position: absolute;
-    top: 10px;
+    top: 20px;
     left: 15px;
 }
 
 #close .primary button {
     display: block;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/close.svg');
     background-size: cover;
@@ -138,7 +138,7 @@ button:focus {
     display: block;
     position: absolute;
     top: 20px;
-    left: 179px;
+    left: 185px;
 }
 
 #exportbtn .primary button {
@@ -155,44 +155,6 @@ button:focus {
 
 #exportbtn .primary button:active {
     background-position:0px -54px;
-}
-
-/**
-  * Challenges button
-  */
-
-#challenges {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100px;
-    z-index: 1;
-    pointer-events: none;
-}
-
-#challenges .primary {
-    display: block;
-    position: absolute;
-    top: 10px;
-    left: 90px;
-}
-
-#challenges .primary button {
-    display: block;
-    position: relative;
-    width: 72px;
-    height: 72px;
-    background-color: transparent;
-    background-image: url('../images/ui/challenges.svg');
-    background-size: cover;
-    pointer-events: auto;
-    border: 0;
-}
-
-#challenges .primary button:active {
-    background-position:0px -72px;
 }
 
 /**
@@ -249,7 +211,7 @@ button:focus {
 #navigation {
     display: block;
     position: absolute;
-    top: calc(100% - 400px);
+    top: 150px;
     left: 0;
     width: 100%;
     height: 200px;
@@ -260,14 +222,14 @@ button:focus {
 #navigation .greenflag {
     display: block;
     position: absolute;
-    left: calc(100% - 90px);
+    left: calc(100% - 80px);
 }
 
 #navigation .greenflag button {
     display: block;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/greenflag.svg');
     background-size: cover;
@@ -276,7 +238,7 @@ button:focus {
 }
 
 #navigation .greenflag button:active {
-    background-position:0px -72px;
+    background-position:0px -54px;
 }
 
 #navigation .greenflag button img {
@@ -288,15 +250,15 @@ button:focus {
 #navigation .stop {
     display: block;
     position: absolute;
-    left: calc(100% - 90px);
-    top: 75px;
+    left: calc(100% - 80px);
+    top: 90px;
 }
 
 #navigation .stop button {
     display: block;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../images/ui/stop.svg');
     background-size: cover;
@@ -305,7 +267,7 @@ button:focus {
 }
 
 #navigation .stop button:active {
-    background-position:0px -72px;
+    background-position:0px -54px;
 }
 
 #navigation .stop button img {
@@ -320,55 +282,34 @@ button:focus {
 #undoRedo {
     display: block;
     position: absolute;
-    top: calc(100% - 240px);
+    top: 330px;
     left: 0;
     width: 100%;
-    height: 58px;
+    height: 200px;
     z-index: 1;
     pointer-events: none;
-}
-
-#undoRedo .undo {
-    display: block;
-    position: absolute;
-    left: calc(100% - 70px);
-}
-
-#undoRedo .undo button {
-    display: block;
-    position: relative;
-    width: 29px;
-    height: 29px;
-    background-color: transparent;
-    background-image: url('../lib/blocks/media/rotate-left.svg');
-    background-size: cover;
-    pointer-events: auto;
-    border: 0;
-}
-
-#undoRedo .undo button img {
-    width: 100%;
-    height: 100%;
-    margin: 0px 0 0 1px;
 }
 
 #undoRedo .redo {
     display: block;
     position: absolute;
-    left: calc(100% - 70px);
-    top: 45px;
+    left: calc(100% - 80px);
 }
 
 #undoRedo .redo button {
     display: block;
     position: relative;
-    width: 29px;
-    height: 29px;
+    width: 54px;
+    height: 54px;
     background-color: transparent;
     background-image: url('../lib/blocks/media/rotate-right.svg');
     background-size: cover;
     pointer-events: auto;
     border: 0;
+}
+
+#undoRedo .redo button:active {
+    background-position:0px -54px;
 }
 
 #undoRedo .redo button img {
@@ -377,77 +318,188 @@ button:focus {
     margin: 0px 0 0 1px;
 }
 
+#undoRedo .undo {
+    display: block;
+    position: absolute;
+    left: calc(100% - 80px);
+    top: 90px;
+}
+
+#undoRedo .undo button {
+    display: block;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    background-color: transparent;
+    background-image: url('../lib/blocks/media/rotate-left.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#undoRedo .undo button:active {
+    background-position:0px -54px;
+}
+
+#undoRedo .undo button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+/**
+ * zoomControls
+ */
+#zoomControls {
+    display: block;
+    position: absolute;
+    top: 510px;
+    left: 0;
+    width: 100%;
+    height: 200px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#zoomControls .zoomIn {
+    display: block;
+    position: absolute;
+    left: calc(100% - 80px);
+}
+
+#zoomControls .zoomIn button {
+    display: block;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    background-color: transparent;
+    background-image: url('../lib/blocks/media/zoom-in.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#zoomControls .zoomIn button:active {
+    background-position:0px -54px;
+}
+
+#zoomControls .zoomIn button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+#zoomControls .zoomOut {
+    display: block;
+    position: absolute;
+    left: calc(100% - 80px);
+    top: 90px;
+}
+
+#zoomControls .zoomOut button {
+    display: block;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    background-color: transparent;
+    background-image: url('../lib/blocks/media/zoom-out.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#zoomControls .zoomOut button:active {
+    background-position:0px -54px;
+}
+
+#zoomControls .zoomOut button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+#zoomControls .zoomReset {
+    display: block;
+    position: absolute;
+    left: calc(100% - 80px);
+    top: 180px;
+}
+
+#zoomControls .zoomReset button {
+    display: block;
+    position: relative;
+    width: 54px;
+    height: 54px;
+    background-color: transparent;
+    background-image: url('../lib/blocks/media/zoom-reset.svg');
+    background-size: cover;
+    pointer-events: auto;
+    border: 0;
+}
+
+#zoomControls .zoomReset button:active {
+    background-position:0px -54px;
+}
+
+#zoomControls .zoomReset button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
 
 
 @media only screen and (max-width: 799px) {
-    #navigation {
-        top: calc(100% - 250px);
-    }
-
     #close .primary {
         display: block;
         position: absolute;
-        top: 5px;
-        left: 5px;
+        top: 11px;
+        left: 15px;
     }
 
     #close .primary button {
-        width:44px;
-        height:44px;
+        width: 25px;
+        height: 25px;
     }
 
     #close .primary button:active {
-        background-position:0px -44px;
+        background-position:0px -25px;
     }
+
 
     #glossary-button .primary {
         display: block;
         position: absolute;
         top: 11px;
-        left: 55px;
+        left: 60px;
     }
 
     #glossary-button .primary button {
-        width: 34px;
-        height: 34px;
+        width: 25px;
+        height: 25px;
     }
 
     #glossary-button .primary button:active {
-        background-position:0px -34px;
+        background-position:0px -25px;
     }
 
-
-    #challenges .primary {
-        display: block;
-        position: absolute;
-        top: 5px;
-        left: 55px;
-    }
-
-    #challenges .primary button {
-        width:44px;
-        height:44px;
-    }
-
-    #challenges .primary button:active {
-        background-position:0px -44px;
-    }
 
     #exportbtn .primary {
         display: block;
         position: absolute;
         top: 11px;
-        left: 103px;
+        left: 105px;
     }
 
     #exportbtn .primary button {
-        width:34px;
-        height:34px;
+        width: 25px;
+        height: 25px;
     }
 
     #exportbtn .primary button:active {
-        background-position:0px -34px;
+        background-position:0px -25px;
     }
+
 
     #projecttext {
         top: 0;
@@ -461,7 +513,6 @@ button:focus {
         width: 98%;
         height: 60px;
     }
-
 
     #projecttext .primary #app-title {
         margin-top: 3px;
@@ -477,32 +528,115 @@ button:focus {
     }
 
 
+    #navigation {
+        top: calc(100% - 255px);
+    }
 
     #navigation .greenflag {
-        left: calc(100% - 55px);
-        top: calc(100% - 170px);;
+        left: calc(100% - 40px);
     }
 
     #navigation .greenflag button {
-        width:44px;
-        height:44px;
+        width: 25px;
+        height: 25px;
     }
 
     #navigation .greenflag button:active {
-        background-position:0px -44px;
+        background-position:0px -25px;
     }
 
+
     #navigation .stop {
-        left: calc(100% - 55px);
-        top: calc(100% - 125px);;
+        left: calc(100% - 40px);
+        top: calc(100% - 160px);
     }
 
     #navigation .stop button {
-        width:44px;
-        height:44px;
+        width: 25px;
+        height: 25px;
     }
 
     #navigation .stop button:active {
-        background-position:0px -44px;
+        background-position:0px -25px;
+    }
+
+
+    #undoRedo {
+        height: 100px;
+        top: calc(100% - 175px);
+    }
+
+    #undoRedo .redo {
+        left: calc(100% - 40px);
+    }
+
+    #undoRedo .redo button {
+        width: 25px;
+        height: 25px;
+    }
+
+    #undoRedo .redo button:active {
+        background-position:0px -25px;
+    }
+
+    #undoRedo .undo {
+        left: calc(100% - 40px);
+        top: calc(100% - 65px);
+    }
+
+    #undoRedo .undo button {
+        width: 25px;
+        height: 25px;
+    }
+
+    #undoRedo .undo button:active {
+        background-position:0px -25px;
+    }
+
+
+    #zoomControls {
+        height: 100px;
+        top: calc(100% - 105px);
+    }
+
+    #zoomControls .zoomIn {
+        left: calc(100% - 40px);
+    }
+
+    #zoomControls .zoomIn button {
+        width: 25px;
+        height: 25px;
+    }
+
+    #zoomControls .zoomIn button:active {
+        background-position:0px -25px;
+    }
+
+   #zoomControls .zoomOut {
+        left: calc(100% - 40px);
+        top: calc(100% - 65px);
+    }
+
+    #zoomControls .zoomOut button {
+        width: 25px;
+        height: 25px;
+    }
+
+    #zoomControls .zoomOut button:active {
+        background-position:0px -25px;
+    }
+
+    #zoomControls .zoomReset {
+        left: calc(100% - 40px);
+        top: calc(100% - 30px);
+    }
+
+    #zoomControls .zoomReset button {
+        width: 25px;
+        height: 25px;
+    }
+
+    #zoomControls .zoomReset button:active {
+        background-position:0px -25px;
     }
 }

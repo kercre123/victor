@@ -216,7 +216,7 @@ button:focus {
     display: block;
     position: absolute;
     left: calc(100% - 90px);
-    top: 75px;
+    top: 85px;
 }
 
 #navigation .stop button {
@@ -366,7 +366,7 @@ button:focus {
 
     #navigation .greenflag {
         left: calc(100% - 55px);
-        top: calc(100% - 170px);;
+        top: calc(100% - 170px);
     }
 
     #navigation .greenflag button {
@@ -380,7 +380,7 @@ button:focus {
 
     #navigation .stop {
         left: calc(100% - 55px);
-        top: calc(100% - 125px);;
+        top: calc(100% - 115px);
     }
 
     #navigation .stop button {
