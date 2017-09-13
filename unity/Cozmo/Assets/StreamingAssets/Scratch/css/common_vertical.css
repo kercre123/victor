@@ -212,17 +212,20 @@ button:focus {
     display: block;
     position: absolute;
     top: 150px;
-    left: 0;
-    width: 100%;
-    height: 200px;
+    left: calc(100% - 80px);
+    width: 5%;
+    height: 170px;
     z-index: 1;
     pointer-events: none;
+    border-width: 2px;
+    border-bottom-width:2px;
+    border-bottom-color: #777777;
+    border-bottom-style: solid;
 }
 
 #navigation .greenflag {
     display: block;
     position: absolute;
-    left: calc(100% - 80px);
 }
 
 #navigation .greenflag button {
@@ -250,7 +253,6 @@ button:focus {
 #navigation .stop {
     display: block;
     position: absolute;
-    left: calc(100% - 80px);
     top: 90px;
 }
 
@@ -282,18 +284,21 @@ button:focus {
 #undoRedo {
     display: block;
     position: absolute;
-    top: 330px;
-    left: 0;
-    width: 100%;
-    height: 200px;
+    top: 345px;
+    left: calc(100% - 80px);
+    width: 5%;
+    height: 160px;
     z-index: 1;
     pointer-events: none;
+    border-width: 2px;
+    border-bottom-width:2px;
+    border-bottom-color: #777777;
+    border-bottom-style: solid;
 }
 
 #undoRedo .redo {
     display: block;
     position: absolute;
-    left: calc(100% - 80px);
 }
 
 #undoRedo .redo button {
@@ -321,8 +326,7 @@ button:focus {
 #undoRedo .undo {
     display: block;
     position: absolute;
-    left: calc(100% - 80px);
-    top: 90px;
+    top: 85px;
 }
 
 #undoRedo .undo button {
@@ -353,9 +357,9 @@ button:focus {
 #zoomControls {
     display: block;
     position: absolute;
-    top: 510px;
-    left: 0;
-    width: 100%;
+    top: 525px;
+    left: calc(100% - 80px);
+    width: 5%;
     height: 200px;
     z-index: 1;
     pointer-events: none;
@@ -364,7 +368,6 @@ button:focus {
 #zoomControls .zoomIn {
     display: block;
     position: absolute;
-    left: calc(100% - 80px);
 }
 
 #zoomControls .zoomIn button {
@@ -392,8 +395,7 @@ button:focus {
 #zoomControls .zoomOut {
     display: block;
     position: absolute;
-    left: calc(100% - 80px);
-    top: 90px;
+    top: 80px;
 }
 
 #zoomControls .zoomOut button {
@@ -421,8 +423,7 @@ button:focus {
 #zoomControls .zoomReset {
     display: block;
     position: absolute;
-    left: calc(100% - 80px);
-    top: 180px;
+    top: 160px;
 }
 
 #zoomControls .zoomReset button {
@@ -529,11 +530,12 @@ button:focus {
 
 
     #navigation {
-        top: calc(100% - 255px);
-    }
-
-    #navigation .greenflag {
+        top: calc(100% - 260px);
         left: calc(100% - 40px);
+        height: 75px;
+        width: 4.5%;
+        border-width: 1px;
+        border-bottom-width: 1px;
     }
 
     #navigation .greenflag button {
@@ -547,8 +549,7 @@ button:focus {
 
 
     #navigation .stop {
-        left: calc(100% - 40px);
-        top: calc(100% - 160px);
+        top: calc(100% - 35px);
     }
 
     #navigation .stop button {
@@ -562,12 +563,12 @@ button:focus {
 
 
     #undoRedo {
-        height: 100px;
+        height: 68px;
         top: calc(100% - 175px);
-    }
-
-    #undoRedo .redo {
         left: calc(100% - 40px);
+        width: 4.5%;
+        border-width: 1px;
+        border-bottom-width: 1px;
     }
 
     #undoRedo .redo button {
@@ -580,8 +581,7 @@ button:focus {
     }
 
     #undoRedo .undo {
-        left: calc(100% - 40px);
-        top: calc(100% - 65px);
+        top: calc(100% - 30px);
     }
 
     #undoRedo .undo button {
@@ -596,10 +596,7 @@ button:focus {
 
     #zoomControls {
         height: 100px;
-        top: calc(100% - 105px);
-    }
-
-    #zoomControls .zoomIn {
+        top: calc(100% - 100px);
         left: calc(100% - 40px);
     }
 
@@ -613,8 +610,7 @@ button:focus {
     }
 
    #zoomControls .zoomOut {
-        left: calc(100% - 40px);
-        top: calc(100% - 65px);
+        top: calc(100% - 68px);
     }
 
     #zoomControls .zoomOut button {
@@ -627,8 +623,7 @@ button:focus {
     }
 
     #zoomControls .zoomReset {
-        left: calc(100% - 40px);
-        top: calc(100% - 30px);
+        top: calc(100% - 35px);
     }
 
     #zoomControls .zoomReset button {
