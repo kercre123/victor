@@ -291,15 +291,20 @@ int hal_resync_partial(int start_offset, int len) {
 //Spins until valid frame header is recieved.
 const struct SpineMessageHeader* hal_read_frame()
 {
-  static unsigned int index = 0;
+  EventTrace(event_READSTART);
 
-  EventTrace(event_READ);
+  static unsigned int index = 0;
 
   //spin here pulling single characters until whole sync rcvd
   while (index < SPINE_HEADER_LEN) {
 
     int rslt = hal_serial_read(gHal.inbuffer + index, 1);
     if (rslt > 0) {
+      if(index == 0)
+      {
+        EventTrace(event_READEND);
+      }
+    
       index = spine_sync(gHal.inbuffer, index);
     }
     else if (rslt < 0) {
@@ -312,6 +317,7 @@ const struct SpineMessageHeader* hal_read_frame()
     }
   } //endwhile
 
+  EventTrace(event_FRAMESTART);
 
   //At this point we have a valid message header. (spine_sync rejects bad lengths and payloadTypes)
   // Collect the right number of bytes.
@@ -350,7 +356,7 @@ const struct SpineMessageHeader* hal_read_frame()
     index = hal_resync_partial(SPINE_HEADER_LEN, total_message_length);
     return NULL;
   }
-  EventTrace(event_FRAME);
+  EventTrace(event_FRAMEEND);
   
   spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
   spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
@@ -388,7 +394,7 @@ const void* hal_wait_for_frame(uint16_t type)
 
 void hal_send_frame(PayloadId type, const void* data, int len)
 {
-   EventTrace(event_SEND);
+   EventTrace(event_SENDSTART);
   const uint8_t* hdr = spine_construct_header(type, len);
   crc_t crc = calc_crc(data, len);
   if (hdr) {
@@ -396,6 +402,7 @@ void hal_send_frame(PayloadId type, const void* data, int len)
     hal_serial_send(data, len);
     hal_serial_send((uint8_t*)&crc, sizeof(crc));
   }
+  EventTrace(event_SENDEND);
 }
 
 void hal_set_mode(int new_mode)

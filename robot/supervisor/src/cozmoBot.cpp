@@ -155,7 +155,7 @@ namespace Anki {
       {
         START_TIME_PROFILE(CozmoBotMain, TOTAL);
         START_TIME_PROFILE(CozmoBot, HAL);
-        EventTrace(event_STEPMAIN);
+        EventTrace(event_STEPSTART);
 
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
@@ -383,8 +383,14 @@ namespace Anki {
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }
-
-
+        
+        EventTrace(event_STEPEND);
+        
+        if(HAL::RadioIsConnected())
+        {
+          EventTraceManage();
+        }
+        
         return RESULT_OK;
 
       } // Robot::step_MainExecution()

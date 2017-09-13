@@ -14,11 +14,22 @@ extern "C" {
 
 
 typedef  enum {
-   event_READ,
+   event_READSTART,
+   event_READEND,
+  
    event_SYNC,
-   event_FRAME,
-   event_STEPMAIN,
-   event_SEND,
+  
+   event_FRAMESTART,
+   event_FRAMEEND,
+  
+   event_STEPSTART,
+   event_STEPEND,
+  
+   event_IMUSTART,
+   event_IMUEND,
+  
+   event_SENDSTART,
+   event_SENDEND,
    /**^^^ Insert New Events Above Here ^^^**/
    EVENT_TYPE_COUNT
 } EventType;

@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <stdbool.h>
+
 #include "anki/cozmo/robot/event_trace.h"
 
 #ifdef EVENT_LOGGING_ENABLED
@@ -33,10 +35,11 @@ static void DumpEvents()
       
 void EventTraceManage(void)
 {
+   static bool b = false;
    static uint64_t starttime = 0;
    uint64_t now = steady_clock_now(); 
    if (!starttime) { starttime = now; }
-   if ((now)>= starttime+(EVENT_LOG_DURATION_SEC*1000)) { DumpEvents(); } 
+   if (!b && (now)>= starttime+(EVENT_LOG_DURATION_SEC*1000)) { b = true; DumpEvents(); }
 }
 
 #endif

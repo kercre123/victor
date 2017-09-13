@@ -322,17 +322,19 @@ namespace Anki {
           headData_.framecounter++;
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
+
+        // Process IMU while next frame is buffering in the background
+#if IMU_WORKING
+        ProcessIMUEvents();
+#endif
+        
         result =  GetSpineDataFrame();
         PrintConsoleOutput();
       }
 #endif
 
-#if IMU_WORKING
-      ProcessIMUEvents();
-#endif
       MonitorConnectionState();
 
-      EventTraceManage();
       return result;
     }
 
