@@ -8,6 +8,8 @@ enum uint_32 Cozmo_Sings_100Bpm
 {
   Cozmo_Sings_Beautiful_Dreamer = 366264019,
   Cozmo_Sings_Beethovens_5Th = 234196460,
+  Cozmo_Sings_Bingo = 2671798574,
+  Cozmo_Sings_Buffalo_Gals = 1616439696,
   Cozmo_Sings_Camptown_Races = 2068892721,
   Cozmo_Sings_Itsy_Bitsy_Spider = 4216855774,
   Cozmo_Sings_London_Bridge = 1890869377,
@@ -16,6 +18,8 @@ enum uint_32 Cozmo_Sings_100Bpm
   Cozmo_Sings_Pop_Goes_The_Weasel = 2629521585,
   Cozmo_Sings_Row_Your_Boat = 468566904,
   Cozmo_Sings_Ta_Ra_Ra_Boom = 2367266190,
+  Cozmo_Sings_Tisket_Tasket = 2168319140,
+  Cozmo_Sings_Yellow_Rose = 3186274273,
   Invalid = 0,
 }
 
@@ -24,6 +28,7 @@ enum uint_32 Cozmo_Sings_120Bpm
   Cozmo_Sings_Cozmambo = 885738211,
   Cozmo_Sings_Entry_Of_The_Gladiators = 2101741982,
   Cozmo_Sings_Hello_My_Baby = 1653598059,
+  Cozmo_Sings_Hush_Little_Baby = 4192423907,
   Cozmo_Sings_Ode_To_Joy = 277478768,
   Cozmo_Sings_Sakura = 1066913866,
   Cozmo_Sings_Turkey_In_The_Straw = 222542119,
@@ -33,9 +38,13 @@ enum uint_32 Cozmo_Sings_120Bpm
 
 enum uint_32 Cozmo_Sings_80Bpm
 {
+  Cozmo_Sings_Danny_Boy = 3740392146,
+  Cozmo_Sings_Farmer_In_The_Dell = 3199213520,
   Cozmo_Sings_Frere_Jacques = 1503161152,
   Cozmo_Sings_Habanera = 2657364191,
   Cozmo_Sings_Mary_Had_A_Little_Lamb = 4246470244,
+  Cozmo_Sings_Muffin_Man = 197233699,
+  Cozmo_Sings_Mulberry_Bush = 2808835548,
   Cozmo_Sings_Pachebel_Canon = 553164015,
   Cozmo_Sings_Take_Me_Out_To_The_Ballgame = 330639210,
   Cozmo_Sings_William_Tell = 2911111070,
