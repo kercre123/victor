@@ -13,6 +13,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
+#include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
@@ -57,14 +58,21 @@ message PathFollowingEvent
   PathEventType  eventType
 }
 
+message AnimationAvailable {
+  uint_32 id,
+  string name
+}
+
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
 {
-  uint_8 tag
+  uint_32 id,
+  uint_8  tag
 }
 
 message AnimationEnded
 {
+  uint_32 id,
   uint_8 tag
 }
 
@@ -127,8 +135,9 @@ union RobotToEngine {
   IMURawDataChunk            imuRawDataChunk        = 0xC7,
   DefaultCameraParams        defaultCameraParams    = 0xC8,
   RobotAvailable             robotAvailable         = 0xC9,
-  AnimationStarted           animStarted            = 0xCA,
-  AnimationEnded             animEnded              = 0xCB,
+  AnimationStarted           animStarted            = 0xCA,   // V2: sent from anim process
+  AnimationEnded             animEnded              = 0xCB,   // V2: sent from anim process
+  //        FREE SLOT!!!                            = 0xCC,
   NVStorage::NVOpResult      nvOpResult             = 0xCD,
   ObjectPowerLevel           objectPowerLevel       = 0xCE,
   CrashReport                crashReport            = 0xCF,
@@ -144,7 +153,8 @@ union RobotToEngine {
   RobotErrorReport           robotError             = 0xD9,
   LiftLoad                   liftLoad               = 0xDA,
   BackpackButton             backpackButton         = 0xDB,
-  IMUTemperature             imuTemperature         = 0xDC,
+  EndOfMessage               endOfMessage           = 0xDC,
+  IMUTemperature             imuTemperature         = 0xDD,
 
   WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,
@@ -158,6 +168,7 @@ union RobotToEngine {
   ObjectAvailable            activeObjectAvailable  = 0xF3,
   ImageImuData               imageGyro              = 0xF4,
   ObjectAccel                objectAccel            = 0xF5,
+  AnimationAvailable         animationAvailable     = 0xF6,   // V2: sent from anim process
 }
 
 

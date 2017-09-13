@@ -1,4 +1,4 @@
-/* #include <stdbool.h> */
+ /* #include <stdbool.h> */
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -10,7 +10,7 @@
 
 
 
-#include "clad/spine/spine_protocol.h"
+#include "schema/messages.h"
 #include "spine_crc.h"
 #include "spine_hal.h"
 
@@ -30,16 +30,16 @@ typedef uint32_t crc_t;
 #define SPINE_CRC_LEN sizeof(crc_t)
 
 static_assert(1, "true");
-static_assert(SPINE_HEADER_LEN == sizeof(SpineMessageHeader), "bad define");
-static_assert(SPINE_MAX_BYTES >= SPINE_HEADER_LEN + sizeof(BodyToHead) + SPINE_CRC_LEN, "bad define");
-static_assert(SPINE_MAX_BYTES >= SPINE_HEADER_LEN + sizeof(HeadToBody) + SPINE_CRC_LEN, "bad_define");
+static_assert(SPINE_HEADER_LEN == sizeof(struct SpineMessageHeader), "bad define");
+static_assert(SPINE_MAX_BYTES >= SPINE_HEADER_LEN + sizeof(struct BodyToHead) + SPINE_CRC_LEN, "bad define");
+static_assert(SPINE_MAX_BYTES >= SPINE_HEADER_LEN + sizeof(struct HeadToBody) + SPINE_CRC_LEN, "bad_define");
 
 
-static const SpineSync SyncKey = SpineSync_SYNC_BODY_TO_HEAD;
+static const SpineSync SyncKey = SYNC_BODY_TO_HEAD;
 
 static struct HalGlobals {
   uint8_t inbuffer[SPINE_MAX_BYTES];
-  SpineMessageHeader outheader;
+  struct SpineMessageHeader outheader;
   int fd;
   int errcount;
 } gHal;
@@ -115,10 +115,15 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 
 int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
 {
+
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
-    result = (errno == EAGAIN) ? 0 : result; //handle nonblocking no-data.
+    if (errno == EAGAIN) { //nonblocking no-data
+      usleep(1000); //wait a msec.
+      result = 0; //not an error
+    }
   }
+  int i;
   return result;
 }
 
@@ -143,26 +148,26 @@ enum MsgDir {
 static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
 {
   switch (payload_type) {
-  case PayloadId_PAYLOAD_MODE_CHANGE:
+  case PAYLOAD_MODE_CHANGE:
     return 0;
     break;
-  case PayloadId_PAYLOAD_DATA_FRAME:
-    return (dir == dir_SEND) ? sizeof(HeadToBody) : sizeof(BodyToHead);
+  case PAYLOAD_DATA_FRAME:
+    return (dir == dir_SEND) ? sizeof(struct HeadToBody) : sizeof(struct BodyToHead);
     break;
-  case PayloadId_PAYLOAD_VERSION:
-    return (dir == dir_SEND) ? 0 : sizeof(VersionInfo);
+  case PAYLOAD_VERSION:
+    return (dir == dir_SEND) ? 0 : sizeof(struct VersionInfo);
     break;
-  case PayloadId_PAYLOAD_ACK:
-    return sizeof(AckMessage);
+  case PAYLOAD_ACK:
+    return sizeof(struct AckMessage);
     break;
-  case PayloadId_PAYLOAD_ERASE:
+  case PAYLOAD_ERASE:
     return 0;
     break;
-  case PayloadId_PAYLOAD_VALIDATE:
+  case PAYLOAD_VALIDATE:
     return 0;
     break;
-  case PayloadId_PAYLOAD_DFU_PACKET:
-    return sizeof(WriteDFU);
+  case PAYLOAD_DFU_PACKET:
+    return sizeof(struct WriteDFU);
     break;
   default:
     break;
@@ -181,8 +186,8 @@ static const uint8_t* spine_construct_header(PayloadId payload_type,  uint16_t p
   assert(expected_len == payload_len);
   assert(payload_len <= (SPINE_MAX_BYTES - SPINE_HEADER_LEN - SPINE_CRC_LEN));
 
-  SpineMessageHeader* hdr = &gHal.outheader;
-  hdr->sync_bytes = SpineSync_SYNC_HEAD_TO_BODY;
+  struct SpineMessageHeader* hdr = &gHal.outheader;
+  hdr->sync_bytes = SYNC_HEAD_TO_BODY;
   hdr->payload_type = payload_type;
   hdr->bytes_to_follow = payload_len;
   return (uint8_t*) hdr;
@@ -201,10 +206,10 @@ static int spine_sync(const uint8_t* buf, unsigned int idx)
   }
   idx++; //accept rest of characters unless proven otherwise
   if (idx == SPINE_HEADER_LEN) {
-    SpineMessageHeader* candidate = (SpineMessageHeader*)buf;
+    struct SpineMessageHeader* candidate = (struct SpineMessageHeader*)buf;
     int expected_len = get_payload_len(candidate->payload_type, dir_READ);
     if (expected_len < 0 || (expected_len != candidate->bytes_to_follow)) {
-      LOGI("spine_header %x %x %x : %d", candidate->sync_bytes,
+      LOGE("spine_header %x %x %x : %d", candidate->sync_bytes,
            candidate->payload_type,
            candidate->bytes_to_follow,
            expected_len);
@@ -242,9 +247,9 @@ SpineErr hal_init(const char* devicename, long baudrate)
 
 //gathers most recently queued frame,
 //Spins until valid frame header is recieved.
-const SpineMessageHeader* hal_read_frame()
+const struct SpineMessageHeader* hal_read_frame()
 {
-//  static uint16_t loopcount = 0;
+  static uint16_t loopcount = 0;
   unsigned int index = 0;
 
   //spin here pulling single characters until whole sync rcvd
@@ -264,7 +269,7 @@ const SpineMessageHeader* hal_read_frame()
 
   //At this point we have a valid message header. (spine_sync rejects bad lengths and payloadTypes)
   // Collect the right number of bytes.
-  unsigned int payload_length = ((SpineMessageHeader*)gHal.inbuffer)->bytes_to_follow;
+  unsigned int payload_length = ((struct SpineMessageHeader*)gHal.inbuffer)->bytes_to_follow;
   unsigned int total_message_length = SPINE_HEADER_LEN + payload_length + SPINE_CRC_LEN;
 
   spine_debug_x("%d byte payload\n", payload_length);
@@ -306,21 +311,37 @@ const SpineMessageHeader* hal_read_frame()
     return NULL;
   }
 
-  spine_debug_x("found frame!\r");
-  return ((SpineMessageHeader*)gHal.inbuffer);
+  spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
+  spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
+  return ((struct SpineMessageHeader*)gHal.inbuffer);
 }
 
 
 //pulls off frames until it gets one of matching type
-const void* hal_get_frame(uint16_t type)
+
+const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
-  const SpineMessageHeader* hdr;
+  const struct SpineMessageHeader* hdr;
   do {
     hdr = hal_read_frame();
+    if (timeout_ms>0 && --timeout_ms==0) {
+      LOGE("TIMEOUT in hal_get_frame() TIMEOUT");
+      return NULL;
+    }
   }
   while (!hdr || hdr->payload_type != type);
   return hdr;
 }
+
+const void* hal_wait_for_frame(uint16_t type)
+{
+  const void* ret;
+  do {
+    ret = hal_get_frame(type, 0xFFFFffff);
+  } while (!ret);
+  return ret;
+}
+
 
 void hal_send_frame(PayloadId type, const void* data, int len)
 {
@@ -335,6 +356,6 @@ void hal_send_frame(PayloadId type, const void* data, int len)
 
 void hal_set_mode(int new_mode)
 {
-  printf("Sending Mode Change %x\n", PayloadId_PAYLOAD_MODE_CHANGE);
-  hal_send_frame(PayloadId_PAYLOAD_MODE_CHANGE, NULL, 0);
+  printf("Sending Mode Change %x\n", PAYLOAD_MODE_CHANGE);
+  hal_send_frame(PAYLOAD_MODE_CHANGE, NULL, 0);
 }

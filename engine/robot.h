@@ -100,6 +100,7 @@ class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
 class TouchSensorComponent;
+class AnimationComponent;
 
 namespace Audio {
 class RobotAudioClient;
@@ -314,6 +315,9 @@ public:
   
   inline const ProxSensorComponent& GetProxSensorComponent() const { return *_proxSensorComponent; }
   inline       ProxSensorComponent& GetProxSensorComponent()       { return *_proxSensorComponent; }
+
+  inline const AnimationComponent& GetAnimationComponent() const { return *_animationComponent; }
+  inline       AnimationComponent& GetAnimationComponent()       { return *_animationComponent; }
   
   inline const TouchSensorComponent& GetTouchSensorComponent() const { return *_touchSensorComponent; }
   inline       TouchSensorComponent& GetTouchSensorComponent()       { return *_touchSensorComponent; }
@@ -798,6 +802,7 @@ protected:
   std::unique_ptr<CliffSensorComponent>   _cliffSensorComponent;
   std::unique_ptr<ProxSensorComponent>    _proxSensorComponent;
   std::unique_ptr<TouchSensorComponent>   _touchSensorComponent;
+  std::unique_ptr<AnimationComponent>     _animationComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;

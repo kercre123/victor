@@ -177,7 +177,8 @@ namespace Anki
         if(arr.size() != values.size())
         {
           PRINT_NAMED_ERROR("JsonTools.GetColorValuesToArrayOptional.DiffSizes",
-                            "The json array and destination array are different sizes");
+                            "The json array and destination array are different sizes. Expected %zu, got %u. Key: %s",
+                            arr.size(), values.size(), key.c_str());
           return false;
         }
         

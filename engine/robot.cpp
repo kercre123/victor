@@ -39,6 +39,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blocks/blockFilter.h"
 #include "engine/charger.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -194,6 +195,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
   , _proxSensorComponent(std::make_unique<ProxSensorComponent>(*this))
   , _touchSensorComponent(std::make_unique<TouchSensorComponent>(*this))
+  , _animationComponent(std::make_unique<AnimationComponent>(*this, _context))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, _pose, "RobotNeck")
@@ -1501,6 +1503,9 @@ Result Robot::Update()
   
   // Send nav memory map data
   _blockWorld->BroadcastNavMemoryMap();
+  
+  /////////// Update AnimationComponent /////////
+  _animationComponent->Update();
       
   /////////// Update visualization ////////////
       

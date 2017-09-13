@@ -47,9 +47,6 @@ Supervisor {
       translation 0.0058 -0.0135 0
     }
 
-    CozmoFaceDisplay {
-      translation 0.012 0 0
-    }
   ]
   
   boundingObject Box {

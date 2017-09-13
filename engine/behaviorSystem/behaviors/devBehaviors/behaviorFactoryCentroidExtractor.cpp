@@ -43,30 +43,30 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
 
   // Backpack lights
   static const BackpackLights passLights = {
-    .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-    .onPeriod_ms            = {{1000,1000,1000,1000,1000}},
-    .offPeriod_ms           = {{100,100,100,100,100}},
-    .transitionOnPeriod_ms  = {{450,450,450,450,450}},
-    .transitionOffPeriod_ms = {{450,450,450,450,450}},
-    .offset                 = {{0,0,0,0,0}}
+    .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
+    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+    .onPeriod_ms            = {{1000,1000,1000}},
+    .offPeriod_ms           = {{100,100,100}},
+    .transitionOnPeriod_ms  = {{450,450,450}},
+    .transitionOffPeriod_ms = {{450,450,450}},
+    .offset                 = {{0,0,0}}
   };
   
   static BackpackLights failLights = {
-    .onColors               = {{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-    .onPeriod_ms            = {{500,500,500,500,500}},
-    .offPeriod_ms           = {{500,500,500,500,500}},
-    .transitionOnPeriod_ms  = {{0,0,0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0,0,0}},
-    .offset                 = {{0,0,0,0,0}}
+    .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
+    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+    .onPeriod_ms            = {{500,500,500}},
+    .offPeriod_ms           = {{500,500,500}},
+    .transitionOnPeriod_ms  = {{0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0}},
+    .offset                 = {{0,0,0}}
   };
   
-  static const BackpackLEDArray fail_onColorRed{{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}};
-  static const BackpackLEDArray fail_onColorOrange{{NamedColors::BLACK,NamedColors::ORANGE,NamedColors::ORANGE,NamedColors::ORANGE,NamedColors::BLACK}};
-  static const BackpackLEDArray fail_onColorMagenta{{NamedColors::BLACK,NamedColors::MAGENTA,NamedColors::MAGENTA,NamedColors::MAGENTA,NamedColors::BLACK}};
-  static const BackpackLEDArray fail_onColorBlue{{NamedColors::BLACK,NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLACK}};
-  static const BackpackLEDArray fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
+  static const BackpackLEDArray fail_onColorRed{{NamedColors::RED,NamedColors::RED,NamedColors::RED}};
+  static const BackpackLEDArray fail_onColorOrange{{NamedColors::ORANGE,NamedColors::ORANGE,NamedColors::ORANGE}};
+  static const BackpackLEDArray fail_onColorMagenta{{NamedColors::MAGENTA,NamedColors::MAGENTA,NamedColors::MAGENTA}};
+  static const BackpackLEDArray fail_onColorBlue{{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}};
+  static const BackpackLEDArray fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
 
   BehaviorFactoryCentroidExtractor::BehaviorFactoryCentroidExtractor(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)

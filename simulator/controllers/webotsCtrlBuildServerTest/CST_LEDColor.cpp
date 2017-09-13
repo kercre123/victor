@@ -4,7 +4,6 @@
 #include "clad/types/ledTypes.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "clad/types/vizTypes.h"
-#include "engine/ledEncoding.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 namespace Anki {

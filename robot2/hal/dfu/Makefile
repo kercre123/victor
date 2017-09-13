@@ -9,7 +9,7 @@ AR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
 # Compiler flags
 # Specify all the flags below which you want to use for your compilation, For this simple example, we only need to specify the include directory path
 CFLAGS          := -I.
-CFLAGS          += -I../../generated/clad/robot
+CFLAGS          += -I../../syscon
 CFLAGS          += -DPLATFORM_ANDROID=1
 
 

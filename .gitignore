@@ -36,6 +36,9 @@ simulator/controllers/webotsCtrlRobot2/webotsCtrlRobot2
 simulator/controllers/webotsCtrlRobot2/resources
 simulator/controllers/webotsCtrlRobot2/nvStorage
 #
+simulator/controllers/webotsCtrlAnim/webotsCtrlAnim
+simulator/controllers/webotsCtrlAnim/resources
+#
 simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
 simulator/controllers/webotsCtrlLightCube/resources
 #

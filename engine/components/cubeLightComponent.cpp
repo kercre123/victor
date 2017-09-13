@@ -30,7 +30,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/ledEncoding.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 
@@ -843,6 +842,9 @@ void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enab
 
 void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values)
 {
+  // Convert MS to LED FRAMES
+  #define MS_TO_LED_FRAMES(ms)  (ms == std::numeric_limits<u32>::max() ? std::numeric_limits<u8>::max() : (((ms)+29)/30))
+  
   if(_sendTransitionMessages)
   {
     ObservableObject* obj = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
@@ -862,8 +864,8 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const O
     LightState lights;
     for(u8 i = 0; i < (u8)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
     {
-      msg.lights[i].onColor = ENCODED_COLOR(values.onColors[i]);
-      msg.lights[i].offColor = ENCODED_COLOR(values.offColors[i]);
+      msg.lights[i].onColor = values.onColors[i];
+      msg.lights[i].offColor = values.offColors[i];
       msg.lights[i].transitionOnFrames = MS_TO_LED_FRAMES(values.transitionOnPeriod_ms[i]);
       msg.lights[i].transitionOffFrames = MS_TO_LED_FRAMES(values.transitionOffPeriod_ms[i]);
       msg.lights[i].onFrames = MS_TO_LED_FRAMES(values.onPeriod_ms[i]);
@@ -1173,8 +1175,8 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
   {
     // Apply white balancing and encode colors
     const ActiveObject::LEDstate ledState = object->GetLEDState(i);
-    lights[i].onColor  = ENCODED_COLOR(WhiteBalanceColor(ledState.onColor));
-    lights[i].offColor = ENCODED_COLOR(WhiteBalanceColor(ledState.offColor));
+    lights[i].onColor  = WhiteBalanceColor(ledState.onColor);
+    lights[i].offColor = WhiteBalanceColor(ledState.offColor);
     lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
     lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
     lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);

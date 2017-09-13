@@ -1,5 +1,6 @@
 #include "vectors.h"
 #include "flash.h"
+#include "power.h"
 
 #include "stm32f0xx.h"
 

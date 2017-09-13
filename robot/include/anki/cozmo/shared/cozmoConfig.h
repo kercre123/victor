@@ -32,7 +32,7 @@ namespace Cozmo {
   const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
   const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
   
-  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
+  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);  // V2 range: -20 to +45 according to McVicar
   const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 44.5f);
   
   const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
@@ -235,6 +235,10 @@ namespace Cozmo {
   // how long there is between stopping the motors and issuing a cliff event (because we have decided there isn't a pickup event)
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
+  
+  // TODO: Move to a config file for animation process
+  const s32 ANIM_TIME_STEP = 33; //ms
+  
   /***************************************************************************
    *
    *                          Streaming Animation
@@ -269,9 +273,12 @@ namespace Cozmo {
   const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
   const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
   
-  // The base listening port for robot TCP server.
+  // The base listening port for robot UDP server.
   // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
   const u16 ROBOT_RADIO_BASE_PORT = 5551;
+  
+  // The base listening port for anim process UDP server
+  const u16 ANIM_PROCESS_SERVER_BASE_PORT = 5600;
   
   /*
    THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientChannel.h
