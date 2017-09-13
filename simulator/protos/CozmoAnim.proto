@@ -1,0 +1,51 @@
+PROTO CozmoAnim [
+  field SFString name "CozmoAnim"
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 0 1 0
+  
+  field SFBool filterLogs FALSE
+]
+{
+Supervisor {
+  name IS name
+  translation IS translation
+  rotation IS rotation
+  controller "webotsCtrlAnim"
+
+  %{ if fields.filterLogs.value then }%
+  controllerArgs "--applyLogFilter"
+  %{ else }%
+  controllerArgs ""
+  %{ end }%
+
+
+  children [
+    # Allows the engine to connect to CozmoBot2
+    Connector {
+      name "animConnector"
+      model "animConnector"
+      rotation 0 1 0 3.14159265
+      type "symmetric"
+      isLocked TRUE
+      autoLock TRUE
+      distanceTolerance 0.1
+      axisTolerance 3.14
+      rotationTolerance 3.14
+      numberOfRotations 1
+    }
+  
+    CozmoFaceDisplay {
+      translation 0.012 0 0
+    }
+  ]
+  
+  boundingObject Box {
+    size 0.000001 0.000001 0.000001
+  }
+  physics Physics {
+    mass 0.00001
+    density -1
+  }
+
+} # Supervisor definition
+} # PROTO definition

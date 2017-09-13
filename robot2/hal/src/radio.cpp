@@ -2,7 +2,7 @@
  * radio.cpp
  *
  *   Implemenation of HAL "radio" functionality for Cozmo V2
- *   This is actually the robot interface to the engine
+ *   This is actually the robot interface to the animation process
  *
  *   Author: Andrew Stein
  *

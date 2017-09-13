@@ -12,8 +12,6 @@
 
 #include "engine/animations/trackLayerManagers/backpackLayerManager.h"
 
-#include "engine/ledEncoding.h"
-
 #include "util/console/consoleInterface.h"
 #include "util/helpers/boundedWhile.h"
 
@@ -46,7 +44,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   track.AddKeyFrameToBack(frame);
   
   // Turn middle light on
-  lights.colors[(int)LEDId::LED_BACKPACK_MIDDLE] = ENCODED_COLOR(NamedColors::RED);
+  lights.colors[(int)LEDId::LED_BACKPACK_MIDDLE] = NamedColors::RED;
   frame.SetLights(lights);
   frame.SetTriggerTime(kGlitchLightDelay_ms);
   frame.SetDuration(kGlitchLightDuration_ms);
@@ -56,13 +54,11 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   std::vector<int> backpackLightsToPickFrom = {{
     (int)LEDId::LED_BACKPACK_BACK,
     (int)LEDId::LED_BACKPACK_FRONT,
-    (int)LEDId::LED_BACKPACK_LEFT,
-    (int)LEDId::LED_BACKPACK_RIGHT
   }};
   
   // Middle light plus a random light
   int rand = GetRNG().RandInt((int)backpackLightsToPickFrom.size());
-  lights.colors[backpackLightsToPickFrom[rand]] = ENCODED_COLOR(NamedColors::RED);
+  lights.colors[backpackLightsToPickFrom[rand]] = NamedColors::RED;
   frame.SetLights(lights);
   frame.SetTriggerTime(kGlitchLightDuration_ms + kGlitchLightDelay_ms);
   track.AddKeyFrameToBack(frame);
@@ -75,7 +71,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   
   // Previous random light plus another random light
   rand = GetRNG().RandInt((int)backpackLightsToPickFrom.size());
-  lights.colors[backpackLightsToPickFrom[rand]] = ENCODED_COLOR(NamedColors::RED);
+  lights.colors[backpackLightsToPickFrom[rand]] = NamedColors::RED;
   frame.SetLights(lights);
   frame.SetTriggerTime((kGlitchLightDuration_ms*2) + kGlitchLightDelay_ms);
   track.AddKeyFrameToBack(frame);

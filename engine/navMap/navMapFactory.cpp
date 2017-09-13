@@ -1,0 +1,27 @@
+/**
+ * File: navMapFactory.cpp
+ *
+ * Author: Raul
+ * Date:   03/11/2016
+ *
+ * Description: Factory to hide the specific type of memory map used by Cozmo.
+ *
+ * Copyright: Anki, Inc. 2016
+ **/
+
+ 
+#include "memoryMap/memoryMap.h"
+
+namespace Anki {
+namespace Cozmo {
+namespace NavMapFactory {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+INavMap* CreateMemoryMap(VizManager* vizManager, Robot* robot)
+{
+  return new MemoryMap(vizManager, robot);
+}
+
+} // namespace
+} // namespace
+} // namespace

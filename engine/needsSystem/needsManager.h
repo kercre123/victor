@@ -43,13 +43,6 @@ class CozmoContext;
 class DesiredFaceDistortionComponent;
 class LocalNotifications;
 
-enum class RobotStorageState
-{
-  Inactive = 0,
-  Reading,
-  Writing
-};
-
 class NeedsManager
 {
 public:
@@ -133,7 +126,7 @@ private:
   static inline const std::string GetNurtureFolder() { return "nurture/"; }
 
   void PossiblyStartWriteToRobot(bool ignoreCooldown = false);
-  void StartWriteToRobot();
+  void StartWriteToRobot(const Time time);
   void FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime);
   bool StartReadFromRobot();
   bool FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res);
@@ -227,7 +220,7 @@ private:
 
   const std::string kPathToSavedStateFile;
 
-  RobotStorageState _robotStorageState = RobotStorageState::Inactive;
+  bool          _pendingReadFromRobot = false;
 
   // component to figure out what the current face distortion level should be
   // This gets instantiated when Init is called

@@ -81,6 +81,9 @@ shift $(($OPTIND - 1))
 if [ ! -d "${TOPLEVEL}/generated" ] || [ ! -d "${TOPLEVEL}/EXTERNALS" ]; then
     echo "Missing ${TOPLEVEL}/generated or ${TOPLEVEL}/EXTERNALS"
     echo "Attempting to run configure.py" 
+    pushd robot > /dev/null 2>&1
+    make dev2
+    popd > /dev/null 2>&1
     ${TOPLEVEL}/configure.py -2 -p ${PLATFORM}  generate
 fi
 
@@ -127,7 +130,9 @@ if [ $CONFIGURE -eq 1 ]; then
     fi
     ${BUILD_TOOLS}/metabuild/metabuild.py $METABUILD_VERBOSE -o ${GEN_SRC_DIR} \
         androidHAL/BUILD.in \
+        animProcess/BUILD.in \
         clad/BUILD.in \
+        engine/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \

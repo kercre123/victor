@@ -401,7 +401,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       float currentLoadingDone = 0.0f;
       if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
       {
-        _context->GetRobotManager()->BroadcastAvailableAnimations();
         SetEngineState(EngineState::Running);
       }
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);

@@ -36,6 +36,9 @@ simulator/controllers/webotsCtrlRobot2/webotsCtrlRobot2
 simulator/controllers/webotsCtrlRobot2/resources
 simulator/controllers/webotsCtrlRobot2/nvStorage
 #
+simulator/controllers/webotsCtrlAnim/webotsCtrlAnim
+simulator/controllers/webotsCtrlAnim/resources
+#
 simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
 simulator/controllers/webotsCtrlLightCube/resources
 #
@@ -56,6 +59,8 @@ simulator/controllers/webotsCtrlKeyboard/factory_test_logs
 simulator/controllers/webotsCtrlKeyboard/resources
 #
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
+#
+simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter
 #
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib

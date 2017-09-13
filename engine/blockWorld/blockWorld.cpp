@@ -43,11 +43,10 @@
 #include "engine/humanHead.h"
 #include "engine/markerlessObject.h"
 #include "engine/mat.h"
-#include "engine/navMemoryMap/iNavMemoryMap.h"
-#include "engine/navMemoryMap/navMemoryMapFactory.h"
-#include "engine/navMemoryMap/navMemoryMapToPlanner.h" // for Brad testing (remove me at some point)
-#include "engine/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
-#include "engine/navMemoryMap/quadData/navMemoryMapQuadData_ProxObstacle.h"
+#include "engine/navMap/iNavMap.h"
+#include "engine/navMap/navMapFactory.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/platform.h"
 #include "engine/potentialObjectsForLocalizingTo.h"
@@ -147,9 +146,9 @@ namespace {
 namespace {
 
 // return the content type we would set in the memory type for each object family
-NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
+MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
 {
-  using ContentType = NavMemoryMapTypes::EContentType;
+  using ContentType = MemoryMapTypes::EContentType;
   ContentType retType = ContentType::Unknown;
   switch(family)
   {
@@ -1279,8 +1278,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       UpdateOriginsOfObjectsReportedInMemMap(oldOriginID, newOriginID);
 
       // grab the underlying memory map and merge them
-      INavMemoryMap* oldMap = _navMemoryMaps[oldOriginID].get();
-      INavMemoryMap* newMap = _navMemoryMaps[newOriginID].get();
+      INavMap* oldMap = _navMemoryMaps[oldOriginID].get();
+      INavMap* newMap = _navMemoryMaps[newOriginID].get();
       
       // COZMO-6184: the issue localizing to a zombie map was related to a cube being disconnected while we delocalized.
       // The issue has been fixed, but this code here would have prevented a crash and produce an error instead, so I
@@ -1294,7 +1293,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         
         // create empty map since somehow we lost the one we had
         VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-        INavMemoryMap* emptyMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr, _robot);
+        INavMap* emptyMemoryMap = NavMapFactory::CreateMemoryMap(vizMgr, _robot);
         
         // set in the container of maps
         _navMemoryMaps[newOriginID].reset(emptyMemoryMap);
@@ -1342,14 +1341,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  const INavMemoryMap* BlockWorld::GetNavMemoryMap() const
+  const INavMap* BlockWorld::GetNavMemoryMap() const
   {
     // current map (if any) must match current robot origin
     DEV_ASSERT((_currentNavMemoryMapOriginID == PoseOriginList::UnknownOriginID) ||
                (_robot->GetPoseOriginList().GetCurrentOriginID() == _currentNavMemoryMapOriginID),
                "BlockWorld.GetNavMemoryMap.BadOrigin");
     
-    const INavMemoryMap* curMap = nullptr;
+    const INavMap* curMap = nullptr;
     if ( PoseOriginList::UnknownOriginID != _currentNavMemoryMapOriginID ) {
       auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOriginID);
       if ( matchPair != _navMemoryMaps.end() ) {
@@ -1362,9 +1361,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  INavMemoryMap* BlockWorld::GetNavMemoryMap()
+  INavMap* BlockWorld::GetNavMemoryMap()
   {
-    INavMemoryMap* curMap = nullptr;
+    INavMap* curMap = nullptr;
     if ( PoseOriginList::UnknownOriginID != _currentNavMemoryMapOriginID ) {
       auto matchPair = _navMemoryMaps.find(_currentNavMemoryMapOriginID);
       if ( matchPair != _navMemoryMaps.end() ) {
@@ -1397,7 +1396,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     const bool addAgain = isFarFromPrev;
     if ( addAgain )
     {
-      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      INavMap* currentNavMemoryMap = GetNavMemoryMap();
       DEV_ASSERT(currentNavMemoryMap, "BlockWorld.UpdateRobotPoseInMemoryMap.NoMemoryMap");
       // cliff quad: clear or cliff
       {
@@ -1414,21 +1413,21 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if ( _robot->GetCliffSensorComponent().IsCliffDetected() )
         {
           // build data we want to embed for this quad
-          NavMemoryMapQuadData_Cliff cliffData;
+          MemoryMapData_Cliff cliffData;
           Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
           cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
           currentNavMemoryMap->AddQuad(cliffquad, cliffData);
         }
         else
         {
-          currentNavMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
+          currentNavMemoryMap->AddQuad(cliffquad, INavMap::EContentType::ClearOfCliff);
         }
       }
 
       const Quad2f& robotQuad = _robot->GetBoundingQuadXY(robotPoseWrtOrigin);
 
       // regular clear of obstacle
-      currentNavMemoryMap->AddQuad(robotQuad, INavMemoryMap::EContentType::ClearOfObstacle );
+      currentNavMemoryMap->AddQuad(robotQuad, INavMap::EContentType::ClearOfObstacle );
 
       // also notify behavior whiteboard.
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
@@ -1450,19 +1449,19 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     curRobotPose.ApplyTo(GroundPlaneROI::GetGroundQuad(), groundPlaneWrtRobot);
     
     // ask memory map to clear
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    INavMap* currentNavMemoryMap = GetNavMemoryMap();
     DEV_ASSERT(currentNavMemoryMap, "BlockWorld.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
-    const INavMemoryMap::EContentType typeInteresting = INavMemoryMap::EContentType::InterestingEdge;
-    const INavMemoryMap::EContentType typeUnknown = INavMemoryMap::EContentType::Unknown;
+    const INavMap::EContentType typeInteresting = INavMap::EContentType::InterestingEdge;
+    const INavMap::EContentType typeUnknown = INavMap::EContentType::Unknown;
     currentNavMemoryMap->ReplaceContent(groundPlaneWrtRobot, typeInteresting, typeUnknown);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
   {
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    INavMap* currentNavMemoryMap = GetNavMemoryMap();
     DEV_ASSERT(currentNavMemoryMap, "BlockWorld.FlagQuadAsNotInterestingEdges.NullMap");
-    currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMemoryMap::EContentType::NotInterestingEdge);
+    currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMap::EContentType::NotInterestingEdge);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1473,10 +1472,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // complexity when raycasting, finding boundaries, readding edges, etc. By flagging Unknown we simply say
     // "there was something here, but we are not sure what it was", which can be good to re-explore the area
   
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    INavMap* currentNavMemoryMap = GetNavMemoryMap();
     DEV_ASSERT(currentNavMemoryMap, "BlockWorld.FlagInterestingEdgesAsUseless.NullMap");
-    const INavMemoryMap::EContentType newType = INavMemoryMap::EContentType::Unknown;
-    currentNavMemoryMap->ReplaceContent(INavMemoryMap::EContentType::InterestingEdge, newType);
+    const INavMap::EContentType newType = INavMap::EContentType::Unknown;
+    currentNavMemoryMap->ReplaceContent(INavMap::EContentType::InterestingEdge, newType);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1520,8 +1519,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // create a new memory map in the given origin
       VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-      INavMemoryMap* navMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr, _robot);
-      _navMemoryMaps.emplace( std::make_pair(worldOriginID, std::unique_ptr<INavMemoryMap>(navMemoryMap)) );
+      INavMap* navMemoryMap = NavMapFactory::CreateMemoryMap(vizMgr, _robot);
+      _navMemoryMaps.emplace( std::make_pair(worldOriginID, std::unique_ptr<INavMap>(navMemoryMap)) );
       _currentNavMemoryMapOriginID = worldOriginID;
     }
   }
@@ -2251,14 +2250,14 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // cliffs currently have extra data (for directionality)
         const Pose3d& robotPose = _robot->GetPose();
         const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
-        NavMemoryMapQuadData_Cliff cliffData;
+        MemoryMapData_Cliff cliffData;
         Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
         cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
         
         // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
         const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
       
-        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+        INavMap* currentNavMemoryMap = GetNavMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
         currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
         
@@ -2274,13 +2273,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
       case ObjectType::ProxObstacle:
       {       
-        NavMemoryMapQuadData_ProxObstacle proxData;
+        MemoryMapData_ProxObstacle proxData;
         const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
         proxData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
         
         const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
         
-        INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+        INavMap* currentNavMemoryMap = GetNavMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
         
         currentNavMemoryMap->AddQuad(proxQuad, proxData);
@@ -2361,10 +2360,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       p2.TranslateForward(fmin(distMeasurement_mm, kMaxObsThreshold_mm) - tempObstacle.GetSize().x());
       
       // add clear info to map
-      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      INavMap* currentNavMemoryMap = GetNavMemoryMap();
       if ( currentNavMemoryMap ) {
         currentNavMemoryMap->AddLine(p1.GetTranslation(), p2.GetTranslation(), 
-                                     INavMemoryMap::EContentType::ClearOfObstacle);
+                                     INavMap::EContentType::ClearOfObstacle);
       }
       
       Quad2f ray(p1.GetTranslation(), p1.GetTranslation(), 
@@ -2379,7 +2378,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         Vec3f dist(distMeasurement_mm + .5f * tempObstacle.GetSize().x(),0,0);
         Pose3d obsPose(0, Z_AXIS_3D(), dist);
         
-//        AddProxObstacle(_robot->GetPose()*obsPose);
+        // TODO: Makes Victor viz lag and sometimes explode so commented out for now
+        //AddProxObstacle(_robot->GetPose()*obsPose);
       }
     }
   }
@@ -2919,8 +2919,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     const int objectId = object.GetID().GetValue();
     const ObjectFamily objectFam = object.GetFamily();
-    const NavMemoryMapTypes::EContentType addType = ObjectFamilyToMemoryMapContentType(objectFam, true);
-    if ( addType == NavMemoryMapTypes::EContentType::Unknown )
+    const MemoryMapTypes::EContentType addType = ObjectFamilyToMemoryMapContentType(objectFam, true);
+    if ( addType == MemoryMapTypes::EContentType::Unknown )
     {
       // this is ok, this obstacle family is not tracked in the memory map
       PRINT_CH_INFO("BlockWorld", "BlockWorld.AddObjectReportToMemMap.InvalidAddType",
@@ -2939,7 +2939,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       Pose3d objWrtRobot;
       if ( newPose.GetWithRespectTo(_robot->GetPose(), objWrtRobot) )
       {
-        INavMemoryMap* memoryMap = matchPair->second.get();
+        INavMap* memoryMap = matchPair->second.get();
         
         const bool isFloating = object.IsPoseTooHigh(objWrtRobot, 1.f, STACKED_HEIGHT_TOL_MM, 0.f);
         if ( isFloating )
@@ -2988,8 +2988,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     const int objectId = object.GetID().GetValue();
     const ObjectFamily objectFam = object.GetFamily();
-    const NavMemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
-    if ( removalType == NavMemoryMapTypes::EContentType::Unknown )
+    const MemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
+    if ( removalType == MemoryMapTypes::EContentType::Unknown )
     {
       // this is not ok, this obstacle family can be added but can't be removed from the map
       PRINT_NAMED_WARNING("BlockWorld.RemoveObjectReportFromMemMap.InvalidRemovalType",
@@ -3019,7 +3019,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           auto matchPair = _navMemoryMaps.find(originID);
           if ( matchPair != _navMemoryMaps.end() )
           {
-            INavMemoryMap* memoryMap = matchPair->second.get();
+            INavMap* memoryMap = matchPair->second.get();
 
             // remove from the memory map
             const Pose3d& oldPoseInThisOrigin = info.pose;
@@ -3109,7 +3109,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     DEV_ASSERT(object->GetPose().IsChildOf(_robot->GetWorldOrigin()),
                "BlockWorld.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
 
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    INavMap* currentNavMemoryMap = GetNavMemoryMap();
     
     // we are creating a quad projected on the ground from the robot to every marker we see. In order to do so
     // the bottom corners of the ground quad match the forward ones of the robot (robotQuad::xLeft). The names
@@ -3139,7 +3139,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
       
       // update navmesh with a quadrilateral between the robot and the seen object
-      currentNavMemoryMap->AddQuad(clearVisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
+      currentNavMemoryMap->AddQuad(clearVisionQuad, INavMap::EContentType::ClearOfObstacle);
       
       // also notify behavior whiteboard.
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
@@ -3233,28 +3233,28 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // ask the memory map to do the merge
     // some implementations make require parameters like max distance to merge, but for now trust continuity
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    INavMap* currentNavMemoryMap = GetNavMemoryMap();
     if( currentNavMemoryMap )
     {
-      using ContentType = INavMemoryMap::EContentType;
+      using ContentType = INavMap::EContentType;
       
       // interesting edges adjacent to any of these types will be deemed not interesting
-      constexpr NavMemoryMapTypes::FullContentArray typesWhoseEdgesAreNotInteresting =
+      constexpr MemoryMapTypes::FullContentArray typesWhoseEdgesAreNotInteresting =
       {
-        {NavMemoryMapTypes::EContentType::Unknown               , false},
-        {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-        {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-        {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
-        {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-        {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
-        {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
-        {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
-        {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-        {NavMemoryMapTypes::EContentType::Cliff                 , false},
-        {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
-        {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
+        {MemoryMapTypes::EContentType::Unknown               , false},
+        {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+        {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+        {MemoryMapTypes::EContentType::ObstacleCube          , true },
+        {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+        {MemoryMapTypes::EContentType::ObstacleCharger       , true },
+        {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+        {MemoryMapTypes::EContentType::ObstacleProx          , true },
+        {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+        {MemoryMapTypes::EContentType::Cliff                 , false},
+        {MemoryMapTypes::EContentType::InterestingEdge       , false},
+        {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
       };
-      static_assert(NavMemoryMapTypes::IsSequentialArray(typesWhoseEdgesAreNotInteresting),
+      static_assert(MemoryMapTypes::IsSequentialArray(typesWhoseEdgesAreNotInteresting),
         "This array does not define all types once and only once.");
 
       // fill border in memory map
@@ -3273,7 +3273,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     DEV_ASSERT(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
     
     // we are only processing edges for the memory map, so if there's no map, don't do anything
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    INavMap* currentNavMemoryMap = GetNavMemoryMap();
     if( nullptr == currentNavMemoryMap && !kDebugRenderOverheadEdges )
     {
       return RESULT_OK;
@@ -3435,22 +3435,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
               That should be the main difference between typesThatOccludeValidInfoOutOfROI vs typesThatOccludeValidInfoInsideROI.
             */
             // typesThatOccludeValidInfoOutOfROI = types to check against outside ground ROI:
-            constexpr NavMemoryMapTypes::FullContentArray typesThatOccludeValidInfoOutOfROI =
+            constexpr MemoryMapTypes::FullContentArray typesThatOccludeValidInfoOutOfROI =
             {
-              {NavMemoryMapTypes::EContentType::Unknown               , false},
-              {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-              {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-              {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
-              {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-              {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
-              {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
-              {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
-              {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-              {NavMemoryMapTypes::EContentType::Cliff                 , true },
-              {NavMemoryMapTypes::EContentType::InterestingEdge       , true },
-              {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
+              {MemoryMapTypes::EContentType::Unknown               , false},
+              {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+              {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+              {MemoryMapTypes::EContentType::ObstacleCube          , true },
+              {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+              {MemoryMapTypes::EContentType::ObstacleCharger       , true },
+              {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+              {MemoryMapTypes::EContentType::ObstacleProx          , true },
+              {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+              {MemoryMapTypes::EContentType::Cliff                 , true },
+              {MemoryMapTypes::EContentType::InterestingEdge       , true },
+              {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
             };
-            static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoOutOfROI),
+            static_assert(MemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoOutOfROI),
               "This array does not define all types once and only once.");
             
             // check if it's occluded before the near plane
@@ -3475,22 +3475,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             That should be the main difference between typesThatOccludeValidInfoOutOfROI vs typesThatOccludeValidInfoInsideROI.
           */
           // typesThatOccludeValidInfoInsideROI = types to check against inside ground ROI:
-          constexpr NavMemoryMapTypes::FullContentArray typesThatOccludeValidInfoInsideROI =
+          constexpr MemoryMapTypes::FullContentArray typesThatOccludeValidInfoInsideROI =
           {
-            {NavMemoryMapTypes::EContentType::Unknown               , false},
-            {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-            {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-            {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
-            {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-            {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
-            {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
-            {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
-            {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-            {NavMemoryMapTypes::EContentType::Cliff                 , false},
-            {NavMemoryMapTypes::EContentType::InterestingEdge       , false },
-            {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false }
+            {MemoryMapTypes::EContentType::Unknown               , false},
+            {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+            {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+            {MemoryMapTypes::EContentType::ObstacleCube          , true },
+            {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+            {MemoryMapTypes::EContentType::ObstacleCharger       , true },
+            {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+            {MemoryMapTypes::EContentType::ObstacleProx          , true },
+            {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+            {MemoryMapTypes::EContentType::Cliff                 , false},
+            {MemoryMapTypes::EContentType::InterestingEdge       , false },
+            {MemoryMapTypes::EContentType::NotInterestingEdge    , false }
           };
-          static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoInsideROI),
+          static_assert(MemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoInsideROI),
             "This array does not define all types once and only once.");
           
           // Vec2f innerRayFrom: already calculated for us
@@ -3713,7 +3713,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
         // add clear info to map
         if ( currentNavMemoryMap ) {
-          currentNavMemoryMap->AddLine(clearFrom, clearTo, INavMemoryMap::EContentType::ClearOfObstacle);
+          currentNavMemoryMap->AddLine(clearFrom, clearTo, INavMap::EContentType::ClearOfObstacle);
         }
       }
       else
@@ -3746,7 +3746,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
           // add clear info to map
           if ( currentNavMemoryMap ) {
-            currentNavMemoryMap->AddTriangle(clearTri2D, INavMemoryMap::EContentType::ClearOfObstacle);
+            currentNavMemoryMap->AddTriangle(clearTri2D, INavMap::EContentType::ClearOfObstacle);
           }
         }
         else
@@ -3761,7 +3761,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
           // add clear info to map
           if ( currentNavMemoryMap ) {
-            currentNavMemoryMap->AddQuad(potentialClearQuad2D, INavMemoryMap::EContentType::ClearOfObstacle);
+            currentNavMemoryMap->AddQuad(potentialClearQuad2D, INavMap::EContentType::ClearOfObstacle);
           }
         }
       }
@@ -3789,7 +3789,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
       // add interesting edge
       if ( currentNavMemoryMap ) {
-        currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, INavMemoryMap::EContentType::InterestingEdge);
+        currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, INavMap::EContentType::InterestingEdge);
       }
     }
     
@@ -3934,7 +3934,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (_lastPlayAreaSizeEventSec + _playAreaSizeEventIntervalSec < currentTimeSec) {
       _lastPlayAreaSizeEventSec = currentTimeSec;
-      const INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      const INavMap* currentNavMemoryMap = GetNavMemoryMap();
       const double areaM2 = currentNavMemoryMap->GetExploredRegionAreaM2();
       Anki::Util::sEventF("robot.play_area_size", {}, "%.2f", areaM2);
     }

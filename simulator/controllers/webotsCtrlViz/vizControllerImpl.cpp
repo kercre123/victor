@@ -690,7 +690,7 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   sprintf(txt, "Dist: %4u mm, signalStrength: %7.2f (%s)",
           proxData.distance_mm,
           proxData.signalIntensity / proxData.spadCount,
-          proxData.distance_mm < FORWARD_RANGE_SENSOR_MAX_DISTANCE_MM ? "OBJ DETECTED" : "CLEAR");
+          proxData.distance_mm < kProxSensorMaxDistance_mm ? "OBJ DETECTED" : "CLEAR");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DIST, Anki::NamedColors::GREEN, txt);
 
 #else

@@ -65,11 +65,10 @@ extern "C" void DumpEvents();
 namespace Anki {
   namespace Cozmo {
 
-    static_assert(MOTOR_LEFT_WHEEL == MOTOR_LEFT, "Robot/Spine CLAD Mimatch");
-    static_assert(MOTOR_RIGHT_WHEEL == MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
-    static_assert(MOTOR_LIFT == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
-    static_assert(MOTOR_HEAD == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
-
+    static_assert(EnumToUnderlyingType(MotorID::MOTOR_LEFT_WHEEL) == MOTOR_LEFT, "Robot/Spine CLAD Mimatch");
+    static_assert(EnumToUnderlyingType(MotorID::MOTOR_RIGHT_WHEEL) == MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
+    static_assert(EnumToUnderlyingType(MotorID::MOTOR_LIFT) == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
+    static_assert(EnumToUnderlyingType(MotorID::MOTOR_HEAD) == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
     
     namespace { // "Private members"
 
@@ -206,9 +205,8 @@ namespace Anki {
       assert(bodyData_ != nullptr);
       
 
-      MotorID m;
-      for (m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
-        MotorResetPosition(m);
+      for (int m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
+        MotorResetPosition((MotorID)m);
       }
       printf("Hal Init Success\n");
 
@@ -220,17 +218,18 @@ namespace Anki {
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
-      assert(motor < MOTOR_COUNT);
-      SAVE_MOTOR_POWER(motor, power);
-      headData_.motorPower[motor] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[motor];
-      
+      const auto m = EnumToUnderlyingType(motor);
+      assert(m < MOTOR_COUNT);
+      SAVE_MOTOR_POWER(m, power);
+      headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
     }
 
     // Reset the internal position of the specified motor to 0
     void HAL::MotorResetPosition(MotorID motor)
     {
-      assert(motor < MOTOR_COUNT);
-      internalData_.motorOffset[motor] = bodyData_->motor[motor].position;
+      const auto m = EnumToUnderlyingType(motor);
+      assert(m < MOTOR_COUNT);
+      internalData_.motorOffset[m] = bodyData_->motor[m].position;
     }
 
 
@@ -238,15 +237,16 @@ namespace Anki {
     // Wheels are in mm/s, everything else is in degrees/s.
     f32 HAL::MotorGetSpeed(MotorID motor)
     {
-      assert(motor < MOTOR_COUNT);
+      const auto m = EnumToUnderlyingType(motor);
+      assert(m < MOTOR_COUNT);
 
       // Every frame, syscon sends the last detected speed as a two part number:
       // `delta` encoder counts, and `time` span for those counts.
       // syscon only changes the value when counts are detected
       // if no counts for ~25ms, will report 0/0
-      if (bodyData_->motor[motor].time != 0) {
-        float countsPerTick = (float)bodyData_->motor[motor].delta / bodyData_->motor[motor].time;
-        return (countsPerTick / HAL_SEC_PER_TICK) * HAL_MOTOR_POSITION_SCALE[motor];
+      if (bodyData_->motor[m].time != 0) {
+        float countsPerTick = (float)bodyData_->motor[m].delta / bodyData_->motor[m].time;
+        return (countsPerTick / HAL_SEC_PER_TICK) * HAL_MOTOR_POSITION_SCALE[m];
       }
       return 0.0; //if time is 0, it's not moving.
     }
@@ -255,8 +255,9 @@ namespace Anki {
     // Wheels are in mm since reset, everything else is in degrees.
     f32 HAL::MotorGetPosition(MotorID motor)
     {
-      assert(motor < MOTOR_COUNT);
-      return (bodyData_->motor[motor].position - internalData_.motorOffset[motor]) * HAL_MOTOR_POSITION_SCALE[motor];
+      const auto m = EnumToUnderlyingType(motor);
+      assert(m < MOTOR_COUNT);
+      return (bodyData_->motor[m].position - internalData_.motorOffset[m]) * HAL_MOTOR_POSITION_SCALE[m];
     }
 
     void PrintConsoleOutput(void)
@@ -277,8 +278,11 @@ namespace Anki {
     }
 
 
+    // TODO: This is now being handled in animation process
+    //       Is there still a need to maintain connection state in robot process?
     Result HAL::MonitorConnectionState(void)
     {
+      /*
       // Send block connection state when engine connects
       static bool wasConnected = false;
       if (!wasConnected && HAL::RadioIsConnected()) {
@@ -288,7 +292,7 @@ namespace Anki {
         idMsg.hwRevision = 0;
         RobotInterface::SendMessage(idMsg);
 
-        // send firmware info indicating simulated robot
+        // send firmware info indicating physical robot
         {
           std::string firmwareJson{"{\"version\":0,\"time\":0}"};
           RobotInterface::FirmwareVersion msg;
@@ -303,7 +307,7 @@ namespace Anki {
       else if (wasConnected && !HAL::RadioIsConnected()) {
         wasConnected = false;
       }
-
+      */
       return RESULT_OK;
 
     } // step()
@@ -335,7 +339,8 @@ namespace Anki {
 #if IMU_WORKING
       ProcessIMUEvents();
 #endif
-      MonitorConnectionState();
+
+      //MonitorConnectionState();
 
       DUMP_SPINE_EVENTS_MAYBE(now);
       return result;
@@ -375,14 +380,16 @@ namespace Anki {
 
     void HAL::SetLED(LEDId led_id, u32 color)
     {
-      assert(led_id >= 0 && led_id <= LED_COUNT);
+      assert(led_id >= 0 && led_id < LED_COUNT);
+      
+      const u32 ledIdx = (u32)led_id;
       
       uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
       uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
       uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
-      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_RED] = r;
-      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_GREEN] = g;
-      headData_.ledColors[led_id * LED_CHANEL_CT + LED0_BLUE] = b;
+      headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_RED] = r;
+      headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_GREEN] = g;
+      headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_BLUE] = b;
     }
 
     u32 HAL::GetID()
@@ -400,6 +407,12 @@ namespace Anki {
       // SPAD count is fixed point 8.8, so convert to float:
       proxData.spadCount = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
       return proxData;
+    }
+    
+    u16 HAL::GetButtonState(const ButtonID button_id)
+    {
+      // TODO(agm) ask adam about this
+      return 0;
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
@@ -434,7 +447,7 @@ namespace Anki {
       return bodyData_->battery.flags & chargerOOS;
     }
 
-    Result HAL::SetBlockLight(const u32 activeID, const u16* colors)
+    Result HAL::SetBlockLight(const u32 activeID, const u32* colors)
     {
       // Not implemented in HAL in V2
       return RESULT_OK;

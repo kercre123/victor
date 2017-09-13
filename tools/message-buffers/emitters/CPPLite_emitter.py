@@ -317,14 +317,20 @@ class HEnumEmitter(BaseEmitter):
         self.emitSuffix(node, globals)
         
     def emitHeader(self, node, globals):
-        self.output.write(textwrap.dedent('''\
-            // ENUM {enum_name}
-            enum {{
-            ''').format(**globals));
-    
+        if (node.cpp_class):
+            self.output.write(textwrap.dedent('''\
+                // ENUM {enum_name}
+                enum class {enum_name} : {enum_storage_type} {{
+                ''').format(**globals));
+        else:
+            self.output.write(textwrap.dedent('''\
+                // ENUM {enum_name}
+                enum {enum_name} : {enum_storage_type} {{
+                ''').format(**globals));
+
+
     def emitFooter(self, node, globals):
-        self.output.write('};\n')
-        self.output.write('typedef {enum_storage_type} {enum_name};\n\n'.format(**globals))
+        self.output.write('};\n\n')
     
     def emitMembers(self, node, globals):
         with self.output.indent(1):
@@ -341,23 +347,36 @@ class HEnumEmitter(BaseEmitter):
 
     def emitSuffix(self, node, globals):
         with self.output.reset_indent():
-            self.output.write('#ifdef CLAD_DEBUG\n')
+            self.output.write(textwrap.dedent('''\
+              constexpr {enum_storage_type} EnumToUnderlyingType({enum_name} e)
+              {{
+                return static_cast<{enum_storage_type}>(e);
+              }}
+              
+              ''').format(**globals));
         
-        self.output.write('const char* {enum_name}ToString({enum_name} m);\n'.format(**globals))
-        
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
-        
-        self.output.write('\n')
+        self.output.write('const char* EnumToString({enum_name} m);\n'.format(**globals))
+        self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
 
 class CPPEnumEmitter(HEnumEmitter):
-    
+  
+    def visit_EnumDecl(self, node):
+        globals = dict(
+            enum_name=node.name,
+            enum_storage_type=cpplite_mutable_type(node.storage_type.builtin_type()),
+            byte=byte,
+            size_t=size_t,
+        )
+      
+        self.emitHeader(node, globals)
+        self.emitMembers(node, globals)
+        self.emitFooter(node, globals)
+        self.emitSuffix(node, globals)
+        self.emitStringToEnum(node, globals)
+
     def emitHeader(self, node, globals):
-        with self.output.reset_indent():
-            self.output.write('#ifdef CLAD_DEBUG\n')
-        
         self.output.write(textwrap.dedent('''\
-            const char* {enum_name}ToString({enum_name} m)
+            const char* EnumToString({enum_name} m)
             {{
             \tswitch(m) {{
             ''').format(**globals))
@@ -368,24 +387,47 @@ class CPPEnumEmitter(HEnumEmitter):
             \t\t\treturn 0;
             \t}
             }
+            
             '''))
-        
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
-        
-        self.output.write('\n')
     
     def emitMembers(self, node, globals):
         with self.output.indent(2):
             for member in node.members():
                 if not member.is_duplicate:
                     self.output.write(textwrap.dedent('''\
-                        case {member_name}:
+                        case {enum_name}::{member_name}:
                         \treturn "{member_name}";
-                        ''').format(member_name=member.name))
+                        ''').format(member_name=member.name, **globals))
     
     def emitSuffix(self, node, globals):
         pass
+
+    def emitStringToEnum(self, node, globals):
+        self.output.write(textwrap.dedent('''\
+          {enum_name} {enum_name}FromString(const std::string& str)
+          {{
+          ''').format(num_values=len(node.members()), **globals))
+          
+        with self.output.indent(1):
+          self.output.write('const std::unordered_map<std::string, {enum_name}> stringToEnumMap = {{\n'.format(**globals))
+          for member in node.members():
+              self.output.write('\t{{"{member_name}", {enum_name}::{member_name}}},\n'.format(member_name=member.name, **globals))
+          self.output.write('};\n\n')
+                
+          self.output.write(textwrap.dedent('''\
+              auto it = stringToEnumMap.find(str);
+              if(it == stringToEnumMap.end()) {{
+              std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              assert(false && "string must be a valid {enum_name} value");
+              return {enum_name}::{first_val};
+              }}
+              
+          ''').format(first_val=node.members()[0].name, **globals))
+            
+          self.output.write('return it->second;\n')
+        
+        self.output.write('}\n\n')
+
 
 class HStructEmitter(BaseEmitter):
     
@@ -598,7 +640,12 @@ class HUnionEmitter(BaseEmitter):
     
     def emitConstructors(self, node, globals):
         self.output.write('{object_name}(): tag(INVALID) {{ }}\n\n'.format(**globals))
-    
+        
+        if node.members():
+          for member in node.members():
+            self.output.write('{object_name}( {member_type} msg ): tag({tag_name}_{member_name}), {member_name}(msg) {{ }}\n'.format(member_type=cpplite_mutable_type(member.type), member_name=member.name, **globals))
+
+
     def emitCast(self, node, globals):
         self.output.write(textwrap.dedent('''\
             /**** Cast to byte buffer, adjusting any padding. ****/
@@ -622,11 +669,7 @@ class HUnionEmitter(BaseEmitter):
         self.output.write('\n')
     
     def emitTagToString(self, node, globals):
-        with self.output.reset_indent():
-            self.output.write('#ifdef CLAD_DEBUG\n')
         self.output.write('static const char* {tag_name}ToString({tag_name} t);\n'.format(**globals))
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
 
 class CPPUnionEmitter(HUnionEmitter):
     
@@ -692,8 +735,6 @@ class CPPUnionEmitter(HUnionEmitter):
         def body(member):
             self.output.write('return "{member_name}";\n'.format(member_name=member.name))
         
-        with self.output.reset_indent():
-            self.output.write('#ifdef CLAD_DEBUG\n')
         self.output.write(textwrap.dedent('''\
             const char* {qualified_object_name}::{tag_name}ToString({tag_name} t)
             {{
@@ -701,9 +742,6 @@ class CPPUnionEmitter(HUnionEmitter):
         with self.output.indent(1):
             self.emitSwitch(node, globals, body, argument='t', default_case='return "INVALID";\n')
         self.output.write('}\n')
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
-        self.output.write('\n')
     
     def emitSwitch(self, node, globals, callback, tag_type='Tag', argument='tag', default_case='break;\n'):
         self.output.write('switch({argument}) {{\n'.format(argument=argument, **globals))
@@ -877,7 +915,7 @@ if __name__ == '__main__':
         main_output_header_callback,
         comment_lines=comment_lines,
         use_inclusion_guards=True,
-        system_headers=['stdbool.h', 'stdint.h'])
+        system_headers=['stdbool.h', 'stdint.h', 'string'])
     
     
     def main_output_source_callback(output):
@@ -888,4 +926,5 @@ if __name__ == '__main__':
         main_output_source_callback,
         comment_lines=comment_lines,
         use_inclusion_guards=False,
-        local_headers=[main_output_header])
+        local_headers=[main_output_header],
+        system_headers=['unordered_map', 'iostream', 'cassert'])

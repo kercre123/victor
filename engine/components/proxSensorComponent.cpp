@@ -17,6 +17,8 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "util/logging/rollingFileLogger.h"
@@ -25,6 +27,8 @@ namespace Anki {
 namespace Cozmo {
   
 namespace {
+  const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
+  
   const std::string kLogDirectory = "sensorData/proxSensor";
 } // end anonymous namespace
 
@@ -79,7 +83,78 @@ void ProxSensorComponent::StopLogging()
     PRINT_NAMED_WARNING("ProxSensorComponent.StopLogging.NotLogging", "Not logging raw data!");
   }
 }
+  
+  
+Pose3d ProxSensorComponent::GetPose() const
+{
+  Pose3d sensorPose;
+  sensorPose.SetTranslation(kProxSensorPositionVec_mm);
+  sensorPose.SetRotation(-kProxSensorTiltAngle_rad, Y_AXIS_3D()); // negative since tilt angle is upward
+  sensorPose.SetParent(_robot.GetPose());
+  return sensorPose;
+}
 
+
+Result ProxSensorComponent::IsInFOV(const Pose3d& inPose, bool& isInFOV) const
+{
+  isInFOV = false;
+
+  const auto& sensorPose = GetPose();
+  Pose3d inPoseWrtSensor("inPoseWrtSensor");
+  if (!inPose.GetWithRespectTo(sensorPose, inPoseWrtSensor)) {
+    return Result::RESULT_FAIL;
+  }
+  
+  // Sensor beam goes along its x axis, so the distance away is simply the pose's x value
+  const auto dist = inPoseWrtSensor.GetTranslation().x();
+  if (dist < 0) {
+    // Not in field of view if behind the sensor
+    isInFOV = false;
+    return Result::RESULT_OK;
+  }
+  
+  // Compute r (which is the radial distance from the beam's center to the pose in question)
+  const float r = std::hypot(inPoseWrtSensor.GetTranslation().y(),
+                             inPoseWrtSensor.GetTranslation().z());
+
+  // The sensor beam is a cone, and the cone's radius at a given distance is
+  // given by distance * tan(fullFOV / 2)
+  const float beamRadiusAtDist = dist * std::tan(kProxSensorFullFOV_rad / 2.f);
+  
+  isInFOV = (r <= beamRadiusAtDist);
+  
+  return Result::RESULT_OK;
+}
+  
+
+Result ProxSensorComponent::IsLiftInFOV(bool& isInFOV) const
+{
+  // TODO: This may require a tolerance due to motor backlash, etc.
+  // Verify with physical robots that this is accurate.
+  
+  isInFOV = false;
+  if (!_robot.IsLiftCalibrated()) {
+    PRINT_NAMED_WARNING("ProxSensorComponent.IsLiftInFOV.LiftNotCalibrated",
+                        "Lift is not calibrated! Considering it not in FOV.");
+    return Result::RESULT_FAIL;
+  }
+
+  const float liftHeight = _robot.GetLiftHeight();
+  
+  // Note: this is the approximate x distance from the sensor to the lift crossbar
+  // when the lift is in front of the sensor. All distances here in mm.
+  const float sensorToLiftDist = (LIFT_BASE_POSITION[0] + LIFT_ARM_LENGTH) - kProxSensorPosition_mm[0];
+  const float beamRadiusAtLift = sensorToLiftDist * std::tan(kProxSensorFullFOV_rad / 2.f);
+  
+  // If the current lift height is within this tolerance of LIFT_HEIGHT_OCCLUDING_PROX_SENSOR,
+  // then at least part of the lift is within view of the sensor.
+  const float withinViewTol = beamRadiusAtLift + (LIFT_XBAR_HEIGHT / 2.f);
+  
+  isInFOV = Util::IsNear(liftHeight, LIFT_HEIGHT_OCCLUDING_PROX_SENSOR, withinViewTol);
+  
+  return Result::RESULT_OK;
+}
+  
   
 void ProxSensorComponent::Log()
 {

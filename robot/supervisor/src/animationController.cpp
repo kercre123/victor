@@ -39,6 +39,17 @@ namespace AnimationController {
 
   namespace {
 
+    constexpr auto KEYFRAME_BUFFER_SIZE = EnumToUnderlyingType(AnimConstants::KEYFRAME_BUFFER_SIZE);
+    
+    constexpr auto HEAD_TRACK = EnumToUnderlyingType(AnimTrackFlag::HEAD_TRACK);
+    constexpr auto LIFT_TRACK = EnumToUnderlyingType(AnimTrackFlag::LIFT_TRACK);
+    constexpr auto BODY_TRACK = EnumToUnderlyingType(AnimTrackFlag::BODY_TRACK);
+    constexpr auto FACE_IMAGE_TRACK = EnumToUnderlyingType(AnimTrackFlag::FACE_IMAGE_TRACK);
+    constexpr auto EVENT_TRACK = EnumToUnderlyingType(AnimTrackFlag::EVENT_TRACK);
+    constexpr auto BACKPACK_LIGHTS_TRACK = EnumToUnderlyingType(AnimTrackFlag::BACKPACK_LIGHTS_TRACK);
+    constexpr auto AUDIO_TRACK = EnumToUnderlyingType(AnimTrackFlag::AUDIO_TRACK);
+    constexpr auto ALL_TRACKS = EnumToUnderlyingType(AnimTrackFlag::ALL_TRACKS);
+    
     // Streamed animation will not play until we've got this many _audio_ keyframes
     // buffered.
     static const s32 ANIMATION_PREROLL_LENGTH = 7;

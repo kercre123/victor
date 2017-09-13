@@ -22,8 +22,8 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/navMemoryMap/iNavMemoryMap.h"
-#include "engine/navMemoryMap/navMemoryMapTypes.h"
+#include "engine/navMap/iNavMap.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
@@ -71,22 +71,22 @@ CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTrackingTiltAngle_deg, CONSOLE_GRO
 
 // If we are doing the memory map check, these are the types which will prevent us from driving the ideal
 // distance
-constexpr NavMemoryMapTypes::FullContentArray typesToBlockDriving =
+constexpr MemoryMapTypes::FullContentArray typesToBlockDriving =
 {
-  {NavMemoryMapTypes::EContentType::Unknown               , false},
-  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-  {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
-  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
-  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-  {NavMemoryMapTypes::EContentType::ObstacleProx          , true },
-  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-  {NavMemoryMapTypes::EContentType::Cliff                 , true },
-  {NavMemoryMapTypes::EContentType::InterestingEdge       , true },
-  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
+  {MemoryMapTypes::EContentType::Unknown               , false},
+  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+  {MemoryMapTypes::EContentType::ObstacleCube          , true },
+  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleCharger       , true },
+  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {MemoryMapTypes::EContentType::ObstacleProx          , true },
+  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+  {MemoryMapTypes::EContentType::Cliff                 , true },
+  {MemoryMapTypes::EContentType::InterestingEdge       , true },
+  {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
 };
-static_assert(NavMemoryMapTypes::IsSequentialArray(typesToBlockDriving),
+static_assert(MemoryMapTypes::IsSequentialArray(typesToBlockDriving),
   "This array does not define all types once and only once.");
 
 }
@@ -188,7 +188,7 @@ bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward(const Robot& robot)
 {
   if( kInteractWithFaces_DoMemoryMapCheckForDriveForward ) {
 
-    const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+    const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
     DEV_ASSERT(nullptr != memoryMap, "BehaviorInteractWithFaces.CanDriveIdealDistanceForward.NeedMemoryMap");
 
     const Vec3f& fromRobot = robot.GetPose().GetTranslation();

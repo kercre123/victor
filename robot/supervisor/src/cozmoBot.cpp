@@ -11,6 +11,7 @@
 #ifndef TARGET_K02
 #include "animationController.h"
 #endif
+#include "backpackLightController.h"
 #include "dockingController.h"
 #include "liftController.h"
 #include "localization.h"
@@ -48,7 +49,7 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-      ImageResolution captureResolution_ = QVGA;
+      ImageResolution captureResolution_ = ImageResolution::QVGA;
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
@@ -113,6 +114,9 @@ namespace Anki {
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 227, "CozmoBot.InitFail.AnimationController", 305, "", 0);
 #endif
+        lastResult = BackpackLightController::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 1249, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
+        
         lastResult = Messages::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 220, "CozmoBot.InitFail.Messages", 305, "", 0);
 
@@ -134,7 +138,6 @@ namespace Anki {
 
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 226, "CozmoBot.InitFail.LiftController", 305, "", 0);
-
 
 #ifdef COZMO_V2
         // Calibrate motors
@@ -221,7 +224,7 @@ namespace Anki {
           PathFollower::Init();
           SteeringController::ExecuteDirectDrive(0,0);
           PickAndPlaceController::Reset();
-          PickAndPlaceController::SetCarryState(CARRY_NONE);
+          PickAndPlaceController::SetCarryState(CarryState::CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
           #ifndef COZMO_V2
@@ -244,9 +247,9 @@ namespace Anki {
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
-#ifdef SIMULATOR
-          TestModeController::Start(TM_NONE);
-          AnimationController::EnableTracks(ALL_TRACKS);
+#ifndef TARGET_K02
+          TestModeController::Start(TestMode::TM_NONE);
+          AnimationController::EnableTracks( EnumToUnderlyingType(AnimTrackFlag::ALL_TRACKS));
 #endif
 
           wasConnected_ = false;
@@ -263,23 +266,30 @@ namespace Anki {
         IMUFilter::Update();
         ProxSensors::Update();
 
-
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
-#ifdef SIMULATOR
-        if(AnimationController::Update() != RESULT_OK) {
-          AnkiWarn( 230, "CozmoBot.Main.AnimationControllerUpdateFailed", 305, "", 0);
-          AnimationController::Clear();
+#ifndef TARGET_K02
+        if (Messages::ReceivedInit()) {
+          if(AnimationController::Update() != RESULT_OK) {
+            AnkiWarn( 230, "CozmoBot.Main.AnimationControllerUpdateFailed", 305, "", 0);
+            AnimationController::Clear();
+          }
         }
 #endif
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
+        
+        MARK_NEXT_TIME_PROFILE(CozmoBot, LIGHTS);
+        BackpackLightController::Update();
+        
 #ifdef SIMULATOR
+        // TODO: Move this to animation process since that's where they'll be controlled from
         BlockLightController::Update();
 #endif
+        
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
@@ -307,9 +317,11 @@ namespace Anki {
               waitForFirstMotorCalibAfterConnect_ = false;
               
 #ifdef SIMULATOR
+#ifndef COZMO_V2
               RobotInterface::RobotAvailable msg;
               AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "", 0);
               RobotInterface::SendMessage(msg);
+#endif
 #endif
               
               mode_ = WAITING;
@@ -365,6 +377,11 @@ namespace Anki {
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
+          
+          // TODO: Can this just be a log in V2? Why send to engine first?
+          AnkiWarn( 1240, "CozmoBot.MainCycleTimeError", 657, "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us", 4,
+                   mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
+          
           RobotInterface::MainCycleTimeError m;
           m.numMainTooLateErrors = mainTooLateCnt_;
           m.avgMainTooLateTime = avgMainTooLateTime_;

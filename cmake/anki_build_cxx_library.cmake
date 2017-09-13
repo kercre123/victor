@@ -3,21 +3,21 @@ macro(__anki_build_cxx_source_list target_name srclist_dir)
 file(STRINGS "${srclist_dir}/${target_name}.srcs.lst" SRCS)
 file(STRINGS "${srclist_dir}/${target_name}.headers.lst" HEADERS)
 
-set(PLATFORM_SRCS "")
-set(PLATFORM_HEADERS "")
+set(_abcxx_PLATFORM_SRCS "")
+set(_abcxx_PLATFORM_HEADERS "")
 if (ANDROID)
     if (EXISTS "${srclist_dir}/${target_name}_android.srcs.lst")
-      file(STRINGS "${srclist_dir}/${target_name}_android.srcs.lst" PLATFORM_SRCS)
+      file(STRINGS "${srclist_dir}/${target_name}_android.srcs.lst" _abcxx_PLATFORM_SRCS)
     endif()
     if (EXISTS "${srclist_dir}/${target_name}_android.headers.lst")
-      file(STRINGS "${srclist_dir}/${target_name}_android.headers.lst" PLATFORM_HEADERS)
+      file(STRINGS "${srclist_dir}/${target_name}_android.headers.lst" _abcxx_PLATFORM_HEADERS)
     endif()
 elseif (MACOSX)
     if (EXISTS "${srclist_dir}/${target_name}_mac.srcs.lst")
-      file(STRINGS "${srclist_dir}/${target_name}_mac.srcs.lst" PLATFORM_SRCS)
+      file(STRINGS "${srclist_dir}/${target_name}_mac.srcs.lst" _abcxx_PLATFORM_SRCS)
     endif()
     if (EXISTS "${srclist_dir}/${target_name}_mac.headers.lst")
-      file(STRINGS "${srclist_dir}/${target_name}_mac.headers.lst" PLATFORM_HEADERS)
+      file(STRINGS "${srclist_dir}/${target_name}_mac.headers.lst" _abcxx_PLATFORM_HEADERS)
     endif()
 endif()
 
@@ -36,8 +36,8 @@ endif()
 add_library(${target_name} ${extra_argv}
   ${SRCS}
   ${HEADERS}
-  ${PLATFORM_SRCS}
-  ${PLATFORM_HEADERS}
+  ${_abcxx_PLATFORM_SRCS}
+  ${_abcxx_PLATFORM_HEADERS}
 )
 endmacro()
 
@@ -54,7 +54,7 @@ endif()
 add_executable(${target_name} ${extra_argv}
   ${SRCS}
   ${HEADERS}
-  ${PLATFORM_SRCS}
-  ${PLATFORM_HEADERS}
+  ${_abcxx_PLATFORM_SRCS}
+  ${_abcxx_PLATFORM_HEADERS}
 )
 endmacro()

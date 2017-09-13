@@ -117,10 +117,7 @@ public:
 
   // Read the face animations in a dir
   void ReadFaceAnimationDir();
-
-  // Iterate through the loaded animations and broadcast their names
-  void BroadcastAvailableAnimations();
-    
+  
   // Iterate through the loaded animation groups and broadcast their names
   void BroadcastAvailableAnimationGroups();
   
@@ -163,7 +160,7 @@ private:
   std::set<AnimationTrigger> _dasBlacklistedAnimationTriggers;
 
 }; // class RobotManager
-  
+
 } // namespace Cozmo
 } // namespace Anki
 

@@ -97,8 +97,8 @@ namespace Anki {
         power_l_ = 0.f;
         power_r_ = 0.f;
 
-        HAL::MotorSetPower(MOTOR_LEFT_WHEEL, power_l_);
-        HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, power_r_);
+        HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, power_l_);
+        HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, power_r_);
       }
     }
 
@@ -213,8 +213,8 @@ namespace Anki {
 #endif
 
       //Command the computed motor power values
-      HAL::MotorSetPower(MOTOR_LEFT_WHEEL, power_l_);
-      HAL::MotorSetPower(MOTOR_RIGHT_WHEEL, power_r_);
+      HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, power_l_);
+      HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, power_r_);
 
       // Update last moved time
       if (!(NEAR_ZERO(filterWheelSpeedL_) && NEAR_ZERO(filterWheelSpeedR_))) {
@@ -229,8 +229,8 @@ namespace Anki {
     void EncoderSpeedFilterIteration(void)
     {
       // Get encoder speed measurements
-      measuredWheelSpeedL_ = Cozmo::HAL::MotorGetSpeed(MOTOR_LEFT_WHEEL);
-      measuredWheelSpeedR_ = Cozmo::HAL::MotorGetSpeed(MOTOR_RIGHT_WHEEL);
+      measuredWheelSpeedL_ = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_LEFT_WHEEL);
+      measuredWheelSpeedR_ = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_RIGHT_WHEEL);
 
       filterWheelSpeedL_ = (measuredWheelSpeedL_ *
                        (1.0f - ENCODER_FILTERING_COEFF) +

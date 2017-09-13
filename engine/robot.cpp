@@ -39,6 +39,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blocks/blockFilter.h"
 #include "engine/charger.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -53,13 +54,13 @@
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/ramp.h"
@@ -201,6 +202,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _carryingComponent(new CarryingComponent(*this))
   , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
   , _proxSensorComponent(std::make_unique<ProxSensorComponent>(*this))
+  , _touchSensorComponent(std::make_unique<TouchSensorComponent>(*this))
+  , _animationComponent(std::make_unique<AnimationComponent>(*this, _context))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, _pose, "RobotNeck")
@@ -530,8 +533,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                         "t=%dms, duration=%dms",
                         GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
-
-      _context->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Fall);
     }
     
     _offTreadsState = _awaitingConfirmationTreadState;
@@ -837,6 +838,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 
   // Update prox sensor component
   _proxSensorComponent->Update(msg);
+  
+  _touchSensorComponent->Update(msg);
 
   // update current path segment in the path component
   _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);
@@ -1508,6 +1511,9 @@ Result Robot::Update()
   
   // Send nav memory map data
   _blockWorld->BroadcastNavMemoryMap();
+  
+  /////////// Update AnimationComponent /////////
+  _animationComponent->Update();
       
   /////////// Update visualization ////////////
       
@@ -3209,6 +3215,7 @@ RobotState Robot::GetDefaultRobotState()
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
+                         0, // touch intensity value when not touched (from capacitive touch sensor)
                          -1); //int8_t currPathSegment
   
   return state;

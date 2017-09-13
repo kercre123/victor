@@ -6,6 +6,7 @@ if (NOT MACOSX)
 endif()
 
 set(CONTROLLERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/controllers")
+set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources")
 
 include(opencv)
 include(symlink_target)
@@ -99,8 +100,8 @@ target_compile_definitions(webotsCtrlLightCube PRIVATE
 
 symlink_target(TARGET webotsCtrlLightCube DST "${CONTROLLERS_DIR}/webotsCtrlLightCube/")
 symlink_target(TARGET webotsCtrlLightCube
-  SRC ${CMAKE_SOURCE_DIR}/resources/config
-  DST ${CONTROLLERS_DIR}/webotsCtrlLightCube/resources/
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlLightCube/resources
 )
 
 
@@ -122,8 +123,8 @@ PRIVATE
 
 symlink_target(TARGET webotsCtrlViz DST "${CONTROLLERS_DIR}/webotsCtrlViz/")
 symlink_target(TARGET webotsCtrlViz
-  SRC ${CMAKE_SOURCE_DIR}/resources/config
-  DST ${CONTROLLERS_DIR}/webotsCtrlViz/resources/
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlViz/resources
 )
 
 
@@ -155,11 +156,38 @@ target_compile_definitions(webotsCtrlRobot2 PRIVATE
 
 symlink_target(TARGET webotsCtrlRobot2 DST "${CONTROLLERS_DIR}/webotsCtrlRobot2/")
 symlink_target(TARGET webotsCtrlRobot2
-  SRC ${CMAKE_SOURCE_DIR}/resources/config
-  DST ${CONTROLLERS_DIR}/webotsCtrlRobot2/resources/
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlRobot2/resources
 )
 
 
+anki_build_cxx_executable(webotsCtrlAnim ${ANKI_SRCLIST_DIR})
+
+target_link_libraries(webotsCtrlAnim
+PRIVATE
+  util
+  kazmath
+  cti_common
+  #cti_common_robot
+  cti_vision
+  robot_interface
+  webotsCtrlCommon
+  victor_anim
+  ${OPENCV_LIBS}
+  ${PLATFORM_LIBS}
+)
+
+target_compile_definitions(webotsCtrlAnim PRIVATE
+  SIMULATOR
+  COZMO_V2
+)
+
+symlink_target(TARGET webotsCtrlAnim DST "${CONTROLLERS_DIR}/webotsCtrlAnim/")
+symlink_target(TARGET webotsCtrlAnim
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlAnim/resources
+)
+ 
 anki_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlGameEngine2
@@ -185,16 +213,8 @@ target_compile_definitions(webotsCtrlGameEngine2 PRIVATE
 
 symlink_target(TARGET webotsCtrlGameEngine2 DST "${CONTROLLERS_DIR}/webotsCtrlGameEngine2/")
 symlink_target(TARGET webotsCtrlGameEngine2
-  SRC ${CMAKE_SOURCE_DIR}/resources/config
-  DST ${CONTROLLERS_DIR}/webotsCtrlGameEngine2/resources/
-)
-symlink_target(TARGET webotsCtrlGameEngine2
-  SRC ${CMAKE_SOURCE_DIR}/resources/test
-  DST ${CONTROLLERS_DIR}/webotsCtrlGameEngine2/resources/
-)
-symlink_target(TARGET webotsCtrlGameEngine2
-  SRC ${CMAKE_SOURCE_DIR}/generated/${ANKI_PLATFORM_NAME}/resources/tts
-  DST ${CONTROLLERS_DIR}/webotsCtrlGameEngine2/resources/
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlGameEngine2/resources
 )
 
 
@@ -226,8 +246,8 @@ target_compile_definitions(webotsCtrlKeyboard PRIVATE
 
 symlink_target(TARGET webotsCtrlKeyboard DST "${CONTROLLERS_DIR}/webotsCtrlKeyboard/")
 symlink_target(TARGET webotsCtrlKeyboard
-  SRC ${CMAKE_SOURCE_DIR}/resources/config
-  DST ${CONTROLLERS_DIR}/webotsCtrlKeyboard/resources/
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlKeyboard/resources
 )
 
 

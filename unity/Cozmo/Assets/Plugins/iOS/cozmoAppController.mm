@@ -261,14 +261,70 @@ void tryExecuteBackgroundTransfers()
 
 @end
 
-//Methods for Voice Command Settings
 extern "C"{
-    void openAppSettings() {
-        if (UIApplicationOpenSettingsURLString != NULL) {
-            NSURL *appSettings = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-            [[UIApplication sharedApplication] openURL:appSettings];
-        }
+  // Method for Voice Command Settings
+  void openAppSettings() {
+    if (UIApplicationOpenSettingsURLString != NULL) {
+      NSURL *appSettings = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+      [[UIApplication sharedApplication] openURL:appSettings];
     }
+  }
+
+  void exportCodelabFile( const char* projectNameString, const char* projectContentString ) {
+    NSString *writablePath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)objectAtIndex:0];
+    NSString *temporaryFilePath = [writablePath stringByAppendingPathComponent:@"cozmo-codelab"];
+
+    NSFileManager* manager = [NSFileManager defaultManager];
+    BOOL isDirectory;
+    NSError *error = nil;
+    if (![manager fileExistsAtPath:temporaryFilePath isDirectory:&isDirectory]) {
+
+      NSDictionary *attr = [[NSDictionary alloc] init];
+
+      [manager createDirectoryAtPath:temporaryFilePath
+         withIntermediateDirectories:YES
+                          attributes:attr
+                               error:&error];
+      if (error != nil) {
+        NSString* errorString = [@"Error creating directory path: " stringByAppendingString:[error localizedDescription]];
+        Unity_DAS_Event("Codelab.ios.export_codelab_file.ErrorCreatingTempDirectory", [errorString UTF8String], nullptr, nullptr, 0);
+        return;
+      }
+    }
+    else if (!isDirectory) {
+      NSString* errorString = [@"Could not create path because a file is using the name wanted by our directory: " stringByAppendingString:[error localizedDescription]];
+      Unity_DAS_Event("Codelab.ios.export_codelab_file.TempDirectoryNameInUseByFile", [errorString UTF8String], nullptr, nullptr, 0);
+      return;
+    }
+
+    NSString *formattedProjectName = [[[[NSString alloc] initWithCString:projectNameString encoding:NSUTF8StringEncoding] stringByReplacingOccurrencesOfString:@" " withString:@"_"] lowercaseString];
+    NSString *fileName = [formattedProjectName stringByAppendingString:@".codelab"];
+    NSString *filePath = [temporaryFilePath stringByAppendingPathComponent:fileName];
+
+    NSString *content = [[NSString alloc] initWithCString:projectContentString encoding:NSUTF8StringEncoding];
+    [content writeToFile:filePath
+              atomically:YES
+                encoding:NSUTF8StringEncoding
+                   error:&error];
+
+    if (error != nil) {
+      NSString* errorString = [@"Codelab file export error: " stringByAppendingString:[error localizedDescription]];
+      Unity_DAS_Event("Codelab.ios.export_codelab_file.TempFileCreateError", [errorString UTF8String], nullptr, nullptr, 0);
+    }
+    else {
+      NSURL *fileURL = [NSURL fileURLWithPath:filePath];
+
+      NSMutableArray *sharingItems = [NSMutableArray new];
+      [sharingItems addObject:fileURL];
+
+      UIActivityViewController* activityController = [[UIActivityViewController alloc] initWithActivityItems:sharingItems applicationActivities:nil];
+      [activityController setExcludedActivityTypes:@[UIActivityTypeMail, UIActivityTypeAirDrop, UIActivityTypePrint, UIActivityTypeMessage, UIActivityTypeCopyToPasteboard, UIActivityTypeAssignToContact]];
+
+      UIViewController *vc = (UIViewController*)[UIApplication sharedApplication].keyWindow.rootViewController;
+      activityController.popoverPresentationController.sourceView = vc.view;
+      [vc presentViewController:activityController animated:YES completion:nil];
+    }
+  }
 }
 
 IMPL_APP_CONTROLLER_SUBCLASS(CozmoAppController);

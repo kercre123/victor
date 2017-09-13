@@ -8,7 +8,7 @@ PROTO CozmoBot2 [
   field SFString name "CozmoBot2"
 
   field SFFloat headAngle          0
-  field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
+  field SFFloat headAngle_lowLimit -0.3491 # 20 degrees down
   field SFFloat headAngle_highLimit 0.7854 # 45 degrees up
 
   field SFFloat liftAngle 0
@@ -282,6 +282,20 @@ Supervisor {
                   numberOfRotations 1
                 }
 
+                # Connects CozmoAnim to CozmoBot2
+                Connector {
+                  name "animConnector"
+                  model "animConnector"
+                  type "symmetric"
+                  isLocked TRUE
+                  autoLock TRUE
+                  distanceTolerance 0.1
+                  axisTolerance 3.14
+                  rotationTolerance 3.14
+                  numberOfRotations 1
+                  translation 0.0001 0.0001 0
+                }
+
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
                 # as way to simulate access to the same IMU from both the robot and engine processes 
                 # which we might in theory be able to eventually do via AndroidHAL.
@@ -500,16 +514,52 @@ Supervisor {
               ]
             } # BACKPACK_GROUP
 
+            # Touch sensor (upper side of the back. For when pet from above)
+            # Works by receiving on a specific channel that is only emitted
+            # by the hand object proto
+            Receiver {
+              name                "touchSensorUpper"
+              translation         -0.003 0 0.025
+              type                "radio"             # for penetrating obstacles (aka other cozmo components)
+              aperture            3.14159             # full half sphere of detection
+              channel             84                  # arbitrarily chosen
+              signalStrengthNoise 0.1
+              directionNoise      0.1
+            }
+            
+            # Visualization of the Touch Sensor receiver (a small disc on the back)
+            # intersecting this with the hand object will trigger touch measurements
+            #
+            # Transform {
+            #   translation -0.003 0 0.025 # same position as the Receiver position
+            #   rotation 1 0 0 1.5707963
+            #   children [
+            #     Shape {
+            #       geometry Cylinder {
+            #         bottom FALSE
+            #         top TRUE
+            #         side FALSE
+            #         height 0.01   # arbitrarily chosen
+            #         radius 0.005  # half the emitter range (hand)
+            #       }
+            #       appearance Appearance {
+            #         material Material {
+            #           diffuseColor 0.5 0 0.5  # purple
+            #         }
+            #       }
+            #     }
+            #   ]
+            # }
 
             %{ if not fields.vizMode.value then }% # BackpackLights
             #Backpack lights (directional)
             Transform {
-              translation -0.009 0 0.025
+              translation 0.003 0 0.025
               children [
                 %{
-                  for i=0,2 do
-                    led_name = string.format("ledHealth%d", i)
-                    xpos = (i)*0.006
+                  for i=0,3 do
+                    led_name = string.format("backpackLED%d", i)
+                    xpos = -(i)*0.004
                 }%
                 LED {
                   name "%{=led_name}%"
@@ -523,7 +573,7 @@ Supervisor {
                           }
                         }
                         geometry Box {
-                          size 0.005 0.005 0.005
+                          size 0.003 0.002 0.005
                         }
                       }
                     ]
@@ -534,39 +584,6 @@ Supervisor {
                   gradual TRUE
                 }
                 %{ end }%   # End light for loop
-                %{
-                  for i=0,1 do
-                    if (i == 0) then
-                      led_name = "ledDirLeft"
-                      ypos = 0.006
-                    else
-                      led_name = "ledDirRight"
-                      ypos = -0.006
-                    end
-                }%
-                LED {
-                  name "%{=led_name}%"
-                  children [
-                    DEF BACKPACK_DIR_LED_SHAPE Group {
-                      children [
-                        Shape {
-                          appearance Appearance {
-                            material Material {
-                              diffuseColor 0.3 0.3 0.3
-                            }
-                          }
-                          geometry Box {
-                            size 0.003 0.005 0.005
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                  translation 0.003 %{=ypos}% 0
-                  color []
-                  gradual TRUE
-                }
-                %{ end }%
               ]
             } # Backpack lights
 

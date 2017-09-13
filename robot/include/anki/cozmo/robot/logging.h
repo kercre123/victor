@@ -98,7 +98,7 @@ namespace Anki {
 #if ANKI_DEBUG_EVENTS
       #define AnkiEvent(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { \
-        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_EVENT, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_EVENT, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
         console_printf("[Event] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
       }
 #else
@@ -108,7 +108,7 @@ namespace Anki {
 #if ANKI_DEBUG_INFO
       #define AnkiInfo(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { \
-        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_INFO, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_INFO, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
         console_printf("[Info] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
       }
 #else
@@ -118,14 +118,14 @@ namespace Anki {
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ALL
       #define AnkiDebug(nameId, nameString, fmtId, fmtString, nargs, ...) \
       { \
-        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
         console_printf("[Debug] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
       }
       
       #define AnkiDebugPeriodic(num_calls_between_prints, nameId, nameString, fmtId, fmtString, nargs, ...) \
       {   static u16 cnt = num_calls_between_prints; \
           if (++cnt > num_calls_between_prints) { \
-            Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+            Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
             console_printf("[DebugP] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
             cnt = 0; \
           } \
@@ -137,26 +137,26 @@ namespace Anki {
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS
       #define AnkiError(nameId, nameString, fmtId, fmtString, nargs, ...) { \
-        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
         console_printf("[Error] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
       }
 
       #define AnkiConditionalError(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           console_printf("[Error] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
         }
 
       #define AnkiConditionalErrorAndReturn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           console_printf("[Error] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
           return; \
         }
       
       #define AnkiConditionalErrorAndReturnValue(expression, returnValue, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if(!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_ERROR, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           console_printf("[Error] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
           return returnValue; \
         }
@@ -169,26 +169,26 @@ namespace Anki {
 
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
       #define AnkiWarn(nameId, nameString, fmtId, fmtString, nargs, ...) { \
-        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+        Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
         console_printf("[Warn] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
       }
 
       #define AnkiConditionalWarn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           console_printf("[Warn] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
         }
 
       #define AnkiConditionalWarnAndReturn(expression, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           console_printf("[Warn] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
           return; \
         }
       
       #define AnkiConditionalWarnAndReturnValue(expression, returnValue, nameId, nameString, fmtId, fmtString, nargs, ...) \
         if(!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_WARN, nameId, fmtId, nargs, CASTx(nargs, __VA_ARGS__)); \
           console_printf("[Warn] " nameString " " fmtString "\r\n", ##__VA_ARGS__); \
           return returnValue;\
         }
@@ -212,7 +212,7 @@ namespace Anki {
       // Anki assert sends assesrt CLAD message and then halts main exec
       #define AnkiAssert(expression, fmtId) \
         if (!(expression)) { \
-          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::ANKI_LOG_LEVEL_ASSERT, 0, fmtId, 1, __LINE__); \
+          Anki::Cozmo::RobotInterface::SendLog(Anki::Cozmo::RobotInterface::LogLevel::ANKI_LOG_LEVEL_ASSERT, 0, fmtId, 1, __LINE__); \
           ANKI_ASSERT_SHOW; \
           while(true); \
         }
