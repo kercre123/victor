@@ -27,8 +27,9 @@
 #include "util/console/consoleInterface.h"
 
 #include <opencv2/highgui/highgui.hpp>
+#include <iomanip>
 
-#define DEBUG_MOTION_DETECTION 0
+#define DEBUG_MOTION_DETECTION 1
 
 namespace Anki {
 namespace Cozmo {
@@ -37,7 +38,7 @@ namespace {
 # define CONSOLE_GROUP_NAME "Vision.MotionDetection"
   
   // For speed, compute motion detection on half-resolution images
-  CONSOLE_VAR(bool, kMotionDetection_UseHalfRes,          CONSOLE_GROUP_NAME, true);
+  CONSOLE_VAR(bool, kMotionDetection_UseHalfRes,          CONSOLE_GROUP_NAME, false);
   
   // How long we have to wait between motion detections. This may be reduce-able, but can't get
   // too small or we'll hallucinate image change (i.e. "motion") due to the robot moving.
@@ -63,21 +64,159 @@ namespace {
   CONSOLE_VAR(f32,  kMotionDetection_MaxBodyAngleChange_deg,    CONSOLE_GROUP_NAME, 0.1f);
   CONSOLE_VAR(f32,  kMotionDetection_MaxPoseChange_mm,          CONSOLE_GROUP_NAME, 0.5f);
   
-  CONSOLE_VAR(bool, kMotionDetection_DrawGroundDetectionsInCameraView, CONSOLE_GROUP_NAME, false);
+  CONSOLE_VAR(bool, kMotionDetection_DrawGroundDetectionsInCameraView, CONSOLE_GROUP_NAME, true);
   
 # undef CONSOLE_GROUP_NAME
 }
-  
+
+
+class MotionDetector::ImageRegionSelector
+{
+public:
+
+  ImageRegionSelector(int width, int height, float horizontalSize, float verticalSize,
+                      float increaseFactor, float decreaseFactor, float maxValue) :
+      _topID(increaseFactor, decreaseFactor, maxValue),
+      _LeftID(increaseFactor, decreaseFactor, maxValue),
+      _RightID(increaseFactor, decreaseFactor, maxValue)
+  {
+    assert(horizontalSize <= 0.5);
+    assert(verticalSize <= 0.5);
+
+    _leftMargin = width * horizontalSize;
+    _rightMargin = width - _leftMargin;
+    _upperMargin = height * (1.0f - verticalSize);
+
+  }
+
+  float getTopResponse() const
+  {
+    return _topID.Value();
+  }
+  float getLeftResponse() const
+  {
+    return _LeftID.Value();
+  }
+  float getRightResponse() const
+  {
+    return _RightID.Value();
+  }
+
+  void Update(const cv::Point &point,
+              float value)
+  {
+
+    int x = point.x;
+    int y = point.y;
+    //where does the point lie?
+
+    //top
+    bool topActivated = false;
+    if (y <= _upperMargin) {
+      topActivated = true;
+      _topID.Update(value);
+      _RightID.Decay();
+      _LeftID.Decay();
+    }
+    //left and right are not in exclusion with top
+    //left
+    if (x <= _leftMargin) {
+      if (! topActivated) {
+        _topID.Decay();
+      }
+      _RightID.Decay();
+      _LeftID.Update(value);
+    }
+      //right
+    else if (x >= _rightMargin) {
+      if (! topActivated) {
+        _topID.Decay();
+      }
+      _RightID.Update(value);
+      _LeftID.Decay();
+
+    }
+    else { //they all go down
+      Decay();
+    }
+
+  }
+
+  void Decay() {
+    _topID.Decay();
+    _RightID.Decay();
+    _LeftID.Decay();
+  }
+
+
+private:
+
+  class ImpulseDecay
+  {
+  public:
+    ImpulseDecay(float increaseFactor, float decreaseFactor, float maxValue) :
+        _increaseFactor(increaseFactor),
+        _decreaseFactor(decreaseFactor),
+        _maxValue(maxValue)
+    {
+
+    }
+
+    float Update(float value = 0)
+    {
+      _value = _value + _increaseFactor * value - _decreaseFactor;
+      if (_value < 0) {
+        _value = 0;
+      }
+      else if (_value > _maxValue) {
+        _value = _maxValue;
+      }
+      return _value;
+    }
+
+    float Decay()
+    {
+      return Update(0);
+    }
+
+    float Value() const {
+      return _value;
+    }
+
+  private:
+    float _increaseFactor;
+    float _decreaseFactor;
+    float _maxValue;
+    float _value = 0;
+
+  };
+
+  float _leftMargin;
+  float _rightMargin;
+  float _upperMargin;
+
+  ImpulseDecay _topID;
+  ImpulseDecay _LeftID;
+  ImpulseDecay _RightID;
+};
+
 static const char * const kLogChannelName = "VisionSystem";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MotionDetector::MotionDetector(const Vision::Camera& camera, VizManager* vizManager)
-: _camera(camera)
+:
+  _regionSelector(nullptr) //need image size information before we can build this
+, _camera(camera)
 , _vizManager(vizManager)
 {
   DEV_ASSERT(kMotionDetection_MinBrightness > 0, "MotionDetector.Constructor.MinBrightnessIsZero");
+
+  // TODO make these proper parameters
 }
-  
+
+// Need to do this for the pimpl implementation of ImageRegionSelector
+MotionDetector::~MotionDetector() = default;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 bool MotionDetector::HavePrevImage<Vision::ImageRGB>() const
@@ -214,6 +353,21 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
                                     std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
                                     DebugImageList<Vision::ImageRGB>& debugImageRGBs)
 {
+
+  // TODO need to make these proper parameters
+  if (_regionSelector == nullptr) {
+    const float kHorizontalSize = 0.3;
+    const float kVerticalSize = 0.3;
+    const float kIncreaseFactor = 0.001;
+    const float kDecreaseFactor = 1.0;
+    const float kMaxValue = 10.0;
+
+    _regionSelector.reset( new ImageRegionSelector(image.GetNumCols(), image.GetNumRows(),
+                                                   kHorizontalSize, kVerticalSize, kIncreaseFactor,
+                                                   kDecreaseFactor, kMaxValue));
+  }
+
+
   const bool headSame = crntPoseData.IsHeadAngleSame(prevPoseData, DEG_TO_RAD(kMotionDetection_MaxHeadAngleChange_deg));
   
   const bool poseSame = crntPoseData.IsBodyPoseSame(prevPoseData,
@@ -264,6 +418,9 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     Vision::Image foregroundMotion(image.GetNumRows(), image.GetNumCols());
     s32 numAboveThresh = RatioTest(image, foregroundMotion);
 
+    // Run the peripheral motion detection
+    DetectPeripheralMotion(foregroundMotion, debugImageRGBs);
+
     // Remove noise
 //    static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
 //    cv::morphologyEx(foregroundMotion.get_CvMat_(), foregroundMotion.get_CvMat_(), cv::MORPH_OPEN, kernel);
@@ -279,7 +436,10 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
       imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionDetection_CentroidPercentileX,
                                   kMotionDetection_CentroidPercentileY);
     }
-    
+
+    // TODO remove this code and export to a new function. Separate so that in case ground plane is not visible, then
+    // call the other attention grabbing motion
+
     // Get centroid of all the motion within the ground plane, if we have one to reason about
     if(crntPoseData.groundPlaneVisible && prevPoseData.groundPlaneVisible)
     {
@@ -293,7 +453,6 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
       foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
       
       // Zero out everything in the ratio image that's not inside the ground plane quad
-      // casting is explicit
       imgQuad -= boundingRect.GetTopLeft().CastTo<float>();
       
       Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
@@ -497,6 +656,75 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
   
 } // Detect()
 
+Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
+                                              DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs) {
+
+  // The image has several disjoint components, try to join them
+  // TODO make these proper parameters
+  const int kMorphologicalSize = 20;
+  const int kMinAreaFormotion = 500;
+
+  cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                         cv::Size(kMorphologicalSize, kMorphologicalSize));
+  const cv::Mat& cvInputImage = inputImage.get_CvMat_();
+  cv::morphologyEx( cvInputImage, cvInputImage, cv::MORPH_CLOSE, structuringElement );
+
+  // Get the connected components with stats
+  Anki::Array2d<s32> labelImage;
+  std::vector<Vision::Image::ConnectedComponentStats> stats;
+  inputImage.GetConnectedComponents(labelImage, stats);
+
+  //update the impulse/decay model
+  bool updated = false;
+  for (const auto& stat: stats) {
+    if (stat.area < kMinAreaFormotion) { //too small
+      continue;
+    }
+    updated  = true;
+    _regionSelector->Update(stat.centroid.get_CvPoint_(), stat.area);
+  }
+  if (! updated)
+    _regionSelector->Decay();
+
+  if (DEBUG_MOTION_DETECTION) {
+    Vision::ImageRGB imageToDisplay(inputImage);
+    // Draw the text
+    {
+      auto to_string_with_precision = [] (const float a_value, const int n = 6) {
+        std::ostringstream out;
+        out << std::setprecision(n) << a_value;
+        return out.str();
+      };
+
+      int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
+      double fontScale = 1;
+      int thickness = 2;
+      {
+        float value = _regionSelector->getTopResponse();
+        std::string text = to_string_with_precision(value, 3);
+        cv::Point origin(imageToDisplay.GetNumCols()/2 - 10, 30);
+        cv::putText(imageToDisplay.get_CvMat_(), text, origin, fontFace, fontScale, cv::Scalar(0, 0, 255), thickness);
+      }
+      {
+        float value = _regionSelector->getRightResponse();
+        std::string text = to_string_with_precision(value, 3);
+        cv::Point origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
+        cv::putText(imageToDisplay.get_CvMat_(), text, origin, fontFace, fontScale, cv::Scalar(0, 0, 255), thickness);
+      }
+      {
+        float value = _regionSelector->getLeftResponse();
+        std::string text = to_string_with_precision(value, 3);
+        cv::Point origin(10, imageToDisplay.GetNumRows()/2);
+        cv::putText(imageToDisplay.get_CvMat_(), text, origin, fontFace, fontScale, cv::Scalar(0, 0, 255), thickness);
+      }
+    }
+
+    debugImageRGBs.push_back({"PeripheralMotion", imageToDisplay});
+  }
+
+  return RESULT_OK;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Explicit instantiation of Detect() method for Gray and RGB images
 template Result MotionDetector::DetectHelper(const Vision::Image&, s32, s32, f32,
@@ -552,7 +780,8 @@ size_t MotionDetector::GetCentroid(const Vision::Image& motionImg, Point2f& cent
     return area;
   }
   
-} // GetCentroid()
+}
+// GetCentroid()
 
 } // namespace Cozmo
 } // namespace Anki

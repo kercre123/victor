@@ -51,9 +51,15 @@ public:
                 const VisionPoseData&   prevPoseData,
                 std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
                 DebugImageList<Vision::ImageRGB>& debugImageRGBs);
-  
+
+  ~MotionDetector();
+
 private:
-  
+
+  // The joy of pimpl :)
+  class ImageRegionSelector;
+  std::unique_ptr<ImageRegionSelector> _regionSelector;
+
   template<class ImageType>
   Result DetectHelper(const ImageType&        resizedImage,
                       s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
@@ -61,6 +67,9 @@ private:
                       const VisionPoseData&   prevPoseData,
                       std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
                       DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+
+  Result DetectPeripheralMotion(const Vision::Image &inputImage,
+                                  DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs);
 
   // Returns the number of times the ratio between the pixels in image and the pixels
   // in the previous image is above a threshold. The corresponding pixels in ratio12
