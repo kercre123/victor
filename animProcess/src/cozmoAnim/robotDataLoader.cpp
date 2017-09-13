@@ -21,7 +21,7 @@
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/proceduralFace.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
-#include "cozmoAnim/cozmoContext.h"
+#include "cozmoAnim/cozmoAnimContext.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -41,7 +41,7 @@ namespace {
 namespace Anki {
 namespace Cozmo {
 
-RobotDataLoader::RobotDataLoader(const CozmoContext* context)
+RobotDataLoader::RobotDataLoader(const CozmoAnimContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
 , _cannedAnimations(new CannedAnimationContainer())

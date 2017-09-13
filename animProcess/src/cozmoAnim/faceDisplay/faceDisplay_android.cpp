@@ -243,9 +243,6 @@ void lcd_shutdown(void) {
 namespace Anki {
 namespace Cozmo {
   
-#pragma mark --- Simulated Hardware Method Implementations ---
-  
-  
   // Definition of static field
   FaceDisplay* FaceDisplay::_instance = 0;
   

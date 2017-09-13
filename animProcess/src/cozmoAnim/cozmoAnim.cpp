@@ -12,7 +12,7 @@
 
 #include "cozmoAnim/cozmoAnim.h"
 #include "cozmoAnim/engineMessages.h"
-#include "cozmoAnim/cozmoContext.h"
+#include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -45,7 +45,7 @@ namespace Cozmo {
 
 CozmoAnimEngine::CozmoAnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
-  , _context(std::make_unique<CozmoContext>(dataPlatform))
+  , _context(std::make_unique<CozmoAnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
 {
   
@@ -63,17 +63,15 @@ CozmoAnimEngine::~CozmoAnimEngine()
   BaseStationTimer::removeInstance();
 }
 
-Result CozmoAnimEngine::Init(const Json::Value& config) {
+Result CozmoAnimEngine::Init() {
 
   if(_isInitialized) {
     PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
 
-  _config = config;
-
   _context->GetDataLoader()->LoadNonConfigData();
     
-  Messages::Init(_animationStreamer.get());
+  Messages::Init(*_animationStreamer);
   
   PRINT_NAMED_INFO("CozmoAnimEngine.Init.Success","");
   _isInitialized = true;

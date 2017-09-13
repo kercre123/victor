@@ -26,7 +26,6 @@ namespace Cozmo {
 
 // Forward declaration
 class ProceduralFace;
-class CozmoContext;
 
 class FaceLayerManager : public ITrackLayerManager<ProceduralFaceKeyFrame>
 {

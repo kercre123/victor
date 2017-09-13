@@ -102,21 +102,13 @@ int main(int argc, char **argv)
   // Start with a step so that we can attach to the process here for debugging
   animSupervisor.step(ANIM_TIME_STEP);
   
-  // Get configuration JSON
-  Json::Value config;
-
-  if (!dataPlatform.readAsJson(Util::Data::Scope::Resources,
-                               "config/engine/configuration.json", config)) {
-    PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConfig", "Failed to parse Json file config/engine/configuration.json");
-  }
-  
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
   NativeAnkiUtilConsoleLoadVars();
   
   // Initialize the API
   CozmoAnimEngine cozmoAnim(&dataPlatform);
-  cozmoAnim.Init(config);
+  cozmoAnim.Init();
 
   PRINT_NAMED_INFO("webotsCtrlAnim.main", "CozmoAnim created and initialized.");
 

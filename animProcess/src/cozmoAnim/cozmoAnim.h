@@ -27,7 +27,7 @@ namespace Data {
 namespace Cozmo {
   
 // Forward declarations
-class CozmoContext;
+class CozmoAnimContext;
 class AnimationStreamer;
   
 class CozmoAnimEngine
@@ -37,7 +37,7 @@ public:
   CozmoAnimEngine(Util::Data::DataPlatform* dataPlatform);
   ~CozmoAnimEngine();
 
-  Result Init(const Json::Value& config);
+  Result Init();
 
   // Hook this up to whatever is ticking the game "heartbeat"
   Result Update(const BaseStationTime_t currTime_nanosec);
@@ -45,9 +45,8 @@ public:
 protected:
   
   bool               _isInitialized = false;
-  Json::Value        _config;
   
-  std::unique_ptr<CozmoContext>       _context;
+  std::unique_ptr<CozmoAnimContext>       _context;
   std::unique_ptr<AnimationStreamer>  _animationStreamer;
   
 }; // class CozmoAnimEngine

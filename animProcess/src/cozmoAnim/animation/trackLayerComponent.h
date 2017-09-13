@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
 
-class CozmoContext;
+class CozmoAnimContext;
 
 class AudioLayerManager;
 class BackpackLayerManager;
@@ -52,7 +52,7 @@ public:
     ProceduralFaceKeyFrame faceKeyFrame;
   };
   
-  TrackLayerComponent(const CozmoContext* context);
+  TrackLayerComponent(const CozmoAnimContext* context);
   ~TrackLayerComponent();
   
   void Init();

@@ -22,7 +22,7 @@
 //#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "cozmoAnim/cozmoContext.h"
+#include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationKeyFrames.h"
@@ -56,7 +56,7 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
   } // namespace
   
-  AnimationStreamer::AnimationStreamer(const CozmoContext* context) //, Audio::RobotAudioClient& audioClient)
+  AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context) //, Audio::RobotAudioClient& audioClient)
   : _context(context)
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))

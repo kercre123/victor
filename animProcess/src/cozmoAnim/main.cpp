@@ -9,20 +9,18 @@
 * Copyright: Anki, inc. 2017
 *
 */
+#include "cozmoAnim/cozmoAnim.h"
+
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
 
 #include <stdio.h>
 #include <chrono>
 #include <fstream>
 #include <thread>
-
-#include "cozmoAnim/cozmoAnim.h"
-#include "util/logging/logging.h"
-#include "util/logging/printfLoggerProvider.h"
-
-#include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-
-
 
 #define TIC_TIME_MS 33
 
@@ -86,8 +84,7 @@ int main(void)
   // Create and init CozmoAnim
   CozmoAnimEngine cozmoAnim(dataPlatform);
   
-  Json::Value dummyJson;
-  cozmoAnim.Init(dummyJson);
+  cozmoAnim.Init();
   
   auto start = std::chrono::steady_clock::now();
   const auto timeOffset = start;

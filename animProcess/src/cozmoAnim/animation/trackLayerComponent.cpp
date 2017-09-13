@@ -17,7 +17,7 @@
 #include "cozmoAnim/animation/trackLayerManagers/backpackLayerManager.h"
 #include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 //#include "anki/cozmo/basestation/components/desiredFaceDistortionComponent.h"
-#include "cozmoAnim/cozmoContext.h"
+#include "cozmoAnim/cozmoAnimContext.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -28,7 +28,7 @@ namespace Cozmo {
 //CONSOLE_VAR(bool, kGenerateGlitchAudio, "ProceduralAnims", false);
 bool kGenerateGlitchAudio = false;
 
-TrackLayerComponent::TrackLayerComponent(const CozmoContext* context)
+TrackLayerComponent::TrackLayerComponent(const CozmoAnimContext* context)
 : _audioLayerManager(new AudioLayerManager(*context->GetRandom()))
 , _backpackLayerManager(new BackpackLayerManager(*context->GetRandom()))
 , _faceLayerManager(new FaceLayerManager(*context->GetRandom()))

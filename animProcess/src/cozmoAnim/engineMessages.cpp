@@ -75,8 +75,9 @@ namespace Messages {
   
 // #pragma mark --- Messages Method Implementations ---
 
-  Result Init(AnimationStreamer* animStreamer)
+  Result Init(AnimationStreamer& animStreamer)
   {
+    
     // Setup robot and engine sockets
     CozmoAnimComms::InitComms();
     
@@ -84,7 +85,7 @@ namespace Messages {
     ReliableTransport_Init();
     ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
-    _animStreamer = animStreamer;
+    _animStreamer = &animStreamer;
     
     return RESULT_OK;
   }
@@ -95,7 +96,7 @@ namespace Messages {
     // If not already doling, dole animations
     if (_isDolingAnims) {
       u32 numAnimsDoledThisTic = 0;
-      auto animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
+      const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
       auto it = animIDToNameMap.find(_nextAnimIDToDole);
       for (; it != animIDToNameMap.end() && numAnimsDoledThisTic < kMaxNumAvailableAnimsToReportPerTic; ++it) {
         
@@ -133,26 +134,26 @@ namespace Messages {
       //       OR the emitter could be smart and only create the switch for messages in a specific range of tags.
       //#include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
         
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_lockAnimTracks:
+      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_lockAnimTracks:
       {
         PRINT_NAMED_INFO("EngineMessages.ProcessMessage.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
         _animStreamer->SetLockedTracks(msg.lockAnimTracks.whichTracks);
         return;
       }
         
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
+      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
       {
         PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim", "%d", msg.playAnim.animID);
         _animStreamer->SetStreamingAnimation(msg.playAnim.animID, msg.playAnim.numLoops);
         return;
       }
         
-      case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
+      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
       {
         PRINT_NAMED_INFO("EngineMessages.RequestAvailableAnimations", "");
         if (!_isDolingAnims) {
-          auto animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
-          if (animIDToNameMap.begin() != animIDToNameMap.end()) {
+          const auto& animIDToNameMap = _animStreamer->GetCannedAnimationContainer().GetAnimationIDToNameMap();
+          if (!animIDToNameMap.empty()) {
             _nextAnimIDToDole =  animIDToNameMap.begin()->first;
             _isDolingAnims = true;
           } else {
@@ -215,7 +216,6 @@ namespace Messages {
   {
     MonitorConnectionState();
 
-    // Dole out availble animations
     DoleAvailableAnimations();
     
     // Process incoming messages from engine
@@ -259,7 +259,8 @@ namespace Messages {
       else
       {
         // Send up to engine
-        SendToEngine(msgBuf.GetBuffer()+1, msgBuf.Size()-1, msgBuf.tag);
+        const int tagSize = sizeof(msgBuf.tag);
+        SendToEngine(msgBuf.GetBuffer()+tagSize, msgBuf.Size()-tagSize, msgBuf.tag);
       }
       
     }

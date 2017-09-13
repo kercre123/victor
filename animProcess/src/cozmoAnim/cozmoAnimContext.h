@@ -1,5 +1,5 @@
 /**
- * File: cozmoContext.h
+ * File: cozmoAnimContext.h
  *
  * Author: Lee Crippen
  * Created: 1/29/2016
@@ -12,8 +12,8 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_CozmoContext_H__
-#define __Cozmo_Basestation_CozmoContext_H__
+#ifndef __Cozmo_Basestation_CozmoAnimContext_H__
+#define __Cozmo_Basestation_CozmoAnimContext_H__
 
 #include "util/helpers/noncopyable.h"
 #include <memory>
@@ -51,18 +51,18 @@ namespace RobotInterface {
 
 
 
-// Here begins the actual namespace and interface for CozmoContext
+// Here begins the actual namespace and interface for CozmoAnimContext
 namespace Anki {
 namespace Cozmo {
   
-class CozmoContext : private Util::noncopyable
+class CozmoAnimContext : private Util::noncopyable
 {
   //using AudioMultiplexer = AudioEngine::Multiplexer::AudioMultiplexer;
   
 public:
-  CozmoContext(Util::Data::DataPlatform* dataPlatform);
-  CozmoContext();
-  virtual ~CozmoContext();
+  CozmoAnimContext(Util::Data::DataPlatform* dataPlatform);
+  CozmoAnimContext();
+  virtual ~CozmoAnimContext();
   
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
 
@@ -96,4 +96,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_CozmoContext_H__
+#endif // __Cozmo_Basestation_CozmoAnimContext_H__

@@ -35,12 +35,12 @@ class DataPlatform;
 namespace Cozmo {
 
 class CannedAnimationContainer;
-class CozmoContext;
+class CozmoAnimContext;
 
 class RobotDataLoader : private Util::noncopyable
 {
 public:
-  RobotDataLoader(const CozmoContext* context);
+  RobotDataLoader(const CozmoAnimContext* context);
   ~RobotDataLoader();
 
   // loads all data excluding configs, using DispatchWorker to parallelize.
@@ -74,7 +74,7 @@ private:
                         const std::function<void(const std::string& filePath)>& walkFunc);
 
 
-  const CozmoContext* const _context;
+  const CozmoAnimContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
   enum FileType {

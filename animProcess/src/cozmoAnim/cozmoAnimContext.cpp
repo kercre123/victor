@@ -1,5 +1,5 @@
 
-#include "cozmoAnim/cozmoContext.h"
+#include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -20,7 +20,7 @@ public:
 };
 
   
-CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform)
+CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   : _dataPlatform(dataPlatform)
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
@@ -35,29 +35,29 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform)
 }
 
 
-CozmoContext::CozmoContext() : CozmoContext(nullptr)
+CozmoAnimContext::CozmoAnimContext() : CozmoAnimContext(nullptr)
 {
 
 }
 
-CozmoContext::~CozmoContext()
+CozmoAnimContext::~CozmoAnimContext()
 {
 
 }
 
 
-void CozmoContext::SetRandomSeed(uint32_t seed)
+void CozmoAnimContext::SetRandomSeed(uint32_t seed)
 {
-  _random->SetSeed("CozmoContext", seed);
+  _random->SetSeed("CozmoAnimContext", seed);
 }
   
 
-void CozmoContext::SetMainThread()
+void CozmoAnimContext::SetMainThread()
 {
   _threadIdHolder->_id = Util::GetCurrentThreadId();
 }
 
-bool CozmoContext::IsMainThread() const
+bool CozmoAnimContext::IsMainThread() const
 {
   return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }
