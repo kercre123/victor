@@ -89,8 +89,8 @@ namespace Anki {
     {
       //InitIMU();
       //InitCamera();
-      camera_init();
-      camera_start(victor_proto_camera_callback);
+      //camera_init();
+      //camera_start(victor_proto_camera_callback);
 
       
     }
@@ -98,8 +98,8 @@ namespace Anki {
     AndroidHAL::~AndroidHAL()
     {
       //      DeleteCamera(); 
-      camera_stop();
-      camera_cleanup();
+      //camera_stop();
+      //camera_cleanup();
      
     }
 
