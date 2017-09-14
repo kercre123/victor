@@ -40,7 +40,7 @@ static struct SpineEvent_t{
 } EventLOG[MAX_EVENTS];
 static uint32_t EventCount=0;
 
-#define EVENT_LOGGING_ENABLED
+//#define EVENT_LOGGING_ENABLED
 #ifdef EVENT_LOGGING_ENABLED
 
 void EventTrace(EventType type);

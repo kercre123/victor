@@ -11,12 +11,13 @@ AR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
 CFLAGS          := -I.
 CFLAGS          += -I../../generated/clad/robot
 CFLAGS          += -I../../syscon
+CFLAGS          += -I../include
 CFLAGS          += -DPLATFORM_ANDROID=1
 
 
 DEPS = ../spine/spine_hal.h ../spine/spine_crc.h 
-SRCS = ../spine/spine_hal.c ../spine/spine_crc.c dfu.c
-OBJ = ../spine/spine_hal.o ../spine/spine_crc.o dfu.o
+SRCS = ../src/event_trace.c ../spine/spine_hal.c ../spine/spine_crc.c dfu.c
+OBJ = ../src/event_trace.o ../spine/spine_hal.o ../spine/spine_crc.o dfu.o
 
 APP = dfu
 
