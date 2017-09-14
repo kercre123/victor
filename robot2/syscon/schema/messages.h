@@ -135,8 +135,8 @@ struct MotorPower
 
 struct BatteryState
 {
-  int32_t batteryVolts;
-  int32_t chargerVolts;
+  uint16_t battery;
+  uint16_t charger;
   BatteryFlags flags;
 };
 

@@ -3,6 +3,7 @@
 #include "common.h"
 #include "hardware.h"
 
+#include "analog.h"
 #include "comms.h"
 #include "motors.h"
 #include "power.h"
@@ -39,7 +40,7 @@ static struct {
     BodyToHead payload;
     SpineMessageFooter footer;
   } sync;
-  
+
   // Additional data (after sync)
   uint8_t tail[sizeof(TransmitFifoPayload) * 3];
 } outboundPacket;
@@ -130,15 +131,15 @@ void Comms::init(void) {
 
 void Comms::enqueue(PayloadId kind, const void* packet, int size) {
   int next = (txFifo_write + 1) % MAX_FIFO_SLOTS;
-  
+
   // Drop payload (should probably do something)
   if (next == txFifo_read) {
     return ;
   }
-  
+
   TransmitFifo* target = &txFifo[txFifo_write];
   SpineMessageFooter* footer = (SpineMessageFooter*)&target->payload.raw[size];
-    
+
   target->payload.header.sync_bytes = SYNC_BODY_TO_HEAD;
   target->payload.header.payload_type = kind;
   target->payload.header.bytes_to_follow = size;
@@ -146,7 +147,7 @@ void Comms::enqueue(PayloadId kind, const void* packet, int size) {
   footer->checksum = crc(target->payload.raw, size / sizeof(uint32_t));
 
   target->size = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter) + size;
-  
+
   txFifo_write = next;
 }
 
@@ -159,12 +160,12 @@ static int dequeue(void* out, int size) {
     if (target->size > size) {
       break ;
     }
-    
+
     memcpy(output, &target->payload, target->size);
     transmitted += target->size;
     size -= target->size;
     output += target->size;
-    
+
     txFifo_read = (txFifo_read + 1) % MAX_FIFO_SLOTS;
   }
 
@@ -180,11 +181,12 @@ void Comms::tick(void) {
   // Stop our DMA
   DMA1_Channel3->CCR = DMA_CCR_MINC
                      | DMA_CCR_DIR;
-  
+
   // Finalize the packet
   int count;
 
   if (applicationRunning) {
+    Analog::transmit(&outboundPacket.sync.payload);
     Motors::transmit(&outboundPacket.sync.payload);
     Opto::transmit(&outboundPacket.sync.payload);
     Mics::transmit(outboundPacket.sync.payload.audio);
@@ -263,7 +265,7 @@ extern "C" void USART1_IRQHandler(void) {
 
   // Configure out receive buffer
   NVIC_DisableIRQ(USART1_IRQn);
-  
+
   DMA1_Channel5->CPAR = (uint32_t)&USART1->RDR;
   DMA1_Channel5->CMAR = (uint32_t)inboundPacket.raw;
   DMA1_Channel5->CNDTR = sizeof(SpineMessageFooter) + inboundPacket.header.bytes_to_follow;
