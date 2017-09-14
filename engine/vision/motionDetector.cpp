@@ -195,7 +195,7 @@ private:
 static const char * const kLogChannelName = "VisionSystem";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MotionDetector::MotionDetector(const Vision::Camera& camera, VizManager* vizManager)
+MotionDetector::MotionDetector(const Vision::Camera &camera, VizManager *vizManager, const Json::Value &config)
 :
   _regionSelector(nullptr) //need image size information before we can build this
 , _camera(camera)

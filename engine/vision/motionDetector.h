@@ -43,7 +43,7 @@ class MotionDetector
 {
 public:
   
-  MotionDetector(const Vision::Camera& camera, VizManager* vizManager);
+  MotionDetector(const Vision::Camera &camera, VizManager *vizManager, const Json::Value &config);
 
   // Will use Color data if available in ImageCache, otherwise grayscale only
   Result Detect(Vision::ImageCache&     imageCache,
