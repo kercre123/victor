@@ -7,6 +7,12 @@ anki_build_copy_assets(
 )
 
 anki_build_copy_assets(
+    TARGET cozmo_resources_sound
+    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+    OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources"
+)
+
+anki_build_copy_assets(
     TARGET cozmo_resources_config
     SRCLIST_DIR ${ANKI_SRCLIST_DIR}
     OUTPUT_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources"

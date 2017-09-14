@@ -23,6 +23,8 @@ if (ANDROID)
   set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
 elseif(MACOSX)
   set(ANKI_PLATFORM_NAME "mac")
+else()
+  message(FATAL_ERROR "unsupported platform: ${ANKI_PLATFORM_NAME}")
 endif()
 
 add_compile_options(
