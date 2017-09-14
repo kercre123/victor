@@ -110,7 +110,7 @@ namespace Anki
           if(!didCompletePath && currentPathIsExternal_)
           {
             // Send a path interruption event iff we were following an externally-specified path when cleared
-            SendPathFollowingEvent(PATH_INTERRUPTED);
+            SendPathFollowingEvent(PathEventType::PATH_INTERRUPTED);
           }
         }
         
@@ -228,7 +228,7 @@ namespace Anki
         // If we were already following an externally-specified path, send an interruption event.
         if(IsTraversingPath() && currentPathIsExternal_)
         {
-          SendPathFollowingEvent(PATH_INTERRUPTED);
+          SendPathFollowingEvent(PathEventType::PATH_INTERRUPTED);
         }
         
         // Set first path segment
@@ -280,7 +280,7 @@ namespace Anki
         {
           // update the lastPathID and send an event that we're starting a new externally-specified path
           lastPathID_ = path_id;
-          SendPathFollowingEvent(PATH_STARTED);
+          SendPathFollowingEvent(PathEventType::PATH_STARTED);
         }
 
         return TRUE;
@@ -433,7 +433,7 @@ namespace Anki
         // Send a path completion event iff this is an externally-specified path
         if(currentPathIsExternal_)
         {
-          SendPathFollowingEvent(PATH_COMPLETED);
+          SendPathFollowingEvent(PathEventType::PATH_COMPLETED);
         }
         
         // Pass in "true" to signify that we _did_ complete the path (so don't send an Interruption event, since

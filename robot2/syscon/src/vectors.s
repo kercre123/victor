@@ -21,9 +21,6 @@ __heap_limit
 
                 AREA    RESET, CODE, READONLY
                 IMPORT  __main
-                IMPORT  __visitor_init
-                IMPORT  __visitor_stop
-                IMPORT  __visitor_tick
 
                 DCD     0x4F4D3243      ; Magic cozmo header (also evil byte)
                 DCD     0xFFFFFFFF      ; "safe" flags
@@ -33,9 +30,6 @@ __heap_limit
                 DCD     __initial_sp    ;
                 DCD     __main
                 SPACE   16
-                DCD     __visitor_init
-                DCD     __visitor_stop
-                DCD     __visitor_tick
 
                 AREA    ||.ARM.__AT_0x20000000||, DATA, READWRITE
 

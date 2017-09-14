@@ -24,9 +24,14 @@ generate_clad_cpplite(
     OUTPUT_SRCS CLAD_CPP_GEN_ROBOT_SRCS
 )
 
-file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad_embedded.headers.lst" ROBOT_HASH_SRCS)
+#
+# Accumulate sources from running special emitters on union clad files
+#
+set(CLAD_UNION_EMITTER_SRCS "")
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad_embedded.headers.lst" ROBOT_UNION_SRCS)
 generate_clad(
-    SRCS "${ROBOT_HASH_SRCS}"
+    SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
     OUTPUT_DIR "${OUTPUT_DIR}"
     OUTPUT_FILE true
@@ -35,10 +40,108 @@ generate_clad(
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_HASH_GEN_ROBOT_SRCS
 )
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_HASH_GEN_ROBOT_SRCS})
+
+set(CLAD_CPP_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPP_declarations_emitter.py")
+set(CLAD_CPP_DECL_EXTS "_declarations.def")
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    EMITTER ${CLAD_CPP_DECL}
+    OUTPUT_EXTS ${CLAD_CPP_DECL_EXTS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_DECL_GEN_ROBOT_SRCS
+)
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_DECL_GEN_ROBOT_SRCS})
+
+set(CLAD_CPP_SWITCH "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPPLite_switch_emitter.py")
+set(CLAD_CPP_SWITCH_EXTS "_switch.def")
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    EMITTER ${CLAD_CPP_SWITCH}
+    OUTPUT_EXTS ${CLAD_CPP_SWITCH_EXTS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_SWITCH_GEN_ROBOT_SRCS
+)
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_SWITCH_GEN_ROBOT_SRCS})
+
+set(CLAD_CPP_SWITCH_ANIM_EXTS "_switch_group_anim.def")
+set(CLAD_CPP_SWITCH_ANIM_FLAGS "--group=anim")
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    EMITTER ${CLAD_CPP_SWITCH}
+    OUTPUT_EXTS ${CLAD_CPP_SWITCH_ANIM_EXTS}
+    FLAGS ${CLAD_CPP_SWITCH_ANIM_FLAGS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_ANIM_GEN_ROBOT_SRCS
+)
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_ANIM_GEN_ROBOT_SRCS})
+
+set(RTIP_START_TAG "0x30")
+set(RTIP_END_TAG "0x7F")
+set(CLAD_CPP_SWITCH_RTIP_EXTS "_switch_from_${RTIP_START_TAG}_to_${RTIP_END_TAG}.def")
+set(CLAD_CPP_SWITCH_RTIP_FLAGS "--start=${RTIP_START_TAG}" "--end=${RTIP_END_TAG}")
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    EMITTER ${CLAD_CPP_SWITCH}
+    OUTPUT_EXTS ${CLAD_CPP_SWITCH_RTIP_EXTS}
+    FLAGS ${CLAD_CPP_SWITCH_RTIP_FLAGS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_RTIP_GEN_ROBOT_SRCS
+)
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_RTIP_GEN_ROBOT_SRCS})
+
+set(CLAD_CPP_SEND_HELPER "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPPLite_send_helper_emitter.py")
+set(CLAD_CPP_SEND_HELPER_EXTS "_send_helper.h")
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    EMITTER ${CLAD_CPP_SEND_HELPER}
+    OUTPUT_EXTS ${CLAD_CPP_SEND_HELPER_EXTS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_SEND_HELPER_GEN_ROBOT_SRCS
+)
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_SEND_HELPER_GEN_ROBOT_SRCS})
+
+set(CLAD_CPP_S2R_HELPER "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPPLite_sendToRobot_helper_emitter.py")
+set(CLAD_CPP_S2R_HELPER_EXTS "_sendToRobot_helper.h")
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    EMITTER ${CLAD_CPP_S2R_HELPER}
+    OUTPUT_EXTS ${CLAD_CPP_S2R_HELPER_EXTS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_S2R_HELPER_GEN_ROBOT_SRCS
+)
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_S2R_HELPER_GEN_ROBOT_SRCS})
+
+
+set(CLAD_CPP_S2E_HELPER "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPPLite_sendToEngine_helper_emitter.py")
+set(CLAD_CPP_S2E_HELPER_EXTS "_sendToEngine_helper.h")
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${OUTPUT_DIR}"
+    EMITTER ${CLAD_CPP_S2E_HELPER}
+    OUTPUT_EXTS ${CLAD_CPP_S2E_HELPER_EXTS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_S2E_HELPER_GEN_ROBOT_SRCS
+)
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_S2E_HELPER_GEN_ROBOT_SRCS})
+
 
 add_library(robot_clad_cpplite STATIC
     ${CLAD_CPP_GEN_ROBOT_SRCS}
-    ${CLAD_HASH_GEN_ROBOT_SRCS}
+    ${CLAD_UNION_EMITTER_SRCS}
 )
 
 target_include_directories(robot_clad_cpplite
@@ -46,8 +149,3 @@ target_include_directories(robot_clad_cpplite
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
 )
-
-#target_link_libraries(robot_clad_cpplite
-#    clad
-#)
-

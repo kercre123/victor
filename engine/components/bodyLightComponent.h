@@ -29,8 +29,36 @@
 namespace Anki {
 namespace Cozmo {
 
+constexpr u32 NUM_BACKPACK_LEDS_V1 = 5;
+using BackpackLEDArray_V1 = std::array<u32,NUM_BACKPACK_LEDS_V1>;
+struct BackpackLights_V1 {
+  BackpackLEDArray_V1 onColors;
+  BackpackLEDArray_V1 offColors;
+  BackpackLEDArray_V1 onPeriod_ms;
+  BackpackLEDArray_V1 offPeriod_ms;
+  BackpackLEDArray_V1 transitionOnPeriod_ms;
+  BackpackLEDArray_V1 transitionOffPeriod_ms;
+  std::array<s32,NUM_BACKPACK_LEDS_V1> offset;
+};
+  
+  
 using BackpackLEDArray = std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>;
 struct BackpackLights {
+  
+  // Convert from V1 to V2 lights
+  BackpackLights& operator=(const BackpackLights_V1& other) {
+    const size_t kNumLights = (size_t)LEDId::NUM_BACKPACK_LEDS;
+    const int indexOffset = 1;  // Index 0 is LED_BACKPACK_LEFT in V1. Start at index 1, LED_BACKPACK_FRONT.
+    std::copy_n(other.onColors.begin() + indexOffset,               kNumLights, onColors.begin());
+    std::copy_n(other.offColors.begin() + indexOffset,              kNumLights, offColors.begin());
+    std::copy_n(other.onPeriod_ms.begin() + indexOffset,            kNumLights, onPeriod_ms.begin());
+    std::copy_n(other.offPeriod_ms.begin() + indexOffset,           kNumLights, offPeriod_ms.begin());
+    std::copy_n(other.transitionOnPeriod_ms.begin() + indexOffset,  kNumLights, transitionOnPeriod_ms.begin());
+    std::copy_n(other.transitionOffPeriod_ms.begin() + indexOffset, kNumLights, transitionOffPeriod_ms.begin());
+    std::copy_n(other.offset.begin() + indexOffset,                 kNumLights, offset.begin());
+    return *this;
+  }
+  
   BackpackLEDArray onColors;
   BackpackLEDArray offColors;
   BackpackLEDArray onPeriod_ms;
@@ -39,6 +67,9 @@ struct BackpackLights {
   BackpackLEDArray transitionOffPeriod_ms;
   std::array<s32,(size_t)LEDId::NUM_BACKPACK_LEDS> offset;
 };
+  
+  
+  
 
 class Robot;
 class CozmoContext;

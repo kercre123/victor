@@ -3,9 +3,28 @@ function(anki_build_copy_assets)
     set(oneValueArgs TARGET DEP_TARGET SRCLIST_DIR OUTPUT_DIR)
     set(multiValueArgs OUT_SRCS OUT_DSTS)
     cmake_parse_arguments(cpassets "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-        
-    file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.srcs.lst" SRCS)
-    file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.dsts.lst" DSTS)
+    
+    set(_SRCS "")
+    set(_DSTS "")
+
+    if (EXISTS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.srcs.lst")
+        file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.srcs.lst" _SRCS)
+    endif()
+
+    if (EXISTS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.dsts.lst")
+        file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}.dsts.lst" _DSTS)
+    endif()
+    
+    if (EXISTS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}_${ANKI_PLATFORM_NAME}.srcs.lst")
+        file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}_${ANKI_PLATFORM_NAME}.srcs.lst" _PLATFORM_SRCS)
+    endif()
+
+    if (EXISTS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}_${ANKI_PLATFORM_NAME}.dsts.lst")
+        file(STRINGS "${cpassets_SRCLIST_DIR}/${cpassets_TARGET}_${ANKI_PLATFORM_NAME}.dsts.lst" _PLATFORM_DSTS)
+    endif()
+
+    set(SRCS ${_SRCS} ${_PLATFORM_SRCS})
+    set(DSTS ${_DSTS} ${_PLATFORM_DSTS})
 
     list(LENGTH SRCS SRCS_COUNT)
     math(EXPR SRCS_COUNT "${SRCS_COUNT} - 1")

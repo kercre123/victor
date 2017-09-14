@@ -3,7 +3,6 @@
 export PRJ=robot2
 cd "${0%/*}"
 if [ ! -d ../$PRJ ]; then echo "Must run from project folder"; exit 1; fi
-./syscon/tools/make_clad.sh
 
 echo Copying to anki-vm-keil:$HOSTNAME/$PRJ...
 rsync --delete -rte "ssh" ../$PRJ nathan@anki-vm-keil:$HOSTNAME

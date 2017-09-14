@@ -21,7 +21,7 @@ namespace Anki {
 
         // Cliff sensor
         #ifdef COZMO_V2
-        const int _nCliffSensors = CLIFF_COUNT;
+        const int _nCliffSensors = HAL::CLIFF_COUNT;
         #else
         const int _nCliffSensors = 1;
         // The upper bound on the cliff detection threshold is computed by subtracting
@@ -78,7 +78,7 @@ namespace Anki {
       u16 GetRawCliffValue(unsigned int ind)
       {
         #ifdef COZMO_V2
-        AnkiConditionalErrorAndReturnValue(ind < CLIFF_COUNT, 0, 1233, "ProxSensors.GetRawCliffValue.InvalidIndex", 647, "Index %d is not valid", 1, ind);
+        AnkiConditionalErrorAndReturnValue(ind < HAL::CLIFF_COUNT, 0, 1233, "ProxSensors.GetRawCliffValue.InvalidIndex", 647, "Index %d is not valid", 1, ind);
         return HAL::GetRawCliffData(static_cast<HAL::CliffID>(ind));
         #else
         AnkiConditionalErrorAndReturnValue(ind == 0, 0, 1233, "ProxSensors.GetRawCliffValue.InvalidIndex", 647, "Index %d is not valid", 1, ind);

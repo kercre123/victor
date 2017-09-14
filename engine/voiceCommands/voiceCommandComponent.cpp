@@ -502,13 +502,13 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
     static const ColorRGBA kGrey2 = ColorRGBA(0.9f, 0.9f, 0.9f);
     
     static const BackpackLights kHeardCommandLights = {
-      .onColors               = {{NamedColors::BLACK, kGrey0, kGrey2, kGrey1, NamedColors::BLACK}},
-      .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-      .onPeriod_ms            = {{0,120,475,270,0}},
-      .offPeriod_ms           = {{0,3000,3000,3000,0}},
-      .transitionOnPeriod_ms  = {{0,150,25,90,0}},
-      .transitionOffPeriod_ms = {{0,330,100,240,0}},
-      .offset                 = {{0,0,0,0,0}}
+      .onColors               = {{kGrey0, kGrey2, kGrey1}},
+      .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+      .onPeriod_ms            = {{120,475,270}},
+      .offPeriod_ms           = {{3000,3000,3000}},
+      .transitionOnPeriod_ms  = {{150,25,90}},
+      .transitionOffPeriod_ms = {{330,100,240}},
+      .offset                 = {{0,0,0}}
     };
     
     static constexpr auto kIndexOfVoiceLight = Util::EnumToUnderlying(LEDId::LED_BACKPACK_MIDDLE);

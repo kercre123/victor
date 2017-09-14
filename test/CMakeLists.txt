@@ -17,8 +17,6 @@ elseif (MACOSX)
   set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
-message(STATUS "test_engine:PLATFORM_LIBS=${PLATFORM_LIBS}")
-
 include(anki_build_cxx_library)
 anki_build_cxx_executable(test_engine ${ANKI_SRCLIST_DIR})
 

@@ -757,13 +757,13 @@ class GamePlatformConfiguration(object):
             if buildaction == 'build':
                 # move files.
                 lib_dir = os.path.join(self.engine_generated, "out", self.options.configuration, "lib")
-                # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
-                if self.options.engine_v2:
-                    ankibuild.util.File.cp(os.path.join(lib_dir, "libcozmoEngine2.so"),
-                                           os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
-                else:
-                    ankibuild.util.File.cp(os.path.join(lib_dir, "libcozmoEngine.so"),
-                                           os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
+            #    # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
+            #    if self.options.engine_v2:
+            #        ankibuild.util.File.cp(os.path.join(lib_dir, "libcozmoEngine2.so"),
+            #                               os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
+            #    else:
+            #        ankibuild.util.File.cp(os.path.join(lib_dir, "libcozmoEngine.so"),
+            #                               os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
                 ankibuild.util.File.cp(os.path.join(lib_dir, "libDAS.so"),
                                        os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
                 # build android-specific java files
@@ -773,20 +773,20 @@ class GamePlatformConfiguration(object):
                 # strip libraries and copy into unity
                 self.strip_libs()
 
-                # Skip Unity build steps for cozmo v2
-                if not self.options.engine_v2:
-                    # Call unity for game
-                    self.call_unity_for_android(script_engine)
+            #    # Skip Unity build steps for cozmo v2
+            #    if not self.options.engine_v2:
+            #        # Call unity for game
+            #        self.call_unity_for_android(script_engine)
 
-                    # Fix Unity's inability to generate an APK that reflects the settings we give it
-                    self.fix_unity_apk()
+            #        # Fix Unity's inability to generate an APK that reflects the settings we give it
+            #        self.fix_unity_apk()
 
-                if self.options.features is not None and 'standalone' in self.options.features[0]:
-                    print("Building standalone-apk")
-                    ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
-                    ankibuild.util.File.execute([path_to_buck(),
-                                                 'build',
-                                                 ':cozmoengine_standalone_app'])
+            #    if self.options.features is not None and 'standalone' in self.options.features[0]:
+            #        print("Building standalone-apk")
+            #        ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
+            #        ankibuild.util.File.execute([path_to_buck(),
+            #                                     'build',
+            #                                     ':cozmoengine_standalone_app'])
 
         elif not os.path.exists(self.workspace_path):
             print_status('Workspace {0} does not exist...you must do a generate before doing a clean or build'.format(self.workspace_path))

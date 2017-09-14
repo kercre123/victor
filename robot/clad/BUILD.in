@@ -4,7 +4,8 @@ cxx_project(
     platform_srcs = [],
     headers = [
         'src/clad/robotInterface/messageEngineToRobot.clad',
-        'src/clad/robotInterface/messageRobotToEngine.clad' 
+        'src/clad/robotInterface/messageRobotToEngine.clad',
+        'src/clad/robotInterface/lightCubeMessage.clad'
     ],
     platform_headers = [],
 )

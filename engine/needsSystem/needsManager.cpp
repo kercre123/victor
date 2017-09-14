@@ -252,7 +252,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _pausedDurRemainingPeriodicDecay(0.0f)
 , _signalHandles()
 , kPathToSavedStateFile((cozmoContext->GetDataPlatform() != nullptr ? cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
-, _robotStorageState(RobotStorageState::Inactive)
+, _pendingReadFromRobot(false)
 , _faceDistortionComponent(new DesiredFaceDistortionComponent(*this))
 , _pendingSparksRewardMsg(false)
 , _sparksRewardMsg()
@@ -414,6 +414,8 @@ void NeedsManager::InitInternal(const float currentTime_s)
 void NeedsManager::InitAfterConnection()
 {
   _robot = _cozmoContext->GetRobotManager()->GetFirstRobot();
+
+  _pendingReadFromRobot = true;
 
   _connectionOccurredThisAppRun = true;
 }
@@ -623,8 +625,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     {
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to robot");
     }
-    _timeLastWrittenToRobot = now;
-    StartWriteToRobot();
+    StartWriteToRobot(now);
   }
 
   _localNotifications->Generate();
@@ -1494,7 +1495,6 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotNeedsData& ms
                                              }))
   {
     PRINT_NAMED_ERROR("NeedsManager.WipeRobotNeedsData.EraseFailed", "Erase failed");
-    _robotStorageState = RobotStorageState::Inactive;
   }
 }
 
@@ -1522,13 +1522,12 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
   if (msg.isPaused)
   {
     // When backgrounding, we'll also write to robot if connected
-    if (_robotStorageState == RobotStorageState::Inactive)
+    if (_robot != nullptr)
     {
-      if (_robot != nullptr)
-      {
-        _timeLastWrittenToRobot = _needsState._timeLastWritten;
-        StartWriteToRobot();
-      }
+      // We pass in the time that was just set in SetPaused (above), when we
+      // wrote to device; this way, we're setting the robot save's 'time last
+      // written' to the EXACT SAME time
+      StartWriteToRobot(_needsState._timeLastWritten);
     }
 
     SendNeedsLevelsDasEvent("app_background");
@@ -2175,9 +2174,6 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
 
 void NeedsManager::PossiblyStartWriteToRobot(bool ignoreCooldown /* = false */)
 {
-  if (_robotStorageState != RobotStorageState::Inactive)
-    return;
-
   if (_robot == nullptr)
     return;
 
@@ -2186,29 +2182,32 @@ void NeedsManager::PossiblyStartWriteToRobot(bool ignoreCooldown /* = false */)
   const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
   if (ignoreCooldown || secsSinceLastSave > kMinimumTimeBetweenRobotSaves_sec)
   {
-    _timeLastWrittenToRobot = now;
-    StartWriteToRobot();
+    StartWriteToRobot(now);
   }
 }
 
-void NeedsManager::StartWriteToRobot()
+void NeedsManager::StartWriteToRobot(const Time time)
 {
   if (_robot == nullptr)
-    return;
-
-  if (!ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartWriteToRobot.RobotStorageConflict",
-              "Attempting to write to robot but state is %d", _robotStorageState))
   {
     return;
   }
 
-  if (_robotStorageState != RobotStorageState::Inactive)
+  // If we're reading from the robot, don't start a write operation, because
+  // the data we're writing will soon be replaced.  This can happen, e.g.,
+  // when robot has just connected (and thus we start reading), and user
+  // backgrounds the app
+  if (_pendingReadFromRobot)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot",
+                  "Aborting writing needs state to robot, because we are reading needs state from robot");
     return;
+  }
+
+  _timeLastWrittenToRobot = time;
 
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Writing to robot...");
   const auto startTime = system_clock::now();
-
-  _robotStorageState = RobotStorageState::Writing;
 
   const auto time_s = duration_cast<seconds>(_timeLastWrittenToRobot.time_since_epoch()).count();
   const auto timeLastWritten = Util::numeric_cast<uint64_t>(time_s);
@@ -2246,16 +2245,12 @@ void NeedsManager::StartWriteToRobot()
                                            }))
   {
     PRINT_NAMED_ERROR("NeedsManager.StartWriteToRobot.WriteFailed", "Write failed");
-    _robotStorageState = RobotStorageState::Inactive;
   }
 }
 
+
 void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime)
 {
-  ANKI_VERIFY(_robotStorageState == RobotStorageState::Writing, "NeedsManager.FinishWriteToRobot.RobotStorageConflict",
-              "Robot storage state should be Writing but instead is %d", _robotStorageState);
-  _robotStorageState = RobotStorageState::Inactive;
-
   const auto endTime = system_clock::now();
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
@@ -2264,48 +2259,33 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
   {
     PRINT_NAMED_ERROR("NeedsManager.FinishWriteToRobot.WriteFailed", "Write failed with %s", EnumToString(res));
   }
-  else
-  {
-    // The write was successful
-    // Send a message to the game to indicate write was completed??
-    //const auto& extInt = _cozmoContext->GetExternalInterface();
-    //extInt->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RequestSetUnlockResult(id, unlocked)));
-  }
 }
 
 
 bool NeedsManager::StartReadFromRobot()
 {
-  if (!ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartReadFromRobot.RobotStorageConflict",
-              "Attempting to read from robot but state is %d", _robotStorageState))
-  {
-    return false;
-  }
-
-  _robotStorageState = RobotStorageState::Reading;
-
   if (!_robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
                                           [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
+                                            _pendingReadFromRobot = false;
+
                                             _robotHadValidNeedsData = FinishReadFromRobot(data, size, res);
 
                                             InitAfterReadFromRobotAttempt();
                                           }))
   {
     PRINT_NAMED_ERROR("NeedsManager.StartReadFromRobot.ReadFailed", "Failed to start read of needs system robot storage");
-    _robotStorageState = RobotStorageState::Inactive;
+
+    _pendingReadFromRobot = false;
     return false;
   }
 
   return true;
 }
 
+
 bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res)
 {
-  ANKI_VERIFY(_robotStorageState == RobotStorageState::Reading, "NeedsManager.FinishReadFromRobot.RobotStorageConflict",
-              "Robot storage state should be Reading but instead is %d", _robotStorageState);
-  _robotStorageState = RobotStorageState::Inactive;
-
   if (res < NVStorage::NVResult::NV_OKAY)
   {
     // The tag doesn't exist on the robot indicating the robot is new or has been wiped

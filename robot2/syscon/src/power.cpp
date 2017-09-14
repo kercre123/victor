@@ -1,8 +1,9 @@
 #include "common.h"
 #include "hardware.h"
 
-#include "timer.h"
 #include "power.h"
+#include "vectors.h"
+#include "flash.h"
 
 #include "contacts.h"
 
@@ -28,22 +29,31 @@ static const uint32_t APB2_CLOCKS = 0
               | RCC_APB2ENR_ADC1EN
               ;
 
+static volatile bool eraseSystem = false;
 static volatile bool ejectSystem = false;
 
 void Power::init(void) {
-  nCHG_EN::reset();
+  POWER_EN::pull(PULL_UP);
+
+  nCHG_EN::set();
   nCHG_EN::mode(MODE_OUTPUT);
 
   nVDDs_EN::reset();
   nVDDs_EN::mode(MODE_OUTPUT);
 }
 
+void Power::setCharge(bool enable) {
+  if (enable) {
+    nCHG_EN::reset();
+  } else {
+    nCHG_EN::set();
+  }
+}
+
 void Power::stop(void) {
   nVDDs_EN::set();
   nCHG_EN::set();
-  
-  POWER_EN::mode(MODE_OUTPUT);
-  POWER_EN::reset();
+  POWER_EN::pull(PULL_DOWN);
 }
 
 void Power::enableClocking(void) {
@@ -51,16 +61,26 @@ void Power::enableClocking(void) {
   RCC->APB2ENR |= APB2_CLOCKS;
 }
 
-void Power::softReset(void) {
+void Power::softReset(bool erase) {
+  eraseSystem = erase;
   ejectSystem = true;
 }
 
 void Power::eject(void) {
   if (!ejectSystem) return ;
 
+  if (eraseSystem) {
+    // Mark the flash application space for deletion
+    for (int i = 0; i < MAX_FAULT_COUNT; i++) {
+      Flash::writeFaultReason(FAULT_USER_WIPE);
+    }
+  }
+
   __disable_irq();
   NVIC->ICER[0]  = ~0;  // Disable all interrupts
-  stop();
+
+  // Power down accessessories
+  nVDDs_EN::set();
 
   // Disable our DMA channels
   DMA1_Channel1->CCR = 0;

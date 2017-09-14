@@ -15,14 +15,14 @@
 
 #include <cassert>
 
-#define GET_RED(color) ((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT)
-#define GET_GRN(color) ((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT)
-#define GET_BLU(color) ((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT)
+#define GET_RED(color) ((color & EnumToUnderlyingType(LEDColor::LED_RED)) >> EnumToUnderlyingType(LEDColorShift::LED_RED_SHIFT))
+#define GET_GRN(color) ((color & EnumToUnderlyingType(LEDColor::LED_GREEN)) >> EnumToUnderlyingType(LEDColorShift::LED_GRN_SHIFT))
+#define GET_BLU(color) ((color & EnumToUnderlyingType(LEDColor::LED_BLUE)) >> EnumToUnderlyingType(LEDColorShift::LED_BLU_SHIFT))
 
 
 namespace Anki {
 namespace Cozmo {
-  inline u16 AlphaBlend(const u16 onColor, const u16 offColor, const float alpha)
+  inline u32 AlphaBlend(const u32 onColor, const u32 offColor, const float alpha)
   {
     const float onRed  = GET_RED(onColor);
     const float onGrn  = GET_GRN(onColor);
@@ -32,14 +32,13 @@ namespace Cozmo {
     const float offBlu = GET_BLU(offColor);
     const float invAlpha = 1.0f - alpha;
 
-    return ((u16)int(onRed * alpha + offRed * invAlpha)) << LED_ENC_RED_SHIFT |
-           ((u16)int(onGrn * alpha + offGrn * invAlpha)) << LED_ENC_GRN_SHIFT |
-           ((u16)int(onBlu * alpha + offBlu * invAlpha)) << LED_ENC_BLU_SHIFT |
-           (alpha >= 0.5f ? onColor & LED_ENC_IR : offColor & LED_ENC_IR);
+    return (int(onRed * alpha + offRed * invAlpha)) << EnumToUnderlyingType(LEDColorShift::LED_RED_SHIFT) |
+           (int(onGrn * alpha + offGrn * invAlpha)) << EnumToUnderlyingType(LEDColorShift::LED_GRN_SHIFT) |
+           (int(onBlu * alpha + offBlu * invAlpha)) << EnumToUnderlyingType(LEDColorShift::LED_BLU_SHIFT);
   }
 
   bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,
-                          u16& newColor)
+                          u32& newColor)
   {
     // Check for constant color
     if (ledParams.onFrames == 255 || (ledParams.onColor == ledParams.offColor)) {

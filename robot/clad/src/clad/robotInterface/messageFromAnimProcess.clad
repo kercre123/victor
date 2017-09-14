@@ -1,0 +1,31 @@
+/** Clad for messages from animation process to engine or game
+ * ROBOT_CLAD_SHARED
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+
+// TODO: Move AnimationAvailable, started, and ended
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  META  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// For messages where an end of message might make sense to denote the full list of messages has
+// been broadcasted. Example: robot might broadcast all available animations, however, there would
+// be no way to tell if all the AnimationAvailable messages have been received without an `end of
+// message` message.
+// Can be extended for other message types later
+
+enum uint_8 MessageType {
+  AnimationAvailable
+}
+
+message EndOfMessage {
+  MessageType messageType
+}
+
+
+} // Cozmo
+} // Anki

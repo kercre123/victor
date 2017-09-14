@@ -385,19 +385,19 @@
   var CozmoAPI = function(){
 
     function getProjects(callbackName) {
-      window.getCozmoUserAndSampleProjectLists(callbackName);
+      window.getCozmoUserAndSampleProjectLists(callbackName, false);
     }
 
     function createNewProject() {
-      window.requestToCreateCozmoProject();
+      window.requestToCreateCozmoProject(false);
     }
 
     function openUserProject(uuid) {
-      window.requestToOpenCozmoUserProject(uuid);
+      window.requestToOpenCozmoUserProject(uuid, false);
     }
 
     function openSampleProject(uuid) {
-      window.requestToOpenCozmoSampleProject(uuid);
+      window.requestToOpenCozmoSampleProject(uuid, false);
     }
 
     function deleteProject(uuid) {

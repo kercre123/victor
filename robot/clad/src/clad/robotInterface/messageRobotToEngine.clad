@@ -13,6 +13,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
+#include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/pathEventTypes.clad"
@@ -38,6 +39,14 @@ message RobotPoked
 {
 }
 
+// This message indicates that the robot experienced a freefall event
+message FallingEvent {
+  uint_32 timestamp,       // When the fall started (as a robot timestamp)
+  uint_32 duration_ms,     // The approximate freefall duration
+  float_32 impactIntensity // A measure of how 'hard' the impact was (this is computed as the
+                           // maximum experienced high-pass filtered accelerometer value)
+}
+
 message RobotStopped
 {
   uint_8 reason  // reserved for later in case we need reasons
@@ -49,14 +58,21 @@ message PathFollowingEvent
   PathEventType  eventType
 }
 
+message AnimationAvailable {
+  uint_32 id,
+  string name
+}
+
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
 {
-  uint_8 tag
+  uint_32 id,
+  uint_8  tag
 }
 
 message AnimationEnded
 {
+  uint_32 id,
   uint_8 tag
 }
 
@@ -113,14 +129,15 @@ union RobotToEngine {
   PotentialCliff             potentialCliff         = 0xC1,
   SyncTimeAck                syncTimeAck            = 0xC2,
   RobotPoked                 robotPoked             = 0xC3,
-//          FREE SLOT!!!                            = 0xC4,
+  FallingEvent               fallingEvent           = 0xC4,
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
   PathFollowingEvent         pathFollowingEvent     = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,
   DefaultCameraParams        defaultCameraParams    = 0xC8,
   RobotAvailable             robotAvailable         = 0xC9,
-  AnimationStarted           animStarted            = 0xCA,
-  AnimationEnded             animEnded              = 0xCB,
+  AnimationStarted           animStarted            = 0xCA,   // V2: sent from anim process
+  AnimationEnded             animEnded              = 0xCB,   // V2: sent from anim process
+  //        FREE SLOT!!!                            = 0xCC,
   NVStorage::NVOpResult      nvOpResult             = 0xCD,
   ObjectPowerLevel           objectPowerLevel       = 0xCE,
   CrashReport                crashReport            = 0xCF,
@@ -136,7 +153,8 @@ union RobotToEngine {
   RobotErrorReport           robotError             = 0xD9,
   LiftLoad                   liftLoad               = 0xDA,
   BackpackButton             backpackButton         = 0xDB,
-  IMUTemperature             imuTemperature         = 0xDC,
+  EndOfMessage               endOfMessage           = 0xDC,
+  IMUTemperature             imuTemperature         = 0xDD,
 
   WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,
@@ -150,6 +168,7 @@ union RobotToEngine {
   ObjectAvailable            activeObjectAvailable  = 0xF3,
   ImageImuData               imageGyro              = 0xF4,
   ObjectAccel                objectAccel            = 0xF5,
+  AnimationAvailable         animationAvailable     = 0xF6,   // V2: sent from anim process
 }
 
 

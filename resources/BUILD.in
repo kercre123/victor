@@ -17,6 +17,24 @@ asset_project(
 
 
 asset_project(
+    name = 'cozmo_resources_sound',
+    srcs = [],
+    platform_srcs = [
+        ('android', subdir_glob([
+            ('sound/android', '*.zip')
+            ],
+            prefix = 'sound')
+        ),
+        ('mac', subdir_glob([
+            ('sound/mac', '*.zip')
+            ],
+            prefix = 'sound')
+        ),
+    ]      
+)
+
+
+asset_project(
     name = 'cozmo_resources_config',
     srcs = glob([
                 'config/**/*',

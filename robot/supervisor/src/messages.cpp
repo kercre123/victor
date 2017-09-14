@@ -7,16 +7,9 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/types/fwTestMessages.h"
 
-#ifndef TARGET_K02
-#include "anki/cozmo/transport/IUnreliableTransport.h"
-#include "anki/cozmo/transport/IReceiver.h"
-#include "anki/cozmo/transport/reliableTransport.h"
-#ifndef COZMO_V2
-#include "nvStorage.h"
-#endif // #ifndef COZMO_V2
-#endif // #ifndef TARGET_K02
 #include <string.h>
 
+#include "backpackLightController.h"
 #include "blockLightController.h"
 #include "dockingController.h"
 #include "headController.h"
@@ -31,16 +24,9 @@
 #include "testModeController.h"
 #include "wheelController.h"
 
-#ifdef TARGET_K02
-#include "hal/dac.h"
-#include "hal/uart.h"
-#include "hal/imu.h"
-#include "hal/wifi.h"
-#include "hal/spine.h"
-#else
 #include <stdio.h>
 #include "animationController.h"
-#endif
+
 #include "anki/cozmo/robot/logging.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
@@ -48,15 +34,28 @@ extern void GenerateTestTone(void);
 
 namespace Anki {
   namespace Cozmo {
-#ifndef TARGET_K02
-    ReliableConnection connection;
-#endif
     namespace Messages {
 
       namespace {
-#ifndef TARGET_K02
+
+        
+        constexpr auto IS_MOVING = EnumToUnderlyingType(RobotStatusFlag::IS_MOVING);
+        constexpr auto IS_CARRYING_BLOCK = EnumToUnderlyingType(RobotStatusFlag::IS_CARRYING_BLOCK);
+        constexpr auto IS_PICKING_OR_PLACING = EnumToUnderlyingType(RobotStatusFlag::IS_PICKING_OR_PLACING);
+        constexpr auto IS_PICKED_UP = EnumToUnderlyingType(RobotStatusFlag::IS_PICKED_UP);
+        constexpr auto IS_BODY_ACC_MODE = EnumToUnderlyingType(RobotStatusFlag::IS_BODY_ACC_MODE);
+        constexpr auto IS_FALLING = EnumToUnderlyingType(RobotStatusFlag::IS_FALLING);
+        constexpr auto IS_PATHING = EnumToUnderlyingType(RobotStatusFlag::IS_PATHING);
+        constexpr auto LIFT_IN_POS = EnumToUnderlyingType(RobotStatusFlag::LIFT_IN_POS);
+        constexpr auto HEAD_IN_POS = EnumToUnderlyingType(RobotStatusFlag::HEAD_IN_POS);
+        constexpr auto IS_ON_CHARGER = EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER);
+        constexpr auto IS_CHARGING = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGING);
+        constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
+        constexpr auto ARE_WHEELS_MOVING = EnumToUnderlyingType(RobotStatusFlag::ARE_WHEELS_MOVING);
+        constexpr auto IS_CHARGER_OOS = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGER_OOS);
+        
         u8 pktBuffer_[2048];
-#endif
+
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
         RobotInterface::EngineToRobot::Tag lookForID_ = RobotInterface::EngineToRobot::INVALID;
@@ -81,7 +80,7 @@ namespace Anki {
         bool onCharger_;
         bool isCharging_;
         bool chargerOOS_;
-        BodyRadioMode bodyRadioMode_ = BODY_LOW_POWER_OPERATING_MODE;
+        BodyRadioMode bodyRadioMode_ = BodyRadioMode::BODY_LOW_POWER_OPERATING_MODE;
 
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
@@ -96,19 +95,10 @@ namespace Anki {
       Result Init()
       {
 #ifndef TARGET_K02
-        ReliableTransport_Init();
-        ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
-
         // In sim we don't expect to get the PowerState message which normally sets this
-        bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
+        bodyRadioMode_ = BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE;
 #endif
         ResetMissedLogCount();
-#ifndef COZMO_V2
-        // For pre-V2 robots, only the 0th entry of cliffDataRaw is used, so initialize the other entries
-        for (int i=0 ; i<CLIFF_COUNT ; i++) {
-          robotState_.cliffDataRaw[i] = 0;
-        }
-#endif
         return RESULT_OK;
       }
 
@@ -197,14 +187,12 @@ namespace Anki {
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
 
-#ifdef COZMO_V2
-        for (int i=0 ; i < CLIFF_COUNT ; i++) {
+        for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
         }
         robotState_.proxData = HAL::GetRawProxData();
-#else
-        robotState_.cliffDataRaw[0] = ProxSensors::GetRawCliffValue(0);
-#endif
+        
+        robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
@@ -225,7 +213,7 @@ namespace Anki {
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
-        robotState_.status |= bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
+        robotState_.status |= bodyRadioMode_ == BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
 #ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
@@ -302,7 +290,7 @@ namespace Anki {
         // Don't modify localization while running path following test.
         // The point of the test is to see how well it follows a path
         // assuming perfect localization.
-        if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
+        if (TestModeController::GetMode() == TestMode::TM_PATH_FOLLOW) {
           return;
         }
 
@@ -361,29 +349,29 @@ namespace Anki {
 
 
         // Process incoming messages
-#ifndef TARGET_K02
         u32 dataLen;
 
-        //ReliableConnection_printState(&connection);
-
+        // Each packet is a single message
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-          s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
-          if (res < 0)
+          Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
+          
+          // Copy into structured memory
+          memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
+          if (!msgBuf.IsValid())
           {
-            AnkiWarn( 1205, "ReliableTransport.PacketNotAccepted", 347, "%d", 1, res);
+            AnkiWarn( 119, "Receiver.ReceiveData.Invalid", 367, "Receiver got %02x[%d] invalid", 2, pktBuffer_[0], dataLen);
+          }
+          else if (msgBuf.Size() != dataLen)
+          {
+            AnkiWarn( 120, "Receiver.ReceiveData.SizeError", 368, "Parsed message size error %d != %d", 2, dataLen, msgBuf.Size());
+          }
+          else
+          {
+            Anki::Cozmo::Messages::ProcessMessage(msgBuf);
           }
         }
 
-        if (HAL::RadioIsConnected())
-        {
-          if (ReliableTransport_Update(&connection) == false) // Connection has timed out
-          {
-            Receiver_OnDisconnect(&connection);
-						// Can't print anything because we have no where to send it
-					}
-        }
-#endif
       }
 
       void Process_clearPath(const RobotInterface::ClearPath& msg) {
@@ -421,7 +409,7 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( 422, "Messages.Process_dockWithObject.Recvd", 630, "action %d, dockMethod %d, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 7,
+        AnkiInfo( 1237, "Messages.Process_dockWithObject.Recvd", 652, "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 7, 
                  msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
@@ -555,48 +543,22 @@ namespace Anki {
 
       void Process_imageRequest(const RobotInterface::ImageRequest& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1206, "Messages.Process_imageRequest.Unsupported", 305, "", 0);
-        #else
-        AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
-        HAL::SetImageSendMode(msg.sendMode, msg.resolution);
-        #endif // ifdef COZMO_V2
       }
 
       void Process_enableColorImages(const RobotInterface::EnableColorImages& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1197, "Messages.Process_enableColorImages.Unsupported", 305, "", 0);
-        #else
-        HAL::CameraSetColorEnabled(msg.enable);
-        #endif  // ifdef COZMO_V2
       }
 
       void Process_setCameraParams(const SetCameraParams& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1198, "Messages.Process_setCameraParams.Unsupported", 305, "", 0);
-        #else
-        if(msg.requestDefaultParams)
-        {
-          DefaultCameraParams params;
-          HAL::CameraGetDefaultParameters(params);
-          RobotInterface::SendMessage(params);
-        }
-        else
-        {
-          HAL::CameraSetParameters(msg.exposure_ms, msg.gain);
-        }
-        #endif // ifdef COZMO_V2
       }
 
       void Process_cameraFOVInfo(const CameraFOVInfo& msg)
       {
-        #ifdef COZMO_V2
         DockingController::SetCameraFieldOfView(msg.horizontalFOV, msg.verticalFOV);
-        #else
-        AnkiWarn( 1200, "Messages.Process_cameraFOVInfo.Unsupported", 305, "", 0);
-        #endif
       }
 
       void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
@@ -616,34 +578,34 @@ namespace Anki {
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
-          case controller_wheel:
+          case ControllerChannel::controller_wheel:
           {
             WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
             break;
           }
-          case controller_head:
+          case ControllerChannel::controller_head:
           {
             HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case controller_lift:
+          case ControllerChannel::controller_lift:
           {
             LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case controller_steering:
+          case ControllerChannel::controller_steering:
           {
             SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
             break;
           }
-          case controller_pointTurn:
+          case ControllerChannel::controller_pointTurn:
           {
             SteeringController::SetPointTurnGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
           default:
           {
-            AnkiWarn( 114, "Messages.Process_setControllerGains.InvalidController", 362, "controller: %d", 1, msg.controller);
+            AnkiWarn( 1236, "Messages.Process_setControllerGains.InvalidController", 651, "controller: %hhu", 1,  msg.controller);
           }
         }
       }
@@ -711,7 +673,7 @@ namespace Anki {
       void Process_enableMotorPower(const RobotInterface::EnableMotorPower& msg)
       {
         switch(msg.motorID) {
-          case MOTOR_HEAD:
+          case MotorID::MOTOR_HEAD:
           {
             if (msg.enable) {
               HeadController::Enable();
@@ -720,7 +682,7 @@ namespace Anki {
             }
             break;
           }
-          case MOTOR_LIFT:
+          case MotorID::MOTOR_LIFT:
           {
             if (msg.enable) {
               LiftController::Enable();
@@ -731,7 +693,7 @@ namespace Anki {
           }
           default:
           {
-            AnkiWarn( 1195, "Messages.enableMotorPower.UnhandledMotorID", 347, "%d", 1, msg.motorID);
+            AnkiWarn( 1195, "Messages.enableMotorPower.UnhandledMotorID", 648, "%hhu", 1, msg.motorID);
             break;
           }
         }
@@ -743,18 +705,18 @@ namespace Anki {
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MOTOR_HEAD, p);
+          HAL::MotorSetPower(MotorID::MOTOR_HEAD, p);
 
           LiftController::Disable();
           p = CLIP(msg.liftPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MOTOR_LIFT, p);
+          HAL::MotorSetPower(MotorID::MOTOR_LIFT, p);
 
         } else {
 
-          HAL::MotorSetPower(MOTOR_HEAD, 0);
+          HAL::MotorSetPower(MotorID::MOTOR_HEAD, 0);
           HeadController::Enable();
 
-          HAL::MotorSetPower(MOTOR_LIFT, 0);
+          HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0);
           LiftController::Enable();
         }
       }
@@ -778,12 +740,7 @@ namespace Anki {
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1207, "Messages.Process_flashObjectIDs.Unsupported", 305, "", 0);
-        #else
-        // Start flash pattern on blocks
-        HAL::FlashBlockIDs();
-        #endif
       }
 
       void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
@@ -901,7 +858,7 @@ namespace Anki {
 
         if (bodyRadioMode_ != msg.operatingMode) {
           bodyRadioMode_ = msg.operatingMode;
-          if (bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ) {
+          if (bodyRadioMode_ == BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE ) {
             LiftController::Enable();
             LiftController::StartCalibrationRoutine();
             HeadController::Enable();
@@ -941,15 +898,48 @@ namespace Anki {
       /// Stub message handlers to satisfy simulator build
       void Process_commandNV(NVStorage::NVCommand const& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1196, "Messages.Process_commandNV.Unsupported", 631, "Cozmo 2.0 NVStorage is in engine only", 0);
-        #else
-        auto callback = [](NVStorage::NVOpResult& res) {
-          RobotInterface::SendMessage(res);
-        };
-        NVStorage::Command(msg, callback);
-        #endif   // ifdef COZMO_V2
       }
+      
+      
+      // ==== V2 Animation ======
+      // TODO: If these messages are specified by a specific range in the clad file,
+      // we can make it so that some of these handlers don't have to be defined here since
+      // they're meant to be handled by the animation process
+      void Process_playAnim(RobotInterface::PlayAnim const& msg)
+      {
+        // Nothing to do here
+      }
+      void Process_lockAnimTracks(RobotInterface::LockAnimTracks const& msg)
+      {
+        // Nothing to do here
+      }
+      void Process_recordHeading(RobotInterface::RecordHeading const& msg)
+      {
+        SteeringController::RecordHeading();
+      }
+      void Process_turnToRecordedHeading(RobotInterface::TurnToRecordedHeading const& msg)
+      {
+        SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.offset_deg),
+                                                              DEG_TO_RAD_F32(msg.speed_degPerSec),
+                                                              DEG_TO_RAD_F32(msg.accel_degPerSec2),
+                                                              DEG_TO_RAD_F32(msg.decel_degPerSec2),
+                                                              DEG_TO_RAD_F32(msg.tolerance_deg),
+                                                              msg.numHalfRevs,
+                                                              msg.useShortestDir);
+      }
+      void Process_setBackpackLights(RobotInterface::SetBackpackLights const& msg)
+      {
+        BackpackLightController::SetParams(msg);
+      }
+      
+      void Process_requestAvailableAnimations(RobotInterface::RequestAvailableAnimations const& msg)
+      {
+        // Nothing to do here
+      }
+      // =========== end V2 animation ==============
+      
+      
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
         // Nothing to do here
@@ -1049,8 +1039,8 @@ namespace Anki {
       void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
       void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
 
-      void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer&) {
-        // Handled on the NRF
+      void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
+        BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);
       }
 
       void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle&) {
@@ -1144,6 +1134,7 @@ namespace Anki {
         missedLogs_ = 0;
       }
 
+#ifndef COZMO_V2
 #ifdef SIMULATOR
       int SendText(const char *format, ...)
       {
@@ -1183,9 +1174,10 @@ namespace Anki {
 
       int SendText(const char *format, va_list vaList)
       {
-        return SendText(RobotInterface::ANKI_LOG_LEVEL_PRINT, format, vaList);
+        return SendText(RobotInterface::LogLevel::ANKI_LOG_LEVEL_PRINT, format, vaList);
       }
-#endif
+#endif // SIMULATOR
+#endif // COZMO_V2
 
       bool ReceivedInit()
       {
@@ -1198,11 +1190,6 @@ namespace Anki {
       {
         initReceived_ = false;
         syncTimeAckSent_ = false;
-        #ifdef SIMULATOR
-        #ifndef COZMO_V2
-        HAL::SetImageSendMode(Stream, DEFAULT_IMAGE_RESOLUTION);
-        #endif
-        #endif
       }
 
     } // namespace Messages
@@ -1214,7 +1201,7 @@ namespace Anki {
         PrintTrace m;
         if (Messages::missedLogs_ > 0)
         {
-          m.level = ANKI_LOG_LEVEL_EVENT;
+          m.level = LogLevel::ANKI_LOG_LEVEL_EVENT;
           m.name  = 2;
           m.stringId = 1;
           m.value_length = 1;
@@ -1246,119 +1233,22 @@ namespace Anki {
     } // namespace RobotInterface
 
     namespace HAL {
-#ifdef TARGET_K02
-      f32 BatteryGetVoltage()
-      {
-        return Messages::robotState_.batteryVoltage;
-      }
-      bool BatteryIsCharging()
-      {
-        return Messages::isCharging_;
-      }
-      bool BatteryIsOnCharger()
-      {
-        return Messages::onCharger_;
-      }
-      bool BatteryIsChargerOOS()
-      {
-        return Messages::chargerOOS_;
-      }
-#else
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
-        const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
-        const bool hot = false;
-        if (RadioIsConnected())
-        {
-          if (reliable)
-          {
-            if (ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
-            {
-              // Have to drop the connection
-              //PRINT("Dropping connection because can't queue reliable messages\r\n");
-              ReliableTransport_Disconnect(&connection);
-              Receiver_OnDisconnect(&connection);
-              return false;
-            }
-            else
-            {
-              return true;
-            }
-          }
-          else
-          {
-            return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleUnreliableMessage, hot, msgID);
-          }
-        }
-        else
-        {
-          return false;
-        }
+        //Stuff msgID up front
+        int newSize = size + 1;
+        u8 buf[newSize];
+        
+        memcpy(buf, &msgID, 1);
+        memcpy(buf + 1, buffer, size);
+        
+        //fprintf(stderr, "RadioSendMsg: %02x [%d]", msgID, newSize);
+        
+        return HAL::RadioSendPacket(buf, newSize);
       }
-#endif
 
-#ifndef SIMULATOR
-      void FlashBlockIDs()
-      {
-        // THIS DOESN'T WORK FOR now
-      }
-#endif
 
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki
 
-#ifndef TARGET_K02
-// Shim for reliable transport
-bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
-{
-  return Anki::Cozmo::HAL::RadioSendPacket(buffer, bufferSize);
-}
-
-void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
-{
-  Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
-
-  // Copy into structured memory
-  memcpy(msgBuf.GetBuffer(), buffer, bufferSize);
-  if (!msgBuf.IsValid())
-  {
-    AnkiWarn( 119, "Receiver.ReceiveData.Invalid", 367, "Receiver got %02x[%d] invalid", 2, buffer[0], bufferSize);
-  }
-  else if (msgBuf.Size() != bufferSize)
-  {
-    AnkiWarn( 120, "Receiver.ReceiveData.SizeError", 368, "Parsed message size error %d != %d", 2, bufferSize, msgBuf.Size());
-  }
-  else
-  {
-    Anki::Cozmo::Messages::ProcessMessage(msgBuf);
-  }
-}
-
-void Receiver_OnConnectionRequest(ReliableConnection* connection)
-{
-  ReliableTransport_FinishConnection(connection); // Accept the connection
-  AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1);
-}
-
-void Receiver_OnConnected(ReliableConnection* connection)
-{
-  AnkiInfo( 122, "Receiver_OnConnected", 370, "ReliableTransport connection completed", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1);
-}
-
-void Receiver_OnDisconnect(ReliableConnection* connection)
-{
-  Anki::Cozmo::HAL::RadioUpdateState(0);   // Must mark connection disconnected BEFORE trying to print
-  AnkiInfo( 123, "Receiver_OnDisconnect", 371, "ReliableTransport disconnected", 0);
-  ReliableConnection_Init(connection, NULL); // Reset the connection
-  Anki::Cozmo::HAL::RadioUpdateState(0);
-}
-
-int Anki::Cozmo::HAL::RadioQueueAvailable()
-{
-  return ReliableConnection_GetReliableQueueAvailable(&Anki::Cozmo::connection);
-}
-
-#endif

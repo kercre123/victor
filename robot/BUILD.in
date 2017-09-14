@@ -12,3 +12,15 @@ cxx_project(
     headers = cxx_header_glob(['supervisor/src/*.h', 'transport/src/*.h']),
     platform_headers = []
 )
+
+cxx_project(
+    name = 'robot_transport',
+    srcs = cxx_src_glob(['transport'],
+                        excludes = ['*_android.*',
+                                    'android/**/*',
+                                    ]),
+    platform_srcs = [],
+    headers = cxx_header_glob(['transport/src/*.h']),
+    platform_headers = []
+)
+
