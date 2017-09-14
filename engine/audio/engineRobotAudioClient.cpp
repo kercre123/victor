@@ -1,0 +1,165 @@
+/*
+ * File: engineRobotAudioClient.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 9/14/2017
+ *
+ * Description: This is a subclass of AudioMuxClient which provides communication between itself and an
+ *              EndingRobotAudioInput by means of EngineToRobot and RobotToEngine messages. It's purpose is to provide
+ *              an interface to perform audio tasks and respond to audio callbacks sent from the audio engine in the
+ *              animation process to engine process.
+ *
+ *
+ * Copyright: Anki, Inc. 2017
+ */
+
+
+#include "engine/audio/engineRobotAudioClient.h"
+#include "engine/cozmoContext.h"
+#include "engine/robot.h"
+#include "engine/robotManager.h"
+#include "engine/robotInterface/messageHandler.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "util/logging/logging.h"
+
+
+namespace Anki {
+namespace Cozmo {  
+namespace Audio {
+
+namespace AEM = AudioEngine::Multiplexer;
+namespace AMD = AudioMetaData;
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Engine -> Robot Methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EngineRobotAudioClient::CallbackIdType EngineRobotAudioClient::PostEvent( AMD::GameEvent::GenericEvent event,
+                                                                          AMD::GameObjectType gameObject,
+                                                                          CallbackFunc&& callback )
+{
+  if (_robot == nullptr) {
+    PRINT_NAMED_WARNING("EngineRobotAudioClient.PostEvent", "_robot is NULL, can NOT send message");
+    return kInvalidCallbackId;
+  }
+  const auto callbackId = ManageCallback( std::move( callback ) );
+  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioEvent( event, gameObject, callbackId ) ) );
+  return callbackId;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::StopAllEvents( AMD::GameObjectType gameObject )
+{
+  if (_robot == nullptr) {
+    PRINT_NAMED_WARNING("EngineRobotAudioClient.StopAllEvents", "_robot is NULL, can NOT send message");
+    return;
+  }
+  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::StopAllAudioEvents( gameObject ) ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::PostGameState( AMD::GameState::StateGroupType gameStateGroup,
+                                            AMD::GameState::GenericState gameState )
+{
+  if (_robot == nullptr) {
+    PRINT_NAMED_WARNING("EngineRobotAudioClient.PostGameState", "_robot is NULL, can NOT send message");
+    return;
+  }
+  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioGameState( gameStateGroup, gameState ) ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::PostSwitchState( AMD::SwitchState::SwitchGroupType switchGroup,
+                                              AMD::SwitchState::GenericSwitch switchState,
+                                              AMD::GameObjectType gameObject )
+{
+  if (_robot == nullptr) {
+    PRINT_NAMED_WARNING("EngineRobotAudioClient.PostSwitchState", "_robot is NULL, can NOT send message");
+    return;
+  }
+  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioSwitchState( switchGroup,
+                                                                                 switchState,
+                                                                                 gameObject ) ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::PostParameter( AMD::GameParameter::ParameterType parameter,
+                                            float parameterValue,
+                                            AMD::GameObjectType gameObject,
+                                            int32_t timeInMilliSeconds,
+                                            CurveType curve ) const
+{
+  if (_robot == nullptr) {
+    PRINT_NAMED_WARNING("EngineRobotAudioClient.PostParameter", "_robot is NULL, can NOT send message");
+    return;
+  }
+  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioParameter( parameter,
+                                                                               parameterValue,
+                                                                               gameObject,
+                                                                               timeInMilliSeconds,
+                                                                               curve ) ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Robot -> Engine Methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
+{
+  DEV_ASSERT(robot != nullptr, "EngineRobotAudioClient.Init._robot.IsNull");
+  if (robot == nullptr) { return; }
+  
+  // Setup robot message handlers
+  _robot = robot;
+  RobotInterface::MessageHandler *messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
+  RobotID_t robotId = _robot->GetID();
+
+  
+  // Subscribe to RobotToEngine messages
+  using localHandlerType = void(EngineRobotAudioClient::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
+  // Create a helper lambda for subscribing to a tag with a local handler
+  auto doRobotSubscribe = [this, robotId, messageHandler] ( RobotInterface::RobotToEngineTag tagType,
+                                                            localHandlerType handler )
+  {
+    _signalHandles.push_back(messageHandler->Subscribe( robotId,
+                                                        tagType,
+                                                        std::bind( handler, this, std::placeholders::_1 ) ));
+  };
+
+  // bind to specific handlers in the audio clients
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackDuration, &EngineRobotAudioClient::HandleRobotEngineMessage);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackMarker, &EngineRobotAudioClient::HandleRobotEngineMessage);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackComplete, &EngineRobotAudioClient::HandleRobotEngineMessage);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackError, &EngineRobotAudioClient::HandleRobotEngineMessage);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::HandleRobotEngineMessage( const AnkiEvent<RobotInterface::RobotToEngine>& message )
+{
+  switch ( static_cast<RobotInterface::RobotToEngineTag>( message.GetType() ) ) {
+    
+    case RobotInterface::RobotToEngine::Tag::audioCallbackDuration:
+      HandleCallbackEvent( message.GetData().Get_audioCallbackDuration() );
+      break;
+    
+    case RobotInterface::RobotToEngine::Tag::audioCallbackMarker:
+      HandleCallbackEvent( message.GetData().Get_audioCallbackMarker() );
+      break;
+      
+    case RobotInterface::RobotToEngine::Tag::audioCallbackComplete:
+      HandleCallbackEvent( message.GetData().Get_audioCallbackComplete() );
+      break;
+      
+    case RobotInterface::RobotToEngine::Tag::audioCallbackError:
+      HandleCallbackEvent( message.GetData().Get_audioCallbackError() );
+      break;
+      
+    default:
+      PRINT_NAMED_ERROR("EngineRobotAudioClient.HandleRobotEngineMessage", "Unexpected message type");
+      break;
+  }
+}
+
+} // Audio
+} // Cozmo
+} // Anki

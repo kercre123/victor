@@ -13,7 +13,7 @@
 #include "cozmoAnim/cozmoAnim.h"
 #include "cozmoAnim/engineMessages.h"
 #include "cozmoAnim/cozmoAnimContext.h"
-#include "cozmoAnim/audio/engineAudioInput.h"
+#include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -73,13 +73,13 @@ Result CozmoAnimEngine::Init() {
 
   _context->GetDataLoader()->LoadNonConfigData();
   
-  // Create and seetup EngineAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
+  // Create and seetup EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
-  auto regId = audioMux->RegisterInput( new Audio::EngineAudioInput() );
+  auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );
   
   // Setup Engine Message
   Messages::Init( *_animationStreamer,
-                  static_cast<Audio::EngineAudioInput*>(audioMux->GetInput( regId )) );
+                  *static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )) );
   
   
   

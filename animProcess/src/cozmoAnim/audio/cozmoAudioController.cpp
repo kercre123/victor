@@ -1,24 +1,23 @@
-//
-//  victorAudioController.cpp
-//  cozmoEngine2
-//
-//  Created by Jordan Rivas on 9/7/17.
-//
-//
+/**
+ * File: cozmoAudioController.h
+ *
+ * Author: Jordan Rivas
+ * Created: 09/07/2017
+ *
+ * Description: Cozmo interface to Audio Engine
+ *              - Subclass of AudioEngine::AudioEngineController
+ *              - Implement Cozmo specific audio functionality
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
 
-
-#include "cozmoAnim/audio/victorAudioController.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
 #include "clad/types/animationKeyFrames.h"
-//#include "clad/audio/audioBusTypes.h"
-//#include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
-//#include "clad/audio/audioParameterTypes.h"
-//#include "clad/audio/audioStateTypes.h"
-
 #include "cozmoAnim/cozmoAnimContext.h"
-
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -34,13 +33,12 @@
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 
 #define USE_AUDIO_ENGINE 1
-//#include "audioEngine/plugins/hijackAudioPlugIn.h"
-//#include "audioEngine/plugins/wavePortalPlugIn.h"
+#include "audioEngine/plugins/hijackAudioPlugIn.h"
+#include "audioEngine/plugins/wavePortalPlugIn.h"
 #else
 // If we're excluding the audio libs, don't link any of the audio engine
 #define USE_AUDIO_ENGINE 0
 #endif
-
 
 
 namespace Anki {
@@ -61,29 +59,22 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-VictorAudioController::VictorAudioController( const CozmoAnimContext* context )
+CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
 {
 
 #if USE_AUDIO_ENGINE
   {
-    DEV_ASSERT(nullptr != context, "VictorAudioController.VictorAudioController.CozmoAnimContext.IsNull");
+    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoAnimContext.IsNull");
 
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
-    
-#ifndef ANDROID
-    // NOT VICTOR =(
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
-#else
-    // Victor =)
-    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "assets/" );
-#endif
+    PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "AssetPath '%s'", assetPath.c_str());
 
     // If assets don't exist don't init the Audio engine
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
-    PRINT_CH_INFO("Audio", "VictorAudioController.VictorAudioController", "AssetPath '%s'", assetPath.c_str());
 
     if ( !assetsExist ) {
-      PRINT_NAMED_ERROR("VictorAudioController.VictorAudioController", "Audio Assets do NOT exist - Ignore if Unit Test");
+      PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets do NOT exist - Ignore if Unit Test");
       return;
     }
 
@@ -97,23 +88,19 @@ VictorAudioController::VictorAudioController( const CozmoAnimContext* context )
                                     std::placeholders::_1, std::placeholders::_2);
 
     // Add Assets Zips to list.
-
-    // iOS & Mac Platfroms
     // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
     std::string zipAssets = assetPath + "AudioAssets.zip";
     if (Util::FileUtils::FileExists(zipAssets)) {
       config.pathToZipFiles.push_back(std::move(zipAssets));
     }
     else {
-      PRINT_NAMED_ERROR("VictorAudioController.VictorAudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
+      PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
     }
-//#endif
 
-    //
+    
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language
     // below.
-    //
     config.audioLocale = AudioLocaleType::EnglishUS;
 
     // Engine Memory
@@ -132,7 +119,7 @@ VictorAudioController::VictorAudioController( const CozmoAnimContext* context )
     SetLogOutput( ErrorLevel::All, &AudioEngineLogCallback );
 
     // If we're using the audio engine, assert that it was successfully initialized.
-    DEV_ASSERT(IsInitialized(), "VictorAudioController.Initialize Audio Engine fail");
+    DEV_ASSERT(IsInitialized(), "CozmoAudioController.Initialize Audio Engine fail");
   }
 #endif // USE_AUDIO_ENGINE
 
@@ -164,14 +151,12 @@ VictorAudioController::VictorAudioController( const CozmoAnimContext* context )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-VictorAudioController::~VictorAudioController()
+CozmoAudioController::~CozmoAudioController()
 {
-
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VictorAudioController::RegisterCladGameObjectsWithAudioController()
+void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
 {
   using GameObjectType = AudioMetaData::GameObjectType;
 
@@ -223,17 +208,16 @@ void AudioEngineLogCallback( uint32_t akErrorCode,
   << "' LevelBitFlag: " << (uint32_t)errorLevel << " PlayingId: " << playingId << " GameObjId: " << gameObjectId;
 
   if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Message) == (uint32_t)ErrorLevel::Message) {
-    PRINT_CH_INFO(VictorAudioController::kLogChannelName,
-                  "VictorAudioController.AudioEngineLog",
+    PRINT_CH_INFO(CozmoAudioController::kLogChannelName,
+                  "CozmoAudioController.AudioEngineLog",
                   "%s", logStream.str().c_str());
   }
 
   if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Error) == (uint32_t)ErrorLevel::Error) {
-    PRINT_NAMED_WARNING("VictorAudioController.AudioEngineError", "%s", logStream.str().c_str());
+    PRINT_NAMED_WARNING("CozmoAudioController.AudioEngineError", "%s", logStream.str().c_str());
   }
 }
 #endif
-
 
 
 } // Audio

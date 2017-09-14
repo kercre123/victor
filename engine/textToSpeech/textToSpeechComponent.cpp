@@ -14,21 +14,20 @@
  *
  */
 
+
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
 #include "engine/textToSpeech/textToSpeechComponent.h"
 #include "engine/textToSpeech/textToSpeechProvider.h"
-
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-
-//#include "audioEngine/audioEngineController.h"
-//#include "audioEngine/multiplexer/audioMultiplexer.h"
-//#include "audioEngine/plugins/ankiPluginInterface.h"
-
+#include "audioEngine/audioEngineController.h"
+#include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "audioEngine/plugins/ankiPluginInterface.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
+
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
@@ -154,7 +153,7 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
 //  if (pluginInterface->WavePortalHasAudioDataInfo()) {
 //    pluginInterface->ClearWavePortalAudioData();
 //  }
-//
+
   // Set OUT value
   out_duration_ms = ttsBundle->waveData->ApproximateDuration_ms();
 //  // Pass ownership of audio data to plugin

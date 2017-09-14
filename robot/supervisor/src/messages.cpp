@@ -1050,14 +1050,13 @@ namespace Anki {
       void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals&) {
         // Handled on the NRF
       }
-      
-      
+            
       // V2 Audio message stubbed
-      void Process_postAudioEvent(Anki::AudioEngine::Multiplexer::PostAudioEvent const&) { /*Nothing to do*/ }
-      void Process_postAudioGameState(Anki::AudioEngine::Multiplexer::PostAudioGameState const&) { /*Nothing to do*/ }
-      void Process_postAudioParameter(Anki::AudioEngine::Multiplexer::PostAudioParameter const&) { /*Nothing to do*/ }
-      void Process_stopAllAudioEvents(Anki::AudioEngine::Multiplexer::StopAllAudioEvents const&) { /*Nothing to do*/ }
-      void Process_postAudioSwitchState(Anki::AudioEngine::Multiplexer::PostAudioSwitchState const&) { /*Nothing to do*/ }
+      void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent&) { /*Nothing to do*/ }
+      void Process_postAudioGameState(const Anki::AudioEngine::Multiplexer::PostAudioGameState&) { /*Nothing to do*/ }
+      void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter&) { /*Nothing to do*/ }
+      void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents&) { /*Nothing to do*/ }
+      void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState&) { /*Nothing to do*/ }
 
 #endif // simulator
 

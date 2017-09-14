@@ -101,6 +101,9 @@ class ProxSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 
+namespace Audio {
+  class EngineRobotAudioClient;
+}
   
 namespace RobotInterface {
 class MessageHandler;
@@ -587,8 +590,8 @@ public:
   u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
   
   // =========== Audio =============
-//  Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
-//  const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient.get(); }
+  Audio::EngineRobotAudioClient* GetAudioClient() { return _audioClient.get(); }
+  const Audio::EngineRobotAudioClient* GetAudioClient() const { return _audioClient.get(); }
   
   // =========== Mood =============
 
@@ -763,7 +766,7 @@ protected:
   std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   ///////// Audio /////////
-//  std::unique_ptr<Audio::RobotAudioClient> _audioClient;
+  std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
 
   // handles planning and path following
   std::unique_ptr<PathComponent> _pathComponent;

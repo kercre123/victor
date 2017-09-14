@@ -16,7 +16,7 @@
 
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
-#include "cozmoAnim/audio/engineAudioInput.h"
+#include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -58,7 +58,7 @@ namespace Messages {
     u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
     
     AnimationStreamer* _animStreamer = nullptr;
-    Audio::EngineAudioInput* _audioInput = nullptr;
+    Audio::EngineRobotAudioInput* _audioInput = nullptr;
     
     
     const u32 kMaxNumAvailableAnimsToReportPerTic = 100;
@@ -80,7 +80,7 @@ namespace Messages {
   
 // #pragma mark --- Messages Method Implementations ---
 
-  Result Init(AnimationStreamer& animStreamer, Audio::EngineAudioInput* audioInput)
+  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput)
   {
     
     // Setup robot and engine sockets
@@ -91,7 +91,7 @@ namespace Messages {
     ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
     _animStreamer = &animStreamer;
-    _audioInput = audioInput;
+    _audioInput   = &audioInput;
     
     return RESULT_OK;
   }

@@ -2,7 +2,7 @@
 #include "cozmoAnim/cozmoAnimContext.h"
 
 #include "audioEngine/multiplexer/audioMultiplexer.h"
-#include "cozmoAnim/audio/victorAudioController.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
 
 #include "cozmoAnim/robotDataLoader.h"
 
@@ -45,10 +45,10 @@ CozmoAnimContext::~CozmoAnimContext()
 }
 
 
-Audio::VictorAudioController* CozmoAnimContext::GetAudioController() const
+Audio::CozmoAudioController* CozmoAnimContext::GetAudioController() const
 {
   if (_audioMux.get() != nullptr) {
-    return dynamic_cast<Audio::VictorAudioController*>( _audioMux->GetAudioController() );
+    return dynamic_cast<Audio::CozmoAudioController*>( _audioMux->GetAudioController() );
   }
   return nullptr;
 }
@@ -80,7 +80,7 @@ void CozmoAnimContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
     return;
   }
   // Init Audio Base: Audio Engine & Multiplexer
-  _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::VictorAudioController(this)));
+  _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::CozmoAudioController(this)));
   // Audio Mux Input setup is in cozmoAnim.cpp & engineMessages.cpp
 }
   

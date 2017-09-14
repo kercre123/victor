@@ -1,5 +1,5 @@
 /*
- * File: animationAudioClinet.cpp
+ * File: animationAudioClient.cpp
  *
  * Author: Jordan Rivas
  * Created: 09/12/17
@@ -12,8 +12,8 @@
  */
 
 
-#include "cozmoAnim/audio/animationAudioClinet.h"
-#include "cozmoAnim/audio/victorAudioController.h"
+#include "cozmoAnim/audio/animationAudioClient.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/animation/keyframe.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -39,7 +39,7 @@ using namespace AudioMetaData;
 static const AudioGameObject kAnimGameObj = static_cast<AudioGameObject>(GameObjectType::Cozmo_OnDevice);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationAudioClient::AnimationAudioClient( VictorAudioController* audioController,
+AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController,
                                             Util::RandomGenerator* randomGenerator )
 : _audioController( audioController )
 , _randomGenerator( randomGenerator )
@@ -59,7 +59,7 @@ void AnimationAudioClient::Update() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::PlayAudioKeyFrame(const RobotAudioKeyFrame& keyFrame)
+void AnimationAudioClient::PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame )
 {
   const auto& audioRef = keyFrame.GetAudioRef();
   

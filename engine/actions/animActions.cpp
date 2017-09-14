@@ -16,7 +16,6 @@
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
-//#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
@@ -301,110 +300,7 @@ namespace Anki {
       return tracksCurrentlyLocked;
     }
 
-    
 
-    #pragma mark ---- DeviceAudioAction ----
-
-    DeviceAudioAction::DeviceAudioAction(Robot& robot,
-                                         const AudioMetaData::GameEvent::GenericEvent event,
-                                         const AudioMetaData::GameObjectType gameObj,
-                                         const bool waitUntilDone)
-    : IAction(robot,
-              "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)),
-              RobotActionType::DEVICE_AUDIO,
-              (u8)AnimTrackFlag::NO_TRACKS)
-    , _actionType( AudioActionType::Event )
-    , _waitUntilDone( waitUntilDone )
-    , _event( event )
-    , _gameObj( gameObj )
-    { }
-
-    // Stop All Events on Game Object, pass in Invalid to stop all audio
-    DeviceAudioAction::DeviceAudioAction(Robot& robot,
-                                         const AudioMetaData::GameObjectType gameObj)
-    : IAction(robot,
-              "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)),
-              RobotActionType::DEVICE_AUDIO,
-              (u8)AnimTrackFlag::NO_TRACKS)
-    , _actionType( AudioActionType::StopEvents )
-    , _gameObj( gameObj )
-    { }
-
-    // Change Music state
-    DeviceAudioAction::DeviceAudioAction(Robot& robot, const AudioMetaData::GameState::Music state)
-    : IAction(robot,
-              "PlayAudioMusicState_" + std::string(EnumToString(state)),
-              RobotActionType::DEVICE_AUDIO,
-              (u8)AnimTrackFlag::NO_TRACKS)
-    , _actionType( AudioActionType::SetState )
-    , _stateGroup( AudioMetaData::GameState::StateGroupType::Music )
-    , _state( static_cast<AudioMetaData::GameState::GenericState>(state) )
-    { }
-
-    void DeviceAudioAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-    {
-      DeviceAudioCompleted info;
-      info.audioEvent = _event;
-      completionUnion.Set_deviceAudioCompleted(std::move( info ));
-    }
-
-    ActionResult DeviceAudioAction::Init()
-    {
-      switch ( _actionType ) {
-        case AudioActionType::Event:
-        {
-          if (_waitUntilDone) {
-            
-//            const  Audio::AudioEngineClient::CallbackFunc callback = [this] ( const AudioEngine::Multiplexer::AudioCallback& callback )
-//            {
-//              const  AudioEngine::Multiplexer::AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
-//              if ( AudioEngine::Multiplexer::AudioCallbackInfoTag::callbackComplete == tag ||
-//                   AudioEngine::Multiplexer::AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
-//                _isCompleted = true;
-//              }
-//            };
-//            
-//            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj, std::move( callback ) );
-          }
-          else {
-//            _robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
-            _isCompleted = true;
-          }
-        }
-          break;
-          
-        case AudioActionType::StopEvents:
-        {
-//          _robot.GetRobotAudioClient()->StopAllEvents(_gameObj);
-          _isCompleted = true;
-        }
-          break;
-          
-        case AudioActionType::SetState:
-        {
-          // FIXME: This is temp until we add boot process which will start music at launch
-//          if (AudioMetaData::GameState::StateGroupType::Music == _stateGroup) {
-//            static bool didStartMusic = false;
-//            if (!didStartMusic) {
-//              _robot.GetRobotAudioClient()->PostEvent( static_cast<AudioMetaData::GameEvent::GenericEvent>(AudioMetaData::GameEvent::Music::Play), AudioMetaData::GameObjectType::Default );
-//              didStartMusic = true;
-//            }
-//          }
-//          
-//          _robot.GetRobotAudioClient()->PostGameState(_stateGroup, _state);
-          _isCompleted = true;
-        }
-          break;
-      }
-      
-      return ActionResult::SUCCESS;
-    }
-
-    ActionResult DeviceAudioAction::CheckIfDone()
-    {
-      return _isCompleted ? ActionResult::SUCCESS : ActionResult::RUNNING;
-    }
-    
     
     
     TriggerCubeAnimationAction::TriggerCubeAnimationAction(Robot& robot,

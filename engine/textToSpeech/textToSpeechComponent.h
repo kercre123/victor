@@ -12,7 +12,7 @@
 *
 */
 
-// TODO: This needs to move to anim process so it can share audio data with audio engine
+// TODO: JIRA VIC-23 - Migrate Text to Speech component to Victor
 
 
 #ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__
@@ -29,9 +29,9 @@
 
 // Forward declarations
 namespace Anki {
-//  namespace AudioEngine {
-//    class AudioEngineController;
-//  }
+  namespace AudioEngine {
+    class AudioEngineController;
+  }
   namespace Util {
     namespace Dispatch {
       class Queue;
@@ -106,7 +106,7 @@ private:
     ~TtsBundle() { Util::SafeDelete(waveData); }
   };
   
-//  AudioEngine::AudioEngineController* _audioController  = nullptr;
+  AudioEngine::AudioEngineController* _audioController  = nullptr;
   Util::Dispatch::Queue* _dispatchQueue                 = nullptr;
   
   std::unordered_map<OperationId, TtsBundle> _ttsWaveDataMap;

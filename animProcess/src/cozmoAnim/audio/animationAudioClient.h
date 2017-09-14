@@ -1,5 +1,5 @@
 /*
- * File: animationAudioClinet.h
+ * File: animationAudioClient.h
  *
  * Author: Jordan Rivas
  * Created: 09/12/17
@@ -12,8 +12,8 @@
  */
 
 
-#ifndef __Anki_Cozmo_AnimationAudioClinet_H__
-#define __Anki_Cozmo_AnimationAudioClinet_H__
+#ifndef __Anki_Cozmo_AnimationAudioClient_H__
+#define __Anki_Cozmo_AnimationAudioClient_H__
 
 
 #include "clad/audio/audioEventTypes.h"
@@ -36,7 +36,7 @@ namespace Cozmo {
 class RobotAudioKeyFrame;
 
 namespace Audio {
-class VictorAudioController;
+class CozmoAudioController;
 
 
 class AnimationAudioClient {
@@ -45,7 +45,7 @@ public:
 
   static const char* kAudioLogChannelName;
 
-  AnimationAudioClient( VictorAudioController* audioController, Util::RandomGenerator* randomGenerator );
+  AnimationAudioClient( CozmoAudioController* audioController, Util::RandomGenerator* randomGenerator );
 
   ~AnimationAudioClient();
   
@@ -53,7 +53,7 @@ public:
   void Update() const;
 
   // Perform functionality for frame
-  void PlayAudioKeyFrame(const RobotAudioKeyFrame& keyFrame);
+  void PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame );
   
   // Stop all animation audio
   void StopCozmoEvent();
@@ -66,7 +66,7 @@ private:
   
   using AnimPlayId = uint32_t;
   
-  VictorAudioController*  _audioController = nullptr;
+  CozmoAudioController*  _audioController = nullptr;
   Util::RandomGenerator*  _randomGenerator = nullptr;
   std::set<AnimPlayId>    _activeEvents;
   mutable std::mutex      _lock;
@@ -83,6 +83,7 @@ private:
   // Track current playing events
   void AddActiveEvent( AnimPlayId playId );
   void RemoveActiveEvent( AnimPlayId playId );
+
 };
 
 
@@ -90,4 +91,4 @@ private:
 }
 }
 
-#endif /* __Anki_Cozmo_AnimationAudioClinet_H__ */
+#endif /* __Anki_Cozmo_AnimationAudioClient_H__ */

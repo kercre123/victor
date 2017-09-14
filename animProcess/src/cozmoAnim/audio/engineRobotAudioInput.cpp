@@ -1,12 +1,18 @@
-//
-//  engineAudioInput.cpp
-//  cozmoEngine2
-//
-//  Created by Jordan Rivas on 9/12/17.
-//
-//
+/*
+ * File: engineRobotAudioInput.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 9/12/2017
+ *
+ * Description: This is a subclass of AudioMuxInput which provides communication between itself and an
+ *              EndingRobotAudioClient by means of EngineToRobot and RobotToEngine messages. It's purpose is to perform
+ *              audio tasks sent from the engine process to the audio engine in the animation process.
+ *
+ * Copyright: Anki, Inc. 2017
+ */
 
-#include "cozmoAnim/audio/engineAudioInput.h"
+
+#include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/engineMessages.h"
 #include "clad/audio/audioMessageTypes.h"
 #include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
@@ -18,7 +24,7 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineAudioInput::HandleEngineToRobotMsg(RobotInterface::EngineToRobot& msg)
+void EngineRobotAudioInput::HandleEngineToRobotMsg(RobotInterface::EngineToRobot& msg)
 {
   PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel,
                  "AudioUnityInput.HandleGameEvents", "Handle game event of type %X",
@@ -35,7 +41,7 @@ void EngineAudioInput::HandleEngineToRobotMsg(RobotInterface::EngineToRobot& msg
       break;
     
     case RobotInterface::EngineToRobot::Tag_postAudioGameState:
-            HandleMessage( msg.postAudioGameState );
+      HandleMessage( msg.postAudioGameState );
       break;
       
     case RobotInterface::EngineToRobot::Tag_postAudioSwitchState:
@@ -53,34 +59,34 @@ void EngineAudioInput::HandleEngineToRobotMsg(RobotInterface::EngineToRobot& msg
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineAudioInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackDuration&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackDuration&& callbackMessage ) const
 {
   if (!RobotInterface::SendMessageToEngine(callbackMessage)) {
-    PRINT_NAMED_ERROR("EngineAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackDuration");
+    PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackDuration");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineAudioInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackMarker&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackMarker&& callbackMessage ) const
 {
   if (!RobotInterface::SendMessageToEngine(callbackMessage)) {
-    PRINT_NAMED_ERROR("EngineAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackMarker");
+    PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackMarker");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineAudioInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const
 {
   if (!RobotInterface::SendMessageToEngine(callbackMessage)) {
-    PRINT_NAMED_ERROR("EngineAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackComplete");
+    PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackComplete");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineAudioInput::PostCallback( const AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const
 {
   if (!RobotInterface::SendMessageToEngine(callbackMessage)) {
-    PRINT_NAMED_ERROR("EngineAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackError");
+    PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackError");
   }
 }
 

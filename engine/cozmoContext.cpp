@@ -96,7 +96,7 @@ void CozmoContext::SetRandomSeed(uint32_t seed)
   
 void CozmoContext::SetLocale(const std::string& localeString)
 {
-  // TODO: Fix this - JMR
+  // TODO: VIC-27 - Migrate Audio Local functionality to Victor
   using Locale = Anki::Util::Locale;
 //  using CozmoAudioController = Anki::Cozmo::Audio::CozmoAudioController;
 

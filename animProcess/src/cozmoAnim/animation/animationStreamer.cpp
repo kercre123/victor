@@ -20,7 +20,7 @@
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
-#include "cozmoAnim/audio/animationAudioClinet.h"
+#include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"

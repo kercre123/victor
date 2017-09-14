@@ -27,7 +27,7 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/animations/proceduralFace.h"
 #include "engine/ankiEventUtil.h"
-//#include "engine/audio/robotAudioClient.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
 #include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/behaviorSystem/behaviorManager.h"
@@ -171,9 +171,9 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _publicStateBroadcaster(new PublicStateBroadcaster())
   , _behaviorMgr(new BehaviorManager(*this))
   , _behaviorSysMgr(new BehaviorSystemManager(*this))
-//  , _audioClient(new Audio::RobotAudioClient(this))
+  , _audioClient(new Audio::EngineRobotAudioClient())
   , _pathComponent(new PathComponent(*this, robotID, context))
-  , _animationStreamer(_context) //, *_audioClient)
+  , _animationStreamer(_context) // v1
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
@@ -229,8 +229,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _stateHistory->Clear();
   _needToSendLocalizationUpdate = false;
 
-  _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID, this);
-      
+  _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(), robotID, this);
+  
+  // Setup audio messages
+  GetAudioClient()->SubscribeAudioCallbackMessages(this);
+
   _lastDebugStringHash = 0;
       
   // Read in Mood Manager Json

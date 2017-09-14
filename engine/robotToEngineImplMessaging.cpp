@@ -21,7 +21,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
-//#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
@@ -63,9 +62,6 @@
 // Filter that makes chargers not discoverable
 #define IGNORE_CHARGER_DISCOVERY 0
 
-// Always play robot audio on device
-#define ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE 0
-
 // How often do we send power level updates to DAS?
 #define POWER_LEVEL_INTERVAL_SEC 600
 
@@ -83,7 +79,6 @@ RobotToEngineImplMessaging::RobotToEngineImplMessaging(Robot* robot) :
 
 RobotToEngineImplMessaging::~RobotToEngineImplMessaging()
 {
-  
 }
 
 void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot)
@@ -346,12 +341,6 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
 
   PRINT_NAMED_INFO("RobotIsPhysical", "%d", robotIsPhysical);
   robot->SetPhysicalRobot(robotIsPhysical);
-  
-  // Update robot audio output source
-//  auto outputSource = (robotIsPhysical && !ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE) ?
-//                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot :
-//                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnDevice;
-//  robot->GetRobotAudioClient()->SetOutputSource(outputSource);
 }
   
 

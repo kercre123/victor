@@ -126,44 +126,11 @@ namespace Anki {
       
     };
 
-    class DeviceAudioAction : public IAction
-    {
-    public:
-      // Play Audio Event
-      // TODO: Add bool to set if caller want's to block "wait" until audio is completed
-      DeviceAudioAction(Robot& robot,
-                        const AudioMetaData::GameEvent::GenericEvent event,
-                        const AudioMetaData::GameObjectType gameObj,
-                        const bool waitUntilDone = false);
-      
-      // Stop All Events on Game Object, pass in Invalid to stop all audio
-      DeviceAudioAction(Robot& robot, const AudioMetaData::GameObjectType gameObj = AudioMetaData::GameObjectType::Invalid);
-      
-      // Change Music state
-      DeviceAudioAction(Robot& robot, const AudioMetaData::GameState::Music state);
-      
-      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
-      
-    protected:
-      
-      virtual ActionResult Init() override;
-      virtual ActionResult CheckIfDone() override;
-      
-      enum class AudioActionType : uint8_t {
-        Event = 0,
-        StopEvents,
-        SetState,
-      };
-      
-      AudioActionType _actionType;
-      bool            _isCompleted    = false;
-      bool            _waitUntilDone  = false;
-      AudioMetaData::GameEvent::GenericEvent    _event       = AudioMetaData::GameEvent::GenericEvent::Invalid;
-      AudioMetaData::GameObjectType             _gameObj     = AudioMetaData::GameObjectType::Invalid;
-      AudioMetaData::GameState::StateGroupType  _stateGroup  = AudioMetaData::GameState::StateGroupType::Invalid;
-      AudioMetaData::GameState::GenericState    _state       = AudioMetaData::GameState::GenericState::Invalid;
-      
-    }; // class PlayAudioAction
+    #pragma mark ---- DeviceAudioAction ----
+    // TODO: JIRA VIC-29 - Reimplement DeviceAudioAction
+    
+    #pragma mark ---- RobotAudioAction ----
+    // TODO: VIC-30 - Implement RobotAudioAction
 
     
     class TriggerCubeAnimationAction : public IAction

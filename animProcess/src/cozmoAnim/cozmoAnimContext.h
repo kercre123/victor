@@ -41,7 +41,7 @@ class RobotDataLoader;
 class ThreadIDInternal;
   
 namespace Audio {
-class VictorAudioController;
+class CozmoAudioController;
 }
 namespace RobotInterface {
 class MessageHandler;
@@ -71,7 +71,7 @@ public:
 
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
-  Audio::VictorAudioController*         GetAudioController() const; // Can return nullptr
+  Audio::CozmoAudioController*         GetAudioController() const; // Can return nullptr
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   
   void SetRandomSeed(uint32_t seed);
