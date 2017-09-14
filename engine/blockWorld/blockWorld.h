@@ -42,7 +42,7 @@ namespace Anki
     class RobotMessageHandler;
     class ActiveObject;
     class IExternalInterface;
-    class INavMemoryMap;
+    class INavMap;
     namespace BlockConfigurations{
     class BlockConfigurationManager;
     }
@@ -354,9 +354,9 @@ namespace Anki
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-      // return pointer to current INavMemoryMap (it may be null if not enabled)
-      const INavMemoryMap* GetNavMemoryMap() const;
-      INavMemoryMap* GetNavMemoryMap();
+      // return pointer to current INavMap (it may be null if not enabled)
+      const INavMap* GetNavMemoryMap() const;
+      INavMap* GetNavMemoryMap();
       
       // update memory map with the current robot pose if needed (objects use other notification methods)
       void UpdateRobotPoseInMemoryMap();
@@ -596,7 +596,7 @@ namespace Anki
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
       
       // Map the world knows the robot has traveled
-      using NavMemoryMapTable = std::map<PoseOriginID_t, std::unique_ptr<INavMemoryMap>>;
+      using NavMemoryMapTable = std::map<PoseOriginID_t, std::unique_ptr<INavMap>>;
       NavMemoryMapTable _navMemoryMaps;
       PoseOriginID_t _currentNavMemoryMapOriginID;
       bool _isNavMemoryMapRenderEnabled;

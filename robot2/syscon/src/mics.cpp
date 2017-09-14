@@ -7,8 +7,6 @@
 #include "mics.h"
 #include "mic_tables.h"
 
-using namespace Anki::Cozmo::Spine;
-
 static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
 static const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
@@ -50,25 +48,27 @@ void Mics::init(void) {
   sample_index = 0;
 
   // Set our MISO lines to SPI1 and SPI2
-  MIC1MISO::alternate(0);
-  MIC1MISO::speed(SPEED_HIGH);
-  MIC1MISO::mode(MODE_ALTERNATE);
+  MIC1_MISO::alternate(0);
+  MIC1_MISO::speed(SPEED_HIGH);
+  MIC1_MISO::mode(MODE_ALTERNATE);
 
-  MIC2MISO::alternate(0);
-  MIC2MISO::speed(SPEED_HIGH);
-  MIC2MISO::mode(MODE_ALTERNATE);
+  MIC2_MISO::alternate(0);
+  MIC2_MISO::speed(SPEED_HIGH);
+  MIC2_MISO::mode(MODE_ALTERNATE);
 
   // Setup our output clock to TIM15
-  MIC1MOSI::alternate(1);
-  MIC1MOSI::speed(SPEED_HIGH);
-  MIC1MOSI::mode(MODE_ALTERNATE);
+  MIC_LR::alternate(1);
+  MIC_LR::speed(SPEED_HIGH);
+  MIC_LR::mode(MODE_ALTERNATE);
 
-  /* TEMP CODE UNTIL REV 2 */
-  POWER_EN::reset();
-  POWER_EN::mode(MODE_OUTPUT);
-  RTN2::alternate(0);
-  RTN2::mode(MODE_ALTERNATE);
-  /* TEMP CODE UNTIL REV 2 */
+  // Set and output clock for the SPI perf so reads work (not connected)
+  MIC1_SCK::alternate(0);
+  MIC1_SCK::speed(SPEED_HIGH);
+  MIC1_SCK::mode(MODE_ALTERNATE);
+
+  MIC2_SCK::alternate(0);
+  MIC2_SCK::speed(SPEED_HIGH);
+  MIC2_SCK::mode(MODE_ALTERNATE);
 
   // Start configuring out clock
   TIM15->PSC = 0;
@@ -93,9 +93,30 @@ void Mics::init(void) {
   NVIC_SetPriority(DMA1_Channel2_3_IRQn, PRIORITY_MICS);
 
   // NEED TO SLOP TIMING HERE
-  TIM15->CR1 = TIM_CR1_CEN;
-  SPI1->CR1 = SPI_CR1;
-  SPI2->CR1 = SPI_CR1;
+  __asm {
+    MOV r0, TIM_CR1_CEN
+    MOV r1, SPI_CR1
+    MOV r2, &TIM15->CR1
+    MOV r3, &SPI1->CR1
+    MOV r4, &SPI2->CR1
+    
+    str r0, [r2, #0]
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    str r1, [r3, #0]
+    str r1, [r4, #0]
+  }
 }
 
 void Mics::transmit(int16_t* payload) {

@@ -5,9 +5,8 @@
 
 #include "encoders.h"
 #include "motors.h"
+#include "power.h"
 #include "messages.h"
-
-using namespace Anki::Cozmo::Spine;
 
 static const int MOTOR_SERVICE_COUNTDOWN = 4;
 static const int MAX_ENCODER_FRAMES = 25; // 0.1250s
@@ -48,7 +47,7 @@ struct MotorStatus {
 #define CONFIG_N(PIN) \
   (PIN::bank), ~(3 << (PIN::pin * 2)), (MODE_ALTERNATE << (PIN::pin * 2)), (MODE_OUTPUT << (PIN::pin * 2))
 
-static const MotorConfig MOTOR_DEF[Anki::Cozmo::Spine::MOTOR_COUNT] = {
+static const MotorConfig MOTOR_DEF[MOTOR_COUNT] = {
   {
     &LTP1::bank->BSRR, LTP1::mask,
     &TIM1->CCR2, CONFIG_N(LTN1),
@@ -71,11 +70,33 @@ static const MotorConfig MOTOR_DEF[Anki::Cozmo::Spine::MOTOR_COUNT] = {
   },
 };
 
-static MotorStatus motorStatus[Anki::Cozmo::Spine::MOTOR_COUNT];
+static MotorStatus motorStatus[MOTOR_COUNT];
 static int16_t motorPower[MOTOR_COUNT];
 static int moterServiced;
 
-static void configure_pins() {
+static void enable_charger() {
+  LP1::mode(MODE_INPUT);
+  LN1::mode(MODE_INPUT);
+  LN2::mode(MODE_INPUT);
+
+  HP1::mode(MODE_INPUT);
+  HN1::mode(MODE_INPUT);
+  HN2::mode(MODE_INPUT);
+
+  RTP1::mode(MODE_INPUT);
+  RTN1::mode(MODE_INPUT);
+  RTN2::mode(MODE_INPUT);
+
+  LTP1::mode(MODE_INPUT);
+  LTN1::mode(MODE_INPUT);
+  LTN2::mode(MODE_INPUT);
+  
+  Power::setCharge(true);
+}
+
+static void enable_motors() {
+  Power::setCharge(false);
+
   // Reset our ports (This is portable, but ugly, can easily collapse this into 6 writes)
   LP1::reset();
   LN1::reset();
@@ -121,8 +142,6 @@ static void Motors::receive(HeadToBody *payload) {
   memcpy(motorPower, payload->motorPower, sizeof(motorPower));
 }
 
-#include "contacts.h"
-
 static void Motors::transmit(BodyToHead *payload) {
   uint32_t* time_last;
   int32_t* delta_last;
@@ -135,7 +154,7 @@ static void Motors::transmit(BodyToHead *payload) {
   } else {
     moterServiced--;
   }
-
+  
   for (int i = 0; i < MOTOR_COUNT; i++) {
     MotorStatus* state = &motorStatus[i];
 
@@ -205,19 +224,66 @@ void Motors::init() {
 
   configure_timer(TIM1);
   configure_timer(TIM3);
-  configure_pins();
+  enable_charger();
+}
+
+void Motors::stop() {
+  LP1::mode(MODE_INPUT);
+  LN1::mode(MODE_INPUT);
+  LN2::mode(MODE_INPUT);
+
+  HP1::mode(MODE_INPUT);
+  HN1::mode(MODE_INPUT);
+  HN2::mode(MODE_INPUT);
+
+  RTP1::mode(MODE_INPUT);
+  RTN1::mode(MODE_INPUT);
+  RTN2::mode(MODE_INPUT);
+
+  LTP1::mode(MODE_INPUT);
+  LTN1::mode(MODE_INPUT);
+  LTN2::mode(MODE_INPUT);
 }
 
 // This treats 0 power as a 'transitional' state
 // This can be optimized so that if in configured and direction has not changed, to reconfigure the pins, otherwise set power
 
+// How many main execution ticks before we reenable our charger
+static const int DISABLE_ON_TIME = 200;
+
 void Motors::tick() {
+  // Charge circuit enable logic
+  static bool motorEnabled = false;
+  static int idleTimer = 0;  
+  bool enableMotors = (++idleTimer) < DISABLE_ON_TIME;
+  
+  if (enableMotors != motorEnabled) {
+    if (enableMotors) {
+      enable_motors();
+    } else {
+      enable_charger();
+    }
+
+    motorEnabled = enableMotors;
+    return ;
+  }
+
+  // Configure pins
   for(int i = 0; i < MOTOR_COUNT; i++) {
     MotorConfig* config =  (MotorConfig*) &MOTOR_DEF[i];
     MotorStatus* state = &motorStatus[i];
 
     bool direction = state->power >= 0;
     bool transition = state->power == 0 || state->direction != direction;
+
+    // Make sure motors are enabled by next phase
+    // We will need to table this power change for one transition
+    if (state->power != 0) {
+      idleTimer = 0;
+      if (!motorEnabled) {
+        break ;
+      }
+    }
 
     // This is set when the bus is idle
     if (!state->configured) {

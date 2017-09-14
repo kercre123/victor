@@ -99,7 +99,7 @@
                 wheel: false,
                 startScale: startScale,
                 maxScale: 2,
-                minScale: 0.5,
+                minScale: 0.35,
                 scaleSpeed: 1.1
             }
         });
@@ -170,6 +170,7 @@
             });
         }
         else {
+            var exportbutton = document.querySelector('#exportbutton');
             var undo = document.querySelector('#undo');
             var redo = document.querySelector('#redo');
 
@@ -185,6 +186,17 @@
                 Scratch.workspace.undo(true);
             });
             redo.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
+
+            exportbutton.addEventListener('click', function () {
+                Scratch.workspace.playAudio('click');
+                vm.stopAll();
+                clearInterval(window.saveProjectTimerId);
+
+                window.exportCozmoProject();
+            });
+            exportbutton.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
 
@@ -207,6 +219,7 @@
         });
         stop.addEventListener('click', function () {
             Scratch.workspace.playAudio('click');
+            window.Unity.call({command: "cozmoStopSign"});
             vm.stopAll();
         });
         stop.addEventListener('touchmove', function (e) {

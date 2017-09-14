@@ -164,13 +164,13 @@ void ActivitySparked::OnSelectedInternal(Robot& robot)
   _observedObjectsSinceStarted.clear();
   
   static const BackpackLights kLoopingSparkLights = {
-    .onColors               = {{NamedColors::BLACK, NamedColors::WHITE, NamedColors::WHITE, NamedColors::WHITE, NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{0,360,360,360,0}},
-    .offPeriod_ms           = {{0,1110,1110,1110,0}},
-    .transitionOnPeriod_ms  = {{0,0,0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0,0,0}},
-    .offset                 = {{0,0,120,240,0}}
+    .onColors               = {{NamedColors::WHITE, NamedColors::WHITE, NamedColors::WHITE}},
+    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .onPeriod_ms            = {{360,360,360}},
+    .offPeriod_ms           = {{1110,1110,1110}},
+    .transitionOnPeriod_ms  = {{0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0}},
+    .offset                 = {{0,120,240}}
   };
   
   BehaviorManager& mngr = robot.GetBehaviorManager();

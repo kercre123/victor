@@ -31,7 +31,7 @@ namespace Cozmo {
   const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
   const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
   
-  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
+  const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);  // V2 range: -20 to +45 according to McVicar
   const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 44.5f);
   
   const f32 kIdealViewBlockHeadAngle = DEG_TO_RAD(-17.5f);
@@ -55,19 +55,25 @@ namespace Cozmo {
   // the drive center is the location between the two wheels)
   const f32 DRIVE_CENTER_OFFSET = -20.f;
   
-  // Length of the forward range sensor (with respect to origin)
-  const u16 FORWARD_RANGE_SENSOR_MIN_DISTANCE_MM = 25;
-  const u16 FORWARD_RANGE_SENSOR_MAX_DISTANCE_MM = 410;
+  // Length of the forward range sensor (with respect to the sensor's origin)
+  const u16 kProxSensorMinDistance_mm = 25;
+  const u16 kProxSensorMaxDistance_mm = 410;
+  
+  // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
+  const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.f);    // Angle that the prox sensor is tilted (upward is positive)
+  const float kProxSensorPosition_mm[3] = {10.f, 0.f, 16.f}; // With respect to robot origin
+  const float kProxSensorFullFOV_rad = DEG_TO_RAD(25.f);     // Full Field of View (FOV) of the sensor cone
   
   // The height of the lift at various configurations
   // Actual limit in proto is closer to 20.4mm, but there is a weird
   // issue with moving the lift when it is at a limit. The lift arm
   // flies off of the robot and comes back! So for now, we just don't
   // drive the lift down that far. We also skip calibration in sim.
-  const f32 LIFT_HEIGHT_LOWDOCK  = 32.f;
-  const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
-  const f32 LIFT_HEIGHT_CARRY    = 92.f;
-  const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
+  const f32 LIFT_HEIGHT_LOWDOCK               = 32.f; // For interfacing with a cube that is on the ground.
+  const f32 LIFT_HEIGHT_OCCLUDING_PROX_SENSOR = 39.f; // TODO: Confirm this on a real robot. At this lift height, the lift crossbar is directly occluding the prox sensor's beam.
+  const f32 LIFT_HEIGHT_HIGHDOCK              = 76.f; // For interfacing with a cube that is stacked on top of another cube.
+  const f32 LIFT_HEIGHT_CARRY                 = 92.f; // Cube carrying height.
+  const f32 LIFT_HEIGHT_LOW_ROLL              = 68.f; // For rolling a cube that is on the ground.
   
   // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
   const f32 LIFT_ARM_LENGTH = 66.f;
@@ -154,17 +160,9 @@ namespace Cozmo {
   const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
   
 #ifdef COZMO_V2
-#ifdef COZMO_ROBOT
-  const ImageResolution DEFAULT_IMAGE_RESOLUTION = NHD;
-#else
   const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::NHD;
-#endif
-#else
-#ifdef COZMO_ROBOT
-  const ImageResolution DEFAULT_IMAGE_RESOLUTION = QVGA;
 #else
   const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::QVGA;
-#endif
 #endif
   
   /***************************************************************************
@@ -241,6 +239,10 @@ namespace Cozmo {
   // how long there is between stopping the motors and issuing a cliff event (because we have decided there isn't a pickup event)
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
+  
+  // TODO: Move to a config file for animation process
+  const s32 ANIM_TIME_STEP = 33; //ms
+  
   /***************************************************************************
    *
    *                          Streaming Animation
@@ -275,9 +277,12 @@ namespace Cozmo {
   const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
   const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
   
-  // The base listening port for robot TCP server.
+  // The base listening port for robot UDP server.
   // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
   const u16 ROBOT_RADIO_BASE_PORT = 5551;
+  
+  // The base listening port for anim process UDP server
+  const u16 ANIM_PROCESS_SERVER_BASE_PORT = 5600;
   
   /*
    THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientChannel.h

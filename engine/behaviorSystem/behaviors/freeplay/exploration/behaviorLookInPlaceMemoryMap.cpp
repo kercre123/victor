@@ -19,7 +19,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/groundPlaneROI.h"
-#include "engine/navMemoryMap/iNavMemoryMap.h"
+#include "engine/navMap/iNavMap.h"
 #include "engine/robot.h"
 
 #include "util/console/consoleInterface.h"
@@ -44,22 +44,22 @@ static const char* kConfigParamsKey = "params";
 
 // This is the configuration of memory map types that this behavior checks against. If a type
 // is set to true, it means that we want to check the sector with that type to see what's there.
-constexpr NavMemoryMapTypes::FullContentArray typesWeWantToVisit =
+constexpr MemoryMapTypes::FullContentArray typesWeWantToVisit =
 {
-  {NavMemoryMapTypes::EContentType::Unknown               , true },
-  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-  {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCube          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCharger       , false},
-  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-  {NavMemoryMapTypes::EContentType::ObstacleProx          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
-  {NavMemoryMapTypes::EContentType::Cliff                 , false},
-  {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
-  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
+  {MemoryMapTypes::EContentType::Unknown               , true },
+  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+  {MemoryMapTypes::EContentType::ObstacleCube          , false},
+  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleCharger       , false},
+  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {MemoryMapTypes::EContentType::ObstacleProx          , false},
+  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , false},
+  {MemoryMapTypes::EContentType::Cliff                 , false},
+  {MemoryMapTypes::EContentType::InterestingEdge       , false},
+  {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
 };
-static_assert(NavMemoryMapTypes::IsSequentialArray(typesWeWantToVisit),
+static_assert(MemoryMapTypes::IsSequentialArray(typesWeWantToVisit),
   "This array does not define all types once and only once.");
 };
 
@@ -84,7 +84,7 @@ BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const Robot& robot) const
 {
   // obviously this behavior needs memory map
-  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
     return false;
   }
@@ -338,7 +338,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   const Point3f& to3D   = robotLocation + sectorNormal * maxDist;
   
   // grab mem map
-  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   DEV_ASSERT(memoryMap, "BehaviorLookInPlaceMemoryMap.NeedMemoryMap"); // checked before
   
   // ask the memory map by tracing the ray cast whether we want to visit the sector

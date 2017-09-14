@@ -13,7 +13,7 @@ namespace Anki {
     // its LEDParams), returns the new RGBA color in newColor. Returns whether the
     // color of the LED actually changed.
     bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,
-                            u16& newColor);
+                            u32& newColor);
 
   } // namespace Cozmo
 } // namespace Anki

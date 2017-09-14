@@ -10,3 +10,15 @@ cxx_project(
         ('android', glob(['include/anki/messaging/**/*_android.h']))
     ]
 )
+
+cxx_project(
+    name = 'cti_messaging_robot',
+    srcs = cxx_src_glob(['shared/src']),
+    platform_srcs = [
+        ('android', glob(['shared/src/**/*_android.cpp']))
+    ],
+    headers = cxx_header_glob(['include/anki/messaging']),
+    platform_headers = [
+        ('android', glob(['include/anki/messaging/**/*_android.h']))
+    ]
+)

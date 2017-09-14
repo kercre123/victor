@@ -57,7 +57,7 @@ init: function() {
               ['cat', 'cat'],
               ['sneeze', 'sneeze'],
               ['excited', 'excited'],
-              ['think Hard', 'thinking'],
+              ['think hard', 'thinking'],
               ['bored', 'bored'],
               ['frustrated', 'frustrated'],
               ['chatty', 'chatty'],

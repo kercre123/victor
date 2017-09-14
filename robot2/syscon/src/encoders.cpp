@@ -14,8 +14,8 @@ static const int8_t QUAD_DECODE[4][4] = {
 };
 
 static int page;
-static uint32_t time[2][Anki::Cozmo::Spine::MOTOR_COUNT];
-static int32_t delta[2][Anki::Cozmo::Spine::MOTOR_COUNT];
+static uint32_t time[2][MOTOR_COUNT];
+static int32_t delta[2][MOTOR_COUNT];
 
 void Encoders::init(void) {
   static const uint32_t EVENT_MASK =
@@ -69,8 +69,8 @@ extern "C" void EXTI0_1_IRQHandler(void) {
   static uint32_t prev;
   const uint32_t now = (HENCA::bank->IDR >> HENCA::pin) & 0x3;
 
-  time[page][Anki::Cozmo::Spine::MOTOR_HEAD] = Timer::getTime();
-  delta[page][Anki::Cozmo::Spine::MOTOR_HEAD] += QUAD_DECODE[prev][now];
+  time[page][MOTOR_HEAD] = Timer::getTime();
+  delta[page][MOTOR_HEAD] += QUAD_DECODE[prev][now];
   prev = now;
 
   // Clear our interrupt
@@ -82,8 +82,8 @@ extern "C" void EXTI2_3_IRQHandler(void) {
   static uint32_t prev;
   const uint32_t now = (LENCA::bank->IDR >> LENCA::pin) & 0x3;
 
-  time[page][Anki::Cozmo::Spine::MOTOR_LIFT] = Timer::getTime();
-  delta[page][Anki::Cozmo::Spine::MOTOR_LIFT] += QUAD_DECODE[prev][now];
+  time[page][MOTOR_LIFT] = Timer::getTime();
+  delta[page][MOTOR_LIFT] += QUAD_DECODE[prev][now];
   prev = now;
 
   // Clear our interrupt
@@ -96,13 +96,13 @@ extern "C" void EXTI4_15_IRQHandler(void) {
   const uint32_t pins = RTENC::bank->IDR & (RTENC::mask | LTENC::mask);
 
   if (EXTI->PR & RTENC::mask) {
-    delta[page][Anki::Cozmo::Spine::MOTOR_RIGHT]++;
-    time[page][Anki::Cozmo::Spine::MOTOR_RIGHT] = now;
+    delta[page][MOTOR_RIGHT]++;
+    time[page][MOTOR_RIGHT] = now;
   }
 
   if (EXTI->PR & LTENC::mask) {
-    delta[page][Anki::Cozmo::Spine::MOTOR_LEFT]++;
-    time[page][Anki::Cozmo::Spine::MOTOR_LEFT] = now;
+    delta[page][MOTOR_LEFT]++;
+    time[page][MOTOR_LEFT] = now;
   }
 
   // Clear our interrupt

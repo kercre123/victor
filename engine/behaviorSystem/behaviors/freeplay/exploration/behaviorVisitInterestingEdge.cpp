@@ -48,42 +48,42 @@ namespace {
 
 // This is the configuration of memory map types that would invalidate goals because we would
 // need to cross an obstacle or edge to get there. If the obstacle is seen by the planner, we can likely path around it
-constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateGoals =
+constexpr MemoryMapTypes::FullContentArray typesThatInvalidateGoals =
 {
-  {NavMemoryMapTypes::EContentType::Unknown               , false},
-  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-  {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCube          , false}, // this could be ok, since we will walk around them
-  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCharger       , false}, // this could be ok, since we will walk around the charger
-  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-  {NavMemoryMapTypes::EContentType::ObstacleProx          , false}, // this could be ok, since we will walk around
-  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-  {NavMemoryMapTypes::EContentType::Cliff                 , true },
-  {NavMemoryMapTypes::EContentType::InterestingEdge       , false}, // the goal itself is the closest one, so we can afford not to do this (which simplifies goal point)
-  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true}
+  {MemoryMapTypes::EContentType::Unknown               , false},
+  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+  {MemoryMapTypes::EContentType::ObstacleCube          , false}, // this could be ok, since we will walk around them
+  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleCharger       , false}, // this could be ok, since we will walk around the charger
+  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {MemoryMapTypes::EContentType::ObstacleProx          , false}, // this could be ok, since we will walk around
+  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+  {MemoryMapTypes::EContentType::Cliff                 , true },
+  {MemoryMapTypes::EContentType::InterestingEdge       , false}, // the goal itself is the closest one, so we can afford not to do this (which simplifies goal point)
+  {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
 };
-static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatInvalidateGoals),
+static_assert(MemoryMapTypes::IsSequentialArray(typesThatInvalidateGoals),
   "This array does not define all types once and only once.");
   
 // This is the configuration of memory map types that would invalidate vantage points because an obstacle would
 // block the point or another edge would present a problem
-constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateVantagePoints =
+constexpr MemoryMapTypes::FullContentArray typesThatInvalidateVantagePoints =
 {
-  {NavMemoryMapTypes::EContentType::Unknown               , false},
-  {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-  {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCube          , true},
-  {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-  {NavMemoryMapTypes::EContentType::ObstacleCharger       , true},
-  {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
-  {NavMemoryMapTypes::EContentType::ObstacleProx          , true},
-  {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
-  {NavMemoryMapTypes::EContentType::Cliff                 , true},
-  {NavMemoryMapTypes::EContentType::InterestingEdge       , true},
-  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true}
+  {MemoryMapTypes::EContentType::Unknown               , false},
+  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+  {MemoryMapTypes::EContentType::ObstacleCube          , true},
+  {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+  {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {MemoryMapTypes::EContentType::ObstacleProx          , true},
+  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+  {MemoryMapTypes::EContentType::Cliff                 , true},
+  {MemoryMapTypes::EContentType::InterestingEdge       , true},
+  {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
 };
-static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatInvalidateVantagePoints),
+static_assert(MemoryMapTypes::IsSequentialArray(typesThatInvalidateVantagePoints),
   "This array does not define all types once and only once.");
 
 // kMinUsefulRegionUnits: number of units in the memory map (eg: quads in a quad tree) that boundaries have to have
@@ -109,7 +109,7 @@ BehaviorVisitInterestingEdge::BorderRegionScore::BorderRegionScore(const BorderR
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const NavMemoryMapTypes::BorderSegment& BehaviorVisitInterestingEdge::BorderRegionScore::GetSegment() const
+const MemoryMapTypes::BorderSegment& BehaviorVisitInterestingEdge::BorderRegionScore::GetSegment() const
 {
   DEV_ASSERT(IsValid(), "BorderRegionScore.InvalidRegion"); // can't call if invalid!
   return borderRegionPtr->segments[idxClosestSegmentInRegion];
@@ -403,7 +403,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
   validGoals.clear();
 
   // ask the information analyzer about the regions it has detected (should have been this frame)
-  const INavMemoryMap::BorderRegionVector& interestingRegions = robot.GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
+  const INavMap::BorderRegionVector& interestingRegions = robot.GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
   
   // process them and see if we can pick one
   if ( !interestingRegions.empty() )
@@ -416,7 +416,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
     const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
   
     // iterate all regions
-    for ( const NavMemoryMapTypes::BorderRegion& region : interestingRegions )
+    for ( const MemoryMapTypes::BorderRegion& region : interestingRegions )
     {
       // if the region is too small, ignore it
       if ( FLT_LE(region.area_m2, kMinRegionArea_m2) ) {
@@ -432,7 +432,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
       // iterate all segments to calculate if this region is the best/closest valid one
       for( size_t idx=0; idx<region.segments.size(); ++idx )
       {
-        const NavMemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
+        const MemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
         
         // if the segment is too small, ignore it
         const float kMinSegmentLenSQ = 2*(memMapPrecision_mm*memMapPrecision_mm); // 2 because aaquads can yield hypotenuse (minSQ=c^2+c^2)
@@ -471,7 +471,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const Vec3f& goalPosition) const
 {
-  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   DEV_ASSERT(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
   
   const Vec3f fromRobot = robot.GetPose().GetWithRespectToRoot().GetTranslation();
@@ -482,7 +482,7 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const 
   // it has to be the one belonging to the goal itself. This allows setting that type to false, and proceed
   // to raycast towards the goal, rather than having to calculate the proper offset from the goal towards the
   // actual corner in the quad
-  static_assert( typesThatInvalidateGoals[Util::EnumToUnderlying(NavMemoryMapTypes::EContentType::InterestingEdge)].Value() == false,
+  static_assert( typesThatInvalidateGoals[Util::EnumToUnderlying(MemoryMapTypes::EContentType::InterestingEdge)].Value() == false,
     "toGoal is inside an InterestingEdge. This type needs to be false for current implementation");
   const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromRobot, toGoal, typesThatInvalidateGoals);
   
@@ -565,7 +565,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(const Robot& robot, con
         const float clearDistanceBehind  = _configParams.additionalClearanceBehind_mm  + robotBack;
         const Vec3f& toPoint   = vantagePointPos - (normalFromLookAtTowardsVantage * clearDistanceInFront);
         const Vec3f& fromPoint = vantagePointPos + (normalFromLookAtTowardsVantage * clearDistanceBehind );
-        const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+        const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
         assert(memoryMap); // otherwise we are not even runnable
         
         // the vantage point is valid if there's no collision with the invalid types (would block the view or the pose)
@@ -912,7 +912,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::RenderDiscardedRegion(const Robot& robot, const NavMemoryMapTypes::BorderRegion& region) const
+void BehaviorVisitInterestingEdge::RenderDiscardedRegion(const Robot& robot, const MemoryMapTypes::BorderRegion& region) const
 {
   #if ANKI_DEV_CHEATS
   {
@@ -920,7 +920,7 @@ void BehaviorVisitInterestingEdge::RenderDiscardedRegion(const Robot& robot, con
     {
       for( size_t idx=0; idx<region.segments.size(); ++idx )
       {
-        const NavMemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
+        const MemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
         robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
           candidateSegment.from, candidateSegment.to, Anki::NamedColors::RED, false, 35.0f);
       }
@@ -930,7 +930,7 @@ void BehaviorVisitInterestingEdge::RenderDiscardedRegion(const Robot& robot, con
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::RenderAcceptedRegion(const Robot& robot, const NavMemoryMapTypes::BorderRegion& region) const
+void BehaviorVisitInterestingEdge::RenderAcceptedRegion(const Robot& robot, const MemoryMapTypes::BorderRegion& region) const
 {
   #if ANKI_DEV_CHEATS
   {
@@ -938,7 +938,7 @@ void BehaviorVisitInterestingEdge::RenderAcceptedRegion(const Robot& robot, cons
     {
       for( size_t idx=0; idx<region.segments.size(); ++idx )
       {
-        const NavMemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
+        const MemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
         robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
           candidateSegment.from, candidateSegment.to, Anki::NamedColors::YELLOW, false, 35.0f);
       }
@@ -954,7 +954,7 @@ void BehaviorVisitInterestingEdge::RenderChosenGoal(const Robot& robot, const Bo
   {
     if ( kVieDrawDebugInfo && bestGoal.IsValid() )
     {
-      const NavMemoryMapTypes::BorderSegment& b = bestGoal.GetSegment();
+      const MemoryMapTypes::BorderSegment& b = bestGoal.GetSegment();
       robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
         b.from, b.to, Anki::NamedColors::CYAN, false, 38.0f);
       Vec3f centerLine = (b.from + b.to)*0.5f;

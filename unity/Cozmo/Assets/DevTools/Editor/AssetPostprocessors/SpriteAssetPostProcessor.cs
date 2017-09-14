@@ -187,7 +187,9 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
 
         TextureImporter textureImporter = (TextureImporter)assetImporter;
         textureImporter.SetTextureSettings(uhdTis);
+
         textureImporter.spritePixelsPerUnit = GetPixelsPerUnit();
+        textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
 
         // TODO: Handle downsizing borders for sliced sprites
       }

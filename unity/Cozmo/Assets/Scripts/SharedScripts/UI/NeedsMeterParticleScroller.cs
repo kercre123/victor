@@ -6,9 +6,6 @@ namespace Cozmo {
       [System.Serializable]
       public class ScrollData {
         public float ScrollSpeed_perSec = 0.005f;
-
-        [Range(0f, 1f)]
-        public float SpeedJitterMagnitude = 1f;
       }
 
       [SerializeField]
@@ -100,8 +97,7 @@ namespace Cozmo {
         // Move UV value
         float movement = (deltaTime * data.ScrollSpeed_perSec * _CutoffValue);
         // TODO: Use AnimationCurves to create a more noodle-y effect
-        float randomOffset = (movement * Random.Range(-data.SpeedJitterMagnitude, data.SpeedJitterMagnitude));
-        currentAnimUV += movement + randomOffset;
+        currentAnimUV += movement;
 
         // Wrap UVs from 0-1
         if (currentAnimUV > 1) {

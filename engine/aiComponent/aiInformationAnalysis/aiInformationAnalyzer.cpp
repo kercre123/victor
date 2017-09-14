@@ -16,7 +16,7 @@
 #include "engine/aiComponent/aiInformationAnalysis/informationAnalysisProcesses/aiInfoAnalysisProcCalculateInterestingRegions.h"
 
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/navMemoryMap/iNavMemoryMap.h"
+#include "engine/navMap/iNavMap.h"
 #include "engine/robot.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"

@@ -61,10 +61,6 @@ RobotManager::RobotManager(const CozmoContext* context)
 {
   using namespace ExternalInterface;
   
-  auto broadcastAvailableAnimationsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
-  {
-    this->BroadcastAvailableAnimations();
-  };
   auto broadcastAvailableAnimationGroupsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
   {
     this->BroadcastAvailableAnimationGroups();
@@ -72,12 +68,10 @@ RobotManager::RobotManager(const CozmoContext* context)
     
   IExternalInterface* externalInterface = context->GetExternalInterface();
 
-  MessageGameToEngineTag tagAnims = MessageGameToEngineTag::RequestAvailableAnimations;
   MessageGameToEngineTag tagGroups = MessageGameToEngineTag::RequestAvailableAnimationGroups;
     
   if (externalInterface != nullptr){
     _signalHandles.push_back( externalInterface->Subscribe(tagGroups, broadcastAvailableAnimationGroupsCallback) );
-    _signalHandles.push_back( externalInterface->Subscribe(tagAnims, broadcastAvailableAnimationsCallback) );
   }
 }
 
@@ -99,8 +93,6 @@ void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventCo
   Anki::Util::Time::PrintTimedSteps();
   Anki::Util::Time::ClearSteps();
 
-  BroadcastAvailableAnimations();
-  
   LoadDasBlacklistedAnimationTriggers(dasEventConfig);
   
   auto endTime = std::chrono::steady_clock::now();
@@ -313,30 +305,11 @@ void RobotManager::UpdateRobotConnection()
 void RobotManager::ReadAnimationDir()
 {
   _context->GetDataLoader()->LoadAnimations();
-  BroadcastAvailableAnimations();
 }
 
 void RobotManager::ReadFaceAnimationDir()
 {
   _context->GetDataLoader()->LoadFaceAnimations();
-}
-
-void RobotManager::BroadcastAvailableAnimations()
-{
-  Anki::Util::Time::ScopedStep scopeTimer("BroadcastAvailableAnimations");
-  // Tell UI about available animations
-  if (nullptr != _context->GetExternalInterface()) {
-    std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
-    for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-      #ifndef COZMO_V2
-      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(*i);
-      #endif
-    }
-
-    _context->GetExternalInterface()->
-      BroadcastToGame<ExternalInterface::EndOfMessage>(ExternalInterface::MessageType::AnimationAvailable);
-    PRINT_NAMED_DEBUG("RobotManager.BroadcastAvailableAnimations", "Supposedly sent EndOfMessage");
-  }
 }
 
 void RobotManager::BroadcastAvailableAnimationGroups()

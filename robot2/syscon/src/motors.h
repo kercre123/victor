@@ -7,10 +7,11 @@
 #include "messages.h"
 
 namespace Motors {
-  void receive(Anki::Cozmo::Spine::HeadToBody *payload);
-  void transmit(Anki::Cozmo::Spine::BodyToHead *payload);
+  void receive(HeadToBody *payload);
+  void transmit(BodyToHead *payload);
 
   void init();
+  void stop();
   void tick();
 }
 

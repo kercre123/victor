@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.util.Log;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import com.unity3d.player.UnityPlayer;
 
+import com.anki.daslib.DAS;
 import com.anki.hockeyappandroid.NativeCrashManager;
 import com.anki.util.AnkitivityDispatcher;
 import com.anki.util.PermissionUtil;
@@ -232,4 +234,48 @@ public class CozmoActivity extends HackUnityPlayerActivity implements ActivityCo
 
   private static native void installBreakpad(String path);
 
+  private ResolveInfo getPackageForUri( Intent i, String string ) {
+
+      final android.content.pm.PackageManager packageManager = this.getPackageManager();
+      java.util.List<android.content.pm.ResolveInfo> pkgAppsList = packageManager.queryIntentActivities( i, android.content.pm.PackageManager.GET_RESOLVED_FILTER );
+      int riid = -1;
+      int index=0;
+      for( android.content.pm.ResolveInfo resolveInfo : pkgAppsList ) {
+          if( riid == -1 || resolveInfo.activityInfo.packageName.equals( string ) ) {
+              riid = index;
+          }
+          ++index;
+      }
+
+      if( riid != -1 ) {
+          return pkgAppsList.get(riid);
+      }
+
+      return null;
+  }
+
+  public void exportCodelabFile(final String projectNameString, final String projectContentString) {
+    DAS.Info("Codelab.Android.exportCodelabFile", "received send email request from engine");
+
+    File file = CozmoCodelabIO.generateFileWithNameAndText(projectNameString, projectContentString);
+
+    if( file != null && file.exists() && file.canRead()) {
+
+        Intent i = new Intent(android.content.Intent.ACTION_SEND);
+        i.setType("text/plain");
+        i.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+
+        // NOTE: "com.google.android.apps.docs" is the package ID for google drive, google docs has a different ID
+        ResolveInfo pkg = getPackageForUri(i, "com.google.android.apps.docs");
+
+        if( pkg != null && file.exists() && file.canRead() ) {
+            i.setComponent(new android.content.ComponentName(pkg.activityInfo.packageName, pkg.activityInfo.name));
+            startActivity(Intent.createChooser(i, ""));
+        }
+    }
+    else
+    {
+      DAS.Error("Codelab.Android.exportCodelabFile.FileCreationError", "Could not properly generate a file with the specified name and text from unity");
+    }
+  }
 }

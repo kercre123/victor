@@ -33,9 +33,10 @@ if (NOT TARGET kazmath)
   add_subdirectory("source/3rd/kazmath")
 endif()
 
-if (NOT TARGET webp)
-  add_subdirectory("source/3rd/libwebp")
-endif()
+# Disable webp until we are going to use it
+# if (NOT TARGET webp)
+#  add_subdirectory("source/3rd/libwebp")
+# endif()
 
 if (NOT TARGET audio_util)
   add_subdirectory("source/anki/audioUtil")

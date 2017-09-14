@@ -44,6 +44,7 @@
 #include "engine/actions/trackPetFaceAction.h"
 #include "engine/actions/visuallyVerifyActions.h"
 
+#include "engine/components/animationComponent.h"
 #include "engine/components/visionComponent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -1545,6 +1546,8 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
     {
       robot->SyncTime();
       PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncTime", "");
+      
+      robot->GetAnimationComponent().Init();
     }
   }
 }

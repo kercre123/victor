@@ -396,6 +396,47 @@ message ShutdownRobot
   uint_32 reserved[8]
 }
 
+// ========== V2 Animation process messages ===========
+
+// TODO: Make animation files referencable by integer tag so we don't have to send a string.
+message RequestAvailableAnimations
+{
+}
+
+message PlayAnim
+{
+  uint_32 animID,
+  uint_32 numLoops = 1,
+}
+
+message LockAnimTracks
+{
+  uint_8 whichTracks    // See AnimTrackFlags
+}
+
+message RecordHeading
+{
+}
+
+message TurnToRecordedHeading
+{
+  int_16 offset_deg,        // Offset from recorded angle
+  int_16 speed_degPerSec,
+  int_16 accel_degPerSec2,
+  int_16 decel_degPerSec2,
+  uint_16 tolerance_deg,
+  uint_16 numHalfRevs,
+  bool useShortestDir,
+}
+
+message SetBackpackLights
+{
+  LightState lights[3],
+  uint_8 layer = 0      // 0 is BPL_USER
+}
+
+// ====================================================
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -517,19 +558,19 @@ union EngineToRobot
   GenerateTestTone              generateTestTone            = 0x65,
   EnableColorImages             enableColorImages           = 0x66,
 
-  // 0x80 to 0xAF: To WiFi
+  // 0x80 to 0xAF: To WiFi in V1. To Anim Process in V2
   RequestCrashReports           requestCrashReports         = 0x80,
   NVStorage::NVCommand          commandNV                   = 0x81,
-  //          FREE SLOT!!!                                  = 0x82,
-  //          FREE SLOT!!!                                  = 0x83,
-  //          FREE SLOT!!!                                  = 0x84,
-  //          FREE SLOT!!!                                  = 0x85,
+  PlayAnim                      playAnim                    = 0x82,   // V2
+  LockAnimTracks                lockAnimTracks              = 0x83,   // V2
+  RecordHeading                 recordHeading               = 0x84,   // V2
+  TurnToRecordedHeading         turnToRecordedHeading       = 0x85,   // V2
   BLE::ConnectionState          bleConnectionState          = 0x86,
   BLE::DataReceived             bleDataReceived             = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
-  //          FREE SLOT!!!                                  = 0x8A,
-  //          FREE SLOT!!!                                  = 0x8B,
-  //          FREE SLOT!!!                                  = 0x8C,
+  SetBackpackLights             setBackpackLights           = 0x8A,   // V2
+  //       FREE SLOT                                        = 0x8B,
+  RequestAvailableAnimations    requestAvailableAnimations  = 0x8C,   // V2
   AbortAnimation                abortAnimation              = 0x8D,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x8E,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x8F,

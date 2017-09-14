@@ -52,6 +52,13 @@ namespace {
   // once we start moving, we have to stop for this long to send StoppedMoving message
   const double STOPPED_MOVING_TIME_SEC = 0.5f;
   
+  
+  
+  constexpr auto NUM_CUBE_LEDS = EnumToUnderlyingType(ActiveObjectConstants::NUM_CUBE_LEDS);
+  constexpr auto MAX_NUM_CUBES = EnumToUnderlyingType(ActiveObjectConstants::MAX_NUM_CUBES);
+  constexpr auto NumAxes = EnumToUnderlyingType(UpAxis::NumAxes);
+  
+  
   webots::Receiver* receiver_;
   webots::Emitter*  emitter_;
   webots::Emitter*  discoveryEmitter_;
@@ -91,8 +98,8 @@ namespace {
   
   // To keep track of previous (and next) UpAxis
   //  sent to the robot (via UpAxisChanged msg)
-  UpAxis prevUpAxis_ = UnknownAxis;
-  UpAxis nextUpAxis_ = UnknownAxis;
+  UpAxis prevUpAxis_ = UpAxis::UnknownAxis;
+  UpAxis nextUpAxis_ = UpAxis::UnknownAxis;
   
   bool wasMoving_;
   double wasLastMovingTime_sec_;
@@ -128,9 +135,9 @@ namespace {
   };
   
   // Mapping from block ID to ObjectType
-  const ObjectType blockIDToObjectType_[MAX_NUM_CUBES] = { Block_LIGHTCUBE1, Block_LIGHTCUBE2, Block_LIGHTCUBE3, Charger_Basic };
+  const ObjectType blockIDToObjectType_[MAX_NUM_CUBES] = { ObjectType::Block_LIGHTCUBE1, ObjectType::Block_LIGHTCUBE2, ObjectType::Block_LIGHTCUBE3, ObjectType::Charger_Basic };
   u32 factoryID_ = 0;
-  ObjectType objectType_ = UnknownObject;
+  ObjectType objectType_ = ObjectType::UnknownObject;
   
   // Flash ID params
   double flashIDStartTime_ = 0;
@@ -147,11 +154,12 @@ namespace {
 // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
 // to make it suitable for webots LED 24bit RGB color
 inline void SetLED_helper(u32 index, u32 rgbaColor) {
-  led_[index]->set(rgbaColor);
+  
+  led_[index]->set(rgbaColor >> 8); // rgba -> 0rgb
 
-  double red = (rgbaColor & 0x00ff0000) >> 16;  // get first byte
-  double green = (rgbaColor & 0x0000ff00) >> 8;  // second byte
-  double blue = (rgbaColor & 0x000000ff);  // third byte
+  double red = (rgbaColor & (u32)LEDColor::LED_RED) >> (u32)LEDColorShift::LED_RED_SHIFT;
+  double green = (rgbaColor & (u32)LEDColor::LED_GREEN) >> (u32)LEDColorShift::LED_GRN_SHIFT;
+  double blue = (rgbaColor & (u32)LEDColor::LED_BLUE) >> (u32)LEDColorShift::LED_BLU_SHIFT;
   double betterColor[3] = {red, green, blue};
   if (ledColorField_) {
     ledColorField_->setMFVec3f(index, betterColor);
@@ -186,12 +194,7 @@ void Process_setCubeLights(const CubeLights& msg)
   
   // Set lights immediately
   for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {
-    // The color in the CLAD structure LightState is 16 bits structed as the following in binary:
-    // irrrrrgggggbbbbb, that's 1 bit for infrared, 5 bits for red, green, blue, respectively.
-    const u32 newColor = ((msg.lights[i].onColor & LED_ENC_RED) << (16 - 10 + 3)) |
-                         ((msg.lights[i].onColor & LED_ENC_GRN) << ( 8 -  5 + 3)) |
-                         ((msg.lights[i].onColor & LED_ENC_BLU) << ( 0 -  0 + 3));
-    SetLED_helper(i, newColor);
+    SetLED_helper(i, msg.lights[i].onColor);
   }
   
 }
@@ -269,7 +272,7 @@ Result Init()
         return RESULT_FAIL;
       }
     } else if (name.compare("CozmoCharger") == 0) {
-      objectType_ = Charger_Basic;
+      objectType_ = ObjectType::Charger_Basic;
       if (blockID_ != 3) {
         printf("Expecting charger to have ID 3\n");
         return RESULT_FAIL;
@@ -321,7 +324,7 @@ Result Init()
   // Get radio emitter for discovery
   discoveryEmitter_ = active_object_controller.getEmitter("discoveryEmitter");
   assert(discoveryEmitter_ != nullptr);
-  discoveryEmitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
+  discoveryEmitter_->setChannel(EnumToUnderlyingType(ActiveObjectConstants::OBJECT_DISCOVERY_CHANNEL));
   
   // Get accelerometer
   accel_ = active_object_controller.getAccelerometer("accel");
@@ -357,7 +360,7 @@ UpAxis GetCurrentUpAxis()
   const double* accelVals = accel_->getValues();
 
   // Determine the axis with the largest absolute acceleration
-  UpAxis retVal = UnknownAxis;
+  UpAxis retVal = UpAxis::UnknownAxis;
   double maxAbsAccel = -1;
   double absAccel[3];
 
@@ -377,15 +380,15 @@ UpAxis GetCurrentUpAxis()
   switch(whichAxis)
   {
     case X:
-      retVal = (accelVals[X] < 0 ? XNegative : XPositive);
+      retVal = (accelVals[X] < 0 ? UpAxis::XNegative : UpAxis::XPositive);
       break;
       
     case Y:
-      retVal = (accelVals[Y] < 0 ? YNegative : YPositive);
+      retVal = (accelVals[Y] < 0 ? UpAxis::YNegative : UpAxis::YPositive);
       break;
 
     case Z:
-      retVal = (accelVals[Z] < 0 ? ZNegative : ZPositive);
+      retVal = (accelVals[Z] < 0 ? UpAxis::ZNegative : UpAxis::ZPositive);
       break;
       
     default:
@@ -438,7 +441,7 @@ void SetLED(WhichCubeLEDs whichLEDs, u32 color)
   u8 shiftedLEDs = static_cast<u8>(whichLEDs);
   for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
     if(shiftedLEDs & FIRST_BIT) {
-      SetLED_helper(ledIndexLUT[prevUpAxis_][i], color);
+      SetLED_helper(ledIndexLUT[EnumToUnderlyingType(prevUpAxis_)][i], color);
     }
     shiftedLEDs = shiftedLEDs >> 1;
   }
@@ -446,7 +449,7 @@ void SetLED(WhichCubeLEDs whichLEDs, u32 color)
 
 inline void SetLED(u32 ledIndex, u32 color)
 {
-  SetLED_helper(ledIndexLUT[prevUpAxis_][ledIndex], color);
+  SetLED_helper(ledIndexLUT[EnumToUnderlyingType(prevUpAxis_)][ledIndex], color);
 }
 
 
@@ -618,7 +621,7 @@ Result Update() {
           const bool isMoving = !NEAR(accelMagSq, 9.81*9.81, 1.0);
           
           if(isMoving) {
-            PRINT_NAMED_INFO("ActiveBlock", "Block %d appears to be moving (UpAxis=%d).", blockID_, prevUpAxis_);
+            PRINT_NAMED_INFO("ActiveBlock", "Block %d appears to be moving (UpAxis=%d).", blockID_, EnumToUnderlyingType(prevUpAxis_));
             
             // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
             BlockMessages::LightCubeMessage msg;
@@ -635,7 +638,7 @@ Result Update() {
             
           } else if(wasMoving_ && currTime_sec - wasLastMovingTime_sec_ > STOPPED_MOVING_TIME_SEC ) {
             
-            PRINT_NAMED_INFO("ActiveBlock", "Block %d stopped moving (UpAxis=%d).", blockID_, prevUpAxis_);
+            PRINT_NAMED_INFO("ActiveBlock", "Block %d stopped moving (UpAxis=%d).", blockID_, EnumToUnderlyingType(prevUpAxis_));
             
             // Send "UpAxisChanged" message now if necessary, so that it's
             //  sent before the stopped message (to mirror what the actual

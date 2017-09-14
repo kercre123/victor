@@ -80,7 +80,7 @@ namespace Anki {
 
       // Resets state machine and configures VisionSystem to track
       // appropriate block
-      void StopDocking(DockingResult result = DOCK_INTERRUPTED);
+      void StopDocking(DockingResult result = DockingResult::DOCK_INTERRUPTED);
 
       // The robot will follow a docking path generated from an error signal to a marker
       // that it expects to be receiving from cozmo-engine immediately after this is called.

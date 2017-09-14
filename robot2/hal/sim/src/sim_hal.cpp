@@ -41,6 +41,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 #include "messages.h"
 #include "wheelController.h"
 
@@ -88,6 +89,18 @@ namespace Anki {
 
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
 
+      constexpr auto MOTOR_LEFT_WHEEL = EnumToUnderlyingType(MotorID::MOTOR_LEFT_WHEEL);
+      constexpr auto MOTOR_RIGHT_WHEEL = EnumToUnderlyingType(MotorID::MOTOR_RIGHT_WHEEL);
+      constexpr auto MOTOR_LIFT = EnumToUnderlyingType(MotorID::MOTOR_LIFT);
+      constexpr auto MOTOR_HEAD = EnumToUnderlyingType(MotorID::MOTOR_HEAD);
+      constexpr auto MOTOR_COUNT = EnumToUnderlyingType(MotorID::MOTOR_COUNT);
+      
+      constexpr auto MAX_NUM_ACTIVE_OBJECTS = EnumToUnderlyingType(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
+      
+      constexpr auto NUM_BACKPACK_LEDS = EnumToUnderlyingType(LEDId::NUM_BACKPACK_LEDS);
+      constexpr auto NUM_CUBE_LEDS = EnumToUnderlyingType(ActiveObjectConstants::NUM_CUBE_LEDS);
+      
+      
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
 
       bool isInitialized = false;
@@ -135,6 +148,9 @@ namespace Anki {
       // Emitter / receiver for block communication
       webots::Receiver *objectDiscoveryReceiver_;
       webots::Emitter *blockCommsEmitter_;
+
+      // Upper Touch Sensor (for petting)
+      webots::Receiver *backpackTouchSensorReceiver_;
 
       struct ActiveObjectSlotInfo {
         u32 assignedFactoryID;
@@ -392,10 +408,13 @@ namespace Anki {
 
       // Block radio
       objectDiscoveryReceiver_ = webotRobot_.getReceiver("discoveryReceiver");
-      objectDiscoveryReceiver_->setChannel(OBJECT_DISCOVERY_CHANNEL);
+      objectDiscoveryReceiver_->setChannel( EnumToUnderlyingType(ActiveObjectConstants::OBJECT_DISCOVERY_CHANNEL));
       objectDiscoveryReceiver_->enable(TIME_STEP);
       
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
+
+      backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
+      backpackTouchSensorReceiver_->enable(TIME_STEP);
       
       char receiverName[32];
       for (int i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
@@ -425,11 +444,9 @@ namespace Anki {
       }
 
       // Lights
-      leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
-      leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
-      leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
-      leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
-      leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
+      leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("backpackLED1");
+      leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
+      leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("backpackLED3");
 
       isInitialized = true;
       return RESULT_OK;
@@ -533,21 +550,21 @@ namespace Anki {
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
       switch(motor) {
-        case MOTOR_LEFT_WHEEL:
+        case MotorID::MOTOR_LEFT_WHEEL:
           leftWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
-        case MOTOR_RIGHT_WHEEL:
+        case MotorID::MOTOR_RIGHT_WHEEL:
           rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
-        case MOTOR_LIFT:
+        case MotorID::MOTOR_LIFT:
           liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
           break;
-        case MOTOR_HEAD:
+        case MotorID::MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
           headMotor_->setVelocity(HeadPowerToAngSpeed(power));
           break;
         default:
-          PRINT_NAMED_ERROR("simHAL.MotorSetPower.UndefinedType", "%d", motor);
+          PRINT_NAMED_ERROR("simHAL.MotorSetPower.UndefinedType", "%d", EnumToUnderlyingType(motor));
           return;
       }
     }
@@ -555,12 +572,12 @@ namespace Anki {
     // Reset the internal position of the specified motor to 0
     void HAL::MotorResetPosition(MotorID motor)
     {
-      if (motor >= MOTOR_COUNT) {
-        PRINT_NAMED_ERROR("simHAL.MotorResetPosition.UndefinedType", "%d", motor);
+      if (motor >= MotorID::MOTOR_COUNT) {
+        PRINT_NAMED_ERROR("simHAL.MotorResetPosition.UndefinedType", "%d", EnumToUnderlyingType(motor));
         return;
       }
 
-      motorPositions_[motor] = 0;
+      motorPositions_[EnumToUnderlyingType(motor)] = 0;
       //motorPrevPositions_[motor] = 0;
     }
 
@@ -569,17 +586,17 @@ namespace Anki {
     f32 HAL::MotorGetSpeed(MotorID motor)
     {
       switch(motor) {
-        case MOTOR_LEFT_WHEEL:
-        case MOTOR_RIGHT_WHEEL:
+        case MotorID::MOTOR_LEFT_WHEEL:
+        case MotorID::MOTOR_RIGHT_WHEEL:
           // if usingTreads, fall through to just returning motorSpeeds_ since
           // it is already stored in mm/s
 
-        case MOTOR_LIFT:
-        case MOTOR_HEAD:
-          return motorSpeeds_[motor];
+        case MotorID::MOTOR_LIFT:
+        case MotorID::MOTOR_HEAD:
+          return motorSpeeds_[EnumToUnderlyingType(motor)];
 
         default:
-          PRINT_NAMED_ERROR("simHAL.MotorGetSpeed.UndefinedType", "%d", motor);
+          PRINT_NAMED_ERROR("simHAL.MotorGetSpeed.UndefinedType", "%d", EnumToUnderlyingType(motor));
           break;
       }
       return 0;
@@ -590,17 +607,17 @@ namespace Anki {
     f32 HAL::MotorGetPosition(MotorID motor)
     {
       switch(motor) {
-        case MOTOR_RIGHT_WHEEL:
-        case MOTOR_LEFT_WHEEL:
+        case MotorID::MOTOR_RIGHT_WHEEL:
+        case MotorID::MOTOR_LEFT_WHEEL:
           // if usingTreads, fall through to just returning motorSpeeds_ since
           // it is already stored in mm
 
-        case MOTOR_LIFT:
-        case MOTOR_HEAD:
-          return motorPositions_[motor];
+        case MotorID::MOTOR_LIFT:
+        case MotorID::MOTOR_HEAD:
+          return motorPositions_[EnumToUnderlyingType(motor)];
 
         default:
-          PRINT_NAMED_ERROR("simHAL.MotorGetPosition.UndefinedType", "%d", motor);
+          PRINT_NAMED_ERROR("simHAL.MotorGetPosition.UndefinedType", "%d", EnumToUnderlyingType(motor));
           return 0;
       }
 
@@ -631,8 +648,8 @@ namespace Anki {
 
     bool IsSameTypeActiveObjectAssigned(ObjectType object_type)
     {
-      DEV_ASSERT((object_type != InvalidObject) &&
-                 (object_type != UnknownObject),
+      DEV_ASSERT((object_type != ObjectType::InvalidObject) &&
+                 (object_type != ObjectType::UnknownObject),
                  "sim_hal.IsSameTypeActiveObjectAssigned.InvalidType");
       
       for (u32 i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
@@ -753,13 +770,10 @@ namespace Anki {
       //timeStamp_ = t;
     };
 
-    void HAL::SetLED(LEDId led_id, u16 color) {
+    void HAL::SetLED(LEDId led_id, u32 color) {
       #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
-        leds_[led_id]->set( ((color & LED_ENC_IR) ? LED_IR : 0) |
-                           (((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT) << (16 + 3)) |
-                           (((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT) << ( 8 + 3)) |
-                           (((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT) << ( 0 + 3)));
+        leds_[led_id]->set( color >> 8 ); // RGBA -> 0RGB
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }
@@ -810,6 +824,35 @@ namespace Anki {
       return proxData;
     }
 
+    u16 HAL::GetButtonState(const ButtonID button_id)
+    {
+      switch(button_id) {
+        case BUTTON_CAPACITIVE:
+        {
+          double signalStrength = 0.0;
+
+          while(backpackTouchSensorReceiver_->getQueueLength() > 0) {
+            signalStrength = backpackTouchSensorReceiver_->getSignalStrength();
+            backpackTouchSensorReceiver_->nextPacket();
+          }
+
+          // XXX rescale the signal strength to fit within a u16 (to match real sensor)
+          u16 ss = Util::numeric_cast_clamped<u16>(signalStrength);
+          return ss;
+        }
+
+        // no need to simulate these button press types
+        case BUTTON_POWER: { return 0; }
+        default: 
+        {
+          AnkiError( 1252, "sim_hal.GetButtonState.UnexpectedButtonType", 658, "Button ID=%d does not have a sensible return value", 1, button_id);
+          return 0; 
+        }
+      }
+
+      return 0;
+    }
+
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {
       if (cliff_id == HAL::CLIFF_COUNT) {
@@ -851,7 +894,7 @@ namespace Anki {
     void DisableIRQ() {}
     }
 
-    Result HAL::SetBlockLight(const u32 activeID, const u16* colors)
+    Result HAL::SetBlockLight(const u32 activeID, const u32* colors)
     {
       BlockMessages::LightCubeMessage m;
       m.tag = BlockMessages::LightCubeMessage::Tag_setCubeLights;
@@ -1020,7 +1063,6 @@ namespace Anki {
         
         objectDiscoveryReceiver_->nextPacket();
       }
-      
       
       // Pass along block-moved messages to basestation
       // TODO: Make block comms receiver checking into a HAL function at some point

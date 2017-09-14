@@ -6,6 +6,7 @@
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/actionResults.clad"
 #include "clad/types/animationEvents.clad"
@@ -907,25 +908,6 @@ message CacheNotificationToSchedule {
 message NotificationTextKeys {
   string textKeys[uint_16],
 }
-
-///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  META  /////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-// For messages where an end of message might make sense to denote the full list of messages has
-// been broadcasted. Example: robot might broadcast all available animations, however, there would
-// be no way to tell if all the AnimationAvailable messages have been received without an `end of
-// message` message.
-// Can be extended for other message types later
-
-enum uint_8 MessageType {
-  AnimationAvailable
-}
-
-message EndOfMessage {
-  MessageType messageType
-}
-
 // explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 // DO NOT CHANGE ANY EXPLICITELY DECLARED VALUES - they must be compatible across all versions so we can reliably
