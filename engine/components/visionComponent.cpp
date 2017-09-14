@@ -20,6 +20,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
@@ -1129,7 +1130,7 @@ namespace Cozmo {
   {
     for(auto & edgeFrame : procResult.overheadEdges)
     {
-      _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
+      _robot.GetMapComponent().ProcessVisionOverheadEdges(edgeFrame);
     }
     
     return RESULT_OK;

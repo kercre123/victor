@@ -13,7 +13,7 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/navMap/iNavMap.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/robot.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -55,7 +55,7 @@ void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyz
   ANKI_CPU_PROFILE("InfoAnalysisProcCalculateInterestingRegions");
   
   // calculate regions
-  INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
   INavMap::BorderRegionVector visionEdges, proxEdges;
   
   analyzer._interestingRegions.clear();

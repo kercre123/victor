@@ -93,13 +93,13 @@ class RobotToEngineImplMessaging;
 class TextToSpeechComponent;
 class PublicStateBroadcaster;
 class VisionComponent;
-struct RobotState;
 class PathComponent;
 class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
 class TouchSensorComponent;
+class MapComponent;
 
 namespace Audio {
 class RobotAudioClient;
@@ -172,6 +172,9 @@ public:
 
   inline VisionComponent&       GetVisionComponent()       { assert(_visionComponent); return *_visionComponent; }
   inline const VisionComponent& GetVisionComponent() const { assert(_visionComponent); return *_visionComponent; }
+  
+  inline MapComponent&       GetMapComponent()       {assert(_mapComponent); return *_mapComponent;}
+  inline const MapComponent& GetMapComponent() const {assert(_mapComponent); return *_mapComponent;}
   
   inline BlockTapFilterComponent& GetBlockTapFilter() {
     assert(_tapFilterComponent);
@@ -785,6 +788,7 @@ protected:
   std::unique_ptr<ActionList>             _actionList;
   std::unique_ptr<MovementComponent>      _movementComponent;
   std::unique_ptr<VisionComponent>        _visionComponent;
+  std::unique_ptr<MapComponent>           _mapComponent;  
   std::unique_ptr<NVStorageComponent>     _nvStorageComponent;
   std::unique_ptr<AIComponent>            _aiComponent;
   std::unique_ptr<TextToSpeechComponent>  _textToSpeechComponent;

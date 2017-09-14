@@ -10,7 +10,7 @@
  **/
 #include "memoryMapToPlanner.h"
 
-#include "engine/blockWorld/blockWorld.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h" // only for debug render
 #include "engine/viz/vizManager.h" // only for debug render
 #include "engine/robot.h"
@@ -218,7 +218,7 @@ void TestNavMemoryMapToPlanner(Robot& robot)
   // kMinUsefulRegionUnits: number of units in the memory map (eg: quads in a quad tree) that boundaries have to have
   // in order for the region to be considered useful
   const uint32_t kMinUsefulRegionUnits = 4;
-  const float memMapPrecision_mm = robot.GetBlockWorld().GetNavMemoryMap()->GetContentPrecisionMM();
+  const float memMapPrecision_mm = robot.GetMapComponent().GetCurrentMemoryMap()->GetContentPrecisionMM();
   const float memMapPrecision_m  = MM_TO_M(memMapPrecision_mm);
   const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
 
@@ -259,7 +259,7 @@ void TestNavMemoryMapToPlanner(Robot& robot)
   static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithNotInterestingEdges),
     "This array does not define all types once and only once.");
 
-  INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
 
   // calculate regions
   // rsam to Brad: this is what doesn't support N:M calculations, only 1:N

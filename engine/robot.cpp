@@ -55,6 +55,7 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -181,6 +182,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
   , _visionComponent( new VisionComponent(*this, _context))
+  , _mapComponent(new MapComponent(this))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
   , _aiComponent(new AIComponent(*this))
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
@@ -699,6 +701,7 @@ void Robot::Delocalize(bool isCarryingObject)
         PRINT_NAMED_WARNING("Robot.Delocalize.UpdateObjectOriginFailed",
                             "Object %d", objectID.GetValue());
       }
+      
     }
   }
 
@@ -1339,7 +1342,7 @@ Result Robot::Update()
   ///////// MemoryMap ///////////
       
   // update the memory map based on the current's robot pose
-  _blockWorld->UpdateRobotPoseInMemoryMap();
+  _mapComponent->UpdateRobotPose();
   
   // Check if we have driven off the charger platform - this has to happen before the behaviors which might
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
@@ -1500,7 +1503,7 @@ Result Robot::Update()
   ConnectToRequestedObjects();
   
   // Send nav memory map data
-  _blockWorld->BroadcastNavMemoryMap();
+  _mapComponent->BroadcastMap();
       
   /////////// Update visualization ////////////
       
@@ -1508,7 +1511,7 @@ Result Robot::Update()
   _blockWorld->DrawAllObjects();
       
   // Nav memory map
-  _blockWorld->DrawNavMemoryMap();
+  _mapComponent->DrawMap();
       
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();
@@ -1969,6 +1972,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
       // Now we need to go through all objects and faces whose poses have been adjusted
       // by this origin switch and notify the outside world of the change.
       _blockWorld->UpdateObjectOrigins(origOriginID, newOriginID);
+      _mapComponent->UpdateMapOrigins(origOriginID, newOriginID);
       _faceWorld->UpdateFaceOrigins(origOriginID, newOriginID); 
       
       // after updating all block world objects, flatten out origins to remove grandparents
