@@ -28,6 +28,7 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <iomanip>
+#include <coretech/common/include/anki/common/basestation/jsonTools.h>
 
 #define DEBUG_MOTION_DETECTION 1
 
@@ -69,7 +70,7 @@ namespace {
 # undef CONSOLE_GROUP_NAME
 }
 
-
+// TODO need documentation here
 class MotionDetector::ImageRegionSelector
 {
 public:
@@ -200,6 +201,7 @@ MotionDetector::MotionDetector(const Vision::Camera &camera, VizManager *vizMana
   _regionSelector(nullptr) //need image size information before we can build this
 , _camera(camera)
 , _vizManager(vizManager)
+, _config(config)
 {
   DEV_ASSERT(kMotionDetection_MinBrightness > 0, "MotionDetector.Constructor.MinBrightnessIsZero");
 
@@ -347,11 +349,28 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
 
   // TODO need to make these proper parameters
   if (_regionSelector == nullptr) {
-    const float kHorizontalSize = 0.3;
-    const float kVerticalSize = 0.3;
-    const float kIncreaseFactor = 0.01;
-    const float kDecreaseFactor = 1.0;
-    const float kMaxValue = 10.0;
+
+    // Helper macro to try to get the specified field and store it in the given variable
+    // and return RESULT_FAIL if that doesn't work
+#   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
+    do { \
+    if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
+      PRINT_NAMED_ERROR("MotionDetection.DetectHelper.MissingJsonParameter", "%s", __fieldName__); \
+      return RESULT_FAIL; \
+    }} while(0)
+
+    const Json::Value& detectionConfig = _config["MotionDetector"];
+    float kHorizontalSize;
+    float kVerticalSize;
+    float kIncreaseFactor;
+    float kDecreaseFactor;
+    float kMaxValue;
+
+    GET_JSON_PARAMETER(detectionConfig, "HorizontalSize", kHorizontalSize);
+    GET_JSON_PARAMETER(detectionConfig, "VerticalSize", kVerticalSize);
+    GET_JSON_PARAMETER(detectionConfig, "IncreaseFactor", kIncreaseFactor);
+    GET_JSON_PARAMETER(detectionConfig, "DecreaseFactor", kDecreaseFactor);
+    GET_JSON_PARAMETER(detectionConfig, "MaxValue", kMaxValue);
 
     _regionSelector.reset( new ImageRegionSelector(image.GetNumCols(), image.GetNumRows(),
                                                    kHorizontalSize, kVerticalSize, kIncreaseFactor,
