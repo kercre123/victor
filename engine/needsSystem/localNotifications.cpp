@@ -193,7 +193,7 @@ void LocalNotifications::Generate()
 
       if (kDumpLocalNotificationsWhenGenerated)
       {
-        const float duration_m = secondsInFuture * 60.0f;
+        const float duration_m = secondsInFuture / 60.0f;
         const float duration_h = duration_m / 60.0f;
         const float duration_d = duration_h / 24.0f;
         const Time futureDateTime = now + seconds(secondsInFuture);
