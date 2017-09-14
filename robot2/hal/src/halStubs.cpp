@@ -164,9 +164,9 @@ namespace Anki {
       {
         printf("Starting spine hal\n");
 
-        SpineErr_t result = hal_init(SPINE_TTY, SPINE_BAUD);
+        SpineErr_t error = hal_init(SPINE_TTY, SPINE_BAUD);
 
-        if (result != err_OK) {
+        if (error != err_OK) {
           return RESULT_FAIL;
         }
         printf("hal Init OK\nSetting RUN mode\n");
@@ -174,18 +174,22 @@ namespace Anki {
         hal_set_mode(RobotMode_RUN);
 
         printf("Waiting for Data Frame\n");
+        Result result;
         do {
-          Result result = GetSpineDataFrame();
+          result = GetSpineDataFrame();
           //spin on good frame
           if (result == RESULT_FAIL_IO_TIMEOUT) {
-            printf("Kicking the body again!");
+            printf("Kicking the body again!\n");
             hal_set_mode(RobotMode_RUN);
           }
         } while (result != RESULT_OK);
+        
       }
 #else
       bodyData_ = &dummyBodyData_;
 #endif
+      assert(bodyData_ != nullptr);
+      
 
       for (int m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
         MotorResetPosition((MotorID)m);

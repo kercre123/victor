@@ -6,6 +6,7 @@ DEFINES += -DCOZMO_ROBOT
 CPPFLAGS += -I$(CPPUTEST_HOME)
 CPPFLAGS += -I"../../robot/include"
 CPPFLAGS += -I"../hal/include"
+# CPPFLAGS += -I"../../robot/generated/clad/robot"
 CPPFLAGS += $(DEFINES)
 
 CXXFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorNewMacros.h
@@ -13,6 +14,8 @@ CFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorMallocMac
 
 LD_LIBRARIES = -L$(CPPUTEST_HOME)/lib -lCppUTest -lCppUTestExt
 LDFLAGS += -L$(CPPUTEST_HOME)/lib -lCppUTest -lCppUTestExt -lc++
+
+CODE_UNDER_TEST = ../hal/src/halStubs.cpp
 
 ifeq ($(PLATFORM),OSX)
 	DEFINES += -DPLATFORM_OSX
@@ -44,7 +47,7 @@ lcd_test:  $(ANDROID_ARM_TOOLS_ROOT) lcd_test.c
 
 
 app: 
-	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) *.cpp
+	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(CODE_UNDER_TEST)
 
 test: app
 	./a.out -c

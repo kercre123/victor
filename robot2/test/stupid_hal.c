@@ -64,13 +64,14 @@ int main(int argc, const char* argv[]) {
 
    hal_set_mode(RobotMode_RUN);
    
-
+   printf("Starting loop\n");
    LOGD("Starting loop");
    while (1) {
       fill_outgoing_frame(&headData);
-      const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_DATA_FRAME, 1000);
+      const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_DATA_FRAME, 10);
       if (!hdr) {  //DEBUG CRASHER
-//         hal_send_frame(PAYLOAD_DATA_FRAME, &headData, sizeof(headData));
+         printf(".\n");
+         hal_send_frame(PAYLOAD_DATA_FRAME, &headData, sizeof(headData));
       }
       else
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
