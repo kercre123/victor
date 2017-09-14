@@ -66,6 +66,18 @@ namespace {
   CONSOLE_VAR(f32,  kMotionDetection_MaxPoseChange_mm,          CONSOLE_GROUP_NAME, 0.5f);
   
   CONSOLE_VAR(bool, kMotionDetection_DrawGroundDetectionsInCameraView, CONSOLE_GROUP_NAME, true);
+
+  // The smaller this value the more broken up will be the motion areas, leading to fragmented ones.
+  // If too big artificially big motion areas can be created.
+  CONSOLE_VAR(u32,  kMotionDetection_MorphologicalSize, CONSOLE_GROUP_NAME, 20);
+
+  // The higher this value the less susceptible to noise motion detection will be. A too high value
+  // will lead to discarding some motion areas.
+  CONSOLE_VAR(u32,  kMotionDetection_MinAreaForMotion, CONSOLE_GROUP_NAME, 500);
+
+  // How much blurring to apply to the camera image before doing motion detection. This value has to
+  // be odd!!
+  CONSOLE_VAR(u32,  kMotionDetection_GaussianBlurFilterSize, CONSOLE_GROUP_NAME, 21);
   
 # undef CONSOLE_GROUP_NAME
 }
@@ -347,7 +359,6 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
                                     DebugImageList<Vision::ImageRGB>& debugImageRGBs)
 {
 
-  // TODO need to make these proper parameters
   if (_regionSelector == nullptr) {
 
     // Helper macro to try to get the specified field and store it in the given variable
@@ -396,11 +407,9 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
      longEnoughSinceLastMotion)
   {
     // Remove noise here before motion detection
-    // TODO Make this a changeable value
-    int kGaussianBlurFilterSize = 21;
     const cv::Mat& imageCV = image.get_CvMat_();
     cv::GaussianBlur(imageCV, imageCV,
-                     cv::Size(kGaussianBlurFilterSize, kGaussianBlurFilterSize), 0);
+                     cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
     blurHappened = true;
 
     // If the previous image hadn't been blurred before, do it now
@@ -409,13 +418,13 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
         PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
                       "Blurring the previous image Grey");
         cv::GaussianBlur(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(),
-                         cv::Size(kGaussianBlurFilterSize, kGaussianBlurFilterSize), 0);
+                         cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
       }
     }
     else if (std::is_same<ImageType, Vision::ImageRGB>::value) {
       if (!_wasPrevImageRGBBlurred) {
         cv::GaussianBlur(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(),
-                         cv::Size(kGaussianBlurFilterSize, kGaussianBlurFilterSize), 0);
+                         cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
         PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
                       "Blurring the previous image RGB");
       }
@@ -668,12 +677,10 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
                                               DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs) {
 
   // The image has several disjoint components, try to join them
-  // TODO make these proper parameters
-  const int kMorphologicalSize = 20;
-  const int kMinAreaFormotion = 500;
 
   cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-                                                         cv::Size(kMorphologicalSize, kMorphologicalSize));
+                                                         cv::Size(kMotionDetection_MorphologicalSize,
+                                                                  kMotionDetection_MorphologicalSize));
   const cv::Mat& cvInputImage = inputImage.get_CvMat_();
   cv::morphologyEx( cvInputImage, cvInputImage, cv::MORPH_CLOSE, structuringElement );
 
@@ -685,7 +692,7 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
   //update the impulse/decay model
   bool updated = false;
   for (const auto& stat: stats) {
-    if (stat.area < kMinAreaFormotion) { //too small
+    if (stat.area < kMotionDetection_MinAreaForMotion) { //too small
       continue;
     }
     updated  = true;
