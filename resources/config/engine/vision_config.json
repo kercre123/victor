@@ -75,5 +75,14 @@
     "NewSearchCycle"      : 8,    // 5 to 45
     "TrackLostCount"      : 2,    // Number of frames to continue searching for (and reporting) a lost pet
     "TrackSteadiness"     : 15    // 10 to 30 in Percentage change required to actually update size/position
+  },
+
+  "MotionDetector" :
+  {
+  	"HorizontalSize" 	: 0.3,
+  	"VerticalSize" 		: 0.3,
+  	"IncreaseFactor" 	: 0.01,
+  	"DecreaseFactor" 	: 1.0,
+  	"MaxValue" 			: 10.0
   }
 }

@@ -98,6 +98,8 @@ private:
   TimeStamp_t   _lastMotionTime = 0;
   
   VizManager*   _vizManager = nullptr;
+
+  const Json::Value& _config;
   
 };
   
