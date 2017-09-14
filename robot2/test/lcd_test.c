@@ -57,7 +57,7 @@ static const INIT_SCRIPT init_scr[] = {
 #define DIR_INPUT 0
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET 96
+#define GPIO_LCD_RESET 55
 
 
 typedef struct GPIO_t {
