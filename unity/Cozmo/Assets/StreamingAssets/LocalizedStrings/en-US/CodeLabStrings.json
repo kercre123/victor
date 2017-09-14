@@ -806,13 +806,6 @@
     "translation": "Activates (and runs the code underneath it) every-time the given cube is moved"
   },
 
-  "codeLabGlossary.block_definitions.title.event_whengreaterthan": {
-    "translation": "When [timer] > 10"
-  },
-  "codeLabGlossary.block_definitions.description.event_whengreaterthan": {
-    "translation": "Not 100% sure (this is a default scratch block), but i think this timer starts on opening the workspace...."
-  },
-
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived": {
     "translation": "When I receive [message1, message2, ...]"
   },
@@ -1141,6 +1134,13 @@
   },
   "codeLabGlossary.block_definitions.description.operator_length": {
     "translation": "The length of the given string."
+  },
+
+  "codeLabGlossary.block_definitions.title.operator_contains": {
+    "translation": "Contains"
+  },
+  "codeLabGlossary.block_definitions.description.operator_contains": {
+    "translation": "True if the second string is contained within the first string"
   },
 
   "codeLabGlossary.block_definitions.title.operator_mod": {
