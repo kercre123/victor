@@ -544,12 +544,6 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _needsState._timeLastDisconnect = Time();
       // Similar for time since last app backgrounded; let's not confuse things
       _needsState._timeLastAppBackgrounded = Time();
-
-      // Notify the game, so it can put up a dialog to notify the user
-      // (We actually never implemented that UI as of 9/1/2017)
-      ExternalInterface::ConnectedToDifferentRobot message;
-      const auto& extInt = _cozmoContext->GetExternalInterface();
-      extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
   }
 
