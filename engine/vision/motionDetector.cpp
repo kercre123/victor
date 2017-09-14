@@ -82,22 +82,31 @@ namespace {
 # undef CONSOLE_GROUP_NAME
 }
 
-// TODO need documentation here
+// This class is used to accumulate data for peripheral motion detection. The image area is divided in three sections:
+// top, right and left. If the centroid of a motion patch falls inside one these areas, it's increased, otherwise it's
+// decreased. This follows a very simple impulse/decay model. The parameters *horizontalSize* and *verticalSize* control
+// how much of the image is for the left sector and the top sector. The parameters *increaseFactor* and *decreaseFactor*
+// control the impulse response.
+//
+// The centroid of the motion in the different sectors are also stored here. Every time one of the areas is activated,
+// the centroid "moves" towards the new activation following an exponential moving average method.
 class MotionDetector::ImageRegionSelector
 {
 public:
-  ImageRegionSelector(int width, int height, float horizontalSize, float verticalSize,
+  ImageRegionSelector(int imageWidth, int imageHeight, float horizontalSize, float verticalSize,
                       float increaseFactor, float decreaseFactor, float maxValue) :
       _topID(increaseFactor, decreaseFactor, maxValue),
       _leftID(increaseFactor, decreaseFactor, maxValue),
       _rightID(increaseFactor, decreaseFactor, maxValue)
   {
-    assert(horizontalSize <= 0.5);
-    assert(verticalSize <= 0.5);
+    DEV_ASSERT(horizontalSize <= 0.5, "MotionDetector::ImageRegionSelector: horizontal size has to be less then half"
+                                      "of the image");
+    DEV_ASSERT(verticalSize <= 0.5, "MotionDetector::ImageRegionSelector: vertical size has to be less then half"
+                                    "of the image");
 
-    _leftMargin = width * horizontalSize;
-    _rightMargin = width - _leftMargin;
-    _upperMargin = height * verticalSize;
+    _leftMargin = imageWidth * horizontalSize;
+    _rightMargin = imageWidth - _leftMargin;
+    _upperMargin = imageHeight * verticalSize;
 
   }
 
@@ -114,19 +123,40 @@ public:
     return _rightID.Value();
   }
 
-  void Update(const cv::Point &point,
+  Anki::Point2f getTopResponseCentroid() const {
+    return _topCentroid;
+  }
+  Anki::Point2f getLeftResponseCentroid() const {
+    return _leftCentroid;
+  }
+  Anki::Point2f getRightResponseCentroid() const {
+    return _rightCentroid;
+  }
+  float getLeftMargin() const {
+    return _leftMargin;
+  }
+
+  float getRightMargin() const {
+    return _rightMargin;
+  }
+
+  float getUpperMargin() const {
+    return _upperMargin;
+  }
+
+
+  void Update(const Anki::Point2f &point,
               float value)
   {
 
-    int x = point.x;
-    int y = point.y;
+    float x = point.x();
+    float y = point.y();
     //where does the point lie?
 
     //top
-    bool topActivated = false;
     if (y <= _upperMargin) {
-      topActivated = true;
       _topID.Update(value);
+      _topCentroid = updatePoint(_topCentroid, point);
     }
     else {
       _topID.Decay();
@@ -136,10 +166,12 @@ public:
     if (x <= _leftMargin) {
       _rightID.Decay();
       _leftID.Update(value);
+      _leftCentroid = updatePoint(_leftCentroid, point);
     }
       //right
     else if (x >= _rightMargin) {
       _rightID.Update(value);
+      _rightCentroid = updatePoint(_rightCentroid, point);
       _leftID.Decay();
 
     }
@@ -159,6 +191,17 @@ public:
 
 private:
 
+  // Implements an exponential moving average, a.k.a. low pass filter
+  Anki::Point2f updatePoint(const Anki::Point2f &oldPoint, const Anki::Point2f &newPoint) const
+  {
+    if (oldPoint.x() < 0) {
+      return newPoint;
+    }
+    else {
+      return newPoint * _alpha  + oldPoint * (1.0 - _alpha);
+    }
+  }
+
   class ImpulseDecay
   {
   public:
@@ -173,7 +216,6 @@ private:
     float Update(float value = 0)
     {
       _value = _value + _increaseFactor * value - _decreaseFactor;
-
       _value = Util::Clamp(_value, 0.0f, _maxValue);
 
       return _value;
@@ -197,12 +239,19 @@ private:
   };
 
   float _leftMargin;
+
+private:
   float _rightMargin;
   float _upperMargin;
 
   ImpulseDecay _topID;
   ImpulseDecay _leftID;
   ImpulseDecay _rightID;
+
+  Anki::Point2f _topCentroid   = Anki::Point2f(-1, -1);
+  Anki::Point2f _leftCentroid  = Anki::Point2f(-1, -1);
+  Anki::Point2f _rightCentroid = Anki::Point2f(-1, -1);
+  const float _alpha = 0.6;
 };
 
 static const char * const kLogChannelName = "VisionSystem";
@@ -438,6 +487,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     s32 numAboveThresh = RatioTest(image, foregroundMotion);
 
     // Run the peripheral motion detection
+    // TODO get the result here and use it!
     DetectPeripheralMotion(foregroundMotion, debugImageRGBs);
 
     // Remove noise
@@ -689,15 +739,16 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
   std::vector<Vision::Image::ConnectedComponentStats> stats;
   inputImage.GetConnectedComponents(labelImage, stats);
 
-  //update the impulse/decay model
+  // Update the impulse/decay model
   bool updated = false;
   for (const auto& stat: stats) {
     if (stat.area < kMotionDetection_MinAreaForMotion) { //too small
       continue;
     }
     updated  = true;
-    _regionSelector->Update(stat.centroid.get_CvPoint_(), stat.area);
+    _regionSelector->Update(stat.centroid, stat.area);
   }
+  // No movement = global decay
   if (! updated)
     _regionSelector->Decay();
 
@@ -729,6 +780,42 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
         std::string text = to_string_with_precision(value, 3);
         Anki::Point2f origin(10, imageToDisplay.GetNumRows()/2);
         imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
+      }
+    }
+
+    // Draw the bounding lines
+    { // Top line
+      int thickness = 1;
+      Anki::Point2f topLeft(0, _regionSelector->getUpperMargin());
+      Anki::Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->getUpperMargin());
+      imageToDisplay.DrawLine(topLeft, topRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
+    }
+    { // Left line
+      int thickness = 1;
+      Anki::Point2f topLeft(_regionSelector->getLeftMargin(), 0);
+      Anki::Point2f bottomLeft(_regionSelector->getLeftMargin(), imageToDisplay.GetNumRows());
+      imageToDisplay.DrawLine(topLeft, bottomLeft, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
+    }
+    { // Right line
+      int thickness = 1;
+      Anki::Point2f topRight(_regionSelector->getRightMargin(), 0);
+      Anki::Point2f BottomRight(_regionSelector->getRightMargin(), imageToDisplay.GetNumCols());
+      imageToDisplay.DrawLine(topRight, BottomRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
+    }
+
+    //Draw the motion centroids
+    {
+      {
+        Anki::Point2f centroid = _regionSelector->getTopResponseCentroid();
+        imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
+      }
+      {
+        Anki::Point2f centroid = _regionSelector->getLeftResponseCentroid();
+        imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
+      }
+      {
+        Anki::Point2f centroid = _regionSelector->getRightResponseCentroid();
+        imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
     }
 
