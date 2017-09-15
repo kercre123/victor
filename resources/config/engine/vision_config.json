@@ -13,7 +13,8 @@
     "DetectingGaze"              : false,
     "DetectingBlinkAmount"       : false,
     "DetectingLaserPoints"       : false,
-    "ComputingStatistics"        : false
+    "ComputingStatistics"        : false,
+    "DetectingGeneralObjects"    : true
   },
   
   "InitialModeSchedules" :
@@ -25,8 +26,11 @@
     "DetectingOverheadEdges" : [false, true],
     "CheckingQuality"        : 15,
     "DetectingLaserPoints"   : 2,
-    "ComputingStatistics"    : false  // NOTE: enabled but not scheduled!
+    "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
+    "DetectingGeneralObjects": 45
   },
+  
+  "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
   
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
   
@@ -75,5 +79,39 @@
     "NewSearchCycle"      : 8,    // 5 to 45
     "TrackLostCount"      : 2,    // Number of frames to continue searching for (and reporting) a lost pet
     "TrackSteadiness"     : 15    // 10 to 30 in Percentage change required to actually update size/position
+  },
+  
+  "ObjectDetector" :
+  {
+    "graph"                       : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
+    //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
+    //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+    //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
+    //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+    "labels"                      : "cocostuff-labels-no-numbers.txt",
+    "mode"                        : "detection",
+    "input_layer"                 :  "image_tensor",
+    "input_width"                 : 0,
+    "input_height"                : 0,
+    "output_scores_layer"         : "detection_scores",
+    "output_classes_layer"        : "detection_classes",
+    "output_boxes_layer"          : "detection_boxes",
+    "output_num_detections_layer" :  "num_detections",
+    "top_K"                       : 5,
+    "min_score"                   : 0.5
+    
+    //"graph"         : "inception_v3_2016_08_28_frozen.pb",
+    //"labels"        : "imagenet_slim_labels.txt",
+    //"input_width"   : 299,
+    //"input_height"  : 299,
+    //"do_crop"       : true,
+    //"input_mean_R"  : 0,
+    //"input_mean_G"  : 0,
+    //"input_mean_B"  : 0,
+    //"input_std"     : 255,
+    //"input_layer"   : "input",
+    //"output_layer"  : "InceptionV3/Predictions/Reshape_1",
+    //"top_K"         : 1  // Only 1 supported for now
+
   }
 }

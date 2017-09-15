@@ -206,6 +206,19 @@ namespace Vision {
     cv::rectangle(this->get_CvMat_(), rect.get_CvRect_(), GetCvColor(color), CV_FILLED);
   }
 
+  
+  template<typename T>
+  void ImageBase<T>::DrawRect(const Rectangle<s32>& rect, const ColorRGBA& color, const s32 thickness)
+  {
+    cv::rectangle(this->get_CvMat_(), rect.get_CvRect_(), GetCvColor(color), thickness);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawFilledRect(const Rectangle<s32>& rect, const ColorRGBA& color)
+  {
+    cv::rectangle(this->get_CvMat_(), rect.get_CvRect_(), GetCvColor(color), CV_FILLED);
+  }
+
   template<typename T>
   void ImageBase<T>::DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness)
   {

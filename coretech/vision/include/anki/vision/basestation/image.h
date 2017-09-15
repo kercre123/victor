@@ -96,9 +96,11 @@ namespace Vision {
     
     // Draw rectangle from top left <X,Y> to bottom right <X+width,Y+height>
     void DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness = 1);
+    void DrawRect(const Rectangle<s32>& rect, const ColorRGBA& color, const s32 thickness = 1);
     
     // Draw filled rectangle from top left <X,Y> to bottom right <X+width,Y+height>
     void DrawFilledRect(const Rectangle<f32>& rect, const ColorRGBA& color);
+    void DrawFilledRect(const Rectangle<s32>& rect, const ColorRGBA& color);
     
     // Draw quadrangle defined by four given points
     void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness = 1);

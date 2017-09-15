@@ -32,6 +32,7 @@
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/imageCache.h"
 #include "anki/vision/basestation/markerDetector.h"
+#include "anki/vision/basestation/objectDetector.h"
 #include "anki/vision/basestation/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -114,6 +115,7 @@ namespace Cozmo {
   , _laserPointDetector(new LaserPointDetector(_vizManager))
   , _motionDetector(new MotionDetector(_camera, _vizManager))
   , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
+  , _generalObjectDetector(new Vision::ObjectDetector())
   , _cameraCalibrator(new CameraCalibrator(*this))
   , _clahe(cv::createCLAHE())
   {
@@ -201,6 +203,22 @@ namespace Cozmo {
     if(RESULT_OK != petTrackerInitResult) {
       PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
       return petTrackerInitResult;
+    }
+    
+    {
+      if(!config.isMember("ObjectDetector"))
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
+        return RESULT_FAIL;
+      }
+      
+      const Json::Value& objDetectorConfig = config["ObjectDetector"];
+      Result objDetectorResult = _generalObjectDetector->Init(Util::FileUtils::FullFilePath({dataPath, "tensorflow_models"}),
+                                                              objDetectorConfig);
+      if(RESULT_OK != objDetectorResult)
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
+      }
     }
     
     // Default processing modes should are set in vision_config.json
@@ -898,7 +916,21 @@ namespace Cozmo {
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+  Result VisionSystem::DetectGeneralObjects(Vision::ImageCache& imageCache)
+  {
+    std::list<Vision::ObjectDetector::DetectedObject> objects;
+    Result result = _generalObjectDetector->Detect(imageCache, objects);
+    
+    // Convert returned Vision::DetectedObject list to our (Cozmo) ExternalInterface message
+    for(const auto& object : objects)
+    {
+      _currentResult.generalObjects.emplace_back(CladRect(object.rect.GetX(), object.rect.GetY(),
+                                                          object.rect.GetWidth(), object.rect.GetHeight()),
+                                                 object.name, object.timestamp, object.score);
+    }
+    
+    return result;
+  }
 
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
@@ -1423,6 +1455,17 @@ namespace Cozmo {
       }
     }
 
+    if(ShouldProcessVisionMode(VisionMode::DetectingGeneralObjects))
+    {
+      Tic("TotalDetectingGeneralObjects");
+      if((lastResult = DetectGeneralObjects(imageCache)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectGeneralObjectsFailed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingGeneralObjects, true);
+      Toc("TotalDetectingGeneralObjects");
+    }
+    
     // NOTE: This should come after any detectors that add things to "detectionRects"
     //       since it meters exposure based on those.
     if(ShouldProcessVisionMode(VisionMode::CheckingQuality))

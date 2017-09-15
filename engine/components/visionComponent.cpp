@@ -856,6 +856,23 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
         
+        // TODO: Move to separate Update method
+        {
+          if(result.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
+          {
+            s32 colorIndex = 0;
+            for(auto const& object : result.generalObjects)
+            {
+              const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
+                                        object.img_rect.width, object.img_rect.height);
+              ColorRGBA color = ColorRGBA::CreateFromColorIndex(colorIndex++);
+              _vizManager->DrawCameraRect(rect, color);
+              const std::string caption(object.name + " - " + std::to_string((s32)std::round(100.f*object.score)));
+              _vizManager->DrawCameraText(rect.GetTopLeft(), caption, color);
+            }
+          }
+        }
+        
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {

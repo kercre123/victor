@@ -1,4 +1,6 @@
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
+#include "util/fileUtils/fileUtils.h"
 
 #include "anki/common/shared/radians.h"
 #include "anki/common/types.h"
@@ -10,6 +12,7 @@
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/imageCache.h"
+#include "anki/vision/basestation/objectDetector.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 #include "anki/vision/basestation/profiler.h"
@@ -440,4 +443,137 @@ GTEST_TEST(ImageCache, ImageCacheGray)
   ASSERT_EQ(true, cache.HasColor());
   cache.GetRGB(ImageCache::Size::Half_NN, &getType);
   ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+}
+
+GTEST_TEST(ObjectDetector, SimpleImage)
+{
+  ANKI_CPU_TICK_ONE_TIME("ObjectDetector.SimpleImage");
+  
+  Vision::ObjectDetector detector;
+  
+  const std::string modelPath = "resources/ctiVision/tensorflow_models";
+  const std::string testImagePath = "resources/ctiVision/test/images";
+  std::string testImageFile = Util::FileUtils::FullFilePath({testImagePath, "grace_hopper.jpg"});
+  
+  Json::Value config;
+  config["graph"] = "inception_v3_2016_08_28_frozen.pb";
+  config["labels"] = "imagenet_slim_labels.txt";
+  config["mode"] = "classification";
+  config["input_width"] = 299;
+  config["input_height"] = 299;
+  config["do_crop"] = false;
+  config["input_mean_R"] = 0;
+  config["input_mean_G"] = 0;
+  config["input_mean_B"] = 0;
+  config["input_std"] = 255;
+  config["input_layer"] = "input";
+  config["output_scores_layer"] = "InceptionV3/Predictions/Reshape_1";
+  config["top_K"] = 1;
+  config["min_score"] = 0.1f;
+  
+  Result result;
+  Vision::ImageRGB testImg;
+  Vision::ImageCache imageCache;
+  std::list<Vision::ObjectDetector::DetectedObject> objects;
+  
+  const bool DO_CLASSIFICATION_TEST = false;
+  if(DO_CLASSIFICATION_TEST)
+  {
+    result = detector.Init(modelPath, config);
+    ASSERT_EQ(RESULT_OK, result);
+    
+    result = testImg.Load(testImageFile);
+    ASSERT_EQ(RESULT_OK, result);
+    imageCache.Reset(testImg);
+    
+    result = detector.Detect(imageCache, objects);
+    ASSERT_EQ(RESULT_OK, result);
+    
+    ASSERT_EQ(1, objects.size());
+    ASSERT_EQ("military uniform", objects.front().name);
+    
+    testImageFile = Util::FileUtils::FullFilePath({testImagePath, "image3.JPG"});
+    result = testImg.Load(testImageFile);
+    ASSERT_EQ(RESULT_OK, result);
+    imageCache.Reset(testImg);
+    
+    result = detector.Detect(imageCache, objects);
+    ASSERT_EQ(RESULT_OK, result);
+    ASSERT_EQ(1, objects.size());
+    ASSERT_NE(std::string::npos, objects.front().name.find("cat"));
+  }
+  
+  //
+  // Change models
+  //
+  
+  /*
+   // Tensorflow SSD
+   config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb";
+   //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
+   //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+   //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
+   //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+   config["labels"] = "cocostuff-labels-no-numbers.txt";
+   config["mode"] = "detection";
+   config["input_width"] = 200;
+   config["input_height"] = 200;
+   config["do_crop"] = true;
+   config["input_layer"] = "image_tensor";
+   config["output_scores_layer"] = "detection_scores";
+   config["output_classes_layer"] = "detection_classes";
+   config["output_boxes_layer"] = "detection_boxes";
+   config["output_num_detections_layer"] = "num_detections";
+   config["top_K"] = 5;
+   config["min_score"] = 0.5f;
+   */
+  
+  // OpenCV DNN w/ Caffe SSD Model
+  config["graph"] = "MobileNetSSD_deploy";
+  config["labels"] = "coco-labels-20.txt";
+  config["input_width"] = 200;
+  config["input_height"] = 200;
+  config["input_mean_R"] = 127.5;
+  config["input_mean_G"] = 127.5;
+  config["input_mean_B"] = 127.5;
+  config["input_std"] = 127.5;
+  config["top_K"] = 1;
+  config["min_score"] = 0.5f;
+  
+  result = detector.Init(modelPath, config);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  testImageFile = Util::FileUtils::FullFilePath({testImagePath, "image3.JPG"});
+  result = testImg.Load(testImageFile);
+  ASSERT_EQ(RESULT_OK, result);
+  imageCache.Reset(testImg);
+  
+  result = detector.Detect(imageCache, objects);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  bool catFound = false;
+  std::for_each(objects.begin(), objects.end(),
+                [&catFound](const Vision::ObjectDetector::DetectedObject& object)
+                {
+                  if(object.name == "cat")
+                  {
+                    catFound = true;
+                  }
+                });
+  EXPECT_TRUE(catFound);
+  
+  Anki::Util::CpuProfiler::GetInstance().GetCurrentThreadProfiler()->LogProfile();
+  
+  if(true)
+  {
+    Vision::ImageRGB dispImg(testImg);
+    for(auto const& object : objects)
+    {
+      dispImg.DrawRect(object.rect, NamedColors::RED);
+      std::stringstream caption;
+      caption << object.name << "[" << std::round(100.f*object.score) << "]";
+      dispImg.DrawText((object.rect.GetBottomLeft() + Point2i(2,-6)).CastTo<f32>(), caption.str(), NamedColors::RED, .5f, true);
+    }
+    dispImg.Display("Detections", 0);
+  }
 }

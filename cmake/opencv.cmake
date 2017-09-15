@@ -1,7 +1,9 @@
+set(OPENCV_VERSION 3.3.0)
+
 if (ANDROID)
   set(OPENCV_DIR opencv-android)
 else()
-  set(OPENCV_DIR opencv-3.1.0)                                                                        
+  set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
 endif()
 
                                                                                                     
@@ -16,9 +18,10 @@ set(OPENCV_LIBS
     flann
     imgcodecs
     ml
-    videoio)
+    videoio
+    dnn)
 
-set(OPENCV_MODULES_DIR ${CORETECH_EXTERNAL_DIR}/opencv-3.1.0/modules)
+set(OPENCV_MODULES_DIR ${CORETECH_EXTERNAL_DIR}/opencv-${OPENCV_VERSION}/modules)
 set(EXTERNAL_BUILD_DIR ${CORETECH_EXTERNAL_DIR}/build)
 
 if (ANDROID)
@@ -31,9 +34,10 @@ else()
   set(OPENCV_INCLUDE_PREFIX "")
 endif()
 
-set(OPENCV2_INCLUDE_PATH "")
 if (ANDROID)
   set(OPENCV2_INCLUDE_PATH ${OPENCV_INCLUDE_PREFIX}/opencv2) 
+else()
+  set(OPENCV2_INCLUDE_PATH ${CORETECH_EXTERNAL_DIR}/opencv-${OPENCV_VERSION}/build)
 endif()
 
 set(OPENCV_INCLUDE_PATHS ${OPENCV_INCLUDE_PREFIX} ${OPENCV2_INCLUDE_PATH})
@@ -42,7 +46,7 @@ set(OPENCV_INCLUDE_PATHS ${OPENCV_INCLUDE_PREFIX} ${OPENCV2_INCLUDE_PATH})
 foreach(OPENCV_MODULE ${OPENCV_LIBS})
     if (ANDROID)
       message(STATUS "opencv.cmake add_library: " ${OPENCV_MODULE})
-      add_library(${OPENCV_MODULE} SHARED IMPORTED)
+      add_library(${OPENCV_MODULE} STATIC IMPORTED)
       set(MODULE_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/jni/include/opencv2/${OPENCV_MODULE}")
       set(include_paths
           ${MODULE_INCLUDE_PATH}
@@ -79,13 +83,30 @@ set_target_properties(opencv_interface PROPERTIES
     "${OPENCV_INCLUDE_PATHS}"
 )
 
-set(OPENCV_EXTERNAL_LIBS
-    IlmImf
-    libjasper
-    libpng
-    libtiff
-    zlib
-)
+if (ANDROID)
+  set(OPENCV_EXTERNAL_LIBS     
+      libcpufeatures
+      #libjpeg
+      libpng
+      libtiff
+      libprotobuf
+  )
+else()
+  set(OPENCV_EXTERNAL_LIBS
+      IlmImf
+      libjasper
+      #libjpeg
+      libpng
+      libtiff
+      zlib
+      libprotobuf
+      libwebp
+      ippicv
+      ipp_iw
+      ittnotify
+  )
+endif()
+
 
 if (MACOSX)
   foreach(LIB ${OPENCV_EXTERNAL_LIBS})
@@ -96,15 +117,19 @@ if (MACOSX)
   endforeach()
   list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
 
+  # Add Frameworks
+  find_library(ACCELERATE Accelerate)
   find_library(APPKIT AppKit)
-  list(APPEND OPENCV_LIBS ${APPKIT})
+  find_library(OPENCL OpenCL)                                                               
+  list(APPEND OPENCV_LIBS ${ACCELERATE} ${APPKIT} ${OPENCL})
+
 endif()
 
 if (ANDROID)
-  add_library(libjpeg SHARED IMPORTED)
+  add_library(libjpeg STATIC IMPORTED)
   set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
     ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libjpeg.so)
-  add_library(libturbojpeg SHARED IMPORTED)
+  add_library(libturbojpeg STATIC IMPORTED)
   set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
     ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libturbojpeg.so)
 elseif (MACOSX)
@@ -128,9 +153,9 @@ if (ANDROID)
         ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/jni/include/opencv2/${OPENCV_MODULE}
         ${OPENCV_INCLUDE_PREFIX}
         ${OPENCV2_INCLUDE_PATH})
-    set_target_properties(tbb PROPERTIES
-        IMPORTED_LOCATION
-        ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so)
+    #set_target_properties(tbb PROPERTIES
+    #    IMPORTED_LOCATION
+    #    ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so)
     set(INSTALL_LIBS
         "${OPENCV_LIBS}"
         tbb
