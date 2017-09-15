@@ -145,6 +145,7 @@ if [ $CONFIGURE -eq 1 ]; then
         animProcess/BUILD.in \
         clad/BUILD.in \
         engine/BUILD.in \
+        coretech/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \

@@ -54,3 +54,47 @@ import(cti_messaging messaging)
 #target_include_directories(cti_messaging INTERFACE
 #  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/types>
 #)
+
+if (NOT MACOSX)
+    return()
+endif()
+
+#find_library(FOUNDATION Foundation)
+set(PLATFORM_LIBS
+#  ${FOUNDATION}
+  "${CMAKE_CURRENT_SOURCE_DIR}/../lib/util/libs/framework/gtest.framework"
+)
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/cti_planning_test.srcs.lst" PLANNING_TEST_SRCS)
+file(STRINGS "${ANKI_SRCLIST_DIR}/cti_vision_test.srcs.lst" VISION_TEST_SRCS)
+file(STRINGS "${ANKI_SRCLIST_DIR}/cti_common_test.srcs.lst" COMMON_TEST_SRCS)
+
+add_executable(test_coretech
+    ${PLANNING_TEST_SRCS}
+    ${VISION_TEST_SRCS}
+    ${COMMON_TEST_SRCS}
+)
+
+target_link_libraries(test_coretech
+PRIVATE
+# anki libs
+util
+cti_common
+cti_planning
+cti_vision
+cti_messaging
+# platform
+${PLATFORM_LIBS}
+)
+
+target_compile_definitions(test_coretech PRIVATE                                                       
+  SIMULATOR
+  CORETECH_BASESTATION                                                                          
+  ANKICORETECH_USE_OPENCV=1                                                                     
+  ANKICORETECH_EMBEDDED_USE_OPENCV=1
+  TEST_DATA_PATH=${CMAKE_CURRENT_SOURCE_DIR})
+
+target_include_directories(test_coretech
+  PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/planning/basestation/src>
+)

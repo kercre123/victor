@@ -1,0 +1,35 @@
+cxx_project(
+    name = 'cti_vision_test',
+    srcs = cxx_src_glob(['vision/basestation/test',
+                         ]),
+    platform_srcs = [
+    ],
+    headers = [],
+    platform_headers = [
+    ]
+)
+
+cxx_project(
+    name = 'cti_planning_test',
+    srcs = cxx_src_glob(['planning/basestation/test',
+                         ],
+                         excludes = [
+                            'run_*',
+                        ]),
+    platform_srcs = [
+    ],
+    headers = [],
+    platform_headers = [
+    ]
+)
+
+cxx_project(
+    name = 'cti_common_test',
+    srcs = cxx_src_glob(['common/basestation/test',
+                         ]),
+    platform_srcs = [
+    ],
+    headers = [],
+    platform_headers = [
+    ]
+)
