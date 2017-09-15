@@ -1510,11 +1510,11 @@ TEST(BlockWorld, CubeStacks)
   
   
   // Put Object 2 above Object 1, but too high, so this Find should fail:
-  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, robot.GetPose() );
+  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, robot.GetPose(), "BottomPose" );
   lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, lastResult);
   
-  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, robot.GetPose());
+  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, robot.GetPose(), "TooHighPose" );
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, tooHighPose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   
@@ -1537,7 +1537,7 @@ TEST(BlockWorld, CubeStacks)
   
   // Put Object 2 at the right height to be on top of Object 1,
   // but move it off to the side so that the quads don't intersect
-  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, robot.GetPose());
+  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, robot.GetPose(), "NotAbovePose");
   lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
   ASSERT_EQ(RESULT_OK, lastResult);
   

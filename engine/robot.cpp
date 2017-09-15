@@ -283,6 +283,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     
 Robot::~Robot()
 {
+  LOG_EVENT("robot.destructor", "%d", GetID());
+  
   // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
   GetAIComponent().GetFreeplayDataTracker().ForceUpdate();
   
@@ -309,6 +311,15 @@ Robot::~Robot()
   Util::SafeDelete(_progressionUnlockComponent);
   Util::SafeDelete(_tapFilterComponent);
   Util::SafeDelete(_blockFilter);
+  
+  // Destroy these components (which may hold poses parented to _pose) *before* _pose is destroyed (despite
+  // order of declaration)
+  _objectPoseConfirmerPtr.reset();
+  _aiComponent.reset();
+  _pathComponent.reset();
+  _petWorld.reset();
+  _faceWorld.reset();
+  _blockWorld.reset();
 }
     
 void Robot::SetOnCharger(bool onCharger)

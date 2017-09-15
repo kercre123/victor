@@ -1040,6 +1040,12 @@ inline const RobotID_t Robot::GetID(void) const
 
 inline const Pose3d& Robot::GetPose(void) const
 {
+  ANKI_VERIFY(_pose.GetRootID() == GetWorldOriginID(),
+              "Robot.GetPose.BadPoseRootOrWorldOriginID",
+              "WorldOriginID:%d(%s), RootID:%d",
+              GetWorldOriginID(), GetWorldOrigin().GetName().c_str(),
+              _pose.GetRootID());
+  
   // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
   ANKI_VERIFY(_pose.HasSameRootAs(GetWorldOrigin()), 
               "Robot.GetPose.PoseOriginNotWorldOrigin",

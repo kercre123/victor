@@ -31,6 +31,8 @@ PoseOriginList::PoseOriginList()
 
 PoseOriginList::~PoseOriginList()
 {
+  LOG_EVENT("poseoriginlist.destructor", "%zu", GetSize());
+  
   // Ignore whether unowned parents are allowed so we can delete
   // pose origins without worrying about the ordering here (since
   // an origin that's a parent of another "origin", thanks to rejiggering
@@ -55,7 +57,7 @@ PoseOriginID_t PoseOriginList::AddNewOrigin()
   PoseOriginID_t ID = _nextID;
   
   const bool success = AddOriginWithID(ID);
-  DEV_ASSERT_MSG(success, "PoseOriginList.AddNewOrigin.AddWithIDFailed", "ID:%d", ID);
+  ANKI_VERIFY(success, "PoseOriginList.AddNewOrigin.AddWithIDFailed", "ID:%d", ID);
 # pragma unused(success) // avoid unused var warnings in release/shipping
   
   return ID;
@@ -65,9 +67,12 @@ bool PoseOriginList::AddOriginWithID(PoseOriginID_t ID)
 {
   const std::string name("Origin" + std::to_string(ID));
   auto result = _origins.emplace(ID, std::unique_ptr<PoseOrigin>(new PoseOrigin(name)));
-  if(!result.second)
+  if(!ANKI_VERIFY(result.second, "PoseOriginList.AddOriginWithID.DuplicateID", "%d", ID))
   {
-    DEV_ASSERT_MSG(false, "PoseOriginList.AddOriginWithID.DuplicateID", "%d", ID);
+    if(ANKI_DEV_CHEATS)
+    {
+      Util::sAbort();
+    }
     return false;
   }
   
