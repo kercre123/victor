@@ -438,17 +438,34 @@ namespace Cozmo {
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
+      _tag = withTag;
+      _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      
       // Switch interlacing for both systems that create images to put on the face.
       // Since animations are relatively short, and InitStream gets called for each
       // new animation or each loop of the same animation, this guarantees we will
       // change scanlines periodically to avoid burn-in. Note that KeepFaceAlive
       // uses a procedural blink, which also switches the scanlines.
-      ProceduralFaceDrawer::SwitchInterlacing();
-      FaceAnimationManager::SwitchInterlacing();
+      //
+      // Special case (largely so that SDK can "stream" in face images one at a time with
+      // SetFaceAction without switching scanlines on each frame): don't switch the scanlines
+      // iff the animation name is the same and it hasn't been too long yet (and it won't have
+      // been too long once this animation ends either).
+      {
+        const TimeStamp_t maxTimeBeforeSwitch_ms = GetTrackLayerComponent()->GetMaxBlinkSpacingTimeForScreenProtection_ms();
+        const TimeStamp_t animEndTime_ms         = (anim == nullptr ? 0 : anim->GetLastKeyFrameEndTime_ms());
+        const bool        hasNameChanged         = (anim == nullptr || (anim->GetName() != _lastAnimName));
+        const bool        tooLongSinceSwitch     = ((_startTime_ms+animEndTime_ms) - _lastScanlineSwitch_ms) > maxTimeBeforeSwitch_ms;
+
+        if(hasNameChanged || tooLongSinceSwitch)
+        {
+          ProceduralFaceDrawer::SwitchInterlacing();
+          FaceAnimationManager::SwitchInterlacing();
+          _lastScanlineSwitch_ms = _startTime_ms;
+        }
       
-      _tag = withTag;
-      
-      _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        _lastAnimName = (anim == nullptr ? "" : anim->GetName());
+      }
       
       // Initialize "fake" streaming time to the same start time so we can compare
       // to it for determining when its time to stream out a keyframe

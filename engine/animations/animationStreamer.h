@@ -294,7 +294,10 @@ namespace Cozmo {
     f32 _longEnoughSinceLastStreamTimeout_s;
     
     AnimationTag _liveIdleTurnEyeShiftTag = NotAnimatingTag;
-
+    
+    std::string _lastAnimName;
+    TimeStamp_t _lastScanlineSwitch_ms = 0;
+    
   }; // class AnimationStreamer
   
 } // namespace Cozmo
