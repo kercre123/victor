@@ -86,6 +86,8 @@ We use a helper script to generate file lists to tell CMake what to build. Somet
 ./project/victor/build-victor.sh -f
 ```
 
+To speed up builds, [install `ccache`](docs/ccache.md) on your system and the build system will automatically start using it.
+
 See [build-instructions](docs/development/build-instructions.md) for a more thorough description of build options.
 
 ## Deploy Victor
