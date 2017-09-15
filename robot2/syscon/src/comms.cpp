@@ -187,7 +187,7 @@ void Comms::tick(void) {
   if (applicationRunning) {
     Motors::transmit(&outboundPacket.sync.payload);
     Opto::transmit(&outboundPacket.sync.payload);
-    Mics::transmit(outboundPacket.sync.payload.audio);
+//    Mics::transmit(outboundPacket.sync.payload.audio);
     Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
     outboundPacket.sync.payload.framecounter++;

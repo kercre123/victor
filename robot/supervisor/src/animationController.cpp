@@ -537,6 +537,8 @@ namespace AnimationController {
 
   Result Update()
   {
+    START_TIME_PROFILE(Anim, UPDATE);
+    
     RobotInterface::EngineToRobot msg; // Allocate on stack here to share with AdvanceAudio function
     if (AdvanceAudio(msg))
     {

@@ -59,7 +59,8 @@ namespace Anki {
       const f32 kTangentialDistCoeff1 = 0.001433240008548796f;
       const f32 kTangentialDistCoeff2 = 0.001523473592445885f;
       const f32 kDistCoeffNoiseFrac   = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
-
+      
+      u8* imageBuffer_ = nullptr;
     } // "private" namespace
 
 
@@ -129,8 +130,13 @@ namespace Anki {
       accel_->enable(TIME_STEP);
     }
 
-    AndroidHAL::~AndroidHAL() {
-      
+    AndroidHAL::~AndroidHAL()
+    {
+      if(imageBuffer_ != nullptr)
+      {
+        free(imageBuffer_);
+        imageBuffer_ = nullptr;
+      }
     }
     
 
@@ -256,11 +262,23 @@ namespace Anki {
     } // HAL::CameraSetParameters()
 
 
-    // Starts camera frame synchronization
-    bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
+    void AndroidHAL::InitCamera()
     {
-      DEV_ASSERT(frame != NULL, "sim_androidHAL.CameraGetFrame.NullFramePointer");
-      
+      return;
+    }
+
+    // Starts camera frame synchronization
+    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
+    {
+      // Malloc to get around being unable to create a static array with unknown size
+      // Also assumes that image size does not change at runtime
+      if(imageBuffer_ == nullptr)
+      {
+        imageBuffer_ = (u8*)(malloc(headCamInfo_.nrows * headCamInfo_.ncols * 3));
+      }
+
+      frame = imageBuffer_;
+
       const u8* image = headCam_->getImage();
       DEV_ASSERT(image != NULL, "sim_androidHAL.CameraGetFrame.NullImagePointer");
 
@@ -268,9 +286,10 @@ namespace Anki {
       s32 imgWidth = headCam_->getWidth();
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
-          frame[pixel++] = webots::Camera::imageGetRed(image, imgWidth, x, y);
-          frame[pixel++] = webots::Camera::imageGetGreen(image, imgWidth, x, y);
-          frame[pixel++] = webots::Camera::imageGetBlue(image,  imgWidth, x, y);
+          *(imageBuffer_ + pixel*3 + 0) = webots::Camera::imageGetRed(image, imgWidth, x, y);
+          *(imageBuffer_ + pixel*3 + 1) = webots::Camera::imageGetGreen(image, imgWidth, x, y);
+          *(imageBuffer_ + pixel*3 + 2) = webots::Camera::imageGetBlue(image,  imgWidth, x, y);
+          ++pixel;
         }
       }
 

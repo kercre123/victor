@@ -22,6 +22,7 @@
 #include "androidHAL/android/camera/camera_manager.h"
 #include "androidHAL/android/camera/image_reader.h"
 #include "androidHAL/android/camera/utils/native_debug.h"
+#include "androidHAL/android/proto_camera/victor_camera.h"
 #include "anki/vision/CameraSettings.h"
 
 #include "androidHAL/android/proto_camera/victor_camera.h"
@@ -37,21 +38,13 @@ namespace Anki {
   namespace Cozmo {
     
     namespace { // "Private members"
-
+      // Pointer to the current (latest) frame the camera has given us
+      uint8_t* _currentFrame = nullptr;
     } // "private" namespace
 
 
 #pragma mark --- Simulated Hardware Method Implementations ---
-    
 
-    
-    int victor_proto_camera_callback(const uint8_t* image, int width, int height)
-    {
-       // process camera image...
-       // NOTE: This callback may occur on a thread that is _not_ owned by the engine.
-       return 0;
-    }
-     
     // Definition of static field
     AndroidHAL* AndroidHAL::_instance = 0;
     
@@ -88,19 +81,12 @@ namespace Anki {
     , _imageFrameID(1)
     {
       //InitIMU();
-      //InitCamera();
-      //camera_init();
-      //camera_start(victor_proto_camera_callback);
-
-      
+      InitCamera();
     }
     
     AndroidHAL::~AndroidHAL()
     {
-      //      DeleteCamera(); 
-      //camera_stop();
-      //camera_cleanup();
-     
+      DeleteCamera();
     }
 
     
@@ -158,31 +144,33 @@ namespace Anki {
       (void)status;   //to silence unused compiler warning
     }
 
+    int CameraCallback(uint8_t* image, int width, int height)
+    {
+      DEV_ASSERT(image != nullptr, "AndroidHAL.CameraCallback.NullImage");
+      _currentFrame = image;
+      return 0;
+    }
+
     void AndroidHAL::InitCamera()
     {
       PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingInit", "");
-      
-      DeleteCamera();
-      
-      _androidCamera = new NativeCamera(nullptr);
-      ASSERT(_androidCamera, "Failed to Create CameraObject");
-      
-      // Get image resolution info
-      const int cameraRes = static_cast<const int>(_imageCaptureResolution);
-      const int width = Vision::CameraResInfo[cameraRes].width;
-      const int height = Vision::CameraResInfo[cameraRes].height;
 
-      PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingCaptureSession", "%d x %d", width, height);
-      ImageResolution_Android res {width, height, 0};
-      _reader= new ImageReader(&res);
+      int res = camera_init();
+      DEV_ASSERT(res == 0, "AndroidHAL.InitCamera.CameraInitFailed");
       
-      _androidCamera->CreateSession(_reader->GetNativeWindow());
-      _androidCamera->Animate();
+      res = camera_start(&CameraCallback);
+      DEV_ASSERT(res == 0, "AndroidHAL.InitCamera.CameraStartFailed");
     }
 
     void AndroidHAL::DeleteCamera() {
       Util::SafeDelete(_androidCamera);
       Util::SafeDelete(_reader);
+
+      int res = camera_stop();
+      DEV_ASSERT(res == 0, "AndroidHAL.Delete.CameraStopFailed");
+
+      res = camera_cleanup();
+      DEV_ASSERT(res == 0, "AndroidHAL.Delete.CameraCleanupFailed");
     }
     
     Result AndroidHAL::Update()
@@ -217,35 +205,34 @@ namespace Anki {
       return;
     }
 
-    bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
+    bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
       DEV_ASSERT(frame != NULL, "androidHAL.CameraGetFrame.NullFramePointer");
-      
-      if (_reader && _reader->IsReady()) {
-        u32 dataLength;
-        _reader->GetLatestRGBImage(frame, dataLength);
-        imageID = ++_imageFrameID;
+
+      if(_currentFrame != nullptr)
+      {
+        // Tell the camera we will be processing this frame
+        camera_set_processing_frame();
         
-        // --------------------------------------------------------------------
-        // TEMP: Image-imu sync isn't implemented yet so, just fake the imu data for now.
-        // See sim_hal::IMUGetCameraTime() for explanation of line2Number
+        frame = _currentFrame;
+        
+        imageID = ++_imageFrameID;
+
         ImageImuData imu_meas(imageID,
                               0.f, 0.f, 0.f,
                               125);          // IMU data point for middle of this image
 
         imuData.push_back(imu_meas);
-        
+
         // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
         imu_meas.imageId = imageID + 1;
         imu_meas.line2Number = 1;
         imuData.push_back(imu_meas);
-        // --------------------------------------------------------------------
-
+        
         return true;
       }
-      
-      return false;
 
+      return false;
     } // CameraGetFrame()
     
   } // namespace Cozmo

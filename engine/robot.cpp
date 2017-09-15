@@ -154,11 +154,19 @@ static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //Thi
 
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
-const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-  0,             -0.0698f,   0.9976f,
- -1.0000f,        0,         0,
-  0,             -0.9976f,  -0.0698f,
-});
+#ifdef COZMO_V2
+  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+     0,     0,   1.f,
+    -1.f,   0,   0,
+     0,    -1.f, 0,
+  });
+#else
+  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+    0,      -0.0698f,  0.9976f,
+  -1.0000f,  0,        0,
+    0,      -0.9976f, -0.0698f,
+  });
+#endif
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
@@ -277,6 +285,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
   _thisRobot = this;
+#endif
+
+#ifdef COZMO_V2
+  // This will create the AndroidHAL instance if it doesn't yet exist
+  AndroidHAL::getInstance();
 #endif
   
 } // Constructor: Robot
@@ -1305,24 +1318,19 @@ Result Robot::Update()
      }
      lastUpdateTime = currentTime_sec;
   */
-  
-  
+
   //////////// Android HAL Update ////////////
   #ifdef COZMO_V2
   AndroidHAL::getInstance()->Update();
   #endif
-  
-  
-  
-  //////////// VisionComponent //////////
-  
-      
+
+  //////////// VisionComponent //////////  
   if(_visionComponent->GetCamera().IsCalibrated())
   {
-#   ifdef COZMO_V2
+    #ifdef COZMO_V2
     _visionComponent->CaptureAndSendImage();
-#   endif
-    
+    #endif
+  
     // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
     Result visionResult = _visionComponent->UpdateAllResults();
     if(RESULT_OK != visionResult) {

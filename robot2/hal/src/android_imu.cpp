@@ -23,6 +23,8 @@
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/event_trace.h"
+
 
 
 namespace Anki {
@@ -76,9 +78,10 @@ namespace Anki {
       data = _imuDataArr[_imuLastReadIdx];
       return true;
     }
-
+ 
     void ProcessIMUEvents()
     {
+      EventTrace(event_IMUSTART);
       static int64_t lastAccTime, lastGyroTime;
 #if IMU_INTERFACE == ANDROID_IMU      
       
@@ -118,8 +121,8 @@ namespace Anki {
         imuData.temperature_degC = IMU_TEMP_RAW_TO_C(rawData.temperature);
         lastAccTime = lastGyroTime = rawData.timestamp * NS_PER_IMU_TICK;
         PushIMU(imuData);
+        EventTrace(event_IMUEND);
       }
-
 #endif
     }
 

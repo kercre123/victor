@@ -129,7 +129,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
-  
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
   
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -1180,6 +1180,19 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
     robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, missedPackets, batteryLevel)));
   }
 
+}
+
+void RobotToEngineImplMessaging::HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const auto& payload = message.GetData().Get_timeProfStat();
+  if(payload.isHeader)
+  {
+    PRINT_NAMED_INFO("Profile", "%s", payload.profName.c_str());
+  }
+  else
+  {
+    PRINT_NAMED_INFO("Profile", "name:%s avg:%u max:%u", payload.profName.c_str(), payload.avg, payload.max);
+  }
 }
   
 } // end namespace Cozmo

@@ -192,7 +192,7 @@ struct BodyToHead
   struct BatteryState battery;
   struct RangeData proximity;
   uint16_t touchLevel[2];
-  int16_t audio[320];
+//  int16_t audio[320];
 };
 
 struct ContactData
