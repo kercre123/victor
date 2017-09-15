@@ -61,7 +61,9 @@ namespace Anki
       /// Scale value for maximum motor power in HAL
       static const f32 MOTOR_MAX_POWER = 1.0f;
       /// Number of bytes of audio data fetche each time step
-      //static const size_t AUDIO_DATA_PER_TICK = 2560;
+      static const size_t MICROPHONE_SAMPLES_PER_TICK = 80;
+      static const int    MICROPHONE_CHANNELS = 4;
+      static const size_t AUDIO_DATA_PER_TICK = MICROPHONE_SAMPLES_PER_TICK * MICROPHONE_CHANNELS;
       /// Maximum number of object advertisements reported in a time step
       //static const size_t MAX_ADVERTISEMENTS_PER_TICK = 16;
 
@@ -184,11 +186,12 @@ namespace Anki
 /************************************************************************
  * \section Microphones
  */
+      typedef uint16_t MicSample;
       
       /** Decompresses microphone data from this tick into buffer.
        * @param[out] A buffer with space for AUDIO_DATA_PER_TICK to receive audio data.
        */ 
-      void GetMicrophoneData(u8* buffer);
+      void GetMicrophoneData(MicSample buffer[], int len);
 
 /************************************************************************
  * \section Audio 

@@ -30,7 +30,6 @@
 #define IMU_WORKING 1
 
 // Debugging Defines
-#define FRAMES_PER_RESPONSE  1  //send response every N input frames
 
 #define REALTIME_CONSOLE_OUTPUT 0 //Print status to console
 #define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
@@ -45,6 +44,14 @@
 #define SAVE_MOTOR_POWER(motor, power)
 #define CONSOLE_DATA(decl)
 #endif
+
+#define DUMP_MICROPHONE_DATA 0
+#if DUMP_MICROPHONE_DATA
+#define DUMP_MIC_DATA DumpMicData
+#else
+#define DUMP_MIC_DATA() //noop
+#endif
+
 
 namespace Anki {
   namespace Cozmo {
@@ -226,6 +233,29 @@ namespace Anki {
       return (bodyData_->motor[m].position - internalData_.motorOffset[m]) * HAL_MOTOR_POSITION_SCALE[m];
     }
 
+#ifdef DUMP_MIC_DATA
+    namespace HAL {
+    void DumpMicData(void) {
+      static FILE* fp = NULL;
+      static int samples_to_write = AUDIO_DATA_PER_TICK * TICKS_PER_SECOND * 5; //five sec of data
+      if (samples_to_write > 0) {
+        if (!fp) {
+          printf("Opening audio File \n");
+          fp  = fopen("audio.raw","w+");
+        }
+        fwrite(bodyData_->audio, sizeof(MicSample), AUDIO_DATA_PER_TICK, fp);
+        samples_to_write-= AUDIO_DATA_PER_TICK;
+      }
+      else if (fp) {
+        fclose(fp);
+        printf("Closed audio file \n");
+        fp = NULL;
+      }
+    }
+    }
+#endif
+    
+
     void PrintConsoleOutput(void)
     {
 #if REALTIME_CONSOLE_OUTPUT > 0
@@ -291,14 +321,11 @@ namespace Anki {
 
 #ifndef USING_ANDROID_PHONE
       {
-        static int repeater = FRAMES_PER_RESPONSE;
-        if (--repeater <= 0) {
-          repeater = FRAMES_PER_RESPONSE;
-          headData_.framecounter++;
-          hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
-        }
+        headData_.framecounter++;
+        hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         result =  GetSpineDataFrame();
         PrintConsoleOutput();
+        DUMP_MIC_DATA();
       }
 #endif
 
@@ -459,6 +486,11 @@ namespace Anki {
       audioReadyForFrame_ = false;
     }
 
+    void HAL::GetMicrophoneData(MicSample buffer[], int len)
+    {
+      assert(len >= AUDIO_DATA_PER_TICK);
+      memcpy(buffer, bodyData_->audio, AUDIO_DATA_PER_TICK*sizeof(MicSample));
+    }    
 
   } // namespace Cozmo
 } // namespace Anki
