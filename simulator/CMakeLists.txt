@@ -173,6 +173,7 @@ PRIVATE
   robot_interface
   webotsCtrlCommon
   victor_anim
+  robot_clad_cpplite
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )

@@ -497,7 +497,10 @@ namespace Cozmo {
               if (IsModeEnabled(VisionMode::ComputingCalibration)) {
                 PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
               } else {
+                Lock();
                 result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
+                Unlock();
+                
                 if(RESULT_OK != result) {
                   PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
                 }
@@ -1239,7 +1242,10 @@ namespace Cozmo {
 
   Result VisionComponent::UpdateComputedCalibration(const VisionProcessingResult& procResult)
   {
-    for(auto & calib : procResult.cameraCalibrations)
+    DEV_ASSERT((procResult.cameraCalibration.empty() || procResult.cameraCalibration.size() == 1),
+               "VisionComponent.UpdateComputedCalibration.UnexpectedNumCalibrations");
+    
+    for(auto & calib : procResult.cameraCalibration)
     {
       CameraCalibration msg;
       msg.center_x = calib.GetCenter_x();
@@ -1258,7 +1264,7 @@ namespace Cozmo {
       
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
-  
+    
     return RESULT_OK;
   }
   
@@ -1502,6 +1508,14 @@ namespace Cozmo {
         }
         break;
         
+      case 720:
+        if (captureWidth!=1280) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::HD;
+        }
+        break;
+
       case 360:
         if (captureWidth!=640) {
           result = RESULT_FAIL;
@@ -1509,7 +1523,6 @@ namespace Cozmo {
           m.resolution = ImageResolution::NHD;
         }
         break;
-
         
       default:
         result = RESULT_FAIL;
@@ -1585,7 +1598,11 @@ namespace Cozmo {
     }
     else
     {
-      return _visionSystem->ClearCalibrationImages();
+      Lock();
+      Result res = _visionSystem->ClearCalibrationImages();
+      Unlock();
+      
+      return res;
     }
   }
   
@@ -1594,7 +1611,7 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredCalibrationImages();
   }
   
-  Result VisionComponent::GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p)
+  Result VisionComponent::GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const
   {
     Result lastResult = RESULT_FAIL;
     
@@ -1622,7 +1639,7 @@ namespace Cozmo {
     return lastResult;
   }
   
-  std::list<std::vector<u8> > VisionComponent::GetCalibrationImageJpegData(u8* dotsFoundMask)
+  std::list<std::vector<u8> > VisionComponent::GetCalibrationImageJpegData(u8* dotsFoundMask) const
   {
     const auto& calibImages = _visionSystem->GetCalibrationImages();
     
@@ -2320,7 +2337,7 @@ namespace Cozmo {
   void VisionComponent::CaptureAndSendImage()
   {
     // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::NHD;
+    const ImageResolution expectedResolution = DEFAULT_IMAGE_RESOLUTION;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);

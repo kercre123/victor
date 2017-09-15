@@ -1,8 +1,6 @@
 #ifndef COZMO_CONFIG_H
 #define COZMO_CONFIG_H
 
-
-
 #ifdef COZMO_ROBOT
 #include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"
@@ -11,6 +9,7 @@
 #include "util/math/math.h"
 #endif
 
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -154,12 +153,17 @@ namespace Cozmo {
   
   /***************************************************************************
    *
-   *                          Camera Calibration
+   *                          Camera
    *
    **************************************************************************/
   
   const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
   
+#ifdef COZMO_V2
+  const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::NHD;
+#else
+  const ImageResolution DEFAULT_IMAGE_RESOLUTION = ImageResolution::QVGA;
+#endif
   
   /***************************************************************************
    *

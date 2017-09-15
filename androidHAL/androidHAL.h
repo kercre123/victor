@@ -145,7 +145,7 @@ namespace Anki
 #endif
       
       // Camera
-      ImageResolution _imageCaptureResolution = ImageResolution::NHD;
+      ImageResolution _imageCaptureResolution = DEFAULT_IMAGE_RESOLUTION;
       u32             _imageFrameID;
       
       

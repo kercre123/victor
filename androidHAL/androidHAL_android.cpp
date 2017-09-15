@@ -77,7 +77,7 @@ namespace Anki {
     , _looper(nullptr)
     , _androidCamera(nullptr)
     , _reader(nullptr)
-    , _imageCaptureResolution(ImageResolution::NHD)
+    , _imageCaptureResolution(DEFAULT_IMAGE_RESOLUTION)
     , _imageFrameID(1)
     {
       //InitIMU();

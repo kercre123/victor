@@ -266,6 +266,10 @@ resources/config/engine/firmware_*
 *.swo
 
 
+# victor envsetup.sh
+filelist
+
+
 # MSVC
 tools/**/bin
 tools/**/obj
