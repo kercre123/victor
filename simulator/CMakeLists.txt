@@ -75,6 +75,10 @@ PUBLIC
   ${PLATFORM_LIBS}
 )
 
+target_compile_definitions(webotsCtrlCommon
+PUBLIC
+  COZMO_V2
+)
 
 #
 # webots controller executables
@@ -150,7 +154,6 @@ PRIVATE
 target_compile_definitions(webotsCtrlRobot2 PRIVATE                                                       
   COZMO_ROBOT
   SIMULATOR
-  COZMO_V2
   _DEBUG
 )
 
@@ -180,7 +183,6 @@ PRIVATE
 
 target_compile_definitions(webotsCtrlAnim PRIVATE
   SIMULATOR
-  COZMO_V2
 )
 
 symlink_target(TARGET webotsCtrlAnim DST "${CONTROLLERS_DIR}/webotsCtrlAnim/")
@@ -209,7 +211,6 @@ PRIVATE
 
 target_compile_definitions(webotsCtrlGameEngine2 PRIVATE                                                       
   SIMULATOR
-  COZMO_V2
 )
 
 symlink_target(TARGET webotsCtrlGameEngine2 DST "${CONTROLLERS_DIR}/webotsCtrlGameEngine2/")

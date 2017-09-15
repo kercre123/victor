@@ -57,7 +57,7 @@ static const INIT_SCRIPT init_scr[] = {
 #define DIR_INPUT 0
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET 96
+#define GPIO_LCD_RESET 55
 
 
 typedef struct GPIO_t {
@@ -186,6 +186,12 @@ static void lcd_draw_frame(uint8_t* frame, int sz) {
 
 int lcd_init(void) {
   static const uint8_t    MODE = 0;
+
+  
+  // Echo to device to activate backlight
+  system("echo 10 > /sys/class/leds/face-backlight/brightness");
+  system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
+  
 
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, 1, 1);

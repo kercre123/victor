@@ -11,6 +11,7 @@
  **/
 
 #include "engine/components/touchSensorComponent.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -27,11 +28,21 @@ namespace Cozmo {
   
 namespace {
   const std::string kLogDirectory = "sensorData/touchSensor";
+  
+  const uint32_t kNumTouchSamples = 30;  // store touch data for ~1s
+                                    // sampled at 30ms update rate
+                                    // 1/0.030 ~ 30 samples
+  
+  const float kRobotTouchedMsgInterval_s = 0.75f;
+  
+  const float kTouchIntensityThreshold = 30000; // arbitrary
 } // end anonymous namespace
 
   
 TouchSensorComponent::TouchSensorComponent(Robot& robot)
   : _robot(robot)
+  , _touchIntensitySamples(kNumTouchSamples)
+  , _lastTimeSentRobotTouchMsg_s(0.0f)
   , _rawDataLogger(nullptr)
 {
 }
@@ -42,9 +53,28 @@ TouchSensorComponent::~TouchSensorComponent() = default;
   
 void TouchSensorComponent::Update(const RobotState& msg)
 {
-  _lastMsgTimestamp = msg.timestamp;
-
-  _latestData = msg.backpackTouchSensorRaw;
+  // a circular buffer maintains the last touch intensity values in some constant time window
+  _touchIntensitySamples.push_back(msg.backpackTouchSensorRaw);
+  
+  // not enough data to process touch data with
+  if(_touchIntensitySamples.size() < kNumTouchSamples) {
+    return;
+  }
+  
+  // compute the mean from the latest subset of touch samples
+  f32 meanTouchIntensity = 0.0;
+  for(int i=0; i<kNumTouchSamples; ++i) {
+    meanTouchIntensity += _touchIntensitySamples[i];
+  }
+  meanTouchIntensity /= kNumTouchSamples;
+  
+  bool isBeingTouched     = meanTouchIntensity > kTouchIntensityThreshold;
+  const auto now          = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool msgRateValid = (now-_lastTimeSentRobotTouchMsg_s)>kRobotTouchedMsgInterval_s;
+  if(isBeingTouched && msgRateValid) {
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotTouched()));
+    _lastTimeSentRobotTouchMsg_s = now;
+  }
   
   Log();
 }
@@ -108,8 +138,7 @@ void TouchSensorComponent::Log()
   
   // append new data to logger
   std::string str;
-  str += std::to_string(_lastMsgTimestamp)  + ", ";
-  str += std::to_string(_latestData)        + "\n";
+  // XXX(agm): figure out what to log
   _rawDataLogger->Write(str);
 }
 
