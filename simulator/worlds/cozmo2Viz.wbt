@@ -35,6 +35,7 @@ DEF CozmoViz_1 CozmoBot2 {
   vizMode TRUE
 }
 CozmoVizDisplay {
+  streamResolution "NHD"
 }
 WebotsKeyboardController{
   

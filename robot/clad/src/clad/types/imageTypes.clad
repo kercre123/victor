@@ -20,7 +20,9 @@ enum int_8 ImageResolution
   SXGA,      // 1280 x 960, technically SXGA-
   UXGA,      // 1600 x 1200
   QXGA,      // 2048 x 1536
-  QUXGA,     // 3200 x 2400  
+  QUXGA,     // 3200 x 2400
+  HD,        // 1280 x 720
+  NHD,       // 640 x 360
   ImageResolutionCount,
   ImageResolutionNone
 }
