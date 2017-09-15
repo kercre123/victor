@@ -553,8 +553,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
                                      (1.f - kMotionDetection_GroundCentroidPercentileX));
       
       // Move back to image coordinates from ROI coordinates
-      // casting is explicit
-      groundPlaneCentroid += boundingRect.GetTopLeft().CastTo<float>();
+      groundPlaneCentroid += boundingRect.GetTopLeft().CastTo<float>(); // casting is explicit
       
       /* Experimental: Try computing moments in an overhead warped view of the ratio image
        groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
