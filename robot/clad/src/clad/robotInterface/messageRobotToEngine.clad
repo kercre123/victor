@@ -4,6 +4,7 @@
  */
 
 
+#include "clad/audio/audioCallbackMessage.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotLogging.clad"
 #include "clad/types/imageTypes.clad"
@@ -21,6 +22,7 @@
 #include "clad/types/fwTestMessages.clad"
 #include "clad/types/factoryFWOnly.clad"
 #include "clad/types/cameraParams.clad"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -155,6 +157,12 @@ union RobotToEngine {
   BackpackButton             backpackButton         = 0xDB,
   EndOfMessage               endOfMessage           = 0xDC,
   IMUTemperature             imuTemperature         = 0xDD,
+
+  // V2 Audio
+  AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
+  AudioEngine::Multiplexer::AudioCallbackMarker   audioCallbackMarker   = 0xE1,
+  AudioEngine::Multiplexer::AudioCallbackComplete audioCallbackComplete = 0xE2,
+  AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
   WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,

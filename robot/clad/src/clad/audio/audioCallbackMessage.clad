@@ -5,25 +5,13 @@ namespace Anki {
 namespace AudioEngine {
 namespace Multiplexer {
 
-
-structure AudioCallbackDuration
+enum uint_8 CallbackType
 {
-  float_32  duration           = 0.0,
-  float_32  estimatedDuration  = 0.0,
-  uint_32   audioNodeId        = 0,
-  bool      isStreaming        = 0
-}
-
-structure AudioCallbackMarker
-{
-  uint_32 identifier  = 0,
-  uint_32 position    = 0,
-  string  labelTitle
-}
-
-structure AudioCallbackComplete
-{
-  Anki::AudioMetaData::GameEvent::GenericEvent eventType,
+  Invalid = 0,
+  Duration,
+  Marker,
+  Complete,
+  Error
 }
 
 enum uint_8 CallbackErrorType
@@ -33,24 +21,35 @@ enum uint_8 CallbackErrorType
   Starvation
 }
 
-structure AudioCallbackError
+message AudioCallbackDuration
 {
+  float_32  duration           = 0.0,
+  float_32  estimatedDuration  = 0.0,
+  uint_32   audioNodeId        = 0,
+  uint_16 callbackId           = 0,
+  bool      isStreaming        = 0
+}
+
+message AudioCallbackMarker
+{
+  uint_32 identifier  = 0,
+  uint_32 position    = 0,
+  uint_16 callbackId  = 0,
+  string  labelTitle
+}
+
+message AudioCallbackComplete
+{
+  Anki::AudioMetaData::GameEvent::GenericEvent eventType,
+  uint_16 callbackId = 0,
+}
+
+message AudioCallbackError
+{
+  uint_16 callbackId = 0,
   CallbackErrorType callbackError,
 }
 
-union AudioCallbackInfo
-{
-  AudioCallbackDuration   callbackDuration,
-  AudioCallbackMarker     callbackMarker,
-  AudioCallbackComplete   callbackComplete,
-  AudioCallbackError      callbackError,
-}
-
-message AudioCallback
-{
-  uint_16 callbackId = 0,
-  AudioCallbackInfo callbackInfo,
-}
 
 } // Multiplexer
 } // AudioEngine

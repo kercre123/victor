@@ -16,7 +16,6 @@
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/activities/activityStrategies/activityStrategyFactory.h"
 #include "engine/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"

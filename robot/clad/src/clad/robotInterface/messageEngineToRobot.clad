@@ -5,6 +5,7 @@
  * lockstep because of strict tag space partitioning.
  */
 
+#include "clad/audio/audioMessage.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/ledTypes.clad"
@@ -557,6 +558,13 @@ union EngineToRobot
   SetAudioVolume                setAudioVolume              = 0x64,
   GenerateTestTone              generateTestTone            = 0x65,
   EnableColorImages             enableColorImages           = 0x66,
+
+  // V2 Audio
+  AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
+  AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
+  AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
+  AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
+  AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   // 0x80 to 0xAF: To WiFi in V1. To Anim Process in V2
   RequestCrashReports           requestCrashReports         = 0x80,

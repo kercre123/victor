@@ -22,7 +22,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
-//#include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioEventTypes.h"
 #include "util/random/randomGenerator.h"
 #include "json/json-forwards.h"
 
@@ -197,16 +197,16 @@ namespace Cozmo {
   public:
     
     struct AudioRef {
-      //AudioMetaData::GameEvent::GenericEvent audioEvent;
+      AudioMetaData::GameEvent::GenericEvent audioEvent;
       float volume;
       float probability;   // random play weight
       bool audioAlts; // The audio event has altrnate or random audio track playback, avoid replaying event
       
-      AudioRef( //AudioMetaData::GameEvent::GenericEvent audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid,
+      AudioRef( AudioMetaData::GameEvent::GenericEvent audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid,
                 float volume      = 1.0f,
                 float probability = 1.0f,
                 bool audioAlts    = false )
-      : //audioEvent( audioEvent ),
+      : audioEvent( audioEvent ),
         volume( volume )
       , probability( probability )
       , audioAlts( audioAlts ) {};

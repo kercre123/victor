@@ -23,6 +23,7 @@
 #include "util/helpers/templateHelpers.h"
 #include <limits>
 
+// TODO: JIRA VIC-23 - Migrate Text to Speech component to Victor
 
 namespace Anki {
 namespace Util {

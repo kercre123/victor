@@ -52,8 +52,8 @@ message PostAudioParameter
 message PostAudioMusicState
 {
   Anki::AudioMetaData::GameState::GenericState  stateValue,
-  bool                                          interrupt                 = 0,
   uint_32                                       minDurationInMilliSeconds = 0,
+  bool                                          interrupt                 = 0,
 }
 
 } // Multiplexer
