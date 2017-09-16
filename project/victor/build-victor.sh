@@ -186,7 +186,7 @@ if [ $CONFIGURE -eq 1 ]; then
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=1
-            -DANDROID_NDK=${HOME}/.anki/android/ndk-repository/android-ndk-r15b
+            -DANDROID_NDK=${ANDROID_NDK_ROOT}
             -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/android.toolchain.patched.cmake"
             -DANDROID_TOOLCHAIN_NAME=clang
             -DANDROID_ABI='armeabi-v7a with NEON'
