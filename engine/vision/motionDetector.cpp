@@ -97,7 +97,8 @@ public:
                       float increaseFactor, float decreaseFactor, float maxValue) :
       _topID(increaseFactor, decreaseFactor, maxValue),
       _leftID(increaseFactor, decreaseFactor, maxValue),
-      _rightID(increaseFactor, decreaseFactor, maxValue)
+      _rightID(increaseFactor, decreaseFactor, maxValue),
+      _maxValue(maxValue)
   {
     DEV_ASSERT(horizontalSize <= 0.5, "MotionDetector::ImageRegionSelector: horizontal size has to be less then half"
                                       "of the image");
@@ -110,40 +111,48 @@ public:
 
   }
 
-  float getTopResponse() const
+  float GetTopResponse() const
   {
     return _topID.Value();
   }
-  float getLeftResponse() const
+  float GetLeftResponse() const
   {
     return _leftID.Value();
   }
-  float getRightResponse() const
+  float GetRightResponse() const
   {
     return _rightID.Value();
   }
 
-  Anki::Point2f getTopResponseCentroid() const {
+  bool IsTopActivated() const {
+    return GetTopResponse() >= _maxValue;
+  }
+  bool IsRightActivated() const {
+    return GetRightResponse() >= _maxValue;
+  }
+  bool IsLeftActivated() const {
+    return GetLeftResponse() >= _maxValue;
+  }
+
+  Anki::Point2f GetTopResponseCentroid() const {
     return _topCentroid;
   }
-  Anki::Point2f getLeftResponseCentroid() const {
+  Anki::Point2f GetLeftResponseCentroid() const {
     return _leftCentroid;
   }
-  Anki::Point2f getRightResponseCentroid() const {
+  Anki::Point2f GetRightResponseCentroid() const {
     return _rightCentroid;
   }
-  float getLeftMargin() const {
+
+  float GetLeftMargin() const {
     return _leftMargin;
   }
-
-  float getRightMargin() const {
+  float GetRightMargin() const {
     return _rightMargin;
   }
-
-  float getUpperMargin() const {
+  float GetUpperMargin() const {
     return _upperMargin;
   }
-
 
   void Update(const Anki::Point2f &point,
               float value)
@@ -252,6 +261,7 @@ private:
   Anki::Point2f _leftCentroid  = Anki::Point2f(-1, -1);
   Anki::Point2f _rightCentroid = Anki::Point2f(-1, -1);
   const float _alpha = 0.6;
+  float _maxValue;
 };
 
 static const char * const kLogChannelName = "VisionSystem";
@@ -408,6 +418,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
                                     DebugImageList<Vision::ImageRGB>& debugImageRGBs)
 {
 
+  // Create the ImageRegionSelector. It has to be done here since the image size is not known before
   if (_regionSelector == nullptr) {
 
     // Helper macro to try to get the specified field and store it in the given variable
@@ -455,45 +466,24 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
      !crntPoseData.histState.WasCameraMoving() &&
      longEnoughSinceLastMotion)
   {
+    // Save timestamp and prepare the msg
+    _lastMotionTime = image.GetTimestamp();
+    ExternalInterface::RobotObservedMotion msg;
+    msg.timestamp = image.GetTimestamp();
+
     // Remove noise here before motion detection
-    const cv::Mat& imageCV = image.get_CvMat_();
-    cv::GaussianBlur(imageCV, imageCV,
-                     cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
+    Vision::Image foregroundMotion(image.GetNumRows(), image.GetNumCols());
     blurHappened = true;
 
-    // If the previous image hadn't been blurred before, do it now
-    if (std::is_same<ImageType, Vision::Image>::value) {
-      if (!_wasPrevImageGrayBlurred) {
-        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
-                      "Blurring the previous image Grey");
-        cv::GaussianBlur(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(),
-                         cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
-      }
-    }
-    else if (std::is_same<ImageType, Vision::ImageRGB>::value) {
-      if (!_wasPrevImageRGBBlurred) {
-        cv::GaussianBlur(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(),
-                         cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
-        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
-                      "Blurring the previous image RGB");
-      }
-    }
-    else {
-      PRINT_NAMED_ERROR("MotionDetector.DetectMotion.FoundCentroid",
-                        "Not know type for image???");
-    }
-
-    Vision::Image foregroundMotion(image.GetNumRows(), image.GetNumCols());
-    s32 numAboveThresh = RatioTest(image, foregroundMotion);
+    // Main method for motion detection
+    s32 numAboveThresh = preprocessRatioImage(image, foregroundMotion);
 
     // Run the peripheral motion detection
-    // TODO get the result here and use it!
-    DetectPeripheralMotion(foregroundMotion, debugImageRGBs);
-
-    // Remove noise
-    // Not necessary anymore, doing Gaussian blur above
-//    static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
-//    cv::morphologyEx(foregroundMotion.get_CvMat_(), foregroundMotion.get_CvMat_(), cv::MORPH_OPEN, kernel);
+    Result peripheralMotionResult = DetectPeripheralMotion(foregroundMotion, debugImageRGBs, msg, scaleMultiplier);
+    if (peripheralMotionResult != RESULT_OK) {
+      //something went very wrong here, bail out
+      return peripheralMotionResult;
+    }
     
     Point2f centroid(0.f,0.f); // Not Embedded::
     Point2f groundPlaneCentroid(0.f,0.f);
@@ -510,116 +500,11 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     // Get centroid of all the motion within the ground plane, if we have one to reason about
     if(crntPoseData.groundPlaneVisible && prevPoseData.groundPlaneVisible)
     {
-      Quad2f imgQuad;
-      crntPoseData.groundPlaneROI.GetImageQuad(crntPoseData.groundPlaneHomography, origNumCols, origNumRows, imgQuad);
-      
-      imgQuad *= 1.f / scaleMultiplier;
-      
-      Rectangle<s32> boundingRect(imgQuad);
-      Vision::Image groundPlaneForegroundMotion;
-      foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
-      
-      // Zero out everything in the ratio image that's not inside the ground plane quad
-      imgQuad -= boundingRect.GetTopLeft().CastTo<float>();
-      
-      Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
-                         groundPlaneForegroundMotion.GetNumCols());
-      mask.FillWith(0);
-      cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
-        imgQuad[Quad::CornerName::TopLeft].get_CvPoint_(),
-        imgQuad[Quad::CornerName::TopRight].get_CvPoint_(),
-        imgQuad[Quad::CornerName::BottomRight].get_CvPoint_(),
-        imgQuad[Quad::CornerName::BottomLeft].get_CvPoint_(),
-      }, 255);
-      
-      for(s32 i=0; i<mask.GetNumRows(); ++i) {
-        const u8* maskData_i = mask.GetRow(i);
-        u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
-        for(s32 j=0; j<mask.GetNumCols(); ++j) {
-          if(maskData_i[j] == 0) {
-            fgMotionData_i[j] = 0;
-          }
-        }
-      }
-      
-      // Find centroid of motion inside the ground plane
-      // NOTE!! We swap X and Y for the percentiles because the ground centroid
-      //        gets mapped to the ground plane in robot coordinates later, but
-      //        small x on the ground corresponds to large y in the *image*, where
-      //        the centroid is actually being computed here.
-      groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
-                                     groundPlaneCentroid,
-                                     kMotionDetection_GroundCentroidPercentileY,
-                                     (1.f - kMotionDetection_GroundCentroidPercentileX));
-      
-      // Move back to image coordinates from ROI coordinates
-      groundPlaneCentroid += boundingRect.GetTopLeft().CastTo<float>(); // casting is explicit
-      
-      /* Experimental: Try computing moments in an overhead warped view of the ratio image
-       groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
-       
-       cv::Moments moments = cv::moments(groundPlaneRatioImg.get_CvMat_(), true);
-       if(moments.m00 > 0) {
-       groundMotionAreaFraction = moments.m00 / static_cast<f32>(groundPlaneRatioImg.GetNumElements());
-       groundPlaneCentroid.x() = moments.m10 / moments.m00;
-       groundPlaneCentroid.y() = moments.m01 / moments.m00;
-       groundPlaneCentroid += _poseData.groundPlaneROI.GetOverheadImageOrigin();
-       
-       // TODO: return other moments?
-       }
-       */
-      
-      if(groundRegionArea > 0.f)
-      {
-        // Switch centroid back to original resolution, since that's where the
-        // homography information is valid
-        groundPlaneCentroid *= scaleMultiplier;
-        
-        // Make ground region area into a fraction of the ground ROI area
-        const f32 imgQuadArea = imgQuad.ComputeArea();
-        DEV_ASSERT(Util::IsFltGTZero(imgQuadArea), "MotionDetector.Detect.QuadWithZeroArea");
-        groundRegionArea /= imgQuadArea;
-        
-        // Map the centroid onto the ground plane, by doing inv(H) * centroid
-        Point3f homographyMappedPoint; // In homogenous coordinates
-        Result solveResult = LeastSquares(crntPoseData.groundPlaneHomography,
-                                          Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f},
-                                          homographyMappedPoint);
-        if(RESULT_OK != solveResult) {
-          PRINT_NAMED_WARNING("MotionDetector.DetectMotion.LeastSquaresFailed",
-                              "Failed to project centroid (%.1f,%.1f) to ground plane",
-                              groundPlaneCentroid.x(), groundPlaneCentroid.y());
-          // Don't report this centroid
-          groundRegionArea = 0.f;
-          groundPlaneCentroid = 0.f;
-        } else if(homographyMappedPoint.z() <= 0.f) {
-          PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadProjectedZ",
-                              "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
-                              homographyMappedPoint.z(), RAD_TO_DEG(crntPoseData.histState.GetHeadAngle_rad()));
-          // Don't report this centroid
-          groundRegionArea = 0.f;
-          groundPlaneCentroid = 0.f;
-        } else {
-          const f32 divisor = 1.f/homographyMappedPoint.z();
-          groundPlaneCentroid.x() = homographyMappedPoint.x() * divisor;
-          groundPlaneCentroid.y() = homographyMappedPoint.y() * divisor;
-          
-          // This is just a sanity check that the centroid is reasonable
-          if(ANKI_DEVELOPER_CODE)
-          {
-            // Scale ground quad slightly to account for numerical inaccuracy.
-            // Centroid just needs to be very nearly inside the ground quad.
-            Quad2f testQuad(crntPoseData.groundPlaneROI.GetGroundQuad());
-            testQuad.Scale(1.01f); // Allow for 1% error
-            if(!testQuad.Contains(groundPlaneCentroid)) {
-              PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadGroundPlaneCentroid",
-                                  "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
-            }
-          }
-        }
-      }
-    } // if(groundPlaneVisible)
-    
+      extractGroundPlaneMotion(origNumRows, origNumCols, scaleMultiplier, crntPoseData,
+                               foregroundMotion, centroid, groundPlaneCentroid, groundRegionArea);
+    }
+
+    // If there's motion either in the image or in the ground area
     if(imgRegionArea > 0 || groundRegionArea > 0.f)
     {
       if(DEBUG_MOTION_DETECTION)
@@ -637,11 +522,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
         _vizManager->DrawCameraOval(centroid * scaleMultiplier, radius, radius, NamedColors::YELLOW);
       }
       
-      _lastMotionTime = image.GetTimestamp();
-      
-      ExternalInterface::RobotObservedMotion msg;
-      msg.timestamp = image.GetTimestamp();
-      
+
       if(imgRegionArea > 0)
       {
         DEV_ASSERT(centroid.x() >= 0.f && centroid.x() <= image.GetNumCols() &&
@@ -720,10 +601,160 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
   
   return RESULT_OK;
   
+}
+
+void MotionDetector::extractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
+                                              const VisionPoseData &crntPoseData,
+                                              const Vision::Image &foregroundMotion,
+                                              const Point2f &centroid,
+                                              Point2f &groundPlaneCentroid, f32 &groundRegionArea) const
+{
+  Quad2f imgQuad;
+  crntPoseData.groundPlaneROI.GetImageQuad(crntPoseData.groundPlaneHomography, origNumCols, origNumRows, imgQuad);
+
+  imgQuad *= 1.f / scaleMultiplier;
+
+  Rectangle<s32> boundingRect(imgQuad);
+  Vision::Image groundPlaneForegroundMotion;
+  foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
+
+  // Zero out everything in the ratio image that's not inside the ground plane quad
+  imgQuad -= boundingRect.GetTopLeft().CastTo<float>();
+
+  Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
+                     groundPlaneForegroundMotion.GetNumCols());
+  mask.FillWith(0);
+  fillConvexPoly(mask.get_CvMat_(), std::__1::vector<cv::Point>{
+        imgQuad[Quad::TopLeft].get_CvPoint_(),
+        imgQuad[Quad::TopRight].get_CvPoint_(),
+        imgQuad[Quad::BottomRight].get_CvPoint_(),
+        imgQuad[Quad::BottomLeft].get_CvPoint_(),
+      }, 255);
+
+  for(s32 i=0; i<mask.GetNumRows(); ++i) {
+        const u8* maskData_i = mask.GetRow(i);
+        u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
+        for(s32 j=0; j<mask.GetNumCols(); ++j) {
+          if(maskData_i[j] == 0) {
+            fgMotionData_i[j] = 0;
+          }
+        }
+      }
+
+  // Find centroid of motion inside the ground plane
+  // NOTE!! We swap X and Y for the percentiles because the ground centroid
+  //        gets mapped to the ground plane in robot coordinates later, but
+  //        small x on the ground corresponds to large y in the *image*, where
+  //        the centroid is actually being computed here.
+  groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
+                                     groundPlaneCentroid,
+                                     kMotionDetection_GroundCentroidPercentileY,
+                                     (1.f - kMotionDetection_GroundCentroidPercentileX));
+
+  // Move back to image coordinates from ROI coordinates
+  groundPlaneCentroid += boundingRect.GetTopLeft().CastTo<float>(); // casting is explicit
+
+  /* Experimental: Try computing moments in an overhead warped view of the ratio image
+   groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
+
+   cv::Moments moments = cv::moments(groundPlaneRatioImg.get_CvMat_(), true);
+   if(moments.m00 > 0) {
+   groundMotionAreaFraction = moments.m00 / static_cast<f32>(groundPlaneRatioImg.GetNumElements());
+   groundPlaneCentroid.x() = moments.m10 / moments.m00;
+   groundPlaneCentroid.y() = moments.m01 / moments.m00;
+   groundPlaneCentroid += _poseData.groundPlaneROI.GetOverheadImageOrigin();
+
+   // TODO: return other moments?
+   }
+   */
+
+  if(groundRegionArea > 0.f)
+      {
+        // Switch centroid back to original resolution, since that's where the
+        // homography information is valid
+        groundPlaneCentroid *= scaleMultiplier;
+
+        // Make ground region area into a fraction of the ground ROI area
+        const f32 imgQuadArea = imgQuad.ComputeArea();
+        DEV_ASSERT(Util::IsFltGTZero(imgQuadArea), "MotionDetector.Detect.QuadWithZeroArea");
+        groundRegionArea /= imgQuadArea;
+
+        // Map the centroid onto the ground plane, by doing inv(H) * centroid
+        Point3f homographyMappedPoint; // In homogenous coordinates
+        Result solveResult = LeastSquares(crntPoseData.groundPlaneHomography,
+                                          Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f},
+                                          homographyMappedPoint);
+        if(RESULT_OK != solveResult) {
+          PRINT_NAMED_WARNING("MotionDetector.DetectMotion.LeastSquaresFailed",
+                              "Failed to project centroid (%.1f,%.1f) to ground plane",
+                              groundPlaneCentroid.x(), groundPlaneCentroid.y());
+          // Don't report this centroid
+          groundRegionArea = 0.f;
+          groundPlaneCentroid = 0.f;
+        } else if(homographyMappedPoint.z() <= 0.f) {
+          PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadProjectedZ",
+                              "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
+                              homographyMappedPoint.z(), RAD_TO_DEG(crntPoseData.histState.GetHeadAngle_rad()));
+          // Don't report this centroid
+          groundRegionArea = 0.f;
+          groundPlaneCentroid = 0.f;
+        } else {
+          const f32 divisor = 1.f/homographyMappedPoint.z();
+          groundPlaneCentroid.x() = homographyMappedPoint.x() * divisor;
+          groundPlaneCentroid.y() = homographyMappedPoint.y() * divisor;
+
+          // This is just a sanity check that the centroid is reasonable
+          if(ANKI_DEVELOPER_CODE)
+          {
+            // Scale ground quad slightly to account for numerical inaccuracy.
+            // Centroid just needs to be very nearly inside the ground quad.
+            Quad2f testQuad(crntPoseData.groundPlaneROI.GetGroundQuad());
+            testQuad.Scale(1.01f); // Allow for 1% error
+            if(!testQuad.Contains(groundPlaneCentroid)) {
+              PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadGroundPlaneCentroid",
+                                  "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
+            }
+          }
+        }
+      }
+}
+
+template<class ImageType>
+s32 MotionDetector::preprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion) {
+  const cv::Mat& imageCV = image.get_CvMat_();
+  GaussianBlur(imageCV, imageCV,
+               cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
+
+
+  // If the previous image hadn't been blurred before, do it now
+  if (std::is_same<ImageType, Vision::Image>::value) {
+    if (!_wasPrevImageGrayBlurred) {
+        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                      "Blurring the previous image Grey");
+        GaussianBlur(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(),
+                     cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
+      }
+    }
+  else if (std::is_same<ImageType, Vision::ImageRGB>::value) {
+    if (!_wasPrevImageRGBBlurred) {
+        GaussianBlur(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(),
+                     cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
+        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                      "Blurring the previous image RGB");
+      }
+    }
+    else {
+      PRINT_NAMED_ERROR("MotionDetector.DetectMotion.FoundCentroid",
+                        "Not know type for image???");
+    }
+
+  s32 numAboveThresh = RatioTest(image, foregroundMotion);
+  return numAboveThresh;
 } // Detect()
 
 Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
-                                              DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs) {
+                                              DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
+                                              ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier) {
 
   // The image has several disjoint components, try to join them
 
@@ -751,6 +782,55 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
   if (! updated)
     _regionSelector->Decay();
 
+  // Filling the message
+  {
+    // top
+    if (_regionSelector->IsTopActivated())
+    {
+      float value = _regionSelector->GetTopResponse();
+      Anki::Point2f centroid = _regionSelector->GetTopResponseCentroid();
+      msg.top_img_area = value; //not really the area here, but the response value
+      msg.top_img_x = int16_t(centroid.x() * scaleMultiplier);
+      msg.top_img_y = int16_t(centroid.y() * scaleMultiplier);
+    }
+    else
+    {
+      msg.top_img_area = 0;
+      msg.top_img_x = 0;
+      msg.top_img_y = 0;
+    }
+    // left
+    if (_regionSelector->IsLeftActivated())
+    {
+      float value = _regionSelector->GetLeftResponse();
+      Anki::Point2f centroid = _regionSelector->GetLeftResponseCentroid();
+      msg.left_img_area = value; //not really the area here, but the response value
+      msg.left_img_x = int16_t(centroid.x() * scaleMultiplier);
+      msg.left_img_y = int16_t(centroid.y() * scaleMultiplier);
+    }
+    else
+    {
+      msg.left_img_area = 0;
+      msg.left_img_x = 0;
+      msg.left_img_y = 0;
+    }
+    // right
+    if (_regionSelector->IsRightActivated())
+    {
+      float value = _regionSelector->GetRightResponse();
+      Anki::Point2f centroid = _regionSelector->GetRightResponseCentroid();
+      msg.right_img_area = value; //not really the area here, but the response value
+      msg.right_img_x = int16_t(centroid.x() * scaleMultiplier);
+      msg.right_img_y = int16_t(centroid.y() * scaleMultiplier);
+    }
+    else
+    {
+      msg.right_img_area = 0;
+      msg.right_img_x = 0;
+      msg.right_img_y = 0;
+    }
+  }
+
   if (DEBUG_MOTION_DETECTION) {
     Vision::ImageRGB imageToDisplay(inputImage);
     // Draw the text
@@ -763,19 +843,19 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
 
       float scale = 0.5;
       {
-        float value = _regionSelector->getTopResponse();
+        float value = _regionSelector->GetTopResponse();
         std::string text = to_string_with_precision(value, 3);
         Anki::Point2f origin(imageToDisplay.GetNumCols()/2 - 10, 30);
         imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
       {
-        float value = _regionSelector->getRightResponse();
+        float value = _regionSelector->GetRightResponse();
         std::string text = to_string_with_precision(value, 3);
         Anki::Point2f origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
         imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
       {
-        float value = _regionSelector->getLeftResponse();
+        float value = _regionSelector->GetLeftResponse();
         std::string text = to_string_with_precision(value, 3);
         Anki::Point2f origin(10, imageToDisplay.GetNumRows()/2);
         imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
@@ -785,35 +865,35 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
     // Draw the bounding lines
     { // Top line
       int thickness = 1;
-      Anki::Point2f topLeft(0, _regionSelector->getUpperMargin());
-      Anki::Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->getUpperMargin());
+      Anki::Point2f topLeft(0, _regionSelector->GetUpperMargin());
+      Anki::Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetUpperMargin());
       imageToDisplay.DrawLine(topLeft, topRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
     { // Left line
       int thickness = 1;
-      Anki::Point2f topLeft(_regionSelector->getLeftMargin(), 0);
-      Anki::Point2f bottomLeft(_regionSelector->getLeftMargin(), imageToDisplay.GetNumRows());
+      Anki::Point2f topLeft(_regionSelector->GetLeftMargin(), 0);
+      Anki::Point2f bottomLeft(_regionSelector->GetLeftMargin(), imageToDisplay.GetNumRows());
       imageToDisplay.DrawLine(topLeft, bottomLeft, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
     { // Right line
       int thickness = 1;
-      Anki::Point2f topRight(_regionSelector->getRightMargin(), 0);
-      Anki::Point2f BottomRight(_regionSelector->getRightMargin(), imageToDisplay.GetNumCols());
+      Anki::Point2f topRight(_regionSelector->GetRightMargin(), 0);
+      Anki::Point2f BottomRight(_regionSelector->GetRightMargin(), imageToDisplay.GetNumCols());
       imageToDisplay.DrawLine(topRight, BottomRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
 
     //Draw the motion centroids
     {
       {
-        Anki::Point2f centroid = _regionSelector->getTopResponseCentroid();
+        Anki::Point2f centroid = _regionSelector->GetTopResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
       {
-        Anki::Point2f centroid = _regionSelector->getLeftResponseCentroid();
+        Anki::Point2f centroid = _regionSelector->GetLeftResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
       {
-        Anki::Point2f centroid = _regionSelector->getRightResponseCentroid();
+        Anki::Point2f centroid = _regionSelector->GetRightResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
     }

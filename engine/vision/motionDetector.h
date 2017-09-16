@@ -69,7 +69,17 @@ private:
                       DebugImageList<Vision::ImageRGB>& debugImageRGBs);
 
   Result DetectPeripheralMotion(const Vision::Image &inputImage,
-                                DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs);
+                                  DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
+                                  ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier);
+
+  template<class ImageType>
+  s32 preprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion);
+  void extractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
+                                const VisionPoseData &crntPoseData,
+                                const Vision::Image &foregroundMotion,
+                                const Point2f &centroid,
+                                Point2f &groundPlaneCentroid,
+                                f32 &groundRegionArea) const;
 
   // Returns the number of times the ratio between the pixels in image and the pixels
   // in the previous image is above a threshold. The corresponding pixels in ratio12
@@ -100,7 +110,7 @@ private:
   VizManager*   _vizManager = nullptr;
 
   const Json::Value& _config;
-  
+
 };
   
 } // namespace Cozmo
