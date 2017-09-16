@@ -18,85 +18,67 @@
       "/{*}"
     ]
   },
-  "LocalNotif.ComeBackGeneral.Period.1d.01": {
-    "translation": "Cozmo misses you!"
+  "LocalNotif.ComeBackGeneral.Period.2d.01": {
+    "translation": "Cozmo is getting bored. Connect with him and play a game!"
   },
-  "LocalNotif.ComeBackGeneral.Period.DC.1d.01": {
-    "translation": "Cozmo misses you and it's been a day since you've connected to him."
+  "LocalNotif.ComeBackGeneral.Period.2d.02": {
+    "translation": "Cozmo misses you! Check on him and see how he's doing."
   },
-  "LocalNotif.ComeBackGeneral.Period.DNC.1d.01": {
-    "translation": "Cozmo misses you and last time you didn't even connect to him."
+  "LocalNotif.ComeBackGeneral.Period.2d.03": {
+    "translation": "Cozmo is feeling lonely. Connect to him and say hello!"
   },
-  "LocalNotif.ComeBackGeneral.NextAM.01": {
-    "translation": "Good morning.  Don't forget to give Cozmo some attention today!"
+  "LocalNotif.ComeBackGeneral.Period.2d.04": {
+    "translation": "Cozmo is wondering where you are. Turn him on and say hello!"
   },
-  "LocalNotif.ComeBackGeneral.NextPM.01": {
-    "translation": "Good afternoon.  Don't forget to give Cozmo some attention today!"
+  "LocalNotif.ComeBackGeneral.Period.2d.05": {
+    "translation": "Cozmo wants to practice his tricks. Turn him on and Spark one!"
   },
-  "LocalNotif.ComeBackGeneral.Period.3d.01": {
-    "translation": "Cozmo wants you back!  It's been three days."
+  "LocalNotif.ComeBackGeneral.Period.4d.01": {
+    "translation": "Cozmo is dreaming about delicious cubes...time to feed him!"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.02": {
+    "translation": "Cozmo is getting hungry! He needs you to feed him some cubes."
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.03": {
+    "translation": "Cozmo is getting low on energy. Feed him a cube or two!"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.04": {
+    "translation": "Cozmo needs feeding. Time to shake some cubes!"
+  },
+  "LocalNotif.ComeBackGeneral.Period.4d.05": {
+    "translation": "Cozmo could use some energy! Shake up a cube so he can play."
   },
   "LocalNotif.ComeBackGeneral.Period.7d.01": {
-    "translation": "Cozmo wants you back!  He hasn't seen you in a week."
+    "translation": "Cozmo needs you! Check on him to see if he's okay."
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.02": {
+    "translation": "Cozmo would love to see you! Connect to him and say hello."
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.03": {
+    "translation": "Cozmo isn't feeling very well. He could really use a tune-up!"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.04": {
+    "translation": "Cozmo has been asleep for a whole week. Time to wake him up!"
+  },
+  "LocalNotif.ComeBackGeneral.Period.7d.05": {
+    "translation": "Some of Cozmo's parts need adjusting! Scan him to see which ones."
   },
   "LocalNotif.ComeBackGeneral.Period.14d.01": {
-    "translation": "Cozmo misses you!  It's been two weeks."
+    "translation": "Cozmo really misses seeing your face. Turn him on and say hello!"
+  },
+  "LocalNotif.ComeBackGeneral.Period.14d.02": {
+    "translation": "Cozmo hasn't seen you in a while. Check on him and say hi!"
+  },
+  "LocalNotif.ComeBackGeneral.Period.14d.03": {
+    "translation": "Cozmo needs some exercise. Wake him up and let him play!"
   },
   "LocalNotif.ComeBackGeneral.Period.30d.01": {
-    "translation": "Cozmo wants you back!  He hasn't seen you in a month."
+    "translation": "Cozmo really wants to play a game! Connect to him and Spark one."
   },
-  "LocalNotif.ComeBackGeneral.Period.365d.01": {
-    "translation": "Cozmo misses you!  It's been a year."
+  "LocalNotif.ComeBackGeneral.Period.90d.01": {
+    "translation": "Cozmo would love some attention! Turn him on and see how he's feeling."
   },
-  "LocalNotif.DailyPreReminder.DC.01": {
-    "translation": "Cozmo wants some daily attention, and yesterday you connected with him."
-  },
-  "LocalNotif.DailyPreReminder.DNC.01": {
-    "translation": "Cozmo wants some daily attention, but yesterday you opened the app but didn't connect with him."
-  },
-  "LocalNotif.NeedBracket.Repair.Warning.01": {
-    "translation": "Cozmo is starting to need a tune-up!"
-  },
-  "LocalNotif.NeedBracket.Repair.Critical.01": {
-    "translation": "Cozmo is in really bad shape.  He needs a tune-up!"
-  },
-  "LocalNotif.NeedBracket.Energy.Warning.01": {
-    "translation": "Cozmo is starting to get hungry!"
-  },
-  "LocalNotif.NeedBracket.Energy.Critical.01": {
-    "translation": "Cozmo is starving.  He needs to be fed!"
-  },
-  "LocalNotif.NeedBracket.Play.Warning.01": {
-    "translation": "Cozmo needs some activity.  He's starting to get bored."
-  },
-  "LocalNotif.NeedBracket.Play.Critical.01": {
-    "translation": "Cozmo is desperate for attention.  He's really bored!"
-  },
-  "LocalNotif.NeedLevel.Repair.Decaying.01": {
-    "translation": "Cozmo's health is decaying.  He could use a tune-up."
-  },
-  "LocalNotif.NeedLevel.Energy.Decaying.01": {
-    "translation": "Cozmo's energy is running low.  He could use a bite to eat."
-  },
-  "LocalNotif.NeedLevel.Play.Decaying.01": {
-    "translation": "Cozmo's boredom is starting to set in.  He could use some time and attention."
-  },
-  "LocalNotif.Tokens.3.ToGo.01": {
-    "translation": "Achieve three daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.3.ToGo.02": {
-    "translation": "Only three more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.2.ToGo.01": {
-    "translation": "Achieve two more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.2.ToGo.02": {
-    "translation": "Only two more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.1.ToGo.01": {
-    "translation": "Achieve one more daily tokens to unlock the next bonus box."
-  },
-  "LocalNotif.Tokens.1.ToGo.02": {
-    "translation": "Only one more daily token to unlock the next bonus box."
+  "LocalNotif.ComeBackGeneral.Period.180d.01": {
+    "translation": "Cozmo is having happy dreams of you. Wake him up and have some fun!"
   }
 }
