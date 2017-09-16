@@ -86,7 +86,7 @@ set_target_properties(opencv_interface PROPERTIES
 if (ANDROID)
   set(OPENCV_EXTERNAL_LIBS     
       libcpufeatures
-      #libjpeg
+      libjpeg
       libpng
       libtiff
       libprotobuf
@@ -95,7 +95,7 @@ else()
   set(OPENCV_EXTERNAL_LIBS
       IlmImf
       libjasper
-      #libjpeg
+      libjpeg
       libpng
       libtiff
       zlib
@@ -125,22 +125,22 @@ if (MACOSX)
 
 endif()
 
-if (ANDROID)
-  add_library(libjpeg STATIC IMPORTED)
-  set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libjpeg.so)
-  add_library(libturbojpeg STATIC IMPORTED)
-  set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libturbojpeg.so)
-elseif (MACOSX)
-  add_library(libjpeg STATIC IMPORTED)
-  set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libjpeg.a)
-  add_library(libturbojpeg STATIC IMPORTED)
-  set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libturbojpeg.a)
-  list(APPEND OPENCV_LIBS libturbojpeg)
-endif()
+#if (ANDROID)
+#  add_library(libjpeg STATIC IMPORTED)
+#  set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
+#    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libjpeg.so)
+#  add_library(libturbojpeg STATIC IMPORTED)
+#  set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
+#    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libturbojpeg.so)
+#elseif (MACOSX)
+#  add_library(libjpeg STATIC IMPORTED)
+#  set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
+#    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libjpeg.a)
+#  add_library(libturbojpeg STATIC IMPORTED)
+#  set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
+#    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libturbojpeg.a)
+#  list(APPEND OPENCV_LIBS libturbojpeg)
+#endif()
 
 # On Android, we need to copy shared libs to our library output folder
 macro(copy_opencv_android_libs)

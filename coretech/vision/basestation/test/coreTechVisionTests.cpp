@@ -1,6 +1,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/quoteMacro.h"
 
 #include "anki/common/shared/radians.h"
 #include "anki/common/types.h"
@@ -451,8 +452,8 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   
   Vision::ObjectDetector detector;
   
-  const std::string modelPath = "resources/ctiVision/tensorflow_models";
-  const std::string testImagePath = "resources/ctiVision/test/images";
+  const std::string modelPath = std::string(QUOTE(TEST_DATA_PATH)) + "/vision/resources/tensorflow_models";
+  const std::string testImagePath = std::string(QUOTE(TEST_DATA_PATH)) + "/vision/resources/test/images";
   std::string testImageFile = Util::FileUtils::FullFilePath({testImagePath, "grace_hopper.jpg"});
   
   Json::Value config;
