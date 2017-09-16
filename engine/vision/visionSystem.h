@@ -67,7 +67,7 @@ namespace Vision {
   class ImageCache;
   class ImagingPipeline;
   class MarkerDetector;
-  class OverheadEdgesDetector;
+  class ObjectDetector;
   class PetTracker;
 }
   
@@ -79,7 +79,7 @@ namespace Cozmo {
   class EncodedImage;
   class LaserPointDetector;
   class MotionDetector;
-  class ObjectDetector;
+  class OverheadEdgesDetector;
   class Robot;
   class VizManager;
   
@@ -224,6 +224,8 @@ namespace Cozmo {
     
     // Will use color if not empty, or gray otherwise
     Result DetectLaserPoints(Vision::ImageCache& imageCache);
+    
+    Result DetectGeneralObjects(Vision::ImageCache& imageCache);
     
     bool IsExposureValid(s32 exposure) const;
     

@@ -868,7 +868,7 @@ namespace Cozmo {
               ColorRGBA color = ColorRGBA::CreateFromColorIndex(colorIndex++);
               _vizManager->DrawCameraRect(rect, color);
               const std::string caption(object.name + " - " + std::to_string((s32)std::round(100.f*object.score)));
-              _vizManager->DrawCameraText(rect.GetTopLeft(), caption, color);
+              _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
             }
           }
         }
