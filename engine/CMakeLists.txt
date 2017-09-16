@@ -98,10 +98,8 @@ target_include_directories(cozmo_engine PUBLIC
 )
 
 if(ANDROID)
-  copy_opencv_android_libs()
   copy_tts_android_libs()
   add_dependencies(cozmo_engine
-    copy_opencv_libs
     copy_tts_libs
   )
 endif()

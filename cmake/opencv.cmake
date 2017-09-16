@@ -1,49 +1,58 @@
 set(OPENCV_VERSION 3.3.0)
 
+set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
+
 if (ANDROID)
-  set(OPENCV_DIR opencv-android)
+  #set(OPENCV_DIR opencv-android)
+  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a)
+  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a)
+  set(OPENCV2_INCLUDE_PATH ${CORETECH_EXTERNAL_DIR}/build/opencv-android) 
 else()
-  set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
+  #set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
+  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib/Release)
+  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/lib/Release)
+  set(OPENCV2_INCLUDE_PATH ${CORETECH_EXTERNAL_DIR}/build/opencv-${OPENCV_VERSION})
 endif()
 
                                                                                                     
 set(OPENCV_LIBS
+    calib3d
+    features2d
+    imgproc 
     core
     highgui
-    imgproc
-    calib3d
     objdetect
     video
-    features2d
     flann
     imgcodecs
     ml
     videoio
     dnn)
 
-set(OPENCV_MODULES_DIR ${CORETECH_EXTERNAL_DIR}/opencv-${OPENCV_VERSION}/modules)
-set(EXTERNAL_BUILD_DIR ${CORETECH_EXTERNAL_DIR}/build)
+set(OPENCV_MODULES_DIR ${CORETECH_EXTERNAL_DIR}/OPENCV_DIR/modules)
 
-if (ANDROID)
-  set(OPENCV_INCLUDE_DIR "")
-endif()
-
-if (ANDROID)
-  set(OPENCV_INCLUDE_PREFIX "${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/jni/include")
-else()
-  set(OPENCV_INCLUDE_PREFIX "")
-endif()
-
-if (ANDROID)
-  set(OPENCV2_INCLUDE_PATH ${OPENCV_INCLUDE_PREFIX}/opencv2) 
-else()
-  set(OPENCV2_INCLUDE_PATH ${CORETECH_EXTERNAL_DIR}/opencv-${OPENCV_VERSION}/build)
-endif()
-
-set(OPENCV_INCLUDE_PATHS ${OPENCV_INCLUDE_PREFIX} ${OPENCV2_INCLUDE_PATH})
+set(OPENCV_INCLUDE_PATHS ${OPENCV2_INCLUDE_PATH})
 
 # Add the include directory for each OpenCV module:
 foreach(OPENCV_MODULE ${OPENCV_LIBS})
+  message(STATUS "opencv.cmake add_library: " ${OPENCV_MODULE})
+  add_library(${OPENCV_MODULE} STATIC IMPORTED)
+  set(MODULE_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/${OPENCV_DIR}/modules/${OPENCV_MODULE}/include")
+  set(include_paths
+        ${MODULE_INCLUDE_PATH}
+        ${OPENCV2_INCLUDE_PATH})
+
+  set_target_properties(${OPENCV_MODULE} PROPERTIES
+        IMPORTED_LOCATION
+        ${OPENCV_LIB_DIR}/libopencv_${OPENCV_MODULE}.a
+        INTERFACE_INCLUDE_DIRECTORIES
+        "${include_paths}")
+
+  list(APPEND OPENCV_INCLUDE_PATHS ${MODULE_INCLUDE_PATH})
+endforeach()
+
+# TODO: Remove this 
+if(0)
     if (ANDROID)
       message(STATUS "opencv.cmake add_library: " ${OPENCV_MODULE})
       add_library(${OPENCV_MODULE} STATIC IMPORTED)
@@ -54,7 +63,7 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
           ${OPENCV2_INCLUDE_PATH})
       set_target_properties(${OPENCV_MODULE} PROPERTIES
           IMPORTED_LOCATION
-          ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_${OPENCV_MODULE}.so
+          ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_${OPENCV_MODULE}.a
           INTERFACE_INCLUDE_DIRECTORIES
           "${include_paths}")
       list(APPEND OPENCV_INCLUDE_PATHS ${MODULE_INCLUDE_PATH})
@@ -75,7 +84,7 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
     else()
       include_directories(${OPENCV_MODULES_DIR}/${OPENCV_MODULE}/include)
     endif()
-endforeach()
+endif()
 
 add_library(opencv_interface INTERFACE IMPORTED)
 set_target_properties(opencv_interface PROPERTIES
@@ -85,7 +94,7 @@ set_target_properties(opencv_interface PROPERTIES
 
 if (ANDROID)
   set(OPENCV_EXTERNAL_LIBS     
-      libcpufeatures
+      cpufeatures
       libjpeg
       libpng
       libtiff
@@ -107,22 +116,21 @@ else()
   )
 endif()
 
+foreach(LIB ${OPENCV_EXTERNAL_LIBS})
+    add_library(${LIB} STATIC IMPORTED)
+    set_target_properties(${LIB} PROPERTIES
+        IMPORTED_LOCATION
+        ${OPENCV_3RDPARTY_LIB_DIR}/lib${LIB}.a)
+endforeach()
+
+list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
 
 if (MACOSX)
-  foreach(LIB ${OPENCV_EXTERNAL_LIBS})
-      add_library(${LIB} STATIC IMPORTED)
-      set_target_properties(${LIB} PROPERTIES
-          IMPORTED_LOCATION
-          ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/3rdparty/lib/Release/lib${LIB}.a)
-  endforeach()
-  list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
-
   # Add Frameworks
   find_library(ACCELERATE Accelerate)
   find_library(APPKIT AppKit)
   find_library(OPENCL OpenCL)                                                               
   list(APPEND OPENCV_LIBS ${ACCELERATE} ${APPKIT} ${OPENCL})
-
 endif()
 
 #if (ANDROID)
@@ -142,40 +150,3 @@ endif()
 #  list(APPEND OPENCV_LIBS libturbojpeg)
 #endif()
 
-# On Android, we need to copy shared libs to our library output folder
-macro(copy_opencv_android_libs)
-if (ANDROID)
-    if (TARGET copy_opencv_libs)
-        return()
-    endif()
-    add_library(tbb SHARED IMPORTED)
-    set(include_paths
-        ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/jni/include/opencv2/${OPENCV_MODULE}
-        ${OPENCV_INCLUDE_PREFIX}
-        ${OPENCV2_INCLUDE_PATH})
-    #set_target_properties(tbb PROPERTIES
-    #    IMPORTED_LOCATION
-    #    ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so)
-    set(INSTALL_LIBS
-        "${OPENCV_LIBS}"
-        tbb
-        libturbojpeg)
-    message(STATUS "opencv libs: ${INSTALL_LIBS}")
-    set(OUTPUT_FILES "")
-    foreach(lib ${INSTALL_LIBS})
-        get_target_property(LIB_PATH ${lib} IMPORTED_LOCATION)
-        get_filename_component(LIB_FILENAME ${LIB_PATH} NAME)
-        set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_FILENAME}") 
-        # message(STATUS "copy opencv lib: ${lib} ${LIB_PATH} -> ${DST_PATH}")
-        add_custom_command(
-            OUTPUT "${DST_PATH}"
-            COMMAND ${CMAKE_COMMAND}
-            ARGS -E copy_if_different "${LIB_PATH}" "${DST_PATH}"
-            COMMENT "copy ${LIB_PATH}"
-            VERBATIM
-        )
-        list(APPEND OUTPUT_FILES ${DST_PATH})
-    endforeach() 
-    add_custom_target(copy_opencv_libs ALL DEPENDS ${OUTPUT_FILES})
-endif()
-endmacro()
