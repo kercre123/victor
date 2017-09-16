@@ -325,7 +325,28 @@ message RobotObservedMotion {
     // If unable to map to the ground, area=0
     float_32 ground_area,
     int_16   ground_x,
-    int_16   ground_y
+    int_16   ground_y,
+
+    // Top area
+    // Area of the supporting region for the point, as a fraction of the image
+    float_32 top_img_area,
+    // Pixel coordinate of the point in the image, relative to image center.
+    int_16   top_img_x,
+    int_16   top_img_y,
+
+    // Left area
+    // Area of the supporting region for the point, as a fraction of the image
+    float_32 left_img_area,
+    // Pixel coordinate of the point in the image, relative to image center.
+    int_16   left_img_x,
+    int_16   left_img_y,
+
+    // Right area
+    // Area of the supporting region for the point, as a fraction of the image
+    float_32 right_img_area,
+    // Pixel coordinate of the point in the image, relative to image center.
+    int_16   right_img_x,
+    int_16   right_img_y
 }
 
 // RobotObservedLaserPoint
