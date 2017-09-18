@@ -104,7 +104,7 @@ namespace Anki {
         CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
-      static const char* HAL_INI_PATH = "./hal.ini";
+      static const char* HAL_INI_PATH = "./hal.conf";
       const HALConfig::Item  configitems_[]  = {
         {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
         {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
