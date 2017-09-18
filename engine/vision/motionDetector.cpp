@@ -12,23 +12,17 @@
 
 #include "motionDetector.h"
 
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
-
 #include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/imageCache.h"
-
+#include "coretech/common/include/anki/common/basestation/jsonTools.h"
 #include "engine/vision/visionPoseData.h"
 #include "engine/viz/vizManager.h"
-
 #include "util/console/consoleInterface.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <iomanip>
-#include <coretech/common/include/anki/common/basestation/jsonTools.h>
+
 
 #define DEBUG_MOTION_DETECTION 1
 
@@ -482,7 +476,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     blurHappened = true;
 
     // Main method for motion detection
-    s32 numAboveThresh = preprocessRatioImage(image, foregroundMotion);
+    s32 numAboveThresh = ReprocessRatioImage(image, foregroundMotion);
 
     // Run the peripheral motion detection
     Result peripheralMotionResult = DetectPeripheralMotion(foregroundMotion, debugImageRGBs, msg, scaleMultiplier);
@@ -506,7 +500,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     // Get centroid of all the motion within the ground plane, if we have one to reason about
     if(crntPoseData.groundPlaneVisible && prevPoseData.groundPlaneVisible)
     {
-      extractGroundPlaneMotion(origNumRows, origNumCols, scaleMultiplier, crntPoseData,
+      ExtractGroundPlaneMotion(origNumRows, origNumCols, scaleMultiplier, crntPoseData,
                                foregroundMotion, centroid, groundPlaneCentroid, groundRegionArea);
     }
 
@@ -609,7 +603,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
   
 }
 
-void MotionDetector::extractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
+void MotionDetector::ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
                                               const VisionPoseData &crntPoseData,
                                               const Vision::Image &foregroundMotion,
                                               const Point2f &centroid,
@@ -726,7 +720,7 @@ void MotionDetector::extractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, 
 }
 
 template<class ImageType>
-s32 MotionDetector::preprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion) {
+s32 MotionDetector::ReprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion) {
   const cv::Mat& imageCV = image.get_CvMat_();
   GaussianBlur(imageCV, imageCV,
                cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
