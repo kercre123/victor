@@ -39,7 +39,7 @@ namespace {
 # define CONSOLE_GROUP_NAME "Vision.MotionDetection"
   
   // For speed, compute motion detection on half-resolution images
-  CONSOLE_VAR(bool, kMotionDetection_UseHalfRes,          CONSOLE_GROUP_NAME, false);
+  CONSOLE_VAR(bool, kMotionDetection_UseHalfRes,          CONSOLE_GROUP_NAME, true);
   
   // How long we have to wait between motion detections. This may be reduce-able, but can't get
   // too small or we'll hallucinate image change (i.e. "motion") due to the robot moving.
@@ -108,6 +108,7 @@ public:
     _leftMargin = imageWidth * horizontalSize;
     _rightMargin = imageWidth - _leftMargin;
     _upperMargin = imageHeight * verticalSize;
+    _imageArea = imageHeight * imageWidth;
 
   }
 
@@ -157,6 +158,9 @@ public:
   void Update(const Anki::Point2f &point,
               float value)
   {
+
+    // The real activation value is a fraction of the image area
+    value = value / float(_imageArea);
 
     float x = point.x();
     float y = point.y();
@@ -262,6 +266,7 @@ private:
   Anki::Point2f _rightCentroid = Anki::Point2f(-1, -1);
   const float _alpha = 0.6;
   float _maxValue;
+  int _imageArea;
 };
 
 static const char * const kLogChannelName = "VisionSystem";
@@ -393,7 +398,8 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
 
   const Vision::ImageCache::Size imageSize = Vision::ImageCache::GetSize((s32)scaleMultiplier,
                                                                          Vision::ResizeMethod::NearestNeighbor);
-    
+
+  // Call the right helper based on image's color
   if(imageCache.HasColor())
   {
     const Vision::ImageRGB& imageColor = imageCache.GetRGB(imageSize);
@@ -750,19 +756,20 @@ s32 MotionDetector::preprocessRatioImage(const ImageType &image, Vision::Image &
 
   s32 numAboveThresh = RatioTest(image, foregroundMotion);
   return numAboveThresh;
-} // Detect()
+}
 
 Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
                                               DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
                                               ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier) {
 
   // The image has several disjoint components, try to join them
-
-  cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-                                                         cv::Size(kMotionDetection_MorphologicalSize,
-                                                                  kMotionDetection_MorphologicalSize));
-  const cv::Mat& cvInputImage = inputImage.get_CvMat_();
-  cv::morphologyEx( cvInputImage, cvInputImage, cv::MORPH_CLOSE, structuringElement );
+  {
+    cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                           cv::Size(kMotionDetection_MorphologicalSize,
+                                                                    kMotionDetection_MorphologicalSize));
+    const cv::Mat &cvInputImage = inputImage.get_CvMat_();
+    cv::morphologyEx(cvInputImage, cvInputImage, cv::MORPH_CLOSE, structuringElement);
+  }
 
   // Get the connected components with stats
   Anki::Array2d<s32> labelImage;
@@ -776,11 +783,13 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
       continue;
     }
     updated  = true;
-    _regionSelector->Update(stat.centroid, stat.area);
+    f32 scaled_area = stat.area * scaleMultiplier;
+    _regionSelector->Update(stat.centroid, scaled_area);
   }
   // No movement = global decay
-  if (! updated)
+  if (! updated) {
     _regionSelector->Decay();
+  }
 
   // Filling the message
   {
