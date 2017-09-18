@@ -7,6 +7,7 @@ namespace DataPersistence {
     public Guid ProjectUUID;
     public bool IsVertical;
     public string ProjectXML;
+    public string ProjectJSON;
     public string ProjectName;
     public DateTime DateTimeCreatedUTC;
     public DateTime DateTimeLastModifiedUTC;
@@ -21,12 +22,13 @@ namespace DataPersistence {
       // 1.6             1 
       // 1.7             1
       // 2.0             2
-      VersionNum = 2;
+      // 2.1             3
+      VersionNum = 3;
     }
 
-    public CodeLabProject(string projectName, string projectXML, bool isVertical) : this() {
+    public CodeLabProject(string projectName, string projectJSON, bool isVertical) : this() {
       ProjectName = projectName;
-      ProjectXML = projectXML;
+      ProjectJSON = projectJSON;
       IsVertical = isVertical;
     }
 

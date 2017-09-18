@@ -3,7 +3,7 @@
     window.isCozmoSampleProject = false;
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = null;
-    window.previouslySavedProjectXML = null;
+    window.previouslySavedProjectJSON = null;
     window.saveProjectTimerId = null;
     window.resolvePromiseWaitForSaveProject = null;
 
@@ -42,6 +42,11 @@
 
     // Put green flag in its location in the upper left corner of the workspace if no green flag is on workspace.
     window.ensureGreenFlagIsOnWorkspace = function () {
+      // TODO This is currently in XML, but we could migrate to use JSON instead throughout this method.
+      // These two lines should help:
+      //var projectJSON = '{"targets":[{"id":"9I=:fGU6_w`eoI3X`=J!","name":"Stage","isStage":true,"x":0,"y":0,"size":100,"direction":90,"draggable":false,"currentCostume":0,"costumeCount":0,"visible":true,"rotationStyle":"all around","blocks":{},"variables":{},"lists":{},"costumes":[],"sounds":[]},{"id":"D:hj2q3qXn53^HJG4b,d","name":"Sprite1","isStage":false,"x":0,"y":0,"size":100,"direction":90,"draggable":false,"currentCostume":0,"costumeCount":0,"visible":true,"rotationStyle":"all around","blocks":{"g68)-/+Er8xO7[moRW8J":{"id":"g68)-/+Er8xO7[moRW8J","opcode":"event_whenflagclicked","inputs":{},"fields":{},"next":null,"topLevel":true,"parent":null,"shadow":false,"x":662.4705882352941,"y":426.7058823529412}},"variables":{},"lists":{},"costumes":[],"sounds":[]}],"meta":{"semver":"3.0.0","vm":"0.1.0","agent":"Mozilla/5.0 (iPad; CPU OS 9_1 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13B143 Safari/601.1"}}';
+      //window.Scratch.vm.fromJSON(projectJSON);
+
       var point = window.getScriptStartingPoint();
       var greenFlagXML = '<block type="event_whenflagclicked" id="RqohItYC/XpjZ2]xiar5" x="' + point.x + '" y="' + point.y +'"></block>';
 
@@ -51,7 +56,7 @@
       if (window.getNodes().length <= 0) {
         // No other blocks are on the workspace so put green flag back on workspace by itself.
         var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
-        window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
+        window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
       }
       else {
         if (!window.isGreenFlagOnWorkspace()) {
@@ -60,7 +65,7 @@
           var xmlText = Blockly.Xml.domToText(xml);
           var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlText.substring(xmlStart.length, xmlText.length);
 
-          window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
+          window.openCozmoProjectXML(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
         }
       }
     }
@@ -68,6 +73,7 @@
     // Check that there is a script on the workspace and it contains
     // more than just the green flag.
     window.hasUserAddedBlocks = function() {
+        // TODO Update to use JSON?
         var nodes = window.getNodes();
         var greenFlagType = 'event_whenflagclicked';
         var hasUserAddedBlocks = false;
@@ -84,6 +90,7 @@
     }
 
     window.isGreenFlagOnWorkspace = function() {
+        // TODO Update to use JSON?
         var nodes = window.getNodes();
         var greenFlagType = 'event_whenflagclicked';
         for(var i = 0; i < nodes.length; i++) { //loop thru the nodes
@@ -97,6 +104,7 @@
 
     // A node is a block representation on the workspace.
     window.getNodes = function() {
+        // TODO Update to use JSON?
         var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
         var nodes = xml.getElementsByTagName('block');
         return nodes;
@@ -138,14 +146,13 @@
             return;
         }
 
-        var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
-        var xmlText = Blockly.Xml.domToText(xml);
+        var json = Scratch.vm.toJSON();
 
         if (window.cozmoProjectUUID == null) {
             window.cozmoProjectUUID = '';
         }
 
-        if (window.cozmoProjectUUID != '' && window.previouslySavedProjectXML == xmlText) {
+        if (window.cozmoProjectUUID != '' && window.previouslySavedProjectJSON == json) {
             // No changes to save
             window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
@@ -157,10 +164,10 @@
             return;
         }
 
-        window.previouslySavedProjectXML = xmlText;
+        window.previouslySavedProjectJSON = json;
 
         // If we reached this far, Unity will take care of resolving the promise.
-        window.Unity.call({requestId: -1, command: "cozmoSaveUserProject", argString: xmlText, argUUID: window.cozmoProjectUUID});
+        window.Unity.call({requestId: -1, command: "cozmoSaveUserProject", argString: json, argUUID: window.cozmoProjectUUID});
     }
 
     window.exportCozmoProject = function() {
@@ -170,44 +177,66 @@
         });
     }
 
-    window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
+    window.openCozmoProjectJSON = function(projectUUID, projectName, projectJSON, isCozmoSampleProjectStr) {
+        window.openCozmoProject(projectUUID, projectName, projectJSON, null, isCozmoSampleProjectStr);
+    }
+
+    // DEPRECATED - only used to open user projects that were created before 2.1 and are still in XML
+    window.openCozmoProjectXML = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
+        window.openCozmoProject(projectUUID, projectName, null, projectXML, isCozmoSampleProjectStr);
+    }
+
+    // Don't call this method directly. Please call openCozmoProjectJSON instead.
+    // This method takes a projectXML parameter to support pre-2.1 builds.
+    window.openCozmoProject = function(projectUUID, projectName, projectJSON, projectXML, isCozmoSampleProjectStr) {
         var startTime = performance.now()
 
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
 
         // TODO: Special case to fix localized text for intruder sample project. Rip out and revisit post-2.0.0.
-        if (isCozmoSampleProject && projectUUID == "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62") {
+        // TODO After sample projects are converted to JSON, must revisit this.
+        if (isCozmoSampleProject && projectUUID == "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62" && projectXML != null) {
             projectXML = window.replaceSampleProjectTextForIntruder(projectXML);
         }
 
         // Remove all existing scripts from workspace
-        Scratch.workspace.clear();
+        //Scratch.workspace.clear();
 
         window.cozmoProjectUUID = projectUUID;
         window.cozmoProjectName = projectName;
         window.isCozmoSampleProject = isCozmoSampleProject;
-        window.previouslySavedProjectXML = null;
+        window.previouslySavedProjectJSON = null;
 
         if (window.saveProjectTimerId) {
             clearInterval(window.saveProjectTimerId);
         }
 
-        if (isCozmoSampleProject) {
+
+        if (isCozmoSampleProject && projectXML != null) {
             // Set the coordinate setting in the sample project xml to our desired location on-screen.
             var startingPoint = window.getScriptStartingPoint();
-            projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x);
-            projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y);
+            projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x); // TODO need JSON solution
+            projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y); // TODO need JSON solution
         }
 
         var startBlocklyTime = performance.now()
-        openBlocklyXML(projectXML);
+        var methodCalledForDAS;
+        if (projectJSON != null) {
+            window.Scratch.vm.fromJSON(projectJSON);
+            methodCalledForDAS = "Scratch.vm.fromJSON";
+        }
+        else {
+            // User project was build pre-Cozmo app 2.1 release. Open projectXML.
+            openBlocklyXML(projectXML);
+            methodCalledForDAS = "openBlocklyXML";
+        }
         var blocklyXmlTime = (performance.now() - startBlocklyTime) * 0.001;
         setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
         window.startSaveProjectTimer();
         
         var loadTime = (performance.now() - startTime) * 0.001;
-        window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s - " + blocklyXmlTime.toFixed(3) + "s in openBlocklyXML()");
+        window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s - " + blocklyXmlTime.toFixed(3) + "s in " + methodCalledForDAS);
     }
 
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {

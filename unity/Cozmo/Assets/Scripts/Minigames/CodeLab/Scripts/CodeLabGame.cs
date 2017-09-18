@@ -781,10 +781,11 @@ namespace CodeLab {
 
     private void OnCozmoSaveUserProject(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnCozmoSaveUserProject", "UUID=" + scratchRequest.argUUID);
+
       // Save both new and existing user projects.
       // Check if this is a new project.
       string projectUUID = scratchRequest.argUUID;
-      string projectXML = scratchRequest.argString;
+      string projectJSON = scratchRequest.argString;
 
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
@@ -796,14 +797,14 @@ namespace CodeLab {
             DAS.Error("OnCozmoSaveUserProject.NullDefaultProfile", "In saving new Code Lab user project, defaultProfile is null");
           }
 
-          // Create new project with the XML stored in projectXML.
+          // Create new project with the JSON stored in projectJSON.
 
           // Create project name: "My Project 1", "My Project 2", etc.
           newUserProjectName = Localization.GetWithArgs(LocalizationKeys.kCodeLabHorizontalUserProjectMyProject, defaultProfile.CodeLabUserProjectNum);
           defaultProfile.CodeLabUserProjectNum++;
 
           bool isVertical = _SessionState.GetGrammarMode() == GrammarMode.Vertical;
-          newProject = new CodeLabProject(newUserProjectName, projectXML, isVertical);
+          newProject = new CodeLabProject(newUserProjectName, projectJSON, isVertical);
 
           if (defaultProfile.CodeLabProjects == null) {
             DAS.Error("OnCozmoSaveUserProject.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
@@ -824,7 +825,7 @@ namespace CodeLab {
         try {
           // Project already has a guid. Locate the project then update it.
           projectToUpdate = FindUserProjectWithUUID(projectUUID);
-          projectToUpdate.ProjectXML = projectXML;
+          projectToUpdate.ProjectJSON = projectJSON;
           projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
 
           _SessionState.OnUpdatedProject(projectToUpdate);
@@ -962,6 +963,7 @@ namespace CodeLab {
         OnCozmoExportProject(scratchRequest);
         return true;
       case "cozmoDASLog":
+        // Use for debugging from JavaScript
         DAS.Warn(scratchRequest.argString, scratchRequest.argString2);
         return true;
       default:
@@ -1717,10 +1719,17 @@ namespace CodeLab {
             // Escape quotes in user project name and project XML
             // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
             String projectNameEscaped = EscapeProjectName(projectToOpen.ProjectName);
-            String projectXMLEscaped = EscapeXML(projectToOpen.ProjectXML);
+            String projectJSON = projectToOpen.ProjectJSON; // TODO Need to escape this?
+            if (projectJSON != null) {
+              this.EvaluateJS("window.openCozmoProjectJSON('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "','" + projectJSON + "','false');");
+            }
+            else {
+              // User project is in XML. It must have been created before the Cozmo app 2.1 release.
+              String projectXMLEscaped = EscapeXML(projectToOpen.ProjectXML);
 
-            // Open requested project in webview
-            this.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
+              // Open requested project in webview
+              this.EvaluateJS("window.openCozmoProjectXML('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
+            }
           }
         }
         else {
@@ -1738,13 +1747,14 @@ namespace CodeLab {
 
           String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
 
+          // TODO Update to use JSON only when sample projects are converted to JSON.
           // Escape quotes in XML and project name
           // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
           String sampleProjectNameEscaped = EscapeProjectName(sampleProjectName);
           String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
 
           // Open requested project in webview
-          this.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
+          this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
@@ -1880,11 +1890,11 @@ namespace CodeLab {
           else if (project.ProjectName.Length > kMaximumDescriptionLength) {
             DAS.Error("Codelab.OnAppLoadedFromData.BadFileName.Length", "new project's name is unreasonably long " + project.ProjectName.Length.ToString());
           }
-          else if (project.ProjectXML.Length > kMaximumCodelabDataLength) {
-            DAS.Error("Codelab.OnAppLoadedFromData.BadFileData.Length", "new project's internal data is unreasonably long " + project.ProjectXML.Length.ToString());
+          else if (project.ProjectJSON.Length > kMaximumCodelabDataLength) {
+            DAS.Error("Codelab.OnAppLoadedFromData.BadFileData.Length", "new project's internal data is unreasonably long " + project.ProjectJSON.Length.ToString());
           }
           else {
-            // Create new project with the XML stored in projectXML.
+            // Create new project.
             while (defaultProfile.CodeLabProjects.Find(p => p.ProjectName == project.ProjectName) != null) {
               string name = StringUtil.GenerateNextUniqueName(project.ProjectName);
               project.ProjectName = name;

@@ -52,13 +52,14 @@ namespace CodeLab {
     }
 
     public void Update(CodeLabProject project) {
-      var projectXML = project.ProjectXML;
-      // Slightly hacky - instead of parsing the XML, just look for the entries we're interested in
-      int numBlocks = CountStringOccurences(projectXML, "<block ");
-      int numConnections = CountStringOccurences(projectXML, "<next>");
-      int numGreenFlags = CountStringOccurences(projectXML, "<block type=\"event_whenflagclicked\"");
-      int numRepeat = CountStringOccurences(projectXML, "<block type=\"control_repeat\"");
-      int numForever = CountStringOccurences(projectXML, "<block type=\"control_forever\"");
+      var projectJSON = project.ProjectJSON;
+
+      // Slightly hacky - instead of parsing the JSON, just look for the entries we're interested in
+      int numBlocks = 0; //CountStringOccurences(projectJSON, "opcode"); // TODO Fix for JSON
+      int numConnections = 0; //CountStringOccurences(projectJSON, "<next>"); // TODO Fix for JSON
+      int numGreenFlags = CountStringOccurences(projectJSON, "event_whenflagclicked");
+      int numRepeat = CountStringOccurences(projectJSON, "control_repeat");
+      int numForever = CountStringOccurences(projectJSON, "control_forever");
 
       bool wasUpdated = (_ProjectUUID != project.ProjectUUID) ||
         (NumBlocks != numBlocks) ||

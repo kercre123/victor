@@ -88,7 +88,7 @@
         // Instantiate scratch-blocks and attach it to the DOM.
         var workspace = window.Blockly.inject('blocks', {
             media: './lib/blocks/media/',
-            scrollbars: true,
+            scrollbars: false,
             trashcan: false,
             horizontalLayout: !window.isVertical,
             toolbox: window.toolbox,
@@ -113,6 +113,8 @@
 
         // Attach scratch-blocks events to VM.
         workspace.addChangeListener(vm.blockListener);
+        workspace.addChangeListener(vm.variableListener); // Handle a Blockly event for the variable map.
+
         const flyoutWorkspace = workspace.getFlyout().getWorkspace();
         flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
         flyoutWorkspace.addChangeListener(vm.monitorBlockListener);
@@ -132,6 +134,13 @@
         });
         vm.on('VISUAL_REPORT', function(data) {
             Scratch.workspace.reportValue(data.id, data.value);
+        });
+
+        // Receipt of new block XML for the selected target.
+        vm.on('workspaceUpdate', function(data) {
+            //Scratch.workspace.clear();
+            var dom = window.Blockly.Xml.textToDom(data.xml);
+            window.Blockly.Xml.domToWorkspace(dom, workspace);
         });
 
         // Run threads
