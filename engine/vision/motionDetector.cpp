@@ -59,19 +59,18 @@ namespace {
   CONSOLE_VAR(f32,  kMotionDetection_MaxBodyAngleChange_deg,    CONSOLE_GROUP_NAME, 0.1f);
   CONSOLE_VAR(f32,  kMotionDetection_MaxPoseChange_mm,          CONSOLE_GROUP_NAME, 0.5f);
   
-  CONSOLE_VAR(bool, kMotionDetection_DrawGroundDetectionsInCameraView, CONSOLE_GROUP_NAME, true);
+  CONSOLE_VAR(bool, kMotionDetection_DrawGroundDetectionsInCameraView, CONSOLE_GROUP_NAME, false);
 
   // The smaller this value the more broken up will be the motion areas, leading to fragmented ones.
   // If too big artificially big motion areas can be created.
-  CONSOLE_VAR(u32,  kMotionDetection_MorphologicalSize, CONSOLE_GROUP_NAME, 20);
+  CONSOLE_VAR(u32,  kMotionDetection_MorphologicalSize_pix, CONSOLE_GROUP_NAME, 20);
 
   // The higher this value the less susceptible to noise motion detection will be. A too high value
   // will lead to discarding some motion areas.
-  CONSOLE_VAR(u32,  kMotionDetection_MinAreaForMotion, CONSOLE_GROUP_NAME, 500);
+  CONSOLE_VAR(u32,  kMotionDetection_MinAreaForMotion_pix, CONSOLE_GROUP_NAME, 500);
 
-  // How much blurring to apply to the camera image before doing motion detection. This value has to
-  // be odd!!
-  CONSOLE_VAR(u32,  kMotionDetection_GaussianBlurFilterSize, CONSOLE_GROUP_NAME, 21);
+  // How much blurring to apply to the camera image before doing motion detection.
+  CONSOLE_VAR(u32,  kMotionDetection_BlurFilterSize_pix, CONSOLE_GROUP_NAME, 21);
   
 # undef CONSOLE_GROUP_NAME
 }
@@ -88,10 +87,13 @@ class MotionDetector::ImageRegionSelector
 {
 public:
   ImageRegionSelector(int imageWidth, int imageHeight, float horizontalSize, float verticalSize,
-                      float increaseFactor, float decreaseFactor, float maxValue) :
+                      float increaseFactor, float decreaseFactor, float maxValue,
+                      float alpha
+  ) :
       _topID(increaseFactor, decreaseFactor, maxValue),
       _leftID(increaseFactor, decreaseFactor, maxValue),
       _rightID(increaseFactor, decreaseFactor, maxValue),
+      _alpha(alpha),
       _maxValue(maxValue)
   {
     DEV_ASSERT(horizontalSize <= 0.5, "MotionDetector::ImageRegionSelector: horizontal size has to be less then half"
@@ -129,13 +131,13 @@ public:
     return GetLeftResponse() >= _maxValue;
   }
 
-  Anki::Point2f GetTopResponseCentroid() const {
+  const Point2f& GetTopResponseCentroid() const {
     return _topCentroid;
   }
-  Anki::Point2f GetLeftResponseCentroid() const {
+  const Point2f& GetLeftResponseCentroid() const {
     return _leftCentroid;
   }
-  Anki::Point2f GetRightResponseCentroid() const {
+  const Point2f& GetRightResponseCentroid() const {
     return _rightCentroid;
   }
 
@@ -149,21 +151,21 @@ public:
     return _upperMargin;
   }
 
-  void Update(const Anki::Point2f &point,
+  void Update(const Point2f &point,
               float value)
   {
 
     // The real activation value is a fraction of the image area
     value = value / float(_imageArea);
 
-    float x = point.x();
-    float y = point.y();
+    const float x = point.x();
+    const float y = point.y();
     //where does the point lie?
 
     //top
     if (y <= _upperMargin) {
       _topID.Update(value);
-      _topCentroid = updatePoint(_topCentroid, point);
+      _topCentroid = UpdatePoint(_topCentroid, point);
     }
     else {
       _topID.Decay();
@@ -173,12 +175,12 @@ public:
     if (x <= _leftMargin) {
       _rightID.Decay();
       _leftID.Update(value);
-      _leftCentroid = updatePoint(_leftCentroid, point);
+      _leftCentroid = UpdatePoint(_leftCentroid, point);
     }
       //right
     else if (x >= _rightMargin) {
       _rightID.Update(value);
-      _rightCentroid = updatePoint(_rightCentroid, point);
+      _rightCentroid = UpdatePoint(_rightCentroid, point);
       _leftID.Decay();
 
     }
@@ -199,7 +201,7 @@ public:
 private:
 
   // Implements an exponential moving average, a.k.a. low pass filter
-  Anki::Point2f updatePoint(const Anki::Point2f &oldPoint, const Anki::Point2f &newPoint) const
+  Point2f UpdatePoint(const Point2f &oldPoint, const Point2f &newPoint) const
   {
     if (oldPoint.x() < 0) {
       return newPoint;
@@ -255,9 +257,9 @@ private:
   ImpulseDecay _leftID;
   ImpulseDecay _rightID;
 
-  Anki::Point2f _topCentroid   = Anki::Point2f(-1, -1);
-  Anki::Point2f _leftCentroid  = Anki::Point2f(-1, -1);
-  Anki::Point2f _rightCentroid = Anki::Point2f(-1, -1);
+  Point2f _topCentroid   = Point2f(-1, -1);
+  Point2f _leftCentroid  = Point2f(-1, -1);
+  Point2f _rightCentroid = Point2f(-1, -1);
   const float _alpha = 0.6;
   float _maxValue;
   int _imageArea;
@@ -436,16 +438,18 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     float kIncreaseFactor;
     float kDecreaseFactor;
     float kMaxValue;
+    float kCentroidStability;
 
     GET_JSON_PARAMETER(detectionConfig, "HorizontalSize", kHorizontalSize);
     GET_JSON_PARAMETER(detectionConfig, "VerticalSize", kVerticalSize);
     GET_JSON_PARAMETER(detectionConfig, "IncreaseFactor", kIncreaseFactor);
     GET_JSON_PARAMETER(detectionConfig, "DecreaseFactor", kDecreaseFactor);
     GET_JSON_PARAMETER(detectionConfig, "MaxValue", kMaxValue);
+    GET_JSON_PARAMETER(detectionConfig, "CentroidStability", kCentroidStability);
 
     _regionSelector.reset( new ImageRegionSelector(image.GetNumCols(), image.GetNumRows(),
                                                    kHorizontalSize, kVerticalSize, kIncreaseFactor,
-                                                   kDecreaseFactor, kMaxValue));
+                                                   kDecreaseFactor, kMaxValue, kCentroidStability));
   }
 
 
@@ -476,7 +480,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     blurHappened = true;
 
     // Main method for motion detection
-    s32 numAboveThresh = ReprocessRatioImage(image, foregroundMotion);
+    const s32 numAboveThresh = ReprocessRatioImage(image, foregroundMotion);
 
     // Run the peripheral motion detection
     Result peripheralMotionResult = DetectPeripheralMotion(foregroundMotion, debugImageRGBs, msg, scaleMultiplier);
@@ -632,14 +636,14 @@ void MotionDetector::ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, 
       }, 255);
 
   for(s32 i=0; i<mask.GetNumRows(); ++i) {
-        const u8* maskData_i = mask.GetRow(i);
-        u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
-        for(s32 j=0; j<mask.GetNumCols(); ++j) {
-          if(maskData_i[j] == 0) {
-            fgMotionData_i[j] = 0;
-          }
+      const u8* maskData_i = mask.GetRow(i);
+      u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
+      for(s32 j=0; j<mask.GetNumCols(); ++j) {
+        if(maskData_i[j] == 0) {
+          fgMotionData_i[j] = 0;
         }
       }
+    }
 
   // Find centroid of motion inside the ground plane
   // NOTE!! We swap X and Y for the percentiles because the ground centroid
@@ -669,84 +673,84 @@ void MotionDetector::ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, 
    */
 
   if(groundRegionArea > 0.f)
+  {
+    // Switch centroid back to original resolution, since that's where the
+    // homography information is valid
+    groundPlaneCentroid *= scaleMultiplier;
+
+    // Make ground region area into a fraction of the ground ROI area
+    const f32 imgQuadArea = imgQuad.ComputeArea();
+    DEV_ASSERT(Util::IsFltGTZero(imgQuadArea), "MotionDetector.Detect.QuadWithZeroArea");
+    groundRegionArea /= imgQuadArea;
+
+    // Map the centroid onto the ground plane, by doing inv(H) * centroid
+    Point3f homographyMappedPoint; // In homogenous coordinates
+    Result solveResult = LeastSquares(crntPoseData.groundPlaneHomography,
+                                      Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f},
+                                      homographyMappedPoint);
+    if(RESULT_OK != solveResult) {
+      PRINT_NAMED_WARNING("MotionDetector.DetectMotion.LeastSquaresFailed",
+                          "Failed to project centroid (%.1f,%.1f) to ground plane",
+                          groundPlaneCentroid.x(), groundPlaneCentroid.y());
+      // Don't report this centroid
+      groundRegionArea = 0.f;
+      groundPlaneCentroid = 0.f;
+    } else if(homographyMappedPoint.z() <= 0.f) {
+      PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadProjectedZ",
+                          "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
+                          homographyMappedPoint.z(), RAD_TO_DEG(crntPoseData.histState.GetHeadAngle_rad()));
+      // Don't report this centroid
+      groundRegionArea = 0.f;
+      groundPlaneCentroid = 0.f;
+    } else {
+      const f32 divisor = 1.f/homographyMappedPoint.z();
+      groundPlaneCentroid.x() = homographyMappedPoint.x() * divisor;
+      groundPlaneCentroid.y() = homographyMappedPoint.y() * divisor;
+
+      // This is just a sanity check that the centroid is reasonable
+      if(ANKI_DEVELOPER_CODE)
       {
-        // Switch centroid back to original resolution, since that's where the
-        // homography information is valid
-        groundPlaneCentroid *= scaleMultiplier;
-
-        // Make ground region area into a fraction of the ground ROI area
-        const f32 imgQuadArea = imgQuad.ComputeArea();
-        DEV_ASSERT(Util::IsFltGTZero(imgQuadArea), "MotionDetector.Detect.QuadWithZeroArea");
-        groundRegionArea /= imgQuadArea;
-
-        // Map the centroid onto the ground plane, by doing inv(H) * centroid
-        Point3f homographyMappedPoint; // In homogenous coordinates
-        Result solveResult = LeastSquares(crntPoseData.groundPlaneHomography,
-                                          Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f},
-                                          homographyMappedPoint);
-        if(RESULT_OK != solveResult) {
-          PRINT_NAMED_WARNING("MotionDetector.DetectMotion.LeastSquaresFailed",
-                              "Failed to project centroid (%.1f,%.1f) to ground plane",
-                              groundPlaneCentroid.x(), groundPlaneCentroid.y());
-          // Don't report this centroid
-          groundRegionArea = 0.f;
-          groundPlaneCentroid = 0.f;
-        } else if(homographyMappedPoint.z() <= 0.f) {
-          PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadProjectedZ",
-                              "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
-                              homographyMappedPoint.z(), RAD_TO_DEG(crntPoseData.histState.GetHeadAngle_rad()));
-          // Don't report this centroid
-          groundRegionArea = 0.f;
-          groundPlaneCentroid = 0.f;
-        } else {
-          const f32 divisor = 1.f/homographyMappedPoint.z();
-          groundPlaneCentroid.x() = homographyMappedPoint.x() * divisor;
-          groundPlaneCentroid.y() = homographyMappedPoint.y() * divisor;
-
-          // This is just a sanity check that the centroid is reasonable
-          if(ANKI_DEVELOPER_CODE)
-          {
-            // Scale ground quad slightly to account for numerical inaccuracy.
-            // Centroid just needs to be very nearly inside the ground quad.
-            Quad2f testQuad(crntPoseData.groundPlaneROI.GetGroundQuad());
-            testQuad.Scale(1.01f); // Allow for 1% error
-            if(!testQuad.Contains(groundPlaneCentroid)) {
-              PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadGroundPlaneCentroid",
-                                  "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
-            }
-          }
+        // Scale ground quad slightly to account for numerical inaccuracy.
+        // Centroid just needs to be very nearly inside the ground quad.
+        Quad2f testQuad(crntPoseData.groundPlaneROI.GetGroundQuad());
+        testQuad.Scale(1.01f); // Allow for 1% error
+        if(!testQuad.Contains(groundPlaneCentroid)) {
+          PRINT_NAMED_WARNING("MotionDetector.DetectMotion.BadGroundPlaneCentroid",
+                              "Centroid=%s", centroid.ToString().c_str());
         }
       }
+    }
+  }
 }
 
 template<class ImageType>
-s32 MotionDetector::ReprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion) {
+s32 MotionDetector::ReprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion)
+{
   const cv::Mat& imageCV = image.get_CvMat_();
-  GaussianBlur(imageCV, imageCV,
-               cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
-
+  cv::boxFilter(imageCV, imageCV, -1,
+                   cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
 
   // If the previous image hadn't been blurred before, do it now
   if (std::is_same<ImageType, Vision::Image>::value) {
     if (!_wasPrevImageGrayBlurred) {
         PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
                       "Blurring the previous image Grey");
-        GaussianBlur(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(),
-                     cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
+      cv::boxFilter(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(), -1,
+                   cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
       }
     }
   else if (std::is_same<ImageType, Vision::ImageRGB>::value) {
     if (!_wasPrevImageRGBBlurred) {
-        GaussianBlur(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(),
-                     cv::Size(kMotionDetection_GaussianBlurFilterSize, kMotionDetection_GaussianBlurFilterSize), 0);
-        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
-                      "Blurring the previous image RGB");
-      }
+      cv::boxFilter(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(), -1,
+                    cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                    "Blurring the previous image RGB");
     }
-    else {
-      PRINT_NAMED_ERROR("MotionDetector.DetectMotion.FoundCentroid",
-                        "Not know type for image???");
-    }
+  }
+  else {
+    PRINT_NAMED_ERROR("MotionDetector.DetectMotion.FoundCentroid",
+                      "Not know type for image???");
+  }
 
   s32 numAboveThresh = RatioTest(image, foregroundMotion);
   return numAboveThresh;
@@ -758,27 +762,27 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
 
   // The image has several disjoint components, try to join them
   {
+    const int kernelSize = int(kMotionDetection_MorphologicalSize_pix / scaleMultiplier);
     cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-                                                           cv::Size(kMotionDetection_MorphologicalSize,
-                                                                    kMotionDetection_MorphologicalSize));
+                                                           cv::Size(kernelSize, kernelSize));
     const cv::Mat &cvInputImage = inputImage.get_CvMat_();
     cv::morphologyEx(cvInputImage, cvInputImage, cv::MORPH_CLOSE, structuringElement);
   }
 
   // Get the connected components with stats
-  Anki::Array2d<s32> labelImage;
+  Array2d<s32> labelImage;
   std::vector<Vision::Image::ConnectedComponentStats> stats;
   inputImage.GetConnectedComponents(labelImage, stats);
 
   // Update the impulse/decay model
   bool updated = false;
   for (const auto& stat: stats) {
-    if (stat.area < kMotionDetection_MinAreaForMotion) { //too small
+    const f32 scaledArea = stat.area * scaleMultiplier;
+    if (scaledArea < kMotionDetection_MinAreaForMotion_pix) { //too small
       continue;
     }
     updated  = true;
-    f32 scaled_area = stat.area * scaleMultiplier;
-    _regionSelector->Update(stat.centroid, scaled_area);
+    _regionSelector->Update(stat.centroid, scaledArea);
   }
   // No movement = global decay
   if (! updated) {
@@ -790,11 +794,11 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
     // top
     if (_regionSelector->IsTopActivated())
     {
-      float value = _regionSelector->GetTopResponse();
-      Anki::Point2f centroid = _regionSelector->GetTopResponseCentroid();
+      const float value = _regionSelector->GetTopResponse();
+      const Point2f& centroid = _regionSelector->GetTopResponseCentroid();
       msg.top_img_area = value; //not really the area here, but the response value
-      msg.top_img_x = int16_t(centroid.x() * scaleMultiplier);
-      msg.top_img_y = int16_t(centroid.y() * scaleMultiplier);
+      msg.top_img_x = int16_t(round(centroid.x() * scaleMultiplier));
+      msg.top_img_y = int16_t(round(centroid.y() * scaleMultiplier));
     }
     else
     {
@@ -805,11 +809,11 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
     // left
     if (_regionSelector->IsLeftActivated())
     {
-      float value = _regionSelector->GetLeftResponse();
-      Anki::Point2f centroid = _regionSelector->GetLeftResponseCentroid();
+      const float value = _regionSelector->GetLeftResponse();
+      const Point2f& centroid = _regionSelector->GetLeftResponseCentroid();
       msg.left_img_area = value; //not really the area here, but the response value
-      msg.left_img_x = int16_t(centroid.x() * scaleMultiplier);
-      msg.left_img_y = int16_t(centroid.y() * scaleMultiplier);
+      msg.left_img_x = int16_t(round(centroid.x() * scaleMultiplier));
+      msg.left_img_y = int16_t(round(centroid.y() * scaleMultiplier));
     }
     else
     {
@@ -820,11 +824,11 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
     // right
     if (_regionSelector->IsRightActivated())
     {
-      float value = _regionSelector->GetRightResponse();
-      Anki::Point2f centroid = _regionSelector->GetRightResponseCentroid();
+      const float value = _regionSelector->GetRightResponse();
+      const Point2f& centroid = _regionSelector->GetRightResponseCentroid();
       msg.right_img_area = value; //not really the area here, but the response value
-      msg.right_img_x = int16_t(centroid.x() * scaleMultiplier);
-      msg.right_img_y = int16_t(centroid.y() * scaleMultiplier);
+      msg.right_img_x = int16_t(round(centroid.x() * scaleMultiplier));
+      msg.right_img_y = int16_t(round(centroid.y() * scaleMultiplier));
     }
     else
     {
@@ -844,23 +848,23 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
         return out.str();
       };
 
-      float scale = 0.5;
+      const float scale = 0.5;
       {
-        float value = _regionSelector->GetTopResponse();
-        std::string text = to_string_with_precision(value, 3);
-        Anki::Point2f origin(imageToDisplay.GetNumCols()/2 - 10, 30);
+        const float value = _regionSelector->GetTopResponse();
+        const std::string& text = to_string_with_precision(value, 3);
+        const Point2f origin(imageToDisplay.GetNumCols()/2 - 10, 30);
         imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
       {
-        float value = _regionSelector->GetRightResponse();
-        std::string text = to_string_with_precision(value, 3);
-        Anki::Point2f origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
+        const float value = _regionSelector->GetRightResponse();
+        const std::string& text = to_string_with_precision(value, 3);
+        const Point2f origin(imageToDisplay.GetNumCols()-50, imageToDisplay.GetNumRows()/2 );
         imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
       {
-        float value = _regionSelector->GetLeftResponse();
-        std::string text = to_string_with_precision(value, 3);
-        Anki::Point2f origin(10, imageToDisplay.GetNumRows()/2);
+        const float value = _regionSelector->GetLeftResponse();
+        const std::string& text = to_string_with_precision(value, 3);
+        const Point2f origin(10, imageToDisplay.GetNumRows()/2);
         imageToDisplay.DrawText(origin, text, Anki::ColorRGBA(u8(255), u8(0), u8(0)), scale);
       }
     }
@@ -868,35 +872,35 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
     // Draw the bounding lines
     { // Top line
       int thickness = 1;
-      Anki::Point2f topLeft(0, _regionSelector->GetUpperMargin());
-      Anki::Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetUpperMargin());
+      Point2f topLeft(0, _regionSelector->GetUpperMargin());
+      Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetUpperMargin());
       imageToDisplay.DrawLine(topLeft, topRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
     { // Left line
       int thickness = 1;
-      Anki::Point2f topLeft(_regionSelector->GetLeftMargin(), 0);
-      Anki::Point2f bottomLeft(_regionSelector->GetLeftMargin(), imageToDisplay.GetNumRows());
+      Point2f topLeft(_regionSelector->GetLeftMargin(), 0);
+      Point2f bottomLeft(_regionSelector->GetLeftMargin(), imageToDisplay.GetNumRows());
       imageToDisplay.DrawLine(topLeft, bottomLeft, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
     { // Right line
       int thickness = 1;
-      Anki::Point2f topRight(_regionSelector->GetRightMargin(), 0);
-      Anki::Point2f BottomRight(_regionSelector->GetRightMargin(), imageToDisplay.GetNumCols());
+      Point2f topRight(_regionSelector->GetRightMargin(), 0);
+      Point2f BottomRight(_regionSelector->GetRightMargin(), imageToDisplay.GetNumCols());
       imageToDisplay.DrawLine(topRight, BottomRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
 
     //Draw the motion centroids
     {
       {
-        Anki::Point2f centroid = _regionSelector->GetTopResponseCentroid();
+        Point2f centroid = _regionSelector->GetTopResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
       {
-        Anki::Point2f centroid = _regionSelector->GetLeftResponseCentroid();
+        Point2f centroid = _regionSelector->GetLeftResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
       {
-        Anki::Point2f centroid = _regionSelector->GetRightResponseCentroid();
+        Point2f centroid = _regionSelector->GetRightResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
     }
