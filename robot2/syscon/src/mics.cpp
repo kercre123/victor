@@ -7,6 +7,8 @@
 #include "mics.h"
 #include "mic_tables.h"
 
+extern "C" void start_mic_spi(int16_t a, int16_t b, void* tim);
+
 static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
 static const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
@@ -15,7 +17,7 @@ static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
 __align(2) static uint8_t pdm_data[2][2][WORDS_PER_SAMPLE * SAMPLES_PER_IRQ];
 static int sample_index;
 
-static uint16_t SPI_CR1 = 0
+static int16_t MIC_SPI_CR1 = 0
            | SPI_CR1_MSTR                 // Master
            | SPI_CR1_RXONLY               // Read only
            | SPI_CR1_SSM                  // Software slave
@@ -92,31 +94,7 @@ void Mics::init(void) {
   NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
   NVIC_SetPriority(DMA1_Channel2_3_IRQn, PRIORITY_MICS);
 
-  // NEED TO SLOP TIMING HERE
-  __asm {
-    MOV r0, TIM_CR1_CEN
-    MOV r1, SPI_CR1
-    MOV r2, &TIM15->CR1
-    MOV r3, &SPI1->CR1
-    MOV r4, &SPI2->CR1
-    
-    str r0, [r2, #0]
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    str r1, [r3, #0]
-    str r1, [r4, #0]
-  }
+  start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
 }
 
 void Mics::transmit(int16_t* payload) {

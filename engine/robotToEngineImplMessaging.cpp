@@ -46,6 +46,9 @@
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/robotStatusAndActions.h"
 
+#include "audioUtil/audioDataTypes.h"
+#include "audioUtil/waveFile.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/debug/messageDebugging.h"
 #include "util/fileUtils/fileUtils.h"
@@ -124,6 +127,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::audioInput,                     &RobotToEngineImplMessaging::HandleAudioInput);
   
   
   // lambda wrapper to call internal handler
@@ -1170,6 +1174,58 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   }
 
 }
+
+void RobotToEngineImplMessaging::HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  static uint32_t sLatestSequenceID = 0;
+  static AudioUtil::AudioChunkList audioData{};
+  static uint32_t totalAudioSize = 0;
   
+  const auto & payload = message.GetData().Get_audioInput();
+
+  constexpr int kNumChannels = 4;
+  const int channelsToSave = 4;
+  
+  if (payload.sequenceID > sLatestSequenceID ||
+      (sLatestSequenceID - payload.sequenceID) > (UINT32_MAX / 2)) // To handle rollover case
+  {
+    audioData.resize(audioData.size() + 1);
+    auto& newData = audioData.back();
+    constexpr int kSamplesPerChunk = 80; // 80 Samples 4 channels = 320 samples total
+    newData.resize(kSamplesPerChunk * channelsToSave);
+    
+    if (channelsToSave == 1)
+    {
+      // For testing purposes lets only save off the first channel
+      for (int j=0; j<kSamplesPerChunk; j++)
+      {
+        newData.data()[j] = payload.data.data()[j * kNumChannels];
+      }
+    }
+    else
+    {
+      std::copy(payload.data.begin(), payload.data.end(), newData.data());
+    }
+    
+    totalAudioSize += kSamplesPerChunk;
+    sLatestSequenceID = payload.sequenceID;
+  }
+  
+  if (totalAudioSize >= (AudioUtil::kSampleRate_hz * 20))
+  {
+    ANKI_CPU_PROFILE("HandleAudioInput.WriteWavFile");
+    if (!robot->IsPhysical())
+    {
+      std::string writeLocation = robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "testoutput.wav");
+      auto saveWaveFile = [dest = std::move(writeLocation), channelsToSave, data = std::move(audioData)] () {
+        AudioUtil::WaveFile::SaveFile(dest, data, channelsToSave);
+      };
+      std::thread(saveWaveFile).detach();
+    }
+    audioData.clear();
+    totalAudioSize = 0;
+  }
+}
+
 } // end namespace Cozmo
 } // end namespace Anki

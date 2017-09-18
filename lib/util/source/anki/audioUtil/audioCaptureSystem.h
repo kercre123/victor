@@ -26,7 +26,7 @@ struct AudioCaptureSystemData;
 class AudioCaptureSystem : public IAudioInputSource
 {
 public:
-  AudioCaptureSystem();
+  AudioCaptureSystem(uint32_t samplesPerChunk = kSamplesPerChunk);
   virtual ~AudioCaptureSystem();
   bool IsValid() const { return _impl != nullptr; }
   
@@ -49,6 +49,7 @@ public:
   
 private:
   std::unique_ptr<AudioCaptureSystemData>   _impl;
+  uint32_t                                  _samplesPerChunk = 0;
   
 }; // class AudioCaptureSystem
 
