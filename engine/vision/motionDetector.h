@@ -59,10 +59,6 @@ public:
 
 private:
 
-  // The joy of pimpl :)
-  class ImageRegionSelector;
-  std::unique_ptr<ImageRegionSelector> _regionSelector;
-
   template<class ImageType>
   Result DetectHelper(const ImageType&        resizedImage,
                       s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
@@ -80,8 +76,8 @@ private:
 
   // apply Gaussian blur to the ration image
   template<class ImageType>
-  s32 preprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion);
-  void extractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
+  s32 ReprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion);
+  void ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
                                 const VisionPoseData &crntPoseData,
                                 const Vision::Image &foregroundMotion,
                                 const Point2f &centroid,
@@ -104,6 +100,9 @@ private:
   static size_t GetCentroid(const Vision::Image& motionImg,
                             Anki::Point2f& centroid,
                             f32 xPercentile, f32 yPercentile);
+  // The joy of pimpl :)
+  class ImageRegionSelector;
+  std::unique_ptr<ImageRegionSelector> _regionSelector;
 
   const Vision::Camera& _camera;
   
