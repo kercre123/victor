@@ -45,6 +45,7 @@ function(anki_build_copy_assets)
             OUTPUT ${DST_PATH}
             COMMAND ${CMAKE_COMMAND}
             ARGS -E copy_if_different "${SRC_PATH}" "${DST_PATH}"
+            DEPENDS ${SRC_PATH}
             COMMENT "copy ${SRC} ${DST}"
             VERBATIM
         )
