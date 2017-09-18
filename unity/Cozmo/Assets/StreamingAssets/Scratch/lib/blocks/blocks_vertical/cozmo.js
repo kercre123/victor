@@ -224,7 +224,35 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
             "options": [
               ['select', 'select'],
               ['win', 'win'],
-              ['lose', 'lose']
+              ['lose', 'lose'],
+              ['game start','game start'], 
+              ['clock tick','clock tick'], 
+              ['bling','bling'], 
+              ['success','success'], 
+              ['fail','fail'], 
+              ['timer warning','timer warning'], 
+              ['timer end','timer end'], 
+              ['eighties music','eighties music'], 
+              ['mambo music','mambo music'], 
+              ['sparkle','sparkle'], 
+              ['swoosh','swoosh'], 
+              ['ping','ping'], 
+              ['hot potato end','hot potato end'], 
+              ['hot potato music slow','hot potato music slow'], 
+              ['hot potato music medium','hot potato music medium'], 
+              ['hot potato music fast','hot potato music fast'], 
+              ['hot potato music superfast','hot potato music superfast'], 
+              ['magnet pull','magnet pull'], 
+              ['magnet repel','magnet repel'], 
+              ['instrument 1 mode 1','instrument 1 mode 1'], 
+              ['instrument 1 mode 2','instrument 1 mode 2'], 
+              ['instrument 1 mode 3','instrument 1 mode 3'], 
+              ['instrument 2 mode 1','instrument 2 mode 1'], 
+              ['instrument 2 mode 2','instrument 2 mode 2'], 
+              ['instrument 2 mode 3','instrument 2 mode 3'], 
+              ['instrument 3 mode 1','instrument 3 mode 1'], 
+              ['instrument 3 mode 2','instrument 3 mode 2'], 
+              ['instrument 3 mode 3','instrument 3 mode 3'] 
             ]
           }
         ],
