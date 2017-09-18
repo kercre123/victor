@@ -113,28 +113,28 @@ void RobotDataLoader::LoadNonConfigData()
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
-    LoadAnimationGroups();
+//    LoadAnimationGroups();
   }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
-    LoadCubeLightAnimations();
+//    LoadCubeLightAnimations();
   }
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-    LoadBackpackLightAnimations();
+//    LoadBackpackLightAnimations();
   }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadFaceAnimations");
-    LoadFaceAnimations();
+//    LoadFaceAnimations();
     AddToLoadingRatio(_kFaceAnimationsLoadingRatio);
   }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
-    LoadEmotionEvents();
+//    LoadEmotionEvents();
   }
 
   {
@@ -159,7 +159,7 @@ void RobotDataLoader::LoadNonConfigData()
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-    LoadCubeAnimationTriggerResponses();
+//    LoadCubeAnimationTriggerResponses();
   }
   
   {
