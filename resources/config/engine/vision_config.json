@@ -79,10 +79,10 @@
 
   "MotionDetector" :
   {
-  	"HorizontalSize" 	: 0.3,
-  	"VerticalSize" 		: 0.3,
-  	"IncreaseFactor" 	: 40.0,
-  	"DecreaseFactor" 	: 1.0,
-  	"MaxValue" 			: 10.0
+  	"HorizontalSize"    : 0.3,    // Fraction of the width of the image to be used for peripheral motion detction (right and left)
+  	"VerticalSize"      : 0.3,    // Fraction of the height of the image to be used for peripheral motion detction (top)
+  	"IncreaseFactor"    : 40.0,   // The higher this number, the more sensitive is motion detection to motion 
+  	"DecreaseFactor"    : 1.0,    // The higher this number, the more quickly motion detection forgets about motion
+  	"MaxValue"          : 10.0    // The higher this value, the sooner peripheral motion detection wilkl be triggered
   }
 }
