@@ -663,6 +663,12 @@ Blockly.Css.CONTENT = [
     'opacity: 0.2;', // *** ANKI CHANGE ***
   '}',
 
+  // *** ANKI CHANGE ***
+  // Hides vertical scrollbars.
+  '.blocklyScrollbarBackgroundVertical {',
+    'opacity: 0.0;',
+  '}',
+
   '.blocklyScrollbarHandle {',
     'fill: #817e7e', // *** ANKI CHANGE ***
   '}',
@@ -1241,7 +1247,7 @@ Blockly.Css.CONTENT = [
     'cursor: pointer;',
     'line-height: 1.2em;', // *** ANKI CHANGE ***
     'margin: 0;',
-    //'padding: 14px 20px 10px 0;', // *** ANKI CHANGE ***
+    'padding: 14px 20px 10px 0;', // *** ANKI CHANGE ***
     'border-bottom: 1px solid #afb1b1;',
     'background-image: radial-gradient(circle at bottom, #b0b1b2 0%, #bcbdbe 60%);',
   '}',

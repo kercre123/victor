@@ -88,7 +88,7 @@
         // Instantiate scratch-blocks and attach it to the DOM.
         var workspace = window.Blockly.inject('blocks', {
             media: './lib/blocks/media/',
-            scrollbars: false,
+            scrollbars: true,
             trashcan: false,
             horizontalLayout: !window.isVertical,
             toolbox: window.toolbox,

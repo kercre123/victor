@@ -199,8 +199,8 @@
             projectXML = window.replaceSampleProjectTextForIntruder(projectXML);
         }
 
-        // Remove all existing scripts from workspace
-        //Scratch.workspace.clear();
+        // Remove all existing scripts from workspace.
+        Scratch.workspace.clear();
 
         window.cozmoProjectUUID = projectUUID;
         window.cozmoProjectName = projectName;
