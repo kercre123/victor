@@ -77,7 +77,7 @@ To build for mac:
 ./project/victor/build-victor.sh -p mac
 
 # To generate an Xcode project without building
-./project/victor/build-victor.sh -p mac -C
+./project/victor/build-victor.sh -p mac -g Xcode -C
 ```
 
 We use a helper script to generate file lists to tell CMake what to build. Sometimes, when changing branches, CMake doesn't notice that it needs to regenerate build files. You can force it do to so by passing the `-f` flag:
