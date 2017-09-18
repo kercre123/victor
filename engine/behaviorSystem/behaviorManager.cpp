@@ -72,7 +72,41 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+namespace ReactionTriggerHelpers {
+// This is declared in reactionTriggerHelpers.h
+const ReactionTriggerHelpers::FullReactionArray &GetAffectAllArray() {
+
+  static constexpr const ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
+      {ReactionTrigger::CliffDetected,         true},
+      {ReactionTrigger::CubeMoved,             true},
+      {ReactionTrigger::FacePositionUpdated,   true},
+      {ReactionTrigger::FistBump,              true},
+      {ReactionTrigger::Frustration,           true},
+      {ReactionTrigger::Hiccup,                true},
+      {ReactionTrigger::MotorCalibration,      true},
+      {ReactionTrigger::NoPreDockPoses,        true},
+      {ReactionTrigger::ObjectPositionUpdated, true},
+      {ReactionTrigger::PlacedOnCharger,       true},
+      {ReactionTrigger::PetInitialDetection,   true},
+      {ReactionTrigger::RobotPickedUp,         true},
+      {ReactionTrigger::RobotPlacedOnSlope,    true},
+      {ReactionTrigger::ReturnedToTreads,      true},
+      {ReactionTrigger::RobotOnBack,           true},
+      {ReactionTrigger::RobotOnFace,           true},
+      {ReactionTrigger::RobotOnSide,           true},
+      {ReactionTrigger::RobotShaken,           true},
+      {ReactionTrigger::Sparked,               true},
+      {ReactionTrigger::UnexpectedMovement,    true},
+      {ReactionTrigger::VC,                    true},
+  };
+
+  static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectAllArray),
+                "Reaction triggers duplicate or non-sequential");
+
+  return kAffectAllArray;
+}
+} // namespace ReactionTriggerHelpers
+    
 namespace{
 // For creating activities and accessing them
 static const char* kHighLevelActivityTypeConfigKey    = "highLevelID";
@@ -114,6 +148,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersUIRequestGame
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersUIRequestGame),
               "Reaction triggers duplicate or non-sequential");
+
 const char* kDisableReactionsUIRequestGameLock = "bm_ui_request_game_lock";
   
 } // namespace
@@ -391,7 +426,7 @@ void BehaviorManager::InitializeEventHandlers()
                                 const auto& msg = event.GetData().Get_DisableAllReactionsWithLock();
                                 DisableReactionsWithLock(
                                                          msg.lockID,
-                                                         ReactionTriggerHelpers::kAffectAllArray,
+                                                         ReactionTriggerHelpers::GetAffectAllArray(),
                                                          true);
                               }));
   
