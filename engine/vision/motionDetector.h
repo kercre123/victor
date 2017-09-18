@@ -39,6 +39,9 @@ namespace Cozmo {
 struct VisionPoseData;
 class VizManager;
 
+// Class for detecting motion in various areas of the image.
+// There's two main components: one that detects motion on the ground plane, and one that detects motion in the
+// peripheral areas (top, left and right).
 class MotionDetector
 {
 public:
@@ -68,10 +71,14 @@ private:
                       std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
                       DebugImageList<Vision::ImageRGB>& debugImageRGBs);
 
+  // To detect peripheral motion, a simple impulse-decay model is used. The longer motion is detected in a
+  // specific area, the higher its activation will be. When it reaches a max value motion is activated in
+  // that specific area.
   Result DetectPeripheralMotion(const Vision::Image &inputImage,
                                   DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
                                   ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier);
 
+  // apply Gaussian blur to the ration image
   template<class ImageType>
   s32 preprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion);
   void extractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,

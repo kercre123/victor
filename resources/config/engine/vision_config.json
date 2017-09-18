@@ -81,7 +81,7 @@
   {
   	"HorizontalSize" 	: 0.3,
   	"VerticalSize" 		: 0.3,
-  	"IncreaseFactor" 	: 0.01,
+  	"IncreaseFactor" 	: 40.0,
   	"DecreaseFactor" 	: 1.0,
   	"MaxValue" 			: 10.0
   }
