@@ -87,7 +87,12 @@ namespace Cozmo.Notifications {
       foreach (var notification in _NotificationCache) {
         UTNotifications.Manager.Instance.ScheduleNotification(
           notification.SecondsInFuture,
+#if UNITY_ANDROID && !UNITY_EDITOR
           "Cozmo",
+#else
+          // On iOS, the title does not look so good (COZMO-14564)
+          string.Empty,
+#endif
           Localization.GetWithArgs(notification.TextKey),
           _NotifId++
         );
