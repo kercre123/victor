@@ -624,7 +624,7 @@ void MotionDetector::extractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, 
   Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
                      groundPlaneForegroundMotion.GetNumCols());
   mask.FillWith(0);
-  fillConvexPoly(mask.get_CvMat_(), std::__1::vector<cv::Point>{
+  fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
         imgQuad[Quad::TopLeft].get_CvPoint_(),
         imgQuad[Quad::TopRight].get_CvPoint_(),
         imgQuad[Quad::BottomRight].get_CvPoint_(),
