@@ -1275,17 +1275,19 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
 {
   if( msg.onboardingStage < _robotOnboardingStageCompleted )
   {
-    // only complete resets are allowed...
-    PRINT_NAMED_WARNING("NeedsManager.HandleMessage.RegisterOnboardingComplete",
-                        "Negative onboarding progress %d -> %d is not allowed",
+    // only complete resets are allowed, however if connecting to a new robot from an old
+    // app we do allow people to restart onboarding.
+    PRINT_NAMED_INFO("NeedsManager.HandleMessage.RegisterOnboardingComplete",
+                        "Negative onboarding progress %d -> %d is ignored",
                         _robotOnboardingStageCompleted, msg.onboardingStage);
-    return;
+  }
+  else
+  {
+    _robotOnboardingStageCompleted = msg.onboardingStage;
   }
   PRINT_CH_INFO(kLogChannelName, "RegisterOnboardingComplete",
                 "OnboardingStageCompleted: %d, finalStage: %d",
                 _robotOnboardingStageCompleted, msg.finalStage);
-
-  _robotOnboardingStageCompleted = msg.onboardingStage;
 
   // phase 1 is just the first part showing the needs hub.
   if( msg.finalStage )
