@@ -216,6 +216,30 @@
   "unlockable.TrackLaser.Description": {
     "translation": "Follow that laser! With this Trick, shine a laser pointer in front of Cozmo and he will let you lead the way."
   },
+  "unlockable.CozmoSings.Title": {
+    "translation": "Cozmo Sings"
+  },
+  "unlockable.CozmoSings.DescriptionFirstLine": {
+    "translation": "When Cozmo is happy, he'll sing songs as he explores the world."
+  },
+  "unlockable.CozmoSings.DescriptionSecondLine": {
+    "translation": "If you shake a cube while he is singing, you'll change his voice."
+  },
+  "unlockable.CozmoSings.ButtonPromptTitle": {
+    "translation": "Tap button"
+  },
+  "unlockable.CozmoSings.ButtonPromptDescription": {
+    "translation": "to see Cozmo's songs"
+  },
+  "unlockable.CozmoSings.ButtonText": {
+    "translation": "Cozmo's Playlist"
+  },
+  "unlockable.CozmoSings.ModalTitle": {
+    "translation": "Cozmo's Songs"
+  },
+  "unlockable.CozmoSings.LockedSongTitle": {
+    "translation": "????"
+  },
   "sparks.Sparked": {
     "translation": "Cozmo is sparked:"
   },

@@ -386,8 +386,6 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_cube_tap = "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_tap";
   public const string kCodeLabGlossaryBlock_definitionsTitleCozmo_event_on_cube_moved = "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_moved";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionCozmo_event_on_cube_moved = "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_moved";
-  public const string kCodeLabGlossaryBlock_definitionsTitleEvent_whengreaterthan = "codeLabGlossary.block_definitions.title.event_whengreaterthan";
-  public const string kCodeLabGlossaryBlock_definitionsDescriptionEvent_whengreaterthan = "codeLabGlossary.block_definitions.description.event_whengreaterthan";
   public const string kCodeLabGlossaryBlock_definitionsTitleEvent_whenbroadcastreceived = "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionEvent_whenbroadcastreceived = "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived";
   public const string kCodeLabGlossaryBlock_definitionsTitleEvent_broadcast = "codeLabGlossary.block_definitions.title.event_broadcast";
@@ -480,6 +478,8 @@ public static class LocalizationKeys {
   public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_letter_of = "codeLabGlossary.block_definitions.description.operator_letter_of";
   public const string kCodeLabGlossaryBlock_definitionsTitleOperator_length = "codeLabGlossary.block_definitions.title.operator_length";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_length = "codeLabGlossary.block_definitions.description.operator_length";
+  public const string kCodeLabGlossaryBlock_definitionsTitleOperator_contains = "codeLabGlossary.block_definitions.title.operator_contains";
+  public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_contains = "codeLabGlossary.block_definitions.description.operator_contains";
   public const string kCodeLabGlossaryBlock_definitionsTitleOperator_mod = "codeLabGlossary.block_definitions.title.operator_mod";
   public const string kCodeLabGlossaryBlock_definitionsDescriptionOperator_mod = "codeLabGlossary.block_definitions.description.operator_mod";
   public const string kCodeLabGlossaryBlock_definitionsTitleOperator_round = "codeLabGlossary.block_definitions.title.operator_round";
@@ -614,33 +614,27 @@ public static class LocalizationKeys {
 
   #region LocalNotificationStrings
 
-  public const string kLocalNotifComeBackGeneralPeriod1d01 = "LocalNotif.ComeBackGeneral.Period.1d.01";
-  public const string kLocalNotifComeBackGeneralPeriodDC1d01 = "LocalNotif.ComeBackGeneral.Period.DC.1d.01";
-  public const string kLocalNotifComeBackGeneralPeriodDNC1d01 = "LocalNotif.ComeBackGeneral.Period.DNC.1d.01";
-  public const string kLocalNotifComeBackGeneralNextAM01 = "LocalNotif.ComeBackGeneral.NextAM.01";
-  public const string kLocalNotifComeBackGeneralNextPM01 = "LocalNotif.ComeBackGeneral.NextPM.01";
-  public const string kLocalNotifComeBackGeneralPeriod3d01 = "LocalNotif.ComeBackGeneral.Period.3d.01";
+  public const string kLocalNotifComeBackGeneralPeriod2d01 = "LocalNotif.ComeBackGeneral.Period.2d.01";
+  public const string kLocalNotifComeBackGeneralPeriod2d02 = "LocalNotif.ComeBackGeneral.Period.2d.02";
+  public const string kLocalNotifComeBackGeneralPeriod2d03 = "LocalNotif.ComeBackGeneral.Period.2d.03";
+  public const string kLocalNotifComeBackGeneralPeriod2d04 = "LocalNotif.ComeBackGeneral.Period.2d.04";
+  public const string kLocalNotifComeBackGeneralPeriod2d05 = "LocalNotif.ComeBackGeneral.Period.2d.05";
+  public const string kLocalNotifComeBackGeneralPeriod4d01 = "LocalNotif.ComeBackGeneral.Period.4d.01";
+  public const string kLocalNotifComeBackGeneralPeriod4d02 = "LocalNotif.ComeBackGeneral.Period.4d.02";
+  public const string kLocalNotifComeBackGeneralPeriod4d03 = "LocalNotif.ComeBackGeneral.Period.4d.03";
+  public const string kLocalNotifComeBackGeneralPeriod4d04 = "LocalNotif.ComeBackGeneral.Period.4d.04";
+  public const string kLocalNotifComeBackGeneralPeriod4d05 = "LocalNotif.ComeBackGeneral.Period.4d.05";
   public const string kLocalNotifComeBackGeneralPeriod7d01 = "LocalNotif.ComeBackGeneral.Period.7d.01";
+  public const string kLocalNotifComeBackGeneralPeriod7d02 = "LocalNotif.ComeBackGeneral.Period.7d.02";
+  public const string kLocalNotifComeBackGeneralPeriod7d03 = "LocalNotif.ComeBackGeneral.Period.7d.03";
+  public const string kLocalNotifComeBackGeneralPeriod7d04 = "LocalNotif.ComeBackGeneral.Period.7d.04";
+  public const string kLocalNotifComeBackGeneralPeriod7d05 = "LocalNotif.ComeBackGeneral.Period.7d.05";
   public const string kLocalNotifComeBackGeneralPeriod14d01 = "LocalNotif.ComeBackGeneral.Period.14d.01";
+  public const string kLocalNotifComeBackGeneralPeriod14d02 = "LocalNotif.ComeBackGeneral.Period.14d.02";
+  public const string kLocalNotifComeBackGeneralPeriod14d03 = "LocalNotif.ComeBackGeneral.Period.14d.03";
   public const string kLocalNotifComeBackGeneralPeriod30d01 = "LocalNotif.ComeBackGeneral.Period.30d.01";
-  public const string kLocalNotifComeBackGeneralPeriod365d01 = "LocalNotif.ComeBackGeneral.Period.365d.01";
-  public const string kLocalNotifDailyPreReminderDC01 = "LocalNotif.DailyPreReminder.DC.01";
-  public const string kLocalNotifDailyPreReminderDNC01 = "LocalNotif.DailyPreReminder.DNC.01";
-  public const string kLocalNotifNeedBracketRepairWarning01 = "LocalNotif.NeedBracket.Repair.Warning.01";
-  public const string kLocalNotifNeedBracketRepairCritical01 = "LocalNotif.NeedBracket.Repair.Critical.01";
-  public const string kLocalNotifNeedBracketEnergyWarning01 = "LocalNotif.NeedBracket.Energy.Warning.01";
-  public const string kLocalNotifNeedBracketEnergyCritical01 = "LocalNotif.NeedBracket.Energy.Critical.01";
-  public const string kLocalNotifNeedBracketPlayWarning01 = "LocalNotif.NeedBracket.Play.Warning.01";
-  public const string kLocalNotifNeedBracketPlayCritical01 = "LocalNotif.NeedBracket.Play.Critical.01";
-  public const string kLocalNotifNeedLevelRepairDecaying01 = "LocalNotif.NeedLevel.Repair.Decaying.01";
-  public const string kLocalNotifNeedLevelEnergyDecaying01 = "LocalNotif.NeedLevel.Energy.Decaying.01";
-  public const string kLocalNotifNeedLevelPlayDecaying01 = "LocalNotif.NeedLevel.Play.Decaying.01";
-  public const string kLocalNotifTokens3ToGo01 = "LocalNotif.Tokens.3.ToGo.01";
-  public const string kLocalNotifTokens3ToGo02 = "LocalNotif.Tokens.3.ToGo.02";
-  public const string kLocalNotifTokens2ToGo01 = "LocalNotif.Tokens.2.ToGo.01";
-  public const string kLocalNotifTokens2ToGo02 = "LocalNotif.Tokens.2.ToGo.02";
-  public const string kLocalNotifTokens1ToGo01 = "LocalNotif.Tokens.1.ToGo.01";
-  public const string kLocalNotifTokens1ToGo02 = "LocalNotif.Tokens.1.ToGo.02";
+  public const string kLocalNotifComeBackGeneralPeriod90d01 = "LocalNotif.ComeBackGeneral.Period.90d.01";
+  public const string kLocalNotifComeBackGeneralPeriod180d01 = "LocalNotif.ComeBackGeneral.Period.180d.01";
 
   #endregion
 
@@ -1038,6 +1032,7 @@ public static class LocalizationKeys {
   public const string kRequestGameDescription = "requestGame.description";
   public const string kLabelConnect = "label.connect";
   public const string kCoreUpgradeDetailsDialogCubesNeeded = "coreUpgradeDetailsDialog.cubesNeeded";
+  public const string kCoreUpgradeDetailsDialogCubesOptional = "coreUpgradeDetailsDialog.cubesOptional";
   public const string kLabelEmptyWithArg = "label.emptyWithArg";
   public const string kTitleSoundCheck = "title.soundCheck";
   public const string kButtonGetACozmo = "button.GetACozmo";
@@ -1200,6 +1195,14 @@ public static class LocalizationKeys {
   public const string kUnlockableGuardDogDescription = "unlockable.GuardDog.Description";
   public const string kUnlockableTrackLaserTitle = "unlockable.TrackLaser.Title";
   public const string kUnlockableTrackLaserDescription = "unlockable.TrackLaser.Description";
+  public const string kUnlockableCozmoSingsTitle = "unlockable.CozmoSings.Title";
+  public const string kUnlockableCozmoSingsDescriptionFirstLine = "unlockable.CozmoSings.DescriptionFirstLine";
+  public const string kUnlockableCozmoSingsDescriptionSecondLine = "unlockable.CozmoSings.DescriptionSecondLine";
+  public const string kUnlockableCozmoSingsButtonPromptTitle = "unlockable.CozmoSings.ButtonPromptTitle";
+  public const string kUnlockableCozmoSingsButtonPromptDescription = "unlockable.CozmoSings.ButtonPromptDescription";
+  public const string kUnlockableCozmoSingsButtonText = "unlockable.CozmoSings.ButtonText";
+  public const string kUnlockableCozmoSingsModalTitle = "unlockable.CozmoSings.ModalTitle";
+  public const string kUnlockableCozmoSingsLockedSongTitle = "unlockable.CozmoSings.LockedSongTitle";
   public const string kSparksSparked = "sparks.Sparked";
   public const string kSparksSparkCozmo = "sparks.SparkCozmo";
   public const string kSparksSpark = "sparks.Spark";

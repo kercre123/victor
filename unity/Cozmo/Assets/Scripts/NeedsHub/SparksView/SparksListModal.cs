@@ -2,12 +2,16 @@
 using Cozmo.Challenge;
 using System.Collections.Generic;
 using UnityEngine;
+using Cozmo.Needs.Sparks.UI.CozmoSings;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparksListModal : BaseModal {
 
     [SerializeField]
     private SparkCell _SparksCellPrefab;
+
+    [SerializeField]
+    private CozmoSingsSparkCell _CozmoSingsSparkCellPrefab;
 
     [SerializeField]
     private Transform _SparksListContainer;
@@ -29,7 +33,15 @@ namespace Cozmo.Needs.Sparks.UI {
       for (int i = 0; i < unlockData.Count; ++i) {
         if (unlockData[i].FeatureIsEnabled &&
             (UnlockablesManager.Instance.IsUnlocked(unlockData[i].Id.Value) || unlockData[i].ComingSoon)) {
-          GameObject cellInstance = UIManager.CreateUIElement(_SparksCellPrefab, _SparksListContainer);
+
+          GameObject cellInstance;
+          if (unlockData[i].Id.Value == Anki.Cozmo.UnlockId.CozmoSings) {
+            cellInstance = UIManager.CreateUIElement(_CozmoSingsSparkCellPrefab, _SparksListContainer);
+          }
+          else {
+            cellInstance = UIManager.CreateUIElement(_SparksCellPrefab, _SparksListContainer);
+          }
+
           cellInstance.GetComponent<SparkCell>().Initialize(unlockData[i], DASEventDialogName);
         }
       }

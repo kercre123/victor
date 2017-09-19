@@ -96,6 +96,9 @@
   "coreUpgradeDetailsDialog.cubesNeeded": {
     "translation": "{0} {1} Required"
   },
+   "coreUpgradeDetailsDialog.cubesOptional" : {
+    "translation" : "{0} {1} Optional"
+  },
   "label.emptyWithArg": {
     "translation": "{0}"
   },

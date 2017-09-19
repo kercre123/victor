@@ -7,30 +7,30 @@ namespace Cozmo.Needs.Sparks.UI {
     private const float kComingSoonAlpha = 0.5f;
 
     [SerializeField]
-    private CozmoImage _TrickIcon;
+    protected CozmoImage _TrickIcon;
 
     [SerializeField]
-    private CozmoText _TrickTitleText;
+    protected CozmoText _TrickTitleText;
 
     [SerializeField]
-    private CozmoButton _SparksButton;
+    protected CozmoButton _SparksButton;
 
     [SerializeField]
-    private CozmoText _SparkCountText;
+    protected CozmoText _SparkCountText;
 
     [SerializeField]
     private GameObject _SparkCostContainer;
 
     [SerializeField]
-    private SparksDetailModal _SparksDetailModalPrefab;
+    protected SparksDetailModal _SparksDetailModalPrefab;
 
     [SerializeField]
     private Sprite _UnlockableAlertIcon;
 
-    private UnlockableInfo _UnlockInfo;
-    private CostLabel _CostLabelHelper;
+    protected UnlockableInfo _UnlockInfo;
+    protected CostLabel _CostLabelHelper;
 
-    public void Initialize(UnlockableInfo unlockInfo, string dasEventDialogName) {
+    public virtual void Initialize(UnlockableInfo unlockInfo, string dasEventDialogName) {
       _SparksButton.Initialize(null, "spark_cell_" + unlockInfo.DASName, dasEventDialogName);
       if (unlockInfo.ComingSoon) {
         _SparksButton.onClick.AddListener(HandleTappedComingSoon);
@@ -72,7 +72,7 @@ namespace Cozmo.Needs.Sparks.UI {
       UIManager.OpenAlert(cozmoNotReadyData, comingSoonPriority);
     }
 
-    private void HandleTappedUnlocked() {
+    protected virtual void HandleTappedUnlocked() {
       // pop up sparks modal
       UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
         SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;

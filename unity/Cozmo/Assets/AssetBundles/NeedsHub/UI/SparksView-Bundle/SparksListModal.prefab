@@ -1144,7 +1144,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114682704381597516}
-    characterCount: 4
+    characterCount: 5
     spriteCount: 0
     spaceCount: 0
     wordCount: 1
@@ -1244,6 +1244,8 @@ MonoBehaviour:
   _PreventForceClose: 0
   DimBackground: 0
   _SparksCellPrefab: {fileID: 114103585801216028, guid: 1bee199f5ab4f4c17894839b6dade46e,
+    type: 2}
+  _CozmoSingsSparkCellPrefab: {fileID: 114901681381498712, guid: 007b3ddb694ca49e09b28a098bd43b4d,
     type: 2}
   _SparksListContainer: {fileID: 224956014636470832}
   _GameListContainer: {fileID: 224623375208273276}
@@ -1365,7 +1367,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: -266.07718, w: 0}
   m_textInfo:
     textComponent: {fileID: 114727537228357842}
-    characterCount: 16
+    characterCount: 18
     spriteCount: 0
     spaceCount: 1
     wordCount: 2

@@ -29,25 +29,25 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoText _Title;
 
     [SerializeField]
-    private CozmoText _NotSparkableLabel;
+    protected CozmoText _NotSparkableLabel;
 
     [SerializeField]
     private GameObject[] _SparkableInfoContainers;
 
     [SerializeField]
-    private CozmoButton _SparkButton;
+    protected CozmoButton _SparkButton;
 
     [SerializeField]
     private CozmoText _SparksCostText;
 
     [SerializeField]
-    private CozmoText _CubesRequiredLabel;
+    protected CozmoText _CubesRequiredLabel;
 
     [SerializeField]
-    private CozmoText _ButtonPromptTitle;
+    protected CozmoText _ButtonPromptTitle;
 
     [SerializeField]
-    private CozmoText _ButtonPromptDescription;
+    protected CozmoText _ButtonPromptDescription;
 
     [SerializeField]
     private GameObject _SparkSpinnerContainer;
@@ -55,7 +55,7 @@ namespace Cozmo.Needs.Sparks.UI {
     [SerializeField]
     protected MoveTweenSettings _StartGameMoveTweenSettings;
 
-    private UnlockableInfo _UnlockInfo;
+    protected UnlockableInfo _UnlockInfo;
     private string _ChallengeId;
     private string _ChallengeTitleLocKey;
 
@@ -65,7 +65,7 @@ namespace Cozmo.Needs.Sparks.UI {
     private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
 
     private bool _IsSparkingGame = false;
-    private bool _IsEngineDrivenTrick = false;
+    protected bool _IsEngineDrivenTrick = false;
     private bool _DoEngineCleanUp = true;
 
     protected override void CleanUp() {
@@ -119,13 +119,13 @@ namespace Cozmo.Needs.Sparks.UI {
       }
     }
 
-    private void InitializeDescription(Sprite icon, string titleLocKey, string descLocKey) {
+    protected void InitializeDescription(Sprite icon, string titleLocKey, string descLocKey) {
       _Icon.sprite = icon;
       _Title.text = Localization.Get(titleLocKey);
       _Description.text = Localization.Get(descLocKey);
     }
 
-    private void InitializeUnlockInfo() {
+    protected virtual void InitializeUnlockInfo() {
       this.DASEventDialogName = this.DASEventDialogName + "_" + _UnlockInfo.DASName;
       int sparkCost = _IsEngineDrivenTrick ? (int)EnumConcept.GetSparkCosts(SparkableThings.DoATrick, 0)
                                                       : _UnlockInfo.RequestTrickCostAmount;
@@ -190,7 +190,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
     #region Spark Trick
 
-    public void InitializeSparksDetailModal(UnlockableInfo unlockInfo, bool isEngineDriven) {
+    public virtual void InitializeSparksDetailModal(UnlockableInfo unlockInfo, bool isEngineDriven) {
       _UnlockInfo = unlockInfo;
       _IsEngineDrivenTrick = isEngineDriven;
 
