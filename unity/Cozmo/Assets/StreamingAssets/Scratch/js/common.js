@@ -138,7 +138,6 @@
 
         // Receipt of new block XML for the selected target.
         vm.on('workspaceUpdate', function(data) {
-            //Scratch.workspace.clear();
             var dom = window.Blockly.Xml.textToDom(data.xml);
             window.Blockly.Xml.domToWorkspace(dom, workspace);
         });

@@ -827,6 +827,7 @@ namespace CodeLab {
           projectToUpdate = FindUserProjectWithUUID(projectUUID);
           projectToUpdate.ProjectJSON = projectJSON;
           projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+          projectToUpdate.ProjectXML = null; // Set ProjectXML to null as this project might have previously been in XML and we don't want to store it anymore.
 
           _SessionState.OnUpdatedProject(projectToUpdate);
         }
@@ -1803,9 +1804,10 @@ namespace CodeLab {
             // Escape quotes in user project name and project XML
             // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
             String projectNameEscaped = EscapeProjectName(projectToOpen.ProjectName);
-            String projectJSON = projectToOpen.ProjectJSON; // TODO Need to escape this?
+            String projectJSON = projectToOpen.ProjectJSON;
             if (projectJSON != null) {
-              this.EvaluateJS("window.openCozmoProjectJSON('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "','" + projectJSON + "','false');");
+              String projectJSONEscaped = EscapeJSON(projectJSON);
+              this.EvaluateJS("window.openCozmoProjectJSON('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "','" + projectJSONEscaped + "','false');");
             }
             else {
               // User project is in XML. It must have been created before the Cozmo app 2.1 release.
@@ -1831,7 +1833,7 @@ namespace CodeLab {
 
           String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
 
-          // TODO Update to use JSON only when sample projects are converted to JSON.
+          // TODO Update to use JSON only when sample projects are converted to JSON. Be sure to call EscapeJSON as well.
           // Escape quotes in XML and project name
           // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
           String sampleProjectNameEscaped = EscapeProjectName(sampleProjectName);
@@ -1871,6 +1873,11 @@ namespace CodeLab {
     private String EscapeProjectName(String projectName) {
       String tempProjectName = projectName.Replace("\"", "\\\"");
       return tempProjectName.Replace("'", "\\'");
+    }
+
+    private String EscapeJSON(String json) {
+      json = json.Replace("\"", "\\\"");
+      return json.Replace("\'", "\\\'");
     }
 
     private String EscapeXML(String xml) {
