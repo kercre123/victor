@@ -348,14 +348,20 @@
   "codeLab.projects.tutorialLabel": {
       "translation": "Tutorial"
   },
-  "codeLab.projects.newProjectButtonLabel": {
-      "translation": "New Project"
+  "codeLab.projects.newHorizontalProjectButtonLabel": {
+      "translation": "New Sandbox Project"
+  },
+  "codeLab.projects.newVerticalProjectButtonLabel": {
+      "translation": "New Constructor Project"
   },
   "codeLab.projects.projectType.sampleProject": {
       "translation": "Sample"
   },
   "codeLab.projects.projectType.personalProject": {
       "translation": "Personal"
+  },
+  "codeLab.projects.projectType.myProject": {
+      "translation": "My Project"
   },
   "codeLab.projects.confirmQuit.promptText": {
       "translation": "Quit Activity?"
@@ -379,14 +385,44 @@
       "translation": "Are you sure you want to delete this project?"
   },
   "codeLab.projects.featuredTab.title": {
+      "translation": "Featured Projects"
+  },
+  "codeLab.projects.horizontalTab.title": {
+      "translation": "Sandbox Mode"
+  },
+  "codeLab.projects.verticalTab.title": {
+      "translation": "Constructor Mode"
+  },
+
+
+
+
+  "codeLab.projects.horizontalTab.horizontalTabHeroTitle": {
+      "translation": "The best place\nto start coding"
+  },
+  "codeLab.projects.horizontalTab.horizontalTabHeroDetail": {
+      "translation": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec tincidunt nunc. Nulla imperdiet nisi eget velit tristique tristique."
+  },
+  "codeLab.projects.verticalTab.verticalTabHeroTitle": {
+      "translation": "Take your coding skills\nto the next level"
+  },
+  "codeLab.projects.verticalTab.verticalTabHeroDetail": {
+      "translation": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec tincidunt nunc. Nulla imperdiet nisi eget velit tristique tristique."
+  },
+  "codeLab.projects.featuredTab.featuredTabHeroTitle": {
       "translation": "Code Lab Featured"
   },
-  "codeLab.projects.sandboxTab.title": {
-      "translation": "Code Lab Sandbox"
+  "codeLab.projects.featuredTab.featuredTabHeroDetail": {
+      "translation": "Code Lab Featured is filled with inspiring projects from players all around the world that will get you thinking about new ways to program"
   },
-  "codeLab.projects.constructorTab.title": {
-      "translation": "Code Lab Constructor"
-  },
+
+
+
+
+
+
+
+
   "codeLabSampleProject_DriveInSquare.projectName": {
       "translation": "Drive In Square"
   },

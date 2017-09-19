@@ -20,7 +20,6 @@ namespace DataPersistence {
     public bool ForceFirstTimeConnectFlow;
     public bool ForceNotFirstTimeConnectFlow;
     public bool FakeGermanLocale;
-    public bool UseVerticalGrammarCodelab;
     public bool EnableAutoBlockPoolOnStart;
 
     public DebugProfile() {
@@ -33,7 +32,6 @@ namespace DataPersistence {
       ForceFirstTimeConnectFlow = false;
       ForceNotFirstTimeConnectFlow = false;
       FakeGermanLocale = false;
-      UseVerticalGrammarCodelab = false;
       EnableAutoBlockPoolOnStart = true;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
@@ -47,7 +45,6 @@ namespace DataPersistence {
       DebugConsoleData.Instance.AddConsoleVar("ForceNotFirstTimeConnectFlow", "UIMockFlow", this);
       DebugConsoleData.Instance.AddConsoleVar("FakeGermanLocale", "UIMockFlow", this);
 #endif
-      DebugConsoleData.Instance.AddConsoleVar("UseVerticalGrammarCodelab", "CodeLab", this);
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
         OverrideLanguage = false;
@@ -95,7 +92,6 @@ namespace DataPersistence {
         }
         break;
       case "UseFastConnectivityFlow":
-      case "UseVerticalGrammarCodelab":
       case "EnableAutoBlockPoolOnStart":
         DataPersistence.DataPersistenceManager.Instance.Save();
         break;

@@ -182,8 +182,7 @@ namespace CodeLab {
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
-      // TODO: Turn on when we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
-      //_SessionState.SetGrammarMode(GrammarMode.None);
+      _SessionState.SetGrammarMode(GrammarMode.None);
 
       DAS.Debug("Loading Webview", "");
       UIManager.Instance.ShowTouchCatcher();
@@ -459,11 +458,6 @@ namespace CodeLab {
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        // TODO: Delete these 3 lines once we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
-        bool useVertical = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseVerticalGrammarCodelab;
-        GrammarMode grammarMode = useVertical ? GrammarMode.Vertical : GrammarMode.Horizontal;
-        _SessionState.StartSession(grammarMode);
-
         robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count, kCodeLabGameDrivingAnimLock);
         robot.EnterSDKMode(false);
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
@@ -699,10 +693,6 @@ namespace CodeLab {
 
     private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest, bool showVerticalProjects) {
       DAS.Info("Codelab.OnGetCozmoUserAndSampleProjectLists", "");
-
-      // TODO: Remove this line once we remove DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
-      // Check which projects we want to display: vertical or horizontal.
-      showVerticalProjects = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
 
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
@@ -1607,16 +1597,6 @@ namespace CodeLab {
       SetRequestToOpenProject(request, projectUUID);
       ShowGettingReadyScreen();
 
-      // TODO Remove this if/else stmt we have removed DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
-      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-        LoadURL(kVerticalIndexFilename);
-      }
-      else {
-        LoadURL(kHorizontalIndexFilename);
-      }
-
-      // TODO Turn on once we have removed DataPersistenceManager.Instance.Data.DefaultProfile UseVerticalGrammarCodelab value
-      /*
       if (!isVertical) {
         _SessionState.StartSession(GrammarMode.Horizontal);
 
@@ -1629,7 +1609,6 @@ namespace CodeLab {
 
         LoadURL(kVerticalIndexFilename);
       }
-      */
     }
 
     // Display blue "Cozmo is getting ready to play" while the Scratch workspace is finishing setup
