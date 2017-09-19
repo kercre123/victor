@@ -86,8 +86,8 @@
     // OpenCV DNN w/ Caffe SSD Model
     "graph": "MobileNetSSD_deploy", 
     "labels": "coco-labels-20.txt", 
-    "input_width": 200, 
-    "input_height": 200, 
+    "input_width": 160, 
+    "input_height": 90, 
     "input_mean_R": 127.5, 
     "input_mean_G": 127.5, 
     "input_mean_B": 127.5, 

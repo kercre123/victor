@@ -12,6 +12,7 @@
 #include "anki/vision/basestation/objectDetector.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/imageCache.h"
+#include "anki/vision/basestation/profiler.h"
 
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -622,7 +623,7 @@ private:
   
 #else // NOT USE_TENSORFLOW
   
-class ObjectDetector::Model
+class ObjectDetector::Model : Vision::Profiler
 {
 public:
   
@@ -695,7 +696,19 @@ public:
     _network.setInput(dnnBlob);
     
     //std::cout << "Forward inference" << std::endl;
+    Tic("ObjectDetector.Run.ForwardInference");
     cv::Mat detections = _network.forward();
+    Toc("ObjectDetector.Run.ForwardInference");
+    
+    {
+      static const int kPrintFreq = 3;
+      static int printCount = kPrintFreq;
+      if(--printCount == 0)
+      {
+        PrintAverageTiming();
+        printCount = kPrintFreq;
+      }
+    }
     
     const cv::Scalar kColor(0,0,255);
     const int numDetections = detections.size[2];
@@ -717,10 +730,12 @@ public:
         DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
                        "ymin=%d ymax=%d", ymin, ymax);
         
+        const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
+        
         DetectedObject object{
           .timestamp = img.GetTimestamp(),
           .score     = confidence,
-          .name      = _labels.at((size_t)labelIndex),
+          .name      = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex)),
           .rect      = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin),
         };
         
@@ -821,19 +836,22 @@ Result ObjectDetector::Detect(ImageCache&           imageCache,
   // Require color data
   if(imageCache.HasColor())
   {
-    const ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Half_NN);
+    const ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Full);
+    
     result = _model->Run(img, objects);
     
-    const f32 scale = (f32)imageCache.GetOrigNumRows() / (f32)img.GetNumRows();
-    if(!Util::IsNear(scale, 1.f))
+    const f32 widthScale = (f32)imageCache.GetOrigNumRows() / (f32)img.GetNumRows();
+    const f32 heightScale = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
+    
+    if(!Util::IsNear(widthScale, 1.f) || !Util::IsNear(heightScale,1.f))
     {
       //const f32 widthScale  = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
-      std::for_each(objects.begin(), objects.end(), [scale](DetectedObject& object)
+      std::for_each(objects.begin(), objects.end(), [widthScale,heightScale](DetectedObject& object)
                     {
-                      object.rect = Rectangle<s32>(std::round((f32)object.rect.GetX() * scale),
-                                                   std::round((f32)object.rect.GetY() * scale),
-                                                   std::round((f32)object.rect.GetWidth() * scale),
-                                                   std::round((f32)object.rect.GetHeight() * scale));
+                      object.rect = Rectangle<s32>(std::round((f32)object.rect.GetX() * widthScale),
+                                                   std::round((f32)object.rect.GetY() * heightScale),
+                                                   std::round((f32)object.rect.GetWidth() * widthScale),
+                                                   std::round((f32)object.rect.GetHeight() * heightScale));
                     });
     }
     
