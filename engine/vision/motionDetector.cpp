@@ -309,7 +309,6 @@ void MotionDetector::SetPrevImage(const Vision::ImageRGB &image, bool wasBlurred
   _prevImageGray = Vision::Image();
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static inline f32 ratioTestHelper(u8 value1, u8 value2)
 {
