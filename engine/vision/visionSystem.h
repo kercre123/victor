@@ -75,7 +75,6 @@ namespace Cozmo {
   // Forward declaration:
   class CameraCalibrator;
   class CozmoContext;
-  class EncodedImage;
   class LaserPointDetector;
   class MotionDetector;
   class OverheadEdgesDetector;
@@ -141,8 +140,8 @@ namespace Cozmo {
                   Vision::ImageCache&        imageCache);
     
     // First decodes the image then calls Update() above
-    Result Update(const VisionPoseData&      robotState,
-                  const EncodedImage&        encodedImg);
+    Result Update(const VisionPoseData&   robotState,
+                  const Vision::ImageRGB& image);
     
     // Wrappers for camera calibration
     Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI) { return _cameraCalibrator->AddCalibrationImage(calibImg, targetROI); }

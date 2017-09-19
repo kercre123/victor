@@ -381,30 +381,30 @@ namespace Cozmo {
     return lastResult;
   }
   
-  Result VisionComponent::SetNextImage(EncodedImage& encodedImage)
+  Result VisionComponent::SetNextImage(Vision::ImageRGB& image)
   {
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "t=%u(%d)",
-                          encodedImage.GetTimeStamp(), encodedImage.GetTimeStamp());
+                          image.GetTimestamp(), image.GetTimestamp());
       return RESULT_FAIL;
     }
     
     if (!_enabled) {
       PRINT_CH_INFO("VisionComponent",
                     "VisionComponent.VisionComponent.SetNextImage", "Set next image but not enabled, t=%u(%d)",
-                    encodedImage.GetTimeStamp(), encodedImage.GetTimeStamp());
+                    image.GetTimestamp(), image.GetTimestamp());
       return RESULT_OK;
     }
   
     // Track how fast we are receiving frames
     if(_lastReceivedImageTimeStamp_ms > 0) {
       // Time should not move backwards!
-      const bool timeWentBackwards = encodedImage.GetTimeStamp() < _lastReceivedImageTimeStamp_ms;
+      const bool timeWentBackwards = image.GetTimestamp() < _lastReceivedImageTimeStamp_ms;
       if (timeWentBackwards)
       {
         PRINT_NAMED_WARNING("VisionComponent.SetNextImage.UnexpectedTimeStamp",
                             "Current:%u Last:%u",
-                            encodedImage.GetTimeStamp(), _lastReceivedImageTimeStamp_ms);
+                            image.GetTimestamp(), _lastReceivedImageTimeStamp_ms);
         
         // This should be recoverable (it could happen if we receive a bunch of garbage image data)
         // so reset the lastReceived and lastProcessd timestamps so we can set them fresh next time
@@ -413,39 +413,40 @@ namespace Cozmo {
         _lastProcessedImageTimeStamp_ms = 0;
         return RESULT_FAIL;
       }
-      _framePeriod_ms = encodedImage.GetTimeStamp() - _lastReceivedImageTimeStamp_ms;
+      _framePeriod_ms = image.GetTimestamp() - _lastReceivedImageTimeStamp_ms;
     }
-    _lastReceivedImageTimeStamp_ms = encodedImage.GetTimeStamp();
+    _lastReceivedImageTimeStamp_ms = image.GetTimestamp();
     
     if(IsCameraCalibrationSet()) {
       DEV_ASSERT(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       DEV_ASSERT(_visionSystem->IsInitialized(), "VisionComponent.SetNextImage.VisionSystemNotInitialized");
 
+      // TODO(Al): Fix rolling shutter
       // Populate IMU data history for this image, for rolling shutter correction
-      GetImuDataHistory().CalculateTimestampForImageIMU(encodedImage.GetImageID(),
-                                                        encodedImage.GetTimeStamp(),
-                                                        RollingShutterCorrector::timeBetweenFrames_ms,
-                                                        encodedImage.GetHeight());
+//      GetImuDataHistory().CalculateTimestampForImageIMU(image.GetImageID(),
+//                                                        image.GetTimestamp(),
+//                                                        RollingShutterCorrector::timeBetweenFrames_ms,
+//                                                        image.GetHeight());
     
       // Fill in the pose data for the given image, by querying robot history
       HistRobotState imageHistState;
       TimeStamp_t imageHistTimeStamp;
       
-      Result lastResult = GetImageHistState(_robot, encodedImage.GetTimeStamp(), imageHistState, imageHistTimeStamp);
+      Result lastResult = GetImageHistState(_robot, image.GetTimestamp(), imageHistState, imageHistTimeStamp);
 
       if(lastResult == RESULT_FAIL_ORIGIN_MISMATCH)
       {
         // Don't print a warning for this case: we expect not to get pose history
         // data successfully
         PRINT_NAMED_INFO("VisionComponent.SetNextImage.OriginMismatch",
-                         "Could not get pose data for t=%u due to origin mismatch. Returning OK", encodedImage.GetTimeStamp());
+                         "Could not get pose data for t=%u due to origin mismatch. Returning OK", image.GetTimestamp());
         return RESULT_OK;
       }
       else if(lastResult != RESULT_OK)
       {
         PRINT_NAMED_WARNING("VisionComponent.SetNextImage.StateHistoryFail",
                             "Unable to get computed pose at image timestamp of %u. (rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
-                            encodedImage.GetTimeStamp(),
+                            image.GetTimestamp(),
                             _robot.GetStateHistory()->GetNumRawStates(),
                             _robot.GetStateHistory()->GetOldestTimeStamp(),
                             _robot.GetStateHistory()->GetNewestTimeStamp(),
@@ -471,55 +472,46 @@ namespace Cozmo {
       // Experimental:
       //UpdateOverheadMap(image, _nextPoseData);
       
-      // Store image for calibration or factory test (*before* we swap encodedImage with _nextImg below!)
+      // Store image for calibration or factory test (*before* we swap image with _nextImg below!)
       // NOTE: This means we do decoding on main thread, but this is just for the factory
       //       test, so I'm not going to the trouble to store encoded images for calibration
       if (_storeNextImageForCalibration || _doFactoryDotTest)
       {
         // If we were moving too fast at the timestamp the image was taken then don't use it for
         // calibration or dot test purposes
-        if(!WasRotatingTooFast(encodedImage.GetTimeStamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
+        if(!WasRotatingTooFast(image.GetTimestamp(), DEG_TO_RAD(0.1), DEG_TO_RAD(0.1), 3))
         {
-          Vision::Image imageGray;
-          Result result = encodedImage.DecodeImageGray(imageGray);
-          if(RESULT_OK != result)
+          Vision::Image imageGray = image.ToGray();
+
+          if(_storeNextImageForCalibration)
           {
-            PRINT_NAMED_WARNING("VisionComponent.SetNextImage.DecodeFailed",
-                                "Cannot use next image for calibration(%d) or dot test(%d)",
-                                _storeNextImageForCalibration, _doFactoryDotTest);
-          }
-          else
+            _storeNextImageForCalibration = false;
+            if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+              PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+            } else {
+              Lock();
+              Result result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
+              Unlock();
+              
+              if(RESULT_OK != result) {
+                PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+              }
+            }
+          } // if(_storeNextImageForCalibration)
+          
+          if(_doFactoryDotTest)
           {
-            if(_storeNextImageForCalibration)
-            {
-              _storeNextImageForCalibration = false;
-              if (IsModeEnabled(VisionMode::ComputingCalibration)) {
-                PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
-              } else {
-                Lock();
-                result = _visionSystem->AddCalibrationImage(imageGray, _calibTargetROI);
-                Unlock();
-                
-                if(RESULT_OK != result) {
-                  PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
-                }
-              }
-            } // if(_storeNextImageForCalibration)
+            _doFactoryDotTest = false;
             
-            if(_doFactoryDotTest)
-            {
-              _doFactoryDotTest = false;
-              
-              ExternalInterface::RobotCompletedFactoryDotTest msg;
-              Result dotResult = FindFactoryTestDotCentroids(imageGray, msg);
-              if(RESULT_OK != dotResult) {
-                PRINT_NAMED_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
-              }
-              _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-              
-            } // if(_doFactoryDotTest)
+            ExternalInterface::RobotCompletedFactoryDotTest msg;
+            Result dotResult = FindFactoryTestDotCentroids(imageGray, msg);
+            if(RESULT_OK != dotResult) {
+              PRINT_NAMED_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
+            }
+            _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
             
-          } // if(decode failed)
+          } // if(_doFactoryDotTest)
+          
         }
         else {
           PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
@@ -535,7 +527,7 @@ namespace Cozmo {
       if(_isSynchronous)
       {
         if(!_paused) {
-          UpdateVisionSystem(_nextPoseData, encodedImage);
+          UpdateVisionSystem(_nextPoseData, image);
         }
       }
       else
@@ -551,18 +543,14 @@ namespace Cozmo {
             PRINT_CH_DEBUG("VisionComponent",
                            "VisionComponent.SetNextImage.DroppedFrame",
                            "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
-                           encodedImage.GetTimeStamp(),
-                           _nextImg.GetTimeStamp(),
-                           _currentImg.GetTimeStamp());
+                           image.GetTimestamp(),
+                           _nextImg.GetTimestamp(),
+                           _currentImg.GetTimestamp());
           }
           _dropStats.Update(isDroppingFrame);
           
           // Make encoded image the new "next" image
-          std::swap(_nextImg, encodedImage);
-          
-          // Because encodedImage mantains state in the form of _prevTimestamp and _nextImg has garbage data
-          // so after the swap encodedImage now has garbage data so we need to reassign prevTimestamp
-          encodedImage.SetPrevTimestamp(_nextImg.GetPrevTimestamp());
+          std::swap(_nextImg, image);
           
           Unlock();
         }
@@ -672,11 +660,11 @@ namespace Cozmo {
     return kDisplayProcessedImagesOnly;
   }
   
-  void VisionComponent::UpdateVisionSystem(const VisionPoseData&  poseData,
-                                           const EncodedImage&    encodedImg)
+  void VisionComponent::UpdateVisionSystem(const VisionPoseData&   poseData,
+                                           const Vision::ImageRGB& image)
   {
     ANKI_CPU_PROFILE("VC::UpdateVisionSystem");
-    Result result = _visionSystem->Update(poseData, encodedImg);
+    Result result = _visionSystem->Update(poseData, image);
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
     }
@@ -1075,7 +1063,7 @@ namespace Cozmo {
                         "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
                         faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
                         faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
-                        faceDetection.GetTimeStamp(),
+                        faceDetection.GetTimestamp(),
                         faceDetection.GetHeadRoll().getDegrees(),
                         faceDetection.GetHeadPitch().getDegrees(),
                         faceDetection.GetHeadYaw().getDegrees(),
@@ -2365,19 +2353,19 @@ namespace Cozmo {
         imgUndistorted.Display("UndistortedImage");
       }
         
-      // Create EncodedImage with proper imageID and timestamp
+      // Create image with proper imageID and timestamp
       // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
       TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
       
-      // ***** TODO: Get rid of encodedImage since we no longer need "encoded" images internally *****
       imgRGB.SetTimestamp(ts);
-      EncodedImage encodedImage(imgRGB, imageId);
-      
-      // Set next image for VisionComponent
-      Result lastResult = SetNextImage(encodedImage);
       
       // Compress to jpeg and send to game and viz
-      lastResult = CompressAndSendImage(imgRGB, 50);
+      // Do this before setting next image since it swaps the image and invalidates it
+      Result lastResult = CompressAndSendImage(imgRGB, 50);
+      
+      // Set next image for VisionComponent
+      lastResult = SetNextImage(imgRGB);
+      
       DEV_ASSERT(RESULT_OK == lastResult, "VisionComponent.CompressAndSendImage.Failed");
     }
   }
