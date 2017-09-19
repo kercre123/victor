@@ -24,7 +24,7 @@
 #include <iomanip>
 
 
-#define DEBUG_MOTION_DETECTION 1
+#define DEBUG_MOTION_DETECTION 0
 
 namespace Anki {
 namespace Cozmo {
@@ -88,13 +88,11 @@ class MotionDetector::ImageRegionSelector
 public:
   ImageRegionSelector(int imageWidth, int imageHeight, float horizontalSize, float verticalSize,
                       float increaseFactor, float decreaseFactor, float maxValue,
-                      float alpha
-  ) :
-      _topID(increaseFactor, decreaseFactor, maxValue),
-      _leftID(increaseFactor, decreaseFactor, maxValue),
-      _rightID(increaseFactor, decreaseFactor, maxValue),
-      _alpha(alpha),
-      _maxValue(maxValue)
+                      float alpha)
+  : _topID(increaseFactor, decreaseFactor, maxValue)
+  , _leftID(increaseFactor, decreaseFactor, maxValue)
+  , _rightID(increaseFactor, decreaseFactor, maxValue)
+  , _alpha(alpha), _maxValue(maxValue)
   {
     DEV_ASSERT(horizontalSize <= 0.5, "MotionDetector::ImageRegionSelector: horizontal size has to be less then half"
                                       "of the image");
@@ -539,8 +537,8 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
         
         // Convert area to fraction of image area (to be resolution-independent)
         // Using scale multiplier to return the coordinates in original image coordinates
-        msg.img_x = centroid.x() * scaleMultiplier;
-        msg.img_y = centroid.y() * scaleMultiplier;
+        msg.img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+        msg.img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
         msg.img_area = imgRegionArea / static_cast<f32>(image.GetNumElements());
       } else {
         msg.img_area = 0;
@@ -550,8 +548,8 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
       
       if(groundRegionArea > 0.f)
       {
-        msg.ground_x = std::round(groundPlaneCentroid.x());
-        msg.ground_y = std::round(groundPlaneCentroid.y());
+        msg.ground_x = int16_t(std::round(groundPlaneCentroid.x()));
+        msg.ground_y = int16_t(std::round(groundPlaneCentroid.y()));
         msg.ground_area = groundRegionArea;
       } else {
         msg.ground_area = 0;
@@ -636,14 +634,14 @@ void MotionDetector::ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, 
       }, 255);
 
   for(s32 i=0; i<mask.GetNumRows(); ++i) {
-      const u8* maskData_i = mask.GetRow(i);
-      u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
-      for(s32 j=0; j<mask.GetNumCols(); ++j) {
-        if(maskData_i[j] == 0) {
-          fgMotionData_i[j] = 0;
-        }
+    const u8* maskData_i = mask.GetRow(i);
+    u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
+    for(s32 j=0; j<mask.GetNumCols(); ++j) {
+      if(maskData_i[j] == 0) {
+        fgMotionData_i[j] = 0;
       }
     }
+  }
 
   // Find centroid of motion inside the ground plane
   // NOTE!! We swap X and Y for the percentiles because the ground centroid
@@ -748,8 +746,7 @@ s32 MotionDetector::ReprocessRatioImage(const ImageType &image, Vision::Image &f
     }
   }
   else {
-    PRINT_NAMED_ERROR("MotionDetector.DetectMotion.FoundCentroid",
-                      "Not know type for image???");
+    DEV_ASSERT(false, "MotionDetector.DetectMotion.FoundCentroid");
   }
 
   s32 numAboveThresh = RatioTest(image, foregroundMotion);
@@ -797,8 +794,8 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
       const float value = _regionSelector->GetTopResponse();
       const Point2f& centroid = _regionSelector->GetTopResponseCentroid();
       msg.top_img_area = value; //not really the area here, but the response value
-      msg.top_img_x = int16_t(round(centroid.x() * scaleMultiplier));
-      msg.top_img_y = int16_t(round(centroid.y() * scaleMultiplier));
+      msg.top_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+      msg.top_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
     }
     else
     {
@@ -812,8 +809,8 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
       const float value = _regionSelector->GetLeftResponse();
       const Point2f& centroid = _regionSelector->GetLeftResponseCentroid();
       msg.left_img_area = value; //not really the area here, but the response value
-      msg.left_img_x = int16_t(round(centroid.x() * scaleMultiplier));
-      msg.left_img_y = int16_t(round(centroid.y() * scaleMultiplier));
+      msg.left_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+      msg.left_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
     }
     else
     {
@@ -827,8 +824,8 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
       const float value = _regionSelector->GetRightResponse();
       const Point2f& centroid = _regionSelector->GetRightResponseCentroid();
       msg.right_img_area = value; //not really the area here, but the response value
-      msg.right_img_x = int16_t(round(centroid.x() * scaleMultiplier));
-      msg.right_img_y = int16_t(round(centroid.y() * scaleMultiplier));
+      msg.right_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+      msg.right_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
     }
     else
     {
@@ -872,35 +869,35 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
     // Draw the bounding lines
     { // Top line
       int thickness = 1;
-      Point2f topLeft(0, _regionSelector->GetUpperMargin());
-      Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetUpperMargin());
+      const Point2f topLeft(0, _regionSelector->GetUpperMargin());
+      const Point2f topRight(imageToDisplay.GetNumCols(), _regionSelector->GetUpperMargin());
       imageToDisplay.DrawLine(topLeft, topRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
     { // Left line
       int thickness = 1;
-      Point2f topLeft(_regionSelector->GetLeftMargin(), 0);
-      Point2f bottomLeft(_regionSelector->GetLeftMargin(), imageToDisplay.GetNumRows());
+      const Point2f topLeft(_regionSelector->GetLeftMargin(), 0);
+      const Point2f bottomLeft(_regionSelector->GetLeftMargin(), imageToDisplay.GetNumRows());
       imageToDisplay.DrawLine(topLeft, bottomLeft, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
     { // Right line
       int thickness = 1;
-      Point2f topRight(_regionSelector->GetRightMargin(), 0);
-      Point2f BottomRight(_regionSelector->GetRightMargin(), imageToDisplay.GetNumCols());
+      const Point2f topRight(_regionSelector->GetRightMargin(), 0);
+      const Point2f BottomRight(_regionSelector->GetRightMargin(), imageToDisplay.GetNumCols());
       imageToDisplay.DrawLine(topRight, BottomRight, Anki::ColorRGBA(u8(255), u8(0), u8(0)), thickness);
     }
 
     //Draw the motion centroids
     {
       {
-        Point2f centroid = _regionSelector->GetTopResponseCentroid();
+        const Point2f centroid = _regionSelector->GetTopResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
       {
-        Point2f centroid = _regionSelector->GetLeftResponseCentroid();
+        const Point2f centroid = _regionSelector->GetLeftResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
       {
-        Point2f centroid = _regionSelector->GetRightResponseCentroid();
+        const Point2f centroid = _regionSelector->GetRightResponseCentroid();
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
     }
