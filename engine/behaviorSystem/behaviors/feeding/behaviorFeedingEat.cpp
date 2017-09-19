@@ -213,6 +213,15 @@ void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
+  // If the behavior is being stopped while feeding is still ongoing notify
+  // listeners that feeding is being interrupted
+  if(!_hasRegisteredActionComplete &&
+     (_currentState >= State::PlacingLiftOnCube)){
+    for(auto& listener: _feedingListeners){
+      listener->EatingInterrupted(robot);
+    }
+  }
+  
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
   
