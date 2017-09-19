@@ -901,7 +901,6 @@ Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage,
         imageToDisplay.DrawFilledCircle(centroid, Anki::ColorRGBA(u8(255), u8(255), u8(0)), 10);
       }
     }
-
     debugImageRGBs.push_back({"PeripheralMotion", imageToDisplay});
   }
 
