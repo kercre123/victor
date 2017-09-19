@@ -1,0 +1,219 @@
+/**
+ * File: objectDetectorModel_opencvdnn.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   6/29/2017
+ *
+ * Description: Implementation of ObjectDetector Model class which wrapps OpenCV's DNN module.
+ *
+ * Copyright: Anki, Inc. 2017
+ **/
+
+#if !defined(USE_TENSORFLOW) || !USE_TENSORFLOW
+
+#include "anki/vision/basestation/objectDetector.h"
+#include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/profiler.h"
+
+#include "anki/common/basestation/array2d_impl.h"
+#include "anki/common/basestation/jsonTools.h"
+
+#include "util/cpuProfiler/cpuProfiler.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/quoteMacro.h"
+
+#include "opencv2/dnn.hpp"
+
+#include <list>
+#include <fstream>
+
+
+namespace Anki {
+namespace Vision {
+  
+static const char * const kLogChannelName = "VisionSystem";
+  
+class ObjectDetector::Model : Vision::Profiler
+{
+public:
+  
+  Result LoadModel(const std::string& modelPath, const Json::Value& config)
+  {
+    ANKI_CPU_PROFILE("ObjectDetector.LoadModel");
+   
+#   define GetFromConfig(keyName) \
+    if(false == JsonTools::GetValueOptional(config, QUOTE(keyName), _params.keyName)) \
+    { \
+      PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", QUOTE(keyName)); \
+      return RESULT_FAIL; \
+    }
+    
+    GetFromConfig(labels);
+    GetFromConfig(top_K);
+    GetFromConfig(min_score);
+    
+    if(!ANKI_VERIFY(Util::IsFltGEZero(_params.min_score) && Util::IsFltLE(_params.min_score, 1.f),
+                    "ObjectDetector.Model.LoadModel.BadMinScore",
+                    "%f not in range [0.0,1.0]", _params.min_score))
+    {
+      return RESULT_FAIL;
+    }
+    
+    GetFromConfig(graph);
+    GetFromConfig(input_height);
+    GetFromConfig(input_width);
+    GetFromConfig(input_mean_R);
+    GetFromConfig(input_mean_G);
+    GetFromConfig(input_mean_B);
+    GetFromConfig(input_std);
+    
+    // Caffe models:
+    const std::string protoFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".prototxt"});
+    const std::string modelFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".caffemodel"});
+    _network = cv::dnn::readNetFromCaffe(protoFileName, modelFileName);
+    
+    // Tensorflow models:
+    //_network = cv::dnn::readNetFromTensorflow(graph);
+   
+    if(_network.empty())
+    {
+      return RESULT_FAIL;
+    }
+    
+    const std::string labelsFileName = Util::FileUtils::FullFilePath({modelPath, _params.labels});
+    Result readLabelsResult = ReadLabelsFile(labelsFileName);
+    if(RESULT_OK == readLabelsResult)
+    {
+      PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadGraph.ReadLabelFileSuccess", "%s",
+                    labelsFileName.c_str());
+    }
+    return readLabelsResult;
+  }
+  
+  Result Run(const ImageRGB& img, std::list<ObjectDetector::DetectedObject>& objects)
+  {
+    ANKI_CPU_PROFILE("RunModel");
+    const cv::Size processingSize(_params.input_width, _params.input_height);
+    const f32 scale = 1.f / (f32)_params.input_std;
+    const cv::Scalar mean(_params.input_mean_R, _params.input_mean_G, _params.input_mean_B);
+    const bool kSwapRedBlue = false; // Our image class is already RGB
+    cv::Mat dnnBlob = cv::dnn::blobFromImage(img.get_CvMat_(), scale, processingSize, kSwapRedBlue);
+    
+    //const cv::dnn::MatShape shape = {1,image.rows,image.cols,3};
+    //std::cout << "FLOPS: " << network.getFLOPS(shape) << std::endl;
+    
+    //std::cout << "Setting blob input: " << dnnBlob.size[0] << "x" << dnnBlob.size[1] << "x" << dnnBlob.size[2] << "x" << dnnBlob.size[3] <<  std::endl;
+    _network.setInput(dnnBlob);
+    
+    //std::cout << "Forward inference" << std::endl;
+    Tic("ObjectDetector.Run.ForwardInference");
+    cv::Mat detections = _network.forward();
+    Toc("ObjectDetector.Run.ForwardInference");
+    
+    {
+      static const int kPrintFreq = 3;
+      static int printCount = kPrintFreq;
+      if(--printCount == 0)
+      {
+        PrintAverageTiming();
+        printCount = kPrintFreq;
+      }
+    }
+    
+    const cv::Scalar kColor(0,0,255);
+    const int numDetections = detections.size[2];
+    for(int iDetection=0; iDetection<numDetections; ++iDetection)
+    {
+      const float* detection = detections.ptr<float>(iDetection);
+      const float confidence = detection[2];
+      
+      if(confidence >= _params.min_score)
+      {
+        const int labelIndex = detection[1];
+        const int xmin = std::round(detection[3] * (float)img.GetNumCols());
+        const int ymin = std::round(detection[4] * (float)img.GetNumRows());
+        const int xmax = std::round(detection[5] * (float)img.GetNumCols());
+        const int ymax = std::round(detection[6] * (float)img.GetNumRows());
+        
+        DEV_ASSERT_MSG(xmax > xmin, "ObjectDetector.Model.Run.InvalidDetectionBoxWidth",
+                       "xmin=%d xmax=%d", xmin, xmax);
+        DEV_ASSERT_MSG(ymax > ymin, "ObjectDetector.Model.Run.InvalidDetectionBoxHeight",
+                       "ymin=%d ymax=%d", ymin, ymax);
+        
+        const bool labelIndexOOB = (labelIndex < 0 || labelIndex > _labels.size());
+        
+        DetectedObject object{
+          .timestamp = img.GetTimestamp(),
+          .score     = confidence,
+          .name      = (labelIndexOOB ? "UNKNOWN" :  _labels.at((size_t)labelIndex)),
+          .rect      = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin),
+        };
+        
+        PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.Run.ObjectDetected",
+                       "Name:%s Score:%.3f Box:[%d %d %d %d] t:%ums",
+                       object.name.c_str(), object.score,
+                       object.rect.GetX(), object.rect.GetY(), object.rect.GetWidth(), object.rect.GetHeight(),
+                       object.timestamp);
+        
+        objects.push_back(std::move(object));
+      }
+    }
+    
+    return RESULT_OK;
+  }
+  
+private:
+  
+  // Private methods:
+  Result ReadLabelsFile(const std::string& fileName)
+  {
+    std::ifstream file(fileName);
+    if (!file)
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.ReadLabelsFile.LabelsFileNotFound",
+                        "%s", fileName.c_str());
+      return RESULT_FAIL;
+    }
+    
+    _labels.clear();
+    std::string line;
+    while (std::getline(file, line)) {
+      _labels.push_back(line);
+    }
+    /*
+     Pad the vector to be a multiple of 16, b/c TF expects that (?)
+     *found_label_count = result->size();
+     const int padding = 16;
+     while (result->size() % padding) {
+     result->emplace_back();
+     }
+     */
+    return RESULT_OK;
+  }
+  
+  // Member variables:
+  struct {
+    
+    std::string graph; // = "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
+    std::string labels; // = "tensorflow/examples/label_image/data/imagenet_slim_labels.txt";
+    s32    input_width; // = 299;
+    s32    input_height; // = 299;
+    f32    input_mean_R; // = 0;
+    f32    input_mean_G; // = 0;
+    f32    input_mean_B; // = 0;
+    f32    input_std; // = 255;
+    
+    s32    top_K; // = 1;
+    f32    min_score; // in [0,1]
+    
+  } _params;
+  
+  cv::dnn::Net              _network;
+  std::vector<std::string>  _labels;
+  
+};
+  
+} // namespace Vision
+} // namespace Anki
+
+#endif // #if !defined(USE_TENSORFLOW) || !USE_TENSORFLOW
