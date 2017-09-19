@@ -57,6 +57,8 @@ namespace DataPersistence {
 
     public Anki.Util.AnkiLab.AssignmentDef[] LabAssignments;
 
+    public List<Cozmo.Notifications.Notification> NotificationsToBeSent;
+
     public static int kSaveVersionCurrent = 2;
 
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
@@ -97,7 +99,7 @@ namespace DataPersistence {
 #endif
       NumTimesNotificationPermissionReminded = 0;
       LastTimeAskedAboutNotifications = System.DateTime.Now;
-
+      NotificationsToBeSent = new List<Cozmo.Notifications.Notification>();
     }
   }
 }

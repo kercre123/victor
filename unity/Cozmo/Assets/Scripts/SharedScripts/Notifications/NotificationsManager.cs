@@ -3,32 +3,39 @@ using Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
 
 namespace Cozmo.Notifications {
+
+  public class Notification {
+    public int SecondsInFuture { get; private set; }
+    public string TextKey { get; private set; }
+    public bool Persist { get; private set; }
+    public int OrderId;
+    public UInt32 TimeToSend;
+
+    public Notification(int secondsInFuture, string textKey, bool persist) {
+      SecondsInFuture = secondsInFuture;
+      TextKey = textKey;
+      Persist = persist;
+      OrderId = 0;
+      TimeToSend = 0;
+    }
+  }
+
   public class NotificationsManager {
 
     private const string _kOrderIdNotificationDataKey = "order_id";
     private const string _kTimeSentNotificationDataKey = "time_sent";
     private const string _kMessageKeyNotificationDataKey = "message_key";
     private const string _kNotificationClickDasEvent = "app.notification.click";
+    private const string _kNotificationSendDasEvent = "app.notification.send";
     private const string _kTimeStampDasEventDataKey = "$ts";
     private const string _kDataDasEventDataKey = "$data";
+
     private static DateTime _sEpochZero = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     public static NotificationsManager Instance { get; private set; }
 
     public static void CreateInstance() {
       Instance = new NotificationsManager();
-    }
-
-    private struct Notification {
-      public int SecondsInFuture { get; private set; }
-      public string TextKey { get; private set; }
-      public bool Persist { get; private set; }
-
-      public Notification(int secondsInFuture, string textKey, bool persist) {
-        SecondsInFuture = secondsInFuture;
-        TextKey = textKey;
-        Persist = persist;
-      }
     }
 
     private List<Notification> _NotificationCache;
@@ -50,6 +57,9 @@ namespace Cozmo.Notifications {
     public void Init() {
       Cozmo.PauseManager.Instance.OnPauseStateChanged += HandlePauseStateChanged;
       RobotEngineManager.Instance.SendNotificationsManagerReady();
+
+      LogDasEventsForSentNotifications();
+      ClearNotificationsToBeSentRecords();
     }
 
     public void InitNotificationsIfAllowed() {
@@ -66,22 +76,13 @@ namespace Cozmo.Notifications {
       return Convert.ToUInt32((dateTime - _sEpochZero).TotalSeconds);
     }
 
-    private void HandleNotificationClicked(UTNotifications.ReceivedNotification notification) {
-      string orderID = notification.userData[_kOrderIdNotificationDataKey];
-      string timeSent = notification.userData[_kTimeSentNotificationDataKey];
-      string messageKey = notification.userData[_kMessageKeyNotificationDataKey];
-      string timeClicked = DateTimeToEpochTimestamp(DateTime.UtcNow).ToString();
-
-      Dictionary<string, string> dasData = new Dictionary<string, string>() {
-        { _kTimeStampDasEventDataKey, timeClicked },
-        { _kDataDasEventDataKey, messageKey + ":" + timeSent }
-      };
-      DAS.Event(_kNotificationClickDasEvent, orderID, dasData);
-    }
-
     private void HandlePauseStateChanged(bool isPaused) {
       if (isPaused) {
         ScheduleAllNotifications();
+      }
+      else {
+        LogDasEventsForSentNotifications();
+        ClearNotificationsToBeSentRecords();
       }
     }
 
@@ -113,14 +114,15 @@ namespace Cozmo.Notifications {
 
       _NotificationCache.Sort((a, b) => (a.SecondsInFuture.CompareTo(b.SecondsInFuture)));
 
-      int orderID = 0;
+      int orderId = 0;
       foreach (var notification in _NotificationCache) {
-        DateTime timeSent = DateTime.UtcNow.AddSeconds(notification.SecondsInFuture);
-        string timeSentEpoch = DateTimeToEpochTimestamp(timeSent).ToString();
+        DateTime timeToSend = DateTime.UtcNow.AddSeconds(notification.SecondsInFuture);
+        notification.TimeToSend = DateTimeToEpochTimestamp(timeToSend);
+        notification.OrderId = orderId;
 
         Dictionary<string, string> notifData = new Dictionary<string, string>(){
-          {_kOrderIdNotificationDataKey, orderID.ToString()},
-          {_kTimeSentNotificationDataKey, timeSentEpoch},
+          {_kOrderIdNotificationDataKey, notification.OrderId.ToString()},
+          {_kTimeSentNotificationDataKey, notification.TimeToSend.ToString()},
           {_kMessageKeyNotificationDataKey, notification.TextKey}
         };
 
@@ -133,12 +135,50 @@ namespace Cozmo.Notifications {
           string.Empty,
 #endif
           Localization.GetWithArgs(notification.TextKey),
-          orderID,
+          orderId,
           notifData
         );
 
-        orderID++;
+        orderId++;
       }
+
+      RecordNotificationsToBeSent();
+    }
+
+    private void RecordNotificationsToBeSent() {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NotificationsToBeSent = _NotificationCache;
+    }
+
+    private void LogDasEventsForSentNotifications() {
+      List<Notification> possiblySentNotifications = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NotificationsToBeSent;
+
+      UInt32 now = DateTimeToEpochTimestamp(DateTime.UtcNow);
+      foreach (var notification in possiblySentNotifications) {
+        if (notification.TimeToSend < now) {
+          Dictionary<string, string> dasData = new Dictionary<string, string>() {
+            { _kTimeStampDasEventDataKey, notification.TimeToSend.ToString() },
+            { _kDataDasEventDataKey, notification.TextKey }
+          };
+          DAS.Event(_kNotificationSendDasEvent, notification.OrderId.ToString(), dasData);
+        }
+      }
+    }
+
+    private void ClearNotificationsToBeSentRecords() {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NotificationsToBeSent.Clear();
+    }
+
+    private void HandleNotificationClicked(UTNotifications.ReceivedNotification notification) {
+      string orderID = notification.userData[_kOrderIdNotificationDataKey];
+      string timeSent = notification.userData[_kTimeSentNotificationDataKey];
+      string messageKey = notification.userData[_kMessageKeyNotificationDataKey];
+      string timeClicked = DateTimeToEpochTimestamp(DateTime.UtcNow).ToString();
+
+      Dictionary<string, string> dasData = new Dictionary<string, string>() {
+        { _kTimeStampDasEventDataKey, timeClicked },
+        { _kDataDasEventDataKey, messageKey + ":" + timeSent }
+      };
+      DAS.Event(_kNotificationClickDasEvent, orderID, dasData);
     }
   }
 }
