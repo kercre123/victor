@@ -18,8 +18,8 @@ MonoBehaviour:
   _ComingSoon: 0
   DescriptionKey: unlockable.TrackLaser.Description
   TitleKey: unlockable.TrackLaser.Title
-  SparkButtonDescription: unlockable.TrackLaser.SparkButtonDescription
-  SparkedStateDescription: unlockable.TrackLaser.SparkedStateDescription
+  SparkButtonDescription: 
+  SparkedStateDescription: 
   SparkedMusicState:
     _Sparked: 982472036
   IsSparkable: 1
