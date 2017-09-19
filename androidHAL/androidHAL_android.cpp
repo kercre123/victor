@@ -40,6 +40,7 @@ namespace Anki {
     namespace { // "Private members"
       // Pointer to the current (latest) frame the camera has given us
       uint8_t* _currentFrame = nullptr;
+      bool     _frameReady = false;
     } // "private" namespace
 
 
@@ -148,6 +149,7 @@ namespace Anki {
     {
       DEV_ASSERT(image != nullptr, "AndroidHAL.CameraCallback.NullImage");
       _currentFrame = image;
+      _frameReady = true;
       return 0;
     }
 
@@ -209,8 +211,10 @@ namespace Anki {
     {
       DEV_ASSERT(frame != NULL, "androidHAL.CameraGetFrame.NullFramePointer");
 
-      if(_currentFrame != nullptr)
+      if(_currentFrame != nullptr && _frameReady)
       {
+        _frameReady = false;
+        
         // Tell the camera we will be processing this frame
         camera_set_processing_frame();
         
