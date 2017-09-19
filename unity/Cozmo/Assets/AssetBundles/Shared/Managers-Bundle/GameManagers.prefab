@@ -81,5 +81,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _TooltipPrefab: {fileID: 114901523654011268, guid: 4ed76da1f74e6475f83c0bce6cbf7228,
     type: 2}
-  _TooltipShowTime_Sec: 3
+  _TooltipShowTime_Sec: 5
   _MinBorderSpaceToEdge: {x: 20, y: 20}
