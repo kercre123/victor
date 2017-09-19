@@ -753,8 +753,8 @@ s32 MotionDetector::ReprocessRatioImage(const ImageType &image, Vision::Image &f
   return numAboveThresh;
 }
 
-Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
-                                              DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
+Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage,
+                                              DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
                                               ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier) {
 
   // The image has several disjoint components, try to join them
@@ -762,14 +762,14 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
     const int kernelSize = int(kMotionDetection_MorphologicalSize_pix / scaleMultiplier);
     cv::Mat structuringElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                            cv::Size(kernelSize, kernelSize));
-    const cv::Mat &cvInputImage = inputImage.get_CvMat_();
-    cv::morphologyEx(cvInputImage, cvInputImage, cv::MORPH_CLOSE, structuringElement);
+    cv::Mat &cvRatioImage = ratioImage.get_CvMat_();
+    cv::morphologyEx(cvRatioImage, cvRatioImage, cv::MORPH_CLOSE, structuringElement);
   }
 
   // Get the connected components with stats
   Array2d<s32> labelImage;
   std::vector<Vision::Image::ConnectedComponentStats> stats;
-  inputImage.GetConnectedComponents(labelImage, stats);
+  ratioImage.GetConnectedComponents(labelImage, stats);
 
   // Update the impulse/decay model
   bool updated = false;
@@ -836,7 +836,7 @@ Result MotionDetector::DetectPeripheralMotion(const Vision::Image &inputImage,
   }
 
   if (DEBUG_MOTION_DETECTION) {
-    Vision::ImageRGB imageToDisplay(inputImage);
+    Vision::ImageRGB imageToDisplay(ratioImage);
     // Draw the text
     {
       auto to_string_with_precision = [] (const float a_value, const int n = 6) {
