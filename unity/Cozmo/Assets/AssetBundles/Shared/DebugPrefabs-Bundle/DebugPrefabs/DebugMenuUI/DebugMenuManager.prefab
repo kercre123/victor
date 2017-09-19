@@ -47,7 +47,6 @@ GameObject:
   - component: {fileID: 11419684}
   - component: {fileID: 11418330}
   - component: {fileID: 11482034}
-  - component: {fileID: 11415984}
   m_Layer: 0
   m_Name: DebugMenuManager
   m_TagString: Untagged
@@ -69,19 +68,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &11415984
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 178082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: efeb7a611d5924646925c1add1994ba8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _LatencyDisplayPrefab: {fileID: 126016, guid: 54041ee844720476896ce5c09ca4baf1,
-    type: 2}
 --- !u!114 &11418330
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -109,7 +95,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DebugMenuDialogPrefab: {fileID: 11496938, guid: 8d0286a28c83143099cdbf6c5cf3def7,
     type: 2}
-  _LatencyCalculator: {fileID: 11415984}
   _DebugMenuCanvas: {fileID: 22391704}
 --- !u!114 &11430208
 MonoBehaviour:

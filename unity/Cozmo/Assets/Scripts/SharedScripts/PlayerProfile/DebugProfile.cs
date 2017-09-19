@@ -8,7 +8,7 @@ namespace DataPersistence {
   [System.Serializable]
   public class DebugProfile {
     public static string kNoFreelpayOnStartLock = "no_freeplay_on_start";
-    public bool LatencyDisplayEnabled;
+    public PerfWarningDisplay.PerfWarningDisplayMode PerfInfoDisplayMode;
     public bool DebugPauseEnabled;
     public bool NoFreeplayOnStart;
     public bool ShowDroneModeDebugInfo;
@@ -24,7 +24,7 @@ namespace DataPersistence {
     public bool EnableAutoBlockPoolOnStart;
 
     public DebugProfile() {
-      LatencyDisplayEnabled = false;
+      PerfInfoDisplayMode = PerfWarningDisplay.PerfWarningDisplayMode.TurnsOnWhenWarning;
       DebugPauseEnabled = false;
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;

@@ -1592,7 +1592,11 @@ Result Robot::Update()
     SendDebugString(buffer);
     _lastDebugStringHash = curr_hash;
   }
-
+  
+#if ANKI_DEV_CHEATS
+  Broadcast( ExternalInterface::MessageEngineToGame(ExternalInterface::DebugPerformanceTick(
+                                                    "Vision",_visionComponent->GetProcessingPeriod_ms())));
+#endif
   _cubeLightComponent->Update();
   _bodyLightComponent->Update();
   

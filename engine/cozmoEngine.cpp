@@ -457,6 +457,9 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
                           {{DDATA,std::to_string(BS_TIME_STEP).c_str()}},
                           "%.2f", updateLengthMs);
     }
+    ExternalInterface::MessageEngineToGame debugPerfMessage(
+                                          ExternalInterface::DebugPerformanceTick("Engine",updateLengthMs));
+    _context->GetExternalInterface()->Broadcast( std::move(debugPerfMessage) );
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
 

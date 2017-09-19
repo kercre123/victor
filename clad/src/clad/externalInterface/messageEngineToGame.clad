@@ -231,7 +231,11 @@ message DebugString {
     string    text
 }
 message DebugAnimationString {
-string    text
+    string    text
+}
+message DebugPerformanceTick {
+    string    systemName,
+    float_32  lastTickTime
 }
 
 ///////////////////////////////////////////////////////////////////////////////
