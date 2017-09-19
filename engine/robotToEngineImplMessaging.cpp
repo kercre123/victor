@@ -113,7 +113,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::potentialCliff,                 &RobotToEngineImplMessaging::HandlePotentialCliffEvent);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::image,                          &RobotToEngineImplMessaging::HandleImageChunk);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imageGyro,                      &RobotToEngineImplMessaging::HandleImageImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
@@ -892,94 +891,6 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));
-}
-
-// For processing image chunks arriving from robot.
-// Sends complete images to VizManager for visualization (and possible saving).
-void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleImageChunk");
-  
-  // Ignore images if robot has not yet acknowledged time sync
-  if (!(robot->GetTimeSynced())) {
-    return;
-  }
-  
-  const ImageChunk& payload = message.GetData().Get_image();
-  
-  const bool isImageReady = robot->GetEncodedImage().AddChunk(payload);
-  
-  // Forward the image chunks over external interface if image send mode is not OFF
-  if (robot->GetContext()->GetExternalInterface() != nullptr && robot->GetImageSendMode() != ImageSendMode::Off && !ShouldIgnoreMultipleImages())
-  {
-    // we don't want to start sending right in the middle of an image, wait until we hit payload 0
-    // before starting to send.
-    if(payload.chunkId == 0 || robot->GetLastSentImageID() == payload.imageId) {
-      robot->SetLastSentImageID(payload.imageId);
-      
-      ExternalInterface::MessageEngineToGame msgWrapper;
-      msgWrapper.Set_ImageChunk(payload);
-      robot->GetContext()->GetExternalInterface()->Broadcast(msgWrapper);
-      
-      const bool wasLastChunk = payload.chunkId == payload.imageChunkCount-1;
-      
-      if(wasLastChunk && robot->GetImageSendMode() == ImageSendMode::SingleShot) {
-        // We were just in single-image send mode, and the image got sent, so
-        // go back to "off". (If in stream mode, stay in stream mode.)
-        robot->SetImageSendMode(ImageSendMode::Off);
-      }
-    }
-  }
-  
-  // Forward the image chunks to Viz as well (Note that this does nothing if
-  // sending images is disabled in VizManager)
-  robot->GetContext()->GetVizManager()->SendImageChunk(robot->GetID(), payload);
-  
-  if(isImageReady)
-  {
-    /* For help debugging COZMO-694:
-     PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
-     "About to process image: robot timestamp %d, message time %f, basestation timestamp %d",
-     image.GetTimestamp(), message.GetCurrentTime(),
-     BaseStationTimer::getInstance()->GetCurrentTimeStamp());
-     */
-    
-    // If we _are_ displaying processed images only, VisionComponent is responsible for sending the DisplayCameraImage
-    // message instead of sending it here.
-    if(!robot->GetVisionComponent().IsDisplayingProcessedImagesOnly())
-    {
-      robot->GetContext()->GetVizManager()->DisplayCameraImage(payload.frameTimeStamp);
-    }
-    
-    const double currentMessageTime = message.GetCurrentTime();
-
-    if (currentMessageTime != _lastImageRecvTime)
-    {
-      _lastImageRecvTime = currentMessageTime;
-      _repeatedImageCount = 0;
-    }
-    else
-    {
-      ++_repeatedImageCount;
-      if (ShouldIgnoreMultipleImages())
-      {
-        PRINT_NAMED_WARNING("RobotImplMessaging.HandleImageChunk",
-                            "Ignoring %dth image (with t=%u) received during basestation tick at %fsec",
-                            _repeatedImageCount,
-                            payload.frameTimeStamp,
-                            currentMessageTime);
-        
-        // Drop the rest of the images on the floor
-        return;
-      }
-    }
-    
-    //PRINT_NAMED_DEBUG("Robot.HandleImageChunk", "Image at t=%d is ready", _encodedImage.GetTimeStamp());
-    
-    // NOTE: _encodedImage will be invalidated by this call (SetNextImage does a swap internally).
-    //       So don't try to use it for anything else after this!
-    robot->GetVisionComponent().SetNextImage(robot->GetEncodedImage());
-  } // if(isImageReady)
 }
   
 bool RobotToEngineImplMessaging::ShouldIgnoreMultipleImages() const
