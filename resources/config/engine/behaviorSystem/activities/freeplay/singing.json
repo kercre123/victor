@@ -5,6 +5,12 @@
   {
     "type" : "Scoring",
     "behaviors" : [
+      { "behaviorID" : "Singing_AbaDaba",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_BeautifulDreamer",
         "scoring" :
         {
@@ -17,7 +23,43 @@
           "flatScore": 10
         }
       },
+      { "behaviorID" : "Singing_Bingo",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_BuffaloGals",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_CanCan1",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_CanCan2",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_DannyBoy",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_EntryOfTheGladiators",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_FarmerInTheDell",
         "scoring" :
         {
           "flatScore": 10
@@ -30,6 +72,12 @@
         }
       },
       { "behaviorID" : "Singing_ItsyBitsySpider",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_LaPaloma",
         "scoring" :
         {
           "flatScore": 10
@@ -48,6 +96,18 @@
         }
       },
       { "behaviorID" : "Singing_MountainKing",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_MuffinMan",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_MulberryBush",
         "scoring" :
         {
           "flatScore": 10
@@ -89,6 +149,12 @@
           "flatScore": 10
         }
       },
+      { "behaviorID" : "Singing_SilveryMoon",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_TakeMeOutToTheBallgame",
         "scoring" :
         {
@@ -101,7 +167,37 @@
           "flatScore": 10
         }
       },
+      { "behaviorID" : "Singing_TisketTasket",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_Toccata",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_TwinkleTwinkle",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_VivaldiSpring",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_WaterMusic",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_WildAboutHarry",
         "scoring" :
         {
           "flatScore": 10
@@ -114,6 +210,12 @@
         }
       },
       { "behaviorID" : "Singing_YankeeDoodle",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_YellowRose",
         "scoring" :
         {
           "flatScore": 10
