@@ -189,6 +189,7 @@ Result BehaviorTrackLaser::InitInternal(Robot& robot)
 void BehaviorTrackLaser::InitHelper(Robot& robot)
 {
   _haveEverConfirmedLaser = false;
+  _shouldSendTrackingObjectiveAchieved = false;
   
   _originalCameraSettings.colorEnabled = robot.GetVisionComponent().AreColorImagesEnabled();
   _originalCameraSettings.exposureTime_ms = robot.GetVisionComponent().GetCurrentCameraExposureTime_ms();
@@ -270,6 +271,14 @@ IBehavior::Status BehaviorTrackLaser::UpdateInternal(Robot& robot)
     }
   
     case State::TrackLaser: // Let tracking action deal with timing out
+    {
+      const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _startedTracking_sec;
+      if(trackingTime_sec > _params.trackingTimeToAchieveObjective_sec)
+      {
+        _shouldSendTrackingObjectiveAchieved = true;
+      }
+      break;
+    }
     case State::GetOutBored:
     case State::Pouncing:
     {
@@ -311,6 +320,10 @@ Result BehaviorTrackLaser::ResumeInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTrackLaser::StopInternal(Robot& robot)
 {
+  if(_shouldSendTrackingObjectiveAchieved){
+    BehaviorObjectiveAchieved(BehaviorObjective::LaserTracked);
+  }
+  
   Cleanup(robot);
 }
   
@@ -325,7 +338,7 @@ bool BehaviorTrackLaser::CheckForTimeout(Robot& robot)
   if (_haveEverConfirmedLaser &&
       (_lastLaserObservation.timestamp_ms + _params.maxTimeSinceNoLaser_ms) < lastImgTime_ms )
   {
-    PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.UpdateInternal.NoLaserTimeout",
+    PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.NoLaserTimeout",
                   "No laser found, giving up after %fms",
                   _params.maxTimeSinceNoLaser_ms);
     
@@ -340,7 +353,7 @@ bool BehaviorTrackLaser::CheckForTimeout(Robot& robot)
   {
     // Ran out of time confirming the unconfirmed laser we had seen, immediately complete
     // to get out of the behavior without really having done anything
-    PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.UpdateInternal.NeverConfirmed",
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.NeverConfirmed",
                    "LastImg:%dms LastObs:%dms MaxTime:%dms",
                    lastImgTime_ms, _lastLaserObservation.timestamp_ms, (TimeStamp_t)_params.maxTimeToConfirm_ms);
   
@@ -353,7 +366,7 @@ bool BehaviorTrackLaser::CheckForTimeout(Robot& robot)
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if ( (GetTimeStartedRunning_s() + _params.maxTimeBehaviorTimeout_sec) < currentTime_sec)
     {
-      PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.UpdateInternal.BehaviorTimeout",
+      PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.BehaviorTimeout",
                     "Started:%.1f, Now:%.1f, Timeout:%.1f",
                     GetTimeStartedRunning_s(), currentTime_sec, _params.maxTimeBehaviorTimeout_sec);
       
@@ -586,11 +599,6 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
                 // Log DAS event indicating how long we tracked in seconds in s_val and whether we pounced in
                 // ddata (1 for pounce, 0 otherwise)
                 Util::sEventF("robot.laser_behavior.tracking_completed", {{DDATA, (doPounce ? "1" : "0")}}, "%f", trackingTime_sec);
-
-                if(trackingTime_sec > _params.trackingTimeToAchieveObjective_sec)
-                {
-                  BehaviorObjectiveAchieved(BehaviorObjective::LaserTracked);
-                }
                 
                 if(doPounce) {
                   TransitionToPounce(robot);

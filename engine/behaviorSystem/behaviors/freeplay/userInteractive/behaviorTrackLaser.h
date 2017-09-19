@@ -144,6 +144,7 @@ private:
   LaserObservation _lastLaserObservation;
   bool  _haveEverConfirmedLaser = false;
   bool  _haveAdjustedAnimations = false;
+  bool  _shouldSendTrackingObjectiveAchieved = false;
   
   s16 _imageMean = -1;
   TimeStamp_t _exposureChangedTime_ms = 0;

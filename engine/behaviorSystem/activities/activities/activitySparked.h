@@ -91,6 +91,9 @@ private:
   // Loaded in from behavior_config
   float _minTimeSecs;
   float _maxTimeSecs;
+  // Indicates whether max timeout should indicate ending "politely" at the action
+  // level or the behavior level
+  bool _maxTimeoutForActionComplete;
   // Setting numberOfRepetitions to 0 will cause the spark to always play until its max time
   // and then play the success animation.  This allows non-time dependent sparks
   int _numberOfRepetitions;
