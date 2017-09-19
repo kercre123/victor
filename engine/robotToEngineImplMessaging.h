@@ -72,6 +72,7 @@ public:
   void HandleObjectPowerLevel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleTimeProfileStat(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  void HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   
   double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
   

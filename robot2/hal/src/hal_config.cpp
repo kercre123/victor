@@ -30,7 +30,6 @@ namespace Anki {
     void HALConfig::ParseValue(const char* valstr, const char* end, const HALConfig::Item* item)
     {
       char* endconv = NULL;
-      while (isspace(*valstr) ) {if (++valstr>= end) { return; } } //find first non-whitespace
       assert(strlen(valstr) <= end-valstr);
       double val = strtod(valstr, &endconv);
       if (endconv > valstr) //valid conversion of at least some chars. 
@@ -92,6 +91,7 @@ namespace Anki {
           free(line);
         }
       }
+      fclose(fp);
       return RESULT_OK;
     }
   }

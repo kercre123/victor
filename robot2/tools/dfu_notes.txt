@@ -1,0 +1,24 @@
+
+PAYLOAD_VERSION   <0> ->
+    <- PAYLOAD_VERSION VersionInfo  was (all 0xFFFF means no app) NOW: NACK on no version
+
+   PAYLOAD_ERASE <0>  ->
+   <- ACK 2 (entered bootloader mode)
+
+   PAYLOAD_DFU_PACKET  WriteDfu ->
+   <- ACK 1
+
+   ...
+
+  PAYLOAD_VALIDATE <0> ->
+  <-ACK 3 (applicaiton)
+
+  PAYLOAD_MODE_CHANGE ->
+  <- PAYLOAD_DATA_FRAME    -or-  ACK <nack> if application wrong
+
+  DATA_FRAMES forever!
+  ...
+
+
+b
+1

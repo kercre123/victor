@@ -15,7 +15,6 @@
 #include "engine/behaviorSystem/behaviors/freeplay/oneShots/behaviorDance.h"
 
 #include "engine/activeObject.h"
-#include "engine/audio/robotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/publicStateBroadcaster.h"

@@ -46,7 +46,7 @@ PUBLIC
   cti_common
   robot_interface
   audio_engine
-  audio_multiplexer
+  audio_multiplexer_engine
   engine_clad
 PRIVATE
   util_audio

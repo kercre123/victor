@@ -33,6 +33,7 @@
 #include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "engine/behaviorSystem/behaviors/behaviorWait.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
@@ -494,6 +495,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::Dance:
     {
       newBehavior = IBehaviorPtr(new BehaviorDance(robot, config));
+      break;
+    }
+    case BehaviorClass::DevPettingTestSimple:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorDevPettingTestSimple(robot, config));
       break;
     }
     case BehaviorClass::DevTurnInPlaceTest:

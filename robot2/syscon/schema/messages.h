@@ -185,14 +185,14 @@ struct SpineMessageFooter
 /// Start Packets
 struct BodyToHead
 {
-  uint32_t framecounter;
+//  int16_t audio[320];     // NOTE: This needs to be immediately followed by the uin32_t framecounter, since that is packed
+  uint32_t framecounter;  // as part of the AudioInput struct to the engine process.
   PowerState powerState;
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;
   struct RangeData proximity;
   uint16_t touchLevel[2];
-//  int16_t audio[320];
 };
 
 struct ContactData

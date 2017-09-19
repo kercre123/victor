@@ -10,12 +10,15 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+// TODO: Update this to work with Text to Speech in Anim Process
+
+
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroup.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
-#include "engine/audio/robotAudioClient.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
@@ -277,11 +280,14 @@ ActionResult SayTextAction::Init()
       const SwitchState::GenericSwitch processingState = static_cast<const SwitchState::GenericSwitch>( it->second );
       // Set voice Pitch
       // Set Cozmo Says Switch State
-      _robot.GetRobotAudioClient()->PostRobotSwitchState(SwitchState::SwitchGroupType::Cozmo_Voice_Processing,
-                                                    processingState);
+      // TODO: JIRA VIC-23 - Migrate Text to Speech component to Victor
+      _robot.GetAudioClient()->PostSwitchState(SwitchState::SwitchGroupType::Cozmo_Voice_Processing,
+                                               processingState,
+                                               GameObjectType::Default /* FIXME: Not correct game object */);
       // Set Cozmo Says Pitch RTPC Parameter
-      _robot.GetRobotAudioClient()->PostRobotParameter(GameParameter::ParameterType::External_Process_Pitch,
-                                                  _voicePitch);
+      _robot.GetAudioClient()->PostParameter(GameParameter::ParameterType::External_Process_Pitch,
+                                             _voicePitch,
+                                             GameObjectType::Default /* FIXME: Not correct game object */);
       
       _isAudioReady = true;
       

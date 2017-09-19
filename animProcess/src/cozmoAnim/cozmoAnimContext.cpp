@@ -1,5 +1,9 @@
 
 #include "cozmoAnim/cozmoAnimContext.h"
+
+#include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
+
 #include "cozmoAnim/robotDataLoader.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -26,12 +30,7 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   , _dataLoader(new RobotDataLoader(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
-
-  // Only set up the audio server if we have a real dataPlatform
-  if (nullptr != dataPlatform)
-  {
-//    _audioServer.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::CozmoAudioController(this)));
-  }
+  InitAudio(_dataPlatform);
 }
 
 
@@ -46,6 +45,14 @@ CozmoAnimContext::~CozmoAnimContext()
 }
 
 
+Audio::CozmoAudioController* CozmoAnimContext::GetAudioController() const
+{
+  if (_audioMux.get() != nullptr) {
+    return dynamic_cast<Audio::CozmoAudioController*>( _audioMux->GetAudioController() );
+  }
+  return nullptr;
+}
+
 void CozmoAnimContext::SetRandomSeed(uint32_t seed)
 {
   _random->SetSeed("CozmoAnimContext", seed);
@@ -57,11 +64,25 @@ void CozmoAnimContext::SetMainThread()
   _threadIdHolder->_id = Util::GetCurrentThreadId();
 }
 
+
 bool CozmoAnimContext::IsMainThread() const
 {
   return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }
 
+
+void CozmoAnimContext::InitAudio(Util::Data::DataPlatform* dataPlatform)
+{
+  // Only set up the audio server if we have a real dataPlatform
+  if (nullptr == dataPlatform) {
+    // Create a dummy Audio Multiplexer
+    _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer( nullptr ));
+    return;
+  }
+  // Init Audio Base: Audio Engine & Multiplexer
+  _audioMux.reset(new AudioEngine::Multiplexer::AudioMultiplexer(new Audio::CozmoAudioController(this)));
+  // Audio Mux Input setup is in cozmoAnim.cpp & engineMessages.cpp
+}
   
 } // namespace Cozmo
 } // namespace Anki

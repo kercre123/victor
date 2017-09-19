@@ -12,6 +12,8 @@
  *
  **/
 
+// TODO: VIC-25 - Migrate Behavior Audio Client to victor
+// This class controlls behavior music state which is not realevent when playing audio on the robot
 
 #ifndef __Basestation_Audio_BehaviorAudioClient_H__
 #define __Basestation_Audio_BehaviorAudioClient_H__
