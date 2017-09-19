@@ -1335,6 +1335,8 @@ namespace Cozmo {
                                                const f32 headTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
   {
+    return false;
+    
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
     if(!_visionWhileMovingFastEnabled)
@@ -1368,6 +1370,8 @@ namespace Cozmo {
                                                const f32 bodyTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
   {
+    return false;
+  
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
     if(!_visionWhileMovingFastEnabled)
@@ -2582,6 +2586,12 @@ namespace Cozmo {
                                           distortionCoeffs);
           
           SetCameraCalibration(calib);
+          
+          // Compute FOV from focal length and send
+          CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
+          if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
+            PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
+          }
 #endif
           
         }

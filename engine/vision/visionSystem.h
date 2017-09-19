@@ -213,7 +213,7 @@ namespace Cozmo {
     bool CheckMailbox(VisionProcessingResult& result);
     
     const RollingShutterCorrector& GetRollingShutterCorrector() { return _rollingShutterCorrector; }
-    void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
+    void  ShouldDoRollingShutterCorrection(bool b) { /*_doRollingShutterCorrection = b;*/ }
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
     Result CheckImageQuality(const Vision::Image& inputImage,
