@@ -421,7 +421,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     Result RobotAudioKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
     {
-      /*
+
       f32 volume = audioKeyframe->volume();
       f32 probability = audioKeyframe->probability();
       bool hasAlts = audioKeyframe->hasAlts();;
@@ -446,13 +446,13 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           return addResult;
         }
       }
-       */
+
       return RESULT_OK;
     }
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      /*
+
       // Get volume
       f32 volume = 1.0f;
       JsonTools::GetValueOptional(jsonRoot, "volume", volume);
@@ -488,7 +488,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           return addResult;
         }
       }
-      */
+
       return RESULT_OK;
     }
     

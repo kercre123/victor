@@ -114,16 +114,16 @@ namespace Anki {
         CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
-      static const char* HAL_INI_PATH = "./hal.ini";
+      static const char* HAL_INI_PATH = "./hal.conf";
       const HALConfig::Item  configitems_[]  = {
-        {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[0]},
-        {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[1]},
-        {"Lift rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[2]},
-        {"Head rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[3]},
-        {"LeftTread Motor Direction",  HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[0]},
-        {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[1]},
-        {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[2]},
-        {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[3]},
+        {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
+        {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
+        {"Lift rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LIFT]},
+        {"Head rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_HEAD]},
+        {"LeftTread Motor Direction",  HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LEFT]},
+        {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_RIGHT]},
+        {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LIFT]},
+        {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
         {0} //Need zeros as end-of-list marker
       };
       
@@ -307,6 +307,13 @@ namespace Anki {
 
     } // step()
 
+    void ForwardAudioInput(void)
+    {
+      // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
+      // laid correctly.
+//      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+//      RobotInterface::SendMessage(*latestAudioInput);
+    }
 
     Result HAL::Step(void)
     {
@@ -339,6 +346,7 @@ namespace Anki {
 
       //MonitorConnectionState();
 
+      ForwardAudioInput();
       return result;
     }
 

@@ -674,6 +674,7 @@
               '<(ce-cti_gyp_path):ctiMessagingRobot',
               '<(ce-cti_gyp_path):ctiPlanningRobot',
               '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):audioUtil',
               'robotClad',
             ],
             'sources': [
@@ -690,6 +691,7 @@
               'libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
             ],
             'actions': [
               {

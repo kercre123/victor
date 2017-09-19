@@ -145,7 +145,7 @@
 // SPI DRIVER CONFIGURATION  
 static  uint32_t k_spi_mode = 0;
 static  uint32_t k_spi_bits = 8;
-static  uint32_t k_spi_speed = 1000000;
+static  uint32_t k_spi_speed = 15000000;
 
 static int gSPI_fd;
 

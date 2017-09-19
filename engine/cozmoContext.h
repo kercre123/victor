@@ -39,12 +39,6 @@ namespace Comms {
   class AdvertisementService;
 }
 
-namespace AudioEngine {
-namespace Multiplexer {
-class AudioMultiplexer;
-}
-}
-
 namespace Cozmo {
   
 class CozmoAudienceTags;
@@ -82,7 +76,6 @@ namespace Cozmo {
   
 class CozmoContext : private Util::noncopyable
 {
-  using AudioMultiplexer = AudioEngine::Multiplexer::AudioMultiplexer;
   
 public:
   CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
@@ -97,7 +90,6 @@ public:
   Util::Locale*                         GetLocale() const { return _locale.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
-  AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioServer.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
@@ -124,7 +116,6 @@ private:
   Util::Data::DataPlatform*                               _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
-  std::unique_ptr<AudioMultiplexer>                     _audioServer;
   std::unique_ptr<CozmoFeatureGate>                     _featureGate;
   std::unique_ptr<Util::RandomGenerator>                _random;
   std::unique_ptr<Util::Locale>                         _locale;
