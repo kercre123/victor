@@ -54,10 +54,10 @@ namespace DataPersistence {
     public bool OSNotificationsPermissionsPromptShown;
     public System.DateTime LastTimeAskedAboutNotifications;
     public int NumTimesNotificationPermissionReminded;
+    public List<Cozmo.Notifications.Notification> NotificationsToBeSent;
+    public Cozmo.Notifications.Notification MostRecentNotificationClicked;
 
     public Anki.Util.AnkiLab.AssignmentDef[] LabAssignments;
-
-    public List<Cozmo.Notifications.Notification> NotificationsToBeSent;
 
     public static int kSaveVersionCurrent = 2;
 
@@ -100,6 +100,7 @@ namespace DataPersistence {
       NumTimesNotificationPermissionReminded = 0;
       LastTimeAskedAboutNotifications = System.DateTime.Now;
       NotificationsToBeSent = new List<Cozmo.Notifications.Notification>();
+      MostRecentNotificationClicked = null;
     }
   }
 }

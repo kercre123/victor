@@ -8,15 +8,17 @@ namespace Cozmo.Notifications {
     public int SecondsInFuture { get; private set; }
     public string TextKey { get; private set; }
     public bool Persist { get; private set; }
-    public int OrderId;
+    public string OrderId;
     public UInt32 TimeToSend;
+    public UInt32 TimeClicked;
 
     public Notification(int secondsInFuture, string textKey, bool persist) {
       SecondsInFuture = secondsInFuture;
       TextKey = textKey;
       Persist = persist;
-      OrderId = 0;
+      OrderId = "";
       TimeToSend = 0;
+      TimeClicked = 0;
     }
   }
 
@@ -29,6 +31,7 @@ namespace Cozmo.Notifications {
     private const string _kNotificationSendDasEvent = "app.notification.send";
     private const string _kTimeStampDasEventDataKey = "$ts";
     private const string _kDataDasEventDataKey = "$data";
+    private const UInt32 _kNotifClickGetsCreditWindowInSeconds = 30 * 60;
 
     private static DateTime _sEpochZero = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -118,10 +121,10 @@ namespace Cozmo.Notifications {
       foreach (var notification in _NotificationCache) {
         DateTime timeToSend = DateTime.UtcNow.AddSeconds(notification.SecondsInFuture);
         notification.TimeToSend = DateTimeToEpochTimestamp(timeToSend);
-        notification.OrderId = orderId;
+        notification.OrderId = orderId.ToString();
 
         Dictionary<string, string> notifData = new Dictionary<string, string>(){
-          {_kOrderIdNotificationDataKey, notification.OrderId.ToString()},
+          {_kOrderIdNotificationDataKey, notification.OrderId},
           {_kTimeSentNotificationDataKey, notification.TimeToSend.ToString()},
           {_kMessageKeyNotificationDataKey, notification.TextKey}
         };
@@ -155,11 +158,11 @@ namespace Cozmo.Notifications {
       UInt32 now = DateTimeToEpochTimestamp(DateTime.UtcNow);
       foreach (var notification in possiblySentNotifications) {
         if (notification.TimeToSend < now) {
-          Dictionary<string, string> dasData = new Dictionary<string, string>() {
-            { _kTimeStampDasEventDataKey, notification.TimeToSend.ToString() },
-            { _kDataDasEventDataKey, notification.TextKey }
-          };
-          DAS.Event(_kNotificationSendDasEvent, notification.OrderId.ToString(), dasData);
+          var dataDict = DasTracker.GetDataDictionary(
+            _kTimeStampDasEventDataKey, notification.TimeToSend.ToString(),
+            _kDataDasEventDataKey, notification.TextKey);
+
+          DAS.Event(_kNotificationSendDasEvent, notification.OrderId.ToString(), dataDict);
         }
       }
     }
@@ -169,16 +172,40 @@ namespace Cozmo.Notifications {
     }
 
     private void HandleNotificationClicked(UTNotifications.ReceivedNotification notification) {
-      string orderID = notification.userData[_kOrderIdNotificationDataKey];
+      string orderId = notification.userData[_kOrderIdNotificationDataKey];
       string timeSent = notification.userData[_kTimeSentNotificationDataKey];
       string messageKey = notification.userData[_kMessageKeyNotificationDataKey];
-      string timeClicked = DateTimeToEpochTimestamp(DateTime.UtcNow).ToString();
+      UInt32 timeClicked = DateTimeToEpochTimestamp(DateTime.UtcNow);
 
       Dictionary<string, string> dasData = new Dictionary<string, string>() {
-        { _kTimeStampDasEventDataKey, timeClicked },
+        { _kTimeStampDasEventDataKey, timeClicked.ToString() },
         { _kDataDasEventDataKey, messageKey + ":" + timeSent }
       };
-      DAS.Event(_kNotificationClickDasEvent, orderID, dasData);
+      DAS.Event(_kNotificationClickDasEvent, orderId, dasData);
+
+      // save clicked notification to give credit on robot connect success
+      Notification clickedNotif = new Notification(0, messageKey, false);
+      clickedNotif.OrderId = orderId;
+      clickedNotif.TimeClicked = timeClicked;
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.MostRecentNotificationClicked = clickedNotif;
+    }
+
+    public Notification GetNotificationClickedForSession() {
+      Notification notifClicked = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.MostRecentNotificationClicked;
+      if (notifClicked == null) {
+        return null;
+      }
+
+      UInt32 secondsSinceClick = DateTimeToEpochTimestamp(DateTime.UtcNow) - notifClicked.TimeClicked;
+      if (secondsSinceClick > _kNotifClickGetsCreditWindowInSeconds) {
+        return null;
+      }
+
+      return notifClicked;
+    }
+
+    public void CreditNotificationForConnect() {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.MostRecentNotificationClicked = null;
     }
   }
 }
