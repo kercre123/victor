@@ -576,6 +576,15 @@ message WantsNeedsOnboarding {
   int_32 onboardingStageCompleted
 }
 
+structure SongUnlockStatus {
+  bool   unlocked,
+  string songUnlockId,
+}
+
+message SongsList {
+  SongUnlockStatus songUnlockStatuses[uint_8],
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Progression Unlocks
 ///////////////////////////////////////////////////////////////////////////////

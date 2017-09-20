@@ -320,6 +320,7 @@ void NeedsManager::Init(const float currentTime_s,      const Json::Value& inJso
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetSongsList>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterOnboardingComplete>();
@@ -1201,6 +1202,52 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 {
   SendNeedsStateToGame();
 }
+
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::GetSongsList& msg)
+{
+  std::vector<ExternalInterface::SongUnlockStatus> songUnlockStatuses;
+
+  // Begin the list with all of the default-unlocked songs
+  const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks(_cozmoContext);
+  for (const auto& defaultUnlock : defaultUnlocks)
+  {
+    std::string defaultUnlockStr = UnlockIdToString(defaultUnlock);
+    static const std::string prefix = "Singing_";
+    if (defaultUnlockStr.compare(0, prefix.length(), prefix) == 0)
+    {
+      ExternalInterface::SongUnlockStatus songUnlockStatus(true, defaultUnlockStr.c_str());
+      songUnlockStatuses.emplace_back(songUnlockStatus);
+    }
+  }
+
+  // Add songs from the level rewards list, in order, checking unlock status for each.
+  // By going through the level rewards list, we ensure we are not including songs that
+  // are in the app but not yet 'released' (and therefore can never be unlocked)
+  auto& puc = _robot->GetProgressionUnlockComponent();
+  const int numLevels = _starRewardsConfig->GetNumLevels();
+  std::vector<NeedsReward> rewards;
+  for (int level = 0; level < numLevels; level++)
+  {
+    _starRewardsConfig->GetRewardsForLevel(level, rewards);
+    for (const auto& reward : rewards)
+    {
+      if (reward.rewardType == NeedsRewardType::Song)
+      {
+        const UnlockId unlockId = UnlockIdFromString(reward.data);
+        const bool isUnlocked = puc.IsUnlocked(unlockId);
+        ExternalInterface::SongUnlockStatus songUnlockStatus(isUnlocked, reward.data.c_str());
+        songUnlockStatuses.emplace_back(songUnlockStatus);
+      }
+    }
+  }
+
+  ExternalInterface::SongsList message(std::move(songUnlockStatuses));
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+
 
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& msg)

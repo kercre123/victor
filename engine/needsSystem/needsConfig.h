@@ -135,6 +135,8 @@ public:
   int GetFreeplayMinSparksForLevel(int level)            const { return GetLevelOrLastLevel(level).freeplayMinSparks; }
   int GetFreeplayMinMaxSparksForLevel(int level)         const { return GetLevelOrLastLevel(level).freeplayMinMaxSparks; }
 
+  int GetNumLevels() const { return static_cast<int>(_UnlockLevels.size()); }
+
 private:
   const UnlockLevel& GetLevelOrLastLevel(int level) const;
 
