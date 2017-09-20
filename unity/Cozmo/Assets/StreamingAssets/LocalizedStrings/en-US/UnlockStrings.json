@@ -216,6 +216,12 @@
   "unlockable.TrackLaser.Description": {
     "translation": "Follow that laser! With this Trick, shine a laser pointer in front of Cozmo and he will let you lead the way."
   },
+  "unlockable.TrackLaser.SparkButtonDescription": {
+    "translation": "Tap to get Cozmo to follow a laser dot."
+  },
+  "unlockable.TrackLaser.SparkedStateDescription": {
+    "translation": "Cozmo will follow the laser until he gets bored."
+  },
   "unlockable.CozmoSings.Title": {
     "translation": "Cozmo Sings"
   },
