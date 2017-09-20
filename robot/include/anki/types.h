@@ -138,6 +138,8 @@ namespace Anki
     RESULT_FAIL_INVALID_PARAMETER    = 0x03000000,
     RESULT_FAIL_INVALID_OBJECT       = 0x04000000,
     RESULT_FAIL_INVALID_SIZE         = 0x05000000,
+    RESULT_FAIL_FILE_OPEN            = 0x06000000,
+    RESULT_FAIL_FILE_READ            = 0x06000001,
   } Result;
 #ifdef __cplusplus
 } // namespace Anki

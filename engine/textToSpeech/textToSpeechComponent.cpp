@@ -14,21 +14,20 @@
  *
  */
 
+
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
 #include "engine/textToSpeech/textToSpeechComponent.h"
 #include "engine/textToSpeech/textToSpeechProvider.h"
-
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-
 #include "audioEngine/audioEngineController.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "audioEngine/plugins/ankiPluginInterface.h"
-
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
+
 
 // Log options
 #define LOG_CHANNEL    "TextToSpeech"
@@ -50,9 +49,9 @@ TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
   const Json::Value& tts_config = context->GetDataLoader()->GetTextToSpeechConfig();
   _pvdr = std::make_unique<TextToSpeech::TextToSpeechProvider>(context, tts_config);
 
-  if (nullptr != context && nullptr != context->GetAudioMultiplexer()) {
-    _audioController = context->GetAudioMultiplexer()->GetAudioController();
-  }
+//  if (nullptr != context && nullptr != context->GetAudioMultiplexer()) {
+//    _audioController = context->GetAudioMultiplexer()->GetAudioController();
+//  }
 } // TextToSpeechComponent()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -144,21 +143,21 @@ bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
     return false;
   }
   
-  using namespace AudioEngine::PlugIns;
-  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
+//  using namespace AudioEngine::PlugIns;
+//  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
   
-  AnkiPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
+//  AnkiPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+//  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
-  if (pluginInterface->WavePortalHasAudioDataInfo()) {
-    pluginInterface->ClearWavePortalAudioData();
-  }
+//  if (pluginInterface->WavePortalHasAudioDataInfo()) {
+//    pluginInterface->ClearWavePortalAudioData();
+//  }
 
   // Set OUT value
   out_duration_ms = ttsBundle->waveData->ApproximateDuration_ms();
-  // Pass ownership of audio data to plugin
-  pluginInterface->GiveWavePortalAudioDataOwnership(ttsBundle->waveData);
+//  // Pass ownership of audio data to plugin
+//  pluginInterface->GiveWavePortalAudioDataOwnership(ttsBundle->waveData);
   // Release ownership of audio data and clear operation form bookkeeping
   ttsBundle->waveData->ReleaseAudioDataOwnership();
   ClearOperationData(operationId);
@@ -171,15 +170,15 @@ void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
 {
   LOG_INFO("TextToSpeechComponent.CleanupAudioEngine", "");
   
-  using namespace AudioEngine::PlugIns;
-  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
-  AnkiPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
-  
-  // Clear previously loaded data
-  if (pluginInterface->WavePortalHasAudioDataInfo()) {
-    pluginInterface->ClearWavePortalAudioData();
-  }
+//  using namespace AudioEngine::PlugIns;
+//  DEV_ASSERT(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
+//  AnkiPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+//  DEV_ASSERT(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
+//  
+//  // Clear previously loaded data
+//  if (pluginInterface->WavePortalHasAudioDataInfo()) {
+//    pluginInterface->ClearWavePortalAudioData();
+//  }
   
   // Clear operation data if needed
   if (TextToSpeechComponent::kInvalidOperationId != operationId) {

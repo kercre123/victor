@@ -12,6 +12,8 @@
 *
 */
 
+// TODO: JIRA VIC-23 - Migrate Text to Speech component to Victor
+
 
 #ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__
 #define __Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__

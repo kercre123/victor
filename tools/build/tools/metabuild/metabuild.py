@@ -221,6 +221,26 @@ def asset_project(name, project_root, srcs, platform_srcs=[]):
             name + ".dsts.lst" : asset_dsts
     }
 
+    for entry in platform_srcs:
+        regex = re.compile(entry[0])
+        lst = entry[1]
+        for p in FindSrc.ANKI_BUILD_PLATFORMS:
+            if regex.match(p):
+                p_srcs = []
+                p_dsts = []
+                if isinstance(lst, dict):
+                    for (dst,src) in lst.items():
+                        p_srcs.append(src)
+                        p_dsts.append(dst)
+                else:
+                    p_srcs = lst
+                    p_dsts = lst
+                srcs_key = "{}_{}.srcs.lst".format(name, p)
+                dsts_key = "{}_{}.dsts.lst".format(name, p)
+                file_map[srcs_key] = p_srcs
+                file_map[dsts_key] = p_dsts
+                break
+
     return file_map
 
 def cxx_project(name,

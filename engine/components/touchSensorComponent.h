@@ -18,6 +18,7 @@
 #include "clad/types/proxMessages.h"
 
 #include "util/helpers/noncopyable.h"
+#include "util/container/circularBuffer.h"
 
 #include <memory>
 
@@ -50,12 +51,10 @@ private:
   void Log();
   
   Robot& _robot;
-
-  // The timestamp of the RobotState message with the
-  // latest capacitive touch sensor data
-  uint32_t _lastMsgTimestamp = 0;
-  uint16_t _latestData;
-
+  
+  Util::CircularBuffer<uint16_t> _touchIntensitySamples;
+  
+  float _lastTimeSentRobotTouchMsg_s;
   
   // Logging stuff:
   std::unique_ptr<Util::RollingFileLogger> _rawDataLogger;

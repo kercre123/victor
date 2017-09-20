@@ -20,7 +20,6 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "engine/components/nvStorageComponent.h"
-#include "engine/encodedImage.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
@@ -90,9 +89,9 @@ struct DockingErrorSignal;
     // mode, it will be processed as soon as the current image is completed.
     // Also, any debug images left by vision processing for display will be
     // displayed.
-    // NOTE: The given encodedImage is swapped into place, so it will no longer
+    // NOTE: The given image is swapped into place, so it will no longer
     //       be valid in the caller after using this method.
-    Result SetNextImage(EncodedImage& encodedImage);
+    Result SetNextImage(Vision::ImageRGB& image);
 
     void Pause(bool isPaused);
     
@@ -192,10 +191,10 @@ struct DockingErrorSignal;
     
     // Get jpeg compressed data of calibration images
     // dotsFoundMask has bits set to 1 wherever the corresponding calibration image was found to contain a valid target
-    std::list<std::vector<u8> > GetCalibrationImageJpegData(u8* dotsFoundMask = nullptr);
+    std::list<std::vector<u8> > GetCalibrationImageJpegData(u8* dotsFoundMask = nullptr) const;
     
     // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
-    Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p);
+    Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
     
     // Tool code images
     Result ClearToolCodeImages();    
@@ -306,8 +305,8 @@ struct DockingErrorSignal;
     bool   _paused  = false;
     std::mutex _lock;
     
-    EncodedImage _currentImg;
-    EncodedImage _nextImg;
+    Vision::ImageRGB _currentImg;
+    Vision::ImageRGB _nextImg;
     
     Vision::DroppedFrameStats _dropStats;
     
@@ -346,7 +345,7 @@ struct DockingErrorSignal;
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
     
     void Processor();
-    void UpdateVisionSystem(const VisionPoseData& poseData, const EncodedImage& encodedImgs);
+    void UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& image);
     
     void Lock();
     void Unlock();

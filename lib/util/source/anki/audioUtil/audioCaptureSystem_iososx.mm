@@ -97,7 +97,9 @@ static void HandleCallbackEntry(void * __nullable               inUserData,
   if (data) { data->HandleCallback(inAQ, inBuffer, inStartTime, inNumberPackets, inPacketDescs); }
 }
 
-AudioCaptureSystem::AudioCaptureSystem() = default;
+AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk)
+: _samplesPerChunk(samplesPerChunk)
+{ }
 
 // Note this should be done AFTER permission has been granted
 void AudioCaptureSystem::Init()
@@ -119,7 +121,7 @@ void AudioCaptureSystem::Init()
     
     for(int i = 0; i < NUM_BUFFERS; i++)
     {
-      status = AudioQueueAllocateBuffer(_impl->_queue, kBytesPerChunk, &_impl->_buffers[i]);
+      status = AudioQueueAllocateBuffer(_impl->_queue, _samplesPerChunk * sizeof(AudioSample), &_impl->_buffers[i]);
       if (kAudioServicesNoError != status)
       {
         PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);

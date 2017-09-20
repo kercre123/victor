@@ -75,6 +75,10 @@ PUBLIC
   ${PLATFORM_LIBS}
 )
 
+target_compile_definitions(webotsCtrlCommon
+PUBLIC
+  COZMO_V2
+)
 
 #
 # webots controller executables
@@ -133,6 +137,7 @@ anki_build_cxx_executable(webotsCtrlRobot2 ${ANKI_SRCLIST_DIR})
 target_link_libraries(webotsCtrlRobot2
 PRIVATE
   util
+  util_audio
   kazmath  
   cti_common
   cti_common_robot  
@@ -150,7 +155,6 @@ PRIVATE
 target_compile_definitions(webotsCtrlRobot2 PRIVATE                                                       
   COZMO_ROBOT
   SIMULATOR
-  COZMO_V2
   _DEBUG
 )
 
@@ -173,13 +177,13 @@ PRIVATE
   robot_interface
   webotsCtrlCommon
   victor_anim
+  robot_clad_cpplite
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )
 
 target_compile_definitions(webotsCtrlAnim PRIVATE
   SIMULATOR
-  COZMO_V2
 )
 
 symlink_target(TARGET webotsCtrlAnim DST "${CONTROLLERS_DIR}/webotsCtrlAnim/")
@@ -208,7 +212,6 @@ PRIVATE
 
 target_compile_definitions(webotsCtrlGameEngine2 PRIVATE                                                       
   SIMULATOR
-  COZMO_V2
 )
 
 symlink_target(TARGET webotsCtrlGameEngine2 DST "${CONTROLLERS_DIR}/webotsCtrlGameEngine2/")

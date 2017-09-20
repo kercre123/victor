@@ -503,6 +503,11 @@
               <FileType>8</FileType>
               <FilePath>.\src\contacts.cpp</FilePath>
             </File>
+            <File>
+              <FileName>start_mics.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\src\start_mics.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

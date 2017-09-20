@@ -322,6 +322,12 @@ void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
     return;
   }
   
+  // Mic data comes nonstop from the robot so we can't record it all
+  if (RobotInterface::RobotToEngineTag::audioInput == message.GetTag())
+  {
+    return;
+  }
+  
   ANKI_CPU_PROFILE("LogMessage_RToE");
   _robotToEngineLog->Write(PrepareMessage(message));
 }

@@ -15,6 +15,7 @@
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/hal_config.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine_hal.h"
@@ -55,11 +56,6 @@ namespace Anki {
     static_assert(EnumToUnderlyingType(MotorID::MOTOR_HEAD) == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
     
 
-          /********** BEGIN TEMP FIXUP **************/
-#define TEMPORARY_HEAD_GEAR_RATIO_REDUCTION 4.0  //TODO: fix when hw changes
-#define TEMPORARY_RIGHT_TREAD_MOTOR_SIGN_REVERSAL -1.0 //TODO: fix when syscon changes    
-#define TEMPORARY_TREAD_MOTOR_POWER_FIXUP    ((m == MOTOR_RIGHT) ? -1 : 1)
-      /********** ENDOF TEMP FIXUP **************/
     
     namespace { // "Private members"
 
@@ -71,11 +67,15 @@ namespace Anki {
       static const f32 HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
 
       //encoder counts -> mm or deg
-      static const f32 HAL_MOTOR_POSITION_SCALE[MOTOR_COUNT] = {
+      static f32 HAL_MOTOR_POSITION_SCALE[MOTOR_COUNT] = {
         ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Left Tread mm
-        ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43 * TEMPORARY_RIGHT_TREAD_MOTOR_SIGN_REVERSAL), //Right Tread mm
+        ((0.948 * 0.125 * 29.2 * 3.14159265359) / 173.43), //Right Tread mm
         (0.25 * 3.14159265359) / 149.7,    //Lift radians
-        (0.25/TEMPORARY_HEAD_GEAR_RATIO_REDUCTION * 3.14159265359) / 348.77,   //Head radians
+        (0.25 * 3.14159265359) / 348.77,   //Head radians
+      };
+
+      static f32 HAL_MOTOR_DIRECTION[MOTOR_COUNT] = {
+        1.0,1.0,1.0,1.0
       };
 
       s32 robotID_ = -1;
@@ -104,6 +104,19 @@ namespace Anki {
         CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
+      static const char* HAL_INI_PATH = "./hal.conf";
+      const HALConfig::Item  configitems_[]  = {
+        {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
+        {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
+        {"Lift rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LIFT]},
+        {"Head rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_HEAD]},
+        {"LeftTread Motor Direction",  HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LEFT]},
+        {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_RIGHT]},
+        {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LIFT]},
+        {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
+        {0} //Need zeros as end-of-list marker
+      };
+      
     } // "private" namespace
 
     // Forward Declarations
@@ -131,6 +144,7 @@ namespace Anki {
       return RESULT_OK;
     }
 
+
     Result HAL::Init()
     {
       // Set ID
@@ -139,6 +153,7 @@ namespace Anki {
 #if IMU_WORKING
       InitIMU();
 #endif
+      HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
 
       if (InitRadio(RADIO_IP) != RESULT_OK) {
         printf("Failed to initialize Radio.\n");
@@ -186,7 +201,7 @@ namespace Anki {
       const auto m = EnumToUnderlyingType(motor);
       assert(m < MOTOR_COUNT);
       SAVE_MOTOR_POWER(m, power);
-      headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * TEMPORARY_TREAD_MOTOR_POWER_FIXUP;
+      headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
       
     }
 
@@ -278,6 +293,13 @@ namespace Anki {
 
     } // step()
 
+    void ForwardAudioInput(void)
+    {
+      // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
+      // laid correctly.
+      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+      RobotInterface::SendMessage(*latestAudioInput);
+    }
 
     Result HAL::Step(void)
     {
@@ -306,6 +328,7 @@ namespace Anki {
       ProcessIMUEvents();
 #endif
       //MonitorConnectionState();
+      ForwardAudioInput();
       return result;
     }
 

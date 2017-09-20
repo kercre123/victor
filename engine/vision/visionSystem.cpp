@@ -19,7 +19,6 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "engine/cozmoContext.h"
-#include "engine/encodedImage.h"
 #include "engine/robot.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
@@ -56,7 +55,6 @@
 #define DEBUG_DISPLAY_CLAHE_IMAGE 0
 
 #define DRAW_TOOL_CODE_DEBUG 0
-#define DRAW_CALIB_IMAGES 0
 
 namespace Anki {
 namespace Cozmo {
@@ -74,11 +72,6 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kCalibDotSearchHeight_mm,  "Vision.ToolCode",  6.5f);
   CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
   
-  // Min/max size of calibration pattern blobs and distance between them
-  CONSOLE_VAR(float, kMaxCalibBlobPixelArea,         "Vision.Calibration", 800.f);
-  CONSOLE_VAR(float, kMinCalibBlobPixelArea,         "Vision.Calibration", 20.f);
-  CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f);
-  
   // Loose constraints on how fast Cozmo can move and still trust tracker (which has no
   // knowledge of or access to camera movement). Rough means of deciding these angles:
   // look at angle created by distance between two faces seen close together at the max
@@ -94,6 +87,8 @@ namespace Cozmo {
   
   // For testing artificial slowdowns of the vision thread
   CONSOLE_VAR(u32, kVisionSystemSimulatedDelay_ms, "Vision.General", 0);
+  
+  CONSOLE_VAR(u32, kCalibTargetType, "Vision.Calibration", (u32)CameraCalibrator::CalibTargetType::CHECKERBOARD);
   
   namespace {
     // These are initialized from Json config:
@@ -118,6 +113,7 @@ namespace Cozmo {
   , _laserPointDetector(new LaserPointDetector(_vizManager))
   , _motionDetector(new MotionDetector(_camera, _vizManager))
   , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
+  , _cameraCalibrator(new CameraCalibrator(*this))
   , _clahe(cv::createCLAHE())
   {
     DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -128,7 +124,6 @@ namespace Cozmo {
   {
     _isInitialized = false;
     
-    _isCalibrating = false;
     _isReadingToolCode = false;
     
     std::string dataPath("");
@@ -294,7 +289,7 @@ namespace Cozmo {
     
     // Re-initialize the marker detector for the new image size
     _markerDetector->Init(camCalib->GetNrows(), camCalib->GetNcols());
-        
+
     return result;
   } // Init()
 
@@ -940,39 +935,6 @@ namespace Cozmo {
 #  error RUN_GROUND_TRUTHING_CAPTURE not implemented in Basestation vision system.
 #endif
 
-  Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI)
-  {
-    if(_isCalibrating) {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.AddCalibrationImage.AlreadyCalibrating",
-                    "Cannot add calibration image while already in the middle of doing calibration.");
-      return RESULT_FAIL;
-    }
-    
-    if(targetROI.GetX() < 0 && targetROI.GetY() < 0 && targetROI.GetWidth() < 0 && targetROI.GetHeight() < 0)
-    {
-      // Use entire image if negative ROI specified
-      const Anki::Rectangle<s32> entireImgROI(0,0,calibImg.GetNumCols(),calibImg.GetNumRows());
-      _calibImages.push_back({.img = calibImg, .roiRect = entireImgROI, .dotsFound = false});
-    } else {
-      _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
-    }
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.AddCalibrationImage",
-                  "Num images including this: %u", (u32)_calibImages.size());
-    return RESULT_OK;
-  } // AddCalibrationImage()
-  
-  Result VisionSystem::ClearCalibrationImages()
-  {
-    if(_isCalibrating) {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ClearCalibrationImages.AlreadyCalibrating",
-                    "Cannot clear calibration images while already in the middle of doing calibration.");
-      return RESULT_FAIL;
-    }
-    
-    _calibImages.clear();
-    return RESULT_OK;
-  }
-
   Result VisionSystem::ClearToolCodeImages()
   {
     if(_isReadingToolCode) {
@@ -1211,30 +1173,10 @@ namespace Cozmo {
   } // DetectMarkersWithCLAHE()
   
   
-  Result VisionSystem::Update(const VisionPoseData&      poseData,
-                              const EncodedImage&        encodedImg)
+  Result VisionSystem::Update(const VisionPoseData&   poseData,
+                              const Vision::ImageRGB& image)
   {
-    Tic("DecodeJPEG");
-    // Should only get allocated the first time, but should re-use _image's memory
-    // from then on, so long as the decoded image is the same size.
-    Result decodeResult = RESULT_FAIL;
-    if(encodedImg.IsColor())
-    {
-      Vision::ImageRGB imgRGB;
-      decodeResult = encodedImg.DecodeImageRGB(imgRGB);
-      _imageCache->Reset(imgRGB);
-    }
-    else
-    {
-      Vision::Image imgGray;
-      decodeResult = encodedImg.DecodeImageGray(imgGray);
-      _imageCache->Reset(imgGray);
-    }
-    Toc("DecodeJPEG");
-    
-    if(RESULT_OK != decodeResult) {
-      return decodeResult;
-    }
+    _imageCache->Reset(image);
     
     return Update(poseData, *_imageCache);
   }
@@ -1412,9 +1354,32 @@ namespace Cozmo {
       visionModesProcessed.SetBitFlag(VisionMode::ReadingToolCode, true);
     }
     
-    if(ShouldProcessVisionMode(VisionMode::ComputingCalibration) && _calibImages.size() >= _kMinNumCalibImagesRequired)
+    if(ShouldProcessVisionMode(VisionMode::ComputingCalibration))
     {
-      if((lastResult = ComputeCalibration()) != RESULT_OK) {
+      switch(kCalibTargetType)
+      {
+        case CameraCalibrator::CalibTargetType::CHECKERBOARD:
+        {
+          lastResult = _cameraCalibrator->ComputeCalibrationFromCheckerboard(_currentResult.cameraCalibration,
+                                                                             _currentResult.debugImageRGBs);
+          break;
+        }
+        case CameraCalibrator::CalibTargetType::QBERT:
+        case CameraCalibrator::CalibTargetType::INVERTED_BOX:
+        {
+          // Marker detection needs to have run before trying to do single taret calibration
+          DEV_ASSERT(visionModesProcessed.IsBitFlagSet(VisionMode::DetectingMarkers),
+                     "VisionSystem.Update.ComputingCalibration.MarkersNotDetected");
+          
+          CameraCalibrator::CalibTargetType targetType = static_cast<CameraCalibrator::CalibTargetType>(kCalibTargetType);
+          lastResult = _cameraCalibrator->ComputeCalibrationFromSingleTarget(targetType,
+                                                                             _currentResult.observedMarkers,
+                                                                             _currentResult.cameraCalibration,
+                                                                             _currentResult.debugImageRGBs);
+          break;
+        }
+      }
+      if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
         return lastResult;
       }
@@ -2071,172 +2036,7 @@ namespace Cozmo {
   
     return RESULT_OK;
   } // ReadToolCode()
-  
-  
-  // Helper function for computing "corner" positions of the calibration board
-  void CalcBoardCornerPositions(cv::Size boardSize, float squareSize, std::vector<cv::Point3f>& corners)
-  {
-    corners.clear();
-    
-    //    switch(patternType)
-    //    {
-    //      case Settings::CHESSBOARD:
-    //      case Settings::CIRCLES_GRID:
-    //        for( int i = 0; i < boardSize.height; ++i )
-    //          for( int j = 0; j < boardSize.width; ++j )
-    //            corners.push_back(Point3f(float( j*squareSize ), float( i*squareSize ), 0));
-    //        break;
-    //
-    //      case Settings::ASYMMETRIC_CIRCLES_GRID:
-    for( int i = 0; i < boardSize.height; i++ )
-      for( int j = 0; j < boardSize.width; j++ )
-        corners.push_back(cv::Point3f(float((2*j + i % 2)*squareSize), float(i*squareSize), 0));
-    //        break;
-    //    }
-  }
 
-  
-  Result VisionSystem::ComputeCalibration()
-  {
-    std::unique_ptr<Vision::CameraCalibration> calibration;
-    _isCalibrating = true;
-    
-    // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
-    // no matter how we return from this function
-    Util::CleanupHelper disableComputingCalibration([this,&calibration]() {
-      if(nullptr == calibration) {
-        PRINT_NAMED_WARNING("VisionSystem.ComputeCalibration.NullCalibration", "");
-      } else {
-        _currentResult.cameraCalibrations.push_back(*calibration);
-      }
-      this->EnableMode(VisionMode::ComputingCalibration, false);
-      _isCalibrating = false;
-    });
-    
-    // Check that there are enough images
-    if (_calibImages.size() < _kMinNumCalibImagesRequired) {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NotEnoughImages",
-                    "Got %u. Need %u.", (u32)_calibImages.size(), _kMinNumCalibImagesRequired);
-      return RESULT_FAIL;
-    }
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)_calibImages.size());
-    
-    
-    // Description of asymmetric circles calibration target
-    cv::Size boardSize(4,11);
-    static constexpr f32 squareSize = 0.005;
-    const Vision::Image& firstImg = _calibImages.front().img;
-    cv::Size imageSize(firstImg.GetNumCols(), firstImg.GetNumRows());
-    
-    std::vector<std::vector<cv::Point2f> > imagePoints;
-    std::vector<std::vector<cv::Point3f> > objectPoints(1);
-    
-    // Parameters for circle grid search
-    cv::SimpleBlobDetector::Params params;
-    params.maxArea = kMaxCalibBlobPixelArea;
-    params.minArea = kMinCalibBlobPixelArea;
-    params.minDistBetweenBlobs = kMinCalibPixelDistBetweenBlobs;
-    cv::Ptr<cv::SimpleBlobDetector> blobDetector = cv::SimpleBlobDetector::create(params);
-    int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
-    
-    int imgCnt = 0;
-    Vision::Image img(firstImg.GetNumRows(), firstImg.GetNumCols());
-    for (auto & calibImage : _calibImages)
-    {
-      // Extract the ROI (leaveing the rest as zeros)
-      img.FillWith(0);
-      Vision::Image imgROI = img.GetROI(calibImage.roiRect);
-      calibImage.img.GetROI(calibImage.roiRect).CopyTo(imgROI);
-      
-      // Get image points
-      std::vector<cv::Point2f> pointBuf;
-      calibImage.dotsFound = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
-
-      if (calibImage.dotsFound) {
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.FoundPoints", "");
-        imagePoints.push_back(pointBuf);
-      } else {
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NoPointsFound", "");
-      }
-      
-      
-      // Draw image
-      if (DRAW_CALIB_IMAGES) {
-        Vision::ImageRGB dispImg;
-        cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
-        if (calibImage.dotsFound) {
-          cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), calibImage.dotsFound);
-        }
-        _currentResult.debugImageRGBs.push_back({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
-      }
-      ++imgCnt;
-    }
-    
-    // Were points found in enough of the images?
-    if (imagePoints.size() < _kMinNumCalibImagesRequired) {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.InsufficientImagesWithPoints",
-                    "Points detected in only %u images. Need %u.",
-                    (u32)imagePoints.size(), _kMinNumCalibImagesRequired);
-      return RESULT_FAIL;
-    }
-    
-    
-    // Get object points
-    CalcBoardCornerPositions(boardSize, squareSize, objectPoints[0]);
-    objectPoints.resize(imagePoints.size(), objectPoints[0]);
-    
-
-    // Compute calibration
-    std::vector<cv::Vec3d> rvecs, tvecs;
-    cv::Mat_<f64> cameraMatrix = cv::Mat_<f64>::eye(3, 3);
-    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
-    
-    const f64 rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
-
-    // Copy distortion coefficients into a f32 vector to set CameraCalibration
-    const f64* distCoeffs_data = distCoeffs[0];
-    Vision::CameraCalibration::DistortionCoeffs distCoeffsVec;
-    std::copy(distCoeffs_data, distCoeffs_data+NUM_RADIAL_DISTORTION_COEFFS, distCoeffsVec.begin());
-    
-    calibration.reset(new Vision::CameraCalibration(imageSize.height, imageSize.width,
-                                                    cameraMatrix(0,0), cameraMatrix(1,1),
-                                                    cameraMatrix(0,2), cameraMatrix(1,2),
-                                                    0.f, // skew
-                                                    distCoeffsVec));
-    
-    DEV_ASSERT_MSG(rvecs.size() == tvecs.size(),
-                   "VisionSystem.ComputeCalibration.BadCalibPoseData",
-                   "Got %zu rotations and %zu translations",
-                   rvecs.size(), tvecs.size());
-    
-    _calibPoses.reserve(rvecs.size());
-    for(s32 iPose=0; iPose<rvecs.size(); ++iPose)
-    {  
-      auto rvec = rvecs[iPose];
-      auto tvec = tvecs[iPose];
-      RotationVector3d R(Vec3f(rvec[0], rvec[1], rvec[2]));
-      Vec3f T(tvec[0], tvec[1], tvec[2]);
-      
-      _calibPoses.emplace_back(Pose3d(R, T));
-    }
-
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.CalibValues",
-                  "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
-                  calibration->GetFocalLength_x(), calibration->GetFocalLength_y(),
-                  calibration->GetCenter_x(), calibration->GetCenter_y(), rms);
-    
-                          
-    // Check if average reprojection error is too high
-    const f64 reprojErrThresh_pix = 0.5;
-    if (rms > reprojErrThresh_pix) {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
-                    "%f > %f", rms, reprojErrThresh_pix);
-      return RESULT_FAIL;
-    }
-    
-    return RESULT_OK;
-  }
-  
   Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
                                              std::vector<u8>& enrollData) const
   {

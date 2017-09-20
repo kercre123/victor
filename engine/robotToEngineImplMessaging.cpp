@@ -21,7 +21,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/audio/robotAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
@@ -47,6 +46,9 @@
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/robotStatusAndActions.h"
 
+#include "audioUtil/audioDataTypes.h"
+#include "audioUtil/waveFile.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/debug/messageDebugging.h"
 #include "util/fileUtils/fileUtils.h"
@@ -62,9 +64,6 @@
 
 // Filter that makes chargers not discoverable
 #define IGNORE_CHARGER_DISCOVERY 0
-
-// Always play robot audio on device
-#define ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE 0
 
 // How often do we send power level updates to DAS?
 #define POWER_LEVEL_INTERVAL_SEC 600
@@ -83,7 +82,6 @@ RobotToEngineImplMessaging::RobotToEngineImplMessaging(Robot* robot) :
 
 RobotToEngineImplMessaging::~RobotToEngineImplMessaging()
 {
-  
 }
 
 void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot)
@@ -115,7 +113,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::potentialCliff,                 &RobotToEngineImplMessaging::HandlePotentialCliffEvent);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::image,                          &RobotToEngineImplMessaging::HandleImageChunk);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imageGyro,                      &RobotToEngineImplMessaging::HandleImageImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
@@ -129,6 +126,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::audioInput,                     &RobotToEngineImplMessaging::HandleAudioInput);
   
   
   // lambda wrapper to call internal handler
@@ -346,12 +344,6 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
 
   PRINT_NAMED_INFO("RobotIsPhysical", "%d", robotIsPhysical);
   robot->SetPhysicalRobot(robotIsPhysical);
-  
-  // Update robot audio output source
-  auto outputSource = (robotIsPhysical && !ALWAYS_PLAY_ROBOT_AUDIO_ON_DEVICE) ?
-                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot :
-                      Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnDevice;
-  robot->GetRobotAudioClient()->SetOutputSource(outputSource);
 }
   
 
@@ -900,94 +892,6 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));
 }
-
-// For processing image chunks arriving from robot.
-// Sends complete images to VizManager for visualization (and possible saving).
-void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleImageChunk");
-  
-  // Ignore images if robot has not yet acknowledged time sync
-  if (!(robot->GetTimeSynced())) {
-    return;
-  }
-  
-  const ImageChunk& payload = message.GetData().Get_image();
-  
-  const bool isImageReady = robot->GetEncodedImage().AddChunk(payload);
-  
-  // Forward the image chunks over external interface if image send mode is not OFF
-  if (robot->GetContext()->GetExternalInterface() != nullptr && robot->GetImageSendMode() != ImageSendMode::Off && !ShouldIgnoreMultipleImages())
-  {
-    // we don't want to start sending right in the middle of an image, wait until we hit payload 0
-    // before starting to send.
-    if(payload.chunkId == 0 || robot->GetLastSentImageID() == payload.imageId) {
-      robot->SetLastSentImageID(payload.imageId);
-      
-      ExternalInterface::MessageEngineToGame msgWrapper;
-      msgWrapper.Set_ImageChunk(payload);
-      robot->GetContext()->GetExternalInterface()->Broadcast(msgWrapper);
-      
-      const bool wasLastChunk = payload.chunkId == payload.imageChunkCount-1;
-      
-      if(wasLastChunk && robot->GetImageSendMode() == ImageSendMode::SingleShot) {
-        // We were just in single-image send mode, and the image got sent, so
-        // go back to "off". (If in stream mode, stay in stream mode.)
-        robot->SetImageSendMode(ImageSendMode::Off);
-      }
-    }
-  }
-  
-  // Forward the image chunks to Viz as well (Note that this does nothing if
-  // sending images is disabled in VizManager)
-  robot->GetContext()->GetVizManager()->SendImageChunk(robot->GetID(), payload);
-  
-  if(isImageReady)
-  {
-    /* For help debugging COZMO-694:
-     PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
-     "About to process image: robot timestamp %d, message time %f, basestation timestamp %d",
-     image.GetTimestamp(), message.GetCurrentTime(),
-     BaseStationTimer::getInstance()->GetCurrentTimeStamp());
-     */
-    
-    // If we _are_ displaying processed images only, VisionComponent is responsible for sending the DisplayCameraImage
-    // message instead of sending it here.
-    if(!robot->GetVisionComponent().IsDisplayingProcessedImagesOnly())
-    {
-      robot->GetContext()->GetVizManager()->DisplayCameraImage(payload.frameTimeStamp);
-    }
-    
-    const double currentMessageTime = message.GetCurrentTime();
-
-    if (currentMessageTime != _lastImageRecvTime)
-    {
-      _lastImageRecvTime = currentMessageTime;
-      _repeatedImageCount = 0;
-    }
-    else
-    {
-      ++_repeatedImageCount;
-      if (ShouldIgnoreMultipleImages())
-      {
-        PRINT_NAMED_WARNING("RobotImplMessaging.HandleImageChunk",
-                            "Ignoring %dth image (with t=%u) received during basestation tick at %fsec",
-                            _repeatedImageCount,
-                            payload.frameTimeStamp,
-                            currentMessageTime);
-        
-        // Drop the rest of the images on the floor
-        return;
-      }
-    }
-    
-    //PRINT_NAMED_DEBUG("Robot.HandleImageChunk", "Image at t=%d is ready", _encodedImage.GetTimeStamp());
-    
-    // NOTE: _encodedImage will be invalidated by this call (SetNextImage does a swap internally).
-    //       So don't try to use it for anything else after this!
-    robot->GetVisionComponent().SetNextImage(robot->GetEncodedImage());
-  } // if(isImageReady)
-}
   
 bool RobotToEngineImplMessaging::ShouldIgnoreMultipleImages() const
 {
@@ -1181,6 +1085,58 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
   }
 
 }
+
+void RobotToEngineImplMessaging::HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  static uint32_t sLatestSequenceID = 0;
+  static AudioUtil::AudioChunkList audioData{};
+  static uint32_t totalAudioSize = 0;
   
+  const auto & payload = message.GetData().Get_audioInput();
+
+  constexpr int kNumChannels = 4;
+  const int channelsToSave = 4;
+  
+  if (payload.sequenceID > sLatestSequenceID ||
+      (sLatestSequenceID - payload.sequenceID) > (UINT32_MAX / 2)) // To handle rollover case
+  {
+    audioData.resize(audioData.size() + 1);
+    auto& newData = audioData.back();
+    constexpr int kSamplesPerChunk = 80; // 80 Samples 4 channels = 320 samples total
+    newData.resize(kSamplesPerChunk * channelsToSave);
+    
+    if (channelsToSave == 1)
+    {
+      // For testing purposes lets only save off the first channel
+      for (int j=0; j<kSamplesPerChunk; j++)
+      {
+        newData.data()[j] = payload.data.data()[j * kNumChannels];
+      }
+    }
+    else
+    {
+      std::copy(payload.data.begin(), payload.data.end(), newData.data());
+    }
+    
+    totalAudioSize += kSamplesPerChunk;
+    sLatestSequenceID = payload.sequenceID;
+  }
+  
+  if (totalAudioSize >= (AudioUtil::kSampleRate_hz * 20))
+  {
+    ANKI_CPU_PROFILE("HandleAudioInput.WriteWavFile");
+    if (!robot->IsPhysical())
+    {
+      std::string writeLocation = robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "testoutput.wav");
+      auto saveWaveFile = [dest = std::move(writeLocation), channelsToSave, data = std::move(audioData)] () {
+        AudioUtil::WaveFile::SaveFile(dest, data, channelsToSave);
+      };
+      std::thread(saveWaveFile).detach();
+    }
+    audioData.clear();
+    totalAudioSize = 0;
+  }
+}
+
 } // end namespace Cozmo
 } // end namespace Anki

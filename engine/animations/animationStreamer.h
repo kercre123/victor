@@ -42,9 +42,9 @@ namespace Cozmo {
     class MessageGameToEngine;
   }
   
-  namespace Audio {
-    class RobotAudioClient;
-  }  
+//  namespace Audio {
+//    class RobotAudioClient;
+//  }  
   
   //
   // IAnimationStreamer declares an abstract interface common to all implementations of an animation
@@ -106,7 +106,7 @@ namespace Cozmo {
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
     static const Tag NotAnimatingTag = ::Anki::Cozmo::NotAnimatingTag;
     
-    AnimationStreamer(const CozmoContext* context, Audio::RobotAudioClient& audioClient);
+    AnimationStreamer(const CozmoContext* context); //, Audio::RobotAudioClient& audioClient);
     
     ~AnimationStreamer();
     
@@ -283,7 +283,7 @@ namespace Cozmo {
     s32            _liftMoveSpacing_ms   = 0;
     s32            _headMoveSpacing_ms   = 0;
     
-    Audio::RobotAudioClient& _audioClient;
+//    Audio::RobotAudioClient& _audioClient;
     
     // For handling incoming messages
     std::vector<Signal::SmartHandle> _eventHandlers;

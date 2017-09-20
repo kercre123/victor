@@ -49,7 +49,7 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-      ImageResolution captureResolution_ = ImageResolution::QVGA;
+      ImageResolution captureResolution_ = DEFAULT_IMAGE_RESOLUTION;
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
@@ -235,7 +235,7 @@ namespace Anki {
           WheelController::Disable();
           HAL::CameraSetColorEnabled(false);
           #ifndef SIMULATOR
-          HAL::SetImageSendMode(Off, QVGA);
+          HAL::SetImageSendMode(Off, DEFAULT_IMAGE_RESOLUTION);
           Messages::ResetMissedLogCount();
           // Put body into bluetooth mode when the engine is connected
           SetBodyRadioMode bMsg;
@@ -439,7 +439,7 @@ namespace Anki {
             const s32 captureHeight = Vision::CameraResInfo[HAL::captureResolution_].height;
             const s32 captureWidth  = Vision::CameraResInfo[HAL::captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
 
-            static const int bufferSize = 1000000;
+            static const int bufferSize = 5000000;
             static u8 buffer[bufferSize];
 
             HAL::CameraGetFrame(buffer,

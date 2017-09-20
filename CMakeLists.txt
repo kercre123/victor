@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(cozmo)
-
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
 )
+
+project(cozmo)
+
+include(ccache) # Use ccache if it is installed
 
 include(import)
 
@@ -23,6 +25,8 @@ if (ANDROID)
   set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
 elseif(MACOSX)
   set(ANKI_PLATFORM_NAME "mac")
+else()
+  message(FATAL_ERROR "unsupported platform: ${ANKI_PLATFORM_NAME}")
 endif()
 
 add_compile_options(
