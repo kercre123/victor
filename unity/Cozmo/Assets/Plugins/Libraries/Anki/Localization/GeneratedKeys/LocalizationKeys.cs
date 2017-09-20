@@ -1247,6 +1247,27 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region WhatsNewStrings
+
+  public const string kWhatsNewModalTitle = "whatsNew.modal.title";
+  public const string kWhatsNewButtonOpenInCodeLab = "whatsNew.button.openInCodeLab";
+  public const string kWhatsNewContent1Title = "whatsNew.content1.title";
+  public const string kWhatsNewContent1Description = "whatsNew.content1.description";
+  public const string kWhatsNewContent2Title = "whatsNew.content2.title";
+  public const string kWhatsNewContent2Description = "whatsNew.content2.description";
+  public const string kWhatsNewContent3Title = "whatsNew.content3.title";
+  public const string kWhatsNewContent3Description = "whatsNew.content3.description";
+  public const string kWhatsNewContent4Title = "whatsNew.content4.title";
+  public const string kWhatsNewContent4Description = "whatsNew.content4.description";
+  public const string kWhatsNewContent5Title = "whatsNew.content5.title";
+  public const string kWhatsNewContent5Description = "whatsNew.content5.description";
+  public const string kWhatsNewContent6Title = "whatsNew.content6.title";
+  public const string kWhatsNewContent6Description = "whatsNew.content6.description";
+  public const string kWhatsNewContent7Title = "whatsNew.content7.title";
+  public const string kWhatsNewContent7Description = "whatsNew.content7.description";
+
+  #endregion
+
   #region WifiStrings
 
   public const string kWifiStringsInstructionsSlideATitleCopy = "wifiStrings.Instructions.SlideA.titleCopy";

@@ -38,6 +38,10 @@ namespace Cozmo {
         get { return _CurrentDialogState == DialogState.IsClosing || _CurrentDialogState == DialogState.Closed; }
       }
 
+      public bool IsAnimating {
+        get { return _CurrentDialogState == DialogState.IsClosing || _CurrentDialogState == DialogState.IsOpening; }
+      }
+
       [SerializeField]
       private string _DASEventDialogName = "";
 

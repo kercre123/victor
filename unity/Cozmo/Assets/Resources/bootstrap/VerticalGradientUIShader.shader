@@ -1,15 +1,19 @@
 // Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
-Shader "UI/Cozmo/GradientUIShader"
+Shader "UI/Cozmo/VerticalGradientUIShader"
 {
   Properties 
   {
+    // Unity yells if we don't have _MainTex even if we don't use it
+    _MainTex ("Base (RGB)", 2D) = "white" {}
     _Color ("Top Color", Color) = (1,1,1,1)
     _Color2 ("Bottom Color", Color) = (0,0,0,1)
   }
   SubShader 
   {
     ZWrite On
+	Blend SrcAlpha OneMinusSrcAlpha 
+
     Pass 
     {
       CGPROGRAM

@@ -10,6 +10,7 @@ GameObject:
   - component: {fileID: 470864}
   - component: {fileID: 11410250}
   - component: {fileID: 114361022454736516}
+  - component: {fileID: 114701708522348244}
   m_Layer: 0
   m_Name: GameManagers
   m_TagString: Untagged
@@ -83,3 +84,20 @@ MonoBehaviour:
     type: 2}
   _TooltipShowTime_Sec: 5
   _MinBorderSpaceToEdge: {x: 20, y: 20}
+--- !u!114 &114701708522348244
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 187916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 977fc8461a12643acab83bc28313c144, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _WhatsNewModalPrefabData:
+    _AssetBundle:
+      _EnumValueAsString: needs_hub_connection
+      _EnumValue: 15
+    _AssetDataName: WhatsNewModal
+  _WhatsNewDataFile: {fileID: 4900000, guid: 5ee05d3952b6f49fe9a2e8be99632cb3, type: 3}
