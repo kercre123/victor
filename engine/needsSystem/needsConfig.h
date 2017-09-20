@@ -77,7 +77,8 @@ public:
 
   float NeedLevelForNeedBracket(const NeedId needId, const NeedBracketId bracketId) const;
 
-  void SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey);
+  void SetUnconnectedDecayTestVariation(const std::string& baseFilename, const std::string& variationKey,
+                                        const Util::AnkiLab::AssignmentStatus assignmentStatus);
   const std::string& GetUnconnectedDecayTestVariation() const { return _unconnectedDecayTestVariationKey; };
 
   float _minNeedLevel;
@@ -109,7 +110,7 @@ private:
 
   const CozmoContext* _cozmoContext;
 
-  std::string _unconnectedDecayTestVariationKey = "unknown";
+  std::string _unconnectedDecayTestVariationKey = "Unknown (unknown)";
 };
 
 

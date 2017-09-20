@@ -74,6 +74,11 @@ static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequen
 
 static const std::string kUnconnectedDecayRatesExperimentKey = "unconnected_decay_rates";
 
+// Note:  We don't use zero for 'uninitialized serial number' because
+// running in webots gives us zero as the robot serial number
+static const u32 kUninitializedSerialNumber = UINT_MAX;
+
+
 using namespace std::chrono;
 using Time = time_point<system_clock>;
 
@@ -197,7 +202,9 @@ namespace {
     Util::AnkiLab::AddABTestingForcedAssignment(experimentKey, variationKey);
     context->channel->WriteLog("ForceAssignExperiment %s => %s", experimentKey, variationKey);
 
-    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(g_DebugNeedsManager->GetDecayConfigBaseFilename(), variationKey);
+    g_DebugNeedsManager->GetNeedsConfigMutable().SetUnconnectedDecayTestVariation(g_DebugNeedsManager->GetDecayConfigBaseFilename(),
+                                                                                  variationKey,
+                                                                                  Util::AnkiLab::AssignmentStatus::ForceAssigned);
   }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
@@ -364,8 +371,7 @@ void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
 
 void NeedsManager::InitInternal(const float currentTime_s)
 {
-  const u32 uninitializedSerialNumber = 0;
-  InitReset(currentTime_s, uninitializedSerialNumber);
+  InitReset(currentTime_s, kUninitializedSerialNumber);
 
   // Read needs data from device storage, if it exists
   _deviceHadValidNeedsData = false;
@@ -634,6 +640,13 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
 void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
 {
+  // If we don't yet have a valid robot serial number, don't try to make
+  // an experiment assignment, since it's based on robot serial number
+  if (robotSerialNumber == kUninitializedSerialNumber)
+  {
+    return;
+  }
+
   // Call this first to set the audience tags based on current data.
   // Note that in ActivateExperiment, if there was already an assigned
   // variation, we'll use that assignment and ignore the audience tags
@@ -644,8 +657,8 @@ void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
   std::string outVariationKey;
   const auto assignmentStatus = _cozmoContext->GetExperiments()->ActivateExperiment(request, outVariationKey);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitInternal",
-                "Unconnected decay experiment activation assignment status is: %s",
-                EnumToString(assignmentStatus));
+                "Unconnected decay experiment activation assignment status is: %s; based on serial number %d",
+                EnumToString(assignmentStatus), robotSerialNumber);
   if (assignmentStatus == Util::AnkiLab::AssignmentStatus::Assigned ||
       assignmentStatus == Util::AnkiLab::AssignmentStatus::OverrideAssigned ||
       assignmentStatus == Util::AnkiLab::AssignmentStatus::ForceAssigned)
@@ -655,11 +668,15 @@ void NeedsManager::AttemptActivateDecayExperiment(u32 robotSerialNumber)
                   kUnconnectedDecayRatesExperimentKey.c_str(),
                   outVariationKey.c_str());
 
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(), outVariationKey);
+    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
+                                                  outVariationKey,
+                                                  assignmentStatus);
   }
   else
   {
-    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(), _needsConfig.kABTestDecayConfigControlKey);
+    _needsConfig.SetUnconnectedDecayTestVariation(GetDecayConfigBaseFilename(),
+                                                  _needsConfig.kABTestDecayConfigControlKey,
+                                                  assignmentStatus);
   }
 }
 
