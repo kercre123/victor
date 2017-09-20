@@ -45,7 +45,7 @@ public:
     Rectangle<s32>  rect;
   };
   
-  Result Detect(ImageCache& imageCache, std::list<DetectedObject>&  objects);
+  Result Detect(ImageCache& imageCache, std::list<DetectedObject>& objects);
   
   //void EnableDisplay(bool enabled);
   

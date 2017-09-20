@@ -532,8 +532,8 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   // OpenCV DNN w/ Caffe SSD Model
   config["graph"] = "MobileNetSSD_deploy";
   config["labels"] = "coco-labels-20.txt";
-  config["input_width"] = 200;
-  config["input_height"] = 200;
+  config["input_width"] = 100;
+  config["input_height"] = 100;
   config["input_mean_R"] = 127.5;
   config["input_mean_G"] = 127.5;
   config["input_mean_B"] = 127.5;

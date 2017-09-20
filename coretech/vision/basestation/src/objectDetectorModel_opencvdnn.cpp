@@ -18,6 +18,7 @@
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/jsonTools.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
@@ -32,6 +33,8 @@ namespace Anki {
 namespace Vision {
   
 static const char * const kLogChannelName = "VisionSystem";
+  
+CONSOLE_VAR(s32, kPrintTimingFrequency, "Vision.ObjectDetector", 1);
   
 class ObjectDetector::Model : Vision::Profiler
 {
@@ -79,6 +82,28 @@ public:
     {
       return RESULT_FAIL;
     }
+
+    // Report network complexity in FLOPS
+    {
+      const cv::dnn::MatShape shape = {1, 3, _params.input_height, _params.input_width};
+      auto const numFLOPS = _network.getFLOPS(shape);
+      
+      const char* flopsPrefix = "M";
+      f32 flopsDivisor = 1e6f;
+      if(numFLOPS > 1e12)
+      {
+        flopsPrefix = "T";
+        flopsDivisor = 1e12f;
+      }
+      else if(numFLOPS > 1e9)
+      {
+        flopsPrefix = "G";
+        flopsDivisor = 1e9f;
+      }
+      
+      PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadModel.NetworkFLOPS", "%.3f %sFLOPS",
+                    (f32)numFLOPS / flopsDivisor, flopsPrefix);
+    }
     
     const std::string labelsFileName = Util::FileUtils::FullFilePath({modelPath, _params.labels});
     Result readLabelsResult = ReadLabelsFile(labelsFileName);
@@ -99,9 +124,6 @@ public:
     const bool kSwapRedBlue = false; // Our image class is already RGB
     cv::Mat dnnBlob = cv::dnn::blobFromImage(img.get_CvMat_(), scale, processingSize, kSwapRedBlue);
     
-    //const cv::dnn::MatShape shape = {1,image.rows,image.cols,3};
-    //std::cout << "FLOPS: " << network.getFLOPS(shape) << std::endl;
-    
     //std::cout << "Setting blob input: " << dnnBlob.size[0] << "x" << dnnBlob.size[1] << "x" << dnnBlob.size[2] << "x" << dnnBlob.size[3] <<  std::endl;
     _network.setInput(dnnBlob);
     
@@ -111,12 +133,11 @@ public:
     Toc("ObjectDetector.Run.ForwardInference");
     
     {
-      static const int kPrintFreq = 3;
-      static int printCount = kPrintFreq;
+      static int printCount = kPrintTimingFrequency;
       if(--printCount == 0)
       {
         PrintAverageTiming();
-        printCount = kPrintFreq;
+        printCount = kPrintTimingFrequency;
       }
     }
     

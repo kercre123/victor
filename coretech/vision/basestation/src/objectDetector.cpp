@@ -59,8 +59,7 @@ Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& con
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Detect(ImageCache&           imageCache,
-                              std::list<DetectedObject>&  objects)
+Result ObjectDetector::Detect(ImageCache& imageCache, std::list<DetectedObject>& objects)
 {
   Result result = RESULT_OK;
   
@@ -71,14 +70,27 @@ Result ObjectDetector::Detect(ImageCache&           imageCache,
   {
     const ImageRGB& img = imageCache.GetRGB(ImageCache::Size::Full);
     
-    result = _model->Run(img, objects);
+    const bool kCropCenterSquare = true;
+    if(kCropCenterSquare)
+    {
+      const s32 squareDim = std::min(img.GetNumRows(), img.GetNumCols());
+      Rectangle<s32> centerCrop(img.GetNumCols()/2 - squareDim/2,
+                                img.GetNumRows()/2 - squareDim/2,
+                                squareDim, squareDim);
+      
+      const ImageRGB& imgCenterCrop = img.GetROI(centerCrop);
+      result = _model->Run(imgCenterCrop, objects);
+    }
+    else
+    {
+      result = _model->Run(img, objects);
+    }
     
     const f32 widthScale = (f32)imageCache.GetOrigNumRows() / (f32)img.GetNumRows();
     const f32 heightScale = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
     
     if(!Util::IsNear(widthScale, 1.f) || !Util::IsNear(heightScale,1.f))
     {
-      //const f32 widthScale  = (f32)imageCache.GetOrigNumCols() / (f32)img.GetNumCols();
       std::for_each(objects.begin(), objects.end(), [widthScale,heightScale](DetectedObject& object)
                     {
                       object.rect = Rectangle<s32>(std::round((f32)object.rect.GetX() * widthScale),
