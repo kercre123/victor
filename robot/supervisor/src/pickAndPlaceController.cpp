@@ -87,6 +87,15 @@ namespace Anki {
 
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
+        
+        // Time when robot first becomes tiled on charger (while docking)
+        u32 tiltedOnChargerStartTime_ = 0;
+        
+        // Pitch angle at which Cozmo is probably having trouble backing up on charger
+        const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
+        
+        // Amount of time that Cozmo pitch needs to exceed TILT_FAILURE_ANGLE_RAD in order to fail at backing up on charger
+        const u32 TILT_FAILURE_DURATION_MS = 250;
 
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
@@ -298,6 +307,10 @@ namespace Anki {
               case DockAction::DA_POST_DOCK_ROLL:
                 // Skip docking completely and go straight to Setting lift for Post Dock
                 mode_ = SET_LIFT_POSTDOCK;
+                break;
+              case DockAction::DA_BACKUP_ONTO_CHARGER:
+                SteeringController::ExecuteDirectDrive(-30, -30);
+                mode_ = BACKUP_ON_CHARGER;
                 break;
               default:
                 AnkiError( 287, "PAP.SET_LIFT_PREDOCK.InvalidAction", 648, "%hhu", 1, action_);
@@ -772,6 +785,41 @@ namespace Anki {
                 }
                 break;
               }
+            }
+            break;
+          }
+          case BACKUP_ON_CHARGER:
+          {
+
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              AnkiEvent( 292, "PAP.BACKUP_ON_CHARGER.Timeout", 305, "", 0);
+              Reset();
+              // TODO: Some kind of recovery?
+              // ...
+            } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
+              // Check for tilt
+              if (tiltedOnChargerStartTime_ == 0) {
+                tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
+              } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
+                // Drive forward until no tilt or timeout
+                AnkiEvent( 293, "PAP.BACKUP_ON_CHARGER.Tilted", 305, "", 0);
+                SteeringController::ExecuteDirectDrive(40, 40);
+                transitionTime_ = HAL::GetTimeStamp() + 2500;
+                mode_ = DRIVE_FORWARD;
+              }
+            } else if (HAL::BatteryIsOnCharger()) {
+              AnkiEvent( 294, "PAP.BACKUP_ON_CHARGER.Success", 305, "", 0);
+              Reset();
+            } else {
+              tiltedOnChargerStartTime_ = 0;
+            }
+            break;
+          }
+          case DRIVE_FORWARD:
+          {
+            // For failed charger mounting recovery only
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              Reset();
             }
             break;
           }

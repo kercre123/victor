@@ -50,6 +50,7 @@ enum uint_8 DockAction
   DA_RAMP_ASCEND,     // Going up a ramp
   DA_RAMP_DESCEND,    // Going down a ramp
   DA_CROSS_BRIDGE,    // Crossing a bridge
+  DA_BACKUP_ONTO_CHARGER, // Reverse onto the charger platform
 }
 
 enum uint_8 CarryState

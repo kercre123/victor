@@ -14,8 +14,8 @@
 #define __Anki_Cozmo_Engine_ChargerActions_H__
 
 #include "engine/actions/actionInterface.h"
-#include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/actions/dockActions.h"
 #include "engine/actionableObject.h"
 
 namespace Anki {
@@ -65,25 +65,28 @@ private:
 //
 // Reverse onto the charger, stopping when charger contacts are sensed.
 // Optionally, use the cliff sensors to correct heading while reversing.
-class BackupOntoChargerAction : public DriveStraightAction
+class BackupOntoChargerAction : public IDockAction
 {
-using super = DriveStraightAction;
 public:
   BackupOntoChargerAction(Robot& robot,
-                          f32 dist_mm,
-                          f32 speed_mmps,
+                          ObjectID chargerID,
                           bool useCliffSensorCorrection);
   
 protected:
+
+  virtual ActionResult SelectDockAction(ActionableObject* object) override;
   
-  virtual ActionResult CheckIfDone() override;
-  virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
+  virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+  
+  //virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
+  
+  virtual ActionResult Verify() override;
   
 private:
   
   // If true, use the cliff sensors to detect the light/dark pattern
   // while reversing onto the charger and adjust accordingly
-  bool _useCliffSensorCorrection;
+  const bool _useCliffSensorCorrection;
   
 }; // class BackupOntoChargerAction
 
