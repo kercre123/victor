@@ -736,13 +736,13 @@ static void downsample_frame(uint64_t in[Y*2][X6], int len, uint8_t out[Y][X][3]
       pixel2[0] = (raw10bits > 255) ? 255 : raw10bits;
       
       // Green (two green per 2x2 square so add and divide by two)
-      raw10bits = (((row1>>10) & 1023) + ((row2>>00) & 1023)) >> (2+DIM);
+      raw10bits = (((row1>>10) & 1023) + ((row2>>00) & 1023)) >> (1+DIM);
       pixel0[1] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row1>>30) & 1023) + ((row2>>20) & 1023)) >> (2+DIM);
+      raw10bits = (((row1>>30) & 1023) + ((row2>>20) & 1023)) >> (1+DIM);
       pixel1[1] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row1>>50) & 1023) + ((row2>>40) & 1023)) >> (2+DIM);
+      raw10bits = (((row1>>50) & 1023) + ((row2>>40) & 1023)) >> (1+DIM);
       pixel2[1] = (raw10bits > 255) ? 255 : raw10bits;
       
       // Blue

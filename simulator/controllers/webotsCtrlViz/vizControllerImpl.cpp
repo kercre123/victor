@@ -456,7 +456,7 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
 void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_ImageChunk();
-
+  
   EncodedImage& encodedImage = _bufferedImages[_imageBufferIndex];
   const bool isImageReady = encodedImage.AddChunk(payload);
 
