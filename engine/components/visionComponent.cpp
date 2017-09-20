@@ -1335,6 +1335,7 @@ namespace Cozmo {
                                                const f32 headTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
   {
+    // TODO(Al): Remove after fixing imageIMU and rolling shutter
     return false;
     
     // Check to see if the robot's body or head are
@@ -1370,6 +1371,7 @@ namespace Cozmo {
                                                const f32 bodyTurnSpeedLimit_radPerSec,
                                                const int numImuDataToLookBack) const
   {
+    // TODO(Al): Remove after fixing imageIMU and rolling shutter
     return false;
   
     // Check to see if the robot's body or head are

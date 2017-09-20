@@ -187,6 +187,7 @@ void Comms::tick(void) {
   if (applicationRunning) {
     Motors::transmit(&outboundPacket.sync.payload);
     Opto::transmit(&outboundPacket.sync.payload);
+    // TODO(Al/Lee): Put back once mics and camera can co-exist
 //    Mics::transmit(outboundPacket.sync.payload.audio);
     Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
