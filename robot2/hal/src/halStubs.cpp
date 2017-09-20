@@ -16,7 +16,6 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/hal_config.h"
-#include "anki/cozmo/robot/event_trace.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine_hal.h"
@@ -38,17 +37,6 @@
 #define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
 #define STR(s)  #s
 #define DEFNAME(s) STR(s)
-
-/******** TEMP SPINE LOGGING ***********/
-#define DUMP_SPINE_EVENTS_MAYBE(time) if ((time)>= seltime+(EVENT_LOG_DURATION_SEC*1000))DumpEvents()
-
-// #define DUMP_SPINE_EVENTS_MAYBE(time) do{\
-//     printf("? %u > %llu\n", time, seltime+(EVENT_LOG_DURATION_SEC*1000));\
-//     DUMP_SPINE_EVENTS_MAYBE_X(time);\
-//   }while(0);
-    
-
-/***************************************/
 
 
 #if REALTIME_CONSOLE_OUTPUT > 0
