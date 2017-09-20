@@ -76,7 +76,7 @@ namespace Anki {
       data = _imuDataArr[_imuLastReadIdx];
       return true;
     }
- 
+
     void ProcessIMUEvents()
     {
       static int64_t lastAccTime, lastGyroTime;
@@ -119,6 +119,7 @@ namespace Anki {
         lastAccTime = lastGyroTime = rawData.timestamp * NS_PER_IMU_TICK;
         PushIMU(imuData);
       }
+
 #endif
     }
 

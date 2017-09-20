@@ -45,8 +45,6 @@ static struct HalGlobals {
 } gHal;
 
 
-/****** SPINE DEBUG STUFF ****************/
-
 /************* Error Handling *****************/
 #define spine_error(code, fmt, args...)   (LOGE( fmt, ##args)?(code):(code))
 #ifdef CONSOLE_DEBUG_PRINTF
