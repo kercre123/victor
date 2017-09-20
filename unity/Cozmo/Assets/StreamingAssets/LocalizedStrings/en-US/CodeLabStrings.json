@@ -725,13 +725,32 @@
 
 
   "codeLabGlossary.block_definitions.title.cozmo_play_animation_from_dropdown": {
-    "translation": "Play [happy, winner, sad, ...] animation with [wheels / no-wheels] , [head / no-head], [lift / no-head]"
+    "translation": "Play [happy, winner, sad, ...] animation"
   },
   "codeLabGlossary.block_definitions.description.cozmo_play_animation_from_dropdown": {
     "translation": "Play the specified animation on Cozmo"
   },
 
+  "codeLabGlossary.block_definitions.title.cozmo_animation_external_select_menu": {
+    "translation": "[happy, winner, sad, ...] animation"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_animation_external_select_menu": {
+    "translation": "A dropdown that contains each of the available animations, can be plugged in to the play animation block"
+  },
 
+  "codeLabGlossary.block_definitions.title.cozmo_vert_enable_animation_track": {
+    "translation": "Enable [Wheels, Head, Lift] animation track"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_enable_animation_track": {
+    "translation": "Enable [Wheels, Head, Lift] animation track (all are enabled by default)"
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_disable_animation_track": {
+    "translation": "Disable [Wheels, Head, Lift] animation track"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_disable_animation_track": {
+    "translation": "Disable [Wheels, Head, Lift] animation track (all are enabled by default)"
+  },
 
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_clear": {
@@ -748,43 +767,57 @@
     "translation": "Display the pending image on Cozmo's face (will stay there for up to 30 seconds, or when something else, e.g. another animation, interrupts it)."
   },
 
+  "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_set_draw_color": {
+    "translation": "Set Draw Color [light, erase]"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_draw_color": {
+    "translation": "Set Draw Color for subsequent draw operations, default draws light, can be switched to erase"
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_set_text_scale": {
+    "translation": "Set Text Scale"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_text_scale": {
+    "translation": "Set Text Scale, default is 1.0, larger values will draw larger text"
+  },
+
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_text": {
-    "translation": "Draw text at (X),(Y) scale (Z) [On/Off] "
+    "translation": "Draw text at (X),(Y)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text": {
-    "translation": "Draw the specified text at the given position at the given scale. (scale of 1 is the default size of the font)."
+    "translation": "Draw the specified text at the given position."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line": {
-    "translation": "Draw line from (X),(Y) to (X2), (Y2) [On/Off] "
+    "translation": "Draw line from (X),(Y) to (X2), (Y2)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line": {
     "translation": "Draw a line between the 2 coordinates."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect": {
-    "translation": "Fill rectangle from (X),(Y) to (X2), (Y2) [On/Off]"
+    "translation": "Fill rectangle from (X),(Y) to (X2), (Y2)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect": {
     "translation": "Draw a filled rectangle between the 2 coordinates"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect": {
-    "translation": "Draw rectangle from (X),(Y) to (X2), (Y2) [On/Off] "
+    "translation": "Draw rectangle from (X),(Y) to (X2), (Y2)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect": {
     "translation": "Draws an outlined (not filled) rectangle between the 2 coordinates"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle": {
-    "translation": "Draw circle at (X),(Y) radius (Z) [On/Off] "
+    "translation": "Draw circle at (X),(Y) radius (Z)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle": {
     "translation": "Draw an outlined (not filled) circle at the given position with the given radius."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle": {
-    "translation": "Fill circle at (X),(Y) radius (Z) [On/Off]"
+    "translation": "Fill circle at (X),(Y) radius (Z)"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle": {
     "translation": "Draws a filled circle at the given position with the given radius."
@@ -822,21 +855,21 @@
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube": {
-    "translation": "When see cube"
+    "translation": "When cube [1,2,3,any] seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube": {
     "translation": "Activates (and runs the code underneath it) every-time Cozmo sees a cube"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_tap": {
-    "translation": "When cube [1,2,3] is tapped"
+    "translation": "When cube [1,2,3,any] is tapped"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_tap": {
     "translation": "Activates (and runs the code underneath it) every-time the given cube is tapped"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_moved": {
-    "translation": "When cube [1,2,3] is moved"
+    "translation": "When cube [1,2,3,any] is moved"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_moved": {
     "translation": "Activates (and runs the code underneath it) every-time the given cube is moved"
@@ -922,6 +955,33 @@
     "translation": "Stop the given stack of blocks (or all = entire program)"
   },
 
+  "codeLabGlossary.block_definitions.title.cozmo_vert_enable_wait_for_actions": {
+    "translation": "Enable wait for actions to complete"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_enable_wait_for_actions": {
+    "translation": "Enable automatically waiting for every action to complete before moving to the next block (this is the default behavior)"
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_disable_wait_for_actions": {
+    "translation": "Disable wait for actions to complete"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_disable_wait_for_actions": {
+    "translation": "Disable automatically waiting for every action to complete before moving to the next block"
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_wait_for_actions": {
+    "translation": "Wait for [drive, head, lift, say, anim, all] actions to complete"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_wait_for_actions": {
+    "translation": "Wait for any active actions that match the given type to complete"
+  },
+  
+  "codeLabGlossary.block_definitions.title.cozmo_vert_cancel_actions": {
+    "translation": "Cancel [drive, head, lift, say, anim, all] actions"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cancel_actions": {
+    "translation": "Cancel any active actions that match the given type"
+  },
 
 
 
@@ -1000,6 +1060,13 @@
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_expression": {
     "translation": "The current expression on the face, one of \"happy\", \"upset\" and \"unknown\""
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_external_cube_sensor_select_menu": {
+    "translation": "Cube ID [1,2,3]"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_external_cube_sensor_select_menu": {
+    "translation": "Cube ID [1,2,3] for setting variables or passing into cube blocks"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_is_visible": {

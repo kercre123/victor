@@ -216,8 +216,11 @@ namespace CodeLab {
     }
 
     public float ConvertRatioXToPixelXFloat(float ratio) {
+      // TODO: Remove this if we stick with using pixel coords, this
+      //       math was to convert 0.0..1.0 to 0..127 pixel range
       // Scale 0.0 to 1.0 values to e.g. 0.0 to 127.0 (for width=128)
-      return ratio * (float)(kFaceTextureWidth - 1);
+      //return ratio;// * (float)(kFaceTextureWidth - 1);
+      return ratio;
     }
 
     public int ConvertRatioXToPixelX(float ratio) {
@@ -226,8 +229,11 @@ namespace CodeLab {
     }
 
     public float ConvertRatioYToPixelYFloat(float ratio) {
+      // TODO: Remove this if we stick with using pixel coords, this
+      //       math was to convert 0.0..1.0 to 0..63 pixel range
       // Scale 0.0 to 1.0 values to e.g. 0.0 to 63.0 (for height=64)
-      return ratio * (float)(kFaceTextureHeight - 1);
+      //return ratio * (float)(kFaceTextureHeight - 1);
+      return ratio;
     }
 
     public int ConvertRatioYToPixelY(float ratio) {

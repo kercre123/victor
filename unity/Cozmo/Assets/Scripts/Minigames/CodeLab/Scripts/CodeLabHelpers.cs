@@ -62,24 +62,86 @@ namespace CodeLab {
     public bool argBool3 { get; set; }
   }
 
+  public delegate void ScratchBlockUpdate();
+
   public class InProgressScratchBlock {
     private int _RequestId;
     private CodeLabGame _CodeLabGame;
+    private ActionType _ActionType;
+    private ActionType _WaitingOnActionType;
+    private uint _ActionIdTag;
+    private ScratchBlockUpdate _UpdateMethod;
 
-    public void Init(int requestId = -1, CodeLabGame codeLabGame = null) {
+    public void Init(int requestId = -1, CodeLabGame codeLabGame = null, ActionType actionType = ActionType.Count, uint actionIdTag = (uint)Anki.Cozmo.ActionConstants.INVALID_TAG) {
       _RequestId = requestId;
       _CodeLabGame = codeLabGame;
+      _ActionType = actionType;
+      _WaitingOnActionType = ActionType.Count;
+      _ActionIdTag = actionIdTag;
+      _UpdateMethod = null;
+    }
+
+    public void DoUpdate() {
+      if (_UpdateMethod != null) {
+        _UpdateMethod();
+      }
+    }
+
+    public void SetActionData(ActionType actionType, uint actionIdTag) {
+      _ActionType = actionType;
+      _ActionIdTag = actionIdTag;
+    }
+
+    public bool MatchesActionType(ActionType actionType) {
+      return ((actionType == _ActionType) || ((actionType == ActionType.All) && (_ActionType != ActionType.Count)));
+    }
+
+    public void WaitOnActions() {
+      if (!InProgressScratchBlockPool.AreAnyActionsInProgress(_WaitingOnActionType)) {
+        AdvanceToNextBlock(true);
+      }
+    }
+
+    public void SetWaitOnAction(ActionType actionType) {
+      DAS.Info("CodeLab.SetWaitOnAction", "actionType = " + actionType.ToString());
+      _UpdateMethod = WaitOnActions;
+      _WaitingOnActionType = actionType;
+    }
+
+    public void CancelAction() {
+      DAS.Info("CodeLab.CancelAction", "actionType = " + _ActionType.ToString());
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      robot.CancelActionByIdTag(_ActionIdTag);
+      ReleaseFromPool();
+    }
+
+    public void VerticalOnAnimationComplete(bool success) {
+      // Failure is usually because another action (e.g. animation) was requested by user clicking in Scratch
+      // Therefore don't queue the neutral face animation in that case, as it will clobber the just requested animation
+      if (success) {
+        // TODO: Confirm if we still need this for vertical (or do we force user to trigger the neutral face if they need it?)
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        _ActionIdTag = robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock, Anki.Cozmo.QueueActionPosition.IN_PARALLEL);
+      }
+      else {
+        AdvanceToNextBlock(success);
+      }
     }
 
     public void NeutralFaceThenAdvanceToNextBlock(bool success) {
       // Failure is usually because another action (e.g. animation) was requested by user clicking in Scratch
       // Therefore don't queue the neutral face animation in that case, as it will clobber the just requested animation
       if (success) {
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        _ActionIdTag = robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
       }
       else {
         AdvanceToNextBlock(success);
       }
+    }
+
+    public bool HasActiveRequestPromise() {
+      return (this._RequestId >= 0);
     }
 
     public void OnReleased() {
@@ -96,7 +158,7 @@ namespace CodeLab {
       InProgressScratchBlockPool.ReleaseInProgressScratchBlock(this);
     }
 
-    private void ResolveRequestPromise() {
+    public void ResolveRequestPromise() {
       if (this._RequestId >= 0) {
         // Calls the JavaScript function resolving the Promise on the block
         _CodeLabGame.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
@@ -123,6 +185,7 @@ namespace CodeLab {
       rEM.RemoveCallback<RobotObservedObject>(RobotObservedObject);
       var robot = rEM.CurrentRobot;
       if (robot != null) {
+        robot.CancelCallback(VerticalOnAnimationComplete);
         robot.CancelCallback(NeutralFaceThenAdvanceToNextBlock);
         robot.CancelCallback(CompletedTurn);
         robot.CancelCallback(AdvanceToNextBlock);
@@ -199,7 +262,8 @@ namespace CodeLab {
         const int kMaxVisionFramesSinceSeeingCube = 30;
         if ((cube != null) && (cube.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube)) {
           success = true;
-          RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
+          var robot = RobotEngineManager.Instance.CurrentRobot;
+          _ActionIdTag = robot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
         }
         else {
           DAS.Warn("DockWithCube.NoVisibleCube", "NumVisionFramesSinceLastSeen = " + ((cube != null) ? cube.NumVisionFramesSinceLastSeen : -1));
@@ -219,7 +283,8 @@ namespace CodeLab {
         // Play angry animation since Cozmo wasn't able to complete the task
         // As this is on failure, queue anim in parallel - failure here could be because another block was clicked, and we don't want to interrupt that one
         Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor, callback: AdvanceToNextBlock, queueActionPosition: queuePos);
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        _ActionIdTag = robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor, callback: AdvanceToNextBlock, queueActionPosition: queuePos);
       }
       else {
         AdvanceToNextBlock(true);
@@ -271,6 +336,55 @@ namespace CodeLab {
       lock (_available) {
         _available.Add(po);
         _inUse.Remove(po);
+      }
+    }
+
+    public static void UpdateBlocks() {
+      lock (_available) {
+        for (int i = 0; i < _inUse.Count; /* don't increment here */) {
+          InProgressScratchBlock scratchBlock = _inUse[i];
+          // Update for a block can complete itself (and remove itself from this list)
+          // So track if the block does that, and iterate accordingly
+          int previousCount = _inUse.Count;
+          scratchBlock.DoUpdate();
+          if (_inUse.Count == previousCount) {
+            // No change - increment to next block
+            ++i;
+          }
+          else if (_inUse.Count == (previousCount - 1)) {
+            // 1 less item - the block completed and removed itself - don't increment i - it's already the next block
+          }
+          else {
+            DAS.Error("CodeLab.UpdateBlocks.BadCountChange", "From " + previousCount + " to " + _inUse.Count);
+          }
+        }
+      }
+    }
+
+    public static bool AreAnyActionsInProgress(ActionType actionType) {
+      lock (_available) {
+        for (int i = 0; i < _inUse.Count; ++i) {
+          InProgressScratchBlock scratchBlock = _inUse[i];
+          if (scratchBlock.MatchesActionType(actionType)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    public static void CancelActionsOfType(ActionType actionType) {
+      lock (_available) {
+        for (int i = 0; i < _inUse.Count; /* don't increment here */ ) {
+          InProgressScratchBlock scratchBlock = _inUse[i];
+          if (scratchBlock.MatchesActionType(actionType)) {
+            // Cancellation also removes the block from the list, so don't increment i
+            scratchBlock.CancelAction();
+          }
+          else {
+            ++i;
+          }
+        }
       }
     }
   }

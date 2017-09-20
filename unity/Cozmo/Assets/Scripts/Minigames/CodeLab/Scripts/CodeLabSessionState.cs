@@ -18,6 +18,25 @@ namespace CodeLab {
     Vertical
   }
 
+  public enum AnimTrack {
+    Wheels = 0,
+    Lift,
+    Head,
+    // Special values:
+    Count
+  }
+
+  public enum ActionType {
+    Drive = 0,
+    Head,
+    Lift,
+    Say,
+    Anim,
+    // Special values:
+    Count,
+    All
+  }
+
   public class ProjectStats {
     public enum EventCategory {
       updated_user_project = 0,
@@ -145,13 +164,72 @@ namespace CodeLab {
           DAS_Event("robot.code_lab.start_challenge_slide_view", _CurrentSlide.ToString());
         }
       }
-    }
+    } // End class ChallengesState
 
     public class ProgramState {
       private System.DateTime _StartDateTime;
       private int _NumBlocksExecuted = 0;
       private bool _IsProgramRunning = false;
       private bool _WasProgramAborted = false;
+
+      // Program state vars 
+      private const bool kDefaultShouldWaitForActions = true;
+      private const byte kDefaultDrawColor = (byte)1; // monochrome 1=On, 0=Off/Erase
+      private const float kDefaultDrawTextScale = 1.0f;
+
+      private bool[] _IsAnimTrackEnabled = new bool[(int)AnimTrack.Count];
+      private bool _ShouldWaitForActions = kDefaultShouldWaitForActions;
+      private byte _DrawColor = kDefaultDrawColor;
+      private float _DrawTextScale = kDefaultDrawTextScale;
+
+      public byte GetDrawColor() {
+        return _DrawColor;
+      }
+
+      public void SetDrawColor(byte newVal) {
+        _DrawColor = newVal;
+      }
+
+      public float GetDrawTextScale() {
+        return _DrawTextScale;
+      }
+
+      public void SetDrawTextScale(float newVal) {
+        _DrawTextScale = newVal;
+      }
+
+      public void SetShouldWaitForActions(bool newVal) {
+        _ShouldWaitForActions = newVal;
+      }
+
+      public bool ShouldWaitForActions() {
+        return _ShouldWaitForActions;
+      }
+
+      public bool IsAnimTrackEnabled(AnimTrack animTrack) {
+        int animTrackInt = (int)animTrack;
+        if ((animTrackInt >= 0) && (animTrackInt < _IsAnimTrackEnabled.Length)) {
+          return _IsAnimTrackEnabled[animTrackInt];
+        }
+        else {
+          DAS.Error("CodeLab.IsAnimTrackEnabled.BadAnimTrack", "Unhandled type " + animTrackInt + " = " + animTrack);
+          return false;
+        }
+      }
+
+      public void SetIsAnimTrackEnabled(AnimTrack animTrack, bool newVal) {
+        int animTrackInt = (int)animTrack;
+        if ((animTrackInt >= 0) && (animTrackInt < _IsAnimTrackEnabled.Length)) {
+          if (_IsAnimTrackEnabled[animTrackInt] != newVal) {
+            DAS.Warn("CodeLab.SetIsAnimTrackEnabled.Changing", animTrack.ToString() + " from "
+                     + _IsAnimTrackEnabled[animTrackInt] + " to " + newVal);
+            _IsAnimTrackEnabled[animTrackInt] = newVal;
+          }
+        }
+        else {
+          DAS.Error("CodeLab.SetIsAnimTrackEnabled.BadAnimTrack", "Unhandled type " + animTrackInt + " = " + animTrack);
+        }
+      }
 
       public bool IsProgramRunning() {
         return _IsProgramRunning;
@@ -161,6 +239,16 @@ namespace CodeLab {
         _NumBlocksExecuted = 0;
         _IsProgramRunning = false;
         _WasProgramAborted = false;
+        ResetProgramStateVars();
+      }
+
+      private void ResetProgramStateVars() {
+        for (int i = 0; i < _IsAnimTrackEnabled.Length; ++i) {
+          _IsAnimTrackEnabled[i] = true;
+        }
+        _ShouldWaitForActions = kDefaultShouldWaitForActions;
+        _DrawColor = kDefaultDrawColor;
+        _DrawTextScale = kDefaultDrawTextScale;
       }
 
       public void OnBlockStarted() {
@@ -176,6 +264,8 @@ namespace CodeLab {
         _StartDateTime = System.DateTime.UtcNow;
         _NumBlocksExecuted = 0;
         _WasProgramAborted = false;
+
+        ResetProgramStateVars();
 
         switch (grammar) {
         case GrammarMode.None:
@@ -223,7 +313,9 @@ namespace CodeLab {
           _WasProgramAborted = true;
         }
       }
-    }
+    } // End class ProgramState
+
+    // SessionState:
 
     private ProjectStats _ProjectStats = new ProjectStats();
     private ProgramState _ProgramState = new ProgramState();
@@ -235,8 +327,44 @@ namespace CodeLab {
     private int _NumProgramsRunInMode = 0;
     private bool _ReceivedGreenFlagEvent = false;
 
+    public ProgramState GetProgramState() {
+      return _ProgramState;
+    }
+
     public bool IsProgramRunning() {
       return _ProgramState.IsProgramRunning();
+    }
+
+    public bool ShouldWaitForActions() {
+      if (_CurrentGrammar == GrammarMode.Vertical) {
+        return _ProgramState.ShouldWaitForActions();
+      }
+      return true;
+    }
+
+    public void SetShouldWaitForActions(bool newVal) {
+      if (_CurrentGrammar == GrammarMode.Vertical) {
+        _ProgramState.SetShouldWaitForActions(newVal);
+      }
+      else {
+        DAS.Error("CodeLab.SetShouldWaitForActions", "Attempt to set in invalid grammar " + _CurrentGrammar.ToString());
+      }
+    }
+
+    public bool IsAnimTrackEnabled(AnimTrack animTrack) {
+      if (_CurrentGrammar == GrammarMode.Vertical) {
+        return _ProgramState.IsAnimTrackEnabled(animTrack);
+      }
+      return true;
+    }
+
+    public void SetIsAnimTrackEnabled(AnimTrack animTrack, bool newVal) {
+      if (_CurrentGrammar == GrammarMode.Vertical) {
+        _ProgramState.SetIsAnimTrackEnabled(animTrack, newVal);
+      }
+      else {
+        DAS.Error("CodeLab.SetIsAnimTrackEnabled", "Attempt to set in invalid grammar " + _CurrentGrammar.ToString());
+      }
     }
 
     // Wrap DAS event so we can easily log the events for debugging

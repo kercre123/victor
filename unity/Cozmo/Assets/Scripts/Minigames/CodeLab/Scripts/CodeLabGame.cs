@@ -18,6 +18,7 @@ namespace CodeLab {
     public bool IsVertical;
     public string ProjectIconName;
     public string ProjectXML;
+    public string ProjectJSON;
     public string ProjectName;
   }
 
@@ -267,6 +268,40 @@ namespace CodeLab {
         _DevLoadPath = Application.temporaryCachePath + payload;
         DAS.Info("CodeLab.SetCachePath", "_DevLoadPath = '" + _DevLoadPath + "'");
         break;
+      case "EnsureProjectExists":
+        // Ensure that there is a project on C# side with given UUID and name
+        // this allows subsequent calls from an attached Python-served workspace to still
+        // save to Unity too
+
+        PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+        if (defaultProfile == null) {
+          DAS.Error("CodeLab.EnsureProjectExists.NullDefaultProfile", "");
+        }
+        else {
+          // Extract from message
+          var payloadArgs = payload.Split(',');
+          if (payloadArgs.Length != 3) {
+            DAS.Error("CodeLab.EnsureProjectExists.WrongArgLength", "Length: " + payloadArgs.Length);
+          }
+          else {
+            string projectUUID = payloadArgs[0];
+            string projectName = payloadArgs[1];
+            bool isVertical = payloadArgs[2] != "0";
+
+            _SessionState.SetGrammarMode(isVertical ? GrammarMode.Vertical : GrammarMode.Horizontal);
+
+            DAS.Info("CodeLab.EnsureProjectExists.Adding", "uuid='" + projectUUID + "' projectName='" + projectName + "' isVertical=" + isVertical);
+
+            CodeLabProject project = FindUserProjectWithUUID(projectUUID);
+            if (project == null) {
+              // Create it
+              project = new CodeLabProject(projectName, null, isVertical);
+              project.ProjectUUID = new Guid(projectUUID);
+              defaultProfile.CodeLabProjects.Add(project);
+            }
+          }
+        }
+        break;
       default:
         DAS.Error("HandleGameToGameContents.BadType", "Unhandled type: " + messageType);
         break;
@@ -451,6 +486,9 @@ namespace CodeLab {
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical && IsDisplayingWorkspacePage()) {
         SendWorldStateToWebView();
+        // NOTE:" UpdateBlocks is currently only required on Vertical workspaces, and is purely to allow custom blocks
+        // like "WaitForActions(ActionType)" to work, as they need to be polled each update.
+        InProgressScratchBlockPool.UpdateBlocks();
       }
     }
 
@@ -483,7 +521,7 @@ namespace CodeLab {
     }
 
     // SetHeadAngleLazy only calls SetHeadAngle if difference is far enough
-    private bool SetHeadAngleLazy(float desiredHeadAngle, RobotCallback callback,
+    private uint SetHeadAngleLazy(float desiredHeadAngle, RobotCallback callback,
                     QueueActionPosition queueActionPosition = QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       var currentHeadAngle = robot.HeadAngle;
@@ -491,16 +529,16 @@ namespace CodeLab {
       var kAngleEpsilon = 0.05; // ~2.8deg // if closer than this then skip the action
 
       if (System.Math.Abs(angleDiff) > kAngleEpsilon) {
-        robot.SetHeadAngle(desiredHeadAngle, callback, queueActionPosition, useExactAngle: true, speed_radPerSec: speed_radPerSec, accel_radPerSec2: accel_radPerSec2);
-        return true;
+        uint idTag = robot.SetHeadAngle(desiredHeadAngle, callback, queueActionPosition, useExactAngle: true, speed_radPerSec: speed_radPerSec, accel_radPerSec2: accel_radPerSec2);
+        return idTag;
       }
       else {
-        return false;
+        return (uint)ActionConstants.INVALID_TAG;
       }
     }
 
     // SetLiftHeightLazy only calls SetLiftHeight if difference is far enough
-    private bool SetLiftHeightLazy(float desiredHeightFactor, RobotCallback callback,
+    private uint SetLiftHeightLazy(float desiredHeightFactor, RobotCallback callback,
                      QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                      float speed_radPerSec = kLiftSpeed_rps, float accel_radPerSec2 = -1.0f) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -509,11 +547,11 @@ namespace CodeLab {
       var kHeightFactorEpsilon = 0.05; // 5% of range // if closer than this then skip the action
 
       if (System.Math.Abs(heightFactorDiff) > kHeightFactorEpsilon) {
-        robot.SetLiftHeight(desiredHeightFactor, callback, queueActionPosition, speed_radPerSec: speed_radPerSec, accel_radPerSec2: accel_radPerSec2);
-        return true;
+        uint idTag = robot.SetLiftHeight(desiredHeightFactor, callback, queueActionPosition, speed_radPerSec: speed_radPerSec, accel_radPerSec2: accel_radPerSec2);
+        return idTag;
       }
       else {
-        return false;
+        return (uint)ActionConstants.INVALID_TAG;
       }
     }
 
@@ -612,13 +650,13 @@ namespace CodeLab {
         }
       }
 
-      if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos)) {
+      if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos) != (uint)ActionConstants.INVALID_TAG) {
         ++_PendingResetToHomeActions;
         // Ensure subsequent reset actions run in parallel with this
         queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
       }
 
-      if (SetLiftHeightLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos)) {
+      if (SetLiftHeightLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos) != (uint)ActionConstants.INVALID_TAG) {
         ++_PendingResetToHomeActions;
         // Ensure subsequent reset actions run in parallel with this
         queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
@@ -1023,19 +1061,27 @@ namespace CodeLab {
       }
     }
 
-    private void TurnInPlace(float turnAngle, RobotCallback callback) {
+    private uint TurnInPlace(float turnAngle, RobotCallback callback) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       //DAS.Info("CodeLab.TurnInPlace.Start", "Turn " + (finalTurnAngle * Mathf.Rad2Deg) + "d from " + (robot.PoseAngle * Mathf.Rad2Deg) + "d");
-      robot.TurnInPlace(turnAngle, 0.0f, 0.0f, kToleranceAngle, callback);
+      return robot.TurnInPlace(turnAngle, 0.0f, 0.0f, kToleranceAngle, callback);
     }
 
-    private void TurnInPlaceVertical(float turnAngle_deg, float speed_deg_per_sec, RobotCallback callback) {
+    private uint TurnInPlaceVertical(float turnAngle_deg, float speed_deg_per_sec, RobotCallback callback) {
       float finalTurnAngle = turnAngle_deg * Mathf.Deg2Rad;
       float speed_rad_per_sec = speed_deg_per_sec * Mathf.Deg2Rad;
       float accel_rad_per_sec2 = 0.0f;
       float toleranceAngle = ((Math.Abs(turnAngle_deg) > 25.0f) ? 10.0f : 5.0f) * Mathf.Deg2Rad;
       var robot = RobotEngineManager.Instance.CurrentRobot;
-      robot.TurnInPlace(finalTurnAngle, speed_rad_per_sec, accel_rad_per_sec2, toleranceAngle, callback, QueueActionPosition.IN_PARALLEL);
+      return robot.TurnInPlace(finalTurnAngle, speed_rad_per_sec, accel_rad_per_sec2, toleranceAngle, callback, QueueActionPosition.IN_PARALLEL);
+    }
+
+    private byte GetDrawColor() {
+      return _SessionState.GetProgramState().GetDrawColor();
+    }
+
+    private float GetDrawTextScale() {
+      return _SessionState.GetProgramState().GetDrawTextScale();
     }
 
     private bool HandleDrawOnFaceRequest(ScratchRequest scratchRequest) {
@@ -1051,8 +1097,7 @@ namespace CodeLab {
           float y1 = scratchRequest.argFloat2;
           float x2 = scratchRequest.argFloat3;
           float y2 = scratchRequest.argFloat4;
-          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
-          _CozmoFaceDisplay.DrawLine(x1, y1, x2, y2, drawColor);
+          _CozmoFaceDisplay.DrawLine(x1, y1, x2, y2, GetDrawColor());
           return true;
         }
       case "cozVertCozmoFaceFillRect": {
@@ -1060,8 +1105,7 @@ namespace CodeLab {
           float y1 = scratchRequest.argFloat2;
           float x2 = scratchRequest.argFloat3;
           float y2 = scratchRequest.argFloat4;
-          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
-          _CozmoFaceDisplay.FillRect(x1, y1, x2, y2, drawColor);
+          _CozmoFaceDisplay.FillRect(x1, y1, x2, y2, GetDrawColor());
           return true;
         }
       case "cozVertCozmoFaceDrawRect": {
@@ -1069,33 +1113,38 @@ namespace CodeLab {
           float y1 = scratchRequest.argFloat2;
           float x2 = scratchRequest.argFloat3;
           float y2 = scratchRequest.argFloat4;
-          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
-          _CozmoFaceDisplay.DrawRect(x1, y1, x2, y2, drawColor);
+          _CozmoFaceDisplay.DrawRect(x1, y1, x2, y2, GetDrawColor());
           return true;
         }
       case "cozVertCozmoFaceFillCircle": {
           float x1 = scratchRequest.argFloat;
           float y1 = scratchRequest.argFloat2;
           float radius = scratchRequest.argFloat3;
-          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
-          _CozmoFaceDisplay.FillCircle(x1, y1, radius, drawColor);
+          _CozmoFaceDisplay.FillCircle(x1, y1, radius, GetDrawColor());
           return true;
         }
       case "cozVertCozmoFaceDrawCircle": {
           float x1 = scratchRequest.argFloat;
           float y1 = scratchRequest.argFloat2;
           float radius = scratchRequest.argFloat3;
-          byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
-          _CozmoFaceDisplay.DrawCircle(x1, y1, radius, drawColor);
+          _CozmoFaceDisplay.DrawCircle(x1, y1, radius, GetDrawColor());
           return true;
         }
       case "cozVertCozmoFaceDrawText": {
           float x1 = scratchRequest.argFloat;
           float y1 = scratchRequest.argFloat2;
-          float scale = scratchRequest.argFloat3;
           string text = scratchRequest.argString;
+          _CozmoFaceDisplay.DrawText(x1, y1, GetDrawTextScale(), text, GetDrawColor());
+          return true;
+        }
+      case "cozVertCozmoFaceSetDrawColor": {
           byte drawColor = scratchRequest.argBool ? (byte)1 : (byte)0;
-          _CozmoFaceDisplay.DrawText(x1, y1, scale, text, drawColor);
+          _SessionState.GetProgramState().SetDrawColor(drawColor);
+          return true;
+        }
+      case "cozVertCozmoFaceSetTextScale": {
+          float drawScale = scratchRequest.argFloat;
+          _SessionState.GetProgramState().SetDrawTextScale(drawScale);
           return true;
         }
       default:
@@ -1131,8 +1180,11 @@ namespace CodeLab {
         float newAngle = robot.PoseAngle + offsetAngle;
         bool level = false;
         bool useManualSpeed = false;
-        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
-        robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+        // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
+        robot.DriveWheels(0.0f, 0.0f);
+        uint idTag = robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertPathTo") {
         float newX = scratchRequest.argFloat;
@@ -1141,17 +1193,26 @@ namespace CodeLab {
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(newX.ToString() + " , " + newY.ToString() + " , " + newAngle.ToString()));
         bool level = false;
         bool useManualSpeed = false;
-        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
-        robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+        // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
+        robot.DriveWheels(0.0f, 0.0f);
+        uint idTag = robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertHeadAngle") {
         float angle = scratchRequest.argFloat * Mathf.Deg2Rad;
         float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
-        robot.DriveHead(0.0f); // Cancel any direct head motor usage to allow action to use it
-        if (!SetHeadAngleLazy(angle, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
+        // Cancel any current head actions, and any head motor usage, so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Head);
+        robot.DriveHead(0.0f);
+        uint idTag = SetHeadAngleLazy(angle, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel);
+        if (idTag == (uint)ActionConstants.INVALID_TAG) {
           inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
+        else {
+          inProgressScratchBlock.SetActionData(ActionType.Head, idTag);
         }
       }
       else if (scratchRequest.command == "cozVertLiftHeight") {
@@ -1159,16 +1220,22 @@ namespace CodeLab {
         float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString() + " , " + speed.ToString()));
-
-        robot.MoveLift(0.0f); // Cancel any direct lift motor usage to allow action to use it
-        if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
+        // Cancel any current lift actions, and any lift motor usage, so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Lift);
+        robot.MoveLift(0.0f);
+        uint idTag = SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel);
+        if (idTag == (uint)ActionConstants.INVALID_TAG) {
           inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
+        else {
+          inProgressScratchBlock.SetActionData(ActionType.Lift, idTag);
         }
       }
       else if (scratchRequest.command == "cozVertMoveLift") {
         float speed = scratchRequest.argFloat * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(speed.ToString()));
-
+        // Cancel any current lift actions, so that the motors can be driven directly
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Lift);
         robot.MoveLift(speed);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
@@ -1176,8 +1243,11 @@ namespace CodeLab {
         float angle = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
-        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
-        TurnInPlaceVertical(angle, speed, inProgressScratchBlock.CompletedTurn);
+        // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
+        robot.DriveWheels(0.0f, 0.0f);
+        uint idTag = TurnInPlaceVertical(angle, speed, inProgressScratchBlock.CompletedTurn);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertSoundEffects") {
         string soundToPlay = scratchRequest.argString;
@@ -1288,13 +1358,18 @@ namespace CodeLab {
         float dist_mm = scratchRequest.argFloat;
         float speed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
-        robot.DriveWheels(0.0f, 0.0f); // Cancel any direct wheel motor usage to allow action to use them
-        robot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+        // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
+        robot.DriveWheels(0.0f, 0.0f);
+        uint idTag = robot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertDriveWheels") {
         float leftSpeed = scratchRequest.argFloat;
         float rightSpeed = scratchRequest.argFloat2;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(leftSpeed.ToString() + " , " + rightSpeed.ToString()));
+        // Cancel any current driving actions, so the motors can drive directly
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
         robot.DriveWheels(leftSpeed, rightSpeed);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
@@ -1303,15 +1378,19 @@ namespace CodeLab {
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(motorToStop));
         switch (motorToStop) {
         case "wheels":
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
           robot.DriveWheels(0.0f, 0.0f);
           break;
         case "head":
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.Head);
           robot.DriveHead(0.0f);
           break;
         case "lift":
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.Lift);
           robot.MoveLift(0.0f);
           break;
         case "all":
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.All);
           robot.StopAllMotors();
           break;
         }
@@ -1321,53 +1400,106 @@ namespace CodeLab {
         // argFloat represents the number selected from the dropdown under the "drive forward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        robot.DriveStraightAction(kNormalDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        uint idTag = robot.DriveStraightAction(kNormalDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozmoDriveForwardFast") {
         // argFloat represents the number selected from the dropdown under the "drive forward fast" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        robot.DriveStraightAction(kFastDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        uint idTag = robot.DriveStraightAction(kFastDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozmoDriveBackward") {
         // argFloat represents the number selected from the dropdown under the "drive backward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        robot.DriveStraightAction(kNormalDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        uint idTag = robot.DriveStraightAction(kNormalDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozmoDriveBackwardFast") {
         // argFloat represents the number selected from the dropdown under the "drive backward fast" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
-        robot.DriveStraightAction(kFastDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        uint idTag = robot.DriveStraightAction(kFastDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
+      }
+      else if (scratchRequest.command == "cozVertEnableAnimationTrack") {
+        bool enable = scratchRequest.argBool;
+        try {
+          AnimTrack animTrack = (AnimTrack)Enum.Parse(typeof(AnimTrack), scratchRequest.argString, ignoreCase: true);
+          _SessionState.SetIsAnimTrackEnabled(animTrack, enable);
+        }
+        catch (ArgumentException) {
+          DAS.Error("CodeLab.EnableAnimTrack.BadAnimTrack", "Unknown track name '" + scratchRequest.argString + "'");
+        }
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if (scratchRequest.command == "cozVertEnableWaitForActions") {
+        bool enable = scratchRequest.argBool;
+        _SessionState.SetShouldWaitForActions(enable);
+        inProgressScratchBlock.AdvanceToNextBlock(true);
+      }
+      else if ((scratchRequest.command == "cozVertWaitForActions") || (scratchRequest.command == "cozVertCancelActions")) {
+        ActionType actionType = ActionType.Count;
+        try {
+          actionType = (ActionType)Enum.Parse(typeof(ActionType), scratchRequest.argString, ignoreCase: true);
+        }
+        catch (ArgumentException) {
+          DAS.Error("CodeLab.WaitForActions.BadActionType", "Unknown Action Type '" + scratchRequest.argString + "'");
+        }
+        if (actionType != ActionType.Count) {
+          if (scratchRequest.command == "cozVertWaitForActions") {
+            inProgressScratchBlock.SetWaitOnAction(actionType);
+          }
+          else {
+            InProgressScratchBlockPool.CancelActionsOfType(actionType);
+            inProgressScratchBlock.AdvanceToNextBlock(true);
+          }
+        }
+        else {
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
       }
       else if (scratchRequest.command == "cozmoPlayAnimation") {
+        // NOTE: This block is called from Horizontal and Vertical!
+        bool isVertical = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
         Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
         bool wasMystery = (scratchRequest.argUInt != 0);
-        bool shouldIgnoreBodyTrack = false;
-        bool shouldIgnoreHead = false;
-        bool shouldIgnoreLift = false;
-        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-          shouldIgnoreBodyTrack = scratchRequest.argBool;
-          shouldIgnoreHead = scratchRequest.argBool2;
-          shouldIgnoreLift = scratchRequest.argBool3;
+        bool shouldIgnoreBodyTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Wheels); ;
+        bool shouldIgnoreHead = !_SessionState.IsAnimTrackEnabled(AnimTrack.Head);
+        bool shouldIgnoreLift = !_SessionState.IsAnimTrackEnabled(AnimTrack.Lift);
+        QueueActionPosition queueActionPosition = QueueActionPosition.NOW;
+        RobotCallback onCompleteCallback = inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock;
+        if (isVertical) {
+          queueActionPosition = QueueActionPosition.IN_PARALLEL;
+          onCompleteCallback = inProgressScratchBlock.VerticalOnAnimationComplete;
+          // Cancel any current anim (or say which is an animation) actions so that this new action can run
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.Anim);
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.Say);
         }
         _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
-        robot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
+        uint idTag = robot.SendAnimationTrigger(animationTrigger, onCompleteCallback, queueActionPosition,
+                                   ignoreBodyTrack: shouldIgnoreBodyTrack, ignoreHeadTrack: shouldIgnoreHead, ignoreLiftTrack: shouldIgnoreLift);
+        inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
         _RequiresResetToNeutralFace = true;
       }
       else if ((scratchRequest.command == "cozVertPlayNamedAnim") || (scratchRequest.command == "cozVertPlayNamedTriggerAnim")) {
         // These are dev/prototyping only blocks while we figure out the list of animations to expose
-        bool ignoreBodyTrack = scratchRequest.argBool;
-        bool ignoreHeadTrack = scratchRequest.argBool2;
-        bool ignoreLiftTrack = scratchRequest.argBool3;
+        bool ignoreBodyTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Wheels);
+        bool ignoreHeadTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Head);
+        bool ignoreLiftTrack = !_SessionState.IsAnimTrackEnabled(AnimTrack.Lift);
         bool startedAnim = false;
+        // Cancel any current anim (or say which is an animation) actions so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Anim);
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Say);
         if (scratchRequest.command == "cozVertPlayNamedTriggerAnim") {
           try {
             AnimationTrigger animationTrigger = (AnimationTrigger)Enum.Parse(typeof(AnimationTrigger), scratchRequest.argString);
 
-            robot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, QueueActionPosition.IN_PARALLEL,
-                                       ignoreBodyTrack: ignoreBodyTrack, ignoreHeadTrack: ignoreHeadTrack, ignoreLiftTrack: ignoreLiftTrack);
+            uint idTag = robot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.VerticalOnAnimationComplete, QueueActionPosition.IN_PARALLEL,
+                                                   ignoreBodyTrack: ignoreBodyTrack, ignoreHeadTrack: ignoreHeadTrack, ignoreLiftTrack: ignoreLiftTrack);
+            inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
             startedAnim = true;
           }
           catch (ArgumentException) {
@@ -1378,8 +1510,9 @@ namespace CodeLab {
           // Unity doesn't currently maintain a list of possible animations, so we just blindly request it
           // if animation doesn't exist, then nothing will play, and block should complete next frame.
           string animationName = scratchRequest.argString;
-          robot.SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(1, animationName, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack),
-                                      inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+          uint idTag = robot.SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(1, animationName, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack),
+                                                inProgressScratchBlock.VerticalOnAnimationComplete, QueueActionPosition.IN_PARALLEL);
+          inProgressScratchBlock.SetActionData(ActionType.Anim, idTag);
           startedAnim = true;
         }
 
@@ -1394,14 +1527,26 @@ namespace CodeLab {
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(kTurnAngle.ToString()));
-        TurnInPlace(kTurnAngle, inProgressScratchBlock.CompletedTurn);
+        uint idTag = TurnInPlace(kTurnAngle, inProgressScratchBlock.CompletedTurn);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozmoTurnRight") {
         // Turn 90 degrees to the right
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData((-kTurnAngle).ToString()));
-        TurnInPlace(-kTurnAngle, inProgressScratchBlock.CompletedTurn);
+        uint idTag = TurnInPlace(-kTurnAngle, inProgressScratchBlock.CompletedTurn);
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozmoSays") {
+        // NOTE: This block is called from Horizontal and Vertical!
+        bool isVertical = (_SessionState.GetGrammarMode() == GrammarMode.Vertical);
+        QueueActionPosition queueActionPosition = QueueActionPosition.NOW;
+        if (isVertical) {
+          queueActionPosition = QueueActionPosition.IN_PARALLEL;
+          // Cancel any current anim (or say which is an animation) actions so that this new action can run
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.Anim);
+          InProgressScratchBlockPool.CancelActionsOfType(ActionType.Say);
+        }
+
         string cozmoSaysText = scratchRequest.argString;
         string cozmoSaysTextCleaned = "";
 
@@ -1415,12 +1560,14 @@ namespace CodeLab {
 
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(cozmoSaysTextCleaned);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(hasBadWords.ToString()));  // deliberately don't send string as it's PII
+        uint idTag;
         if (hasBadWords) {
-          robot.SendAnimationTrigger(AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock);
+          idTag = robot.SendAnimationTrigger(AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock, queueActionPosition);
         }
         else {
-          robot.SayTextWithEvent(cozmoSaysTextCleaned, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock);
+          idTag = robot.SayTextWithEvent(cozmoSaysTextCleaned, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock, queueActionPosition: queueActionPosition);
         }
+        inProgressScratchBlock.SetActionData(ActionType.Say, idTag);
       }
       else if (scratchRequest.command == "cozmoHeadAngle") {
         float desiredHeadAngle = (CozmoUtil.kIdealBlockViewHeadValue + CozmoUtil.kIdealFaceViewHeadValue) * 0.5f; // medium setting
@@ -1435,25 +1582,35 @@ namespace CodeLab {
 
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData((desiredHeadAngle * Mathf.Rad2Deg).ToString()));
 
-        if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.AdvanceToNextBlock)) {
-          // Trigger a short wait action to ensure that our promise is met after this method exits
-          robot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
+        uint idTag = SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.AdvanceToNextBlock);
+        if (idTag == (uint)ActionConstants.INVALID_TAG) {
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
+        else {
+          inProgressScratchBlock.SetActionData(ActionType.Head, idTag);
         }
       }
       else if (scratchRequest.command == "cozmoDockWithCube") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
         float desiredHeadAngle = CozmoUtil.HeadAngleFactorToRadians(CozmoUtil.kIdealBlockViewHeadValue, false);
-        if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.DockWithCube)) {
+        uint idTag = SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.DockWithCube);
+        if (idTag == (uint)ActionConstants.INVALID_TAG) {
           // Trigger a very short wait action first instead to ensure callbacks happen after this method exits
-          robot.WaitAction(0.01f, callback: inProgressScratchBlock.DockWithCube);
+          idTag = robot.WaitAction(0.01f, callback: inProgressScratchBlock.DockWithCube);
         }
+
+        inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertDockWithCubeById") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
         uint cubeIndex = scratchRequest.argUInt;
         LightCube cubeToDockWith = robot.GetLightCubeWithObjectType(GetLightCubeIdFromIndex(cubeIndex));
+        // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
+        InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
+        robot.DriveWheels(0.0f, 0.0f);
         if ((cubeToDockWith != null)) {
-          robot.AlignWithObject(cubeToDockWith, 0.0f, callback: inProgressScratchBlock.AdvanceToNextBlock, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, queueActionPosition: QueueActionPosition.IN_PARALLEL, numRetries: 2);
+          uint idTag = robot.AlignWithObject(cubeToDockWith, 0.0f, callback: inProgressScratchBlock.AdvanceToNextBlock, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, queueActionPosition: QueueActionPosition.IN_PARALLEL, numRetries: 2);
+          inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
         }
         else {
           DAS.Warn("DockWithCube.NoCube", "CubeId: " + cubeIndex);
@@ -1470,9 +1627,12 @@ namespace CodeLab {
         }
 
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString()));
-        if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock)) {
-          // Trigger a short wait action to ensure that our promise is met after this method exits
-          robot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
+        uint idTag = SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock);
+        if (idTag == (uint)ActionConstants.INVALID_TAG) {
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
+        else {
+          inProgressScratchBlock.SetActionData(ActionType.Lift, idTag);
         }
       }
       else if (scratchRequest.command == "cozmoSetBackpackColor") {
@@ -1506,6 +1666,7 @@ namespace CodeLab {
         else {
           DAS.Error("CodeLab.NullCube", "No connected cube with index " + cubeIndex.ToString());
         }
+        inProgressScratchBlock.ReleaseFromPool();
       }
       else if (scratchRequest.command == "cozVertCubeAnimation") {
         uint color = scratchRequest.argUInt;
@@ -1527,6 +1688,7 @@ namespace CodeLab {
         else {
           DAS.Error("CodeLab.NullCube", "No connected cube with index " + cubeIndex.ToString());
         }
+        inProgressScratchBlock.ReleaseFromPool();
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeFace") {
         _SessionState.ScratchBlockEvent(scratchRequest.command);
@@ -1553,6 +1715,11 @@ namespace CodeLab {
       else {
         inProgressScratchBlock.ReleaseFromPool();
         DAS.Error("HandleBlockScratchRequest.UnknownCommand", "Command = '" + scratchRequest.command + "'");
+      }
+
+      if (inProgressScratchBlock.HasActiveRequestPromise() && inProgressScratchBlock.MatchesActionType(ActionType.All) && !_SessionState.ShouldWaitForActions()) {
+        // Tell Scratch to continue immediately (leave block active (don't release it) so we can still later query running actions)
+        inProgressScratchBlock.ResolveRequestPromise();
       }
 
       return;
@@ -1811,15 +1978,23 @@ namespace CodeLab {
           codeLabSampleProject = _CodeLabSampleProjects.Find(findProject);
 
           String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
-
-          // TODO Update to use JSON only when sample projects are converted to JSON. Be sure to call EscapeJSON as well.
           // Escape quotes in XML and project name
           // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
           String sampleProjectNameEscaped = EscapeProjectName(sampleProjectName);
-          String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
 
-          // Open requested project in webview
-          this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
+          String projectJSON = codeLabSampleProject.ProjectJSON;
+          if (projectJSON != null) {
+            // Sample project is in JSON. This should be true for all new sample projects.
+            String projectJSONEscaped = EscapeJSON(projectJSON);
+            // Open requested project in webview
+            this.EvaluateJS("window.openCozmoProjectJSON('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "','" + projectJSONEscaped + "','true');");
+          }
+          else {
+            // Sample project is still in XML. This will be true for some until we convert them all over.
+            String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
+            // Open requested project in webview
+            this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
+          }
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
@@ -1911,16 +2086,24 @@ namespace CodeLab {
       return false;
     }
 
+    private const int kAnyCubeId = 4;
+
     public void RobotObservedObjectVerticalHatBlock(RobotObservedObject message) {
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', null);");
+      int lightCubeIndex = ((int)GetLightCubeIndexFromId(message.objectID));
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
     }
 
     public void CubeTappedVerticalHatBlock(int id, int tappedTimes, float timeStamp) {
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + ((int)GetLightCubeIndexFromId(id)) + "\"});");
+      int lightCubeIndex = ((int)GetLightCubeIndexFromId(id));
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
     }
 
     public void CubeMovedVerticalHatBlock(int id, float XAccel, float YAccel, float ZAccel) {
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + ((int)GetLightCubeIndexFromId(id)) + "\"});");
+      int lightCubeIndex = ((int)GetLightCubeIndexFromId(id));
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_moved', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
     }
 
     void UnhideWebView() {
