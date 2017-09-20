@@ -1,0 +1,223 @@
+/**
+* File: placeRelObjectHelper.h
+*
+* Author: Kevin M. Karol
+* Created: 2/21/17
+*
+* Description: Handles placing a carried block relative to another object
+*
+* Copyright: Anki, Inc. 2017
+*
+**/
+
+
+#include "engine/aiComponent/behaviorSystem/behaviorHelpers/placeRelObjectHelper.h"
+
+#include "engine/actions/dockActions.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/AIWhiteboard.h"
+#include "engine/aiComponent/behaviorSystem/behaviorExternalInterface.h"
+#include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/needsSystem/needsManager.h"
+#include "engine/robot.h"
+
+
+namespace Anki {
+namespace Cozmo {
+
+namespace{
+static const int kMaxNumRetrys = 3;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PlaceRelObjectHelper::PlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface,
+                                           IBehavior& behavior,
+                                           BehaviorHelperFactory& helperFactory,
+                                           const ObjectID& targetID,
+                                           const bool placingOnGround,
+                                           const PlaceRelObjectParameters& parameters)
+: IHelper("PlaceRelObject", behaviorExternalInterface, behavior, helperFactory)
+, _targetID(targetID)
+, _placingOnGround(placingOnGround)
+, _params(parameters)
+, _tmpRetryCounter(0)
+{
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+PlaceRelObjectHelper::~PlaceRelObjectHelper()
+{
+  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool PlaceRelObjectHelper::ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStatus PlaceRelObjectHelper::Init(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  _tmpRetryCounter = 0;
+  
+  const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(behaviorExternalInterface,
+                                                                             _targetID,
+                                                                             actionType,
+                                                                             _params.placementOffsetX_mm,
+                                                                             _params.placementOffsetY_mm);
+  if(isAtPreAction != ActionResult::SUCCESS){
+    DriveToParameters params;
+    params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
+    params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
+    params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
+    DelegateProperties delegateProperties;
+    delegateProperties.SetDelegateToSet(CreateDriveToHelper(behaviorExternalInterface, _targetID, params));
+    delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){StartPlaceRelObject(behaviorExternalInterface); return _status;});
+    DelegateAfterUpdate(delegateProperties);
+  }else{
+    StartPlaceRelObject(behaviorExternalInterface);
+  }
+  
+
+  return _status;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  return _status;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PlaceRelObjectHelper::StartPlaceRelObject(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  if(_tmpRetryCounter >= kMaxNumRetrys){
+    MarkFailedToStackOrPlace(behaviorExternalInterface);
+    _status = BehaviorStatus::Failure;
+    return;
+  }
+  _tmpRetryCounter++;
+
+  const PreActionPose::ActionType actionType = PreActionPose::PreActionPose::PLACE_RELATIVE;
+  const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(behaviorExternalInterface,
+                                                                             _targetID,
+                                                                             actionType,
+                                                                             _params.placementOffsetX_mm,
+                                                                             _params.placementOffsetY_mm);
+  if(isAtPreAction != ActionResult::SUCCESS){
+    DriveToParameters params;
+    params.actionType = PreActionPose::ActionType::PLACE_RELATIVE;
+    params.placeRelOffsetX_mm = _params.placementOffsetX_mm;
+    params.placeRelOffsetY_mm = _params.placementOffsetY_mm;
+    DelegateProperties properties;
+    properties.SetDelegateToSet(CreateDriveToHelper(behaviorExternalInterface,
+                                                    _targetID,
+                                                    params));
+    properties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface){
+                                      StartPlaceRelObject(behaviorExternalInterface); return _status;
+                                    });
+    DelegateAfterUpdate(properties);
+  }else{
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    Robot& robot = behaviorExternalInterface.GetRobot();
+    PlaceRelObjectAction* placeObj =
+            new PlaceRelObjectAction(robot, _targetID, _placingOnGround,
+                                     _params.placementOffsetX_mm,
+                                     _params.placementOffsetY_mm,
+                                     false, _params.relativeCurrentMarker);
+    
+    StartActingWithResponseAnim(placeObj, &PlaceRelObjectHelper::RespondToPlaceRelResult);
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface)
+{
+  switch(result){
+    case ActionResult::SUCCESS:
+    {
+      _status = BehaviorStatus::Complete;
+      break;
+    }
+    case ActionResult::NO_PREACTION_POSES:
+    {
+      behaviorExternalInterface.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_targetID);
+      break;
+    }
+    case ActionResult::VISUAL_OBSERVATION_FAILED:
+    case ActionResult::LAST_PICK_AND_PLACE_FAILED:
+    case ActionResult::DID_NOT_REACH_PREACTION_POSE:
+    {
+      StartPlaceRelObject(behaviorExternalInterface);
+      break;
+    }
+    case ActionResult::CANCELLED_WHILE_RUNNING:
+      // leave the helper running, since it's about to be canceled
+      break;
+
+    case ActionResult::ABORT:
+    case ActionResult::BAD_OBJECT:
+    {
+      _status = BehaviorStatus::Failure;
+      break;
+    }
+    default:
+    {
+      //DEV_ASSERT(false, "HANDLE CASE!");
+      //_status = BehaviorStatus::Failure;
+      StartPlaceRelObject(behaviorExternalInterface);
+      break;
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PlaceRelObjectHelper::MarkFailedToStackOrPlace(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  const Robot& robot = behaviorExternalInterface.GetRobot();
+  
+  const ObservableObject* placeRelObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* carryingObj = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(
+                                                      robot.GetCarryingComponent().GetCarryingObject());
+  
+  if((placeRelObj != nullptr) &&
+     (carryingObj != nullptr)){
+    auto& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();
+    if(!_placingOnGround){
+      // CODE REVIEW - to clarify, should this failure indicate the block that I
+      // failed to stack on, or the one in my hand?
+      whiteboard.SetFailedToUse(*placeRelObj,
+                                AIWhiteboard::ObjectActionFailure::StackOnObject);
+      
+    }else{
+      const f32 xOffset = _params.placementOffsetX_mm;
+      const f32 yOffset = _params.placementOffsetY_mm;
+      
+      const Pose3d& placingAtPose = Pose3d(Z_AXIS_3D(),
+                                           {xOffset, yOffset, 0},
+                                           placeRelObj->GetPose());
+      whiteboard.SetFailedToUse(*carryingObj,
+                                AIWhiteboard::ObjectActionFailure::PlaceObjectAt,
+                                placingAtPose);
+    }
+  }
+}
+
+
+
+} // namespace Cozmo
+} // namespace Anki
+

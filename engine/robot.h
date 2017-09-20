@@ -226,8 +226,8 @@ public:
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
-  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+  const BehaviorManager& GetBehaviorManager() const;
+  BehaviorManager&       GetBehaviorManager();
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);
@@ -745,9 +745,6 @@ protected:
   std::unique_ptr<PetWorld>              _petWorld;
  
   std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
-
-  std::unique_ptr<BehaviorManager>       _behaviorMgr;
-  std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;

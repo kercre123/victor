@@ -13,8 +13,8 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/needsSystem/needsManager.h"

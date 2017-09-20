@@ -16,18 +16,22 @@
 
 #include "clad/types/unlockTypes.h"
 
+namespace Json {
+class Value;
+}
+
 namespace Anki {
 namespace Cozmo {
   
 // forward declarations
 class IBehavior;
-class Robot;
+class BehaviorExternalInterface;
   
 class DoATrickSelector{
 public:
-  DoATrickSelector(Robot& robot);
+  DoATrickSelector(const Json::Value& trickWeightsConfig);
 
-  void RequestATrick(Robot& robot);
+  void RequestATrick(BehaviorExternalInterface& behaviorExternalInterface);
 private:
   std::vector<std::pair<int, UnlockId>> _weightToUnlockMap;
   // track the last trick that was performed

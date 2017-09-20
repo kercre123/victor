@@ -14,8 +14,8 @@
 
 #include "engine/components/publicStateBroadcaster.h"
 
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"

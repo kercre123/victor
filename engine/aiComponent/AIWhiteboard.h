@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 #define __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 
-#include "engine/behaviorSystem/AIBeacon.h"
+#include "engine/aiComponent/behaviorSystem/AIBeacon.h"
 
 #include "engine/externalInterface/externalInterface_fwd.h"
 

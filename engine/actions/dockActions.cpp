@@ -19,7 +19,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationStack.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -345,7 +345,7 @@ namespace Anki {
                                         const PreActionPoseInput& input,
                                         PreActionPoseOutput& output)
     {
-      ActionableObject* dockObject                = input.object;
+      const ActionableObject* dockObject          = input.object;
       PreActionPose::ActionType preActionPoseType = input.preActionPoseType;
       bool doNearPredockPoseCheck                 = input.doNearPreDockPoseCheck;
       Radians preActionPoseAngleTolerance         = input.preActionPoseAngleTolerance;
@@ -2126,7 +2126,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    ActionResult PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(ActionableObject* object,
+    ActionResult PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(const ActionableObject* object,
                                                                         const f32 placementOffsetX_mm,
                                                                         const f32 placementOffsetY_mm,
                                                                         Robot& robot,

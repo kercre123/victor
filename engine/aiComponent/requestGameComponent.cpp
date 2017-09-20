@@ -14,10 +14,10 @@
 #include "engine/aiComponent/requestGameComponent.h"
 
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/behaviorExternalInterface.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robot.h"
 
@@ -37,14 +37,14 @@ const int kMaxRetrys = 1000;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RequestGameComponent::RequestGameComponent(Robot& robot)
+RequestGameComponent::RequestGameComponent(BehaviorExternalInterface& behaviorExternalInterface,
+                                           const Json::Value& requestGameWeights)
 : _lastGameRequested(UnlockId::Count)
 , _canRequestGame(false)
 , _shouldAutomaticallyResetDefaults(false)
 {
   // load the lets play mapping in from JSON
-  const Json::Value& letsPlayConfig = robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig();
-  for(const auto& entry: letsPlayConfig){
+  for(const auto& entry: requestGameWeights){
     UnlockId unlockID = UnlockIdFromString(
               JsonTools::ParseString(entry,
                                      kUnlockIDConfigKey,
@@ -59,9 +59,11 @@ RequestGameComponent::RequestGameComponent(Robot& robot)
   }
   _defaultGameRequests = _gameRequests;
   
+  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   // register to receive notification from the game about when game requests are allowed
-  if ( robot.HasExternalInterface() ) {
-    auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _eventHandles);
+  if (robotExternalInterface != nullptr) {
+    IExternalInterface* EI = robotExternalInterface.get();
+    auto helper = MakeAnkiEventUtil(*EI, *this, _eventHandles);
     helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::CanCozmoRequestGame>();
     helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::SetOverrideGameRequestWeights>();
   }
@@ -69,7 +71,7 @@ RequestGameComponent::RequestGameComponent(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-UnlockId RequestGameComponent::IdentifyNextGameTypeToRequest(const Robot& robot)
+UnlockId RequestGameComponent::IdentifyNextGameTypeToRequest(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Ensure game has said games can be requested
   if(!_canRequestGame){
@@ -89,8 +91,10 @@ UnlockId RequestGameComponent::IdentifyNextGameTypeToRequest(const Robot& robot)
   // Map weight to behavior for unlocked
   std::vector<std::pair<int, UnlockId>> unlockedBehaviors;
   int totalWeight = 0;
+  auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();
   for(const auto& entry: _gameRequests){
-    if(robot.GetProgressionUnlockComponent().IsUnlocked(entry.second._unlockID)){
+    if(progressionUnlockComp != nullptr &&
+       progressionUnlockComp->IsUnlocked(entry.second._unlockID)){
       totalWeight += entry.second._weight;
       unlockedBehaviors.emplace_back(std::make_pair(totalWeight,
                                                     entry.first));
@@ -110,7 +114,7 @@ UnlockId RequestGameComponent::IdentifyNextGameTypeToRequest(const Robot& robot)
     {
       // to achieve weighted randomness the random indicator maps to the first entry
       // in the vector that it's value is less than
-      randomIndicator = robot.GetRNG().RandInt(totalWeight);
+      randomIndicator = behaviorExternalInterface.GetRNG().RandInt(totalWeight);
       for(const auto& entry: unlockedBehaviors){
         if(randomIndicator <  entry.first){
           nextRequest = entry.second;

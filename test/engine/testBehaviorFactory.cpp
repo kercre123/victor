@@ -16,9 +16,10 @@
 
 #include "gtest/gtest.h"
 
-#include "engine/behaviorSystem/behaviorContainer.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorSystem/behaviorContainer.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/cozmoContext.h"
@@ -100,7 +101,7 @@ static const char* kTestBehaviorJson =
 static const BehaviorID expectedID = BehaviorID::Wait;
 
 // verifies that behavior matches expected data based on the Json above and factory contains it correctly
-void VerifyBehavior(const IBehaviorPtr inBehavior, BehaviorContainer& behaviorContainer, size_t expectedBehaviorCount)
+void VerifyBehavior(const IBehaviorPtr inBehavior, const BehaviorContainer& behaviorContainer, size_t expectedBehaviorCount)
 {
   EXPECT_EQ(inBehavior->GetID(), expectedID);
   
@@ -129,7 +130,7 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
 {
   CozmoContext context{};
   Robot testRobot(0, &context);
-  BehaviorContainer& behaviorContainer = testRobot.GetBehaviorManager().GetBehaviorContainer();
+  BehaviorContainer& behaviorContainer = testRobot.GetAIComponent().GetBehaviorContainer();
   
   const size_t kBaseBehaviorCount = behaviorContainer.GetBehaviorMap().size(); // some behaviors are added by default so likely >0
   
@@ -139,8 +140,15 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   ASSERT_TRUE(parsedOK);
   
   EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), nullptr); // this behavior shouldn't exist by default
+  
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
+                                                                                       testRobot.GetAIComponent(),
+                                                                                       behaviorContainer,
+                                                                                       testRobot.GetBlockWorld(),
+                                                                                       testRobot.GetFaceWorld());
 
-  IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson, testRobot);
+  IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
+  newBehavior->Init(*behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);
   
   VerifyBehavior(newBehavior, behaviorContainer, kBaseBehaviorCount + 1);

@@ -16,10 +16,11 @@
 
 #include "gtest/gtest.h"
 
-#include "engine/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
-#include "engine/behaviorSystem/behaviorContainer.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorSystem/behaviorContainer.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/robot.h"
 #include "engine/cozmoContext.h"
 
@@ -50,7 +51,7 @@ static const char* kTestBehavior3Json =
 bool LoadTestBehaviors(Robot& testRobot, ScoringBSRunnableChooser& behaviorChooser)
 {
   bool allAddedOk = true;
-  BehaviorContainer& behaviorContainer = testRobot.GetBehaviorManager().GetBehaviorContainer();
+  BehaviorContainer& behaviorContainer = testRobot.GetAIComponent().GetBehaviorContainer();
 
   Json::Reader reader;
   
@@ -65,8 +66,13 @@ bool LoadTestBehaviors(Robot& testRobot, ScoringBSRunnableChooser& behaviorChoos
     if (parsedOK)
     {
       // Factory will automatically delete the behaviors later when robot is destroyed
-      
-      IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson, testRobot);
+      BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
+                                                          testRobot.GetAIComponent(),
+                                                          behaviorContainer,
+                                                          testRobot.GetBlockWorld(),
+                                                          testRobot.GetFaceWorld());
+      IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
+      newBehavior->Init(*behaviorExternalInterface);
       EXPECT_NE(newBehavior, nullptr);
       if (newBehavior)
       {

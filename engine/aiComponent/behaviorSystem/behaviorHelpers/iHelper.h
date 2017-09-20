@@ -1,0 +1,272 @@
+/**
+ * File: iHelper.h
+ *
+ * Author: Kevin M. Karol
+ * Created: 2/1/17
+ *
+ * Description: Interface for BehaviorHelpers
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
+
+
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_IHelper_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_IHelper_H__
+
+#include "anki/common/basestation/objectIDs.h"
+#include "engine/aiComponent/behaviorSystem/behaviorHelpers/behaviorHelperParameters.h"
+#include "engine/aiComponent/behaviorSystem/behaviorHelpers/helperHandle.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorSystem/iBSRunnable.h"
+#include "clad/types/actionResults.h"
+#include "clad/types/animationTrigger.h"
+#include "clad/types/userFacingResults.h"
+#include <functional>
+
+namespace Anki {
+namespace Cozmo {
+
+// Forward Declarations
+class Robot;
+class IActionRunner;
+class BehaviorHelperFactory;
+
+class IHelper : public IBSRunnable{
+  // Enforce creation/interaction through HelperComponent
+  friend class BehaviorHelperComponent;
+  friend class BehaviorHelperFactory;
+
+public:
+  virtual ~IHelper(){};
+
+  const std::string& GetName() const { return _name; }
+  
+protected:
+  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
+  // as a uniform interface across Activities and Behaviors, but they will be
+  // wired up in a seperate PR
+  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
+  virtual void EnteredActivatableScopeInternal() override {};
+  virtual BehaviorStatus UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return BehaviorStatus::Complete;};
+  virtual bool WantsToBeActivatedInternal() override { return false;};
+  virtual Result OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return Result::RESULT_OK;};
+  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
+  virtual void LeftActivatableScopeInternal() override {};
+  
+  using UserFacingActionResultMapFunc = std::function<UserFacingActionResult(ActionResult)>;
+  
+  struct DelegateProperties{
+  public:
+    HelperHandle GetDelegateToSet() const { return _delegateToSet;}
+    BehaviorStatusCallbackWithExternalInterface GetOnSuccessFunction() const {return _onSuccessFunction;}
+    BehaviorStatusCallbackWithExternalInterface GetOnFailureFunction() const {return _onFailureFunction;}
+    
+    void SetDelegateToSet(HelperHandle delegate){ _delegateToSet = delegate;}
+    void SetOnSuccessFunction(BehaviorStatusCallbackWithExternalInterface onSuccess){_onSuccessFunction = onSuccess;}
+    void SetOnFailureFunction(BehaviorStatusCallbackWithExternalInterface onFailure){_onFailureFunction = onFailure;}
+
+    // utility functions to automatically pass or fail when the delegate does
+    void FailImmediatelyOnDelegateFailure();
+    void SucceedImmediatelyOnDelegateFailure();
+    
+    void ClearDelegateProperties();
+    
+  private:
+    HelperHandle _delegateToSet;
+    BehaviorStatusCallbackWithExternalInterface _onSuccessFunction = nullptr;
+    BehaviorStatusCallbackWithExternalInterface _onFailureFunction = nullptr;
+  };
+  
+  // Initialize the helper with the behavior to start actions on, and a reference to the factory to delegate
+  // out to new helpers
+  IHelper(const std::string& name, BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior, BehaviorHelperFactory& _helperFactory);
+
+  void SetName(const std::string& name) { _name = name; }
+  
+  // Initialize variables when placed on stack
+  void InitializeOnStack();
+  virtual void InitializeOnStackInternal() {};
+  
+  BehaviorStatus OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface);
+  BehaviorStatus OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface);
+  
+  bool IsActing();
+  
+  // Helper is being stopped externally
+  void Stop(bool isActive);
+
+  // override-able by helpers to handle cleanup when they are stopped
+  virtual void StopInternal(bool isActive) {};
+  
+  // Called each tick when the helper is not active to determine if
+  // the stack of delegates this helper has created should be canceled
+  // and this helper should become active
+  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
+  
+  // Called each tick when the helper is at the top of the helper stack
+  BehaviorStatus UpdateWhileActive(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle& delegateToSet);
+ 
+  // Called on the first time a helper is ticked while active
+  // UpdateWhileActive will be called immediately after on the same tick if no
+  // delegate is set
+  virtual BehaviorStatus Init(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  
+  // Allows sub classes to pass back a delegate, success and failure function for IHelper to manage. If a
+  // delegate is set in the delegate properties, then it will be pushed onto the stack, and the callbacks from
+  // the properties will be used
+  virtual BehaviorStatus UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  
+
+  
+  ///////
+  /// Convenience functions
+  //////
+  
+  ActionResult IsAtPreActionPoseWithVisualVerification(BehaviorExternalInterface& behaviorExternalInterface,
+                                                       const ObjectID& targetID,
+                                                       PreActionPose::ActionType actionType,
+                                                       const f32 offsetX_mm = 0,
+                                                       const f32 offsetY_mm = 0);
+  
+  void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
+  
+  // Use the set behavior's start acting to perform an action
+  template <typename T>
+  bool StartActing(IActionRunner* action, void(T::*callback)(ActionResult,BehaviorExternalInterface&));
+  
+  template <typename T>
+  bool StartActing(IActionRunner* action, void(T::*callback)(const ExternalInterface::RobotCompletedAction&,
+                                                             BehaviorExternalInterface&));
+  
+  // Pass in a function that maps action results to UserFacingActionResults so that the
+  // BehaviorEventAnimationResponseDirector knows how to respond to the failure with the
+  // appropriate animation
+  template<typename T>
+  bool StartActingWithResponseAnim(IActionRunner* action,
+                                   void(T::*callback)(ActionResult, BehaviorExternalInterface&),
+                                   UserFacingActionResultMapFunc mapFunc = nullptr);
+  
+  template<typename T>
+  bool StartActingWithResponseAnim(IActionRunner* action,
+                                   void(T::*callback)(const ExternalInterface::RobotCompletedAction&, BehaviorExternalInterface&),
+                                   UserFacingActionResultMapFunc mapFunc = nullptr);
+
+  bool StartActing(IActionRunner* action, BehaviorActionResultWithExternalInterfaceCallback callback);
+  bool StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
+
+  // Stop the behavior acting so that the delegate can issue a new action
+  bool StopActing(bool allowCallback);
+  
+  // Helpers to access the HelperFactory without needing access to the underlying behavior
+  HelperHandle CreatePickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& targetID,
+                                       const PickupBlockParamaters& parameters = {});
+  HelperHandle CreatePlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface);
+  HelperHandle CreateRollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, const ObjectID& targetID,
+                                     bool rollToUpright, const RollBlockParameters& parameters = {});
+  HelperHandle CreateDriveToHelper(BehaviorExternalInterface& behaviorExternalInterface,
+                                   const ObjectID& targetID,
+                                   const DriveToParameters& parameters = {});
+  HelperHandle CreatePlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface,
+                                          const ObjectID& targetID,
+                                          const bool placingOnGround = false,
+                                          const PlaceRelObjectParameters& parameters = {});
+  
+  HelperHandle CreateSearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
+                                          const SearchParameters& params = {});
+
+  
+  BehaviorStatus _status;
+  
+private:
+
+  void LogStopEvent(bool isActive);
+  
+  std::string _name;
+  bool _hasStarted;
+  BehaviorStatusCallbackWithExternalInterface _onSuccessFunction;
+  BehaviorStatusCallbackWithExternalInterface _onFailureFunction;
+  DelegateProperties _delegateAfterUpdate;
+  float _timeStarted_s = 0.0f;
+
+
+  IBehavior& _behaviorToCallActionsOn;
+  BehaviorHelperFactory& _helperFactory;
+  
+  // Functions for responding to action results with StartActingWithResponseAnim
+  UserFacingActionResultMapFunc _actionResultMapFunc = nullptr;
+  BehaviorActionResultWithExternalInterfaceCallback _callbackAfterResponseAnim = nullptr;
+  BehaviorRobotCompletedActionWithExternalInterfaceCallback _callbackAfterResponseAnimUsingRCA = nullptr;
+  
+  AnimationTrigger AnimationResponseToActionResult(BehaviorExternalInterface& behaviorExternalInterface, UserFacingActionResult result);
+  
+  template<typename T>
+  void RespondToActionWithAnim(const T& res,
+                               ActionResult actionResult,
+                               BehaviorExternalInterface& behaviorExternalInterface,
+                               std::function<void(const T&,BehaviorExternalInterface&)>& callback);
+  
+  void RespondToRCAWithAnim(const ExternalInterface::RobotCompletedAction& rca, BehaviorExternalInterface& behaviorExternalInterface);
+  void RespondToResultWithAnim(ActionResult result, BehaviorExternalInterface& behaviorExternalInterface);
+
+};
+
+  
+template<typename T>
+bool IHelper::StartActing(IActionRunner* action, void(T::*callback)(ActionResult,BehaviorExternalInterface&))
+{
+  return StartActing(action, 
+          std::bind(callback, static_cast<T*>(this), std::placeholders::_1,
+                                                     std::placeholders::_2));
+}
+
+template<typename T>
+bool IHelper::StartActing(IActionRunner* action,
+                          void(T::*callback)(const ExternalInterface::RobotCompletedAction&,BehaviorExternalInterface&))
+{
+  return StartActing(action,
+                     std::bind(callback,
+                               static_cast<T*>(this),
+                               std::placeholders::_1,
+                               std::placeholders::_2));
+}
+  
+template<typename T>
+bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
+                                          void(T::*callback)(ActionResult,BehaviorExternalInterface&),
+                                          UserFacingActionResultMapFunc mapFunc)
+{
+  _callbackAfterResponseAnim = std::bind(callback,
+                                         static_cast<T*>(this),
+                                         std::placeholders::_1,
+                                         std::placeholders::_2);
+  _actionResultMapFunc = mapFunc;
+  
+  DEV_ASSERT(_callbackAfterResponseAnim != nullptr,
+             "IHelper.StartActingWithResponseAnim.NullActionResultCallback");
+  
+  return StartActing(action, &IHelper::RespondToResultWithAnim);
+}
+
+template<typename T>
+bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
+                                          void(T::*callback)(const ExternalInterface::RobotCompletedAction&,BehaviorExternalInterface&),
+                                          UserFacingActionResultMapFunc mapFunc)
+{
+  _callbackAfterResponseAnimUsingRCA = std::bind(callback,
+                                                 static_cast<T*>(this),
+                                                 std::placeholders::_1,
+                                                 std::placeholders::_2);
+  _actionResultMapFunc = mapFunc;
+  
+  DEV_ASSERT(_callbackAfterResponseAnimUsingRCA != nullptr,
+             "IHelper.StartActingWithResponseAnim.NullRCACallback");
+  
+  return StartActing(action, &IHelper::RespondToRCAWithAnim);
+}
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_IHelper_H__

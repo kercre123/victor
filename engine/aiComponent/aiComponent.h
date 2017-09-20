@@ -19,14 +19,20 @@
 #include <assert.h>
 #include <string>
 
+#define USE_BSM 0
+
 namespace Anki {
 namespace Cozmo {
 
 // Forward declarations
 class AIInformationAnalyzer;
 class AIWhiteboard;
+class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
+class BehaviorExternalInterface;
 class BehaviorHelperComponent;
+class BehaviorManager;
+class BehaviorSystemManager;
 class DoATrickSelector;
 class FeedingSoundEffectManager;
 class FreeplayDataTracker;
@@ -65,6 +71,11 @@ public:
   inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
   inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
   
+  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
+  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
+  
+  // For test only
+  inline BehaviorContainer& GetBehaviorContainer() { return *_behaviorContainer; }
   
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
@@ -95,7 +106,8 @@ public:
   ////////////////////////////////////////////////////////////////////////////////
 
   Result Init();
-  Result Update();
+  Result Update(Robot& robot, std::string& currentActivityName,
+                              std::string& behaviorDebugStr);
 
   ////////////////////////////////////////////////////////////////////////////////
   // Message handling / dispatch
@@ -111,11 +123,8 @@ public:
   inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
 
 private:
-
   Robot& _robot;
   bool   _suddenObstacleDetected;
-  
-  void CheckForSuddenObstacle();
   
   // module to analyze information for the AI in processes common to more than one behavior, for example
   // border calculation
@@ -128,6 +137,15 @@ private:
   // component which behaviors can delegate to for automatic action error handling
   std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;
 
+  // Factory creates and tracks data-driven behaviors etc
+  std::unique_ptr<BehaviorContainer> _behaviorContainer;
+  
+  // Interface that the behavior system can use to communicate with the rest of engine
+  std::unique_ptr<BehaviorExternalInterface> _behaviorExternalInterface;
+  
+  // components which manage the behavior system
+  std::unique_ptr<BehaviorManager>       _behaviorMgr;
+  std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   // Component which tracks and caches the best objects to use for certain interactions
   std::unique_ptr<ObjectInteractionInfoCache> _objectInteractionInfoCache;
@@ -152,7 +170,10 @@ private:
   
   // component for tracking severe needs states
   std::unique_ptr<SevereNeedsComponent> _severeNeedsComponent;
-
+  
+  
+  Result UpdateBehaviorManager(Robot& robot, std::string& currentActivityName,
+                                             std::string& behaviorDebugStr);  
 };
 
 }

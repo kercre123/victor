@@ -18,10 +18,10 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/activeObjectHelpers.h"
-#include "engine/behaviorSystem/behaviorContainer.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
-#include "engine/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
+#include "engine/aiComponent/behaviorSystem/behaviorContainer.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -39,7 +39,7 @@ void CreateStackBehavior(Robot& robot, IBehaviorPtr& stackBehavior)
 {
   ASSERT_TRUE(stackBehavior == nullptr) << "test bug: should not have behavior yet";
 
-  auto& behaviorContainer = robot.GetBehaviorManager().GetBehaviorContainer();
+  BehaviorContainer& behaviorContainer = robot.GetAIComponent().GetBehaviorContainer();
 
   // Arbitrarily using the Wait ID - no effect on implementation details
   const std::string& configStr =
@@ -53,10 +53,16 @@ void CreateStackBehavior(Robot& robot, IBehaviorPtr& stackBehavior)
   Json::Reader reader;
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
-  
+
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+
   stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
-                                                   robot,
                                                    config);
+  stackBehavior->Init(*behaviorExternalInterface);
   ASSERT_TRUE(stackBehavior != nullptr);
 }
 
@@ -109,7 +115,8 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, ObjectID& objID1, ObjectID& objID2)
+void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, BehaviorExternalInterface& behaviorExternalInterface,
+                    ObjectID& objID1, ObjectID& objID2)
 {
   auto& aiComponent = robot.GetAIComponent();
   
@@ -117,19 +124,22 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, ObjectID& objID1,
 
   CreateStackBehavior(robot, stackBehavior);
 
-  ASSERT_FALSE(stackBehavior->IsRunnable(robot)) << "behavior should not be runnable without cubes";
-
-  aiComponent.Update();
-  aiComponent.Update();
-  aiComponent.Update();
-  ASSERT_FALSE(stackBehavior->IsRunnable(robot)) << "behavior should not be runnable without cubes after update";
+  ASSERT_FALSE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "behavior should not be runnable without cubes";
+  
+  std::string currentActivityName;
+  std::string behaviorDebugStr;
+  
+  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  ASSERT_FALSE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "behavior should not be runnable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
   blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
 
-  aiComponent.Update();
-  ASSERT_FALSE(stackBehavior->IsRunnable(robot)) << "behavior should not be runnable with unknown cubes";
+  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  ASSERT_FALSE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "behavior should not be runnable with unknown cubes";
 
   // Add two objects
   ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
@@ -155,7 +165,7 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, ObjectID& objID1,
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
-  ASSERT_TRUE(stackBehavior->IsRunnable(robot)) << "now behavior should be runnable";
+  ASSERT_TRUE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "now behavior should be runnable";
 
 }
 
@@ -166,11 +176,16 @@ TEST(StackBlocksBehavior, InitBehavior)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
 
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
   IBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
-  SetupStackTest(robot, stackBehavior, objID1, objID2);
+  SetupStackTest(robot, stackBehavior, *behaviorExternalInterface, objID1, objID2);
   
-  auto result = stackBehavior->Init();
+  auto result = stackBehavior->OnBehaviorActivated(*behaviorExternalInterface);
 
   EXPECT_EQ(RESULT_OK, result);
 }
@@ -181,12 +196,19 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();
 
   IBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
-  SetupStackTest(robot, stackBehavior, objID1, objID2);
+  SetupStackTest(robot, stackBehavior, *behaviorExternalInterface,
+                 objID1, objID2);
 
   {
     ObservableObject* object1 = blockWorld.GetLocatedObjectByID(objID1);
@@ -213,14 +235,18 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
     ASSERT_TRUE(object2 == nullptr) << "object should have been deleted";
   }
 
-  aiComponent.Update();
-  auto result = stackBehavior->Init();
+  std::string currentActivityName;
+  std::string behaviorDebugStr;
+  
+  aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+  stackBehavior->EnteredActivatableScope();
+  auto result = stackBehavior->OnActivated(*behaviorExternalInterface);
   EXPECT_EQ(RESULT_OK, result);
 
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   
-  auto status = stackBehavior->Update();
+  auto status = stackBehavior->Update(*behaviorExternalInterface);
   EXPECT_NE(BehaviorStatus::Running, status) << "should have stopped running";
 }

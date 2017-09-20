@@ -11,7 +11,7 @@
  **/
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
 
 // If enabled, don't do the first enrollment where we don't see a face and just

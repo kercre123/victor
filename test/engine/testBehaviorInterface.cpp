@@ -10,10 +10,11 @@
  *
  **/
 
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -33,12 +34,9 @@ class TestBehavior : public IBehavior
 {
 public:
 
-  TestBehavior(Robot& robot, const Json::Value& config)
-    : IBehavior(robot, config)
+  TestBehavior(const Json::Value& config)
+    : IBehavior(config)
     {
-      if(robot.HasExternalInterface()) {
-        SubscribeToTags({EngineToGameTag::Ping});
-      }
     }
 
   bool _inited = false;
@@ -46,35 +44,42 @@ public:
   bool _stopped = false;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override {
+  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override{
+    auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+    if(robotExternalInterface != nullptr) {
+      SubscribeToTags({EngineToGameTag::Ping});
+    }
+  }
+
+  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
   }
 
-  virtual Result InitInternal(Robot& robot) override {
+  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _inited = true;
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(Robot& robot) override {
+  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
     _numUpdates++;
     return Status::Running;
   }
-  virtual void   StopInternal(Robot& robot) override {
+  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _stopped = true;
   }
 
   int _alwaysHandleCalls = 0;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override {
+  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override {
     _alwaysHandleCalls++;
   }
 
   int _handleWhileRunningCalls = 0;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override { 
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override { 
     _handleWhileRunningCalls++;
   }
 
   int _handleWhileNotRunningCalls = 0;
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override {
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override {
     _handleWhileNotRunningCalls++;
   }
 
@@ -84,7 +89,7 @@ public:
   }
 
   int _calledRobotFunc = 0;
-  void Bar(Robot& robot) {
+  void Bar(BehaviorExternalInterface& behaviorExternalInterface) {
     _calledRobotFunc++;
   }
 
@@ -110,10 +115,10 @@ public:
 
 protected:
 
-  virtual float EvaluateRunningScoreInternal(const Robot& robot) const override {
+  virtual float EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return kRunningScore;
   }
-  virtual float EvaluateScoreInternal(const Robot& robot) const override {
+  virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return kNotRunningScore;
   }
 
@@ -124,14 +129,21 @@ TEST(BehaviorInterface, Create)
 {
   CozmoContext context{};
   Robot robot(0, &context);
+  
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
-
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
   b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b.IsRunning() );
-  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
-  EXPECT_TRUE( b.IsRunnable(robot));
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  EXPECT_TRUE( b.IsRunnable(*behaviorExternalInterface));
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -142,14 +154,22 @@ TEST(BehaviorInterface, Init)
   CozmoContext context{};
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
 
-  TestBehavior b(robot, empty);
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b._inited );
-  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
-  b.Init();
-  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  b.OnActivated(*behaviorExternalInterface);
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kRunningScore );
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -161,11 +181,19 @@ TEST(BehaviorInterface, InitWithInterface)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
 
-  TestBehavior b(robot, empty);
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
 
   EXPECT_FALSE( b._inited );
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -177,33 +205,40 @@ TEST(BehaviorInterface, Run)
   CozmoContext context{};
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
-
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   b.ReadFromScoredJson(empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
 
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
   for(int i=0; i<5; i++) {
-    EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kRunningScore );
+    EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kRunningScore );
     BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 0.01 * i ) );
-    b.Update();
+    b.Update(*behaviorExternalInterface);
   }
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
 
-  b.Stop();
+  b.OnDeactivated(*behaviorExternalInterface);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
 
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 5 );
   EXPECT_TRUE( b._stopped );
 }
 
-void TickAndCheckScore( Robot& robot, IBehavior& behavior, int num, float expectedScore )
+void TickAndCheckScore( Robot& robot, IBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num, float expectedScore )
 {
   auto startTime = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   const float dt = 0.01f;
@@ -211,8 +246,8 @@ void TickAndCheckScore( Robot& robot, IBehavior& behavior, int num, float expect
   for( int i=0; i<num; ++i ) {
     BaseStationTimer::getInstance()->UpdateTime( startTime + Util::SecToNanoSec( dt * i ) );
     robot.GetActionList().Update();
-    behavior.Update();
-    EXPECT_FLOAT_EQ( expectedScore, behavior.EvaluateScore(robot) ) << "i=" << i;
+    behavior.Update(behaviorExternalInterface);
+    EXPECT_FLOAT_EQ( expectedScore, behavior.EvaluateScore(behaviorExternalInterface) ) << "i=" << i;
   }
 }
 
@@ -224,17 +259,25 @@ TEST(BehaviorInterface, ScoreWhileRunning)
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
   b.ReadFromScoredJson(empty);
+  b.EnteredActivatableScope();
+
 
   BaseStationTimer::getInstance()->UpdateTime(0);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
 
   {
     SCOPED_TRACE("");
-    b.Init();
-    TickAndCheckScore(robot, b, 5, kRunningScore);
+    b.OnActivated(*behaviorExternalInterface);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
   }
 
   // this should have no effect, since we aren't acting
@@ -242,46 +285,46 @@ TEST(BehaviorInterface, ScoreWhileRunning)
 
   {
     SCOPED_TRACE("");
-    TickAndCheckScore(robot, b, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
   }
 
   bool done = false;
   {
     SCOPED_TRACE("");
     EXPECT_TRUE( b.CallStartActing(robot, done) );
-    TickAndCheckScore(robot, b, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
   }
 
   {
     SCOPED_TRACE("");
     b.CallIncreaseScoreWhileActing(0.1f);
-    TickAndCheckScore(robot, b, 5, kRunningScore + 0.1f);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore + 0.1f);
   }
 
   {
     SCOPED_TRACE("");
     b.CallIncreaseScoreWhileActing(1.0f);
-    TickAndCheckScore(robot, b, 5, kRunningScore + 0.1f + 1.0f);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore + 0.1f + 1.0f);
   }
 
   {
     SCOPED_TRACE("");
     done = true;
     // now the behavior is not acting so the score should revert back
-    TickAndCheckScore(robot, b, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
   }
 
   {
     SCOPED_TRACE("");
     b.CallIncreaseScoreWhileActing(0.999f);
-    TickAndCheckScore(robot, b, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
   }
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
 
-  b.Stop();
+  b.OnDeactivated(*behaviorExternalInterface);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
 
   EXPECT_TRUE( b._inited );
   EXPECT_TRUE( b._stopped );
@@ -294,10 +337,18 @@ TEST(BehaviorInterface, HandleMessages)
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   EXPECT_EQ(b._alwaysHandleCalls, 0);
   EXPECT_EQ(b._handleWhileRunningCalls, 0);
@@ -312,7 +363,7 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
-  b.Stop();
+  b.OnDeactivated(*behaviorExternalInterface);
 
   robot.Broadcast( MessageEngineToGame( Ping() ) );
   
@@ -321,11 +372,11 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._handleWhileNotRunningCalls,  1);
 };
 
-void DoTicks(Robot& robot, IBehavior& behavior, int num=1)
+void DoTicks(Robot& robot, IBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num=1)
 {
   for(int i=0; i<num; i++) {
     robot.GetActionList().Update();
-    behavior.Update();
+    behavior.Update(behaviorExternalInterface);
   }
 }
 
@@ -335,14 +386,21 @@ TEST(BehaviorInterface, OutsideAction)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
-
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
+  b.OnActivated(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  b.Init();
   
-  b.Update();
-  b.Update();
+  b.Update(*behaviorExternalInterface);
+  b.Update(*behaviorExternalInterface);
 
   bool done = false;
 
@@ -351,15 +409,15 @@ TEST(BehaviorInterface, OutsideAction)
   WaitForLambdaAction* action = new WaitForLambdaAction(robot, [&done](Robot& r){ return done; });
   robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
 
-  DoTicks(robot, b);
+  DoTicks(robot, b, *behaviorExternalInterface);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   done = true;
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
@@ -421,26 +479,33 @@ TEST(BehaviorInterface, StartActingSimple)
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestBehavior b(robot, empty);
-
-  BaseStationTimer::getInstance()->UpdateTime(0);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
   
-  b.Init();
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  b.EnteredActivatableScope();
 
-  DoTicks(robot, b, 3);
+  b.OnActivated(*behaviorExternalInterface);
+
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
   bool done = false;
   EXPECT_TRUE( b.CallStartActing(robot, done) );
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   done = true;
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
@@ -456,13 +521,21 @@ TEST(BehaviorInterface, StartActingFailures)
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  
-  b.Init();
+  b.EnteredActivatableScope();
 
-  DoTicks(robot, b, 3);
+  b.OnActivated(*behaviorExternalInterface);
+
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
@@ -472,7 +545,7 @@ TEST(BehaviorInterface, StartActingFailures)
   EXPECT_TRUE( b.CallStartActing(robot, done) );
   EXPECT_FALSE( b.CallStartActing(robot, done) );
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE( b.CallStartActing(robot, done) );
 
@@ -483,14 +556,14 @@ TEST(BehaviorInterface, StartActingFailures)
   // action hasn't updated yet, so it's done. Should still fail to start a new action
   EXPECT_FALSE( b.CallStartActing(robot, done) );
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
   done = false;
   EXPECT_TRUE( b.CallStartActing(robot, done) );
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
   EXPECT_TRUE( b.CallStopActing() );
@@ -498,13 +571,13 @@ TEST(BehaviorInterface, StartActingFailures)
   bool done2 = false;
   EXPECT_TRUE( b.CallStartActing(robot, done2) );
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   done2 = true;
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
   
@@ -520,11 +593,19 @@ TEST(BehaviorInterface, StartActingCallbacks)
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
   
-  BaseStationTimer::getInstance()->UpdateTime(0);
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
 
-  b.Init();
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  b.EnteredActivatableScope();
+
+  b.OnActivated(*behaviorExternalInterface);
 
   bool done = false;
   bool callbackCalled = false;
@@ -534,10 +615,10 @@ TEST(BehaviorInterface, StartActingCallbacks)
                                                 });
   EXPECT_TRUE(ret);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b,*behaviorExternalInterface, 3);
   EXPECT_FALSE(callbackCalled);
   done = true;
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_TRUE(callbackCalled);
 
   done = false;
@@ -548,21 +629,21 @@ TEST(BehaviorInterface, StartActingCallbacks)
                                            });
   EXPECT_TRUE(ret);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_FALSE(callbackCalled);
   done = true;
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_TRUE(callbackCalled);
 
   done = false;
   ret = b.CallStartActingInternalCallbackVoid(robot, done);
   EXPECT_TRUE(ret);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_EQ(b._calledVoidFunc, 0);
   EXPECT_EQ(b._calledRobotFunc, 0);
   done = true;
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_EQ(b._calledVoidFunc, 1);
   EXPECT_EQ(b._calledRobotFunc, 0);
 
@@ -570,11 +651,11 @@ TEST(BehaviorInterface, StartActingCallbacks)
   ret = b.CallStartActingInternalCallbackRobot(robot, done);
   EXPECT_TRUE(ret);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_EQ(b._calledVoidFunc, 1);
   EXPECT_EQ(b._calledRobotFunc, 0);
   done = true;
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_EQ(b._calledVoidFunc, 1);
   EXPECT_EQ(b._calledRobotFunc, 1);
 }
@@ -586,17 +667,25 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
+  b.EnteredActivatableScope();
 
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
 
-  b.Stop();
+  b.OnDeactivated(*behaviorExternalInterface);
 
   bool done1 = false;
   bool callbackCalled1 = false;
@@ -609,9 +698,9 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   BaseStationTimer::getInstance()->UpdateTime(0);
   
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   bool done2 = false;
   bool callbackCalled2 = false;
@@ -622,7 +711,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   EXPECT_TRUE(ret);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(callbackCalled1);
   EXPECT_FALSE(callbackCalled2);
@@ -631,7 +720,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );  
 
-  b.Stop();
+  b.OnDeactivated(*behaviorExternalInterface);
   
   robot.GetActionList().Update();
   robot.GetActionList().Update();
@@ -650,13 +739,21 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestBehavior b(robot, empty);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime( 0 );
   
-  b.Init();
+  b.EnteredActivatableScope();
+  b.OnActivated(*behaviorExternalInterface);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   bool done1 = false;
   bool callbackCalled1 = false;
@@ -666,14 +763,14 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
                                                 });
   EXPECT_TRUE(ret);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   // stop acting but don't allow the callback
   b.CallStopActing(false);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should be canceled";
   EXPECT_FALSE(callbackCalled1) << "StartActing callback should not have run";
 
@@ -688,14 +785,14 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
                                                 });
   EXPECT_TRUE(ret);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   // stop acting but don't allow the callback
   b.CallStopActing(true);
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
   EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should be canceled";
   EXPECT_TRUE(callbackCalled1) << "Should have gotten callback this time";
 
@@ -705,8 +802,8 @@ class TestInitBehavior : public IBehavior
 {
 public:
 
-  TestInitBehavior(Robot& robot, const Json::Value& config)
-    :IBehavior(robot, config)
+  TestInitBehavior(const Json::Value& config)
+    :IBehavior(config)
     {
     }
 
@@ -718,23 +815,26 @@ public:
 
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override {
+  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
   }
 
-  virtual Result InitInternal(Robot& robot) override {
+  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _inited = true;
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    Robot& robot = behaviorExternalInterface.GetRobot();
     WaitForLambdaAction* action = new WaitForLambdaAction(robot, [this](Robot& r){ return _stopAction; });
     StartActing(action);
 
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(Robot& robot) override {
+  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
     _numUpdates++;
     return Status::Running;
   }
-  virtual void   StopInternal(Robot& robot) override {
+  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     _stopped = true;
   }
 
@@ -745,21 +845,28 @@ TEST(BehaviorInterface, StartActingInsideInit)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
-  TestInitBehavior b(robot, empty);
-
-  b.Init();
+  TestInitBehavior b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
+  b.OnActivated(*behaviorExternalInterface);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty()) << "action should be started by Init";
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   b._stopAction = true;
 
-  DoTicks(robot, b, 3);
+  DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 }

@@ -16,8 +16,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/behaviorSystem/behaviorHelpers/iHelper.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/behaviorHelpers/iHelper.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -38,8 +39,8 @@ class TestBehaviorWithHelpers : public IBehavior
 {
 public:
 
-  TestBehaviorWithHelpers(Robot& robot, const Json::Value& config)
-    : IBehavior(robot, config)
+  TestBehaviorWithHelpers(const Json::Value& config)
+    : IBehavior(config)
     {
     }
 
@@ -71,17 +72,17 @@ public:
     _lastStartActingResult = false;
   }
 
-  virtual bool IsRunnableInternal(const Robot& robot) const override {
+  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
   }
 
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual Result InitInternal(Robot& robot) override {
+  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
     return RESULT_OK;
   }
 
-  virtual Status UpdateInternal(Robot& robot) override {
+  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
 
     _updateCount++;
 
@@ -91,7 +92,7 @@ public:
     }
 
     if( _helperHandleToDelegate ) {
-      _lastDelegateSuccess = SmartDelegateToHelper(robot,
+      _lastDelegateSuccess = SmartDelegateToHelper(behaviorExternalInterface,
                                                    _helperHandleToDelegate,
                                                    _successCallbackToDelegate,
                                                    _failureCallbackToDelegate);
@@ -112,7 +113,7 @@ public:
     switch(_updateResult) {
       case UpdateResult::UseBaseClass: {
         printf("TestBehaviorWithHelpers.Update UseBaseClass: IsActing:%d\n", IsActing());
-        return IBehavior::UpdateInternal(robot);
+        return IBehavior::UpdateInternal(behaviorExternalInterface);
       }
       case UpdateResult::Running: {
         printf("TestBehaviorWithHelpers.Update Running\n");
@@ -125,7 +126,7 @@ public:
     }
   }
 
-  virtual void  StopInternal(Robot& robot) override {
+  virtual void  OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
   }
 
   bool _lastDelegateSuccess = false;
@@ -153,8 +154,8 @@ class TestHelper : public IHelper
 {
 public:
 
-  TestHelper(Robot& robot, IBehavior& behavior, const std::string& name = "")
-    : IHelper("", robot, behavior, robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory())
+  TestHelper(BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior, const std::string& name = "")
+    : IHelper("", behaviorExternalInterface, behavior, behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory())
     , _name(name)
     , _behavior(behavior)
     {
@@ -169,7 +170,11 @@ public:
     _nextActionToRun = action;
   }
 
-  void StartAutoAction(Robot& robot) {
+  void StartAutoAction(BehaviorExternalInterface& behaviorExternalInterface) {
+    
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    Robot& robot = behaviorExternalInterface.GetRobot();
     _selfActionDone = false;
     _nextActionToRun = new WaitForLambdaAction(robot, [this](Robot& t) {
         printf("%s: ShouldStopActing: %d\n", _name.c_str(), _selfActionDone);
@@ -191,7 +196,7 @@ public:
     _stopCount++;
   }
 
-  virtual bool ShouldCancelDelegates(const Robot& robot) const override {
+  virtual bool ShouldCancelDelegates(BehaviorExternalInterface& behaviorExternalInterface) const override {
     _shouldCancelCount++;
     printf("%s: ShouldCancel:%d\n", _name.c_str(), _cancelDelegates);
     bool ret = false;
@@ -202,7 +207,7 @@ public:
     return ret;
   }
 
-  virtual IBehavior::Status Init(Robot& robot) override {
+  virtual IBehavior::Status Init(BehaviorExternalInterface& behaviorExternalInterface) override {
     _initCount++;
 
     printf("%s: Init. Action=%p\n", _name.c_str(), _nextActionToRun);
@@ -212,7 +217,7 @@ public:
     return IBehavior::Status::Running;
   }
 
-  virtual IBehavior::Status UpdateWhileActiveInternal(Robot& robot) override {
+  virtual IBehavior::Status UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
     _updateCount++;
 
     printf("%s: Update. IsActing:%d, _delegateAfter:%d\n",
@@ -224,13 +229,13 @@ public:
     
     if( !IsActing() && _delegateAfterAction ) {
       _delegateAfterAction = false;
-      _subHelperRaw = new TestHelper(robot, _behavior, _name + "_child");
-      _subHelperRaw->StartAutoAction(robot);
+      _subHelperRaw = new TestHelper(behaviorExternalInterface, _behavior, _name + "_child");
+      _subHelperRaw->StartAutoAction(behaviorExternalInterface);
       auto newHelperHandle = std::shared_ptr<IHelper>(_subHelperRaw);
       _subHelper = newHelperHandle;
       DelegateProperties delegateProperties;
       delegateProperties.SetDelegateToSet(newHelperHandle);
-      delegateProperties.SetOnSuccessFunction([this](Robot& robot) {
+      delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface) {
           if( _immediateCompleteOnSubSuccess ) {
             return IBehavior::Status::Complete;
           }
@@ -249,7 +254,7 @@ public:
 
   void CheckActions() {
     if( _nextActionToRun ) {
-      StartActing(_nextActionToRun, [this](ActionResult res, Robot& r) {
+      StartActing(_nextActionToRun, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
           _actionCompleteCount++;
           if( _thisSucceedsOnActionSuccess ) {
             _updateResult = IBehavior::Status::Complete;
@@ -301,17 +306,25 @@ void DoTicks_(Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool exp
   int updateTicks = behavior._updateCount;
 
   IBehavior::Status status = IBehavior::Status::Running;
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
   
+  
+  std::string currentActivityName;
+  std::string behaviorDebugStr;
   for(int i=0; i<num; i++) {
-    robot.GetAIComponent().Update();
-    status = behavior.Update();
+    robot.GetAIComponent().Update(robot, currentActivityName, behaviorDebugStr);
+    status = behavior.Update(*behaviorExternalInterface);
     robot.GetActionList().Update();
     
     updateTicks++;
     ASSERT_EQ(behavior._updateCount, updateTicks) << "behavior not ticked as often as it should be";
 
     if( expectComplete && status == IBehavior::Status::Complete ) {
-      behavior.Stop();
+      behavior.OnDeactivated(*behaviorExternalInterface);
       break;
     }
     ASSERT_EQ(status, IBehavior::Status::Running) << "behavior should still be running i="<<i;
@@ -329,12 +342,19 @@ TEST(BehaviorHelperSystem, BehaviorComplete)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, 3);
   ASSERT_EQ(b._updateCount, 3);
@@ -351,12 +371,20 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, 3);
 
@@ -397,12 +425,20 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, 3);
 
@@ -413,14 +449,14 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   TestHelper* rawPtr = nullptr;
 
   {
-    rawPtr = new TestHelper(robot, b);
+    rawPtr = new TestHelper(*behaviorExternalInterface, b);
     auto testHelper = std::shared_ptr<IHelper>( rawPtr );
     weak = testHelper;
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](Robot& robot) {helperSucceeded = true;},
-                                   [&helperFailed](Robot& robot) {helperFailed = true;});
+                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
+                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -453,14 +489,14 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   helperFailed = false;
   
   {
-    rawPtr = new TestHelper(robot, b);
+    rawPtr = new TestHelper(*behaviorExternalInterface, b);
     auto testHelper = std::shared_ptr<IHelper>( rawPtr );
     weak = testHelper;
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](Robot& robot) {helperSucceeded = true;},
-                                   [&helperFailed](Robot& robot) {helperFailed = true;});
+                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
+                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -494,12 +530,20 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   bool helperFailed = false;
   bool helperSucceeded = false;
@@ -510,7 +554,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   TestHelper* rawPtr = nullptr;
 
   {
-    rawPtr = new TestHelper(robot, b);
+    rawPtr = new TestHelper(*behaviorExternalInterface, b);
     rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopAction, &actionChecks](Robot& r){
           printf("action: %d\n", stopAction);
           actionChecks++;
@@ -521,8 +565,8 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](Robot& robot) {helperSucceeded = true;},
-                                   [&helperFailed](Robot& robot) {helperFailed = true;});
+                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
+                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -588,12 +632,19 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   bool helperFailed = false;
   bool helperSucceeded = false;
@@ -603,7 +654,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
   TestHelper* rawPtr = nullptr;
 
   {
-    rawPtr = new TestHelper(robot, b);
+    rawPtr = new TestHelper(*behaviorExternalInterface, b);
     rawPtr->SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopHelperAction](Robot& r){
           printf("helper action: %d\n", stopHelperAction);
           return stopHelperAction;
@@ -613,8 +664,8 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
     ASSERT_FALSE(weak.expired());
 
     b.DelegateToHelperOnNextUpdate(testHelper,
-                                   [&helperSucceeded](Robot& robot) {helperSucceeded = true;},
-                                   [&helperFailed](Robot& robot) {helperFailed = true;});
+                                   [&helperSucceeded](BehaviorExternalInterface& behaviorExternalInterface) {helperSucceeded = true;},
+                                   [&helperFailed](BehaviorExternalInterface& behaviorExternalInterface) {helperFailed = true;});
   }
 
   ASSERT_TRUE(rawPtr != nullptr);
@@ -802,13 +853,20 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   std::vector<HelperPointers> ptrs;
   ptrs.resize(1);
@@ -818,25 +876,28 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
   bool stopBehaviorAction = false;
   
   {
-    ptrs[0].raw = new TestHelper(robot, b);
+    ptrs[0].raw = new TestHelper(*behaviorExternalInterface, b);
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
-    ptrs[0].raw->StartAutoAction(robot);
+    ptrs[0].raw->StartAutoAction(*behaviorExternalInterface);
     ptrs[0].raw->_delegateAfterAction = true;
 
     ASSERT_FALSE(ptrs[0].weak.expired());
     // on success, set bool and also queue another action
     b.DelegateToHelperOnNextUpdate(
       strong,
-      [&baseHelperSucceeded, &b, &stopBehaviorAction](Robot& robot) {
+      [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
         baseHelperSucceeded = true;
+        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+        // be removed
+        Robot& robot = behaviorExternalInterface.GetRobot();
         b.SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
       },
-      [&baseHelperFailed](Robot& robot) {baseHelperFailed = true;});
+      [&baseHelperFailed](BehaviorExternalInterface& behaviorExternalInterface) {baseHelperFailed = true;});
     
     ASSERT_FALSE(ptrs[0].weak.expired());
     ptrs[0].strong = strong; // store strong pointer now, to make sure it stays alive during the delegation
@@ -904,12 +965,19 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   std::vector<HelperPointers> ptrs;
   ptrs.resize(1);
@@ -919,25 +987,28 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   bool stopBehaviorAction = false;
   
   {
-    ptrs[0].raw = new TestHelper(robot, b);
+    ptrs[0].raw = new TestHelper(*behaviorExternalInterface, b);
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
-    ptrs[0].raw->StartAutoAction(robot);
+    ptrs[0].raw->StartAutoAction(*behaviorExternalInterface);
     ptrs[0].raw->_delegateAfterAction = true;
 
     ASSERT_FALSE(ptrs[0].weak.expired());
     // on success, set bool and also queue another action
     b.DelegateToHelperOnNextUpdate(
       strong,
-      [&baseHelperSucceeded, &b, &stopBehaviorAction](Robot& robot) {
+      [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
+        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+        // be removed
+        Robot& robot = behaviorExternalInterface.GetRobot();
         baseHelperSucceeded = true;
         b.SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
       },
-      [&baseHelperFailed](Robot& robot) {baseHelperFailed = true;});
+      [&baseHelperFailed](BehaviorExternalInterface& behaviorExternalInterface) {baseHelperFailed = true;});
     
     ASSERT_FALSE(ptrs[0].weak.expired());
     ptrs[0].strong = strong; // store strong pointer now, to make sure it stays alive during the delegation
@@ -963,7 +1034,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
 
   // have some action in the middle cancel it's delegates
   ptrs[6].raw->_cancelDelegates = true;
-  ptrs[6].raw->StartAutoAction(robot);
+  ptrs[6].raw->StartAutoAction(*behaviorExternalInterface);
   
   DoTicks(robot, b, 2);
 
@@ -1065,13 +1136,20 @@ TEST(BehaviorHelperSystem, StopBehavior)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
+  BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
+                                                                                       robot.GetAIComponent(),
+                                                                                       robot.GetBehaviorManager().GetBehaviorContainer(),
+                                                                                       robot.GetBlockWorld(),
+                                                                                       robot.GetFaceWorld());
+  
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
-  TestBehaviorWithHelpers b(robot, empty);
-
+  TestBehaviorWithHelpers b(empty);
+  b.Init(*behaviorExternalInterface);
+  b.EnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
-  b.Init();
+  b.OnActivated(*behaviorExternalInterface);
 
   std::vector<HelperPointers> ptrs;
   ptrs.resize(1);
@@ -1081,25 +1159,28 @@ TEST(BehaviorHelperSystem, StopBehavior)
   bool stopBehaviorAction = false;
   
   {
-    ptrs[0].raw = new TestHelper(robot, b);
+    ptrs[0].raw = new TestHelper(*behaviorExternalInterface, b);
     auto strong = std::shared_ptr<IHelper>( ptrs[0].raw );
     ptrs[0].weak = strong; // store weak pointer
     
-    ptrs[0].raw->StartAutoAction(robot);
+    ptrs[0].raw->StartAutoAction(*behaviorExternalInterface);
     ptrs[0].raw->_delegateAfterAction = true;
 
     ASSERT_FALSE(ptrs[0].weak.expired());
     // on success, set bool and also queue another action
     b.DelegateToHelperOnNextUpdate(
       strong,
-      [&baseHelperSucceeded, &b, &stopBehaviorAction](Robot& robot) {
+      [&baseHelperSucceeded, &b, &stopBehaviorAction](BehaviorExternalInterface& behaviorExternalInterface) {
         baseHelperSucceeded = true;
+        // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+        // be removed
+        Robot& robot = behaviorExternalInterface.GetRobot();
         b.SetActionToRunOnNextUpdate(new WaitForLambdaAction(robot, [&stopBehaviorAction](Robot& r) {
               printf("behavior post-helper action: %d\n", stopBehaviorAction);
               return stopBehaviorAction;
             }));
       },
-      [&baseHelperFailed](Robot& robot) {baseHelperFailed = true;});
+      [&baseHelperFailed](BehaviorExternalInterface& behaviorExternalInterface) {baseHelperFailed = true;});
     
     ASSERT_FALSE(ptrs[0].weak.expired());
     ptrs[0].strong = strong; // store strong pointer now, to make sure it stays alive during the delegation

@@ -19,7 +19,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/animations/animationStreamer.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockConfigurationStack.h"

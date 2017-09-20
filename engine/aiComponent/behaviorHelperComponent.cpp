@@ -16,14 +16,15 @@
  **/
 
 #include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/behaviorSystem/behaviorHelpers/pickupBlockHelper.h"
-#include "engine/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
-#include "engine/behaviorSystem/behaviorHelpers/rollBlockHelper.h"
+#include "engine/aiComponent/behaviorSystem/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorSystem/behaviorHelpers/pickupBlockHelper.h"
+#include "engine/aiComponent/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
+#include "engine/aiComponent/behaviorSystem/behaviorHelpers/rollBlockHelper.h"
 #include "engine/robot.h"
 #include "util/helpers/boundedWhile.h"
 
 #include <iterator>
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -56,10 +57,10 @@ HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
+bool BehaviorHelperComponent::DelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
                                                HelperHandle handleToRun,
-                                               BehaviorSimpleCallbackWithRobot successCallback,
-                                               BehaviorSimpleCallbackWithRobot failureCallback)
+                                               BehaviorSimpleCallbackWithExternalInterface successCallback,
+                                               BehaviorSimpleCallbackWithExternalInterface failureCallback)
 {
   ClearStackMaintenanceVars();
   _behaviorSuccessCallback = successCallback;
@@ -70,7 +71,10 @@ bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
     return false;
   }
   
-  PushHelperOntoStackAndUpdate(robot, handleToRun);
+  PushHelperOntoStackAndUpdate(behaviorExternalInterface, handleToRun);
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  const Robot& robot = behaviorExternalInterface.GetRobot();
   _worldOriginIDAtStart = robot.GetWorldOriginID();
   return true;
 }
@@ -91,16 +95,16 @@ bool BehaviorHelperComponent::StopHelperWithoutCallback(const HelperHandle& help
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::Update(Robot& robot)
+void BehaviorHelperComponent::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Update the active helper stack
-  CheckInactiveStackHelpers(robot);
-  UpdateActiveHelper(robot);
+  CheckInactiveStackHelpers(behaviorExternalInterface);
+  UpdateActiveHelper(behaviorExternalInterface);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::CheckInactiveStackHelpers(const Robot& robot)
+void BehaviorHelperComponent::CheckInactiveStackHelpers(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!_helperStack.empty()){
     // Grab the iterator to the active helper
@@ -111,7 +115,7 @@ void BehaviorHelperComponent::CheckInactiveStackHelpers(const Robot& robot)
     // to clear the stack on top of them and become active again.
     auto inactiveIter = _helperStack.begin();
     while(inactiveIter != activeIter){
-      const bool shouldCancelDelegates = (*inactiveIter)->ShouldCancelDelegates(robot);
+      const bool shouldCancelDelegates = (*inactiveIter)->ShouldCancelDelegates(behaviorExternalInterface);
 
       inactiveIter++;
       if(shouldCancelDelegates){
@@ -124,12 +128,15 @@ void BehaviorHelperComponent::CheckInactiveStackHelpers(const Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
+void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
   IBehavior::Status helperStatus = IBehavior::Status::Running;
   if(!_helperStack.empty()){
     auto activeIter = _helperStack.end();
     activeIter--;
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    const Robot& robot = behaviorExternalInterface.GetRobot();
     // TODO: COZMO-10389 - return to base helper if origin changes
     bool blockWorldOriginChange = (robot.GetWorldOriginID() != _worldOriginIDAtStart);
     if(blockWorldOriginChange){
@@ -140,9 +147,9 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
       
       // First, check to see if we've just completed a helper
       if(helperStatus == IBehavior::Status::Complete){
-        helperStatus = (*activeIter)->OnDelegateSuccess(robot);
+        helperStatus = (*activeIter)->OnDelegateSuccess(behaviorExternalInterface);
       }else if(helperStatus == IBehavior::Status::Failure){
-        helperStatus = (*activeIter)->OnDelegateFailure(robot);
+        helperStatus = (*activeIter)->OnDelegateFailure(behaviorExternalInterface);
       }
       
       
@@ -159,7 +166,7 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
       // Allows Delegate to directly check on success/failure
       if(helperStatus == IBehavior::Status::Running){
         // Give helper update tick
-        helperStatus = (*activeIter)->UpdateWhileActive(robot, newDelegate);
+        helperStatus = (*activeIter)->UpdateWhileActive(behaviorExternalInterface, newDelegate);
       }
       
       // If helper completed, start the next helper, or if the
@@ -190,7 +197,7 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
         activeIter = _helperStack.end();
 
         if(newDelegate){          
-          PushHelperOntoStackAndUpdate(robot, newDelegate);
+          PushHelperOntoStackAndUpdate(behaviorExternalInterface, newDelegate);
           activeIter = _helperStack.end();
           activeIter--;
         }
@@ -203,7 +210,7 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
     // Copy the callback function so that it can be called after
     // this helper stack has been cleared in case it wants to set up a
     // new helper stack/callbacks
-    BehaviorSimpleCallbackWithRobot behaviorCallbackToRun = nullptr;
+    BehaviorSimpleCallbackWithExternalInterface behaviorCallbackToRun = nullptr;
     
     if(helperStatus == IBehavior::Status::Complete &&
        _behaviorSuccessCallback != nullptr){
@@ -220,13 +227,13 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
     // in case the callback wants to set up helpers/callbacks of its own
     ClearStackMaintenanceVars();
     if(behaviorCallbackToRun != nullptr){
-      behaviorCallbackToRun(robot);
+      behaviorCallbackToRun(behaviorExternalInterface);
     }
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(Robot& robot, HelperHandle handle)
+void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle handle)
 {
   PRINT_CH_INFO("Behaviors", "HelperComponent.StartNewHelper", "%s", handle->GetName().c_str());
   
@@ -234,7 +241,7 @@ void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(Robot& robot, HelperH
   _helperStack.push_back(handle);
 
   // Run the first update immediately so the helper can start acting
-  UpdateActiveHelper(robot);
+  UpdateActiveHelper(behaviorExternalInterface);
 }
 
   

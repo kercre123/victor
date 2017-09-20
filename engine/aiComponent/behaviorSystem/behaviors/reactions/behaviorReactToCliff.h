@@ -1,0 +1,82 @@
+/**
+ * File: behaviorReactToCliff.h
+ *
+ * Author: Kevin
+ * Created: 10/16/15
+ *
+ * Description: Behavior for immediately responding to a detected cliff. This behavior actually handles both
+ *              the stop and cliff events
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
+
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include <vector>
+
+namespace Anki {
+namespace Cozmo {
+
+class ICompoundAction;
+  
+class BehaviorReactToCliff : public IBehavior
+{
+private:
+  using super = IBehavior;
+  
+  // Enforce creation through BehaviorContainer
+  friend class BehaviorContainer;
+  BehaviorReactToCliff(const Json::Value& config);
+  
+public:
+  
+  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
+  
+protected:
+  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
+  
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
+  
+  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+
+private:
+  using base = IBehavior;
+  enum class State {
+    PlayingStopReaction,
+    PlayingCliffReaction,
+    BackingUp
+  };
+
+  State _state = State::PlayingStopReaction;
+
+  bool _gotCliff = false;
+  uint8_t _detectedFlags = 0;
+  
+  void TransitionToPlayingStopReaction(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToPlayingCliffReaction(BehaviorExternalInterface& behaviorExternalInterface);
+  void TransitionToBackingUp(BehaviorExternalInterface& behaviorExternalInterface);
+  void SendFinishedReactToCliffMessage(BehaviorExternalInterface& behaviorExternalInterface);
+  
+#ifdef COZMO_V2
+  // Based on which cliff sensor(s) was tripped, select an appropriate pre-animation action
+  CompoundActionSequential* GetCliffPreReactAction(BehaviorExternalInterface& behaviorExternalInterface, uint8_t cliffDetectedFlags);
+#endif // COZMO_V2
+
+  u16 _cliffDetectThresholdAtStart = 0;
+  bool _quitReaction = false;
+  
+  bool _shouldStopDueToCharger;
+  
+  
+}; // class BehaviorReactToCliff
+  
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__

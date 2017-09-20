@@ -12,7 +12,6 @@
 #ifdef COZMO_V2
 #include "androidHAL/androidHAL.h"
 #endif
-#define USE_BSM 0
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseOriginList.h"
@@ -28,11 +27,7 @@
 #include "engine/animations/proceduralFace.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/robotAudioClient.h"
-#include "engine/behaviorSystem/activities/activities/iActivity.h"
-#include "engine/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
-#include "engine/behaviorSystem/behaviorManager.h"
-#include "engine/behaviorSystem/behaviorSystemManager.h"
-#include "engine/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -168,8 +163,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _faceWorld(new FaceWorld(*this))
   , _petWorld(new PetWorld(*this))
   , _publicStateBroadcaster(new PublicStateBroadcaster())
-  , _behaviorMgr(new BehaviorManager(*this))
-  , _behaviorSysMgr(new BehaviorSystemManager(*this))
   , _audioClient(new Audio::RobotAudioClient(this))
   , _pathComponent(new PathComponent(*this, robotID, context))
   , _animationStreamer(_context, *_audioClient)
@@ -242,13 +235,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _progressionUnlockComponent->Init();
   
   _inventoryComponent->Init(_context->GetDataLoader()->GetInventoryConfig());
-
-  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
-  _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
-  
-  if(USE_BSM){
-    _behaviorSysMgr->InitConfiguration(*this, _context->GetDataLoader()->GetBehaviorSystemConfig());
-  }
   
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
@@ -283,11 +269,6 @@ Robot::~Robot()
   GetAIComponent().GetFreeplayDataTracker().ForceUpdate();
   
   AbortAll();
-  
-  // This needs to happen before ActionList is destroyed, because otherwise behaviors will try to respond
-  // to actions shutting down
-  _behaviorMgr.reset();
-  _behaviorSysMgr.reset();
   
   // Destroy our actionList before things like the path planner, since actions often rely on those.
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
@@ -720,8 +701,6 @@ void Robot::Delocalize(bool isCarryingObject)
   
   // notify behavior whiteboard
   _aiComponent->OnRobotDelocalized();
-  
-  _behaviorMgr->OnRobotDelocalized();
   
   _movementComponent->OnRobotDelocalized();
   
@@ -1385,57 +1364,11 @@ Result Robot::Update()
 
   _tapFilterComponent->Update();
 
-  // Update AI component before behaviors so that behaviors can use the latest information
-  _aiComponent->Update();
-      
-  const char* currentActivityName = "";
-  std::string behaviorDebugStr("<disabled>");
-
-  // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
-  static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
-  if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
-  {
-    
-    IBehaviorPtr currentBehavior;
-    if(USE_BSM){
-      _behaviorSysMgr->Update(*this);
-      
-      currentActivityName = "ACTIVITY NAME TBD";
-      
-      behaviorDebugStr = currentActivityName;
-      
-      currentBehavior = _behaviorSysMgr->GetCurrentBehavior();
-    }else{
-      _behaviorMgr->Update(*this);
-      
-      currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
-      
-      behaviorDebugStr = currentActivityName;
-      
-      currentBehavior = _behaviorMgr->GetCurrentBehavior();
-    }
-
-
-
-    if(currentBehavior != nullptr) {
-      behaviorDebugStr += " ";
-      behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
-      const std::string& stateName = currentBehavior->GetDebugStateName();
-      if (!stateName.empty())
-      {
-        behaviorDebugStr += "-" + stateName;
-      }
-    }
-
-  } else {
-    --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
-  }
-      
-  GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                         "%s", behaviorDebugStr.c_str());
+  std::string currentActivityName;
+  std::string behaviorDebugStr;
   
-  GetContext()->SetSdkStatus(SdkStatusType::Behavior,
-                                 std::string(currentActivityName) + std::string(":") + behaviorDebugStr);
+  // Update AI component before behaviors so that behaviors can use the latest information
+  _aiComponent->Update(*this, currentActivityName, behaviorDebugStr);
 
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
@@ -1566,7 +1499,7 @@ Result Robot::Update()
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
            (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
-           currentActivityName,
+           currentActivityName.c_str(),
            behaviorDebugStr.c_str());
       
   std::hash<std::string> hasher;
@@ -1803,7 +1736,15 @@ Result Robot::SyncTime()
   }
   return res;
 }
-    
+  
+const BehaviorManager& Robot::GetBehaviorManager() const {
+  return _aiComponent->GetBehaviorManager();
+}
+  
+BehaviorManager& Robot::GetBehaviorManager(){
+  return _aiComponent->GetBehaviorManager();
+}
+  
 Result Robot::LocalizeToObject(const ObservableObject* seenObject,
                                ObservableObject* existingObject)
 {

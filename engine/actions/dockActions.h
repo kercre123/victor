@@ -17,7 +17,7 @@
 #include "engine/actionableObject.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
@@ -117,7 +117,7 @@ namespace Anki {
       struct PreActionPoseInput
       {
         // Inputs
-        ActionableObject* object;
+        const ActionableObject* object;
         PreActionPose::ActionType preActionPoseType;
         bool doNearPreDockPoseCheck;
         f32 preActionPoseAngleTolerance;
@@ -125,7 +125,7 @@ namespace Anki {
         bool useApproachAngle;
         f32 approachAngle_rad;
         
-        PreActionPoseInput(ActionableObject* object,
+        PreActionPoseInput(const ActionableObject* object,
                           PreActionPose::ActionType preActionPoseType,
                           bool doNearPreDockPoseCheck,
                           f32 preDockPoseDistOffsetX_mm,
@@ -480,7 +480,7 @@ namespace Anki {
       virtual ActionResult InitInternal() override;
       
       // placement offsets are relative to the object's coordinate system, not marker
-      static ActionResult ComputePlaceRelObjectOffsetPoses(ActionableObject* object,
+      static ActionResult ComputePlaceRelObjectOffsetPoses(const ActionableObject* object,
                                                            const f32 placementOffsetX_mm,
                                                            const f32 placementOffsetY_mm,
                                                            Robot& robot,

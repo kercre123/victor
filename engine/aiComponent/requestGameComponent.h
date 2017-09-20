@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_AIComponent_RequestGameComponent_H__
 
 #include "anki/common/types.h"
-#include "engine/behaviorSystem/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior_fwd.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
@@ -40,12 +40,13 @@ struct GameRequestData{
   
 class RequestGameComponent{
 public:
-  RequestGameComponent(Robot& robot);
+  RequestGameComponent(BehaviorExternalInterface& behaviorExternalInterface,
+                       const Json::Value& requestGameWeights);
   ~RequestGameComponent() {};
   
   // Returns the unlockID of the next game type to request
   // returns count if no game should be requested
-  UnlockId IdentifyNextGameTypeToRequest(const Robot& robot);
+  UnlockId IdentifyNextGameTypeToRequest(BehaviorExternalInterface& behaviorExternalInterface);
   
   
   // declaration for any event handler
