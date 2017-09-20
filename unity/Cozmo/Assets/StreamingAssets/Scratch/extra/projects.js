@@ -546,6 +546,7 @@
       if (projectTabName == 'featured') {
         // render nothing until there are featured projects
         renderFeaturedProjects();
+        //window.getCozmoFeaturedProjectList(callbackName);
       } else {
         var isVertical = _getIsVertical();
         window.getCozmoUserAndSampleProjectLists(callbackName, isVertical);

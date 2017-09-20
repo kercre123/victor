@@ -47,6 +47,7 @@ namespace CodeLab {
     private RequestToOpenProjectOnWorkspace _RequestToOpenProjectOnWorkspace;
     private string _ProjectUUIDToOpen;
     private List<CodeLabSampleProject> _CodeLabSampleProjects;
+    private List<CodeLabSampleProject> _CodeLabFeaturedProjects;
 
     // SessionState tracks the entirety of the current CodeLab Game session, including any currently running program.
     private SessionState _SessionState = new SessionState();
@@ -197,26 +198,34 @@ namespace CodeLab {
       // We don't want this behavior for CodeLab.
       CurrentRobot.SetEnableFreeplayLightStates(true);
 
-      // Load sample projects json from file and cache in list
-      string pathToFile = "/Scratch/sample-projects.json";
-#if UNITY_EDITOR || UNITY_IOS
-      string path = Application.streamingAssetsPath + pathToFile;
-#elif UNITY_ANDROID
-      string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
-#endif
-
 #if !UNITY_EDITOR
 #if UNITY_ANDROID
       _CozmoAndroidActivity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
 #endif
 #endif
 
-      string json = File.ReadAllText(path);
-      _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
+      // Cache sample and featured projects locally.
+      _CodeLabSampleProjects = this.LoadProjects("sample-projects.json");
+      _CodeLabFeaturedProjects = this.LoadProjects("featured-projects.json");
 
       RobotEngineManager.Instance.AddCallback<GameToGame>(HandleGameToGame);
 
       LoadWebView();
+    }
+
+    // Return projects as list. Currently only used for sample and featured projects.
+    private List<CodeLabSampleProject> LoadProjects(string projectFile) {
+      string scratchFolder = "/Scratch/";
+#if UNITY_EDITOR || UNITY_IOS
+      string streamingAssetsPath = Application.streamingAssetsPath + scratchFolder;
+#elif UNITY_ANDROID
+      string streamingAssetsPath = PlatformUtil.GetResourcesBaseFolder() + scratchFolder;
+#endif
+
+      // Load projects json from file and return list
+      string path = streamingAssetsPath + projectFile;
+      string json = File.ReadAllText(path);
+      return JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
     }
 
     private void HandleGameToGameContents(string messageType, string payload) {
@@ -792,6 +801,31 @@ namespace CodeLab {
       this.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
     }
 
+    private void OnGetCozmoFeaturedProjectList(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnGetCozmoFeaturedProjectList", "");
+
+      // Provide JavaScript with a list of featured projects as JSON, sorted by DisplayOrder.
+      // Don't include the ProjectJSON as it isn't necessary to send along with this list.
+      string jsCallback = scratchRequest.argString;
+
+      _CodeLabFeaturedProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
+      List<CodeLabSampleProject> copyCodeLabFeaturedProjectList = new List<CodeLabSampleProject>();
+      for (int i = 0; i < _CodeLabFeaturedProjects.Count; i++) {
+        var project = _CodeLabFeaturedProjects[i];
+
+        CodeLabSampleProject proj = new CodeLabSampleProject();
+        proj.ProjectUUID = project.ProjectUUID;
+        proj.ProjectIconName = project.ProjectIconName;
+        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        copyCodeLabFeaturedProjectList.Add(proj);
+      }
+
+      string featuredProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabFeaturedProjectList);
+
+      // Call jsCallback with list of serialized Code Lab featured projects
+      this.EvaluateJS(jsCallback + "('" + featuredProjectsAsJSON + "');");
+    }
+
     private void OnSetChallengeBookmark(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnSetChallengeBookmark", "");
       _SessionState.OnChallengesSetSlideNumber(scratchRequest.argUInt);
@@ -950,6 +984,9 @@ namespace CodeLab {
         return true;
       case "getCozmoUserAndSampleProjectLists":
         OnGetCozmoUserAndSampleProjectLists(scratchRequest, scratchRequest.argBool);
+        return true;
+      case "getCozmoFeaturedProjectList":
+        OnGetCozmoFeaturedProjectList(scratchRequest);
         return true;
       case "cozmoSetChallengeBookmark":
         OnSetChallengeBookmark(scratchRequest);

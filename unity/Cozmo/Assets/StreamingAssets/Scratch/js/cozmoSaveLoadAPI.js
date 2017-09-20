@@ -3,8 +3,14 @@
     // cozmoSaveLoadAPI.js is a list of calls for the save/load UI page and should not contain any references to
     // code in Scratch/lib (i.e., Blockly, scratch-blocks or scratch-vm code).
 
+    // Retrieve one list of projects: featured projects that are all vertical, sorted by the order
+    // it should be displayed.
+    //
+    // Callback method has one parameters, a JSON array of the featured projects.
+    // The callback has only been tested with a method on window.
+    // Example: window.myCallback(featuredProjectList)
     window.getCozmoFeaturedProjectList = function(callback) {
-        // TODO Implement
+        window.Unity.call({requestId: -1, command: "getCozmoFeaturedProjectList", argString: callback});
     }
 
     // For horizontal or vertical: retrieve two lists of projects: user projects and sample projects. Each is sorted by the order
