@@ -107,8 +107,8 @@ Result AIComponent::Update()
 
   _freeplayDataTracker->Update();
   
-  CheckForSuddenObstacle();
-   
+//  CheckForSuddenObstacle();
+  
   return RESULT_OK;
 }
 
