@@ -79,6 +79,11 @@ void Analog::stop(void) {
   while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
 }
 
+void Analog::transmit(BodyToHead* data) {
+  data->battery.battery = values[ADC_VBAT];
+  data->battery.charger = values[ADC_VEXT];
+}
+
 #ifndef BOOTLOADER
 #include "lights.h"
 
@@ -119,10 +124,5 @@ void Analog::tick(void) {
       hold_count = 0;
     }
   }
-}
-
-void Analog::transmit(BodyToHead* data) {
-  data->battery.battery = values[ADC_VBAT];
-  data->battery.charger = values[ADC_VEXT];
 }
 #endif

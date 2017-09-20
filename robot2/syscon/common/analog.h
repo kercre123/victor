@@ -14,13 +14,10 @@ namespace Analog {
   extern volatile uint16_t values[ADC_CHANNELS];
   extern bool button_pressed;
 
-  #ifndef BOOTLOADER
-  void transmit(BodyToHead* data);
-  #endif
-
   void init(void);
   void tick(void);
   void stop(void);
+  void transmit(BodyToHead* data);
 };
 
 #endif
