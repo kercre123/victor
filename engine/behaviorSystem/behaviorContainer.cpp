@@ -65,6 +65,7 @@
 #include "engine/behaviorSystem/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/behaviorSystem/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "engine/behaviorSystem/behaviors/freeplay/userInteractive/behaviorBouncer.h"
+#include "engine/behaviorSystem/behaviors/freeplay/userInteractive/behaviorDistractedByMotion.h"
 #include "engine/behaviorSystem/behaviors/freeplay/userInteractive/behaviorFistBump.h"
 #include "engine/behaviorSystem/behaviors/freeplay/userInteractive/behaviorGuardDog.h"
 #include "engine/behaviorSystem/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
@@ -523,6 +524,10 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     {
       newBehavior = IBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(robot, config));
       break;
+    }
+    case BehaviorClass::DistractedByMotion:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorDistractedByMotion(robot, config));
     }
     
     ////////////
