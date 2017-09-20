@@ -621,8 +621,8 @@ MonoBehaviour:
   _SettingsScrollRect: {fileID: 114568398700008192}
   _PanelPrefabs:
   - {fileID: 11475564, guid: f061ad6a23b0b44b3a9496a4a2dff331, type: 2}
-  - {fileID: 11443554, guid: b9d3485eeb34b4b7daec3475859c1744, type: 2}
   - {fileID: 11473112, guid: 53225bebd1ccb4ca7a62299282e1d238, type: 2}
+  - {fileID: 11443554, guid: b9d3485eeb34b4b7daec3475859c1744, type: 2}
   - {fileID: 11470202, guid: 2e1d60ebe723b44f28a6eb0be4ccb407, type: 2}
   - {fileID: 11443554, guid: ad591d3147f4846f6b649a1de5b699ae, type: 2}
   - {fileID: 11443554, guid: e6ccb6ce9d67e47ff8bab13576debb66, type: 2}
