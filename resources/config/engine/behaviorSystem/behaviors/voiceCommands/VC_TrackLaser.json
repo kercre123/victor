@@ -2,6 +2,7 @@
   "behaviorClass": "TrackLaser",
   "behaviorID": "VC_TrackLaser",
   "displayNameKey":"behavior.VC_TrackLaser",
+  "needsActionID": "Laser_Sparked",
 
   "alwaysStreamline": true,
   "skipGetOutAnim": true,

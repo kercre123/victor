@@ -322,6 +322,7 @@ void BehaviorTrackLaser::StopInternal(Robot& robot)
 {
   if(_shouldSendTrackingObjectiveAchieved){
     BehaviorObjectiveAchieved(BehaviorObjective::LaserTracked);
+    NeedActionCompleted();
   }
   
   Cleanup(robot);
@@ -617,7 +618,6 @@ void BehaviorTrackLaser::TransitionToPounce(Robot& robot)
   
   StartActing(pounceAction, [this,&robot]() {
     BehaviorObjectiveAchieved(BehaviorObjective::LaserPounced);
-    NeedActionCompleted();
     TransitionToBringingHeadDown(robot);
   });
 }
