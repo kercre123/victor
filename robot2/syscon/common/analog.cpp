@@ -3,6 +3,8 @@
 #include "common.h"
 #include "hardware.h"
 
+#include "messages.h"
+
 #include "analog.h"
 #include "power.h"
 #include "vectors.h"
@@ -58,10 +60,10 @@ void Analog::init(void) {
   DMA1_Channel1->CMAR = (uint32_t)&values[0];
   DMA1_Channel1->CNDTR = ADC_CHANNELS;
   DMA1_Channel1->CCR |= 0
-                     | DMA_CCR_MINC 
-                     | DMA_CCR_MSIZE_0 
+                     | DMA_CCR_MINC
+                     | DMA_CCR_MSIZE_0
                      | DMA_CCR_PSIZE_0
-                     | DMA_CCR_CIRC; 
+                     | DMA_CCR_CIRC;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 }
 
@@ -75,6 +77,11 @@ void Analog::stop(void) {
 
   ADC1->CR |= ADC_CR_ADDIS;
   while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
+}
+
+void Analog::transmit(BodyToHead* data) {
+  data->battery.battery = values[ADC_VBAT];
+  data->battery.charger = values[ADC_VEXT];
 }
 
 #ifndef BOOTLOADER

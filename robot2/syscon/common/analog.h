@@ -1,6 +1,8 @@
 #ifndef __ADC_H
 #define __ADC_H
 
+#include "messages.h"
+
 enum ADC_CHANNEL {
   ADC_VEXT,
   ADC_VBAT,
@@ -15,6 +17,7 @@ namespace Analog {
   void init(void);
   void tick(void);
   void stop(void);
+  void transmit(BodyToHead* data);
 };
 
 #endif

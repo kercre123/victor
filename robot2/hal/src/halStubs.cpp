@@ -425,7 +425,7 @@ namespace Anki {
 
     f32 HAL::BatteryGetVoltage()
     {
-      return bodyData_->battery.batteryVolts;
+      return bodyData_->battery.battery;
     }
 
     bool HAL::BatteryIsCharging()

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const Body = require("./board");
 
-const body = new Body("/dev/tty.usbserial-A504B5CN");
+const body = new Body(process.argv[2]);
 
 function* send() {
 	// Get current version
@@ -42,9 +42,6 @@ flow.next();
 
 body.on('data', (info) => {
 	switch (info.id) {
-	case Body.PAYLOAD_DATA_FRAME:
-		body.send(Body.PAYLOAD_DATA_FRAME, Buffer.alloc(0x20));
-		return ;
 	case Body.PAYLOAD_ACK:
 		{
 			const value = info.data.readInt32LE(0);

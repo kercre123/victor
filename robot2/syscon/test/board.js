@@ -45,12 +45,13 @@ class Body extends EventEmitter {
 			// Find sync header
 			do {
 				if (this.payload.length - offset < 8) return ;
-				if (this.payload.readUInt32LE(offset) == 0x483242AA) break ;
+				if (this.payload.readUInt32LE(offset) == 0x423248AA) break ;
 				offset++;
 			} while (true);
 
 			// Trim Payload
 			this.payload = this.payload.slice(offset);
+			if (offset) console.log(`Discarded ${offset} bytes`);
 
 			// Payload settings
 			const payloadID = this.payload.readUInt16LE(4);
