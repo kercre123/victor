@@ -15,9 +15,9 @@
     [
       { "channel": "Unnamed" ,             "enabled": false }, // Unnamed is currently the default channel
       { "channel": "CoreTech",             "enabled": false },
-      { "channel": "Unfiltered",           "enabled": false  }, // Things that are always required (like callstack on assert)
-      { "channel": "CpuProfiler",          "enabled": false  },
-      { "channel": "Keyboard",             "enabled": false },
+      { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
+      { "channel": "CpuProfiler",          "enabled": true  },
+      { "channel": "Keyboard",             "enabled": true },
       { "channel": "Network",              "enabled": false },
       { "channel": "Profiler",             "enabled": false },
       { "channel": "Unity"   ,             "enabled": false },
@@ -25,7 +25,7 @@
       { "channel": "VisionSystem",         "enabled": false },
       { "channel": "UnlockComponent",      "enabled": false },
       { "channel": "Actions",              "enabled": false },
-      { "channel": "Behaviors",            "enabled": true },
+      { "channel": "Behaviors",            "enabled": false },
       { "channel": "BehaviorHelpers",      "enabled": false },
       { "channel": "BuildPyramid",         "enabled": false },
       { "channel": "AIWhiteboard",         "enabled": false },

@@ -1,16 +1,8 @@
-<<<<<<< HEAD
-#VRML_SIM V8.5 utf8
-CozmoWorldInfo {
-}
-Viewpoint {
-  orientation -0.009928407 0.010001097 0.9999007 4.70531
-=======
 #VRML_SIM V8.2.1 utf8
 CozmoWorldInfo {
 }
 Viewpoint {
   orientation -0.00992841 0.0100011 0.999901 4.70531
->>>>>>> parent of 5f90bdbdfe... Skeleton implementation of DistractedByMotionBehavior
   position 0.00369197 -0.0994576 1.97111
 }
 Background {
@@ -39,10 +31,6 @@ CozmoMat {
 LightCube {
   translation 0.0884345 0.0833803 0.022
   rotation 0 0 1 0.523599
-<<<<<<< HEAD
-  filterLogs TRUE
-=======
->>>>>>> parent of 5f90bdbdfe... Skeleton implementation of DistractedByMotionBehavior
 }
 LightCube {
   translation 0.129117 -0.00670031 0.0219929
@@ -61,10 +49,6 @@ DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
 }
 WebotsKeyboardController {
-<<<<<<< HEAD
-  filterLogs TRUE
-=======
->>>>>>> parent of 5f90bdbdfe... Skeleton implementation of DistractedByMotionBehavior
   translation 0.288125 0.0208444 0.08
 }
 CozmoVizDisplay {
