@@ -283,7 +283,6 @@ enum uint_8 ExecutableBehaviorType {
   EnrollFace,
   FindFaces,
   FistBump,
-  DistractedByMotion,
   KnockOverCubes,
   LiftLoadTest,
   LookAroundInPlace,
