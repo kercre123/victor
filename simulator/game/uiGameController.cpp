@@ -1593,15 +1593,6 @@ namespace Anki {
       message.Set_LogRawCliffData(m);
       SendMessage(message);
     }
-    
-    void UiGameController::SendLogProxDataRequest(const u32 length_ms)
-    {
-      ExternalInterface::LogRawProxData m;
-      m.length_ms = length_ms;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_LogRawProxData(m);
-      SendMessage(message);
-    }
 
     void UiGameController::SendAnimation(const char* animName, u32 numLoops, bool throttleMessages)
     {

@@ -345,7 +345,6 @@ namespace Anki {
         printf("           Cancel current action:  Alt+q\n");
         printf("         Update controller gains:  k\n");
         printf("        Request cliff sensor log:  c\n");
-        printf("         Request prox sensor log:  Shift+d\n");
         printf("                 Request IMU log:  o\n");
         printf("           Toggle face detection:  f\n");
         printf(" Assign userName to current face:  Shift+f\n");
@@ -905,8 +904,7 @@ namespace Anki {
                   ExternalInterface::ForceDelocalizeRobot delocMsg;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
                 } else if(shiftKeyPressed) {
-                  // Shift+D = Log raw prox data
-                  SendLogProxDataRequest(2000);
+                  // FREE KEY COMBO!!!
                 } else if(altKeyPressed) {
 
                   // FREE KEY COMBO!!!

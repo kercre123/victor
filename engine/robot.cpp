@@ -51,7 +51,6 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "engine/components/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
@@ -194,7 +193,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _dockingComponent(new DockingComponent(*this))
   , _carryingComponent(new CarryingComponent(*this))
   , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
-  , _proxSensorComponent(std::make_unique<ProxSensorComponent>(*this))
   , _touchSensorComponent(std::make_unique<TouchSensorComponent>(*this))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
@@ -835,9 +833,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
 
-  // Update prox sensor component
-  _proxSensorComponent->Update(msg);
-  
   _touchSensorComponent->Update(msg);
 
   // update current path segment in the path component
@@ -1097,9 +1092,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     }
     
   }
-  
-  // check for new obstacles from prox sensor
-  _blockWorld->UpdateProxObstaclePoses();
   
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wdeprecated-declarations" 
@@ -3220,7 +3212,6 @@ RobotState Robot::GetDefaultRobotState()
                          5.f, //float batteryVoltage,
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
-                         ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
                          -1); //int8_t currPathSegment
   

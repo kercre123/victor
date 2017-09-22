@@ -40,8 +40,6 @@ namespace Anki {
       
       u16 GetRawCliffValue(unsigned int ind = 0);
 
-      u16 GetRawProxValue();
-
     } // namespace ProxSensors
   } // namespace Cozmo
 } // namespace Anki
