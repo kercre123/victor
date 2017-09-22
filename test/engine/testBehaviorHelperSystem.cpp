@@ -82,7 +82,7 @@ public:
     return RESULT_OK;
   }
 
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {
 
     _updateCount++;
 
@@ -113,7 +113,7 @@ public:
     switch(_updateResult) {
       case UpdateResult::UseBaseClass: {
         printf("TestBehaviorWithHelpers.Update UseBaseClass: IsActing:%d\n", IsActing());
-        return IBehavior::UpdateInternal(behaviorExternalInterface);
+        return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
       }
       case UpdateResult::Running: {
         printf("TestBehaviorWithHelpers.Update Running\n");

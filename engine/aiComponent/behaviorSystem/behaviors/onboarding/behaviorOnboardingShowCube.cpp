@@ -225,7 +225,7 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& eve
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This behavior is killed by unity switching to none
-IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( !IsActing() && !IsSequenceComplete() )
   {

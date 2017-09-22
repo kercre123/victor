@@ -149,7 +149,7 @@ void BehaviorCubeLiftWorkout::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -162,7 +162,7 @@ IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(BehaviorExternalInterf
     StopOnNextActionComplete();
   }
 
-  return super::UpdateInternal(behaviorExternalInterface);
+  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

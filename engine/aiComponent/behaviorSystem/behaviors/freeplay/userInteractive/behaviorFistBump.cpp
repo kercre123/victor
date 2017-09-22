@@ -132,7 +132,7 @@ Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorFistBump::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
@@ -265,7 +265,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(BehaviorExternalInterface& be
         _waitingAccelX_mmps2 = robot.GetHeadAccelData().x;
         _state = State::WaitingForBump;
         if (now - _waitStartTime_s > kMaxTimeForMotorSettling_s) {
-          PRINT_NAMED_WARNING("BehaviorFistBump.UpdateInternal.MotorSettleTimeTooLong", "%f", now - _waitStartTime_s);
+          PRINT_NAMED_WARNING("BehaviorFistBump.UpdateInternal_Legacy.MotorSettleTimeTooLong", "%f", now - _waitStartTime_s);
         }
       }
       break;

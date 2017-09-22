@@ -97,7 +97,7 @@ protected:
   void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   // Override b/c default resume internal uses invalid pre-req data
   virtual Result ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
 

@@ -130,15 +130,15 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    IBehavior::Status BehaviorLiftLoadTest::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+    IBehavior::Status BehaviorLiftLoadTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
     {
       if(_numLiftRaises == kNumLiftRaises || _abortTest)
       {
         if (_numLiftRaises == kNumLiftRaises) {
-          PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal.TestComplete", "%d", _numLiftRaises);
+          PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal_Legacy.TestComplete", "%d", _numLiftRaises);
           Write("\nTest Completed Successfully");
         } else {
-          PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal.TestAborted", "%d", _numLiftRaises);
+          PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal_Legacy.TestAborted", "%d", _numLiftRaises);
           Write("\nTest Aborted");
         }
         

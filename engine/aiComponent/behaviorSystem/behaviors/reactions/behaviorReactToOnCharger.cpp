@@ -127,7 +127,7 @@ void BehaviorReactToOnCharger::OnBehaviorDeactivated(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _onChargerCanceled )
   {

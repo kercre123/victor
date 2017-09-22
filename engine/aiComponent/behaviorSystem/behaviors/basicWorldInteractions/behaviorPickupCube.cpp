@@ -86,7 +86,7 @@ Result BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorPickUpCube::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorPickUpCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // If the block we're going to pickup ever becomes part of an illegal configuration
   // immediately stop the behavior
@@ -98,7 +98,7 @@ IBehavior::Status BehaviorPickUpCube::UpdateInternal(BehaviorExternalInterface& 
     }
   }
   
-  return super::UpdateInternal(behaviorExternalInterface);
+  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
  
   

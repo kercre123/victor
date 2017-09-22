@@ -214,7 +214,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    IBehavior::Status BehaviorDockingTestSimple::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+    IBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
     {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
@@ -240,7 +240,7 @@ namespace Anki {
       }
       
       DEV_ASSERT(robot.IsPoseInWorldOrigin(robot.GetPose()),
-                 "BehaviorDockingTestSimple.UpdateInternal.BadRobotPoseOrigin");
+                 "BehaviorDockingTestSimple.UpdateInternal_Legacy.BadRobotPoseOrigin");
       
       switch(_currentState)
       {

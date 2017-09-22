@@ -159,7 +159,7 @@ Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorFeedingEat::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Feeding should be considered "complete" so long as the animation has reached
   // the point where all light has been drained from the cube.  If the behavior
@@ -187,7 +187,7 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(BehaviorExternalInterface& 
     TransitionToReactingToInterruption(behaviorExternalInterface);
   }
   
-  return base::UpdateInternal(behaviorExternalInterface);
+  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

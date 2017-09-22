@@ -513,19 +513,19 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorBouncer::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  LOG_TRACE("BehaviorBouncer.UpdateInternal", "Update behavior with state=%s", EnumToString(_state));
+  LOG_TRACE("BehaviorBouncer.UpdateIntern_Legacy", "Update behavior with state=%s", EnumToString(_state));
 
   // Check elapsed time
   if (GetRunningDuration() > kBouncerTimeout_sec) {
-    LOG_WARNING("BehaviorBouncer.UpdateInternal", "Behavior has timed out");
+    LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Behavior has timed out");
     return BehaviorStatus::Complete;
   }
   
   // Validate target state
   if (!_target.IsValid()) {
-    LOG_WARNING("BehaviorBouncer.UpdateInternal", "Target face (%s) is not valid", _target.GetDebugStr().c_str());
+    LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) is not valid", _target.GetDebugStr().c_str());
     return BehaviorStatus::Complete;
   }
   
@@ -533,7 +533,7 @@ BehaviorStatus BehaviorBouncer::UpdateInternal(BehaviorExternalInterface& behavi
   const auto & faceWorld = behaviorExternalInterface.GetFaceWorld();
   const auto * face = faceWorld.GetFace(_target);
   if (nullptr == face) {
-    LOG_WARNING("BehaviorBouncer.UpdateInternal", "Target face (%s) has disappeared", _target.GetDebugStr().c_str());
+    LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) has disappeared", _target.GetDebugStr().c_str());
     return BehaviorStatus::Complete;
   }
   
@@ -544,7 +544,7 @@ BehaviorStatus BehaviorBouncer::UpdateInternal(BehaviorExternalInterface& behavi
   TimeStamp_t lastObserved_ms = face->GetTimeStamp();
   TimeStamp_t lastImage_ms = robot.GetLastImageTimeStamp();
   if (lastImage_ms - lastObserved_ms > Util::SecToMilliSec(kBouncerMissingFace_sec)) {
-    LOG_WARNING("BehaviorBouncer.UpdateInternal", "Target face (%s) has gone stale",
+    LOG_WARNING("BehaviorBouncer.UpdateIntern_Legacy", "Target face (%s) has gone stale",
                 _target.GetDebugStr().c_str());
     return BehaviorStatus::Complete;
   }

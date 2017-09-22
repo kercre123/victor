@@ -87,7 +87,7 @@ Result BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behav
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorDriveToFace::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorDriveToFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_currentState == State::TrackFace &&
@@ -96,7 +96,7 @@ IBehavior::Status BehaviorDriveToFace::UpdateInternal(BehaviorExternalInterface&
     return Status::Complete;
   }
   
-  return base::UpdateInternal(behaviorExternalInterface);
+  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

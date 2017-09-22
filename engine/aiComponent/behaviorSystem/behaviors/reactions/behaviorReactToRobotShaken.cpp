@@ -100,7 +100,7 @@ Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
 
   // Master state machine:

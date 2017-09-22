@@ -81,7 +81,7 @@ Result BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behavio
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorRollBlock::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr && _behaviorState == State::RollingBlock){
@@ -114,7 +114,7 @@ IBehavior::Status BehaviorRollBlock::UpdateInternal(BehaviorExternalInterface& b
     }
   }
   
-  return base::UpdateInternal(behaviorExternalInterface);
+  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

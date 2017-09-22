@@ -57,7 +57,7 @@ Result BehaviorSearchForFace::OnBehaviorActivated(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorSearchForFace::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorSearchForFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if((_behaviorState == State::SearchingForFace) &&
      (behaviorExternalInterface.GetFaceWorld().HasAnyFaces())){
@@ -65,7 +65,7 @@ IBehavior::Status BehaviorSearchForFace::UpdateInternal(BehaviorExternalInterfac
     TransitionToFoundFace(behaviorExternalInterface);
   }
   
-  return base::UpdateInternal(behaviorExternalInterface);
+  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

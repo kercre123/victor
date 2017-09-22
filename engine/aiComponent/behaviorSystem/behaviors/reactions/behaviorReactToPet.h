@@ -42,7 +42,7 @@ protected:
   // IReactionaryBehavior
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   virtual void AddListener(IReactToPetListener* listener) override;

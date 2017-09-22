@@ -62,7 +62,7 @@ protected:
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   // update internal: to handle discarding more goals while running
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic Helpers

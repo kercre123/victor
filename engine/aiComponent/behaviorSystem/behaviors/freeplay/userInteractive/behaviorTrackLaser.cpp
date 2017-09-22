@@ -225,7 +225,7 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorTrackLaser::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(_state)
   {

@@ -160,7 +160,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToPickup::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const bool isActing = IsActing();
   if( !isActing && behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::InAir ) {

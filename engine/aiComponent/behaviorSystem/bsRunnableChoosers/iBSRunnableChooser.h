@@ -66,9 +66,9 @@ protected:
   //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void EnteredActivatableScopeInternal() override {};
-  virtual BehaviorStatus UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override { return BehaviorStatus::Complete;};
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual bool WantsToBeActivatedInternal() override { return false;};
-  virtual Result OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {OnSelected(); return RESULT_OK;};
+  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {OnSelected();};
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {OnDeselected();};
   virtual void LeftActivatableScopeInternal() override {};
   

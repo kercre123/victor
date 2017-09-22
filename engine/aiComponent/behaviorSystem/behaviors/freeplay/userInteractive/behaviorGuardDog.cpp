@@ -204,7 +204,7 @@ Result BehaviorGuardDog::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Check to see if all cubes were flipped or moved:
   if (_monitoringCubeMotion) {
@@ -288,7 +288,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(BehaviorExternalInterf
       StartActing(retryAction, [this](ActionResult res)
                                {
                                  if (res != ActionResult::SUCCESS) {
-                                   PRINT_NAMED_WARNING("BehaviorGuardDog.UpdateInternal.DriveToStartingPoseFailed",
+                                   PRINT_NAMED_WARNING("BehaviorGuardDog.UpdateInternal_Legacy.DriveToStartingPoseFailed",
                                                        "Failed to drive to starting pose (result = %s)! Continuing behavior from current pose.",
                                                        EnumToString(res));
                                  }
@@ -388,7 +388,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(BehaviorExternalInterf
       //  purely for aesthetics and we do not want failures to prevent the animations afterward from
       //  being played.
       const ObservableObject* closestBlock = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), *_connectedCubesOnlyFilter);
-      if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal.Timeout.NoClosestBlock", "No closest block returned by blockworld!")) {
+      if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal_Legacy.Timeout.NoClosestBlock", "No closest block returned by blockworld!")) {
         action->AddAction(new TurnTowardsPoseAction(robot, closestBlock->GetPose()), true);
       }
 
@@ -435,7 +435,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(BehaviorExternalInterf
       //  purely for aesthetics and we do not want failures to prevent the animations afterward from
       //  being played.
       const ObservableObject* closestBlock = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), *_connectedCubesOnlyFilter);
-      if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal.PlayerSuccess.NoClosestBlock", "No closest block returned by blockworld!")) {
+      if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal_Legacy.PlayerSuccess.NoClosestBlock", "No closest block returned by blockworld!")) {
         action->AddAction(new TurnTowardsPoseAction(robot, closestBlock->GetPose()), true);
       }
 

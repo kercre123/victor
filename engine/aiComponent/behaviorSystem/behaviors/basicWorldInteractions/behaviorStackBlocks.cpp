@@ -144,7 +144,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorStackBlocks::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto topBlockIntention  = ObjectInteractionIntention::StackTopObjectAxisCheck;
   auto bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectAxisCheck;
@@ -211,7 +211,7 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(BehaviorExternalInterface&
   }
   
 
-  IBehavior::Status ret = IBehavior::UpdateInternal(behaviorExternalInterface);
+  IBehavior::Status ret = IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
   
   return ret;
 }

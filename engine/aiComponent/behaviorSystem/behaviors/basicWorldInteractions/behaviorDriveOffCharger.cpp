@@ -139,7 +139,7 @@ void BehaviorDriveOffCharger::OnBehaviorDeactivated(BehaviorExternalInterface& b
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

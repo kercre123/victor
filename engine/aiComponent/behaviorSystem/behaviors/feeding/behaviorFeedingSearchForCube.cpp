@@ -64,7 +64,7 @@ Result BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if((_currentState == State::FirstSearchForCube) ||
      (_currentState == State::SecondSearchForCube)){
@@ -79,7 +79,7 @@ IBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal(BehaviorExternalI
     }
   }
   
-  return Base::UpdateInternal(behaviorExternalInterface);
+  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

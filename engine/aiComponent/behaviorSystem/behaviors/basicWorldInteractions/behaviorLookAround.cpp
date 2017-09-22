@@ -348,7 +348,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorLookAround::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
 
 #if SAFE_ZONE_VIZ

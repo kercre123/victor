@@ -179,7 +179,7 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorPeekABoo::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   UpdateTimestampSets(behaviorExternalInterface);
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -202,7 +202,7 @@ IBehavior::Status BehaviorPeekABoo::UpdateInternal(BehaviorExternalInterface& be
     }
   }
   
-  return super::UpdateInternal(behaviorExternalInterface);
+  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

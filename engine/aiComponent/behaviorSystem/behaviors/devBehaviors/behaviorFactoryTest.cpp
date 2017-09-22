@@ -702,7 +702,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   }
   
   
-  IBehavior::Status BehaviorFactoryTest::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+  IBehavior::Status BehaviorFactoryTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
   {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
@@ -711,7 +711,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
     
     if(!ENABLE_FACTORY_TEST)
     {
-      PRINT_NAMED_ERROR("BehaviorFactoryTest.UpdateInternal.NotEnabled",
+      PRINT_NAMED_ERROR("BehaviorFactoryTest.UpdateInternal_Legacy.NotEnabled",
                         "Factory test is not enabled");
       return Status::Complete;
     }

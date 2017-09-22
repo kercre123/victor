@@ -278,13 +278,13 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorEnrollFace::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
   if((State::LookingForFace == _state || State::Enrolling == _state) && !IsEnrollmentRequested())
   {
-    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateInternal.EnrollmentCancelled", "In state: %s",
+    PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.UpdateInternal_Legacy.EnrollmentCancelled", "In state: %s",
                   _state == State::LookingForFace ? "LookingForFace" : "Enrolling");
     return Status::Complete;
   }
@@ -379,7 +379,7 @@ IBehavior::Status BehaviorEnrollFace::UpdateInternal(BehaviorExternalInterface& 
       
   } // switch(_state) 
   
-  return IBehavior::UpdateInternal(behaviorExternalInterface);
+  return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

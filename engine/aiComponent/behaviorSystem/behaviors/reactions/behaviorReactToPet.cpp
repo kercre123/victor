@@ -91,7 +91,7 @@ Result BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behavi
 // Called each tick while behavior is active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToPet::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   //
   // If target disappears during iteration, end iteration immediately.
@@ -204,7 +204,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   AnimationTrigger trigger = GetAnimationTrigger(petType);
   
   // Tracking animations do not end by themselves.
-  // Choose a random duration and rely on UpdateInternal() to end the action.
+  // Choose a random duration and rely on UpdateInternal_WhileRunning() to end the action.
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const float randTime_s = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(kReactToPetMinTime_s, kReactToPetMaxTime_s));
   const float endTime_s = currTime_s + randTime_s;

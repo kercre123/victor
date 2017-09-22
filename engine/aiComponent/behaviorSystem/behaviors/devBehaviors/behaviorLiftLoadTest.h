@@ -51,7 +51,7 @@ namespace Anki {
       
         virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       
-        virtual IBehavior::Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual IBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
       
         virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
         

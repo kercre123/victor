@@ -396,7 +396,7 @@ void IBehavior::SubscribeToTags(std::set<RobotInterface::RobotToEngineTag> &&tag
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result IBehavior::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+Result IBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Init").c_str(), "Starting...");
   
@@ -530,7 +530,7 @@ IBehavior::Status IBehavior::Update(BehaviorExternalInterface& behaviorExternalI
   }
   
   DEV_ASSERT(IsRunning(), "IBehavior::UpdateNotRunning");  
-  return UpdateInternal(behaviorExternalInterface);
+  return UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   
@@ -717,9 +717,23 @@ Util::RandomGenerator& IBehavior::GetRNG() const {
   return _behaviorExternalInterface->GetRNG();
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status IBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  if(!USE_BSM){
+    DEV_ASSERT("IBehavior.UpdateInternal.NotUsingBSM",
+               "This function is BSM specific - please  don't call it if you're using the behavior manager");
+  }
+  
+  if(IsRunning()){
+    UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior::Status IBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( IsActing() ) {  
     return Status::Running;
@@ -750,7 +764,7 @@ Result IBehavior::ResumeInternal(BehaviorExternalInterface& behaviorExternalInte
   
   if ( IsRunnable(behaviorExternalInterface) ) {
     _isRunning = true;
-    resumeResult = OnActivatedInternal(behaviorExternalInterface);
+    resumeResult = OnActivatedInternal_Legacy(behaviorExternalInterface);
   }
   return resumeResult;
 }

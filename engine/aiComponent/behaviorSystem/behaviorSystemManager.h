@@ -32,9 +32,9 @@ class IActivity;
 class Robot;
 
 struct BehaviorRunningInfo;
-  
+
 namespace Audio {
-class BehaviorAudioClient;
+  class BehaviorAudioClient;
 }
 
 class BehaviorSystemManager
@@ -46,7 +46,7 @@ public:
   
   BehaviorSystemManager();
   ~BehaviorSystemManager();
-
+  
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
                            const Json::Value& behaviorSystemConfig);
@@ -54,45 +54,30 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+  
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
-  Result Update(BehaviorExternalInterface& behaviorExternalInterface);
+  void Update(BehaviorExternalInterface& behaviorExternalInterface);
   
   // returns nullptr if there is no current behavior
   const IBehaviorPtr GetCurrentBehavior() const;
-
+  
   IBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
   IBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
-
+  
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
 private:
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Methods
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-  bool SwitchToBehaviorBase(BehaviorExternalInterface& behaviorExternalInterface,
-                            BehaviorRunningInfo& nextBehaviorInfo);
+  void UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface);
   
-  // checks the chooser and switches to a new behavior if neccesary
-  void UpdateActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface);
-  
-  // stop the current behavior if it is non-null and running (i.e. Init was called)
-  void StopAndNullifyCurrentBehavior(BehaviorExternalInterface& behaviorExternalInterface);
-  
-  // Called at the Complete or Failed state of a behavior in order to switch to a new one
-  void FinishCurrentBehavior(BehaviorExternalInterface& behaviorExternalInterface, IBehaviorPtr activeBehavior);
-
-  void SendDasTransitionMessage(const BehaviorRunningInfo& oldBehaviorInfo,
-                                const BehaviorRunningInfo& newBehaviorInfo);
   
   // Functions which mediate direct access to running/resume info so that the robot
   // can respond appropriately to switching between reactions/resumes
   BehaviorRunningInfo& GetRunningInfo() const {assert(_runningInfo); return *_runningInfo;}
   void SetRunningInfo(const BehaviorRunningInfo& newInfo);
-
-
-    
+  
+  
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

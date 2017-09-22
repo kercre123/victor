@@ -261,7 +261,7 @@ bool IBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status IBehaviorRequestGame::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status IBehaviorRequestGame::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const ObservableObject* obj = GetClosestBlock(behaviorExternalInterface);
   if( obj != nullptr ) {

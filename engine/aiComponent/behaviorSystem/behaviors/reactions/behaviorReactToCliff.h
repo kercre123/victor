@@ -42,7 +42,7 @@ protected:
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
   using base = IBehavior;

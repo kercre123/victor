@@ -37,7 +37,7 @@ protected:
   virtual bool CarryingObjectHandledInternally() const override { return false; }
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual BehaviorStatus UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual BehaviorStatus UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:

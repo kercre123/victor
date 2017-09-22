@@ -153,7 +153,7 @@ Result BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -168,7 +168,7 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(BehaviorExternalInte
     }
   }
   
-  return BaseClass::UpdateInternal(behaviorExternalInterface);
+  return BaseClass::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

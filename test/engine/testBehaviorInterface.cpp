@@ -60,7 +60,7 @@ public:
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {
     _numUpdates++;
     return Status::Running;
   }
@@ -830,7 +830,7 @@ public:
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {
     _numUpdates++;
     return Status::Running;
   }

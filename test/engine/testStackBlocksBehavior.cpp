@@ -240,8 +240,9 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   stackBehavior->EnteredActivatableScope();
-  auto result = stackBehavior->OnActivated(*behaviorExternalInterface);
-  EXPECT_EQ(RESULT_OK, result);
+  //auto result =
+  stackBehavior->OnActivated(*behaviorExternalInterface);
+  //EXPECT_EQ(RESULT_OK, result);
 
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;

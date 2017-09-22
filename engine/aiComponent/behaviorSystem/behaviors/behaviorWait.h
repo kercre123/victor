@@ -48,7 +48,7 @@ protected:
     return Result::RESULT_OK;
   }
   
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override
   {
     return Status::Running;
   }

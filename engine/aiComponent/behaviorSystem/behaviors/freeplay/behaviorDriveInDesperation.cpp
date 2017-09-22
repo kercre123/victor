@@ -144,7 +144,7 @@ void BehaviorDriveInDesperation::OnBehaviorDeactivated(BehaviorExternalInterface
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorDriveInDesperation::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads ) {
     if( !_wasPickedUp ) {
@@ -162,7 +162,7 @@ IBehavior::Status BehaviorDriveInDesperation::UpdateInternal(BehaviorExternalInt
     TransitionToIdle(behaviorExternalInterface);
   }
 
-  return Base::UpdateInternal(behaviorExternalInterface);
+  return Base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

@@ -103,13 +103,13 @@ Result BehaviorRespondPossiblyRoll::OnBehaviorActivated(BehaviorExternalInterfac
 Result BehaviorRespondPossiblyRoll::ResumeInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _metadata.SetPlayedOnSideAnim();
-  return OnActivatedInternal(behaviorExternalInterface);
+  return OnActivatedInternal_Legacy(behaviorExternalInterface);
 }
 
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
   
@@ -121,7 +121,7 @@ IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal(BehaviorExternalIn
   }
   
   _upAxisChangedIDs.clear();
-  return IBehavior::UpdateInternal(behaviorExternalInterface);
+  return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

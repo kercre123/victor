@@ -104,7 +104,7 @@ Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& 
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   using namespace BlockConfigurations;
   const auto& pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
@@ -148,7 +148,7 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(BehaviorExternalInter
   
   _lastBasesCount = Util::numeric_cast<int>(pyramidBases.size());
   
-  IBehavior::Status ret = IBehavior::UpdateInternal(behaviorExternalInterface);
+  IBehavior::Status ret = IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
   return ret;
 }
   

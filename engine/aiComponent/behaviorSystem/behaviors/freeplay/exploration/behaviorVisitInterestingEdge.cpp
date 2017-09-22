@@ -255,7 +255,7 @@ void BehaviorVisitInterestingEdge::OnBehaviorDeactivated(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // return status
   BaseClass::Status ret = BaseClass::Status::Failure;
@@ -277,7 +277,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::Up
     case EOperatingState::DoneVisiting:
       // these states don't need special update since actions run in their place
       // delegate on parent for return value
-      ret = BaseClass::UpdateInternal(behaviorExternalInterface);
+      ret = BaseClass::UpdateInternal_WhileRunning(behaviorExternalInterface);
       break;
   }
   

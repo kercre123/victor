@@ -19,7 +19,7 @@
 #include <assert.h>
 #include <string>
 
-#define USE_BSM 0
+#define USE_BSM 1
 
 namespace Anki {
 namespace Cozmo {

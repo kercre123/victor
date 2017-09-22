@@ -105,7 +105,7 @@ Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterfa
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // object seen - cancel turn and play response
   if(_state == State::TurningToLastLocationOfBlock
@@ -120,7 +120,7 @@ IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal(BehaviorExternalI
     SET_STATE(ReactingToBlockPresence);
   }
   
-  return IBehavior::UpdateInternal(behaviorExternalInterface);
+  return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

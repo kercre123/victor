@@ -96,7 +96,7 @@ Result BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _shouldStart ) {
     _shouldStart = false;
@@ -104,7 +104,7 @@ IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal(BehaviorExternalInte
     BeginIteration(behaviorExternalInterface);
   }
 
-  return super::UpdateInternal(behaviorExternalInterface);
+  return super::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
   
   

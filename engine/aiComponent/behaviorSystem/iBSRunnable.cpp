@@ -70,7 +70,7 @@ void IBSRunnable::EnteredActivatableScope()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
+void IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
     DEV_ASSERT_MSG(_currentActivationState != ActivationState::OutOfScope,
@@ -90,7 +90,7 @@ BehaviorStatus IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalIn
     _lastTickOfUpdate = tickCount;
   }
   
-  return UpdateInternal(behaviorExternalInterface);
+  UpdateInternal(behaviorExternalInterface);
 }
 
 
@@ -110,7 +110,7 @@ bool IBSRunnable::WantsToBeActivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
     DEV_ASSERT_MSG(_currentActivationState == ActivationState::InScope,
@@ -129,7 +129,7 @@ Result IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInter
   }
   
   _currentActivationState = ActivationState::Activated;
-  return OnActivatedInternal(behaviorExternalInterface);
+  OnActivatedInternal(behaviorExternalInterface);
 }
 
 

@@ -129,14 +129,14 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     return Result::RESULT_OK;
   }
   
-  IBehavior::Status BehaviorFactoryCentroidExtractor::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+  IBehavior::Status BehaviorFactoryCentroidExtractor::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
   {
     if(_waitingForDots || !_liftCalibrated || !_headCalibrated)
     {
       return Status::Running;
     }
     
-    return IBehavior::UpdateInternal(behaviorExternalInterface);
+    return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
   }
   
   void BehaviorFactoryCentroidExtractor::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

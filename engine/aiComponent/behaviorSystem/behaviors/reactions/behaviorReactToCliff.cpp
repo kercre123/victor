@@ -263,13 +263,13 @@ void BehaviorReactToCliff::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToCliff::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+IBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_shouldStopDueToCharger){
     _shouldStopDueToCharger = false;
     return Status::Complete;
   }
-  return base::UpdateInternal(behaviorExternalInterface);
+  return base::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

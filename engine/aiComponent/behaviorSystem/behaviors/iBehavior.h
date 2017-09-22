@@ -126,7 +126,9 @@ public:
   // Will be called upon first switching to a behavior before calling update.
   // Calls protected virtual OnBehaviorActivated() method, which each derived class
   // should implement.
-  Result OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final
+           {OnActivatedInternal_Legacy(behaviorExternalInterface); }
+  Result OnActivatedInternal_Legacy(BehaviorExternalInterface& behaviorExternalInterface);
 
   // If this behavior is resuming after a short interruption (e.g. a cliff reaction), this Resume function
   // will be called instead. It calls ResumeInternal(), which defaults to simply calling OnBehaviorActivated, but can
@@ -242,7 +244,8 @@ protected:
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
   // return Running while IsActing, and Complete otherwise
-  virtual Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface);
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) { };
 
   Util::RandomGenerator& GetRNG() const;

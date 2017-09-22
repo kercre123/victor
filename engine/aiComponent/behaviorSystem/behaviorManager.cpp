@@ -359,8 +359,10 @@ Result BehaviorManager::InitConfiguration(BehaviorExternalInterface& behaviorExt
                                                               activityJson))));
     }
     
-    // start with selection that defaults to Wait
-    SetCurrentActivity(behaviorExternalInterface, HighLevelActivity::Selection, true);
+    if(!USE_BSM){
+      // start with selection that defaults to Wait
+      SetCurrentActivity(behaviorExternalInterface, HighLevelActivity::Selection, true);
+    }
     
     // Setup the UnlockID to game request behavior map for ui driven requests
     const BehaviorContainer& BC = _behaviorExternalInterface->GetBehaviorContainer();
@@ -435,20 +437,22 @@ void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behavio
                               ExternalInterface::MessageGameToEngineTag::ActivateHighLevelActivity,
                               [this, &behaviorExternalInterface] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                               {
-                                const HighLevelActivity activityType =
-                                event.GetData().Get_ActivateHighLevelActivity().activityType;
-                                SetCurrentActivity(behaviorExternalInterface, activityType);
-                                if((activityType == HighLevelActivity::Freeplay) &&
-                                   (_firstTimeFreeplayStarted < 0.0f)){
-                                  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-                                  _firstTimeFreeplayStarted = currTime_s;
-                                }
-                                
-                                // If we are leaving freeplay, ensure that sparks
-                                // have been cleared out
-                                if(activityType != HighLevelActivity::Freeplay){
-                                  _activeSpark = UnlockId::Count;
-                                  _lastRequestedSpark = UnlockId::Count;
+                                if(!USE_BSM){
+                                  const HighLevelActivity activityType =
+                                  event.GetData().Get_ActivateHighLevelActivity().activityType;
+                                  SetCurrentActivity(behaviorExternalInterface, activityType);
+                                  if((activityType == HighLevelActivity::Freeplay) &&
+                                     (_firstTimeFreeplayStarted < 0.0f)){
+                                    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                                    _firstTimeFreeplayStarted = currTime_s;
+                                  }
+                                  
+                                  // If we are leaving freeplay, ensure that sparks
+                                  // have been cleared out
+                                  if(activityType != HighLevelActivity::Freeplay){
+                                    _activeSpark = UnlockId::Count;
+                                    _lastRequestedSpark = UnlockId::Count;
+                                  }
                                 }
                                 
                               }));
@@ -624,7 +628,7 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorExternalInterface& behaviorEx
   StopAndNullifyCurrentBehavior(behaviorExternalInterface);
   bool initSuccess = true;
   if( nullptr != nextBehavior ) {
-    const Result initRet = nextBehavior->OnActivated(behaviorExternalInterface);
+    const Result initRet = nextBehavior->OnActivatedInternal_Legacy(behaviorExternalInterface);
     if ( initRet != RESULT_OK ) {
       // the previous behavior has been told to stop, but no new behavior has been started
       PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",

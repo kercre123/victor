@@ -42,13 +42,13 @@ public:
   void EnteredActivatableScope();
   
   // Guaranteed to be ticked every tick that the runnable is within activatable scope
-  BehaviorStatus Update(BehaviorExternalInterface& behaviorExternalInterface);
+  void Update(BehaviorExternalInterface& behaviorExternalInterface);
   
   // Check to see if the runnable wants to run right now
   bool WantsToBeActivated();
   
   // Informs the runnable that it has been activated
-  Result OnActivated(BehaviorExternalInterface& behaviorExternalInterface);
+  void OnActivated(BehaviorExternalInterface& behaviorExternalInterface);
   
   // Informs the runnable that it has been deactivated
   void OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface);
@@ -62,9 +62,9 @@ public:
 protected:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void EnteredActivatableScopeInternal() = 0;
-  virtual BehaviorStatus UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual bool WantsToBeActivatedInternal() = 0;
-  virtual Result OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void LeftActivatableScopeInternal() = 0;
   

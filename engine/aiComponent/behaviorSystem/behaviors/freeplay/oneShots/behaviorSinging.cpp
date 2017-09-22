@@ -242,7 +242,7 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStatus BehaviorSinging::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Figure out which object was, on average, shaken the most this tick
   float mostShakenObjectAverage = 0;

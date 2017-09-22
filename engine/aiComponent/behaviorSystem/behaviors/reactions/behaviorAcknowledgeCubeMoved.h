@@ -43,7 +43,7 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // allows the reaction to interrupt itself
-  virtual IBehavior::Status UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual IBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   
