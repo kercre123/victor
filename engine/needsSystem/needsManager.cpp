@@ -44,7 +44,8 @@ namespace Cozmo {
 const char* NeedsManager::kLogChannelName = "NeedsSystem";
 
 
-static const std::string kNeedsStateFile = "needsState.json";
+static const std::string kNeedsStateFileBase = "needsState";
+static const std::string kNeedsStateFile = kNeedsStateFileBase + ".json";
 
 static const std::string kStateFileVersionKey = "_StateFileVersion";
 static const std::string kDateTimeKey = "_DateTime";
@@ -376,29 +377,14 @@ void NeedsManager::InitInternal(const float currentTime_s)
   // Read needs data from device storage, if it exists
   _deviceHadValidNeedsData = false;
   _deviceNeedsVersionUpdate = false;
-  bool appliedDecay = false;
 
-  if (DeviceHasNeedsState())
+  _deviceHadValidNeedsData = AttemptReadFromDevice(kNeedsStateFile, _deviceNeedsVersionUpdate);
+
+  if (!_deviceHadValidNeedsData)
   {
-    _deviceHadValidNeedsData = ReadFromDevice(_deviceNeedsVersionUpdate);
-
-    if (_deviceHadValidNeedsData)
-    {
-      // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
-      _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
-
-      static const bool connected = false;
-      ApplyDecayForTimeSinceLastDeviceWrite(connected);
-
-      appliedDecay = true;
-
-      _needsState._timesOpenedSinceLastDisconnect++;
-
-      SendTimeSinceBackgroundedDasEvent();
-    }
+    // If there was no device save, we still want to send needs state to show the initial state
+    SendNeedsStateToGame(NeedsActionId::NoAction);
   }
-
-  SendNeedsStateToGame(appliedDecay ? NeedsActionId::Decay : NeedsActionId::NoAction);
 
   // Save to device, because we've either applied a bunch of unconnected decay,
   // or we never had valid needs data on this device yet
@@ -493,10 +479,30 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
   else if (!_robotHadValidNeedsData && _deviceHadValidNeedsData)
   {
+    // Robot does NOT have needs data, but device does
     PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
                   "Robot does NOT have needs data, but device does");
-    // Robot does NOT have needs data, but device does
-    // So just go with device data, and write that to robot
+
+    // Compare the device save's robot serial number with the actual robot
+    // serial number; if different, we look for another device save that has
+    // the actual serial number in the file name (a file we created when
+    // backgrounding the app).
+    if (_previousRobotSerialNumber != _needsState._robotSerialNumber)
+    {
+      const std::string filename = NeedsFilenameFromSerialNumber(_needsState._robotSerialNumber);
+
+      if (AttemptReadFromDevice(filename, _deviceNeedsVersionUpdate))
+      {
+        needToWriteToDevice = true;
+      }
+      else
+      {
+        PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt",
+                      "Attempted to read alternate save file %s; file missing or read failed; could be because of brand new robot", filename.c_str());
+      }
+    }
+
+    // Either way, we definitely want to write to robot
     needToWriteToRobot = true;
   }
   else
@@ -1597,6 +1603,42 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 
     SendNeedsLevelsDasEvent("app_background");
 
+    if (_needsState._robotSerialNumber != kUninitializedSerialNumber)
+    {
+      // If we have a valid robot serial number, make a copy of the save file
+      // we just wrote out (in the call to SetPaused above), with the serial
+      // number as part of the filename.
+      // We do this to fix the case of multiple robots on one device, and the
+      // user corrupts the robot's needs save by killing the app right after
+      // backgrounding, before the robot save completes.
+
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
+      const auto startTime = system_clock::now();
+#endif
+
+      const std::string destFile = kPathToSavedStateFile +
+                                   NeedsFilenameFromSerialNumber(_needsState._robotSerialNumber);
+
+      const std::string srcFile = kPathToSavedStateFile + kNeedsStateFile;
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
+      const auto midTime = system_clock::now();
+#endif
+      if (!Util::FileUtils::CopyFile(destFile, srcFile))
+      {
+        PRINT_NAMED_ERROR("NeedsManager.SetGameBeingPaused",
+                          "Error copying %s to %s",
+                          srcFile.c_str(), destFile.c_str());
+      }
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
+      const auto endTime = system_clock::now();
+      const auto microsecsMid = duration_cast<microseconds>(endTime - midTime);
+      const auto microsecs = duration_cast<microseconds>(endTime - startTime);
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.CopyFile",
+                    "Copying needs state file took %lld microseconds total; %lld microseconds for the copy",
+                    microsecs.count(), microsecsMid.count());
+#endif
+    }
+
     // It's too late to generate local notifications, which is why we
     // generate them peridically and on certain events
   }
@@ -2059,9 +2101,9 @@ void NeedsManager::DetectBracketChangeForDas(const bool forceSend)
 }
 
 
-bool NeedsManager::DeviceHasNeedsState()
+bool NeedsManager::DeviceHasNeedsState(const std::string& filename)
 {
-  return Util::FileUtils::FileExists(kPathToSavedStateFile + kNeedsStateFile);
+  return Util::FileUtils::FileExists(kPathToSavedStateFile + filename);
 }
 
 void NeedsManager::PossiblyWriteToDevice()
@@ -2124,26 +2166,59 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
 
   state[kForceNextSongKey] = EnumToString(_needsState._forceNextSong);
 
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
   const auto midTime = system_clock::now();
+#endif
   if (!_cozmoContext->GetDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.WriteToDevice.WriteStateFailed", "Failed to write needs state file");
   }
 
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
   const auto endTime = system_clock::now();
   const auto microsecsMid = duration_cast<microseconds>(endTime - midTime);
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.WriteToDevice",
                 "Write to device took %lld microseconds total; %lld microseconds for the actual write",
                 microsecs.count(), microsecsMid.count());
+#endif
 }
 
-bool NeedsManager::ReadFromDevice(bool& versionUpdated)
+
+bool NeedsManager::AttemptReadFromDevice(const std::string& filename, bool& versionUpdated)
+{
+  bool valid = false;
+
+  if (DeviceHasNeedsState(filename))
+  {
+    if (ReadFromDevice(filename, versionUpdated))
+    {
+      valid = true;
+
+      // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
+      _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
+
+      static const bool connected = false;
+      ApplyDecayForTimeSinceLastDeviceWrite(connected);
+
+      SendNeedsStateToGame(NeedsActionId::Decay);
+
+      _needsState._timesOpenedSinceLastDisconnect++;
+
+      SendTimeSinceBackgroundedDasEvent();
+    }
+  }
+
+  return valid;
+}
+
+
+bool NeedsManager::ReadFromDevice(const std::string& filename, bool& versionUpdated)
 {
   versionUpdated = false;
 
   Json::Value state;
-  if (!_cozmoContext->GetDataPlatform()->readAsJson(kPathToSavedStateFile + kNeedsStateFile, state))
+  if (!_cozmoContext->GetDataPlatform()->readAsJson(kPathToSavedStateFile + filename, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.ReadFromDevice.ReadStateFailed", "Failed to read %s", kNeedsStateFile.c_str());
     return false;
@@ -2237,6 +2312,16 @@ bool NeedsManager::ReadFromDevice(bool& versionUpdated)
 }
 
 
+std::string NeedsManager::NeedsFilenameFromSerialNumber(const u32 serialNumber)
+{
+  const std::string filename = kNeedsStateFileBase + "_" +
+                               std::to_string(_needsState._robotSerialNumber) +
+                               ".json";
+
+  return filename;
+}
+
+
 void NeedsManager::PossiblyStartWriteToRobot(bool ignoreCooldown /* = false */)
 {
   if (_robot == nullptr)
@@ -2316,9 +2401,11 @@ void NeedsManager::StartWriteToRobot(const Time time)
 
 void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime)
 {
+#if ENABLE_NEEDS_READ_WRITE_PROFILING
   const auto endTime = system_clock::now();
   const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
+#endif
 
   if (res < NVStorage::NVResult::NV_OKAY)
   {
