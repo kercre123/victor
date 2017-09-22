@@ -15,6 +15,7 @@
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "audioEngine/audioScene.h"
+#include "audioEngine/soundbankLoader.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "cozmoAnim/cozmoAnimContext.h"
@@ -61,7 +62,6 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
 {
-
 #if USE_AUDIO_ENGINE
   {
     DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoAnimContext.IsNull");
@@ -72,13 +72,13 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
 
     // If assets don't exist don't init the Audio engine
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
-
     if ( !assetsExist ) {
       PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets do NOT exist - Ignore if Unit Test");
       return;
     }
-
-
+    // Create sound bank loader
+    _soundbankLoader.reset(new SoundbankLoader(*this, assetPath));
+    
     // Config Engine
     SetupConfig config{};
     // Assets
@@ -86,17 +86,6 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
     // Path resolver function
     config.pathResolver = std::bind(&ResolvePathToAudioFile, assetPath,
                                     std::placeholders::_1, std::placeholders::_2);
-
-    // Add Assets Zips to list.
-    // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
-    std::string zipAssets = assetPath + "AudioAssets.zip";
-    if (Util::FileUtils::FileExists(zipAssets)) {
-      config.pathToZipFiles.push_back(std::move(zipAssets));
-    }
-    else {
-      PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
-    }
-
     
     // Cozmo uses default audio locale regardless of current context.
     // Locale-specific adjustments are made by setting GameState::External_Language
@@ -126,27 +115,13 @@ CozmoAudioController::CozmoAudioController( const CozmoAnimContext* context )
   // The audio engine was initialized correctly, so now let's setup everything else
   if ( IsInitialized() )
   {
-#if USE_AUDIO_ENGINE
-
-    // FIXME: Temp fix to load audio banks
-    AudioBankList bankList = {
-      "Init.bnk",
-      //      "Music.bnk",
-      //      "UI.bnk",
-      "SFX.bnk",
-      "Cozmo.bnk",
-      "Dev_Debug.bnk",
-    };
-    const std::string sceneTitle = "InitScene";
-    AudioScene initScene = AudioScene( sceneTitle, AudioEventList(), bankList );
-
-    RegisterAudioScene( std::move(initScene) );
-
-    LoadAudioScene( sceneTitle );
-
+    // Load audio sound bank metadata
+    // NOTE: This will slightly change when we implement RAMS
+    if (_soundbankLoader.get() != nullptr) {
+      _soundbankLoader->LoadDefaultSoundbanks();
+    }
+    
     RegisterCladGameObjectsWithAudioController();
-
-#endif
   }
 }
 

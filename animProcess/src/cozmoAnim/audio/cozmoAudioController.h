@@ -16,27 +16,34 @@
 #define __Anki_Cozmo_CozmoAudioController_H__
 
 #include "audioEngine/audioEngineController.h"
+#include <memory>
 
 namespace Anki {
+namespace AudioEngine {
+class SoundbankLoader;
+}
 namespace Cozmo {
-// Forward declaration
 class CozmoAnimContext;
 namespace Audio {
-  
+
 
 class CozmoAudioController : public AudioEngine::AudioEngineController
 {
 
 public:
 
-  CozmoAudioController( const CozmoAnimContext* context );
+  CozmoAudioController(const CozmoAnimContext* context);
 
   virtual ~CozmoAudioController();
 
 
+private:
+  
+  std::unique_ptr<AudioEngine::SoundbankLoader> _soundbankLoader;
+  
   // Register CLAD Game Objects
   void RegisterCladGameObjectsWithAudioController();
-
+ 
 };
 
 }

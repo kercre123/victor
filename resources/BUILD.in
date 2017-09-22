@@ -21,12 +21,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('android', subdir_glob([
-            ('sound/android', '*.zip')
+            ('sound/android', '*')
             ],
             prefix = 'sound')
         ),
         ('mac', subdir_glob([
-            ('sound/mac', '*.zip')
+            ('sound/mac', '*')
             ],
             prefix = 'sound')
         ),

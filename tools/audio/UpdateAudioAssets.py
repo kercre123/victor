@@ -23,10 +23,10 @@ import dependencies
 __externalsDir = path.join(__projectRoot, 'EXTERNALS')
 __wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WwiseToAppMetadata.py')
 __wwiseIdFileName = 'Wwise_IDs.h'
-__wwiseIdsFilePath = path.join(__externalsDir, 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
+__wwiseIdsFilePath = path.join(__externalsDir, 'victor-audio-assets', 'metadata', __wwiseIdFileName)
 __audioMetadataFileName= 'audioEventMetadata.csv'
 __audioMetadataFilePath = path.join(__scriptDir, __audioMetadataFileName)
-__audioCladDir = path.join(__projectRoot, 'clad', 'src', 'clad', 'audio')
+__audioCladDir = path.join(__projectRoot, 'robot', 'clad', 'src', 'clad', 'audio')
 __depsFilePath = path.join(__projectRoot, 'DEPS')
 __namespaceList = ['Anki', 'AudioMetaData']
 
@@ -114,7 +114,7 @@ def __updateSoundbanks(version, mergeMetadataPath):
             logging.info('Update Soundbanks Version')
             svn_key = 'svn'
             repo_names_key = 'repo_names'
-            cozmosoundbanks_key = 'cozmosoundbanks'
+            cozmosoundbanks_key = 'victor-audio-assets'
             version_key = 'version'
 
             abortMsg = 'Can not update Soundbank Version!!!!!! Can\'t Find'

@@ -20,9 +20,9 @@
                 ],
                 "version": "2401"
             },
-            "cozmosoundbanks": {
-                "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "191"
+            "victor-audio-assets": {
+               "allow_extra_files": "True",
+                "version": "7"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
