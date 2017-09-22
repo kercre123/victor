@@ -497,7 +497,7 @@ class GamePlatformConfiguration(object):
     def generate_assets(self):
       # Update unity assets, eg Acknowledgements.txt
       print_status('Generating assets')
-      exe = os.path.join('.', 'project', 'build-scripts', 'generate-assets.sh')
+      exe = os.path.join(GAME_ROOT, 'project', 'build-scripts', 'generate-assets.sh')
       ankibuild.util.File.execute([exe])
 
     def generate(self):
