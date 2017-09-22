@@ -18,10 +18,11 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
-#include "engine/aiComponent/behaviorSystem/behaviorContainer.h"
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/scoringBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/emotionAffector.h"
 #include "engine/moodSystem/emotionEvent.h"
@@ -458,11 +459,13 @@ TEST(MoodManager, BehaviorScoring)
   parsedOK = reader.parse(kTestBehavior2Json, testBehavior2Json, false);
   ASSERT_TRUE(parsedOK);
   
+  DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
                                                                                        testRobot.GetAIComponent(),
                                                                                        behaviorContainer,
                                                                                        testRobot.GetBlockWorld(),
-                                                                                       testRobot.GetFaceWorld());
+                                                                                       testRobot.GetFaceWorld(),
+                                                                                       delegationComp);
   
   // have to alloc the behaviors - they're freed by the chooser
   IBehaviorPtr testBehaviorReqHappy = behaviorContainer.CreateBehavior(testBehavior1Json);

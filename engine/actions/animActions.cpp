@@ -17,7 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/audio/robotAudioClient.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/cozmoContext.h"

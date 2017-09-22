@@ -17,10 +17,11 @@
 #include "gtest/gtest.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorSystem/bsRunnableChoosers/scoringBSRunnableChooser.h"
-#include "engine/aiComponent/behaviorSystem/behaviorContainer.h"
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/scoringBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/robot.h"
 #include "engine/cozmoContext.h"
 
@@ -65,12 +66,14 @@ bool LoadTestBehaviors(Robot& testRobot, ScoringBSRunnableChooser& behaviorChoos
 
     if (parsedOK)
     {
+      DelegationComponent delegationComp;
       // Factory will automatically delete the behaviors later when robot is destroyed
       BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
                                                           testRobot.GetAIComponent(),
                                                           behaviorContainer,
                                                           testRobot.GetBlockWorld(),
-                                                          testRobot.GetFaceWorld());
+                                                          testRobot.GetFaceWorld(),
+                                                          delegationComp);
       IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
       newBehavior->Init(*behaviorExternalInterface);
       EXPECT_NE(newBehavior, nullptr);

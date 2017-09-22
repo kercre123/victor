@@ -18,10 +18,11 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/activeObject.h"
 #include "engine/activeObjectHelpers.h"
-#include "engine/aiComponent/behaviorSystem/behaviorContainer.h"
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -54,11 +55,13 @@ void CreateStackBehavior(Robot& robot, IBehaviorPtr& stackBehavior)
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
 
+  DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       delegationComp);
 
   stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
                                                    config);
@@ -176,11 +179,13 @@ TEST(StackBlocksBehavior, InitBehavior)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
 
+  DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       delegationComp);
   IBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, *behaviorExternalInterface, objID1, objID2);
@@ -196,11 +201,14 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
+  
+  DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       delegationComp);
   
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();

@@ -13,8 +13,8 @@
 
 #include "engine/aiComponent/doATrickSelector.h"
 
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
-#include "engine/aiComponent/behaviorSystem/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"

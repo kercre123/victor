@@ -19,20 +19,15 @@
 #include <assert.h>
 #include <string>
 
-#define USE_BSM 1
-
 namespace Anki {
 namespace Cozmo {
 
 // Forward declarations
 class AIInformationAnalyzer;
 class AIWhiteboard;
+class BehaviorComponent;
 class BehaviorContainer;
-class BehaviorEventAnimResponseDirector;
-class BehaviorExternalInterface;
 class BehaviorHelperComponent;
-class BehaviorManager;
-class BehaviorSystemManager;
 class DoATrickSelector;
 class FeedingSoundEffectManager;
 class FreeplayDataTracker;
@@ -41,6 +36,8 @@ class RequestGameComponent;
 class Robot;
 class SevereNeedsComponent;
 class WorkoutComponent;
+  
+
   
 class AIComponent : private Util::noncopyable
 {
@@ -63,19 +60,15 @@ public:
     return *_aiInformationAnalyzer;
   }
   
-  inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
-    { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
-  inline BehaviorEventAnimResponseDirector&       GetBehaviorEventAnimResponseDirector()
-    { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
   
-  inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
-  inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
+  inline const BehaviorComponent& GetBehaviorComponent() const { assert(_behaviorComponent); return *_behaviorComponent; }
+  inline BehaviorComponent&       GetBehaviorComponent()       { assert(_behaviorComponent); return *_behaviorComponent; }
   
-  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
-  
+  // Support legacy code until move helper comp into delegate component
+  const BehaviorHelperComponent& GetBehaviorHelperComponent() const;
+  BehaviorHelperComponent&       GetBehaviorHelperComponent();
   // For test only
-  inline BehaviorContainer& GetBehaviorContainer() { return *_behaviorContainer; }
+  BehaviorContainer& GetBehaviorContainer();
   
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
@@ -130,22 +123,8 @@ private:
   // border calculation
   std::unique_ptr<AIInformationAnalyzer>   _aiInformationAnalyzer;
   
-  // Component which behaviors and helpers can query to find out the appropriate animation
-  // to play in response to a user facing action result
-  std::unique_ptr<BehaviorEventAnimResponseDirector> _behaviorEventAnimResponseDirector;
-  
-  // component which behaviors can delegate to for automatic action error handling
-  std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;
-
-  // Factory creates and tracks data-driven behaviors etc
-  std::unique_ptr<BehaviorContainer> _behaviorContainer;
-  
-  // Interface that the behavior system can use to communicate with the rest of engine
-  std::unique_ptr<BehaviorExternalInterface> _behaviorExternalInterface;
-  
-  // components which manage the behavior system
-  std::unique_ptr<BehaviorManager>       _behaviorMgr;
-  std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
+  // component hwich manages all aspects of the AI system that relate to behaviors
+  std::unique_ptr<BehaviorComponent> _behaviorComponent;
   
   // Component which tracks and caches the best objects to use for certain interactions
   std::unique_ptr<ObjectInteractionInfoCache> _objectInteractionInfoCache;

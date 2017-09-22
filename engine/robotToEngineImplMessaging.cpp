@@ -22,7 +22,7 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/robotAudioClient.h"
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/blockTapFilterComponent.h"

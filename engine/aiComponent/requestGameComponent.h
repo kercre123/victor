@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_AIComponent_RequestGameComponent_H__
 
 #include "anki/common/types.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
@@ -27,6 +27,7 @@ namespace Anki {
 namespace Cozmo {
   
 // forward declarations
+class IExternalInterface;
 class Robot;
   
 struct GameRequestData{
@@ -40,7 +41,7 @@ struct GameRequestData{
   
 class RequestGameComponent{
 public:
-  RequestGameComponent(BehaviorExternalInterface& behaviorExternalInterface,
+  RequestGameComponent(IExternalInterface* robotExternalInterface,
                        const Json::Value& requestGameWeights);
   ~RequestGameComponent() {};
   

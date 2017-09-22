@@ -16,15 +16,15 @@
  **/
 
 #include "engine/aiComponent/behaviorHelperComponent.h"
-#include "engine/aiComponent/behaviorSystem/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorSystem/behaviorHelpers/pickupBlockHelper.h"
-#include "engine/aiComponent/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
-#include "engine/aiComponent/behaviorSystem/behaviorHelpers/rollBlockHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/pickupBlockHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/placeBlockHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/rollBlockHelper.h"
 #include "engine/robot.h"
 #include "util/helpers/boundedWhile.h"
 
 #include <iterator>
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {

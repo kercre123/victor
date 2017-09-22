@@ -14,9 +14,9 @@
 #include "engine/aiComponent/requestGameComponent.h"
 
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
-#include "engine/aiComponent/behaviorSystem/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robot.h"
@@ -37,7 +37,7 @@ const int kMaxRetrys = 1000;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RequestGameComponent::RequestGameComponent(BehaviorExternalInterface& behaviorExternalInterface,
+RequestGameComponent::RequestGameComponent(IExternalInterface* robotExternalInterface,
                                            const Json::Value& requestGameWeights)
 : _lastGameRequested(UnlockId::Count)
 , _canRequestGame(false)
@@ -59,11 +59,9 @@ RequestGameComponent::RequestGameComponent(BehaviorExternalInterface& behaviorEx
   }
   _defaultGameRequests = _gameRequests;
   
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   // register to receive notification from the game about when game requests are allowed
   if (robotExternalInterface != nullptr) {
-    IExternalInterface* EI = robotExternalInterface.get();
-    auto helper = MakeAnkiEventUtil(*EI, *this, _eventHandles);
+    auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _eventHandles);
     helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::CanCozmoRequestGame>();
     helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::SetOverrideGameRequestWeights>();
   }

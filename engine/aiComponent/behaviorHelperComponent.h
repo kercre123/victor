@@ -19,9 +19,9 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_BehaviorHelperComponent_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorHelpers_BehaviorHelperComponent_H__
 
-#include "engine/aiComponent/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
-#include "engine/aiComponent/behaviorSystem/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/behaviorSystem/behaviorHelpers/iHelper.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
+#include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
 
 #include <vector>
 #include <memory>
@@ -50,7 +50,7 @@ public:
   bool StopHelperWithoutCallback(const HelperHandle& helperToStop);
   
 protected:
-  friend class AIComponent;
+  friend class BehaviorComponent;
   friend class BehaviorHelperFactory;
   friend class IHelper;
   void Update(BehaviorExternalInterface& behaviorExternalInterface);

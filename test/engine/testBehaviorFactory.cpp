@@ -17,9 +17,10 @@
 #include "gtest/gtest.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorSystem/behaviorContainer.h"
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
-#include "engine/aiComponent/behaviorSystem/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/cozmoContext.h"
@@ -141,11 +142,13 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   
   EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), nullptr); // this behavior shouldn't exist by default
   
+  DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
                                                                                        testRobot.GetAIComponent(),
                                                                                        behaviorContainer,
                                                                                        testRobot.GetBlockWorld(),
-                                                                                       testRobot.GetFaceWorld());
+                                                                                       testRobot.GetFaceWorld(),
+                                                                                       delegationComp);
 
   IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
   newBehavior->Init(*behaviorExternalInterface);

@@ -17,7 +17,7 @@
 #include "engine/actionableObject.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
-#include "engine/aiComponent/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"

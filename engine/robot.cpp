@@ -23,11 +23,12 @@
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/animations/proceduralFace.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/robotAudioClient.h"
-#include "engine/aiComponent/behaviorSystem/bsRunnableChoosers/iBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -1738,11 +1739,11 @@ Result Robot::SyncTime()
 }
   
 const BehaviorManager& Robot::GetBehaviorManager() const {
-  return _aiComponent->GetBehaviorManager();
+  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
 }
   
 BehaviorManager& Robot::GetBehaviorManager(){
-  return _aiComponent->GetBehaviorManager();
+  return _aiComponent->GetBehaviorComponent().GetBehaviorManager();
 }
   
 Result Robot::LocalizeToObject(const ObservableObject* seenObject,

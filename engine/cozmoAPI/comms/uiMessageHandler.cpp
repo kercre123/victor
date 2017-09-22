@@ -25,7 +25,7 @@
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/messaging/advertisementService.h"
 
-#include "engine/aiComponent/behaviorSystem/behaviorManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 
 #include "engine/viz/vizManager.h"
 #include "engine/buildVersion.h"
