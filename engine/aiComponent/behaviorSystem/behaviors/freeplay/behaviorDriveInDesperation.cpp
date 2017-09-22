@@ -167,7 +167,7 @@ IBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(Behavi
 
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveInDesperation::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDriveInDesperation::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

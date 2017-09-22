@@ -57,7 +57,7 @@ protected:
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   
 private:

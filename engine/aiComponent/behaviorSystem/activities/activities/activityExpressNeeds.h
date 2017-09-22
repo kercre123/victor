@@ -26,8 +26,8 @@ public:
 
 protected:
 
-  virtual void OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 };
 

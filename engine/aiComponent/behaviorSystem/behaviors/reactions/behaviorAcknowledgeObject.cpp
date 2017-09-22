@@ -461,7 +461,7 @@ void BehaviorAcknowledgeObject::OnBehaviorDeactivated(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeObject::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorAcknowledgeObject::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return !_targets.empty();
 }

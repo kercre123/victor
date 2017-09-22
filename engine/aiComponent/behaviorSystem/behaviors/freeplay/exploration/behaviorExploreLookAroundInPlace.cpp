@@ -73,7 +73,7 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorExploreLookAroundInPlace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.

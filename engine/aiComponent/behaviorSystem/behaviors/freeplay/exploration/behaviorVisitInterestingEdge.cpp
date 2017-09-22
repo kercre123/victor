@@ -138,9 +138,9 @@ BehaviorVisitInterestingEdge::~BehaviorVisitInterestingEdge()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::IsRunnableInternal"); // we are doing some processing now, keep an eye
+  ANKI_CPU_PROFILE("BehaviorVisitInterestingEdge::WantsToBeActivatedBehavior"); // we are doing some processing now, keep an eye
   
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

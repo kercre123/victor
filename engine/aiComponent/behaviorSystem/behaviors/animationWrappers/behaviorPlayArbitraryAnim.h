@@ -39,7 +39,7 @@ public:
   void SetAnimationTrigger(AnimationTrigger trigger, int numLoops);
   void SetAnimationTriggers(std::vector<AnimationTrigger>& triggers, int sequenceLoopCount);
   
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
 protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

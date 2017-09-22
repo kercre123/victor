@@ -37,7 +37,7 @@ BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToRobotOnFace::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToRobotOnFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

@@ -76,14 +76,14 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDriveOffCharger::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
   DEV_ASSERT(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
-             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
+             "BehaviorDriveOffCharger.WantsToBeActivatedBehavior.InconsistentChargerFlags");
 
   // can run any time we are on the charger platform
   

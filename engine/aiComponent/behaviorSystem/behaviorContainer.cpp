@@ -161,7 +161,7 @@ void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterfac
     // To support old behavior manager functionality, have all behaviors be within
     // "activatable" scope since the old behavior manager isn't aware of this state
     if(shouldAddToActivatableScope){
-      behaviorMap.second->EnteredActivatableScope();
+      behaviorMap.second->OnEnteredActivatableScope();
     }
   }
 }

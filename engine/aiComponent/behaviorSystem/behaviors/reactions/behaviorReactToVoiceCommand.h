@@ -30,7 +30,7 @@ private:
   BehaviorReactToVoiceCommand(const Json::Value& config);
   
 public:
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
   void SetDesiredFace(const Vision::FaceID_t& desiredFace){_desiredFace = desiredFace;}
   

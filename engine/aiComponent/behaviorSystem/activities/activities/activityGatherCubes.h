@@ -33,11 +33,11 @@ public:
   ActivityGatherCubes(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
   virtual ~ActivityGatherCubes() {};
   
-  virtual Result Update(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 protected:
-  virtual void OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   std::map<ObjectID,bool> _isPlayingRingAnim;

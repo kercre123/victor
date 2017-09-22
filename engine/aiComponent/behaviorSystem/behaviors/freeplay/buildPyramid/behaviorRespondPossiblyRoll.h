@@ -87,7 +87,7 @@ public:
   virtual ~BehaviorRespondPossiblyRoll();
   virtual bool CarryingObjectHandledInternally() const override { return false;}
   
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
   // Behavior can be queried to find out where it is in its process
   const RespondPossiblyRollMetadata& GetResponseMetadata() const { return _metadata;}

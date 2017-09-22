@@ -61,7 +61,7 @@ IBehaviorPtr SelectionBSRunnableChooser::GetDesiredActiveBehavior(BehaviorExtern
   auto runnable = [this, &behaviorExternalInterface](const IBehaviorPtr behavior)
   {
     const bool behaviorIsRunning = nullptr != behavior && behavior->IsRunning();
-    bool ret = (nullptr != behavior && (behaviorIsRunning || behavior->IsRunnable(behaviorExternalInterface)));
+    bool ret = (nullptr != behavior && (behaviorIsRunning || behavior->WantsToBeActivated(behaviorExternalInterface)));
     
     // If this is the selected behavior
     if(behavior == _selectedBehavior)
@@ -160,7 +160,7 @@ void SelectionBSRunnableChooser::HandleExecuteBehavior(const AnkiEvent<ExternalI
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SelectionBSRunnableChooser::OnSelected()
+void SelectionBSRunnableChooser::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // enable process for selected behavior
   SetProcessEnabled(_selectedBehavior, true);
@@ -168,7 +168,7 @@ void SelectionBSRunnableChooser::OnSelected()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SelectionBSRunnableChooser::OnDeselected()
+void SelectionBSRunnableChooser::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // disable process for selected behavior
   SetProcessEnabled(_selectedBehavior, false);

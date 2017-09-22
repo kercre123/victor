@@ -116,7 +116,7 @@ BehaviorPeekABoo::BehaviorPeekABoo(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPeekABoo::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPeekABoo::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const float currentTime_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // for COZMO-8914 - no way to play spark get out if no face is found during spark search

@@ -36,7 +36,7 @@ BehaviorSearchForFace::BehaviorSearchForFace(const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSearchForFace::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorSearchForFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // For the time being this behavior is designed under the assumption that
   // no faces are known and we're searching for a new face

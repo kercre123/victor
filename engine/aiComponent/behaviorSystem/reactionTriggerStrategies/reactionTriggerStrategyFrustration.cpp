@@ -55,7 +55,7 @@ void ReactionTriggerStrategyFrustration::LoadJson(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFrustration::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
@@ -79,7 +79,7 @@ bool ReactionTriggerStrategyFrustration::ShouldTriggerBehaviorInternal(BehaviorE
   if(notReactingToFrustration &&
      confidentVal < _maxConfidentScore &&
      ( (_lastReactedTime_s <= 0.f) || ((currTime_s - _lastReactedTime_s) > _cooldownTime_s)) ){
-    return behavior->IsRunnable(behaviorExternalInterface);
+    return behavior->WantsToBeActivated(behaviorExternalInterface);
   }
   
   return false;

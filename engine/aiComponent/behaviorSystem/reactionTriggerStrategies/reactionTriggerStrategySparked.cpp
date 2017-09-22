@@ -36,7 +36,7 @@ ReactionTriggerStrategySparked::ReactionTriggerStrategySparked(BehaviorExternalI
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategySparked::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
@@ -65,7 +65,7 @@ bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(BehaviorExter
                                     ((currentBehavior->GetClass() == BehaviorClass::ReactToCliff) ||
                                      (currentBehavior->GetClass() == BehaviorClass::ReactToSparked)));
   
-  return cancelCurrentReaction && !behaviorWhitelisted && behavior->IsRunnable(behaviorExternalInterface);
+  return cancelCurrentReaction && !behaviorWhitelisted && behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
   

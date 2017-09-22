@@ -34,7 +34,7 @@ private:
   UnexpectedMovementSide _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
   
 public:  
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
   
 protected:

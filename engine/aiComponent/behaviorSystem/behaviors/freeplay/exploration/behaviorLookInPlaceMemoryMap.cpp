@@ -82,7 +82,7 @@ BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorLookInPlaceMemoryMap::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

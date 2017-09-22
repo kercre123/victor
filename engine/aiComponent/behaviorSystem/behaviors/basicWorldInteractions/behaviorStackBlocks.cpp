@@ -82,7 +82,7 @@ BehaviorStackBlocks::BehaviorStackBlocks(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorStackBlocks::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorStackBlocks::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   UpdateTargetBlocks(behaviorExternalInterface);
   return _targetBlockBottom.IsSet() && _targetBlockTop.IsSet();

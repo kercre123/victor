@@ -237,7 +237,7 @@ void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(BehaviorExternalInter
 {
   PRINT_CH_INFO("Behaviors", "HelperComponent.StartNewHelper", "%s", handle->GetName().c_str());
   
-  handle->InitializeOnStack();
+  handle->OnActivatedInternal(behaviorExternalInterface);
   _helperStack.push_back(handle);
 
   // Run the first update immediately so the helper can start acting

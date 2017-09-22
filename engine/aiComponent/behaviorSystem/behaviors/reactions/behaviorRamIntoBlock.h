@@ -34,7 +34,7 @@ private:
 
 
 public:
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
   void SetBlockToRam(s32 targetID){_targetID = targetID;}

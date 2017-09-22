@@ -33,7 +33,7 @@ BehaviorPickUpAndPutDownCube::BehaviorPickUpAndPutDownCube(const Json::Value& co
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPickUpAndPutDownCube::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPickUpAndPutDownCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   auto& objInfoCache = behaviorExternalInterface.GetAIComponent().GetObjectInteractionInfoCache();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;

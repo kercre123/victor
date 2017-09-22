@@ -93,7 +93,7 @@ BehaviorBuildPyramid::BehaviorBuildPyramid(const Json::Value& config)
     
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorBuildPyramid::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorBuildPyramid::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   UpdatePyramidTargets(behaviorExternalInterface);
 

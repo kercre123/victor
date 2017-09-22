@@ -324,7 +324,7 @@ ActivityBuildPyramid::~ActivityBuildPyramid()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityBuildPyramid::OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityBuildPyramid::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _uprightAnimIndex = 0;
   _onSideAnimIndex = 0;
@@ -363,7 +363,7 @@ void ActivityBuildPyramid::OnSelectedInternal(BehaviorExternalInterface& behavio
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityBuildPyramid::OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityBuildPyramid::OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Make sure that all custom patterns are cleared off of the cubes
   for(auto& entry: _pyramidCubePropertiesTrackers){
@@ -679,7 +679,7 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(BehaviorExternalI
   IBehaviorPtr bestBehavior = nullptr;
   
   if(_behaviorBuildPyramid->IsRunning() ||
-     _behaviorBuildPyramid->IsRunnable(behaviorExternalInterface)){
+     _behaviorBuildPyramid->WantsToBeActivated(behaviorExternalInterface)){
     
     bestBehavior = _behaviorBuildPyramid;
     // If the behavior has not been running, update pyramid assignments
@@ -690,7 +690,7 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(BehaviorExternalI
     }
     
   }else if(_behaviorBuildPyramidBase->IsRunning() ||
-           _behaviorBuildPyramidBase->IsRunnable(behaviorExternalInterface)){
+           _behaviorBuildPyramidBase->WantsToBeActivated(behaviorExternalInterface)){
     
     bestBehavior = _behaviorBuildPyramidBase;
     // If the behavior has not been running, update pyramid assignments
@@ -738,7 +738,7 @@ IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(BehaviorExternalInter
       if(!rolledCubeHimself){
         _behaviorPyramidThankYou->SetTargetID(objectID);
         if(_behaviorPyramidThankYou->IsRunning() ||
-           _behaviorPyramidThankYou->IsRunnable(behaviorExternalInterface)){
+           _behaviorPyramidThankYou->WantsToBeActivated(behaviorExternalInterface)){
           bestBehavior = _behaviorPyramidThankYou;
         }
       }
@@ -791,7 +791,7 @@ IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(BehaviorExternal
                                              false);
 
         _behaviorRespondPossiblyRoll->SetRespondPossiblyRollMetadata(metadata);
-        if(_behaviorRespondPossiblyRoll->IsRunnable(behaviorExternalInterface)){
+        if(_behaviorRespondPossiblyRoll->WantsToBeActivated(behaviorExternalInterface)){
           PRINT_CH_INFO("BuildPyramid",
                         "ActivityBuildPyramid.CheckForRespondPossiblyRoll.RespondToBlockOnSide",
                         "Responding to object %d which is on its side and rolling",
@@ -809,7 +809,7 @@ IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(BehaviorExternal
                                              true);
         
         _behaviorRespondPossiblyRoll->SetRespondPossiblyRollMetadata(metadata);        
-        if(_behaviorRespondPossiblyRoll->IsRunnable(behaviorExternalInterface)){
+        if(_behaviorRespondPossiblyRoll->WantsToBeActivated(behaviorExternalInterface)){
           bestBehavior = _behaviorRespondPossiblyRoll;
           PRINT_CH_INFO("BuildPyramid",
                         "ActivityBuildPyramid.CheckForRespondPossiblyRoll.MayRespondToUpright",
@@ -883,7 +883,7 @@ void ActivityBuildPyramid::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(Beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ActivityBuildPyramid::Update(BehaviorExternalInterface& behaviorExternalInterface)
+Result ActivityBuildPyramid::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_s > _nextTimeCheckBlockOrientations_s){

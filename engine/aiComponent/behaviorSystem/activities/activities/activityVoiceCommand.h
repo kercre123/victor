@@ -49,7 +49,7 @@ public:
   ActivityVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
   virtual ~ActivityVoiceCommand();
   
-  virtual Result Update(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   template<typename T>
   void HandleMessage(const T& msg);

@@ -38,7 +38,7 @@ public:
   IBehaviorRequestGame(const Json::Value& config);
 
   // final to ensure subclass does not skip. If you need to override in subclass I suggest another internal one
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const final override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const final override;
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) final override;

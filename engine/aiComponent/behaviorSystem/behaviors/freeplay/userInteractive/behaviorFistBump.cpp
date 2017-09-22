@@ -98,7 +98,7 @@ BehaviorFistBump::BehaviorFistBump(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFistBump::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFistBump::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

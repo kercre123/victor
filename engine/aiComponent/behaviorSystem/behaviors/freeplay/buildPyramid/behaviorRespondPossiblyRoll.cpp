@@ -81,7 +81,7 @@ void BehaviorRespondPossiblyRoll::InitBehavior(BehaviorExternalInterface& behavi
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRespondPossiblyRoll::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

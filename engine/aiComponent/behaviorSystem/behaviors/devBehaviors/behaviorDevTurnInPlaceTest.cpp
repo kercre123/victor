@@ -54,7 +54,7 @@ BehaviorDevTurnInPlaceTest::BehaviorDevTurnInPlaceTest(const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDevTurnInPlaceTest::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return (ANKI_DEV_CHEATS != 0);
 }

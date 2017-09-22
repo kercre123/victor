@@ -285,11 +285,11 @@ BehaviorBouncer::BehaviorBouncer(const Json::Value& config)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Check if behavior can run at this time
-bool BehaviorBouncer::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorBouncer::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // Is this feature enabled?
   if (!IsFeatureEnabled(behaviorExternalInterface)) {
-    LOG_TRACE("BehaviorBouncer.IsRunnableInternal", "Feature is disabled");
+    LOG_TRACE("BehaviorBouncer.WantsToBeActivatedBehavior", "Feature is disabled");
     return false;
   }
   
@@ -298,7 +298,7 @@ bool BehaviorBouncer::IsRunnableInternal(BehaviorExternalInterface& behaviorExte
   const auto & faceIDs = faceWorld.GetFaceIDs();
   
   if (faceIDs.empty()) {
-    LOG_TRACE("BehaviorBouncer.IsRunnableInternal", "No faces to track");
+    LOG_TRACE("BehaviorBouncer.WantsToBeActivatedBehavior", "No faces to track");
     return false;
   }
   
@@ -308,11 +308,11 @@ bool BehaviorBouncer::IsRunnableInternal(BehaviorExternalInterface& behaviorExte
   _target = faceWorld.GetSmartFaceID(faceID);
   
   if (!_target.IsValid()) {
-    LOG_WARNING("BehaviorBouncer.IsRunnableInternal", "Best face (%s) is not valid", _target.GetDebugStr().c_str());
+    LOG_WARNING("BehaviorBouncer.WantsToBeActivatedBehavior", "Best face (%s) is not valid", _target.GetDebugStr().c_str());
     return false;
   }
   
-  LOG_TRACE("BehaviorBouncer.IsRunnableInternal", "Behavior is runnable with target %s", _target.GetDebugStr().c_str());
+  LOG_TRACE("BehaviorBouncer.WantsToBeActivatedBehavior", "Behavior is runnable with target %s", _target.GetDebugStr().c_str());
   return true;
   
 }

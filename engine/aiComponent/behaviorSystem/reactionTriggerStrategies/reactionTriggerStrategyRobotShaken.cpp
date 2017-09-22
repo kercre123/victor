@@ -35,7 +35,7 @@ ReactionTriggerStrategyRobotShaken::ReactionTriggerStrategyRobotShaken(BehaviorE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyRobotShaken::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
@@ -45,7 +45,7 @@ bool ReactionTriggerStrategyRobotShaken::ShouldTriggerBehaviorInternal(BehaviorE
   if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
                  "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
-    const bool isRunnable = behavior->IsRunning() || behavior->IsRunnable(behaviorExternalInterface);
+    const bool isRunnable = behavior->IsRunning() || behavior->WantsToBeActivated(behaviorExternalInterface);
 
     return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface) && isRunnable;
   }

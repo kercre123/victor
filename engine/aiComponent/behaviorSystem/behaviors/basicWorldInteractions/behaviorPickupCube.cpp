@@ -64,7 +64,7 @@ BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPickUpCube::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPickUpCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // check even if we haven't seen a block so that we can pickup blocks we know of
   // that are outside FOV  

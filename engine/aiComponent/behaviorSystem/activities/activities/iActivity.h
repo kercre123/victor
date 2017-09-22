@@ -59,29 +59,10 @@ public:
   static ActivityID ExtractActivityIDFromConfig(const Json::Value& config,
                                                 const std::string& fileName = "");
   static ActivityType ExtractActivityTypeFromConfig(const Json::Value& config);
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Activity switch
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  void OnSelected(BehaviorExternalInterface& behaviorExternalInterface);
-  void OnDeselected(BehaviorExternalInterface& behaviorExternalInterface);
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Behaviors
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // choose next behavior for this activity
-  IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
-  
-  virtual Result Update(BehaviorExternalInterface& behaviorExternalInterface) { return Result::RESULT_OK;}
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // returns sparkId required to run this activity, UnlockId::Count if none required
-  UnlockId GetRequiredSpark() const { return _requiredSpark; }
   
   // return strategy that defines this activity's selection
   const IActivityStrategy& GetStrategy() const { assert(_strategy); return *_strategy.get(); }
@@ -91,28 +72,49 @@ public:
   ActivityID  GetID() const { return _id; }
   // Sub activities can override
   virtual const char* GetIDStr() const { return ActivityIDToString(_id); }
+
+protected:
+  // Functions called by iBSRunnable
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override { Update_Legacy(behaviorExternalInterface);};
+  virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  
+  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
+  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
+  virtual void OnEnteredActivatableScopeInternal() override {};
+  virtual void OnLeftActivatableScopeInternal() override {};
+  
+  // Override to have sub classes notified of activated/deactivated
+  virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) {};
+  virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) {};
+
+  ////////////
+  //// LEGACY FUNCTIONS
+  
+  // friend classes to support cozmo 1.0 functionality while restricting victor access to legacy functions
+  friend class ActivityFreeplay;
+  friend class ActivitySparked;
+  friend class ActivityStrictPriority;
+  friend class BehaviorManager;
+  
+  // returns sparkId required to run this activity, UnlockId::Count if none required
+  UnlockId GetRequiredSpark() const { return _requiredSpark; }
   
   float GetLastTimeStartedSecs() const { return _lastTimeActivityStartedSecs; }
   float GetLastTimeStoppedSecs() const { return _lastTimeActivityStoppedSecs; }
   
-protected:
-  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
-  // as a uniform interface across Activities and Behaviors, but they will be
-  // wired up in a seperate PR
-  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual void EnteredActivatableScopeInternal() override {};
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual bool WantsToBeActivatedInternal() override { return false;};
-  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual void LeftActivatableScopeInternal() override {};
+  // choose next behavior for this activity
+  IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
+  
+  virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) { return Result::RESULT_OK;}
+  
+  ///// END LEGACY FUNCTIONS
+  //////////
   
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
   
-  virtual void OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface) {};
-  virtual void OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface) {};
-
   // can be overridden by derived classes to chose behaviors. Defaults to using the config defined behavior chooser
   virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
   

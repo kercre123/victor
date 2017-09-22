@@ -36,7 +36,7 @@ protected:
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
   virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { BehaviorStackBlocks::UpdateTargetBlocks(behaviorExternalInterface); }

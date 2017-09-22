@@ -37,7 +37,7 @@ public:
 
 protected:
 
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 

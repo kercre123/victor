@@ -70,7 +70,7 @@ BehaviorRamIntoBlock::BehaviorRamIntoBlock(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRamIntoBlock::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRamIntoBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return _targetID >= 0;
 }

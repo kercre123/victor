@@ -89,7 +89,7 @@ bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(B
     const bool robotOffCharger = !robot.IsOnChargerPlatform();
     return robotOffCharger &&
            kEnableFaceAcknowledgeReact &&
-           behavior->IsRunnable(behaviorExternalInterface);
+           behavior->WantsToBeActivated(behaviorExternalInterface);
   }
   
   return false;

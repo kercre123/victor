@@ -93,7 +93,7 @@ ActivitySocialize::ActivitySocialize(BehaviorExternalInterface& behaviorExternal
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySocialize::OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivitySocialize::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // we always want to do the search first, if possible
   _state = State::Initial;
@@ -120,12 +120,12 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
   // otherwise, check if it's time to change behaviors
   switch( _state ) {
     case State::Initial: {
-      if( _interactWithFacesBehavior->IsRunnable(behaviorExternalInterface) ) {
+      if( _interactWithFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         // if we can just right to interact, do that
         bestBehavior = _interactWithFacesBehavior;
         _state = State::Interacting;
       }
-      else if( _findFacesBehavior->IsRunnable(behaviorExternalInterface) ) {
+      else if( _findFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         // otherwise, search for a face
         bestBehavior = _findFacesBehavior;
         _state = State::FindingFaces;
@@ -135,7 +135,7 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
     }
     
     case State::FindingFaces: {
-      if( _interactWithFacesBehavior->IsRunnable(behaviorExternalInterface) ) {
+      if( _interactWithFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         bestBehavior = _interactWithFacesBehavior;
         _state = State::Interacting;
       }
@@ -157,7 +157,7 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
         bestBehavior = nullptr;
         _state = State::None;
       }
-      else if( _findFacesBehavior->IsRunning() || _findFacesBehavior->IsRunnable(behaviorExternalInterface) ) {
+      else if( _findFacesBehavior->IsRunning() || _findFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         bestBehavior = _findFacesBehavior;
       }
       break;
@@ -166,12 +166,12 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
     case State::Interacting: {
       // keep interacting until the behavior ends. If we can't interact (e.g. we lost the face) then go back
       // to searching
-      if( _interactWithFacesBehavior->IsRunning() || _interactWithFacesBehavior->IsRunnable(behaviorExternalInterface) ) {
+      if( _interactWithFacesBehavior->IsRunning() || _interactWithFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         bestBehavior = _interactWithFacesBehavior;
       }
       else {
         // go back to find, but don't reset search count
-        if( _findFacesBehavior->IsRunning() || _findFacesBehavior->IsRunnable(behaviorExternalInterface) ) {
+        if( _findFacesBehavior->IsRunning() || _findFacesBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
           bestBehavior = _findFacesBehavior;
         }        
         _state = State::FindingFaces;
@@ -196,7 +196,7 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
             if( beh != nullptr )
             {
               // Check if runnable and valid.
-              if( beh->IsRunnable(behaviorExternalInterface) )
+              if( beh->WantsToBeActivated(behaviorExternalInterface) )
               {
                 wantsRunnableBehaviors.push_back(beh);
                 PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedInteraction",
@@ -221,7 +221,7 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
       
       if( nullptr != _playingBehavior && needsToPlay ) {
         // should be runnable since it was just selected in the code above
-        DEV_ASSERT( _playingBehavior->IsRunnable(behaviorExternalInterface), "ActivitySocialize.PlayingBehavior.NotRunnable");        
+        DEV_ASSERT( _playingBehavior->WantsToBeActivated(behaviorExternalInterface), "ActivitySocialize.PlayingBehavior.NotRunnable");
         bestBehavior = _playingBehavior; 
         _lastNumTimesPlayStarted = _playingBehavior->GetNumTimesBehaviorStarted();
         _state = State::Playing;
@@ -249,7 +249,7 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
         }
       }
       
-      if( _playingBehavior->IsRunning() || _playingBehavior->IsRunnable(behaviorExternalInterface) ) {
+      if( _playingBehavior->IsRunning() || _playingBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         bestBehavior = _playingBehavior;
       }
       break;

@@ -29,7 +29,7 @@ protected:
   BehaviorReactToSparked(const Json::Value& config);
 
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
   
 }; // class BehaviorReactToSparked

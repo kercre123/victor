@@ -60,7 +60,7 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCantHandleTallStack::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorCantHandleTallStack::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const bool forFreeplay = true;
   auto progressionUnlockComp = behaviorExternalInterface.GetProgressionUnlockComponent().lock();

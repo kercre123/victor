@@ -52,7 +52,7 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorExploreVisitPossibleMarker::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // check whiteboard for known markers
   const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();

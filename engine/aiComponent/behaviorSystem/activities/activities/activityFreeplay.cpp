@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
 
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorSystem/iBSRunnable.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorSystem/behaviorManager.h"
@@ -194,20 +195,20 @@ void ActivityFreeplay::SetActivityIDFromSubActivity(ActivityID activityID){
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ActivityFreeplay::Update(BehaviorExternalInterface& behaviorExternalInterface)
+Result ActivityFreeplay::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto result = Result::RESULT_OK;
   if(_currentActivityPtr != nullptr){
-    result = _currentActivityPtr->Update(behaviorExternalInterface);
+    result = _currentActivityPtr->Update_Legacy(behaviorExternalInterface);
   }
   return result;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFreeplay::OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityFreeplay::OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if ( _currentActivityPtr ) {
-    _currentActivityPtr->OnDeselected(behaviorExternalInterface);
+    _currentActivityPtr->OnDeactivated(behaviorExternalInterface);
     _currentActivityPtr = nullptr;
   }
 }
@@ -240,7 +241,7 @@ void ActivityFreeplay::HandleMessage(const ExternalInterface::RobotOffTreadsStat
         // note: this will set the activity on cooldown, which may not be desired if it didn't run for some time
         
         // stop current activity
-        _currentActivityPtr->OnDeselected(_behaviorExternalInterface);
+        _currentActivityPtr->OnDeactivated(_behaviorExternalInterface);
         _currentActivityPtr = nullptr;
       }
     }
@@ -445,12 +446,12 @@ bool ActivityFreeplay::PickNewActivityForSpark(BehaviorExternalInterface& behavi
           newActivity         ? EnumToString(newActivity->GetID()) : "no activity" );
       // set new activity and timestamp
       if ( _currentActivityPtr ) {
-        _currentActivityPtr->OnDeselected(behaviorExternalInterface);
+        _currentActivityPtr->OnDeactivated(behaviorExternalInterface);
       }
       _currentActivityPtr = newActivity;
       if ( _currentActivityPtr ) {
         SetActivityIDFromSubActivity(_currentActivityPtr->GetID());
-        _currentActivityPtr->OnSelected(behaviorExternalInterface);
+        _currentActivityPtr->OnActivated(behaviorExternalInterface);
       }
     }
     else if ( _currentActivityPtr != nullptr )

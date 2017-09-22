@@ -33,7 +33,7 @@ ActivityGatherCubes::ActivityGatherCubes(BehaviorExternalInterface& behaviorExte
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ActivityGatherCubes::Update(BehaviorExternalInterface& behaviorExternalInterface){
+Result ActivityGatherCubes::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface){
   if (_gatherCubesFinished)
   {
     return Result::RESULT_OK;
@@ -97,7 +97,7 @@ Result ActivityGatherCubes::Update(BehaviorExternalInterface& behaviorExternalIn
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityGatherCubes::OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityGatherCubes::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // destroy beacon so that the sparksThinkAboutBeacons behavior in SparksGatherCube can create it
   ClearBeacons(behaviorExternalInterface);
@@ -105,7 +105,7 @@ void ActivityGatherCubes::OnSelectedInternal(BehaviorExternalInterface& behavior
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityGatherCubes::OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityGatherCubes::OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // destroy beacon so that hiking can recreate it in freeplay
   ClearBeacons(behaviorExternalInterface);

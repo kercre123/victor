@@ -113,7 +113,7 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyFistBump::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
@@ -139,7 +139,7 @@ bool ReactionTriggerStrategyFistBump::ShouldTriggerBehaviorInternal(BehaviorExte
   
   return _shouldTrigger &&
          (behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads) &&
-         behavior->IsRunnable(behaviorExternalInterface);
+         behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 

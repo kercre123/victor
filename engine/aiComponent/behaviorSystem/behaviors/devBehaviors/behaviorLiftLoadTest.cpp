@@ -81,7 +81,7 @@ namespace Anki {
     }
 
     
-    bool BehaviorLiftLoadTest::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+    bool BehaviorLiftLoadTest::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
     {
       return _canRun && (_currentState == State::Init || _currentState == State::TestComplete);
     }

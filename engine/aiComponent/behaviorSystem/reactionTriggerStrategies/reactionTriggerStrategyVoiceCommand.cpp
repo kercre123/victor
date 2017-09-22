@@ -61,7 +61,7 @@ void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(BehaviorExte
                                  BehaviorClass::ReactToVoiceCommand,
                                  directPtr);
   directPtr->SetDesiredFace(GetDesiredFace(behaviorExternalInterface));
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
@@ -91,7 +91,7 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(Behavior
       DEV_ASSERT(behavior->GetID() == BehaviorID::ReactToVoiceCommand_Wakeup,
                  "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.ExpectedWakeUpReaction");
     
-      return behavior->IsRunnable(behaviorExternalInterface);
+      return behavior->WantsToBeActivated(behaviorExternalInterface);
     }
     // Otherwise Cozmo is not going to sleep so the normal "Hey Cozmo" reaction can run
     else if(!robotHasIdleTimeout && !_isWakeUpReaction)
@@ -112,7 +112,7 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(Behavior
                                      directPtr);
       LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.DesiredFace", "DesiredFaceID: %d", desiredFace);
       directPtr->SetDesiredFace(desiredFace);
-      return behavior->IsRunnable(behaviorExternalInterface);
+      return behavior->WantsToBeActivated(behaviorExternalInterface);
     }
   }
   

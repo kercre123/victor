@@ -79,7 +79,7 @@ BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(const Json::Value& co
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorAcknowledgeCubeMoved::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return _activeObjectID.IsSet();
 }

@@ -39,8 +39,8 @@ public:
   virtual IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
   
   // events to notify the chooser when it becomes (in)active
-  virtual void OnSelected() override;
-  virtual void OnDeselected() override;
+  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 protected:
   BehaviorExternalInterface& _behaviorExternalInterface;

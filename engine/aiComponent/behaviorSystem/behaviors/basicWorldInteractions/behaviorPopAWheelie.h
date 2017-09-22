@@ -36,7 +36,7 @@ namespace Anki {
       virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       
-      virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+      virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
       virtual bool CarryingObjectHandledInternally() const override { return false;}
       
       virtual void UpdateTargetBlocksInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { UpdateTargetBlock(behaviorExternalInterface); }

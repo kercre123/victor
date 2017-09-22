@@ -36,7 +36,7 @@ public:
   //
   // Abstract methods to be overloaded:
   //
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { return true; }
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override { return true; }
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
 

@@ -62,7 +62,7 @@ BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(const Json::Value& co
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPlacedOnSlope::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToPlacedOnSlope::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

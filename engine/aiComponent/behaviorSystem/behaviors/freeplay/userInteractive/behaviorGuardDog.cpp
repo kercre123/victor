@@ -105,7 +105,7 @@ BehaviorGuardDog::BehaviorGuardDog(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorGuardDog::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorGuardDog::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

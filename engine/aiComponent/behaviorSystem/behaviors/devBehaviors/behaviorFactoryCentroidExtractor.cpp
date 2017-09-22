@@ -79,7 +79,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     }});
   }
   
-  bool BehaviorFactoryCentroidExtractor::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+  bool BehaviorFactoryCentroidExtractor::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
   {
     return !IsActing() && !_waitingForDots;
   }

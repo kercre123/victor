@@ -35,7 +35,7 @@ BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json:
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToUnexpectedMovement::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

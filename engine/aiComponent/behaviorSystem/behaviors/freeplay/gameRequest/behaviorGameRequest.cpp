@@ -86,7 +86,7 @@ void IBehaviorRequestGame::InitBehavior(BehaviorExternalInterface& behaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorRequestGame::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {  
   // Save some computation by checking wether this request is the one the request component
   // wants next first

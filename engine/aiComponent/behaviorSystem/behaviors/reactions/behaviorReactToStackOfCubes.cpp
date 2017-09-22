@@ -34,7 +34,7 @@ BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToStackOfCubes::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToStackOfCubes::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   using namespace BlockConfigurations;
   auto allPyramids = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();

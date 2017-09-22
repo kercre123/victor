@@ -53,7 +53,7 @@ public:
   virtual bool CarryingObjectHandledInternally() const override { return false;}
   
   // Is runnable when FaceWorld has enrollment settings set
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   
 protected:
 

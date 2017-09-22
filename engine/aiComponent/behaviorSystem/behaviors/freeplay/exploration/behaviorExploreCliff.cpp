@@ -75,7 +75,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool BehaviorExploreCliff::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+//bool BehaviorExploreCliff::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 //{
 //  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
 //  if ( nullptr == memoryMap ) {

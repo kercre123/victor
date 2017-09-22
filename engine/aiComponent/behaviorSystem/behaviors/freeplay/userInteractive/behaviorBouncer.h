@@ -33,7 +33,7 @@ protected:
   BehaviorBouncer(const Json::Value& config);
   
   // IBehavior interface
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false; }
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

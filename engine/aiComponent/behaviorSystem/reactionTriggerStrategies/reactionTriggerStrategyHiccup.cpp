@@ -120,7 +120,7 @@ void ReactionTriggerStrategyHiccup::SetupForceTriggerBehavior(BehaviorExternalIn
                                                          directPtr);
   
   directPtr->SetAnimSequence(GetHiccupAnim());
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
@@ -171,7 +171,7 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(BehaviorExtern
     // Make sure that we only consider ourselves cured once the get out animation plays
     // Otherwise we could be cured but the player never saw the get out
     directPtr->SetAnimSequence(anim);
-    if(behavior->IsRunnable(behaviorExternalInterface))
+    if(behavior->WantsToBeActivated(behaviorExternalInterface))
     {
       _hiccupsCured = HiccupsCured::NotCured;
       const_cast<Robot&>(robot).GetAnimationStreamer().ResetKeepFaceAliveLastStreamTimeout();
@@ -228,7 +228,7 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(BehaviorExtern
       }
       
       directPtr->SetAnimSequence(GetHiccupAnim());
-      const bool isRunnable = behavior->IsRunnable(behaviorExternalInterface);
+      const bool isRunnable = behavior->WantsToBeActivated(behaviorExternalInterface);
 
       if(!isRunnable)
       {

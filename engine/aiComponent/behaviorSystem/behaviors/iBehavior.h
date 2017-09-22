@@ -152,7 +152,7 @@ public:
   void StopOnNextActionComplete();
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  bool IsRunnable(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override final;
 
   BehaviorID         GetID()      const { return _id; }
   const std::string& GetIDStr()   const { return _idString; }
@@ -213,13 +213,10 @@ public:
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
 protected:
-  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
-  // as a uniform interface across Activities and Behaviors, but they will be
-  // wired up in a seperate PR
-  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
-  virtual void EnteredActivatableScopeInternal() override {};
-  virtual bool WantsToBeActivatedInternal() override { return false;};
-  virtual void LeftActivatableScopeInternal() override {};
+  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
+  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
+  virtual void OnEnteredActivatableScopeInternal() override {};
+  virtual void OnLeftActivatableScopeInternal() override {};
   
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
@@ -238,8 +235,8 @@ protected:
   virtual void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {};
   
   // To keep passing through data generic, if robot is not overridden
-  // check the NoPreReqs IsRunnableInternal
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
+  // check the NoPreReqs WantsToBeActivatedBehavior
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
 
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
@@ -438,7 +435,7 @@ protected:
   
   // If a behavior requires that an AIInformationProcess is running for the behavior
   // to operate properly, the behavior should set this variable directly so that
-  // it's checked in IsRunnableBase
+  // it's checked in WantsToBeActivatedBase
   AIInformationAnalysis::EProcess _requiredProcess;
   
   bool ShouldStreamline() const { return (_alwaysStreamline || _sparksStreamline); }
@@ -456,7 +453,7 @@ private:
   IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
-  bool IsRunnableBase(BehaviorExternalInterface& behaviorExternalInterface) const;
+  bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
   
   bool ReadFromJson(const Json::Value& config);
   

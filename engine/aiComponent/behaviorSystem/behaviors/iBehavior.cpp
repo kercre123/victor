@@ -595,10 +595,10 @@ void IBehavior::StopOnNextActionComplete()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::IsRunnable(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehavior::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  if(IsRunnableBase(behaviorExternalInterface)){
-    return IsRunnableInternal(behaviorExternalInterface);
+  if(WantsToBeActivatedBase(behaviorExternalInterface)){
+    return WantsToBeActivatedBehavior(behaviorExternalInterface);
   }
   
   return false;
@@ -606,12 +606,12 @@ bool IBehavior::IsRunnable(BehaviorExternalInterface& behaviorExternalInterface)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::IsRunnableBase(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehavior::WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
   DEV_ASSERT(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
   if (IsRunning()) {
-    PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetIDStr().c_str());
+    PRINT_CH_DEBUG("Behaviors", "IBehavior.WantsToBeActivatedBase", "Behavior %s is already running", GetIDStr().c_str());
     return true;
   }
   
@@ -762,7 +762,7 @@ Result IBehavior::ResumeInternal(BehaviorExternalInterface& behaviorExternalInte
   // by default, if we are runnable again, initialize and start over
   Result resumeResult = RESULT_FAIL;
   
-  if ( IsRunnable(behaviorExternalInterface) ) {
+  if ( WantsToBeActivated(behaviorExternalInterface) ) {
     _isRunning = true;
     resumeResult = OnActivatedInternal_Legacy(behaviorExternalInterface);
   }
@@ -1291,7 +1291,7 @@ float IBehavior::EvaluateScore(BehaviorExternalInterface& behaviorExternalInterf
                  "No score was loaded in for behavior name %s",
                  GetIDStr().c_str());
 #endif
-  if (IsRunning() || IsRunnable(behaviorExternalInterface))
+  if (IsRunning() || WantsToBeActivated(behaviorExternalInterface))
   {
     const bool isRunning = IsRunning();
     

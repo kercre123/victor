@@ -38,7 +38,7 @@ BehaviorEarnedSparks::~BehaviorEarnedSparks()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEarnedSparks::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorEarnedSparks::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
   if(needsManager != nullptr){

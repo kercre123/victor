@@ -35,7 +35,7 @@ BehaviorTurnToFace::BehaviorTurnToFace(const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTurnToFace::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorTurnToFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   Pose3d wastedPose;
   TimeStamp_t lastTimeObserved = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(wastedPose);

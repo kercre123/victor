@@ -65,7 +65,7 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(const Json::Value& conf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToVoiceCommand::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if (Vision::UnknownFaceID != _desiredFace)
   {

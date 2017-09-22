@@ -148,7 +148,7 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorKnockOverCubes::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorKnockOverCubes::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   UpdateTargetStack(behaviorExternalInterface);
   if(auto tallestStack = _currentTallestStack.lock()){

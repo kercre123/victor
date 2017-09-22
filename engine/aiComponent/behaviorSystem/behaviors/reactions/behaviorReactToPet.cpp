@@ -60,7 +60,7 @@ BehaviorReactToPet::BehaviorReactToPet(const Json::Value& config)
 // Called at the start of each tick. Return true if behavior can run.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorReactToPet::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorReactToPet::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if (AlreadyReacting()) {
     PRINT_TRACE("ReactToPet.IsRunnable.AlreadyReacting", "Already reacting to a pet");

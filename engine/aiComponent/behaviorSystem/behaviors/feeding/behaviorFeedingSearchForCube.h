@@ -29,7 +29,7 @@ protected:
   BehaviorFeedingSearchForCube(const Json::Value& config);
   
 public:
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
     
 protected:

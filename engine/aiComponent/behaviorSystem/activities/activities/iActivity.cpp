@@ -214,11 +214,20 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::OnSelected(BehaviorExternalInterface& behaviorExternalInterface)
+bool IActivity::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+{
+  return _strategy->WantsToStart(behaviorExternalInterface,
+                                 GetLastTimeStoppedSecs(),
+                                 GetLastTimeStartedSecs());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastTimeActivityStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_behaviorChooserPtr.get() != nullptr){
-    _behaviorChooserPtr->OnSelected();
+    _behaviorChooserPtr->OnActivated(behaviorExternalInterface);
   }
   
   // Update Activity state for the PublicStateBroadcaster
@@ -257,15 +266,15 @@ void IActivity::OnSelected(BehaviorExternalInterface& behaviorExternalInterface)
   // log event to das - note freeplay_goal is a legacy name for Activities left
   // in place so that data is queriable - please do not change
   Util::sEventF("robot.freeplay_goal_started", {}, "%s", ActivityIDToString(_id));
-  OnSelectedInternal(behaviorExternalInterface);
+  OnActivatedActivity(behaviorExternalInterface);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::OnDeselected(BehaviorExternalInterface& behaviorExternalInterface)
+void IActivity::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _lastTimeActivityStoppedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_behaviorChooserPtr.get() != nullptr){
-    _behaviorChooserPtr->OnDeselected();
+    _behaviorChooserPtr->OnDeactivated(behaviorExternalInterface);
   }
 
   // clear idle if it was set
@@ -334,7 +343,7 @@ void IActivity::OnDeselected(BehaviorExternalInterface& behaviorExternalInterfac
                 {{DDATA, std::to_string(nSecs).c_str()}},
                 "%s", ActivityIDToString(_id));
   
-  OnDeselectedInternal(behaviorExternalInterface);
+  OnDeactivatedActivity(behaviorExternalInterface);
 }
 
   

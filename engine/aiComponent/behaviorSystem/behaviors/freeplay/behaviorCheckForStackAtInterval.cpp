@@ -46,7 +46,7 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(const Json::Val
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCheckForStackAtInterval::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorCheckForStackAtInterval::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currTime > _nextCheckTime_s)

@@ -1055,7 +1055,7 @@ void BehaviorManager::SetCurrentActivity(BehaviorExternalInterface& behaviorExte
   
   if(!ignorePreviousActivity){
     // notify all chooser it's no longer selected
-    GetCurrentActivity()->OnDeselected(behaviorExternalInterface);
+    GetCurrentActivity()->OnDeactivated(behaviorExternalInterface);
     
     // channeled log and event - legacy event from when activites were just choosers
     // PLEASE DO NOT CHANGE or you will break analytics queries
@@ -1087,7 +1087,7 @@ void BehaviorManager::SetCurrentActivity(BehaviorExternalInterface& behaviorExte
 
   _currentHighLevelActivity = newActivity;
   
-  GetCurrentActivity()->OnSelected(behaviorExternalInterface);
+  GetCurrentActivity()->OnActivated(behaviorExternalInterface);
   
   // mark the time at which the change happened (this is checked by behaviors)
   _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

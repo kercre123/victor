@@ -43,9 +43,6 @@ public:
   IBSRunnableChooser(BehaviorExternalInterface& behaviorExternalInterface,
                      const Json::Value& config):IBSRunnable("chooser"){};
   virtual ~IBSRunnableChooser() {}
-  
-  virtual void OnSelected() {};
-  virtual void OnDeselected() {};
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic
@@ -60,17 +57,18 @@ public:
 
 
 protected:
-  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
-  // as a uniform interface across Activities and Behaviors, but they will be
-  // wired up in a seperate PR
-  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
+  // Functions called by iBSRunnable
+  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
+  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
+  
+  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
+  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual void EnteredActivatableScopeInternal() override {};
+  virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual bool WantsToBeActivatedInternal() override { return false;};
-  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {OnSelected();};
-  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {OnDeselected();};
-  virtual void LeftActivatableScopeInternal() override {};
+  virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { return false;};
+
+  virtual void OnLeftActivatableScopeInternal() override {};
   
 }; // class IBSRunnableChooser
   

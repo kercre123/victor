@@ -128,7 +128,7 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTrackLaser::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorTrackLaser::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -164,7 +164,7 @@ bool BehaviorTrackLaser::IsRunnableInternal(BehaviorExternalInterface& behaviorE
       
       if(crntSeenRecently && prevSeenRecently)
       {
-        PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.IsRunnableInternal.CanStart",
+        PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.WantsToBeActivatedBehavior.CanStart",
                        "LastObs:%dms PrevObs:%dms LastImgTime:%dms Threshold:%.2fs",
                        _lastLaserObservation.timestamp_ms,
                        _lastLaserObservation.timestamp_prev_ms,

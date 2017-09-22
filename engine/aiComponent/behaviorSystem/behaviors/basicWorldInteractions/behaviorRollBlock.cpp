@@ -57,7 +57,7 @@ BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRollBlock::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRollBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   UpdateTargetBlock(behaviorExternalInterface);
   

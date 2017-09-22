@@ -40,7 +40,7 @@ ReactionTriggerStrategyNoPreDockPoses::ReactionTriggerStrategyNoPreDockPoses(Beh
 
 void ReactionTriggerStrategyNoPreDockPoses::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,7 +57,7 @@ bool ReactionTriggerStrategyNoPreDockPoses::ShouldTriggerBehaviorInternal(Behavi
     ObjectID unsetObj;
     behaviorExternalInterface.GetAIComponent().GetNonConstWhiteboard().SetNoPreDockPosesOnObject(unsetObj);
     directPtr->SetBlockToRam(objectWithoutPosesCopy.GetValue());
-    return behavior->IsRunnable(behaviorExternalInterface);
+    return behavior->WantsToBeActivated(behaviorExternalInterface);
   }
   return false;
 }

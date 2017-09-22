@@ -172,7 +172,7 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(Behavio
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorInteractWithFaces::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorInteractWithFaces::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   _targetFace = Vision::UnknownFaceID;
   SelectFaceToTrack(behaviorExternalInterface);

@@ -50,7 +50,7 @@ BehaviorFeedingSearchForCube::BehaviorFeedingSearchForCube(const Json::Value& co
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingSearchForCube::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFeedingSearchForCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

@@ -51,7 +51,7 @@ BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAcknowledgeFace::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorAcknowledgeFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return !_desiredTargets.empty();
 }

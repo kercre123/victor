@@ -186,7 +186,7 @@ void BehaviorExploreBringCubeToBeacon::LoadConfig(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorExploreBringCubeToBeacon::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   _candidateObjects.clear();
   const AIWhiteboard& whiteboard = behaviorExternalInterface.GetAIComponent().GetWhiteboard();

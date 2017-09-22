@@ -108,13 +108,13 @@ IBehavior::Status IHelper::UpdateWhileActive(BehaviorExternalInterface& behavior
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IHelper::InitializeOnStack()
+void IHelper::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _status = IBehavior::Status::Running;
   _hasStarted = false;
   _onSuccessFunction = nullptr;
   _onFailureFunction = nullptr;
-  InitializeOnStackInternal();
+  OnActivatedHelper(behaviorExternalInterface);
 }
 
 

@@ -43,7 +43,7 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
   virtual void AddListener(IReactToPetListener* listener) override;
   
@@ -53,7 +53,7 @@ private:
   static constexpr float NEVER = -1.0f;
   
   // Everything we want to react to before we stop (to handle multiple targets in the same frame).
-  // This member must be mutable to retain state from const method IsRunnableInternal().
+  // This member must be mutable to retain state from const method WantsToBeActivatedBehavior().
   std::set<Vision::FaceID_t> _targets;
   
   // Current target

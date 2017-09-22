@@ -72,7 +72,7 @@
 //}
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//bool BehaviorExploreMarkedCube::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+//bool BehaviorExploreMarkedCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 //{
 //  const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
 //  if ( nullptr == memoryMap ) {

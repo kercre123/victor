@@ -50,7 +50,7 @@ BehaviorFindFaces::BehaviorFindFaces(const Json::Value& config)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFindFaces::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFindFaces::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // we can always search for faces (override base class restrictions)
   return true;

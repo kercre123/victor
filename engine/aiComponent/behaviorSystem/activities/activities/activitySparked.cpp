@@ -160,7 +160,7 @@ ActivitySparked::~ActivitySparked()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivitySparked::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _timeChooserStarted = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _currentObjectiveCompletedCount = 0;
@@ -216,7 +216,7 @@ void ActivitySparked::OnSelectedInternal(BehaviorExternalInterface& behaviorExte
   
   // Notify the delegate chooser if it exists
   if(_subActivityDelegate != nullptr){
-    _subActivityDelegate->OnSelected(behaviorExternalInterface);
+    _subActivityDelegate->OnActivated(behaviorExternalInterface);
   }
   
   // for COZMO-8914
@@ -227,14 +227,14 @@ void ActivitySparked::OnSelectedInternal(BehaviorExternalInterface& behaviorExte
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivitySparked::OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   ResetLightsAndAnimations(behaviorExternalInterface);
   // clear any custom light events set during the spark
   
   // Notify the delegate chooser if it exists
   if(_subActivityDelegate != nullptr){
-    _subActivityDelegate->OnDeselected(behaviorExternalInterface);
+    _subActivityDelegate->OnDeactivated(behaviorExternalInterface);
   }
   
   {
@@ -345,7 +345,7 @@ void ActivitySparked::HandleMessage(const ExternalInterface::RobotObservedObject
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ActivitySparked::Update(BehaviorExternalInterface& behaviorExternalInterface)
+Result ActivitySparked::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -378,7 +378,7 @@ Result ActivitySparked::Update(BehaviorExternalInterface& behaviorExternalInterf
   Result result = Result::RESULT_OK;
   
   if(_subActivityDelegate != nullptr){
-    result = _subActivityDelegate->Update(behaviorExternalInterface);
+    result = _subActivityDelegate->Update_Legacy(behaviorExternalInterface);
   }
   
   return result;  

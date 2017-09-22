@@ -150,7 +150,7 @@ BehaviorSinging::~BehaviorSinging()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSinging::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorSinging::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // Always runnable, the higher level Singing goal/activity is responsible
   // for deciding when Cozmo should sing

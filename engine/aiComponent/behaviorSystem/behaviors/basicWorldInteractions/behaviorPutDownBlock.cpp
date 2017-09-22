@@ -69,7 +69,7 @@ BehaviorPutDownBlock::BehaviorPutDownBlock(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPutDownBlock::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPutDownBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

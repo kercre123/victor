@@ -248,7 +248,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorFactoryTest::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+  bool BehaviorFactoryTest::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
   {
     return _testResult == FactoryTestResultCode::UNKNOWN;
   }

@@ -124,7 +124,7 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, BehaviorExternalI
 
   CreateStackBehavior(robot, stackBehavior);
 
-  ASSERT_FALSE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "behavior should not be runnable without cubes";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable without cubes";
   
   std::string currentActivityName;
   std::string behaviorDebugStr;
@@ -132,14 +132,14 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, BehaviorExternalI
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  ASSERT_FALSE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "behavior should not be runnable without cubes after update";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
   blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
   blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
 
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  ASSERT_FALSE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "behavior should not be runnable with unknown cubes";
+  ASSERT_FALSE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "behavior should not be runnable with unknown cubes";
 
   // Add two objects
   ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
@@ -165,7 +165,7 @@ void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, BehaviorExternalI
   static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   incrementEngineTime_ns += 100000000.0f;
   BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
-  ASSERT_TRUE(stackBehavior->IsRunnable(behaviorExternalInterface)) << "now behavior should be runnable";
+  ASSERT_TRUE(stackBehavior->WantsToBeActivated(behaviorExternalInterface)) << "now behavior should be runnable";
 
 }
 
@@ -239,7 +239,7 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   std::string behaviorDebugStr;
   
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  stackBehavior->EnteredActivatableScope();
+  stackBehavior->OnEnteredActivatableScope();
   //auto result =
   stackBehavior->OnActivated(*behaviorExternalInterface);
   //EXPECT_EQ(RESULT_OK, result);

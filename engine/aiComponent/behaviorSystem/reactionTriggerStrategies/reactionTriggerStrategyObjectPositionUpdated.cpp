@@ -89,7 +89,7 @@ bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal
                                    directPtr);
     
     directPtr->SetObjectsToAcknowledge(targets);
-    return behavior->IsRunnable(behaviorExternalInterface);
+    return behavior->WantsToBeActivated(behaviorExternalInterface);
   }
   
   return false;

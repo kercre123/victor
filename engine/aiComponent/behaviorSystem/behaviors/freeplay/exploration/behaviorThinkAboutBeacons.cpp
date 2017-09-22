@@ -39,7 +39,7 @@ BehaviorThinkAboutBeacons::~BehaviorThinkAboutBeacons()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorThinkAboutBeacons::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // we want to think about beacons if we don't have any or we have finished the current one
   bool needsBeacon = true;

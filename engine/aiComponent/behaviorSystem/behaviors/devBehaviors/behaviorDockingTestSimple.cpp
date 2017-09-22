@@ -144,7 +144,7 @@ namespace Anki {
     }
 
     
-    bool BehaviorDockingTestSimple::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+    bool BehaviorDockingTestSimple::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
     {
       return _currentState == State::Init;
     }

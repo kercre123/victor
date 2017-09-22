@@ -74,7 +74,7 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPopAWheelie::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPopAWheelie::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   UpdateTargetBlock(behaviorExternalInterface);
   

@@ -52,10 +52,10 @@ public:
   
   
   // Delegates to current activity
-  virtual Result Update(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // exit the current activity so that we clean up any conditions we've set up before entering the new chooser
-  virtual void OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behavior selection

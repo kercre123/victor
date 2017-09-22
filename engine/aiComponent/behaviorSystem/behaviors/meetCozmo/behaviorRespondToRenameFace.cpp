@@ -52,7 +52,7 @@ void BehaviorRespondToRenameFace::HandleWhileNotRunning(const GameToEngineEvent&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorRespondToRenameFace::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorRespondToRenameFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const bool haveValidName = !_name.empty();
   return haveValidName;

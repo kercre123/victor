@@ -146,7 +146,7 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(BehaviorExt
         if(behavior->IsRunning()){
           return true;
         }else{
-          return behavior->IsRunnable(behaviorExternalInterface);
+          return behavior->WantsToBeActivated(behaviorExternalInterface);
         }
       }
     }

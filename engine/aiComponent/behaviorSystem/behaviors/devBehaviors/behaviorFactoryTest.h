@@ -52,7 +52,7 @@ namespace Cozmo {
 
     virtual ~BehaviorFactoryTest() { }
     
-    virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
+    virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
     virtual bool CarryingObjectHandledInternally() const override{ return true;}
 
   protected:

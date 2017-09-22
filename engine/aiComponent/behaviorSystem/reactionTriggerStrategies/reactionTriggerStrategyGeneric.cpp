@@ -93,11 +93,11 @@ void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(BehaviorExternalI
 {
   if (_needsRobotPreReq)
   {
-    behavior->IsRunnable(behaviorExternalInterface);
+    behavior->WantsToBeActivated(behaviorExternalInterface);
   }
   else
   {
-    behavior->IsRunnable(behaviorExternalInterface);
+    behavior->WantsToBeActivated(behaviorExternalInterface);
   }
 }
   
@@ -112,8 +112,8 @@ bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(BehaviorExter
     
     const bool isRunnable = (behavior->IsRunning() ||
                              (_needsRobotPreReq ?
-                              behavior->IsRunnable(behaviorExternalInterface) :
-                              behavior->IsRunnable(behaviorExternalInterface)));
+                              behavior->WantsToBeActivated(behaviorExternalInterface) :
+                              behavior->WantsToBeActivated(behaviorExternalInterface)));
     
     return isRunnable && _wantsToRunStrategy->WantsToRun(behaviorExternalInterface);
   }

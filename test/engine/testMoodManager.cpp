@@ -574,7 +574,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_NEAR(score2, 0.5f, 1e-4);
   
   // 2) happy happened 0.0 seconds ago:
-  testBehaviorReqHappy->EnteredActivatableScope();
+  testBehaviorReqHappy->OnEnteredActivatableScope();
   testBehaviorReqHappy->OnActivated(*behaviorExternalInterface);
   testBehaviorReqHappy->OnDeactivated(*behaviorExternalInterface);
 
@@ -588,7 +588,7 @@ TEST(MoodManager, BehaviorScoring)
   gCurrentTime += 1.0;
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
-  testBehaviorReqCalm->EnteredActivatableScope();
+  testBehaviorReqCalm->OnEnteredActivatableScope();
   testBehaviorReqCalm->OnActivated(*behaviorExternalInterface);
   testBehaviorReqCalm->OnDeactivated(*behaviorExternalInterface);
   

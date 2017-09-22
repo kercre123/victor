@@ -143,7 +143,7 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorEnrollFace::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorEnrollFace::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // This behavior is runnable iff a face enrollment has been requested
   return IsEnrollmentRequested();

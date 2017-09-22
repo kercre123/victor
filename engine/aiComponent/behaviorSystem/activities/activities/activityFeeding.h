@@ -40,7 +40,7 @@ public:
   ActivityFeeding(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
   ~ActivityFeeding();
   
-  virtual Result Update(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // Implementation of IFeedingListener
   virtual void StartedEating(BehaviorExternalInterface& behaviorExternalInterface, const int duration_s) override;
@@ -50,8 +50,8 @@ public:
 protected:
   virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
 
-  virtual void OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual void OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   enum class FeedingActivityStage{

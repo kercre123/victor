@@ -39,9 +39,9 @@ BehaviorPlayArbitraryAnim::~BehaviorPlayArbitraryAnim()
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayArbitraryAnim::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPlayArbitraryAnim::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(behaviorExternalInterface);
+  const bool retVal = _numLoops >= 0 && BaseClass::WantsToBeActivatedBehavior(behaviorExternalInterface);
   return retVal;
 }
   

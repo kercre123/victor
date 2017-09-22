@@ -77,7 +77,7 @@ BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCubeLiftWorkout::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorCubeLiftWorkout::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

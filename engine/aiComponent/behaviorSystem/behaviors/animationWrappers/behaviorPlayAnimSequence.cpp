@@ -54,7 +54,7 @@ BehaviorPlayAnimSequence::~BehaviorPlayAnimSequence()
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayAnimSequence::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPlayAnimSequence::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   const bool hasAnims = !_animTriggers.empty();
   return hasAnims && IsRunnableAnimSeqInternal(behaviorExternalInterface);

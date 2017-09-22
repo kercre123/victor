@@ -24,12 +24,12 @@ ActivityExpressNeeds::ActivityExpressNeeds(BehaviorExternalInterface& behaviorEx
 }
 
 
-void ActivityExpressNeeds::OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityExpressNeeds::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
 
 }
 
-void ActivityExpressNeeds::OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityExpressNeeds::OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
 
 }

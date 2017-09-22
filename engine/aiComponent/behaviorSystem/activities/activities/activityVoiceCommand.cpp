@@ -303,7 +303,7 @@ IBehaviorPtr ActivityVoiceCommand::GetDesiredActiveBehaviorInternal(BehaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ActivityVoiceCommand::Update(BehaviorExternalInterface& behaviorExternalInterface)
+Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -468,7 +468,7 @@ Result ActivityVoiceCommand::Update(BehaviorExternalInterface& behaviorExternalI
         
         if(desiredFace.IsValid()){
           _driveToFaceBehavior->SetTargetFace(desiredFace);
-          if(_driveToFaceBehavior->IsRunnable(behaviorExternalInterface)){
+          if(_driveToFaceBehavior->WantsToBeActivated(behaviorExternalInterface)){
             // Only play the "alrighty" animation if we're actually going to drive towards the face
             const auto& face = robot.GetFaceWorld().GetFace(desiredFace);
             if(face != nullptr){
@@ -485,7 +485,7 @@ Result ActivityVoiceCommand::Update(BehaviorExternalInterface& behaviorExternalI
         }
         
         if(shouldSearchForFaces){
-          if(ANKI_VERIFY(_searchForFaceBehavior->IsRunnable(behaviorExternalInterface),
+          if(ANKI_VERIFY(_searchForFaceBehavior->WantsToBeActivated(behaviorExternalInterface),
                          "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotRunnable",
                          "No way to respond to the voice command")){
             responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _searchForFaceBehavior;});
@@ -509,7 +509,7 @@ Result ActivityVoiceCommand::Update(BehaviorExternalInterface& behaviorExternalI
       case VoiceCommandType::FistBump:
       {
         //Ensure fist bump is runnable
-        if(_fistBumpBehavior->IsRunnable(behaviorExternalInterface))
+        if(_fistBumpBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this, &behaviorExternalInterface, currentCommand](const IBehaviorPtr currentBehavior){
@@ -531,7 +531,7 @@ Result ActivityVoiceCommand::Update(BehaviorExternalInterface& behaviorExternalI
       case VoiceCommandType::PeekABoo:
       {
         //Ensure PeekABoo is runnable
-        if(_peekABooBehavior->IsRunnable(behaviorExternalInterface))
+        if(_peekABooBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this, &behaviorExternalInterface, currentCommand](const IBehaviorPtr currentBehavior){
@@ -552,7 +552,7 @@ Result ActivityVoiceCommand::Update(BehaviorExternalInterface& behaviorExternalI
       }
       case VoiceCommandType::GoToSleep:
       {
-        if(_goToSleepBehavior->IsRunnable(behaviorExternalInterface))
+        if(_goToSleepBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _goToSleepBehavior;});
@@ -570,7 +570,7 @@ Result ActivityVoiceCommand::Update(BehaviorExternalInterface& behaviorExternalI
       }
       case VoiceCommandType::LookDown:
       {
-        if(_laserBehavior->IsRunnable(behaviorExternalInterface))
+        if(_laserBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _laserBehavior;   });
@@ -783,7 +783,7 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(BehaviorExternalInterface
              refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
              "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");
   
-  if(refuseBehavior->IsRunnable(behaviorExternalInterface))
+  if(refuseBehavior->WantsToBeActivated(behaviorExternalInterface))
   {
     responseQueue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
     return true;
@@ -869,7 +869,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(BehaviorExternalInterface
   }
   
   howAreYouDoingBehavior->SetAnimationsToPlay(howAreYouDoingAnims);
-  if(howAreYouDoingBehavior->IsRunnable(behaviorExternalInterface))
+  if(howAreYouDoingBehavior->WantsToBeActivated(behaviorExternalInterface))
   {
     responseQueue.push([howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
   }

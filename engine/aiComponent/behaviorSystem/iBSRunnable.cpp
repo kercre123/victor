@@ -53,7 +53,7 @@ void IBSRunnable::Init(BehaviorExternalInterface& behaviorExternalInterface)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::EnteredActivatableScope()
+void IBSRunnable::OnEnteredActivatableScope()
 {
   DEV_ASSERT_MSG(_currentActivationState == ActivationState::OutOfScope,
                  "IBSRunnable.EnteredActivatableScope.WrongActivationState",
@@ -65,7 +65,7 @@ void IBSRunnable::EnteredActivatableScope()
   // so set the last tick count as being one tickInterval before the current tickCount
   _lastTickOfUpdate = (BaseStationTimer::getInstance()->GetTickCount() - kBSTickInterval);
   _currentActivationState = ActivationState::InScope;
-  EnteredActivatableScopeInternal();
+  OnEnteredActivatableScopeInternal();
 }
 
 
@@ -95,7 +95,7 @@ void IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBSRunnable::WantsToBeActivated()
+bool IBSRunnable::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if(USE_BSM){
     DEV_ASSERT_MSG(_currentActivationState == ActivationState::InScope,
@@ -105,7 +105,7 @@ bool IBSRunnable::WantsToBeActivated()
                    ActivationStateToString(_currentActivationState).c_str());
     _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
   }
-  return WantsToBeActivatedInternal();
+  return WantsToBeActivatedInternal(behaviorExternalInterface);
 }
 
 
@@ -149,7 +149,7 @@ void IBSRunnable::OnDeactivated(BehaviorExternalInterface& behaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::LeftActivatableScope()
+void IBSRunnable::OnLeftActivatableScope()
 {
   DEV_ASSERT_MSG(_currentActivationState == ActivationState::InScope,
                  "IBSRunnable.LeftActivatableScope.WrongActivationState",
@@ -157,12 +157,12 @@ void IBSRunnable::LeftActivatableScope()
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
   _currentActivationState = ActivationState::OutOfScope;
-  LeftActivatableScopeInternal();
+  OnLeftActivatableScopeInternal();
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string IBSRunnable::ActivationStateToString(ActivationState state)
+std::string IBSRunnable::ActivationStateToString(ActivationState state) const
 {
   switch(state){
     case ActivationState::NotInitialized : return "NotInitialized";

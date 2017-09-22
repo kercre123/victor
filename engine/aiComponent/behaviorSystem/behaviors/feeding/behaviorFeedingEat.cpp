@@ -103,7 +103,7 @@ BehaviorFeedingEat::BehaviorFeedingEat(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorFeedingEat::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorFeedingEat::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if(_targetID.IsSet()){
     if( IsCubeBad(behaviorExternalInterface, _targetID ) ) {

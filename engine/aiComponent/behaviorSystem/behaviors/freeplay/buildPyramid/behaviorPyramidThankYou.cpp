@@ -46,7 +46,7 @@ BehaviorPyramidThankYou::~BehaviorPyramidThankYou()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPyramidThankYou::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorPyramidThankYou::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // Check to see if there's a person we can turn to look at
   if(behaviorExternalInterface.GetFaceWorld().HasAnyFaces(kTimeSinceFaceSeenForTurn)){

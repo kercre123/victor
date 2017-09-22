@@ -39,13 +39,13 @@ public:
   
   // Function which informs the Runnable that it may be activated - opportunity
   // to start any processes which need to be running for the Runnable to be runnable
-  void EnteredActivatableScope();
+  void OnEnteredActivatableScope();
   
   // Guaranteed to be ticked every tick that the runnable is within activatable scope
   void Update(BehaviorExternalInterface& behaviorExternalInterface);
   
   // Check to see if the runnable wants to run right now
-  bool WantsToBeActivated();
+  bool WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const;
   
   // Informs the runnable that it has been activated
   void OnActivated(BehaviorExternalInterface& behaviorExternalInterface);
@@ -55,18 +55,18 @@ public:
   
   // Function which informs the Runnable that it has fallen out of scope to be activated
   // the runnable should stop any processes it started on entering selectable scope
-  void LeftActivatableScope();
+  void OnLeftActivatableScope();
   
-  //virtual std::set<IBSRunnable> GetAllDelegates() = 0;
+  virtual void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const = 0;
 
 protected:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual void EnteredActivatableScopeInternal() = 0;
+  virtual void OnEnteredActivatableScopeInternal() = 0;
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual bool WantsToBeActivatedInternal() = 0;
+  virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
   virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual void LeftActivatableScopeInternal() = 0;
+  virtual void OnLeftActivatableScopeInternal() = 0;
   
 private:
   enum class ActivationState{
@@ -79,11 +79,11 @@ private:
   // tmp string for identifying BSRunnables until IDs are combined
   std::string _idString;
   ActivationState _currentActivationState;
-  size_t _lastTickWantsToBeActivatedCheckedOn;
+  mutable size_t _lastTickWantsToBeActivatedCheckedOn;
   size_t _lastTickOfUpdate;
 
   
-  std::string ActivationStateToString(ActivationState state);
+  std::string ActivationStateToString(ActivationState state) const;
   
   
 };

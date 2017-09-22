@@ -65,7 +65,7 @@ void BehaviorOnConfigSeen::ReadJson(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnConfigSeen::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorOnConfigSeen::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // if this is the first update in a long time consider that the config was already known
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

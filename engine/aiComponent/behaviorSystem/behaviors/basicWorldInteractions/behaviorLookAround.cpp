@@ -70,7 +70,7 @@ BehaviorLookAround::~BehaviorLookAround()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorLookAround::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorLookAround::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return true;
 }

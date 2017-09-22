@@ -51,7 +51,7 @@ public:
     }
   }
 
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
   }
 
@@ -143,7 +143,7 @@ TEST(BehaviorInterface, Create)
 
   EXPECT_FALSE( b.IsRunning() );
   EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
-  EXPECT_TRUE( b.IsRunnable(*behaviorExternalInterface));
+  EXPECT_TRUE( b.WantsToBeActivated(*behaviorExternalInterface));
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -163,7 +163,7 @@ TEST(BehaviorInterface, Init)
 
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b._inited );
@@ -190,7 +190,7 @@ TEST(BehaviorInterface, InitWithInterface)
 
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b._inited );
   b.OnActivated(*behaviorExternalInterface);
@@ -213,7 +213,7 @@ TEST(BehaviorInterface, Run)
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   b.ReadFromScoredJson(empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -267,7 +267,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   b.ReadFromScoredJson(empty);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
 
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -345,7 +345,7 @@ TEST(BehaviorInterface, HandleMessages)
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
 
   BaseStationTimer::getInstance()->UpdateTime(0);
   b.OnActivated(*behaviorExternalInterface);
@@ -394,7 +394,7 @@ TEST(BehaviorInterface, OutsideAction)
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   b.OnActivated(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -488,7 +488,7 @@ TEST(BehaviorInterface, StartActingSimple)
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   BaseStationTimer::getInstance()->UpdateTime(0);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
 
   b.OnActivated(*behaviorExternalInterface);
 
@@ -531,7 +531,7 @@ TEST(BehaviorInterface, StartActingFailures)
   b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
 
   b.OnActivated(*behaviorExternalInterface);
 
@@ -603,7 +603,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
   b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
 
   b.OnActivated(*behaviorExternalInterface);
 
@@ -677,7 +677,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
 
   b.OnActivated(*behaviorExternalInterface);
 
@@ -750,7 +750,7 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
 
   BaseStationTimer::getInstance()->UpdateTime( 0 );
   
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
@@ -815,7 +815,7 @@ public:
 
   virtual bool CarryingObjectHandledInternally() const override {return true;}
 
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
   }
 
@@ -855,7 +855,7 @@ TEST(BehaviorInterface, StartActingInsideInit)
 
   TestInitBehavior b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   b.OnActivated(*behaviorExternalInterface);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty()) << "action should be started by Init";

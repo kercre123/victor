@@ -142,7 +142,7 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehaviorInternal(B
                                  directPtr);
   
   directPtr->SetTargets(targets);
-  return behavior->IsRunnable(behaviorExternalInterface);
+  return behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 

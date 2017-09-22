@@ -59,7 +59,7 @@ protected:
 
   // reset the state and populate the objective which we will require for this run (they are randomized each
   // time the activity is selected)
-  virtual void OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 private:
   // use the objective requirements to populate _objectivesLeft, taking into account unlocks and random

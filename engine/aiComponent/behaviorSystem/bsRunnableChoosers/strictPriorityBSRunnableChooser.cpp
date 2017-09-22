@@ -67,7 +67,7 @@ IBehaviorPtr StrictPriorityBSRunnableChooser::GetDesiredActiveBehavior(BehaviorE
   // Iterate through available behaviors, and return the first one that is runnable
   // since this is the highest priority behavior
   for(const auto& entry: _behaviors){
-    if(entry->IsRunning() || entry->IsRunnable(behaviorExternalInterface)){
+    if(entry->IsRunning() || entry->WantsToBeActivated(behaviorExternalInterface)){
       return entry;
     }
   }

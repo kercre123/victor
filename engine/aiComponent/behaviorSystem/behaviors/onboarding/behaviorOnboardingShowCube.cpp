@@ -94,7 +94,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(const Json::Value& config
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorOnboardingShowCube::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorOnboardingShowCube::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // behavior will be killed by unity, the only thing that can start it...
   return true;

@@ -107,7 +107,7 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExpressNeeds::IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const
+bool BehaviorExpressNeeds::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if(_caresAboutExpressedState &&
      (_requiredBracket == NeedBracketId::Critical)){

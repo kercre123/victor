@@ -43,17 +43,21 @@ public:
   const std::string& GetName() const { return _name; }
   
 protected:
-  // IBSRunnable methods - TO BE IMPLEMENTED - these will be used by the new BSM
-  // as a uniform interface across Activities and Behaviors, but they will be
-  // wired up in a seperate PR
-  //virtual std::set<IBSRunnable> GetAllDelegates() override { return std::set<IBSRunnable>();}
+  // VIC-322: For the time being the behavior helper component ticks helpers instead of
+  // the BSM. While this is true it will be impossible to delegate to helpers in the way
+  // other BSRunnables are delegated to - so don't tie this UpdateInternal in just yet
+  
+  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual void EnteredActivatableScopeInternal() override {};
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual bool WantsToBeActivatedInternal() override { return false;};
-  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
+  virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { return false;};
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  virtual void LeftActivatableScopeInternal() override {};
+  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
+  virtual void OnEnteredActivatableScopeInternal() override {};
+  virtual void OnLeftActivatableScopeInternal() override {};
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
+  DEV_ASSERT("IHelper.UpdateInternal.TickedImproperly",
+             "Helpers are still managed by the BehaviorHelperComponent and this function doesn't work");
+  };
   
   using UserFacingActionResultMapFunc = std::function<UserFacingActionResult(ActionResult)>;
   
@@ -86,8 +90,8 @@ protected:
   void SetName(const std::string& name) { _name = name; }
   
   // Initialize variables when placed on stack
-  void InitializeOnStack();
-  virtual void InitializeOnStackInternal() {};
+  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
+  virtual void OnActivatedHelper(BehaviorExternalInterface& behaviorExternalInterface) {};
   
   BehaviorStatus OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface);
   BehaviorStatus OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface);

@@ -234,7 +234,7 @@ ActivityFeeding::~ActivityFeeding()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::OnSelectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityFeeding::OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( ! ANKI_VERIFY(_currIdle == AnimationTrigger::Count,
                     "ActivityFeeding.OnSelectedInternal.IdleAlreadySet", "") ) {
@@ -334,7 +334,7 @@ void ActivityFeeding::OnSelectedInternal(BehaviorExternalInterface& behaviorExte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::OnDeselectedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ActivityFeeding::OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_severeBehaviorLocksSet){
     ClearSevereAnims(behaviorExternalInterface);
@@ -413,7 +413,7 @@ IBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(BehaviorExternalI
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ActivityFeeding::Update(BehaviorExternalInterface& behaviorExternalInterface)
+Result ActivityFeeding::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Maintain appropriate music state and disables
   const NeedId currentSevereExpression = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
@@ -598,7 +598,7 @@ void ActivityFeeding::UpdateCubeToEat(BehaviorExternalInterface& behaviorExterna
   for(const auto& entry: _cubeControllerMap){
     if( entry.second->IsCubeCharged() ) {
       _eatFoodBehavior->SetTargetObject(entry.first);
-      if( _eatFoodBehavior->IsRunnable(behaviorExternalInterface)) {
+      if( _eatFoodBehavior->WantsToBeActivated(behaviorExternalInterface)) {
 
         // just eat the first cube we can. It might be better to eat the closest cube, or the most recently
         // seen cube, but any cube will do        
@@ -670,7 +670,7 @@ void ActivityFeeding::TransitionToBestActivityStage(BehaviorExternalInterface& b
     }
     else {
       _eatFoodBehavior->SetTargetObject(_cubeIDToEat);
-      if( _eatFoodBehavior->IsRunnable(behaviorExternalInterface) ) {
+      if( _eatFoodBehavior->WantsToBeActivated(behaviorExternalInterface) ) {
         SET_STAGE(behaviorExternalInterface, EatFood);
         return;
       }

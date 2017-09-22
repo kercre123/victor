@@ -41,7 +41,7 @@ ReactionTriggerStrategyRobotPlacedOnSlope::ReactionTriggerStrategyRobotPlacedOnS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ReactionTriggerStrategyRobotPlacedOnSlope::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
 {
-  behavior->IsRunnable(behaviorExternalInterface);
+  behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
@@ -52,7 +52,7 @@ bool ReactionTriggerStrategyRobotPlacedOnSlope::ShouldTriggerBehaviorInternal(Be
   if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
                  "ReactionTriggerStrategyPlacedOnCharger.ShouldTriggerBehaviorInternal",
                  "WantsToRunStrategyNotSpecified")){
-    return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface) && behavior->IsRunnable(behaviorExternalInterface);
+    return _wantsToRunStrategy->WantsToRun(behaviorExternalInterface) && behavior->WantsToBeActivated(behaviorExternalInterface);
   }
   return false;
 }

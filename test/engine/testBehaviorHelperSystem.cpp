@@ -72,7 +72,7 @@ public:
     _lastStartActingResult = false;
   }
 
-  virtual bool IsRunnableInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
+  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
   }
 
@@ -187,7 +187,7 @@ public:
   }
 
 
-  virtual void InitializeOnStackInternal() override {
+  virtual void OnActivatedHelper(BehaviorExternalInterface& behaviorExternalInterface) override {
     _initOnStackCount++;
   }
 
@@ -350,7 +350,7 @@ TEST(BehaviorHelperSystem, BehaviorComplete)
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
@@ -380,7 +380,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
@@ -434,7 +434,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
@@ -539,7 +539,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
@@ -640,7 +640,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
@@ -862,7 +862,7 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
@@ -973,7 +973,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
@@ -1145,7 +1145,7 @@ TEST(BehaviorHelperSystem, StopBehavior)
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
-  b.EnteredActivatableScope();
+  b.OnEnteredActivatableScope();
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
