@@ -1336,6 +1336,9 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& 
     //robot->GetAnimationComponent().PlayAnimByName("anim_reacttocliff_edgeliftup_01", msg.enable ? 2 : 1 );
     robot->GetAnimationComponent().PlayAnimByName("anim_sparking_earnsparks_01", msg.enable ? 2 : 1 );
     //robot->GetAnimationComponent().PlayAnimByName(msg.enable ? "anim_bored_event_04" : "anim_bored_event_02" );
+    
+    robot->SendRobotMessage<RobotInterface::StartMotorCalibration>(true, true);
+    
     return;
   }
 }

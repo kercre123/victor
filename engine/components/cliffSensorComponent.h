@@ -38,6 +38,8 @@ public:
   // constructor/destructor
   CliffSensorComponent(Robot& robot);
   ~CliffSensorComponent();
+  
+  void SetPause(bool b) { _isPaused = b; }
 
   void UpdateRobotData(const RobotState& msg);
   
@@ -96,6 +98,8 @@ private:
 // members:
   
   Robot& _robot;
+  
+  bool _isPaused = false;
   
   bool _enableCliffSensor = true;
   bool _isCliffDetected = false;

@@ -56,6 +56,14 @@ PoseData ConvertToPoseData(const Pose3d& p)
 
 Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
 {
+  MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, DEG_TO_RAD(0));
+  StartActing(action, [this, &robot](){ TransitionToPickupCube(robot); });
+
+  return RESULT_OK;
+}
+
+void BehaviorPlaypenPickupCube::TransitionToPickupCube(Robot& robot)
+{
   _expectedCubePose = kExpectedCubePose;
   _expectedCubePose.SetParent(robot.GetWorldOrigin());
   
@@ -66,7 +74,7 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
   
   if(object == nullptr)
   {
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_NOT_FOUND, RESULT_FAIL);
+    PLAYPEN_SET_RESULT(FactoryTestResultCode::CUBE_NOT_FOUND);
     
     // Should we be ignoring playpen failures we will need a valid object to do stuff with so make
     // a ghost object
@@ -84,8 +92,7 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
   // Write pose data to log on device
   if(!GetLogger().AppendObservedCubePose(poseData))
   {
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED,
-                                       RESULT_FAIL);
+    PLAYPEN_SET_RESULT(FactoryTestResultCode::WRITE_TO_LOG_FAILED);
   }
   
   // Verify that block is approximately where expected
@@ -108,7 +115,7 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
                         Tdiff.x(), Tdiff.y(), Tdiff.z(),
                         angleDiff.getDegrees());
     
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED, RESULT_FAIL);
+    PLAYPEN_SET_RESULT(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
   }
   
   const f32 kObservedCubePoseHeightDiff_mm = object->GetPose().GetTranslation().z() - (0.5f*object->GetSize().z());
@@ -122,11 +129,11 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
     
     if(kObservedCubePoseHeight_mm > kExpectedCubePose.GetTranslation().z())
     {
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_HEIGHT_TOO_HIGH, RESULT_FAIL);
+      PLAYPEN_SET_RESULT(FactoryTestResultCode::CUBE_HEIGHT_TOO_HIGH);
     }
     else
     {
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CUBE_HEIGHT_TOO_LOW, RESULT_FAIL);
+      PLAYPEN_SET_RESULT(FactoryTestResultCode::CUBE_HEIGHT_TOO_LOW);
     }
   }
   
@@ -151,8 +158,6 @@ Result BehaviorPlaypenPickupCube::InternalInitInternal(Robot& robot)
     Util::SafeDelete(object);
     object = nullptr;
   }
-  
-  return RESULT_OK;
 }
 
 void BehaviorPlaypenPickupCube::TransitionToPlaceCube(Robot& robot)

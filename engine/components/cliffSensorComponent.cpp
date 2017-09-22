@@ -114,6 +114,11 @@ u16 CliffSensorComponent::GetCliffDataRaw(unsigned int ind) const
 
 void CliffSensorComponent::UpdateCliffDetectThreshold()
 {
+  if(_isPaused)
+  {
+    return;
+  }
+  
   // Check pose history for cliff readings to see if cliff readings went up
   // after stopping indicating a suspicious cliff.
   if (_cliffStartTimestamp > 0) {

@@ -35,6 +35,7 @@ namespace Anki {
       
     private:
       
+      void TransitionToPickupCube(Robot& robot);
       void TransitionToPlaceCube(Robot& robot);
       void TransitionToBackup(Robot& robot);
       

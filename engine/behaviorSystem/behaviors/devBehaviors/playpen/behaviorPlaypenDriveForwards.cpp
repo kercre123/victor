@@ -31,12 +31,16 @@ BehaviorPlaypenDriveForwards::BehaviorPlaypenDriveForwards(Robot& robot, const J
 
 Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
 {
+  robot.GetCliffSensorComponent().ClearCliffRunningStats();
+  robot.GetCliffSensorComponent().SetPause(true);
+
   // Drive fowards some amount until front cliffs trigger, while cause the action to fail with
   // CANCELLED_WHILE_RUNNING
   MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(robot, 0);
   MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
   DriveStraightAction* driveForwards = new DriveStraightAction(robot,
-                                                               PlaypenConfig::kDistanceToTriggerFrontCliffs_mm);
+                                                               PlaypenConfig::kDistanceToTriggerFrontCliffs_mm,
+                                                               PlaypenConfig::kCliffSpeed_mmps);
   driveForwards->SetShouldPlayAnimation(false);
   
   CompoundActionParallel* action = new CompoundActionParallel(robot, {headToZero, liftDown, driveForwards});
@@ -87,12 +91,15 @@ void BehaviorPlaypenDriveForwards::StopInternal(Robot& robot)
   _waitingForCliffsState = NONE;
   _frontCliffsDetected = false;
   _backCliffsDetected = false;
+  robot.GetCliffSensorComponent().SetPause(false);
 }
 
 void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(Robot& robot)
 {
   // We have seen the front cliffs fire so we need to drive forwards until the back cliffs fire
-  DriveStraightAction* action = new DriveStraightAction(robot, PlaypenConfig::kDistanceToTriggerBackCliffs_mm);
+  DriveStraightAction* action = new DriveStraightAction(robot,
+                                                        PlaypenConfig::kDistanceToTriggerBackCliffs_mm,
+                                                        PlaypenConfig::kCliffSpeed_mmps);
   action->SetShouldPlayAnimation(false);
   
   StartActing(action, [this, &robot](ActionResult result) {

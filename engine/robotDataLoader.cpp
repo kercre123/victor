@@ -102,12 +102,12 @@ void RobotDataLoader::LoadNonConfigData()
   
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-    CollectAnimFiles();
+//    CollectAnimFiles();
   }
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimations");
-    LoadAnimationsInternal();
+//    LoadAnimationsInternal();
     // The threaded animation loading workers each add to the loading ratio
   }
 

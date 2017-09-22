@@ -156,6 +156,7 @@ WRAP_EXTERN_CONSOLE_VAR(CustomObjectMarker, kMarkerToTriggerCalibration, "Plaype
 WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToTriggerFrontCliffs_mm, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToTriggerBackCliffs_mm,  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToDriveOverCliff_mm,     "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(f32, kCliffSpeed_mmps,                 "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kTimeToWaitForCliffEvent_ms,      "Playpen");
 
 WRAP_EXTERN_CONSOLE_VAR(f32, kToolCodeDistThreshX_pix, "Playpen");

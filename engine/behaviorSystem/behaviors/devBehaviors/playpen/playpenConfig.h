@@ -121,14 +121,17 @@ static CustomObjectMarker kMarkerToTriggerCalibration = CustomObjectMarker::Tria
 
 // ----------Drive Forwards----------
 // Distance to drive forwards to trigger the front cliff sensors
-static f32 kDistanceToTriggerFrontCliffs_mm = 90;
+static f32 kDistanceToTriggerFrontCliffs_mm = 140;
 
 //  Distance to drive forwards to trigger the back cliff sensors after trigger the front ones
-static f32 kDistanceToTriggerBackCliffs_mm  = 60;
+static f32 kDistanceToTriggerBackCliffs_mm  = 80;
 
 // Distance to drive forwards to have all cliff sensors on the ground after triggering the
 // back cliff sensors
 static f32 kDistanceToDriveOverCliff_mm     = 30;
+
+// Speed at which to drive forwards towards cliff
+static f32 kCliffSpeed_mmps                 = 50;
 
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;

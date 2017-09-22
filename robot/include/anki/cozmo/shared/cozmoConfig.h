@@ -173,10 +173,10 @@ namespace Cozmo {
 
 #ifdef COZMO_V2
   // Default cliff detection threshold
-  const u32 CLIFF_SENSOR_DROP_LEVEL = 180;
+  const u32 CLIFF_SENSOR_DROP_LEVEL = 250;
   
   // Cliff un-detection threshold (hysteresis)
-  const u32 CLIFF_SENSOR_UNDROP_LEVEL = 210;
+  const u32 CLIFF_SENSOR_UNDROP_LEVEL = 300;
   const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 100;
 #else
   // Default cliff detection threshold
