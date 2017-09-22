@@ -61,12 +61,15 @@ namespace Cozmo.ConnectionFlow.UI {
                       Singleton<Anki.Cozmo.ExternalInterface.RequestDataCollectionOption>.Instance.Initialize(dataCollectionEnabled);
         RobotEngineManager.Instance.SendMessage();
       }
+
+      WhatsNew.WhatsNewModalManager.OnCodeLabConnectPressed += HandleCodeLabConnectPressed;
     }
 
     protected override void CleanUp() {
       _MetersWidget.OnPlayPressed -= HandleMeterPressed;
       _MetersWidget.OnEnergyPressed -= HandleMeterPressed;
       _MetersWidget.OnRepairPressed -= HandleMeterPressed;
+      WhatsNew.WhatsNewModalManager.OnCodeLabConnectPressed -= HandleCodeLabConnectPressed;
       Destroy(_MetersWidget.gameObject);
     }
 
@@ -125,6 +128,15 @@ namespace Cozmo.ConnectionFlow.UI {
                                                             showCloseButton: true);
 
       UIManager.OpenAlert(needToConnectData, new ModalPriorityData());
+    }
+
+    private void HandleCodeLabConnectPressed() {
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        HandleMockConnectButtonPressed();
+      }
+      else {
+        HandleConnectButtonPressed();
+      }
     }
   }
 }

@@ -518,13 +518,20 @@ namespace CodeLab {
         _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
         _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
 
-        int timesPlayedCodeLab = 0;
-        DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(ChallengeID, out timesPlayedCodeLab);
-        if (timesPlayedCodeLab <= 0) {
-          LoadURL("extra/tutorial.html");
+        if (Cozmo.WhatsNew.WhatsNewModalManager.ShouldAutoOpenProject) {
+          OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject,
+                             Cozmo.WhatsNew.WhatsNewModalManager.AutoOpenCodeLabProjectGuid.ToString(),
+                             isVertical: true);
         }
         else {
-          LoadURL("extra/projects.html");
+          int timesPlayedCodeLab = 0;
+          DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(ChallengeID, out timesPlayedCodeLab);
+          if (timesPlayedCodeLab <= 0) {
+            LoadURL("extra/tutorial.html");
+          }
+          else {
+            LoadURL("extra/projects.html");
+          }
         }
       }
     }

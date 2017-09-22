@@ -15,7 +15,11 @@
     "IconAssetBundleName": "game_icon_sprites",
     "IconAssetName": "icon_speedTap",
     "LeftTintColor": [128,128,128],
-    "RightTintColor": [0,0,0]
+    "RightTintColor": [0,0,0],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
   },
     {
     "StartDate": {
@@ -33,7 +37,11 @@
     "IconAssetBundleName": "game_icon_sprites",
     "IconAssetName": "icon_cubePounce",
     "LeftTintColor": [255,0,0],
-    "RightTintColor": [0,255,0]
+    "RightTintColor": [0,255,0],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
   },
     {
     "StartDate": {
@@ -47,7 +55,11 @@
     "IconAssetBundleName": "game_icon_sprites",
     "IconAssetName": "icon_memorymatch",
     "LeftTintColor": [0,0,255],
-    "RightTintColor": [255,255,0]
+    "RightTintColor": [255,255,0],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
   },
     {
     "StartDate": {
@@ -61,7 +73,11 @@
     "IconAssetBundleName": "game_icon_sprites",
     "IconAssetName": "icon_guardDog",
     "LeftTintColor": [255,0,255],
-    "RightTintColor": [0,255,255]
+    "RightTintColor": [0,255,255],
+    "CodeLabData": {
+        "ShowButton": true,
+        "ProjectGuid": "c99f3fe9-0494-4c41-979d-42ed796bc884"
+    }
   },
     {
     "StartDate": {
@@ -79,7 +95,11 @@
     "IconAssetBundleName": "trick_icon_sprites",
     "IconAssetName": "icon_cozmosings_804x804",
     "LeftTintColor": [255,0,0],
-    "RightTintColor": [255,255,0]
+    "RightTintColor": [255,255,0],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
   },
     {
     "StartDate": {
@@ -93,7 +113,11 @@
     "IconAssetBundleName": "trick_icon_sprites",
     "IconAssetName": "icon_laserPointer_804x804",
     "LeftTintColor": [0,255,0],
-    "RightTintColor": [255,0,255]
+    "RightTintColor": [255,0,255],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
   },
     {
     "StartDate": {
@@ -111,6 +135,10 @@
     "IconAssetBundleName": "trick_icon_sprites",
     "IconAssetName": "overlay_pyramid_804x804",
     "LeftTintColor": [0,0,255],
-    "RightTintColor": [0,255,255]
+    "RightTintColor": [0,255,255],
+    "CodeLabData": {
+        "ShowButton": false,
+        "ProjectGuid": "00000000-0000-0000-0000-000000000000"
+    }
   }
 ]

@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Cozmo.WhatsNew {
   public class WhatsNewModalManager : MonoBehaviour {
+    public delegate void CodeLabConnectPressedHandler();
+    public static event CodeLabConnectPressedHandler OnCodeLabConnectPressed;
+
     [SerializeField]
     private GameObjectDataLink _WhatsNewModalPrefabData;
     private WhatsNewModal _WhatsNewModalInstance;
@@ -18,11 +21,21 @@ namespace Cozmo.WhatsNew {
     private bool _OpenWhatsNewModalAllowed = false;
     private bool _OptedOutWhatsNewThisAppRun;
 
+    private static System.Guid _sAutoOpenCodeLabProjectGuid;
+    public static System.Guid AutoOpenCodeLabProjectGuid {
+      get { return _sAutoOpenCodeLabProjectGuid; }
+      set { _sAutoOpenCodeLabProjectGuid = value; }
+    }
+    public static bool ShouldAutoOpenProject {
+      get { return _sAutoOpenCodeLabProjectGuid != System.Guid.Empty; }
+    }
+
     private void Start() {
       _OpenWhatsNewModalAllowed = false;
       _OptedOutWhatsNewThisAppRun = false;
       _WhatsNewModalInstance = null;
       _CurrentWhatsNewData = null;
+      _sAutoOpenCodeLabProjectGuid = System.Guid.Empty;
 
       LoadWhatsNewData();
 
@@ -93,6 +106,9 @@ namespace Cozmo.WhatsNew {
       // Get date for today
       DataPersistence.Date today = DataPersistenceManager.Today;
 
+      // COZMO-14671 9/21/2017 - Uncomment for easy debugging with current json data
+      // today = new Date(2017, 12, 1);
+
       // Walk backwards through list, from latest to earliest
       for (int i = _WhatsNewDataList.Count - 1; i >= 0; i--) {
         // If end date exists and today is after the end date, continue
@@ -146,11 +162,21 @@ namespace Cozmo.WhatsNew {
       _WhatsNewModalInstance = (WhatsNewModal)whatsNewModal;
       _WhatsNewModalInstance.InitializeWhatsNewModal(_CurrentWhatsNewData);
       _WhatsNewModalInstance.OnOptOutButtonPressed += HandleOptOutButtonPressed;
+      _WhatsNewModalInstance.OnCodeLabButtonPressed += HandleCodeLabButtonPressed;
       _CurrentWhatsNewData = null;
     }
 
     private void HandleOptOutButtonPressed() {
       _OptedOutWhatsNewThisAppRun = true;
+    }
+
+    private void HandleCodeLabButtonPressed(System.Guid projectGuid) {
+      if (_sAutoOpenCodeLabProjectGuid == System.Guid.Empty) {
+        _sAutoOpenCodeLabProjectGuid = projectGuid;
+        if (OnCodeLabConnectPressed != null) {
+          OnCodeLabConnectPressed();
+        }
+      }
     }
   }
 
@@ -164,6 +190,7 @@ namespace Cozmo.WhatsNew {
     public string IconAssetName;
     public int[] LeftTintColor;
     public int[] RightTintColor;
+    public CodeLabData CodeLabData;
 
     public static int CompareDataByStartDate(WhatsNewData a, WhatsNewData b) {
       DataPersistence.Date dateA = SimpleDate.DateFromSimpleDate(a.StartDate);
@@ -208,6 +235,11 @@ namespace Cozmo.WhatsNew {
       }
       return tintColor;
     }
+  }
+
+  public class CodeLabData {
+    public bool ShowButton;
+    public System.Guid ProjectGuid;
   }
 
   public class SimpleDate {

@@ -7,6 +7,9 @@ namespace Cozmo.WhatsNew {
     public delegate void OptOutButtonPressedHandler();
     public event OptOutButtonPressedHandler OnOptOutButtonPressed;
 
+    public delegate void CodeLabButtonPressedHandler(System.Guid projectGuid);
+    public event CodeLabButtonPressedHandler OnCodeLabButtonPressed;
+
     [SerializeField]
     private CozmoButton _OkayButton;
 
@@ -36,6 +39,8 @@ namespace Cozmo.WhatsNew {
     private string _IconAssetBundle;
     private string _IconAssetName;
 
+    private System.Guid _CodeLabProject;
+
     public void InitializeWhatsNewModal(WhatsNewData data) {
       _NewContentTitleLabel.text = Localization.Get(data.TitleKey);
       _NewContentDescLabel.text = Localization.Get(data.DescriptionKey);
@@ -50,8 +55,13 @@ namespace Cozmo.WhatsNew {
       _IconAssetName = data.IconAssetName;
       AssetBundleManager.Instance.LoadAssetBundleAsync(_IconAssetBundle, HandleIconAssetBundleLoaded);
 
-      _OkayButton.Initialize(HandleOkayButtonClicked, "ignore_button", this.DASEventDialogName);
-      _CodeLabButton.gameObject.SetActive(false);
+      _OkayButton.Initialize(HandleOkayButtonPressed, "ignore_button", this.DASEventDialogName);
+
+      UnlockableInfo codeLabGameUnlockable = UnlockablesManager.Instance.GetUnlockableInfo(Anki.Cozmo.UnlockId.CodeLabGame);
+      _CodeLabButton.gameObject.SetActive(data.CodeLabData.ShowButton
+                                          && UnlockablesManager.Instance.IsOSSupported(codeLabGameUnlockable));
+      _CodeLabButton.Initialize(HandleCodeLabButtonPressed, "code_lab_link_button", this.DASEventDialogName);
+      _CodeLabProject = data.CodeLabData.ProjectGuid;
 
       this.ModalClosedWithCloseButtonOrOutside += HandleModalClosedWithCloseButtonOrOutside;
     }
@@ -80,7 +90,7 @@ namespace Cozmo.WhatsNew {
       _GradientMaterial.SetColor(materialProperty, targetColor);
     }
 
-    private void HandleOkayButtonClicked() {
+    private void HandleOkayButtonPressed() {
       RaiseOptOutPressed();
       CloseDialog();
     }
@@ -107,6 +117,13 @@ namespace Cozmo.WhatsNew {
       if (icon != null) {
         _IconImage.sprite = icon;
       }
+    }
+
+    private void HandleCodeLabButtonPressed() {
+      if (OnCodeLabButtonPressed != null) {
+        OnCodeLabButtonPressed(_CodeLabProject);
+      }
+      CloseDialog();
     }
   }
 }
