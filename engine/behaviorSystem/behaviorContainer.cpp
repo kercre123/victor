@@ -528,6 +528,7 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::DistractedByMotion:
     {
       newBehavior = IBehaviorPtr(new BehaviorDistractedByMotion(robot, config));
+      break;
     }
     
     ////////////
