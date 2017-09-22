@@ -176,7 +176,7 @@ void ProxSensorComponent::Log()
   // Create a logger if it doesn't exist already
   if (_rawDataLogger == nullptr) {
     _rawDataLogger = std::make_unique<Util::RollingFileLogger>(nullptr, _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory));
-    _rawDataLogger->Write("timestamp_ms, distance_mm, signalIntensity, ambientIntensity, spadCount \n");
+    _rawDataLogger->Write("timestamp_ms, distance_mm, signalIntensity, ambientIntensity, spadCount, rangeStatus \n");
   }
   
   const auto& d = _latestData;
@@ -185,7 +185,8 @@ void ProxSensorComponent::Log()
   str += std::to_string(d.distance_mm)      + ", ";
   str += std::to_string(d.signalIntensity)  + ", ";
   str += std::to_string(d.ambientIntensity) + ", ";
-  str += std::to_string(d.spadCount)        + "\n";
+  str += std::to_string(d.spadCount)        + ", ";
+  str += std::to_string(d.rangeStatus)      + "\n";
   
   _rawDataLogger->Write(str);
 }

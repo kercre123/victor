@@ -386,6 +386,7 @@ namespace Anki {
     ProxSensorData HAL::GetRawProxData()
     {
       ProxSensorData proxData;
+      proxData.rangeStatus = bodyData_->proximity.rangeStatus;
       proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
       // Signal/Ambient Rate are fixed point 9.7, so convert to float:
       proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
