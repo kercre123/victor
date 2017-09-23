@@ -36,7 +36,7 @@ Blockly.Blocks['control_forever'] = {
   init: function() {
     this.jsonInit({
       "id": "control_forever",
-      "message0": "forever",
+      "message0": "%{BKY_CONTROLS_FOREVER_SCRATCH_2}", // *** ANKI CHANGE ***
       "message1": "%1", // Statement
       "message2": "%1", // Icon
       "lastDummyAlign2": "RIGHT",
@@ -71,7 +71,7 @@ Blockly.Blocks['control_repeat'] = {
   init: function() {
     this.jsonInit({
       "id": "control_repeat",
-      "message0": "repeat %1",
+      "message0": "%{BKY_CONTROLS_REPEAT_SCRATCH_2}", // *** ANKI CHANGE ***
       "message1": "%1", // Statement
       "message2": "%1", // Icon
       "lastDummyAlign2": "RIGHT",
@@ -111,7 +111,7 @@ Blockly.Blocks['control_if'] = {
   init: function() {
     this.jsonInit({
       "type": "control_if",
-      "message0": "if %1 then",
+      "message0": "%{BKY_CONTROLS_IF_MSG_IF_THEN_SCRATCH_2}", // *** ANKI CHANGE ***
       "message1": "%1", // Statement
       "args0": [
         {
@@ -140,9 +140,9 @@ Blockly.Blocks['control_if_else'] = {
   init: function() {
     this.jsonInit({
       "type": "control_if_else",
-      "message0": "if %1 then",
+      "message0": "%{BKY_CONTROLS_IF_MSG_IF_THEN_SCRATCH_2}", // *** ANKI CHANGE ***
       "message1": "%1",
-      "message2": "else",
+      "message2": "%{BKY_CONTROLS_IF_MSG_ELSE_SCRATCH_2}", // *** ANKI CHANGE ***
       "message3": "%1",
       "args0": [
         {
@@ -226,7 +226,7 @@ Blockly.Blocks['control_wait'] = {
   init: function() {
     this.jsonInit({
       "id": "control_wait",
-      "message0": "wait %1 secs",
+      "message0": "%{BKY_CONTROLS_WAIT_X_SECS_SCRATCH_2}", // *** ANKI CHANGE ***
       "args0": [
         {
           "type": "input_value",
@@ -246,7 +246,7 @@ Blockly.Blocks['control_wait_until'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "wait until %1",
+      "message0": "%{BKY_CONTROLS_WAIT_UNTIL_SCRATCH_2}", // *** ANKI CHANGE ***
       "args0": [
         {
           "type": "input_value",
@@ -266,7 +266,7 @@ Blockly.Blocks['control_repeat_until'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "repeat until %1",
+      "message0": "%{BKY_CONTROLS_WHILEUNTIL_OPERATOR_UNTIL} %1", // *** ANKI CHANGE ***
       "message1": "%1",
       "message2": "%1",
       "lastDummyAlign2": "RIGHT",
