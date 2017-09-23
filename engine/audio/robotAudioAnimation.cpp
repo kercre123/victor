@@ -162,24 +162,14 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   // Prep animation audio events
   Animations::Track<RobotAudioKeyFrame>& audioTrack = anAnimation->GetTrack<RobotAudioKeyFrame>();
   AnimationEvent::AnimationEventId eventId = AnimationEvent::kInvalidAnimationEventId;
-  bool playEvent = true;
-  bool allowEventProbability = ( kEnableAudioEventProbability && ( nullptr != _randomGenerator ) );
   
   while ( audioTrack.HasFramesLeft() ) {
     const RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
-    const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef();
-    const auto event = audioRef.audioEvent;
-    if ( AudioMetaData::GameEvent::GenericEvent::Invalid != event ) {
-      
-      // Apply random weight if event probability is allowed
-      if ( allowEventProbability && !Util::IsFltNear( audioRef.probability, 1.0f ) ) {
-        playEvent = audioRef.probability >= _randomGenerator->RandDbl( 1.0 );
-      }
-      else {
-        playEvent = true;
-      }
-      
-      if ( playEvent ) {
+    const int8_t audioRefIdx = aFrame.GetAudioRefIndex(kEnableAudioEventProbability);
+    if (audioRefIdx >= 0) {
+      const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef(audioRefIdx);
+      const auto event = audioRef.audioEvent;
+      if (AudioMetaData::GameEvent::GenericEvent::Invalid != event) {
         // Add Event to queue
         _animationEvents.emplace_back( ++eventId, event, aFrame.GetTriggerTime(), audioRef.volume );
         // Check if buffer should only play once

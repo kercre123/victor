@@ -300,22 +300,17 @@ void StreamingAnimation::GenerateAudioEventList()
   AnimationEvent::AnimationEventId eventId = AnimationEvent::kInvalidAnimationEventId;
   while (audioTrack.HasFramesLeft()) {
     const RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
-    const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef();
-    const AudioMetaData::GameEvent::GenericEvent event = audioRef.audioEvent;
-    if (AudioMetaData::GameEvent::GenericEvent::Invalid != event) {
-      
-      // Apply random weight
-      bool playEvent = Util::IsFltNear(audioRef.probability, 1.0f);
-      if (!playEvent) {
-        playEvent = audioRef.probability >= _audioClient.GetRandomGenerator().RandDbl(1.0);
-        _hasRandomEvents = true;
-      }
-      else {
-        // No random generator
-        playEvent = true;
-      }
-      
-      if (playEvent) {
+    int8_t audioRefIdx = aFrame.GetAudioRefIndex();
+    if (audioRefIdx >= 0) {
+      const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef(audioRefIdx);
+      const AudioMetaData::GameEvent::GenericEvent event = audioRef.audioEvent;
+      if (AudioMetaData::GameEvent::GenericEvent::Invalid != event) {
+        const int8_t numAudioRefs = aFrame.GetNumAudioRefs();
+        if (numAudioRefs > 1) {
+          _hasRandomEvents = true;
+        } else if ((numAudioRefs == 1) && (!Util::IsFltNear(audioRef.probability, 1.0f))) {
+          _hasRandomEvents = true;
+        }
         // Add Event to queue
         _animationAudioEvents.emplace_back(++eventId, event, aFrame.GetTriggerTime(), audioRef.volume);
         // Check if buffer should only play once

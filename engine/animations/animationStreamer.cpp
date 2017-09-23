@@ -980,11 +980,23 @@ namespace Cozmo {
     if( !anim->HasFramesLeft() &&
         _audioClient.AnimationIsComplete() &&
         _sendBuffer.empty() &&
-        _startOfAnimationSent &&
         !_endOfAnimationSent)
-    {      
-       _audioClient.ClearCurrentAnimation();
-      lastResult = SendEndOfAnimation(robot);
+    {
+      if (!_startOfAnimationSent) {
+        // If an animation ONLY contains a single audio keyframe with probability
+        // and the probability logic decides to not play ANY audio event, then we
+        // end up with an "empty" animation.  In that case, send audio silence
+        // (since the robot is waiting for something) and the start message.
+        // The robot's animation controller complains about a corrupt buffer if
+        // we try to send the start and end messages on the same tick, so send
+        // the end message with the next tick.
+        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+        SendStartOfAnimation();
+        lastResult = SendBufferedMessages(robot);
+      } else {
+        _audioClient.ClearCurrentAnimation();
+        lastResult = SendEndOfAnimation(robot);
+      }
     }
     
     return lastResult;

@@ -276,6 +276,8 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
   else {
     // Audio is not needed for this animation
     Util::SafeDelete( audioAnimation );
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName, "RobotAudioClient.CreateAudioAnimation",
+                  "Audio is not needed right now for animation: %s", anAnimation->GetName().c_str());
     _currentAnimation = nullptr;
   }
 }
