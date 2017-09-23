@@ -23,7 +23,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <iomanip>
 
-
 #define DEBUG_MOTION_DETECTION 0
 
 namespace Anki {
@@ -472,6 +471,31 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     ExternalInterface::RobotObservedMotion msg;
     msg.timestamp = image.GetTimestamp();
 
+#define MOTION_DETECTION_SEND_CUSTOM_MESSAGE
+
+#ifdef MOTION_DETECTION_SEND_CUSTOM_MESSAGE
+    (void)kLogChannelName;
+
+    const Point2f centroid(160/2, 120/2);
+    msg.ground_x = 0;
+    msg.ground_y = 0;
+    msg.ground_area = 0;
+
+    msg.top_img_area = 10.0; //not really the area here, but the response value
+    msg.top_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+    msg.top_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+
+    msg.left_img_area = 0; //not really the area here, but the response value
+    msg.left_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+    msg.left_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+
+    msg.right_img_area = 0; //not really the area here, but the response value
+    msg.right_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+    msg.right_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+
+    observedMotions.emplace_back(std::move(msg));
+#else
+
     // Remove noise here before motion detection
     FilterImageAndPrevImages<ImageType>(image);
     blurHappened = true;
@@ -497,6 +521,10 @@ Result MotionDetector::DetectHelper(const ImageType &image,
       }
       observedMotions.emplace_back(std::move(msg));
     }
+    
+    //_prevRatioImg = ratio12;
+
+#endif
     
   } // if(headSame && poseSame)
   
@@ -986,4 +1014,3 @@ size_t MotionDetector::GetCentroid(const Vision::Image& motionImg, Point2f& cent
 
 } // namespace Cozmo
 } // namespace Anki
-
