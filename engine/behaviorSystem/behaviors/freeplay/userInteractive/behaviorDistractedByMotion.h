@@ -32,6 +32,32 @@ protected:
 
   bool IsRunnableInternal(const Robot &robot) const override;
 
+  virtual void HandleWhileRunning(const EngineToGameEvent &event, Robot &robot) override;
+
+private:
+
+  enum class State {
+    Starting,
+    WaitingForMotion,
+    AfterWaitingForMotion,
+    TurningTowardsMotion,
+    Ending
+  };
+
+  State _state;
+
+
+  void SetState_internal(State state, const std::string& stateName);
+
+  void TransitionToStartState(Robot &robot);
+  void TransitionToEnd(Robot& robot);
+  void TransitionToWaitForMotion(Robot& robot);
+  void TransitionToAfterWaitingForMotion(Robot& robot);
+  void TransitionToTurnsTowardsMotion(Robot& robot);
+
+  int16_t _observedX;
+  int16_t _observedY;
+  bool _motionObserved = false;
 };
 
 
