@@ -169,7 +169,7 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void SparkCozmo(ChallengeManager.ChallengeStatePacket challengePacket) {
-      if (ShowEdgeCaseAlertIfNeeded()) {
+      if (ShowEdgeCaseAlertIfNeeded(_ChallengeTitleLocKey)) {
         return;
       }
 
@@ -238,7 +238,7 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void SparkCozmo(UnlockableInfo unlockInfo) {
-      if (ShowEdgeCaseAlertIfNeeded()) {
+      if (ShowEdgeCaseAlertIfNeeded(unlockInfo.TitleKey)) {
         return;
       }
 
@@ -340,8 +340,8 @@ namespace Cozmo.Needs.Sparks.UI {
 
     #region Edge Cases
 
-    private bool ShowEdgeCaseAlertIfNeeded() {
-      return _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(_ChallengeTitleLocKey,
+    private bool ShowEdgeCaseAlertIfNeeded(string titleLocKey) {
+      return _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(titleLocKey,
                                                                 _UnlockInfo.CubesRequired,
                                                                 UnlockablesManager.Instance.IsOSSupported(_UnlockInfo),
                                                                 _UnlockInfo.AndroidReleaseVersion);
