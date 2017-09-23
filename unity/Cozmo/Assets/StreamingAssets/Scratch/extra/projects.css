@@ -124,11 +124,11 @@ button:focus {
 #projects #vertical-tab-hero {
   background-image: url(images/img_codeLab_verticalBG.png);
   background-position: top left;
-  background-size: 95% auto;
+  background-size: 100% auto;
 }
 #projects #featured-tab-hero {
   background-image: url(images/img_codeLab_featuredBG.png);
-  background-size: 80%;
+  background-size: 100%;
 }
 
 
@@ -137,10 +137,10 @@ button:focus {
 #projects #projects-list {
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 0;
   height: 100%;
   list-style-type: none;
-  padding: 0 0 9vh 0;
+  padding: 0 0 9vh 50%;   /* use padding to shift so dragging hero img scrolls projects */
   margin: 0;
   text-align: left;
   white-space: nowrap;
@@ -188,8 +188,8 @@ button:focus {
 .project .btn-delete-project {
   position: absolute;
   top: 2vh;
-  right: 2vh;
-  width: 7vh;
+  right: 1vh;
+  width: 8vh;
   height: 7vh;
 }
 
@@ -241,6 +241,21 @@ button:focus {
   height: auto;
   background-color: transparent;
   cursor: pointer;
+}
+
+.project-featured .project-title {
+  top: 2vh;
+  color: #e3e4e5;
+}
+.project-featured .project-description {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  padding: 0 7% 5% 7%;
+  text-transform: none;
+  line-height: 1.3em;
+  font-family: 'Avenir Next';
+  color: #353535;
 }
 
 
@@ -309,7 +324,7 @@ button:focus {
 
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   text-align: center;
   margin: 4.5vh 1vw 0 1vw;
   border-radius: 10px 10px 0 0;
@@ -354,11 +369,16 @@ button:focus {
   #project-tabs .project-tab {
     font-size: 3vh;
   }
-
+  .project.project-featured {
+    font-size: 2.7vh;
+  }
 }
 
 @media screen and (min-height: 769px) {
   .project {
     font-size: 2.5vh;
+  }
+  .project.project-featured {
+    font-size: 2.1vh;
   }
 }

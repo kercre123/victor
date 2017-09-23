@@ -450,6 +450,26 @@
   "codeLabSampleProject_IntruderAlarm.projectName": {
       "translation": "Intruder Alarm!"
   },
+
+
+
+
+  "codeLabFeaturedProject_HotPotato.projectName": {
+      "translation": "A Featured Project Name Two Lines"
+  },
+  "codeLabFeaturedProject_HotPotato.projectDescription": {
+      "translation": "Multiple lines of text. This project is amazing! Let me tell you why."
+  },
+  "codeLabFeaturedProject_TinyOrchestra.projectName": {
+      "translation": "A Featured Project!"
+  },
+  "codeLabFeaturedProject_TinyOrchestra.projectDescription": {
+      "translation":  "This project is amazing!"
+  },
+
+
+
+
   "codeLab.SaveProject.Autosaved": {
       "translation": "Autosaved"
   },

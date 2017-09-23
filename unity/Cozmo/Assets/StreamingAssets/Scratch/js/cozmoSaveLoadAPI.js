@@ -28,14 +28,19 @@
         window.Unity.call({requestId: -1, command: "cozmoDeleteUserProject", argString: projectUUID});
     }
 
-    // For horizontal or vertical user project, calls Unity with projectUUID, requesting Unity to send project data to window.openCozmoUserProject()
+    // For horizontal or vertical user project, calls Unity with projectUUID and requests Unity to open project.
     window.requestToOpenCozmoUserProject = function(projectUUID, isVertical) {
         window.Unity.call({requestId: -1, command: "cozmoRequestToOpenUserProject", argString: projectUUID, argBool: isVertical});
     }
 
-    // For horizontal or vertical sample project, calls Unity with projectUUID, requesting Unity to send project data to window.openCozmoSampleProject()
+    // For horizontal or vertical sample project, calls Unity with projectUUID and requests Unity to open project.
     window.requestToOpenCozmoSampleProject = function(projectUUID, isVertical) {
         window.Unity.call({requestId: -1, command: "cozmoRequestToOpenSampleProject", argString: projectUUID, argBool: isVertical});
+    }
+
+    // For featured project, calls Unity with projectUUID and requests Unity to open project.
+    window.requestToOpenCozmoFeaturedProject = function(projectUUID) {
+        window.Unity.call({requestId: -1, command: "cozmoRequestToOpenFeaturedProject", argString: projectUUID});
     }
 
     // Request that horizontal or vertical workspace be presented with only a green flag on the workspace.

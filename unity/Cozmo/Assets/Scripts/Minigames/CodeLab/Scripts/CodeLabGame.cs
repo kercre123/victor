@@ -22,14 +22,28 @@ namespace CodeLab {
     public string ProjectName;
   }
 
+  // CodeLabFeaturedProject are only used in vertical grammar.
+  public class CodeLabFeaturedProject {
+    public uint DisplayOrder;
+    public Guid ProjectUUID;
+    public uint VersionNum;
+    public string ProjectJSON;
+    public string ProjectName;
+    public string FeaturedProjectDescription;
+    public string FeaturedProjectImageName;
+    public string FeaturedProjectBackgroundColor;
+    public string FeaturedProjectTitleTextColor;
+  }
+
   public class CodeLabGame : GameBase {
     // When the webview is opened to display the Code Lab workspace,
     // we can display one of the following projects.
     private enum RequestToOpenProjectOnWorkspace {
       DisplayNoProject,     // Unset value
       CreateNewProject,     // Workspace displays only green flag
-      DisplayUserProject,   // Display a previously-saved user project. User project UUID saved in _ProjectUUIDToOpen.
-      DisplaySampleProject  // Display a previously-saved sample project. Sample project UUID saved in _ProjectUUIDToOpen.
+      DisplayUserProject,
+      DisplaySampleProject,
+      DisplayFeaturedProject
     }
 
     private enum MusicRoundStates {
@@ -47,7 +61,7 @@ namespace CodeLab {
     private RequestToOpenProjectOnWorkspace _RequestToOpenProjectOnWorkspace;
     private string _ProjectUUIDToOpen;
     private List<CodeLabSampleProject> _CodeLabSampleProjects;
-    private List<CodeLabSampleProject> _CodeLabFeaturedProjects;
+    private List<CodeLabFeaturedProject> _CodeLabFeaturedProjects;
 
     // SessionState tracks the entirety of the current CodeLab Game session, including any currently running program.
     private SessionState _SessionState = new SessionState();
@@ -205,16 +219,16 @@ namespace CodeLab {
 #endif
 
       // Cache sample and featured projects locally.
-      _CodeLabSampleProjects = this.LoadProjects("sample-projects.json");
-      _CodeLabFeaturedProjects = this.LoadProjects("featured-projects.json");
+      _CodeLabSampleProjects = this.LoadSampleProjects("sample-projects.json");
+      _CodeLabFeaturedProjects = this.LoadFeaturedProjects("featured-projects.json");
 
       RobotEngineManager.Instance.AddCallback<GameToGame>(HandleGameToGame);
 
       LoadWebView();
     }
 
-    // Return projects as list. Currently only used for sample and featured projects.
-    private List<CodeLabSampleProject> LoadProjects(string projectFile) {
+    // Return sample projects as list.
+    private List<CodeLabSampleProject> LoadSampleProjects(string projectFile) {
       string scratchFolder = "/Scratch/";
 #if UNITY_EDITOR || UNITY_IOS
       string streamingAssetsPath = Application.streamingAssetsPath + scratchFolder;
@@ -226,6 +240,21 @@ namespace CodeLab {
       string path = streamingAssetsPath + projectFile;
       string json = File.ReadAllText(path);
       return JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
+    }
+
+    // Return featured projects as list.
+    private List<CodeLabFeaturedProject> LoadFeaturedProjects(string projectFile) {
+      string scratchFolder = "/Scratch/";
+#if UNITY_EDITOR || UNITY_IOS
+      string streamingAssetsPath = Application.streamingAssetsPath + scratchFolder;
+#elif UNITY_ANDROID
+      string streamingAssetsPath = PlatformUtil.GetResourcesBaseFolder() + scratchFolder;
+#endif
+
+      // Load projects json from file and return list
+      string path = streamingAssetsPath + projectFile;
+      string json = File.ReadAllText(path);
+      return JsonConvert.DeserializeObject<List<CodeLabFeaturedProject>>(json);
     }
 
     private void HandleGameToGameContents(string messageType, string payload) {
@@ -771,7 +800,7 @@ namespace CodeLab {
 
         CodeLabProject proj = new CodeLabProject();
         proj.ProjectUUID = project.ProjectUUID;
-        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        proj.ProjectName = EscapeProjectText(project.ProjectName);
         proj.IsVertical = project.IsVertical;
 
         copyCodeLabProjectList.Add(proj);
@@ -797,7 +826,7 @@ namespace CodeLab {
         CodeLabSampleProject proj = new CodeLabSampleProject();
         proj.ProjectUUID = project.ProjectUUID;
         proj.ProjectIconName = project.ProjectIconName;
-        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        proj.ProjectName = EscapeProjectText(project.ProjectName);
         proj.IsVertical = project.IsVertical;
         copyCodeLabSampleProjectList.Add(proj);
       }
@@ -816,14 +845,18 @@ namespace CodeLab {
       string jsCallback = scratchRequest.argString;
 
       _CodeLabFeaturedProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
-      List<CodeLabSampleProject> copyCodeLabFeaturedProjectList = new List<CodeLabSampleProject>();
+      List<CodeLabFeaturedProject> copyCodeLabFeaturedProjectList = new List<CodeLabFeaturedProject>();
       for (int i = 0; i < _CodeLabFeaturedProjects.Count; i++) {
         var project = _CodeLabFeaturedProjects[i];
 
-        CodeLabSampleProject proj = new CodeLabSampleProject();
+        CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
         proj.ProjectUUID = project.ProjectUUID;
-        proj.ProjectIconName = project.ProjectIconName;
-        proj.ProjectName = EscapeProjectName(project.ProjectName);
+        proj.ProjectName = EscapeProjectText(project.ProjectName);
+        proj.FeaturedProjectDescription = EscapeProjectText(project.FeaturedProjectDescription);
+        proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
+        proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
+        proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
+
         copyCodeLabFeaturedProjectList.Add(proj);
       }
 
@@ -1011,6 +1044,10 @@ namespace CodeLab {
       case "cozmoRequestToOpenSampleProject":
         SessionState.DAS_Event("robot.code_lab.open_sample_project", scratchRequest.argString);
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString, scratchRequest.argBool);
+        return true;
+      case "cozmoRequestToOpenFeaturedProject":
+        SessionState.DAS_Event("robot.code_lab.open_featured_project", scratchRequest.argString);
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayFeaturedProject, scratchRequest.argString, true);
         return true;
       case "cozmoRequestToCreateProject":
         SessionState.DAS_Event("robot.code_lab.create_project", "");
@@ -1993,7 +2030,7 @@ namespace CodeLab {
           if (projectToOpen != null) {
             // Escape quotes in user project name and project XML
             // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
-            String projectNameEscaped = EscapeProjectName(projectToOpen.ProjectName);
+            String projectNameEscaped = EscapeProjectText(projectToOpen.ProjectName);
             String projectJSON = projectToOpen.ProjectJSON;
             if (projectJSON != null) {
               String projectJSONEscaped = EscapeJSON(projectJSON);
@@ -2024,7 +2061,7 @@ namespace CodeLab {
           String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
           // Escape quotes in XML and project name
           // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
-          String sampleProjectNameEscaped = EscapeProjectName(sampleProjectName);
+          String sampleProjectNameEscaped = EscapeProjectText(sampleProjectName);
 
           String projectJSON = codeLabSampleProject.ProjectJSON;
           if (projectJSON != null) {
@@ -2038,6 +2075,32 @@ namespace CodeLab {
             String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
             // Open requested project in webview
             this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
+          }
+        }
+        else {
+          DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
+        }
+        break;
+
+      case RequestToOpenProjectOnWorkspace.DisplayFeaturedProject:
+        if (_ProjectUUIDToOpen != null) {
+          Guid projectGuid = new Guid(_ProjectUUIDToOpen);
+          CodeLabFeaturedProject codeLabFeaturedProject = null;
+
+          Predicate<CodeLabFeaturedProject> findProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
+          codeLabFeaturedProject = _CodeLabFeaturedProjects.Find(findProject);
+
+          String featuredProjectName = Localization.Get(codeLabFeaturedProject.ProjectName);
+          // Escape quotes in JSON and project name
+          // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
+          String featuredProjectNameEscaped = EscapeProjectText(featuredProjectName);
+
+          String projectJSON = codeLabFeaturedProject.ProjectJSON;
+          if (projectJSON != null) {
+            String projectJSONEscaped = EscapeJSON(projectJSON);
+            // Open requested project in webview
+            // TODO Pass along featured text to show in text box on workspace
+            this.EvaluateJS("window.openCozmoProjectJSON('" + codeLabFeaturedProject.ProjectUUID + "','" + featuredProjectNameEscaped + "','" + projectJSONEscaped + "','true');");
           }
         }
         else {
@@ -2068,9 +2131,9 @@ namespace CodeLab {
       }
     }
 
-    private String EscapeProjectName(String projectName) {
-      String tempProjectName = projectName.Replace("\"", "\\\"");
-      return tempProjectName.Replace("'", "\\'");
+    private String EscapeProjectText(String projectText) {
+      String tempProjectText = projectText.Replace("\"", "\\\"");
+      return tempProjectText.Replace("'", "\\'");
     }
 
     private String EscapeJSON(String json) {

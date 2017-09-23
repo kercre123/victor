@@ -91,6 +91,11 @@
         playClickSound = false;
         handleSampleProjectClick(typeElem.dataset.uuid);
         break;
+      case 'load-featured-project':
+        // we play the click sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleFeaturedProjectClick(typeElem.dataset.uuid);
+        break;
       case 'load-user-project':
         // we play click the sound before calling unity to make sure sound plays on android
         playClickSound = false;
@@ -247,6 +252,18 @@
   }
 
   /**
+   * Handles notifying Unity that the user wants to load a featured project
+   * @returns {void}
+   */
+  function handleFeaturedProjectClick(uuid) {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.openFeaturedProject(uuid);
+  }
+
+  /**
    * Handles notifying Unity that the user wants to load a user's personal project
    * @returns {void}
    */
@@ -306,45 +323,6 @@
   // **********************
 
   /**
-   * Renders cards for user and sample projects
-   * @param {Array} userProjects - array of user projects to render
-   * @param {Array} sampleProjects - array of sample projects to render
-   */
-  window.renderProjects = function(userProjectsStr, sampleProjectsStr) {
-    // clear any already rendered projects
-    clearProjects();
-
-    var projectTabName = getSelectedProjectTabName();
-    if (projectTabName === 'featured') {
-      renderFeaturedProjects();
-    } else {
-      var projectList = document.querySelector('#projects-list');
-      var i, card;
-
-      // render user projects and add them to the UI
-      var userProjects = JSON.parse(userProjectsStr);
-      var sampleProjects = JSON.parse(sampleProjectsStr);
-
-      projectList.style.visibility = 'visible';
-
-      if (Array.isArray(userProjects)) {
-        for(i = 0; i < userProjects.length; i++) {
-          card = makeUserProjectCard(userProjects[i], i);
-          projectList.appendChild(card);
-        }
-      }
-
-      // render sample projects and add them to the UI
-      if (Array.isArray(sampleProjects)) {
-        for(i = 0; i < sampleProjects.length; i++) {
-          card = makeSampleProjectCard(sampleProjects[i]);
-          projectList.appendChild(card);
-        }
-      }
-    }
-  };
-
-  /**
    * Removes user and sample project cards from display
    * @returns {void}
    */
@@ -367,20 +345,54 @@
     }
   }
 
+
   /**
-   * Temp function to hide projects until there are featured projects
-   * @returns {void}
+   * Renders cards for user and sample projects
+   * @param {Array} userProjects - array of user projects to render
+   * @param {Array} sampleProjects - array of sample projects to render
    */
-  function renderFeaturedProjects() {
+  window.renderProjects = function(userProjectsStr, sampleProjectsStr) {
+    // clear any already rendered projects
     clearProjects();
 
-    // hide the projects list for Featured until we have some
+    var projectTabName = getSelectedProjectTabName();
     var projectList = document.querySelector('#projects-list');
-    projectList.style.visibility = 'hidden';
+    var i, card;
 
-    var projectsUI = document.querySelector('#projects');
-    projectsUI.style.visibility = 'visible';
-  }
+    // render user projects and add them to the UI
+
+    if (projectTabName === 'featured') {
+      // featured projects
+      var featuredProjects = JSON.parse(userProjectsStr);
+      if (Array.isArray(featuredProjects)) {
+        for(i = 0; i < featuredProjects.length; i++) {
+          card = makeFeaturedProjectCard(featuredProjects[i]);
+          projectList.appendChild(card);
+        }
+      }
+    } else {
+      // horizontal or vertical projects
+      var userProjects = JSON.parse(userProjectsStr);
+      var sampleProjects = JSON.parse(sampleProjectsStr);
+
+      // render user projects and add them to UI
+      if (Array.isArray(userProjects)) {
+        for(i = 0; i < userProjects.length; i++) {
+          card = makeUserProjectCard(userProjects[i], i);
+          projectList.appendChild(card);
+        }
+      }
+
+      // render sample projects and add them to the UI
+      if (Array.isArray(sampleProjects)) {
+        for(i = 0; i < sampleProjects.length; i++) {
+          card = makeSampleProjectCard(sampleProjects[i]);
+          projectList.appendChild(card);
+        }
+      }
+    }
+  };
+
 
 
   /**
@@ -453,6 +465,45 @@
 
       // if title is unusually large, add a class to reduce the font
       _shrinkLongProjectTitle(title, project);
+    });
+
+    return project;
+  }
+
+
+  /**
+   * Creates DOM element for a featured project card
+   * @param {Object} projectData - fields about the project
+   * @returns {HTMLElement} returns unattached DOM element for featured project card
+   */
+  function makeFeaturedProjectCard(projectData) {
+    var project = document.querySelector('#prototype-featured-project').cloneNode(true);
+    project.removeAttribute('id');
+
+    // add the project data to the element
+    setProjectData(project, projectData);
+
+    // set the project title to the localized name
+    var title = project.querySelector('.project-title');
+    title.textContent = $t(projectData.ProjectName);
+    title.style.color = projectData.FeaturedProjectTitleTextColor;
+
+    // set the project description to the localized name
+    var description = project.querySelector('.project-description');
+    description.textContent = $t(projectData.FeaturedProjectDescription);
+
+    var projectsUI = document.querySelector('#projects');
+
+    // set color of puzzle pieces on background card based on order position
+    var cardUrl = 'images/framing_card' + projectData.FeaturedProjectImageName + '_feat.svg';
+    var card = project.querySelector('.project-card');
+    card.setAttribute('src', cardUrl);
+    card.addEventListener('load', function(){
+      // show the card once the background has loaded
+      project.style.display = 'inline-block';
+
+      // show the entire Projects UI when the first featured project is ready to be shown
+      projectsUI.style.visibility = 'visible';
     });
 
     return project;
@@ -545,8 +596,7 @@
       var projectTabName = getSelectedProjectTabName();
       if (projectTabName == 'featured') {
         // render nothing until there are featured projects
-        renderFeaturedProjects();
-        //window.getCozmoFeaturedProjectList(callbackName);
+        window.getCozmoFeaturedProjectList(callbackName);
       } else {
         var isVertical = _getIsVertical();
         window.getCozmoUserAndSampleProjectLists(callbackName, isVertical);
@@ -568,6 +618,10 @@
       window.requestToOpenCozmoSampleProject(uuid, isVertical);
     }
 
+    function openFeaturedProject(uuid) {
+      window.requestToOpenCozmoFeaturedProject(uuid);
+    }
+
     function deleteProject(uuid) {
       // remove the project from the display
       var projectElem = document.querySelector('.project[data-uuid="'+uuid+'"]');
@@ -586,6 +640,7 @@
       createNewProject: createNewProject,
       openUserProject: openUserProject,
       openSampleProject: openSampleProject,
+      openFeaturedProject: openFeaturedProject,
       deleteProject: deleteProject,
       closeCodeLab: closeCodeLab
     };
@@ -604,7 +659,20 @@
 
     var tabName = getSelectedProjectTabName();
     if (tabName === 'featured') {
-      renderFeaturedProjects();
+      // renderFeaturedProjects();
+
+      getJSON('../featured-projects.json', function(featuredProjects) {
+
+        var projects = JSON.parse(JSON.stringify(featuredProjects));
+
+        for (var i=0; i < projects.length; i++) {
+          var project = projects[i];
+          project.ProjectName = $t(project.ProjectName);
+          project.FeaturedProjectDescription = $t(project.FeaturedProjectDescription);
+        }
+
+        window.renderProjects(JSON.stringify(projects));
+      });
 
     } else {
       getJSON('../sample-projects.json', function(sampleProjects) {
