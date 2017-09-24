@@ -24,8 +24,6 @@
 #include <list>
 #include <fstream>
 
-#define USE_TENSORFLOW 0
-
 #if USE_TENSORFLOW
 #  include "objectDetectorModel_tensorflow.cpp"
 #else

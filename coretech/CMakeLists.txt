@@ -7,6 +7,8 @@ include(import)
 
 include(opencv)
 
+add_definitions(-DUSE_TENSORFLOW=${USE_TENSORFLOW})
+
 #set(CTI_COMMON_GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/common)
 #set(CTI_VISION_GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/vision)
 #set(CTI_TYPES_GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/types)

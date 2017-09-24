@@ -25,8 +25,12 @@ set(OPENCV_LIBS
     flann
     imgcodecs
     ml
-    videoio
-    dnn)
+    videoio)
+
+if(NOT USE_TENSORFLOW)
+  message(STATUS "Adding OpenCV DNN module")
+  list(APPEND OPENCV_LIBS dnn)
+endif()
 
 set(OPENCV_INCLUDE_PATHS ${OPENCV2_INCLUDE_PATH})
 
@@ -60,7 +64,6 @@ if (ANDROID)
       libjpeg
       libpng
       libtiff
-      libprotobuf
   )
 else()
   set(OPENCV_EXTERNAL_LIBS
@@ -70,12 +73,16 @@ else()
       libpng
       libtiff
       zlib
-      libprotobuf
       libwebp
       ippicv
       ipp_iw
       ittnotify
   )
+endif()
+
+if(NOT USE_TENSORFLOW)
+  message(STATUS "Adding OpenCV protobuf lib")
+  list(APPEND OPENCV_EXTERNAL_LIBS libprotobuf)
 endif()
 
 foreach(LIB ${OPENCV_EXTERNAL_LIBS})

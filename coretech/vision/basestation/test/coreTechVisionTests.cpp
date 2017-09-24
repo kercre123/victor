@@ -508,38 +508,41 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   // Change models
   //
   
-  /*
-   // Tensorflow SSD
-   config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb";
-   //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
-   //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-   //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
-   //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
-   config["labels"] = "cocostuff-labels-no-numbers.txt";
-   config["mode"] = "detection";
-   config["input_width"] = 200;
-   config["input_height"] = 200;
-   config["do_crop"] = true;
-   config["input_layer"] = "image_tensor";
-   config["output_scores_layer"] = "detection_scores";
-   config["output_classes_layer"] = "detection_classes";
-   config["output_boxes_layer"] = "detection_boxes";
-   config["output_num_detections_layer"] = "num_detections";
-   config["top_K"] = 5;
-   config["min_score"] = 0.5f;
-   */
-  
-  // OpenCV DNN w/ Caffe SSD Model
-  config["graph"] = "MobileNetSSD_deploy";
-  config["labels"] = "coco-labels-20.txt";
-  config["input_width"] = 100;
-  config["input_height"] = 100;
-  config["input_mean_R"] = 127.5;
-  config["input_mean_G"] = 127.5;
-  config["input_mean_B"] = 127.5;
-  config["input_std"] = 127.5;
-  config["top_K"] = 1;
-  config["min_score"] = 0.5f;
+  if(USE_TENSORFLOW)
+  {
+    // Tensorflow SSD
+    config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb";
+    //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
+    //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+    //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
+    //config["graph"] = "faster_rcnn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
+    config["labels"] = "cocostuff-labels-no-numbers.txt";
+    config["mode"] = "detection";
+    config["input_width"] = 200;
+    config["input_height"] = 200;
+    config["do_crop"] = true;
+    config["input_layer"] = "image_tensor";
+    config["output_scores_layer"] = "detection_scores";
+    config["output_classes_layer"] = "detection_classes";
+    config["output_boxes_layer"] = "detection_boxes";
+    config["output_num_detections_layer"] = "num_detections";
+    config["top_K"] = 5;
+    config["min_score"] = 0.5f;
+  }
+  else
+  {
+    // OpenCV DNN w/ Caffe SSD Model
+    config["graph"] = "MobileNetSSD_deploy";
+    config["labels"] = "coco-labels-20.txt";
+    config["input_width"] = 100;
+    config["input_height"] = 100;
+    config["input_mean_R"] = 127.5;
+    config["input_mean_G"] = 127.5;
+    config["input_mean_B"] = 127.5;
+    config["input_std"] = 127.5;
+    config["top_K"] = 1;
+    config["min_score"] = 0.5f;
+  }
   
   result = detector.Init(modelPath, config);
   ASSERT_EQ(RESULT_OK, result);

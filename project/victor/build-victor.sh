@@ -33,6 +33,8 @@ CONFIGURATION=Debug
 PLATFORM=android
 CMAKE_GENERATOR=Ninja
 
+# TODO: provide command line option?
+USE_TENSORFLOW=1
 
 while getopts ":x:c:p:g:hvfdC" opt; do
     case $opt in
@@ -205,6 +207,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=1 \
+        -DUSE_TENSORFLOW=${USE_TENSORFLOW} \
         "${PLATFORM_ARGS[@]}"
         
 fi

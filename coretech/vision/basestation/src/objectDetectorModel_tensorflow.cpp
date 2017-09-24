@@ -27,7 +27,7 @@
 
 // Whether or not to use the Ahead-of-Time (AOT) compiled Tensorflow model
 #ifndef TENSORFLOW_USE_AOT
-# error Expecting TENSORFLOW_USE_AOT to be defined by gyp!
+# error Expecting TENSORFLOW_USE_AOT to be defined by cmake!
 #endif
 
 #if TENSORFLOW_USE_AOT
