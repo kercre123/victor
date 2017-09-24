@@ -61,7 +61,7 @@
 
         <!-- Toolbox -->
         <xml id="toolbox">
-            <category name="Drive" colour="#0898c4" secondaryColour="0">
+            <category name="codeLab.Category.Drive" colour="#0898c4" secondaryColour="0">
               <block type="cozmo_vert_drive">
                   <value name="DISTANCE">
                       <shadow type="math_number">
@@ -144,7 +144,7 @@
                 </value>
               </block>
             </category>
-            <category name="Actions" colour="#5e3dfc" secondaryColour="0">
+            <category name="codeLab.Category.Actions" colour="#5e3dfc" secondaryColour="0">
 
               <block type="cozmo_vert_set_liftheight">
                   <value name="HEIGHT_RATIO">
@@ -210,7 +210,7 @@
                 </value>
               </block>
             </category>
-            <category name="Animations" colour="#a03c87" secondaryColour="0">
+            <category name="codeLab.Category.Animations" colour="#a03c87" secondaryColour="0">
               <block type="cozmo_play_animation_from_dropdown">
                 <value name="ANIMATION">
                     <shadow type="cozmo_animation_select_menu"></shadow>
@@ -242,7 +242,7 @@
               </block>
             </category>
 
-            <category name="Events" colour="#f4b606" secondaryColour="0">
+            <category name="codeLab.Category.Events" colour="#f4b606" secondaryColour="0">
               <block type="event_whenflagclicked"></block>
               <block type="cozmo_event_on_face"></block>
               <block type="cozmo_event_on_happy_face"></block>
@@ -277,7 +277,7 @@
               </block>
             </category>
 
-            <category name="Control" colour="#e5580a" secondaryColour="0">
+            <category name="codeLab.Category.Control" colour="#e5580a" secondaryColour="0">
               <block type="control_forever"></block>
               <block type="control_if"></block>
               <block type="control_if_else"></block>
@@ -297,7 +297,11 @@
                   </value>
               </block>
               <block type="control_repeat_until"></block>
-              <block type="control_stop"></block>
+              <block type="control_stop">
+                <value name="STOP_OPTION">
+                  <shadow type="stop_option_menu"></shadow>
+                </value>
+              </block>
 
               <block type="cozmo_vert_enable_wait_for_actions"></block>
               <block type="cozmo_vert_disable_wait_for_actions"></block>
@@ -305,7 +309,7 @@
               <block type="cozmo_vert_cancel_actions"></block>
             </category>
 
-            <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
+            <category name="codeLab.Category.Sensors" colour="#5CB1D6" secondaryColour="0">
               <!-- Cozmo -->
               <block type="cozmo_vert_get_position_3d"></block>
               <block type="cozmo_vert_get_pitch"></block>
@@ -363,7 +367,7 @@
                 </value>
               </block>
             </category>
-            <category name="Display" colour="#0fBD8C" secondaryColour="0">
+            <category name="codeLab.Category.Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_clear"></block>
                 <block type="cozmo_vert_cozmoface_display"></block>
                 <block type="cozmo_vert_cozmoface_set_draw_color"></block>
@@ -496,7 +500,7 @@
                 </block>
             </category>
 
-            <category name="Operators" colour="#40BF4A" secondaryColour="0">
+            <category name="codeLab.Category.Operators" colour="#40BF4A" secondaryColour="0">
               <block type="operator_add">
                   <value name="NUM1">
                       <shadow type="math_number">
@@ -667,7 +671,7 @@
               </block>
             </category>
 
-            <category name="Data" colour="#FF8C1A" secondaryColour="0" custom="VARIABLE">
+            <category name="codeLab.Category.Data" colour="#FF8C1A" secondaryColour="0" custom="VARIABLE">
             </category>
         </xml>
 

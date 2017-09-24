@@ -445,26 +445,26 @@ Blockly.Blocks['operator_mathop'] = {
   init: function() {
     this.jsonInit(
       {
-        "message0": "%1 of %2",
+        "message0": "%{BKY_OPERATORS_MATH_OP_SCRATCH_2}",
         "args0": [
           {
             "type": "field_dropdown",
             "name": "OPERATOR",
             "options": [
-              ['abs', 'abs'],
-              ['floor', 'floor'],
-              ['ceiling', 'ceiling'],
-              ['sqrt', 'sqrt'],
-              ['sin', 'sin'],
-              ['cos', 'cos'],
-              ['tan', 'tan'],
-              ['asin', 'asin'],
-              ['acos', 'acos'],
-              ['atan', 'atan'],
-              ['ln', 'ln'],
-              ['log', 'log'],
-              ['e ^', 'e ^'],
-              ['10 ^', '10 ^']
+              ['%{BKY_OPERATORS_ABS_SCRATCH_2}', 'abs'],
+              ['%{BKY_OPERATORS_FLOOR_SCRATCH_2}', 'floor'],
+              ['%{BKY_OPERATORS_CEILING_SCRATCH_2}', 'ceiling'],
+              ['%{BKY_OPERATORS_SQRT_SCRATCH_2}', 'sqrt'],
+              ['%{BKY_OPERATORS_SIN_SCRATCH_2}', 'sin'],
+              ['%{BKY_OPERATORS_COS_SCRATCH_2}', 'cos'],
+              ['%{BKY_OPERATORS_TAN_SCRATCH_2}', 'tan'],
+              ['%{BKY_OPERATORS_ASIN_SCRATCH_2}', 'asin'],
+              ['%{BKY_OPERATORS_ACOS_SCRATCH_2}', 'acos'],
+              ['%{BKY_OPERATORS_ATAN_SCRATCH_2}', 'atan'],
+              ['%{BKY_OPERATORS_LN_SCRATCH_2}', 'ln'],
+              ['%{BKY_OPERATORS_LOG_SCRATCH_2}', 'log'],
+              ['%{BKY_OPERATORS_EULER_MULT_SCRATCH_2}', 'e ^'],
+              ['%{BKY_OPERATORS_TEN_MULT_SCRATCH_2}', '10 ^']
             ]
           },
           {

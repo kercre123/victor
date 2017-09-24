@@ -169,42 +169,61 @@ Blockly.Blocks['control_if_else'] = {
   }
 };
 
-Blockly.Blocks['control_stop'] = {
+// *** ANKI CHANGE ***
+// Add menu of options for ease of translation and to exclude the sprite option.
+Blockly.Blocks['stop_option_menu'] = {
   /**
-   * Block for stop all scripts.
+   * Stop drop-down menu.
    * @this Blockly.Block
    */
   init: function() {
-    var ALL_SCRIPTS = 'all';
-    var THIS_SCRIPT = 'this script';
-    // *** ANKI CHANGE ***
-    // Removing the 'Other scripts in sprite' option. mcembalest, 8/10/17
+    this.jsonInit(
+      {
+        "message0": "%1",
+        "args0": [
+          {
+            "type": "field_dropdown",
+            "name": "STOP_OPTION",
+            "options": [
+              ['%{BKY_CONTROLS_STOP_ALL_SCRATCH_2}', 'all'],
+              ['%{BKY_CONTROLS_THIS_SCRIPT_SCRATCH_2}', 'this script'],
+            ]
+          }
+        ],
+        "colour": Blockly.Colours.control.secondary,
+        "colourSecondary": Blockly.Colours.control.secondary,
+        "colourTertiary": Blockly.Colours.control.tertiary,
+        "extensions": ["output_string"]
+      });
+  }
+};
 
-    //var OTHER_SCRIPTS = 'other scripts in sprite';
-    var stopDropdown = new Blockly.FieldDropdown(function() {
-    // if (this.sourceBlock_ &&
-    //     this.sourceBlock_.nextConnection &&
-    //     this.sourceBlock_.nextConnection.isConnected()) {
-    //   return [
-    //     ['other scripts in sprite', OTHER_SCRIPTS]
-    //   ];
-    // }
-      return [['all', ALL_SCRIPTS],
-        ['this script', THIS_SCRIPT] //,
-    // ['other scripts in sprite', OTHER_SCRIPTS]
-      ];
-    // }, function(option) {
-    //   this.sourceBlock_.setNextStatement(option == OTHER_SCRIPTS);
+// *** ANKI CHANGE ***
+// Add menu of options for ease of translation and to exclude the sprite option.
+Blockly.Blocks['control_stop'] = {
+  /**
+   * Block to send a broadcast.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "id": "control_stop",
+      "message0": "%{BKY_CONTROLS_STOP_SCRATCH_2}",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "STOP_OPTION"
+        }
+      ],
+      "category": Blockly.Categories.control,
+      "extensions": ["colours_control", "shape_statement"]
     });
-    this.appendDummyInput()
-        .appendField('stop')
-        .appendField(stopDropdown, 'STOP_OPTION');
-    this.setCategory(Blockly.Categories.control);
     this.setColour(Blockly.Colours.control.primary,
       Blockly.Colours.control.secondary,
       Blockly.Colours.control.tertiary
-    );
+      );
     this.setPreviousStatement(true);
+    this.setNextStatement(false);
   },
   mutationToDom: function() {
     var container = document.createElement('mutation');
@@ -217,6 +236,52 @@ Blockly.Blocks['control_stop'] = {
     this.setNextStatement(hasNext);
   }
 };
+
+// Blockly.Blocks['control_stop'] = {
+//   /**
+//    * Block for stop all scripts.
+//    * @this Blockly.Block
+//    */
+//   init: function() {
+//     var ALL_SCRIPTS = 'all';
+//     var THIS_SCRIPT = 'this script';
+//     var OTHER_SCRIPTS = 'other scripts in sprite';
+//     var stopDropdown = new Blockly.FieldDropdown(function() {
+//       if (this.sourceBlock_ &&
+//           this.sourceBlock_.nextConnection &&
+//           this.sourceBlock_.nextConnection.isConnected()) {
+//         return [
+//           ['other scripts in sprite', OTHER_SCRIPTS]
+//         ];
+//       }
+//       return [['all', ALL_SCRIPTS],
+//         ['this script', THIS_SCRIPT],
+//         ['other scripts in sprite', OTHER_SCRIPTS]
+//       ];
+//     }, function(option) {
+//       this.sourceBlock_.setNextStatement(option == OTHER_SCRIPTS);
+//     });
+//     this.appendDummyInput()
+//         .appendField('stop')
+//         .appendField(stopDropdown, 'STOP_OPTION');
+//     this.setCategory(Blockly.Categories.control);
+//     this.setColour(Blockly.Colours.control.primary,
+//       Blockly.Colours.control.secondary,
+//       Blockly.Colours.control.tertiary
+//     );
+//     this.setPreviousStatement(true);
+//   },
+//   mutationToDom: function() {
+//     var container = document.createElement('mutation');
+//     var hasNext = (this.getFieldValue('STOP_OPTION') == 'other scripts in sprite');
+//     container.setAttribute('hasnext', hasNext);
+//     return container;
+//   },
+//   domToMutation: function(xmlElement) {
+//     var hasNext = (xmlElement.getAttribute('hasnext') == 'true');
+//     this.setNextStatement(hasNext);
+//   }
+// };
 
 Blockly.Blocks['control_wait'] = {
   /**

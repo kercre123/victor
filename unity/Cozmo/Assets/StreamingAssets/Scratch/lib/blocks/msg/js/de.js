@@ -8,12 +8,33 @@ goog.provide('Blockly.Msg.de');
 goog.require('Blockly.Msg');
 
 // SCRATCH 2 Translations from https://github.com/LLK/scratchr2_translations/blob/master/legacy/editor/static/locale/de.po
+
+// Events category
+Blockly.Msg["EVENTS_GREEN_FLAG_SCRATCH_2"] = "Wenn %1 angeklickt";
+Blockly.Msg["EVENTS_BROADCAST_HAT_SCRATCH_2"] = "Wenn ich %1 empfange";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2"] = "Nachricht1";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2"] = "Nachricht2";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2"] = "Nachricht3";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_4_SCRATCH_2"] = "Nachricht4";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_5_SCRATCH_2"] = "Nachricht5";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_6_SCRATCH_2"] = "Nachricht6";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_7_SCRATCH_2"] = "Nachricht7";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_8_SCRATCH_2"] = "Nachricht8";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_9_SCRATCH_2"] = "Nachricht9";
+Blockly.Msg["EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2"] = "neue Nachricht";
+Blockly.Msg["EVENTS_BROADCAST_SCRATCH_2"] = "sende %1 an alle";
+Blockly.Msg["EVENTS_BROADCAST_AND_WAIT_SCRATCH_2"] = "sende %1 an alle und warte";
+
+// Control category
 Blockly.Msg["CONTROLS_FOREVER_SCRATCH_2"] = "wiederhole fortlaufend";
 Blockly.Msg["CONTROLS_REPEAT_SCRATCH_2"] = "wiederhole %1 mal";
 Blockly.Msg["CONTROLS_IF_MSG_IF_THEN_SCRATCH_2"] = "falls %1 dann";
 Blockly.Msg["CONTROLS_IF_MSG_ELSE_SCRATCH_2"] = "sonst";
 Blockly.Msg["CONTROLS_WAIT_X_SECS_SCRATCH_2"] = "warte %1 Sek.";
 Blockly.Msg["CONTROLS_WAIT_UNTIL_SCRATCH_2"] = "warte bis %1";
+Blockly.Msg["CONTROLS_STOP_SCRATCH_2"] = "stoppe %1";
+Blockly.Msg["CONTROLS_STOP_ALL_SCRATCH_2"] = "alles";
+Blockly.Msg["CONTROLS_THIS_SCRIPT_SCRATCH_2"] = "dieses Skript";
 
 // Operators category
 Blockly.Msg["OPERATORS_PICK_RANDOM_SCRATCH_2"] = "Zufallszahl von %1 bis %2";
@@ -25,6 +46,21 @@ Blockly.Msg["OPERATORS_LETTER_X_OF_SCRATCH_2"] = "Zeichen %1 von %2"
 Blockly.Msg["OPERATORS_LENGTH_OF_SCRATCH_2"] = "Länge von %1"
 Blockly.Msg["OPERATORS_MOD_SCRATCH_2"] = "%1 mod %2";
 Blockly.Msg["OPERATORS_ROUND_SCRATCH_2"] = "%1 gerundet";
+Blockly.Msg["OPERATORS_MATH_OP_SCRATCH_2"] = "%1 von %2";
+Blockly.Msg["OPERATORS_ABS_SCRATCH_2"] = "Betrag";
+Blockly.Msg["OPERATORS_FLOOR_SCRATCH_2"] = "abrunden";
+Blockly.Msg["OPERATORS_CEILING_SCRATCH_2"] = "aufrunden";
+Blockly.Msg["OPERATORS_SQRT_SCRATCH_2"] = "Wurzel";
+Blockly.Msg["OPERATORS_SIN_SCRATCH_2"] = "sin";
+Blockly.Msg["OPERATORS_COS_SCRATCH_2"] = "cos";
+Blockly.Msg["OPERATORS_TAN_SCRATCH_2"] = "tan";
+Blockly.Msg["OPERATORS_ASIN_SCRATCH_2"] = "asin";
+Blockly.Msg["OPERATORS_ACOS_SCRATCH_2"] = "acos";
+Blockly.Msg["OPERATORS_ATAN_SCRATCH_2"] = "atan";
+Blockly.Msg["OPERATORS_LN_SCRATCH_2"] = "ln";
+Blockly.Msg["OPERATORS_LOG_SCRATCH_2"] = "log";
+Blockly.Msg["OPERATORS_EULER_MULT_SCRATCH_2"] = "e^";
+Blockly.Msg["OPERATORS_TEN_MULT_SCRATCH_2"] = "10^";
 
 // Data category
 Blockly.Msg["DATA_SET_VAR_SCRATCH_2"] = "setze %1 auf %2";

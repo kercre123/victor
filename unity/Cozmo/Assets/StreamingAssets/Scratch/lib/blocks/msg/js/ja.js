@@ -9,6 +9,22 @@ goog.require('Blockly.Msg');
 
 // SCRATCH 2 Translations from https://github.com/LLK/scratchr2_translations/blob/master/legacy/editor/static/locale/ja.po
 
+// Events category
+Blockly.Msg["EVENTS_GREEN_FLAG_SCRATCH_2"] = "%1 がクリックされたとき";
+Blockly.Msg["EVENTS_BROADCAST_HAT_SCRATCH_2"] = "%1 を受け取ったとき";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_1_SCRATCH_2"] = "メッセージ1";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_2_SCRATCH_2"] = "メッセージ2";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_3_SCRATCH_2"] = "メッセージ3";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_4_SCRATCH_2"] = "メッセージ4";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_5_SCRATCH_2"] = "メッセージ5";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_6_SCRATCH_2"] = "メッセージ6";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_7_SCRATCH_2"] = "メッセージ7";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_8_SCRATCH_2"] = "メッセージ8";
+Blockly.Msg["EVENTS_BROADCAST_MESSAGE_9_SCRATCH_2"] = "メッセージ9";
+Blockly.Msg["EVENTS_BROADCAST_NEW_MESSAGE_SCRATCH_2"] = "新しいメッセージ";
+Blockly.Msg["EVENTS_BROADCAST_SCRATCH_2"] = "%1 を送る";
+Blockly.Msg["EVENTS_BROADCAST_AND_WAIT_SCRATCH_2"] = "%1 を送って待つ"
+
 // Control category
 Blockly.Msg["CONTROLS_FOREVER_SCRATCH_2"] = "ずっと";
 Blockly.Msg["CONTROLS_REPEAT_SCRATCH_2"] = "%1 回繰り返す";
@@ -16,6 +32,9 @@ Blockly.Msg["CONTROLS_IF_MSG_IF_THEN_SCRATCH_2"] = "もし %1 なら";
 Blockly.Msg["CONTROLS_IF_MSG_ELSE_SCRATCH_2"] = "でなければ";
 Blockly.Msg["CONTROLS_WAIT_X_SECS_SCRATCH_2"] = "%1 秒待つ";
 Blockly.Msg["CONTROLS_WAIT_UNTIL_SCRATCH_2"] = "%1 まで待つ";
+Blockly.Msg["CONTROLS_STOP_SCRATCH_2"] = "%1 を止める";
+Blockly.Msg["CONTROLS_STOP_ALL_SCRATCH_2"] = "すべて";
+Blockly.Msg["CONTROLS_THIS_SCRIPT_SCRATCH_2"] = "このスクリプト";
 
 // Operators category
 Blockly.Msg["OPERATORS_PICK_RANDOM_SCRATCH_2"] = "%1 から %2 までの乱数";
@@ -27,6 +46,21 @@ Blockly.Msg["OPERATORS_LETTER_X_OF_SCRATCH_2"] = "%1 番目( %2 )の文字";
 Blockly.Msg["OPERATORS_LENGTH_OF_SCRATCH_2"] = "%1 の長さ";
 Blockly.Msg["OPERATORS_MOD_SCRATCH_2"] = "%1 を %2 で割った余り";
 Blockly.Msg["OPERATORS_ROUND_SCRATCH_2"] = "%1 を四捨五入"
+Blockly.Msg["OPERATORS_MATH_OP_SCRATCH_2"] = "%1 ( %2 )";
+Blockly.Msg["OPERATORS_ABS_SCRATCH_2"] = "絶対値";
+Blockly.Msg["OPERATORS_FLOOR_SCRATCH_2"] = "切り下げ";
+Blockly.Msg["OPERATORS_CEILING_SCRATCH_2"] = "切り上げ";
+Blockly.Msg["OPERATORS_SQRT_SCRATCH_2"] = "平方根";
+Blockly.Msg["OPERATORS_SIN_SCRATCH_2"] = "sin";
+Blockly.Msg["OPERATORS_COS_SCRATCH_2"] = "cos";
+Blockly.Msg["OPERATORS_TAN_SCRATCH_2"] = "tan";
+Blockly.Msg["OPERATORS_ASIN_SCRATCH_2"] = "asin";
+Blockly.Msg["OPERATORS_ACOS_SCRATCH_2"] = "acos";
+Blockly.Msg["OPERATORS_ATAN_SCRATCH_2"] = "atan";
+Blockly.Msg["OPERATORS_LN_SCRATCH_2"] = "ln";
+Blockly.Msg["OPERATORS_LOG_SCRATCH_2"] = "log";
+Blockly.Msg["OPERATORS_EULER_MULT_SCRATCH_2"] = "e ^";
+Blockly.Msg["OPERATORS_TEN_MULT_SCRATCH_2"] = "10 ^";
 
 // Data category
 Blockly.Msg["DATA_SET_VAR_SCRATCH_2"] = "%1 を %2 にする";
