@@ -51,15 +51,28 @@ enum class ENodeContentType : uint8_t {
 using ENodeContentTypePackedType = uint32_t;
 
 // content for each node. INavMemoryMapQuadData is polymorphic depending on the content type
-struct NodeContent {
-  explicit NodeContent(ENodeContentType t) : type(t), data(nullptr) {}
+class NodeContent {
+public:
+  explicit NodeContent(ENodeContentType t, TimeStamp_t timeMeasured) 
+    : type(t)
+    , typeData(nullptr)
+    , firstObserved_ms(timeMeasured)
+    , lastObserved_ms(timeMeasured) {}
   
   // comparison operators
   bool operator==(const NodeContent& other) const;
   bool operator!=(const NodeContent& other) const;
   
   ENodeContentType type;
-  std::shared_ptr<const MemoryMapData> data;
+  std::shared_ptr<const MemoryMapData> typeData;
+  
+  void SetLastObservedTime(TimeStamp_t t) {lastObserved_ms = t;}
+  TimeStamp_t GetLastObservedTime()  const {return lastObserved_ms;}
+  TimeStamp_t GetFirstObservedTime() const {return firstObserved_ms;}
+  
+private:
+  TimeStamp_t firstObserved_ms;
+  TimeStamp_t lastObserved_ms;
 };
 
 // position with respect to the parent

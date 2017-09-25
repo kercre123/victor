@@ -1458,7 +1458,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       BroadcastObjectObservation(observedObject);
       
       _didObjectsChange = true;
-      _robotMsgTimeStampAtChange = atTimestamp;
+      _robotMsgTimeStampAtChange = fmax(atTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
       
     } // for each object seen
     
@@ -1793,7 +1793,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
 
     AddLocatedObject(markerlessObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = lastTimestamp;
     
     // add cliffs to memory map, or other objects if feature is enabled
     switch (type) {
@@ -1802,30 +1801,28 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         // cliffs currently have extra data (for directionality)
         const Pose3d& robotPose = _robot->GetPose();
         const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
-        MemoryMapData_Cliff cliffData;
         Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
+        MemoryMapData_Cliff cliffData(Vec2f {rotatedFwdVector.x(), rotatedFwdVector.y()});
         
         // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
         const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
       
         INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
-        currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
+        currentNavMemoryMap->AddQuad(cliffQuad, cliffData, lastTimestamp);
         break;
       }
       case ObjectType::ProxObstacle:
-      {       
-        MemoryMapData_ProxObstacle proxData;
+      {
         const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
-        proxData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
+        MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()});
         
         const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
         
         INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
         
-        currentNavMemoryMap->AddQuad(proxQuad, proxData);
+        currentNavMemoryMap->AddQuad(proxQuad, proxData, lastTimestamp);
         break;
       }
       default:
@@ -1834,6 +1831,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         break;
       }
     }
+
+    _robotMsgTimeStampAtChange = fmax(lastTimestamp, _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
     
     return RESULT_OK;
   }
@@ -1861,7 +1860,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
 
     AddLocatedObject(customObject);
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
+    _robotMsgTimeStampAtChange = fmax(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
     
     return customObject->GetID();
   }
@@ -2470,9 +2469,9 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result BlockWorld::Update(const std::list<Vision::ObservedMarker>& currentObsMarkers)
+  Result BlockWorld::UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& currentObsMarkers)
   {
-    ANKI_CPU_PROFILE("BlockWorld::Update");
+    ANKI_CPU_PROFILE("BlockWorld::UpdateObservedMarkers");
 
     const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (_lastPlayAreaSizeEventSec + _playAreaSizeEventIntervalSec < currentTimeSec) {
@@ -2498,7 +2497,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         {
           if(marker.GetTimeStamp() != atTimestamp)
           {
-            PRINT_NAMED_ERROR("BlockWorld.Update.MisMatchedTimestamps", "Expected t=%u, Got t=%u",
+            PRINT_NAMED_ERROR("BlockWorld.UpdateObservedMarkers.MisMatchedTimestamps", "Expected t=%u, Got t=%u",
                               atTimestamp, marker.GetTimeStamp());
             return RESULT_FAIL;
           }
@@ -2535,13 +2534,13 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         
         Result lastResult = _objectLibrary.CreateObjectsFromMarkers(currentObsMarkers, objectsSeen);
         if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("BlockWorld.Update.CreateObjectsFromMarkersFailed", "");
+          PRINT_NAMED_ERROR("BlockWorld.UpdateObservedMarkers.CreateObjectsFromMarkersFailed", "");
           return lastResult;
         }
         
         lastResult = AddAndUpdateObjects(objectsSeen, atTimestamp);
         if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("BlockWorld.Update.AddAndUpdateFailed", "");
+          PRINT_NAMED_ERROR("BlockWorld.UpdateObservedMarkers.AddAndUpdateFailed", "");
           return lastResult;
         }
       }
@@ -2627,7 +2626,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     
     if(ANKI_DEVELOPER_CODE)
     {
-      DEV_ASSERT(RESULT_OK == SanityCheckBookkeeping(), "BlockWorld.Update.SanityCheckBookkeepingFailed");
+      DEV_ASSERT(RESULT_OK == SanityCheckBookkeeping(), "BlockWorld.UpdateObservedMarkers.SanityCheckBookkeepingFailed");
     }
     
     // rsam: Test for Brad. Enable this to render convex hulls from memory map
@@ -2635,7 +2634,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
 
     return lastResult;
     
-  } // Update()
+  } // UpdateObservedMarkers()
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BlockWorld::CheckForCollisionWithRobot(const ObservableObject* object) const
@@ -2828,7 +2827,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     
     // Flag that we removed an object
     _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
+    _robotMsgTimeStampAtChange = fmax(_robot->GetLastMsgTimestamp(), _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp());
   }
   
   ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,

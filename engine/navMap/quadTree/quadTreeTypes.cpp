@@ -24,9 +24,12 @@ namespace QuadTreeTypes {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NodeContent::operator==(const NodeContent& other) const
 {
-  const bool equals = (type == other.type) &&
-    ( (data == other.data) ||
-      ((data != nullptr) && (other.data != nullptr) && (data->Equals(other.data.get())))
+  const bool equals = 
+    (type == other.type) &&
+    (firstObserved_ms == other.GetFirstObservedTime()) &&
+    (lastObserved_ms == other.GetLastObservedTime()) &&    
+    ( (typeData == other.typeData) ||
+      ((typeData != nullptr) && (other.typeData != nullptr) && (typeData->Equals(other.typeData.get())))
     );
   
   return equals;

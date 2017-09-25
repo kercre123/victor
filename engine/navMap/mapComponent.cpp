@@ -268,6 +268,7 @@ void MapComponent::UpdateRobotPose()
   if ( addAgain )
   {
     INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+    TimeStamp_t currentTimestamp = _robot->GetLastMsgTimestamp();
     DEV_ASSERT(currentNavMemoryMap, "MapComponent.UpdateRobotPoseInMemoryMap.NoMemoryMap");
     // cliff quad: clear or cliff
     {
@@ -284,21 +285,20 @@ void MapComponent::UpdateRobotPose()
       if ( _robot->GetCliffSensorComponent().IsCliffDetected() )
       {
         // build data we want to embed for this quad
-        MemoryMapData_Cliff cliffData;
         Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
-        currentNavMemoryMap->AddQuad(cliffquad, cliffData);
+        MemoryMapData_Cliff cliffData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()});
+        currentNavMemoryMap->AddQuad(cliffquad, cliffData, currentTimestamp);
       }
       else
       {
-        currentNavMemoryMap->AddQuad(cliffquad, INavMap::EContentType::ClearOfCliff);
+        currentNavMemoryMap->AddQuad(cliffquad, INavMap::EContentType::ClearOfCliff, currentTimestamp);
       }
     }
 
     const Quad2f& robotQuad = _robot->GetBoundingQuadXY(robotPoseWrtOrigin);
 
     // regular clear of obstacle
-    currentNavMemoryMap->AddQuad(robotQuad, INavMap::EContentType::ClearOfObstacle );
+    currentNavMemoryMap->AddQuad(robotQuad, INavMap::EContentType::ClearOfObstacle, currentTimestamp);
 
     // also notify behavior whiteboard.
     // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
@@ -324,7 +324,7 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
   const INavMap::EContentType typeInteresting = INavMap::EContentType::InterestingEdge;
   const INavMap::EContentType typeUnknown = INavMap::EContentType::Unknown;
-  currentNavMemoryMap->ReplaceContent(groundPlaneWrtRobot, typeInteresting, typeUnknown);
+  currentNavMemoryMap->ReplaceContent(groundPlaneWrtRobot, typeInteresting, typeUnknown, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -332,7 +332,7 @@ void MapComponent::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
 {
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagQuadAsNotInterestingEdges.NullMap");
-  currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMap::EContentType::NotInterestingEdge);
+  currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMap::EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -346,7 +346,7 @@ void MapComponent::FlagInterestingEdgesAsUseless()
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagInterestingEdgesAsUseless.NullMap");
   const INavMap::EContentType newType = INavMap::EContentType::Unknown;
-  currentNavMemoryMap->ReplaceContent(INavMap::EContentType::InterestingEdge, newType);
+  currentNavMemoryMap->ReplaceContent(INavMap::EContentType::InterestingEdge, newType, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -621,7 +621,7 @@ void MapComponent::AddObject(const ObservableObject& object, const Pose3d& newPo
         // add to memory map flattened out wrt origin
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
         const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
-        memoryMap->AddQuad(newQuad, addType);
+        memoryMap->AddQuad(newQuad, addType, _robot->GetLastImageTimeStamp());
         
         // store in as a reported pose
         _reportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
@@ -696,7 +696,7 @@ void MapComponent::RemoveObject(const ObservableObject& object, PoseOriginID_t o
           // remove from the memory map
           const Pose3d& oldPoseInThisOrigin = info.pose;
           const Quad2f& newQuad = object.GetBoundingQuadXY(oldPoseInThisOrigin);
-          memoryMap->AddQuad(newQuad, removalType);
+          memoryMap->AddQuad(newQuad, removalType, _robot->GetLastImageTimeStamp());
         }
         else
         {
@@ -811,7 +811,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
     Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
     
     // update navmesh with a quadrilateral between the robot and the seen object
-    currentNavMemoryMap->AddQuad(clearVisionQuad, INavMap::EContentType::ClearOfObstacle);
+    currentNavMemoryMap->AddQuad(clearVisionQuad, INavMap::EContentType::ClearOfObstacle, _robot->GetLastImageTimeStamp());
     
     // also notify behavior whiteboard.
     // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
@@ -893,7 +893,7 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
       "This array does not define all types once and only once.");
 
     // fill border in memory map
-    map->FillBorder(ContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, ContentType::NotInterestingEdge);
+    map->FillBorder(ContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, ContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
   }
 }
 
@@ -1348,7 +1348,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
       // add clear info to map
       if ( currentNavMemoryMap ) {
-        currentNavMemoryMap->AddLine(clearFrom, clearTo, INavMap::EContentType::ClearOfObstacle);
+        currentNavMemoryMap->AddLine(clearFrom, clearTo, INavMap::EContentType::ClearOfObstacle, frameInfo.timestamp);
       }
     }
     else
@@ -1381,7 +1381,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
         // add clear info to map
         if ( currentNavMemoryMap ) {
-          currentNavMemoryMap->AddTriangle(clearTri2D, INavMap::EContentType::ClearOfObstacle);
+          currentNavMemoryMap->AddTriangle(clearTri2D, INavMap::EContentType::ClearOfObstacle, frameInfo.timestamp);
         }
       }
       else
@@ -1396,7 +1396,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
         // add clear info to map
         if ( currentNavMemoryMap ) {
-          currentNavMemoryMap->AddQuad(potentialClearQuad2D, INavMap::EContentType::ClearOfObstacle);
+          currentNavMemoryMap->AddQuad(potentialClearQuad2D, INavMap::EContentType::ClearOfObstacle, frameInfo.timestamp);
         }
       }
     }
@@ -1424,7 +1424,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   
     // add interesting edge
     if ( currentNavMemoryMap ) {
-      currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, INavMap::EContentType::InterestingEdge);
+      currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, INavMap::EContentType::InterestingEdge, frameInfo.timestamp);
     }
   }
   

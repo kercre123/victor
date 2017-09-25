@@ -69,7 +69,7 @@ void QuadTreeProcessor::SetRoot(QuadTreeNode* node)
     // we expect to set the root before anyone else (and only then)
     DEV_ASSERT(node->GetContentType() == ENodeContentType::Invalid, "QuadTreeProcessor.SetRoot.RootIsInitialized");
     // change from invalid to unknown; this is required when Unknown is cached, so that we cache the root as soon as we get it
-    QuadTreeTypes::NodeContent rootContent(ENodeContentType::Unknown);
+    QuadTreeTypes::NodeContent rootContent(ENodeContentType::Unknown, node->_content.GetLastObservedTime());
     _root->ForceSetDetectedContentType(rootContent, *this);
   }
 }
@@ -307,7 +307,7 @@ void QuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentTypeP
           outBorders.emplace_back();
         }
         MemoryMapTypes::BorderRegion& curRegion = outBorders.back();
-        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
+        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->typeData, firstNeighborDir, lastNeighborDir) );
         
         // origin <- dest
         curOrigin = curDest;
@@ -325,7 +325,7 @@ void QuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentTypeP
           outBorders.emplace_back();
         }
         MemoryMapTypes::BorderRegion& curRegion = outBorders.back();
-        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
+        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->typeData, firstNeighborDir, lastNeighborDir) );
         
         // calculate the area of the border by adding all node's area
         float totalArea_m2 = 0.0f;

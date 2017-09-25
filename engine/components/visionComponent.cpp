@@ -1040,7 +1040,7 @@ namespace Cozmo {
       }
     } // if(!procResult.observedMarkers.empty())
 
-    lastResult = _robot.GetBlockWorld().Update(observedMarkers);
+    lastResult = _robot.GetBlockWorld().UpdateObservedMarkers(observedMarkers);
     if(RESULT_OK != lastResult)
     {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionResults.BlockWorldUpdateFailed", "");

@@ -25,7 +25,7 @@ namespace Cozmo {
 struct MemoryMapData_Cliff : public MemoryMapData
 {
   // constructor
-  MemoryMapData_Cliff();
+  MemoryMapData_Cliff(Vec2f dir);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapData* Clone() const;

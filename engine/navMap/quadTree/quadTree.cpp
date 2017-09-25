@@ -52,7 +52,7 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 QuadTree::QuadTree(VizManager* vizManager, Robot* robot)
 : _gfxDirty(true)
 , _processor(vizManager)
-, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr)  // Note the root is created at z=1
+, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr, robot->GetLastMsgTimestamp())  // Note the root is created at z=1
 , _vizManager(vizManager)
 , _robot(robot)
 {
@@ -159,7 +159,8 @@ void QuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent, int s
   }
 
   // add quad now
-  _gfxDirty = _root.AddContentQuad(quad, nodeContent, _processor) || _gfxDirty;
+  const bool changed = _root.AddContentQuad(quad, nodeContent, _processor);
+  _gfxDirty |= changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -216,7 +217,8 @@ void QuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent
   }
 
   // add segment now
-  _gfxDirty = _root.AddContentLine(from, to, nodeContent, _processor) || _gfxDirty;
+  const bool changed = _root.AddContentLine(from, to, nodeContent, _processor);
+  _gfxDirty |= changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -259,7 +261,8 @@ void QuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent
   }
 
   // add triangle now
-  _gfxDirty = _root.AddContentTriangle(tri, nodeContent, _processor) || _gfxDirty;
+  const bool changed = _root.AddContentTriangle(tri, nodeContent, _processor);
+  _gfxDirty |= changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -284,7 +287,8 @@ void QuadTree::AddPoint(const Point2f& point, const NodeContent& nodeContent, in
   }
   
   // add point now
-  _gfxDirty = _root.AddContentPoint(point, nodeContent, _processor) || _gfxDirty;
+  const bool changed = _root.AddContentPoint(point, nodeContent, _processor);
+  _gfxDirty |= changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

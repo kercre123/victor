@@ -100,14 +100,14 @@ void MemoryMap::Merge(const INavMap* other, const Pose3d& transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet)
+void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured)
 {
   // convert into node types and emtpy (no extra info) node content
   using namespace QuadTreeTypes;
   const ENodeContentType nodeTypeToReplace  = ConvertContentType(typeToReplace);
   const ENodeContentTypePackedType nodeNeighborsToFillFrom = ConvertContentArrayToFlags(neighborsToFillFrom);
   const ENodeContentType newNodeTypeSet = ConvertContentType(newTypeSet);
-  NodeContent emptyNewNodeContent(newNodeTypeSet);
+  NodeContent emptyNewNodeContent(newNodeTypeSet, timeMeasured);
 
   // ask the processor to do it
   _quadTree.GetProcessor().FillBorder(nodeTypeToReplace, nodeNeighborsToFillFrom, emptyNewNodeContent);
@@ -115,13 +115,13 @@ void MemoryMap::FillBorderInternal(EContentType typeToReplace, const FullContent
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet)
+void MemoryMap::ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured)
 {
   // convert into node types and emtpy (no extra info) node content
   using namespace QuadTreeTypes;
   const ENodeContentType nodeTypeToReplace = ConvertContentType(typeToReplace);
   const ENodeContentType newNodeTypeSet = ConvertContentType(newTypeSet);
-  NodeContent emptyNewNodeContent(newNodeTypeSet);
+  NodeContent emptyNewNodeContent(newNodeTypeSet, timeMeasured);
 
   // Implementation note: since we define a quad, we should be directly asking the navMesh to do this. Currently
   // however I do not have a way to do this in AddQuad, and I think it would be slightly more difficult to
@@ -138,13 +138,13 @@ void MemoryMap::ReplaceContentInternal(const Quad2f& inQuad, EContentType typeTo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet)
+void MemoryMap::ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured)
 {
   // convert into node types and emtpy (no extra info) node content
   using namespace QuadTreeTypes;
   const ENodeContentType nodeTypeToReplace = ConvertContentType(typeToReplace);
   const ENodeContentType newNodeTypeSet = ConvertContentType(newTypeSet);
-  NodeContent emptyNewNodeContent(newNodeTypeSet);
+  NodeContent emptyNewNodeContent(newNodeTypeSet, timeMeasured);
 
   // ask the processor
   _quadTree.GetProcessor().ReplaceContent(nodeTypeToReplace, emptyNewNodeContent);
@@ -246,73 +246,73 @@ void MemoryMap::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) con
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddQuadInternal(const Quad2f& quad, EContentType type)
+void MemoryMap::AddQuadInternal(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
-  NodeContent nodeContent(nodeContentType);
+  NodeContent nodeContent(nodeContentType, timeMeasured);
   _quadTree.AddQuad(quad, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddQuadInternal(const Quad2f& quad, const MemoryMapData& content)
+void MemoryMap::AddQuadInternal(const Quad2f& quad, const MemoryMapData& content, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
-  NodeContent nodeContent(nodeContentType);
-  nodeContent.data.reset( content.Clone() );
+  NodeContent nodeContent(nodeContentType, timeMeasured);
+  nodeContent.typeData.reset( content.Clone() );
 
   _quadTree.AddQuad(quad, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddLineInternal(const Point2f& from, const Point2f& to, EContentType type)
+void MemoryMap::AddLineInternal(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
-  NodeContent nodeContent(nodeContentType);
+  NodeContent nodeContent(nodeContentType, timeMeasured);
   _quadTree.AddLine(from, to, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content)
+void MemoryMap::AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
-  NodeContent nodeContent(nodeContentType);
-  nodeContent.data.reset( content.Clone() );
+  NodeContent nodeContent(nodeContentType, timeMeasured);
+  nodeContent.typeData.reset( content.Clone() );
 
   _quadTree.AddLine(from, to, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddTriangleInternal(const Triangle2f& tri, EContentType type)
+void MemoryMap::AddTriangleInternal(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
-  NodeContent nodeContent(nodeContentType);
+  NodeContent nodeContent(nodeContentType, timeMeasured);
   _quadTree.AddTriangle(tri, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content)
+void MemoryMap::AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
-  NodeContent nodeContent(nodeContentType);
-  nodeContent.data.reset( content.Clone() );
+  NodeContent nodeContent(nodeContentType, timeMeasured);
+  nodeContent.typeData.reset( content.Clone() );
 
   _quadTree.AddTriangle(tri, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddPointInternal(const Point2f& point, EContentType type)
+void MemoryMap::AddPointInternal(const Point2f& point, EContentType type, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
-  NodeContent nodeContent(nodeContentType);
+  NodeContent nodeContent(nodeContentType, timeMeasured);
   _quadTree.AddPoint(point, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MemoryMap::AddPointInternal(const Point2f& point, const MemoryMapData& content)
+void MemoryMap::AddPointInternal(const Point2f& point, const MemoryMapData& content, TimeStamp_t timeMeasured)
 {
   const QuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
-  NodeContent nodeContent(nodeContentType);
-  nodeContent.data.reset( content.Clone() );
+  NodeContent nodeContent(nodeContentType, timeMeasured);
+  nodeContent.typeData.reset( content.Clone() );
 
   _quadTree.AddPoint(point, nodeContent, numberOfAllowedShiftsToIncludeContent);
 }

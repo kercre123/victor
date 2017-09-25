@@ -45,13 +45,13 @@ public:
   virtual void Merge(const INavMap* other, const Pose3d& transform) override;
   
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
-  virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet) override;
+  virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
   
   // change the content type from typeToReplace into newTypeSet within the given quad
-  virtual void ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet) override;
+  virtual void ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
   
   // change the content type from typeToReplace into newTypeSet in all known space
-  virtual void ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet) override;
+  virtual void ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const override;
@@ -93,20 +93,22 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // add a quad with the specified content
-  virtual void AddQuadInternal(const Quad2f& quad, EContentType type) override;
-  virtual void AddQuadInternal(const Quad2f& quad, const MemoryMapData& content) override;
+  virtual void AddQuadInternal(const Quad2f& quad, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddQuadInternal(const Quad2f& quad, const MemoryMapData& content, TimeStamp_t timeMeasured) override;
   
   // add a line with the specified content
-  virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type) override;
-  virtual void AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content) override;
+  virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddLineInternal(const Point2f& from, const Point2f& to, const MemoryMapData& content, TimeStamp_t timeMeasured) override;
   
   // add a triangle with the specified content
-  virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type) override;
-  virtual void AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content) override;
+  virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddTriangleInternal(const Triangle2f& tri, const MemoryMapData& content, TimeStamp_t timeMeasured) override;
   
   // add a point with the specified content
-  virtual void AddPointInternal(const Point2f& point, EContentType type) override;
-  virtual void AddPointInternal(const Point2f& point, const MemoryMapData& content) override;
+  virtual void AddPointInternal(const Point2f& point, EContentType type, TimeStamp_t timeMeasured) override;
+  virtual void AddPointInternal(const Point2f& point, const MemoryMapData& content, TimeStamp_t timeMeasured) override;
+  
+  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeContent().GetLastObservedTime();}
 
 private:
 

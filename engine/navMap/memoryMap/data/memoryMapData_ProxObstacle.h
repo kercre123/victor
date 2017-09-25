@@ -25,7 +25,7 @@ namespace Cozmo {
 struct MemoryMapData_ProxObstacle : public MemoryMapData
 {
   // constructor
-  MemoryMapData_ProxObstacle();
+  MemoryMapData_ProxObstacle(Vec2f dir);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapData* Clone() const;

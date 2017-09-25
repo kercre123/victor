@@ -89,7 +89,8 @@ public:
 
   // Crete node
   // it will allow subdivision as long as level is greater than 0
-  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent);
+  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant,
+                      QuadTreeNode* parent, TimeStamp_t timeCreated);
   
   // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
   // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
@@ -115,7 +116,7 @@ public:
   // consider using the concrete checks if you are going to do GetContentType() == X, in case the meaning of that
   // comparison changes
   ENodeContentType GetContentType() const { return _content.type; }
-  std::shared_ptr<const MemoryMapData> GetData() const { return _content.data; }
+  std::shared_ptr<const MemoryMapData> GetData() const { return _content.typeData; }
   bool IsContentTypeUnknown() const { return _content.type == ENodeContentType::Unknown; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad

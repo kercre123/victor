@@ -560,6 +560,7 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
     // collision checking
     long endPoints = prim->intermediatePositions.size();
     bool collision = false; // fatal collision
+    bool reverseMotion = env.GetActionType(prim->id).IsReverseAction();
 
     nextSucc_.g = 0;
 
@@ -635,7 +636,8 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
               }
               else {
                 // apply soft penalty, but allow the action
-                penalty += obs.second * pt.oneOverDistanceFromLastPosition;
+                penalty += obs.second * pt.oneOverDistanceFromLastPosition 
+                        +  (reverseMotion ? REVERSE_OVER_OBSTACLE_COST : 0);
 
                 assert(!isinf(penalty));
                 assert(!isnan(penalty));
@@ -662,7 +664,8 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
               }
               else {
                 // apply soft penalty, but allow the action
-                penalty += obs.second  * prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
+                penalty += obs.second  * prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition
+                        +  (reverseMotion ? REVERSE_OVER_OBSTACLE_COST : 0);
 
                 assert(!isinf(penalty));
                 assert(!isnan(penalty));

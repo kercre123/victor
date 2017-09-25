@@ -159,7 +159,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   // Tick BlockWorld, which will use the queued marker
   std::list<Vision::ObservedMarker> markers{marker};
-  lastResult = robot.GetBlockWorld().Update(markers);
+  lastResult = robot.GetBlockWorld().UpdateObservedMarkers(markers);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   {
@@ -188,7 +188,7 @@ TEST(BlockWorld, AddAndRemoveObject)
     ASSERT_EQ(RESULT_OK, lastResult);
     Vision::ObservedMarker marker(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
     std::list<Vision::ObservedMarker> markers{marker};
-    lastResult = robot.GetBlockWorld().Update(markers);
+    lastResult = robot.GetBlockWorld().UpdateObservedMarkers(markers);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -242,7 +242,7 @@ TEST(BlockWorld, AddAndRemoveObject)
     lastResult = robot.UpdateFullRobotState(stateMsg);
     ASSERT_EQ(RESULT_OK, lastResult);
     robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
-    lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
+    lastResult = robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -266,7 +266,7 @@ TEST(BlockWorld, AddAndRemoveObject)
     lastResult = robot.UpdateFullRobotState(stateMsg);
     ASSERT_EQ(RESULT_OK, lastResult);
     robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
-    lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
+    lastResult = robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -288,7 +288,7 @@ TEST(BlockWorld, AddAndRemoveObject)
     ASSERT_EQ(RESULT_OK, lastResult);
     Vision::ObservedMarker markerFar(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
     std::list<Vision::ObservedMarker> markersFar{markerFar};
-    lastResult = robot.GetBlockWorld().Update(markersFar);
+    lastResult = robot.GetBlockWorld().UpdateObservedMarkers(markersFar);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -1629,7 +1629,7 @@ TEST(BlockWorld, UnobserveCubeStack)
     };
     robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp, imuEntries);
     
-    lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
+    lastResult = robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -2234,7 +2234,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     
     // update the stack cache
     robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
-    robot.GetBlockWorld().Update(emptyMarkersList);
+    robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
     
     // check that the expected number of stacks exist
     const auto& stacks = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache();
@@ -2354,7 +2354,7 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
           
           // build the configuration cache
           robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
-          robot.GetBlockWorld().Update(emptyMarkersList);
+          robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
           const auto& bases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache();
           
           fprintf(stdout, "staticBlockPose x:%f y:%f z:%f xRot:%f, yRot:%f, zRot:%f\n",
@@ -2387,7 +2387,7 @@ useThirdBlock:%d, thirdBlockInStack:%d\n",
             
             // build a full pyramid, and then re-build the cache
             robot.GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
-            robot.GetBlockWorld().Update(emptyMarkersList);
+            robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
 
             const auto& pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache();
             
@@ -2702,7 +2702,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
     // "Unobserve" the object and update BlockWorld to trigger a collision check
     robot.GetVisionComponent().FakeImageProcessed(fakeTime);
     fakeTime+=10;
-    robot.GetBlockWorld().Update({});
+    robot.GetBlockWorld().UpdateObservedMarkers({});
     
     return object->GetPoseState();
   };

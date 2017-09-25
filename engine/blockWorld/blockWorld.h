@@ -61,7 +61,7 @@ namespace Anki
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robot's and objects' poses from them.
-      Result Update(const std::list<Vision::ObservedMarker>& observedMarkers);
+      Result UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& observedMarkers);
       
       // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);

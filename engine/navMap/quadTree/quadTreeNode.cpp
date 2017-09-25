@@ -66,8 +66,8 @@ ExternalInterface::ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(ENode
   
   ExternalInterface::ENodeContentTypeDebugVizEnum internalContentType = ExternalInterface::ENodeContentTypeDebugVizEnum::Unknown;
   switch (contentType) {
-    case ENodeContentType::Invalid:               { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this
-    case ENodeContentType::Subdivided:            { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this (we only send leaves)
+    case ENodeContentType::Invalid:               { DEV_ASSERT(false, "QuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this
+    case ENodeContentType::Subdivided:            { DEV_ASSERT(false, "QuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this (we only send leaves)
     case ENodeContentType::Unknown:               { internalContentType = ENodeContentTypeDebugVizEnum::Unknown;                break; }
     case ENodeContentType::ClearOfObstacle:       { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfObstacle;        break; }
     case ENodeContentType::ClearOfCliff:          { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfCliff;           break; }
@@ -80,26 +80,26 @@ ExternalInterface::ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(ENode
     case ENodeContentType::Cliff:                 { internalContentType = ENodeContentTypeDebugVizEnum::Cliff;                  break; }
     case ENodeContentType::InterestingEdge:       { internalContentType = ENodeContentTypeDebugVizEnum::InterestingEdge;        break; }
     case ENodeContentType::NotInterestingEdge:    { internalContentType = ENodeContentTypeDebugVizEnum::NotInterestingEdge;     break; }
-    case ENodeContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
+    case ENodeContentType::_Count:                { DEV_ASSERT(false, "QuadTreeNode._Count"); break; }
   }
   return internalContentType;
 }
   
 } // namespace
 
-static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
-static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
-static_assert( !std::is_move_assignable<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
-static_assert( !std::is_move_constructible<QuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-movable" );
+static_assert( !std::is_copy_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
+static_assert( !std::is_copy_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-copyable" );
+static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
+static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent)
+QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent, TimeStamp_t timeCreated)
 : _center(center)
 , _sideLen(sideLength)
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
-, _content(ENodeContentType::Invalid)
+, _content(ENodeContentType::Invalid, timeCreated)
 {
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
@@ -356,10 +356,11 @@ bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTre
     
     // create new children
     const float chHalfLen = rootHalfLen*0.5f;
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
+    const TimeStamp_t timeCreated = _content.GetLastObservedTime();
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this, timeCreated) ); // up L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this, timeCreated) ); // up R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this, timeCreated) ); // lo L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this, timeCreated) ); // lo R
 
     // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
     using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
@@ -387,7 +388,7 @@ bool QuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, QuadTre
     */
     
     // this content is set to the children that don't inherit old children
-    NodeContent emptyUnknownContent(ENodeContentType::Unknown);
+    NodeContent emptyUnknownContent(ENodeContentType::Unknown, timeCreated);
     
     // calculate which children are brought over from the old ones
     if ( xShift && yShift )
@@ -494,6 +495,7 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
 
   const bool xPlus = FLT_GE_ZERO(direction.x());
   const bool yPlus = FLT_GE_ZERO(direction.y());
+  const TimeStamp_t timeCreated = _content.GetLastObservedTime();
   
   // move to its new center
   const float oldHalfLen = _sideLen * 0.50f;
@@ -501,10 +503,10 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this, timeCreated) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this, timeCreated) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this, timeCreated) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this, timeCreated) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
@@ -515,7 +517,7 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   
   // we have to set the new first level children as Unknown, since they are initialized as Invalid
   // except the child that takes my place, since that one is going to inherit my content
-  NodeContent emptyUnknownContent(ENodeContentType::Unknown);
+  NodeContent emptyUnknownContent(ENodeContentType::Unknown, timeCreated);
   for(size_t idx=0; idx<_childrenPtr.size(); ++idx) {
     if ( idx != childIdx ) {
       _childrenPtr[idx]->ForceSetDetectedContentType(emptyUnknownContent, processor);
@@ -533,7 +535,7 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   // set the content type I had in the child that takes my place
   childTakingMyPlace.ForceSetDetectedContentType( _content, processor );
   
-  NodeContent emptySubdividedContent(ENodeContentType::Subdivided);
+  NodeContent emptySubdividedContent(ENodeContentType::Subdivided, timeCreated);
   ForceSetDetectedContentType(emptySubdividedContent, processor);
   
   // upgrade my remaining stats
@@ -591,10 +593,11 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
+  const TimeStamp_t timeCreated = _content.GetLastObservedTime();
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this, timeCreated) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this, timeCreated) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this, timeCreated) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this, timeCreated) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
@@ -603,7 +606,7 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   }
   
   // set our content type to subdivided
-  NodeContent emptySubdividedContent(ENodeContentType::Subdivided);
+  NodeContent emptySubdividedContent(ENodeContentType::Subdivided, timeCreated);
   ForceSetDetectedContentType(emptySubdividedContent, processor);
 }
 
@@ -1388,6 +1391,7 @@ bool QuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
   if ( quadsOverlap )
   {
     const EContentOverlap overlap = isMyQuadContained ? EContentOverlap::Total : EContentOverlap::Partial;
+    _content.SetLastObservedTime(detectedContent.GetLastObservedTime());
   
     // am I fully contained within the quad?
     if ( isMyQuadContained )
@@ -1493,6 +1497,8 @@ bool QuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
     // am I fully contained within the quad?
     if ( isMyQuadContained )
     {
+      _content.SetLastObservedTime(detectedContent.GetLastObservedTime());
+      
       // if subdivided
       if ( IsSubdivided() )
       {
@@ -1589,6 +1595,7 @@ bool QuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLine,
     // with curves). For that reason and until I find a better way to represent this (or to trust timestamps, distance
     // to detected content, etc, as a measurement of trust), I am going to revert lines to being partial
     const EContentOverlap overlap = EContentOverlap::Partial;
+    _content.SetLastObservedTime(detectedContent.GetLastObservedTime());
   
     // see if we can subdivide
     const bool wasSubdivided = IsSubdivided();
@@ -1655,6 +1662,7 @@ bool QuadTreeNode::AddPoint_Recursive(const Point2f& point,
   const bool quadContainsPoint = IsPointInAAQuad(myQuad, point);
   if ( quadContainsPoint )
   {
+    _content.SetLastObservedTime(detectedContent.GetLastObservedTime());
     const EContentOverlap overlap = EContentOverlap::Partial; // makes sense
   
     // for any given node, a point can only be in one of their children, so we should always subdivide, since potentially
