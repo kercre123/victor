@@ -19,11 +19,13 @@
 #include "engine/vision/visionPoseData.h"
 #include "engine/viz/vizManager.h"
 #include "util/console/consoleInterface.h"
+#include "util/random/randomGenerator.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <iomanip>
 
-#define DEBUG_MOTION_DETECTION 0
+
+#define DEBUG_MOTION_DETECTION 1
 
 namespace Anki {
 namespace Cozmo {
@@ -471,12 +473,16 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     ExternalInterface::RobotObservedMotion msg;
     msg.timestamp = image.GetTimestamp();
 
-#define MOTION_DETECTION_SEND_CUSTOM_MESSAGE
+//#define MOTION_DETECTION_SEND_CUSTOM_MESSAGE
 
 #ifdef MOTION_DETECTION_SEND_CUSTOM_MESSAGE
     (void)kLogChannelName;
 
-    const Point2f centroid(160/2, 120/2);
+    Util::RandomGenerator rand;
+    const double x = rand.RandDbl(image.GetNumCols());
+    const double y = rand.RandDbl(image.GetNumRows());
+
+    const Point2f centroid(x, y);
     msg.ground_x = 0;
     msg.ground_y = 0;
     msg.ground_area = 0;
@@ -835,6 +841,8 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
     // top
     if (_regionSelector->IsTopActivated())
     {
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                    "Motion in the top area");
       const float value = _regionSelector->GetTopResponse();
       const Point2f& centroid = _regionSelector->GetTopResponseCentroid();
       msg.top_img_area = value; //not really the area here, but the response value
@@ -851,6 +859,8 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
     // left
     if (_regionSelector->IsLeftActivated())
     {
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                    "Motion on the left area");
       const float value = _regionSelector->GetLeftResponse();
       const Point2f& centroid = _regionSelector->GetLeftResponseCentroid();
       msg.left_img_area = value; //not really the area here, but the response value
@@ -867,6 +877,8 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
     // right
     if (_regionSelector->IsRightActivated())
     {
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                    "Motion in the right area");
       const float value = _regionSelector->GetRightResponse();
       const Point2f& centroid = _regionSelector->GetRightResponseCentroid();
       msg.right_img_area = value; //not really the area here, but the response value
