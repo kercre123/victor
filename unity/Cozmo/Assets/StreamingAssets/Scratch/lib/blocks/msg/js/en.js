@@ -36,7 +36,6 @@ Blockly.Msg["CONTROLS_STOP_SCRATCH_2"] = "stop %1";
 Blockly.Msg["CONTROLS_STOP_ALL_SCRATCH_2"] = "all";
 Blockly.Msg["CONTROLS_THIS_SCRIPT_SCRATCH_2"] = "this script";
 
-
 // Operators category
 Blockly.Msg["OPERATORS_PICK_RANDOM_SCRATCH_2"] = "pick random %1 to %2";
 Blockly.Msg["OPERATORS_AND_SCRATCH_2"] = "%1 and %2";
@@ -66,6 +65,16 @@ Blockly.Msg["OPERATORS_TEN_MULT_SCRATCH_2"] = "10 ^";
 // Data category
 Blockly.Msg["DATA_SET_VAR_SCRATCH_2"] = "set %1 to %2";
 Blockly.Msg["DATA_CHANGE_VAR_SCRATCH_2"] = "change %1 by %2";
+
+// Sensor category
+Blockly.Msg["SENSING_CURRENT_SCRATCH_2"] = "current %1";
+Blockly.Msg["SENSING_DROPDOWN_YEAR_SCRATCH_2"] = "year";
+Blockly.Msg["SENSING_DROPDOWN_MONTH_SCRATCH_2"] = "month";
+Blockly.Msg["SENSING_DROPDOWN_DATE_SCRATCH_2"] = "date";
+Blockly.Msg["SENSING_DROPDOWN_DAY_OF_WEEK_SCRATCH_2"] = "day of week";
+Blockly.Msg["SENSING_DROPDOWN_HOUR_SCRATCH_2"] = "hour";
+Blockly.Msg["SENSING_DROPDOWN_MINUTE_SCRATCH_2"] = "minute";
+Blockly.Msg["SENSING_DROPDOWN_SECOND_SCRATCH_2"] = "second";
 
 
 Blockly.Msg["ADD_COMMENT"] = "Add Comment";

@@ -42,7 +42,7 @@
   "codeLabVertical.DOCK_WITH_CUBE_X": {
     "translation": "dock with cube %1"
   },
-  "codeLabVertical.SAY": {
+  "codeLabVertical.SAY_X": {
     "translation": "say %1"
   },
   "codeLabVertical.WHEN_SEE_FACE": {
@@ -200,5 +200,209 @@
   },
   "codeLabVertical.DRAW_DISPLAY_ON_FACE": {
     "translation": "display on face"
+  },
+  "codeLabVertical.HAPPY": {
+    "translation": "happy"
+  },
+  "codeLabVertical.WINNER": {
+    "translation": "winner"
+  },
+  "codeLabVertical.SAD": {
+    "translation": "sad"
+  },
+  "codeLabVertical.SURPRISED": {
+    "translation": "surprised"
+  },
+  "codeLabVertical.DOG": {
+    "translation": "dog"
+  },
+  "codeLabVertical.CAT": {
+    "translation": "cat"
+  },
+  "codeLabVertical.SNEEZE": {
+    "translation": "sneeze"
+  },
+  "codeLabVertical.EXCITED": {
+    "translation": "excited"
+  },
+  "codeLabVertical.THINK_HARD": {
+    "translation": "think hard"
+  },
+  "codeLabVertical.BORED": {
+    "translation": "bored"
+  },
+  "codeLabVertical.FRUSTRATED": {
+    "translation": "frustrated"
+  },
+  "codeLabVertical.CHATTY": {
+    "translation": "chatty"
+  },
+  "codeLabVertical.DISAPPOINTED": {
+    "translation": "disappointed"
+  },
+  "codeLabVertical.SNORE": {
+    "translation": "snore"
+  },
+  "codeLabVertical.MYSTERY": {
+    "translation": "mystery"
+  },
+  "codeLabVertical.WHEELS": {
+    "translation": "wheels"
+  },
+  "codeLabVertical.HEAD": {
+    "translation": "head"
+  },
+  "codeLabVertical.LIFT": {
+    "translation": "lift"
+  },
+  "codeLabVertical.ALL": {
+    "translation": "all"
+  },
+  "codeLabVertical.SELECT": {
+    "translation": "select"
+  },
+  "codeLabVertical.WIN": {
+    "translation": "win"
+  },
+  "codeLabVertical.LOSE": {
+    "translation": "lose"
+  },
+  "codeLabVertical.GAME_START": {
+    "translation": "game start"
+  },
+  "codeLabVertical.CLOCK_TICK": {
+    "translation": "clock tick"
+  },
+  "codeLabVertical.BLING": {
+    "translation": "bling"
+  },
+  "codeLabVertical.SUCCESS": {
+    "translation": "success"
+                },
+  "codeLabVertical.FAIL": {
+    "translation": "fail"
+  },
+  "codeLabVertical.TIMER_WARNING": {
+    "translation": "timer warning"
+  },
+  "codeLabVertical.TIMER_END": {
+    "translation": "timer end"
+  },
+  "codeLabVertical.EIGHTIES_MUSIC": {
+    "translation": "eighties music"
+  },
+  "codeLabVertical.MAMBO_MUSIC": {
+    "translation": "mambo music"
+  },
+  "codeLabVertical.SPARKLE": {
+    "translation": "sparkle"
+                },
+  "codeLabVertical.SWOOSH": {
+    "translation": "swoosh"
+  },
+  "codeLabVertical.PING": {
+    "translation": "ping"
+  },
+  "codeLabVertical.HOT_POTATO_END": {
+    "translation": "hot potato end"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_SLOW": {
+    "translation": "hot potato music slow"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_MEDIUM": {
+    "translation": "hot potato music medium"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_FAST": {
+    "translation": "hot potato music fast"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_SUPERFAST": {
+    "translation": "hot potato music superfast"
+  },
+  "codeLabVertical.MAGNET_PULL": {
+    "translation": "magnet pull"
+  },
+  "codeLabVertical.MAGNET_REPEL": {
+    "translation": "magnet repel"
+  },
+  "codeLabVertical.INSTRUMENT_1_MODE_1": {
+    "translation": "instrument 1 mode 1"
+  },
+  "codeLabVertical.INSTRUMENT_1_MODE_2": {
+    "translation": "instrument 1 mode 2"
+  },
+  "codeLabVertical.INSTRUMENT_1_MODE_3": {
+    "translation": "instrument 1 mode 3"
+  },
+  "codeLabVertical.INSTRUMENT_2_MODE_1": {
+    "translation": "instrument 2 mode 1"
+  },
+  "codeLabVertical.INSTRUMENT_2_MODE_2": {
+    "translation": "instrument 2 mode 2"
+  },
+  "codeLabVertical.INSTRUMENT_2_MODE_3": {
+    "translation": "instrument 2 mode 3"
+  },
+  "codeLabVertical.INSTRUMENT_3_MODE_1": {
+    "translation": "instrument 3 mode 1"
+  },
+  "codeLabVertical.INSTRUMENT_3_MODE_2": {
+    "translation": "instrument 3 mode 2"
+  },
+  "codeLabVertical.INSTRUMENT_3_MODE_3": {
+    "translation": "instrument 3 mode 3"
+  },
+  "codeLabVertical.ANY": {
+    "translation": "any"
+  },
+  "codeLabVertical.DRIVE": {
+    "translation": "drive"
+  },
+  "codeLabVertical.SAY": {
+    "translation": "say"
+  },
+  "codeLabVertical.ANIMATION": {
+    "translation": "animation"
+  },
+  "codeLabVertical.LIGHT_1": {
+    "translation": "light 1"
+  },
+  "codeLabVertical.LIGHT_2": {
+    "translation": "light 2"
+  },
+  "codeLabVertical.LIGHT_3": {
+    "translation": "light 3"
+  },
+  "codeLabVertical.LIGHT_4": {
+    "translation": "light 4"
+  },
+  "codeLabVertical.ALL_LIGHTS": {
+    "translation": "all lights"
+  },
+  "codeLabVertical.SPIN": {
+    "translation": "spin"
+  },
+  "codeLabVertical.BLINK": {
+    "translation": "blink"
+  },
+  "codeLabVertical.LIGHT": {
+    "translation": "light"
+  },
+  "codeLabVertical.ERASE": {
+    "translation": "erase"
+  },
+  "codeLabVertical.TOP": {
+    "translation": "top"
+  },
+  "codeLabVertical.CENTER": {
+    "translation": "center"
+  },
+  "codeLabVertical.BOTTOM": {
+    "translation": "bottom"
+  },
+  "codeLabVertical.LEFT": {
+    "translation": "left"
+  },
+  "codeLabVertical.RIGHT": {
+    "translation": "right"
   }
 }

@@ -49,21 +49,21 @@ Blockly.Blocks['cozmo_animation_select_menu'] = {
             "type": "field_dropdown",
             "name": "ANIMATION_SELECT",
             "options": [
-              ['happy', 'happy'],
-              ['winner', 'victory'],
-              ['sad', 'unhappy'],
-              ['surprised', 'surprise'],
-              ['dog', 'dog'],
-              ['cat', 'cat'],
-              ['sneeze', 'sneeze'],
-              ['excited', 'excited'],
-              ['think hard', 'thinking'],
-              ['bored', 'bored'],
-              ['frustrated', 'frustrated'],
-              ['chatty', 'chatty'],
-              ['disappointed', 'dejected'],
-              ['snore', 'sleep'],
-              ['mystery', 'mystery']
+              ['%{BKY_HAPPY}', 'happy'],
+              ['%{BKY_WINNER}', 'victory'],
+              ['%{BKY_SAD}', 'unhappy'],
+              ['%{BKY_SURPRISED}', 'surprise'],
+              ['%{BKY_DOG}', 'dog'],
+              ['%{BKY_CAT}', 'cat'],
+              ['%{BKY_SNEEZE}', 'sneeze'],
+              ['%{BKY_EXCITED}', 'excited'],
+              ['%{BKY_THINK_HARD}', 'thinking'],
+              ['%{BKY_BORED}', 'bored'],
+              ['%{BKY_FRUSTRATED}', 'frustrated'],
+              ['%{BKY_CHATTY}', 'chatty'],
+              ['%{BKY_DISAPPOINTED}', 'dejected'],
+              ['%{BKY_SNORE}', 'sleep'],
+              ['%{BKY_MYSTERY}', 'mystery']
             ]
           }
         ],
@@ -91,21 +91,21 @@ Blockly.Blocks['cozmo_animation_external_select_menu'] = {
             "type": "field_dropdown",
             "name": "ANIMATION_SELECT",
             "options": [
-              ['happy', 'happy'],
-              ['winner', 'victory'],
-              ['sad', 'unhappy'],
-              ['surprised', 'surprise'],
-              ['dog', 'dog'],
-              ['cat', 'cat'],
-              ['sneeze', 'sneeze'],
-              ['excited', 'excited'],
-              ['think hard', 'thinking'],
-              ['bored', 'bored'],
-              ['frustrated', 'frustrated'],
-              ['chatty', 'chatty'],
-              ['disappointed', 'dejected'],
-              ['snore', 'sleep'],
-              ['mystery', 'mystery']
+              ['%{BKY_HAPPY}', 'happy'],
+              ['%{BKY_WINNER}', 'victory'],
+              ['%{BKY_SAD}', 'unhappy'],
+              ['%{BKY_SURPRISED}', 'surprise'],
+              ['%{BKY_DOG}', 'dog'],
+              ['%{BKY_CAT}', 'cat'],
+              ['%{BKY_SNEEZE}', 'sneeze'],
+              ['%{BKY_EXCITED}', 'excited'],
+              ['%{BKY_THINK_HARD}', 'thinking'],
+              ['%{BKY_BORED}', 'bored'],
+              ['%{BKY_FRUSTRATED}', 'frustrated'],
+              ['%{BKY_CHATTY}', 'chatty'],
+              ['%{BKY_DISAPPOINTED}', 'dejected'],
+              ['%{BKY_SNORE}', 'sleep'],
+              ['%{BKY_MYSTERY}', 'mystery']
             ]
           }
         ],
@@ -133,9 +133,9 @@ init: function() {
           "type": "field_dropdown",
           "name": "ANIMATION_TRACK",
           "options": [
-              ['wheels', 'wheels'],
-              ['head', 'head'],
-              ['lift', 'lift']
+              ['%{BKY_WHEELS}', 'wheels'],
+              ['%{BKY_HEAD}', 'head'],
+              ['%{BKY_LIFT}', 'lift']
             ]
         }
       ],
@@ -164,9 +164,9 @@ init: function() {
           "type": "field_dropdown",
           "name": "ANIMATION_TRACK",
           "options": [
-              ['wheels', 'wheels'],
-              ['head', 'head'],
-              ['lift', 'lift']
+              ['%{BKY_WHEELS}', 'wheels'],
+              ['%{BKY_HEAD}', 'head'],
+              ['%{BKY_LIFT}', 'lift']
             ]
         }
       ],
@@ -279,37 +279,37 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
             "type": "field_dropdown",
             "name": "SOUND_MENU",
             "options": [
-              ['select', 'select'],
-              ['win', 'win'],
-              ['lose', 'lose'],
-              ['game start','game start'], 
-              ['clock tick','clock tick'], 
-              ['bling','bling'], 
-              ['success','success'], 
-              ['fail','fail'], 
-              ['timer warning','timer warning'], 
-              ['timer end','timer end'], 
-              ['eighties music','eighties music'], 
-              ['mambo music','mambo music'], 
-              ['sparkle','sparkle'], 
-              ['swoosh','swoosh'], 
-              ['ping','ping'], 
-              ['hot potato end','hot potato end'], 
-              ['hot potato music slow','hot potato music slow'], 
-              ['hot potato music medium','hot potato music medium'], 
-              ['hot potato music fast','hot potato music fast'], 
-              ['hot potato music superfast','hot potato music superfast'], 
-              ['magnet pull','magnet pull'], 
-              ['magnet repel','magnet repel'], 
-              ['instrument 1 mode 1','instrument 1 mode 1'], 
-              ['instrument 1 mode 2','instrument 1 mode 2'], 
-              ['instrument 1 mode 3','instrument 1 mode 3'], 
-              ['instrument 2 mode 1','instrument 2 mode 1'], 
-              ['instrument 2 mode 2','instrument 2 mode 2'], 
-              ['instrument 2 mode 3','instrument 2 mode 3'], 
-              ['instrument 3 mode 1','instrument 3 mode 1'], 
-              ['instrument 3 mode 2','instrument 3 mode 2'], 
-              ['instrument 3 mode 3','instrument 3 mode 3'] 
+              ['%{BKY_SELECT}', 'select'],
+              ['%{BKY_WIN}', 'win'],
+              ['%{BKY_LOSE}', 'lose'],
+              ['%{BKY_GAME_START}','game start'], 
+              ['%{BKY_CLOCK_TICK}','clock tick'], 
+              ['%{BKY_BLING}','bling'], 
+              ['%{BKY_SUCCESS}','success'], 
+              ['%{BKY_FAIL}','fail'], 
+              ['%{BKY_TIMER_WARNING}','timer warning'], 
+              ['%{BKY_TIMER_END}','timer end'], 
+              ['%{BKY_EIGHTIES_MUSIC}','eighties music'], 
+              ['%{BKY_MAMBO_MUSIC}','mambo music'], 
+              ['%{BKY_SPARKLE}','sparkle'], 
+              ['%{BKY_SWOOSH}','swoosh'], 
+              ['%{BKY_PING}','ping'], 
+              ['%{BKY_HOT_POTATO_END}','hot potato end'], 
+              ['%{BKY_HOT_POTATO_MUSIC_SLOW}','hot potato music slow'], 
+              ['%{BKY_HOT_POTATO_MUSIC_MEDIUM}','hot potato music medium'], 
+              ['%{BKY_HOT_POTATO_MUSIC_FAST}','hot potato music fast'], 
+              ['%{BKY_HOT_POTATO_MUSIC_SUPERFAST}','hot potato music superfast'], 
+              ['%{BKY_MAGNET_PULL}','magnet pull'], 
+              ['%{BKY_MAGNET_REPEL}','magnet repel'], 
+              ['%{BKY_INSTRUMENT_1_MODE_1}','instrument 1 mode 1'], 
+              ['%{BKY_INSTRUMENT_1_MODE_2}','instrument 1 mode 2'], 
+              ['%{BKY_INSTRUMENT_1_MODE_3}','instrument 1 mode 3'], 
+              ['%{BKY_INSTRUMENT_2_MODE_1}','instrument 2 mode 1'], 
+              ['%{BKY_INSTRUMENT_2_MODE_2}','instrument 2 mode 2'], 
+              ['%{BKY_INSTRUMENT_2_MODE_3}','instrument 2 mode 3'], 
+              ['%{BKY_INSTRUMENT_3_MODE_1}','instrument 3 mode 1'], 
+              ['%{BKY_INSTRUMENT_3_MODE_2}','instrument 3 mode 2'], 
+              ['%{BKY_INSTRUMENT_3_MODE_3}','instrument 3 mode 3'] 
             ]
           }
         ],
@@ -432,7 +432,7 @@ Blockly.Blocks['cozmo_says'] = {
 init: function() {
   this.jsonInit({
     "id": "cozmo_says",
-    "message0": "%{BKY_SAY}",
+    "message0": "%{BKY_SAY_X}",
     "args0": [
         {
           "type": "input_value",
@@ -525,7 +525,7 @@ Blockly.Blocks['cozmo_cube_event_select_menu'] = {
               ['1', '1'],
               ['2', '2'],
               ['3', '3'],
-              ['any', '4']
+              ['%{BKY_ANY}', '4']
             ]
           }
         ],
@@ -1256,12 +1256,12 @@ Blockly.Blocks['cozmo_vert_wait_for_actions'] = {
           "type": "field_dropdown",
           "name": "ACTION_SELECT",
           "options": [
-            ['drive', 'drive'],
-            ['head', 'head'],
-            ['lift', 'lift'],
-            ['say', 'say'],
-            ['anim', 'anim'],
-            ['all', 'all']
+            ['%{BKY_DRIVE}', 'drive'],
+            ['%{BKY_HEAD}', 'head'],
+            ['%{BKY_LIFT}', 'lift'],
+            ['%{BKY_SAY}', 'say'],
+            ['%{BKY_ANIMATION}', 'anim'],
+            ['%{BKY_ALL}', 'all']
           ]
         }
         ],
@@ -1290,12 +1290,12 @@ Blockly.Blocks['cozmo_vert_cancel_actions'] = {
           "type": "field_dropdown",
           "name": "ACTION_SELECT",
           "options": [
-            ['drive', 'drive'],
-            ['head', 'head'],
-            ['lift', 'lift'],
-            ['say', 'say'],
-            ['anim', 'anim'],
-            ['all', 'all']
+            ['%{BKY_DRIVE}', 'drive'],
+            ['%{BKY_HEAD}', 'head'],
+            ['%{BKY_LIFT}', 'lift'],
+            ['%{BKY_SAY}', 'say'],
+            ['%{BKY_ANIMATION}', 'anim'],
+            ['%{BKY_ALL}', 'all']
           ]
         }
         ],
@@ -1324,10 +1324,10 @@ Blockly.Blocks['cozmo_vert_stop_motor'] = {
           "type": "field_dropdown",
           "name": "MOTOR_SELECT",
           "options": [
-            ['wheels', 'wheels'],
-            ['head', 'head'],
-            ['lift', 'lift'],
-            ['all', 'all']
+            ['%{BKY_WHEELS}', 'wheels'],
+            ['%{BKY_HEAD}', 'head'],
+            ['%{BKY_LIFT}', 'lift'],
+            ['%{BKY_ALL}', 'all']
           ]
         }
         ],
@@ -1571,11 +1571,11 @@ Blockly.Blocks['cozmo_vert_set_cube_light_corner'] = {
           "type": "field_dropdown",
           "name": "LIGHT_SELECT",
           "options": [
-            ['light 1', '0'],
-            ['light 2', '1'],
-            ['light 3', '2'],
-            ['light 4', '3'],
-            ['all lights', '4']
+            ['%{BKY_LIGHT_1}', '0'],
+            ['%{BKY_LIGHT_2}', '1'],
+            ['%{BKY_LIGHT_3}', '2'],
+            ['%{BKY_LIGHT_4}', '3'],
+            ['%{BKY_ALL_LIGHTS}', '4']
           ]
         },
         {
@@ -1612,8 +1612,8 @@ Blockly.Blocks['cozmo_vert_cube_anim'] = {
           "type": "field_dropdown",
           "name": "ANIM_SELECT",
           "options": [
-            ['spin', 'spin'],
-            ['blink', 'blink']
+            ['%{BKY_SPIN}', 'spin'],
+            ['%{BKY_BLINK}', 'blink']
           ]
         },
         {
@@ -1672,8 +1672,8 @@ Blockly.Blocks['cozmo_vert_cozmoface_set_draw_color'] = {
              "type": "field_dropdown",
              "name": "DRAW_COLOR",
              "options": [
-                ['light', 'true'],
-                ['erase', 'false']
+                ['%{BKY_LIGHT}', 'true'],
+                ['%{BKY_ERASE}', 'false']
               ]
            }
         ],
@@ -1728,18 +1728,18 @@ Blockly.Blocks['cozmo_vert_cozmoface_set_text_alignment'] = {
             "type": "field_dropdown",
             "name": "TEXT_ALIGNMENT_Y",
             "options": [
-              ['Top', 0],
-              ['Center', 1],
-              ['Bottom', 2]
+              ['%{BKY_TOP}', 0],
+              ['%{BKY_CENTER}', 1],
+              ['%{BKY_BOTTOM}', 2]
              ]
           },
           {
              "type": "field_dropdown",
              "name": "TEXT_ALIGNMENT_X",
              "options": [
-                ['Left', 0],
-                ['Center', 1],
-                ['Right', 2]
+                ['%{BKY_LEFT}', 0],
+                ['%{BKY_CENTER}', 1],
+                ['%{BKY_RIGHT}', 2]
               ]
           }
         ],

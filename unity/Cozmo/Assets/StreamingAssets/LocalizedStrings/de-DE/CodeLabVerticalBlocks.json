@@ -8,5 +8,389 @@
   },
   "codeLabVertical.COZMO_VERT_DRIVE": {
     "translation": "drive %1 at speed %2"
+  },
+  "codeLabVertical.COZMO_VERT_SETBACKPACKCOLOR": {
+    "translation": "set backpack color to %1"
+  },
+  "codeLabVertical.VERT_ENABLE_ANIMATION_TRACK": {
+    "translation": "enable %1 animation track"
+  },
+  "codeLabVertical.VERT_DISABLE_ANIMATION_TRACK": {
+    "translation": "disable %1 animation track"
+  },
+  "codeLabVertical.PLAY_ANIMATION": {
+    "translation": "play %1 animation"
+  },
+  "codeLabVertical.PLAY_SOUND": {
+    "translation": "play sound %1"
+  },
+  "codeLabVertical.DOCK_WITH_CUBE": {
+    "translation": "dock with cube"
+  },
+  "codeLabVertical.DOCK_WITH_CUBE_X": {
+    "translation": "dock with cube %1"
+  },
+  "codeLabVertical.SAY_X": {
+    "translation": "say %1"
+  },
+  "codeLabVertical.WHEN_SEE_FACE": {
+    "translation": "when see face"
+  },
+  "codeLabVertical.WHEN_SEE_HAPPY_FACE": {
+    "translation": "when see happy face"
+  },
+  "codeLabVertical.WHEN_SEE_SAD_FACE": {
+    "translation": "when see sad face"
+  },
+  "codeLabVertical.WHEN_CUBE_SEEN": {
+    "translation": "when cube %1 seen"
+  },
+  "codeLabVertical.WHEN_CUBE_TAPPED": {
+    "translation": "when cube %1 is tapped"
+  },
+  "codeLabVertical.WHEN_CUBE_MOVED": {
+    "translation": "when cube %1 is moved"
+  },
+  "codeLabVertical.COZMO_POSITION": {
+    "translation": "Cozmo position %1"
+  },
+  "codeLabVertical.COZMO_PITCH": {
+    "translation": "Cozmo pitch"
+  },
+  "codeLabVertical.COZMO_ROLL": {
+    "translation": "Cozmo roll"
+  },
+  "codeLabVertical.COZMO_YAW": {
+    "translation": "Cozmo yaw"
+  },
+  "codeLabVertical.LIFT_HEIGHT": {
+    "translation": "Cozmo lift height"
+  },
+  "codeLabVertical.HEAD_ANGLE": {
+    "translation": "Cozmo head angle"
+  },
+  "codeLabVertical.FACE_VISIBLE": {
+    "translation": "face is visible"
+  },
+  "codeLabVertical.FACE_NAME": {
+    "translation": "face name"
+  },
+  "codeLabVertical.FACE_CAMERA": {
+    "translation": "face camera %1"
+  },
+  "codeLabVertical.FACE_POSITION": {
+    "translation": "face position %1"
+  },
+  "codeLabVertical.FACE_EXPRESSION": {
+    "translation": "face expression"
+  },
+  "codeLabVertical.CUBE_X": {
+    "translation": "cube %1"
+  },
+  "codeLabVertical.CUBE_IS_VISIBLE": {
+    "translation": "cube %1 is visible"
+  },
+  "codeLabVertical.CUBE_CAMERA": {
+    "translation": "cube %1 camera %2"
+  },
+  "codeLabVertical.CUBE_POSITION": {
+    "translation": "cube %1 position %2"
+  },
+  "codeLabVertical.CUBE_PITCH": {
+    "translation": "cube %1 pitch"
+  },
+  "codeLabVertical.CUBE_ROLL": {
+    "translation": "cube %1 roll"
+  },
+  "codeLabVertical.CUBE_YAW": {
+    "translation": "cube %1 yaw"
+  },
+  "codeLabVertical.DEVICE_PITCH": {
+    "translation": "device pitch"
+  },
+  "codeLabVertical.DEVICE_ROLL": {
+    "translation": "device roll"
+  },
+  "codeLabVertical.DEVICE_YAW": {
+    "translation": "device yaw"
+  },
+  "codeLabVertical.DRIVE_WHEELS": {
+    "translation": "drive wheels left %1 right %2"
+  },
+  "codeLabVertical.ENABLE_WAIT_FOR_ACTIONS": {
+    "translation": "enable: wait for actions to complete"
+  },
+  "codeLabVertical.DISABLE_WAIT_FOR_ACTIONS": {
+    "translation": "disable: wait for actions to complete"
+  },
+  "codeLabVertical.WAIT_FOR_ACTIONS": {
+    "translation": "wait for %1 actions"
+  },
+  "codeLabVertical.STOP_ACTIONS": {
+    "translation": "stop %1 actions"
+  },
+  "codeLabVertical.STOP_MOTORS": {
+    "translation": "stop motors: %1"
+  },
+  "codeLabVertical.PATH_FORWARD": {
+    "translation": "path forward:%1 left:%2 turn:%3"
+  },
+  "codeLabVertical.PATH_TO_X_Y_ANGLE": {
+    "translation": "path to x:%1 y:%2 angle:%3"
+  },
+  "codeLabVertical.TURN": {
+    "translation": "turn %1 at speed %2"
+  },
+  "codeLabVertical.MOVE_LIFT_TO_X": {
+    "translation": "move lift to %1 at speed %2"
+  },
+  "codeLabVertical.MOVE_LIFT": {
+    "translation": "move lift at speed %1"
+  },
+  "codeLabVertical.MOVE_HEAD_TO_X": {
+    "translation": "move head to %1 at speed %2"
+  },
+  "codeLabVertical.SET_X_ON_CUBE": {
+    "translation": "set %1 on cube %2 to %3"
+  },
+  "codeLabVertical.CUBE_ANIM": {
+    "translation": "play %1 anim on cube %2 with color %3"
+  },
+  "codeLabVertical.DRAW_CLEAR_SCREEN": {
+    "translation": "clear screen"
+  },
+  "codeLabVertical.DRAW_COLOR": {
+    "translation": "set draw color %1"
+  },
+  "codeLabVertical.DRAW_TEXT_SCALE": {
+    "translation": "set text scale %1"
+  },
+  "codeLabVertical.DRAW_TEXT_ALIGNMENT": {
+    "translation": "set text alignment %1 %2"
+  },
+  "codeLabVertical.DRAW_LINE": {
+    "translation": "draw line at: %1 %2 to: %3 %4"
+  },
+  "codeLabVertical.DRAW_FILL_RECT": {
+    "translation": "fill rectangle at: %1 %2 to: %3 %4"
+  },
+  "codeLabVertical.DRAW_RECT": {
+    "translation": "draw rectangle at: %1 %2 to: %3 %4"
+  },
+  "codeLabVertical.DRAW_FILL_CIRCLE": {
+    "translation": "fill circle at: %1 %2 radius: %3"
+  },
+  "codeLabVertical.DRAW_CIRCLE": {
+    "translation": "draw circle at: %1 %2 radius: %3"
+  },
+  "codeLabVertical.DRAW_TEXT": {
+    "translation": "draw %1 at: %2 %3"
+  },
+  "codeLabVertical.DRAW_DISPLAY_ON_FACE": {
+    "translation": "display on face"
+  },
+  "codeLabVertical.HAPPY": {
+    "translation": "happy"
+  },
+  "codeLabVertical.WINNER": {
+    "translation": "winner"
+  },
+  "codeLabVertical.SAD": {
+    "translation": "sad"
+  },
+  "codeLabVertical.SURPRISED": {
+    "translation": "surprised"
+  },
+  "codeLabVertical.DOG": {
+    "translation": "dog"
+  },
+  "codeLabVertical.CAT": {
+    "translation": "cat"
+  },
+  "codeLabVertical.SNEEZE": {
+    "translation": "sneeze"
+  },
+  "codeLabVertical.EXCITED": {
+    "translation": "excited"
+  },
+  "codeLabVertical.THINK_HARD": {
+    "translation": "think hard"
+  },
+  "codeLabVertical.BORED": {
+    "translation": "bored"
+  },
+  "codeLabVertical.FRUSTRATED": {
+    "translation": "frustrated"
+  },
+  "codeLabVertical.CHATTY": {
+    "translation": "chatty"
+  },
+  "codeLabVertical.DISAPPOINTED": {
+    "translation": "disappointed"
+  },
+  "codeLabVertical.SNORE": {
+    "translation": "snore"
+  },
+  "codeLabVertical.MYSTERY": {
+    "translation": "mystery"
+  },
+  "codeLabVertical.WHEELS": {
+    "translation": "wheels"
+  },
+  "codeLabVertical.HEAD": {
+    "translation": "head"
+  },
+  "codeLabVertical.LIFT": {
+    "translation": "lift"
+  },
+  "codeLabVertical.ALL": {
+    "translation": "all"
+  },
+  "codeLabVertical.SELECT": {
+    "translation": "select"
+  },
+  "codeLabVertical.WIN": {
+    "translation": "win"
+  },
+  "codeLabVertical.LOSE": {
+    "translation": "lose"
+  },
+  "codeLabVertical.GAME_START": {
+    "translation": "game start"
+  },
+  "codeLabVertical.CLOCK_TICK": {
+    "translation": "clock tick"
+  },
+  "codeLabVertical.BLING": {
+    "translation": "bling"
+  },
+  "codeLabVertical.SUCCESS": {
+    "translation": "success"
+                },
+  "codeLabVertical.FAIL": {
+    "translation": "fail"
+  },
+  "codeLabVertical.TIMER_WARNING": {
+    "translation": "timer warning"
+  },
+  "codeLabVertical.TIMER_END": {
+    "translation": "timer end"
+  },
+  "codeLabVertical.EIGHTIES_MUSIC": {
+    "translation": "eighties music"
+  },
+  "codeLabVertical.MAMBO_MUSIC": {
+    "translation": "mambo music"
+  },
+  "codeLabVertical.SPARKLE": {
+    "translation": "sparkle"
+                },
+  "codeLabVertical.SWOOSH": {
+    "translation": "swoosh"
+  },
+  "codeLabVertical.PING": {
+    "translation": "ping"
+  },
+  "codeLabVertical.HOT_POTATO_END": {
+    "translation": "hot potato end"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_SLOW": {
+    "translation": "hot potato music slow"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_MEDIUM": {
+    "translation": "hot potato music medium"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_FAST": {
+    "translation": "hot potato music fast"
+  },
+  "codeLabVertical.HOT_POTATO_MUSIC_SUPERFAST": {
+    "translation": "hot potato music superfast"
+  },
+  "codeLabVertical.MAGNET_PULL": {
+    "translation": "magnet pull"
+  },
+  "codeLabVertical.MAGNET_REPEL": {
+    "translation": "magnet repel"
+  },
+  "codeLabVertical.INSTRUMENT_1_MODE_1": {
+    "translation": "instrument 1 mode 1"
+  },
+  "codeLabVertical.INSTRUMENT_1_MODE_2": {
+    "translation": "instrument 1 mode 2"
+  },
+  "codeLabVertical.INSTRUMENT_1_MODE_3": {
+    "translation": "instrument 1 mode 3"
+  },
+  "codeLabVertical.INSTRUMENT_2_MODE_1": {
+    "translation": "instrument 2 mode 1"
+  },
+  "codeLabVertical.INSTRUMENT_2_MODE_2": {
+    "translation": "instrument 2 mode 2"
+  },
+  "codeLabVertical.INSTRUMENT_2_MODE_3": {
+    "translation": "instrument 2 mode 3"
+  },
+  "codeLabVertical.INSTRUMENT_3_MODE_1": {
+    "translation": "instrument 3 mode 1"
+  },
+  "codeLabVertical.INSTRUMENT_3_MODE_2": {
+    "translation": "instrument 3 mode 2"
+  },
+  "codeLabVertical.INSTRUMENT_3_MODE_3": {
+    "translation": "instrument 3 mode 3"
+  },
+  "codeLabVertical.ANY": {
+    "translation": "any"
+  },
+  "codeLabVertical.DRIVE": {
+    "translation": "drive"
+  },
+  "codeLabVertical.SAY": {
+    "translation": "say"
+  },
+  "codeLabVertical.ANIMATION": {
+    "translation": "animation"
+  },
+  "codeLabVertical.LIGHT_1": {
+    "translation": "light 1"
+  },
+  "codeLabVertical.LIGHT_2": {
+    "translation": "light 2"
+  },
+  "codeLabVertical.LIGHT_3": {
+    "translation": "light 3"
+  },
+  "codeLabVertical.LIGHT_4": {
+    "translation": "light 4"
+  },
+  "codeLabVertical.ALL_LIGHTS": {
+    "translation": "all lights"
+  },
+  "codeLabVertical.SPIN": {
+    "translation": "spin"
+  },
+  "codeLabVertical.BLINK": {
+    "translation": "blink"
+  },
+  "codeLabVertical.LIGHT": {
+    "translation": "light"
+  },
+  "codeLabVertical.ERASE": {
+    "translation": "erase"
+  },
+  "codeLabVertical.TOP": {
+    "translation": "top"
+  },
+  "codeLabVertical.CENTER": {
+    "translation": "center"
+  },
+  "codeLabVertical.BOTTOM": {
+    "translation": "bottom"
+  },
+  "codeLabVertical.LEFT": {
+    "translation": "left"
+  },
+  "codeLabVertical.RIGHT": {
+    "translation": "right"
   }
 }

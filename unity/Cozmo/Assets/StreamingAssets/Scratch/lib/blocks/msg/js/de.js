@@ -66,6 +66,16 @@ Blockly.Msg["OPERATORS_TEN_MULT_SCRATCH_2"] = "10^";
 Blockly.Msg["DATA_SET_VAR_SCRATCH_2"] = "setze %1 auf %2";
 Blockly.Msg["DATA_CHANGE_VAR_SCRATCH_2"] = "ändere %1 um %2"
 
+// Sensor category
+Blockly.Msg["SENSING_CURRENT_SCRATCH_2"] = "%1 im Moment";
+Blockly.Msg["SENSING_DROPDOWN_YEAR_SCRATCH_2"] = "Jahr";
+Blockly.Msg["SENSING_DROPDOWN_MONTH_SCRATCH_2"] = "Monat";
+Blockly.Msg["SENSING_DROPDOWN_DATE_SCRATCH_2"] = "Datum";
+Blockly.Msg["SENSING_DROPDOWN_DAY_OF_WEEK_SCRATCH_2"] = "Wochentag";
+Blockly.Msg["SENSING_DROPDOWN_HOUR_SCRATCH_2"] = "Stunde";
+Blockly.Msg["SENSING_DROPDOWN_MINUTE_SCRATCH_2"] = "Minute";
+Blockly.Msg["SENSING_DROPDOWN_SECOND_SCRATCH_2"] = "Sekunde";
+
 
 Blockly.Msg["ADD_COMMENT"] = "Kommentar hinzufügen";
 Blockly.Msg["CANNOT_DELETE_VARIABLE_PROCEDURE"] = "Die Variable „%1“ kann nicht gelöscht werden, da sie Teil der Definition der Funktion „%2“ ist.";

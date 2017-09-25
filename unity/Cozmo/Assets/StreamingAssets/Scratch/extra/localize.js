@@ -40,7 +40,7 @@ if (LOCALE == 'fr-FR') {
 else if (LOCALE == 'de-DE') {
 	blocklyStrings = "de.js";
 }
-else if (LOCALE == 'jp-JP') {
+else if (LOCALE == 'ja-JP') {
 	blocklyStrings = "ja.js";
 }
 document.write('<script src="' + "./lib/blocks/msg/js/" + blocklyStrings + '"></script>');

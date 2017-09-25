@@ -66,6 +66,16 @@ Blockly.Msg["OPERATORS_TEN_MULT_SCRATCH_2"] = "10 ^";
 Blockly.Msg["DATA_SET_VAR_SCRATCH_2"] = "%1 を %2 にする";
 Blockly.Msg["DATA_CHANGE_VAR_SCRATCH_2"] = "%1 を %2 ずつ変える"
 
+// Sensor category
+Blockly.Msg["SENSING_CURRENT_SCRATCH_2"] = "現在の %1";
+Blockly.Msg["SENSING_DROPDOWN_YEAR_SCRATCH_2"] = "年";
+Blockly.Msg["SENSING_DROPDOWN_MONTH_SCRATCH_2"] = "月";
+Blockly.Msg["SENSING_DROPDOWN_DATE_SCRATCH_2"] = "日";
+Blockly.Msg["SENSING_DROPDOWN_DAY_OF_WEEK_SCRATCH_2"] = "曜日";
+Blockly.Msg["SENSING_DROPDOWN_HOUR_SCRATCH_2"] = "時";
+Blockly.Msg["SENSING_DROPDOWN_MINUTE_SCRATCH_2"] = "分";
+Blockly.Msg["SENSING_DROPDOWN_SECOND_SCRATCH_2"] = "秒";
+
 
 Blockly.Msg["ADD_COMMENT"] = "コメントを追加";
 Blockly.Msg["CANNOT_DELETE_VARIABLE_PROCEDURE"] = "Can't delete the variable '%1' because it's part of the definition of the function '%2'";  // untranslated
