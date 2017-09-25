@@ -80,8 +80,6 @@ namespace Cozmo.Needs.UI {
 
       _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
       _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName, baseDialog: this);
-      _MetersWidget.OnRepairPressed += HandleRepairButton;
-      _MetersWidget.OnEnergyPressed += HandleEnergyButton;
 
       _RepairButton.Initialize(HandleRepairButton, "repair_need_meter_button", DASEventDialogName);
       _FeedButton.Initialize(HandleEnergyButton, "energy_need_meter_button", DASEventDialogName);
@@ -116,10 +114,6 @@ namespace Cozmo.Needs.UI {
     }
 
     protected override void CleanUp() {
-      if (_MetersWidget != null) {
-        _MetersWidget.OnRepairPressed -= HandleRepairButton;
-        _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
-      }
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {

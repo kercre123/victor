@@ -34,6 +34,8 @@ namespace Cozmo.ConnectionFlow.UI {
     private BaseModal _HelpTipsModalPrefab;
     private BaseModal _HelpTipsModalInstance;
 
+    private bool _ConnectedClicked = false;
+
     // Use this for initialization
     void Start() {
       if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
@@ -48,9 +50,6 @@ namespace Cozmo.ConnectionFlow.UI {
 
       _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
       _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName, baseDialog: this);
-      _MetersWidget.OnPlayPressed += HandleMeterPressed;
-      _MetersWidget.OnEnergyPressed += HandleMeterPressed;
-      _MetersWidget.OnRepairPressed += HandleMeterPressed;
 
       // Request Locale gives us ability to get real platform dependent locale
       // whereas unity just gives us the language
@@ -66,9 +65,6 @@ namespace Cozmo.ConnectionFlow.UI {
     }
 
     protected override void CleanUp() {
-      _MetersWidget.OnPlayPressed -= HandleMeterPressed;
-      _MetersWidget.OnEnergyPressed -= HandleMeterPressed;
-      _MetersWidget.OnRepairPressed -= HandleMeterPressed;
       WhatsNew.WhatsNewModalManager.OnCodeLabConnectPressed -= HandleCodeLabConnectPressed;
       Destroy(_MetersWidget.gameObject);
     }
@@ -81,16 +77,22 @@ namespace Cozmo.ConnectionFlow.UI {
     }
 
     private void HandleConnectButtonPressed() {
-      if (OnConnectButtonPressed != null) {
-        OnConnectButtonPressed();
-        Invoke("HideSelf", 1.0f);
+      if (!_ConnectedClicked) {
+        if (OnConnectButtonPressed != null) {
+          OnConnectButtonPressed();
+          Invoke("HideSelf", 1.0f);
+        }
+        _ConnectedClicked = true;
       }
     }
 
     private void HandleMockConnectButtonPressed() {
-      if (OnMockConnectButtonPressed != null) {
-        OnMockConnectButtonPressed();
-        Invoke("HideSelf", 1.0f);
+      if (!_ConnectedClicked) {
+        if (OnMockConnectButtonPressed != null) {
+          OnMockConnectButtonPressed();
+          Invoke("HideSelf", 1.0f);
+        }
+        _ConnectedClicked = true;
       }
     }
 
@@ -117,19 +119,6 @@ namespace Cozmo.ConnectionFlow.UI {
       _HelpTipsModalInstance.Initialize();
     }
 
-    private void HandleMeterPressed() {
-      AlertModalButtonData okayButtonData = new AlertModalButtonData("okay_button",
-                                                                     LocalizationKeys.kButtonOkay);
-
-      AlertModalData needToConnectData = new AlertModalData("need_to_connect_alert",
-                                                            LocalizationKeys.kNeedsUnconnectedNeedToConnectTitle,
-                                                            LocalizationKeys.kNeedsUnconnectedNeedToConnectDescription,
-                                                            okayButtonData,
-                                                            showCloseButton: true);
-
-      UIManager.OpenAlert(needToConnectData, new ModalPriorityData());
-    }
-
     private void HandleCodeLabConnectPressed() {
       if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
         HandleMockConnectButtonPressed();
@@ -140,3 +129,4 @@ namespace Cozmo.ConnectionFlow.UI {
     }
   }
 }
+

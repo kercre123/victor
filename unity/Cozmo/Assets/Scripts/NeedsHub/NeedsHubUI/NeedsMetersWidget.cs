@@ -6,11 +6,6 @@ using UnityEngine;
 
 namespace Cozmo.Needs.UI {
   public class NeedsMetersWidget : MonoBehaviour {
-    public delegate void NeedsMeterButtonPressedHandler();
-    public event NeedsMeterButtonPressedHandler OnRepairPressed;
-    public event NeedsMeterButtonPressedHandler OnEnergyPressed;
-    public event NeedsMeterButtonPressedHandler OnPlayPressed;
-
     [SerializeField]
     private NeedsMeter _RepairMeter;
 
@@ -219,24 +214,6 @@ namespace Cozmo.Needs.UI {
       }
       if (enteredFullBracket) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Full);
-      }
-    }
-
-    private void RaiseRepairPressed() {
-      if (OnRepairPressed != null) {
-        OnRepairPressed();
-      }
-    }
-
-    private void RaiseEnergyPressed() {
-      if (OnEnergyPressed != null) {
-        OnEnergyPressed();
-      }
-    }
-
-    private void RaisePlayPressed() {
-      if (OnPlayPressed != null) {
-        OnPlayPressed();
       }
     }
 
