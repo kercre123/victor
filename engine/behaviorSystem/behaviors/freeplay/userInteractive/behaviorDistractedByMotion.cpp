@@ -49,16 +49,30 @@ void BehaviorDistractedByMotion::HandleWhileRunning(const IBehavior::EngineToGam
 
       const ExternalInterface::RobotObservedMotion& motionObserved = event.GetData().Get_RobotObservedMotion();
 
-      // TODO Trying the top motion only right now
+      // TODO There's an implicit hierarchy here: top > right > left
       if (motionObserved.top_img_area > 0) {
-        PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.HandleWhileNotRunning",
-                      "Motion has been observed");
         _observedX = motionObserved.top_img_x;
         _observedY = motionObserved.top_img_y;
         _motionObserved = true;
         PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.HandleWhileNotRunning",
-                      "Motion observed in image coordinates: (%d, %d)", _observedX, _observedY);
-        StopActing();
+                      "Motion observed in top image coordinates: (%d, %d)", _observedX, _observedY);
+        StopActing(); // This means stopping the Wait action?
+      }
+      else if (motionObserved.right_img_area > 0) {
+        _observedX = motionObserved.right_img_x;
+        _observedY = motionObserved.right_img_y;
+        _motionObserved = true;
+        PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.HandleWhileNotRunning",
+                      "Motion observed in right image coordinates: (%d, %d)", _observedX, _observedY);
+        StopActing(); // This means stopping the Wait action?
+      }
+      else if (motionObserved.left_img_area > 0) {
+        _observedX = motionObserved.left_img_x;
+        _observedY = motionObserved.left_img_y;
+        _motionObserved = true;
+        PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.HandleWhileNotRunning",
+                      "Motion observed inleft  image coordinates: (%d, %d)", _observedX, _observedY);
+        StopActing(); // This means stopping the Wait action?
       }
       else {
         _motionObserved = false;
@@ -114,7 +128,7 @@ void BehaviorDistractedByMotion::TransitionToEnd(Robot &robot)
 void BehaviorDistractedByMotion::TransitionToWaitForMotion(Robot &robot)
 {
   SET_STATE(WaitingForMotion);
-  static const float kWaitForMotionInterval_s = 2.0f;
+  static const float kWaitForMotionInterval_s = 10.0f;
   StartActing(new WaitAction(robot, kWaitForMotionInterval_s),
               &BehaviorDistractedByMotion::TransitionToAfterWaitingForMotion);
 }
