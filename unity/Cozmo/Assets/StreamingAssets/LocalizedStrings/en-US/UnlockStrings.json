@@ -24,12 +24,6 @@
   "unlockable.OSNotSupported.Description": {
     "translation": "Code Lab requires Android {0} or newer."
   },
-  "unlockable.Mystery.Title": {
-    "translation": "Locked Ability"
-  },
-  "unlockable.Mystery.Description": {
-    "translation": "Fill Cozmo's Play Need daily to earn a Play Token. These unlock Bonus Boxes with rewards like Sparks, Tricks, and more!"
-  },
   "unlockable.FistBump.Title": {
     "translation": "Fist Bump"
   },

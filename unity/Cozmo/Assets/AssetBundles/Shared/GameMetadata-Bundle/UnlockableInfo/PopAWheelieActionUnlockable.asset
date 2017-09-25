@@ -15,23 +15,19 @@ MonoBehaviour:
     _EnumValueAsString: PopAWheelieAction
     _EnumValue: 13
   UnlockableType: 1
-  Prerequisites:
-  - _EnumValueAsString: KnockOverThreeCubeStack
-    _EnumValue: 5
-  AnyPrereqUnlock: 0
-  _ComingSoon: 0
   DescriptionKey: unlockable.PopAWheelieAction.Description
   TitleKey: unlockable.PopAWheelieAction.Title
   SparkButtonDescription: unlockable.PopAWheelieAction.SparkButtonDescription
   SparkedStateDescription: unlockable.PopAWheelieAction.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 982472036
+  IsSparkable: 1
   RequestTrickCostItemId: spark
   _SparkableThingID:
     _EnumValueAsString: PopAWheelie
     _EnumValue: 17
   CoreUpgradeIcon: {fileID: 21300000, guid: 55d44ac342f9645cc9d7b909952cd412, type: 3}
   CubesRequired: 1
-  SortOrder: 600
+  SortOrder: 80
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0

@@ -4,7 +4,7 @@ using Cozmo.UI;
 namespace Cozmo.Needs.Sparks.UI {
   public class SparkCell : MonoBehaviour {
 
-    private const float kComingSoonAlpha = 0.5f;
+    private const float kComingSoonAlpha = 1f;
 
     [SerializeField]
     protected CozmoImage _TrickIcon;
@@ -31,30 +31,33 @@ namespace Cozmo.Needs.Sparks.UI {
     protected CostLabel _CostLabelHelper;
 
     public virtual void Initialize(UnlockableInfo unlockInfo, string dasEventDialogName) {
+      _UnlockInfo = unlockInfo;
       _SparksButton.Initialize(null, "spark_cell_" + unlockInfo.DASName, dasEventDialogName);
-      if (unlockInfo.ComingSoon) {
-        _SparksButton.onClick.AddListener(HandleTappedComingSoon);
-        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
+
+      if (UnlockablesManager.Instance.IsUnlocked(unlockInfo.Id.Value)) {
+        _SparksButton.onClick.AddListener(HandleTappedUnlocked);
+        _SparksButton.gameObject.SetActive(unlockInfo.IsSparkable);
+        _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
+        _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
+
+        _CostLabelHelper = new CostLabel(unlockInfo.RequestTrickCostItemId,
+                       unlockInfo.RequestTrickCostAmount,
+                                         _SparkCountText,
+                                         UIColorPalette.GeneralSparkTintColor);
       }
       else {
-        _SparksButton.onClick.AddListener(HandleTappedUnlocked);
+        _SparksButton.onClick.AddListener(HandleTappedComingSoon);
+        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
+        _SparkCostContainer.gameObject.SetActive(false);
+        _TrickIcon.sprite = _UnlockableAlertIcon;
+        _TrickTitleText.text = Localization.Get(LocalizationKeys.kUnlockableComingSoonTitle);
       }
-
-      _SparkCostContainer.gameObject.SetActive(!(unlockInfo.ComingSoon || !unlockInfo.IsSparkable));
-
-      _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
-      _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
-
-      _UnlockInfo = unlockInfo;
-
-      _CostLabelHelper = new CostLabel(unlockInfo.RequestTrickCostItemId,
-                                       unlockInfo.RequestTrickCostAmount,
-                                       _SparkCountText,
-                                       UIColorPalette.GeneralSparkTintColor);
     }
 
     private void OnDestroy() {
-      _CostLabelHelper.DeregisterEvents();
+      if (_CostLabelHelper != null) {
+        _CostLabelHelper.DeregisterEvents();
+      }
     }
 
     private void HandleTappedComingSoon() {

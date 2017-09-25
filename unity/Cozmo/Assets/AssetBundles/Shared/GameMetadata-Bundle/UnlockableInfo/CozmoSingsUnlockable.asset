@@ -15,7 +15,6 @@ MonoBehaviour:
     _EnumValueAsString: CozmoSings
     _EnumValue: 65
   UnlockableType: 1
-  _ComingSoon: 0
   DescriptionKey: unlockable.CozmoSings.Description
   TitleKey: unlockable.CozmoSings.Title
   SparkButtonDescription: 
@@ -29,6 +28,6 @@ MonoBehaviour:
     _EnumValue: 0
   CoreUpgradeIcon: {fileID: 21300000, guid: 0a5e1f0d37612476c840afeb0f1f2b10, type: 3}
   CubesRequired: 1
-  SortOrder: 800
+  SortOrder: 0
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0

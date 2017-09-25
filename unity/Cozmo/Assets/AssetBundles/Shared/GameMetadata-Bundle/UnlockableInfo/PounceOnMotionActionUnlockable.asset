@@ -15,23 +15,19 @@ MonoBehaviour:
     _EnumValueAsString: PounceOnMotionAction
     _EnumValue: 12
   UnlockableType: 1
-  Prerequisites:
-  - _EnumValueAsString: QuickTapGame
-    _EnumValue: 18
-  AnyPrereqUnlock: 0
-  _ComingSoon: 0
   DescriptionKey: unlockable.PounceOnMotionAction.Description
   TitleKey: unlockable.PounceOnMotionAction.Title
   SparkButtonDescription: unlockable.PounceOnMotionAction.SparkButtonDescription
   SparkedStateDescription: unlockable.PounceOnMotionAction.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 0
+  IsSparkable: 1
   RequestTrickCostItemId: spark
   _SparkableThingID:
     _EnumValueAsString: PounceOnFingers
     _EnumValue: 15
   CoreUpgradeIcon: {fileID: 21300000, guid: 3d82dcb60a5964ab9adfd0732e5f2139, type: 3}
   CubesRequired: 0
-  SortOrder: 300
+  SortOrder: 50
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0

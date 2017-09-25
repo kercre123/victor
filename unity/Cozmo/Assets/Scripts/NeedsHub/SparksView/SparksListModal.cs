@@ -22,7 +22,7 @@ namespace Cozmo.Needs.Sparks.UI {
     [SerializeField]
     private GameCell _GameCellPrefab;
 
-    public void InitializeSparksListModal(List<ChallengeManager.ChallengeStatePacket> minigameData, List<UnlockableInfo> unlockData) {
+    public void InitializeSparksListModal(List<ChallengeManager.ChallengeStatePacket> minigameData) {
       for (int i = 0; i < minigameData.Count; ++i) {
         if (minigameData[i].Data.IsMinigame) {
           GameObject cellInstance = UIManager.CreateUIElement(_GameCellPrefab, _GameListContainer);
@@ -30,23 +30,31 @@ namespace Cozmo.Needs.Sparks.UI {
         }
       }
 
-      for (int i = 0; i < unlockData.Count; ++i) {
-        if (unlockData[i].FeatureIsEnabled &&
-            (UnlockablesManager.Instance.IsUnlocked(unlockData[i].Id.Value) || unlockData[i].ComingSoon)) {
+      UnlockableInfo cozmoSingsData = UnlockablesManager.Instance.GetUnlockableInfo(Anki.Cozmo.UnlockId.CozmoSings);
+      CreateSparkCell(cozmoSingsData, _CozmoSingsSparkCellPrefab.gameObject);
 
-          GameObject cellInstance;
-          if (unlockData[i].Id.Value == Anki.Cozmo.UnlockId.CozmoSings) {
-            cellInstance = UIManager.CreateUIElement(_CozmoSingsSparkCellPrefab, _SparksListContainer);
-          }
-          else {
-            cellInstance = UIManager.CreateUIElement(_SparksCellPrefab, _SparksListContainer);
-          }
+      List<UnlockableInfo> unlockedUnlockInfos = UnlockablesManager.Instance.GetUnlocked(UnlockableType.Action);
+      unlockedUnlockInfos.Sort();
+      for (int i = 0; i < unlockedUnlockInfos.Count; ++i) {
+        if (unlockedUnlockInfos[i].Id.Value != Anki.Cozmo.UnlockId.CozmoSings) {
+          CreateSparkCell(unlockedUnlockInfos[i], _SparksCellPrefab.gameObject);
+        }
+      }
 
-          cellInstance.GetComponent<SparkCell>().Initialize(unlockData[i], DASEventDialogName);
+      List<UnlockableInfo> lockedUnlockInfos = UnlockablesManager.Instance.GetAvailableAndLocked(UnlockableType.Action);
+      lockedUnlockInfos.Sort();
+      for (int i = 0; i < lockedUnlockInfos.Count; ++i) {
+        if (lockedUnlockInfos[i].Id.Value != Anki.Cozmo.UnlockId.CozmoSings) {
+          CreateSparkCell(lockedUnlockInfos[i], _SparksCellPrefab.gameObject);
         }
       }
 
       SparksDetailModal.OnSparkGameClicked += HandleStartChallengePressed;
+    }
+
+    private void CreateSparkCell(UnlockableInfo unlockData, GameObject prefab) {
+      GameObject cellInstance = UIManager.CreateUIElement(prefab, _SparksListContainer);
+      cellInstance.GetComponent<SparkCell>().Initialize(unlockData, DASEventDialogName);
     }
 
     protected override void CleanUp() {
