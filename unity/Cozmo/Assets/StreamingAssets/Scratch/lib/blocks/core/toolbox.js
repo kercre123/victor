@@ -448,6 +448,13 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     for (var i = 0; i < categories.length; i++) {
       var child = categories[i];
       var row = goog.dom.createDom('div', 'scratchCategoryMenuRowVertical');
+
+      // *** ANKI CHANGE ***
+      // Make categories less tall on phones.
+      if (window.innerWidth < window.TABLET_WIDTH) {
+        row.style.padding = 0;
+      }
+
       this.table.appendChild(row);
       if (child) {
         this.categories_.push(new Blockly.Toolbox.Category(this, row,

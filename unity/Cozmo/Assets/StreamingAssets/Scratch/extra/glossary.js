@@ -221,7 +221,7 @@ var Glossary = function(){
     });
 
     // start with the Drive category
-    _selectCategory('Drive');
+    _selectCategory('codeLab.Category.Drive');
   }
 
 

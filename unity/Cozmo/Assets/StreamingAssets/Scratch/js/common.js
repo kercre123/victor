@@ -83,6 +83,9 @@
             toolboxPosition = 'start';
             controls = true;
             startScale = 0.85;
+            if (window.innerWidth < window.TABLET_WIDTH) {
+                startScale = 0.7;
+            }
         }
 
         // Instantiate scratch-blocks and attach it to the DOM.
