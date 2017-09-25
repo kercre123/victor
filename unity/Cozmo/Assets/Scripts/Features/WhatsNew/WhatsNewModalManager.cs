@@ -181,6 +181,8 @@ namespace Cozmo.WhatsNew {
   }
 
   public class WhatsNewData {
+    public string DASEventFeatureID;
+
     public SimpleDate StartDate;
     public SimpleDate EndDate;
 

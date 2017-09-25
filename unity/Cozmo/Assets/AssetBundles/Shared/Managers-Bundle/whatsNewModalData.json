@@ -1,5 +1,6 @@
 [
   {
+    "DASEventFeatureID": "black_white_feature",
     "StartDate": {
         "Month": "8",
         "Day": "1",
@@ -22,6 +23,7 @@
     }
   },
     {
+    "DASEventFeatureID": "red_green_feature",
     "StartDate": {
         "Month": "11",
         "Day": "1",
@@ -44,6 +46,7 @@
     }
   },
     {
+    "DASEventFeatureID": "blue_yellow_feature",
     "StartDate": {
         "Month": "11",
         "Day": "9",
@@ -62,6 +65,7 @@
     }
   },
     {
+    "DASEventFeatureID": "magenta_cyan_feature",
     "StartDate": {
         "Month": "11",
         "Day": "12",
@@ -80,6 +84,7 @@
     }
   },
     {
+    "DASEventFeatureID": "red_yellow_feature",
     "StartDate": {
         "Month": "11",
         "Day": "16",
@@ -102,6 +107,7 @@
     }
   },
     {
+    "DASEventFeatureID": "green_magenta_feature",
     "StartDate": {
         "Month": "12",
         "Day": "15",
@@ -120,6 +126,7 @@
     }
   },
     {
+    "DASEventFeatureID": "blue_cyan_feature",
     "StartDate": {
         "Month": "2",
         "Day": "1",

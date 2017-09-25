@@ -42,6 +42,8 @@ namespace Cozmo.WhatsNew {
     private System.Guid _CodeLabProject;
 
     public void InitializeWhatsNewModal(WhatsNewData data) {
+      _DASEventExtraData = data.DASEventFeatureID + "," + (data.CodeLabData.ShowButton ? "1" : "0");
+
       _NewContentTitleLabel.text = Localization.Get(data.TitleKey);
       _NewContentDescLabel.text = Localization.Get(data.DescriptionKey);
 
@@ -55,12 +57,12 @@ namespace Cozmo.WhatsNew {
       _IconAssetName = data.IconAssetName;
       AssetBundleManager.Instance.LoadAssetBundleAsync(_IconAssetBundle, HandleIconAssetBundleLoaded);
 
-      _OkayButton.Initialize(HandleOkayButtonPressed, "ignore_button", this.DASEventDialogName);
+      _OkayButton.Initialize(HandleOkayButtonPressed, "ignore_button", this.DASEventDialogName + "," + _DASEventExtraData);
 
       UnlockableInfo codeLabGameUnlockable = UnlockablesManager.Instance.GetUnlockableInfo(Anki.Cozmo.UnlockId.CodeLabGame);
       _CodeLabButton.gameObject.SetActive(data.CodeLabData.ShowButton
                                           && UnlockablesManager.Instance.IsOSSupported(codeLabGameUnlockable));
-      _CodeLabButton.Initialize(HandleCodeLabButtonPressed, "code_lab_link_button", this.DASEventDialogName);
+      _CodeLabButton.Initialize(HandleCodeLabButtonPressed, "code_lab_link_button", this.DASEventDialogName + "," + _DASEventExtraData);
       _CodeLabProject = data.CodeLabData.ProjectGuid;
 
       this.ModalClosedWithCloseButtonOrOutside += HandleModalClosedWithCloseButtonOrOutside;

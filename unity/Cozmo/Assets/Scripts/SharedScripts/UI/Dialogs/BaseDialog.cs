@@ -50,6 +50,11 @@ namespace Cozmo {
         set { _DASEventDialogName = value; }
       }
 
+      protected string _DASEventExtraData = "";
+      public string DASEventExtraData {
+        get { return _DASEventExtraData; }
+      }
+
       // The UI event that should play when this dialog opens
       [SerializeField]
       private Anki.Cozmo.Audio.AudioEventParameter _OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
