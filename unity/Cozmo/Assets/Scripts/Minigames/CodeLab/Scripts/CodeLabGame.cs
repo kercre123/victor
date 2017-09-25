@@ -1,3 +1,7 @@
+#if !SHIPPING
+#define ENABLE_TEST_PROJECTS
+#endif
+
 using UnityEngine;
 using Anki.Cozmo;
 using Anki.Cozmo.Audio;
@@ -221,6 +225,13 @@ namespace CodeLab {
       // Cache sample and featured projects locally.
       _CodeLabSampleProjects = this.LoadSampleProjects("sample-projects.json");
       _CodeLabFeaturedProjects = this.LoadFeaturedProjects("featured-projects.json");
+
+#if ENABLE_TEST_PROJECTS
+      if (DataPersistenceManager.Instance.Data.DebugPrefs.LoadTestCodeLabProjects) {
+        var testProjects = this.LoadSampleProjects("test-projects.json");
+        _CodeLabSampleProjects.AddRange(testProjects);
+      }
+#endif
 
       RobotEngineManager.Instance.AddCallback<GameToGame>(HandleGameToGame);
 
@@ -1165,6 +1176,14 @@ namespace CodeLab {
       return _SessionState.GetProgramState().GetDrawTextScale();
     }
 
+    private AlignmentX GetDrawTextAlignmentX() {
+      return _SessionState.GetProgramState().GetDrawTextAlignmentX();
+    }
+
+    private AlignmentY GetDrawTextAlignmentY() {
+      return _SessionState.GetProgramState().GetDrawTextAlignmentY();
+    }
+
     private bool HandleDrawOnFaceRequest(ScratchRequest scratchRequest) {
       switch (scratchRequest.command) {
       case "cozVertCozmoFaceClear":
@@ -1215,7 +1234,7 @@ namespace CodeLab {
           float x1 = scratchRequest.argFloat;
           float y1 = scratchRequest.argFloat2;
           string text = scratchRequest.argString;
-          _CozmoFaceDisplay.DrawText(x1, y1, GetDrawTextScale(), text, GetDrawColor());
+          _CozmoFaceDisplay.DrawText(x1, y1, GetDrawTextScale(), GetDrawTextAlignmentX(), GetDrawTextAlignmentY(), text, GetDrawColor());
           return true;
         }
       case "cozVertCozmoFaceSetDrawColor": {
@@ -1226,6 +1245,10 @@ namespace CodeLab {
       case "cozVertCozmoFaceSetTextScale": {
           float drawScale = scratchRequest.argFloat;
           _SessionState.GetProgramState().SetDrawTextScale(drawScale);
+          return true;
+        }
+      case "cozVertCozmoFaceSetTextAlignment": {
+          _SessionState.GetProgramState().SetDrawTextAlignment(scratchRequest.argUInt, scratchRequest.argUInt2);
           return true;
         }
       default:
@@ -2137,12 +2160,22 @@ namespace CodeLab {
     }
 
     private String EscapeJSON(String json) {
-      json = json.Replace("\"", "\\\"");
-      return json.Replace("\'", "\\\'");
+      if (json != null) {
+        json = json.Replace("\"", "\\\"");
+        return json.Replace("\'", "\\\'");
+      }
+      else {
+        return null;
+      }
     }
 
     private String EscapeXML(String xml) {
-      return xml.Replace("\"", "\\\"");
+      if (xml != null) {
+        return xml.Replace("\"", "\\\"");
+      }
+      else {
+        return null;
+      }
     }
 
     private void StartVerticalHatBlockListeners() {

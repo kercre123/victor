@@ -28,6 +28,7 @@ from io import BytesIO
 import json
 import os
 import queue
+import re
 import sys
 from threading import Thread
 import time
@@ -153,6 +154,12 @@ def parse_command_args():
                             action='store_const',
                             const=True,
                             help="Use CodeLab.py's project store for listing and serving projects (instead of Unity's")
+    arg_parser.add_argument('-ltp', '--load_test_projects',
+                            dest='load_test_projects',
+                            default=False,
+                            action='store_const',
+                            const=True,
+                            help="Load test projects (they add to the list of sample projects)")
     arg_parser.add_argument('-vert', '--show_vertical',
                         dest='show_vertical',
                         default=False,
@@ -258,9 +265,22 @@ VALID_SCRATCH_EXTENSIONS = [".css", ".cur", ".gif", ".html", ".js", ".jpg", ".jp
 CODELAB_FILE_HEADER = "CODELAB:"
 
 
+def is_unity_timestamp(in_date_time):
+    return str(in_date_time).startswith("/Date(")
+
+
 def datetime_to_unity_timestamp(in_datetime):
-    timestamp = calendar.timegm(in_datetime.timetuple()) * 1000 + in_datetime.microsecond
+    if isinstance(in_datetime, str):
+        in_datetime = datetime.datetime.strptime(in_datetime, "%Y-%m-%d %H:%M:%S.%f")
+    timestamp = calendar.timegm(in_datetime.timetuple()) * 1000 + (in_datetime.microsecond / 1000)
     return "/Date(%s)/" % timestamp
+
+
+def extract_timestamp_number(in_timestamp):
+    if not is_unity_timestamp(in_timestamp):
+        in_timestamp = datetime_to_unity_timestamp(in_timestamp)
+    numbers = re.findall(r'\d+', str(in_timestamp))
+    return int(numbers[0])
 
 
 def python_bool_to_js_bool_str(python_bool):
@@ -458,6 +478,7 @@ class CodeLabInterface():
         # Database of projects stored in a dictionary, UUID as key
         self._user_projects = {}
         self._sample_projects = {}
+        self._featured_projects = {}
 
         self._game_to_game_conn = GameToGameConn()
 
@@ -467,7 +488,7 @@ class CodeLabInterface():
 
         self._sent_dummy_state = False
 
-        self.load_sample_projects()
+        self.load_anki_projects()
         self.load_user_projects()
 
     def on_connect_to_unity(self):
@@ -496,7 +517,11 @@ class CodeLabInterface():
     def send_to_webpage(self, message, wait_for_page_load=False):
         if command_args.verbose:
             command = "LoadThenSendToWeb" if wait_for_page_load else "SendToWeb"
-            log_text("%s: %s" % (command, message))
+            if message.startswith("window.Scratch.vm.runtime.startHats"):
+                # very spammy/verbose
+                pass
+            else:
+                log_text("%s: %s" % (command, message))
         if wait_for_page_load:
             self._delayed_commands_for_web.put(message)
         else:
@@ -567,26 +592,37 @@ class CodeLabInterface():
 
         return "window.setCozmoState('" + json.dumps(cozmo_state_dict) + "');"
 
-    def load_sample_projects(self):
-        path_name = os.path.join(BASE_SRC_SCRATCH_PATH, "sample-projects.json")
+    def load_project_dict(self, dest_dict, path_name):
+        if command_args.verbose:
+            log_text("load_project_dict: path_name = %s" % path_name)
         with open(path_name) as data_file:
             data = json.load(data_file)
             for project_json in data:
                 project_uuid = project_json["ProjectUUID"]
                 if command_args.verbose:
-                    log_text("load_sample_projects Adding %s" % project_uuid)
-                self._sample_projects[project_uuid] = project_json
+                    log_text("load_project_dict Adding %s '%s'" % (project_uuid, project_json["ProjectName"]))
+                dest_dict[project_uuid] = project_json
 
                 if command_args.clone_samples:
                     # Clone the sample to a new user project on load
                     user_project_json = dict(project_json)
                     user_project_uuid = str(uuid.uuid4())  # Create a new UUID
-                    user_project_name = "Clone" + str(len(self._sample_projects)) + "_of_" + project_json["ProjectName"]
+                    user_project_name = "Clone" + str(len(dest_dict)) + "_of_" + project_json["ProjectName"]
                     user_project_json["ProjectUUID"] = user_project_uuid
                     user_project_json["ProjectName"] = user_project_name
                     log_text("Cloning sample %s '%s' to %s '%s'" % (project_uuid, project_json["ProjectName"],
                                                                     user_project_uuid, user_project_name))
                     self._user_projects[user_project_uuid] = user_project_json
+
+    def load_anki_projects(self):
+        self.load_project_dict(self._sample_projects,
+                               os.path.join(BASE_SRC_SCRATCH_PATH, "sample-projects.json"))
+        if command_args.load_test_projects:
+            self.load_project_dict(self._sample_projects,
+                                   os.path.join(BASE_SRC_SCRATCH_PATH, "test-projects.json"))
+        self.load_project_dict(self._featured_projects,
+                               os.path.join(BASE_SRC_SCRATCH_PATH, "featured-projects.json"))
+
 
     def load_user_projects(self):
         try:
@@ -601,7 +637,7 @@ class CodeLabInterface():
                     project_json = json.load(data_file)
                     project_uuid = project_json["ProjectUUID"]
                     if command_args.verbose:
-                        log_text("load_user_projects Adding %s" % project_uuid)
+                        log_text("load_user_projects Adding %s '%s'" % (project_uuid, project_json["ProjectName"]))
                     self._user_projects[project_uuid] = project_json
             except FileNotFoundError:
                 log_text("load_user_projects - no contents (just history) for deleted file %s" % path_name)
@@ -638,6 +674,7 @@ class CodeLabInterface():
                 log_text("save_user_project() - updating project: '%s'" % project_data)
             project_data['ProjectXML'] = project_xml
             project_data['ProjectJSON'] = project_json
+            project_data['DateTimeLastModifiedUTC'] = str(utcnow)
             project_data['VersionNum'] = version_num
             project_data['IsNew'] = False
         except KeyError:
@@ -854,6 +891,16 @@ class CodeLabInterface():
                         project_copy["ProjectJSON"] = None
                         userProjectsAsJSON.append(project_copy)
 
+                def get_last_modified_time(project_data):
+                    try:
+                        last_modified_time = project_data['DateTimeLastModifiedUTC']
+                        timestamp_number = extract_timestamp_number(last_modified_time)
+                    except KeyError:
+                        last_modified_time = None
+                        timestamp_number = 0
+                    return timestamp_number
+
+                userProjectsAsJSON = sorted(userProjectsAsJSON, key=lambda project: -get_last_modified_time(project))
                 sampleProjectsAsJSON = []
                 for key, value in self._sample_projects.items():
                     is_vertical = js_bool_to_python_bool(value["IsVertical"])
@@ -862,6 +909,8 @@ class CodeLabInterface():
                         project_copy["ProjectXML"] = None
                         project_copy["ProjectJSON"] = None
                         sampleProjectsAsJSON.append(project_copy)
+
+                sampleProjectsAsJSON = sorted(sampleProjectsAsJSON, key=lambda project: project["DisplayOrder"])
 
                 userProjectsAsEncodedJSON = json.dumps(userProjectsAsJSON, ensure_ascii=False)
                 sampleProjectsAsEncodedJSON = json.dumps(sampleProjectsAsJSON, ensure_ascii=False)
@@ -1410,7 +1459,9 @@ def handle_log_line(evt, *, msg):
                           "VisionComponent.SetCameraSettings",
                           "[@VisionComponent] DroppedFrameStats",
                           "[@VisionComponent] VisionComponent.VisionComponent",
+                          "[@VisionSystem] MotionDetector.DetectMotion.FoundCentroid",
                           "VisionSystem.Profiler"]
+
 
     msg_line = msg.line.strip()
 

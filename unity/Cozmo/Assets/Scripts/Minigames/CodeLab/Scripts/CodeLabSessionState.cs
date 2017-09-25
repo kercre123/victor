@@ -37,6 +37,18 @@ namespace CodeLab {
     All
   }
 
+  public enum AlignmentX {
+    Left = 0,
+    Center,
+    Right
+  }
+
+  public enum AlignmentY {
+    Top = 0,
+    Center,
+    Bottom
+  }
+
   public class ProjectStats {
     public enum EventCategory {
       updated_user_project = 0,
@@ -181,6 +193,8 @@ namespace CodeLab {
       private bool _ShouldWaitForActions = kDefaultShouldWaitForActions;
       private byte _DrawColor = kDefaultDrawColor;
       private float _DrawTextScale = kDefaultDrawTextScale;
+      private AlignmentX _DrawTextAlignmentX;
+      private AlignmentY _DrawTextAlignmentY;
 
       public byte GetDrawColor() {
         return _DrawColor;
@@ -196,6 +210,19 @@ namespace CodeLab {
 
       public void SetDrawTextScale(float newVal) {
         _DrawTextScale = newVal;
+      }
+
+      public AlignmentX GetDrawTextAlignmentX() {
+        return _DrawTextAlignmentX;
+      }
+
+      public AlignmentY GetDrawTextAlignmentY() {
+        return _DrawTextAlignmentY;
+      }
+
+      public void SetDrawTextAlignment(uint xAlignment, uint yAlignment) {
+        _DrawTextAlignmentX = (AlignmentX)xAlignment;
+        _DrawTextAlignmentY = (AlignmentY)yAlignment;
       }
 
       public void SetShouldWaitForActions(bool newVal) {
@@ -249,6 +276,8 @@ namespace CodeLab {
         _ShouldWaitForActions = kDefaultShouldWaitForActions;
         _DrawColor = kDefaultDrawColor;
         _DrawTextScale = kDefaultDrawTextScale;
+        _DrawTextAlignmentX = AlignmentX.Left;
+        _DrawTextAlignmentY = AlignmentY.Top;
       }
 
       public void OnBlockStarted() {

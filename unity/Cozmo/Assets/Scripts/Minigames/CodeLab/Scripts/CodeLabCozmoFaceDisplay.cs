@@ -20,6 +20,8 @@ namespace CodeLab {
     private TMP_FontAsset _FontAsset = null;
     private Texture2D _FontTexture = null;
     private bool _IsFontInitialized = false;
+    private const float kDefaultFontSpaceWidth = 20.0f;
+    private float _FontSpaceWidth = kDefaultFontSpaceWidth;
 
     public void ClearScreen(byte clearCol) {
       int i = 0;
@@ -75,12 +77,86 @@ namespace CodeLab {
       RenderTexture.active = cachedActiveRenderTexture;
       RenderTexture.ReleaseTemporary(tempRenderTexture);
 
+      TMP_Glyph glyph = null;
+      if (_FontAsset.characterDictionary.TryGetValue((int)' ', out glyph)) {
+        _FontSpaceWidth = glyph.xAdvance;
+      }
+      else {
+        DAS.Error("CodeLab.GetSpaceWidth.NoSpace", "No space in font: " + _FontAsset.fontInfo.Name);
+        _FontSpaceWidth = kDefaultFontSpaceWidth;
+      }
+
       _IsFontInitialized = true;
 
       return true;
     }
 
-    public void DrawText(float xRatio, float yRatio, float scale, string text, byte color) {
+    public void CalculateTextBounds(float scale, string text, out float outWidth, out float outHeight) {
+      if (!InitFontAsset()) {
+        outWidth = 0.0f;
+        outHeight = 0.0f;
+        return;
+      }
+
+      var characterDictionary = _FontAsset.characterDictionary;
+
+      float x = 0.0f;
+      float maxY = 0.0f;
+
+      for (int cI = 0; cI < text.Length; ++cI) {
+        int charKey = (int)text[cI];
+        TMP_Glyph glyph = null;
+
+        if (characterDictionary.TryGetValue(charKey, out glyph)) {
+          float charMaxY = (Mathf.Abs(glyph.height) - glyph.yOffset) * scale;
+          maxY = Mathf.Max(maxY, charMaxY);
+          x += glyph.xAdvance * scale;
+        }
+        else {
+          // The character isn't in this font - insert a space
+          x += _FontSpaceWidth * scale;
+        }
+      }
+
+      outWidth = x;
+      outHeight = (_FontAsset.fontInfo.Ascender * scale) + maxY;
+    }
+
+    public void DrawText(float x, float y, float scale, AlignmentX alignmentX, AlignmentY alignmentY, string text, byte color) {
+      if ((alignmentX != AlignmentX.Left) || (alignmentY != AlignmentY.Top)) {
+        // Calc size that the text would be, and adjust position appropriately
+        float width;
+        float height;
+        CalculateTextBounds(scale, text, out width, out height);
+        switch (alignmentX) {
+        case AlignmentX.Left:
+          // x remains unchanged
+          break;
+        case AlignmentX.Center:
+          x -= (width * 0.5f);
+          break;
+        case AlignmentX.Right:
+          x -= width;
+          break;
+        }
+
+        switch (alignmentY) {
+        case AlignmentY.Top:
+          // y remains unchanged
+          break;
+        case AlignmentY.Center:
+          y -= (height * 0.5f);
+          break;
+        case AlignmentY.Bottom:
+          y -= height;
+          break;
+        }
+      }
+
+      DrawText(x, y, scale, text, color);
+    }
+
+    public void DrawText(float x, float y, float scale, string text, byte color) {
       if (!InitFontAsset()) {
         return;
       }
@@ -89,9 +165,6 @@ namespace CodeLab {
       var characterDictionary = _FontAsset.characterDictionary;
 
       var fontInfo = _FontAsset.fontInfo;
-
-      float x = ConvertRatioXToPixelXFloat(xRatio);
-      float y = ConvertRatioYToPixelYFloat(yRatio);
 
       for (int cI = 0; cI < text.Length; ++cI) {
         int charKey = (int)text[cI];
@@ -202,43 +275,9 @@ namespace CodeLab {
         }
         else {
           // The character isn't in this font - insert a space
-          float spaceAdvance = 20.0f;
-          if (characterDictionary.TryGetValue((int)' ', out glyph)) {
-            spaceAdvance = glyph.xAdvance;
-          }
-          else {
-            DAS.Error("CodeLab.DrawText.UnhandledChar.NoSpace", "No space in font: " + fontInfo.Name);
-          }
-
-          x += spaceAdvance * scale;
+          x += _FontSpaceWidth * scale;
         }
       }
-    }
-
-    public float ConvertRatioXToPixelXFloat(float ratio) {
-      // TODO: Remove this if we stick with using pixel coords, this
-      //       math was to convert 0.0..1.0 to 0..127 pixel range
-      // Scale 0.0 to 1.0 values to e.g. 0.0 to 127.0 (for width=128)
-      //return ratio;// * (float)(kFaceTextureWidth - 1);
-      return ratio;
-    }
-
-    public int ConvertRatioXToPixelX(float ratio) {
-      // Convert 0.0 to 1.0 values to e.g. 0 to 127 (for width=128)
-      return Mathf.RoundToInt(ConvertRatioXToPixelXFloat(ratio));
-    }
-
-    public float ConvertRatioYToPixelYFloat(float ratio) {
-      // TODO: Remove this if we stick with using pixel coords, this
-      //       math was to convert 0.0..1.0 to 0..63 pixel range
-      // Scale 0.0 to 1.0 values to e.g. 0.0 to 63.0 (for height=64)
-      //return ratio * (float)(kFaceTextureHeight - 1);
-      return ratio;
-    }
-
-    public int ConvertRatioYToPixelY(float ratio) {
-      // convert 0.0 to 1.0 values to e.g. 0 to 63 (for height=64)
-      return Mathf.RoundToInt(ConvertRatioYToPixelYFloat(ratio));
     }
 
     public void DrawPixel(int x, int y, byte color) {
@@ -261,10 +300,10 @@ namespace CodeLab {
     }
 
     public void DrawLine(float x1, float y1, float x2, float y2, byte color) {
-      int x1Int = ConvertRatioXToPixelX(x1);
-      int y1Int = ConvertRatioYToPixelY(y1);
-      int x2Int = ConvertRatioXToPixelX(x2);
-      int y2Int = ConvertRatioYToPixelY(y2);
+      int x1Int = Mathf.RoundToInt(x1);
+      int y1Int = Mathf.RoundToInt(y1);
+      int x2Int = Mathf.RoundToInt(x2);
+      int y2Int = Mathf.RoundToInt(y2);
       DrawLineInt(x1Int, y1Int, x2Int, y2Int, color);
     }
 
@@ -318,9 +357,9 @@ namespace CodeLab {
     }
 
     public void FillCircle(float x, float y, float radius, byte color) {
-      int xInt = ConvertRatioXToPixelX(x);
-      int yInt = ConvertRatioYToPixelY(y);
-      int radiusInt = ConvertRatioYToPixelY(radius); // use the smaller of the 2 for radius
+      int xInt = Mathf.RoundToInt(x);
+      int yInt = Mathf.RoundToInt(y);
+      int radiusInt = Mathf.RoundToInt(radius); // use the smaller of the 2 for radius
 
       FillCircleInt(xInt, yInt, radiusInt, color);
     }
@@ -344,9 +383,9 @@ namespace CodeLab {
     }
 
     public void DrawCircle(float x, float y, float radius, byte color) {
-      int xInt = ConvertRatioXToPixelX(x);
-      int yInt = ConvertRatioYToPixelY(y);
-      int radiusInt = ConvertRatioYToPixelY(radius); // use the smaller of the 2 for radius
+      int xInt = Mathf.RoundToInt(x);
+      int yInt = Mathf.RoundToInt(y);
+      int radiusInt = Mathf.RoundToInt(radius); // use the smaller of the 2 for radius
 
       DrawCircleInt(xInt, yInt, radiusInt, color);
     }
@@ -383,10 +422,10 @@ namespace CodeLab {
     }
 
     public void DrawRect(float x1, float y1, float x2, float y2, byte color) {
-      int x1Int = ConvertRatioXToPixelX(x1);
-      int y1Int = ConvertRatioYToPixelY(y1);
-      int x2Int = ConvertRatioXToPixelX(x2);
-      int y2Int = ConvertRatioYToPixelY(y2);
+      int x1Int = Mathf.RoundToInt(x1);
+      int y1Int = Mathf.RoundToInt(y1);
+      int x2Int = Mathf.RoundToInt(x2);
+      int y2Int = Mathf.RoundToInt(y2);
 
       DrawRectInt(x1Int, y1Int, x2Int, y2Int, color);
     }
@@ -438,10 +477,10 @@ namespace CodeLab {
     }
 
     public void FillRect(float x1, float y1, float x2, float y2, byte color) {
-      int x1Int = ConvertRatioXToPixelX(x1);
-      int y1Int = ConvertRatioYToPixelY(y1);
-      int x2Int = ConvertRatioXToPixelX(x2);
-      int y2Int = ConvertRatioYToPixelY(y2);
+      int x1Int = Mathf.RoundToInt(x1);
+      int y1Int = Mathf.RoundToInt(y1);
+      int x2Int = Mathf.RoundToInt(x2);
+      int y2Int = Mathf.RoundToInt(y2);
 
       FillRectInt(x1Int, y1Int, x2Int, y2Int, color);
     }

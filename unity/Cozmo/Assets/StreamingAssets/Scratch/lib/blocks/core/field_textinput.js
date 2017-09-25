@@ -139,7 +139,13 @@ Blockly.FieldTextInput.prototype.removeKanji = function(newText) {
 
   // Kanji is in the range from 0x4E00 to 0x9FC3, inclusive. Filter out all
   // those characters and replace with empty string.
-  newText = newText.replace(/[\u4E00-\u9FC3]/g, "");
+
+  try {
+    newText = newText.replace(/[\u4E00-\u9FC3]/g, "");
+  }
+  catch(err) {
+    console.log("ERROR: string.replace in removeKanji failed: typeof newText = " + typeof newText + " error = " + err.message);
+  }
 
   return newText;
 }
