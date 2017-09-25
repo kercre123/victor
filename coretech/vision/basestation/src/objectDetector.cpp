@@ -25,7 +25,13 @@
 #include <fstream>
 
 #if USE_TENSORFLOW
-#  include "objectDetectorModel_tensorflow.cpp"
+#  ifndef TENSORFLOW_USE_AOT
+#    error Expecting TENSORFLOW_USE_AOT to be defined by cmake!
+#  elif TENSORFLOW_USE_AOT==1
+#    include "objectDetectorModel_tensorflow_AOT.cpp"
+#  else
+#    include "objectDetectorModel_tensorflow.cpp"
+#  endif
 #else
 #  include "objectDetectorModel_opencvdnn.cpp"
 #endif
