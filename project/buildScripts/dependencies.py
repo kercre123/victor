@@ -481,7 +481,11 @@ def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR, validate
         os.makedirs(location)
     json_parser(version_file)
     if validate_assets:
-        validate_anim_data.check_audio_events_all_anims(location)
+        try:
+            validate_anim_data.check_audio_events_all_anims(location)
+        except ValueError, e:
+            print(str(e))
+            print("WARNING: This build may contain animations that reference missing audio events")
 
 
 def json_parser(version_file):
