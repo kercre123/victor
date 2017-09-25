@@ -32,6 +32,7 @@ enum uint_32 Cozmo_Sings_120Bpm
   Cozmo_Sings_Hello_My_Baby = 1653598059,
   Cozmo_Sings_Hush_Little_Baby = 4192423907,
   Cozmo_Sings_La_Paloma = 2263560367,
+  Cozmo_Sings_Moonlight_Bay = 3990987963,
   Cozmo_Sings_Ode_To_Joy = 277478768,
   Cozmo_Sings_Sakura = 1066913866,
   Cozmo_Sings_Silvery_Moon = 2709516065,
