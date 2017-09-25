@@ -821,6 +821,11 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
   std::vector<Vision::Image::ConnectedComponentStats> stats;
   ratioImage.GetConnectedComponents(labelImage, stats);
 
+  // one big connected component means no motion (all black)
+  if (stats.size() ==1 && stats[0].area == ratioImage.GetNumElements()) {
+    return Result::RESULT_OK; // no need to make a fuss here
+  }
+
   // Update the impulse/decay model
   bool updated = false;
   for (const auto& stat: stats) {
