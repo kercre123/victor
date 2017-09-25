@@ -172,7 +172,7 @@ void BehaviorDistractedByMotion::TransitionToTurnsTowardsMotion(Robot &robot)
   // clear motion
   _motionObserved = false;
 
-  StartActing(action, &BehaviorDistractedByMotion::TransitionToEnd);
+  StartActing(action, &BehaviorDistractedByMotion::TransitionToWaitForMotion);
 
 }
 
