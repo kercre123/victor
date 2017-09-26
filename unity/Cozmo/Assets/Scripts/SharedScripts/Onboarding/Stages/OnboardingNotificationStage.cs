@@ -6,23 +6,24 @@ namespace Onboarding {
     public override void Start() {
       base.Start();
       // bring up notification preprompt.
-#if UNITY_ANDROID && !UNITY_EDITOR
-      // Since we don't need any permissions skip this stage
-      OnboardingManager.Instance.GoToNextStage();
-#else
-      // Pop up window telling you we will ask for notifications
-      AlertModalData modalData = new AlertModalData("notifications_alert",
-                      LocalizationKeys.kSettingsNotificationpanelTitle,
-                      LocalizationKeys.kOnboardingNotificationprepromptBody,
-                      new AlertModalButtonData("yes_notifications_button", LocalizationKeys.kButtonYes, HandleShowOSNotificationsPrompt),
-                      new AlertModalButtonData("no_notifications_button", LocalizationKeys.kButtonMaybeLater, HandleMaybeLaterClicked));
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown) {
+        // Since we don't need any permissions skip this stage
+        OnboardingManager.Instance.GoToNextStage();
+      }
+      else {
+        // Pop up window telling you we will ask for notifications
+        AlertModalData modalData = new AlertModalData("notifications_alert",
+                        LocalizationKeys.kSettingsNotificationpanelTitle,
+                        LocalizationKeys.kOnboardingNotificationprepromptBody,
+                        new AlertModalButtonData("yes_notifications_button", LocalizationKeys.kButtonYes, HandleShowOSNotificationsPrompt),
+                        new AlertModalButtonData("no_notifications_button", LocalizationKeys.kButtonMaybeLater, HandleMaybeLaterClicked));
 
-      var modalPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 2,
-                  LowPriorityModalAction.CancelSelf,
-                  HighPriorityModalAction.Stack);
+        var modalPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 2,
+                    LowPriorityModalAction.CancelSelf,
+                    HighPriorityModalAction.Stack);
 
-      UIManager.OpenAlert(modalData, modalPriority, overrideCloseOnTouchOutside: false);
-#endif
+        UIManager.OpenAlert(modalData, modalPriority, overrideCloseOnTouchOutside: false);
+      }
     }
 
     private void HandleShowOSNotificationsPrompt() {
