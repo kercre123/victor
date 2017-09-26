@@ -56,7 +56,10 @@ void BehaviorDistractedByMotion::HandleWhileRunning(const IBehavior::EngineToGam
         _motionObserved = true;
         PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.HandleWhileNotRunning",
                       "Motion observed in top image coordinates: (%d, %d)", _observedX, _observedY);
-        StopActing(); // This means stopping the Wait action?
+
+        if (_state != State::TurningTowardsMotion) {
+          StopActing();
+        }
       }
       else if (motionObserved.right_img_area > 0) {
         _observedX = motionObserved.right_img_x;
@@ -64,7 +67,9 @@ void BehaviorDistractedByMotion::HandleWhileRunning(const IBehavior::EngineToGam
         _motionObserved = true;
         PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.HandleWhileNotRunning",
                       "Motion observed in right image coordinates: (%d, %d)", _observedX, _observedY);
-        StopActing(); // This means stopping the Wait action?
+        if (_state != State::TurningTowardsMotion) {
+          StopActing();
+        }
       }
       else if (motionObserved.left_img_area > 0) {
         _observedX = motionObserved.left_img_x;
@@ -72,7 +77,9 @@ void BehaviorDistractedByMotion::HandleWhileRunning(const IBehavior::EngineToGam
         _motionObserved = true;
         PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.HandleWhileNotRunning",
                       "Motion observed inleft  image coordinates: (%d, %d)", _observedX, _observedY);
-        StopActing(); // This means stopping the Wait action?
+        if (_state != State::TurningTowardsMotion) {
+          StopActing();
+        }
       }
       else {
         _motionObserved = false;
