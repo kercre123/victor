@@ -38,7 +38,7 @@ namespace Anki {
 - (void)application:(UIApplication *)application
 performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler;
 
-- (void)exportCodelabFile:(NSString*)projectName withContent:(NSString*)content;
+- (bool)exportCodelabFile:(NSString*)projectName withContent:(NSString*)content;
 
 @end
 
@@ -131,14 +131,14 @@ void tryExecuteBackgroundTransfers()
   NSString *fullText = [NSString stringWithContentsOfURL:filename encoding:NSUTF8StringEncoding error:&error];
 
   if( fullText == nil ) {
-    Unity_DAS_LogE("robot.code_lab.ios.handle_opened_file_url.file_parse_error", [[error localizedDescription] UTF8String], nullptr, nullptr, 0);
+    Unity_DAS_LogE("code_lab.ios.handle_opened_file_url.file_parse_error", [[error localizedDescription] UTF8String], nullptr, nullptr, 0);
   }
   else {
     NSUInteger codeLength = [fullText length];
     NSString* eventString = [@"size=" stringByAppendingString:[NSString stringWithFormat:@"%llu", (unsigned long long)codeLength]];
-    Unity_DAS_Event("robot.code_lab.ios.handle_opened_file_url", [eventString UTF8String], nullptr, nullptr, 0);
+    Unity_DAS_Event("code_lab.ios.handle_opened_file_url", [eventString UTF8String], nullptr, nullptr, 0);
 
-    UnitySendMessage("StartupManager", "LoadCodelabFromRawJson", [fullText UTF8String]);
+    UnitySendMessage("StartupManager", "LoadCodeLabFromRawJson", [fullText UTF8String]);
   }
   return YES;
 }
@@ -256,7 +256,7 @@ void tryExecuteBackgroundTransfers()
   [vc presentViewController:activityController animated:YES completion:nil];
 }
 
-- (void)exportCodelabFile:(NSString*)projectName withContent:(NSString*)content
+- (bool)exportCodelabFile:(NSString*)projectName withContent:(NSString*)content
 {
   NSString *writablePath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)objectAtIndex:0];
   NSString *temporaryFilePath = [writablePath stringByAppendingPathComponent:@"cozmo-codelab"];
@@ -274,14 +274,14 @@ void tryExecuteBackgroundTransfers()
                              error:&error];
     if (error != nil) {
       NSString* errorString = [@"Error creating directory path: " stringByAppendingString:[error localizedDescription]];
-      Unity_DAS_LogE("robot.code_lab.ios.export_codelab_file.error_creating_temp_directory", [errorString UTF8String], nullptr, nullptr, 0);
-      return;
+      Unity_DAS_LogE("code_lab.ios.export_codelab_file.error_creating_temp_directory", [errorString UTF8String], nullptr, nullptr, 0);
+      return false;
     }
   }
   else if (!isDirectory) {
     NSString* errorString = [@"Could not create path because a file is using the name wanted by our directory: " stringByAppendingString:[error localizedDescription]];
-    Unity_DAS_LogE("robot.code_lab.ios.export_codelab_file.temp_directory_name_in_use_by_file", [errorString UTF8String], nullptr, nullptr, 0);
-    return;
+    Unity_DAS_LogE("code_lab.ios.export_codelab_file.temp_directory_name_in_use_by_file", [errorString UTF8String], nullptr, nullptr, 0);
+    return false;
   }
 
   NSString *fileName = [projectName stringByAppendingString:@".codelab"];
@@ -294,12 +294,14 @@ void tryExecuteBackgroundTransfers()
 
   if (error != nil) {
     NSString* errorString = [@"Codelab file export error: " stringByAppendingString:[error localizedDescription]];
-    Unity_DAS_LogE("robot.code_lab.ios.export_codelab_file.temp_file_create_error", [errorString UTF8String], nullptr, nullptr, 0);
+    Unity_DAS_LogE("code_lab.ios.export_codelab_file.temp_file_create_error", [errorString UTF8String], nullptr, nullptr, 0);
   }
   else {
     NSURL *fileURL = [NSURL fileURLWithPath:filePath];
     [self presentActivityControllerForURL:fileURL];
+    return true;
   }
+  return false;
 }
 
 - (void)applicationDidEnterBackground:(UIApplication*)application
@@ -350,13 +352,14 @@ extern "C"{
     }
   }
 
-  void exportCodelabFile( const char* projectNameString, const char* projectContentString ) {
+  bool exportCodelabFile( const char* projectNameString, const char* projectContentString ) {
+
     NSString *formattedProjectName = [[[[NSString alloc] initWithCString:projectNameString encoding:NSUTF8StringEncoding] stringByReplacingOccurrencesOfString:@" " withString:@"_"] lowercaseString];
 
     NSString *content = [[NSString alloc] initWithCString:projectContentString encoding:NSUTF8StringEncoding];
 
     CozmoAppController* cozmoAppController = (CozmoAppController*)[[UIApplication sharedApplication] delegate];
-    [cozmoAppController exportCodelabFile:formattedProjectName withContent:content];
+    return [cozmoAppController exportCodelabFile:formattedProjectName withContent:content];
   }
 }
 

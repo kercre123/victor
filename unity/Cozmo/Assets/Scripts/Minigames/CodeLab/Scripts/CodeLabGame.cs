@@ -199,6 +199,12 @@ namespace CodeLab {
     private const string kHorizontalIndexFilename = "index.html";
     private const string kVerticalIndexFilename = "index_vertical.html";
 
+    // @TODO: Currently nothing is done with this list.
+    //  it should be used when we want to surface errors in the codelab file import process that occur before the ui
+    //  is ready for them.  At present the list is not cleared out, and could get quite long if many external files are
+    //  loaded incorrectly during the same session.
+    private static List<string> _importErrors = new List<string>();
+
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
@@ -979,32 +985,48 @@ namespace CodeLab {
       DAS.Info("Codelab.OnCozmoExportProject.Called", "User intends to share project");
 
       string projectUUID = scratchRequest.argUUID;
+      bool exportSuccessful = true;
 
       if (String.IsNullOrEmpty(projectUUID)) {
         DAS.Error("Codelab.OnCozmoExportProject.BadUUID", "Attempt to export project with no project UUID specified.");
+        exportSuccessful = false;
       }
       else {
         CodeLabProject projectToExport = FindUserProjectWithUUID(projectUUID);
 
-        System.Action<string, string> sendFileCall = null;
+        if (projectToExport == null) {
+          exportSuccessful = false;
+        }
+        else {
+
+          System.Func<string, string, bool> sendFileCall = null;
 
 #if !UNITY_EDITOR
 #if UNITY_IPHONE
         sendFileCall = (string name, string json) => IOS_Settings.ExportCodelabFile(name, json);
 #elif UNITY_ANDROID
-        sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call("exportCodelabFile", name, json);
-#else
-        sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
-#endif
+        sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call<bool>("exportCodelabFile", name, json);
 #else
         sendFileCall = (string name, string json) => {
-          Debug.LogWarning("Unity Editor does not implement sharing codelab project");
-        };
+          DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
+          return false;
+        }
+#endif
+#else
+          sendFileCall = (string name, string json) => {
+            DAS.Error("Codelab.OnCozmoShareProject.EditorNotSupported", "Unity Editor does not implement sharing codelab project");
+            return false;
+          };
 #endif
 
-        string projectJsonString = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
+          string projectJsonString = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
 
-        sendFileCall(projectToExport.ProjectName, projectJsonString);
+          exportSuccessful = sendFileCall(projectToExport.ProjectName, projectJsonString);
+        }
+      }
+
+      if (!exportSuccessful) {
+        DAS.Error("Codelab.OnCozmoShareProject.ExportError", "Codelab was unable to export the project");
       }
     }
 
@@ -2502,6 +2524,10 @@ namespace CodeLab {
       stats.PostPendingChanges(ProjectStats.EventCategory.loaded_from_file);
 
       return true;
+    }
+
+    public static void PushImportError(string errorLocString) {
+      _importErrors.Add(errorLocString);
     }
   }
 }

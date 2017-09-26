@@ -6,7 +6,7 @@ using UnityEngine;
 
 public static class IOS_Settings {
   [DllImport("__Internal")]
-  private static extern void exportCodelabFile(string projectNameString, string projectContentString);
+  private static extern bool exportCodelabFile(string projectNameString, string projectContentString);
 
   [DllImport("__Internal")]
   private static extern void openAppSettings();
@@ -17,9 +17,11 @@ public static class IOS_Settings {
 #endif
   }
 
-  public static void ExportCodelabFile(string projectNameString, string projectContentString) {
+  public static bool ExportCodelabFile(string projectNameString, string projectContentString) {
 #if UNITY_IOS && !UNITY_EDITOR
-    exportCodelabFile(projectNameString, projectContentString);
+    return exportCodelabFile(projectNameString, projectContentString);
+#else
+    return false;
 #endif
   }
 }
