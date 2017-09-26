@@ -86,6 +86,8 @@ namespace Cozmo.Notifications {
       else {
         LogDasEventsForSentNotifications();
         ClearNotificationsToBeSentRecords();
+        ClearNotificationCache();
+        CancelAllNotifications();
       }
     }
 
@@ -103,7 +105,7 @@ namespace Cozmo.Notifications {
                                               notificationMessage.persist));
     }
 
-    private void CancelAllNotifications() {
+    public void CancelAllNotifications() {
       if (UTNotifications.Manager.Instance.IsInitialized()) {
         UTNotifications.Manager.Instance.CancelAllNotifications();
       }
