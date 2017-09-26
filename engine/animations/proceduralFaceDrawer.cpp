@@ -278,19 +278,34 @@ namespace Cozmo {
     rowMin = Util::Clamp(rowMin, 0, ProceduralFace::HEIGHT-1);
     rowMax = Util::Clamp(rowMax, 0, ProceduralFace::HEIGHT-1);
 
-    // Apply interlacing / scanlines at the end
-    for(s32 i=_firstScanLine; i<ProceduralFace::HEIGHT; i+=2) {
-      memset(faceImg.GetRow(i), 0, ProceduralFace::WIDTH);
-    }
-    
-    // Distort the scanlines
-    auto scanlineDistorter = faceData.GetScanlineDistorter();
-    if(nullptr != scanlineDistorter)
+    if(rowMax > rowMin)
     {
-      if(rowMax > rowMin)
+      // Apply interlacing / scanlines: blank out every other row between min and max
+      // NOTE: we take care to avoid tying which set of scanlines is blanked directly to the
+      //       value of rowMin. Odd or even scanlines should be blanked based entirely on
+      //       _firstScanline, and not rowMin's value, which changes all the time.
+      const bool evenScanlines = (_firstScanLine == 0);
+      const bool evenRowMin    = (rowMin % 2) == 0;
+      const s32  rowMin_off    = (evenScanlines == evenRowMin ? rowMin : rowMin + 1);
+      
+      for(s32 i=rowMin_off; i<rowMax; i+=2) {
+        memset(faceImg.GetRow(i), 0, ProceduralFace::WIDTH);
+      }
+    
+      // Distort the scanlines (only those that are actually "on")
+      auto scanlineDistorter = faceData.GetScanlineDistorter();
+      if(nullptr != scanlineDistorter)
       {
         const f32 scale = 1.f / (rowMax - rowMin);
-        for(s32 row=rowMin; row < rowMax; ++row)
+        
+        // Only bother distorting rows that are actually "on" (i.e. the ones that
+        // have not been blacked out by the artificial interlacing above). So we
+        // just distort every other row and if the first row is even (or odd) and
+        // the first scanline is also even (or odd), then we need to start one
+        // further down.
+        const s32 rowMin_on  = (evenScanlines == evenRowMin ? rowMin + 1 : rowMin);
+        
+        for(s32 row=rowMin_on; row < rowMax; row+=2)
         {
           const f32 eyeFrac = (row - rowMin) * scale;
           const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac);
