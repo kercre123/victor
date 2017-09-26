@@ -343,7 +343,7 @@ s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& rati
         retVal = 255; // use 255 because it will actually display
       }
     } // if both pixels are bright enough
-    
+
     return retVal;
   };
   
@@ -409,12 +409,12 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class ImageType>
-Result MotionDetector::DetectHelper(const ImageType&        image,
+Result MotionDetector::DetectHelper(const ImageType &image,
                                     s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
-                                    const VisionPoseData&   crntPoseData,
-                                    const VisionPoseData&   prevPoseData,
-                                    std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
-                                    DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+                                    const VisionPoseData &crntPoseData,
+                                    const VisionPoseData &prevPoseData,
+                                    std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
+                                    DebugImageList<Vision::ImageRGB> &debugImageRGBs)
 {
 
   // Create the ImageRegionSelector. It has to be done here since the image size is not known before
@@ -422,7 +422,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
 
     // Helper macro to try to get the specified field and store it in the given variable
     // and return RESULT_FAIL if that doesn't work
-#   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
+    #define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
     do { \
     if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
       PRINT_NAMED_ERROR("MotionDetection.DetectHelper.MissingJsonParameter", "%s", __fieldName__); \
@@ -471,140 +471,30 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     _lastMotionTime = image.GetTimestamp();
     ExternalInterface::RobotObservedMotion msg;
     msg.timestamp = image.GetTimestamp();
-    bool messageWasAddedToQueue = false;
 
     // Remove noise here before motion detection
-    Vision::Image foregroundMotion(image.GetNumRows(), image.GetNumCols());
+    filterImageAndPrevImages<ImageType>(image);
     blurHappened = true;
 
-    // Main method for motion detection
-    const s32 numAboveThresh = ReprocessRatioImage(image, foregroundMotion);
+    // Create the ratio test image
+    Vision::Image foregroundMotion(image.GetNumRows(), image.GetNumCols());
+    s32 numAboveThresh = RatioTest(image, foregroundMotion);
 
     // Run the peripheral motion detection
-    bool peripheralMotionDetected = false;
-    Result peripheralMotionResult = DetectPeripheralMotion(foregroundMotion, debugImageRGBs, msg, scaleMultiplier,
-                                                           peripheralMotionDetected);
+    const bool peripheralMotionDetected = DetectPeripheralMotionHelper(foregroundMotion, debugImageRGBs, msg,
+                                                                       scaleMultiplier);
 
-    if (peripheralMotionResult != RESULT_OK) {
-      //something went very wrong here, bail out
-      return peripheralMotionResult;
-    }
-    
-    Point2f centroid(0.f,0.f); // Not Embedded::
-    Point2f groundPlaneCentroid(0.f,0.f);
-    
-    // Get overall image centroid
-    const size_t minArea = std::round((f32)image.GetNumElements() * kMotionDetection_MinAreaFraction);
-    f32 imgRegionArea    = 0.f;
-    f32 groundRegionArea = 0.f;
-    if(numAboveThresh > minArea) {
-      imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionDetection_CentroidPercentileX,
-                                  kMotionDetection_CentroidPercentileY);
-    }
+    const bool groundMotionDetected = DetectGroundPlaneMotionHelper(foregroundMotion, numAboveThresh, origNumRows,
+                                                                    origNumCols,
+                                                                    scaleMultiplier, crntPoseData, prevPoseData,
+                                                                    observedMotions,
+                                                                    debugImageRGBs, msg);
 
-    // Get centroid of all the motion within the ground plane, if we have one to reason about
-    if(crntPoseData.groundPlaneVisible && prevPoseData.groundPlaneVisible)
-    {
-      ExtractGroundPlaneMotion(origNumRows, origNumCols, scaleMultiplier, crntPoseData,
-                               foregroundMotion, centroid, groundPlaneCentroid, groundRegionArea);
-    }
-
-    // If there's motion either in the image or in the ground area
-    if(imgRegionArea > 0 || groundRegionArea > 0.f)
-    {
-      if(DEBUG_MOTION_DETECTION)
-      {
-        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
-                      "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
-                      "-- %.1f%% of ground area at (%.1f,%.1f)",
-                      imgRegionArea, centroid.x(), centroid.y(),
-                      groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
-      }
-      
-      if(kMotionDetection_DrawGroundDetectionsInCameraView && (nullptr != _vizManager))
-      {
-        const f32 radius = std::max(1.f, std::sqrtf(groundRegionArea*(f32)image.GetNumElements() / M_PI_F));
-        _vizManager->DrawCameraOval(centroid * scaleMultiplier, radius, radius, NamedColors::YELLOW);
-      }
-      
-
-      if(imgRegionArea > 0)
-      {
-        DEV_ASSERT(centroid.x() >= 0.f && centroid.x() <= image.GetNumCols() &&
-                   centroid.y() >= 0.f && centroid.y() <= image.GetNumRows(),
-                   "MotionDetector.DetectMotion.CentroidOOB");
-        
-        // make relative to image center *at processing resolution*
-        DEV_ASSERT(_camera.IsCalibrated(), "MotionDetector.Detect.CameraNotCalibrated");
-        centroid -= _camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier);
-        
-        // Convert area to fraction of image area (to be resolution-independent)
-        // Using scale multiplier to return the coordinates in original image coordinates
-        msg.img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
-        msg.img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
-        msg.img_area = imgRegionArea / static_cast<f32>(image.GetNumElements());
-      } else {
-        msg.img_area = 0;
-        msg.img_x = 0;
-        msg.img_y = 0;
-      }
-      
-      if(groundRegionArea > 0.f)
-      {
-        msg.ground_x = int16_t(std::round(groundPlaneCentroid.x()));
-        msg.ground_y = int16_t(std::round(groundPlaneCentroid.y()));
-        msg.ground_area = groundRegionArea;
-      } else {
-        msg.ground_area = 0;
-        msg.ground_x = 0;
-        msg.ground_y = 0;
-      }
-      
-      observedMotions.emplace_back(std::move(msg));
-      messageWasAddedToQueue = true;
-      
-      if(DEBUG_MOTION_DETECTION)
-      {
-        char tempText[128];
-        Vision::ImageRGB ratioImgDisp(foregroundMotion);
-        ratioImgDisp.DrawCircle(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)),
-                                NamedColors::RED, 4);
-        snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
-        cv::putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
-                    cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
-        debugImageRGBs.push_back({"RatioImg", ratioImgDisp});
-        
-        //_currentResult.debugImages.push_back({"PrevRatioImg", _prevRatioImg});
-        //_currentResult.debugImages.push_back({"ForegroundMotion", foregroundMotion});
-        //_currentResult.debugImages.push_back({"AND", cvAND});
-        
-        Vision::Image foregroundMotionFullSize(origNumRows, origNumCols);
-        foregroundMotion.Resize(foregroundMotionFullSize, Vision::ResizeMethod::NearestNeighbor);
-        Vision::ImageRGB ratioImgDispGround(crntPoseData.groundPlaneROI.GetOverheadImage(foregroundMotionFullSize,
-                                                                                      crntPoseData.groundPlaneHomography));
-        if(groundRegionArea > 0.f) {
-          Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
-          ratioImgDispGround.DrawCircle(dispCentroid - crntPoseData.groundPlaneROI.GetOverheadImageOrigin(),
-                                        NamedColors::RED, 2);
-          snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
-          cv::putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
-                      cv::Point(0,crntPoseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
-                      CV_RGB(0,255,0));
-        }
-        debugImageRGBs.push_back({"RatioImgGround", ratioImgDispGround});
-        
-        //
-        //_currentResult.debugImageRGBs.push_back({"CurrentImg", image});
-      }
-    }
-
-    //only peripheral motion
-    if (! messageWasAddedToQueue && peripheralMotionDetected) {
-      //add the message here
+    if (peripheralMotionDetected || groundMotionDetected) {
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.DetectHelper",
+                    "Motion found, sending message");
       observedMotions.emplace_back(std::move(msg));
     }
-    
-    //_prevRatioImg = ratio12;
     
   } // if(headSame && poseSame)
   
@@ -613,6 +503,125 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
   
   return RESULT_OK;
   
+}
+
+bool MotionDetector::DetectGroundPlaneMotionHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
+                                                   s32 origNumCols, f32 scaleMultiplier,
+                                                   const VisionPoseData &crntPoseData,
+                                                   const VisionPoseData &prevPoseData,
+                                                   std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
+                                                   DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
+                                                   ExternalInterface::RobotObservedMotion &msg)
+{
+
+  Point2f centroid(0.f,0.f); // Not Embedded::
+  Point2f groundPlaneCentroid(0.f,0.f);
+  bool motionFound = false;
+
+  // Get overall image centroid
+  const size_t minArea = std::round((f32)foregroundMotion.GetNumElements() * kMotionDetection_MinAreaFraction);
+  f32 imgRegionArea    = 0.f;
+  f32 groundRegionArea = 0.f;
+  if(numAboveThresh > minArea) {
+    imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionDetection_CentroidPercentileX,
+                                kMotionDetection_CentroidPercentileY);
+  }
+
+  // Get centroid of all the motion within the ground plane, if we have one to reason about
+  if(crntPoseData.groundPlaneVisible && prevPoseData.groundPlaneVisible)
+  {
+    ExtractGroundPlaneMotion(origNumRows, origNumCols, scaleMultiplier, crntPoseData,
+                             foregroundMotion, centroid, groundPlaneCentroid, groundRegionArea);
+  }
+
+  // If there's motion either in the image or in the ground area
+  if(imgRegionArea > 0 || groundRegionArea > 0.f)
+  {
+    motionFound = true;
+    if(DEBUG_MOTION_DETECTION)
+    {
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+                    "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
+                        "-- %.1f%% of ground area at (%.1f,%.1f)",
+                    imgRegionArea, centroid.x(), centroid.y(),
+                    groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
+    }
+
+    if(kMotionDetection_DrawGroundDetectionsInCameraView && (nullptr != _vizManager))
+    {
+      const f32 radius = std::max(1.f, sqrtf(groundRegionArea * (f32)foregroundMotion.GetNumElements() / M_PI_F));
+      _vizManager->DrawCameraOval(centroid * scaleMultiplier, radius, radius, NamedColors::YELLOW);
+    }
+
+
+    if(imgRegionArea > 0)
+    {
+      DEV_ASSERT(centroid.x() >= 0.f && centroid.x() <= foregroundMotion.GetNumCols() &&
+                 centroid.y() >= 0.f && centroid.y() <= foregroundMotion.GetNumRows(),
+                 "MotionDetector.DetectMotion.CentroidOOB");
+
+      // make relative to image center *at processing resolution*
+      DEV_ASSERT(_camera.IsCalibrated(), "MotionDetector.Detect.CameraNotCalibrated");
+      centroid -= _camera.GetCalibration()->GetCenter() * (1.f / scaleMultiplier);
+
+      // Convert area to fraction of image area (to be resolution-independent)
+      // Using scale multiplier to return the coordinates in original image coordinates
+      msg.img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
+      msg.img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+      msg.img_area = imgRegionArea / static_cast<f32>(foregroundMotion.GetNumElements());
+    } else {
+      msg.img_area = 0;
+      msg.img_x = 0;
+      msg.img_y = 0;
+    }
+
+    if(groundRegionArea > 0.f)
+    {
+      msg.ground_x = int16_t(std::round(groundPlaneCentroid.x()));
+      msg.ground_y = int16_t(std::round(groundPlaneCentroid.y()));
+      msg.ground_area = groundRegionArea;
+    } else {
+      msg.ground_area = 0;
+      msg.ground_x = 0;
+      msg.ground_y = 0;
+    }
+
+    observedMotions.emplace_back(std::move(msg));
+
+    if(DEBUG_MOTION_DETECTION)
+    {
+      char tempText[128];
+      Vision::ImageRGB ratioImgDisp(foregroundMotion);
+      ratioImgDisp.DrawCircle(centroid + (_camera.GetCalibration()->GetCenter() * (1.f / scaleMultiplier)),
+                              NamedColors::RED, 4);
+      snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
+      putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
+              cv::Point(0, ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0, 255, 0));
+      debugImageRGBs.push_back({"RatioImg", ratioImgDisp});
+
+      //_currentResult.debugImages.push_back({"PrevRatioImg", _prevRatioImg});
+      //_currentResult.debugImages.push_back({"ForegroundMotion", foregroundMotion});
+      //_currentResult.debugImages.push_back({"AND", cvAND});
+
+      Vision::Image foregroundMotionFullSize(origNumRows, origNumCols);
+      foregroundMotion.Resize(foregroundMotionFullSize, Vision::ResizeMethod::NearestNeighbor);
+      Vision::ImageRGB ratioImgDispGround(crntPoseData.groundPlaneROI.GetOverheadImage(foregroundMotionFullSize,
+                                                                                       crntPoseData.groundPlaneHomography));
+      if(groundRegionArea > 0.f) {
+        Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
+        ratioImgDispGround.DrawCircle(dispCentroid - crntPoseData.groundPlaneROI.GetOverheadImageOrigin(),
+                                      NamedColors::RED, 2);
+        snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
+        putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
+                cv::Point(0, crntPoseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
+                CV_RGB(0,255,0));
+      }
+      debugImageRGBs.push_back({"RatioImgGround", ratioImgDispGround});
+
+    }
+  }
+
+  return motionFound;
 }
 
 void MotionDetector::ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
@@ -731,44 +740,37 @@ void MotionDetector::ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, 
   }
 }
 
-template<class ImageType>
-s32 MotionDetector::ReprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion)
+template <class ImageType>
+void MotionDetector::filterImageAndPrevImages(const ImageType &image)
 {
   const cv::Mat& imageCV = image.get_CvMat_();
-  cv::boxFilter(imageCV, imageCV, -1,
-                   cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
+  boxFilter(imageCV, imageCV, -1,
+            cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
 
   // If the previous image hadn't been blurred before, do it now
   if (std::is_same<ImageType, Vision::Image>::value) {
     if (!_wasPrevImageGrayBlurred) {
-        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
-                      "Blurring the previous image Grey");
-      cv::boxFilter(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(), -1,
-                   cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
-      }
+      boxFilter(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(), -1,
+                cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
     }
+  }
   else if (std::is_same<ImageType, Vision::ImageRGB>::value) {
     if (!_wasPrevImageRGBBlurred) {
-      cv::boxFilter(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(), -1,
-                    cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
-      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
-                    "Blurring the previous image RGB");
+      boxFilter(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(), -1,
+                cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
     }
   }
   else {
     DEV_ASSERT(false, "MotionDetector.DetectMotion.FoundCentroid");
   }
-
-  s32 numAboveThresh = RatioTest(image, foregroundMotion);
-  return numAboveThresh;
 }
 
-Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage, DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
-                                              ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier,
-                                              bool &motionDetected)
+bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
+                                                  DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
+                                                  ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier)
 {
 
-  motionDetected = false;
+  bool motionDetected = false;
   // The image has several disjoint components, try to join them
   {
     const int kernelSize = int(kMotionDetection_MorphologicalSize_pix / scaleMultiplier);
@@ -919,7 +921,7 @@ Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage, DebugIm
     debugImageRGBs.push_back({"PeripheralMotion", imageToDisplay});
   }
 
-  return RESULT_OK;
+  return motionDetected;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
