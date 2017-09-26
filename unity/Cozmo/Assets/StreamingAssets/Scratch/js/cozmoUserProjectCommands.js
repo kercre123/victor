@@ -172,8 +172,15 @@
 
     window.exportCozmoProject = function() {
         var promiseSaveProject = window.promiseWaitForSaveProject();
+        
+        var projectType = "user";
+        if(window.isCozmoSampleProject) {
+            projectType = "sample";
+        }
+        // @todo: inject a new check for featured projects
+
         promiseSaveProject.then(function(result) {
-            window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID});
+            window.Unity.call({requestId: -1, command: "cozmoExportProject", argUUID: window.cozmoProjectUUID, argString: projectType});
         });
     }
 

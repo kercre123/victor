@@ -981,52 +981,77 @@ namespace CodeLab {
       LoadURL("extra/projects.html");
     }
 
+    // This callback manages identifying a CodeLabProject from a user project export request from the workspace and handling it appropriately.
     private void OnCozmoExportProject(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnCozmoExportProject.Called", "User intends to share project");
 
       string projectUUID = scratchRequest.argUUID;
-      bool exportSuccessful = true;
 
       if (String.IsNullOrEmpty(projectUUID)) {
         DAS.Error("Codelab.OnCozmoExportProject.BadUUID", "Attempt to export project with no project UUID specified.");
-        exportSuccessful = false;
       }
       else {
-        CodeLabProject projectToExport = FindUserProjectWithUUID(projectUUID);
+        CodeLabProject projectToExport = null;
 
-        if (projectToExport == null) {
-          exportSuccessful = false;
+        string projectType = scratchRequest.argString;
+        switch (projectType) {
+        case "user":
+          projectToExport = FindUserProjectWithUUID(projectUUID);
+          break;
+        case "sample":
+          // @TODO: when we pass in "featured" as a project type, break out this behavior into two cases
+          Guid projectGuid = new Guid(projectUUID);
+
+          Predicate<CodeLabSampleProject> findSampleProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
+          CodeLabSampleProject sampleProject = _CodeLabSampleProjects.Find(findSampleProject);
+          if (sampleProject != null) {
+            projectToExport = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
+            projectToExport.VersionNum = sampleProject.VersionNum;
+
+            // @TODO: The MinAppVersionNum will need to be set when that is added
+            break;
+          }
+
+          Predicate<CodeLabFeaturedProject> findFeaturedProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
+          CodeLabFeaturedProject featuredProject = _CodeLabFeaturedProjects.Find(findFeaturedProject);
+          if (featuredProject != null) {
+            projectToExport = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
+            projectToExport.VersionNum = featuredProject.VersionNum;
+
+            // @TODO: The MinAppVersionNum will need to be set when that is added
+          }
+
+
+          break;
         }
-        else {
 
-          System.Func<string, string, bool> sendFileCall = null;
+        if (projectToExport != null) {
+          string projectToExportJSON = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
+
+          System.Action<string, string> sendFileCall = null;
 
 #if !UNITY_EDITOR
 #if UNITY_IPHONE
-        sendFileCall = (string name, string json) => IOS_Settings.ExportCodelabFile(name, json);
+          sendFileCall = (string name, string json) => IOS_Settings.ExportCodelabFile(name, json);
 #elif UNITY_ANDROID
-        sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call<bool>("exportCodelabFile", name, json);
+          sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call("exportCodelabFile", name, json);
 #else
-        sendFileCall = (string name, string json) => {
-          DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
-          return false;
-        }
+          sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
 #endif
 #else
-          sendFileCall = (string name, string json) => {
-            DAS.Error("Codelab.OnCozmoShareProject.EditorNotSupported", "Unity Editor does not implement sharing codelab project");
-            return false;
-          };
+          sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupportedEditor", "Unity Editor does not implement sharing codelab project");
 #endif
 
-          string projectJsonString = kCodelabPrefix + WWW.EscapeURL(projectToExport.GetSerializedJson());
-
-          exportSuccessful = sendFileCall(projectToExport.ProjectName, projectJsonString);
+          if (string.IsNullOrEmpty(projectToExportJSON)) {
+            DAS.Error("Codelab.OnCozmoShareProject.ProjectNotFound", "Could not find a project to export with the specified UUID.");
+          }
+          else if (sendFileCall == null) {
+            DAS.Error("Codelab.OnCozmoShareProject.PlatformNotFound", "Could not create an export call for the current platform.");
+          }
+          else {
+            sendFileCall(projectToExport.ProjectName, projectToExportJSON);
+          }
         }
-      }
-
-      if (!exportSuccessful) {
-        DAS.Error("Codelab.OnCozmoShareProject.ExportError", "Codelab was unable to export the project");
       }
     }
 
@@ -2232,6 +2257,7 @@ namespace CodeLab {
       return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
     }
 
+    // Identify an existing user CodeLabProject with a supplied uuid
     CodeLabProject FindUserProjectWithUUID(string uuid) {
       Guid projectGuid = new Guid(uuid);
       CodeLabProject codeLabProject = null;
