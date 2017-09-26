@@ -277,8 +277,6 @@ static void ProcessMessage(InboundPacket& packet) {
         break ;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;
-        // USART2->TDR = packet.headToBody.framecounter;
-        // USART2->TDR = packet.headToBody.framecounter >> 8;
         Motors::receive(&packet.headToBody);
         Lights::receive(packet.headToBody.ledColors);
         break ;
