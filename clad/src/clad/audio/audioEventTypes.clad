@@ -16,6 +16,8 @@ enum uint_32 App
 enum uint_32 Codelab
 {
   Invalid = 0,  // Use this to check for Invalid events
+  Music_Background_Silence_Off = 3328628191,
+  Music_Background_Silence_On = 4207184651,
   Music_Hot_Potato_Level_1_Loop = 716489468,
   Music_Hot_Potato_Level_1_Loop_Stop = 2689778401,
   Music_Hot_Potato_Level_2_Loop = 2357357213,
@@ -140,6 +142,8 @@ enum uint_32 GenericEvent
   Play__App__Music_Dim_On = 3577443762,
   Play__App__Music_Vc_Mode_Off = 2840054831,
   Play__App__Music_Vc_Mode_On = 708318267,
+  Play__Codelab__Music_Background_Silence_Off = 3328628191,
+  Play__Codelab__Music_Background_Silence_On = 4207184651,
   Play__Codelab__Music_Hot_Potato_Level_1_Loop = 716489468,
   Play__Codelab__Music_Hot_Potato_Level_2_Loop = 2357357213,
   Play__Codelab__Music_Hot_Potato_Level_3_Loop = 2340195146,
