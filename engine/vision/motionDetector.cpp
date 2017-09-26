@@ -529,13 +529,13 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     }
     
     //_prevRatioImg = ratio12;
-
-#endif
     
   } // if(headSame && poseSame)
   
   // Store a copy of the current image for next time (at correct resolution!)
   SetPrevImage(image, blurHappened);
+
+#endif
   
   return RESULT_OK;
   
