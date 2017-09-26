@@ -398,8 +398,8 @@ namespace Anki {
     
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
-      // TODO(agm) ask adam about this
-      return 0;
+      assert(button_id >= 0 && button_id < BUTTON_COUNT);
+      return bodyData_->touchLevel[button_id];
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
