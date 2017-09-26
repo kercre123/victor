@@ -143,7 +143,7 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(Behavi
       // Wait until on treads or the animations that are playing finish (timeout).
       if (behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnTreads) {
         _state = EState::ActDizzy;
-      } else if (!IsActing()) {
+      } else if (!IsControlDelegated()) {
         // The "DizzyStillPickedUp" reaction played to completion, so log that as the played reaction:
         _reactionPlayed = EReaction::StillPickedUp;
         _state = EState::Finished;
@@ -183,7 +183,7 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(Behavi
     }
     case EState::Finished:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         // Done
         BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotShaken);
         return Status::Complete;

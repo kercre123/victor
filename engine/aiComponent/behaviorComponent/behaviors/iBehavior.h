@@ -108,9 +108,18 @@ public:
   static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
   bool IsRunning() const { return _isRunning; }
+
+  // returns true if the behavior has delegated control to a helper/action/bsRunnable
+  bool IsControlDelegated() const;
+  
   // returns true if any action from StartAction is currently running, indicating that the behavior is
   // likely waiting for something to complete
-  inline bool IsActing() const;
+  bool IsActing() const;
+
+  
+  // used to track whether control has been re-gained within the last tick
+  // this relies on update being ticked once and only once per tick
+  bool WasControlDelegatedLastTick();
 
   // returns the number of times this behavior has been started (number of times Init was called and returned
   // OK, not counting calls to Resume)
@@ -450,6 +459,10 @@ private:
   float _lastRunTime_s;
   float _startedRunningTime_s;
   
+  
+  size_t _lastTickWhenControlWasDelegated;
+  ExternalInterface::RobotCompletedAction _lastCompletedMsgCopy;
+  
   IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
@@ -459,10 +472,9 @@ private:
   
   template<class EventType>
   void HandleEvent(const EventType& event);
-
-  // this is an internal handler just for StartActing
+  
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
-                
+  
   // ==================== Member Vars ====================
   
   // The ID and a convenience cast of the ID to a string
@@ -494,7 +506,6 @@ private:
   int _startCount = 0;
 
   // for Start/StopActing if invalid, no action
-  u32 _lastActionTag = ActionConstants::INVALID_TAG;
   RobotCompletedActionCallback  _actingCallback;
   bool _stopRequestedAfterAction = false;
   
@@ -668,13 +679,6 @@ bool IBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExterna
                                std::bind(successCallback, static_cast<T*>(this), std::placeholders::_1),
                                std::bind(failureCallback, static_cast<T*>(this), std::placeholders::_1));
 }
-
-  
-inline bool IBehavior::IsActing() const {
-  return _lastActionTag != ActionConstants::INVALID_TAG;
-}
-
-
   
 template<class EventType>
 void IBehavior::HandleEvent(const EventType& event)

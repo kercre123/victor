@@ -153,7 +153,7 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorE
       DEBUG_SET_STATE(WaitForOnTreads);
       // TODO:(bn) play an idle here?
     }
-    else if( ! IsActing() ) {
+    else if( ! IsControlDelegated() ) {
       // if we finished the last action, but are still on the charger, queue another one
       TransitionToDrivingForward(behaviorExternalInterface);
     }
@@ -161,7 +161,7 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorE
     return Status::Running;
   }
 
-  if( IsActing() ) {
+  if( IsControlDelegated() ) {
     // let the action finish
     return Status::Running;
   }

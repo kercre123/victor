@@ -922,7 +922,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
       PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Far").c_str(), "Got a far edge, continuing forward fetch");
       
       // not close enough, keep moving forward
-      const bool isActing = IsActing();
+      const bool isActing = IsControlDelegated();
       if ( !isActing )
       {
         // DEPRECATED - Grabbing robot to support current cozmo code, but this should

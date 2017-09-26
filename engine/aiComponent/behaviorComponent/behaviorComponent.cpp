@@ -37,7 +37,6 @@ BehaviorComponent::BehaviorComponent(Robot& robot)
 , _behaviorHelperComponent( new BehaviorHelperComponent())
 , _behaviorContainer(new BehaviorContainer(robot.GetContext()->GetDataLoader()->GetBehaviorJsons()))
 , _audioClient(new Audio::BehaviorAudioClient(robot.GetRobotAudioClient()))
-, _delegationComponent(new DelegationComponent())
 {
 
 }
@@ -57,6 +56,10 @@ BehaviorComponent::~BehaviorComponent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComponent::Init(Robot& robot)
 {
+  _behaviorMgr = std::make_unique<BehaviorManager>();
+  _behaviorSysMgr = std::make_unique<BehaviorSystemManager>();
+  
+  _delegationComponent.reset(new DelegationComponent(robot, *_behaviorSysMgr, *_behaviorMgr));
   
   _behaviorExternalInterface = std::make_unique<BehaviorExternalInterface>(robot,
                                                                            robot.GetAIComponent(),
@@ -70,9 +73,7 @@ void BehaviorComponent::Init(Robot& robot)
                                                     &robot.GetProgressionUnlockComponent(),
                                                     &robot.GetPublicStateBroadcaster(),
                                                     robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr);
-  _behaviorMgr = std::make_unique<BehaviorManager>();
-  _behaviorSysMgr = std::make_unique<BehaviorSystemManager>();
-  
+
   
   assert(_behaviorContainer);
   _behaviorContainer->Init(*_behaviorExternalInterface, !static_cast<bool>(USE_BSM));

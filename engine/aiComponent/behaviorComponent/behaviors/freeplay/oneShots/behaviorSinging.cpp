@@ -309,7 +309,7 @@ BehaviorStatus BehaviorSinging::UpdateInternal_WhileRunning(BehaviorExternalInte
     _cubeShakingStartTime_ms = 0;
   }
   
-  return (IsActing() ? BehaviorStatus::Running : BehaviorStatus::Complete);
+  return (IsControlDelegated() ? BehaviorStatus::Running : BehaviorStatus::Complete);
 }
 
 

@@ -248,7 +248,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
   }
   
   // Only run the state machine if we're not acting:
-  if (IsActing()) {
+  if (IsControlDelegated()) {
     return Status::Running;
   }
   

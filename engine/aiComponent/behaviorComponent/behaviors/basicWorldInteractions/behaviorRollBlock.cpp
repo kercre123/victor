@@ -61,7 +61,7 @@ bool BehaviorRollBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface& be
 {
   UpdateTargetBlock(behaviorExternalInterface);
   
-  return _targetID.IsSet() || IsActing();
+  return _targetID.IsSet() || IsControlDelegated();
 }
 
   

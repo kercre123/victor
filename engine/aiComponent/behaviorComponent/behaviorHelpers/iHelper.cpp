@@ -120,9 +120,9 @@ void IHelper::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::IsActing()
+bool IHelper::IsControlDelegated()
 {
-  return _behaviorToCallActionsOn.IsActing();
+  return _behaviorToCallActionsOn.IsControlDelegated();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,13 +131,13 @@ void IHelper::Stop(bool isActive)
   PRINT_CH_INFO("BehaviorHelpers", "IHelper.Stop", "%s isActive=%d, IsActing=%d",
                 GetName().c_str(),
                 isActive,
-                IsActing());
+                IsControlDelegated());
 
   LogStopEvent(isActive);
   
   // assumption: if the behavior is acting, and we are active, then we must have started the action, so we
   // should stop it
-  if( isActive && IsActing() ) {
+  if( isActive && _behaviorToCallActionsOn.IsActing() ) {
     const bool allowCallback = false;
     const bool keepHelpers = true; // to avoid infinite loops of Stop
     _behaviorToCallActionsOn.StopActing(allowCallback, keepHelpers);

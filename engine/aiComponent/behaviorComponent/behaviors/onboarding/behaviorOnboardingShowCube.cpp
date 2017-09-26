@@ -227,7 +227,7 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& eve
 // This behavior is killed by unity switching to none
 IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if( !IsActing() && !IsSequenceComplete() )
+  if( !IsControlDelegated() && !IsSequenceComplete() )
   {
     float timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s();
     if( timeRunning > _maxTimeBeforeTimeout_Sec )

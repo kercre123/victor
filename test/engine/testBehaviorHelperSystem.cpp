@@ -101,7 +101,7 @@ public:
     }
 
     if( _nextActionToRun ) {
-      if( IsActing() ) {
+      if( IsControlDelegated() ) {
         printf("TestBehaviorWithHelpers: canceling previous action to start new one\n");
         StopActing();
       }
@@ -113,7 +113,7 @@ public:
     
     switch(_updateResult) {
       case UpdateResult::UseBaseClass: {
-        printf("TestBehaviorWithHelpers.Update UseBaseClass: IsActing:%d\n", IsActing());
+        printf("TestBehaviorWithHelpers.Update UseBaseClass: IsActing:%d\n", IsControlDelegated());
         return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
       }
       case UpdateResult::Running: {
@@ -223,12 +223,12 @@ public:
 
     printf("%s: Update. IsActing:%d, _delegateAfter:%d\n",
            _name.c_str(),
-           IsActing(),
+           IsControlDelegated(),
            _delegateAfterAction);
 
     CheckActions();
     
-    if( !IsActing() && _delegateAfterAction ) {
+    if( !IsControlDelegated() && _delegateAfterAction ) {
       _delegateAfterAction = false;
       _subHelperRaw = new TestHelper(behaviorExternalInterface, _behavior, _name + "_child");
       _subHelperRaw->StartAutoAction(behaviorExternalInterface);

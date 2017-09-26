@@ -750,7 +750,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
       _blockPickedUpReceived = false;
     }
     
-    if (IsActing()) {
+    if (IsControlDelegated()) {
       return Status::Running;
     }
 
@@ -1820,7 +1820,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   {
     std::string name = EnumToString(_currentState);
         
-    if( IsActing() ) {
+    if( IsControlDelegated() ) {
       name += '*';
     }
     else {

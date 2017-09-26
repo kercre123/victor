@@ -1324,7 +1324,7 @@ void BehaviorEnrollFace::HandleWhileRunning(const EngineToGameEvent& event, Beha
     case EngineToGameTag::RobotOffTreadsStateChanged:
     case EngineToGameTag::CliffEvent:
     {
-      if(IsActing())
+      if(IsControlDelegated())
       {
         if(State::LookingForFace == _state)
         {

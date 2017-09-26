@@ -96,7 +96,7 @@ protected:
   BehaviorStatus OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface);
   BehaviorStatus OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface);
   
-  bool IsActing();
+  bool IsControlDelegated();
   
   // Helper is being stopped externally
   void Stop(bool isActive);
@@ -184,7 +184,7 @@ protected:
   BehaviorStatus _status;
   
 private:
-
+  friend class DelegationComponent;
   void LogStopEvent(bool isActive);
   
   std::string _name;

@@ -33,6 +33,8 @@ public:
   IBSRunnable(const std::string& idString);
   virtual ~IBSRunnable(){};
   
+  const std::string& GetPrintableID(){ return _idString;}
+  
   // Function that allows the behavior to initialize variables/subscribe
   // through the behaviorExternalInterface
   void Init(BehaviorExternalInterface& behaviorExternalInterface);

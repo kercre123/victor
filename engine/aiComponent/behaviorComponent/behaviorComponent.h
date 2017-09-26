@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <memory>
 
-#define USE_BSM 1
+#define USE_BSM 0
 
 
 namespace Anki {
@@ -53,22 +53,6 @@ public:
               std::string& behaviorDebugStr);
   
   void OnRobotDelocalized();
-  
-  /**
-  inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
-  { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
-  inline BehaviorEventAnimResponseDirector&       GetBehaviorEventAnimResponseDirector()
-  { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
-  
-  inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
-  inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
-  
-  inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
-  inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
-  
-  // For test only
-  inline BehaviorContainer& GetBehaviorContainer() { return *_behaviorContainer; }
-  **/
   
   inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
            { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }

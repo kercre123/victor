@@ -81,7 +81,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
   
   bool BehaviorFactoryCentroidExtractor::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
   {
-    return !IsActing() && !_waitingForDots;
+    return !IsControlDelegated() && !_waitingForDots;
   }
 
   Result BehaviorFactoryCentroidExtractor::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)

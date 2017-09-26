@@ -234,7 +234,7 @@ namespace Anki {
         SetCurrStateAndFlashLights(State::ManualReset, robot);
       }
       
-      if(IsActing())
+      if(IsControlDelegated())
       {
         return Status::Running;
       }
@@ -862,7 +862,7 @@ namespace Anki {
         name += "FromFailure";
       }
       
-      if( IsActing() ) {
+      if( IsControlDelegated() ) {
         name += '*';
       }
       else {

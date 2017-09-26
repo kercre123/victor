@@ -207,7 +207,7 @@ Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExtern
                 &BehaviorRequestGameSimple::TransitionToLookingAtFace);
   }else if( GetNumBlocks(behaviorExternalInterface) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
-    if( ! IsActing() ) {
+    if( ! IsControlDelegated() ) {
       // skip the block stuff and go right to the face
       TransitionToLookingAtFace(behaviorExternalInterface);
     }
@@ -219,7 +219,7 @@ Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExtern
     _activeConfig = &_oneBlockConfig;
     if(robot.GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToFace(behaviorExternalInterface);
-    }else if( ! IsActing() ) {
+    }else if( ! IsControlDelegated() ) {
       TransitionToPlayingInitialAnimation(behaviorExternalInterface);
     }
   }
@@ -252,7 +252,7 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Behavior
     TransitionToPlayingDenyAnim(behaviorExternalInterface);
   }
 
-  if( IsActing() ) {
+  if( IsControlDelegated() ) {
     return Status::Running;
   }
   
@@ -313,7 +313,7 @@ float BehaviorRequestGameSimple::EvaluateScoreInternal(BehaviorExternalInterface
 float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // if we have requested, and are past the timeout, then we don't want to keep running
-  if( IsActing() ) {
+  if( IsControlDelegated() ) {
     // while we are doing things, we really don't want to be interrupted
     return 1.5f;
   }

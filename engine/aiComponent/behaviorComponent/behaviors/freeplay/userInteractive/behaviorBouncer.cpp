@@ -251,7 +251,7 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
             AnimationTriggerToString(animationTrigger), EnumToString(nextState));
   
   // This should never be called when action is already in progress
-  DEV_ASSERT(!IsActing(), "BehaviorBouncer.StartAnimation.ShouldNotBeActing");
+  DEV_ASSERT(!IsControlDelegated(), "BehaviorBouncer.StartAnimation.ShouldNotBeActing");
     
   auto callback = [this, nextState] {
     LOG_TRACE("BehaviorBouncer.StartAnimation.Callback", "Finish animation %s, nextState %s",
@@ -266,7 +266,7 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
   StartActing(action, callback);
   
   // StartActing shouldn't fail
-  DEV_ASSERT(IsActing(), "BehaviorBouncer.StartAnimation.ShouldBeActing");
+  DEV_ASSERT(IsControlDelegated(), "BehaviorBouncer.StartAnimation.ShouldBeActing");
 }
 
 
@@ -467,7 +467,7 @@ void BehaviorBouncer::UpdateSound(BehaviorExternalInterface& behaviorExternalInt
   // Do we need to play a bounce sound?
   bool playBounceSound = false;
   
-  if (!IsActing()) {
+  if (!IsControlDelegated()) {
     if (_ballHitFloor) {
       playBounceSound = true;
       _ballHitFloor = false;
@@ -487,7 +487,7 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
   LOG_TRACE("BehaviorBouncer.UpdateInternal", "paddleX=%.2f ballX=%.2f ballY=%.2f", _paddlePosX, _ballPosX, _ballPosY);
   
   // Do we need to draw a new face?
-  if (!IsActing()) {
+  if (!IsControlDelegated()) {
     
     // Init background
     Vision::Image image(_displayHeight_px, _displayWidth_px, NamedColors::BLACK);
@@ -558,28 +558,28 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     }
     case BouncerState::GetIn:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerGetIn, BouncerState::IdeaToPlay);
       }
       break;
     }
     case BouncerState::IdeaToPlay:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerIdeaToPlay, BouncerState::RequestToPlay);
       }
       break;
     }
     case BouncerState::RequestToPlay:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerRequestToPlay, BouncerState::WaitToPlay);
       }
       break;
     }
     case BouncerState::WaitToPlay:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerWait, BouncerState::Play);
       }
       break;
@@ -595,14 +595,14 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     }
     case BouncerState::Timeout:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerTimeout, BouncerState::ShowScore);
       }
       break;
     }
     case BouncerState::ShowScore:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         // TO DO: Choose between BouncerIntoScore1, BouncerIntoScore2, BouncerIntoScore3
         StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerIntoScore1, BouncerState::GetOut);
       }
@@ -610,14 +610,14 @@ BehaviorStatus BehaviorBouncer::UpdateInternal_WhileRunning(BehaviorExternalInte
     }
     case BouncerState::GetOut:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         StartAnimation(behaviorExternalInterface, AnimationTrigger::BouncerGetOut, BouncerState::Complete);
       }
       break;
     }
     case BouncerState::Complete:
     {
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         LOG_TRACE("BehaviorBouncer.Update.Complete", "Behavior complete");
         return BehaviorStatus::Complete;
       }

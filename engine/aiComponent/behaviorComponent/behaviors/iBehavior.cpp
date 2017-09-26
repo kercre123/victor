@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "engine/components/cubeLightComponent.h"
@@ -195,6 +196,7 @@ IBehavior::IBehavior(const Json::Value& config)
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _startedRunningTime_s(0.0f)
+, _lastTickWhenControlWasDelegated(0)
 , _wantsToRunStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
@@ -523,11 +525,26 @@ Result IBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterface, R
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(IsActing()){
+    _lastTickWhenControlWasDelegated = BaseStationTimer::getInstance()->GetTickCount();
+  }else{
+    if(_stopRequestedAfterAction) {
+      // we've been asked to stop, don't bother ticking update
+      return Status::Complete;
+    }
 
-  if(_stopRequestedAfterAction && !IsActing()) {
-    // we've been asked to stop, don't bother ticking update
-    return Status::Complete;
+    if(WasControlDelegatedLastTick()){
+      
+      ScoredActingStateChanged(false);
+      
+      if( IsRunning() && _actingCallback) {
+        _actingCallback(_lastCompletedMsgCopy);
+        _actingCallback = nullptr;
+      }
+    }
   }
+  
+
   
   DEV_ASSERT(IsRunning(), "IBehavior::UpdateNotRunning");  
   return UpdateInternal_WhileRunning(behaviorExternalInterface);
@@ -735,7 +752,7 @@ void IBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status IBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if( IsActing() ) {  
+  if( IsControlDelegated() ) {  
     return Status::Running;
   }
 
@@ -768,11 +785,42 @@ Result IBehavior::ResumeInternal(BehaviorExternalInterface& behaviorExternalInte
   }
   return resumeResult;
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::IsControlDelegated() const
+{
+  return _behaviorExternalInterface->GetDelegationComponent().IsControlDelegated(this);
+}
   
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::IsActing() const
+{
+  return _behaviorExternalInterface->GetDelegationComponent().IsActing(this);
+}
+
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::WasControlDelegatedLastTick()
+{
+  return _lastTickWhenControlWasDelegated == (BaseStationTimer::getInstance()->GetTickCount() - 1);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback callback)
 {
+  auto delegateWrapper = _behaviorExternalInterface->GetDelegationComponent().GetDelegateWrapper(this).lock();
+  if(delegateWrapper == nullptr){
+    PRINT_NAMED_ERROR("IBehavior.StartActing.Illegal start acting attempt",
+                      "Behavior %s attempted to start action while it did not have control of delegation",
+                      GetIDStr().c_str());
+    delete action;
+    return false;
+  }
+  
+  
   // needed for StopOnNextActionComplete to work properly, don't allow starting new actions if we've requested
   // the behavior to stop
   if( _stopRequestedAfterAction ) {
@@ -798,23 +846,10 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   }
 
   _actingCallback = callback;
-  _lastActionTag = action->GetTag();
   
   ScoredActingStateChanged(true);
-
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = _behaviorExternalInterface->GetRobot();
-  Result result = robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
-  if (RESULT_OK != result) {
-    PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotQueued",
-                        "Behavior '%s' can't queue action '%s' (error %d)",
-                        GetIDStr().c_str(), action->GetName().c_str(), result);
-    delete action;
-    return false;
-  }
-
-  return true;
+  
+  return delegateWrapper->Delegate(this, action);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -860,15 +895,12 @@ bool IBehavior::StartActing(IActionRunner* action, SimpleCallbackWithRobot callb
   return StartActing(action, [this, callback = std::move(callback)](ActionResult ret){ callback(*_behaviorExternalInterface); });
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
 {
-  if( IsActing() && msg.idTag == _lastActionTag ) {
-    _lastActionTag = ActionConstants::INVALID_TAG;
-    ScoredActingStateChanged(false);
-
-    if( IsRunning() && _actingCallback) {
-      _actingCallback(msg);
-    }
+  if( IsControlDelegated()) {
+    _lastCompletedMsgCopy = msg;
   }
 }
 
@@ -888,34 +920,12 @@ bool IBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
     StopHelperWithoutCallback();
   }    
   
-  if( IsActing() ) {
-    u32 tagToCancel = _lastActionTag;
-      
-    if( ! allowCallback ) {
-      // if we want to block the callback, clear the tag here, before the cancel
-      _lastActionTag = ActionConstants::INVALID_TAG;
+  if( IsControlDelegated() ) {
+    if(!allowCallback){
+      _actingCallback = nullptr;
     }
     
-    bool ret = false;
-    {
-      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-      // be removed
-      Robot& robot = _behaviorExternalInterface->GetRobot();
-      // NOTE: if we are allowing callbacks, this cancel could run a bunch of behavior code
-      ret = robot.GetActionList().Cancel( tagToCancel );
-    }
-
-
-    // note that the callback, if there was one (and it was allowed to run), should have already been called
-    // at this point, so it's safe to clear the tag. Also, if the cancel itself failed, that is probably a
-    // bug, but somehow the action is gone, so no sense keeping the tag around (and it clearly isn't
-    // running). If the callback called StartActing, we may have a new action tag, so only clear this if the
-    // cancel didn't change it
-    if( _lastActionTag == tagToCancel ) {
-      _lastActionTag = ActionConstants::INVALID_TAG;
-    }
-    
-    return ret;
+    return _behaviorExternalInterface->GetDelegationComponent().CancelDelegates(this);
   }
 
   return false;
@@ -1134,11 +1144,33 @@ bool IBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExterna
                        "Attempted to start a handler while handle already running, stopping running helper");
    StopHelperWithoutCallback();
   }
-  const bool delegateSuccess = behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().
-                                     DelegateToHelper(behaviorExternalInterface,
-                                                      handleToRun,
-                                                      successCallback,
-                                                      failureCallback);
+  
+  auto delegateWrapper = behaviorExternalInterface.GetDelegationComponent().GetDelegateWrapper(this).lock();
+  
+  if(delegateWrapper == nullptr){
+    PRINT_NAMED_ERROR("IBehavior.SmartDelegateToHelper.NotInControl",
+                      "Behavior %s attempted to delegate while not in control",
+                      GetIDStr().c_str());
+    return false;
+  }
+  
+  
+  // A bit of a hack while BSM is still under construction - essentially IsControlDelegated
+  // is now overloaded for both helpers and actions, but StartActing needs to be able
+  // to distinguish the same IsActing used to indicate only actions - assigning
+  // this tmp handle indicates to behaviors that they've "delegated" and should allow
+  // helpers to queue actions - but if the delegation fails this tmp handle will fall
+  // out of scope as soon as this function ends so that _currentHelperHandle becomes
+  // invalid again
+  HelperHandle tmpHandle = _robot->GetAIComponent().GetBehaviorHelperComponent().
+                                        GetBehaviorHelperFactory().CreatePlaceBlockHelper(*_behaviorExternalInterface, *this);
+  _currentHelperHandle = tmpHandle;
+  
+  const bool delegateSuccess = delegateWrapper->Delegate(this,
+                                                         behaviorExternalInterface,
+                                                         handleToRun,
+                                                         successCallback,
+                                                         failureCallback);
 
   if( delegateSuccess ) {
     _currentHelperHandle = handleToRun;
@@ -1177,8 +1209,8 @@ bool IBehavior::StopHelperWithoutCallback()
   if( handle ) {
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartStopHelper").c_str(),
                   "Behavior stopping its helper");
-
-    handleStopped = _behaviorExternalInterface->GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(handle);
+    
+    handleStopped = _behaviorExternalInterface->GetDelegationComponent().CancelDelegates(this);
   }
   
   return handleStopped;
@@ -1345,7 +1377,7 @@ void IBehavior::HandleBehaviorObjective(const ExternalInterface::BehaviorObjecti
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::IncreaseScoreWhileActing(float extraScore)
 {
-  if( IsActing() ) {
+  if( IsControlDelegated() ) {
     _extraRunningScore += extraScore;
   }
 }

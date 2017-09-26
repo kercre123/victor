@@ -74,7 +74,7 @@ bool BehaviorPutDownBlock::WantsToBeActivatedBehavior(BehaviorExternalInterface&
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
-  return robot.GetCarryingComponent().IsCarryingObject() || IsActing();
+  return robot.GetCarryingComponent().IsCarryingObject() || IsControlDelegated();
 }
 
 

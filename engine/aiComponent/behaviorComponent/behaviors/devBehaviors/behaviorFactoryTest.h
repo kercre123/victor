@@ -126,8 +126,8 @@ namespace Cozmo {
     bool                  _eraseBirthCertificate;
  
     // Map of action tags that have been commanded to callback functions
-    std::map<u32, std::string> _animActionTags;
-    ActionResultCallback       _actionResultCallback;
+    std::map<u32, std::string>   _animActionTags;
+    BehaviorActionResultCallback _actionResultCallback;
 
     // ID of block to pickup
     ObjectID _blockObjectID;

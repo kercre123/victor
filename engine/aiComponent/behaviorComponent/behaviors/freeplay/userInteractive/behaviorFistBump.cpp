@@ -158,7 +158,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
     }
     default:
     {
-      if (IsActing()) {
+      if (IsControlDelegated()) {
         return Status::Running;
       }
     }
@@ -284,7 +284,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
       }
       
       // When idle anim is complete, retry or fail
-      if (!IsActing()) {
+      if (!IsControlDelegated()) {
         robot.GetMoveComponent().EnableLiftPower(true);
         robot.GetMoveComponent().EnableHeadPower(true);
         if (++_fistBumpRequestCnt < kMaxNumAttempts) {

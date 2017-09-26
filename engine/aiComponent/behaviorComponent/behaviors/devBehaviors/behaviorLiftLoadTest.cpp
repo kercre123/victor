@@ -151,7 +151,7 @@ namespace Anki {
         return Status::Complete;
       }
       
-      if(IsActing())
+      if(IsControlDelegated())
       {
         return Status::Running;
       }
@@ -255,7 +255,7 @@ namespace Anki {
       
       name += std::to_string(_numLiftRaises);
       
-      if( IsActing() ) {
+      if( IsControlDelegated() ) {
         name += '*';
       }
       else {

@@ -76,7 +76,7 @@ namespace Anki {
       
         void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
       
-        bool IsActing() const {return !_actionCallbackMap.empty(); }
+        bool IsControlDelegated() const {return !_actionCallbackMap.empty(); }
       
         // Records this attempt and sets state to reset
         void EndAttempt(Robot& robot, ActionResult result, std::string name, bool endingFromFailedAction = false);

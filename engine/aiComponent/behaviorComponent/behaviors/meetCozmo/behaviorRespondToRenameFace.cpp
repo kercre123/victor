@@ -105,7 +105,7 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorRespondToRenameFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(!IsActing())
+  if(!IsControlDelegated())
   {
     return Status::Complete;
   }

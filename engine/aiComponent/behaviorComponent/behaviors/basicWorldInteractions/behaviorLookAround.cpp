@@ -356,7 +356,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExtern
   robot.GetContext()->GetVizManager()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
 
-  if( IsActing() ) {
+  if( IsControlDelegated() ) {
     return Status::Running;
   }
   
