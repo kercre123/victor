@@ -21,6 +21,7 @@ typedef enum SpineErr_t {
   err_BAD_ARGUMENT,
   err_ALREADY_OPEN,
   err_FILE_READ_ERROR,
+  err_SERIAL_TIMEOUT,
 } SpineErr;
 
 

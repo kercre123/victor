@@ -44,7 +44,7 @@ static struct HalGlobals {
   int errcount;
 } gHal;
 
-
+#define CONSOLE_DEBUG_PRINTF
 /************* Error Handling *****************/
 #define spine_error(code, fmt, args...)   (LOGE( fmt, ##args)?(code):(code))
 #ifdef CONSOLE_DEBUG_PRINTF
@@ -53,7 +53,7 @@ static struct HalGlobals {
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
 #endif
 
-#define EXTENDED_SPINE_DEBUG 0
+#define EXTENDED_SPINE_DEBUG 1
 #if EXTENDED_SPINE_DEBUG
 #define spine_debug_x spine_debug
 #else
@@ -64,7 +64,7 @@ static struct HalGlobals {
 
 static void hal_serial_close()
 {
-  LOGD("close(fd = %d)", gHal.fd);
+  spine_debug("close(fd = %d)", gHal.fd);
   //TODO: restore?:  tcsetattr(gHal.fd, TCSANOW, &gHal.oldcfg))
   close(gHal.fd);
   gHal.fd = 0;
@@ -101,7 +101,7 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 
     cfg.c_cflag |= (CS8 | CSTOPB);    // Use N82 bit words
 
-    LOGD("configuring port %s (fd=%d)", devicename, gHal.fd);
+    spine_debug("configuring port %s (fd=%d)", devicename, gHal.fd);
 
     if (tcsetattr(gHal.fd, TCSANOW, &cfg)) {
       hal_serial_close();
@@ -113,17 +113,18 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 }
 
 
+#define SERIAL_WAIT_USEC 200  //200 usec
+
 int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
 {
 
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
     if (errno == EAGAIN) { //nonblocking no-data
-      usleep(1000); //wait a msec.
+      usleep(SERIAL_WAIT_USEC); //wait a msec.
       result = 0; //not an error
     }
   }
-  int i;
   return result;
 }
 
@@ -209,7 +210,7 @@ static int spine_sync(const uint8_t* buf, unsigned int idx)
     struct SpineMessageHeader* candidate = (struct SpineMessageHeader*)buf;
     int expected_len = get_payload_len(candidate->payload_type, dir_READ);
     if (expected_len < 0 || (expected_len != candidate->bytes_to_follow)) {
-      LOGE("spine_header %x %x %x : %d", candidate->sync_bytes,
+       spine_error(err_INVALID_FRAME_LEN, "spine_header %x %x %x : %d", candidate->sync_bytes,
            candidate->payload_type,
            candidate->bytes_to_follow,
            expected_len);
@@ -260,9 +261,12 @@ const struct SpineMessageHeader* hal_read_frame()
       index = spine_sync(gHal.inbuffer, index);
     }
     else if (rslt < 0) {
-      if ((gHal.errcount++ & 0x3FF) == 0) { //TODO: at somepoint maybe we handle this?
-        LOGI("spine_read_error %d", rslt);
-      }
+       spine_error(err_FILE_READ_ERROR, "spine_read_error %d", rslt);    //TODO: at somepoint maybe we handle thi?s
+    }
+    else {
+       if ((gHal.errcount++ & 0x3F) == 0) {
+          spine_debug("spine waiting for data");
+       }
     }
   } //endwhile
 
@@ -321,11 +325,12 @@ const struct SpineMessageHeader* hal_read_frame()
 
 const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
+   timeout_ms *= 1000/SERIAL_WAIT_USEC; //convert ms to sus 
   const struct SpineMessageHeader* hdr;
   do {
     hdr = hal_read_frame();
     if (timeout_ms>0 && --timeout_ms==0) {
-      LOGE("TIMEOUT in hal_get_frame() TIMEOUT");
+       spine_error(err_SERIAL_TIMEOUT, "TIMEOUT in hal_get_frame() TIMEOUT");
       return NULL;
     }
   }
