@@ -105,7 +105,7 @@ namespace Cozmo.Notifications {
                                               notificationMessage.persist));
     }
 
-    public void CancelAllNotifications() {
+    private void CancelAllNotifications() {
       if (UTNotifications.Manager.Instance.IsInitialized()) {
         UTNotifications.Manager.Instance.CancelAllNotifications();
       }
