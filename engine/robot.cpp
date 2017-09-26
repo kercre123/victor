@@ -1180,6 +1180,8 @@ void Robot::SetPhysicalRobot(bool isPhysical)
     Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
   }
   #endif // !(ANKI_PLATFORM_IOS || ANKI_PLATFORM_ANDROID)
+
+  _visionComponent->SetPhysicalRobot(_isPhysical);
 }
 
 Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const
@@ -1701,7 +1703,7 @@ void Robot::SetPose(const Pose3d &newPose)
       
 } // SetPose()
     
-Pose3d Robot::GetCameraPose(f32 atAngle) const
+Pose3d Robot::GetCameraPose(const f32 atAngle) const
 {
   // Start with canonical (untilted) headPose
   Pose3d newHeadPose(_headCamPose);
@@ -1712,7 +1714,7 @@ Pose3d Robot::GetCameraPose(f32 atAngle) const
   newHeadPose.SetName("Camera");
 
   return newHeadPose;
-} // GetCameraHeadPose()
+} // GetCameraPose()
     
 void Robot::SetHeadAngle(const f32& angle)
 {
@@ -2344,7 +2346,7 @@ Result Robot::SetOnRamp(bool t)
       
   return RESULT_OK;
       
-} // SetOnPose()
+} // SetOnRamp()
     
     
 Result Robot::SetPoseOnCharger()
@@ -2379,7 +2381,7 @@ Result Robot::SetPoseOnCharger()
       
   return RESULT_OK;
       
-} // SetOnPose()
+} // SetPoseOnCharger()
   
 // ============ Messaging ================
     
@@ -2590,7 +2592,7 @@ Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) cons
       
   return boundingQuad;
       
-} // GetBoundingBoxXY()
+} // GetBoundingQuadXY()
     
 f32 Robot::GetHeight() const
 {
@@ -2602,19 +2604,19 @@ f32 Robot::GetLiftHeight() const
   return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
 }
     
-Transform3d Robot::GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
+Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const
 {
   Pose3d liftPose(_liftPose);
   ComputeLiftPose(atLiftAngle, liftPose);
-      
+
   Pose3d camPose = GetCameraPose(atHeadAngle);
-      
+
   Pose3d liftPoseWrtCam;
   const bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
-  
+
   DEV_ASSERT(result, "Robot.GetLiftTransformWrtCamera.LiftWrtCamPoseFailed");
 # pragma unused(result)
-  
+
   return liftPoseWrtCam.GetTransform();
 }
     

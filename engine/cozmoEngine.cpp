@@ -246,6 +246,18 @@ Result CozmoEngine::Init(const Json::Value& config) {
 #else
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "1");
 #endif
+
+#if defined(DEBUG)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "DEBUG");
+#elif defined(RELEASE)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "RELEASE");
+#elif defined(PROFILE)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "PROFILE");
+#elif defined(SHIPPING)
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "SHIPPING");
+#else
+  PRINT_NAMED_INFO("CozmoEngine.Init.BuildConfiguration", "UNKNOWN build configuration");
+#endif
   
   _isInitialized = true;
 

@@ -400,42 +400,54 @@ namespace Anki {
           // as bad as trying to choose between two poses with mismatched origins (like above).
           return RESULT_FAIL_ORIGIN_MISMATCH;
         }
-        
-        // Get the pose transform between the two poses.
-        Pose3d pTransform;
-        const bool inSameOrigin = it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform);
-        if(!inSameOrigin)
-        {
-          PRINT_NAMED_INFO("RobotStateHistory.GetRawStateAt.MisMatchedOrigins",
-                            "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
-                           t_request,
-                           prev_it->second.GetPose().FindRoot().GetName().c_str(),
-                           it->second.GetPose().FindRoot().GetName().c_str());
-          
-          // they asked us for a t_request that is between two origins. We can't interpolate or decide which origin is
-          // "right" for you, so, we are going to fail
-          return RESULT_FAIL_ORIGIN_MISMATCH;
-        }
-        
+
+        bool inSameOrigin;
         if(withInterpolation)
         {
-          // Compute scale factor between time to previous pose and time between previous pose and next pose.
-          const f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
-          
-          state = HistRobotState::Interpolate(prev_it->second, it->second, pTransform, timeScale);
-          
-          t = t_request;
+          // Get the pose transform between the two poses.
+          // We don't need to check return value (bool) here because we've effectively
+          // checked it already in the call to HasSameRootAs above
+          Pose3d pTransform;
+          inSameOrigin = it->second.GetPose().GetWithRespectTo(prev_it->second.GetPose(), pTransform);
+
+          if (inSameOrigin)
+          {
+            // Compute scale factor between time to previous pose and time between previous pose and next pose.
+            const f32 timeScale = (f32)(t_request - prev_it->first) / (it->first - prev_it->first);
+
+            state = HistRobotState::Interpolate(prev_it->second, it->second, pTransform, timeScale);
+
+            t = t_request;
+          }
         }
         else
         {
-          // Return the pose closest to the requested time
-          if (it->first - t_request < t_request - prev_it->first) {
-            t = it->first;
-            state = it->second;
-          } else {
-            t = prev_it->first;
-            state = prev_it->second;
+          inSameOrigin = it->second.GetPose().HasSameRootAs(prev_it->second.GetPose());
+          
+          if (inSameOrigin)
+          {
+            // Return the pose closest to the requested time
+            if (it->first - t_request < t_request - prev_it->first) {
+              t = it->first;
+              state = it->second;
+            } else {
+              t = prev_it->first;
+              state = prev_it->second;
+            }
           }
+        }
+
+        if(!inSameOrigin)
+        {
+          PRINT_NAMED_INFO("RobotStateHistory.GetRawStateAt.MisMatchedOrigins",
+                           "Cannot interpolate at t=%u as requested because the two poses don't share the same origin: prev=%s vs next=%s",
+                           t_request,
+                           prev_it->second.GetPose().FindRoot().GetName().c_str(),
+                           it->second.GetPose().FindRoot().GetName().c_str());
+
+          // they asked us for a t_request that is between two origins. We can't interpolate or decide which origin is
+          // "right" for you, so, we are going to fail
+          return RESULT_FAIL_ORIGIN_MISMATCH;
         }
       }
       

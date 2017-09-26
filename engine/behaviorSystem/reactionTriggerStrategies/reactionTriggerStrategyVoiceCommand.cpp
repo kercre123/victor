@@ -124,8 +124,7 @@ Vision::FaceID_t ReactionTriggerStrategyVoiceCommand::GetDesiredFace(const Robot
   {
     // If we don't know where this face is right now, continue on
     const auto* face = robot.GetFaceWorld().GetFace(faceID);
-    Pose3d pose;
-    if(nullptr == face || !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), pose))
+    if(nullptr == face || !face->GetHeadPose().HasSameRootAs(robot.GetPose()))
     {
       continue;
     }

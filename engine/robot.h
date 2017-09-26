@@ -243,7 +243,7 @@ public:
     assert(_progressionUnlockComponent);
     return *_progressionUnlockComponent;
   }
-  //InventoryComponent
+
   inline const InventoryComponent& GetInventoryComponent() const {
     assert(_inventoryComponent);
     return *_inventoryComponent;
@@ -412,8 +412,8 @@ public:
   const Pose3d&       GetWorldOrigin()  const;
   PoseOriginID_t      GetWorldOriginID()const;
   
-  Pose3d              GetCameraPose(f32 atAngle) const;
-  Transform3d         GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+  Pose3d              GetCameraPose(const f32 atAngle) const;
+  Transform3d         GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const;
 
   OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
