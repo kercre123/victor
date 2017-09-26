@@ -37,7 +37,7 @@ Result BehaviorPlaypenDriveForwards::InternalInitInternal(Robot& robot)
   // Drive fowards some amount until front cliffs trigger, while cause the action to fail with
   // CANCELLED_WHILE_RUNNING
   MoveHeadToAngleAction* headToZero = new MoveHeadToAngleAction(robot, 0);
-  MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
+  MoveLiftToHeightAction* liftDown = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK + 10);
   DriveStraightAction* driveForwards = new DriveStraightAction(robot,
                                                                PlaypenConfig::kDistanceToTriggerFrontCliffs_mm,
                                                                PlaypenConfig::kCliffSpeed_mmps);
@@ -144,9 +144,13 @@ void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffs(Robot& robot
 void BehaviorPlaypenDriveForwards::TransitionToWaitingForBackCliffUndetected(Robot& robot)
 {
   // Drive forwards completely over the cliff section of playpen
-  DriveStraightAction* action = new DriveStraightAction(robot, PlaypenConfig::kDistanceToDriveOverCliff_mm);
-  action->SetShouldPlayAnimation(false);
-  action->SetMotionProfile(DEFAULT_PATH_MOTION_PROFILE);
+  DriveStraightAction* driveAction = new DriveStraightAction(robot, PlaypenConfig::kDistanceToDriveOverCliff_mm);
+  driveAction->SetShouldPlayAnimation(false);
+  driveAction->SetMotionProfile(DEFAULT_PATH_MOTION_PROFILE);
+  
+  MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
+  
+  CompoundActionParallel* action = new CompoundActionParallel(robot, {driveAction, liftAction});
   
   StartActing(action, [this, &robot]() {
     AddTimer(PlaypenConfig::kTimeToWaitForCliffEvent_ms, [this, &robot]() {

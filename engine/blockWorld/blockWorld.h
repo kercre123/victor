@@ -269,7 +269,6 @@ namespace Anki
                                                                  f32 zTolerance,
                                                                  const BlockWorldFilter& filterIn = BlockWorldFilter());
       
-      
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // BoundingBoxes
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

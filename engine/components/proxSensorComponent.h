@@ -39,6 +39,7 @@ public:
 
   void Update(const RobotState& msg);
   
+  const ProxSensorData& GetLatestProxData() const { return _latestData; }
   u16 GetLatestDistance_mm() const { return _latestData.distance_mm; }
   
   // Start logging raw data from the sensor for the specified duration.

@@ -55,6 +55,7 @@ enum uint_8 BehaviorClass {
   PlayArbitraryAnim,
 
   PlaypenCameraCalibration,
+  PlaypenDistanceSensor,
   PlaypenDriftCheck,
   PlaypenDriveForwards,
   PlaypenInitChecks,
@@ -181,6 +182,8 @@ enum uint_8 BehaviorID {
   PlayArbitraryAnim,
 
   PlaypenCameraCalibration,
+  PlaypenDistanceSensor100mm,
+  PlaypenDistanceSensor300mm,
   PlaypenDriftCheck,
   PlaypenDriveForwards,
   PlaypenEndChecks,

@@ -85,7 +85,7 @@ Result MarkerDetector::Memory::ResetBuffers(s32 numRows, s32 numCols, s32 maxMar
   //  _ccmBuffer.resize(CCM_BUFFER_MULTIPLIER * numPixels);
 
   static const s32 OFFCHIP_BUFFER_SIZE = 4000000;
-  static const s32 ONCHIP_BUFFER_SIZE  = 1300000;
+  static const s32 ONCHIP_BUFFER_SIZE  = 1400000;
   static const s32 CCM_BUFFER_SIZE     = 200000;
 
   _offchipBuffer.resize(OFFCHIP_BUFFER_SIZE);

@@ -408,6 +408,35 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
+  bool FactoryTestLogger::Append(const DistanceSensorData& data)
+  {
+    static u32 count = 0;
+    const std::string name = "DistanceSensor_" + std::to_string(count++);
+    
+    std::stringstream ss;
+    if (_exportJson)
+    {
+      Json::Value& node = _json[name];
+      node["SignalIntensity"] = data.proxSensorData.signalIntensity;
+      node["AmbientIntensity"] = data.proxSensorData.ambientIntensity;
+      node["SpadCount"] = data.proxSensorData.spadCount;
+      node["SensorDistance_mm"] = data.proxSensorData.distance_mm;
+      node["VisualDistance_mm"] = data.distanceToTarget_mm;
+      ss << "[" << name << "]\n" << node;
+    }
+    else
+    {
+      ss << "\n[" << name << "]" << std::fixed
+      << "\nSignalIntensity: " << data.proxSensorData.signalIntensity
+      << "\nAmbientIntensity: " << data.proxSensorData.ambientIntensity
+      << "\nSpadCount: " << data.proxSensorData.spadCount
+      << "\nSensorDistance_mm: " << data.proxSensorData.distance_mm
+      << "\nVisualDistance_mm: " << data.distanceToTarget_mm;
+    }
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.DistanceSensorData", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
   bool FactoryTestLogger::AppendToFile(const std::string& data) {
     
     // If log name was not actually defined yet, do nothing.

@@ -5019,6 +5019,5 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
     FindLocatedObjectHelper(filter, visualizeHelper, false);
     
   } // DrawAllObjects()
-    
 } // namespace Cozmo
 } // namespace Anki

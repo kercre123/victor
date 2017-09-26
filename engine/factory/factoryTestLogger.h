@@ -64,6 +64,7 @@ public:
   bool AppendCalibPose(const PoseData& data);
   bool AppendObservedCubePose(const PoseData& data);
   bool Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg);
+  bool Append(const DistanceSensorData& data);
   
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);

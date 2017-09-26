@@ -79,6 +79,10 @@ static u32 kIMUDriftDetectPeriod_ms = 2000;
 // How much our heading can change over kIMUDriftDetectPeriod_ms
 static f32 kIMUDriftAngleThreshDeg  = 0.2f;
 
+// ----------Distance Sensor----------
+// Number of distance sensor readings to record
+static u32 kNumDistanceSensorReadingsToRecord = 50;
+
 // ----------Camera Calibration----------
 // Exposure setting for playpen
 static u16 kExposure_ms                               = 3;
@@ -128,7 +132,7 @@ static f32 kDistanceToTriggerBackCliffs_mm  = 80;
 
 // Distance to drive forwards to have all cliff sensors on the ground after triggering the
 // back cliff sensors
-static f32 kDistanceToDriveOverCliff_mm     = 30;
+static f32 kDistanceToDriveOverCliff_mm     = 120;
 
 // Speed at which to drive forwards towards cliff
 static f32 kCliffSpeed_mmps                 = 50;

@@ -139,6 +139,8 @@ WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToPlaySound,    "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kIMUDriftDetectPeriod_ms, "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kIMUDriftAngleThreshDeg,  "Playpen");
 
+WRAP_EXTERN_CONSOLE_VAR(u32, kNumDistanceSensorReadingsToRecord, "Playpen");
+
 WRAP_EXTERN_CONSOLE_VAR(u16, kExposure_ms,                               "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kGain,                                      "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kFocalLengthTolerance,                      "Playpen");

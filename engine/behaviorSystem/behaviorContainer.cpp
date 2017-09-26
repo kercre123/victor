@@ -40,6 +40,7 @@
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenCameraCalibration.h"
+#include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDistanceSensor.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriftCheck.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenDriveForwards.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/playpen/behaviorPlaypenEndChecks.h"
@@ -540,6 +541,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::PlaypenMotorCalibration:
     {
       newBehavior = IBehaviorPtr(new BehaviorPlaypenMotorCalibration(robot, config));
+      break;
+    }
+    case BehaviorClass::PlaypenDistanceSensor:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlaypenDistanceSensor(robot, config));
       break;
     }
     case BehaviorClass::PlaypenDriftCheck:

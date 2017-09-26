@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2016
 
 #include "clad/types/birthCertificate.clad"
+#include "clad/types/proxMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -124,6 +125,8 @@ enum uint_8 FactoryTestResultCode {
   CUBE_HEIGHT_TOO_LOW,
   CUBE_HEIGHT_TOO_HIGH,
   DISTORTION_VALUES_OOR,
+  DISTANCE_MARKER_NOT_FOUND,
+  
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
@@ -164,6 +167,11 @@ structure PoseData {
   float_32 transX_mm,
   float_32 transY_mm,
   float_32 transZ_mm,
+}
+
+structure DistanceSensorData {
+  ProxSensorData proxSensorData,
+  float_32       distanceToTarget_mm
 }
 
 
