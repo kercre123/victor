@@ -70,9 +70,8 @@ private:
   // To detect peripheral motion, a simple impulse-decay model is used. The longer motion is detected in a
   // specific area, the higher its activation will be. When it reaches a max value motion is activated in
   // that specific area.
-  Result DetectPeripheralMotion(Vision::Image &ratioImage,
-                                DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
-                                ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier);
+  Result DetectPeripheralMotion(Vision::Image &ratioImage, DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
+                                ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier, bool &motionDetected);
 
   // apply Gaussian blur to the ration image
   template<class ImageType>
