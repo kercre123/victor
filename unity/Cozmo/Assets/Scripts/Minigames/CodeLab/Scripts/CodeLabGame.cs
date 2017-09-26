@@ -385,6 +385,9 @@ namespace CodeLab {
         _SessionState.EndSession();
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
+        // Put cubes back to normal Freeplay behavior
+        robot.SetEnableFreeplayLightStates(true);
+        robot.EnableCubeSleep(false);
       }
 
       InProgressScratchBlockPool.ReleaseAllInUse();
@@ -698,7 +701,7 @@ namespace CodeLab {
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         robot.TurnOffAllLights(true);
         robot.StopAllMotors();
-        robot.EnableCubeSleep(true, true);
+        robot.EnableCubeSleep(true, true);  // Turn off the cube lights
 
         //turn off all cube lights
         for (int i = 0; i < 3; i++) {
@@ -2041,15 +2044,28 @@ namespace CodeLab {
 
       if (!isVertical) {
         _SessionState.StartSession(GrammarMode.Horizontal);
-
         LoadURL(kHorizontalIndexFilename);
       }
       else {
         _SessionState.StartSession(GrammarMode.Vertical);
-
-        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
-
         LoadURL(kVerticalIndexFilename);
+      }
+
+      SetupCubeLights();
+    }
+
+    private void SetupCubeLights() {
+      // Freeplay lights are enabled in Horizontal, but in Vertical we want user to have full control
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+          robot.SetEnableFreeplayLightStates(false);
+          robot.EnableCubeSleep(true, true);
+        }
+        else {
+          robot.SetEnableFreeplayLightStates(true);
+          robot.EnableCubeSleep(false);
+        }
       }
     }
 
@@ -2319,10 +2335,7 @@ namespace CodeLab {
       }
       Invoke("UnhideWebView", delayInSeconds);
 
-      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-        //in Vertical, disable cubes illuminating blue when Cozmo sees them
-        RobotEngineManager.Instance.CurrentRobot.EnableCubeSleep(true, true);
-      }
+      SetupCubeLights();
     }
 
     private String EscapeProjectText(String projectText) {

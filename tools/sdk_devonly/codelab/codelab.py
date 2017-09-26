@@ -626,7 +626,7 @@ class CodeLabInterface():
 
     def load_user_projects(self):
         try:
-            list_of_directories = [dir for dir in os.listdir(PROJECTS_DIR) if not os.path.isfile(dir)]
+            list_of_directories = [dir for dir in os.listdir(PROJECTS_DIR) if os.path.isdir(os.path.join(PROJECTS_DIR, dir))]
         except FileNotFoundError:
             log_text("load_user_projects - no projects directory")
             return
