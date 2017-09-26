@@ -396,6 +396,7 @@ namespace Anki {
     ProxSensorData HAL::GetRawProxData()
     {
       ProxSensorData proxData;
+      proxData.rangeStatus = bodyData_->proximity.rangeStatus;
       proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
       // Signal/Ambient Rate are fixed point 9.7, so convert to float:
       proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
@@ -407,8 +408,8 @@ namespace Anki {
     
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
-      // TODO(agm) ask adam about this
-      return 0;
+      assert(button_id >= 0 && button_id < BUTTON_COUNT);
+      return bodyData_->touchLevel[button_id];
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)

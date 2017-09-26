@@ -156,18 +156,19 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
 
   if (DMA1->ISR & DMA_ISR_HTIF2) {
     decimate(pdm_data[0][0], pdm_data[1][0], index);
+    DMA1->IFCR = DMA_IFCR_CHTIF2;
+    sample_index++;
   }
 
-  else if (DMA1->ISR & DMA_ISR_TCIF2) {
+  if (DMA1->ISR & DMA_ISR_TCIF2) {
     decimate(pdm_data[0][1], pdm_data[1][1], index);
+    DMA1->IFCR = DMA_IFCR_CTCIF2;
+    sample_index++;
   }
 
   // Circular buffer increment
-  if (++sample_index >= IRQS_PER_FRAME * 2) {
+  if (sample_index >= IRQS_PER_FRAME * 2) {
     index = audio_data[0];
     sample_index = 0;
   }
-
-  // Clear DMA1 interrupts
-  DMA1->IFCR = 0x00F0;
 }

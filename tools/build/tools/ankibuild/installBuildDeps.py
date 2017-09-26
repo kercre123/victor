@@ -1,4 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
+# Do not change to python2 as this is used to install python2.
 
 import sys
 import subprocess
@@ -27,24 +28,13 @@ class DependencyInstaller(object):
     return True
 
 
-  def getHomebrew(self):
-    """Install homebrew"""
-    # TODO: Simply installing homebrew an using it is not enough, we need to handle:
-    # - Updating homebrew if necessary
-    # - Checking the versions of the packages that we need
-    # - Making sure to install specific versions
+  def testHomebrew(self):
+    """Test if homebrew is installed.  Installing this directly now requires user input."""
+
     noBrew = subprocess.call(['which', 'brew'], stdout=subprocess.PIPE)
     if noBrew:
-      if self.options.verbose:
-        print "Homebrew not installed!"
-      brewInstallFailed = subprocess.call(['ruby', '-e', "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"])
-      if brewInstallFailed:
-        print "Failed to install Homebrew!"
-        return False
-      noBrew = subprocess.call(['which', 'brew'], stdout=subprocess.PIPE)
-      if noBrew:
-        print "Homebrew still not found after install! (Check your path!)"
-        return False
+       print "Homebrew is not installed.  Goto https://brew.sh "
+       return False
     return True
 
 
@@ -107,7 +97,7 @@ class DependencyInstaller(object):
   def install(self):
     homebrew_deps = self.options.deps
 
-    if not self.getHomebrew():
+    if not self.testHomebrew():
       return False
 
     for tool in homebrew_deps:

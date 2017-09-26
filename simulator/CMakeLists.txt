@@ -282,6 +282,20 @@ target_compile_definitions(webotsCtrlBuildServerTest PRIVATE
 
 symlink_target(TARGET webotsCtrlBuildServerTest DST "${CONTROLLERS_DIR}/webotsCtrlBuildServerTest/")
 
+# Webots Ctrl Hand Emitter
+
+anki_build_cxx_executable(webotsCtrlHandEmitter ${ANKI_SRCLIST_DIR})
+target_include_directories(webotsCtrlHandEmitter
+PRIVATE
+  ${CMAKE_SOURCE_DIR}
+)
+target_link_libraries(webotsCtrlHandEmitter
+PRIVATE
+  ${PLATFORM_LIBS}
+)
+symlink_target(TARGET webotsCtrlHandEmitter DST "${CONTROLLERS_DIR}/webotsCtrlHandEmitter/")
+
+# end -- Webots Controller Hand Emitter
 
 anki_build_cxx_executable(webotsCtrlDevLog ${ANKI_SRCLIST_DIR})
 

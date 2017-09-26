@@ -82,6 +82,7 @@ void Analog::stop(void) {
 void Analog::transmit(BodyToHead* data) {
   data->battery.battery = values[ADC_VBAT];
   data->battery.charger = values[ADC_VEXT];
+  data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
 }
 
 #ifndef BOOTLOADER

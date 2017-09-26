@@ -34,48 +34,6 @@
                 "extension": "tar.gz",
                 "package_name": "Cte",
                 "version": "173"
-            },
-            "firmware": {
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "2265"
-            },
-            "firmware_1299": {
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "1299"
-            },
-            "firmware_1859": {
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "1859"
-            },
-            "firmware_1889": {
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "1889"
-            },
-            "firmware_2158": {
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "2158"
-            },
-            "firmware_2187": {
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "2187"
-            },
-            "old_firmware": {
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "2187"
             }
         },
         "default_usr": "puller_cozmo",
