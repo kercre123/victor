@@ -471,6 +471,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     _lastMotionTime = image.GetTimestamp();
     ExternalInterface::RobotObservedMotion msg;
     msg.timestamp = image.GetTimestamp();
+    bool messageWasAddedToQueue = false;
 
     // Remove noise here before motion detection
     Vision::Image foregroundMotion(image.GetNumRows(), image.GetNumCols());
@@ -480,7 +481,10 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
     const s32 numAboveThresh = ReprocessRatioImage(image, foregroundMotion);
 
     // Run the peripheral motion detection
-    Result peripheralMotionResult = DetectPeripheralMotion(foregroundMotion, debugImageRGBs, msg, scaleMultiplier);
+    bool peripheralMotionDetected = false;
+    Result peripheralMotionResult = DetectPeripheralMotion(foregroundMotion, debugImageRGBs, msg, scaleMultiplier,
+                                                           peripheralMotionDetected);
+
     if (peripheralMotionResult != RESULT_OK) {
       //something went very wrong here, bail out
       return peripheralMotionResult;
@@ -557,6 +561,7 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
       }
       
       observedMotions.emplace_back(std::move(msg));
+      messageWasAddedToQueue = true;
       
       if(DEBUG_MOTION_DETECTION)
       {
@@ -591,6 +596,12 @@ Result MotionDetector::DetectHelper(const ImageType&        image,
         //
         //_currentResult.debugImageRGBs.push_back({"CurrentImg", image});
       }
+    }
+
+    //only peripheral motion
+    if (! messageWasAddedToQueue && peripheralMotionDetected) {
+      //add the message here
+      observedMotions.emplace_back(std::move(msg));
     }
     
     //_prevRatioImg = ratio12;
@@ -752,10 +763,12 @@ s32 MotionDetector::ReprocessRatioImage(const ImageType &image, Vision::Image &f
   return numAboveThresh;
 }
 
-Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage,
-                                              DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
-                                              ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier) {
+Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage, DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
+                                              ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier,
+                                              bool &motionDetected)
+{
 
+  motionDetected = false;
   // The image has several disjoint components, try to join them
   {
     const int kernelSize = int(kMotionDetection_MorphologicalSize_pix / scaleMultiplier);
@@ -795,6 +808,7 @@ Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage,
       msg.top_img_area = value; //not really the area here, but the response value
       msg.top_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.top_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+      motionDetected = true;
     }
     else
     {
@@ -810,6 +824,7 @@ Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage,
       msg.left_img_area = value; //not really the area here, but the response value
       msg.left_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.left_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+      motionDetected = true;
     }
     else
     {
@@ -825,6 +840,7 @@ Result MotionDetector::DetectPeripheralMotion(Vision::Image &ratioImage,
       msg.right_img_area = value; //not really the area here, but the response value
       msg.right_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.right_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
+      motionDetected = true;
     }
     else
     {
