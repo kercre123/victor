@@ -348,6 +348,31 @@ Blockly.Blocks['cozmo_sound_play'] = {
   }
 };
 
+Blockly.Blocks['cozmo_sound_stop'] = {
+  /**
+   * Block to play sound.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%{BKY_STOP_SOUND}", 
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "SOUND_MENU"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.actions,
+      "colour": Blockly.Colours.actions.primary,
+      "colourSecondary": Blockly.Colours.actions.secondary,
+      "colourTertiary": Blockly.Colours.actions.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_cube_motion_select_menu'] = {
   /**
    * Cube ID drop-down menu.

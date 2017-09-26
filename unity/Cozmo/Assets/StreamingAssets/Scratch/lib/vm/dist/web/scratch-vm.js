@@ -18924,6 +18924,7 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_set_cube_light_corner: this.verticalSetCubeLightCorner,
         cozmo_vert_cube_anim: this.verticalCubeAnim,
         cozmo_sound_play: this.verticalPlaySound,
+        cozmo_sound_stop: this.verticalStopSound,
         // Draw (on Cozmo's face)
         cozmo_vert_cozmoface_clear: this.verticalCozmoFaceClear,
         cozmo_vert_cozmoface_display: this.verticalCozmoFaceDisplay,
@@ -19563,7 +19564,12 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function (args, util) {
 
 Scratch3CozmoBlocks.prototype.verticalPlaySound = function (args, util) {
     var soundSelection = Cast.toString(args.SOUND_MENU);
-    window.Unity.call({ requestId: -1, command: "cozVertSoundEffects", argString: soundSelection });
+    window.Unity.call({ requestId: -1, command: "cozVertPlaySoundEffects", argString: soundSelection });
+};
+
+Scratch3CozmoBlocks.prototype.verticalStopSound = function (args, util) {
+    var soundSelection = Cast.toString(args.SOUND_MENU);
+    window.Unity.call({ requestId: -1, command: "cozVertStopSoundEffects", argString: soundSelection });
 };
 
 // Drawing on Cozmo's Face
@@ -27723,7 +27729,7 @@ module.exports = got;
 /* 104 */
 /***/ (function(module, exports) {
 
-module.exports = {"_from":"got@5.7.1","_id":"got@5.7.1","_inBundle":false,"_integrity":"sha1-X4FjWmHkplifGAVp6k44FoClHzU=","_location":"/got","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"got@5.7.1","name":"got","escapedName":"got","rawSpec":"5.7.1","saveSpec":null,"fetchSpec":"5.7.1"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/got/-/got-5.7.1.tgz","_shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","_spec":"got@5.7.1","_where":"/Users/markw/GitRepos/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm","browser":{"unzip-response":false},"bugs":{"url":"https://github.com/sindresorhus/got/issues"},"bundleDependencies":false,"dependencies":{"create-error-class":"^3.0.1","duplexer2":"^0.1.4","is-redirect":"^1.0.0","is-retry-allowed":"^1.0.0","is-stream":"^1.0.0","lowercase-keys":"^1.0.0","node-status-codes":"^1.0.0","object-assign":"^4.0.1","parse-json":"^2.1.0","pinkie-promise":"^2.0.0","read-all-stream":"^3.0.0","readable-stream":"^2.0.5","timed-out":"^3.0.0","unzip-response":"^1.0.2","url-parse-lax":"^1.0.0"},"deprecated":false,"description":"Simplified HTTP/HTTPS requests","devDependencies":{"ava":"^0.16.0","coveralls":"^2.11.4","form-data":"^2.1.1","get-port":"^2.0.0","get-stream":"^2.3.0","into-stream":"^2.0.0","nyc":"^8.1.0","pem":"^1.4.4","pify":"^2.3.0","tempfile":"^1.1.1","xo":"0.16.x"},"engines":{"node":">=0.10.0 <7"},"files":["index.js"],"homepage":"https://github.com/sindresorhus/got#readme","keywords":["http","https","get","got","url","uri","request","util","utility","simple","curl","wget","fetch"],"license":"MIT","maintainers":[{"name":"Sindre Sorhus","email":"sindresorhus@gmail.com","url":"sindresorhus.com"},{"name":"Vsevolod Strukchinsky","email":"floatdrop@gmail.com","url":"github.com/floatdrop"}],"name":"got","repository":{"type":"git","url":"git+https://github.com/sindresorhus/got.git"},"scripts":{"coveralls":"nyc report --reporter=text-lcov | coveralls","test":"xo && nyc ava"},"version":"5.7.1","warnings":[{"code":"ENOTSUP","required":{"node":">=0.10.0 <7"},"pkgid":"got@5.7.1"}],"xo":{"ignores":["test/**"]}}
+module.exports = {"_args":[[{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm"]],"_from":"got@5.7.1","_id":"got@5.7.1","_inCache":true,"_location":"/got","_nodeVersion":"0.10.48","_npmOperationalInternal":{"host":"packages-18-east.internal.npmjs.com","tmp":"tmp/got-5.7.1.tgz_1478113400687_0.6078383799176663"},"_npmUser":{"name":"floatdrop","email":"floatdrop@gmail.com"},"_npmVersion":"2.15.1","_phantomChildren":{},"_requested":{"raw":"got@5.7.1","scope":null,"escapedName":"got","name":"got","rawSpec":"5.7.1","spec":"5.7.1","type":"version"},"_requiredBy":["#DEV:/"],"_resolved":"https://registry.npmjs.org/got/-/got-5.7.1.tgz","_shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","_shrinkwrap":null,"_spec":"got@5.7.1","_where":"/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm","browser":{"unzip-response":false},"bugs":{"url":"https://github.com/sindresorhus/got/issues"},"dependencies":{"create-error-class":"^3.0.1","duplexer2":"^0.1.4","is-redirect":"^1.0.0","is-retry-allowed":"^1.0.0","is-stream":"^1.0.0","lowercase-keys":"^1.0.0","node-status-codes":"^1.0.0","object-assign":"^4.0.1","parse-json":"^2.1.0","pinkie-promise":"^2.0.0","read-all-stream":"^3.0.0","readable-stream":"^2.0.5","timed-out":"^3.0.0","unzip-response":"^1.0.2","url-parse-lax":"^1.0.0"},"description":"Simplified HTTP/HTTPS requests","devDependencies":{"ava":"^0.16.0","coveralls":"^2.11.4","form-data":"^2.1.1","get-port":"^2.0.0","get-stream":"^2.3.0","into-stream":"^2.0.0","nyc":"^8.1.0","pem":"^1.4.4","pify":"^2.3.0","tempfile":"^1.1.1","xo":"0.16.x"},"directories":{},"dist":{"shasum":"5f81635a61e4a6589f180569ea4e381680a51f35","tarball":"https://registry.npmjs.org/got/-/got-5.7.1.tgz"},"engines":{"node":">=0.10.0 <7"},"files":["index.js"],"gitHead":"856b4caf16b02ce28ef0d92e83cf434a50b71e84","homepage":"https://github.com/sindresorhus/got#readme","keywords":["http","https","get","got","url","uri","request","util","utility","simple","curl","wget","fetch"],"license":"MIT","maintainers":[{"name":"sindresorhus","email":"sindresorhus@gmail.com"},{"name":"floatdrop","email":"floatdrop@gmail.com"},{"name":"kevva","email":"kevinmartensson@gmail.com"}],"name":"got","optionalDependencies":{},"readme":"ERROR: No README data found!","repository":{"type":"git","url":"git+https://github.com/sindresorhus/got.git"},"scripts":{"coveralls":"nyc report --reporter=text-lcov | coveralls","test":"xo && nyc ava"},"version":"5.7.1","xo":{"ignores":["test/**"]}}
 
 /***/ }),
 /* 105 */

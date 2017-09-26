@@ -24,6 +24,9 @@
   "codeLabVertical.PLAY_SOUND": {
     "translation": "play sound %1"
   },
+  "codeLabVertical.STOP_SOUND": {
+    "translation": "stop sound %1"
+  },
   "codeLabVertical.DOCK_WITH_CUBE": {
     "translation": "dock with cube"
   },

@@ -143,6 +143,7 @@
         vm.on('workspaceUpdate', function(data) {
             var dom = window.Blockly.Xml.textToDom(data.xml);
             window.Blockly.Xml.domToWorkspace(dom, workspace);
+            Scratch.workspace.clearUndo();
         });
 
         // Run threads
