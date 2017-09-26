@@ -10,11 +10,11 @@ namespace Cozmo {
     [SerializeField]
     private PerfWarningDisplay _PerfWarningHUDPrefab;
     private PerfWarningDisplay _PerfWarningHUDInstance;
-
+#if ANKI_DEV_CHEATS
     public PerfWarningDisplay PerfHUD {
       get { return _PerfWarningHUDInstance; }
     }
-
+#endif
     // These correspond to the 6 QualitySettings.
     [SerializeField]
     private float[] _LowThresholdPercents;
@@ -72,7 +72,9 @@ namespace Cozmo {
     }
     private void Start() {
       // Attach the HUD ( it controls which parts are visible )
+#if ANKI_DEV_CHEATS
       _PerfWarningHUDInstance = GameObject.Instantiate(_PerfWarningHUDPrefab, DebugMenuManager.Instance.DebugOverlayCanvas.transform);
+#endif
     }
 
     private void Update() {

@@ -103,7 +103,9 @@ public class PerformancePane : MonoBehaviour {
   }
 
   private void HandlePerfHUDModeChanged(int value_changed) {
+#if ANKI_DEV_CHEATS
     Cozmo.PerformanceManager.Instance.PerfHUD.SetPerfWarningDisplayState((PerfWarningDisplay.PerfWarningDisplayMode)value_changed);
+#endif
   }
 
   private void InitQualityLevelDropdown() {
