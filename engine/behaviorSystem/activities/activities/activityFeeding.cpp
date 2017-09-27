@@ -716,8 +716,11 @@ void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 void ActivityFeeding::EatingComplete(Robot& robot)
 {
   using CS = FeedingCubeController::ControllerState;
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Deactivated);
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Activated);
+  const auto it = _cubeControllerMap.find(_cubeIDToEat);
+  if( it != _cubeControllerMap.end()){
+    it->second->SetControllerState(robot, CS::Deactivated);
+    it->second->SetControllerState(robot, CS::Activated);
+  }
 }
 
 
@@ -725,8 +728,11 @@ void ActivityFeeding::EatingComplete(Robot& robot)
 void ActivityFeeding::EatingInterrupted(Robot& robot)
 {
   using CS = FeedingCubeController::ControllerState;
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Deactivated);
-  _cubeControllerMap[_cubeIDToEat]->SetControllerState(robot, CS::Activated);
+  const auto it = _cubeControllerMap.find(_cubeIDToEat);
+  if( it != _cubeControllerMap.end()){
+    it->second->SetControllerState(robot, CS::Deactivated);
+    it->second->SetControllerState(robot, CS::Activated);
+  }
 }
 
 
