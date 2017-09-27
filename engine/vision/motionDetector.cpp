@@ -411,8 +411,8 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
 template<class ImageType>
 Result MotionDetector::DetectHelper(const ImageType &image,
                                     s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
-                                    const VisionPoseData &crntPoseData,
-                                    const VisionPoseData &prevPoseData,
+                                    const VisionPoseData& crntPoseData,
+                                    const VisionPoseData& prevPoseData,
                                     std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
                                     DebugImageList<Vision::ImageRGB> &debugImageRGBs)
 {
@@ -422,7 +422,7 @@ Result MotionDetector::DetectHelper(const ImageType &image,
 
     // Helper macro to try to get the specified field and store it in the given variable
     // and return RESULT_FAIL if that doesn't work
-    #define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
+#   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
     do { \
     if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
       PRINT_NAMED_ERROR("MotionDetection.DetectHelper.MissingJsonParameter", "%s", __fieldName__); \
@@ -473,7 +473,7 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     msg.timestamp = image.GetTimestamp();
 
     // Remove noise here before motion detection
-    filterImageAndPrevImages<ImageType>(image);
+    FilterImageAndPrevImages<ImageType>(image);
     blurHappened = true;
 
     // Create the ratio test image
@@ -484,15 +484,17 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     const bool peripheralMotionDetected = DetectPeripheralMotionHelper(foregroundMotion, debugImageRGBs, msg,
                                                                        scaleMultiplier);
 
-    const bool groundMotionDetected = DetectGroundPlaneMotionHelper(foregroundMotion, numAboveThresh, origNumRows,
-                                                                    origNumCols,
-                                                                    scaleMultiplier, crntPoseData, prevPoseData,
-                                                                    observedMotions,
-                                                                    debugImageRGBs, msg);
+    const bool groundMotionDetected = DetectGroundAndImageHelper(foregroundMotion, numAboveThresh, origNumRows,
+                                                                 origNumCols,
+                                                                 scaleMultiplier, crntPoseData, prevPoseData,
+                                                                 observedMotions,
+                                                                 debugImageRGBs, msg);
 
     if (peripheralMotionDetected || groundMotionDetected) {
-      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.DetectHelper",
-                    "Motion found, sending message");
+      if (DEBUG_MOTION_DETECTION) {
+        PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.DetectHelper",
+                      "Motion found, sending message");
+      }
       observedMotions.emplace_back(std::move(msg));
     }
     
@@ -505,16 +507,16 @@ Result MotionDetector::DetectHelper(const ImageType &image,
   
 }
 
-bool MotionDetector::DetectGroundPlaneMotionHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
-                                                   s32 origNumCols, f32 scaleMultiplier,
-                                                   const VisionPoseData &crntPoseData,
-                                                   const VisionPoseData &prevPoseData,
-                                                   std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                                                   DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
-                                                   ExternalInterface::RobotObservedMotion &msg)
+bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
+                                                s32 origNumCols, f32 scaleMultiplier,
+                                                const VisionPoseData &crntPoseData,
+                                                const VisionPoseData &prevPoseData,
+                                                std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
+                                                DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
+                                                ExternalInterface::RobotObservedMotion &msg)
 {
 
-  Point2f centroid(0.f,0.f); // Not Embedded::
+  Point2f centroid(0.f,0.f);
   Point2f groundPlaneCentroid(0.f,0.f);
   bool motionFound = false;
 
@@ -540,7 +542,7 @@ bool MotionDetector::DetectGroundPlaneMotionHelper(Vision::Image &foregroundMoti
     motionFound = true;
     if(DEBUG_MOTION_DETECTION)
     {
-      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.FoundCentroid",
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.DetectGroundAndImageHelper",
                     "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
                         "-- %.1f%% of ground area at (%.1f,%.1f)",
                     imgRegionArea, centroid.x(), centroid.y(),
@@ -741,23 +743,23 @@ void MotionDetector::ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, 
 }
 
 template <class ImageType>
-void MotionDetector::filterImageAndPrevImages(const ImageType &image)
+void MotionDetector::FilterImageAndPrevImages(const ImageType& image)
 {
   const cv::Mat& imageCV = image.get_CvMat_();
-  boxFilter(imageCV, imageCV, -1,
+  cv::boxFilter(imageCV, imageCV, -1,
             cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
 
   // If the previous image hadn't been blurred before, do it now
   if (std::is_same<ImageType, Vision::Image>::value) {
     if (!_wasPrevImageGrayBlurred) {
-      boxFilter(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(), -1,
-                cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
+      cv::boxFilter(_prevImageGray.get_CvMat_(), _prevImageGray.get_CvMat_(), -1,
+                    cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
     }
   }
   else if (std::is_same<ImageType, Vision::ImageRGB>::value) {
     if (!_wasPrevImageRGBBlurred) {
-      boxFilter(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(), -1,
-                cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
+      cv::boxFilter(_prevImageRGB.get_CvMat_(), _prevImageRGB.get_CvMat_(), -1,
+                    cv::Size(kMotionDetection_BlurFilterSize_pix, kMotionDetection_BlurFilterSize_pix));
     }
   }
   else {
