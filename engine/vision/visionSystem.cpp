@@ -19,7 +19,6 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "engine/cozmoContext.h"
-#include "engine/encodedImage.h"
 #include "engine/robot.h"
 #include "engine/vision/laserPointDetector.h"
 #include "engine/vision/motionDetector.h"
@@ -1206,30 +1205,10 @@ namespace Cozmo {
   } // DetectMarkersWithCLAHE()
   
   
-  Result VisionSystem::Update(const VisionPoseData&      poseData,
-                              const EncodedImage&        encodedImg)
+  Result VisionSystem::Update(const VisionPoseData&   poseData,
+                              const Vision::ImageRGB& image)
   {
-    Tic("DecodeJPEG");
-    // Should only get allocated the first time, but should re-use _image's memory
-    // from then on, so long as the decoded image is the same size.
-    Result decodeResult = RESULT_FAIL;
-    if(encodedImg.IsColor())
-    {
-      Vision::ImageRGB imgRGB;
-      decodeResult = encodedImg.DecodeImageRGB(imgRGB);
-      _imageCache->Reset(imgRGB);
-    }
-    else
-    {
-      Vision::Image imgGray;
-      decodeResult = encodedImg.DecodeImageGray(imgGray);
-      _imageCache->Reset(imgGray);
-    }
-    Toc("DecodeJPEG");
-    
-    if(RESULT_OK != decodeResult) {
-      return decodeResult;
-    }
+    _imageCache->Reset(image);
     
     return Update(poseData, *_imageCache);
   }

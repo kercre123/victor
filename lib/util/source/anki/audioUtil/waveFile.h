@@ -22,7 +22,7 @@ namespace AudioUtil {
 
 class WaveFile {
 public:
-  static bool SaveFile(const std::string& filename, const AudioChunkList& chunkList);
+  static bool SaveFile(const std::string& filename, const AudioChunkList& chunkList, uint16_t numChannels = 1);
   
 }; // class WaveFile
 

@@ -1,0 +1,56 @@
+
+#include "clad/audio/audioEventTypes.clad"
+
+namespace Anki {
+namespace AudioEngine {
+namespace Multiplexer {
+
+enum uint_8 CallbackType
+{
+  Invalid = 0,
+  Duration,
+  Marker,
+  Complete,
+  Error
+}
+
+enum uint_8 CallbackErrorType
+{
+  Invalid = 0,
+  EventFailed,
+  Starvation
+}
+
+message AudioCallbackDuration
+{
+  float_32  duration           = 0.0,
+  float_32  estimatedDuration  = 0.0,
+  uint_32   audioNodeId        = 0,
+  uint_16 callbackId           = 0,
+  bool      isStreaming        = 0
+}
+
+message AudioCallbackMarker
+{
+  uint_32 identifier  = 0,
+  uint_32 position    = 0,
+  uint_16 callbackId  = 0,
+  string  labelTitle
+}
+
+message AudioCallbackComplete
+{
+  Anki::AudioMetaData::GameEvent::GenericEvent eventType,
+  uint_16 callbackId = 0,
+}
+
+message AudioCallbackError
+{
+  uint_16 callbackId = 0,
+  CallbackErrorType callbackError,
+}
+
+
+} // Multiplexer
+} // AudioEngine
+} // Anki

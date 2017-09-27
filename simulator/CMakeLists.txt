@@ -137,6 +137,7 @@ anki_build_cxx_executable(webotsCtrlRobot2 ${ANKI_SRCLIST_DIR})
 target_link_libraries(webotsCtrlRobot2
 PRIVATE
   util
+  util_audio
   kazmath  
   cti_common
   cti_common_robot  
@@ -281,6 +282,20 @@ target_compile_definitions(webotsCtrlBuildServerTest PRIVATE
 
 symlink_target(TARGET webotsCtrlBuildServerTest DST "${CONTROLLERS_DIR}/webotsCtrlBuildServerTest/")
 
+# Webots Ctrl Hand Emitter
+
+anki_build_cxx_executable(webotsCtrlHandEmitter ${ANKI_SRCLIST_DIR})
+target_include_directories(webotsCtrlHandEmitter
+PRIVATE
+  ${CMAKE_SOURCE_DIR}
+)
+target_link_libraries(webotsCtrlHandEmitter
+PRIVATE
+  ${PLATFORM_LIBS}
+)
+symlink_target(TARGET webotsCtrlHandEmitter DST "${CONTROLLERS_DIR}/webotsCtrlHandEmitter/")
+
+# end -- Webots Controller Hand Emitter
 
 anki_build_cxx_executable(webotsCtrlDevLog ${ANKI_SRCLIST_DIR})
 

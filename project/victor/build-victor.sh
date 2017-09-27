@@ -89,11 +89,8 @@ shift $(($OPTIND - 1))
 
 if [ ! -d "${TOPLEVEL}/generated" ] || [ ! -d "${TOPLEVEL}/EXTERNALS" ]; then
     echo "Missing ${TOPLEVEL}/generated or ${TOPLEVEL}/EXTERNALS"
-    echo "Attempting to run configure.py" 
-    pushd robot > /dev/null 2>&1
-    make dev2
-    popd > /dev/null 2>&1
-    ${TOPLEVEL}/configure.py -2 -p ${PLATFORM}  generate
+    echo "Attempting to run fetch-build-deps.sh"
+    ${TOPLEVEL}/project/victor/scripts/fetch-build-deps.sh
 fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
@@ -105,13 +102,21 @@ if [ ${CMAKE_GENERATOR} != "Ninja" ]; then
 fi
 : ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
 
-#declare -A PROJECT_MAP
-PROJECT_MAP["Ninja"]="build.ninja"
-PROJECT_MAP["Xcode"]="cozmo.xcodeproj"
+case ${CMAKE_GENERATOR} in
+    "Ninja")
+        PROJECT_FILE="build.ninja"
+        ;;
+    "Xcode")
+        PROJECT_FILE="cozmo.xcodeproj"
+        ;;
+    "*")
+        PROJECT_FILE=""
+        ;;
+esac
 
-if [ ${PROJECT_MAP[${CMAKE_GENERATOR}]+_} ]; then
+if [ ${PROJECT_FILE}+_} ]; then
     # found
-    if [ ! -e "${BUILD_DIR}/${PROJECT_MAP[${CMAKE_GENERATOR}]}" ]; then
+    if [ ! -e "${BUILD_DIR}/${PROJECT_FILE}" ]; then
         CONFIGURE=1
     fi
 else

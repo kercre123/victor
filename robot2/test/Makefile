@@ -6,7 +6,7 @@ DEFINES += -DCOZMO_ROBOT
 CPPFLAGS += -I$(CPPUTEST_HOME)
 CPPFLAGS += -I"../../robot/include"
 CPPFLAGS += -I"../hal/include"
-CPPFLAGS += -I"../../robot/generated/clad/robot"
+# CPPFLAGS += -I"../../robot/generated/clad/robot"
 CPPFLAGS += $(DEFINES)
 
 CXXFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorNewMacros.h
@@ -32,7 +32,7 @@ ANDROID_NDK_ROOT:=~/.anki/android/ndk-repository/android-ndk-r15b
 ANDROID_ARM_TOOLS_ROOT:=../../generated/android/tools/arm
 ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
 # Compilation Tools
-ARMCC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc
+ARMCC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc -pie
 ARMCPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++
 ARMAR := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-ar
 
@@ -47,7 +47,7 @@ lcd_test:  $(ANDROID_ARM_TOOLS_ROOT) lcd_test.c
 
 
 app: 
-	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) *.cpp $(CODE_UNDER_TEST)
+	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(CODE_UNDER_TEST)
 
 test: app
 	./a.out -c
@@ -59,11 +59,14 @@ test: app
 stupid:
 	echo $(PLATFORM)
 #	$(CC) -v $(DEFINES) $(LOCAL_LDLIBS) -gcc-toolchain -L../spine -lspine stupid_hal.c
-	$(CC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c 
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c 
 	adb push ./a.out /data/local/tmp
 
 spinal_tap:
-#	$(CC) -v $(DEFINES) $(LOCAL_LDLIBS) -gcc-toolchain -L../spine -lspine stupid_hal.c
 	$(CC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon  ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c spinal_tap.c -o spinal_tap
 
+imu_test: imu_test.c ../hal/spine/imu.c
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/include -I../hal/spine ../hal/spine/imu.c imu_test.c -o imu_test
 
+clean:
+	rm -f *.o imu_test spinal_tap stupid_hal a.out

@@ -3,6 +3,8 @@
 #include "common.h"
 #include "hardware.h"
 
+#include "messages.h"
+
 #include "analog.h"
 #include "power.h"
 #include "vectors.h"
@@ -58,10 +60,10 @@ void Analog::init(void) {
   DMA1_Channel1->CMAR = (uint32_t)&values[0];
   DMA1_Channel1->CNDTR = ADC_CHANNELS;
   DMA1_Channel1->CCR |= 0
-                     | DMA_CCR_MINC 
-                     | DMA_CCR_MSIZE_0 
+                     | DMA_CCR_MINC
+                     | DMA_CCR_MSIZE_0
                      | DMA_CCR_PSIZE_0
-                     | DMA_CCR_CIRC; 
+                     | DMA_CCR_CIRC;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 }
 
@@ -77,6 +79,14 @@ void Analog::stop(void) {
   while ((~ADC1->CR & ADC_CR_ADEN) != 0) ;
 }
 
+bool Analog::button_pressed;
+
+void Analog::transmit(BodyToHead* data) {
+  data->battery.battery = values[ADC_VBAT];
+  data->battery.charger = values[ADC_VEXT];
+  data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+}
+
 #ifndef BOOTLOADER
 #include "lights.h"
 
@@ -84,8 +94,6 @@ static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Erase flash
 static const int BUTTON_THRESHOLD = 0xD00;
 static const int BOUNCE_LENGTH = 3;
-
-bool Analog::button_pressed;
 
 void Analog::tick(void) {
   static bool bouncy_button;

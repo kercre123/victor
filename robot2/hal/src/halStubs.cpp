@@ -16,7 +16,6 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/hal_config.h"
-#include "anki/cozmo/robot/event_trace.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine_hal.h"
@@ -38,17 +37,6 @@
 #define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
 #define STR(s)  #s
 #define DEFNAME(s) STR(s)
-
-/******** TEMP SPINE LOGGING ***********/
-#define DUMP_SPINE_EVENTS_MAYBE(time) if ((time)>= seltime+(EVENT_LOG_DURATION_SEC*1000))DumpEvents()
-
-// #define DUMP_SPINE_EVENTS_MAYBE(time) do{\
-//     printf("? %u > %llu\n", time, seltime+(EVENT_LOG_DURATION_SEC*1000));\
-//     DUMP_SPINE_EVENTS_MAYBE_X(time);\
-//   }while(0);
-    
-
-/***************************************/
 
 
 #if REALTIME_CONSOLE_OUTPUT > 0
@@ -114,16 +102,16 @@ namespace Anki {
         CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
-      static const char* HAL_INI_PATH = "./hal.ini";
+      static const char* HAL_INI_PATH = "./hal.conf";
       const HALConfig::Item  configitems_[]  = {
-        {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[0]},
-        {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[1]},
-        {"Lift rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[2]},
-        {"Head rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[3]},
-        {"LeftTread Motor Direction",  HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[0]},
-        {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[1]},
-        {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[2]},
-        {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[3]},
+        {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
+        {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
+        {"Lift rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LIFT]},
+        {"Head rad/count",      HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_HEAD]},
+        {"LeftTread Motor Direction",  HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LEFT]},
+        {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_RIGHT]},
+        {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LIFT]},
+        {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
         {0} //Need zeros as end-of-list marker
       };
       
@@ -307,6 +295,14 @@ namespace Anki {
 
     } // step()
 
+    void ForwardAudioInput(void)
+    {
+      // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
+      // laid correctly.
+      // TODO(Al/Lee): Put back once mics and camera can co-exist
+//      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+//      RobotInterface::SendMessage(*latestAudioInput);
+    }
 
     Result HAL::Step(void)
     {
@@ -339,6 +335,7 @@ namespace Anki {
 
       //MonitorConnectionState();
 
+      ForwardAudioInput();
       return result;
     }
 
@@ -396,6 +393,7 @@ namespace Anki {
     ProxSensorData HAL::GetRawProxData()
     {
       ProxSensorData proxData;
+      proxData.rangeStatus = bodyData_->proximity.rangeStatus;
       proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
       // Signal/Ambient Rate are fixed point 9.7, so convert to float:
       proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
@@ -407,8 +405,8 @@ namespace Anki {
     
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
-      // TODO(agm) ask adam about this
-      return 0;
+      assert(button_id >= 0 && button_id < BUTTON_COUNT);
+      return bodyData_->touchLevel[button_id];
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
@@ -425,7 +423,7 @@ namespace Anki {
 
     f32 HAL::BatteryGetVoltage()
     {
-      return bodyData_->battery.batteryVolts;
+      return bodyData_->battery.battery;
     }
 
     bool HAL::BatteryIsCharging()

@@ -185,6 +185,9 @@ message RobotPoked {
 message RobotStopped {
 }
 
+message RobotTouched {
+}
+
 message RobotOffTreadsStateChanged {
     OffTreadsState treadsState
 }

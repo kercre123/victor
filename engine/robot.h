@@ -23,7 +23,6 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
 #include "engine/animations/animationStreamer.h"
-#include "engine/animations/engineAnimationController.h"
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/ramp.h"
@@ -103,7 +102,7 @@ class TouchSensorComponent;
 class AnimationComponent;
 
 namespace Audio {
-class RobotAudioClient;
+  class EngineRobotAudioClient;
 }
   
 namespace RobotInterface {
@@ -591,8 +590,8 @@ public:
   u8 GetEnabledAnimationTracks() const { return _enabledAnimTracks; }
   
   // =========== Audio =============
-  Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
-  const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient.get(); }
+  Audio::EngineRobotAudioClient* GetAudioClient() { return _audioClient.get(); }
+  const Audio::EngineRobotAudioClient* GetAudioClient() const { return _audioClient.get(); }
   
   // =========== Mood =============
 
@@ -767,7 +766,7 @@ protected:
   std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   ///////// Audio /////////
-  std::unique_ptr<Audio::RobotAudioClient> _audioClient;
+  std::unique_ptr<Audio::EngineRobotAudioClient> _audioClient;
 
   // handles planning and path following
   std::unique_ptr<PathComponent> _pathComponent;
@@ -783,8 +782,6 @@ protected:
   
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
   
-  ///////// NEW Animation /////////
-  std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
   std::unique_ptr<ActionList>             _actionList;
   std::unique_ptr<MovementComponent>      _movementComponent;

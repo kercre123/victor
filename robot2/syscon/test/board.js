@@ -33,6 +33,8 @@ class Body extends EventEmitter {
 		buffer.writeInt16LE(payload.length, 6);
 		buffer.writeInt32LE(crc(payload), payload.length + 8);
 
+		console.log("-->", id, payload);
+
 		this.port.write(buffer);
 	}
 
@@ -51,6 +53,7 @@ class Body extends EventEmitter {
 
 			// Trim Payload
 			this.payload = this.payload.slice(offset);
+			if (offset) console.log(`Discarded ${offset} bytes`);
 
 			// Payload settings
 			const payloadID = this.payload.readUInt16LE(4);

@@ -45,7 +45,7 @@ void Touch::init(void) {
 
 extern "C" void TIM16_IRQHandler(void) {
   touch[0] = (TIM16->SR & TIM_SR_CC1IF) ? TIM16->CCR1 : 0xFFFF;
-  touch[1] = (TIM17->SR & TIM_SR_CC1IF) ? TIM17->CCR1 : 0xFFFF;
+  //touch[1] = (TIM17->SR & TIM_SR_CC1IF) ? TIM17->CCR1 : 0xFFFF;
 
   CAPO::reset();
   TIM16->SR = TIM17->SR = 0;

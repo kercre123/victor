@@ -12,11 +12,14 @@
  *
  **/
 
+// TODO: VIC-24 - Migrate Cozmo Sings to Victor - Fix Audio Game Object
+
+
 #include "engine/behaviorSystem/behaviors/freeplay/oneShots/behaviorSinging.h"
 
 #include "engine/activeObject.h"
 #include "engine/actions/animActions.h"
-#include "engine/audio/robotAudioClient.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/cozmoContext.h"
@@ -166,8 +169,9 @@ Result BehaviorSinging::InitInternal(Robot& robot)
 {
   // Tell Wwise to switch to the specific SwitchGroup (80/100/120bpm)
   // and a specific switch in the group (song)
-  robot.GetRobotAudioClient()->PostRobotSwitchState(_audioSwitchGroup,
-                                                    _audioSwitch);
+  robot.GetAudioClient()->PostSwitchState(_audioSwitchGroup,
+                                          _audioSwitch,
+                                          AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
 
   // Disable reactions
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersSinging);
@@ -250,8 +254,9 @@ BehaviorStatus BehaviorSinging::UpdateInternal(Robot& robot)
                       _vibratoScaleFilt * (1.f-kVibratoLowPassCoeff);
 
   // Post the filtered vibrato scale to wwise
-  robot.GetRobotAudioClient()->PostRobotParameter(kVibratoParam,
-                                                  _vibratoScaleFilt);
+  robot.GetAudioClient()->PostParameter(kVibratoParam,
+                                        _vibratoScaleFilt,
+                                        AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
   
   // Using filtered vibrato scale to determine when shaking starts
   // since it is already smoothed by the low pass filter and is just as representative
@@ -293,7 +298,9 @@ BehaviorStatus BehaviorSinging::UpdateInternal(Robot& robot)
 
 void BehaviorSinging::StopInternal(Robot& robot)
 {
-  robot.GetRobotAudioClient()->PostRobotParameter(kVibratoParam, 0);
+  robot.GetAudioClient()->PostParameter(kVibratoParam,
+                                        0,
+                                        AudioMetaData::GameObjectType::Default /* FIXME: Not correct game object */);
 
   // Remove all our listeners
   for(auto iter = _cubeAccelListeners.begin(); iter != _cubeAccelListeners.end();)

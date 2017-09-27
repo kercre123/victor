@@ -19,8 +19,8 @@
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
-//#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
+#include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/cozmoAnimContext.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -56,16 +56,22 @@ namespace Cozmo {
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
   } // namespace
   
-  AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context) //, Audio::RobotAudioClient& audioClient)
+  AnimationStreamer::AnimationStreamer(const CozmoAnimContext* context)
   : _context(context)
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)
   , _tracksInUse(0)
-//  , _audioClient( audioClient )
+  , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController(), context->GetRandom()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   {    
-    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
+  }
+  
+  Result AnimationStreamer::Init()
+  {
+    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Init.NullContext");
+    DEV_ASSERT(nullptr != _context->GetDataLoader(), "AnimationStreamer.Init.NullRobotDataLoader");
+    DEV_ASSERT(nullptr != _context->GetDataLoader()->GetCannedAnimations(), "AnimationStreamer.Init.NullCannedAnimationsContainer");
     
     SetDefaultParams();
     
@@ -88,10 +94,12 @@ namespace Cozmo {
                         "Could not find expected neutral face animation file called %s",
                         neutralFaceAnimName.c_str());
     }
-
-  
+    
+    
     // Do this after the ProceduralFace class has set to use the right neutral face
     _trackLayerComponent->Init();
+    
+    return RESULT_OK;
   }
   
   
@@ -236,6 +244,8 @@ namespace Cozmo {
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
       EnableBackpackAnimationLayer(false);
+
+      _audioClient->StopCozmoEvent();
 
 //      if (_audioClient.HasAnimation()) {
 //        _audioClient.GetCurrentAnimation()->AbortAnimation();
@@ -521,11 +531,10 @@ namespace Cozmo {
     if (robotAudioTrack.HasFramesLeft() &&
         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
     {
-      // TODO: Play via wwise
-      robotAudioTrack.GetCurrentKeyFrame();
+      _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame() );
       robotAudioTrack.MoveToNextKeyFrame();
     }
-        
+
     // Send keyframes at appropriates times
     if (anim->HasFramesLeft())
     {
@@ -780,6 +789,9 @@ namespace Cozmo {
         lastResult = StreamLayers();
       }
     }
+    
+    // Tick audio engine
+    _audioClient->Update();
     
     return lastResult;
   } // AnimationStreamer::Update()
