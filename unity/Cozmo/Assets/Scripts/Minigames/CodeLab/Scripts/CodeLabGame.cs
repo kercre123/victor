@@ -707,7 +707,8 @@ namespace CodeLab {
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
         robot.TurnOffAllLights(true);
         robot.StopAllMotors();
-        robot.EnableCubeSleep(true, true);  // Turn off the cube lights
+
+        SetupCubeLights();  // Turn off the cube lights
 
         //turn off all cube lights
         for (int i = 0; i < 3; i++) {
@@ -2106,8 +2107,8 @@ namespace CodeLab {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-          robot.SetEnableFreeplayLightStates(false);
           robot.EnableCubeSleep(true, true);
+          robot.SetEnableFreeplayLightStates(false);
         }
         else {
           robot.SetEnableFreeplayLightStates(true);
