@@ -156,7 +156,8 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
-  : _context(context)
+  : _poseOriginList(new PoseOriginList())
+  , _context(context)
   , _ID(robotID)
   , _timeSynced(false)
   , _lastMsgTimestamp(0)
@@ -184,7 +185,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _carryingComponent(new CarryingComponent(*this))
   , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
   , _touchSensorComponent(std::make_unique<TouchSensorComponent>(*this))
-  , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, _pose, "RobotNeck")
   , _headCamPose(_kDefaultHeadCamRotation,

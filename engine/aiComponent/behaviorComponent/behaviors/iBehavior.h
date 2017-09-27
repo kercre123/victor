@@ -223,7 +223,7 @@ public:
   
 protected:
   // Currently unused overrides of iBSRunnable since no equivalence in old BM system
-  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
+  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override {}
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void OnLeftActivatableScopeInternal() override {};
   
@@ -460,7 +460,7 @@ private:
   float _startedRunningTime_s;
   
   
-  size_t _lastTickWhenControlWasDelegated;
+  size_t _actionFinishedRunningOnTick;
   ExternalInterface::RobotCompletedAction _lastCompletedMsgCopy;
   
   IWantsToRunStrategyPtr _wantsToRunStrategy;

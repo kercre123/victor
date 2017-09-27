@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <memory>
 
-#define USE_BSM 0
+#define USE_BSM 1
 
 
 namespace Anki {

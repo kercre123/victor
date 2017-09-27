@@ -40,6 +40,8 @@ public:
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
   virtual IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
 
+  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
+  
 private:
   std::vector<IBehaviorPtr> _behaviors;
 };

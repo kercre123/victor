@@ -464,17 +464,18 @@ TEST(MoodManager, BehaviorScoring)
                                                                                        testRobot.GetAIComponent(),
                                                                                        behaviorContainer,
                                                                                        testRobot.GetBlockWorld(),
-                                                                                       testRobot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       testRobot.GetFaceWorld());
   
   // have to alloc the behaviors - they're freed by the chooser
   IBehaviorPtr testBehaviorReqHappy = behaviorContainer.CreateBehavior(testBehavior1Json);
   testBehaviorReqHappy->ReadFromScoredJson(testBehavior1Json);
   testBehaviorReqHappy->Init(*behaviorExternalInterface);
+  testBehaviorReqHappy->OnEnteredActivatableScope();
 
   IBehaviorPtr testBehaviorReqCalm  = behaviorContainer.CreateBehavior(testBehavior2Json);
   testBehaviorReqCalm->ReadFromScoredJson(testBehavior2Json);
   testBehaviorReqCalm->Init(*behaviorExternalInterface);
+  testBehaviorReqCalm->OnEnteredActivatableScope();
 
   ASSERT_NE(testBehaviorReqHappy, nullptr);
   ASSERT_NE(testBehaviorReqCalm,  nullptr);
@@ -577,7 +578,6 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_NEAR(score2, 0.5f, 1e-4);
   
   // 2) happy happened 0.0 seconds ago:
-  testBehaviorReqHappy->OnEnteredActivatableScope();
   testBehaviorReqHappy->OnActivated(*behaviorExternalInterface);
   testBehaviorReqHappy->OnDeactivated(*behaviorExternalInterface);
 
@@ -591,7 +591,7 @@ TEST(MoodManager, BehaviorScoring)
   gCurrentTime += 1.0;
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
-  testBehaviorReqCalm->OnEnteredActivatableScope();
+  testBehaviorReqCalm->WantsToBeActivated(*behaviorExternalInterface);
   testBehaviorReqCalm->OnActivated(*behaviorExternalInterface);
   testBehaviorReqCalm->OnDeactivated(*behaviorExternalInterface);
   

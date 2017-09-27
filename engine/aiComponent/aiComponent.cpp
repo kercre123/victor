@@ -69,8 +69,14 @@ Result AIComponent::Init()
   }
   
   _behaviorComponent->Init(_robot);
+  if(USE_BSM){
+    // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
+    // active on app start
+    _freeplayDataTracker->SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
+    _freeplayDataTracker->SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
+  }
   
-  _requestGameComponent = std::make_unique<RequestGameComponent>(_robot.GetExternalInterface(),
+  _requestGameComponent = std::make_unique<RequestGameComponent>(_robot.HasExternalInterface() ? _robot.GetExternalInterface() : nullptr,
                                                                  _robot.GetContext()->GetDataLoader()->GetGameRequestWeightsConfig());
   
   // initialize whiteboard
@@ -80,17 +86,12 @@ Result AIComponent::Init()
   assert(_severeNeedsComponent);
   _severeNeedsComponent->Init();
   
-
-
-  
-  
   RobotDataLoader* dataLoader = nullptr;
   if(context){
     dataLoader = _robot.GetContext()->GetDataLoader();
   }
   
 
-  
   // initialize workout component
   if(dataLoader != nullptr){
     assert( _workoutComponent );

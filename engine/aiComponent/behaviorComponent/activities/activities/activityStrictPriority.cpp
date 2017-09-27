@@ -11,11 +11,14 @@
 **/
 
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityStrictPriority.h"
-#include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
+#include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robot.h"
@@ -137,9 +140,43 @@ IBehaviorPtr ActivityStrictPriority::GetDesiredActiveBehaviorInternal(BehaviorEx
     }
     DEV_ASSERT(activityIter != _activities.end(),
                "ActivityStrictPriority.GetDesiredActiveBehaviorInternal.NoRunnableActivities");
+    
+    // if this is the last activity, break without checking WantsToENd
+    if(_currentActivityPtr == _activities.back().get()){
+      break;
+    }
   }
   
   return _currentActivityPtr->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityStrictPriority::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+{
+  for(auto activityIter = _activities.begin(); activityIter != _activities.end(); ++activityIter){
+    (*activityIter)->GetAllDelegates(delegates);
+  }
+  IActivity::GetAllDelegates(delegates);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityStrictPriority::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  if(USE_BSM){
+    auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
+    if((delegationComponent != nullptr) &&
+       delegationComponent->IsControlDelegated(this)){
+      IBehaviorPtr nextBehavior = GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
+      auto delegationWrap = delegationComponent->GetDelegator(this).lock();
+      if(delegationWrap != nullptr){
+        delegationWrap->Delegate(this, nextBehavior.get());
+      }
+    }
+  }else{
+    IActivity::UpdateInternal(behaviorExternalInterface);
+  }
 }
 
   

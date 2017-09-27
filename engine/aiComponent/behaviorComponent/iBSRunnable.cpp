@@ -29,6 +29,7 @@ static const int kBSTickInterval = 1;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBSRunnable::IBSRunnable(const std::string& idString)
 : _idString(idString)
+, _currentInScopeCount(0)
 , _currentActivationState(ActivationState::NotInitialized)
 , _lastTickWantsToBeActivatedCheckedOn(0)
 , _lastTickOfUpdate(0)
@@ -55,11 +56,21 @@ void IBSRunnable::Init(BehaviorExternalInterface& behaviorExternalInterface)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBSRunnable::OnEnteredActivatableScope()
 {
-  DEV_ASSERT_MSG(_currentActivationState == ActivationState::OutOfScope,
+  DEV_ASSERT_MSG(_currentActivationState != ActivationState::NotInitialized,
                  "IBSRunnable.EnteredActivatableScope.WrongActivationState",
                  "Attempted to make activatable %s while it was in state %s",
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
+  
+  _currentInScopeCount++;
+  if(_currentActivationState != ActivationState::OutOfScope){
+    PRINT_CH_INFO("Behaviors",
+                  "IBSRunnable.OnEnteredActivatableScope.AlreadyInScope",
+                  "Runnable %s is already in scope %s, ignoring request to enter scope",
+                  _idString.c_str(),
+                  ActivationStateToString(_currentActivationState).c_str());
+    return;
+  }
 
   // Update should be called immediately after entering activatable scope
   // so set the last tick count as being one tickInterval before the current tickCount
@@ -156,6 +167,22 @@ void IBSRunnable::OnLeftActivatableScope()
                  "Attempted to leave activation scope %s while it was in state %s",
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
+  
+  if(ANKI_VERIFY(_currentInScopeCount != 0,
+                 "", "")){
+    return;
+  }
+  
+  _currentInScopeCount--;
+  if(_currentInScopeCount != 0){
+    PRINT_CH_INFO("Behaviors",
+                  "IBSRunnable.OnLeftActivatableScope.StillInScope",
+                  "There's still an in scope count of %d on %s",
+                  _currentInScopeCount,
+                  _idString.c_str());
+    return;
+  }
+  
   _currentActivationState = ActivationState::OutOfScope;
   OnLeftActivatableScopeInternal();
 }

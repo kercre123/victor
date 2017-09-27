@@ -312,8 +312,7 @@ void DoTicks_(Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool exp
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   
   std::string currentActivityName;
@@ -351,8 +350,7 @@ TEST(BehaviorHelperSystem, BehaviorComplete)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
@@ -360,6 +358,7 @@ TEST(BehaviorHelperSystem, BehaviorComplete)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, 3);
@@ -383,8 +382,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
@@ -392,6 +390,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, 3);
@@ -439,8 +438,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   
   TestBehaviorWithHelpers b(empty);
@@ -449,6 +447,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::Running);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, 3);
@@ -547,8 +546,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
@@ -556,6 +554,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   bool helperFailed = false;
@@ -651,8 +650,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
@@ -660,6 +658,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   bool helperFailed = false;
@@ -875,8 +874,7 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(empty);
@@ -885,6 +883,7 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   std::vector<HelperPointers> ptrs;
@@ -990,8 +989,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
@@ -999,6 +997,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   std::vector<HelperPointers> ptrs;
@@ -1164,8 +1163,7 @@ TEST(BehaviorHelperSystem, StopBehavior)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(empty);
@@ -1174,6 +1172,7 @@ TEST(BehaviorHelperSystem, StopBehavior)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   b.SetUpdateResult(TestBehaviorWithHelpers::UpdateResult::UseBaseClass);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   std::vector<HelperPointers> ptrs;

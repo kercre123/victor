@@ -60,12 +60,12 @@ void CreateStackBehavior(Robot& robot, IBehaviorPtr& stackBehavior)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
 
   stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
                                                    config);
   stackBehavior->Init(*behaviorExternalInterface);
+  stackBehavior->OnEnteredActivatableScope();
   ASSERT_TRUE(stackBehavior != nullptr);
 }
 
@@ -184,8 +184,7 @@ TEST(StackBlocksBehavior, InitBehavior)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   IBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, *behaviorExternalInterface, objID1, objID2);
@@ -207,8 +206,7 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();
@@ -247,8 +245,8 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   std::string behaviorDebugStr;
   
   aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  stackBehavior->OnEnteredActivatableScope();
   //auto result =
+  stackBehavior->WantsToBeActivated(*behaviorExternalInterface);
   stackBehavior->OnActivated(*behaviorExternalInterface);
   //EXPECT_EQ(RESULT_OK, result);
 

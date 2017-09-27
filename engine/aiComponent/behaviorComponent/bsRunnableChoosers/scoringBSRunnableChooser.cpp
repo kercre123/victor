@@ -293,5 +293,14 @@ IBehaviorPtr ScoringBSRunnableChooser::FindBehaviorInTableByID(BehaviorID behavi
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ScoringBSRunnableChooser::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+{
+  for (const auto& kv : _idToScoredBehaviorMap){
+    delegates.insert(kv.second.get());
+  }
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

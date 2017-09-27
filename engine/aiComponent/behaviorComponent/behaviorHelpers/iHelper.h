@@ -51,7 +51,7 @@ protected:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { return false;};
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
+  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override {}
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void OnLeftActivatableScopeInternal() override {};
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {

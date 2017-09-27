@@ -14,8 +14,6 @@
 #include "engine/aiComponent/requestGameComponent.h"
 
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/robotDataLoader.h"

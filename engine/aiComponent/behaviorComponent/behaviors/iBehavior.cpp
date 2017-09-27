@@ -196,7 +196,7 @@ IBehavior::IBehavior(const Json::Value& config)
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)
 , _startedRunningTime_s(0.0f)
-, _lastTickWhenControlWasDelegated(0)
+, _actionFinishedRunningOnTick(0)
 , _wantsToRunStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
@@ -526,7 +526,7 @@ Result IBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterface, R
 IBehavior::Status IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(IsActing()){
-    _lastTickWhenControlWasDelegated = BaseStationTimer::getInstance()->GetTickCount();
+    _actionFinishedRunningOnTick = BaseStationTimer::getInstance()->GetTickCount();
   }else{
     if(_stopRequestedAfterAction) {
       // we've been asked to stop, don't bother ticking update
@@ -745,6 +745,12 @@ void IBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterf
   
   if(IsRunning()){
     UpdateInternal_WhileRunning(behaviorExternalInterface);
+    if(!IsControlDelegated()){
+      auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
+      if(delegationComponent != nullptr){
+        delegationComponent->CancelSelf(this);
+      }
+    }
   }
 }
 
@@ -790,13 +796,23 @@ Result IBehavior::ResumeInternal(BehaviorExternalInterface& behaviorExternalInte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::IsControlDelegated() const
 {
-  return _behaviorExternalInterface->GetDelegationComponent().IsControlDelegated(this);
+  auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
+  if(delegationComponent != nullptr){
+    return delegationComponent->IsControlDelegated(this);
+  }
+  
+  return false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::IsActing() const
 {
-  return _behaviorExternalInterface->GetDelegationComponent().IsActing(this);
+  auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
+  if(delegationComponent != nullptr){
+    return delegationComponent->IsActing(this);
+  }
+  
+  return false;
 }
 
 
@@ -804,16 +820,25 @@ bool IBehavior::IsActing() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::WasControlDelegatedLastTick()
 {
-  return _lastTickWhenControlWasDelegated == (BaseStationTimer::getInstance()->GetTickCount() - 1);
+  return _actionFinishedRunningOnTick == (BaseStationTimer::getInstance()->GetTickCount() - 1);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback callback)
 {
-  auto delegateWrapper = _behaviorExternalInterface->GetDelegationComponent().GetDelegateWrapper(this).lock();
+  auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
+  if(delegationComponent == nullptr) {
+    PRINT_NAMED_ERROR("IBehavior.StartActing.NoDelegationComponent",
+                      "Behavior %s attempted to start action while it did not have control of delegation",
+                      GetIDStr().c_str());
+    delete action;
+    return false;
+  }
+  
+  auto delegateWrapper = delegationComponent->GetDelegator(this).lock();
   if(delegateWrapper == nullptr){
-    PRINT_NAMED_ERROR("IBehavior.StartActing.Illegal start acting attempt",
+    PRINT_NAMED_ERROR("IBehavior.StartActing.NoDelegator",
                       "Behavior %s attempted to start action while it did not have control of delegation",
                       GetIDStr().c_str());
     delete action;
@@ -924,8 +949,11 @@ bool IBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
     if(!allowCallback){
       _actingCallback = nullptr;
     }
-    
-    return _behaviorExternalInterface->GetDelegationComponent().CancelDelegates(this);
+    auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
+    if(delegationComponent != nullptr){
+      delegationComponent->CancelDelegates(this);
+      return true;
+    }
   }
 
   return false;
@@ -1145,10 +1173,18 @@ bool IBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExterna
    StopHelperWithoutCallback();
   }
   
-  auto delegateWrapper = behaviorExternalInterface.GetDelegationComponent().GetDelegateWrapper(this).lock();
+  auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
+  if(delegationComponent == nullptr){
+    PRINT_NAMED_ERROR("IBehavior.SmartDelegateToHelper.NotInControlOfDelegationComponent",
+                      "Behavior %s attempted to delegate while not in control",
+                      GetIDStr().c_str());
+    return false;
+  }
+  
+  auto delegateWrapper = delegationComponent->GetDelegator(this).lock();
   
   if(delegateWrapper == nullptr){
-    PRINT_NAMED_ERROR("IBehavior.SmartDelegateToHelper.NotInControl",
+    PRINT_NAMED_ERROR("IBehavior.SmartDelegateToHelper.NotInControlOfDelegator",
                       "Behavior %s attempted to delegate while not in control",
                       GetIDStr().c_str());
     return false;
@@ -1209,8 +1245,11 @@ bool IBehavior::StopHelperWithoutCallback()
   if( handle ) {
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartStopHelper").c_str(),
                   "Behavior stopping its helper");
-    
-    handleStopped = _behaviorExternalInterface->GetDelegationComponent().CancelDelegates(this);
+    auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
+    if(delegationComponent != nullptr){
+      delegationComponent->CancelDelegates(this);
+      handleStopped = true;
+    }
   }
   
   return handleStopped;

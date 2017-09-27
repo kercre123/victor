@@ -59,16 +59,16 @@ void BehaviorComponent::Init(Robot& robot)
   _behaviorMgr = std::make_unique<BehaviorManager>();
   _behaviorSysMgr = std::make_unique<BehaviorSystemManager>();
   
-  _delegationComponent.reset(new DelegationComponent(robot, *_behaviorSysMgr, *_behaviorMgr));
+  _delegationComponent.reset(new DelegationComponent(robot, *_behaviorSysMgr));
   
   _behaviorExternalInterface = std::make_unique<BehaviorExternalInterface>(robot,
                                                                            robot.GetAIComponent(),
                                                                            *_behaviorContainer,
                                                                            robot.GetBlockWorld(),
-                                                                           robot.GetFaceWorld(),
-                                                                           *_delegationComponent);
+                                                                           robot.GetFaceWorld());
   
-  _behaviorExternalInterface->SetOptionalInterfaces(&robot.GetMoodManager(),
+  _behaviorExternalInterface->SetOptionalInterfaces(_delegationComponent.get(),
+                                                    &robot.GetMoodManager(),
                                                     robot.GetContext()->GetNeedsManager(),
                                                     &robot.GetProgressionUnlockComponent(),
                                                     &robot.GetPublicStateBroadcaster(),
@@ -125,20 +125,15 @@ void BehaviorComponent::Update(Robot& robot,
 {
   _behaviorHelperComponent->Update(*_behaviorExternalInterface);
   
-  // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
-  static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
-  if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
-  {
-    IBehaviorPtr currentBehavior;
-    if(USE_BSM){
-      _behaviorSysMgr->Update(*_behaviorExternalInterface);
-      
-      currentActivityName = "ACTIVITY NAME TBD";
-      
-      behaviorDebugStr = currentActivityName;
-      
-      currentBehavior = _behaviorSysMgr->GetCurrentBehavior();
-    }else{
+  if(USE_BSM){
+    _behaviorSysMgr->Update(*_behaviorExternalInterface);
+  }else{
+    // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
+    static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
+    if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
+    {
+      IBehaviorPtr currentBehavior;
+
       Result res = _behaviorMgr->Update(*_behaviorExternalInterface);
       if(res == RESULT_OK){
         currentActivityName = _behaviorMgr->GetCurrentActivity()->GetIDStr();
@@ -147,20 +142,20 @@ void BehaviorComponent::Update(Robot& robot,
         
         currentBehavior = _behaviorMgr->GetCurrentBehavior();
       }
-    }
-    
-    if(currentBehavior != nullptr) {
-      behaviorDebugStr += " ";
-      behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
-      const std::string& stateName = currentBehavior->GetDebugStateName();
-      if (!stateName.empty())
-      {
-        behaviorDebugStr += "-" + stateName;
+      
+      if(currentBehavior != nullptr) {
+        behaviorDebugStr += " ";
+        behaviorDebugStr +=  BehaviorIDToString(currentBehavior->GetID());
+        const std::string& stateName = currentBehavior->GetDebugStateName();
+        if (!stateName.empty())
+        {
+          behaviorDebugStr += "-" + stateName;
+        }
       }
+      
+    } else {
+      --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
     }
-    
-  } else {
-    --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
   }
   
   robot.GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,

@@ -51,18 +51,19 @@ public:
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
   virtual IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) = 0;
   
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override {}
+  
 
 protected:
   // Functions called by iBSRunnable
   virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  
+
   // Currently unused overrides of iBSRunnable since no equivalence in old BM system
-  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};

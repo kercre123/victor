@@ -63,6 +63,8 @@ public:
   // adds a specific behavior to the table of behaviors if name doesn't exist, otherwise fail
   Result TryAddBehavior(IBehaviorPtr behavior);
   
+  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
+  
 protected:  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods

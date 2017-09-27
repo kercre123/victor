@@ -68,12 +68,12 @@ bool LoadTestBehaviors(Robot& testRobot, ScoringBSRunnableChooser& behaviorChoos
     {
       DelegationComponent delegationComp;
       // Factory will automatically delete the behaviors later when robot is destroyed
-      BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
+      BehaviorExternalInterface* behaviorExternalInterface =
+                            new BehaviorExternalInterface(testRobot,
                                                           testRobot.GetAIComponent(),
                                                           behaviorContainer,
                                                           testRobot.GetBlockWorld(),
-                                                          testRobot.GetFaceWorld(),
-                                                          delegationComp);
+                                                          testRobot.GetFaceWorld());
       IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
       newBehavior->Init(*behaviorExternalInterface);
       EXPECT_NE(newBehavior, nullptr);

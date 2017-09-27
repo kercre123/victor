@@ -50,10 +50,10 @@ public:
                             AIComponent& aiComponent,
                             const BehaviorContainer& behaviorContainer,
                             BlockWorld& blockWorld,
-                            FaceWorld& faceWorld,
-                            DelegationComponent& delegationComponent);
+                            FaceWorld& faceWorld);
   
-  void SetOptionalInterfaces(MoodManager* moodManager,
+  void SetOptionalInterfaces(DelegationComponent* delegationComponent,
+                             MoodManager* moodManager,
                              NeedsManager* needsManager,
                              ProgressionUnlockComponent* progressionUnlockComponent,
                              PublicStateBroadcaster* publicStateBroadcaster,
@@ -64,7 +64,6 @@ public:
   // Access components which the BehaviorSystem can count on will always exist
   // when making decisions
   AIComponent&             GetAIComponent()         const { return _aiComponent;}
-  DelegationComponent&     GetDelegationComponent() const { return _delegationComponent;}
   const FaceWorld&         GetFaceWorld()           const { return _faceWorld;}
   const BlockWorld&        GetBlockWorld()          const { return _blockWorld;}
   const BehaviorContainer& GetBehaviorContainer()   const { return _behaviorContainer;}
@@ -78,6 +77,7 @@ public:
 
   // Access components which may or may not exist - the BehaviorSystem should
   // premise no critical decisions on the existance of these components
+  std::weak_ptr<DelegationComponent>        GetDelegationComponent() const { return _delegationComponent;}
   std::weak_ptr<PublicStateBroadcaster>     GetRobotPublicStateBroadcaster() const { return _publicStateBroadcaster; }
   std::weak_ptr<IExternalInterface>         GetRobotExternalInterface() const { return _robotExternalInterface; }
   std::weak_ptr<ProgressionUnlockComponent> GetProgressionUnlockComponent() const { return _progressionUnlockComponent; }
@@ -91,10 +91,10 @@ public:
 private:
   Robot&                                      _robot;
   AIComponent&                                _aiComponent;
-  DelegationComponent&                        _delegationComponent;
   const BehaviorContainer&                    _behaviorContainer;
   const FaceWorld&                            _faceWorld;
   const BlockWorld&                           _blockWorld;
+  std::shared_ptr<DelegationComponent>        _delegationComponent;
   std::shared_ptr<MoodManager>                _moodManager;
   std::shared_ptr<NeedsManager>               _needsManager;
   std::shared_ptr<ProgressionUnlockComponent> _progressionUnlockComponent;

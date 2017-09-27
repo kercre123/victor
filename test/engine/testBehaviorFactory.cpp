@@ -147,8 +147,7 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
                                                                                        testRobot.GetAIComponent(),
                                                                                        behaviorContainer,
                                                                                        testRobot.GetBlockWorld(),
-                                                                                       testRobot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       testRobot.GetFaceWorld());
 
   IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
   newBehavior->Init(*behaviorExternalInterface);

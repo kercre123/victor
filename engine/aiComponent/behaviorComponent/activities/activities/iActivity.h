@@ -75,13 +75,13 @@ public:
 
 protected:
   // Functions called by iBSRunnable
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override { Update_Legacy(behaviorExternalInterface);};
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   
   // Currently unused overrides of iBSRunnable since no equivalence in old BM system
-  void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const override {}
+  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void OnLeftActivatableScopeInternal() override {};

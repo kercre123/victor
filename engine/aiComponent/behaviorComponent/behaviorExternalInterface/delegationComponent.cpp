@@ -15,9 +15,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/actionTypes.h"
 
 #include "engine/actions/actionInterface.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -34,52 +37,58 @@ namespace{
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DelegateWrapper::DelegateWrapper(Robot& robot)
+Delegator::Delegator(Robot& robot,
+                                 BehaviorSystemManager& bsm)
 : _robot(robot)
-, _runnableThatQueuedAction(nullptr)
-, _runnableThatQueuedHelper(nullptr)
+, _runnableThatDelegatedAction(nullptr)
+, _lastActionTag(ActionConstants::INVALID_TAG)
+, _runnableThatDelegatedHelper(nullptr)
+, _bsm(&bsm)
 {
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegateWrapper::Delegate(IBSRunnable* delegator, IActionRunner* action)
+bool Delegator::Delegate(IBSRunnable* delegatingRunnable, IActionRunner* action)
 {
   EnsureHandleIsUpdated();
 
-  DEV_ASSERT_MSG(((_runnableThatQueuedHelper == nullptr) ||
-                        (_runnableThatQueuedHelper == delegator)) &&
-                 (_runnableThatQueuedAction == nullptr),
-                 "DelegateWrapper.DelegateAction.RunnableAlreadySet",
+  DEV_ASSERT_MSG(((_runnableThatDelegatedHelper == nullptr) ||
+                        (_runnableThatDelegatedHelper == delegatingRunnable)) &&
+                 (_runnableThatDelegatedAction == nullptr),
+                 "Delegator.DelegateAction.RunnableAlreadySet",
                  "Queued Helper address %p, Queued Action address: %p",
-                 _runnableThatQueuedHelper, _runnableThatQueuedAction);
+                 _runnableThatDelegatedHelper, _runnableThatDelegatedAction);
   
   
   Result result = _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
   if (RESULT_OK != result) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotQueued",
                         "Behavior '%s' can't queue action '%s' (error %d)",
-                        delegator->GetPrintableID().c_str(),
+                        delegatingRunnable->GetPrintableID().c_str(),
                         action->GetName().c_str(), result);
     delete action;
     return false;
   }
   
-  _runnableThatQueuedAction = delegator;
+  _runnableThatDelegatedAction = delegatingRunnable;
   _lastActionTag = action->GetTag();
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegateWrapper::Delegate(IBSRunnable* delegator, IBSRunnable* delegated)
+bool Delegator::Delegate(IBSRunnable* delegatingRunnable, IBSRunnable* delegated)
 {
+  if(USE_BSM){
+    return _bsm->Delegate(delegatingRunnable, delegated);
+  }
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegateWrapper::Delegate(IBSRunnable* delegator,
+bool Delegator::Delegate(IBSRunnable* delegatingRunnable,
                                BehaviorExternalInterface& behaviorExternalInterface,
                                HelperHandle helper,
                                BehaviorSimpleCallbackWithExternalInterface successCallback,
@@ -87,13 +96,13 @@ bool DelegateWrapper::Delegate(IBSRunnable* delegator,
 {
   EnsureHandleIsUpdated();
   
-  DEV_ASSERT_MSG((_runnableThatQueuedHelper == nullptr) &&
-                 (_runnableThatQueuedAction == nullptr),
-                 "DelegateWrapper.DelegateHelper.RunnableAlreadySet",
+  DEV_ASSERT_MSG((_runnableThatDelegatedHelper == nullptr) &&
+                 (_runnableThatDelegatedAction == nullptr),
+                 "Delegator.DelegateHelper.RunnableAlreadySet",
                  "Queued Helper address %p, Queued Action address: %p",
-                 _runnableThatQueuedHelper, _runnableThatQueuedAction);
-  _runnableThatQueuedHelper = delegator;
-  _queuedHandle = helper;
+                 _runnableThatDelegatedHelper, _runnableThatDelegatedAction);
+  _runnableThatDelegatedHelper = delegatingRunnable;
+  _delegateHelperHandle = helper;
   return _robot.GetAIComponent().GetBehaviorHelperComponent().
                      DelegateToHelper(behaviorExternalInterface,
                                       helper, successCallback, failureCallback);
@@ -101,13 +110,12 @@ bool DelegateWrapper::Delegate(IBSRunnable* delegator,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegateWrapper::EnsureHandleIsUpdated()
+void Delegator::EnsureHandleIsUpdated()
 {
   // If the helper completes successfully we don't get notified
   // so clear the _runnable to avoid the DEV_ASSERTS
-  if(_queuedHandle.expired()){
-    _runnableThatQueuedHelper = nullptr;
-    _queuedHandle.reset();
+  if(_delegateHelperHandle.expired()){
+    _runnableThatDelegatedHelper = nullptr;
   }
 }
 
@@ -117,18 +125,15 @@ void DelegateWrapper::EnsureHandleIsUpdated()
 ///////////////////////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DelegationComponent::DelegationComponent(Robot& robot,
-                                         BehaviorSystemManager& bsm,
-                                         BehaviorManager& bm)
-//: _bsm(bsm)
-//, _bm(bm)
-: _delegateWrapper( new DelegateWrapper(robot))
+                                         BehaviorSystemManager& bsm)
+: _delegator( new Delegator(robot, bsm))
+, _bsm(&bsm)
 {
-  
-  IExternalInterface* externalInterface = robot.GetExternalInterface();
-  if(externalInterface != nullptr) {
+  if(robot.HasExternalInterface()){
+    IExternalInterface* externalInterface = robot.GetExternalInterface();
     using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
     using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
-    // NOTE: this won't get sent down to derived classes (unless they also subscribe)
+
     _eventHandles.push_back(externalInterface->Subscribe(
        EngineToGameTag::RobotCompletedAction,
        [this](const EngineToGameEvent& event) {
@@ -137,86 +142,105 @@ DelegationComponent::DelegationComponent(Robot& robot,
          HandleActionComplete(event.GetData().Get_RobotCompletedAction());
        } ));
   }
-
+  {
+    // Create a weak ptr with no strong references to return when delegation is locked
+    _invalidDelegator = std::weak_ptr<Delegator>();
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DelegationComponent::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
 {
-  if(IsControlDelegated(_delegateWrapper->_runnableThatQueuedAction) &&
-     (msg.idTag == _delegateWrapper->_lastActionTag))
+  if(IsControlDelegated(_delegator->_runnableThatDelegatedAction) &&
+     (msg.idTag == _delegator->_lastActionTag))
   {
-    _delegateWrapper->_lastActionTag = ActionConstants::INVALID_TAG;
-    _delegateWrapper->_runnableThatQueuedAction = nullptr;
+    _delegator->_lastActionTag = ActionConstants::INVALID_TAG;
+    _delegator->_runnableThatDelegatedAction = nullptr;
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::IsControlDelegated(const IBSRunnable* delegator)
+bool DelegationComponent::IsControlDelegated(const IBSRunnable* delegatingRunnable)
 {
-  if(_delegateWrapper->_runnableThatQueuedAction == delegator){
-    return IsActing(delegator);
-  }else if(_delegateWrapper->_runnableThatQueuedHelper == delegator){
-    return !_delegateWrapper->_queuedHandle.expired();
+  if(USE_BSM){
+    if(_bsm->IsControlDelegated(delegatingRunnable)){
+      return true;
+    }
   }
-  return false;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::IsActing(const IBSRunnable* delegator)
-{
-  if(_delegateWrapper->_runnableThatQueuedAction == delegator){
-    return _delegateWrapper->_lastActionTag != ActionConstants::INVALID_TAG;
+  
+  if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
+    return IsActing(delegatingRunnable);
+  }else if(_delegator->_runnableThatDelegatedHelper == delegatingRunnable){
+    return !_delegator->_delegateHelperHandle.expired();
   }
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::CancelDelegates(IBSRunnable* delegator)
+bool DelegationComponent::IsActing(const IBSRunnable* delegatingRunnable)
 {
-  if(_delegateWrapper->_runnableThatQueuedAction != nullptr){
-    _delegateWrapper->_runnableThatQueuedAction = nullptr;
+  if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
+    return _delegator->_lastActionTag != ActionConstants::INVALID_TAG;
+  }
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DelegationComponent::CancelDelegates(IBSRunnable* delegatingRunnable)
+{
+  if(_delegator->_runnableThatDelegatedAction != nullptr){
     bool ret = false;
-    u32 tagToCancel = _delegateWrapper->_lastActionTag;
-    if(_delegateWrapper->_runnableThatQueuedAction == delegator){
-      ret = _delegateWrapper->_robot.GetActionList().Cancel(tagToCancel);
+    u32 tagToCancel = _delegator->_lastActionTag;
+    if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
+      _delegator->_runnableThatDelegatedAction = nullptr;
+      ret = _delegator->_robot.GetActionList().Cancel(tagToCancel);
     }
     // note that the callback, if there was one (and it was allowed to run), should have already been called
     // at this point, so it's safe to clear the tag. Also, if the cancel itself failed, that is probably a
     // bug, but somehow the action is gone, so no sense keeping the tag around (and it clearly isn't
     // running). If the callback called StartActing, we may have a new action tag, so only clear this if the
     // cancel didn't change it
-    if( _delegateWrapper->_lastActionTag == tagToCancel ) {
-      _delegateWrapper->_lastActionTag = ActionConstants::INVALID_TAG;
+    if( _delegator->_lastActionTag == tagToCancel ) {
+      _delegator->_lastActionTag = ActionConstants::INVALID_TAG;
     }
-    return ret;
-  }else if(_delegateWrapper->_runnableThatQueuedHelper != nullptr){
-    _delegateWrapper->_runnableThatQueuedHelper = nullptr;
-    const bool res = _delegateWrapper->_robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(_delegateWrapper->_queuedHandle.lock());
-    _delegateWrapper->_queuedHandle.reset();
-    return res;
-  }else{
-    return false;
+    
+  }else if(_delegator->_runnableThatDelegatedHelper != nullptr){
+    _delegator->_runnableThatDelegatedHelper = nullptr;
+    _delegator->_robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(_delegator->_delegateHelperHandle.lock());
+    _delegator->_delegateHelperHandle.reset();
+  }
+  
+  if(USE_BSM){
+    _bsm->CancelDelegates(delegatingRunnable);
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::CancelSelf(IBSRunnable* delegator)
+void DelegationComponent::CancelSelf(IBSRunnable* delegatingRunnable)
 {
-  
+  if(USE_BSM){
+    _bsm->CancelSelf(delegatingRunnable);
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::weak_ptr<DelegateWrapper> DelegationComponent::GetDelegateWrapper(IBSRunnable* delegator)
+std::weak_ptr<Delegator> DelegationComponent::GetDelegator(IBSRunnable* delegatingRunnable)
 {
-  // TODO: Add logic checking BSM to see if on top
-  return _delegateWrapper;
+  if(USE_BSM){
+    if(_bsm->CanDelegate(delegatingRunnable)){
+      return _delegator;
+    }else{
+      return _invalidDelegator;
+    }
+  }else{
+    return _delegator;
+  }
 }
 
 } // namespace Cozmo

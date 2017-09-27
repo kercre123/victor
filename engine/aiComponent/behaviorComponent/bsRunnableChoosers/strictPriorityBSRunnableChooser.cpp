@@ -75,6 +75,15 @@ IBehaviorPtr StrictPriorityBSRunnableChooser::GetDesiredActiveBehavior(BehaviorE
   return nullptr;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StrictPriorityBSRunnableChooser::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+{
+  for(const auto& entry: _behaviors){
+    delegates.insert(entry.get());
+  }
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

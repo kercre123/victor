@@ -715,6 +715,11 @@ public:
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
 protected:
+  // Geometry / Pose
+  std::unique_ptr<PoseOriginList> _poseOriginList;
+  
+  Pose3d         _pose;
+  
   
   const CozmoContext* _context;
   
@@ -783,10 +788,7 @@ protected:
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
   
-  // Geometry / Pose
-  std::unique_ptr<PoseOriginList> _poseOriginList;
- 
-  Pose3d         _pose;
+
   Pose3d         _driveCenterPose;
   PoseFrameID_t  _frameId                   = 0;
   ObjectID       _localizedToID; // ID of mat object robot is localized to

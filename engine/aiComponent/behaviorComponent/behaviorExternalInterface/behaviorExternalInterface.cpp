@@ -39,16 +39,15 @@ BehaviorExternalInterface::BehaviorExternalInterface(Robot& robot,
                                                      AIComponent& aiComponent,
                                                      const BehaviorContainer& behaviorContainer,
                                                      BlockWorld& blockWorld,
-                                                     FaceWorld& faceWorld,
-                                                     DelegationComponent& delegationComponent)
+                                                     FaceWorld& faceWorld)
 : _robot(robot)
 , _aiComponent(aiComponent)
-, _delegationComponent(delegationComponent)
 , _behaviorContainer(behaviorContainer)
 , _faceWorld(faceWorld)
 , _blockWorld(blockWorld)
 {
-  SetOptionalInterfaces(&robot.GetMoodManager(),
+  SetOptionalInterfaces(nullptr,
+                        &robot.GetMoodManager(),
                         robot.GetContext()->GetNeedsManager(),
                         &robot.GetProgressionUnlockComponent(),
                         &robot.GetPublicStateBroadcaster(),
@@ -56,7 +55,8 @@ BehaviorExternalInterface::BehaviorExternalInterface(Robot& robot,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExternalInterface::SetOptionalInterfaces(MoodManager* moodManager,
+void BehaviorExternalInterface::SetOptionalInterfaces(DelegationComponent* delegationComponent,
+                                                      MoodManager* moodManager,
                                                       NeedsManager* needsManager,
                                                       ProgressionUnlockComponent* progressionUnlockComponent,
                                                       PublicStateBroadcaster* publicStateBroadcaster,
@@ -73,12 +73,14 @@ void BehaviorExternalInterface::SetOptionalInterfaces(MoodManager* moodManager,
   // Solution: pass null deleters into our fake shared pointers so that when they
   // are destroyed robot is unaffected
   
+  auto delegationNullDeleter = [](DelegationComponent *) {};
   auto moodNullDeleter = [](MoodManager *) {};
   auto needsNullDeleter = [](NeedsManager *) {};
   auto progNullDeleter = [](ProgressionUnlockComponent *) {};
   auto pubStateNullDeleter = [](PublicStateBroadcaster *) {};
   auto robotInterNullDeleter = [](IExternalInterface *) {};
 
+  _delegationComponent        = std::shared_ptr<DelegationComponent>(delegationComponent, delegationNullDeleter);
   _moodManager                = std::shared_ptr<MoodManager>(moodManager, moodNullDeleter);
   _needsManager               = std::shared_ptr<NeedsManager>(needsManager, needsNullDeleter);
   _progressionUnlockComponent = std::shared_ptr<ProgressionUnlockComponent>(progressionUnlockComponent, progNullDeleter);

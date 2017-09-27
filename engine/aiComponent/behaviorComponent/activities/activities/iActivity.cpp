@@ -17,10 +17,12 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/audio/robotAudioClient.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/activityStrategyFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/bsRunnableChooserFactory.h"
 #include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
@@ -210,6 +212,36 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
   const Json::Value& strategyConfig = config[kStrategyConfigKey];
   IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(behaviorExternalInterface, strategyConfig);
   _strategy.reset( newStrategy );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+  if(USE_BSM){
+    auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
+    if((_behaviorChooserPtr != nullptr) &&
+       (delegationComponent != nullptr) &&
+       !delegationComponent->IsControlDelegated(this)){
+      IBehaviorPtr nextBehavior = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
+      auto delegationWrap = delegationComponent->GetDelegator(this).lock();
+      if(delegationWrap != nullptr){
+        delegationWrap->Delegate(this, nextBehavior.get());
+      }
+    }
+  }
+  Update_Legacy(behaviorExternalInterface);
+};
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+{
+ if(_behaviorChooserPtr.get() != nullptr){
+   _behaviorChooserPtr->GetAllDelegates(delegates);
+ }
+ if(_interludeBehaviorChooserPtr != nullptr){
+   _interludeBehaviorChooserPtr->GetAllDelegates(delegates);
+ }
 }
 
 

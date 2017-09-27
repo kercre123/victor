@@ -137,11 +137,11 @@ TEST(BehaviorInterface, Create)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
+  b.OnEnteredActivatableScope();
   b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b.IsRunning() );
@@ -163,8 +163,7 @@ TEST(BehaviorInterface, Init)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
 
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -173,6 +172,7 @@ TEST(BehaviorInterface, Init)
 
   EXPECT_FALSE( b._inited );
   EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
   EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kRunningScore );
   EXPECT_TRUE( b._inited );
@@ -192,14 +192,14 @@ TEST(BehaviorInterface, InitWithInterface)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
 
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   b.OnEnteredActivatableScope();
 
   EXPECT_FALSE( b._inited );
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
@@ -218,8 +218,7 @@ TEST(BehaviorInterface, Run)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -229,7 +228,8 @@ TEST(BehaviorInterface, Run)
   BaseStationTimer::getInstance()->UpdateTime(0);
 
   EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
-
+  
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
   for(int i=0; i<5; i++) {
     EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kRunningScore );
@@ -274,8 +274,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   b.ReadFromScoredJson(empty);
@@ -288,6 +287,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
 
   {
     SCOPED_TRACE("");
+    b.WantsToBeActivated(*behaviorExternalInterface);
     b.OnActivated(*behaviorExternalInterface);
     TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
   }
@@ -354,14 +354,14 @@ TEST(BehaviorInterface, HandleMessages)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   b.OnEnteredActivatableScope();
 
   BaseStationTimer::getInstance()->UpdateTime(0);
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   EXPECT_EQ(b._alwaysHandleCalls, 0);
@@ -406,12 +406,12 @@ TEST(BehaviorInterface, OutsideAction)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   b.OnEnteredActivatableScope();
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -501,14 +501,13 @@ TEST(BehaviorInterface, StartActingSimple)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   BaseStationTimer::getInstance()->UpdateTime(0);
   b.OnEnteredActivatableScope();
-
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
@@ -545,14 +544,14 @@ TEST(BehaviorInterface, StartActingFailures)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
   b.OnEnteredActivatableScope();
+  b.WantsToBeActivated(*behaviorExternalInterface);
 
   b.OnActivated(*behaviorExternalInterface);
 
@@ -619,14 +618,14 @@ TEST(BehaviorInterface, StartActingCallbacks)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
   b.OnEnteredActivatableScope();
+  b.WantsToBeActivated(*behaviorExternalInterface);
 
   b.OnActivated(*behaviorExternalInterface);
 
@@ -695,14 +694,14 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
   b.OnEnteredActivatableScope();
+  b.WantsToBeActivated(*behaviorExternalInterface);
 
   b.OnActivated(*behaviorExternalInterface);
 
@@ -723,6 +722,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   BaseStationTimer::getInstance()->UpdateTime(0);
   
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
@@ -769,8 +769,7 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -778,6 +777,7 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   BaseStationTimer::getInstance()->UpdateTime( 0 );
   
   b.OnEnteredActivatableScope();
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
@@ -878,14 +878,14 @@ TEST(BehaviorInterface, StartActingInsideInit)
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld(),
-                                                                                       delegationComp);
+                                                                                       robot.GetFaceWorld());
   
   Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   TestInitBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   b.OnEnteredActivatableScope();
+  b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty()) << "action should be started by Init";

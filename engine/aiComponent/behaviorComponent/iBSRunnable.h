@@ -59,7 +59,7 @@ public:
   // the runnable should stop any processes it started on entering selectable scope
   void OnLeftActivatableScope();
   
-  virtual void GetAllDelegates(std::set<const IBSRunnable&>& delegates) const = 0;
+  virtual void GetAllDelegates(std::set<IBSRunnable*>& delegates) const = 0;
 
 protected:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
@@ -80,6 +80,8 @@ private:
   
   // tmp string for identifying BSRunnables until IDs are combined
   std::string _idString;
+  // Track the number of EnteredScope requests
+  uint32_t _currentInScopeCount;
   ActivationState _currentActivationState;
   mutable size_t _lastTickWantsToBeActivatedCheckedOn;
   size_t _lastTickOfUpdate;
