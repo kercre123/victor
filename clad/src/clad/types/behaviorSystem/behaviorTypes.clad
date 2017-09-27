@@ -265,10 +265,10 @@ enum uint_8 BehaviorID {
   SparksRollBlock,
   SparksStackBlock,
   SparksThinkAboutBeacons,
+  SparksTrackLaser,
   SparksVisitPossibleMarker,
 
   StackBlocks,
-  TrackLaser,
 
   VC_AlrightyResponse,
   VC_ComeHere,
@@ -285,7 +285,6 @@ enum uint_8 BehaviorID {
   VC_RequestMemoryMatch,
   VC_RequestSpeedTap,
   VC_SearchForFace,
-  VC_TrackLaser,
 
   Wait
 }

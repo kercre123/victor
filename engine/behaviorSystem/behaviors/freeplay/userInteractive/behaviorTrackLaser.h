@@ -87,7 +87,7 @@ private:
     float    searchAmplitude_deg; // E.g. 90deg
     
     // Various timeouts
-    float    maxTimeSinceNoLaser_ms; // Eg.g 3000ms (3 sec)
+    Util::GraphEvaluator2d maxLostLaserTimeoutGraph_ms; // E.g. time behavior's been running -> ms to search
     float    maxTimeBehaviorTimeout_sec;  // E.g. 30sec
     float    maxTimeBeforeRotate_sec;  // E.g. 4sec
     float    trackingTimeout_sec;  // E.g. 1.5fsec
@@ -151,6 +151,7 @@ private:
   
   float _lastTimeRotate = 0.f;
   float _startedTracking_sec = 0.f;
+  float _currentLostLaserTimeout = 0.f;
   
   State _state = State::Inactive;
   

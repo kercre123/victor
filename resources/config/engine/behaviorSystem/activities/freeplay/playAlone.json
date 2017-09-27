@@ -32,12 +32,6 @@
           "flatScore": 20
         }
       },
-      { "behaviorID" : "TrackLaser",
-        "scoring"      :
-        {
-          "flatScore": 10
-        }
-      },
       { "behaviorID" : "GuardDog",
         "scoring"      :
         {
