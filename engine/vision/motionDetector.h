@@ -60,23 +60,31 @@ public:
 private:
 
   template<class ImageType>
-  Result DetectHelper(const ImageType&        resizedImage,
+  Result DetectHelper(const ImageType &resizedImage,
                       s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
-                      const VisionPoseData&   crntPoseData,
-                      const VisionPoseData&   prevPoseData,
-                      std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
-                      DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+                      const VisionPoseData &crntPoseData,
+                      const VisionPoseData &prevPoseData,
+                      std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
+                      DebugImageList<Vision::ImageRGB> &debugImageRGBs);
 
   // To detect peripheral motion, a simple impulse-decay model is used. The longer motion is detected in a
   // specific area, the higher its activation will be. When it reaches a max value motion is activated in
   // that specific area.
-  Result DetectPeripheralMotion(Vision::Image &ratioImage,
-                                DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
-                                ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier);
+  bool DetectPeripheralMotionHelper(Vision::Image &ratioImage,
+                                    DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
+                                    ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier);
 
-  // apply Gaussian blur to the ration image
-  template<class ImageType>
-  s32 ReprocessRatioImage(const ImageType &image, Vision::Image &foregroundMotion);
+  bool DetectGroundAndImageHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
+                                  s32 origNumCols, f32 scaleMultiplier,
+                                  const VisionPoseData &crntPoseData,
+                                  const VisionPoseData &prevPoseData,
+                                  std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
+                                  DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
+                                  ExternalInterface::RobotObservedMotion &msg);
+
+  template <class ImageType>
+  void FilterImageAndPrevImages(const ImageType& image);
+
   void ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
                                 const VisionPoseData &crntPoseData,
                                 const Vision::Image &foregroundMotion,
@@ -116,7 +124,6 @@ private:
   VizManager*   _vizManager = nullptr;
 
   const Json::Value& _config;
-
 };
   
 } // namespace Cozmo
