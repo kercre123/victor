@@ -74,16 +74,16 @@ private:
                                     DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
                                     ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier);
 
-  bool DetectGroundPlaneMotionHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
-                                     s32 origNumCols, f32 scaleMultiplier,
-                                     const VisionPoseData &crntPoseData,
-                                     const VisionPoseData &prevPoseData,
-                                     std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                                     DebugImageList <Anki::Vision::ImageRGB> &debugImageRGBs,
-                                     ExternalInterface::RobotObservedMotion &msg);
+  bool DetectGroundAndImageHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
+                                  s32 origNumCols, f32 scaleMultiplier,
+                                  const VisionPoseData &crntPoseData,
+                                  const VisionPoseData &prevPoseData,
+                                  std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
+                                  DebugImageList<Anki::Vision::ImageRGB> &debugImageRGBs,
+                                  ExternalInterface::RobotObservedMotion &msg);
 
   template <class ImageType>
-  void filterImageAndPrevImages(const ImageType &image);
+  void FilterImageAndPrevImages(const ImageType& image);
 
   void ExtractGroundPlaneMotion(s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
                                 const VisionPoseData &crntPoseData,
