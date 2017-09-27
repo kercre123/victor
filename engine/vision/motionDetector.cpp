@@ -542,7 +542,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
     motionFound = true;
     if(DEBUG_MOTION_DETECTION)
     {
-      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.DetectGroundAndImageHelper",
+      PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectGroundAndImageHelper.FoundCentroid",
                     "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
                         "-- %.1f%% of ground area at (%.1f,%.1f)",
                     imgRegionArea, centroid.x(), centroid.y(),
@@ -560,10 +560,10 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
     {
       DEV_ASSERT(centroid.x() >= 0.f && centroid.x() <= foregroundMotion.GetNumCols() &&
                  centroid.y() >= 0.f && centroid.y() <= foregroundMotion.GetNumRows(),
-                 "MotionDetector.DetectMotion.CentroidOOB");
+                 "MotionDetector.DetectGroundAndImageHelper.CentroidOOB");
 
       // make relative to image center *at processing resolution*
-      DEV_ASSERT(_camera.IsCalibrated(), "MotionDetector.Detect.CameraNotCalibrated");
+      DEV_ASSERT(_camera.IsCalibrated(), "MotionDetector.DetectGroundAndImageHelper.CameraNotCalibrated");
       centroid -= _camera.GetCalibration()->GetCenter() * (1.f / scaleMultiplier);
 
       // Convert area to fraction of image area (to be resolution-independent)
