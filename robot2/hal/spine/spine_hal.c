@@ -344,7 +344,7 @@ const struct SpineMessageHeader* hal_read_frame()
     index = hal_resync_partial(SPINE_HEADER_LEN, total_message_length);
     return NULL;
   }
-
+  
   spine_debug_x("found frame %04x!\r", ((struct SpineMessageHeader*)gHal.inbuffer)->payload_type);
   spine_debug_x("payload start: %08x!\r", *(uint32_t*)(((struct SpineMessageHeader*)gHal.inbuffer)+1));
   index = 0; //get ready for next one
@@ -356,6 +356,7 @@ const struct SpineMessageHeader* hal_read_frame()
 
 const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
+  timeout_ms *= 5;
   const struct SpineMessageHeader* hdr;
   do {
     hdr = hal_read_frame();

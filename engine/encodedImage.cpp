@@ -121,7 +121,15 @@ namespace Cozmo {
       }
 
       _buffer.clear();
-      _buffer.reserve(_imgWidth*_imgHeight*sizeof(Vision::PixelRGB));
+      
+      if(chunk.imageEncoding == ImageEncoding::JPEGGray)
+      {
+        _buffer.reserve(_imgWidth*_imgHeight);
+      }
+      else
+      {
+        _buffer.reserve(_imgWidth*_imgHeight*sizeof(Vision::PixelRGB));
+      }
       
       _numChunksReceived = 0;
     }

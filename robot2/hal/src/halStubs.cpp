@@ -55,8 +55,6 @@ namespace Anki {
     static_assert(EnumToUnderlyingType(MotorID::MOTOR_LIFT) == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
     static_assert(EnumToUnderlyingType(MotorID::MOTOR_HEAD) == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
     
-
-    
     namespace { // "Private members"
 
       //map power -1.0 .. 1.0 to -32767 to 32767
@@ -147,13 +145,14 @@ namespace Anki {
 
     Result HAL::Init()
     {
+      HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+
       // Set ID
       robotID_ = 1;
 
-#if IMU_WORKING
+//#if IMU_WORKING
       InitIMU();
-#endif
-      HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+//#endif
 
       if (InitRadio(RADIO_IP) != RESULT_OK) {
         printf("Failed to initialize Radio.\n");
@@ -206,7 +205,6 @@ namespace Anki {
       assert(m < MOTOR_COUNT);
       SAVE_MOTOR_POWER(m, power);
       headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
-      
     }
 
     // Reset the internal position of the specified motor to 0
@@ -301,8 +299,9 @@ namespace Anki {
     {
       // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
       // laid correctly.
-      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
-      RobotInterface::SendMessage(*latestAudioInput);
+      // TODO(Al/Lee): Put back once mics and camera can co-exist
+//      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+//      RobotInterface::SendMessage(*latestAudioInput);
     }
 
     Result HAL::Step(void)
@@ -323,15 +322,19 @@ namespace Anki {
           headData_.framecounter++;
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
+
+        // Process IMU while next frame is buffering in the background
+#if IMU_WORKING
+        ProcessIMUEvents();
+#endif
+        
         result =  GetSpineDataFrame();
         PrintConsoleOutput();
       }
 #endif
 
-#if IMU_WORKING
-      ProcessIMUEvents();
-#endif
       //MonitorConnectionState();
+
       ForwardAudioInput();
       return result;
     }
