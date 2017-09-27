@@ -171,6 +171,7 @@
 
         if (!window.isVertical) {
             var challengesButton = document.querySelector('#challengesbutton');
+            var tutorialButton = document.querySelector('#tutorialbutton');
 
             challengesButton.addEventListener('click', function () {
               // show challenges dialog
@@ -178,6 +179,15 @@
               Challenges.show();
             });
             challengesButton.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+            });
+
+            tutorialButton.addEventListener('click', function () {
+              // show tutorials dialog
+              Scratch.workspace.playAudio('click');
+              window.Tutorial.show();
+            });
+            tutorialButton.addEventListener('touchmove', function (e) {
                 e.preventDefault();
             });
         }
@@ -282,6 +292,12 @@
 
         window.setLocalizedValues();
         window.onresize();
+
+        var urlTutorialVar = window.getUrlVars()['showTutorial'];
+
+        if( urlTutorialVar && urlTutorialVar == "true" ) {
+            window.Tutorial.show();
+        }
     }
 
     window.onresize = function(event) {

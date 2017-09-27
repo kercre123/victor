@@ -573,14 +573,7 @@ namespace CodeLab {
                              isVertical: true);
         }
         else {
-          int timesPlayedCodeLab = 0;
-          DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(ChallengeID, out timesPlayedCodeLab);
-          if (timesPlayedCodeLab <= 0) {
-            LoadURL("extra/tutorial.html");
-          }
-          else {
-            LoadURL("extra/projects.html");
-          }
+          LoadURL("extra/projects.html");
         }
       }
     }
@@ -1130,6 +1123,12 @@ namespace CodeLab {
         return true;
       case "cozmoChallengesClose":
         _SessionState.OnChallengesClose();
+        return true;
+      case "cozmoTutorialOpen":
+        _SessionState.OnTutorialOpen();
+        return true;
+      case "cozmoTutorialClose":
+        _SessionState.OnTutorialClose();
         return true;
       case "cozmoExportProject":
         OnCozmoExportProject(scratchRequest);
@@ -2092,7 +2091,17 @@ namespace CodeLab {
 
       if (!isVertical) {
         _SessionState.StartSession(GrammarMode.Horizontal);
-        LoadURL(kHorizontalIndexFilename);
+
+        Dictionary<string, string> parameters = new Dictionary<string, string>();
+
+        if (DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed == 0) {
+          parameters.Add("showTutorial", "true");
+          DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabHorizontalPlayed = 1;
+        }
+        else {
+          parameters.Add("showTutorial", "false");
+        }
+        LoadURL(kHorizontalIndexFilename, parameters);
       }
       else {
         _SessionState.StartSession(GrammarMode.Vertical);
@@ -2170,7 +2179,7 @@ namespace CodeLab {
       return false;
     }
 
-    private void LoadURL(string scratchPathToHTML) {
+    private void LoadURL(string scratchPathToHTML, Dictionary<string, string> urlParameters = null) {
       if (_SessionState.IsProgramRunning()) {
         // Program is currently running and we won't receive OnScriptStopped notification
         // when the active page and Javascript is nuked, so manually force an OnScriptStopped event
@@ -2189,6 +2198,12 @@ namespace CodeLab {
       // Append locale parameter to URL
       string locale = Localization.GetStringsLocale();
       urlPath += "?locale=" + locale;
+
+      if (urlParameters != null) {
+        foreach (KeyValuePair<string, string> kvp in urlParameters) {
+          urlPath += "&" + kvp.Key + "=" + kvp.Value;
+        }
+      }
 
       DAS.Info("CodeLab.LoadURL", "urlPath = '" + urlPath + "'");
 

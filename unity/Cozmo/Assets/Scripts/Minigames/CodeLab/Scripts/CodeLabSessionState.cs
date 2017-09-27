@@ -178,6 +178,35 @@ namespace CodeLab {
       }
     } // End class ChallengesState
 
+    public class TutorialState {
+      private System.DateTime _OpenDateTime;
+      private bool _IsOpen = false;
+
+      public bool IsOpen() {
+        return _IsOpen;
+      }
+
+      public void Open() {
+        if (_IsOpen) {
+          DAS.Error("CodeLab.Tutorial.Open.AlreadyOpen", "");
+        }
+        DAS_Event("robot.code_lab.start_tutorial_ui", "");
+        _IsOpen = true;
+        _OpenDateTime = System.DateTime.UtcNow;
+      }
+
+      public void Close() {
+        if (_IsOpen) {
+          double timeOpen_s = (System.DateTime.UtcNow - _OpenDateTime).TotalSeconds;
+          DAS_Event("robot.code_lab.end_tutorial_ui", timeOpen_s.ToString());
+          _IsOpen = false;
+        }
+        else {
+          DAS.Error("CodeLab.Tutorial.Close.NotOpen", "");
+        }
+      }
+    } // End class TutorialState
+
     public class ProgramState {
       private System.DateTime _StartDateTime;
       private int _NumBlocksExecuted = 0;
@@ -349,6 +378,8 @@ namespace CodeLab {
     private ProjectStats _ProjectStats = new ProjectStats();
     private ProgramState _ProgramState = new ProgramState();
     private ChallengesState _ChallengesState = new ChallengesState();
+    private TutorialState _TutorialState = new TutorialState();
+
     private System.DateTime _EnterCodeLabDateTime;
     private System.DateTime _EnterCurrentGrammarModeDateTime;
     private GrammarMode _CurrentGrammar = GrammarMode.None;
@@ -539,6 +570,14 @@ namespace CodeLab {
 
     public void OnChallengesSetSlideNumber(uint slideNum) {
       _ChallengesState.SetSlideNumber(slideNum);
+    }
+
+    public void OnTutorialOpen() {
+      _TutorialState.Open();
+    }
+
+    public void OnTutorialClose() {
+      _TutorialState.Close();
     }
   }
 }

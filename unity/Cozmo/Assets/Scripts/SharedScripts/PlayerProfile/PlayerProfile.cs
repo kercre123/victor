@@ -39,6 +39,7 @@ namespace DataPersistence {
     public bool DroneModeInstructionsSeen;
 
     public List<DataPersistence.CodeLabProject> CodeLabProjects;
+    public int CodeLabHorizontalPlayed;
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
@@ -86,6 +87,7 @@ namespace DataPersistence {
       DroneModeInstructionsSeen = false;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
+      CodeLabHorizontalPlayed = 0;
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       DisplayedStars = 0;
       DisplayedSparks = 0;
