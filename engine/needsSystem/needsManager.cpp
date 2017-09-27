@@ -1542,6 +1542,11 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotNeedsData& msg)
 {
+  if (nullptr == _robot) {
+    PRINT_NAMED_WARNING("NeedsManager.WipeRobotNeedsData.NoRobot", "No active robot");
+    return;
+  }
+
   if (!_robot->GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
                                              [this](NVStorage::NVResult res)
                                              {
