@@ -15,7 +15,7 @@
 1.369576:text:4 of 9
 0.726821:text:<color=#FFFFFF>3 Tokens unlock a </color><b><color=#F5BF2D>Bonus Box.</color></b>
 0.019584:text:<color=#FFFFFF>Earn </color><b><color=#F5BF2D>Play Tokens</color></b><color=#FFFFFF> each day.</color>
-0.827887:text:Each day you fill Cozmo's Play Need, you earn a Play Token. Play Tokens unlock Bonus Boxes, filled with rewards like Sparks, Games, and Tricks.
+0.827887:text:Each day you fill Cozmo's Play Need, you earn a Play Token. Play Tokens unlock Bonus Boxes, filled with rewards like Sparks and Tricks.
 0.143258:text:Cozmo gets better over time.
 0.069129:click:next_button:0.1307373
 1.315209:text:5 of 9
