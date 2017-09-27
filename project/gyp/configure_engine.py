@@ -220,12 +220,7 @@ def main(scriptArgs):
     UtilLog.error("error compiling robot2 clad files")
     return False
 
-  #generate AnkiLogStringTables.json
-  if (subprocess.call(['make', '--silent', 'app'], cwd=os.path.join(projectRoot, 'robot')) != 0):
-      UtilLog.error("Error generating AnkiLogStringTables.json")
-      return False
-
-  # update file lists
+   # update file lists
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['engine', 'resources'],
                           ['project/gyp/cozmoEngine.lst'],

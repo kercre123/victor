@@ -208,8 +208,8 @@ namespace Anki
       /// Button IDs
       typedef enum 
       {
-        BUTTON_POWER = 0,
-        BUTTON_CAPACITIVE,
+        BUTTON_CAPACITIVE = 0,
+        BUTTON_POWER = 1,
         BUTTON_COUNT
       } ButtonID;
  

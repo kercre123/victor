@@ -6,21 +6,25 @@
 extern "C" {
 #endif
 
-//camera callback: called with captured `image` of `width` by `height` 8bit greyscale pixels
+// Camera callback: called with captured `image` of `width` by `height` 8bit greyscale pixels
 // (called from separate thread)
-typedef int(*camera_cb)(const uint8_t* image, int width, int height); 
+typedef int(*camera_cb)(uint8_t* image, int width, int height);
 
 
-//Initializes the camera
+// Initializes the camera
 int camera_init();
 
-//Starts capturing frames in new thread, sends them to callback `cb`.
+// Starts capturing frames in new thread, sends them to callback `cb`.
 int camera_start(camera_cb cb);
 
-//stops capturing frames
+// Let Camera know that the latest frame is being processed and that the buffer that holds
+// it should not be written to
+void camera_set_processing_frame();
+
+// Stops capturing frames
 int camera_stop();
 
-//de-initializes camera, makes it available to rest of system
+// De-initializes camera, makes it available to rest of system
 int camera_cleanup();
 
 

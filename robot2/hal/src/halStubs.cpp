@@ -55,8 +55,6 @@ namespace Anki {
     static_assert(EnumToUnderlyingType(MotorID::MOTOR_LIFT) == MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
     static_assert(EnumToUnderlyingType(MotorID::MOTOR_HEAD) == MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
     
-
-    
     namespace { // "Private members"
 
       //map power -1.0 .. 1.0 to -32767 to 32767
@@ -147,13 +145,14 @@ namespace Anki {
 
     Result HAL::Init()
     {
+      HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+
       // Set ID
       robotID_ = 1;
 
-#if IMU_WORKING
+//#if IMU_WORKING
       InitIMU();
-#endif
-      HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+//#endif
 
       if (InitRadio(RADIO_IP) != RESULT_OK) {
         printf("Failed to initialize Radio.\n");
@@ -164,9 +163,9 @@ namespace Anki {
       {
         printf("Starting spine hal\n");
 
-        SpineErr_t result = hal_init(SPINE_TTY, SPINE_BAUD);
+        SpineErr_t error = hal_init(SPINE_TTY, SPINE_BAUD);
 
-        if (result != err_OK) {
+        if (error != err_OK) {
           return RESULT_FAIL;
         }
         printf("hal Init OK\nSetting RUN mode\n");
@@ -174,18 +173,22 @@ namespace Anki {
         hal_set_mode(RobotMode_RUN);
 
         printf("Waiting for Data Frame\n");
+        Result result;
         do {
-          Result result = GetSpineDataFrame();
+          result = GetSpineDataFrame();
           //spin on good frame
           if (result == RESULT_FAIL_IO_TIMEOUT) {
-            printf("Kicking the body again!");
+            printf("Kicking the body again!\n");
             hal_set_mode(RobotMode_RUN);
           }
         } while (result != RESULT_OK);
+        
       }
 #else
       bodyData_ = &dummyBodyData_;
 #endif
+      assert(bodyData_ != nullptr);
+      
 
       for (int m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
         MotorResetPosition((MotorID)m);
@@ -202,7 +205,6 @@ namespace Anki {
       assert(m < MOTOR_COUNT);
       SAVE_MOTOR_POWER(m, power);
       headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power * HAL_MOTOR_DIRECTION[m];
-      
     }
 
     // Reset the internal position of the specified motor to 0
@@ -297,8 +299,9 @@ namespace Anki {
     {
       // Takes advantage of the data in bodyData being ordered such that the required members of AudioInput are already
       // laid correctly.
-      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
-      RobotInterface::SendMessage(*latestAudioInput);
+      // TODO(Al/Lee): Put back once mics and camera can co-exist
+//      const auto* latestAudioInput = reinterpret_cast<const RobotInterface::AudioInput*>(&bodyData_->audio);
+//      RobotInterface::SendMessage(*latestAudioInput);
     }
 
     Result HAL::Step(void)
@@ -319,15 +322,19 @@ namespace Anki {
           headData_.framecounter++;
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
+
+        // Process IMU while next frame is buffering in the background
+#if IMU_WORKING
+        ProcessIMUEvents();
+#endif
+        
         result =  GetSpineDataFrame();
         PrintConsoleOutput();
       }
 #endif
 
-#if IMU_WORKING
-      ProcessIMUEvents();
-#endif
       //MonitorConnectionState();
+
       ForwardAudioInput();
       return result;
     }
@@ -386,6 +393,7 @@ namespace Anki {
     ProxSensorData HAL::GetRawProxData()
     {
       ProxSensorData proxData;
+      proxData.rangeStatus = bodyData_->proximity.rangeStatus;
       proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
       // Signal/Ambient Rate are fixed point 9.7, so convert to float:
       proxData.signalIntensity = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
@@ -397,8 +405,8 @@ namespace Anki {
     
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
-      // TODO(agm) ask adam about this
-      return 0;
+      assert(button_id >= 0 && button_id < BUTTON_COUNT);
+      return bodyData_->touchLevel[button_id];
     }
 
     u16 HAL::GetRawCliffData(const CliffID cliff_id)

@@ -371,6 +371,8 @@ struct DockingErrorSignal;
     bool _enableAutoExposure = true;
     bool _enableColorImages = false;
     
+    ImageSendMode _imageSaveMode = ImageSendMode::Off;
+    
   }; // class VisionComponent
   
   inline void VisionComponent::Pause(bool isPaused) {

@@ -197,6 +197,7 @@ int lcd_init(void) {
   static const uint8_t    MODE = 0;
   
   // Echo to device to activate backlight
+  // TODO: Open file and write to it instead of shelling out to the system
   system("echo 10 > /sys/class/leds/face-backlight/brightness");
   system("echo 1 > /sys/kernel/debug/regulator/8916_l17/enable");
   
@@ -231,6 +232,11 @@ int lcd_init(void) {
 
 
 void lcd_shutdown(void) {
+  // Echo to device to turn off backlight
+  // TODO: Open file and write to it instead of shelling out to the system
+  system("echo 0 > /sys/class/leds/face-backlight/brightness");
+  system("echo 0 > /sys/kernel/debug/regulator/8916_l17/enable");
+  
   //todo: turn off screen?
   static const uint8_t SLEEP = 0x10;
   spi(TRUE, 1, &SLEEP);
@@ -278,6 +284,7 @@ namespace Cozmo {
 
   FaceDisplay::~FaceDisplay()
   {
+    FaceClear();
     lcd_shutdown();
   }
   

@@ -215,6 +215,8 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   }
 
   RobotConnectionResult result;
+  
+#ifndef COZMO_V2
   if (robotIsSimulated) {
     result = RobotConnectionResult::Success;
   }
@@ -239,6 +241,9 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
       result = RobotConnectionResult::Success;
     }
   }
+#else
+  result = RobotConnectionResult::Success;
+#endif
 
   OnNotified(result, robotVersion);
 }

@@ -1,7 +1,6 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -397,8 +396,7 @@ namespace Anki {
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }
-
-
+        
         return RESULT_OK;
 
       } // Robot::step_MainExecution()

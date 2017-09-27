@@ -22,8 +22,8 @@ REPORT_ERRORS = True
 RETRIES = 10
 SVN_INFO_CMD = "svn info %s %s --xml"
 SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trust-server-cert"
-RELATIVE_DEPS_FILE = "../../DEPS"
-RELATIVE_EXTERNALS_DIR = "../../EXTERNALS"
+RELATIVE_DEPS_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'DEPS')
+RELATIVE_EXTERNALS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'EXTERNALS')
 DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 
 # Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
@@ -481,7 +481,11 @@ def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR, validate
         os.makedirs(location)
     json_parser(version_file)
     if validate_assets:
-        validate_anim_data.check_audio_events_all_anims(location)
+        try:
+            validate_anim_data.check_audio_events_all_anims(location)
+        except ValueError, e:
+            print(str(e))
+            print("WARNING: This build may contain animations that reference missing audio events")
 
 
 def json_parser(version_file):
@@ -544,13 +548,34 @@ def update_teamcity_version(version_file, teamcity_builds):
 # ENTRY POINT #
 ###############
 
+import argparse
 
-def main():
-    """Main should only be called for debugging."""
-    extract_dependencies(RELATIVE_DEPS_FILE, RELATIVE_EXTERNALS_DIR)
+def parse_args(argv=[]):
+  parser = argparse.ArgumentParser(description='fetch external build deps')
+  parser.add_argument('--verbose', dest='verbose', action='store_true',                             
+                      help='prints extra output')
+  parser.add_argument('--deps-file',
+                      action='store',
+                      default=RELATIVE_DEPS_FILE,
+                      help='path to DEPS file')
+  parser.add_argument('--externals-dir',
+                      action='store',
+                      default=RELATIVE_EXTERNALS_DIR,
+                      help='path to EXTERNALS dir')                           
+                                                                                                    
+  (options, args) = parser.parse_known_args(argv)                                             
+  return options
 
+def main(argv):
+    options = parse_args(argv[1:])
+    deps_file = os.path.abspath(options.deps_file)
+    externals_dir = os.path.abspath(options.externals_dir)
+    if options.verbose:
+        print("    deps-file: {}".format(deps_file))
+        print("externals-dir: {}".format(externals_dir))
+    extract_dependencies(deps_file, externals_dir)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
 
 

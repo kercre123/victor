@@ -17,6 +17,27 @@
 
 #include "messages.h"
 
+enum CommsState {
+  COMM_STATE_SYNC,
+  COMM_STATE_VALIDATE,
+  COMM_STATE_PAYLOAD
+};
+
+struct InboundPacket {
+  union {
+    SpineMessageHeader header;
+    uint8_t raw[];
+  };
+  union {
+    HeadToBody headToBody;
+    ContactData contactData;
+    AckMessage ack;
+    VersionInfo version;
+    uint8_t raw_payload[];
+  };
+  SpineMessageFooter _footer;
+};
+
 struct TransmitFifoPayload {
   SpineMessageHeader header;
   union {
@@ -45,29 +66,17 @@ static struct {
   uint8_t tail[sizeof(TransmitFifoPayload) * 3];
 } outboundPacket;
 
-static struct {
-  union {
-    SpineMessageHeader header;
-    uint8_t header_raw[];
-  };
-  union {
-    HeadToBody headToBody;
-    ContactData contactData;
-    AckMessage ack;
-    VersionInfo version;
-    uint8_t raw[];
-  };
-  SpineMessageFooter _footer;
-} inboundPacket;
-
 static const uint16_t BYTE_TIMER_PRESCALE = SYSTEM_CLOCK / COMMS_BAUDRATE;
 static const uint16_t BYTE_TIMER_PERIOD = 14; // 8 bits, 1 start / stop + 3 bits of "slop"
 static const int MAX_MISSED_FRAMES = 200; // 1 second of missed frames
 static const int MAX_FIFO_SLOTS = 4;
+static const int MAX_INBOUND_SIZE = 0x100;  // Must be a power of two, and at least twice as big as InboundPacket
+static const int EXTRA_MESSAGE_DATA = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
 
 static TransmitFifo txFifo[MAX_FIFO_SLOTS];
 static int txFifo_read = 0;
 static int txFifo_write = 0;
+static uint8_t inbound_raw[MAX_INBOUND_SIZE];
 
 static int missed_frames = 0;
 static bool applicationRunning = false;
@@ -97,13 +106,11 @@ void Comms::init(void) {
   BODY_RX::pull(PULL_NONE);
   BODY_RX::mode(MODE_ALTERNATE);
 
-  // Configure our USART1 (Start interrupt)
+  // Configure our USART1 (Using double buffered DMA)
   USART1->BRR = SYSTEM_CLOCK / COMMS_BAUDRATE;
   USART1->CR3 = USART_CR3_DMAR | USART_CR3_OVRDIS;
-  USART1->CR2 = (SYNC_HEAD_TO_BODY & 0xFF) << 24;
   USART1->CR1 = USART_CR1_RE
               | USART_CR1_TE
-              | USART_CR1_RXNEIE
               | USART_CR1_UE;
 
   // Timer6 is used to fire off the DMA for outbound UART data
@@ -117,16 +124,25 @@ void Comms::init(void) {
   outboundPacket.sync.header.payload_type = PAYLOAD_DATA_FRAME;
   outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
 
-  applicationRunning = false;
-
   static const AckMessage ack = { ACK_APPLICATION };
   enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
 
   // Configure our interrupts
-  NVIC_SetPriority(USART1_IRQn, PRIORITY_SPINE_COMMS);
-  NVIC_EnableIRQ(USART1_IRQn);
   NVIC_SetPriority(DMA1_Channel4_5_IRQn, PRIORITY_SPINE_COMMS);
   NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
+
+  // Start reading in a circul
+  DMA1_Channel5->CPAR = (uint32_t)&USART1->RDR;
+  DMA1_Channel5->CMAR = (uint32_t)inbound_raw;
+  DMA1_Channel5->CNDTR = sizeof(inbound_raw);
+  DMA1_Channel5->CCR = DMA_CCR_MINC
+                     | DMA_CCR_CIRC
+                     | DMA_CCR_TCIE
+                     | DMA_CCR_HTIE
+                     | DMA_CCR_EN
+                     ;
+
+  applicationRunning = false;
 }
 
 void Comms::enqueue(PayloadId kind, const void* packet, int size) {
@@ -189,7 +205,8 @@ void Comms::tick(void) {
     Analog::transmit(&outboundPacket.sync.payload);
     Motors::transmit(&outboundPacket.sync.payload);
     Opto::transmit(&outboundPacket.sync.payload);
-    Mics::transmit(outboundPacket.sync.payload.audio);
+    // TODO(Al/Lee): Put back once mics and camera can co-exist
+//    Mics::transmit(outboundPacket.sync.payload.audio);
     Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
     outboundPacket.sync.payload.framecounter++;
@@ -210,6 +227,8 @@ void Comms::tick(void) {
     DMA1_Channel3->CNDTR = count;
     DMA1_Channel3->CCR |= DMA_CCR_EN;
   }
+
+  NVIC_SetPendingIRQ(DMA1_Channel4_5_IRQn);
 }
 
 static int sizeOfInboundPayload(PayloadId id) {
@@ -227,54 +246,6 @@ static int sizeOfInboundPayload(PayloadId id) {
   }
 }
 
-extern "C" void USART1_IRQHandler(void) {
-  static int header_rx_index = 0;
-
-  // Flush overflows
-  if (USART1->ISR & USART_ISR_ORE) {
-    USART1->ICR = USART_ICR_ORECF;
-  }
-
-  // No data available
-  if (~USART1->ISR & USART_ISR_RXNE) {
-    return ;
-  }
-
-  inboundPacket.header_raw[header_rx_index++] = USART1->RDR;
-
-  const uint32_t mask = ~(~0 << (header_rx_index * 8));
-  const uint32_t diff = (SYNC_HEAD_TO_BODY ^ inboundPacket.header.sync_bytes) & mask;
-
-  // Header mismatch
-  if (diff) {
-    header_rx_index = 0;
-    return ;
-  }
-
-  if (header_rx_index < sizeof(inboundPacket.header)) {
-    return ;
-  }
-
-  // Clear header for matching next time
-  header_rx_index = 0;
-
-  // Payload is an incorrect size (ignore)
-  if (inboundPacket.header.bytes_to_follow != sizeOfInboundPayload(inboundPacket.header.payload_type)) {
-    return ;
-  }
-
-  // Configure out receive buffer
-  NVIC_DisableIRQ(USART1_IRQn);
-
-  DMA1_Channel5->CPAR = (uint32_t)&USART1->RDR;
-  DMA1_Channel5->CMAR = (uint32_t)inboundPacket.raw;
-  DMA1_Channel5->CNDTR = sizeof(SpineMessageFooter) + inboundPacket.header.bytes_to_follow;
-  DMA1_Channel5->CCR = DMA_CCR_MINC
-                     | DMA_CCR_TCIE
-                     | DMA_CCR_EN
-                     ;
-}
-
 void Comms::sendVersion(void) {
   VersionInfo ver;
 
@@ -286,19 +257,15 @@ void Comms::sendVersion(void) {
   Comms::enqueue(PAYLOAD_VERSION, &ver, sizeof(ver));
 }
 
-extern "C" void DMA1_Channel4_5_IRQHandler(void) {
+static void ProcessMessage(InboundPacket& packet) {
+  using namespace Comms;
   // Check the CRC
-  uint32_t foundCRC = crc(inboundPacket.raw, inboundPacket.header.bytes_to_follow / sizeof (uint32_t));
-  SpineMessageFooter* footer = (SpineMessageFooter*) &inboundPacket.raw[inboundPacket.header.bytes_to_follow];
-
-  // Switch back to interrupt mode
-  DMA1_Channel5->CCR = 0;
-  DMA1->IFCR = DMA_IFCR_CGIF5;
-  NVIC_EnableIRQ(USART1_IRQn);
+  uint32_t foundCRC = crc(packet.raw_payload, packet.header.bytes_to_follow / sizeof (uint32_t));
+  SpineMessageFooter* footer = (SpineMessageFooter*) &packet.raw_payload[packet.header.bytes_to_follow];
 
   // Process our packet
   if (foundCRC == footer->checksum) {
-    switch (inboundPacket.header.payload_type) {
+    switch (packet.header.payload_type) {
       case PAYLOAD_MODE_CHANGE:
         missed_frames = 0;
         applicationRunning = true;
@@ -311,14 +278,119 @@ extern "C" void DMA1_Channel4_5_IRQHandler(void) {
         break ;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;
-        Motors::receive(&inboundPacket.headToBody);
-        Lights::receive(inboundPacket.headToBody.ledColors);
+        Motors::receive(&packet.headToBody);
+        Lights::receive(packet.headToBody.ledColors);
         break ;
       case PAYLOAD_CONT_DATA:
-        Contacts::forward(inboundPacket.contactData);
+        Contacts::forward(packet.contactData);
         break ;
       default:
+        static const AckMessage ack = { NACK_BAD_COMMAND };
+        enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
         break ;
     }
+  } else {
+    static const AckMessage ack = { NACK_CRC_FAILED };
+    enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
   }
+}
+
+extern "C" void DMA1_Channel4_5_IRQHandler(void) {
+  // Find number of words transfered
+  static int previousIndex = 0;
+  static int receivedWords = 0;
+  static CommsState state = COMM_STATE_SYNC;
+
+  int currentIndex = MAX_INBOUND_SIZE - DMA1_Channel5->CNDTR;
+
+  static InboundPacket packet;
+  static int packetLength;
+
+  while (currentIndex != previousIndex) {
+    int copy;
+
+    if (currentIndex < previousIndex) {
+      // Copy wrap around
+      copy = MAX_INBOUND_SIZE - previousIndex;
+    } else {
+      // Up to cursor copy
+      copy = currentIndex - previousIndex;
+    }
+
+    // Clamp to buffer length
+    if (copy > sizeof(InboundPacket) - receivedWords) {
+      copy = sizeof(InboundPacket) - receivedWords;
+    }
+
+    // Shift in the data from the circular buffer
+    memcpy(&packet.raw[receivedWords], &inbound_raw[previousIndex], copy);
+    receivedWords += copy;
+    previousIndex = (previousIndex + copy) & (MAX_INBOUND_SIZE - 1);
+
+    // Sync to packet header
+    switch (state) {
+      case COMM_STATE_SYNC:
+        int offset;
+
+        // We don't have enough data to test the header
+        if (receivedWords < sizeof(uint32_t)) {
+          continue ;
+        }
+
+        // Locate our sync header
+        for (offset = 0; offset <= receivedWords - sizeof(uint32_t); offset++) {
+          __packed uint32_t* sync_word = (__packed uint32_t*) &packet.raw[offset];
+
+          if (*sync_word == SYNC_HEAD_TO_BODY) {
+            state = COMM_STATE_VALIDATE;
+            break ;
+          }
+        }
+
+        // Trim off the erranious words
+        if (offset) {
+          memcpy(&packet.raw[0], &packet.raw[offset], receivedWords - offset);
+          receivedWords -= offset;
+        }
+
+        // Restart packing stage
+        continue ;
+
+      case COMM_STATE_VALIDATE:
+        // We don't have enough data to test the header
+        if (receivedWords < sizeof(SpineMessageHeader)) {
+          continue ;
+        }
+
+        // Verify that the message is of the expected type
+        // Discard everything if the data is bunk (can cause additional packet loss)
+        if (packet.header.bytes_to_follow != sizeOfInboundPayload(packet.header.payload_type)) {
+          state = COMM_STATE_SYNC;
+          receivedWords = 0;
+          continue ;
+        }
+
+        // Header was valid, start receiving the payload
+        state = COMM_STATE_PAYLOAD;
+        packetLength = packet.header.bytes_to_follow + EXTRA_MESSAGE_DATA;
+
+      case COMM_STATE_PAYLOAD:
+        // Have not received data
+        if (receivedWords < packetLength) {
+          continue ;
+        }
+
+        // Process the message
+        ProcessMessage(packet);
+
+        // Clear out our payload
+        memcpy(&packet.raw[0], &packet.raw[packetLength], receivedWords - packetLength);
+        receivedWords -= packetLength;
+        state = COMM_STATE_SYNC;
+        continue ;
+    }
+  }
+
+  // Clear any pending interrupts
+  DMA1->IFCR = DMA_IFCR_CGIF5;
 }

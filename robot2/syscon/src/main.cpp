@@ -56,6 +56,9 @@ int main (void) {
   // This is all driven by IRQ logic
   Opto::init();
 
+  // Clear boot code lights
+  Lights::boot(0);
+
   // Low priority interrupts are now our main execution
   for (;;) {
     __asm("WFI");

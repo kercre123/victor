@@ -179,7 +179,18 @@ After starting the robot process, you should see/hear head and lift calibrating 
 ./animctl.sh restart
 ./robotctl.sh restart
 ```
+## Running Victor in Webots (simulation)
 
+If you get a crash in  `webotsCtrlGameEngine2` process, and an error message mentioning "shared memory" appears in the console log for Webots (towards the beginning), then it may be because simulating the Cozmo2 camera requires a larger memory budget than allocated. To increase it, edit the `/etc/sysctl.conf` file to have the following contents:
+```
+# Modified setup (currently not set)
+kern.sysv.shmmax=67108864
+kern.sysv.shmmin=1
+kern.sysv.shmmni=256
+kern.sysv.shmseg=64
+kern.sysv.shmall=4096
+```
+And then restart OSX, for the changes to take effect. The shared-memory crash should no longer occur.
 
 ## Updating syscon
 

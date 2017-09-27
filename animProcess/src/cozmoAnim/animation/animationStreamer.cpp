@@ -65,7 +65,13 @@ namespace Cozmo {
   , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController(), context->GetRandom()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   {    
-    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
+  }
+  
+  Result AnimationStreamer::Init()
+  {
+    DEV_ASSERT(nullptr != _context, "AnimationStreamer.Init.NullContext");
+    DEV_ASSERT(nullptr != _context->GetDataLoader(), "AnimationStreamer.Init.NullRobotDataLoader");
+    DEV_ASSERT(nullptr != _context->GetDataLoader()->GetCannedAnimations(), "AnimationStreamer.Init.NullCannedAnimationsContainer");
     
     SetDefaultParams();
     
@@ -88,10 +94,12 @@ namespace Cozmo {
                         "Could not find expected neutral face animation file called %s",
                         neutralFaceAnimName.c_str());
     }
-
-  
+    
+    
     // Do this after the ProceduralFace class has set to use the right neutral face
     _trackLayerComponent->Init();
+    
+    return RESULT_OK;
   }
   
   
@@ -102,6 +110,7 @@ namespace Cozmo {
   
   AnimationStreamer::~AnimationStreamer()
   {
+    FaceDisplay::removeInstance();
   }
 
   AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(u32 animID, u32 numLoops, bool interruptRunning)
