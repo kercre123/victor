@@ -110,6 +110,7 @@ namespace Cozmo {
   
   AnimationStreamer::~AnimationStreamer()
   {
+    FaceDisplay::removeInstance();
   }
 
   AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(u32 animID, u32 numLoops, bool interruptRunning)
