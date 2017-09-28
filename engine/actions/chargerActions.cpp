@@ -230,6 +230,10 @@ BackupOntoChargerAction::BackupOntoChargerAction(Robot& robot,
   // TODO: Charger marker pose still oscillates so just do your best from where you are
   //       rather than oscillating between jumpy predock poses.
   SetDoNearPredockPoseCheck(false);
+  
+  // Don't turn toward the object since we're expected to be facing away from it
+  SetShouldFirstTurnTowardsObject(false);
+  SetShouldCheckForObjectOnTopOf(false);
 }
 
   

@@ -310,6 +310,7 @@ namespace Anki {
                 break;
               case DockAction::DA_BACKUP_ONTO_CHARGER:
                 SteeringController::ExecuteDirectDrive(-30, -30);
+                transitionTime_ = HAL::GetTimeStamp() + 8000;
                 mode_ = BACKUP_ON_CHARGER;
                 break;
               default:
