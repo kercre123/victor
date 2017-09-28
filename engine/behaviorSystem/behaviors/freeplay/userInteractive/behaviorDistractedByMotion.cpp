@@ -163,13 +163,8 @@ void BehaviorDistractedByMotion::TransitionToTurnsTowardsMotion(Robot &robot)
   Radians relPanAngle;
   Radians relTiltAngle;
 
-  // TODO This is bad, and needs to be solved (see VIC-323)
-  {
-    const Vision::Camera &camera = robot.GetVisionComponent().GetCamera();
-    const Point2f cameraCentroid = camera.GetCalibration()->GetCenter();
-    const Point2f centeredMotion = motionCentroid - cameraCentroid;
-    camera.ComputePanAndTiltAngles(centeredMotion, relPanAngle, relTiltAngle);
-  }
+  const Vision::Camera &camera = robot.GetVisionComponent().GetCamera();
+  camera.ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
 
   PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.TransitionToTurnsTowardsMotion",
                 "Turning towards %f pan and %f tilt", relPanAngle.getDegrees(), relTiltAngle.getDegrees());
