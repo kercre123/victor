@@ -22,25 +22,21 @@
 #else
 #define dprint(s, ...)
 #endif
-
-
-
 #define SERIAL_STREAM_DEBUG_IN 1
 #define SERIAL_STREAM_DEBUG_OUT 0
 
-#define USAGE_STRING "USAGE:\n%s [-v] <filename> [-f]\n"\
-                     "\tDownloads file to fixture stm-32\n"\
-                     "\t(-v to read current version and exit)\n"\
-                     "\t(-f to force update to older version)\n"
 
+#define USAGE_STRING "USAGE:\n%s [-v] <filename> [-f]\n"  \
+  "\tDownloads file to fixture stm-32\n"                  \
+  "\t(-v to read current version and exit)\n"             \
+  "\t(-f to force update to older version)\n"
+
+// All the global resources to be cleaned up on exit
 static struct {
   int serialFd;
   int imageFd;
   const uint8_t* safefile;
 } gDFU = {0};
-
-
-
 
 
 enum DfuAppErrorCode {
@@ -57,34 +53,19 @@ enum DfuAppErrorCode {
   app_IO_ERROR = -10,
 };
 
-enum VersionStatus {
-  version_UNKNOWN,
-  version_OLDER,
-  version_OK,
-  version_NEWER,
-};
 
 
-
-void printhex(const uint8_t* bytes, int len)
-{
-  while (len-- > 0) {
-    printf("%02x", *bytes++);
-  }
-}
-
-
-
+//Clean up open file handles and memory
 void on_exit(void)
 {
   if (gDFU.imageFd) {
     close(gDFU.imageFd);
     gDFU.imageFd = 0;
-   }
+  }
   if (gDFU.serialFd) {
     close(gDFU.serialFd);
     gDFU.serialFd = 0;
-   }
+  }
   if (gDFU.safefile) {
     free((void*)gDFU.safefile);
     gDFU.safefile = 0;
@@ -104,12 +85,16 @@ void error_exit(enum DfuAppErrorCode code, const char* msg, ...)
   exit(code);
 }
 
-//returns fd.
+
+//Opens serial port at `devicename` with given `baud` enum. Returns file descriptor.
 int serial_init(const char* devicename, int baud)
 {
+  assert(devicename!=NULL);
+   
   int serialFd = open(devicename, O_RDWR | O_NONBLOCK);
   if (serialFd <= 0) {
-    return serialFd;
+    error_exit(app_INIT_ERROR, "Can't init serial port at %s. (%d)",
+               FIXTURE_TTY, serialFd);
   }
   gDFU.serialFd = serialFd;
 
@@ -123,7 +108,6 @@ int serial_init(const char* devicename, int baud)
 
     cfsetispeed(&cfg, baud);
     cfsetospeed(&cfg, baud);
-    
 
     cfg.c_cflag |= (CS8 | CSTOPB);    // Use N82 bit words
 
@@ -137,35 +121,12 @@ int serial_init(const char* devicename, int baud)
 }
 
 
-
-
-const uint8_t* ReadSafefile(int safefp, int* szOut)
+int serial_write(int serial_fd, const uint8_t* buffer, int len)
 {
-  uint8_t imagebuffer[MAX_FIRMWARE_SZ];
-  int n_read = read(safefp, imagebuffer, MAX_FIRMWARE_SZ);
-  if (n_read < 0) {
-    error_exit(app_FILE_READ_ERROR, "Error reading file : %d", errno);
-  }
-  uint8_t eof;
-  int remaining_bytes = read(safefp, &eof, 1);
-  if (remaining_bytes) {
-    error_exit(app_FILE_SIZE_ERROR, "Image File too big ( %d > %d) ", n_read, MAX_FIRMWARE_SZ);
-  }
-  
-  uint8_t* buffer = malloc(n_read);
-  if (!buffer) {
-    error_exit(app_MEMORY_ERROR, "Error allocating memory (%d bytes)", n_read);
-  }
-  memcpy(buffer, imagebuffer, n_read);
-  *szOut = n_read;
-  return buffer;
-}
-
-int serial_write(int serial_fd, const uint8_t* buffer, int len){
 #if SERIAL_STREAM_DEBUG_OUT
   printf("sending %d chars: ", len);
   int i;
-  for (i=0;i< len ;i++) {
+  for (i = 0; i < len ; i++) {
     printf("%c", buffer[i]);
   }
   printf("\n");
@@ -186,23 +147,48 @@ int serial_read(int serial_fd, uint8_t* buffer, int len) //->bytes_rcvd
     }
   }
 #if SERIAL_STREAM_DEBUG_IN
-  if (result>0) {
-    
+  if (result > 0) {
+
     int i;
-    for (i=0;i<result;i++) {
+    for (i = 0; i < result; i++) {
       printf("%c", buffer[i]);
     }
-//    printhex(buffer, result);    
   }
-#endif  
+#endif
   return result;
 }
 
-     
 
-int readAck(int serialFd) {
-  
-  uint8_t ackByte=0;
+
+
+const uint8_t* read_safefile(int safefp, int* szOut)
+{
+  uint8_t imagebuffer[MAX_FIRMWARE_SZ];
+  int n_read = read(safefp, imagebuffer, MAX_FIRMWARE_SZ);
+  if (n_read < 0) {
+    error_exit(app_FILE_READ_ERROR, "Error reading file : %d", errno);
+  }
+  uint8_t eof;
+  int remaining_bytes = read(safefp, &eof, 1);
+  if (remaining_bytes) {
+    error_exit(app_FILE_SIZE_ERROR, "Image File too big ( %d > %d) ", n_read, MAX_FIRMWARE_SZ);
+  }
+
+  uint8_t* buffer = malloc(n_read);
+  if (!buffer) {
+    error_exit(app_MEMORY_ERROR, "Error allocating memory (%d bytes)", n_read);
+  }
+  memcpy(buffer, imagebuffer, n_read);
+  *szOut = n_read;
+  return buffer;
+}
+
+
+
+int readAck(int serialFd)
+{
+
+  uint8_t ackByte = 0;
   int nread = 0;
   while (nread < 1) {
     nread = serial_read(serialFd, &ackByte, 1);
@@ -211,7 +197,9 @@ int readAck(int serialFd) {
 }
 
 
-int readTo(int serialFd, char* target)
+//Reads chars from `serialFd` until all chars in target` string matched.
+//Returns total number read.
+int readTo(int serialFd, const char* target)
 {
   assert(serialFd > 0);
   assert(target != NULL);
@@ -222,27 +210,11 @@ int readTo(int serialFd, char* target)
     if (nread == 1 && data == *target) {
       target++;
     }
-    count+=nread;
+    count += nread;
   }
   return count;
 }
 
-void user_interface(int serialfd)
-{
-  size_t n = 0;
-  char* line = NULL;
-  for ( getline(&line, &n, stdin);
-        line && *line!='q';
-        getline(&line, &n, stdin))
-  {
-    int l = strlen(line);
-    serial_write(serialfd, line, l);
-    char buffer[256];
-    int nread = serial_read(serialfd, buffer, 255);
-    buffer[nread] = 0;
-    printf("%s", buffer);
-  }
-}
 
 int main(int argc, const char* argv[])
 {
@@ -252,10 +224,7 @@ int main(int argc, const char* argv[])
 
   dprint("Initializing comms\n");
 
-  gDFU.serialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
-  if (gDFU.serialFd <=  0) {
-    error_exit(app_INIT_ERROR, "Can't init serial port. (%d)", gDFU.serialFd);
-  }
+  serial_init(FIXTURE_TTY, FIXTURE_BAUD);
 
   //verify existing one first?
 
@@ -265,31 +234,30 @@ int main(int argc, const char* argv[])
     error_exit(app_FILE_OPEN_ERROR, "Can't open %s", argv[1]);
   }
   int safefilesz = 0;
-  gDFU.safefile = ReadSafefile(gDFU.imageFd, &safefilesz);
+  gDFU.safefile = read_safefile(gDFU.imageFd, &safefilesz);
 
-
-//  user_interface(gDFU.serialFd);
 
   // Attention
   dprint("Sending escape\n");
-  char esc[] = {27,0};
+  char esc[] = {27, 0};
   serial_write(gDFU.serialFd, esc, 1);
   serial_write(gDFU.serialFd, esc, 1);
 
   dprint("Waiting for response\n");
   readTo(gDFU.serialFd, ">");
-  
+
 
   //Exit Command Line mode
   dprint("Sending Exit\n");
-  serial_write(gDFU.serialFd, "Exit\n",5);
+  serial_write(gDFU.serialFd, "Exit\n", 5);
   sleep(1); // 1 sec to drain buffers
-  int nRead = 0;
+  int n_read = 0;
   do {
     uint8_t tempbuf[1];
-    nRead = serial_read(gDFU.serialFd, tempbuf, 1);
-  } while (nRead > 0);
-  
+    n_read = serial_read(gDFU.serialFd, tempbuf, 1);
+  }
+  while (n_read > 0);
+
   // Download.
   dprint("Sending new image\n");
 
@@ -298,20 +266,17 @@ int main(int argc, const char* argv[])
 
   // Send Tag A
   int index;
-  for (index = 0; index < 4; index++)
-  {
-    int n_written = serial_write(gDFU.serialFd, gDFU.safefile+index, 1);
+  for (index = 0; index < 4; index++) {
+    serial_write(gDFU.serialFd, gDFU.safefile + index, 1);
     if (!readAck(gDFU.serialFd)) {
       error_exit(app_VALIDATION_ERROR, "HeadAck %d\n", index);
     }
 
   }
   // Send the remaining data blocks
-  while (index < safefilesz )
-  {
+  while (index < safefilesz) {
     int count = 2048 + 32;
-    if (index == 4)
-    {
+    if (index == 4) {
       count -= 4;  // Account for Tag A being sent first
     }
     serial_write(gDFU.serialFd, gDFU.safefile + index, count);

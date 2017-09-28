@@ -4,7 +4,8 @@
 #  Fixture firmware dfu.
 
 Prereqs
-0. > adb wait-for-device
+
+1. > adb wait-for-device
 1. > adb root
 2. > cd dfu
 3. > make
