@@ -634,7 +634,6 @@ namespace CodeLab {
         return;
       }
       var robot = RobotEngineManager.Instance.CurrentRobot;
-      robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel any pending actions
       robot.WaitAction(kTimeoutForResetToHomePose_s, this.OnTimeoutForResetToHomeCompleted);
       _HasQueuedResetToHomePose = true;
     }
@@ -695,6 +694,7 @@ namespace CodeLab {
 
       Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.NOW;
 
+      robot.CancelAction(RobotActionType.UNKNOWN); // Cancel all current actions
       robot.TurnOffAllBackpackBarLED();
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
