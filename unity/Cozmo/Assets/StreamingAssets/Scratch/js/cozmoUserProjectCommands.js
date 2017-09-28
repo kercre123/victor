@@ -184,8 +184,14 @@
         });
     }
 
-    window.openCozmoProjectJSON = function(projectUUID, projectName, projectJSON, isCozmoSampleProjectStr) {
-        window.openCozmoProject(projectUUID, projectName, projectJSON, null, isCozmoSampleProjectStr);
+    window.openCozmoProjectJSON = function (cozmoProjectJSON) {
+        try {
+            var cozmoProject = JSON.parse(cozmoProjectJSON);
+            window.openCozmoProject(cozmoProject.projectUUID, cozmoProject.projectName, cozmoProject.projectJSON, null, cozmoProject.isSampleStr);
+        }
+        catch(err) {
+            window.Unity.call({requestId: -1, command: "cozmoDASError", argString: "openCozmoProjectJSON JavaScript error", argString2: err.message});
+        }
     }
 
     // DEPRECATED - only used to open user projects that were created before 2.1 and are still in XML
@@ -218,7 +224,6 @@
             clearInterval(window.saveProjectTimerId);
         }
 
-
         if (isCozmoSampleProject && projectXML != null) {
             // Set the coordinate setting in the sample project xml to our desired location on-screen.
             var startingPoint = window.getScriptStartingPoint();
@@ -229,7 +234,7 @@
         var startBlocklyTime = performance.now()
         var methodCalledForDAS;
         if (projectJSON != null) {
-            window.Scratch.vm.fromJSON(projectJSON);
+            window.Scratch.vm.fromJSON(JSON.stringify(projectJSON));
             methodCalledForDAS = "Scratch.vm.fromJSON";
         }
         else {

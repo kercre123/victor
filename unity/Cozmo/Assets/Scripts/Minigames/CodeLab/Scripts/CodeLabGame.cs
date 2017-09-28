@@ -23,7 +23,7 @@ namespace CodeLab {
     public string ProjectIconName;
     public string ProjectXML;
     public string ProjectJSON;
-    public string ProjectName;
+    public string ProjectName; // Stored in sample-projects.js as string key.
   }
 
   // CodeLabFeaturedProject are only used in vertical grammar.
@@ -32,8 +32,8 @@ namespace CodeLab {
     public Guid ProjectUUID;
     public uint VersionNum;
     public string ProjectJSON;
-    public string ProjectName;
-    public string FeaturedProjectDescription;
+    public string ProjectName; // Stored in featured-projects.js as string key.
+    public string FeaturedProjectDescription; // Stored in featured-projects.js as string key.
     public string FeaturedProjectImageName;
     public string FeaturedProjectBackgroundColor;
     public string FeaturedProjectTitleTextColor;
@@ -788,6 +788,7 @@ namespace CodeLab {
       }
     }
 
+    // Called by js to retrieve list of user and sample projects to display in lobby.
     private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest, bool showVerticalProjects) {
       DAS.Info("Codelab.OnGetCozmoUserAndSampleProjectLists", "");
 
@@ -840,7 +841,7 @@ namespace CodeLab {
         CodeLabSampleProject proj = new CodeLabSampleProject();
         proj.ProjectUUID = project.ProjectUUID;
         proj.ProjectIconName = project.ProjectIconName;
-        proj.ProjectName = EscapeProjectText(project.ProjectName);
+        proj.ProjectName = project.ProjectName; // value is string key
         proj.IsVertical = project.IsVertical;
         copyCodeLabSampleProjectList.Add(proj);
       }
@@ -851,6 +852,7 @@ namespace CodeLab {
       this.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
     }
 
+    // Called by js to retrieve list of featured projects to display in lobby.
     private void OnGetCozmoFeaturedProjectList(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnGetCozmoFeaturedProjectList", "");
 
@@ -865,8 +867,8 @@ namespace CodeLab {
 
         CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
         proj.ProjectUUID = project.ProjectUUID;
-        proj.ProjectName = EscapeProjectText(project.ProjectName);
-        proj.FeaturedProjectDescription = EscapeProjectText(project.FeaturedProjectDescription);
+        proj.ProjectName = project.ProjectName; // value is string key
+        proj.FeaturedProjectDescription = project.FeaturedProjectDescription; // value is string key
         proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
         proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
         proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
@@ -944,6 +946,7 @@ namespace CodeLab {
           projectToUpdate.ProjectJSON = projectJSON;
           projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
           projectToUpdate.ProjectXML = null; // Set ProjectXML to null as this project might have previously been in XML and we don't want to store it anymore.
+          projectToUpdate.VersionNum = CodeLabProject.kCurrentVersionNum;
 
           _SessionState.OnUpdatedProject(projectToUpdate);
         }
@@ -1136,6 +1139,10 @@ namespace CodeLab {
       case "cozmoDASLog":
         // Use for debugging from JavaScript
         DAS.Warn(scratchRequest.argString, scratchRequest.argString2);
+        return true;
+      case "cozmoDASError":
+        // Use for recording error in DAS from JavaScript
+        DAS.Error(scratchRequest.argString, scratchRequest.argString2);
         return true;
       default:
         return false;
@@ -2302,16 +2309,12 @@ namespace CodeLab {
         if (_ProjectUUIDToOpen != null) {
           CodeLabProject projectToOpen = FindUserProjectWithUUID(_ProjectUUIDToOpen);
           if (projectToOpen != null) {
-            // Escape quotes in user project name and project XML
-            // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
             String projectNameEscaped = EscapeProjectText(projectToOpen.ProjectName);
-            String projectJSON = projectToOpen.ProjectJSON;
-            if (projectJSON != null) {
-              String projectJSONEscaped = EscapeJSON(projectJSON);
-              this.EvaluateJS("window.openCozmoProjectJSON('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "','" + projectJSONEscaped + "','false');");
+            if (projectToOpen.ProjectJSON != null) {
+              OpenCozmoProjectJSON(projectNameEscaped, projectToOpen.ProjectJSON, projectToOpen.ProjectUUID, "false");
             }
             else {
-              // User project is in XML. It must have been created before the Cozmo app 2.1 release.
+              // User project is in XML. It must have been created before the Cozmo app 2.1 release and is CodeLabProject VersionNum 2 or less.
               String projectXMLEscaped = EscapeXML(projectToOpen.ProjectXML);
 
               // Open requested project in webview
@@ -2333,20 +2336,18 @@ namespace CodeLab {
           codeLabSampleProject = _CodeLabSampleProjects.Find(findProject);
 
           String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
-          // Escape quotes in XML and project name
-          // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
           String sampleProjectNameEscaped = EscapeProjectText(sampleProjectName);
 
-          String projectJSON = codeLabSampleProject.ProjectJSON;
-          if (projectJSON != null) {
-            // Sample project is in JSON. This should be true for all new sample projects.
-            String projectJSONEscaped = EscapeJSON(projectJSON);
-            // Open requested project in webview
-            this.EvaluateJS("window.openCozmoProjectJSON('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "','" + projectJSONEscaped + "','true');");
+          if (codeLabSampleProject.ProjectJSON != null) {
+            // Sample project is in JSON.
+            // Open requested project in webview.
+
+            OpenCozmoProjectJSON(sampleProjectNameEscaped, codeLabSampleProject.ProjectJSON, codeLabSampleProject.ProjectUUID, "true");
           }
           else {
             // Sample project is still in XML. This will be true for some until we convert them all over.
             String projectXMLEscaped = EscapeXML(codeLabSampleProject.ProjectXML);
+
             // Open requested project in webview
             this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
           }
@@ -2364,17 +2365,12 @@ namespace CodeLab {
           Predicate<CodeLabFeaturedProject> findProject = (CodeLabFeaturedProject p) => { return p.ProjectUUID == projectGuid; };
           codeLabFeaturedProject = _CodeLabFeaturedProjects.Find(findProject);
 
-          String featuredProjectName = Localization.Get(codeLabFeaturedProject.ProjectName);
-          // Escape quotes in JSON and project name
-          // TODO Should we be fixing this in a different way? May need to make this more robust for vertical release.
-          String featuredProjectNameEscaped = EscapeProjectText(featuredProjectName);
+          if (codeLabFeaturedProject.ProjectJSON != null) {
+            String featuredProjectName = Localization.Get(codeLabFeaturedProject.ProjectName);
+            String featuredProjectNameEscaped = EscapeProjectText(featuredProjectName);
 
-          String projectJSON = codeLabFeaturedProject.ProjectJSON;
-          if (projectJSON != null) {
-            String projectJSONEscaped = EscapeJSON(projectJSON);
             // Open requested project in webview
-            // TODO Pass along featured text to show in text box on workspace
-            this.EvaluateJS("window.openCozmoProjectJSON('" + codeLabFeaturedProject.ProjectUUID + "','" + featuredProjectNameEscaped + "','" + projectJSONEscaped + "','true');");
+            OpenCozmoProjectJSON(featuredProjectNameEscaped, codeLabFeaturedProject.ProjectJSON, codeLabFeaturedProject.ProjectUUID, "true");
           }
         }
         else {
@@ -2407,16 +2403,6 @@ namespace CodeLab {
       return tempProjectText.Replace("'", "\\'");
     }
 
-    private String EscapeJSON(String json) {
-      if (json != null) {
-        json = json.Replace("\"", "\\\"");
-        return json.Replace("\'", "\\\'");
-      }
-      else {
-        return null;
-      }
-    }
-
     private String EscapeXML(String xml) {
       if (xml != null) {
         return xml.Replace("\"", "\\\"");
@@ -2424,6 +2410,21 @@ namespace CodeLab {
       else {
         return null;
       }
+    }
+
+    // Open requested project in webview
+    private void OpenCozmoProjectJSON(String projectName, String projectJSON, Guid projectUUID, string isSampleStr) {
+      DAS.Info("CodeLabTest", "OpenCozmoProjectJSON: projectName = " + projectName + ", isSampleStr = " + isSampleStr);
+
+      CozmoProjectOpenInWorkspaceRequest cozmoProjectRequest = new CozmoProjectOpenInWorkspaceRequest();
+      cozmoProjectRequest.projectName = projectName;
+      cozmoProjectRequest.projectJSON = projectJSON;
+      cozmoProjectRequest.projectUUID = projectUUID;
+      cozmoProjectRequest.isSampleStr = isSampleStr;
+
+      string test = JsonConvert.SerializeObject(cozmoProjectRequest);
+
+      this.EvaluateJS(@"window.openCozmoProjectJSON('" + test + "');");
     }
 
     private void StartVerticalHatBlockListeners() {
@@ -2508,6 +2509,7 @@ namespace CodeLab {
       return data.Length > kCodelabPrefix.Length && data.Substring(0, kCodelabPrefix.Length) == kCodelabPrefix;
     }
 
+    // Used for importing .codelab files.
     public static DataPersistence.CodeLabProject CreateProjectFromJsonString(string rawData) {
       if (!IsRawStringValidCodelab(rawData)) {
         DAS.Error("Codelab.OnAppLoadedFromData.BadHeader", "Attempting to load codelab file with improper prefix");
@@ -2551,6 +2553,7 @@ namespace CodeLab {
       return null;
     }
 
+    // Used to import project.
     public static bool AddExternalProject(DataPersistence.CodeLabProject project) {
 
       DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;

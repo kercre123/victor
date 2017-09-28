@@ -1,4 +1,6 @@
 using Anki.Cozmo.ExternalInterface;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace CodeLab {
@@ -25,6 +27,33 @@ namespace CodeLab {
     public float pitch_d;
     public float roll_d;
     public float yaw_d;
+  }
+
+  public class CozmoProjectOpenInWorkspaceRequest {
+    public Guid projectUUID;
+    public string projectName;
+    [JsonConverter(typeof(RawJsonConverter))]
+    public string projectJSON;
+    public string isSampleStr;
+  }
+
+  public class RawJsonConverter : JsonConverter {
+    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) {
+      writer.WriteRawValue(value.ToString());
+    }
+
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) {
+      throw new NotImplementedException();
+    }
+
+    public override bool CanConvert(Type objectType) {
+      return typeof(string).IsAssignableFrom(objectType);
+    }
+
+    public override bool CanRead {
+      get { return false; }
+
+    }
   }
 
   public class CozmoStateForCodeLab {
