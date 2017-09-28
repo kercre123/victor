@@ -95,7 +95,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1374062174178452
 GameObject:
   m_ObjectHideFlags: 0
@@ -420,7 +420,6 @@ MonoBehaviour:
   _LeftGradientCapImage: {fileID: 114841252100148946}
   _RightGradientCapImage: {fileID: 114625898855836224}
   _GradientImage: {fileID: 114676095683267410}
-  _BackgroundCanvasGroup: {fileID: 225713835519271798}
   _IconImage: {fileID: 114434624917431742}
 --- !u!114 &114056626251451068
 MonoBehaviour:
