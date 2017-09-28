@@ -41,10 +41,14 @@ private:
   void TransitionToRecordSensor(Robot& robot);
   void TransitionToTurnBack(Robot& robot);
   
-  Radians    _startingAngle = 0;
-  Radians    _angleToTurn = 0;
-  ObjectType _expectedObjectType = ObjectType::UnknownObject;
-  int        _numRecordedReadingsLeft = -1;
+  bool GetExpectedObjectMarkerPoseWrtRobot(Robot& robot,
+                                           Pose3d& markerPoseWrtRobot);
+  
+  Radians    _startingAngle               = 0;
+  Radians    _angleToTurn                 = 0;
+  ObjectType _expectedObjectType          = ObjectType::UnknownObject;
+  f32        _expectedDistanceToObject_mm = 0;
+  int        _numRecordedReadingsLeft     = -1;
 };
 
 }

@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.99799156 0.050890347 0.037722986 4.9263429
-  position -0.059130243 -0.75474353 0.30517844
+  orientation -0.99494944 0.060505998 0.080091481 5.1833036
+  position 0.010138573 -0.85140701 0.52732676
 }
 Background {
   skyColor [
@@ -85,12 +85,23 @@ CozmoChargerSimple {
   translation -0.23 0 0
 }
 Block1x1_NotActive {
-  translation 0.03 0.17 0.022
+  translation 0.030000005 0.34 0.022
   rotation 0 0 1 1.5707963
+  markerWidth 0.044
+  markerImg_front "lightCubes/lightCubeK_top.png"
+}
+Block1x1_NotActive {
+  translation 0.029999991 -0.145 0.022
+  rotation 0 0 1 4.7123889
   markerImg_front "lightCubes/lightCubeJ_top.png"
 }
 CustomWall {
-  translation 0.12096649 0.15320271 0.02
+  translation 0.12096649 0.32320271 0.02
+  rotation 0 0 1 1.5707963
+  width 0.2
+}
+CustomWall {
+  translation 0.12088999 -0.12825129 0.02
   rotation 0 0 1 1.5707963
   width 0.2
 }

@@ -1,6 +1,7 @@
 {
   "behaviorClass": "PlaypenDistanceSensor",
   "behaviorID": "PlaypenDistanceSensor300mm",
-  "AngleToTurnToSeeTarget_deg": -90,
-  "ExpectedObjectType": "Block_STAR5"
+  "AngleToTurnToSeeTarget_deg": 90,
+  "ExpectedObjectType": "Block_LIGHTCUBE3",
+  "ExpectedDistance_mm": 300
 }

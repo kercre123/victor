@@ -126,6 +126,7 @@ enum uint_8 FactoryTestResultCode {
   CUBE_HEIGHT_TOO_HIGH,
   DISTORTION_VALUES_OOR,
   DISTANCE_MARKER_NOT_FOUND,
+  DISTANCE_MARKER_OOR,
   
 
   // ==== New result codes should be added at the end ========
@@ -145,8 +146,15 @@ structure CalibMetaInfo {
   uint_8 dotsFoundMask    // bit mask for which calibration images had dots found
 }
 
+structure IMUTempDuration {
+  float_32 tempStart_c = 0.0,
+  float_32 tempEnd_c   = 0.0,
+  uint_32  duration_ms = 0
+}
+
 structure IMUInfo {
-  float_32 driftRate_degPerSec
+  float_32 driftRate_degPerSec,
+  IMUTempDuration tempDuration
 }
 
 structure CliffSensorValue {
@@ -171,7 +179,8 @@ structure PoseData {
 
 structure DistanceSensorData {
   ProxSensorData proxSensorData,
-  float_32       distanceToTarget_mm
+  float_32       visualDistanceToTarget_mm,
+  float_32       visualAngleAwayFromTarget_rad
 }
 
 

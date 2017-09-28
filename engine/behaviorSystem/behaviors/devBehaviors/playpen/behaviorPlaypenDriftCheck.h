@@ -47,6 +47,8 @@ private:
   
   // Whether or not the drift check is complete
   bool _driftCheckComplete = false;
+  
+  IMUTempDuration _imuTemp;
 };
 
 }

@@ -47,6 +47,9 @@ void BehaviorPlaypenDriftCheck::TransitionToPlayingSound(Robot& robot)
 {
   // Record intial starting orientation and after kIMUDriftDetectPeriod_ms check for drift
   _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+  _imuTemp.tempStart_c = robot.GetImuTemperature();
+  _imuTemp.duration_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
   AddTimer(PlaypenConfig::kIMUDriftDetectPeriod_ms, [this, &robot](){ CheckDrift(robot); });
   
   // TODO: Don't play sound while checking drift because of speaker to IMU coupling????
@@ -61,6 +64,10 @@ void BehaviorPlaypenDriftCheck::CheckDrift(Robot& robot)
   // Write drift rate to robot
   IMUInfo imuInfo;
   imuInfo.driftRate_degPerSec = angleChange / (PlaypenConfig::kIMUDriftDetectPeriod_ms / 1000.f);
+  _imuTemp.tempEnd_c = robot.GetImuTemperature();
+  _imuTemp.duration_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _imuTemp.duration_ms;
+  imuInfo.tempDuration = std::move(_imuTemp);
+  
   WriteToStorage(robot, NVStorage::NVEntryTag::NVEntry_IMUInfo, (u8*)&imuInfo, sizeof(imuInfo),
                  FactoryTestResultCode::IMU_INFO_WRITE_FAILED);
   
@@ -95,6 +102,7 @@ void BehaviorPlaypenDriftCheck::StopInternal(Robot& robot)
   _soundComplete = false;
   _driftCheckComplete = false;
   _startingRobotOrientation = 0;
+  _imuTemp = IMUTempDuration();
 }
 
 }

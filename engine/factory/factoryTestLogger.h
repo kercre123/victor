@@ -55,6 +55,7 @@ public:
   bool Append(const ToolCodeInfo& data);
   bool Append(const BirthCertificate& data);
   bool Append(const IMUInfo& data);
+  bool Append(const IMUTempDuration& data);
   bool Append(const CalibMetaInfo& data);
   bool AppendCliffValueOnDrop(const CliffSensorValue& data);
   bool AppendCliffValueOnGround(const CliffSensorValue& data);
@@ -64,7 +65,10 @@ public:
   bool AppendCalibPose(const PoseData& data);
   bool AppendObservedCubePose(const PoseData& data);
   bool Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg);
-  bool Append(const DistanceSensorData& data);
+  
+  // DistanceSensorData is added to an json array of data called "name". Separate data entries are
+  // labelled as "seq_*". Call with an existing name to add to that array
+  bool Append(const std::string& name, const DistanceSensorData& data);
   
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);
@@ -91,6 +95,8 @@ private:
   bool AppendToFile(const std::string& data);
 
   bool ArchiveAndDelete(const std::string& archiveName, const std::string& logBaseDir);
+  
+  void ParseIMUTempDuration(const IMUTempDuration& data, Json::Value* json, std::stringstream& ss);
   
   std::string GetCurrDateTime() const;
   

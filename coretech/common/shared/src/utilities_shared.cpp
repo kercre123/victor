@@ -20,12 +20,14 @@ namespace Anki
     int CoreTechPrint(const char * format, ...)
     {
       int printed = 0;
+      va_list ap;
+      va_start(ap, format);
       if (CoreTechPrintFunc) {
-        va_list ap;
-        va_start(ap, format);
         printed = (*CoreTechPrintFunc)(format, ap);
-        va_end(ap);
+      } else {
+        ::Anki::Util::sChanneledInfoV("CoreTech", "CoreTech.Print", {}, format, ap);
       }
+      va_end(ap);
       return printed;
     }
 

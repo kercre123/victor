@@ -28,7 +28,7 @@ namespace Cozmo {
   static const std::string _kArchiveRootDirName = "factory_test_log_archives";
   static const Util::Data::Scope _kLogScope = Util::Data::Scope::Persistent;
   
-  static const int _kMaxEngineLogSizeBytes = 150000;
+  static const int _kMaxEngineLogSizeBytes = 1500000;
   
   FactoryTestLogger::FactoryTestLogger(bool exportJson)
   : _logDir("")
@@ -259,21 +259,53 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
+  void FactoryTestLogger::ParseIMUTempDuration(const IMUTempDuration& data,
+                                                    Json::Value* json,
+                                                    std::stringstream& ss)
+  {
+    if(_exportJson)
+    {
+      DEV_ASSERT(json != nullptr, "FactoryTestLogger.NullJson");
+      
+      Json::Value& node = (*json)["IMUTempDuration"];
+      node["TempStart_c"] = data.tempStart_c;
+      node["TempEnd_c"] = data.tempEnd_c;
+      node["duration_ms"] = data.duration_ms;
+      ss << "[IMUTempDuration]\n" << node;
+    }
+    else
+    {
+      ss << "\n[IMUTempDuration]"
+      << "\nTempStart_c: " << data.tempStart_c
+      << "\nTempEnd_c: " << data.tempEnd_c
+      << "\nDuration_ms: " << data.duration_ms;
+    }
+  }
+  
+  bool FactoryTestLogger::Append(const IMUTempDuration& data)
+  {
+    std::stringstream ss;
+    ParseIMUTempDuration(data, &_json, ss);
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.IMUTempDuration", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
   bool FactoryTestLogger::Append(const IMUInfo& data)
   {
     std::stringstream ss;
     if (_exportJson) {
       Json::Value& node = _json["IMUInfo"];
       node["DriftRate_degPerSec"] = data.driftRate_degPerSec;
+      ParseIMUTempDuration(data.tempDuration, &node, ss);
       ss << "[IMUInfo]\n" << node;
     } else {
       ss << "\n[IMUInfo]" << std::fixed
       << "\nDriftRate_degPerSec: " << data.driftRate_degPerSec;
+      ParseIMUTempDuration(data.tempDuration, nullptr, ss);
     }
     PRINT_NAMED_INFO("FactoryTestLogger.Append.IMUInfo", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
   
   bool FactoryTestLogger::AppendCliffValueOnDrop(const CliffSensorValue& data) {
     return AppendCliffSensorValue("CliffOnDrop", data);
@@ -408,21 +440,21 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
-  bool FactoryTestLogger::Append(const DistanceSensorData& data)
+  bool FactoryTestLogger::Append(const std::string& name, const DistanceSensorData& data)
   {
-    static u32 count = 0;
-    const std::string name = "DistanceSensor_" + std::to_string(count++);
-    
     std::stringstream ss;
     if (_exportJson)
     {
       Json::Value& node = _json[name];
-      node["SignalIntensity"] = data.proxSensorData.signalIntensity;
-      node["AmbientIntensity"] = data.proxSensorData.ambientIntensity;
-      node["SpadCount"] = data.proxSensorData.spadCount;
-      node["SensorDistance_mm"] = data.proxSensorData.distance_mm;
-      node["VisualDistance_mm"] = data.distanceToTarget_mm;
-      ss << "[" << name << "]\n" << node;
+      Json::Value newNode;
+      newNode["SignalIntensity"] = data.proxSensorData.signalIntensity;
+      newNode["AmbientIntensity"] = data.proxSensorData.ambientIntensity;
+      newNode["SpadCount"] = data.proxSensorData.spadCount;
+      newNode["SensorDistanceRaw_mm"] = data.proxSensorData.distance_mm;
+      newNode["VisualDistance_mm"] = data.visualDistanceToTarget_mm;
+      newNode["VisualAngleAway_rad"] = data.visualAngleAwayFromTarget_rad;
+      node.append(newNode);
+      ss << "[" << name << "]\n" << newNode;
     }
     else
     {
@@ -430,8 +462,9 @@ namespace Cozmo {
       << "\nSignalIntensity: " << data.proxSensorData.signalIntensity
       << "\nAmbientIntensity: " << data.proxSensorData.ambientIntensity
       << "\nSpadCount: " << data.proxSensorData.spadCount
-      << "\nSensorDistance_mm: " << data.proxSensorData.distance_mm
-      << "\nVisualDistance_mm: " << data.distanceToTarget_mm;
+      << "\nSensorDistanceRaw_mm: " << data.proxSensorData.distance_mm
+      << "\nVisualDistance_mm: " << data.visualDistanceToTarget_mm
+      << "\nVisualAngleAway_rad: " << data.visualAngleAwayFromTarget_rad;
     }
     PRINT_NAMED_INFO("FactoryTestLogger.Append.DistanceSensorData", "%s", ss.str().c_str());
     return AppendToFile(ss.str());

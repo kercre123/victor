@@ -81,7 +81,16 @@ static f32 kIMUDriftAngleThreshDeg  = 0.2f;
 
 // ----------Distance Sensor----------
 // Number of distance sensor readings to record
-static u32 kNumDistanceSensorReadingsToRecord = 50;
+static u32 kNumDistanceSensorReadingsToRecord       = 50;
+
+// Threshold on calculated distance to distance sensor target (using detected marker)
+// +/- this from the expected distance to the object/marker defined in the distance sensor
+// behavior json file
+static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 10;
+
+// Threshold on the raw distance sensor reading from the expected distance defined in the
+// distance sensor behavior json file
+static f32 kDistanceSensorReadingThresh_mm = 20;
 
 // ----------Camera Calibration----------
 // Exposure setting for playpen
