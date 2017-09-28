@@ -456,13 +456,13 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
                           });
     }
     
-    for(auto & objectsByOrigin : _locatedObjects) {
+    for(const auto & objectsByOrigin : _locatedObjects) {
       if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetPoseOriginList().GetCurrentOriginID())) {
-        for(auto & objectsByFamily : objectsByOrigin.second) {
+        for(const auto & objectsByFamily : objectsByOrigin.second) {
           if(filter.ConsiderFamily(objectsByFamily.first)) {
-            for(auto & objectsByType : objectsByFamily.second) {
+            for(const auto & objectsByType : objectsByFamily.second) {
               if(filter.ConsiderType(objectsByType.first)) {
-                for(auto & objectsByID : objectsByType.second) {
+                for(const auto & objectsByID : objectsByType.second) {
                   ObservableObject* object_nonconst = objectsByID.second.get();
                   const ObservableObject* object = object_nonconst;
                   
@@ -1758,7 +1758,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     
     // Check if this prox obstacle already exists
     std::vector<ObservableObject*> existingObjects;
-    auto originIter = _locatedObjects.find(_robot->GetPoseOriginList().GetCurrentOriginID());
+    const auto originIter = _locatedObjects.find(_robot->GetPoseOriginList().GetCurrentOriginID());
     if(originIter != _locatedObjects.end())
     {
       FindOverlappingObjects(markerlessObject.get(), originIter->second[ObjectFamily::MarkerlessObject], existingObjects);

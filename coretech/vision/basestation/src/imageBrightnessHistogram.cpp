@@ -37,23 +37,38 @@ Result ImageBrightnessHistogram::FillFromImage(const Image& img, s32 subSample, 
     ncols *= nrows;
     nrows = 1;
   }
-  
-  for(s32 i=0; i<nrows; i+=subSample)
+
+  if(transformFcn)
   {
-    const u8* img_i = img.GetRow(i);
-    
-    for(s32 j=0; j<ncols; j+=subSample)
+    for(s32 i=0; i<nrows; i+=subSample)
     {
-      u8 pixelValue = img_i[j];
-      if(transformFcn)
+      const u8* img_i = img.GetRow(i);
+
+      for(s32 j=0; j<ncols; j+=subSample)
       {
-        pixelValue = transformFcn(pixelValue);
+        const u8 pixelValue = transformFcn(img_i[j]);
+        ++_counts[pixelValue];
       }
-      ++_counts[pixelValue];
-      ++_totalCount;
     }
   }
-  
+  else
+  {
+    for(s32 i=0; i<nrows; i+=subSample)
+    {
+      const u8* img_i = img.GetRow(i);
+
+      for(s32 j=0; j<ncols; j+=subSample)
+      {
+        ++_counts[img_i[j]];
+      }
+    }
+  }
+
+  // Consider that in the loop above, we always start at row 0, and we always start at column 0
+  const s32 totalCountToAdd = ((nrows + subSample - 1) / subSample) *
+                              ((ncols + subSample - 1) / subSample);
+  _totalCount += totalCountToAdd;
+
   return RESULT_OK;
 }
 

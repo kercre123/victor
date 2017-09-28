@@ -530,17 +530,20 @@ namespace Cozmo {
     DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
     
     s32 sum=0;
-    s32 count=0;
-    for(s32 i=0; i<inputImageGray.GetNumRows(); i+=sampleInc)
+    const s32 numRows = inputImageGray.GetNumRows();
+    const s32 numCols = inputImageGray.GetNumCols();
+    for(s32 i=0; i<numRows; i+=sampleInc)
     {
       const u8* image_i = inputImageGray.GetRow(i);
-      for(s32 j=0; j<inputImageGray.GetNumCols(); j+=sampleInc)
+      for(s32 j=0; j<numCols; j+=sampleInc)
       {
         sum += image_i[j];
-        ++count;
       }
     }
-    
+    // Consider that in the loop above, we always start at row 0, and we always start at column 0
+    const s32 count = ((numRows + sampleInc - 1) / sampleInc) *
+                      ((numCols + sampleInc - 1) / sampleInc);
+
     const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
     return mean;
   }
@@ -1007,21 +1010,31 @@ namespace Cozmo {
         
       case MarkerDetectionCLAHE::WhenDark:
       {
-        const s32 subSample = 3;
+        // Use CLAHE on the current image if it is dark enough
+        static const s32 subSample = 3;
+        const s32 numRows = inputImageGray.GetNumRows();
+        const s32 numCols = inputImageGray.GetNumCols();
+        // Consider that in the loop below, we always start at row 0, and we always start at column 0
+        const s32 count = ((numRows + subSample - 1) / subSample) *
+                          ((numCols + subSample - 1) / subSample);
+        const s32 threshold = kClaheWhenDarkThreshold * count;
+
+        _currentUseCLAHE = true;
         s32 meanValue = 0;
-        s32 count = 0;
-        for(s32 i=0; i<inputImageGray.GetNumRows(); i+=subSample)
+        for(s32 i=0; i<numRows; i+=subSample)
         {
           const u8* img_i = inputImageGray.GetRow(i);
-          for(s32 j=0; j<inputImageGray.GetNumCols(); j+=subSample)
+          for(s32 j=0; j<numCols; j+=subSample)
           {
             meanValue += img_i[j];
-            ++count;
+          }
+          if (meanValue >= threshold)
+          {
+            // Image is not dark enough; early out
+            _currentUseCLAHE = false;
+            break;
           }
         }
-        
-        // Use CLAHE on the current image if it is dark enough
-        _currentUseCLAHE = (meanValue < kClaheWhenDarkThreshold * count);
         break;
       }
         
