@@ -441,10 +441,10 @@ namespace Anki {
       if (canTransition) {
         if (isCharging && !aboveThreshNow) {
             isCharging = false;
-            transition = HAL::GetTimeStamp();
+            transitionTime_ms = HAL::GetTimeStamp();
         } else if (!isCharging && aboveThreshNow) {
             isCharging = true;
-            transition = HAL::GetTimeStamp();
+            transitionTime_ms = HAL::GetTimeStamp();
         }
       }
       
