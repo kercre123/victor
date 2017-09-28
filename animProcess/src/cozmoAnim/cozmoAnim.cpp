@@ -73,6 +73,9 @@ Result CozmoAnimEngine::Init() {
 
   _context->GetDataLoader()->LoadNonConfigData();
   
+  // animation streamer must be initialized after loading non config data (otherwise there are no animations loaded)
+  _animationStreamer->Init();
+  
   // Create and seetup EngineRobotAudioInput to receive Engine->Robot messages and broadcast Robot->Engine
   auto* audioMux = _context->GetAudioMultiplexer();
   auto regId = audioMux->RegisterInput( new Audio::EngineRobotAudioInput() );

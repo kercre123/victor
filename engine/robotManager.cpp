@@ -53,10 +53,7 @@ RobotManager::RobotManager(const CozmoContext* context)
 , _animationGroups(context->GetDataLoader()->GetAnimationGroups())
 , _animationTriggerResponses(context->GetDataLoader()->GetAnimationTriggerResponses())
 , _cubeAnimationTriggerResponses(context->GetDataLoader()->GetCubeAnimationTriggerResponses())
-, _firmwareUpdater(new FirmwareUpdater(context))
 , _robotMessageHandler(new RobotInterface::MessageHandler())
-, _fwVersion(0)
-, _fwTime(0)
 , _dasBlacklistedAnimationTriggers()
 {
   using namespace ExternalInterface;
@@ -111,8 +108,6 @@ void RobotManager::Init(const Json::Value& config, const Json::Value& dasEventCo
   }
   
   LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
-
-  _firmwareUpdater->LoadHeader(FirmwareType::Current, kHighestVersion, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
 }
 
 void RobotManager::LoadDasBlacklistedAnimationTriggers(const Json::Value& dasEventConfig)
@@ -133,7 +128,7 @@ void RobotManager::AddRobot(const RobotID_t withID)
     _IDs.push_back(withID);
     _initialConnections.emplace(std::piecewise_construct,
       std::forward_as_tuple(withID),
-      std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface(), _fwVersion, _fwTime));
+      std::forward_as_tuple(withID, _robotMessageHandler.get(), _context->GetExternalInterface()));
   } else {
     PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
   }  
@@ -222,34 +217,6 @@ size_t RobotManager::GetNumRobots() const
 bool RobotManager::DoesRobotExist(const RobotID_t withID) const
 {
   return _robots.count(withID) > 0;
-}
-
-
-bool RobotManager::InitUpdateFirmware(FirmwareType type, int version)
-{
-  bool success = _firmwareUpdater->InitUpdate(_robots, type, version);
-  
-  if (success)
-  {
-    for (const auto& kv : _robots)
-    {
-      const auto robotID = kv.second->GetID();
-      if (!ANKI_VERIFY(MakeRobotFirmwareUntrusted(robotID),
-                       "RobotManager.InitUpdateFirmware",
-                       "Error making firmware untrusted for robotID: %d", robotID))
-      {
-        success = false;
-      }
-    }
-  }
-  
-  return success;
-}
-
-
-bool RobotManager::UpdateFirmware()
-{
-  return _firmwareUpdater->Update(_robots);
 }
 
 
@@ -346,15 +313,6 @@ bool RobotManager::HasCubeAnimationForTrigger( CubeAnimationTrigger ev )
 std::string RobotManager::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
 {
   return _cubeAnimationTriggerResponses->GetResponse(ev);
-}
-
-void RobotManager::ParseFirmwareHeader(const Json::Value& header)
-{
-  JsonTools::GetValueOptional(header, FirmwareUpdater::kFirmwareVersionKey, _fwVersion);
-  JsonTools::GetValueOptional(header, FirmwareUpdater::kFirmwareTimeKey, _fwTime);
-  if (_fwVersion == 0 || _fwTime == 0) {
-    PRINT_NAMED_WARNING("RobotManager.ParseFirmwareHeader", "got version %d, time %d", _fwVersion, _fwTime);
-  }
 }
 
 bool RobotManager::ShouldFilterMessage(const RobotID_t robotId, const RobotInterface::RobotToEngineTag msgType) const

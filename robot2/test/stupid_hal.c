@@ -68,8 +68,7 @@ int main(int argc, const char* argv[]) {
    LOGD("Starting loop");
    while (1) {
       fill_outgoing_frame(&headData);
-//      const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_DATA_FRAME, 10);
-      const struct SpineMessageHeader* hdr = NULL;
+      const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_DATA_FRAME, 10);
       if (!hdr) {  //DEBUG CRASHER
          printf(".\n");
          hal_send_frame(PAYLOAD_DATA_FRAME, &headData, sizeof(headData));

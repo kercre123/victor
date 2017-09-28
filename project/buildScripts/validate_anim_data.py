@@ -4,8 +4,7 @@ import os
 
 # This is the audio assets package file (relative to the EXTERNALS directory)
 # that contains the SoundBanks XML file with audio event info
-AUDIO_ASSETS_DIR = os.path.join("cozmosoundbanks", "GeneratedSoundBanks", "Mac")
-AUDIO_ASSETS_PACKAGE = os.path.join(AUDIO_ASSETS_DIR, "AudioAssets.zip")
+AUDIO_ASSETS_DIR = os.path.join("victor-audio-assets")
 
 # This is the name of the SoundBanks XML file with audio event info
 SOUNDBANKS_XML_FILE = "SoundbanksInfo.xml"
@@ -148,21 +147,21 @@ def get_audio_event_usage_in_anim(json_file, all_available_events):
 
 
 def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
-                                 audio_assets_package=AUDIO_ASSETS_PACKAGE,
-                                 soundbanks_xml_file=SOUNDBANKS_XML_FILE,
-                                 audio_assets_dir=AUDIO_ASSETS_DIR):
+                                 audio_assets_dir=AUDIO_ASSETS_DIR,
+                                 soundbanks_xml_file=SOUNDBANKS_XML_FILE
+                                 ):
     """
     This function will raise ValueError with relevant info if any
     animations use any audio events that are unavailable.
     """
 
     # Get a list of all available audio events
-    local_soundbanks_xml_file = os.path.join(externals_dir, audio_assets_dir, soundbanks_xml_file)
+    local_soundbanks_xml_file = os.path.join(externals_dir, audio_assets_dir, 'metadata', 'mac', soundbanks_xml_file)
     if os.path.isfile(local_soundbanks_xml_file):
         soundbanks_xml_file = local_soundbanks_xml_file
     else:
         tmp_dir = tempfile.mkdtemp()
-        zip_file = os.path.join(externals_dir, audio_assets_package)
+        zip_file = os.path.join(externals_dir, audio_assets_dir)
         try:
             zip_obj = zipfile.ZipFile(zip_file, 'r')
         except (IOError, OSError, zipfile.error), e:

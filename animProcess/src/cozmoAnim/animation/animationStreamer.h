@@ -53,6 +53,8 @@ namespace Cozmo {
     
     ~AnimationStreamer();
     
+    Result Init();
+    
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
     // Returns a tag you can use to monitor whether the robot is done playing this

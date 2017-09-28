@@ -679,20 +679,16 @@ int mm_app_stop_channel(mm_camera_test_obj_t *test_obj,
                                           channel->ch_id);
 }
 
-
-
-
 camera_cb  user_frame_callback = NULL;
 void camera_install_callback(camera_cb cb)
 {
   user_frame_callback = cb;
 }
 
-
-#define DIM 0
 #define X 640
 #define Y 360
 #define X6 214
+#define MASK_10BIT 1023
 // A raw frame is 720x214 where each element is 64 bits and contains 6 color channels
 // (each color channel is 10bits)
 // The least significant bits contain the left-most color channel so the 4 most significant bits are unused
@@ -704,55 +700,47 @@ void camera_install_callback(camera_cb cb)
 // ...
 //
 // (0,0) is red
-static void downsample_frame(uint64_t in[Y*2][X6], int len, uint8_t out[Y][X][3]) {
+static void downsample_frame(uint64_t in[Y*2][X6], uint8_t out[Y][X][3]) {
   int x = 0, y = 0, i = 0;
   for (y = 0; y < Y; y++)
   {
     for (x = 0; x < X6; x++)
     {
-      // Grayscale downsampling
-//      g = (((p>>00) & 1023) + ((p>>10) & 1023) + ((q>>00) & 1023) + ((q>>10) & 1023)) >> DIM;
-//      out[y][x*3+0] = (g > 255) ? 255 : g;
-//      g = (((p>>20) & 1023) + ((p>>30) & 1023) + ((q>>20) & 1023) + ((q>>30) & 1023)) >> DIM;
-//      out[y][x*3+1] = (g > 255) ? 255 : g;
-//      g = (((p>>40) & 1023) + ((p>>50) & 1023) + ((q>>40) & 1023) + ((q>>50) & 1023)) >> DIM;
-//      out[y][x*3+2] = (g > 255) ? 255 : g;
-      
       unsigned long long row1 = in[y*2][x], row2 = in[y*2+1][x];
       int raw10bits;
       
       uint8_t* pixel0 = (uint8_t*)&(out[y][x*3+0]);
-      uint8_t* pixel1 = (uint8_t*)&(out[y][x*3+1]);
-      uint8_t* pixel2 = (uint8_t*)&(out[y][x*3+2]);
+      uint8_t* pixel1 = pixel0 + 3; // Pointer math: Add three to move forwards a pixel (3 uint8_ts)
+      uint8_t* pixel2 = pixel1 + 3;
       
       // Red
-      raw10bits = (((row1>>00) & 1023)) >> DIM;
+      raw10bits = (((row1>>00) & MASK_10BIT));
       pixel0[0] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row1>>20) & 1023)) >> DIM;
+      raw10bits = (((row1>>20) & MASK_10BIT));
       pixel1[0] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row1>>40) & 1023)) >> DIM;
+      raw10bits = (((row1>>40) & MASK_10BIT));
       pixel2[0] = (raw10bits > 255) ? 255 : raw10bits;
       
       // Green (two green per 2x2 square so add and divide by two)
-      raw10bits = (((row1>>10) & 1023) + ((row2>>00) & 1023)) >> (1+DIM);
+      raw10bits = (((row1>>10) & MASK_10BIT) + ((row2>>00) & MASK_10BIT)) >> 1;
       pixel0[1] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row1>>30) & 1023) + ((row2>>20) & 1023)) >> (1+DIM);
+      raw10bits = (((row1>>30) & MASK_10BIT) + ((row2>>20) & MASK_10BIT)) >> 1;
       pixel1[1] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row1>>50) & 1023) + ((row2>>40) & 1023)) >> (1+DIM);
+      raw10bits = (((row1>>50) & MASK_10BIT) + ((row2>>40) & MASK_10BIT)) >> 1;
       pixel2[1] = (raw10bits > 255) ? 255 : raw10bits;
       
       // Blue
-      raw10bits = (((row2>>10) & 1023)) >> DIM;
+      raw10bits = (((row2>>10) & MASK_10BIT));
       pixel0[2] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row2>>30) & 1023)) >> DIM;
+      raw10bits = (((row2>>30) & MASK_10BIT));
       pixel1[2] = (raw10bits > 255) ? 255 : raw10bits;
       
-      raw10bits = (((row2>>50) & 1023)) >> DIM;
+      raw10bits = (((row2>>50) & MASK_10BIT));
       pixel2[2] = (raw10bits > 255) ? 255 : raw10bits;
     }
   }
@@ -822,7 +810,6 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
         m_frame = bufs->bufs[i];
         
         downsample_frame((uint64_t (*)[X6])m_frame->buffer,
-                         m_frame->planes[0].length,
                          (uint8_t (*)[X][3])outbuf);
         
         // image has been taken from the buffer and downsampled, it is now safe for

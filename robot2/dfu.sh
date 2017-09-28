@@ -4,7 +4,6 @@
 #
 # Must first build the syscon firmware using
 #  > cd robot2
-#  > syscon/tools/make_clad.sh
 #  > ./vmake.sh
 #
 

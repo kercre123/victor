@@ -6,7 +6,7 @@ DEFINES += -DCOZMO_ROBOT
 CPPFLAGS += -I$(CPPUTEST_HOME)
 CPPFLAGS += -I"../../robot/include"
 CPPFLAGS += -I"../hal/include"
-CPPFLAGS += -I"../../robot/generated/clad/robot"
+# CPPFLAGS += -I"../../robot/generated/clad/robot"
 CPPFLAGS += $(DEFINES)
 
 CXXFLAGS += -include $(CPPUTEST_HOME)/include/CppUTest/MemoryLeakDetectorNewMacros.h
@@ -47,7 +47,7 @@ lcd_test:  $(ANDROID_ARM_TOOLS_ROOT) lcd_test.c
 
 
 app: 
-	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) *.cpp $(CODE_UNDER_TEST)
+	gcc $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $(CODE_UNDER_TEST)
 
 test: app
 	./a.out -c

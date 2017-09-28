@@ -50,6 +50,22 @@
             "initCommands": [
                 "settings set target.exec-search-paths ${workspaceRoot}/_build/mac/Debug/lib",
             ]
+        },
+        {
+            "name": "anim:debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/android/Debug/bin/victor_animator",
+            "env": {
+                "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "platform shell killall victor_animator || true",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+            ]
         }
     ]
 }

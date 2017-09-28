@@ -6,6 +6,7 @@ asset_project(
                 ('assets', 'cubeAnimationGroupMaps/CubeAnimationTriggerMap.json'),
                 ('assets', 'RewardedActions/RewardedActions.json'),
                 ('assets', 'voiceCommand/voice-recognition-data.txt'),
+                ('assets', 'voiceCommand/exports/voiceCommand_config.json'),
                 ('assets', 'voiceCommand/exports/**/*.raw'),
                 ('external', 'animations/**/*.bin'),
                 ('external', 'animationGroups/**/*.json'),
@@ -21,12 +22,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('android', subdir_glob([
-            ('sound/android', '*.zip')
+            ('sound/android', '*')
             ],
             prefix = 'sound')
         ),
         ('mac', subdir_glob([
-            ('sound/mac', '*.zip')
+            ('sound/mac', '*')
             ],
             prefix = 'sound')
         ),

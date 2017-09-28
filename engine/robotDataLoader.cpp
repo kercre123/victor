@@ -586,7 +586,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 #if THF_FUNCTIONALITY
   // Configuration for voice command component 
   {
-    std::string jsonFilename = "assets/voiceCommand/voiceCommand_config.json";
+    std::string jsonFilename = "assets/voiceCommand/exports/voiceCommand_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
     if (!success)
     {
