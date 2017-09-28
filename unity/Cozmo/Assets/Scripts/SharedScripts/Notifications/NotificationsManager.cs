@@ -152,6 +152,7 @@ namespace Cozmo.Notifications {
 
     private void RecordNotificationsToBeSent() {
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NotificationsToBeSent = _NotificationCache;
+      DataPersistence.DataPersistenceManager.Instance.Save();
     }
 
     private void LogDasEventsForSentNotifications() {
