@@ -34,7 +34,7 @@ class MountChargerAction : public IAction
 public:
   MountChargerAction(Robot& robot,
                      ObjectID chargerID,
-                     const bool useCliffSensorCorrection = false,
+                     const bool useCliffSensorCorrection = true,
                      const bool useManualSpeed = false);
   
 protected:
@@ -99,7 +99,7 @@ class DriveToAndMountChargerAction : public CompoundActionSequential
 public:
   DriveToAndMountChargerAction(Robot& robot,
                                const ObjectID& objectID,
-                               const bool useCliffSensorCorrection = false,
+                               const bool useCliffSensorCorrection = true,
                                const bool useManualSpeed = false);
   
   virtual ~DriveToAndMountChargerAction() { }

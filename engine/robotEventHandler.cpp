@@ -563,6 +563,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToAndMountChargerAction* action =  new DriveToAndMountChargerAction(robot,
                                                                              selectedObjectID,
+                                                                             true,
                                                                              msg.useManualSpeed);
     
     if(msg.motionProf.isCustom)
@@ -571,7 +572,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
     }
     return action;
   } else {
-    MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, msg.useManualSpeed);
+    MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, true, msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, chargerAction);
