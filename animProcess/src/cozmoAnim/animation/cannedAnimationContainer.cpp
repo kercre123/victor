@@ -20,7 +20,7 @@ namespace Anki {
 namespace Cozmo {
   
   CannedAnimationContainer::CannedAnimationContainer()
-  : _animIDCtr(0)   // 0 is reserved invalid
+  : _animIDCtr(kInvalidAnimID)
   {
     DefineHardCoded();
    
@@ -221,6 +221,7 @@ namespace Cozmo {
     }
     
     PRINT_NAMED_WARNING("CannedAnimationContainer.GetAnimIDByName.UnknownName", "%s", animName.c_str());
+    animID = kInvalidAnimID;
     return false;
   }
   
