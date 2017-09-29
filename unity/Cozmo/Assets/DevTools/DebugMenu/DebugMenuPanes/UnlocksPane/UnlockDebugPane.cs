@@ -35,9 +35,14 @@ public class UnlockDebugPane : MonoBehaviour {
 
   private void PopulateOptions() {
     List<UnityEngine.UI.Dropdown.OptionData> options = new List<UnityEngine.UI.Dropdown.OptionData>();
+    List<string> enumNames = new List<string>();
     for (int i = 0; i < System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).Length; ++i) {
+      enumNames.Add(System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).GetValue(i).ToString());
+    }
+    enumNames.Sort();
+    for (int i = 0; i < enumNames.Count; i++) {
       UnityEngine.UI.Dropdown.OptionData option = new UnityEngine.UI.Dropdown.OptionData();
-      option.text = System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).GetValue(i).ToString();
+      option.text = enumNames[i];
       options.Add(option);
     }
     _UnlockSelection.AddOptions(options);

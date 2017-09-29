@@ -32,11 +32,9 @@ namespace Cozmo.Needs.Sparks.UI {
 
     public virtual void Initialize(UnlockableInfo unlockInfo, string dasEventDialogName) {
       _UnlockInfo = unlockInfo;
-      _SparksButton.Initialize(null, "spark_cell_" + unlockInfo.DASName, dasEventDialogName);
 
       if (UnlockablesManager.Instance.IsUnlocked(unlockInfo.Id.Value)) {
-        _SparksButton.onClick.AddListener(HandleTappedUnlocked);
-        _SparksButton.gameObject.SetActive(unlockInfo.IsSparkable);
+        _SparksButton.Initialize(HandleTappedUnlocked, "spark_cell_" + unlockInfo.DASName, dasEventDialogName);
         _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
         _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
 
@@ -46,7 +44,7 @@ namespace Cozmo.Needs.Sparks.UI {
                                          UIColorPalette.GeneralSparkTintColor);
       }
       else {
-        _SparksButton.onClick.AddListener(HandleTappedComingSoon);
+        _SparksButton.Initialize(HandleTappedComingSoon, "spark_cell_coming_soon_" + unlockInfo.DASName, dasEventDialogName);
         _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
         _SparkCostContainer.gameObject.SetActive(false);
         _TrickIcon.sprite = _UnlockableAlertIcon;
