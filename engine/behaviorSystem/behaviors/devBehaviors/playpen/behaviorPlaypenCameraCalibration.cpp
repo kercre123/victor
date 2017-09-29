@@ -121,7 +121,10 @@ BehaviorStatus BehaviorPlaypenCameraCalibration::InternalUpdateInternal(Robot& r
        robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0 &&
        _seeingTarget)
     {
-      robot.GetVisionComponent().StoreNextImageForCameraCalibration();
+      // Wait half a second for marker detection to stabilize
+      StartActing(new WaitAction(robot, 0.5f), [&robot]{
+        robot.GetVisionComponent().StoreNextImageForCameraCalibration();
+      });
     }
     // Otherwise if we have a calibration image, start computing calibration
     else if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 1)

@@ -260,17 +260,18 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   }
   
   std::map<Vision::MarkerType, Quad3f> markersTo3dCoords;
+  std::set<Vision::MarkerType> markersNeededToBeSeen;
   
   switch(targetType)
   {
     case INVERTED_BOX:
     {
-      GetCalibTargetMarkersTo3dCoords_InvertedBox(markersTo3dCoords);
+      GetCalibTargetMarkersTo3dCoords_InvertedBox(markersTo3dCoords, markersNeededToBeSeen);
       break;
     }
     case QBERT:
     {
-      GetCalibTargetMarkersTo3dCoords_Qbert(markersTo3dCoords);
+      GetCalibTargetMarkersTo3dCoords_Qbert(markersTo3dCoords, markersNeededToBeSeen);
       break;
     }
     case CHECKERBOARD:
@@ -343,9 +344,27 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   std::string s = ss.str();
   if(!s.empty())
   {
-    PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.MissingMarkers",
-                        "Expected to see the following markers but didnt %s",
-                        s.c_str());
+    PRINT_NAMED_INFO("CameraCalibrator.ComputeCalibrationFromSingleTarget.MarkersNotSeen",
+                     "Expected to see the following markers but didnt %s",
+                     s.c_str());
+  }
+  
+  ss.str(std::string());
+  for(const auto& marker : markersNeededToBeSeen)
+  {
+    if(codes.count(marker) == 0)
+    {
+      ss << Vision::MarkerTypeStrings[marker] << " ";
+    }
+  }
+  
+  s = ss.str();
+  if(!s.empty())
+  {
+    PRINT_NAMED_ERROR("CameraCalibrator.ComputeCalibrationFromSingleTarget.MissingMarkers",
+                      "Needed to see the following markers but didnt %s",
+                      s.c_str());
+    return RESULT_FAIL;
   }
   
   if(DRAW_CALIB_IMAGES)
@@ -363,7 +382,6 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   }
   
   // Depending on what type of robot we are running, provide a different initial guess for calibration
-#ifdef COZMO_V2
 #ifdef SIMULATOR
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
                                 507, 0, 639,
@@ -380,14 +398,6 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   
   cv::Mat_<f64> distCoeffs = (cv::Mat_<double>(1, NUM_RADIAL_DISTORTION_COEFFS) <<
                               -0.1, -0.1, 0.00005, -0.0001, 0.05, 0, 0, 0);
-#endif
-#else
-  cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
-                                290, 0, 160,
-                                0, 290, 120,
-                                0, 0, 1);
-  
-  cv::Mat_<f64> distCoeffs = cv::Mat_<f64>::zeros(1, NUM_RADIAL_DISTORTION_COEFFS);
 #endif
   
   std::vector<cv::Vec3d> rvecs, tvecs;
@@ -519,7 +529,8 @@ void CameraCalibrator::CalcBoardCornerPositions(cv::Size boardSize,
   }
 }
 
-void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
+void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords,
+                                                             std::set<Vision::MarkerType>& markersNeededToBeSeen)
 {
   markersTo3dCoords.clear();
 
@@ -597,36 +608,49 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::Ma
   
   // Second row of cubes
   markersTo3dCoords[Vision::MARKER_ARROW]             = GetCoordsForFace(true, 0, 1, 1);
+  markersNeededToBeSeen.insert(Vision::MARKER_ARROW);
   
   markersTo3dCoords[Vision::MARKER_SDK_2HEXAGONS]     = GetCoordsForFace(true, 1, 0, 1);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_2HEXAGONS);
   
   markersTo3dCoords[Vision::MARKER_SDK_5DIAMONDS]     = GetCoordsForFace(false, 2, -1, 1);
   markersTo3dCoords[Vision::MARKER_SDK_4DIAMONDS]     = GetCoordsForFace(true, 2, -1, 1);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_4DIAMONDS);
   
   markersTo3dCoords[Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 3, -2, 1);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_3DIAMONDS);
   markersTo3dCoords[Vision::MARKER_SDK_2DIAMONDS]     = GetCoordsForFace(true, 3, -2, 1);
   
   markersTo3dCoords[Vision::MARKER_SDK_5CIRCLES]      = GetCoordsForFace(false, 4, -3, 1);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_5CIRCLES);
   
   markersTo3dCoords[Vision::MARKER_SDK_3CIRCLES]      = GetCoordsForFace(false, 5, -4, 1);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_3CIRCLES);
   
   // Third row of cubes
   markersTo3dCoords[Vision::MARKER_SDK_4HEXAGONS]     = GetCoordsForFace(true, 0, 2, 2);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_4HEXAGONS);
   
   markersTo3dCoords[Vision::MARKER_SDK_2CIRCLES]      = GetCoordsForFace(true, 1, 1, 2);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_2CIRCLES);
   
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_FRONT]  = GetCoordsForFace(false, 2, 0, 2);
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(true, 2, 0, 2);
+  markersNeededToBeSeen.insert(Vision::MARKER_LIGHTCUBEK_TOP);
   
   markersTo3dCoords[Vision::MARKER_STAR5]             = GetCoordsForFace(false, 3, -1, 2);
+  markersNeededToBeSeen.insert(Vision::MARKER_STAR5);
   markersTo3dCoords[Vision::MARKER_BULLSEYE2]         = GetCoordsForFace(true, 3, -1, 2);
   
   markersTo3dCoords[Vision::MARKER_SDK_5TRIANGLES]    = GetCoordsForFace(false, 4, -2, 2);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_5TRIANGLES);
   markersTo3dCoords[Vision::MARKER_SDK_4TRIANGLES]    = GetCoordsForFace(true, 4, -2, 2);
   
   markersTo3dCoords[Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 5, -3, 2);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_3TRIANGLES);
   
   markersTo3dCoords[Vision::MARKER_SDK_5HEXAGONS]     = GetCoordsForFace(false, 6, -4, 2);
+  markersNeededToBeSeen.insert(Vision::MARKER_SDK_5HEXAGONS);
   
   // Fourth row of cubes (top row)
   markersTo3dCoords[Vision::MARKER_SDK_4CIRCLES]      = GetCoordsForFace(true, 0, 3, 3);
@@ -648,7 +672,9 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::Ma
   markersTo3dCoords[Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(false, 7, -4, 3);
 }
 
-void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords)
+// TODO: Populate markersNeededToBeSeen should we end up using this target again
+void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Vision::MarkerType, Quad3f>& markersTo3dCoords,
+                                                                   std::set<Vision::MarkerType>& markersNeededToBeSeen)
 {
   markersTo3dCoords.clear();
   
