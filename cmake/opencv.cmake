@@ -1,11 +1,16 @@
-set(OPENCV_VERSION 3.3.0)
+set(OPENCV_VERSION 3.1.0)
+if(NOT USE_TENSORFLOW)
+  set(OPENCV_VERSION 3.3.0) # the dnn module exists OpenCV 3.3.0
+endif()
+
+message(STATUS "Using OpenCV-${OPENCV_VERSION}")
 
 set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
 
 if (ANDROID)
   #set(OPENCV_DIR opencv-android)
   set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a)
-  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a)
+  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/opencv-android-${OPENCV_VERSION}/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a)
   set(OPENCV2_INCLUDE_PATH ${CORETECH_EXTERNAL_DIR}/build/opencv-android) 
 else()
   #set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
@@ -34,10 +39,17 @@ endif()
 
 set(OPENCV_INCLUDE_PATHS ${OPENCV2_INCLUDE_PATH})
 
+set(LIB_EXT a)
+set(LIB_TYPE STATIC)
+if(ANDROID AND OPENCV_VERSION EQUAL "3.1.0")
+  set(LIB_EXT so)
+  set(LIB_TYPE SHARED)
+endif()
+
 # Add the include directory for each OpenCV module:
 foreach(OPENCV_MODULE ${OPENCV_LIBS})
   message(STATUS "opencv.cmake add_library: " ${OPENCV_MODULE})
-  add_library(${OPENCV_MODULE} STATIC IMPORTED)
+  add_library(${OPENCV_MODULE} ${LIB_TYPE} IMPORTED)
   set(MODULE_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/${OPENCV_DIR}/modules/${OPENCV_MODULE}/include")
   set(include_paths
         ${MODULE_INCLUDE_PATH}
@@ -45,7 +57,7 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
 
   set_target_properties(${OPENCV_MODULE} PROPERTIES
         IMPORTED_LOCATION
-        ${OPENCV_LIB_DIR}/libopencv_${OPENCV_MODULE}.a
+        ${OPENCV_LIB_DIR}/libopencv_${OPENCV_MODULE}.${LIB_EXT}
         INTERFACE_INCLUDE_DIRECTORIES
         "${include_paths}")
 
@@ -60,8 +72,6 @@ set_target_properties(opencv_interface PROPERTIES
 
 if (ANDROID)
   set(OPENCV_EXTERNAL_LIBS     
-      cpufeatures
-      libjpeg
       libpng
       libtiff
   )
@@ -69,20 +79,19 @@ else()
   set(OPENCV_EXTERNAL_LIBS
       IlmImf
       libjasper
-      libjpeg
       libpng
       libtiff
       zlib
-      libwebp
-      ippicv
-      ipp_iw
-      ittnotify
   )
 endif()
 
-if(NOT USE_TENSORFLOW)
-  message(STATUS "Adding OpenCV protobuf lib")
-  list(APPEND OPENCV_EXTERNAL_LIBS libprotobuf)
+if(OPENCV_VERSION EQUAL "3.3.0")
+  message(STATUS "Adding OpenCV jpeg, protobuf, and IPP libs for 3.3.0")
+  if (ANDROID)
+   list(APPEND OPENCV_EXTERNAL_LIBS cpufeatures libjpeg libprotobuf)
+  elif()
+    list(APPEND OPENCV_EXTERNAL_LIBS libjpeg ippicv ipp_iw ittnotify libwebp libprotobuf)
+  endif()
 endif()
 
 foreach(LIB ${OPENCV_EXTERNAL_LIBS})
@@ -93,6 +102,27 @@ foreach(LIB ${OPENCV_EXTERNAL_LIBS})
 endforeach()
 
 list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
+
+# We used jpeg-turbo with 3.1.0
+if(OPENCV_VERSION EQUAL "3.1.0")
+  if (ANDROID)
+    add_library(libjpeg SHARED IMPORTED)
+    set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
+      ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libjpeg.so)
+    add_library(libturbojpeg SHARED IMPORTED)
+    set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
+      ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libturbojpeg.so)
+  elseif (MACOSX)
+    add_library(libjpeg STATIC IMPORTED)
+    set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
+      ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libjpeg.a)
+    add_library(libturbojpeg STATIC IMPORTED)
+    set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
+      ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libturbojpeg.a)
+    list(APPEND OPENCV_LIBS libturbojpeg)
+  endif()
+endif()
+
 
 if (MACOSX)
   # Add Frameworks
