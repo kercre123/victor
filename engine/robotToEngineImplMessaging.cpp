@@ -182,7 +182,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
                                                          [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                            ANKI_CPU_PROFILE("RobotTag::chargerMountCompleted");
-                                                           PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d charger mount %s.", robot->GetID(), message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
+                                                           PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Charger mount %s.", message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
                                                            if (message.GetData().Get_chargerMountCompleted().didSucceed) {
                                                              robot->SetPoseOnCharger();
                                                            }
