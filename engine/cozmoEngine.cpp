@@ -269,10 +269,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::UpdateFirmware& msg)
     return;
   }
   
-  if (_context->GetRobotManager()->InitUpdateFirmware(msg.fwType, msg.version))
-  {
-    SetEngineState(EngineState::UpdatingFirmware);
-  }
+  // TODO: figure out how to update firmware for Victor
 }
 
 template<>
@@ -400,6 +397,15 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
       break;
     }
+    case EngineState::UpdatingFirmware:
+    {
+      // TODO: VictorFirmwareUpdate
+      SetEngineState(EngineState::Running);
+      
+      // deliberate fallthrough because we
+      // do not handle updating firmware in
+      // victor yet
+    }
     case EngineState::Running:
     {
       // Update time
@@ -415,18 +421,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       _context->GetRobotManager()->UpdateAllRobots();
       
       UpdateLatencyInfo();
-      break;
-    }
-    case EngineState::UpdatingFirmware:
-    {
-      // Update comms and messages from robot
-      _context->GetRobotManager()->UpdateRobotConnection();
-      
-      // Update the firmware updating, returns true when complete (error or success)
-      if (_context->GetRobotManager()->UpdateFirmware())
-      {
-        SetEngineState(EngineState::Running);
-      }
       break;
     }
     default:
