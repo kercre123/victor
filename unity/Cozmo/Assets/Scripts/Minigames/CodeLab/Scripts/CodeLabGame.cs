@@ -1031,7 +1031,7 @@ namespace CodeLab {
 #if UNITY_IPHONE
           sendFileCall = (string name, string json) => IOS_Settings.ExportCodelabFile(name, json);
 #elif UNITY_ANDROID
-          sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call("exportCodelabFile", name, json);
+          sendFileCall = (string name, string json) => _CozmoAndroidActivity.Call<Boolean>("exportCodeLabFile", name, json);
 #else
           sendFileCall = (string name, string json) => DAS.Error("Codelab.OnCozmoShareProject.PlatformNotSupported", "Platform not supported");
 #endif
@@ -2549,6 +2549,10 @@ namespace CodeLab {
             while (defaultProfile.CodeLabProjects.Find(p => p.ProjectName == project.ProjectName) != null) {
               string name = StringUtil.GenerateNextUniqueName(project.ProjectName);
               project.ProjectName = name;
+            }
+
+            while (defaultProfile.CodeLabProjects.Find(p => p.ProjectUUID == project.ProjectUUID) != null) {
+              project.ProjectUUID = Guid.NewGuid();
             }
 
             return project;

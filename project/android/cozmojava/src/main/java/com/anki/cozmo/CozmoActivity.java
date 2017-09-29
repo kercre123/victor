@@ -254,8 +254,8 @@ public class CozmoActivity extends HackUnityPlayerActivity implements ActivityCo
       return null;
   }
 
-  public boolean exportCodelabFile(final String projectNameString, final String projectContentString) {
-    DAS.Info("Codelab.Android.exportCodelabFile", "received send email request from engine");
+  public boolean exportCodeLabFile(final String projectNameString, final String projectContentString) {
+    DAS.Info("Codelab.Android.exportCodeLabFile", "received send email request from engine");
 
     File file = CozmoCodelabIO.generateFileWithNameAndText(projectNameString, projectContentString);
 
@@ -276,7 +276,7 @@ public class CozmoActivity extends HackUnityPlayerActivity implements ActivityCo
     }
     else
     {
-      DAS.Error("Codelab.Android.exportCodelabFile.FileCreationError", "Could not properly generate a file with the specified name and text from unity");
+      DAS.Error("Codelab.Android.exportCodeLabFile.FileCreationError", "Could not properly generate a file with the specified name and text from unity");
     }
 
     return false;
