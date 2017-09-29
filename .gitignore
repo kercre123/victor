@@ -390,8 +390,3 @@ unity/Cozmo/Assets/StreamingAssets/Scratch/lib/closure-library
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/closure-library.meta
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm/dist/web/scratch-vm.js.map.meta
-
-cmake-build-debug/
-
-
-resources/config/basestation/
