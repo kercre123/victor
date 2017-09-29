@@ -34,7 +34,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  QuadTree(VizManager* vizManager, Robot* robot);
+  QuadTree(VizManager* vizManager, Robot* robot, MemoryMapData rootData);
   ~QuadTree();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

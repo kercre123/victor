@@ -1,5 +1,5 @@
 /**
- * File: memoryMapData_ProxObstacle.h
+ * File: memoryMapData_ObservableObject.h
  *
  * Author: Michael Willett
  * Date:   2017-07-31
@@ -8,24 +8,25 @@
  *
  * Copyright: Anki, Inc. 2017
  **/
-
-#ifndef ANKI_COZMO_MEMORY_MAP_DATA_PROX_OBSTACLE_H
-#define ANKI_COZMO_MEMORY_MAP_DATA_PROX_OBSTACLE_H
+ 
+ #ifndef __Anki_Cozmo_MemoryMapDataObservableObject_H__
+ #define __Anki_Cozmo_MemoryMapDataObservableObject_H__
 
 #include "memoryMapData.h"
 
 #include "anki/common/basestation/math/point.h"
+#include "anki/vision/basestation/observableObject.h"
 
 namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// MemoryMapData_ProxObstacle
+// MemoryMapData_ObservableObject
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-struct MemoryMapData_ProxObstacle : public MemoryMapData
+struct MemoryMapData_ObservableObject : public MemoryMapData
 {
   // constructor
-  MemoryMapData_ProxObstacle(Vec2f dir, TimeStamp_t t);
+  MemoryMapData_ObservableObject(MemoryMapTypes::EContentType type, TimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
   MemoryMapData* Clone() const override;
@@ -37,7 +38,7 @@ struct MemoryMapData_ProxObstacle : public MemoryMapData
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
-  Vec2f directionality; // direction we presume for the collision (based off robot pose when detected)
+  ObjectID id;
 };
  
 } // namespace

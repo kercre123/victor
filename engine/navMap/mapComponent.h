@@ -109,8 +109,8 @@ private:
   void UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOriginID_t relocalizedOriginID);
 
   // add/remove the given object to/from the memory map
-  void AddObject(const ObservableObject& object, const Pose3d& newPose);
-  void RemoveObject(const ObservableObject& object, PoseOriginID_t originID);
+  void AddObservableObject(const ObservableObject& object, const Pose3d& newPose);
+  void RemoveObservableObject(const ObservableObject& object, PoseOriginID_t originID);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Vision border detection

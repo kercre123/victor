@@ -21,6 +21,7 @@
 #include "engine/navMap/navMapFactory.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_ObservableObject.h"
 
 #include "engine/block.h"
 #include "engine/robot.h"
@@ -249,6 +250,7 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::UpdateRobotPose()
 {
+  using namespace MemoryMapTypes;
   ANKI_CPU_PROFILE("MapComponent::UpdateRobotPoseInMemoryMap");
   
   // grab current robot pose
@@ -286,19 +288,19 @@ void MapComponent::UpdateRobotPose()
       {
         // build data we want to embed for this quad
         Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        MemoryMapData_Cliff cliffData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()});
-        currentNavMemoryMap->AddQuad(cliffquad, cliffData, currentTimestamp);
+        MemoryMapData_Cliff cliffData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, currentTimestamp);
+        currentNavMemoryMap->AddQuad(cliffquad, cliffData);
       }
       else
       {
-        currentNavMemoryMap->AddQuad(cliffquad, INavMap::EContentType::ClearOfCliff, currentTimestamp);
+        currentNavMemoryMap->AddQuad(cliffquad, EContentType::ClearOfCliff, currentTimestamp);
       }
     }
 
     const Quad2f& robotQuad = _robot->GetBoundingQuadXY(robotPoseWrtOrigin);
 
     // regular clear of obstacle
-    currentNavMemoryMap->AddQuad(robotQuad, INavMap::EContentType::ClearOfObstacle, currentTimestamp);
+    currentNavMemoryMap->AddQuad(robotQuad, EContentType::ClearOfObstacle, currentTimestamp);
 
     // also notify behavior whiteboard.
     // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
@@ -314,6 +316,7 @@ void MapComponent::UpdateRobotPose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
 {
+  using namespace MemoryMapTypes;
   // get quad wrt robot
   const Pose3d& curRobotPose = _robot->GetPose().GetWithRespectToRoot();
   Quad3f groundPlaneWrtRobot;
@@ -322,17 +325,18 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
   // ask memory map to clear
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
-  const INavMap::EContentType typeInteresting = INavMap::EContentType::InterestingEdge;
-  const INavMap::EContentType typeUnknown = INavMap::EContentType::Unknown;
+  const EContentType typeInteresting = EContentType::InterestingEdge;
+  const EContentType typeUnknown = EContentType::Unknown;
   currentNavMemoryMap->ReplaceContent(groundPlaneWrtRobot, typeInteresting, typeUnknown, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
 {
+  using namespace MemoryMapTypes;
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagQuadAsNotInterestingEdges.NullMap");
-  currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMap::EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
+  currentNavMemoryMap->AddQuad(quadWRTOrigin, EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -342,11 +346,12 @@ void MapComponent::FlagInterestingEdgesAsUseless()
   // we detected something, but we discarded it because it didn't have enough info; however that increases
   // complexity when raycasting, finding boundaries, readding edges, etc. By flagging Unknown we simply say
   // "there was something here, but we are not sure what it was", which can be good to re-explore the area
-
+  using namespace MemoryMapTypes;
+    
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagInterestingEdgesAsUseless.NullMap");
-  const INavMap::EContentType newType = INavMap::EContentType::Unknown;
-  currentNavMemoryMap->ReplaceContent(INavMap::EContentType::InterestingEdge, newType, _robot->GetLastImageTimeStamp());
+  const EContentType newType = EContentType::Unknown;
+  currentNavMemoryMap->ReplaceContent(EContentType::InterestingEdge, newType, _robot->GetLastImageTimeStamp());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -528,7 +533,7 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
     if ( !oldValid && newValid )
     {
       // first time we see the object, add report
-      AddObject(object, object.GetPose());
+      AddObservableObject(object, object.GetPose());
     }
     else if ( oldValid && newValid )
     {
@@ -558,21 +563,21 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
         
         // if it is far from previous (or previous was not in the map, remove-add)
         if ( isFarFromPrev ) {
-          RemoveObject(object, curOriginID);
-          AddObject(object, object.GetPose());
+          RemoveObservableObject(object, curOriginID);
+          AddObservableObject(object, object.GetPose());
         }
       }
       else
       {
         // did not find an entry in the current origin for this object, add it now
-        AddObject(object, object.GetPose());
+        AddObservableObject(object, object.GetPose());
       }
     }
     else if ( oldValid && !newValid )
     {
       // deleting an object, remove its report using oldOrigin (the origin it was removed from)
       const PoseOriginID_t oldOriginID = oldPose->GetRootID();
-      RemoveObject(object, oldOriginID);
+      RemoveObservableObject(object, oldOriginID);
     }
     else
     {
@@ -584,7 +589,7 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::AddObject(const ObservableObject& object, const Pose3d& newPose)
+void MapComponent::AddObservableObject(const ObservableObject& object, const Pose3d& newPose)
 {
   const int objectId = object.GetID().GetValue();
   const ObjectFamily objectFam = object.GetFamily();
@@ -592,7 +597,7 @@ void MapComponent::AddObject(const ObservableObject& object, const Pose3d& newPo
   if ( addType == MemoryMapTypes::EContentType::Unknown )
   {
     // this is ok, this obstacle family is not tracked in the memory map
-    PRINT_CH_INFO("MapComponent", "MapComponent.AddObjectReportToMemMap.InvalidAddType",
+    PRINT_CH_INFO("MapComponent", "MapComponent.AddObservableObject.InvalidAddType",
                   "Family '%s' is not known in memory map",
                   ObjectFamilyToString(objectFam) );
     return;
@@ -621,7 +626,24 @@ void MapComponent::AddObject(const ObservableObject& object, const Pose3d& newPo
         // add to memory map flattened out wrt origin
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
         const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
-        memoryMap->AddQuad(newQuad, addType, _robot->GetLastImageTimeStamp());
+        switch (addType) {
+          case MemoryMapTypes::EContentType::ObstacleCube:
+          {
+            // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
+            // however, we have no mechanism for merging data, so for now we just replace with the new id
+            MemoryMapData_ObservableObject data(addType, _robot->GetLastImageTimeStamp());
+            data.id = object.GetID();
+            memoryMap->AddQuad(newQuad, data);
+            break;
+          }
+          case MemoryMapTypes::EContentType::ObstacleCubeRemoved:
+            PRINT_NAMED_WARNING("MapComponent.AddObservableObject.AddedRemovalType",
+                                "Called add on removal type rather than explicit RemoveObservableObject.");
+            break;
+          default:
+            memoryMap->AddQuad(newQuad, addType, _robot->GetLastImageTimeStamp());
+            break;
+        }
         
         // store in as a reported pose
         _reportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
@@ -644,72 +666,59 @@ void MapComponent::AddObject(const ObservableObject& object, const Pose3d& newPo
     else
     {
       // should not happen, so warn about it
-      PRINT_NAMED_WARNING("MapComponent.AddObjectReportToMemMap.InvalidPose",
+      PRINT_NAMED_WARNING("MapComponent.AddObservableObject.InvalidPose",
                           "Could not get object's new pose wrt robot. Won't add to map");
     }
   }
   else
   {
     // if the map was removed (for zombies), we shouldn't be asking to add an object to it
-    DEV_ASSERT(matchPair == _navMaps.end(), "MapComponent.AddObjectReportToMemMap.NoMapForOrigin");
+    DEV_ASSERT(matchPair == _navMaps.end(), "MapComponent.AddObservableObject.NoMapForOrigin");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::RemoveObject(const ObservableObject& object, PoseOriginID_t originID)
+void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOriginID_t originID)
 {
-  const int objectId = object.GetID().GetValue();
+  using namespace MemoryMapTypes;
+    
+  const ObjectID id = object.GetID();
   const ObjectFamily objectFam = object.GetFamily();
   const MemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
   if ( removalType == MemoryMapTypes::EContentType::Unknown )
   {
     // this is not ok, this obstacle family can be added but can't be removed from the map
-    PRINT_NAMED_WARNING("MapComponent.RemoveObjectReportFromMemMap.InvalidRemovalType",
+    PRINT_NAMED_WARNING("MapComponent.RemoveObservableObject.InvalidRemovalType",
                         "Family '%s' does not have a removal type in memory map",
                         ObjectFamilyToString(objectFam) );
     return;
   }
   
-  // find origins for the given object
-  const ObjectIdToPosesPerOrigin::iterator originsForObjectIt = _reportedPoses.find(objectId);
-  if ( originsForObjectIt != _reportedPoses.end() )
+  // find the memory map for the given origin
+  auto matchPair = _navMaps.find(originID);
+  if ( matchPair != _navMaps.end() )
   {
-    OriginToPoseInMapInfo& infosPerOrigin = originsForObjectIt->second;
-    const OriginToPoseInMapInfo::iterator infosForOriginIt = infosPerOrigin.find(originID);
-    if ( infosForOriginIt != infosPerOrigin.end() )
+    TimeStamp_t timeStamp = _robot->GetLastImageTimeStamp();
+    NodeTransformFunction transform = [id, removalType, timeStamp](std::shared_ptr<MemoryMapData> data)
     {
-      PoseInMapInfo& info = infosForOriginIt->second;
-      
-      // if it's already not in the map do nothing
-      if ( info.isInMap )
+      if (data->type == MemoryMapTypes::EContentType::ObstacleCube) 
       {
-        // pose should be correct if it's in map (could be from an old origin if it's not in map)
-        DEV_ASSERT(infosForOriginIt->second.pose.IsChildOf(_robot->GetPoseOriginList().GetOriginByID(originID)),
-                   "MapComponent.RemoveObjectReportFromMemMap.PoseNotFlattenedOut");
-        
-        // find the memory map for the given origin
-        auto matchPair = _navMaps.find(originID);
-        if ( matchPair != _navMaps.end() )
+        // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
+        // however, we have no mechanism for merging data, so for now we are just completely replacing
+        // the NodeContent if the ID matches.
+        auto currentCubeData = std::static_pointer_cast<const MemoryMapData_ObservableObject>(data);
+        if (currentCubeData->id == id) 
         {
-          INavMap* memoryMap = matchPair->second.get();
-
-          // remove from the memory map
-          const Pose3d& oldPoseInThisOrigin = info.pose;
-          const Quad2f& newQuad = object.GetBoundingQuadXY(oldPoseInThisOrigin);
-          memoryMap->AddQuad(newQuad, removalType, _robot->GetLastImageTimeStamp());
-        }
-        else
-        {
-          // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
-          DEV_ASSERT(matchPair == _navMaps.end(), "MapComponent.RemoveObjectReportFromMemMap.NoMapForOrigin");
-        }
-      
-        // flag as not in map anymore
-        // we do not want to remove the entry in case we rejigger origins. By setting this flag we are saying
-        // "we had a pose here, but has become unknown", rather than "we don't have a pose" if we called erase
-        info.isInMap = false;
-      }
-    }
+          return MemoryMapData(removalType, timeStamp); 
+        } 
+      } 
+      return *data;
+    };
+     
+    matchPair->second->TransformContent(transform);
+  } else {
+    // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
+    DEV_ASSERT(matchPair == _navMaps.end(), "MapComponent.RemoveObservableObject.NoMapForOrigin");
   }
 }
 
@@ -731,7 +740,7 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
     const ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(pairIdToPoseInfoByOrigin.first);
     if ( nullptr == object )
     {
-      PRINT_CH_INFO("MapComponent", "MapComponent.UpdateObjectsReportedInMepMap.NotAnObject",
+      PRINT_CH_INFO("MapComponent", "MapComponent.UpdateOriginsOfObjects.NotAnObject",
                     "Could not find object ID '%d' in MapComponent updating their quads", pairIdToPoseInfoByOrigin.first );
       continue;
     }
@@ -749,7 +758,7 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
       // but rather flag them as !isInMap.
       // Additionally we don't have to worry about the container we are iterating changing, since iterators are not
       // affected by changing a boolean, but are if we erased from it.
-      RemoveObject(*object, relocalizedOriginID);
+      RemoveObservableObject(*object, relocalizedOriginID);
       
       // we are bringing over the current info into the relocalized origin, update the reported pose in the
       // relocalized origin to be that of the newest information
@@ -758,7 +767,7 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
         // bring over the pose if it's in map (otherwise we don't care about the pose)
         // when we bring it, flatten out to the relocalized origin
         DEV_ASSERT(_robot->GetPoseOriginList().GetOriginByID(relocalizedOriginID).HasSameRootAs(matchInCurOrigin->second.pose),
-                   "MapComponent.UpdateObjectsReportedInMepMap.PoseDidNotHookGrandpa");
+                   "MapComponent.UpdateOriginsOfObjects.PoseDidNotHookGrandpa");
         poseInfoByOriginForObj[relocalizedOriginID].pose = matchInCurOrigin->second.pose.GetWithRespectToRoot();
       }
       // also, erase the current origin from the reported poses of this object, since we will never use it after this
@@ -777,9 +786,11 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
 {
+  using namespace MemoryMapTypes;
+    
   // the newPose should be directly in the robot's origin
   DEV_ASSERT(object->GetPose().IsChildOf(_robot->GetWorldOrigin()),
-             "MapComponent.ClearRobotToMarkersInMemMap.ObservedObjectParentNotRobotOrigin");
+             "MapComponent.ClearRobotToMarkers.ObservedObjectParentNotRobotOrigin");
 
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   
@@ -800,7 +811,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
     // An observed marker. Assign the marker's bottom corners as the top corners for the ground quad
     // The names of the corners (cornerTL and cornerTR) are those of the ground quad: TopLeft and TopRight
     DEV_ASSERT(_robot->IsPoseInWorldOrigin(observedMarkerIt->GetPose()),
-               "MapComponent.ClearVisionFromRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
+               "MapComponent.ClearRobotToMarkers.MarkerOriginShouldBeRobotOrigin");
     
     const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToRoot());
     Point3f cornerTL = markerCorners[Quad::BottomLeft];
@@ -811,7 +822,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
     Quad2f clearVisionQuad { cornerTL, cornerBL, cornerTR, cornerBR };
     
     // update navmesh with a quadrilateral between the robot and the seen object
-    currentNavMemoryMap->AddQuad(clearVisionQuad, INavMap::EContentType::ClearOfObstacle, _robot->GetLastImageTimeStamp());
+    currentNavMemoryMap->AddQuad(clearVisionQuad, EContentType::ClearOfObstacle, _robot->GetLastImageTimeStamp());
     
     // also notify behavior whiteboard.
     // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
@@ -860,8 +871,9 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
   // improvement.
   // Note2: Actually FindBorder is very fast compared to having to check each node against the quad, depending
   // on how many nodes of each type there are (interesting vs quads within 'withinQuad'), so it can potentially
-  // be faster depending on the case. Unless profiling shows up for this, no need to listen to Note1
+  // be faster depending on the case. Unless profiling shows up for this, no need to listen to Note
 
+    
   // check if merge is enabled
   if ( !kReviewInterestingEdges ) {
     return;
@@ -870,36 +882,38 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
   // ask the memory map to do the merge
   // some implementations make require parameters like max distance to merge, but for now trust continuity
   if( map )
-  {
-    using ContentType = INavMap::EContentType;
+  {	    
+    using namespace MemoryMapTypes;
     
     // interesting edges adjacent to any of these types will be deemed not interesting
-    constexpr MemoryMapTypes::FullContentArray typesWhoseEdgesAreNotInteresting =
+    constexpr FullContentArray typesWhoseEdgesAreNotInteresting =
     {
-      {MemoryMapTypes::EContentType::Unknown               , false},
-      {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
-      {MemoryMapTypes::EContentType::ClearOfCliff          , false},
-      {MemoryMapTypes::EContentType::ObstacleCube          , true },
-      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-      {MemoryMapTypes::EContentType::ObstacleCharger       , true },
-      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
-      {MemoryMapTypes::EContentType::ObstacleProx          , true },
-      {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-      {MemoryMapTypes::EContentType::Cliff                 , false},
-      {MemoryMapTypes::EContentType::InterestingEdge       , false},
-      {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
+      {EContentType::Unknown               , false},
+      {EContentType::ClearOfObstacle       , false},
+      {EContentType::ClearOfCliff          , false},
+      {EContentType::ObstacleCube          , true },
+      {EContentType::ObstacleCubeRemoved   , false},
+      {EContentType::ObstacleCharger       , true },
+      {EContentType::ObstacleChargerRemoved, true },
+      {EContentType::ObstacleProx          , true },
+      {EContentType::ObstacleUnrecognized  , true },
+      {EContentType::Cliff                 , false},
+      {EContentType::InterestingEdge       , false},
+      {EContentType::NotInterestingEdge    , true }
     };
-    static_assert(MemoryMapTypes::IsSequentialArray(typesWhoseEdgesAreNotInteresting),
+    static_assert(IsSequentialArray(typesWhoseEdgesAreNotInteresting),
       "This array does not define all types once and only once.");
 
     // fill border in memory map
-    map->FillBorder(ContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, ContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
+    map->FillBorder(EContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 {
+  using namespace MemoryMapTypes;
+    
   ANKI_CPU_PROFILE("MapComponent::AddVisionOverheadEdges");
   _robot->GetContext()->GetVizManager()->EraseSegments("MapComponent.AddVisionOverheadEdges");
   
@@ -1348,7 +1362,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
       // add clear info to map
       if ( currentNavMemoryMap ) {
-        currentNavMemoryMap->AddLine(clearFrom, clearTo, INavMap::EContentType::ClearOfObstacle, frameInfo.timestamp);
+        currentNavMemoryMap->AddLine(clearFrom, clearTo, EContentType::ClearOfObstacle, frameInfo.timestamp);
       }
     }
     else
@@ -1381,7 +1395,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
         // add clear info to map
         if ( currentNavMemoryMap ) {
-          currentNavMemoryMap->AddTriangle(clearTri2D, INavMap::EContentType::ClearOfObstacle, frameInfo.timestamp);
+          currentNavMemoryMap->AddTriangle(clearTri2D, EContentType::ClearOfObstacle, frameInfo.timestamp);
         }
       }
       else
@@ -1396,7 +1410,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
         // add clear info to map
         if ( currentNavMemoryMap ) {
-          currentNavMemoryMap->AddQuad(potentialClearQuad2D, INavMap::EContentType::ClearOfObstacle, frameInfo.timestamp);
+          currentNavMemoryMap->AddQuad(potentialClearQuad2D, EContentType::ClearOfObstacle, frameInfo.timestamp);
         }
       }
     }
@@ -1424,7 +1438,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   
     // add interesting edge
     if ( currentNavMemoryMap ) {
-      currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, INavMap::EContentType::InterestingEdge, frameInfo.timestamp);
+      currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, EContentType::InterestingEdge, frameInfo.timestamp);
     }
   }
   

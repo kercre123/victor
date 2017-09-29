@@ -35,7 +35,6 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
-#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -43,7 +42,7 @@
 #include "engine/humanHead.h"
 #include "engine/markerlessObject.h"
 #include "engine/mat.h"
-#include "engine/navMap/iNavMap.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/navMap/navMapFactory.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
@@ -1802,27 +1801,27 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         const Pose3d& robotPose = _robot->GetPose();
         const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
         Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        MemoryMapData_Cliff cliffData(Vec2f {rotatedFwdVector.x(), rotatedFwdVector.y()});
+        MemoryMapData_Cliff cliffData(Vec2f {rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);
         
         // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
         const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
       
         INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
-        currentNavMemoryMap->AddQuad(cliffQuad, cliffData, lastTimestamp);
+        currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
         break;
       }
       case ObjectType::ProxObstacle:
       {
         const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
-        MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()});
+        MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);
         
         const Quad2f& proxQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToRoot() );
         
         INavMap* currentNavMemoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
         DEV_ASSERT(currentNavMemoryMap, "BlockWorld.AddMarkerlessObject.NoMemoryMap");
         
-        currentNavMemoryMap->AddQuad(proxQuad, proxData, lastTimestamp);
+        currentNavMemoryMap->AddQuad(proxQuad, proxData);
         break;
       }
       default:
