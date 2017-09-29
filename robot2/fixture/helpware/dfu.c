@@ -65,10 +65,6 @@ void error_exit(CoreAppErrorCode code, const char* msg, ...)
 }
 
 
-
-
-
-
 const uint8_t* read_safefile(int safefp, int* szOut)
 {
   uint8_t imagebuffer[MAX_FIRMWARE_SZ];
@@ -138,12 +134,11 @@ int main(int argc, const char* argv[])
 
   dprintf("opening file\n");
   gDFU.imageFd = open(argv[1], O_RDONLY);
-  if (!gDFU.imageFd) {
-    error_exit(app_FILE_OPEN_ERROR, "Can't open %s", argv[1]);
+  if (gDFU.imageFd <=0) {
+    error_exit(app_FILE_OPEN_ERROR, "Can't open '%s' (%d)", argv[1], errno);
   }
   int safefilesz = 0;
   gDFU.safefile = read_safefile(gDFU.imageFd, &safefilesz);
-
 
   // Attention
   dprintf("Sending escape\n");

@@ -53,6 +53,7 @@ $(DFU): $(DFU_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(DFU_OBJ) $(LIBPATH) $(LIBS)  -o $(DFU)
 
 push:
+	adb shell -x "mkdir -p $(REMOTE_DEST)"
 	adb push $(DFU)  $(REMOTE_DEST) 
 
 execute:
