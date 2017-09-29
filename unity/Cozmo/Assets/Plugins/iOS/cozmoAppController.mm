@@ -18,6 +18,7 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 #import <UIKit/UIKit.h>
+#import <UserNotifications/UserNotifications.h>
 
 namespace Anki {
   namespace Util {
@@ -40,6 +41,9 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
 
 - (bool)exportCodelabFile:(NSString*)projectName withContent:(NSString*)content;
 
+- (void)applicationWillEnterForeground:(UIApplication *)application;
+
+- (void)applicationDidBecomeActive:(UIApplication * )application;
 @end
 
 bool unityLogHandler(LogType logType, const char* log, va_list list)
@@ -115,7 +119,6 @@ void tryExecuteBackgroundTransfers()
   });
   
   REMOTE_CONSOLE_ENABLED_ONLY( Anki::Util::kDemoMode = false );
-  
   BOOL didHandleURL = YES;
   
   NSURL *URL = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
@@ -124,6 +127,22 @@ void tryExecuteBackgroundTransfers()
   }
   
   return didHandleURL;
+}
+
+// Might seem redundant to hook into both applicationDidBecomeActive and applicationWillEnterForeground,
+// but applicationWillEnterForeground doesn't seem to be called as consistently. There will be instances
+// where both methods get called sequentially, but calling removeAllDeliveredNotifications twice doesn't
+// cause any issues.
+- (void)applicationDidBecomeActive:(UIApplication * )application
+{
+    [[UNUserNotificationCenter currentNotificationCenter] removeAllDeliveredNotifications];
+    [super applicationDidBecomeActive:application];
+}
+
+- (void)applicationWillEnterForeground:(UIApplication *)application
+{
+    [[UNUserNotificationCenter currentNotificationCenter] removeAllDeliveredNotifications];
+    [super applicationWillEnterForeground:application];
 }
 
 -(BOOL)handleOpenedFileURL:(NSURL *)filename {
