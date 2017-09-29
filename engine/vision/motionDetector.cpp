@@ -562,11 +562,6 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
                  centroid.y() >= 0.f && centroid.y() <= foregroundMotion.GetNumRows(),
                  "MotionDetector.DetectGroundAndImageHelper.CentroidOOB");
 
-      // make relative to image center *at processing resolution*
-      DEV_ASSERT(_camera.IsCalibrated(), "MotionDetector.DetectGroundAndImageHelper.CameraNotCalibrated");
-      centroid -= _camera.GetCalibration()->GetCenter() * (1.f / scaleMultiplier);
-
-      // Convert area to fraction of image area (to be resolution-independent)
       // Using scale multiplier to return the coordinates in original image coordinates
       msg.img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
@@ -579,6 +574,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
 
     if(groundRegionArea > 0.f)
     {
+      // groundPlaneCentroid had already been scaled by scaleMultiplier before
       msg.ground_x = int16_t(std::round(groundPlaneCentroid.x()));
       msg.ground_y = int16_t(std::round(groundPlaneCentroid.y()));
       msg.ground_area = groundRegionArea;
