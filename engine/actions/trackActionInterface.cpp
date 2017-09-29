@@ -53,13 +53,15 @@ ITrackAction::~ITrackAction()
 {
   if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
     // Make sure any eye shift gets removed
-    _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
+    // TODO: Restore eye shifts (VIC-363)
+    //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
     _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
   }
 
   if(_originalEyeDartDist >= 0.f) {
     // Make sure to restore original eye dart distance
-    _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+    // TODO: Restore KeepFaceAlive stuff (VIC-364)
+    //_robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
   }
   
   // Make sure we abort any sound actions we triggered
@@ -312,10 +314,12 @@ ActionResult ITrackAction::Init()
   }
   
   // Store eye dart setting so we can restore after tracking
-  _originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
+  // TODO: Restore KeepFaceAlive stuff (VIC-364)
+  //_originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
   // Reduce eye darts so we better appear to be tracking and not look around
-  _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
+  // TODO: Restore KeepFaceAlive stuff (VIC-364)
+  //_robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
 
   if( _stopOnOtherActionTag != ActionConstants::INVALID_TAG &&
       ! IsTagInUse( _stopOnOtherActionTag ) ) {
@@ -592,6 +596,8 @@ ActionResult ITrackAction::CheckIfDone()
         const f32 kXMax = static_cast<f32>(ProceduralFace::WIDTH/4);
         const f32 kYMax = static_cast<f32>(ProceduralFace::HEIGHT/4);
         
+        // TODO: Restore eye shifts (VIC-363)
+        /*
         _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                     "TrackActionEyeShift",
                                                                                     eyeShiftX, eyeShiftY,
@@ -601,6 +607,7 @@ ActionResult ITrackAction::CheckIfDone()
                                                                                     kMaxLookUpScale,
                                                                                     kMinLookDownScale,
                                                                                     kOuterEyeScaleIncrease);
+         */
       } // if(_moveEyes)
       
       // Can't meet stop criteria based on predicted updates (as opposed to actual observations)

@@ -538,16 +538,6 @@ public:
     
   // =========== Animation Commands =============
   
-#if BUILD_NEW_ANIMATION_CODE
-  inline IAnimationStreamer & GetAnimationStreamer() {
-    return (*_animationController.get());
-  }
-#else
-  inline IAnimationStreamer & GetAnimationStreamer() {
-    return _animationStreamer;
-  }
-#endif
-
   // Returns the number of animation bytes or audio frames played on the robot since
   // it was initialized with SyncTime.
   s32 GetNumAnimationBytesPlayed() const;

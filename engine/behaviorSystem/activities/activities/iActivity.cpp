@@ -262,7 +262,8 @@ void IActivity::OnDeselected(Robot& robot)
   // clear idle if it was set
   if( _idleAnimTrigger != AnimationTrigger::Count ) {
     // NOTE: assumes _idleAnimTrigger doesn't change while this was running
-    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+    // TODO: Restore idle animations (VIC-366)
+    //robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
   }      
   
   // clear driving animations for this activity if specified in config
@@ -383,7 +384,8 @@ void IActivity::SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation)
                  "IActivity.SmartPushIdleAnimation.IdleAlreadySet",
                  "Activity %s has already set an idle animation",
                  GetIDStr())){
-    robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
+    // TODO: Restore idle animations (VIC-366)
+    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
     _hasSetIdle = true;
   }
 }
@@ -396,7 +398,8 @@ void IActivity::SmartRemoveIdleAnimation(Robot& robot)
                  "IActivity.SmartRemoveIdleAnimation.NoIdleSet",
                  "Activity %s is trying to remove an idle, but none is currently set",
                  GetIDStr())){
-    robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
+    // TODO: Restore idle animations (VIC-366)
+    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
     _hasSetIdle = false;
   }
 }

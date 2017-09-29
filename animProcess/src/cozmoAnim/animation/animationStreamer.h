@@ -61,10 +61,20 @@ namespace Cozmo {
     // animation.
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
-    Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
-    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
+    Result SetStreamingAnimation(const std::string& name,
+                                 Tag tag,
+                                 u32 numLoops = 1,
+                                 bool interruptRunning = true);
     
-    Tag SetStreamingAnimation(u32 animID, u32 numLoops = 1, bool interruptRunning = true);
+    Result SetStreamingAnimation(Animation* anim,
+                                 Tag tag,
+                                 u32 numLoops = 1,
+                                 bool interruptRunning = true);
+    
+    Result SetStreamingAnimation(u32 animID,
+                                 Tag tag,
+                                 u32 numLoops = 1,
+                                 bool interruptRunning = true);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
@@ -159,13 +169,10 @@ namespace Cozmo {
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();
     
-    void IncrementTagCtr();
-    
     bool _isIdling = false;
     
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
-    Tag _tagCtr   = 0;
 
     // Start and end messages sent to engine
     bool _startOfAnimationSent = false;

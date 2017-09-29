@@ -21,6 +21,7 @@
 #include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/components/cubeAccelComponentListeners.h"
 #include "engine/cozmoContext.h"
@@ -34,7 +35,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
-
+#include "util/math/math.h"
 
 
 namespace Anki {
@@ -297,18 +298,19 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
   RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
   if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
   {
+    // TODO: Soon we will not have direct access to the CannedAnimationContainer and the raw animation data in this process (VIC-368)
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
-    const auto& animStreamer = robot.GetAnimationStreamer();
+    const auto& animComponent = robot.GetAnimationComponent();
     const auto& cannedAnims = robot.GetContext()->GetRobotManager()->GetCannedAnimations();
     
     const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
-    const auto& animName = animStreamer.GetAnimationNameFromGroup(animGroupName, robot);
+    const auto& animName = animComponent.GetAnimationNameFromGroup(animGroupName, robot);
     const Animation* eatingAnimRawPointer = cannedAnims.GetAnimation(animName);
     const auto& track = eatingAnimRawPointer->GetTrack<EventKeyFrame>();
     if(!track.IsEmpty()){
       // assumes only one keyframe per eating anim
-      timeDrainCube_s = track.GetLastKeyFrame()->GetTriggerTime()/1000;
+      timeDrainCube_s = Util::MilliSecToSec((f32)track.GetLastKeyFrame()->GetTriggerTime());
     }
   }
   

@@ -149,9 +149,21 @@ namespace Messages {
         
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
       {
-        PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim", "%d", msg.playAnim.animID);
-        _animStreamer->SetStreamingAnimation(msg.playAnim.animID, msg.playAnim.numLoops);
+        PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim",
+                         "AnimID: %d, Tag: %d",
+                         msg.playAnim.animID, msg.playAnim.tag);
+        
+        _animStreamer->SetStreamingAnimation(msg.playAnim.animID, msg.playAnim.tag, msg.playAnim.numLoops);
         return;
+      }
+      case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_abortAnimation:
+      {
+        PRINT_NAMED_INFO("EngineMessages.ProcessMessage.AbortAnim",
+                         "Tag: %d",
+                         msg.abortAnimation.tag);
+        
+        // TODO: Need to hook this up to AnimationStreamer
+        //       Maybe _animStreamer->Abort(msg.abortAnimation.tag)?
       }
         
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
