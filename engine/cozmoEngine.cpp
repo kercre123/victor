@@ -402,9 +402,9 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       // TODO: VictorFirmwareUpdate
       SetEngineState(EngineState::Running);
       
-      [[fallthrough]]; // deliberate fallthrough because we
-                       // do not handle updating firmware in
-                       // victor yet
+      // deliberate fallthrough because we
+      // do not handle updating firmware in
+      // victor yet
     }
     case EngineState::Running:
     {
