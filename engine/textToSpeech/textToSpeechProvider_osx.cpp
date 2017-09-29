@@ -101,7 +101,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* ctx,
   HMODULE h = BabTtsInitDllEx(resources.c_str());
   if (nullptr == h) {
     LOG_ERROR("TextToSpeechProvider.Initialize.InitDll",
-              "Unable to initialize TTS provider DLL");
+              "Unable to initialize TTS provider DLL in '%s'",resources.c_str());
     return;
   }
   

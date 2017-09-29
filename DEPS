@@ -18,6 +18,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
+                "export_dirname": "animation-assets",
                 "version": "2401"
             },
             "victor-audio-assets": {
