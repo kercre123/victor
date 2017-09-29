@@ -918,10 +918,17 @@ namespace CodeLab {
           // Create new project with the JSON stored in projectJSON.
 
           // Create project name: "My Project 1", "My Project 2", etc.
-          newUserProjectName = Localization.GetWithArgs(LocalizationKeys.kCodeLabHorizontalUserProjectMyProject, defaultProfile.CodeLabUserProjectNum);
-          defaultProfile.CodeLabUserProjectNum++;
-
           bool isVertical = _SessionState.GetGrammarMode() == GrammarMode.Vertical;
+
+          if (isVertical) {
+            newUserProjectName = Localization.GetWithArgs(LocalizationKeys.kCodeLabHorizontalUserProjectMyProject, defaultProfile.CodeLabUserProjectNumVertical);
+            defaultProfile.CodeLabUserProjectNumVertical++;
+          }
+          else {
+            newUserProjectName = Localization.GetWithArgs(LocalizationKeys.kCodeLabHorizontalUserProjectMyProject, defaultProfile.CodeLabUserProjectNum);
+            defaultProfile.CodeLabUserProjectNum++;
+          }
+
           newProject = new CodeLabProject(newUserProjectName, projectJSON, isVertical);
 
           if (defaultProfile.CodeLabProjects == null) {

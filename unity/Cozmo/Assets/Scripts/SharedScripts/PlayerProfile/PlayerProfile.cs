@@ -35,6 +35,7 @@ namespace DataPersistence {
     // Mainly just for logging, but different from sessions in that you need to connect.
     public int DaysWithCozmo;
     public int CodeLabUserProjectNum;
+    public int CodeLabUserProjectNumVertical;
     public bool HideFreeplayCard;
     public bool DroneModeInstructionsSeen;
 
@@ -83,6 +84,7 @@ namespace DataPersistence {
       TotalSessions = 0;
       DaysWithCozmo = 0;
       CodeLabUserProjectNum = 1;
+      CodeLabUserProjectNumVertical = 1;
       HideFreeplayCard = false;
       DroneModeInstructionsSeen = false;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
