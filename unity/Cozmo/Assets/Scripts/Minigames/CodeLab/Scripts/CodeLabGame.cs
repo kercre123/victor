@@ -2052,6 +2052,14 @@ namespace CodeLab {
           audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Tiny_Orchestra_Strings_03_Loop_Stop;
         }
         break;
+      case "background music":
+        if (isStartSound) {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off;
+        }
+        else {
+          audioEvent = Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_On;
+        }
+        break;
       }
 
       return audioEvent;

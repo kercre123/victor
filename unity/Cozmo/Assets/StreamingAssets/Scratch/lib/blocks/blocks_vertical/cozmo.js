@@ -279,6 +279,9 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
             "type": "field_dropdown",
             "name": "SOUND_MENU",
             "options": [
+              ['%{BKY_EIGHTIES_MUSIC}','eighties music'], 
+              ['%{BKY_MAMBO_MUSIC}','mambo music'], 
+              ['%{BKY_BACKGROUND_MUSIC}','background music'], 
               ['%{BKY_SELECT}', 'select'],
               ['%{BKY_WIN}', 'win'],
               ['%{BKY_LOSE}', 'lose'],
@@ -289,8 +292,6 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
               ['%{BKY_FAIL}','fail'], 
               ['%{BKY_TIMER_WARNING}','timer warning'], 
               ['%{BKY_TIMER_END}','timer end'], 
-              ['%{BKY_EIGHTIES_MUSIC}','eighties music'], 
-              ['%{BKY_MAMBO_MUSIC}','mambo music'], 
               ['%{BKY_SPARKLE}','sparkle'], 
               ['%{BKY_SWOOSH}','swoosh'], 
               ['%{BKY_PING}','ping'], 
