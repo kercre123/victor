@@ -178,6 +178,15 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a bridge.", robot->GetID());
                                                        //SetOnBridge(false);
                                                      }));
+
+  GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
+                                                         [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                           ANKI_CPU_PROFILE("RobotTag::chargerMountCompleted");
+                                                           PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d charger mount %s.", robot->GetID(), message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
+                                                           if (message.GetData().Get_chargerMountCompleted().didSucceed) {
+                                                             robot->SetPoseOnCharger();
+                                                           }
+                                                         }));
   
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::mainCycleTimeError,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){

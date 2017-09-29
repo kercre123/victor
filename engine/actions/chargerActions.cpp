@@ -135,7 +135,7 @@ ActionResult MountChargerAction::ConfigureAlignWithChargerAction()
   _alignWithChargerAction->ShouldSuppressTrackLocking(true);
   
   // Dock action to align with the charger marker
-  const float distanceFromMarker_mm = 120.f;
+  const float distanceFromMarker_mm = 130.f;
   const float alignSpeed_mmps = 30.f;
   auto alignAction = new AlignWithObjectAction(_robot,
                                                _chargerID,
@@ -239,12 +239,6 @@ BackupOntoChargerAction::BackupOntoChargerAction(Robot& robot,
   
 ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 {
-  if (_useCliffSensorCorrection) {}
-  _dockAction = DockAction::DA_BACKUP_ONTO_CHARGER;
-  return ActionResult::SUCCESS;
-  
-  ///////
-  
   Charger* charger = dynamic_cast<Charger*>(object);
   if(charger == nullptr) {
     PRINT_NAMED_ERROR("BackupOntoChargerAction.SelectDockAction.NotChargerObject",
@@ -252,7 +246,10 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
     return ActionResult::BAD_OBJECT;
   }
   
-  _dockAction = DockAction::DA_BACKUP_ONTO_CHARGER;
+  _dockAction = _useCliffSensorCorrection ?
+                  DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF :
+                  DockAction::DA_BACKUP_ONTO_CHARGER;
+  
   
   // Tell robot which charger it will be using
   _robot.SetCharger(_dockObjectID);
@@ -265,13 +262,12 @@ ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
   if (_robot.IsOnCharger()) {
-  PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
+    PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
                 "Robot has mounted charger.");
-    _robot.SetPoseOnCharger();
     return ActionResult::SUCCESS;
   }
   
-  return ActionResult::ABORT;;
+  return ActionResult::ABORT;
 }
   
   

@@ -91,6 +91,9 @@ namespace Anki {
         // Time when robot first becomes tiled on charger (while docking)
         u32 tiltedOnChargerStartTime_ = 0;
         
+        // For charger mounting, whether or not to use cliff sensors to align the robot.
+        bool useCliffSensorAlignment_ = false;
+        
         // Pitch angle at which Cozmo is probably having trouble backing up on charger
         const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
         
@@ -197,6 +200,17 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      Result SendChargerMountCompleteMessage(const bool success)
+      {
+        ChargerMountComplete msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(RobotInterface::SendMessage(msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
       static void StartBackingOut()
       {
         static const f32 MIN_BACKOUT_DIST_MM = 35.f;
@@ -309,8 +323,10 @@ namespace Anki {
                 mode_ = SET_LIFT_POSTDOCK;
                 break;
               case DockAction::DA_BACKUP_ONTO_CHARGER:
+              case DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF:
                 SteeringController::ExecuteDirectDrive(-30, -30);
                 transitionTime_ = HAL::GetTimeStamp() + 8000;
+                useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
                 mode_ = BACKUP_ON_CHARGER;
                 break;
               default:
@@ -791,14 +807,12 @@ namespace Anki {
           }
           case BACKUP_ON_CHARGER:
           {
-
             if (HAL::GetTimeStamp() > transitionTime_) {
               AnkiEvent( 292, "PAP.BACKUP_ON_CHARGER.Timeout", 305, "", 0);
+              SendChargerMountCompleteMessage(false);
               Reset();
-              // TODO: Some kind of recovery?
-              // ...
             } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
-              // Check for tilt
+              // Check for excessive tilt
               if (tiltedOnChargerStartTime_ == 0) {
                 tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
               } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
@@ -810,7 +824,26 @@ namespace Anki {
               }
             } else if (HAL::BatteryIsOnCharger()) {
               AnkiEvent( 294, "PAP.BACKUP_ON_CHARGER.Success", 305, "", 0);
+              SendChargerMountCompleteMessage(true);
               Reset();
+            } else if (useCliffSensorAlignment_) {
+              const float backupSpeed = -30.f;
+              const float backupSpeedLow = -10.f;
+              
+              const u16 cliffBlackThreshold = 400;
+              
+              const u16 cliffBL = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BL);
+              const u16 cliffBR = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BR);
+              
+              const bool isBlackBL = cliffBL < cliffBlackThreshold;
+              const bool isBlackBR = cliffBR < cliffBlackThreshold;
+              
+              const float leftSpeed  = isBlackBL ? backupSpeedLow : backupSpeed;
+              const float rightSpeed = isBlackBR ? backupSpeedLow : backupSpeed;
+              
+              SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+              
+              tiltedOnChargerStartTime_ = 0;
             } else {
               tiltedOnChargerStartTime_ = 0;
             }
@@ -820,6 +853,7 @@ namespace Anki {
           {
             // For failed charger mounting recovery only
             if (HAL::GetTimeStamp() > transitionTime_) {
+              SendChargerMountCompleteMessage(false);
               Reset();
             }
             break;

@@ -50,7 +50,8 @@ enum uint_8 DockAction
   DA_RAMP_ASCEND,     // Going up a ramp
   DA_RAMP_DESCEND,    // Going down a ramp
   DA_CROSS_BRIDGE,    // Crossing a bridge
-  DA_BACKUP_ONTO_CHARGER, // Reverse onto the charger platform
+  DA_BACKUP_ONTO_CHARGER,           // Reverse onto the charger platform
+  DA_BACKUP_ONTO_CHARGER_USE_CLIFF, // Reverse onto the charger platform, using cliff sensors for angle correction
 }
 
 enum uint_8 CarryState

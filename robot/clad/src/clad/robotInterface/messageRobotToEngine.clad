@@ -145,7 +145,7 @@ union RobotToEngine {
   RobotAvailable             robotAvailable         = 0xC9,
   AnimationStarted           animStarted            = 0xCA,   // V2: sent from anim process
   AnimationEnded             animEnded              = 0xCB,   // V2: sent from anim process
-  //        FREE SLOT!!!                            = 0xCC,
+  ChargerMountComplete       chargerMountCompleted  = 0xCC,
   NVStorage::NVOpResult      nvOpResult             = 0xCD,
   ObjectPowerLevel           objectPowerLevel       = 0xCE,
   CrashReport                crashReport            = 0xCF,
