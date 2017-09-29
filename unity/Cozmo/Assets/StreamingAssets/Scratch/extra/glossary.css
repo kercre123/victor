@@ -69,6 +69,13 @@ body.show-glossary-modal #glossary-modal {
   padding: 0;
   background-color: transparent;
   border: 0;
+
+  background-image: url('../images/ui/btn_close.svg');
+  background-size: cover;
+}
+
+#glossary .close-button:active {
+  background-position: 0 -48px;
 }
 
 #glossary .bd {
