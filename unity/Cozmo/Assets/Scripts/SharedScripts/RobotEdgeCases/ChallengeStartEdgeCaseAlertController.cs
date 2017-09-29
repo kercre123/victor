@@ -105,7 +105,7 @@ namespace Cozmo.UI {
                    LocalizationKeys.kUnlockableOSNotSupportedTitle,
                    LocalizationKeys.kUnlockableOSNotSupportedDescription,
                    new AlertModalButtonData("os_not_supported_okay_button", LocalizationKeys.kButtonOkay),
-                   showCloseButton: true,
+                   showCloseButton: false,
                    descLocArgs: new object[] { requiredOs });
 
       UIManager.OpenAlert(osNotSupportedAlertData, ModalPriorityData.CreateSlightlyHigherData(_BasePriority));
