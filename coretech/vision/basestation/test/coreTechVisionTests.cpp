@@ -511,7 +511,8 @@ GTEST_TEST(ObjectDetector, SimpleImage)
   if(USE_TENSORFLOW)
   {
     // Tensorflow SSD
-    config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb";
+    //config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb"; // full floating point model
+    config["graph"] = "ssd_mobilenet_v1_coco_11_06_2017_quantized.pb"; // quantized model
     //config["graph"] = "ssd_inception_v2_coco_11_06_2017_frozen.pb";
     //config["graph"] = "rfcn_resnet101_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "Round"
     //config["graph"] = "faster_rcnn_inception_resnet_v2_atrous_coco_11_06_2017_frozen.pb"; // Doesn't work: needs Op "FloorMod"
