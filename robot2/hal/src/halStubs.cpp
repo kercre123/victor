@@ -430,24 +430,25 @@ namespace Anki {
     {
       // TEMP!! This should be fixed once syscon reports the correct flags for isCharging, etc.
       static bool isCharging = false;
-      static u32 transitionTime_ms = HAL::GetTimeStamp();
+      static bool wasAboveThresh = false;
+      static u32 lastTransition_ms = HAL::GetTimeStamp();
       
       const int32_t thresh = 2000; // raw ADC value?
-      const u32 debounceTime_ms = 300U;
+      const u32 debounceTime_ms = 200U;
       
-      const bool aboveThreshNow = bodyData_->battery.charger > thresh;
-      const bool canTransition = HAL::GetTimeStamp() > transitionTime_ms + debounceTime_ms;
+      const bool isAboveThresh = bodyData_->battery.charger > thresh;
       
-      if (canTransition) {
-        if (isCharging && !aboveThreshNow) {
-            isCharging = false;
-            transitionTime_ms = HAL::GetTimeStamp();
-        } else if (!isCharging && aboveThreshNow) {
-            isCharging = true;
-            transitionTime_ms = HAL::GetTimeStamp();
-        }
+      if (isAboveThresh != wasAboveThresh) {
+        lastTransition_ms = HAL::GetTimeStamp();
       }
       
+      const bool canTransition = HAL::GetTimeStamp() > lastTransition_ms + debounceTime_ms;
+      
+      if (canTransition) {
+        isCharging = isAboveThresh;
+      }
+      
+      wasAboveThresh = isAboveThresh;
       return isCharging;
       //return bodyData_->battery.flags & isCharging;
     }

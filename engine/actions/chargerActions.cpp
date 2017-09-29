@@ -198,6 +198,9 @@ ActionResult MountChargerAction::ConfigureTurnAndMountAction()
                                                              _chargerID,
                                                              _useCliffSensorCorrection));
   
+  // Lower the lift back to the ground
+  _turnAndMountAction->AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK));
+  
   return ActionResult::SUCCESS;
 }
   
