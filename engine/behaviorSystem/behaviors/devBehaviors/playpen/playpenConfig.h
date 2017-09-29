@@ -33,7 +33,7 @@ namespace PlaypenConfig {
 static bool  kDisconnectAtEnd      = false;
 
 // Whether or not to write to robot storage
-static bool  kWriteToStorage       = false;
+static bool  kWriteToStorage       = true;
 
 // Whether or not to ignore any test failures
 // The playpen behaviors should be written in such a way so that they can continue running
