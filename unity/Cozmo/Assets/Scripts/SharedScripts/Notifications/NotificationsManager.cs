@@ -86,7 +86,8 @@ namespace Cozmo.Notifications {
       else {
         LogDasEventsForSentNotifications();
         ClearNotificationsToBeSentRecords();
-        ClearNotificationCache(); // notifications not-yet-delivered (or scheduled)
+        ClearNotificationCache();
+        CancelAllNotifications();
       }
     }
 
