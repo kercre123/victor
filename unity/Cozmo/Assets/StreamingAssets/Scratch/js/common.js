@@ -35,7 +35,12 @@
         messageContents = "[" + getTimeStamp() + "] " + messageContents;
         window.Unity.call({command: "cozmoDASLog", argString: eventName, argString2: messageContents});
     }    
-    
+
+    window.cozmoDASError = function(eventName, messageContents) {
+        messageContents = "[" + getTimeStamp() + "] " + messageContents;
+        window.Unity.call({command: "cozmoDASError", argString: eventName, argString2: messageContents});
+    }
+
     /**
      * Window "onload" handler.
      * @return {void}

@@ -25109,11 +25109,17 @@ var VirtualMachine = function (_EventEmitter) {
 
             // Validate & parse
             if (typeof json !== 'string') {
+                // *** ANKI CHANGE ***
+                window.cozmoDASError("Codelab.ScratchVM.FromJSONError.NonString", "Failed to parse project. Non-string supplied to fromJSON");
+
                 log.error('Failed to parse project. Non-string supplied to fromJSON.');
                 return;
             }
             json = JSON.parse(json);
             if ((typeof json === 'undefined' ? 'undefined' : _typeof(json)) !== 'object') {
+                // *** ANKI CHANGE ***
+                window.cozmoDASError("Codelab.ScratchVM.FromJSONError.FailToParse", "Failed to parse project. JSON supplied to fromJSON is not an object.");
+
                 log.error('Failed to parse project. JSON supplied to fromJSON is not an object.');
                 return;
             }

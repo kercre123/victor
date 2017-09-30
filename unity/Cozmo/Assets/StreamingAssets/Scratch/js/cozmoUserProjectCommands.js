@@ -186,11 +186,10 @@
 
     window.openCozmoProjectJSON = function (cozmoProjectJSON) {
         try {
-            var cozmoProject = JSON.parse(cozmoProjectJSON);
-            window.openCozmoProject(cozmoProject.projectUUID, cozmoProject.projectName, cozmoProject.projectJSON, null, cozmoProject.isSampleStr);
+            window.openCozmoProject(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
         }
         catch(err) {
-            window.Unity.call({requestId: -1, command: "cozmoDASError", argString: "openCozmoProjectJSON JavaScript error", argString2: err.message});
+            window.Unity.call({requestId: -1, command: "cozmoDASError", argString: "Codelab.OpenCozmoProjectJSON.JavaScriptError", argString2: err.message});
         }
     }
 

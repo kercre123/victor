@@ -2429,7 +2429,7 @@ namespace CodeLab {
 
     // Open requested project in webview
     private void OpenCozmoProjectJSON(String projectName, String projectJSON, Guid projectUUID, string isSampleStr) {
-      DAS.Info("CodeLabTest", "OpenCozmoProjectJSON: projectName = " + projectName + ", isSampleStr = " + isSampleStr);
+      DAS.Info("CodeLabTest", "OpenCozmoProjectJSONUnity: projectName = " + projectName + ", isSampleStr = " + isSampleStr);
 
       CozmoProjectOpenInWorkspaceRequest cozmoProjectRequest = new CozmoProjectOpenInWorkspaceRequest();
       cozmoProjectRequest.projectName = projectName;
@@ -2437,9 +2437,9 @@ namespace CodeLab {
       cozmoProjectRequest.projectUUID = projectUUID;
       cozmoProjectRequest.isSampleStr = isSampleStr;
 
-      string test = JsonConvert.SerializeObject(cozmoProjectRequest);
+      string cozmoProjectSerialized = JsonConvert.SerializeObject(cozmoProjectRequest);
 
-      this.EvaluateJS(@"window.openCozmoProjectJSON('" + test + "');");
+      this.EvaluateJS(@"window.openCozmoProjectJSON(" + cozmoProjectSerialized + ");");
     }
 
     private void StartVerticalHatBlockListeners() {
@@ -2552,12 +2552,6 @@ namespace CodeLab {
             DAS.Error("Codelab.OnAppLoadedFromData.BadFileData.Length", "new project's internal data is unreasonably long " + project.ProjectJSON.Length.ToString());
           }
           else {
-            // Create new project.
-            while (defaultProfile.CodeLabProjects.Find(p => p.ProjectName == project.ProjectName) != null) {
-              string name = StringUtil.GenerateNextUniqueName(project.ProjectName);
-              project.ProjectName = name;
-            }
-
             while (defaultProfile.CodeLabProjects.Find(p => p.ProjectUUID == project.ProjectUUID) != null) {
               project.ProjectUUID = Guid.NewGuid();
             }
@@ -2578,6 +2572,11 @@ namespace CodeLab {
       DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
       if (defaultProfile == null) {
         DAS.Error("Codelab.AddExternalProject.NullDefaultProfile", "In adding external Code Lab project, defaultProfile is null");
+        return false;
+      }
+
+      if (project == null) {
+        DAS.Error("Codelab.AddExternalProject.NullProject", "In adding external Code Lab project, project is null");
         return false;
       }
 
