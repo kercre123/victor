@@ -76,7 +76,7 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
-      const f32 HEAD_CALIB_POWER = 0.40f;
+      const f32 HEAD_CALIB_POWER = 0.4f;
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
 

@@ -39,6 +39,9 @@ static const std::set<ExternalInterface::MessageEngineToGameTag> kFailureTags = 
   ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged,
   ExternalInterface::MessageEngineToGameTag::UnexpectedMovement
 };
+
+// Static (shared) across all playpen behaviors
+static std::map<std::string, std::vector<FactoryTestResultCode>> results;
 }
  
 IBehaviorPlaypen::IBehaviorPlaypen(Robot& robot, const Json::Value& config)
@@ -266,6 +269,23 @@ void IBehaviorPlaypen::WriteToStorage(Robot& robot, NVStorage::NVEntryTag tag,co
 bool IBehaviorPlaypen::ShouldIgnoreFailures() const
 {
   return PlaypenConfig::kIgnoreFailures;
+}
+
+void IBehaviorPlaypen::SetResult(FactoryTestResultCode result)
+{
+  _result = result;
+  _timers.clear();
+  AddToResultList(result);
+}
+
+void IBehaviorPlaypen::AddToResultList(FactoryTestResultCode result)
+{
+  results[GetIDStr()].push_back(result);
+}
+
+const std::map<std::string, std::vector<FactoryTestResultCode>>& IBehaviorPlaypen::GetAllPlaypenResults()
+{
+  return results;
 }
   
 }

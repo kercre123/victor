@@ -470,6 +470,34 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
   
+  bool FactoryTestLogger::Append(const std::map<std::string, std::vector<FactoryTestResultCode>>& results)
+  {
+    std::stringstream ss;
+    
+    for(const auto& kv : results)
+    {
+      if(_exportJson)
+      {
+        Json::Value& node = _json["AllPlaypenResults"][kv.first];
+        for(const auto& result : kv.second)
+        {
+          node.append(FactoryTestResultCodeToString(result));
+        }
+        ss << "[" << kv.first << "]\n" << node;
+      }
+      else
+      {
+        ss << "\n[" << kv.first << "]\n";
+        for(const auto& result : kv.second)
+        {
+          ss << FactoryTestResultCodeToString(result) << ", ";
+        }
+      }
+    }
+    PRINT_NAMED_INFO("FactoryTestLogger.Append.AllPlaypenResults", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+  
   bool FactoryTestLogger::AppendToFile(const std::string& data) {
     
     // If log name was not actually defined yet, do nothing.

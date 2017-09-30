@@ -88,7 +88,7 @@ Block1x1_NotActive {
   translation 0.030000005 0.34 0.022
   rotation 0 0 1 1.5707963
   markerWidth 0.044
-  markerImg_front "lightCubes/lightCubeK_top.png"
+  markerImg_front "chargerHome.png"
 }
 Block1x1_NotActive {
   translation 0.029999991 -0.145 0.022

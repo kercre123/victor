@@ -2,6 +2,6 @@
   "behaviorClass": "PlaypenDistanceSensor",
   "behaviorID": "PlaypenDistanceSensor300mm",
   "AngleToTurnToSeeTarget_deg": 90,
-  "ExpectedObjectType": "Block_LIGHTCUBE3",
+  "ExpectedObjectType": "Charger_Basic",
   "ExpectedDistance_mm": 300
 }

@@ -207,6 +207,14 @@ namespace Cozmo {
     const bool calibChanged = _camera.SetCalibration(camCalib);
     if(calibChanged)
     {
+      // Stop the visionSystem before updating calibration
+      // New calibration causes MarkerDetector's embedded memory to be reset
+      // which could happen while it is running so we need to stop it first
+      if(!_isSynchronous)
+      {
+        Stop();
+      }
+      
       Lock();
       _visionSystem->UpdateCameraCalibration(camCalib);
       Unlock();

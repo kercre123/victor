@@ -155,8 +155,8 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn(Robot& robot)
     }
     else
     {
-      angle = (robot.GetPose().GetRotation().GetAngleAroundZaxis() -
-               markerPose.GetRotation().GetAngleAroundZaxis());
+      angle = -1*(robot.GetPose().GetRotation().GetAngleAroundZaxis() -
+                  markerPose.GetRotation().GetAngleAroundZaxis());
     }
     
     PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.TransitionToRefineTurn.TurnAngle",

@@ -33,6 +33,7 @@ namespace Cozmo {
     return; \
   } else { \
     PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", "Ignoring %s failure in behavior %s", EnumToString(result), GetIDStr().c_str()); \
+    AddToResultList(result); \
   } \
 }
   
@@ -42,6 +43,7 @@ namespace Cozmo {
     return retval; \
   } else { \
     PRINT_NAMED_WARNING("IBehaviorPlaypen.IgnoringFailure", "Ignoring %s failure in behavior %s", EnumToString(result), GetIDStr().c_str()); \
+    AddToResultList(result); \
   } \
 }
   
@@ -69,6 +71,8 @@ public:
   FactoryTestResultCode GetResult() { return _result; }
   
   void Reset() { Stop(); _timers.clear(); _result = FactoryTestResultCode::UNKNOWN; }
+  
+  static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllPlaypenResults();
 
 protected:
   
@@ -118,7 +122,8 @@ protected:
                       FactoryTestResultCode failureCode);
   
   // Use the macro PLAYPEN_SET_RESULT if you can instead of directly calling this function
-  void SetResult(FactoryTestResultCode result) { _result = result; _timers.clear(); }
+  void SetResult(FactoryTestResultCode result);
+  void AddToResultList(FactoryTestResultCode result);
   
   // Adds a timer that will call the callback when time_ms has passed
   void AddTimer(TimeStamp_t time_ms, std::function<void(void)> callback)
