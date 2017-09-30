@@ -40,6 +40,17 @@ class EngineRobotAudioClient : public AudioEngine::Multiplexer::AudioMuxClient {
 public:
   
   EngineRobotAudioClient() {}
+
+
+  // Engine Robot Audio Client Helper Methods
+  //--------------------------------------------------------------------------------------------------------------------
+  // Control Robot's master volume
+  // Volume is [0.0 - 1.0]
+  void SetRobotMasterVolume( float volume, int32_t timeInMilliSeconds = 0, CurveType curve = CurveType::Linear );
+
+
+  // Basic Audio Client Methods
+  //--------------------------------------------------------------------------------------------------------------------
   
   // Perform event
   // Provide a callback lambda to get all event callbacks; Duration, Marker, Complete & Error.

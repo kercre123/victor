@@ -143,9 +143,9 @@ void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
     bool success = RegisterGameObject( static_cast<AudioGameObject>( aGameObj ),
                                       std::string(EnumToString(static_cast<GameObjectType>( aGameObj ))) );
     if (!success) {
-      PRINT_NAMED_ERROR( "CozmoAudioController.RegisterCladGameObjectsWithAudioController",
+      PRINT_NAMED_ERROR("CozmoAudioController.RegisterCladGameObjectsWithAudioController",
                         "Registering GameObjectId: %ul - %s was unsuccessful",
-                        aGameObj, EnumToString(static_cast<GameObjectType>(aGameObj)) );
+                        aGameObj, EnumToString(static_cast<GameObjectType>(aGameObj)));
     }
   }
 }
