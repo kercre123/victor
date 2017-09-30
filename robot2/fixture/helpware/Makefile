@@ -34,12 +34,14 @@ DFU = dfu
 DFU_SRC = dfu.c
 DFU_OBJ = $(DFU_SRC:%.c=$(OBJDIR)/%.o)
 
-
+ANIMATE = animate
+ANIMATE_SRC = animate.c
+ANIMATE_OBJ = $(ANIMATE_SRC:%.c=$(OBJDIR)/%.o)
 
 
 REMOTE_DEST = /data/local/fixture/
 
-all: $(ANDROID_ARM_TOOLS_ROOT) $(DFU)
+all: $(ANDROID_ARM_TOOLS_ROOT) $(DFU) $(ANIMATE)
 
 $(ANDROID_ARM_TOOLS_ROOT):
 	$(ANDROID_NDK_ROOT)/build/tools/make_standalone_toolchain.py --arch arm --install-dir $(ANDROID_ARM_TOOLS_ROOT) --api 24
@@ -52,12 +54,18 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 $(DFU): $(DFU_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(DFU_OBJ) $(LIBPATH) $(LIBS)  -o $(DFU)
 
+$(ANIMATE): $(ANIMATE_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(ANIMATE_OBJ) $(LIBPATH) $(LIBS)  -o $(ANIMATE)
+
+
+app=$(DFU)
+
 push:
 	adb shell -x "mkdir -p $(REMOTE_DEST)"
-	adb push $(DFU)  $(REMOTE_DEST) 
+	adb push $(app)  $(REMOTE_DEST) 
 
 execute:
-	adb shell -x "cd $(REMOTE_DEST) && ./$(DFU) $(safe)"
+	adb shell -x "cd $(REMOTE_DEST) && ./$(app) $(safe)"
 
 clean:
 	rm -f $(APP) $(OBJDIR)/*.o 

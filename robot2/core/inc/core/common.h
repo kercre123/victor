@@ -24,13 +24,15 @@ typedef enum CoreAppErrorCode_t {
   app_FILE_SIZE_ERROR = -8,
   app_MEMORY_ERROR = -9,
   app_IO_ERROR = -10,
+  app_DEVICE_OPEN_ERROR = -11,
 } CoreAppErrorCode;
 
 
-/// Applications must implement this
-extern void error_exit(CoreAppErrorCode, const char*, ...);
+void error_exit(CoreAppErrorCode, const char*, ...);
 
-/* #define core_set_error_handler(error_exit) core_error = (error_exit) */
+/// Applications must implement this
+// it should cleanup any open resources
+extern void on_exit(void);
 
 
 #endif//CORE_COMMON_H

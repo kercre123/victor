@@ -51,19 +51,6 @@ void on_exit(void)
   }
 }
 
-void error_exit(CoreAppErrorCode code, const char* msg, ...)
-{
-  va_list args;
-
-  printf("ERROR %d: ", code);
-  va_start(args, msg);
-  vprintf(msg, args);
-  va_end(args);
-  printf("\n\n");
-  on_exit();
-  exit(code);
-}
-
 
 const uint8_t* read_safefile(int safefp, int* szOut)
 {
