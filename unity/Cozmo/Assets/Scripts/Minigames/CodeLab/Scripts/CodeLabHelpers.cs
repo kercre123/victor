@@ -60,7 +60,7 @@ namespace CodeLab {
     public float posePitch_d;
     public float poseRoll_d;
     public float poseYaw_d;
-    public float liftHeightFactor; // 0.0 to 1.0
+    public float liftHeightPercentage;
     public float headAngle_d;
     public Vector3 pos;
     public CubeStateForCodeLab cube1 = new CubeStateForCodeLab();

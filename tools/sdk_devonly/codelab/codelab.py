@@ -265,6 +265,9 @@ VALID_SCRATCH_EXTENSIONS = [".css", ".cur", ".gif", ".html", ".js", ".jpg", ".jp
 CODELAB_FILE_HEADER = "CODELAB:"
 
 
+kCurrentVersionNum = 3
+
+
 def is_unity_timestamp(in_date_time):
     return str(in_date_time).startswith("/Date(")
 
@@ -388,6 +391,22 @@ def make_json_vector3(x, y, z):
 
 def make_json_vector2(x, y):
     return {'x': x, 'y': y}
+
+
+def load_and_verify_json(json_string, debug_name):
+    # deserialize string to json object, log more helpful error message on failure
+    try:
+        loaded_json = json.loads(json_string)
+        return loaded_json
+    except json.decoder.JSONDecodeError as e:
+        error_str = str(e)
+        log_text("Error: Failed to decode %s: %s" % (debug_name, error_str))
+        if error_str.startswith("Invalid control character at"):
+            numbers = re.findall(r'\d+', error_str)
+            bad_char_index = int(numbers[len(numbers) - 1])
+            log_text("Invalid control char at %s ='%s' ord=%s" %
+                     (bad_char_index, json_string[bad_char_index], ord(json_string[bad_char_index])))
+        return None
 
 
 # As close to C# version as possible for ease of conversion
@@ -579,7 +598,7 @@ class CodeLabInterface():
                             'poseYaw_d': 0.0,
                             'posePitch_d': 0.0,
                             'poseRoll_d': 0.0,
-                            'liftHeightFactor': 0.0,
+                            'liftHeightPercentage': 0.0,
                             'headAngle_d': 0.0,
                             'cube1': self.make_json_cube_state(1),
                             'cube2': self.make_json_cube_state(2),
@@ -648,10 +667,14 @@ class CodeLabInterface():
         # messages to keep Javascript side working correctly.
         project_uuid = msg_payload_js["argUUID"]
         project_xml = None  # urllib.parse.unquote(msg_payload_js["argString"])
-        project_json = urllib.parse.unquote(msg_payload_js["argString"])  # unquote seems to be doing nothing on JSON data?
+
+        project_json = msg_payload_js["argString"]
+        if command_args.verbose:
+            # verify that this data can be reloaded
+            load_and_verify_json(project_json, "verify-on-save")
 
         utcnow = datetime.datetime.utcnow()
-        version_num = 2
+        version_num = kCurrentVersionNum
         is_vertical_str = python_bool_to_js_bool_str(self._is_vertical_grammar)
         project_name = "Unknown"
 
@@ -717,14 +740,6 @@ class CodeLabInterface():
     def unescape_project_xml(self, project_xml):
         return project_xml.replace("\\\"", "\"")
 
-    def escape_project_json(self, project_json):
-        escaped_json = project_json.replace("\"", "\\\"")
-        return escaped_json.replace("'", "\\'")
-
-    def unescape_project_json(self, project_json):
-        unescaped_json = project_json.replace("\\'", "'")
-        return unescaped_json.replace("\\\"", "\"")
-
     def send_game_to_game(self, message_type, msg_payload):
         if command_args.verbose:
             log_text("SendToUnity: %s('%s')" % (message_type, msg_payload))
@@ -753,12 +768,17 @@ class CodeLabInterface():
             if command_args.verbose:
                 log_text("%s - load projects" % command)
             self.request_page_load("extra/projects.html")
-        elif (command == "cozmoRequestToOpenSampleProject") or (command == "cozmoRequestToOpenUserProject"):
+        elif ((command == "cozmoRequestToOpenSampleProject") or
+              (command == "cozmoRequestToOpenUserProject") or
+              (command == "cozmoRequestToOpenFeaturedProject")):
             is_sample = command == "cozmoRequestToOpenSampleProject"
+            is_featured = command == "cozmoRequestToOpenFeaturedProject"
             project_uuid = msg_payload_js["argString"]
             try:
                 if is_sample:
                     project = self._sample_projects[project_uuid]
+                elif is_featured:
+                    project = self._featured_projects[project_uuid]
                 else:
                     project = self._user_projects[project_uuid]
             except KeyError:
@@ -789,9 +809,10 @@ class CodeLabInterface():
                     self.request_page_load(url)
 
                     project_name = project["ProjectName"]
+                    # TODO - sample/featured project names are localization keys
                     project_name_escaped = self.escape_project_name(project_name)
 
-                    is_sample_str = python_bool_to_js_bool_str(is_sample)
+                    is_sample_str = python_bool_to_js_bool_str(is_sample or is_featured)
 
                     # If loading python's project versions, but connected to Unity, then ensure that Unity
                     # has an entry for this project (at least for the UUID so that it will see saves)
@@ -804,11 +825,17 @@ class CodeLabInterface():
                                                                                    project_uuid, project_name))
 
                     if load_json:
-                        project_json_escaped = self.escape_project_json(project_json)
+                        project_json_loaded = load_and_verify_json(project_json, "open_project")
+
+                        project_data = {'projectName': project_name_escaped,
+                                        'projectJSON': project_json_loaded,
+                                        'projectUUID': project_uuid,
+                                        'isSampleStr': is_sample_str
+                                        }
+                        project_data_str = json.dumps(project_data)
 
                         self.send_to_webpage(
-                            "window.openCozmoProjectJSON('" + project_uuid + "','" + project_name_escaped + "',\"" + project_json_escaped + "\",'" + is_sample_str + "');",
-                            wait_for_page_load=True)
+                            "window.openCozmoProjectJSON(" + project_data_str + ");", wait_for_page_load=True)
                     else:
                         # XML
                         project_xml_escaped = self.escape_project_xml(project_xml)
@@ -850,8 +877,13 @@ class CodeLabInterface():
                     self._commands_for_web.put(delayed_command)
             except queue.Empty:
                 pass
+        elif command == "cozmoDASLog":
+            log_text("Das.Log: %s %s" % (msg_payload_js["argString"], msg_payload_js["argString2"]))
+        elif command == "cozmoDASError":
+            log_text("Das.Error: %s %s" % (msg_payload_js["argString"], msg_payload_js["argString2"]))
 
-        redirect_to_python = command_args.use_python_projects and (command == "getCozmoUserAndSampleProjectLists")
+        redirect_to_python = (command_args.use_python_projects and
+                              ((command == "getCozmoUserAndSampleProjectLists") or (command == "getCozmoFeaturedProjectList")))
         if is_connected_to_unity and not redirect_to_python:
             # Send straight on to C# / Unity
             MAX_PAYLOAD_SIZE = 2024 - len(
@@ -874,7 +906,24 @@ class CodeLabInterface():
             # No connection - for testing without having to connect to an engine or robot
             # Handle subset of messages ourselves to allow testing without Unity / Engine / Robot connection
 
-            if command == "getCozmoUserAndSampleProjectLists":
+            if command == "getCozmoFeaturedProjectList":
+                jsCallback = msg_payload_js["argString"]
+
+                featuredProjectsAsJSON = []
+                for key, value in self._featured_projects.items():
+                    is_vertical = js_bool_to_python_bool(value["IsVertical"])
+                    if is_vertical == self._is_vertical_grammar:
+                        project_copy = dict(value)
+                        project_copy["ProjectXML"] = None
+                        project_copy["ProjectJSON"] = None
+                        featuredProjectsAsJSON.append(project_copy)
+
+                featuredProjectsAsJSON = sorted(featuredProjectsAsJSON, key=lambda project: project["DisplayOrder"])
+                featuredProjectsAsEncodedJSON = json.dumps(featuredProjectsAsJSON, ensure_ascii=False)
+
+                self.send_to_webpage(
+                    jsCallback + "('" + featuredProjectsAsEncodedJSON + "');")
+            elif command == "getCozmoUserAndSampleProjectLists":
                 if command_args.verbose:
                     log_text("%s - sending from Python" % command)
                 # return list of projects to the requested method
@@ -1003,8 +1052,6 @@ class CodeLabInterface():
                     # Note ProjectJSON doesn't currently need unescaping
                     if key == "ProjectXML":
                         value = self.unescape_project_xml(value)
-                    if key == "ProjectJSON":
-                        value = self.unescape_project_json(value)
                     elif key == "ProjectName":
                         value = self.unescape_project_name(value)
 

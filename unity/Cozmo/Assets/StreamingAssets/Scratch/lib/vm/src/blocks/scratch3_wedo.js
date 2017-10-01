@@ -189,7 +189,7 @@ function InitTestCozmoWorldState() {
     jsonData.posePitch_d = 0.0;
     jsonData.poseRoll_d = 0.0;
     jsonData.poseYaw_d = 0.0;
-    jsonData.liftHeightFactor = 0.0;
+    jsonData.liftHeightPercentage = 0.0;
     jsonData.headAngle_d = 0.0;
     jsonData.pos = InitVectorState(0.0, 0.0, 0.0);
     jsonData.cube1 = InitCubeState(1);
@@ -875,7 +875,7 @@ Scratch3CozmoBlocks.prototype.verticalCozmoGetYaw = function(args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoGetLiftHeight = function(args, util) {
-    return Cast.toNumber(gCozmoWorldState.liftHeightFactor);
+    return Cast.toNumber(gCozmoWorldState.liftHeightPercentage);
 };
 
 Scratch3CozmoBlocks.prototype.verticalCozmoGetHeadAngle = function(args, util) {

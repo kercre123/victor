@@ -471,7 +471,7 @@ namespace CodeLab {
         _LatestCozmoState.poseYaw_d = robot.PoseAngle * Mathf.Rad2Deg;
         _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
         _LatestCozmoState.poseRoll_d = robot.RollAngle * Mathf.Rad2Deg;
-        _LatestCozmoState.liftHeightFactor = robot.LiftHeightFactor;
+        _LatestCozmoState.liftHeightPercentage = robot.LiftHeightFactor * 100.0f;
         _LatestCozmoState.headAngle_d = robot.HeadAngle * Mathf.Rad2Deg;
 
         // Set cube data
@@ -1307,7 +1307,7 @@ namespace CodeLab {
           return true;
         }
       case "cozVertCozmoFaceSetTextScale": {
-          float drawScale = scratchRequest.argFloat;
+          float drawScale = scratchRequest.argFloat * 0.01f; // value from JS is a percentage
           _SessionState.GetProgramState().SetDrawTextScale(drawScale);
           return true;
         }
@@ -1384,7 +1384,7 @@ namespace CodeLab {
         }
       }
       else if (scratchRequest.command == "cozVertLiftHeight") {
-        float liftHeight = scratchRequest.argFloat;
+        float liftHeight = scratchRequest.argFloat * 0.01f;  // lift height comes in as a percentage
         float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString() + " , " + speed.ToString()));
