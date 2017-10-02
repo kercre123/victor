@@ -8,217 +8,649 @@
       { "behaviorID" : "Singing_AbaDaba",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_BeautifulDreamer",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_Beethovens5th",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_Bingo",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_BuffaloGals",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_CanCan1",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_CanCan2",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_DannyBoy",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_EntryOfTheGladiators",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_FarmerInTheDell",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_FrereJacques",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_ItsyBitsySpider",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_LaPaloma",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_LondonBridge",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_MaryHadALittleLamb",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_MountainKing",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_MuffinMan",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_MulberryBush",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_MussIDenn",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_OdeToJoy",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_PachebelCanon",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_PopGoesTheWeasel",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_RowYourBoat",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_Sakura",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_SilveryMoon",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_TakeMeOutToTheBallgame",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_TaRaRaBoom",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_TisketTasket",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_Toccata",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_TwinkleTwinkle",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_VivaldiSpring",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_WaterMusic",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_WildAboutHarry",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_WilliamTell",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_YankeeDoodle",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       },
       { "behaviorID" : "Singing_YellowRose",
         "scoring" :
         {
-          "flatScore": 10
+          "flatScore": 100,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 20000.0,
+                "y": 1.0
+              }
+            ]
+          }
         }
       }
     ]
