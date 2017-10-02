@@ -175,7 +175,7 @@
     "translation": "Cozmo got the Hiccups"
   },
   "needs.FeedingOverfedHiccups.Description": {
-    "translation": "Cozmo is too full - now he has the hiccups!"
+    "translation": "Cozmo is too full - now he has the hiccups! Try to help Cozmo by putting him upside-down."
   },
   "needs.severeAlert.energy.title": {
     "translation": "Cozmo Really Needs Feeding"

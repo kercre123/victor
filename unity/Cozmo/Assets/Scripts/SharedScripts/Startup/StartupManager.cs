@@ -495,6 +495,8 @@ public class StartupManager : MonoBehaviour {
 
     Cozmo.RequestGame.RequestGameManager.CreateInstance();
     Cozmo.Notifications.NotificationsManager.CreateInstance();
+
+    Cozmo.UI.HasHiccupsAlertController.InitializeInstance();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
