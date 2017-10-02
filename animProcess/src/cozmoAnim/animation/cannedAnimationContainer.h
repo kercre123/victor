@@ -70,6 +70,7 @@ namespace Cozmo {
     AnimNameToIDMap_t _animNameToIDMap;
     
     // AnimID counter
+    static const u32 kInvalidAnimID = 0;
     u32 _animIDCtr;
     
   }; // class CannedAnimationContainer

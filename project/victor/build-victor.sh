@@ -93,7 +93,23 @@ fi
 
 PLATFORM=`echo $PLATFORM | tr "[:upper:]" "[:lower:]"`
 
-# For non-ninja builds, add generator type fo build dir
+#
+# Validate configuration
+#
+case "${CONFIGURATION}" in
+  [Dd][Ee][Bb][Uu][Gg])
+    CONFIGURATION="Debug"
+    ;;
+  [Rr][Ee][Ll][Ee][Aa][Ss][Ee])
+    CONFIGURATION="Release"
+    ;;
+  *)
+    echo "Unknown configuration '${CONFIGURATION}'. Configuration should be Debug or Release."
+    exit 1
+    ;;
+esac
+
+# For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
 if [ ${CMAKE_GENERATOR} != "Ninja" ]; then
     BUILD_SYSTEM_TAG="-${CMAKE_GENERATOR}"
@@ -187,10 +203,17 @@ if [ $CONFIGURE -eq 1 ]; then
             -DANDROID=0
         )
     elif [ "$PLATFORM" == "android" ]; then
+        #
+        # If ANDROID_NDK is set, use it, else provide default location
+        #
+        if [ -z "${ANDROID_NDK+x}" ]; then
+          ANDROID_NDK=`${TOPLEVEL}/tools/build/tools/ankibuild/android.py`
+        fi
+
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=1
-            -DANDROID_NDK=${HOME}/.anki/android/ndk-repository/android-ndk-r15b
+            -DANDROID_NDK="${ANDROID_NDK}"
             -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/android.toolchain.patched.cmake"
             -DANDROID_TOOLCHAIN_NAME=clang
             -DANDROID_ABI='armeabi-v7a with NEON'

@@ -212,7 +212,8 @@ namespace Anki {
       }
       
       // Stop squinting
-      _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
+      // TODO: Restore squinting (add message to AnimationComponent to send to AnimationStreamer) (VIC-362)
+      //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
       
       if(_faceAndVerifyAction != nullptr)
       {
@@ -718,10 +719,13 @@ namespace Anki {
       }
       
       // If this is a reset clear the _squintLayerTag
+      // TODO: Restore squinting  (VIC-362)
+      /*
       if(_squintLayerTag != AnimationStreamer::NotAnimatingTag){
         _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
         _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       }
+       */
       
       // Allow actions the opportunity to check or set any properties they need to
       // this allows actions that are part of driveTo or wrappers a chance to check data
@@ -812,6 +816,8 @@ namespace Anki {
         _wasPickingOrPlacing = _dockingComponentRef.IsPickingOrPlacing();
         
         if(_wasPickingOrPlacing && ShouldApplyDockingSquint()) {
+          // TODO: Restore squinting  (VIC-362)
+          /*
           // Apply continuous eye squint if we have just now started picking and placing
           const f32 DockSquintScaleX = 1.05f;
           const f32 DockSquintScaleY = 0.35f;
@@ -820,6 +826,7 @@ namespace Anki {
                                                                                               DockSquintScaleX,
                                                                                               DockSquintScaleY,
                                                                                               DockSquintUpperLidAngle);
+           */
         }
       }
       else if (!_dockingComponentRef.IsPickingOrPlacing() && !_robot.GetMoveComponent().IsMoving())

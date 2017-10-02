@@ -62,7 +62,7 @@ message PathFollowingEvent
 
 message AnimationAvailable {
   uint_32 id,
-  string name
+  string  name
 }
 
 // These two messages bookend animations as they are played on the robot
@@ -75,7 +75,8 @@ message AnimationStarted
 message AnimationEnded
 {
   uint_32 id,
-  uint_8 tag
+  uint_8  tag,
+  bool    wasAborted
 }
 
 message AnimationEvent

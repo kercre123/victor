@@ -89,7 +89,8 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     FaceLayerToRemove & layer = layerIter->second;
     if(_isHeadMoving && false == layer.headWasMoving) {
       // Wait for transition from stopped to moving again
-      _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
+      // TODO: Restore eye shifts (VIC-363)
+      //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
       layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
     } else {
       layer.headWasMoving = _isHeadMoving;
