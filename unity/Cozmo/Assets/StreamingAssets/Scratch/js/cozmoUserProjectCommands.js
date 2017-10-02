@@ -189,7 +189,7 @@
             window.openCozmoProject(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
         }
         catch(err) {
-            window.Unity.call({requestId: -1, command: "cozmoDASError", argString: "Codelab.OpenCozmoProjectJSON.JavaScriptError", argString2: err.message});
+            window.cozmoDASError("Codelab.OpenCozmoProjectJSON.JavaScriptError", err.message);
         }
     }
 

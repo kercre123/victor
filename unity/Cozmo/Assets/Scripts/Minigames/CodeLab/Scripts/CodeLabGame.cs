@@ -967,6 +967,9 @@ namespace CodeLab {
       }
 
       this.EvaluateJS(@"window.saveProjectCompleted();");
+
+      // Save data to disk
+      DataPersistenceManager.Instance.Save();
     }
 
     private void OnCozmoDeleteUserProject(ScratchRequest scratchRequest) {
