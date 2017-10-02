@@ -331,7 +331,7 @@ namespace Anki {
                 break;
               case DockAction::DA_BACKUP_ONTO_CHARGER:
               case DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF:
-                SteeringController::ExecuteDirectDrive(-30, -30);
+                SteeringController::ExecuteDirectDrive(kChargerDockingSpeedHigh, kChargerDockingSpeedHigh);
                 transitionTime_ = HAL::GetTimeStamp() + 8000;
                 useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
                 mode_ = BACKUP_ON_CHARGER;
