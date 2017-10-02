@@ -155,6 +155,9 @@
   function switchProjectTab(tabElem) {
     var projectsElem = document.querySelector('#projects');
 
+    var tabId = tabElem.getAttribute('id').replace("#", "").replace("-projects-tab", "");
+    window.Unity.call({command: "cozmoSwitchProjectTab", argString: tabId});
+
     if (tabElem.classList.contains('tab-selected')) {
       return;
     } else {

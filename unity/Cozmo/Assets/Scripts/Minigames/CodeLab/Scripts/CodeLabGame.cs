@@ -85,6 +85,7 @@ namespace CodeLab {
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
     private bool _IsDrivingOffCharger = false;
+    private string _LastOpenedTab = "featured";
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
     private static readonly string kCodelabPrefix = "CODELAB:";
@@ -573,7 +574,10 @@ namespace CodeLab {
                              isVertical: true);
         }
         else {
-          LoadURL("extra/projects.html");
+
+          Dictionary<string, string> urlParameters = new Dictionary<string, string>();
+          urlParameters["projects"] = _LastOpenedTab;
+          LoadURL("extra/projects.html", urlParameters);
         }
       }
     }
@@ -982,7 +986,13 @@ namespace CodeLab {
 
       OnExitWorkspace();
 
-      LoadURL("extra/projects.html");
+      Dictionary<string, string> urlParameters = new Dictionary<string, string>();
+      urlParameters["projects"] = _LastOpenedTab;
+      LoadURL("extra/projects.html", urlParameters);
+    }
+
+    private void OnCozmoSwitchProjectTab(ScratchRequest scratchRequest) {
+      _LastOpenedTab = scratchRequest.argString;
     }
 
     // This callback manages identifying a CodeLabProject from a user project export request from the workspace and handling it appropriately.
@@ -1142,6 +1152,9 @@ namespace CodeLab {
         return true;
       case "cozmoExportProject":
         OnCozmoExportProject(scratchRequest);
+        return true;
+      case "cozmoSwitchProjectTab":
+        OnCozmoSwitchProjectTab(scratchRequest);
         return true;
       case "cozmoDASLog":
         // Use for debugging from JavaScript
