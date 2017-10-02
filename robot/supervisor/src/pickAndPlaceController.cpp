@@ -94,6 +94,13 @@ namespace Anki {
         // For charger mounting, whether or not to use cliff sensors to align the robot.
         bool useCliffSensorAlignment_ = false;
         
+        // Threshold used to distinguish black stripe on charger from the white body
+        const u16 kChargerCliffBlackThreshold = 400;
+
+        // Charger docking wheel speeds for backing onto the charger:
+        const float kChargerDockingSpeedHigh = -30.f;
+        const float kChargerDockingSpeedLow  = -10.f;
+
         // Pitch angle at which Cozmo is probably having trouble backing up on charger
         const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
         
@@ -826,23 +833,24 @@ namespace Anki {
               AnkiEvent( 294, "PAP.BACKUP_ON_CHARGER.Success", 305, "", 0);
               SendChargerMountCompleteMessage(true);
               Reset();
-            } else if (useCliffSensorAlignment_) {
-              const float backupSpeed = -30.f;
-              const float backupSpeedLow = -10.f;
-              
-              const u16 cliffBlackThreshold = 400;
-              
+            } else if (useCliffSensorAlignment_) {              
               const u16 cliffBL = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BL);
               const u16 cliffBR = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BR);
               
-              const bool isBlackBL = cliffBL < cliffBlackThreshold;
-              const bool isBlackBR = cliffBR < cliffBlackThreshold;
-              
-              const float leftSpeed  = isBlackBL ? backupSpeedLow : backupSpeed;
-              const float rightSpeed = isBlackBR ? backupSpeedLow : backupSpeed;
+              float leftSpeed  = kChargerDockingSpeedHigh;
+              float rightSpeed = kChargerDockingSpeedHigh;
+
+              const bool isBlackBL = cliffBL < kChargerCliffBlackThreshold;
+              const bool isBlackBR = cliffBR < kChargerCliffBlackThreshold;
+
+              // Slow down one of the sides if it's seeing black
+              if (isBlackBL && !isBlackBR) {
+                leftSpeed = kChargerDockingSpeedLow;
+              } else if (!isBlackBL && isBlackBR) {
+                rightSpeed = kChargerDockingSpeedLow;
+              }
               
               SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
-              
               tiltedOnChargerStartTime_ = 0;
             } else {
               tiltedOnChargerStartTime_ = 0;
