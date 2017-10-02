@@ -1,25 +1,29 @@
 #ifndef CORE_GPIO_H
 #define CORE_GPIO_H
 
-#define LOW 0
-#define HIGH 1
-#define DIR_OUTPUT 1
-#define DIR_INPUT 0
+enum Gpio_Dir {
+  gpio_DIR_INPUT,
+  gpio_DIR_OUTPUT
+};
 
-typedef struct GPIO_t {
-   int pin;
-   int fd;
-} GPIO;
+enum Gpio_Level {
+  gpio_LOW,
+  gpio_HIGH
+};
+
+
+struct GPIO_t;
+typedef struct GPIO_t* GPIO;
 
 
 
 /************* GPIO Interface ***************/
 
-void gpio_set_direction(GPIO gp, int isOutput);
+GPIO gpio_create(int gpio_number, enum Gpio_Dir isOutput, enum Gpio_Level initial_value);
 
-void gpio_set_value(GPIO gp, int value);
+void gpio_set_direction(GPIO gp, enum Gpio_Dir isOutput);
 
-GPIO gpio_create(int gpio_number, int isOutput, int initial_value);
+void gpio_set_value(GPIO gp, enum Gpio_Level value);
 
 void gpio_close(GPIO gp);
 

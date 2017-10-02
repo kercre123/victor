@@ -90,7 +90,7 @@ static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
 	while (bytes > 0) {
      tr.len = (bytes > MAX_TRANSFER) ? MAX_TRANSFER : bytes;
 
-		gpio_set_value(DnC_PIN, cmd ? LOW : HIGH);
+		gpio_set_value(DnC_PIN, cmd ? gpio_LOW : gpio_HIGH);
 		ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
 
 		bytes -= tr.len;
@@ -109,10 +109,10 @@ static void lcd_device_init() {
 	}
 }
 
-void lcd_draw_frame(uint8_t* frame, int sz) {
+void lcd_draw_frame(LcdFrame* frame) {
    static const uint8_t WRITE_RAM = 0x2C;
    lcd_spi_transfer(TRUE, 1, &WRITE_RAM);
-   lcd_spi_transfer(FALSE, sz, frame);
+   lcd_spi_transfer(FALSE, sizeof(frame->data), frame->data);
 }
 
 int lcd_init(void) {
@@ -124,11 +124,11 @@ int lcd_init(void) {
 
 
   // IO Setup
-  DnC_PIN = gpio_create(GPIO_LCD_WRX, 1, 1);
-  RESET_PIN = gpio_create(GPIO_LCD_RESET, 1, 1);
+  DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
+  RESET_PIN = gpio_create(GPIO_LCD_RESET, gpio_DIR_OUTPUT, gpio_HIGH);
 
-  gpio_set_direction(DnC_PIN, DIR_OUTPUT);
-  gpio_set_direction(RESET_PIN, DIR_OUTPUT);
+  gpio_set_direction(DnC_PIN, gpio_DIR_OUTPUT);  //TODO: test if needed
+  gpio_set_direction(RESET_PIN, gpio_DIR_OUTPUT);
 
   // SPI setup
 

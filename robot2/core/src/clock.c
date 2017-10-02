@@ -18,10 +18,6 @@ uint64_t steady_clock_now(void) {
 }
 void microwait(long microsec)
 {
-  /* uint64_t start = steady_clock_now(); */
-  /* while ((steady_clock_now() - start) < (microsec * NSEC_PER_MSEC)) { */
-  /*   ; */
-  /* } */
   struct timespec time;
   uint64_t nsec = microsec * NSEC_PER_MSEC;
   time.tv_sec =  nsec / NSEC_PER_SEC;

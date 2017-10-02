@@ -1,17 +1,11 @@
-// Compile with: ../../generated/android/tools/arm/bin/arm-linux-androideabi-gcc -pie lcd_test.c
+// Displays test animations on face.
 // Generate frames from animated gif with: python3 gif_to_raw.py <gif_filename>
-// adb push a.out and <gif_filename>.raw to robot temp dir.
+// adb push animate and <gif_filename>.raw to robot temp dir.
 //
-// Usage:  ./a.out frames.raw.
+// Usage:  ./animate frames.raw.
 //
 #include <stdint.h>
-/* #include <unistd.h> */
 #include <stdio.h>
-/* #include <stdlib.h> */
-/* #include <fcntl.h> */
-/* #include <sys/ioctl.h> */
-/* #include <linux/types.h> */
-/* #include <linux/spi/spidev.h> */
 
 #include "core/common.h"
 #include "core/lcd.h"
@@ -21,12 +15,12 @@
 /*************** TEST CODE *********************/
 
 static void animate(const char* fn) {
-	uint16_t frame[LCD_FRAME_WIDTH * LCD_FRAME_HEIGHT];
+  LcdFrame frame;
 	FILE *fo = fopen(fn, "rb");
 
 	while (!feof(fo)) {
-		fread(frame, 1, sizeof(frame), fo);
-    lcd_draw_frame((uint8_t*)frame, sizeof(frame));
+		fread(frame.data, 1, sizeof(frame.data), fo);
+    lcd_draw_frame(&frame);
 	}
   fclose(fo);
 }
@@ -49,7 +43,7 @@ int main(int argc, char** argv) {
   {
     return rc;
   }
-  
+
 	// Start drawing stuff to the screen
   if (argc>1) {
      do {
