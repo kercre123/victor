@@ -918,8 +918,8 @@ Blockly.Css.CONTENT = [
 
   '.blocklyWidgetDiv .goog-palette-colorswatch {',
     'position: relative;',
-    'height: 26px;', // *** ANKI CHANGE ***
-    'width: 30px;',  // *** ANKI CHANGE ***
+    'height: 38px;', // *** ANKI CHANGE ***
+    'width: 38px;',  // *** ANKI CHANGE ***
 //    'height: 13px;',
 //    'width: 15px;',
   '}',

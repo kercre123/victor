@@ -598,7 +598,7 @@ Blockly.Blocks['sensing_current'] = {
         }
       ],
       "category": Blockly.Categories.sensing,
-      "checkboxInFlyout": true,
+      //"checkboxInFlyout": true, // *** ANKI CHANGE ***
       "extensions": ["colours_sensing", "output_number"]
     });
   }
