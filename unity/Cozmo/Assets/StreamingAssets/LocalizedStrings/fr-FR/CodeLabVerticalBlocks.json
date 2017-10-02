@@ -7,190 +7,190 @@
     "source_key_paths" : ["/{*}"]
   },
   "codeLabVertical.COZMO_VERT_DRIVE": {
-    "translation": "drive %1 at speed %2"
+    "translation": "drive %1 mm at %2 mm/s"
   },
   "codeLabVertical.COZMO_VERT_SETBACKPACKCOLOR": {
-    "translation": "set backpack color to %1"
+    "translation": "set backpack light %1"
   },
   "codeLabVertical.VERT_ENABLE_ANIMATION_TRACK": {
-    "translation": "enable %1 animation track"
+    "translation": "enable: %1 in animations"
   },
   "codeLabVertical.VERT_DISABLE_ANIMATION_TRACK": {
-    "translation": "disable %1 animation track"
+    "translation": "disable: %1 in animations"
   },
   "codeLabVertical.PLAY_ANIMATION": {
     "translation": "play %1 animation"
   },
   "codeLabVertical.PLAY_SOUND": {
-    "translation": "play sound %1"
+    "translation": "play %1 sound"
   },
   "codeLabVertical.STOP_SOUND": {
-    "translation": "stop sound %1"
+    "translation": "stop %1 sound"
   },
   "codeLabVertical.DOCK_WITH_CUBE": {
-    "translation": "dock with cube"
+    "translation": "dock with Cube"
   },
   "codeLabVertical.DOCK_WITH_CUBE_X": {
-    "translation": "dock with cube %1"
+    "translation": "dock with Cube %1"
   },
   "codeLabVertical.SAY_X": {
     "translation": "say %1"
   },
   "codeLabVertical.WHEN_SEE_FACE": {
-    "translation": "when see face"
+    "translation": "when face seen"
   },
   "codeLabVertical.WHEN_SEE_HAPPY_FACE": {
-    "translation": "when see happy face"
+    "translation": "when happy face seen"
   },
   "codeLabVertical.WHEN_SEE_SAD_FACE": {
-    "translation": "when see sad face"
+    "translation": "when sad face seen"
   },
   "codeLabVertical.WHEN_CUBE_SEEN": {
-    "translation": "when cube %1 seen"
+    "translation": "when Cube %1 seen"
   },
   "codeLabVertical.WHEN_CUBE_TAPPED": {
-    "translation": "when cube %1 is tapped"
+    "translation": "when Cube %1 tapped"
   },
   "codeLabVertical.WHEN_CUBE_MOVED": {
-    "translation": "when cube %1 is moved"
+    "translation": "when Cube %1 moved"
   },
   "codeLabVertical.COZMO_POSITION": {
-    "translation": "Cozmo position %1"
+    "translation": "Cozmo map position %1"
   },
   "codeLabVertical.COZMO_PITCH": {
-    "translation": "Cozmo pitch"
+    "translation": "Cozmo pitch °"
   },
   "codeLabVertical.COZMO_ROLL": {
-    "translation": "Cozmo roll"
+    "translation": "Cozmo roll °"
   },
   "codeLabVertical.COZMO_YAW": {
-    "translation": "Cozmo yaw"
+    "translation": "Cozmo yaw °"
   },
   "codeLabVertical.LIFT_HEIGHT": {
-    "translation": "Cozmo lift height"
+    "translation": "Cozmo lift height %"
   },
   "codeLabVertical.HEAD_ANGLE": {
-    "translation": "Cozmo head angle"
+    "translation": "Cozmo head angle °"
   },
   "codeLabVertical.FACE_VISIBLE": {
-    "translation": "face is visible"
+    "translation": "is face visible"
   },
   "codeLabVertical.FACE_NAME": {
     "translation": "face name"
   },
   "codeLabVertical.FACE_CAMERA": {
-    "translation": "face camera %1"
+    "translation": "face position in camera %1"
   },
   "codeLabVertical.FACE_POSITION": {
-    "translation": "face position %1"
+    "translation": "face position in map %1"
   },
   "codeLabVertical.FACE_EXPRESSION": {
     "translation": "face expression"
   },
   "codeLabVertical.CUBE_X": {
-    "translation": "cube %1"
+    "translation": "Cube %1"
   },
   "codeLabVertical.CUBE_IS_VISIBLE": {
-    "translation": "cube %1 is visible"
+    "translation": "is Cube %1 visible"
   },
   "codeLabVertical.CUBE_CAMERA": {
-    "translation": "cube %1 camera %2"
+    "translation": "Cube %1 position in camera %2"
   },
   "codeLabVertical.CUBE_POSITION": {
-    "translation": "cube %1 position %2"
+    "translation": "Cube %1 position in map %2"
   },
   "codeLabVertical.CUBE_PITCH": {
-    "translation": "cube %1 pitch"
+    "translation": "Cube %1 pitch ° in camera"
   },
   "codeLabVertical.CUBE_ROLL": {
-    "translation": "cube %1 roll"
+    "translation": "Cube %1 roll ° in camera"
   },
   "codeLabVertical.CUBE_YAW": {
-    "translation": "cube %1 yaw"
+    "translation": "Cube %1 yaw ° in camera"
   },
   "codeLabVertical.DEVICE_PITCH": {
-    "translation": "device pitch"
+    "translation": "device pitch °"
   },
   "codeLabVertical.DEVICE_ROLL": {
-    "translation": "device roll"
+    "translation": "device roll °"
   },
   "codeLabVertical.DEVICE_YAW": {
-    "translation": "device yaw"
+    "translation": "device yaw °"
   },
   "codeLabVertical.DRIVE_WHEELS": {
-    "translation": "drive wheels left %1 right %2"
+    "translation": "drive left wheel %1 mm/s, right %2 mm/s"
   },
   "codeLabVertical.ENABLE_WAIT_FOR_ACTIONS": {
-    "translation": "enable: wait for actions to complete"
+    "translation": "enable: always wait for Cozmo to finish"
   },
   "codeLabVertical.DISABLE_WAIT_FOR_ACTIONS": {
-    "translation": "disable: wait for actions to complete"
+    "translation": "disable: always wait for Cozmo to finish"
   },
   "codeLabVertical.WAIT_FOR_ACTIONS": {
-    "translation": "wait for %1 actions"
+    "translation": "wait for Cozmo to finish %1"
   },
   "codeLabVertical.STOP_ACTIONS": {
-    "translation": "stop %1 actions"
+    "translation": "stop Cozmo %1"
   },
   "codeLabVertical.STOP_MOTORS": {
-    "translation": "stop motors: %1"
+    "translation": "stop %1"
   },
   "codeLabVertical.PATH_FORWARD": {
-    "translation": "path forward:%1 left:%2 turn:%3"
+    "translation": "navigate %1 forward, %2 left/right, %3 °"
   },
   "codeLabVertical.PATH_TO_X_Y_ANGLE": {
-    "translation": "path to x:%1 y:%2 angle:%3"
+    "translation": "navigate on map to %1 x, %2 y, %3 °"
   },
   "codeLabVertical.TURN": {
-    "translation": "turn %1 at speed %2"
+    "translation": "turn %1 ° at %2 °/s"
   },
   "codeLabVertical.MOVE_LIFT_TO_X": {
-    "translation": "move lift to %1 at speed %2"
+    "translation": "move lift %2 °/s to %1 %"
   },
   "codeLabVertical.MOVE_LIFT": {
-    "translation": "move lift at speed %1"
+    "translation": "move lift %1 °/s"
   },
   "codeLabVertical.MOVE_HEAD_TO_X": {
-    "translation": "move head to %1 at speed %2"
+    "translation": "move head %2 °/s to %1 °"
   },
   "codeLabVertical.SET_X_ON_CUBE": {
-    "translation": "set %1 on cube %2 to %3"
+    "translation": "on cube %2 set %1 to %3"
   },
   "codeLabVertical.CUBE_ANIM": {
-    "translation": "play %1 anim on cube %2 with color %3"
+    "translation": "on cube %2 %1 lights in %3"
   },
   "codeLabVertical.DRAW_CLEAR_SCREEN": {
-    "translation": "clear screen"
+    "translation": "erase all pixels"
   },
   "codeLabVertical.DRAW_COLOR": {
-    "translation": "set draw color %1"
+    "translation": "set drawing mode to %1"
   },
   "codeLabVertical.DRAW_TEXT_SCALE": {
-    "translation": "set text scale %1"
+    "translation": "set text scale to %1 %"
   },
   "codeLabVertical.DRAW_TEXT_ALIGNMENT": {
-    "translation": "set text alignment %1 %2"
+    "translation": "set text alignment to %1 %2"
   },
   "codeLabVertical.DRAW_LINE": {
-    "translation": "draw line at: %1 %2 to: %3 %4"
+    "translation": "draw line from %1, %2 to %3, %4"
   },
   "codeLabVertical.DRAW_FILL_RECT": {
-    "translation": "fill rectangle at: %1 %2 to: %3 %4"
+    "translation": "fill rectangle from %1, %2 to %3, %4"
   },
   "codeLabVertical.DRAW_RECT": {
-    "translation": "draw rectangle at: %1 %2 to: %3 %4"
+    "translation": "draw rectangle from %1, %2 to %3, %4"
   },
   "codeLabVertical.DRAW_FILL_CIRCLE": {
-    "translation": "fill circle at: %1 %2 radius: %3"
+    "translation": "fill circle at %1, %2 with radius %3"
   },
   "codeLabVertical.DRAW_CIRCLE": {
-    "translation": "draw circle at: %1 %2 radius: %3"
+    "translation": "draw circle at %1, %2 with radius %3"
   },
   "codeLabVertical.DRAW_TEXT": {
-    "translation": "draw %1 at: %2 %3"
+    "translation": "draw %1 at %2, %3"
   },
   "codeLabVertical.DRAW_DISPLAY_ON_FACE": {
-    "translation": "display on face"
+    "translation": "display on Cozmo's face"
   },
   "codeLabVertical.HAPPY": {
     "translation": "happy"
@@ -349,13 +349,13 @@
     "translation": "any"
   },
   "codeLabVertical.DRIVE": {
-    "translation": "drive"
+    "translation": "driving"
   },
   "codeLabVertical.SAY": {
-    "translation": "say"
+    "translation": "saying text"
   },
   "codeLabVertical.ANIMATION": {
-    "translation": "animation"
+    "translation": "animations"
   },
   "codeLabVertical.LIGHT_1": {
     "translation": "light 1"
@@ -379,10 +379,10 @@
     "translation": "blink"
   },
   "codeLabVertical.LIGHT": {
-    "translation": "light"
+    "translation": "draw pixels"
   },
   "codeLabVertical.ERASE": {
-    "translation": "erase"
+    "translation": "erase pixels"
   },
   "codeLabVertical.TOP": {
     "translation": "top"

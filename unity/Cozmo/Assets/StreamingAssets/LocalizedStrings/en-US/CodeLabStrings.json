@@ -316,13 +316,13 @@
       "translation": "Challenges"
   },
   "codeLab.modalSlideshow.backButtonLabel": {
-      "translation": "Back"
+      "translation": "BACK"
   },
   "codeLab.modalSlideshow.nextButtonLabel": {
-      "translation": "Next"
+      "translation": "NEXT"
   },
   "codeLab.modalSlideshow.doneButtonLabel": {
-      "translation": "Done"
+      "translation": "DONE"
   },
   "codeLab.tutorial.modalTitle": {
       "translation": "Code Lab Tutorial"
@@ -367,19 +367,19 @@
       "translation": "Quit Activity?"
   },
   "codeLab.projects.confirmQuit.confirmButton.labelText": {
-      "translation": "Quit"
+      "translation": "QUIT"
   },
   "codeLab.projects.confirmQuit.cancelButton.labelText": {
-      "translation": "Cancel"
+      "translation": "CANCEL"
   },
   "codeLab.projects.confirmDeleteProject.confirmPromptTitle": {
       "translation": "Delete \"{0}\"?"
   },
   "codeLab.projects.confirmDeleteProject.confirmButton.labelText": {
-      "translation": "Yes, Delete"
+      "translation": "YES, DELETE"
   },
   "codeLab.projects.confirmDeleteProject.cancelButton.labelText": {
-      "translation": "No, Cancel"
+      "translation": "NO, CANCEL"
   },
   "codeLab.projects.confirmDeleteProject.confirmPrompt": {
       "translation": "Are you sure you want to delete this project?"
@@ -398,22 +398,22 @@
 
 
   "codeLab.projects.horizontalTab.horizontalTabHeroTitle": {
-      "translation": "The best place\nto start coding"
+      "translation": "THE BEST PLACE\nTO START CODING."
   },
   "codeLab.projects.horizontalTab.horizontalTabHeroDetail": {
-      "translation": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec tincidunt nunc. Nulla imperdiet nisi eget velit tristique tristique."
+      "translation": "Simply snap together code blocks to create your first programs! Complete challenges to grow your skills."
   },
   "codeLab.projects.verticalTab.verticalTabHeroTitle": {
-      "translation": "Take your coding skills\nto the next level"
+      "translation": "TAKE YOUR CODING SKILLS\nTO THE NEXT LEVEL."
   },
   "codeLab.projects.verticalTab.verticalTabHeroDetail": {
-      "translation": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In nec tincidunt nunc. Nulla imperdiet nisi eget velit tristique tristique."
+      "translation": "With concepts like branching and loops, create complex programs with endless possibilties."
   },
   "codeLab.projects.featuredTab.featuredTabHeroTitle": {
-      "translation": "Code Lab Featured"
+      "translation": "DISCOVER WHAT'S\nPOSSIBLE."
   },
   "codeLab.projects.featuredTab.featuredTabHeroDetail": {
-      "translation": "Code Lab Featured is filled with inspiring projects from players all around the world that will get you thinking about new ways to program"
+      "translation": "Get inspired by the powerful programs you can create. Remix code blocks to jumpstart your own ideas!"
   },
 
 
@@ -474,7 +474,7 @@
       "translation": "Autosaved"
   },
   "codeLab.SaveProject.NotSaved": {
-      "translation": "Sample projects not saved"
+      "translation": "Sample projects not saved."
   },
  "codeLabHorizontal.UserProject.MyProject": {
     "translation": "My Project {0}"
