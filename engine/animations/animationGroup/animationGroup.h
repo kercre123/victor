@@ -43,7 +43,7 @@ namespace Util {
       explicit AnimationGroup(Util::RandomGenerator& rng, const std::string& name = "");
       
       // For reading animation groups from files
-      Result DefineFromJson(const std::string& name, const Json::Value& json, const CannedAnimationContainer* cannedAnimations);
+      Result DefineFromJson(const std::string& name, const Json::Value& json);
 
       // Retrieve an animation based on the mood manager
       const std::string& GetAnimationName(const MoodManager& moodManager,

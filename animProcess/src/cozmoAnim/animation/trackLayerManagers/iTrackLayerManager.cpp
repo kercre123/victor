@@ -32,7 +32,7 @@ void ITrackLayerManager<FRAME_TYPE>::IncrementLayerTagCtr()
   // value used to indicate "not animating" or any existing
   // layer tag in use
   ++_layerTagCtr;
-  while(_layerTagCtr == NotAnimatingTag ||
+  while(_layerTagCtr == kNotAnimatingTag ||
         _layers.find(_layerTagCtr) != _layers.end())
   {
     ++_layerTagCtr;

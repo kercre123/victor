@@ -50,8 +50,8 @@ static const INIT_SCRIPT init_scr[] = {
   { 0x3A, 1, { 0x55 } },
   { 0x55, 1, { 0xA0 } },
   { 0x21, 0 },
-  { 0x2A, 4, { 0x00, RSHIFT, (Anki::Cozmo::FaceDisplay::FACE_DISPLAY_WIDTH + RSHIFT - 1) >> 8, (Anki::Cozmo::FaceDisplay::FACE_DISPLAY_WIDTH + RSHIFT - 1) & 0xFF } },
-  { 0x2B, 4, { 0x00, 0x00, (Anki::Cozmo::FaceDisplay::FACE_DISPLAY_HEIGHT -1) >> 8, (Anki::Cozmo::FaceDisplay::FACE_DISPLAY_HEIGHT -1) & 0xFF } },
+  { 0x2A, 4, { 0x00, RSHIFT, (Anki::Cozmo::FACE_DISPLAY_WIDTH + RSHIFT - 1) >> 8, (Anki::Cozmo::FACE_DISPLAY_WIDTH + RSHIFT - 1) & 0xFF } },
+  { 0x2B, 4, { 0x00, 0x00, (Anki::Cozmo::FACE_DISPLAY_HEIGHT -1) >> 8, (Anki::Cozmo::FACE_DISPLAY_HEIGHT -1) & 0xFF } },
   { 0x29, 0 },
   
   { 0 }

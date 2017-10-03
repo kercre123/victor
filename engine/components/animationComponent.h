@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_Components_AnimationComponent_H__
 
 #include "anki/common/types.h"
+#include "anki/cozmo/shared/animationTag.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/events/ankiEvent.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -35,7 +36,7 @@ class AnimationComponent : private Anki::Util::noncopyable, private Util::Signal
 {
 public:
   
-  using Tag = u8;
+  using Tag = AnimationTag;
   
   enum class AnimResult {
     Completed = 0,   // Animation completed successfully

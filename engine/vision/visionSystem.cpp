@@ -12,6 +12,7 @@
 
 #include "visionSystem.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"

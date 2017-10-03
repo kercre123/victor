@@ -14,7 +14,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/setFaceAction.h"
-#include "engine/keyframe.h"
+//#include "engine/keyframe.h"
 #include "engine/robot.h"
 #include "util/math/math.h"
 
@@ -28,13 +28,14 @@ SetFaceAction::SetFaceAction(Robot& robot, const Vision::Image& faceImage, u32 d
           RobotActionType::DISPLAY_FACE_IMAGE,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _faceImage(faceImage)
-, _animation("SetFaceImageAnimation")
+//, _animation("SetFaceImageAnimation")
 , _duration_ms(duration_ms)
 {
   
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  /*
 SetFaceAction::SetFaceAction(Robot& robot, const ProceduralFace& procFace, u32 duration_ms)
 : IAction(robot,
           "SetProceduralFace",
@@ -46,11 +47,12 @@ SetFaceAction::SetFaceAction(Robot& robot, const ProceduralFace& procFace, u32 d
 {
   
 }
+   */
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SetFaceAction::Init()
 {
-  _animation.SetIsLive(true);
+  //_animation.SetIsLive(true);
   
   const u32 kMaxDurationToAvoidScreenBurnIn_ms = 30000; // TODO: use value from AnimationStreamer or elsewhere
   if(_duration_ms > kMaxDurationToAvoidScreenBurnIn_ms)
@@ -61,13 +63,13 @@ ActionResult SetFaceAction::Init()
     
     _duration_ms = kMaxDurationToAvoidScreenBurnIn_ms;
   }
-  else if(_duration_ms < IKeyFrame::SAMPLE_LENGTH_MS)
+  else if(_duration_ms < ANIM_TIME_STEP_MS)
   {
     PRINT_NAMED_WARNING("SetFaceAction.Init.DurationTooShort",
                         "Clamping duration to %ums which is the minimum animation resolution",
-                        IKeyFrame::SAMPLE_LENGTH_MS);
+                        ANIM_TIME_STEP_MS);
     
-    _duration_ms = IKeyFrame::SAMPLE_LENGTH_MS;
+    _duration_ms = ANIM_TIME_STEP_MS;
   }
   
   Result addResult = RESULT_FAIL;
@@ -75,6 +77,8 @@ ActionResult SetFaceAction::Init()
   {
     case RobotActionType::DISPLAY_PROCEDURAL_FACE:
     {
+      // VIC-360:
+      /*
       // Always add one keyframe
       addResult = _animation.AddKeyFrameToBack(ProceduralFaceKeyFrame(_procFace));
       
@@ -83,12 +87,15 @@ ActionResult SetFaceAction::Init()
       {
         addResult = _animation.AddKeyFrameToBack(ProceduralFaceKeyFrame(_procFace, _duration_ms-IKeyFrame::SAMPLE_LENGTH_MS));
       }
+       */
         
       break;
     }
   
     case RobotActionType::DISPLAY_FACE_IMAGE:
     {
+      // VIC-360:
+      /*
       FaceAnimationManager* faceAnimMgr = FaceAnimationManager::getInstance();
       faceAnimMgr->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
       addResult = faceAnimMgr->AddImage(FaceAnimationManager::ProceduralAnimName, _faceImage, _duration_ms);
@@ -96,6 +103,7 @@ ActionResult SetFaceAction::Init()
       {
         addResult = _animation.AddKeyFrameToBack(FaceAnimationKeyFrame(FaceAnimationManager::ProceduralAnimName));
       }
+       */
       break;
     }
       
@@ -112,7 +120,8 @@ ActionResult SetFaceAction::Init()
     return ActionResult::ABORT;
   }
   
-  _playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation));
+  // VIC-360:
+  //_playAnimationAction.reset(new PlayAnimationAction(_robot, &_animation));
   
   return ActionResult::SUCCESS;
 }

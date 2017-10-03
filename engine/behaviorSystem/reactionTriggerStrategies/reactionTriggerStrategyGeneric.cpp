@@ -11,6 +11,7 @@
 *
 **/
 
+#include "anki/common/basestation/jsonTools.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyGeneric.h"
 #include "engine/behaviorSystem/behaviors/iBehavior.h"
 #include "engine/behaviorSystem/behaviorManager.h"

@@ -913,11 +913,15 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::WaitForIma
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayProceduralFace& msg)
 {
+  // TODO: SetFaceAction is broken. Probably pass the ExternalInterface::DisplayProceduralFace all the way through (VIC-360)
+  /*
   ProceduralFace procFace;
   procFace.SetFromMessage(msg);
       
   SetFaceAction* action = new SetFaceAction(robot, procFace, msg.duration_ms);
   return action;
+   */
+  return nullptr;
 }
       
 // Version for face image
@@ -925,8 +929,8 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFaceImage& msg)
 {
   // Expand the bit-packed msg.faceData (every bit == 1 pixel) to byte array (every byte == 1 pixel)
-  Vision::Image image(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
-  static_assert(std::tuple_size<decltype(msg.faceData)>::value * 8 == (ProceduralFace::HEIGHT*ProceduralFace::WIDTH),
+  Vision::Image image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  static_assert(std::tuple_size<decltype(msg.faceData)>::value * 8 == (FACE_DISPLAY_HEIGHT*FACE_DISPLAY_WIDTH),
                 "Mismatched face image and bit image sizes");
       
   assert(image.IsContinuous());
@@ -945,7 +949,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DisplayFac
       currentByte = (uint8_t)(currentByte << 1);
     }
   }
-  assert(destI == (ProceduralFace::WIDTH * ProceduralFace::HEIGHT));
+  assert(destI == (FACE_DISPLAY_HEIGHT*FACE_DISPLAY_WIDTH));
       
   SetFaceAction* action = new SetFaceAction(robot, image, msg.duration_ms);
       

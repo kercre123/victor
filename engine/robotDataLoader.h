@@ -40,7 +40,6 @@ namespace Cozmo {
 
 class AnimationGroupContainer;
 class BackpackLightAnimationContainer;
-class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
 class AnimationTriggerResponsesContainer;
@@ -61,7 +60,6 @@ public:
   bool DoNonConfigDataLoading(float& loadingCompleteRatio_out);
 
   // refresh individual data pieces after initial load
-  void LoadAnimations();
   void LoadFaceAnimations();
   void LoadRobotConfigs();
   void LoadVoiceCommandConfigs();
@@ -74,7 +72,6 @@ public:
   const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
   const ActivityIDJsonMap& GetActivityJsons() const { return _activities; }
   
-  CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
   AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
@@ -107,9 +104,6 @@ public:
   
 private:
   void CollectAnimFiles();
-  
-  void LoadAnimationsInternal();
-  void LoadAnimationFile(const std::string& path);
   
   void LoadCubeLightAnimations();
   void LoadCubeLightAnimationFile(const std::string& path);
@@ -150,7 +144,6 @@ private:
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
   // animation data
-  std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
   std::unique_ptr<CubeLightAnimationContainer>        _cubeLightAnimations;
   std::unique_ptr<AnimationGroupContainer>            _animationGroups;
   std::unique_ptr<AnimationTriggerResponsesContainer> _animationTriggerResponses;

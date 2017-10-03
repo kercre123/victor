@@ -14,6 +14,7 @@
 
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyHiccup.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
