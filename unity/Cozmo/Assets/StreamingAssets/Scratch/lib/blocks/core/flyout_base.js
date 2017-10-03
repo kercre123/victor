@@ -590,7 +590,9 @@ Blockly.Flyout.prototype.blockMouseDown_ = function(block) {
     if (gesture) {
       // *** ANKI CHANGE ***
       // Play sound when block in toolbox is tapped.
-      flyout.workspace_.playAudio("click");
+      if (!window.isVertical) {
+        flyout.workspace_.playAudio("click");
+      }
 
       gesture.setStartBlock(block);
       gesture.handleFlyoutStart(e, flyout);
