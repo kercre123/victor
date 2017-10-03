@@ -88,7 +88,7 @@ namespace Anki {
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
         
-        // Time when robot first becomes tiled on charger (while docking)
+        // Time when robot first becomes tilted on charger (while docking)
         u32 tiltedOnChargerStartTime_ = 0;
         
         // For charger mounting, whether or not to use cliff sensors to align the robot.

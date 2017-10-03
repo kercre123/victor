@@ -242,10 +242,10 @@ BackupOntoChargerAction::BackupOntoChargerAction(Robot& robot,
   
 ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 {
-  Charger* charger = dynamic_cast<Charger*>(object);
-  if(charger == nullptr) {
+  auto objType = object->GetType();
+  if (objType != ObjectType::Charger_Basic) {
     PRINT_NAMED_ERROR("BackupOntoChargerAction.SelectDockAction.NotChargerObject",
-                      "Could not cast generic ActionableObject into Charger object.");
+                      "Object is not a charger! It's a %s.", EnumToString(objType));
     return ActionResult::BAD_OBJECT;
   }
   
