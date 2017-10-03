@@ -30,7 +30,19 @@ namespace Audio {
 
 namespace AEM = AudioEngine::Multiplexer;
 namespace AMD = AudioMetaData;
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Engine Robot Audio Client Helper Methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void EngineRobotAudioClient::SetRobotMasterVolume(float volume, int32_t timeInMilliSeconds, CurveType curve)
+{
+  DEV_ASSERT(((volume >= 0.0f) && (volume <= 1.0f)), "EngineRobotAudioClient.SetRobotMasterVolume.Volume.InvalidValue");
+  PostParameter(AMD::GameParameter::ParameterType::Robot_Volume,
+                volume,
+                AMD::GameObjectType::Invalid,
+                timeInMilliSeconds,
+                curve);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Engine -> Robot Methods
@@ -111,9 +123,8 @@ void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
   
   // Setup robot message handlers
   _robot = robot;
-  RobotInterface::MessageHandler *messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
+  RobotInterface::MessageHandler* messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
   RobotID_t robotId = _robot->GetID();
-
   
   // Subscribe to RobotToEngine messages
   using localHandlerType = void(EngineRobotAudioClient::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
@@ -126,11 +137,22 @@ void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
                                                         std::bind( handler, this, std::placeholders::_1 ) ));
   };
 
-  // bind to specific handlers in the audio clients
+  // Bind to specific handlers in the audio clients
   doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackDuration, &EngineRobotAudioClient::HandleRobotEngineMessage);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackMarker, &EngineRobotAudioClient::HandleRobotEngineMessage);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackComplete, &EngineRobotAudioClient::HandleRobotEngineMessage);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::audioCallbackError, &EngineRobotAudioClient::HandleRobotEngineMessage);
+  
+  // Add Listeners to GameToEngine messages
+  auto robotVolumeCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ) {
+    const ExternalInterface::SetRobotVolume& msg = message.GetData().Get_SetRobotVolume();
+    SetRobotMasterVolume( msg.volume );
+  };
+  
+  IExternalInterface* gameToEngineInterface = _robot->GetContext()->GetExternalInterface();
+  if ( gameToEngineInterface ) {
+    _signalHandles.push_back(gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,                                                              robotVolumeCallback));
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

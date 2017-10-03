@@ -147,7 +147,9 @@ private:
   std::unordered_map<std::string, SimpleQuadVector> _simpleQuadVectorMapIncoming; // incoming from the socket
   
   // memory map quad info data
-  using MemoryMapQuadInfoDebugVizVector = std::vector<ExternalInterface::MemoryMapQuadInfoDebugViz>;
+  // Maps message sequence number to message. This allows use to check that all messages were received and deals with
+  // out of order messages
+  using MemoryMapQuadInfoDebugVizVector = std::map<u32, std::vector<ExternalInterface::MemoryMapQuadInfoDebugViz>>;
   std::unordered_map<uint32_t, MemoryMapQuadInfoDebugVizVector> _memoryMapQuadInfoDebugVizVectorMapIncoming;  // incoming from the socket
   std::unordered_map<uint32_t, ExternalInterface::MemoryMapInfo> _memoryMapInfo;
   
