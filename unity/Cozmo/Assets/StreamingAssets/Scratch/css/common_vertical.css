@@ -461,6 +461,15 @@ button:focus {
     #close .primary button {
         width: 25px;
         height: 25px;
+        /* We were seeing weird behavior where these buttons were being
+           improperly sized as rectangles but only in safari on ios5.
+           The buttons were coming out as 32x25, and cutting off the
+           bottom 7 px.  Could not yet find a way to rescale them that
+           would not also impact chrome and other device configurations.
+           However, limiting the background size to 25, and preventing
+           it from horizontally repeating visually fixed the issue. */
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #close .primary button:active {
@@ -478,6 +487,8 @@ button:focus {
     #glossary-button .primary button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #glossary-button .primary button:active {
@@ -495,6 +506,8 @@ button:focus {
     #exportbtn .primary button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #exportbtn .primary button:active {
@@ -541,6 +554,8 @@ button:focus {
     #navigation .greenflag button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #navigation .greenflag button:active {
@@ -555,6 +570,8 @@ button:focus {
     #navigation .stop button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #navigation .stop button:active {
@@ -574,6 +591,8 @@ button:focus {
     #undoRedo .redo button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #undoRedo .redo button:active {
@@ -587,6 +606,8 @@ button:focus {
     #undoRedo .undo button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #undoRedo .undo button:active {
@@ -603,6 +624,8 @@ button:focus {
     #zoomControls .zoomIn button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #zoomControls .zoomIn button:active {
@@ -616,6 +639,8 @@ button:focus {
     #zoomControls .zoomOut button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #zoomControls .zoomOut button:active {
@@ -629,6 +654,8 @@ button:focus {
     #zoomControls .zoomReset button {
         width: 25px;
         height: 25px;
+        background-repeat: no-repeat;
+        background-size: 25px 50px;
     }
 
     #zoomControls .zoomReset button:active {
