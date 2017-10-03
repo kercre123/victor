@@ -230,8 +230,9 @@ BackupOntoChargerAction::BackupOntoChargerAction(Robot& robot,
                 false)
   , _useCliffSensorCorrection(useCliffSensorCorrection)
 {
-  // TODO: Charger marker pose still oscillates so just do your best from where you are
-  //       rather than oscillating between jumpy predock poses.
+  // We don't expect to be near the pre-action pose of the charger when we
+  // begin backing up onto it, so don't check for it. We aren't even seeing
+  // the marker at this point anyway.
   SetDoNearPredockPoseCheck(false);
   
   // Don't turn toward the object since we're expected to be facing away from it
