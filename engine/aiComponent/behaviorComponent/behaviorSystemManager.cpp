@@ -139,6 +139,7 @@ void BehaviorSystemManager::RunnableStack::PrepareDelegateForRemovalFromStack(IB
 // BehaviorSystemManager implementation
 /////////
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSystemManager::BehaviorSystemManager()
 : _initializationStage(InitializationStage::SystemNotInitialized)
@@ -258,6 +259,13 @@ bool BehaviorSystemManager::Delegate(IBSRunnable* delegator, IBSRunnable* delega
   
   // Activate the new runnable and add it to the top of the stack
   _runnableStack->PushOntoStack(delegated);
+
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.Delegate.ToBSRunnable",
+                "'%s' delegated to '%s'",
+                delegator->GetPrintableID().c_str(),
+                delegated->GetPrintableID().c_str());
+  
+  _runnableStack->DebugPrintStack("AfterDelegation");
   
   return true;
 }
@@ -272,10 +280,17 @@ void BehaviorSystemManager::CancelDelegates(IBSRunnable* delegator)
       _runnableStack->PopStack();
     }
   }
+
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
+                "'%s' canceled it's delegates",
+                delegator->GetPrintableID().c_str());
+
+  _runnableStack->DebugPrintStack("AfterCancelDelgates");
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// TODO:(bn) kevink: consider rename to "stop" rather than cancel
 void BehaviorSystemManager::CancelSelf(IBSRunnable* delegator)
 {
   CancelDelegates(delegator);
@@ -285,8 +300,13 @@ void BehaviorSystemManager::CancelSelf(IBSRunnable* delegator)
                  "CancelDelegates was called, but the delegator is not on the top of the stack")){
     _runnableStack->PopStack();
   }
-}
 
+  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelSelf",
+                "'%s' canceled itself",
+                delegator->GetPrintableID().c_str());
+
+  _runnableStack->DebugPrintStack("AfterCancelSelf");
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorPtr BehaviorSystemManager::FindBehaviorByID(BehaviorID behaviorID) const
@@ -310,6 +330,7 @@ IBehaviorPtr BehaviorSystemManager::FindBehaviorByExecutableType(ExecutableBehav
     return empty;
   }
 }
+
 
 
 } // namespace Cozmo
