@@ -1466,13 +1466,13 @@ namespace Anki {
 
     void UiGameController::SendMountCharger(s32 objectID,
                                             PathMotionProfile motionProf,
-                                            const bool usePreDockPose,
+                                            const bool useCliffSensorCorrection,
                                             const bool useManualSpeed)
     {
       ExternalInterface::MountCharger m;
       m.objectID = objectID;
       m.motionProf = motionProf;
-      m.usePreDockPose = usePreDockPose;
+      m.useCliffSensorCorrection = useCliffSensorCorrection;
       m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_MountCharger(m);
@@ -1481,10 +1481,10 @@ namespace Anki {
 
     
     void UiGameController::SendMountSelectedCharger(PathMotionProfile motionProf,
-                                                    const bool usePreDockPose,
+                                                    const bool useCliffSensorCorrection,
                                                     const bool useManualSpeed)
     {
-      SendMountCharger(-1, motionProf, usePreDockPose, useManualSpeed);
+      SendMountCharger(-1, motionProf, useCliffSensorCorrection, useManualSpeed);
     }
 
     BehaviorClass UiGameController::GetBehaviorClass(const std::string& behaviorClass) const

@@ -107,7 +107,7 @@ message GotoPose {
 message MountCharger {
   int_32 objectID,
   PathMotionProfile motionProf,
-  bool usePreDockPose,
+  bool useCliffSensorCorrection,
   bool useManualSpeed
 }
 

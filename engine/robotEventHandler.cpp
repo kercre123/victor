@@ -560,25 +560,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharg
     selectedObjectID = msg.objectID;
   }
   
-  if(static_cast<bool>(msg.usePreDockPose)) {
-    DriveToAndMountChargerAction* action =  new DriveToAndMountChargerAction(robot,
-                                                                             selectedObjectID,
-                                                                             true,
-                                                                             msg.useManualSpeed);
-    
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
-    }
-    return action;
-  } else {
-    MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, true, msg.useManualSpeed);
-    if(msg.motionProf.isCustom)
-    {
-      robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, chargerAction);
-    }
-    return chargerAction;
+  auto action =  new DriveToAndMountChargerAction(robot,
+                                                  selectedObjectID,
+                                                  msg.useCliffSensorCorrection,
+                                                  msg.useManualSpeed);
+  if(msg.motionProf.isCustom)
+  {
+    robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
   }
+  return action;
+
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

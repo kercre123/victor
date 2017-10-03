@@ -337,18 +337,8 @@ void Robot::SetOnCharger(bool onCharger)
     if ( nullptr == chargerInstance )
     {
       // there's currently no located instance, we need to create one.
-      ActiveID unconnectedActiveID = ObservableObject::InvalidActiveID;
-      FactoryID unconnectedFactoryID = ObservableObject::InvalidFactoryID;
-      chargerInstance = CreateActiveObjectByType(ObjectType::Charger_Basic, unconnectedActiveID, unconnectedFactoryID);
-
-      // check if there is a connected instance, because we can inherit its ID (objectID)
-      // note that setting ActiveID and FactoryID is responsibility of whenever we Add the object to the BlockWorld
-      ActiveObject* connectedInstance = GetBlockWorld().FindConnectedActiveMatchingObject(filter);
-      if ( nullptr != connectedInstance ) {
-        chargerInstance->CopyID(connectedInstance);
-      } else {
-        chargerInstance->SetID();
-      }
+      chargerInstance = new Charger();
+      chargerInstance->SetID();
     }
 
     // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
