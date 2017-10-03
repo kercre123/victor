@@ -17,7 +17,6 @@
 #include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
-#include "engine/animations/animationStreamer.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/blockWorld/blockConfigurationManager.h"

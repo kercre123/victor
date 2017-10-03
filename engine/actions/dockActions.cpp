@@ -29,7 +29,6 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
-#include "engine/components/trackLayerComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
@@ -721,9 +720,9 @@ namespace Anki {
       // If this is a reset clear the _squintLayerTag
       // TODO: Restore squinting  (VIC-362)
       /*
-      if(_squintLayerTag != AnimationStreamer::NotAnimatingTag){
+      if(_squintLayerTag != AnimationStreamer::kNotAnimatingTag){
         _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
-        _squintLayerTag = AnimationStreamer::NotAnimatingTag;
+        _squintLayerTag = AnimationStreamer::kNotAnimatingTag;
       }
        */
       

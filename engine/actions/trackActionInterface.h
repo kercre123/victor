@@ -13,10 +13,10 @@
 #ifndef __Anki_Cozmo_Basestation_TrackActionInterface_H__
 #define __Anki_Cozmo_Basestation_TrackActionInterface_H__
 
+#include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/actions/actionInterface.h"
-#include "engine/animations/animation.h"
 
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTrigger.h"
@@ -161,7 +161,7 @@ private:
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
   u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
   
-  AnimationTag _eyeShiftTag = NotAnimatingTag;
+  AnimationTag _eyeShiftTag = kNotAnimatingTag;
   bool         _moveEyes    = false;
   f32          _originalEyeDartDist;
   

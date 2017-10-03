@@ -37,8 +37,8 @@ namespace Cozmo {
   public:
     AnimationGroupContainer(Util::RandomGenerator& rng);
 
-    Result DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName,
-                          const CannedAnimationContainer* cannedAnimations);
+    // TODO: Add back check that each animation in the group is valid (VIC-370)
+    Result DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName);
     
     Result AddAnimationGroup(const std::string& name);
     

@@ -215,7 +215,7 @@ AnimationComponent::Tag AnimationComponent::IsAnimPlaying(u32 animID)
       return it->first;
     }
   }
-  return NotAnimatingTag;
+  return kNotAnimatingTag;
 }
   
   
@@ -232,7 +232,7 @@ Result AnimationComponent::StopAnimByName(const std::string& animName)
     const auto animID = it->second;
     
     const Tag tag = IsAnimPlaying(animID);
-    if (tag != NotAnimatingTag) {
+    if (tag != kNotAnimatingTag) {
       return _robot.SendRobotMessage<RobotInterface::AbortAnimation>(tag);
     }
     else {

@@ -18,7 +18,6 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/severeNeedsComponent.h"
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
@@ -298,7 +297,8 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
   RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
   if( robot_mgr->HasAnimationForTrigger(eatingAnim) )
   {
-    // TODO: Soon we will not have direct access to the CannedAnimationContainer and the raw animation data in this process (VIC-368)
+    // TODO: We do not have direct access to the CannedAnimationContainer and the raw animation data in this process (VIC-368)
+    /*
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
     const auto& animComponent = robot.GetAnimationComponent();
@@ -312,6 +312,8 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
       // assumes only one keyframe per eating anim
       timeDrainCube_s = Util::MilliSecToSec((f32)track.GetLastKeyFrame()->GetTriggerTime());
     }
+    */
+    timeDrainCube_s = 2.f; // HACK until VIC-368 is done
   }
   
   

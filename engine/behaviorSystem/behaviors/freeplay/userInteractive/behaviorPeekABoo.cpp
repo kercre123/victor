@@ -12,6 +12,7 @@
 
 #include "engine/behaviorSystem/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"

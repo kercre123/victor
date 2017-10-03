@@ -32,9 +32,6 @@ public:
   
   // Dtor
   ~FaceDisplay();
-
-  static const int FACE_DISPLAY_WIDTH = 184;
-  static const int FACE_DISPLAY_HEIGHT = 96;
   
   // Clears the face display
   void FaceClear();

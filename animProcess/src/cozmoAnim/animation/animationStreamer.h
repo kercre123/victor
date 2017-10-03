@@ -47,7 +47,7 @@ namespace Cozmo {
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
-    static const Tag NotAnimatingTag = ::Anki::Cozmo::NotAnimatingTag;
+    static const Tag kNotAnimatingTag = ::Anki::Cozmo::kNotAnimatingTag;
     
     AnimationStreamer(const CozmoAnimContext* context);
     
@@ -235,7 +235,7 @@ namespace Cozmo {
     // idle animation
     f32 _longEnoughSinceLastStreamTimeout_s;
     
-    AnimationTag _liveIdleTurnEyeShiftTag = NotAnimatingTag;
+    AnimationTag _liveIdleTurnEyeShiftTag = kNotAnimatingTag;
 
   }; // class AnimationStreamer
   

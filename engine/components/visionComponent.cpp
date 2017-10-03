@@ -37,6 +37,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"

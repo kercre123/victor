@@ -133,11 +133,11 @@ Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   {
     const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
-    const double maxUpdateDuration = ANIM_TIME_STEP;
+    const double maxUpdateDuration = ANIM_TIME_STEP_MS;
     if (updateLengthMs > maxUpdateDuration)
     {
       Anki::Util::sEventF("cozmo_anim.update.run.slow",
-                          {{DDATA,std::to_string(ANIM_TIME_STEP).c_str()}},
+                          {{DDATA,std::to_string(ANIM_TIME_STEP_MS).c_str()}},
                           "%.2f", updateLengthMs);
     }
   }

@@ -15,11 +15,11 @@
 
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
-#include "engine/animations/animationStreamer.h"
 #include "engine/components/animationComponent.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "clad/externalInterface/messageActions.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/animationTrigger.h"
@@ -32,18 +32,11 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      PlayAnimationAction(Robot& robot,
-                          const std::string& animName,
-                          u32 numLoops = 1,
-                          bool interruptRunning = true,
-                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
-                          float timeout_sec = _kDefaultTimeout_sec);
-      // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
-      // Caller owns the animation -- it will not be deleted by this action.
+    
       // Numloops 0 causes the action to loop forever
       // tracksToLock indicates tracks of the animation which should not play
       PlayAnimationAction(Robot& robot,
-                          Animation* animation,
+                          const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true,
                           u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
@@ -65,7 +58,6 @@ namespace Anki {
       bool                      _stoppedPlaying;
       bool                      _wasAborted;
       bool                      _interruptRunning;
-      Animation*                _animPointer = nullptr;
       float                     _timeout_sec = _kDefaultTimeout_sec;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;

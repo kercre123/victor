@@ -2,9 +2,11 @@
 
 #include <vector>
 
-#include "anki/common/types.h"
-#include "engine/animations/proceduralFaceDrawer.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/types.h"
+#include "cozmoAnim/animations/proceduralFaceDrawer.h"
+
+// TODO: Re-enable this test - nothing is running this (VIC-372)
 
 // Sweep all parameters and make sure we don't trigger an assert or crash when
 // we try to actually draw the face. (Clipping should prevent that.)

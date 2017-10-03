@@ -13,6 +13,7 @@
 #include "engine/behaviorSystem/activities/activities/activitySparked.h"
 
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/behaviorSystem/behaviorManager.h"

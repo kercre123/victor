@@ -20,6 +20,7 @@
 #include "json/json.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
+#include "util/random/randomGenerator.h"
 
 namespace Anki {
 namespace Cozmo {

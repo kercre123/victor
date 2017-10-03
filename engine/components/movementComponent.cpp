@@ -21,7 +21,6 @@
 #include "engine/components/animTrackHelpers.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
-#include "engine/components/trackLayerComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -349,7 +348,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   }
 }
 
-void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms)
+void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationTag faceLayerTag, TimeStamp_t duration_ms)
 {
   PRINT_NAMED_DEBUG("MovementComponent.RemoveFaceLayersWhenHeadMoves.",
                     "Registering tag=%d for removal with duration=%dms",
