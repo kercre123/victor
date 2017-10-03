@@ -95,7 +95,12 @@ namespace Anki {
         bool useCliffSensorAlignment_ = false;
         
         // Threshold used to distinguish black stripe on charger from the white body
+#ifdef SIMULATOR
+        const u16 kChargerCliffBlackThreshold = 880;
+#else
         const u16 kChargerCliffBlackThreshold = 400;
+#endif
+
 
         // Charger docking wheel speeds for backing onto the charger:
         const float kChargerDockingSpeedHigh = -30.f;
