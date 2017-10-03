@@ -52,20 +52,26 @@ public:
                 const bool isDarkExposure,
                 std::list<ExternalInterface::RobotObservedLaserPoint>& points,
                 DebugImageList<Vision::ImageRGB>& debugImageRGBs);
-  
+
+  // Same as above, but without the poseData. Searches in the whole image. Used for testing and debug
+  Result Detect(Vision::ImageCache&   imageCache,
+                const bool isDarkExposure,
+                std::list<ExternalInterface::RobotObservedLaserPoint>& points,
+                DebugImageList<Vision::ImageRGB>& debugImageRGBs);
+
 private:
-  
+
   Result FindConnectedComponents(const Vision::ImageRGB& imgColor,
                                  const Vision::Image&    imgGray,
                                  const u8 lowThreshold,
                                  const u8 highThreshold);
-  
+
   size_t FindLargestRegionCentroid(const Vision::ImageRGB& imgColor,
                                    const Vision::Image&    imgGray,
                                    const Quad2f&           groundQuadInImage,
                                    const bool              isDarkExposure,
                                    Point2f& centroid);
-  
+
   // TODO: Make static (and pass in vizManager?)
   bool IsOnGroundPlane(const Quad2f& groundQuadInImage, const Vision::Image::ConnectedComponentStats& stat);
   bool IsSurroundedByDark(const Vision::Image& image, const Vision::Image::ConnectedComponentStats& stat,
@@ -74,10 +80,12 @@ private:
                    const f32 redThreshold, const f32 greenThreshold);
 
   VizManager*   _vizManager    = nullptr;
-  
+
   std::vector<Vision::Image::ConnectedComponentStats> _connCompStats;
-  
+
   Vision::ImageRGB _debugImage;
+
+
 };
   
 } // namespace Cozmo
