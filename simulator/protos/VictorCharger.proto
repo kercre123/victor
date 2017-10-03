@@ -17,10 +17,10 @@ PROTO VictorCharger [
   field SFFloat dockMarkerWidth  0.044
   field SFFloat dockMarkerHeight 0.044
 
-  field SFVec3f translation 0 0 0
+  field SFVec3f    translation 0 0 0
   field SFRotation rotation 0 0 1 0
-  field SFFloat mass 0.5
-  field SFColor color .3 .3 .3
+  field SFFloat    mass 0.5
+  field SFColor    color .3 .3 .3
 
 ]
 {
@@ -48,39 +48,39 @@ Robot {
         # Back side
         # Origin is center of back side of charger
         # x-axis points toward ramp, y-axis points to robot left when robot is in charger, z-axis points up
-      	Transform {
-      	  translation %{=fields.backThickness.value/2}% 0 %{=fields.backHeight.value/2}%
+        Transform {
+          translation %{=fields.backThickness.value/2}% 0 %{=fields.backHeight.value/2}%
           children [
             Shape {
               appearance Appearance {
-				        material DEF ChargerPlastic Material {
-				          diffuseColor 1.0 1.0 1.0
-				        }
-	   		      }
-			        geometry Box {
-			          size %{=fields.backThickness.value}% %{=fields.backWidth.value}% %{=fields.backHeight.value}%
-			        }
-			      }
-		      ]
-      	}
+                material DEF ChargerPlastic Material {
+                  diffuseColor 1.0 1.0 1.0
+                }
+              }
+              geometry Box {
+                size %{=fields.backThickness.value}% %{=fields.backWidth.value}% %{=fields.backHeight.value}%
+              }
+            }
+          ]
+        }
 
         # Platform        
-				Transform {
-				  rotation 1 0 0 1.5708
-				  translation %{=fields.backThickness.value + 0.5*fields.platformLength.value}% 0 0.0001
-				  children [
-				    Shape {
-							geometry Plane {
-								size %{=fields.platformLength.value}% %{=fields.platformWidth.value}%
-							}
-							appearance Appearance {
+        Transform {
+          rotation 1 0 0 1.5708
+          translation %{=fields.backThickness.value + 0.5*fields.platformLength.value}% 0 0.0001
+          children [
+            Shape {
+              geometry Plane {
+                size %{=fields.platformLength.value}% %{=fields.platformWidth.value}%
+              }
+              appearance Appearance {
                 texture ImageTexture {
                   url [ "textures/chargerStripe.png" ]
                 }
               }
-				    }
-				  ]
-				}
+            }
+          ]
+        }
 
       ] # ChargerGroup Children
     } # ChargerGroup
@@ -90,26 +90,25 @@ Robot {
       translation %{=fields.backThickness.value + 0.038}% 0 %{=fields.platformHeight.value}%
       rotation 1 0 0 0
       children [
-				Connector {
-					name			"ChargeContact"
-					model         "ChargeContact"
-					type 			"symmetric"
-					isLocked		FALSE
-					autoLock		FALSE
-					distanceTolerance	0.01
-					axisTolerance		0.2
-					rotationTolerance 	1.5708
-					numberOfRotations 	4
-					snap			FALSE
-				}
+        Connector {
+          name      "ChargeContact"
+          model     "ChargeContact"
+          type      "symmetric"
+          isLocked  FALSE
+          autoLock  FALSE
+          distanceTolerance 0.01
+          axisTolerance     0.2
+          rotationTolerance 1.5708
+          numberOfRotations 4
+          snap      FALSE
+        }
       ]
     }
 
-  ] # Solid Children
+  ] # children
 
   boundingObject USE ChargerGroup
 
 }
-
 
 } # PROTO
