@@ -19,6 +19,7 @@
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "engine/actions/basicActions.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
@@ -96,8 +97,6 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     _liftCalibrated = false;
     
     robot.GetActionList().Cancel();
-    
-    // TODO: Mute volume - VIC-28 - Implement Robot Volume
     
     // Disable reactionary behaviors
     robot.GetBehaviorManager().DisableReactionsWithLock(
