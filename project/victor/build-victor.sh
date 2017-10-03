@@ -165,7 +165,6 @@ if [ $CONFIGURE -eq 1 ]; then
         androidHAL/BUILD.in \
         animProcess/BUILD.in \
         clad/BUILD.in \
-        engine/BUILD.in \
         coretech/common/BUILD.in \
         coretech/common/clad/BUILD.in \
         coretech/vision/BUILD.in \
@@ -174,6 +173,7 @@ if [ $CONFIGURE -eq 1 ]; then
         coretech/messaging/BUILD.in \
         engine/BUILD.in \
         lib/util/source/anki/util/BUILD.in \
+        lib/util/source/anki/utilUnitTest/BUILD.in \
         resources/BUILD.in \
         robot/BUILD.in \
         robot/clad/BUILD.in \
