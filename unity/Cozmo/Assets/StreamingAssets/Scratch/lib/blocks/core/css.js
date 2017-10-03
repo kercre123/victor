@@ -248,7 +248,8 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyDropDownContent {',
-    'max-height: 300px;', // @todo: spec for maximum height.
+    //'max-height: 300px;', // @todo: spec for maximum height.
+    'max-height:250px;', // *** ANKI CHANGE ***
     'overflow: auto;',
   '}',
 
