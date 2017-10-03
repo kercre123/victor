@@ -513,13 +513,10 @@ void PhysVizController::ProcessVizMemoryMapMessageDebugVizBegin(const AnkiEvent<
 
 void PhysVizController::ProcessVizMemoryMapMessageDebugViz(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  // WARNING:  No check here that we've received the 'begin' message yet (does not handle out-of-order messages)
   const auto& payload = msg.GetData().Get_MemoryMapMessageDebugViz();
 
   MemoryMapQuadInfoDebugVizVector& dest = _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId];
-  const size_t newSize = dest.size() + payload.quadInfos.size();
-  dest.reserve(newSize);
-  dest.insert(dest.end(), payload.quadInfos.begin(), payload.quadInfos.end());
+  dest[payload.seqNum] = std::move(payload.quadInfos);
 }
 
 void PhysVizController::ProcessVizMemoryMapMessageDebugVizEnd(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -530,19 +527,39 @@ void PhysVizController::ProcessVizMemoryMapMessageDebugVizEnd(const AnkiEvent<Vi
   
   // input  is _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId], and _memoryMapInfo[payload.originId]
   // output is _simpleQuadVectorMapReady["string"]
-  
-  const ExternalInterface::MemoryMapInfo& info = _memoryMapInfo[payload.originId];
-  
-  SimpleQuadVector& destSimpleQuads = _simpleQuadVectorMapReady[info.identifier];
-  destSimpleQuads.clear();
-  
-  Point3f rootCenter(MM_TO_M(info.rootCenterX), MM_TO_M(info.rootCenterY), MM_TO_M(info.rootCenterZ));
-  MemoryMapNode rootNode(info.rootDepth, MM_TO_M(info.rootSize_mm), rootCenter);
-
-  const auto& srcQuadInfos = _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId];
-  for (const auto& quadInfo : srcQuadInfos)
+  const auto& iter = _memoryMapInfo.find(payload.originId);
+  if(iter == _memoryMapInfo.end())
   {
-    rootNode.AddChild(destSimpleQuads, quadInfo.content, quadInfo.depth);
+    dWebotsConsolePrintf("[PhysVizController] [INFO] Didn't get begin memory map begin viz message");
+  }
+  else
+  {
+    const ExternalInterface::MemoryMapInfo& info = iter->second;
+    
+    SimpleQuadVector& destSimpleQuads = _simpleQuadVectorMapReady[info.identifier];
+    destSimpleQuads.clear();
+    
+    Point3f rootCenter(MM_TO_M(info.rootCenterX), MM_TO_M(info.rootCenterY), MM_TO_M(info.rootCenterZ));
+    MemoryMapNode rootNode(info.rootDepth, MM_TO_M(info.rootSize_mm), rootCenter);
+
+    u32 expectedSeqNum = 0;
+    const auto& srcQuadInfos = _memoryMapQuadInfoDebugVizVectorMapIncoming[payload.originId];
+    for (const auto& quadInfo : srcQuadInfos)
+    {
+      if(quadInfo.first != expectedSeqNum)
+      {
+        dWebotsConsolePrintf("[PhysVizController] [INFO] Dropped memory map viz message, displayed map will be incorrect");
+        break;
+      }
+      else
+      {
+        for (const auto& quad : quadInfo.second)
+        {
+          rootNode.AddChild(destSimpleQuads, quad.content, quad.depth);
+        }
+        ++expectedSeqNum;
+      }
+    }
   }
   
   _memoryMapQuadInfoDebugVizVectorMapIncoming.erase(payload.originId);
