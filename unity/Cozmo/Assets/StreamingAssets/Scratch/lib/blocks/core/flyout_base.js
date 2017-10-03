@@ -727,13 +727,6 @@ Blockly.Flyout.prototype.placeNewBlock_ = function(oldBlock) {
   // The position of the old block in main workspace coordinates.
   var finalOffsetMainWs = finalOffsetPixels.scale(1 / targetWorkspace.scale);
 
-  // *** ANKI CHANGE ***
-  // Have new block position take into account the fact that the flyout is shifted down from the top
-  if (window.isVertical) {
-    finalOffsetPixels.y += 60;
-    finalOffsetMainWs.y += 60;
-  }
-
   block.moveBy(finalOffsetMainWs.x, finalOffsetMainWs.y);
   return block;
 };

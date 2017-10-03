@@ -123,7 +123,7 @@ Blockly.Toolbox.prototype.init = function() {
 
   // *** ANKI CHANGE ***
   // Move toolbox down different amount for phones.
-    if (window.isVertical && window.innerWidth < window.TABLET_WIDTH) {
+  if (window.isVertical && window.innerWidth < window.TABLET_WIDTH) {
     this.HtmlDiv.style.top = "60px";
   }
 
@@ -141,7 +141,7 @@ Blockly.Toolbox.prototype.init = function() {
           Blockly.hideChaff(true);
         }
         Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
-      });
+      }, /*opt_noCaptureIdentifier*/ false, /*opt_noPreventDefault*/ true);
 
   this.createFlyout_();
   this.categoryMenu_ = new Blockly.Toolbox.CategoryMenu(this, this.HtmlDiv);
@@ -242,7 +242,15 @@ Blockly.Toolbox.prototype.position = function() {
     } else {  // Left
       treeDiv.style.left = '0';
     }
-    treeDiv.style.height = '100%';
+
+    // *** ANKI CHANGE ***
+    // In order to size height of toolbox correctly for screen,
+    // get the current toolbox top value and subtract from height.
+    var toolboxTop = this.HtmlDiv.style.top // toolboxTop value is like "60px"
+    var pxStrPosition = toolboxTop.indexOf("px");
+    var topValueNum = toolboxTop.substring(0, pxStrPosition); // strip the number out of toolboxTop
+    treeDiv.style.height = (window.innerHeight - topValueNum) + "px";
+    //treeDiv.style.height = '100%';
   }
   this.flyout_.position();
 };
@@ -564,7 +572,7 @@ Blockly.Toolbox.Category.prototype.createDom = function() {
     this.item_.appendChild(this.label_);
     this.parentHtml_.appendChild(this.item_);
     Blockly.bindEvent_(this.item_, 'mousedown', toolbox,
-      toolbox.setSelectedItemFactory(this));
+      toolbox.setSelectedItemFactory(this), true);
   }
 };
 
