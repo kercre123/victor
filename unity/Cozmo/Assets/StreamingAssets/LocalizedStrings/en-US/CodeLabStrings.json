@@ -466,6 +466,12 @@
   "codeLabFeaturedProject_TinyOrchestra.projectDescription": {
       "translation":  "This project is amazing!"
   },
+  "codeLabFeaturedProject_MagicFortuneTeller.projectName": {
+      "translation": "Magic Fortune Teller"
+  },
+  "codeLabFeaturedProject_MagicFortuneTeller.projectDescription": {
+      "translation":  "Shake Cozmo and have your fortune told!"
+  },
 
 
 
