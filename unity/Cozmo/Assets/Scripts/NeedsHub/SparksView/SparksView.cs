@@ -193,6 +193,9 @@ namespace Cozmo.Needs.Sparks.UI {
         OnboardingManager.Instance.GoToNextStage();
       }
       else if (RobotEngineManager.Instance.CurrentRobot != null) {
+        // In case we can't start the trick right away, let the user know we caught their button press
+        ContextManager.Instance.ShowForeground();
+
         // Prevent the player from doing other things
         DisableTouches();
 

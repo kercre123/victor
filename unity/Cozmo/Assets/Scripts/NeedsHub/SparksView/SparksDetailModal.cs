@@ -223,6 +223,7 @@ namespace Cozmo.Needs.Sparks.UI {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
 
       if (isEngineDriven) {
+        ContextManager.Instance.HideForeground();
         PlaySparkedSounds();
         // Button state already updated by InitializeButtonState above
 

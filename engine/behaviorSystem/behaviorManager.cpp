@@ -1286,27 +1286,17 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     // User asked for a random trick via UI
     case ExternalInterface::BehaviorManagerMessageUnionTag::DoATrickRequest:
     {
-      // It's possible to mash the Play a Game button and then the Do A Trick button
-      // and get multiple messages in a row; this avoids disabling buttons in the UI
-      // and getting into a weird state where the app may be locked out from listening
-      // for a game request pop-up to open that will not happen because of a reactionary behavior
-      if (_uiRequestGameBehavior == nullptr){
-        _robot.GetAIComponent().GetDoATrickSelector().RequestATrick(_robot);
+      _robot.GetAIComponent().GetDoATrickSelector().RequestATrick(_robot);
       
-        // We already check that the player can afford the cost Game side
-        const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
-        _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
-      }
+      // We already check that the player can afford the cost Game side
+      const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
+      _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
       break;
     }
     
     // User asked for a random game via UI
     case ExternalInterface::BehaviorManagerMessageUnionTag::PlayAGameRequest:
     {
-      // It's possible to mash the button and get multiple messages in a row;
-      // this avoids disabling buttons in the UI and getting into a weird state where
-      // the app may be locked out from listening for a game request pop-up to open
-      // that will not happen because of a reactionary behavior
       if (_uiRequestGameBehavior == nullptr ||
           _uiRequestGameBehavior->IsRunning()) {
         _shouldRequestGame = true;
