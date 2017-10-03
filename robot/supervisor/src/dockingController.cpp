@@ -763,6 +763,19 @@ namespace Anki {
               break;
             }
             
+            // If this is DA_BACKUP_ONTO_CHARGER*, don't bother with all the checks below
+            // and just assume we got to where we want. (Charger marker pose signal is
+            // too noisy to trust. We just need to get roughly in front of the thing so
+            // we can turn around to back into it.
+            if (createdValidPath_ &&
+                !PathFollower::IsTraversingPath() &&
+                (PickAndPlaceController::GetCurAction() == DockAction::DA_BACKUP_ONTO_CHARGER ||
+                 PickAndPlaceController::GetCurAction() == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF))
+            {
+              StopDocking(DockingResult::DOCK_SUCCESS);
+              break;
+            }
+            
             // If finished traversing path
             if (createdValidPath_ &&
                 !PathFollower::IsTraversingPath() &&

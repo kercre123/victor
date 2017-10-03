@@ -87,6 +87,30 @@ namespace Anki {
 
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
+        
+        // Time when robot first becomes tilted on charger (while docking)
+        u32 tiltedOnChargerStartTime_ = 0;
+        
+        // For charger mounting, whether or not to use cliff sensors to align the robot.
+        bool useCliffSensorAlignment_ = false;
+        
+        // Threshold used to distinguish black stripe on charger from the white body
+#ifdef SIMULATOR
+        const u16 kChargerCliffBlackThreshold = 880;
+#else
+        const u16 kChargerCliffBlackThreshold = 400;
+#endif
+
+
+        // Charger docking wheel speeds for backing onto the charger:
+        const float kChargerDockingSpeedHigh = -30.f;
+        const float kChargerDockingSpeedLow  = -10.f;
+
+        // Pitch angle at which Cozmo is probably having trouble backing up on charger
+        const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
+        
+        // Amount of time that Cozmo pitch needs to exceed TILT_FAILURE_ANGLE_RAD in order to fail at backing up on charger
+        const u32 TILT_FAILURE_DURATION_MS = 250;
 
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
@@ -188,6 +212,17 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      Result SendChargerMountCompleteMessage(const bool success)
+      {
+        ChargerMountComplete msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(RobotInterface::SendMessage(msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
       static void StartBackingOut()
       {
         static const f32 MIN_BACKOUT_DIST_MM = 35.f;
@@ -298,6 +333,13 @@ namespace Anki {
               case DockAction::DA_POST_DOCK_ROLL:
                 // Skip docking completely and go straight to Setting lift for Post Dock
                 mode_ = SET_LIFT_POSTDOCK;
+                break;
+              case DockAction::DA_BACKUP_ONTO_CHARGER:
+              case DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF:
+                SteeringController::ExecuteDirectDrive(kChargerDockingSpeedHigh, kChargerDockingSpeedHigh);
+                transitionTime_ = HAL::GetTimeStamp() + 8000;
+                useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
+                mode_ = BACKUP_ON_CHARGER;
                 break;
               default:
                 AnkiError( 287, "PAP.SET_LIFT_PREDOCK.InvalidAction", 648, "%hhu", 1, action_);
@@ -772,6 +814,60 @@ namespace Anki {
                 }
                 break;
               }
+            }
+            break;
+          }
+          case BACKUP_ON_CHARGER:
+          {
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              AnkiEvent( 292, "PAP.BACKUP_ON_CHARGER.Timeout", 305, "", 0);
+              SendChargerMountCompleteMessage(false);
+              Reset();
+            } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
+              // Check for excessive tilt
+              if (tiltedOnChargerStartTime_ == 0) {
+                tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
+              } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
+                // Drive forward until no tilt or timeout
+                AnkiEvent( 293, "PAP.BACKUP_ON_CHARGER.Tilted", 305, "", 0);
+                SteeringController::ExecuteDirectDrive(40, 40);
+                transitionTime_ = HAL::GetTimeStamp() + 2500;
+                mode_ = DRIVE_FORWARD;
+              }
+            } else if (HAL::BatteryIsOnCharger()) {
+              AnkiEvent( 294, "PAP.BACKUP_ON_CHARGER.Success", 305, "", 0);
+              SendChargerMountCompleteMessage(true);
+              Reset();
+            } else if (useCliffSensorAlignment_) {              
+              const u16 cliffBL = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BL);
+              const u16 cliffBR = ProxSensors::GetRawCliffValue((int) HAL::CLIFF_BR);
+              
+              float leftSpeed  = kChargerDockingSpeedHigh;
+              float rightSpeed = kChargerDockingSpeedHigh;
+
+              const bool isBlackBL = cliffBL < kChargerCliffBlackThreshold;
+              const bool isBlackBR = cliffBR < kChargerCliffBlackThreshold;
+
+              // Slow down one of the sides if it's seeing black
+              if (isBlackBL && !isBlackBR) {
+                leftSpeed = kChargerDockingSpeedLow;
+              } else if (!isBlackBL && isBlackBR) {
+                rightSpeed = kChargerDockingSpeedLow;
+              }
+              
+              SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+              tiltedOnChargerStartTime_ = 0;
+            } else {
+              tiltedOnChargerStartTime_ = 0;
+            }
+            break;
+          }
+          case DRIVE_FORWARD:
+          {
+            // For failed charger mounting recovery only
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              SendChargerMountCompleteMessage(false);
+              Reset();
             }
             break;
           }
