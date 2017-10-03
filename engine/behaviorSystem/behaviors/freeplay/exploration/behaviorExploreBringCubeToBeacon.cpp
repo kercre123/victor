@@ -11,6 +11,7 @@
  **/
 #include "engine/behaviorSystem/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"

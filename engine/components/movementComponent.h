@@ -16,7 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/trackedFace.h"
-#include "engine/animations/animationStreamer.h"
+#include "engine/components/animationComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <list>
@@ -117,7 +117,7 @@ public:
   // Register a persistent face layer tag for removal next time head moves
   // You may optionally specify the duration of the layer removal (i.e. how
   // long it takes to return to not making any face adjustment)
-  void RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms=0);
+  void RemoveFaceLayerWhenHeadMoves(AnimationComponent::Tag faceLayerTag, TimeStamp_t duration_ms=0);
   
   Result StopAllMotors();
   Result StopHead();
@@ -195,7 +195,7 @@ private:
     TimeStamp_t duration_ms;
     bool        headWasMoving;
   };
-  std::map<AnimationStreamer::Tag, FaceLayerToRemove> _faceLayerTagsToRemoveOnHeadMovement;
+  std::map<AnimationComponent::Tag, FaceLayerToRemove> _faceLayerTagsToRemoveOnHeadMovement;
   
   // Helper class for detecting unexpected movement
   class UnexpectedMovement

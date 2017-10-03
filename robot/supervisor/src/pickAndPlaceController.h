@@ -50,6 +50,8 @@ namespace Anki {
         TRAVERSE_BRIDGE,
         LEAVE_BRIDGE,
         PICKUP_ANIM,
+        BACKUP_ON_CHARGER,
+        DRIVE_FORWARD,
       } Mode;
 
       Result Init();

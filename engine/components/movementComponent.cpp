@@ -21,7 +21,6 @@
 #include "engine/components/animTrackHelpers.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
-#include "engine/components/trackLayerComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -89,7 +88,8 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     FaceLayerToRemove & layer = layerIter->second;
     if(_isHeadMoving && false == layer.headWasMoving) {
       // Wait for transition from stopped to moving again
-      _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
+      // TODO: Restore eye shifts (VIC-363)
+      //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
       layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
     } else {
       layer.headWasMoving = _isHeadMoving;
@@ -348,7 +348,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   }
 }
 
-void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationStreamer::Tag faceLayerTag, TimeStamp_t duration_ms)
+void MovementComponent::RemoveFaceLayerWhenHeadMoves(AnimationTag faceLayerTag, TimeStamp_t duration_ms)
 {
   PRINT_NAMED_DEBUG("MovementComponent.RemoveFaceLayersWhenHeadMoves.",
                     "Registering tag=%d for removal with duration=%dms",

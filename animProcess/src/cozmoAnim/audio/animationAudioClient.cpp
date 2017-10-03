@@ -12,6 +12,7 @@
  */
 
 
+#include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/animation/keyframe.h"
@@ -36,7 +37,7 @@ namespace Audio {
 using namespace AudioEngine;
 using namespace AudioMetaData;
 
-static const AudioGameObject kAnimGameObj = static_cast<AudioGameObject>(GameObjectType::Cozmo_OnDevice);
+static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Cozmo_OnDevice);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController,
@@ -111,13 +112,27 @@ bool AnimationAudioClient::HasActiveEvents() const
   std::lock_guard<std::mutex> lock( _lock );
   return !_activeEvents.empty();
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioClient::SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
+                                                 AudioEngine::AudioTimeMs timeInMilliSeconds,
+                                                 AudioEngine::AudioCurveType curve )
+{
+  if ( _audioController == nullptr ) { return; }
+  DEV_ASSERT(((volume >= 0.0f) && (volume <= 1.0f)), "AnimationAudioClient.SetRobotMasterVolume.Volume.InvalidValue");
+  _audioController->SetParameter( ToAudioParameterId( GameParameter::ParameterType::Robot_Volume ),
+                                  volume,
+                                  kInvalidAudioGameObject,
+                                  timeInMilliSeconds,
+                                  curve );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimationAudioClient::AnimPlayId AnimationAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event )
+AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event )
 {
   if ( _audioController == nullptr ) { return kInvalidAudioPlayingId; }
 
-  const auto audioEventId = Util::numeric_cast<AudioEventId>( event );
+  const auto audioEventId = ToAudioEventId( event );
   AudioCallbackContext* audioCallbackContext = nullptr;
   const auto callbackFunc = std::bind(&AnimationAudioClient::CozmoEventCallback, this, std::placeholders::_1);
   audioCallbackContext = new AudioCallbackContext();
@@ -135,21 +150,20 @@ AnimationAudioClient::AnimPlayId AnimationAudioClient::PostCozmoEvent( AudioMeta
   const AudioEngine::AudioPlayingId playId = _audioController->PostAudioEvent( audioEventId,
                                                                                kAnimGameObj,
                                                                                audioCallbackContext );
-  
+
   // Track event playback
   AddActiveEvent( playId );
-  
+
   return playId;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AnimationAudioClient::SetCozmoEventParameter( AnimPlayId playId, AudioMetaData::GameParameter::ParameterType parameter, float value ) const
+bool AnimationAudioClient::SetCozmoEventParameter( AudioEngine::AudioPlayingId playId,
+                                                   AudioMetaData::GameParameter::ParameterType parameter,
+                                                   AudioEngine::AudioRTPCValue value ) const
 {
   if ( _audioController == nullptr ) { return false; }
-  const AudioParameterId parameterId = Util::numeric_cast<AudioParameterId>( parameter );
-  const AudioRTPCValue rtpcVal = Util::numeric_cast<AudioRTPCValue>( value );
-  const AudioPlayingId audioPlayId = Util::numeric_cast<AudioPlayingId>( playId );
-  return _audioController->SetParameterWithPlayingId( parameterId, rtpcVal, audioPlayId );
+  return _audioController->SetParameterWithPlayingId( ToAudioParameterId( parameter ), value, playId );
 }
   
   
@@ -197,7 +211,7 @@ void AnimationAudioClient::CozmoEventCallback( const AudioEngine::AudioCallbackI
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::AddActiveEvent( AnimPlayId playId )
+void AnimationAudioClient::AddActiveEvent( AudioEngine::AudioPlayingId playId )
 {
   if ( playId != kInvalidAudioPlayingId ) {
     std::lock_guard<std::mutex> lock( _lock );
@@ -206,7 +220,7 @@ void AnimationAudioClient::AddActiveEvent( AnimPlayId playId )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::RemoveActiveEvent( AnimPlayId playId )
+void AnimationAudioClient::RemoveActiveEvent( AudioEngine::AudioPlayingId playId )
 {
   std::lock_guard<std::mutex> lock( _lock );
   _activeEvents.erase( playId );

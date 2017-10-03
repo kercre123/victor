@@ -26,11 +26,18 @@ else
 	LOCAL_LDLIBS += -llog 
 endif
 
-#android arm build toolchain
-ANDROID_NDK_ROOT:=~/.anki/android/ndk-repository/android-ndk-r15b
 
-ANDROID_ARM_TOOLS_ROOT:=../../generated/android/tools/arm
-ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
+#
+# Use android.py to locate Android NDK
+#
+TOPLEVEL := ../..
+ANDROID_PY := $(TOPLEVEL)/tools/build/tools/ankibuild/android.py
+ANDROID_NDK_ROOT := $(shell $(ANDROID_PY))
+
+# Android arm build toolchain
+ANDROID_ARM_TOOLS_ROOT := $(TOPLEVEL)/generated/android/tools/arm
+ANDROID_ARM_TOOLS_BIN := $(ANDROID_ARM_TOOLS_ROOT)/bin
+
 # Compilation Tools
 ARMCC := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-gcc -pie
 ARMCPP := $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-g++

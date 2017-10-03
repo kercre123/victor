@@ -457,7 +457,7 @@ void BehaviorBouncer::UpdateDisplay(Robot& robot)
     
     // Display image
     LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
-    const u32 duration_ms = IKeyFrame::SAMPLE_LENGTH_MS;
+    const u32 duration_ms = ANIM_TIME_STEP_MS;
     IActionRunner * setFaceAction = new SetFaceAction(robot, image, duration_ms);
     SimpleCallback callback = []() {
       LOG_TRACE("BehaviorBouncer.UpdateDisplay.Callback", "Face action complete");

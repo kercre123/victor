@@ -13,7 +13,6 @@
  *
  **/
 
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroup.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/moodSystem/moodManager.h"
@@ -36,7 +35,7 @@ AnimationGroup::AnimationGroup(Util::RandomGenerator& rng, const std::string& na
       
 }
     
-Result AnimationGroup::DefineFromJson(const std::string& name, const Json::Value &jsonRoot, const CannedAnimationContainer* cannedAnimations)
+Result AnimationGroup::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
 {
   _name = name;
       
@@ -61,7 +60,8 @@ Result AnimationGroup::DefineFromJson(const std::string& name, const Json::Value
     const Json::Value& jsonEntry = jsonAnimations[iEntry];
     
     AnimationGroupEntry newEntry;
-    Result addResult = newEntry.DefineFromJson(jsonEntry, cannedAnimations);
+    
+    Result addResult = newEntry.DefineFromJson(jsonEntry);
     if(RESULT_OK != addResult) {
       PRINT_NAMED_ERROR("AnimationGroup.DefineFromJson.AddEntryFailure",
                         "Adding animation %d failed.",

@@ -14,6 +14,7 @@
 
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyHiccup.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/behaviorSystem/behaviorManager.h"
 #include "engine/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
@@ -168,7 +169,8 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
     if(behavior->IsRunnable(robot))
     {
       _hiccupsCured = HiccupsCured::NotCured;
-      const_cast<Robot&>(robot).GetAnimationStreamer().ResetKeepFaceAliveLastStreamTimeout();
+      // TODO: Restore KeepFaceAlive controls (VIC-364)
+      //const_cast<Robot&>(robot).GetAnimationStreamer().ResetKeepFaceAliveLastStreamTimeout();
       return true;
     }
     
@@ -372,7 +374,8 @@ void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const EngineToGameEvent
           if(HasHiccups() && _hiccupsCured == HiccupsCured::NotCured)
           {
             const f32 kTimeout_s = 5.f;
-            const_cast<Robot&>(robot).GetAnimationStreamer().SetKeepFaceAliveLastStreamTimeout(kTimeout_s);
+            // TODO: Restore KeepFaceAlive controls (VIC-364)
+            //const_cast<Robot&>(robot).GetAnimationStreamer().SetKeepFaceAliveLastStreamTimeout(kTimeout_s);
             _hiccupsCured = HiccupsCured::PendingCure;
           }
         }

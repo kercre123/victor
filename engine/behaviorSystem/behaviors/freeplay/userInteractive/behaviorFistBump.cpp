@@ -18,6 +18,8 @@
 #include "engine/components/movementComponent.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
+
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "util/console/consoleInterface.h"

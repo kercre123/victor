@@ -3,7 +3,7 @@
 
 
 #define platform_set_baud(fd, cfg, speed) \
-   cfsetispeed(&cfg, baudrate), cfsetospeed(&cfg, baudrate)
+   cfsetispeed(&cfg, speed), cfsetospeed(&cfg, speed)
 
 
 #endif//SERIAL_SUPPORT_H__

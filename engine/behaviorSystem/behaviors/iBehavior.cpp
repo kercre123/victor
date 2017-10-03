@@ -871,7 +871,8 @@ void IBehavior::SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation)
                  "IBehavior.SmartPushIdleAnimation.IdleAlreadySet",
                  "Behavior %s has already set an idle animation",
                  GetIDStr().c_str())){
-    robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
+    // TODO: Restore idle animations (VIC-366)
+    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
     _hasSetIdle = true;
   }
 }
@@ -884,7 +885,8 @@ void IBehavior::SmartRemoveIdleAnimation(Robot& robot)
                  "IBehavior.SmartRemoveIdleAnimation.NoIdleSet",
                  "Behavior %s is trying to remove an idle, but none is currently set",
                  GetIDStr().c_str())){
-    robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
+    // TODO: Restore idle animations (VIC-366)
+    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
     _hasSetIdle = false;
   }
 }

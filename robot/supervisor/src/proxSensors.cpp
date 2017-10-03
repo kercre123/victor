@@ -2,7 +2,7 @@
 #include "trig_fast.h"
 #include "headController.h"
 #include "liftController.h"
-#include "animationController.h"
+#include "messages.h"
 #include "pickAndPlaceController.h"
 #include "steeringController.h"
 #include "wheelController.h"
@@ -177,11 +177,6 @@ namespace Anki {
             // Stop all motors and animations
             PickAndPlaceController::Reset();
             SteeringController::ExecuteDirectDrive(0,0);
-            
-            #ifdef SIMULATOR
-            // TODO: On K02, need way to tell Espressif to cancel animations
-            AnimationController::Clear();
-            #endif
 
             // Send stopped message
             RobotInterface::RobotStopped msg;

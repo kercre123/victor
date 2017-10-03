@@ -15,13 +15,14 @@
 
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/components/animationComponent.h"
 #include "anki/common/basestation/math/pose.h"
-#include "clad/types/actionTypes.h"
-#include "clad/types/animationTrigger.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "engine/animations/animationStreamer.h"
+#include "clad/externalInterface/messageActions.h"
+#include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTrigger.h"
 
 
 namespace Anki {
@@ -31,18 +32,11 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      PlayAnimationAction(Robot& robot,
-                          const std::string& animName,
-                          u32 numLoops = 1,
-                          bool interruptRunning = true,
-                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
-                          float timeout_sec = _kDefaultTimeout_sec);
-      // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
-      // Caller owns the animation -- it will not be deleted by this action.
+    
       // Numloops 0 causes the action to loop forever
       // tracksToLock indicates tracks of the animation which should not play
       PlayAnimationAction(Robot& robot,
-                          Animation* animation,
+                          const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true,
                           u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
@@ -58,24 +52,13 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-
-      bool HasAnimStartedPlaying() const { return _startedPlaying; }
       
       std::string               _animName;
       u32                       _numLoopsRemaining;
-      bool                      _startedPlaying;
       bool                      _stoppedPlaying;
       bool                      _wasAborted;
-      AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
       bool                      _interruptRunning;
-      Animation*                _animPointer = nullptr;
       float                     _timeout_sec = _kDefaultTimeout_sec;
-      
-      // For responding to AnimationStarted, AnimationEnded, and AnimationEvent events
-      Signal::SmartHandle _startSignalHandle;
-      Signal::SmartHandle _endSignalHandle;
-      Signal::SmartHandle _eventSignalHandle;
-      Signal::SmartHandle _abortSignalHandle;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;
       static constexpr float _kDefaultTimeoutForInfiniteLoops_sec = std::numeric_limits<f32>::max();

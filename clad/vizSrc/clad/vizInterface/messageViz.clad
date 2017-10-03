@@ -114,6 +114,7 @@ message MemoryMapMessageDebugVizBegin
 message MemoryMapMessageDebugViz
 {
   uint_32  originId,
+  uint_32  seqNum,
   ExternalInterface::MemoryMapQuadInfoDebugViz quadInfos[uint_16]
 }
 

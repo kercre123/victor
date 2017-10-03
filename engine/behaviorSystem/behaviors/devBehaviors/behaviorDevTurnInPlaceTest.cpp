@@ -16,6 +16,8 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/robot.h"
 
+#include "anki/common/basestation/jsonTools.h"
+
 namespace Anki {
 namespace Cozmo {
 

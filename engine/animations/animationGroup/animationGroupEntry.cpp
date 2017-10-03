@@ -14,8 +14,6 @@
  **/
 
 #include "engine/animations/animationGroup/animationGroupEntry.h"
-#include "engine/animations/animation.h"
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -36,7 +34,7 @@ namespace Anki {
     {
     }
     
-    Result AnimationGroupEntry::DefineFromJson(const Json::Value &jsonRoot, const CannedAnimationContainer* cannedAnimations)
+    Result AnimationGroupEntry::DefineFromJson(const Json::Value &jsonRoot)
     {
       const Json::Value& jsonName = jsonRoot[kNameKey];
       
@@ -47,12 +45,16 @@ namespace Anki {
       }
       
       _name = jsonName.asString();
+      
+      // TODO: Verify each animation actually exists in the CannedAnimationContainer (which is now in the animation process) (VIC-370)
+      /*
       if(nullptr != cannedAnimations && nullptr == cannedAnimations->GetAnimation(_name)) {
         PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.InvalidName",
                           "No canned animation exists named '%s'",
                           _name.c_str());
         return RESULT_FAIL;
       }
+      */
       
       const Json::Value& jsonWeight = jsonRoot[kWeightKey];
       

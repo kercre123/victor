@@ -15,8 +15,6 @@
 #define __Anki_Cozmo_Actions_SetFaceAction_H__
 
 #include "engine/actions/actionInterface.h"
-#include "engine/animations/animationStreamer.h"
-#include "engine/animations/proceduralFace.h"
 
 #include "anki/vision/basestation/image.h"
 #include "util/math/math.h"
@@ -24,12 +22,14 @@
 namespace Anki {
 namespace Cozmo {
 
+// TODO: SetFaceAction is broken (ProceduralFace and Animation only exist in animation process) (VIC-360)
+  
 class SetFaceAction : public IAction
 {
 public:
   
   SetFaceAction(Robot& robot, const Vision::Image& faceImage, u32 duration_ms);
-  SetFaceAction(Robot& robot, const ProceduralFace& procFace, u32 duration_ms);
+  //SetFaceAction(Robot& robot, const ProceduralFace& procFace, u32 duration_ms);
   
   virtual ~SetFaceAction();
   
@@ -44,8 +44,8 @@ protected:
 private:
   
   Vision::Image                  _faceImage;
-  ProceduralFace                 _procFace;
-  Animation                      _animation;
+  //ProceduralFace                 _procFace;
+  //Animation                      _animation;
   std::unique_ptr<IActionRunner> _playAnimationAction  = nullptr;
   u32                            _duration_ms;
   

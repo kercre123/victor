@@ -626,6 +626,7 @@ void QuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) cons
     QuadTreeNode::QuadInfoDebugVizVector partQuadInfos;
     partQuadInfos.reserve(quadsPerMessage);
     
+    u32 seqNum = 0;
     // while we have quads to send
     while (remainingQuads > 0)
     {
@@ -639,7 +640,7 @@ void QuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) cons
       remainingQuads -= quadsPerMessage;
       
       // send message
-      _robot->Broadcast(MessageViz(MemoryMapMessageDebugViz(originID, partQuadInfos)));
+      _robot->Broadcast(MessageViz(MemoryMapMessageDebugViz(originID, seqNum++, partQuadInfos)));
     }
     
     // Send the end message

@@ -63,16 +63,9 @@ namespace Anki {
       Pose3d frontPose(-M_PI_2_F, Z_AXIS_3D(),
                        Point3f{SlopeLength+PlatformLength, 0, MarkerZPosition});
       
-      _marker = &AddMarker(Vision::MARKER_CHARGER, frontPose, Point2f(MarkerWidth, MarkerHeight));
+      _marker = &AddMarker(Vision::MARKER_CHARGERHOME, frontPose, Point2f(MarkerWidth, MarkerHeight));
       
     } // Charger() Constructor
-    
-    Charger::Charger(ActiveID activeID, FactoryID factoryID, ObjectType objectType)
-    : Charger(objectType)
-    {     
-      _activeID = activeID;
-      _factoryID = factoryID;
-    }
 
     
     Charger::~Charger()
