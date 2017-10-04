@@ -45,8 +45,6 @@ target_compile_definitions(test_engine
   PRIVATE
   SIMULATOR
   CORETECH_BASESTATION
-  ANKICORETECH_USE_OPENCV=1
-  ANKICORETECH_EMBEDDED_USE_OPENCV=1
 )
 
 target_include_directories(test_engine

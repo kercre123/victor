@@ -8,8 +8,9 @@ include(flatbuffers)
 include(opencv)
 
 set(PLATFORM_LIBS "")
-set(PLATFORM_INCLUDES "")
+set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
+
 if (ANDROID)
     set(PLATFORM_LIBS
         android
@@ -24,9 +25,9 @@ elseif (MACOSX)
 endif()
 
 target_link_libraries(victor_anim
-PRIVATE
+  PRIVATE
   util
-# cti
+  # cti
   cti_common_robot
   cti_vision
   cti_messaging_robot
@@ -38,8 +39,8 @@ PRIVATE
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
-# platform
-PUBLIC
+  # platform
+  PUBLIC
   # these need to be public until we remove android-specific classes from androidHAL.h
   ${PLATFORM_LIBS}
 )
@@ -48,14 +49,13 @@ android_strip(TARGET victor_anim)
 
 target_compile_definitions(victor_anim
   PRIVATE
-  -DCOZMO_BASESTATION
-  -DCOZMO_V2
-  -DANKICORETECH_USE_OPENCV=1
-  -DANKICORETECH_EMBEDDED_USE_OPENCV=1  
+  COZMO_BASESTATION
+  COZMO_V2
   ${PLATFORM_COMPILE_DEFS}
 )
 
-target_include_directories(victor_anim PUBLIC
+target_include_directories(victor_anim 
+  PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
   ${PLATFORM_INCLUDES}
 )
@@ -67,7 +67,7 @@ if (ANDROID)
   anki_build_cxx_executable(victor_animator ${ANKI_SRCLIST_DIR})
 
   target_link_libraries(victor_animator
-  PRIVATE
+    PRIVATE
     victor_anim
     cti_common_robot
     util

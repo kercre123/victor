@@ -7,8 +7,7 @@ anki_build_cxx_library(cti_planning ${ANKI_SRCLIST_DIR} STATIC)
   
 target_compile_definitions(cti_planning
   PRIVATE
-  -DCORETECH_BASESTATION
-  -DANKICORETECH_USE_OPENCV=1
+  CORETECH_BASESTATION
 )
 
 set_target_properties(cti_planning PROPERTIES
@@ -24,10 +23,10 @@ PRIVATE
 set_property(TARGET cti_planning PROPERTY CXX_STANDARD 11)
 
 target_link_libraries(cti_planning
-PUBLIC
+  PUBLIC
   cti_common
-PRIVATE
-  ${OPENCV_LIBS}                                                                                    
+  PRIVATE
+  ${OPENCV_LIBS}
 )
 
 target_include_directories(cti_planning PUBLIC
