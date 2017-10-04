@@ -200,6 +200,40 @@ namespace CodeLab {
     private const string kHorizontalIndexFilename = "index.html";
     private const string kVerticalIndexFilename = "index_vertical.html";
 
+    private const float kMaxAngleClamp = 3600.0f; // 10 full rotations
+    private const float kMinAngularSpeedClamp = 2.5f; // 2.5 degrees per second
+    private const float kMaxAngularSpeedClamp = 360.0f; // 1 full rotation per second
+    private const float kMaxDistanceClamp = 100000.0f; // 100 meters
+    private const float kMaxSpeedClamp = 1000.0f; // 1 m/s
+
+    private float ClampAngleInput(float inputAngle) {
+      return Mathf.Clamp(inputAngle, -kMaxAngleClamp, kMaxAngleClamp);
+    }
+
+    private float ClampHeadAngleInput(float inputAngle) {
+      return Mathf.Clamp(inputAngle, CozmoUtil.kMinHeadAngle, CozmoUtil.kMaxHeadAngle);
+    }
+
+    private float ClampAngularSpeedInput(float inputSpeed) {
+      return Mathf.Clamp(inputSpeed, -kMaxAngularSpeedClamp, kMaxAngularSpeedClamp);
+    }
+
+    private float ClampPositiveAngularSpeedInput(float inputSpeed) {
+      return Mathf.Clamp(inputSpeed, kMinAngularSpeedClamp, kMaxAngularSpeedClamp);
+    }
+
+    private float ClampDistanceInput(float inputDistance) {
+      return Mathf.Clamp(inputDistance, -kMaxDistanceClamp, kMaxDistanceClamp);
+    }
+
+    private float ClampSpeedInput(float inputSpeed) {
+      return Mathf.Clamp(inputSpeed, -kMaxSpeedClamp, kMaxSpeedClamp);
+    }
+
+    private float ClampPercentageInput(float inputValue, float maxValue = 100.0f) {
+      return Mathf.Clamp(inputValue, 0.0f, maxValue);
+    }
+
     // @TODO: Currently nothing is done with this list.
     //  it should be used when we want to surface errors in the codelab file import process that occur before the ui
     //  is ready for them.  At present the list is not cleared out, and could get quite long if many external files are
@@ -411,6 +445,12 @@ namespace CodeLab {
 
     private CozmoStateForCodeLab _LatestCozmoState = new CozmoStateForCodeLab(); // The latest world state sent to JS
 
+    private float ConvertEngineYawToCodeLabYaw(float inYaw) {
+      // We invert yaw so that that it increases with clockwise rotation of Cozmo
+      // (this matches how we invert turn angles so they're clockwise).
+      return -inYaw;
+    }
+
     private void SetCubeStateForCodeLab(CubeStateForCodeLab cubeDest, LightCube cubeSrc) {
       if (cubeSrc == null) {
         cubeDest.pos = new Vector3(0.0f, 0.0f, 0.0f);
@@ -429,7 +469,7 @@ namespace CodeLab {
         cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
         cubeDest.pitch_d = cubeSrc.PitchDegrees;
         cubeDest.roll_d = cubeSrc.RollDegrees;
-        cubeDest.yaw_d = cubeSrc.YawDegrees;
+        cubeDest.yaw_d = ConvertEngineYawToCodeLabYaw(cubeSrc.YawDegrees);
       }
     }
 
@@ -469,7 +509,7 @@ namespace CodeLab {
         // Set Cozmo data
 
         _LatestCozmoState.pos = robot.WorldPosition;
-        _LatestCozmoState.poseYaw_d = robot.PoseAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.poseYaw_d = ConvertEngineYawToCodeLabYaw(robot.PoseAngle * Mathf.Rad2Deg);
         _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
         _LatestCozmoState.poseRoll_d = robot.RollAngle * Mathf.Rad2Deg;
         _LatestCozmoState.liftHeightPercentage = robot.LiftHeightFactor * 100.0f;
@@ -1336,7 +1376,7 @@ namespace CodeLab {
           return true;
         }
       case "cozVertCozmoFaceSetTextScale": {
-          float drawScale = scratchRequest.argFloat * 0.01f; // value from JS is a percentage
+          float drawScale = ClampPercentageInput(scratchRequest.argFloat, 10000.0f) * 0.01f; // value from JS is a percentage
           _SessionState.GetProgramState().SetDrawTextScale(drawScale);
           return true;
         }
@@ -1364,9 +1404,9 @@ namespace CodeLab {
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertPathOffset") {
-        float offsetX = scratchRequest.argFloat;
-        float offsetY = scratchRequest.argFloat2;
-        float offsetAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;
+        float offsetX = ClampDistanceInput(scratchRequest.argFloat);
+        float offsetY = ClampDistanceInput(scratchRequest.argFloat2);
+        float offsetAngle = ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(offsetX.ToString() + " , " + offsetY.ToString() + " , " + offsetAngle.ToString()));
         // Offset is in current robot space, so rotate        
         float currentAngle = robot.PoseAngle;
@@ -1384,9 +1424,9 @@ namespace CodeLab {
         inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertPathTo") {
-        float newX = scratchRequest.argFloat;
-        float newY = scratchRequest.argFloat2;
-        float newAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;
+        float newX = ClampDistanceInput(scratchRequest.argFloat);
+        float newY = ClampDistanceInput(scratchRequest.argFloat2);
+        float newAngle = ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(newX.ToString() + " , " + newY.ToString() + " , " + newAngle.ToString()));
         bool level = false;
         bool useManualSpeed = false;
@@ -1397,8 +1437,8 @@ namespace CodeLab {
         inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertHeadAngle") {
-        float angle = scratchRequest.argFloat * Mathf.Deg2Rad;
-        float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
+        float angle = ClampHeadAngleInput(scratchRequest.argFloat) * Mathf.Deg2Rad;
+        float speed = ClampPositiveAngularSpeedInput(scratchRequest.argFloat2) * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
         // Cancel any current head actions, and any head motor usage, so that this new action can run
@@ -1413,8 +1453,8 @@ namespace CodeLab {
         }
       }
       else if (scratchRequest.command == "cozVertLiftHeight") {
-        float liftHeight = scratchRequest.argFloat * 0.01f;  // lift height comes in as a percentage
-        float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
+        float liftHeight = ClampPercentageInput(scratchRequest.argFloat) * 0.01f;  // lift height comes in as a percentage
+        float speed = ClampPositiveAngularSpeedInput(scratchRequest.argFloat2) * Mathf.Deg2Rad;
         float accel = -1.0f;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString() + " , " + speed.ToString()));
         // Cancel any current lift actions, and any lift motor usage, so that this new action can run
@@ -1429,7 +1469,7 @@ namespace CodeLab {
         }
       }
       else if (scratchRequest.command == "cozVertMoveLift") {
-        float speed = scratchRequest.argFloat * Mathf.Deg2Rad;
+        float speed = ClampAngularSpeedInput(scratchRequest.argFloat) * Mathf.Deg2Rad;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(speed.ToString()));
         // Cancel any current lift actions, so that the motors can be driven directly
         InProgressScratchBlockPool.CancelActionsOfType(ActionType.Lift);
@@ -1437,13 +1477,15 @@ namespace CodeLab {
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertTurn") {
-        float angle = scratchRequest.argFloat;
-        float speed = scratchRequest.argFloat2;
+        float angle = ClampAngleInput(scratchRequest.argFloat);
+        float speed = ClampPositiveAngularSpeedInput(scratchRequest.argFloat2);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
         // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
         InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
         robot.DriveWheels(0.0f, 0.0f);
-        uint idTag = TurnInPlaceVertical(angle, speed, inProgressScratchBlock.CompletedTurn);
+        // We invert the angle here, so that Turn(90) is to the right, instead of the left, because
+        // non-roboticists are more likely to assume positive=clockwise rotation
+        uint idTag = TurnInPlaceVertical(-angle, speed, inProgressScratchBlock.CompletedTurn);
         inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertPlaySoundEffects") {
@@ -1467,8 +1509,8 @@ namespace CodeLab {
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozVertDrive") {
-        float dist_mm = scratchRequest.argFloat;
-        float speed = scratchRequest.argFloat2;
+        float dist_mm = ClampDistanceInput(scratchRequest.argFloat);
+        float speed = ClampSpeedInput(scratchRequest.argFloat2);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
         // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
         InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
@@ -1477,8 +1519,8 @@ namespace CodeLab {
         inProgressScratchBlock.SetActionData(ActionType.Drive, idTag);
       }
       else if (scratchRequest.command == "cozVertDriveWheels") {
-        float leftSpeed = scratchRequest.argFloat;
-        float rightSpeed = scratchRequest.argFloat2;
+        float leftSpeed = ClampSpeedInput(scratchRequest.argFloat);
+        float rightSpeed = ClampSpeedInput(scratchRequest.argFloat2);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(leftSpeed.ToString() + " , " + rightSpeed.ToString()));
         // Cancel any current driving actions, so the motors can drive directly
         InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);

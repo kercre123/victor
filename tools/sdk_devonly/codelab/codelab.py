@@ -943,7 +943,10 @@ class CodeLabInterface():
                 def get_last_modified_time(project_data):
                     try:
                         last_modified_time = project_data['DateTimeLastModifiedUTC']
-                        timestamp_number = extract_timestamp_number(last_modified_time)
+                        if last_modified_time is not None:
+                            timestamp_number = extract_timestamp_number(last_modified_time)
+                        else:
+                            timestamp_number = 0
                     except KeyError:
                         last_modified_time = None
                         timestamp_number = 0
@@ -1096,11 +1099,15 @@ class CodeLabInterface():
                             'DateTimeLastModifiedUTC': None
                             }
             if command_args.verbose:
-                log_text("on_recv_window_openCozmoProject() - project_data = %s" % str(project_data))
+                log_text("on_openCozmoProject_helper() - project_data = %s" % str(project_data))
             self._update_project(project_data)
 
-    def on_recv_window_openCozmoProjectJSON(self, project_uuid, project_name, project_json, is_sample):
+    def on_recv_window_openCozmoProjectJSON(self, loaded_json):
         project_xml = None
+        project_name = loaded_json["projectName"]
+        project_json = json.dumps(loaded_json["projectJSON"])
+        project_uuid = loaded_json["projectUUID"]
+        is_sample = loaded_json["isSampleStr"]
         self.on_openCozmoProject_helper(project_uuid, project_name, project_xml, project_json, is_sample)
 
     def on_recv_window_openCozmoProjectXML(self, project_uuid, project_name, project_xml, is_sample):
@@ -1153,6 +1160,8 @@ class CodeLabInterface():
             payload_str = message_payload_str[len(method_name)+1:-2]  # assumes "method_name(payload);"
             args = split_method_args(payload_str)
 
+            handler_name = "on_recv_" + method_name.replace(".", "_")
+
             if (len(args) > 1) or ((len(args) > 0) and (len(args[0]) > 0)):
                 if command_args.verbose:
                     log_text("handle_method_from_unity() - %s(...):" % method_name)
@@ -1166,11 +1175,15 @@ class CodeLabInterface():
                 if command_args.verbose:
                     log_text("Warning: handle_method_from_unity() - no args for '%s'" % method_name)
 
-            handler_name = "on_recv_" + method_name.replace(".", "_")
             handler = getattr(self, handler_name, None)
 
             if handler is not None:
-                handler(*args)
+                if handler_name == "on_recv_window_openCozmoProjectJSON":
+                    # special case - we need to convert the string into a json object
+                    loaded_json = load_and_verify_json(payload_str, handler_name)
+                    handler(loaded_json)
+                else:
+                    handler(*args)
             else:
                 log_text("Warning: handle_method_from_unity() - no handler for '%s'" % handler_name)
         else:
