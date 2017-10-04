@@ -521,7 +521,7 @@ Result MotionDetector::DetectHelper(const ImageType &image,
                                                                  debugImageRGBs, msg);
 
     if (peripheralMotionDetected || groundMotionDetected) {
-      if (DEBUG_MOTION_DETECTION) {
+      if (DEBUG_MOTION_DETECTION > 0) {
         PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectMotion.DetectHelper",
                       "Motion found, sending message");
       }
@@ -529,14 +529,13 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     }
     
     //_prevRatioImg = ratio12;
-    
+#endif
+
   } // if(headSame && poseSame)
   
   // Store a copy of the current image for next time (at correct resolution!)
   SetPrevImage(image, blurHappened);
 
-#endif
-  
   return RESULT_OK;
   
 }
@@ -574,7 +573,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
   if(imgRegionArea > 0 || groundRegionArea > 0.f)
   {
     motionFound = true;
-    if(DEBUG_MOTION_DETECTION)
+    if(DEBUG_MOTION_DETECTION > 0)
     {
       PRINT_CH_INFO(kLogChannelName, "MotionDetector.DetectGroundAndImageHelper.FoundCentroid",
                     "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
@@ -620,7 +619,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
 
     observedMotions.emplace_back(std::move(msg));
 
-    if(DEBUG_MOTION_DETECTION)
+    if(DEBUG_MOTION_DETECTION > 1)
     {
       char tempText[128];
       Vision::ImageRGB ratioImgDisp(foregroundMotion);
@@ -850,6 +849,11 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
       msg.top_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.top_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
       motionDetected = true;
+
+      if (_vizManager && (DEBUG_MOTION_DETECTION>0)) {
+        const int radius = 10;
+        _vizManager->DrawCameraOval(centroid * scaleMultiplier, radius, radius, NamedColors::RED);
+      }
     }
     else
     {
@@ -868,6 +872,11 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
       msg.left_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.left_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
       motionDetected = true;
+
+      if (_vizManager && (DEBUG_MOTION_DETECTION>0)) {
+        const int radius = 10;
+        _vizManager->DrawCameraOval(centroid * scaleMultiplier, radius, radius, NamedColors::RED);
+      }
     }
     else
     {
@@ -886,6 +895,11 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
       msg.right_img_x = int16_t(std::round(centroid.x() * scaleMultiplier));
       msg.right_img_y = int16_t(std::round(centroid.y() * scaleMultiplier));
       motionDetected = true;
+
+      if (_vizManager && (DEBUG_MOTION_DETECTION>0)) {
+        const int radius = 10;
+        _vizManager->DrawCameraOval(centroid * scaleMultiplier, radius, radius, NamedColors::RED);
+      }
     }
     else
     {
@@ -895,7 +909,7 @@ bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
     }
   }
 
-  if (DEBUG_MOTION_DETECTION) {
+  if (DEBUG_MOTION_DETECTION > 1) {
     Vision::ImageRGB imageToDisplay(ratioImage);
     // Draw the text
     {
