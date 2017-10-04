@@ -1,9 +1,7 @@
 set(OPENCV_VERSION 3.1.0)
 if(NOT USE_TENSORFLOW)
-  set(OPENCV_VERSION 3.3.0) # the dnn module exists OpenCV 3.3.0
+  set(OPENCV_VERSION 3.3.0) # the dnn module exists in OpenCV 3.3.0
 endif()
-
-message(STATUS "Using OpenCV-${OPENCV_VERSION}")
 
 set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
 
@@ -33,7 +31,6 @@ set(OPENCV_LIBS
     videoio)
 
 if(NOT USE_TENSORFLOW)
-  message(STATUS "Adding OpenCV DNN module")
   list(APPEND OPENCV_LIBS dnn)
 endif()
 
@@ -48,7 +45,6 @@ endif()
 
 # Add the include directory for each OpenCV module:
 foreach(OPENCV_MODULE ${OPENCV_LIBS})
-  message(STATUS "opencv.cmake add_library: " ${OPENCV_MODULE})
   add_library(${OPENCV_MODULE} ${LIB_TYPE} IMPORTED)
   set(MODULE_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/${OPENCV_DIR}/modules/${OPENCV_MODULE}/include")
   set(include_paths
@@ -86,7 +82,6 @@ else()
 endif()
 
 if(OPENCV_VERSION EQUAL "3.3.0")
-  message(STATUS "Adding OpenCV jpeg, protobuf, and IPP libs for 3.3.0")
   if (ANDROID)
    list(APPEND OPENCV_EXTERNAL_LIBS cpufeatures libjpeg libprotobuf)
   elif()
@@ -100,6 +95,8 @@ foreach(LIB ${OPENCV_EXTERNAL_LIBS})
         IMPORTED_LOCATION
         ${OPENCV_3RDPARTY_LIB_DIR}/lib${LIB}.a)
 endforeach()
+
+message(STATUS "including OpenCV: v${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [3rdParty: ${OPENCV_EXTERNAL_LIBS}]")
 
 list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
 
