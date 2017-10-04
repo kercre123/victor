@@ -70,7 +70,7 @@ body.show-glossary-modal #glossary-modal {
   background-color: transparent;
   border: 0;
 
-  background-image: url('../images/ui/btn_close.svg');
+  background-image: url('../images/ui/close_glossary.svg');
   background-size: cover;
 }
 
