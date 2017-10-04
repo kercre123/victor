@@ -36,13 +36,20 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-target_compile_definitions(test_engine PRIVATE                                                       
-    -DSIMULATOR
-    -DCORETECH_BASESTATION                                                                          
-    -DANKICORETECH_USE_OPENCV=1                                                                     
-    -DANKICORETECH_EMBEDDED_USE_OPENCV=1)
+target_compile_options(test_engine
+  PRIVATE
+  -Wno-undef
+)
+
+target_compile_definitions(test_engine 
+  PRIVATE
+  SIMULATOR
+  CORETECH_BASESTATION
+  ANKICORETECH_USE_OPENCV=1
+  ANKICORETECH_EMBEDDED_USE_OPENCV=1
+)
 
 target_include_directories(test_engine
-    PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/engine>
+  PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/engine>
 )
