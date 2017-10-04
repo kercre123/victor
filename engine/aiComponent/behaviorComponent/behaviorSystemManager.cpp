@@ -15,13 +15,14 @@
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/viz/vizManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
+#include "engine/viz/vizManager.h"
 
 #include "clad/types/behaviorSystem/reactionTriggers.h"
 
@@ -139,11 +140,11 @@ void BehaviorSystemManager::RunnableStack::PrepareDelegateForRemovalFromStack(IB
 // BehaviorSystemManager implementation
 /////////
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSystemManager::BehaviorSystemManager()
 : _initializationStage(InitializationStage::SystemNotInitialized)
 {
+  _runnableStack.reset();
 }
 
 
@@ -184,7 +185,11 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   // time checks in iBSRunnable, so Activate the base here instead of in init
   if(_initializationStage == InitializationStage::StackNotInitialized){
     _initializationStage = InitializationStage::Initialized;
-    _runnableStack->InitRunnableStack(behaviorExternalInterface, _baseRunnableTmp);
+
+
+    IBehavior* baseRunnable = _baseRunnableTmp;
+    
+    _runnableStack->InitRunnableStack(behaviorExternalInterface, baseRunnable);
     _baseRunnableTmp = nullptr;
   }
   

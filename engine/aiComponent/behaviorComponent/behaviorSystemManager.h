@@ -77,7 +77,6 @@ private:
   // - - - - - - - - - - - - - - -
   // others/shared
   // - - - - - - - - - - - - - - -
-  
   BehaviorExternalInterface* _behaviorExternalInterface;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

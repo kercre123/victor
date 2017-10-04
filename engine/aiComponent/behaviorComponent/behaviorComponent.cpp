@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/devBaseRunnable.h"
 #include "engine/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 
@@ -114,9 +115,19 @@ void BehaviorComponent::Init(Robot& robot)
       if(!behaviorSystemConfig.empty()){
         ActivityType type = IActivity::ExtractActivityTypeFromConfig(behaviorSystemConfig);
         
-        IBSRunnable* baseRunnable = ActivityFactory::CreateActivity(*_behaviorExternalInterface,
-                                                                    type,
-                                                                    behaviorSystemConfig);
+        IBehavior* dataBasedRunnable = ActivityFactory::CreateActivity(*_behaviorExternalInterface,
+                                                                       type,
+                                                                       behaviorSystemConfig);
+        dataBasedRunnable->Init( *_behaviorExternalInterface );
+        
+        IBehavior* baseRunnable = dataBasedRunnable;
+        if( ANKI_DEV_CHEATS ) {
+          // create a dev base layer to put on the bottom, and pass the desired base in so that DevBaseRunnable
+          // will automatically delegate to it
+          baseRunnable = new DevBaseRunnable( dataBasedRunnable );
+          baseRunnable->Init( *_behaviorExternalInterface);
+        }
+        
         _behaviorSysMgr->InitConfiguration(*_behaviorExternalInterface,
                                            baseRunnable);
       }
