@@ -38,10 +38,15 @@ namespace Cozmo.Needs.Sparks.UI {
         _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
         _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
 
-        _CostLabelHelper = new CostLabel(unlockInfo.RequestTrickCostItemId,
-                       unlockInfo.RequestTrickCostAmount,
-                                         _SparkCountText,
-                                         UIColorPalette.GeneralSparkTintColor);
+        if (unlockInfo.RequestTrickCostAmount > 0 && unlockInfo.IsSparkable) {
+          _CostLabelHelper = new CostLabel(unlockInfo.RequestTrickCostItemId,
+                         unlockInfo.RequestTrickCostAmount,
+                                           _SparkCountText,
+                                           UIColorPalette.GeneralSparkTintColor);
+        }
+        else {
+          _SparkCostContainer.gameObject.SetActive(false);
+        }
       }
       else {
         _SparksButton.Initialize(HandleTappedComingSoon, "spark_cell_coming_soon_" + unlockInfo.DASName, dasEventDialogName);
