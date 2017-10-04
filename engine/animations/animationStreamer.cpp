@@ -67,7 +67,7 @@ namespace Cozmo {
   
   AnimationStreamer::AnimationStreamer(const CozmoContext* context,
                                        Audio::RobotAudioClient& audioClient)
-  : IAnimationStreamer(context->GetExternalInterface())
+  : HasSettableParameters(context->GetExternalInterface())
   , _context(context)
   , _animationContainer(_context->GetRobotManager()->GetCannedAnimations())
   , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())

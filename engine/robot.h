@@ -23,7 +23,6 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
 #include "engine/animations/animationStreamer.h"
-#include "engine/animations/engineAnimationController.h"
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/ramp.h"
@@ -111,11 +110,6 @@ class RobotToEngine;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
-
-//
-// Compile-time switch for Animation Streamer 2.0
-//
-#define BUILD_NEW_ANIMATION_CODE 0
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -534,15 +528,9 @@ public:
     
   // =========== Animation Commands =============
   
-#if BUILD_NEW_ANIMATION_CODE
-  inline IAnimationStreamer & GetAnimationStreamer() {
-    return (*_animationController.get());
-  }
-#else
-  inline IAnimationStreamer & GetAnimationStreamer() {
+  inline AnimationStreamer& GetAnimationStreamer() {
     return _animationStreamer;
   }
-#endif
 
   // Returns the number of animation bytes or audio frames played on the robot since
   // it was initialized with SyncTime.
@@ -777,9 +765,6 @@ protected:
   u8                _animationTag                    = 0;
   
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
-  
-  ///////// NEW Animation /////////
-  std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
   std::unique_ptr<ActionList>             _actionList;
   std::unique_ptr<MovementComponent>      _movementComponent;

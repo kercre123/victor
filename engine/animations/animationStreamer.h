@@ -46,60 +46,12 @@ namespace Cozmo {
     class RobotAudioClient;
   }  
   
-  //
-  // IAnimationStreamer declares an abstract interface common to all implementations of an animation
-  // streamer component. All methods are pure virtual and must be implemented by the interface provider.
-  //  
-  class IAnimationStreamer :
-    public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
+  class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
   public:
     
     using Tag = AnimationTag;
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
-    
-    IAnimationStreamer(IExternalInterface * interface) :
-      HasSettableParameters(interface)
-    {
-    }
-    
-    // Sets an animation to be streamed and how many times to stream it.
-    // Use numLoops = 0 to play the animation indefinitely.
-    // Returns a tag you can use to monitor whether the robot is done playing this
-    // animation.
-    // If interruptRunning == true, any currently-streaming animation will be aborted.
-    // Actual streaming occurs on calls to Update().
-    virtual Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) = 0;
-    
-    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
-    // idle (even if it came from SetIdleAnimation) is always on the stack
-    virtual Result PushIdleAnimation(AnimationTrigger animName, const std::string& lockName) = 0;
-    
-    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
-    // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
-    // Will not pop the last idle off the stack.
-    virtual Result RemoveIdleAnimation(const std::string& lockName) = 0;
-    
-    // If any animation is set for streaming and isn't done yet, stream it.
-    virtual Result Update(Robot& robot) = 0;
-    
-    virtual const Animation* GetStreamingAnimation() const = 0;
-    
-    virtual const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const = 0;
-    
-    // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
-    // and there is no idle animation
-    virtual void SetKeepFaceAliveLastStreamTimeout(const f32 time_s) = 0;
-    virtual void ResetKeepFaceAliveLastStreamTimeout() = 0;
-    
-    virtual TrackLayerComponent* GetTrackLayerComponent() { return nullptr; }
-    virtual const TrackLayerComponent* GetTrackLayerComponent() const { return nullptr; }
-    
-  };
-  
-  class AnimationStreamer : public IAnimationStreamer
-  {
-  public:
     
     static const AnimationTrigger NeutralFaceTrigger;
     
@@ -117,33 +69,33 @@ namespace Cozmo {
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
     Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
-    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) override;
+    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
     
     // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
     // idle (even if it came from SetIdleAnimation) is always on the stack
-    Result PushIdleAnimation(AnimationTrigger animName, const std::string& lockName) override;
+    Result PushIdleAnimation(AnimationTrigger animName, const std::string& lockName);
     
     // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
     // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
     // Will not pop the last idle off the stack.
-    Result RemoveIdleAnimation(const std::string& lockName) override;
+    Result RemoveIdleAnimation(const std::string& lockName);
 
     const std::string& GetIdleAnimationName() const;
     
     // If any animation is set for streaming and isn't done yet, stream it.
-    Result Update(Robot& robot) override;
+    Result Update(Robot& robot);
      
     // Returns true if the idle animation is playing
     bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
-    const Animation* GetStreamingAnimation() const override { return _streamingAnimation; }
+    const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
-    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const override;
+    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const;
     const Animation* GetCannedAnimation(const std::string& name) const;
 
     // Required by HasSettableParameters:
-    virtual void SetDefaultParams() override;
+    void SetDefaultParams();
     
     // Overload of SetParam from base class. Mostly just calls base class method.
     void SetParam(LiveIdleAnimationParameter whichParam, float newValue);
@@ -155,12 +107,11 @@ namespace Cozmo {
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
     // and there is no idle animation
-    void SetKeepFaceAliveLastStreamTimeout(const f32 time_s) override
-      { _longEnoughSinceLastStreamTimeout_s = time_s; }
-    void ResetKeepFaceAliveLastStreamTimeout() override;
+    void SetKeepFaceAliveLastStreamTimeout(const f32 time_s) { _longEnoughSinceLastStreamTimeout_s = time_s; }
+    void ResetKeepFaceAliveLastStreamTimeout();
     
-    virtual TrackLayerComponent* GetTrackLayerComponent() override { return _trackLayerComponent.get(); }
-    virtual const TrackLayerComponent* GetTrackLayerComponent() const override { return _trackLayerComponent.get(); }
+    TrackLayerComponent* GetTrackLayerComponent() { return _trackLayerComponent.get(); }
+    const TrackLayerComponent* GetTrackLayerComponent() const { return _trackLayerComponent.get(); }
 
   private:
     

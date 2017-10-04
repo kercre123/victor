@@ -25,7 +25,6 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
-#include "engine/animations/engineAnimationController.h"
 #include "engine/animations/proceduralFace.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/robotAudioClient.h"
@@ -175,9 +174,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _pathComponent(new PathComponent(*this, robotID, context))
   , _animationStreamer(_context, *_audioClient)
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
-#if BUILD_NEW_ANIMATION_CODE
-  , _animationController(new RobotAnimation::EngineAnimationController(_context, _audioClient.get()))
-#endif
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
   , _visionComponent( new VisionComponent(*this, _context))
@@ -1449,20 +1445,12 @@ Result Robot::Update()
   
   //////// Stream Animations /////////
   if (_timeSynced) { // Don't stream anything before we've connected
-    // NEW Animations!
-    if (BUILD_NEW_ANIMATION_CODE) {
-      result = _animationController->Update(*this);
-      if (result != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update.AnimationController",
-                            "Robot %d had an animation controller failure (%d)", robotID, result);
-      }
-    } else {
-      result = _animationStreamer.Update(*this);
-      if (result != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update.AnimationStreamer",
-                            "Robot %d had an animation streamer failure (%d)", robotID, result);
-      }
+    result = _animationStreamer.Update(*this);
+    if (result != RESULT_OK) {
+      PRINT_NAMED_WARNING("Robot.Update.AnimationStreamer",
+                          "Robot %d had an animation streamer failure (%d)", robotID, result);
     }
+    
   }
 
   /////////// Update NVStorage //////////

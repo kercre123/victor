@@ -11,7 +11,6 @@
  *
  */
 
-#include "helpers/audio/streamingAnimationTest.h"
 #include "engine/animations/animation.h"
 #include "engine/audio/robotAudioAnimationOnRobot.h"
 #include "engine/audio/robotAudioClient.h"
@@ -197,21 +196,6 @@ void AnimationAudioTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAudioTe
     // Tick
     animationFrameBeginTime_ms += Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
     animationFrameEndTime_ms += Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioTestConfig::LoadStreamingAnimation( Anki::Cozmo::RobotAnimation::StreamingAnimationTest& out_streamingAnimation )
-{
-  // Add events to animation
-  out_streamingAnimation.GenerateAudioEventList_TEST();
-  
-  // Add Fake audio buffer data
-  LoadAudioBuffer(*(RobotAudioTestBuffer*)out_streamingAnimation.GetAudioBuffer());
-  
-  // Mark all mock events complete
-  for (size_t i = 0; i < _events.size(); ++i) {
-    out_streamingAnimation.IncrementCompletedEventCount_TEST();
   }
 }
 
