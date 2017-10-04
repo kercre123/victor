@@ -223,7 +223,7 @@ void BehaviorBuildPyramidBase::TransitionToObservingBase(BehaviorExternalInterfa
   action->AddAction(new DriveStraightAction(robot, -kDriveBackDistance_mm, kDriveBackSpeed_mm_s));
   action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidReactToBase));
 
-  StartActing(action,
+  DelegateIfInControl(action,
               [this, &behaviorExternalInterface]{
                 if(_continuePastBaseCallback != nullptr){
                   _continuePastBaseCallback(behaviorExternalInterface);

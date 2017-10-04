@@ -634,14 +634,16 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorExternalInterface& behaviorEx
     }
   }
   
-  if( nullptr != nextBehavior ) {
-    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-    // be removed
-    const Robot& robot = behaviorExternalInterface.GetRobot();
-    VIZ_BEHAVIOR_SELECTION_ONLY(
-      robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(
-           VizInterface::NewBehaviorSelected( nextBehavior->GetID() )));
-  }
+  #if ANKI_DEV_CHEATS
+    if( nullptr != nextBehavior ) {
+      // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+      // be removed
+      const Robot& robot = behaviorExternalInterface.GetRobot();
+      VIZ_BEHAVIOR_SELECTION_ONLY(
+        robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(
+             VizInterface::NewBehaviorSelected( nextBehavior->GetID() )));
+    }
+  #endif
   
   SetRunningAndResumeInfo(behaviorExternalInterface, nextBehaviorInfo);
   SendDasTransitionMessage(behaviorExternalInterface,
@@ -704,11 +706,13 @@ bool BehaviorManager::SwitchToReactionTrigger(BehaviorExternalInterface& behavio
     return false;
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  VIZ_BEHAVIOR_SELECTION_ONLY(robot.GetContext()->GetVizManager()->SendNewReactionTriggered(
-                              VizInterface::NewReactionTriggered( triggerStrategy.GetName())));
+  #if ANKI_DEV_CHEATS
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    const Robot& robot = behaviorExternalInterface.GetRobot();
+    VIZ_BEHAVIOR_SELECTION_ONLY(robot.GetContext()->GetVizManager()->SendNewReactionTriggered(
+                                VizInterface::NewReactionTriggered( triggerStrategy.GetName())));
+  #endif
 
   BehaviorRunningAndResumeInfo newBehaviorInfo;
   newBehaviorInfo.SetCurrentBehavior(nextBehavior);

@@ -229,10 +229,12 @@ IBehaviorPtr ScoringBSRunnableChooser::GetDesiredActiveBehavior(BehaviorExternal
     VIZ_BEHAVIOR_SELECTION_ONLY( robotBehaviorSelectData.scoreData.push_back(scoreData) );
   }
   
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  const Robot& robot = behaviorExternalInterface.GetRobot();
-  VIZ_BEHAVIOR_SELECTION_ONLY( robot.GetContext()->GetVizManager()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
+  #if ANKI_DEV_CHEATS
+    // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+    // be removed
+    const Robot& robot = behaviorExternalInterface.GetRobot();
+    VIZ_BEHAVIOR_SELECTION_ONLY( robot.GetContext()->GetVizManager()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
+  #endif
   
   if( runningBehavior != nullptr && bestBehavior != runningBehavior ) {
     PRINT_NAMED_INFO("BehaviorChooser.SwitchBehaviors",

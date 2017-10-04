@@ -149,7 +149,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
   void BehaviorFactoryCentroidExtractor::TransitionToMovingHead(Robot& robot)
   {
     MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, 0);
-    StartActing(action, [this, &robot](ActionResult res)
+    DelegateIfInControl(action, [this, &robot](ActionResult res)
                 {
                   if(res == ActionResult::SUCCESS)
                   {

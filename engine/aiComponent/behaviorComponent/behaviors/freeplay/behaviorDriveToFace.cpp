@@ -120,7 +120,7 @@ void BehaviorDriveToFace::TransitionToTurningTowardsFace(BehaviorExternalInterfa
     turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(robot, _targetFace));
     turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(robot, facePtr->GetID()));
     
-    StartActing(new TurnTowardsFaceAction(robot, _targetFace),
+    DelegateIfInControl(new TurnTowardsFaceAction(robot, _targetFace),
                 [this, &behaviorExternalInterface, &facePtr](ActionResult result){
                   if(result == ActionResult::SUCCESS){
                     if(IsCozmoAlreadyCloseEnoughToFace(behaviorExternalInterface, facePtr->GetID())){
@@ -150,7 +150,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(BehaviorExternalInterface& b
                                                                distToHead - kMinDriveToFaceDistance_mm,
                                                                MAX_WHEEL_SPEED_MMPS);
     driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
-    StartActing(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
+    DelegateIfInControl(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
   }
 }
 
@@ -163,7 +163,7 @@ void BehaviorDriveToFace::TransitionToAlreadyCloseEnough(BehaviorExternalInterfa
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_AlreadyHere),
+  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_AlreadyHere),
               &BehaviorDriveToFace::TransitionToTrackingFace);
 }
 
@@ -182,7 +182,7 @@ void BehaviorDriveToFace::TransitionToTrackingFace(BehaviorExternalInterface& be
     Robot& robot = behaviorExternalInterface.GetRobot();
     
     const Vision::FaceID_t faceID = facePtr->GetID();
-    StartActing(new TrackFaceAction(robot, faceID));
+    DelegateIfInControl(new TrackFaceAction(robot, faceID));
   }
 }
 

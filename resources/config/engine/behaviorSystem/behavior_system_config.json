@@ -10,6 +10,6 @@
   // sub-activities to create - ensure they're in priority order
   "subActivities" :
   [
-    { "activityID" : "NothingToDo", "activityPriority"          : 0}
+    { "activityID" : "PlayAlone", "activityPriority"          : 0}
   ]
 }

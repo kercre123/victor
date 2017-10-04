@@ -156,7 +156,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
       PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.WithinRange.Verify",
                        "robot is already within range of the cube, check if we can see it");
       
-      StartActing(action, [this, &robot, objectType, possibleCubePose](ActionResult res) {
+      DelegateIfInControl(action, [this, &robot, objectType, possibleCubePose](ActionResult res) {
           if( res == ActionResult::SUCCESS ) {
             MarkPossiblePoseAsEmpty(robot, objectType, possibleCubePose);
           }
@@ -245,7 +245,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
 
   // TODO Either set head up at end, or at start and as soon as we see the cube, react
   
-  StartActing(approachAction);
+  DelegateIfInControl(approachAction);
 }
 
 void BehaviorExploreVisitPossibleMarker::MarkPossiblePoseAsEmpty(Robot& robot, ObjectType objectType, const Pose3d& pose)

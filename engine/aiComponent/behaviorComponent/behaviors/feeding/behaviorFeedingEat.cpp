@@ -264,7 +264,7 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(BehaviorExternalInterface& be
                                                                           kDistanceFromMarker_mm);
   action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(kFeedingPreActionAngleTol_deg));
   
-  StartActing(action, [this, &behaviorExternalInterface](ActionResult result){
+  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult result){
     if( result == ActionResult::SUCCESS ){
       TransitionToPlacingLiftOnCube(behaviorExternalInterface);
     }
@@ -308,7 +308,7 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube(BehaviorExternalInterface
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerAnimationAction(robot, bestAnim),
+  DelegateIfInControl(new TriggerAnimationAction(robot, bestAnim),
               &BehaviorFeedingEat::TransitionToEating);
 }
 
@@ -359,7 +359,7 @@ void BehaviorFeedingEat::TransitionToEating(BehaviorExternalInterface& behaviorE
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeCubeIsSuccessfullyDrained_sec = currentTime_s + timeDrainCube_s;
   
-  StartActing(new TriggerAnimationAction(robot, eatingAnim));
+  DelegateIfInControl(new TriggerAnimationAction(robot, eatingAnim));
 }
 
 
@@ -390,7 +390,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(BehaviorExternalInte
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerLiftSafeAnimationAction(robot, trigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, trigger));
   }
 }
 

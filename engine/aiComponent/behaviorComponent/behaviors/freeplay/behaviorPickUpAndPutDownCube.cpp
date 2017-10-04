@@ -79,7 +79,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToDriveWithCube(BehaviorExternalInt
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TurnInPlaceAction(robot,turn_rad,false),
+  DelegateIfInControl(new TurnInPlaceAction(robot,turn_rad,false),
               &BehaviorPickUpAndPutDownCube::TransitionToPutDownCube);
 }
 
@@ -108,7 +108,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(BehaviorExternalInter
     action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
   }
 
-  StartActing(action, [this]()
+  DelegateIfInControl(action, [this]()
                       {
                         BehaviorObjectiveAchieved(BehaviorObjective::PickedUpAndPutDownBlock);
                         NeedActionCompleted();

@@ -102,7 +102,7 @@ void BehaviorOnConfigSeen::TransitionToPlayAnimationSequence(BehaviorExternalInt
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     const AnimationTrigger animTrigger = _animTriggers[0];
-    StartActing(new TriggerLiftSafeAnimationAction(robot, animTrigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animTrigger));
   }
 }
 

@@ -133,7 +133,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(BehaviorExternalInterfac
   }
   
   placeAction->AddAction(new PlaceObjectOnGroundAction(robot));
-  StartActing(placeAction, &BehaviorRamIntoBlock::TransitionToTurningToBlock);
+  DelegateIfInControl(placeAction, &BehaviorRamIntoBlock::TransitionToTurningToBlock);
 }
 
 
@@ -148,7 +148,7 @@ void BehaviorRamIntoBlock::TransitionToTurningToBlock(BehaviorExternalInterface&
     new TurnTowardsObjectAction(robot, _targetID),
     new MoveLiftToHeightAction(robot,  MoveLiftToHeightAction::Preset::CARRY)
   });
-  StartActing(action, &BehaviorRamIntoBlock::TransitionToRammingIntoBlock);
+  DelegateIfInControl(action, &BehaviorRamIntoBlock::TransitionToRammingIntoBlock);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -181,7 +181,7 @@ void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(BehaviorExternalInterfac
     CompoundActionSequential* driveAction = new CompoundActionSequential(robot);
     driveAction->AddAction(ramAction);
     driveAction->AddAction(driveOut);
-    StartActing(driveAction);
+    DelegateIfInControl(driveAction);
   }
 }
   

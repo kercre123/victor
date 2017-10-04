@@ -29,7 +29,7 @@ Result BehaviorPlayAnimSequenceWithFace::OnBehaviorActivated(BehaviorExternalInt
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   // attempt to turn towards last face, and even if fails, move on to the animations
-  StartActing(new TurnTowardsLastFacePoseAction(robot), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot), [this](BehaviorExternalInterface& behaviorExternalInterface) {
       BaseClass::StartPlayingAnimations(behaviorExternalInterface);
     });
 

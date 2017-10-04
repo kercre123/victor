@@ -109,7 +109,7 @@ void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(BehaviorExternalIn
     IActionRunner* action = new TurnTowardsObjectAction(robot, obj->GetID());
     
     // check above even if turn action fails
-    StartActing(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
+    DelegateIfInControl(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);
   }
   else
   {
@@ -140,7 +140,7 @@ void BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock(BehaviorExt
     turnAction->UseCustomObject(_ghostStackedObject.get());
     
     // after checking the object, go back to the rotation we had at start, or continue with next block if any left
-    StartActing(turnAction, [this, &behaviorExternalInterface](const ActionResult& result) {
+    DelegateIfInControl(turnAction, [this, &behaviorExternalInterface](const ActionResult& result) {
       ++_knownBlockIndex;
       const bool hasMoreBlocks = _knownBlockIndex < _knownBlockIDs.size();
       if (hasMoreBlocks) {
@@ -170,7 +170,7 @@ void BehaviorCheckForStackAtInterval::TransitionToReturnToSearch(BehaviorExterna
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   IActionRunner* action = new PanAndTiltAction(robot, initialRobotRotation, 0, true, false);
-  StartActing(action, [this](){
+  DelegateIfInControl(action, [this](){
     _nextCheckTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _delayBetweenChecks_s;
   });
 }

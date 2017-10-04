@@ -66,7 +66,7 @@ void BehaviorDrivePath::TransitionToFollowingPath(BehaviorExternalInterface& beh
   
   IActionRunner* drivePath = new DrivePathAction(robot, _path);
   //Perform action and then callback
-  StartActing(drivePath, [this](ActionResult res) {
+  DelegateIfInControl(drivePath, [this](ActionResult res) {
     switch(IActionRunner::GetActionResultCategory(res))
     {
       case ActionResultCategory::SUCCESS:

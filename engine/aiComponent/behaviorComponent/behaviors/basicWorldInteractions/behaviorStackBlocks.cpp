@@ -280,7 +280,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(BehaviorExternalInterface
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
     IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
   }
   NeedActionCompleted();
@@ -308,7 +308,7 @@ void BehaviorStackBlocks::TransitionToFailedToStack(BehaviorExternalInterface& b
                               -kDistToBackupOnStackFailure_mm,
                               DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
       new PlaceObjectOnGroundAction(robot)});
-    StartActing(placeAction, retryIfPossible);
+    DelegateIfInControl(placeAction, retryIfPossible);
   }else{
     retryIfPossible(behaviorExternalInterface);
   }

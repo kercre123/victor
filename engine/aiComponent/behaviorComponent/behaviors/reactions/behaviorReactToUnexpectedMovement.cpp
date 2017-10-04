@@ -70,7 +70,7 @@ Result BehaviorReactToUnexpectedMovement::OnBehaviorActivated(BehaviorExternalIn
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerLiftSafeAnimationAction(robot, reactionAnimation,
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, reactionAnimation,
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);

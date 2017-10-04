@@ -82,7 +82,7 @@ void BehaviorPlayAnimSequence::StartPlayingAnimations(BehaviorExternalInterface&
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerLiftSafeAnimationAction(robot, animTrigger, _numLoops),
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animTrigger, _numLoops),
                 &BehaviorPlayAnimSequence::CallToListeners);
   }
   else
@@ -111,7 +111,7 @@ void BehaviorPlayAnimSequence::StartSequenceLoop(BehaviorExternalInterface& beha
     // count already that the loop is done for the next time
     ++_sequenceLoopsDone;
     // start it and come back here next time to check for more loops
-    StartActing(sequenceAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
+    DelegateIfInControl(sequenceAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       CallToListeners(behaviorExternalInterface);
       StartSequenceLoop(behaviorExternalInterface);
     });

@@ -117,7 +117,7 @@ void BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase(BehaviorExterna
     new TriggerAnimationAction(robot, searchIdle)
   });
   
-  StartActing(searchAction,
+  DelegateIfInControl(searchAction,
               &BehaviorFeedingSearchForCube::TransitionToSearchForFoodBase);
 }
 
@@ -137,7 +137,7 @@ void BehaviorFeedingSearchForCube::TransitionToMakeFoodRequest(BehaviorExternalI
   IActionRunner* playAnimAction = new TriggerAnimationAction(robot, reactionAnimation);
   IActionRunner* turnToFaceAction = new TurnTowardsFaceWrapperAction(robot, playAnimAction);
 
-  StartActing(turnToFaceAction,
+  DelegateIfInControl(turnToFaceAction,
               &BehaviorFeedingSearchForCube::TransitionToSecondSearchForFood);
 }
   
@@ -154,7 +154,7 @@ void BehaviorFeedingSearchForCube::TransitionToFailedToFindCubeReaction(Behavior
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerAnimationAction(robot, reactionAnimation));
+  DelegateIfInControl(new TriggerAnimationAction(robot, reactionAnimation));
 }
   
   

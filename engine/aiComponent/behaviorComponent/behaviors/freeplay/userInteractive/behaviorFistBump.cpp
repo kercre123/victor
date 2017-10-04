@@ -171,7 +171,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      StartActing(new PlaceObjectOnGroundAction(robot));
+      DelegateIfInControl(new PlaceObjectOnGroundAction(robot));
       _state = State::LookForFace;
       break;
     }
@@ -183,7 +183,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
       // Turn towards last seen face
       TurnTowardsLastFacePoseAction* turnToFace = new TurnTowardsLastFacePoseAction(robot);
       turnToFace->SetRequireFaceConfirmation(true);
-      StartActing(turnToFace, [this](ActionResult result) {
+      DelegateIfInControl(turnToFace, [this](ActionResult result) {
         if (result == ActionResult::NO_FACE) {
           _startLookingForFaceTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           _state = State::LookingForFace;
@@ -211,7 +211,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
       Pose3d facePose;
       TimeStamp_t lastObservedFaceTime = behaviorExternalInterface.GetFaceWorld().GetLastObservedFace(facePose);
       if (lastObservedFaceTime > 0 && (robot.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
-        StartActing(new TurnTowardsLastFacePoseAction(robot));
+        DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot));
         _state = State::RequestInitialFistBump;
         break;
       }
@@ -219,7 +219,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
       // Check if time to adjust gaze
       if (now > _nextGazeChangeTime_s) {
         PanAndTiltAction* ptAction = new PanAndTiltAction(robot, kLookForFaceAngleChanges_rad[_nextGazeChangeIndex], kLookForFaceHeadAngle, false, true);
-        StartActing(ptAction);
+        DelegateIfInControl(ptAction);
         
         // Set next gaze change time
         _nextGazeChangeTime_s = now + Util::numeric_cast<float>(GetRNG().RandDblInRange(kMinTimeBeforeGazeChange_s, kMaxTimeBeforeGazeChange_s));
@@ -235,7 +235,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestOnce));
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestOnce));
       _state = State::RequestingFistBump;
       break;
     }
@@ -249,7 +249,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
       robot.GetMoveComponent().EnableHeadPower(false);
       
       // Play idle anim
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpIdle));
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpIdle));
       
       _state = State::WaitingForMotorsToSettle;
       break;
@@ -279,7 +279,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
         StopActing();  // Stop the idle anim
         robot.GetMoveComponent().EnableLiftPower(true);
         robot.GetMoveComponent().EnableHeadPower(true);
-        StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpSuccess));
+        DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpSuccess));
         _state = State::CompleteSuccess;
       }
       
@@ -288,10 +288,10 @@ IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternal
         robot.GetMoveComponent().EnableLiftPower(true);
         robot.GetMoveComponent().EnableHeadPower(true);
         if (++_fistBumpRequestCnt < kMaxNumAttempts) {
-          StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestRetry));
+          DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpRequestRetry));
           _state = State::RequestingFistBump;
         } else {
-          StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpLeftHanging));
+          DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FistBumpLeftHanging));
           _state = State::CompleteFail;
         }
       }

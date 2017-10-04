@@ -707,7 +707,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(BehaviorExt
   };
   
   // start moving, and react to action results
-  StartActing(moveAction, onActionResult);
+  DelegateIfInControl(moveAction, onActionResult);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -789,7 +789,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(BehaviorExter
   // stop the squint loop and the movement, and start the new actions, which includes squint out
   StopActing();
   StopSquintLoop(behaviorExternalInterface);
-  StartActing(observationActions);
+  DelegateIfInControl(observationActions);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -933,7 +933,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
         const float distance_mm = 200.0f;
         const float speed_mmps = _configParams.borderApproachSpeed_mmps;
         IAction* driveFwd = new DriveStraightAction(robot, distance_mm, speed_mmps, false);
-        StartActing( driveFwd );
+        DelegateIfInControl( driveFwd );
       }
 
       // wait for new edges
@@ -969,7 +969,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     
     // stop the squint loop and start the new actions, which includes squint out
     StopSquintLoop(behaviorExternalInterface);
-    StartActing(noEdgesFoundAnims);
+    DelegateIfInControl(noEdgesFoundAnims);
 
     // done visiting (still playing anims)
     _operatingState = EOperatingState::DoneVisiting;

@@ -44,7 +44,7 @@ Result BehaviorReactToReturnedToTreads::OnBehaviorActivated(BehaviorExternalInte
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   // Wait for a bit to allow pitch to correct
-  StartActing(new WaitAction(robot, 0.5f),
+  DelegateIfInControl(new WaitAction(robot, 0.5f),
               &BehaviorReactToReturnedToTreads::CheckForHighPitch);
   
   return Result::RESULT_OK;
@@ -66,7 +66,7 @@ void BehaviorReactToReturnedToTreads::CheckForHighPitch(BehaviorExternalInterfac
   // for unnecessary head calibrations.
   if (std::fabsf(robot.GetPitchAngle().getDegrees()) > 10.f) {
     LOG_EVENT("BehaviorReactToReturnedToTreads.CalibratingHead", "%f", robot.GetPitchAngle().getDegrees());
-    StartActing(new CalibrateMotorAction(robot, true, false));
+    DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
   }
 }
 

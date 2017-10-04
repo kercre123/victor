@@ -137,7 +137,7 @@ Result BehaviorReactToVoiceCommand::OnBehaviorActivated(BehaviorExternalInterfac
     }
   };
   
-  StartActing(actionSeries, completionCallback);
+  DelegateIfInControl(actionSeries, completionCallback);
   
   Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(VoiceCommandType::HeyCozmo));
   robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));

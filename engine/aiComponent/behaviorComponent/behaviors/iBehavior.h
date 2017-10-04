@@ -319,18 +319,18 @@ protected:
   // Start an action now, and optionally provide a callback which will be called with the
   // RobotCompletedAction that corresponds to the action
   using RobotCompletedActionCallback = BehaviorRobotCompletedActionCallback;
-  bool StartActing(IActionRunner* action, RobotCompletedActionCallback callback = {});
+  bool DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback = {});
 
-  bool StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
+  bool DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
 
   // helper that just looks at the result (simpler, but you can't get things like the completion union)
   using ActionResultCallback = BehaviorActionResultCallback;
-  bool StartActing(IActionRunner* action, ActionResultCallback callback);
+  bool DelegateIfInControl(IActionRunner* action, ActionResultCallback callback);
   
   // helper that passes through both the ActionResult and Robot so that behaviors don't have
   // to store references to robot as much
   using ActionResultWithRobotCallback = BehaviorActionResultWithExternalInterfaceCallback;
-  bool StartActing(IActionRunner* action, ActionResultWithRobotCallback callback);
+  bool DelegateIfInControl(IActionRunner* action, ActionResultWithRobotCallback callback);
 
   // If you want to do something when the action finishes, regardless of its result, you can use the
   // following callbacks, with either a callback function taking no arguments or taking a single BehaviorExternalInterface&
@@ -338,19 +338,29 @@ protected:
   // reason (as long as the behavior is running)
 
   using SimpleCallback = BehaviorSimpleCallback;
-  bool StartActing(IActionRunner* action, SimpleCallback callback);
+  bool DelegateIfInControl(IActionRunner* action, SimpleCallback callback);
 
   using SimpleCallbackWithRobot = BehaviorSimpleCallbackWithExternalInterface;
-  bool StartActing(IActionRunner* action, SimpleCallbackWithRobot callback);
+  bool DelegateIfInControl(IActionRunner* action, SimpleCallbackWithRobot callback);
 
   template<typename T>
-  bool StartActing(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface));
 
   template<typename T>
-  bool StartActing(IActionRunner* action, void(T::*callback)(void));
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(void));
   
   template<typename T>
-  bool StartActing(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface));
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface));
+  
+  
+  // If possible (without canceling anything), delegate to the given runnable and return true. Otherwise,
+  // return false
+  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface, IBSRunnable* delegate);
+  
+  // If possible (even if it means canceling delegated, delegate to the given runnable and return
+  // true. Otherwise, return false (e.g. if the passed in interface doesn't have access to the delegation
+  // component)
+  bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBSRunnable* delegate);
   
   // This function cancels the action started by StartActing (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are running, this will trigger a callback for the
@@ -458,11 +468,11 @@ private:
   BehaviorExternalInterface* _behaviorExternalInterface;
   float _lastRunTime_s;
   float _startedRunningTime_s;
-  
+
+  // only used if we aren't using the BSM
+  u32 _lastActionTag = 0;
   
   size_t _actionFinishedRunningOnTick;
-  ExternalInterface::RobotCompletedAction _lastCompletedMsgCopy;
-  
   IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
@@ -640,22 +650,22 @@ private:
   
   
 template<typename T>
-bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
+bool IBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
 {
-  return StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+  return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
 
 template<typename T>
-bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(void))
+bool IBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(void))
 {
   std::function<void(void)> boundCallback = std::bind(callback, static_cast<T*>(this));
-  return StartActing(action, boundCallback);
+  return DelegateIfInControl(action, boundCallback);
 }
 
 template<typename T>
-bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface))
+bool IBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface))
 {
-  return StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1, std::placeholders::_2));
+  return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1, std::placeholders::_2));
 }
 
 
@@ -701,13 +711,13 @@ void IBehavior::HandleEvent(const EventType& event)
   
 inline bool IBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing) {
   IncreaseScoreWhileActing(extraScoreWhileActing);
-  return StartActing(action);
+  return DelegateIfInControl(action);
 }
 
 template<typename CallbackType>
 inline bool IBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing, CallbackType callback) {
   IncreaseScoreWhileActing(extraScoreWhileActing);
-  return StartActing(action, callback);
+  return DelegateIfInControl(action, callback);
 }
 
 } // namespace Cozmo

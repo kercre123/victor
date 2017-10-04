@@ -92,7 +92,7 @@ Result BehaviorPyramidThankYou::OnBehaviorActivated(BehaviorExternalInterface& b
                                       AnimationTrigger::BuildPyramidThankUser));
   }
   
-  StartActing(turnVerifyThank);
+  DelegateIfInControl(turnVerifyThank);
   return Result::RESULT_OK;
 }
 

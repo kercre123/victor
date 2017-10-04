@@ -54,7 +54,7 @@ Result BehaviorEarnedSparks::OnBehaviorActivated(BehaviorExternalInterface& beha
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   const AnimationTrigger animTrigger = AnimationTrigger::EarnedSparks;
-  StartActing(new TriggerLiftSafeAnimationAction(robot, animTrigger));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animTrigger));
 
   return RESULT_OK;
 }

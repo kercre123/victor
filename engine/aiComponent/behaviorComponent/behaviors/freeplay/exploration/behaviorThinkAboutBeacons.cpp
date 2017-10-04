@@ -74,7 +74,7 @@ Result BehaviorThinkAboutBeacons::OnBehaviorActivated(BehaviorExternalInterface&
     Robot& robot = behaviorExternalInterface.GetRobot();
     
     IAction* animNewArea = new TriggerAnimationAction(robot,trigger);
-    StartActing( animNewArea );
+    DelegateIfInControl( animNewArea );
   }
   
   return RESULT_OK;

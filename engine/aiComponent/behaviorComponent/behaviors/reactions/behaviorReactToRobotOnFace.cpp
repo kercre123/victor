@@ -71,7 +71,7 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded(BehaviorExternalInterface& beh
     }
     
 
-    StartActing(new TriggerAnimationAction(robot, anim),
+    DelegateIfInControl(new TriggerAnimationAction(robot, anim),
                 &BehaviorReactToRobotOnFace::DelayThenCheckState);
   }
 }
@@ -84,7 +84,7 @@ void BehaviorReactToRobotOnFace::DelayThenCheckState(BehaviorExternalInterface& 
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
+    DelegateIfInControl(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnFace::CheckFlipSuccess);
   }
 
@@ -98,7 +98,7 @@ void BehaviorReactToRobotOnFace::CheckFlipSuccess(BehaviorExternalInterface& beh
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FailedToRightFromFace),
+    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::FailedToRightFromFace),
                 &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
   }else{
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnFace);

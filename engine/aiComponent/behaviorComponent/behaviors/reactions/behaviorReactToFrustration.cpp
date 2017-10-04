@@ -96,7 +96,7 @@ void BehaviorReactToFrustration::TransitionToReaction(BehaviorExternalInterface&
 
   TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(robot, _animToPlay);
 
-  StartActing(action, [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       AnimationComplete(behaviorExternalInterface);
     });    
 }
@@ -155,7 +155,7 @@ void BehaviorReactToFrustration::AnimationComplete(BehaviorExternalInterface& be
     // TODO:(bn) motion profile?
     const bool kForceHeadDown = false;
     DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToRoot(), kForceHeadDown);
-    StartActing(action); // finish behavior when we are done
+    DelegateIfInControl(action); // finish behavior when we are done
   }
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedToFrustration);
 }

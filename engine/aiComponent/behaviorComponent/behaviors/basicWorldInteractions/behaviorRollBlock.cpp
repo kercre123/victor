@@ -212,7 +212,7 @@ void BehaviorRollBlock::TransitionToRollSuccess(BehaviorExternalInterface& behav
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
   }
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
   BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);

@@ -114,7 +114,7 @@ Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& 
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
   return Result::RESULT_OK;
 }
 

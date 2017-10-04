@@ -259,7 +259,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
       // Play the 'soothing' pulse animation
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPulse), [this]() { SET_STATE(DriveToBlocks); });
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPulse), [this]() { SET_STATE(DriveToBlocks); });
       
       // Set cube lights to 'setup'
       StartLightCubeAnims(behaviorExternalInterface, CubeAnimationTrigger::GuardDogSetup);
@@ -285,7 +285,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // Wrap this in a retry action in case it fails.
       const u8 kNumRetries = 2;
       auto retryAction = new RetryWrapperAction(robot, driveToStartingPoseAction, AnimationTrigger::Count, kNumRetries);
-      StartActing(retryAction, [this](ActionResult res)
+      DelegateIfInControl(retryAction, [this](ActionResult res)
                                {
                                  if (res != ActionResult::SUCCESS) {
                                    PRINT_NAMED_WARNING("BehaviorGuardDog.UpdateInternal_Legacy.DriveToStartingPoseFailed",
@@ -301,7 +301,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogSettle),
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogSettle),
                   [this, &behaviorExternalInterface, &robot]() {
                                      // Stop setup light cube animation and go to "sleeping" lights:
                                      StartLightCubeAnims(behaviorExternalInterface, CubeAnimationTrigger::GuardDogSleeping);
@@ -320,7 +320,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
       // Start the sleeping loop animation (override default timeout)
-      StartActing(new TriggerAnimationAction(robot,
+      DelegateIfInControl(new TriggerAnimationAction(robot,
                                              AnimationTrigger::GuardDogSleepLoop,
                                              0,                                   // numLoops (0 = infinite)
                                              true,                                // interruptRunning
@@ -341,7 +341,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogFakeout), [this]() { SET_STATE(StartSleeping); });
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogFakeout), [this]() { SET_STATE(StartSleeping); });
       break;
     }
     case State::Busted:
@@ -356,7 +356,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
 
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
       UpdatePublicBehaviorStage(behaviorExternalInterface, GuardDogStage::Busted);
       break;
     }
@@ -369,7 +369,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
 
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogCubeDisconnect), [this]() { SET_STATE(Complete); });
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogCubeDisconnect), [this]() { SET_STATE(Complete); });
       break;
     }
     case State::Timeout:
@@ -409,7 +409,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
 
-      StartActing(action, [this]() { SET_STATE(Complete); });
+      DelegateIfInControl(action, [this]() { SET_STATE(Complete); });
       break;
     }
     case State::PlayerSuccess:
@@ -451,7 +451,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal_WhileRunning(BehaviorE
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(true) ) );
 
-      StartActing(action, [this]() { SET_STATE(Complete); });
+      DelegateIfInControl(action, [this]() { SET_STATE(Complete); });
       break;
     }
     case State::Complete:

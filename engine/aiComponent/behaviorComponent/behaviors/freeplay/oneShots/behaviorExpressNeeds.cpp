@@ -152,7 +152,7 @@ Result BehaviorExpressNeeds::OnBehaviorActivated(BehaviorExternalInterface& beha
     action->AddAction(new TriggerAnimationAction(robot, trigger));
   }
   
-  StartActing(action, [this](ActionResult res) {
+  DelegateIfInControl(action, [this](ActionResult res) {
       if( IActionRunner::GetActionResultCategory(res) == ActionResultCategory::SUCCESS ) {
         // only update the variable for the last time we express the animation if it completes successfully
         // (wasn't interrupted)

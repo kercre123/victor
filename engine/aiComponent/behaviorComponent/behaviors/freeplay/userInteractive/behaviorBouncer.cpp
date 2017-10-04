@@ -263,7 +263,7 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   IActionRunner* action = new TriggerAnimationAction(robot, animationTrigger);
-  StartActing(action, callback);
+  DelegateIfInControl(action, callback);
   
   // StartActing shouldn't fail
   DEV_ASSERT(IsControlDelegated(), "BehaviorBouncer.StartAnimation.ShouldBeActing");
@@ -506,7 +506,7 @@ void BehaviorBouncer::UpdateDisplay(BehaviorExternalInterface& behaviorExternalI
     SimpleCallback callback = []() {
       LOG_TRACE("BehaviorBouncer.UpdateDisplay.Callback", "Face action complete");
     };
-    StartActing(setFaceAction, callback);
+    DelegateIfInControl(setFaceAction, callback);
   }
 
 }

@@ -131,7 +131,7 @@ Result BehaviorOnboardingShowCube::OnBehaviorActivated(BehaviorExternalInterface
   {
    // Can't transition out of WaitForShowCube state until
     // GetDockingComponent().CanPickUpObjectFromGround is true so the next transition will wait until the putdown is complete.
-    StartActing(new PlaceObjectOnGroundAction(robot));
+    DelegateIfInControl(new PlaceObjectOnGroundAction(robot));
   }
   
   return Result::RESULT_OK;
@@ -290,7 +290,7 @@ void BehaviorOnboardingShowCube::TransitionToNextState(BehaviorExternalInterface
 
       TimeStamp_t startWaitTime = robot.GetLastImageTimeStamp();
       const int kNumFramesWaitForImages = 3;
-      StartActing(new WaitForImagesAction(robot, kNumFramesWaitForImages, VisionMode::DetectingMarkers),
+      DelegateIfInControl(new WaitForImagesAction(robot, kNumFramesWaitForImages, VisionMode::DetectingMarkers),
                   [this, &behaviorExternalInterface, &robot, startWaitTime](ActionResult result) {
                     bool blockError = true;
                     bool lightsError = false;
@@ -365,7 +365,7 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(BehaviorExternalI
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  StartActing(new TriggerAnimationAction(robot,AnimationTrigger::OnboardingReactToCube),
+  DelegateIfInControl(new TriggerAnimationAction(robot,AnimationTrigger::OnboardingReactToCube),
               [this, &behaviorExternalInterface](const ActionResult& result){
                 if(result == ActionResult::SUCCESS)
                 {
@@ -409,7 +409,7 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(BehaviorExternalInterf
         robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
         _targetBlock = lastSeenObject->GetID();
       }
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail),
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail),
                   &BehaviorOnboardingShowCube::StartSubStatePickUpBlock);
     }
     else
@@ -453,7 +453,7 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(BehaviorExternalIn
   
   action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingReactToCubePutDown));
   
-  StartActing(action,
+  DelegateIfInControl(action,
               [this,&robot, &behaviorExternalInterface](const ExternalInterface::RobotCompletedAction& msg)
               {
                 _timesPickedUpCube++;

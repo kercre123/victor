@@ -203,7 +203,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
   bool done = false;
   {
     SCOPED_TRACE("");
-    EXPECT_TRUE( b.CallStartActing(robot, done) );
+    EXPECT_TRUE( b.CallDelegateIfInControl(robot, done) );
     TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore);
   }
 
@@ -343,12 +343,12 @@ TEST(BehaviorInterface, OutsideAction)
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 }
 
-bool TestBehavior::CallStartActing(Robot& robot, bool& actionCompleteRef)
+bool TestBehavior::CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef)
 {
   WaitForLambdaAction* action =
     new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
 
-  return StartActing(action);
+  return DelegateIfInControl(action);
 }
 
 bool TestBehavior::CallStartActingExternalCallback1(Robot& robot,
@@ -358,7 +358,7 @@ bool TestBehavior::CallStartActingExternalCallback1(Robot& robot,
   WaitForLambdaAction* action =
     new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
 
-  return StartActing(action, callback);
+  return DelegateIfInControl(action, callback);
 }
 
 bool TestBehavior::CallStartActingExternalCallback2(Robot& robot,
@@ -368,7 +368,7 @@ bool TestBehavior::CallStartActingExternalCallback2(Robot& robot,
   WaitForLambdaAction* action =
     new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
 
-  return StartActing(action, callback);
+  return DelegateIfInControl(action, callback);
 }
 
 bool TestBehavior::CallStartActingInternalCallbackVoid(Robot& robot,
@@ -377,7 +377,7 @@ bool TestBehavior::CallStartActingInternalCallbackVoid(Robot& robot,
   WaitForLambdaAction* action =
     new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
 
-  return StartActing(action, &TestBehavior::Foo);
+  return DelegateIfInControl(action, &TestBehavior::Foo);
 }
 
 bool TestBehavior::CallStartActingInternalCallbackRobot(Robot& robot,
@@ -386,7 +386,7 @@ bool TestBehavior::CallStartActingInternalCallbackRobot(Robot& robot,
   WaitForLambdaAction* action =
     new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
 
-  return StartActing(action, &TestBehavior::Bar);
+  return DelegateIfInControl(action, &TestBehavior::Bar);
 }
 
 TEST(BehaviorInterface, StartActingSimple)
@@ -415,7 +415,7 @@ TEST(BehaviorInterface, StartActingSimple)
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
   bool done = false;
-  EXPECT_TRUE( b.CallStartActing(robot, done) );
+  EXPECT_TRUE( b.CallDelegateIfInControl(robot, done) );
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
 
@@ -462,26 +462,26 @@ TEST(BehaviorInterface, StartActingFailures)
   EXPECT_FALSE( b.CallStopActing() );
   
   bool done = false;
-  EXPECT_TRUE( b.CallStartActing(robot, done) );
-  EXPECT_FALSE( b.CallStartActing(robot, done) );
+  EXPECT_TRUE( b.CallDelegateIfInControl(robot, done) );
+  EXPECT_FALSE( b.CallDelegateIfInControl(robot, done) );
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
 
-  EXPECT_FALSE( b.CallStartActing(robot, done) );
+  EXPECT_FALSE( b.CallDelegateIfInControl(robot, done) );
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
 
   done = true;
 
   // action hasn't updated yet, so it's done. Should still fail to start a new action
-  EXPECT_FALSE( b.CallStartActing(robot, done) );
+  EXPECT_FALSE( b.CallDelegateIfInControl(robot, done) );
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty());
 
   done = false;
-  EXPECT_TRUE( b.CallStartActing(robot, done) );
+  EXPECT_TRUE( b.CallDelegateIfInControl(robot, done) );
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
 
@@ -489,7 +489,7 @@ TEST(BehaviorInterface, StartActingFailures)
   EXPECT_TRUE( b.CallStopActing() );
   // same tick, should be able to start a new one
   bool done2 = false;
-  EXPECT_TRUE( b.CallStartActing(robot, done2) );
+  EXPECT_TRUE( b.CallDelegateIfInControl(robot, done2) );
 
   DoTicks(robot, b, *behaviorExternalInterface, 3);
 
@@ -752,7 +752,7 @@ public:
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     WaitForLambdaAction* action = new WaitForLambdaAction(robot, [this](Robot& r){ return _stopAction; });
-    StartActing(action);
+    DelegateIfInControl(action);
 
     return RESULT_OK;
   }

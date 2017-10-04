@@ -242,7 +242,7 @@ void BehaviorReactToPet::BeginIteration(BehaviorExternalInterface& behaviorExter
   _endReactionTime_s = endTime_s;
   
   // Begin reaction sequence
-  StartActing(compoundAction, &BehaviorReactToPet::EndIteration);
+  DelegateIfInControl(compoundAction, &BehaviorReactToPet::EndIteration);
 }
 
 //

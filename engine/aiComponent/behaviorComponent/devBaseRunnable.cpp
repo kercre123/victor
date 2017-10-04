@@ -134,14 +134,23 @@ void DevBaseRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternal
     // WantsToBeActivated could do the same things Update can
 
     if( _pendingDelegate->WantsToBeActivated( behaviorExternalInterface ) ) {
-      const bool ret = DelegateIfInControl(behaviorExternalInterface, _pendingDelegate);
-      if( ret ) {
-        // we successfully delegated, so decrement repeat count (if it's negative, that means loop forever)
-        if( _pendingDelegateRepeatCount > 0 ) {
-          _pendingDelegateRepeatCount--;
-        }
-        if( _pendingDelegateRepeatCount == 0 ){
-          _pendingDelegate = nullptr;
+      auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
+      if((delegationComponent != nullptr) &&
+         !delegationComponent->IsControlDelegated(this)) {
+        
+        auto delegator = delegationComponent->GetDelegator(this).lock();
+        if( delegator != nullptr ) {
+          const bool res = delegator->Delegate(this, _pendingDelegate);
+          if( res ) {
+            // we successfully delegated, so decrement repeat count (if it's negative, that means loop forever)
+            if( _pendingDelegateRepeatCount > 0 ) {
+              _pendingDelegateRepeatCount--;
+            }
+            if( _pendingDelegateRepeatCount == 0 ){
+              _pendingDelegate = nullptr;
+            }
+          }
+          
         }
       }
     }

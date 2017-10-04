@@ -63,7 +63,7 @@ Result BehaviorReactToPickup::OnBehaviorActivated(BehaviorExternalInterface& beh
   // wait for the cliffDetect sensor to confirm he's on the ground
   const f32 bufferDelay_s = .5f;
   const f32 wait_s = CLIFF_EVENT_DELAY_MS/1000 + bufferDelay_s;
-  StartActing(new WaitAction(robot, wait_s), &BehaviorReactToPickup::StartAnim);
+  DelegateIfInControl(new WaitAction(robot, wait_s), &BehaviorReactToPickup::StartAnim);
   return Result::RESULT_OK;
 }
  
@@ -113,13 +113,13 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
     if(name.empty())
     {
       // Just react to unnamed face, but without using treads
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::AcknowledgeFaceUnnamed, 1, true, kTracksToLock));
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::AcknowledgeFaceUnnamed, 1, true, kTracksToLock));
     }
     else
     {
       SayTextAction* sayText = new SayTextAction(robot, name, SayTextIntent::Name_Normal);
       sayText->SetAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed, kTracksToLock);
-      StartActing(sayText);
+      DelegateIfInControl(sayText);
     }
   }
   else
@@ -134,7 +134,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
       }
       
       // React, but without using body track, since we're picked up
-      StartActing(new TriggerAnimationAction(robot, animTrigger, 1, true, kTracksToLock));
+      DelegateIfInControl(new TriggerAnimationAction(robot, animTrigger, 1, true, kTracksToLock));
     }
     else
     {
@@ -147,7 +147,7 @@ void BehaviorReactToPickup::StartAnim(BehaviorExternalInterface& behaviorExterna
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      StartActing(new TriggerAnimationAction(robot, anim));
+      DelegateIfInControl(new TriggerAnimationAction(robot, anim));
     }
   }
   
@@ -185,7 +185,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal_WhileRunning(BehaviorExt
         StartAnim(behaviorExternalInterface);
       } else {
         LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d", cliffDataRaw);
-        StartActing(new CalibrateMotorAction(robot, true, false));
+        DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
       }
     }
   }

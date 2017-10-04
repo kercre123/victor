@@ -187,7 +187,7 @@ void BehaviorDriveInDesperation::TransitionToIdle(BehaviorExternalInterface& beh
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   
-  StartActing(new WaitAction(robot, timeToIdle), &BehaviorDriveInDesperation::TransitionFromIdle);
+  DelegateIfInControl(new WaitAction(robot, timeToIdle), &BehaviorDriveInDesperation::TransitionFromIdle);
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,7 +206,7 @@ void BehaviorDriveInDesperation::TransitionToDriveRandom(BehaviorExternalInterfa
   const bool lookDown = true;
   DriveToPoseAction* driveAction = new DriveToPoseAction(robot, randomPose, lookDown);
   
-  StartActing(driveAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(driveAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
       // if we are using cubes, do a search now at this location. Otherwise, leave the behavior
       if( _params->_useCubes ) {
         TransitionToSearchForCube(behaviorExternalInterface);
@@ -240,12 +240,12 @@ void BehaviorDriveInDesperation::TransitionToRequest(BehaviorExternalInterface& 
   IActionRunner* animAction = new TriggerAnimationAction(robot, _params->_requestAnimTrigger);
   TurnTowardsFaceWrapperAction* faceAction = new TurnTowardsFaceWrapperAction(robot, animAction);
   
-  StartActing(faceAction, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(faceAction, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
       // if we were visiting a cube before this request, turn back to it before finishing (and likely looping
       // back to the idle state). Otherwise just finish now
       if( _targetCube.IsSet() ) {
         TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _targetCube);
-        StartActing(turnAction);
+        DelegateIfInControl(turnAction);
         // we are done with this cube now.
         _targetCube.UnSet();
       }
@@ -342,7 +342,7 @@ void BehaviorDriveInDesperation::TransitionToDriveToCube(BehaviorExternalInterfa
                                                            Point3f{kDriveToCubeDistTolerance},
                                                            DEG_TO_RAD(kDriveToCubeAngleTolerance_deg));
     // don't bother with retries or anything, always just look at the cube once this is done
-    StartActing(driveAction, &BehaviorDriveInDesperation::TransitionToLookAtCube);
+    DelegateIfInControl(driveAction, &BehaviorDriveInDesperation::TransitionToLookAtCube);
   }
   else {
     // already at a predock pose, or couldn't get any poses, so just turn towards the object
@@ -374,7 +374,7 @@ void BehaviorDriveInDesperation::TransitionToLookAtCube(BehaviorExternalInterfac
                                                                     Radians{M_PI_F},
                                                                     verifyWhenDone,
                                                                     headTrackWhenDone);
-  StartActing(turnAction, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(turnAction, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
       if( res == ActionResult::SUCCESS ) {
         // there's a cube here, so do a request to the user
         TransitionToRequest(behaviorExternalInterface);

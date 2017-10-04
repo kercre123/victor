@@ -173,7 +173,7 @@ namespace Anki {
           
           CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, { lowerLiftAction, raiseLiftAction });
           
-          StartActing(compoundAction,
+          DelegateIfInControl(compoundAction,
                       [this, &robot](ActionResult result){
                         if (ActionResult::SUCCESS == result) {
                           // Tell robot to check for load and wait for response
@@ -185,7 +185,7 @@ namespace Anki {
                             return _loadStatusReceived;
                           };
                           auto waitAction = new WaitForLambdaAction(robot, waitForLiftLoadMsgLambda);
-                          StartActing(waitAction);
+                          DelegateIfInControl(waitAction);
                           
                         } else {
                           PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.LiftActionFailed","");

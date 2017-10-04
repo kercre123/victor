@@ -121,7 +121,7 @@ void BehaviorCantHandleTallStack::TransitionToLookingUpAndDown(BehaviorExternalI
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new CompoundActionSequential(robot, {
+  DelegateIfInControl(new CompoundActionSequential(robot, {
                 new WaitAction(robot, _lookingInitialWait_s),
                 new MoveHeadToAngleAction(robot, kLookingDown_rad),
                 new WaitAction(robot, _lookingDownWait_s),
@@ -140,7 +140,7 @@ void BehaviorCantHandleTallStack::TransitionToDisapointment(BehaviorExternalInte
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::CantHandleTallStack));
+  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::CantHandleTallStack));
 }
 
 

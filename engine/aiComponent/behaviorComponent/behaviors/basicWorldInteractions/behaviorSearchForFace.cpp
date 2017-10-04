@@ -76,7 +76,7 @@ void BehaviorSearchForFace::TransitionToSearchingAnimation(BehaviorExternalInter
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_SearchForFace));
+  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_SearchForFace));
 }
 
 
@@ -87,7 +87,7 @@ void BehaviorSearchForFace::TransitionToFoundFace(BehaviorExternalInterface& beh
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_SearchForFace_FoundFace));
+  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_SearchForFace_FoundFace));
 }
 
 

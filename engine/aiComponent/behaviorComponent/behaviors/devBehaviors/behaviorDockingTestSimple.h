@@ -74,7 +74,7 @@ namespace Anki {
         // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
         using ActionResultCallback = std::function<bool(const ActionResult& result, const ActionCompletedUnion& completionInfo)>;
       
-        void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
+        void DelegateIfInControl(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
       
         bool IsControlDelegated() const {return !_actionCallbackMap.empty(); }
       

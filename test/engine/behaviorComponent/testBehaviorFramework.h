@@ -14,16 +14,14 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 
-using namespace Anki::Cozmo;
-
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 namespace TestBehaviorFramework{
-std::unique_ptr<Robot> CreateRobot(int robotID);
-std::unique_ptr<BehaviorContainer> CreateBehaviors();
-void GenerateCoreBehaviorTestingComponents(std::unique_ptr<Robot>& robot,
-                                           std::unique_ptr<BehaviorContainer>& bc,
-                                           std::unique_ptr<BehaviorExternalInterface>& bei);
+std::unique_ptr<Anki::Cozmo::Robot> CreateRobot(int robotID);
+std::unique_ptr<Anki::Cozmo::BehaviorContainer> CreateBehaviors();
+void GenerateCoreBehaviorTestingComponents(std::unique_ptr<Anki::Cozmo::Robot>& robot,
+                                           std::unique_ptr<Anki::Cozmo::BehaviorContainer>& bc,
+                                           std::unique_ptr<Anki::Cozmo::BehaviorExternalInterface>& bei);
 }
 
 
@@ -61,7 +59,6 @@ private:
 class TestBehavior : public IBehavior
 {
 public:
-  
   TestBehavior(const Json::Value& config)
   : IBehavior(config)
   {
@@ -103,7 +100,7 @@ public:
   void Foo();
   void Bar(BehaviorExternalInterface& behaviorExternalInterface);
   
-  bool CallStartActing(Robot& robot, bool& actionCompleteRef);
+  bool CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef);
   
   void CallIncreaseScoreWhileActing(float extraScore) { IncreaseScoreWhileActing(extraScore); }
   

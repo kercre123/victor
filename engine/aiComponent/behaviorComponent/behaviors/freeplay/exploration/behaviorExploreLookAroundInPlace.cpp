@@ -226,7 +226,7 @@ Result BehaviorExploreLookAroundInPlace::OnBehaviorActivated(BehaviorExternalInt
      && !(_configParams.behavior_CanCarryCube && robot.GetCarryingComponent().IsCarryingObject())
   ){
     IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
-    StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);
+    DelegateIfInControl(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);
   }
   else {
     BeginStateMachine(behaviorExternalInterface);
@@ -321,7 +321,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(BehaviorExter
         _configParams.sx_BodyTurnSpeed_degPerSec, _configParams.sxt_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
-  StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS2_Pause );
+  DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS2_Pause );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -354,7 +354,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(BehaviorExternalInte
   
   // request action with transition to proper state
   DEV_ASSERT(nullptr != pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS2_Pause.NullAction");
-  StartActing(pauseAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn);
+  DelegateIfInControl(pauseAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -377,11 +377,11 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(BehaviorExternalI
   // request action with transition to proper state
   if( _s4HeadMovesLeft != 0 )
   {
-    StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
+    DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
   }
   else // avoid uint overflow and skip to turning back.
   {
-    StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
+    DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
   }
 }
 
@@ -434,7 +434,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(BehaviorExterna
           _configParams.sxh_HeadTurnSpeed_degPerSec);
   
     // do head action and transition to next state or same (depending on callback)
-    StartActing( moveHeadAction, nextCallback );
+    DelegateIfInControl( moveHeadAction, nextCallback );
   };
   
   IAction* pauseAction = nullptr;
@@ -465,7 +465,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(BehaviorExterna
   
   // request action with transition to proper state
   DEV_ASSERT(nullptr != pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
-  StartActing(pauseAction, runAfterPause);
+  DelegateIfInControl(pauseAction, runAfterPause);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -484,7 +484,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(BehaviorExter
         _configParams.sxh_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
-  StartActing( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
+  DelegateIfInControl( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -499,7 +499,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(BehaviorExte
         _configParams.sx_BodyTurnSpeed_degPerSec, _configParams.sxt_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
-  StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd );
+  DelegateIfInControl( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

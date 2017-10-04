@@ -176,7 +176,7 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
         compoundAction->AddAction(new TurnTowardsObjectAction(robot, targetID), true);
       }
       compoundAction->AddAction(searchNearby);
-      StartActing(compoundAction, &SearchForBlockHelper::SearchForBlock);
+      DelegateIfInControl(compoundAction, &SearchForBlockHelper::SearchForBlock);
       _nextSearchIntensity = SearchIntensity::StandardSearch;
       break;
     }
@@ -209,7 +209,7 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
         compoundAction->AddAction(new SearchForNearbyObjectAction(robot, targetID), ignoreFailure);
       }
       
-      StartActing(compoundAction, &SearchForBlockHelper::SearchForBlock);
+      DelegateIfInControl(compoundAction, &SearchForBlockHelper::SearchForBlock);
       _nextSearchIntensity = SearchIntensity::ExhaustiveSearch;
       break;
     }
@@ -237,7 +237,7 @@ void SearchForBlockHelper::SearchForBlock(ActionResult result, BehaviorExternalI
         SearchFinishedWithoutInterruption(behaviorExternalInterface);
       };
       
-      StartActing(compoundAction, exhaustiveSearchFailure);
+      DelegateIfInControl(compoundAction, exhaustiveSearchFailure);
       break;
     }
   }

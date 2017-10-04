@@ -231,7 +231,7 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(BehaviorExternalInterface
           scanForPyramid->AddAction(checkForTopBlock);
           scanForPyramid->AddAction(new WaitAction(robot, kWaitForVisualTopBlock_sec));
           scanForPyramid->AddAction(new MoveHeadToAngleAction(robot, kHeadBottomCheckTopBlock_rad));
-          StartActing(scanForPyramid);
+          DelegateIfInControl(scanForPyramid);
         }
       };
       
@@ -264,7 +264,7 @@ void BehaviorBuildPyramid::TransitionToReactingToPyramid(BehaviorExternalInterfa
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
 }
 
 

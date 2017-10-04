@@ -72,14 +72,14 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(BehaviorExternalInterface& beh
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
-      StartActing(new TriggerAnimationAction(robot, anim),
+      DelegateIfInControl(new TriggerAnimationAction(robot, anim),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
       LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d", cliffDataRaw);
-      StartActing(new CalibrateMotorAction(robot, true, false),
+      DelegateIfInControl(new CalibrateMotorAction(robot, true, false),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     }
   }
@@ -96,7 +96,7 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown(BehaviorExternalInterface& be
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
+    DelegateIfInControl(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
   }
   else {

@@ -116,7 +116,7 @@ IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(Beha
     Robot& robot = behaviorExternalInterface.GetRobot();
 
     StopActing(false);
-    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::AcknowledgeObject));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }
   
@@ -139,7 +139,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(BehaviorExte
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  StartActing(new CompoundActionParallel(robot, {
+  DelegateIfInControl(new CompoundActionParallel(robot, {
     new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedSense),
     new WaitAction(robot, kDelayForUserPresentBlock_s) }),
               &BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock);
@@ -165,7 +165,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Beha
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  StartActing(new CompoundActionParallel(robot, {
+  DelegateIfInControl(new CompoundActionParallel(robot, {
     new TurnTowardsPoseAction(robot, blockPose),
     new WaitAction(robot, kDelayToRecognizeBlock_s) }),
               &BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence);
@@ -180,7 +180,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(BehaviorEx
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedCubeMoved);
 }
   

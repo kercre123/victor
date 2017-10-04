@@ -449,7 +449,7 @@ void BehaviorTrackLaser::TransitionToInitialSearch(BehaviorExternalInterface& be
     fullAction->AddAction(panAndTilt);
   }
   
-  StartActing(fullAction, &BehaviorTrackLaser::TransitionToWaitForLaser);
+  DelegateIfInControl(fullAction, &BehaviorTrackLaser::TransitionToWaitForLaser);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -466,7 +466,7 @@ void BehaviorTrackLaser::TransitionToBringingHeadDown(BehaviorExternalInterface&
     new DriveStraightAction(robot, _params.backupDistAfterPounce_mm, backupSpeed_mmps),
   });
   
-  StartActing(moveBackAndBringHeadDown, &BehaviorTrackLaser::TransitionToWaitForLaser);
+  DelegateIfInControl(moveBackAndBringHeadDown, &BehaviorTrackLaser::TransitionToWaitForLaser);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -496,7 +496,7 @@ void BehaviorTrackLaser::TransitionToRotateToWatchingNewArea(BehaviorExternalInt
   
   _lastLaserObservation.type = LaserObservation::Type::None;
   
-  StartActing(panAction, &BehaviorTrackLaser::TransitionToWaitForLaser);
+  DelegateIfInControl(panAction, &BehaviorTrackLaser::TransitionToWaitForLaser);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -521,7 +521,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(BehaviorExternalInter
   
   // Once we've gottena a couple of images, switch to looking for a laser dot
   // to confirm it.
-  StartActing(action, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface)
+  DelegateIfInControl(action, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface)
   {
     // We *assume* exposure has changed after seeing enough images, no way to know for sure!
     // Once this is true, observed lasers will be considered "confirmed".
@@ -578,7 +578,7 @@ void BehaviorTrackLaser::TransitionToRespondToLaser(BehaviorExternalInterface& b
                                Util::EnumToUnderlying(AnimTrackFlag::HEAD_TRACK))
   });
   
-  StartActing(action, &BehaviorTrackLaser::TransitionToTrackLaser);
+  DelegateIfInControl(action, &BehaviorTrackLaser::TransitionToTrackLaser);
 }
 
 
@@ -645,7 +645,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(BehaviorExternalInterface& behav
   
   const float startedActionTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  StartActing(trackAction,
+  DelegateIfInControl(trackAction,
               [this,&behaviorExternalInterface, startedActionTime_sec](ActionResult result)
               {
                 const bool doPounce = (ActionResult::SUCCESS == result);
@@ -682,7 +682,7 @@ void BehaviorTrackLaser::TransitionToPounce(BehaviorExternalInterface& behaviorE
   
   IActionRunner* pounceAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::LaserPounce);
   
-  StartActing(pounceAction, [this,&behaviorExternalInterface]() {
+  DelegateIfInControl(pounceAction, [this,&behaviorExternalInterface]() {
     BehaviorObjectiveAchieved(BehaviorObjective::LaserPounced);
     TransitionToBringingHeadDown(behaviorExternalInterface);
   });
@@ -708,7 +708,7 @@ void BehaviorTrackLaser::TransitionToGetOutBored(BehaviorExternalInterface& beha
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
 
-    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::LaserGetOut), callback);
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::LaserGetOut), callback);
   }
 }
 

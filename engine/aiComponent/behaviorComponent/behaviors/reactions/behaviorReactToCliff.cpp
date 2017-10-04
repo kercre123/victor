@@ -132,7 +132,7 @@ Result BehaviorReactToCliff::OnBehaviorActivated(BehaviorExternalInterface& beha
       }
 
       WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(robot, waitForStopLambda);
-      StartActing(waitForStopAction, callbackFunc);
+      DelegateIfInControl(waitForStopAction, callbackFunc);
       break;
     }
     case State::PlayingCliffReaction:
@@ -180,7 +180,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(BehaviorExternalInter
     return _gotCliff;
   };
   action->AddAction(new WaitForLambdaAction(robot, waitForCliffLambda, maxWaitTime_s), true);
-  StartActing(action, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
+  DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
   
@@ -216,7 +216,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(BehaviorExternalInte
     auto action = new TriggerLiftSafeAnimationAction(robot, reactionAnim);
 #endif
     
-    StartActing(action, &BehaviorReactToCliff::TransitionToBackingUp);
+    DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
   // else end the behavior now
 }
@@ -231,7 +231,7 @@ void BehaviorReactToCliff::TransitionToBackingUp(BehaviorExternalInterface& beha
 
   // if the animation doesn't drive us backwards enough, do it manually
   if( robot.GetCliffSensorComponent().IsCliffDetected() ) {
-      StartActing(new DriveStraightAction(robot, -kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
+      DelegateIfInControl(new DriveStraightAction(robot, -kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
                   [this,&behaviorExternalInterface](){
                       SendFinishedReactToCliffMessage(behaviorExternalInterface);
                   });

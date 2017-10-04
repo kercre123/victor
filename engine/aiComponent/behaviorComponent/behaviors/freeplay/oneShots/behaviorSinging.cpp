@@ -229,7 +229,7 @@ Result BehaviorSinging::OnBehaviorActivated(BehaviorExternalInterface& behaviorE
   action->AddAction(new TriggerAnimationAction(robot, kGetInTrigger));
   action->AddAction(new TriggerAnimationAction(robot, _songAnimTrigger));
   action->AddAction(new TriggerAnimationAction(robot, kGetOutTrigger));
-  StartActing(action, [this](const ActionResult& res) {
+  DelegateIfInControl(action, [this](const ActionResult& res) {
     if(res == ActionResult::SUCCESS)
     {
       BehaviorObjectiveAchieved(BehaviorObjective::Singing);

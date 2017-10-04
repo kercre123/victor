@@ -55,7 +55,7 @@ Result BehaviorTurnToFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TurnTowardsFaceAction(robot, _targetFace));
+    DelegateIfInControl(new TurnTowardsFaceAction(robot, _targetFace));
     return Result::RESULT_OK;
   }else{
     return RESULT_FAIL;

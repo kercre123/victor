@@ -458,7 +458,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(BehaviorExternalInterface& behavi
   fullVisitAction->AddAction( turnAction2 );
   
   // visit by performing sequential actions
-  StartActing( fullVisitAction, runAfterAction );
+  DelegateIfInControl( fullVisitAction, runAfterAction );
   
   // update sector render because it will have changed right before deciding to visit
   UpdateSectorRender(behaviorExternalInterface);

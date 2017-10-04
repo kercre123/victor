@@ -219,7 +219,7 @@ void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(BehaviorExternalInterface
     driveBackAndAnimateAction->AddAction(new TriggerAnimationAction(robot, currWorkout.postLiftAnim));
   }
   
-  StartActing(driveBackAndAnimateAction,
+  DelegateIfInControl(driveBackAndAnimateAction,
               &BehaviorCubeLiftWorkout::TransitionToStrongLifts);
   
   // Update the music round if we're playing 80's music for this workout
@@ -247,7 +247,7 @@ void BehaviorCubeLiftWorkout::TransitionToStrongLifts(BehaviorExternalInterface&
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, currWorkout.strongLiftAnim, _numStrongLiftsToDo),
+    DelegateIfInControl(new TriggerAnimationAction(robot, currWorkout.strongLiftAnim, _numStrongLiftsToDo),
                 &BehaviorCubeLiftWorkout::TransitionToWeakPose);
   }
 }
@@ -264,7 +264,7 @@ void BehaviorCubeLiftWorkout::TransitionToWeakPose(BehaviorExternalInterface& be
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, currWorkout.transitionAnim),
+    DelegateIfInControl(new TriggerAnimationAction(robot, currWorkout.transitionAnim),
                 &BehaviorCubeLiftWorkout::TransitionToWeakLifts);
   }
 }
@@ -285,7 +285,7 @@ void BehaviorCubeLiftWorkout::TransitionToWeakLifts(BehaviorExternalInterface& b
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     const auto& currWorkout = behaviorExternalInterface.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();
-    StartActing(new TriggerAnimationAction(robot, currWorkout.weakLiftAnim, _numWeakLiftsToDo),
+    DelegateIfInControl(new TriggerAnimationAction(robot, currWorkout.weakLiftAnim, _numWeakLiftsToDo),
                 &BehaviorCubeLiftWorkout::TransitionToPuttingDown);
   }
 }
@@ -303,7 +303,7 @@ void BehaviorCubeLiftWorkout::TransitionToPuttingDown(BehaviorExternalInterface&
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, currWorkout.putDownAnim),
+    DelegateIfInControl(new TriggerAnimationAction(robot, currWorkout.putDownAnim),
                 // double check the put down with a manual one, just in case
                 &BehaviorCubeLiftWorkout::TransitionToCheckPutDown);
   }
@@ -331,7 +331,7 @@ void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(BehaviorExternalInterface
     action->AddAction( new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK) );
     action->AddAction( new SearchForNearbyObjectAction(robot, _targetBlockID) );
   
-    StartActing(action, &BehaviorCubeLiftWorkout::EndIteration);
+    DelegateIfInControl(action, &BehaviorCubeLiftWorkout::EndIteration);
   }
   else {
     // otherwise we are done, so finish the iteration
@@ -350,7 +350,7 @@ void BehaviorCubeLiftWorkout::TransitionToManualPutDown(BehaviorExternalInterfac
   if( robot.GetCarryingComponent().IsCarryingObject() ) {
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".ManualPutDown").c_str(),
                   "Manually putting down object because animation (may have) failed to do it");
-    StartActing(new PlaceObjectOnGroundAction(robot), &BehaviorCubeLiftWorkout::EndIteration);
+    DelegateIfInControl(new PlaceObjectOnGroundAction(robot), &BehaviorCubeLiftWorkout::EndIteration);
   }
   else {
     EndIteration(behaviorExternalInterface);

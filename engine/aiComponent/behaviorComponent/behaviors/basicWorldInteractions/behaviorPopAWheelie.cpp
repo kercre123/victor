@@ -119,7 +119,7 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(BehaviorExternalInterface&
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   // Turn towards the object and then react to it before performing the pop a wheelie action
-  StartActing(new CompoundActionSequential(robot, {
+  DelegateIfInControl(new CompoundActionSequential(robot, {
       new TurnTowardsObjectAction(robot, _targetBlock),
       new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
     }),
@@ -188,7 +188,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
   goPopAWheelie->SetPreDockCallback(disableCliff);
 
 
-  StartActing(goPopAWheelie,
+  DelegateIfInControl(goPopAWheelie,
               [&, this](const ExternalInterface::RobotCompletedAction& msg) {
                 if(msg.result != ActionResult::SUCCESS){
                   this->SmartRemoveDisableReactionsLock(GetIDStr());
@@ -199,7 +199,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(BehaviorExternalInterface
                   case ActionResultCategory::SUCCESS:
                   {
                     _lastBlockReactedTo.UnSet();
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
+                    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     NeedActionCompleted();
                     break;
@@ -275,7 +275,7 @@ void BehaviorPopAWheelie::SetupRetryAction(BehaviorExternalInterface& behaviorEx
   }
   
   if( nullptr != animAction ) {
-    StartActing(animAction, [this,&behaviorExternalInterface]() {
+    DelegateIfInControl(animAction, [this,&behaviorExternalInterface]() {
       this->TransitionToPerformingAction(behaviorExternalInterface, true);
     });
   }

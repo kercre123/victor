@@ -152,7 +152,7 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     _timeSparkAboutToEnd_Sec = 0.0f;
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SparkFailure));
+    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::SparkFailure));
     return RESULT_OK;
   }
   
@@ -220,7 +220,7 @@ void BehaviorPeekABoo::TransitionToIntroAnim(BehaviorExternalInterface& behavior
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PeekABooGetIn),&BehaviorPeekABoo::TransitionTurnToFace);
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PeekABooGetIn),&BehaviorPeekABoo::TransitionTurnToFace);
 }
 
   
@@ -233,7 +233,7 @@ void BehaviorPeekABoo::TransitionTurnToFace(BehaviorExternalInterface& behaviorE
   Robot& robot = behaviorExternalInterface.GetRobot();
   TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface), M_PI_F, false);
   action->SetRequireFaceConfirmation(_params.requireFaceConfirmBeforeRequest);
-  StartActing(action, [this, &behaviorExternalInterface](ActionResult ret )
+  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult ret )
   {
     if( ret == ActionResult::SUCCESS )
     {
@@ -289,7 +289,7 @@ void BehaviorPeekABoo::TransitionPlayPeekABooAnim(BehaviorExternalInterface& beh
     action->AddAction(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)));
   }
   
-  StartActing(action,[this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(action,[this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
     // If we saw a face in the frame buffer, assume that they haven't tried to peekaboo yet
     // if we didn't see a face, assume their face is hidden and they are about to finish the peekaboo
     const TimeStamp_t timestampHeadSteady = robot.GetLastImageTimeStamp();
@@ -313,7 +313,7 @@ void BehaviorPeekABoo::TransitionWaitToHideFace(BehaviorExternalInterface& behav
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
-  StartActing(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
 
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
@@ -334,7 +334,7 @@ void BehaviorPeekABoo::TransitionWaitToHideFace(BehaviorExternalInterface& behav
 
     // Idle until the timeout. this transition will be aborted if the face gets hidden, so this is just for
     // the no user interaction timeout
-    StartActing(trackAndIdleAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
+    DelegateIfInControl(trackAndIdleAction, [this](BehaviorExternalInterface& behaviorExternalInterface) {
         LOG_EVENT("robot.peekaboo_face_never_hidden","%u", _numPeeksRemaining);
         TransitionToNoUserInteraction(behaviorExternalInterface);
     });
@@ -349,10 +349,10 @@ void BehaviorPeekABoo::TransitionWaitToSeeFace(BehaviorExternalInterface& behavi
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
-  StartActing(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(new TurnTowardsFaceAction(robot, GetInteractionFace(behaviorExternalInterface)), [this](BehaviorExternalInterface& behaviorExternalInterface) {
       // Idle until the timeout. This transition will be aborted if the face is seen, so this just handles no
       // user interaction timeout
-      StartActing( GetIdleAndReRequestAction(behaviorExternalInterface, true), [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      DelegateIfInControl( GetIdleAndReRequestAction(behaviorExternalInterface, true), [this](BehaviorExternalInterface& behaviorExternalInterface) {
           LOG_EVENT("robot.peekaboo_face_never_came_back","%u", _numPeeksRemaining);
           TransitionToNoUserInteraction(behaviorExternalInterface);
       });
@@ -445,7 +445,7 @@ void BehaviorPeekABoo::TransitionSeeFaceAfterHiding(BehaviorExternalInterface& b
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PeekABooSurprised),
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PeekABooSurprised),
                 &BehaviorPeekABoo::TransitionTurnToFace);
   }
 }
@@ -464,7 +464,7 @@ void BehaviorPeekABoo::TransitionToNoUserInteraction(BehaviorExternalInterface& 
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     IActionRunner* failAnim = new TriggerAnimationAction(robot, AnimationTrigger::PeekABooNoUserInteraction);
-    StartActing(failAnim, &BehaviorPeekABoo::TransitionTurnToFace);
+    DelegateIfInControl(failAnim, &BehaviorPeekABoo::TransitionTurnToFace);
   }else{
     TransitionExit(behaviorExternalInterface);
   }
@@ -481,7 +481,7 @@ void BehaviorPeekABoo::TransitionExit(BehaviorExternalInterface& behaviorExterna
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   // last state, just existing after this...
-  StartActing(new TriggerLiftSafeAnimationAction(robot,
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot,
      anySuccessfullReactions ? AnimationTrigger::PeekABooGetOutHappy : AnimationTrigger::PeekABooGetOutSad));
   
   // Must be done after the animation so this plays

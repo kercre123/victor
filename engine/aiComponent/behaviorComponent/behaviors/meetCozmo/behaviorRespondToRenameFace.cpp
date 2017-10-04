@@ -85,7 +85,7 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
   //  turnTowardsFace->SetSayNameAnimationTrigger(_animTrigger);
   //  turnTowardsFace->SetNoNameAnimationTrigger(_animTrigger);
   //  
-  //  StartActing(turnTowardsFace);
+  //  DelegateIfInControl(turnTowardsFace);
   
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -93,7 +93,7 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
   SayTextAction* sayName = new SayTextAction(robot, _name, SayTextIntent::Name_Normal);
   sayName->SetAnimationTrigger(_animTrigger);
   
-  StartActing(sayName);
+  DelegateIfInControl(sayName);
   
   _name.clear();
   _faceID = Vision::UnknownFaceID;

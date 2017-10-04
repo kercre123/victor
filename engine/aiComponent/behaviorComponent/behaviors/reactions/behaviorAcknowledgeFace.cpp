@@ -157,7 +157,7 @@ void BehaviorAcknowledgeFace::BeginIteration(BehaviorExternalInterface& behavior
   
   turnAction->SetMaxFramesToWait(kNumImagesToWaitFor);
 
-  StartActing(turnAction, &BehaviorAcknowledgeFace::FinishIteration);
+  DelegateIfInControl(turnAction, &BehaviorAcknowledgeFace::FinishIteration);
 } // InitInternalReactionary()
 
 

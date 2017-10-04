@@ -170,7 +170,8 @@ void ActivityStrictPriority::UpdateInternal(BehaviorExternalInterface& behaviorE
        !delegationComponent->IsControlDelegated(this)){
       IBehaviorPtr nextBehavior = GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
       auto delegationWrap = delegationComponent->GetDelegator(this).lock();
-      if(delegationWrap != nullptr){
+      if((delegationWrap != nullptr) &&
+         (nextBehavior != nullptr)){
         delegationWrap->Delegate(this, nextBehavior.get());
       }
     }

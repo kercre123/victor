@@ -77,7 +77,7 @@ Result BehaviorDevTurnInPlaceTest::OnBehaviorActivated(BehaviorExternalInterface
   Robot& robot = behaviorExternalInterface.GetRobot();
   // Start the tests rolling
   const auto action = GenerateTestAction(robot, _testInd);
-  StartActing(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
+  DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
   
   return RESULT_OK;
 }
@@ -129,7 +129,7 @@ void BehaviorDevTurnInPlaceTest::ActionCallback(BehaviorExternalInterface& behav
   }
   
   const auto action = GenerateTestAction(robot, _testInd);
-  StartActing(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
+  DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
 }
 
 

@@ -130,7 +130,6 @@ void TestSuperPoweredRunnable::OnLeftActivatableScopeInternal() {
 /// Setup a test behavior class that tracks data for testing
 //////////
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {
   auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();

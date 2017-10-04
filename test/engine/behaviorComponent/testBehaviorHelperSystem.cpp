@@ -107,7 +107,7 @@ public:
       }
 
       printf("TestBehaviorWithHelpers: starting action\n");
-      _lastStartActingResult = StartActing(_nextActionToRun);
+      _lastStartActingResult = DelegateIfInControl(_nextActionToRun);
       _nextActionToRun = nullptr;
     }
     
@@ -255,7 +255,7 @@ public:
 
   void CheckActions() {
     if( _nextActionToRun ) {
-      StartActing(_nextActionToRun, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
+      DelegateIfInControl(_nextActionToRun, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
           _actionCompleteCount++;
           if( _thisSucceedsOnActionSuccess ) {
             _updateResult = IBehavior::Status::Complete;

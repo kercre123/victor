@@ -82,7 +82,7 @@ void BehaviorFindFaces::TransitionToLookUp(BehaviorExternalInterface& behaviorEx
                                                             kHeadUpBodyTurnSpeed_degPerSec,
                                                             kHeadUpHeadTurnSpeed_degPerSec);
 
-  StartActing(moveHeadAction, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(moveHeadAction, [this, &robot](BehaviorExternalInterface& behaviorExternalInterface) {
       const TimeStamp_t latestTimestamp = robot.GetLastImageTimeStamp();
       // check if we should turn towards the last face, even if it's not in the current origin
       const bool kMustBeInCurrentOrigin = false;
@@ -107,7 +107,7 @@ void BehaviorFindFaces::TransitionToLookAtLastFace(BehaviorExternalInterface& be
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TurnTowardsLastFacePoseAction(robot), &BehaviorFindFaces::TransitionToBaseClass);
+  DelegateIfInControl(new TurnTowardsLastFacePoseAction(robot), &BehaviorFindFaces::TransitionToBaseClass);
 }
 
   

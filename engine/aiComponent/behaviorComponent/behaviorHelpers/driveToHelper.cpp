@@ -130,7 +130,7 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
       driveToAction->SetGetPossiblePosesFunc(secondClosestPredockFunc);
     }
 
-    StartActing(driveToAction, &DriveToHelper::RespondToDriveResult);
+    DelegateIfInControl(driveToAction, &DriveToHelper::RespondToDriveResult);
   }else{
     // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
     const ActionableObject* obj = dynamic_cast<const ActionableObject*>(
@@ -159,7 +159,7 @@ void DriveToHelper::DriveToPreActionPose(BehaviorExternalInterface& behaviorExte
           compoundAction->AddAction(driveToPoseAction, shouldIgnoreFailure);
           
           compoundAction->AddAction(new VisuallyVerifyObjectAction(robot, _targetID));
-          StartActing(compoundAction, &DriveToHelper::RespondToDriveResult);
+          DelegateIfInControl(compoundAction, &DriveToHelper::RespondToDriveResult);
         }
       }else{
         PRINT_NAMED_INFO("DriveToHelper.DriveToPreActionPose.NoPreDockPoses",

@@ -416,7 +416,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(BehaviorExternal
         // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToPickUp", MoodManager::GetCurrentTimeInSeconds());
       }
     };
-    StartActing(pickUpAction, onPickUpActionResult);
+    DelegateIfInControl(pickUpAction, onPickUpActionResult);
   }
   else
   {
@@ -493,7 +493,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(BehaviorExternalInterface& b
       // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToStack", MoodManager::GetCurrentTimeInSeconds());
     }
   };
-  StartActing( stackAction, onStackActionResult );
+  DelegateIfInControl( stackAction, onStackActionResult );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -569,7 +569,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(BehaviorExternalInterface& b
 
   };
 
-  StartActing( placeObjectAction, onPlaceActionResult );
+  DelegateIfInControl( placeObjectAction, onPlaceActionResult );
 
 }
 

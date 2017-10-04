@@ -141,7 +141,7 @@ Result BehaviorLookForFaceAndCube::OnBehaviorActivated(BehaviorExternalInterface
   }
 
   // look here
-  StartActing( initialActions, &BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft );
+  DelegateIfInControl( initialActions, &BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft );
   
   return Result::RESULT_OK;
 }
@@ -323,7 +323,7 @@ void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(BehaviorExternalInter
 
   _isVerifyingFace = true;
   
-  StartActing(action, [this, observedFace](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
+  DelegateIfInControl(action, [this, observedFace](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
       const bool isTrackingOnly = observedFace < 0;
       if( !isTrackingOnly && res == ActionResult::SUCCESS ) {
         _verifiedFaces.insert(observedFace);
@@ -359,10 +359,10 @@ void BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft(BehaviorExternalInter
   
   // look here
   if ( _currentSidePicksDone < _configParams.face_sidePicks ) {
-    StartActing( leftLookForFace, &BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft );  // left again
+    DelegateIfInControl( leftLookForFace, &BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft );  // left again
   } else {
     _currentSidePicksDone = 0; // reset for next state
-    StartActing( leftLookForFace, &BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight ); // go to right
+    DelegateIfInControl( leftLookForFace, &BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight ); // go to right
   }
 }
 
@@ -386,9 +386,9 @@ void BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight(BehaviorExternalInte
   
   // look here
   if ( _currentSidePicksDone < _configParams.face_sidePicks ) {
-    StartActing( rightLookForFace, &BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight ); // right again
+    DelegateIfInControl( rightLookForFace, &BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight ); // right again
   } else {
-    StartActing( rightLookForFace, &BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight ); // go on to cubes
+    DelegateIfInControl( rightLookForFace, &BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight ); // go on to cubes
   }
 }
 
@@ -412,10 +412,10 @@ void BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight(BehaviorExternalInte
   
   // look here
   if ( _currentSidePicksDone < _configParams.cube_sidePicks ) {
-    StartActing( rightLookForCube, &BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight ); // right again
+    DelegateIfInControl( rightLookForCube, &BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight ); // right again
   } else {
     _currentSidePicksDone = 0; // reset for next state
-    StartActing( rightLookForCube, &BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft ); // go on
+    DelegateIfInControl( rightLookForCube, &BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft ); // go on
   }
 }
 
@@ -439,10 +439,10 @@ void BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft(BehaviorExternalInter
   
   // look here
   if ( _currentSidePicksDone < _configParams.cube_sidePicks ) {
-    StartActing( leftLookForCube, &BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft ); // left again
+    DelegateIfInControl( leftLookForCube, &BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft ); // left again
   } else {
     _currentSidePicksDone = 0; // reset for next state
-    StartActing( leftLookForCube, &BehaviorLookForFaceAndCube::TransitionToS5_Center ); // go on
+    DelegateIfInControl( leftLookForCube, &BehaviorLookForFaceAndCube::TransitionToS5_Center ); // go on
   }
 
 }
@@ -467,7 +467,7 @@ void BehaviorLookForFaceAndCube::TransitionToS5_Center(BehaviorExternalInterface
 
   // look here and do only 1 iteration
   _currentSidePicksDone = 0; // reset for next state
-  StartActing( centerLookForCube, &BehaviorLookForFaceAndCube::TransitionToS6_Done ); // done after
+  DelegateIfInControl( centerLookForCube, &BehaviorLookForFaceAndCube::TransitionToS6_Done ); // done after
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

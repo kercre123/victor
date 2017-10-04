@@ -14,6 +14,8 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
 
 #include "util/logging/logging.h"
@@ -32,7 +34,7 @@ IBSRunnable::IBSRunnable(const std::string& idString)
 , _currentInScopeCount(0)
 , _lastTickWantsToBeActivatedCheckedOn(0)
 , _lastTickOfUpdate(0)
-#ifdef ANKI_DEV_CHEATS
+#if ANKI_DEV_CHEATS
 , _currentActivationState(ActivationState::NotInitialized)
 #endif
 {
@@ -43,44 +45,30 @@ IBSRunnable::IBSRunnable(const std::string& idString)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBSRunnable::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  DEV_ASSERT_MSG(_currentActivationState == ActivationState::NotInitialized,
-                 "IBSRunnable.Init.WrongActivationState",
-                 "Attempted to initialize %s while it was in state %s",
-                 _idString.c_str(),
-                 ActivationStateToString(_currentActivationState).c_str());
+  AssertActivationState_DevOnly(ActivationState::NotInitialized);
+  SetActivationState_DevOnly(ActivationState::OutOfScope);
   
   InitInternal(behaviorExternalInterface);
-  
-  if(ANKI_DEV_CHEATS){
-    _currentActivationState = ActivationState::OutOfScope;
-  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBSRunnable::OnEnteredActivatableScope()
 {
-  DEV_ASSERT_MSG(_currentActivationState != ActivationState::NotInitialized,
-                 "IBSRunnable.EnteredActivatableScope.WrongActivationState",
-                 "Attempted to make activatable %s while it was in state %s",
-                 _idString.c_str(),
-                 ActivationStateToString(_currentActivationState).c_str());
+  AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
   
   _currentInScopeCount++;
-  if(ANKI_DEV_CHEATS &&
-     (_currentActivationState != ActivationState::OutOfScope)){
+  // If this isn't the first EnteredActivatableScope don't call internal functions
+  if(_currentInScopeCount != 1){
     PRINT_CH_INFO("Behaviors",
                   "IBSRunnable.OnEnteredActivatableScope.AlreadyInScope",
-                  "Runnable %s is already in scope %s, ignoring request to enter scope",
-                  _idString.c_str(),
-                  ActivationStateToString(_currentActivationState).c_str());
+                  "Runnable %s is already in scope, ignoring request to enter scope",
+                  _idString.c_str());
     return;
   }
 
-  if(ANKI_DEV_CHEATS){
-    _currentActivationState = ActivationState::InScope;
-  }
-  
+  SetActivationState_DevOnly(ActivationState::InScope);
+
   // Update should be called immediately after entering activatable scope
   // so set the last tick count as being one tickInterval before the current tickCount
   _lastTickOfUpdate = (BaseStationTimer::getInstance()->GetTickCount() - kBSTickInterval);
@@ -92,11 +80,8 @@ void IBSRunnable::OnEnteredActivatableScope()
 void IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
-    DEV_ASSERT_MSG(_currentActivationState != ActivationState::OutOfScope,
-                   "IBSRunnable.Update.WrongActivationState",
-                   "Attempted to activate %s while it was in state %s",
-                   _idString.c_str(),
-                   ActivationStateToString(_currentActivationState).c_str());
+    AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
+    AssertNotActivationState_DevOnly(ActivationState::OutOfScope);
   
     // Ensure update is ticked every tick while in activatable scope
     const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
@@ -117,11 +102,7 @@ void IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
 bool IBSRunnable::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if(USE_BSM){
-    DEV_ASSERT_MSG(_currentActivationState == ActivationState::InScope,
-                   "IBSRunnable.OnActivated.WrongActivationState",
-                   "Attempted to activate %s while it was in state %s",
-                   _idString.c_str(),
-                   ActivationStateToString(_currentActivationState).c_str());
+    AssertActivationState_DevOnly(ActivationState::InScope);
     _lastTickWantsToBeActivatedCheckedOn = BaseStationTimer::getInstance()->GetTickCount();
   }
   return WantsToBeActivatedInternal(behaviorExternalInterface);
@@ -132,11 +113,7 @@ bool IBSRunnable::WantsToBeActivated(BehaviorExternalInterface& behaviorExternal
 void IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
-    DEV_ASSERT_MSG(_currentActivationState == ActivationState::InScope,
-                   "IBSRunnable.OnActivated.WrongActivationState",
-                   "Attempted to activate %s while it was in state %s",
-                   _idString.c_str(),
-                   ActivationStateToString(_currentActivationState).c_str());
+    AssertActivationState_DevOnly(ActivationState::InScope);
 
     const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
     DEV_ASSERT_MSG(tickCount == _lastTickWantsToBeActivatedCheckedOn,
@@ -147,9 +124,7 @@ void IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterfa
                    _lastTickWantsToBeActivatedCheckedOn);
   }
   
-  if(ANKI_DEV_CHEATS){
-    _currentActivationState = ActivationState::Activated;
-  }
+  SetActivationState_DevOnly(ActivationState::Activated);
   OnActivatedInternal(behaviorExternalInterface);
 }
 
@@ -158,16 +133,10 @@ void IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterfa
 void IBSRunnable::OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
-    DEV_ASSERT_MSG(_currentActivationState == ActivationState::Activated,
-                   "IBSRunnable.OnDeactivated.WrongActivationState",
-                   "Attempted to deactivate %s while it was in state %s",
-                   _idString.c_str(),
-                   ActivationStateToString(_currentActivationState).c_str());
-  }
-  if(ANKI_DEV_CHEATS){
-    _currentActivationState = ActivationState::InScope;
+    AssertActivationState_DevOnly(ActivationState::Activated);
   }
   
+  SetActivationState_DevOnly(ActivationState::InScope);
   OnDeactivatedInternal(behaviorExternalInterface);
 }
 
@@ -175,11 +144,7 @@ void IBSRunnable::OnDeactivated(BehaviorExternalInterface& behaviorExternalInter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBSRunnable::OnLeftActivatableScope()
 {
-  DEV_ASSERT_MSG(_currentActivationState == ActivationState::InScope,
-                 "IBSRunnable.LeftActivatableScope.WrongActivationState",
-                 "Attempted to leave activation scope %s while it was in state %s",
-                 _idString.c_str(),
-                 ActivationStateToString(_currentActivationState).c_str());
+  AssertActivationState_DevOnly(ActivationState::InScope);
   
   if(ANKI_VERIFY(_currentInScopeCount != 0,
                  "", "")){
@@ -196,15 +161,52 @@ void IBSRunnable::OnLeftActivatableScope()
     return;
   }
   
-  if(ANKI_DEV_CHEATS){
-    _currentActivationState = ActivationState::OutOfScope;
-  }
   
+  SetActivationState_DevOnly(ActivationState::OutOfScope);
   OnLeftActivatableScopeInternal();
 }
-  
 
-#if ANKI_DEV_CHEATS
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBSRunnable::SetActivationState_DevOnly(ActivationState state)
+{
+  PRINT_CH_INFO("Behaviors",
+                "IBSRunnable.SetActivationState",
+                "Activation state set to %s",
+                ActivationStateToString(state).c_str());
+  
+  #if ANKI_DEV_CHEATS
+    _currentActivationState = state;
+  #endif
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBSRunnable::AssertActivationState_DevOnly(ActivationState state) const
+{
+  #if ANKI_DEV_CHEATS
+  DEV_ASSERT_MSG(_currentActivationState == state,
+                 "IBSRunnable.AssertActivationState_DevOnly.WrongActivationState",
+                 "Runnable %s is not in state %s which it should be",
+                 _idString.c_str(),
+                 ActivationStateToString(_currentActivationState).c_str());
+  #endif
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBSRunnable::AssertNotActivationState_DevOnly(ActivationState state) const
+{
+  #if ANKI_DEV_CHEATS
+  DEV_ASSERT_MSG(_currentActivationState != state,
+                 "IBSRunnable.AssertNotActivationState_DevOnly.WrongActivationState",
+                 "Runnable %s is in state %s when it shouldn't be",
+                 _idString.c_str(),
+                 ActivationStateToString(_currentActivationState).c_str());
+  #endif
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string IBSRunnable::ActivationStateToString(ActivationState state) const
 {
@@ -215,7 +217,6 @@ std::string IBSRunnable::ActivationStateToString(ActivationState state) const
     case ActivationState::InScope        : return "InScope";
   }
 }
-#endif
   
 } // namespace Cozmo
 } // namespace Anki

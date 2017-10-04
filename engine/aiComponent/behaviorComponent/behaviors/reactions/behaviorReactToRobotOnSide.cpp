@@ -72,7 +72,7 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide(BehaviorExternalInterface& b
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, anim),
+    DelegateIfInControl(new TriggerAnimationAction(robot, anim),
                 &BehaviorReactToRobotOnSide::AskToBeRighted);
   }
 }
@@ -95,7 +95,7 @@ void BehaviorReactToRobotOnSide::AskToBeRighted(BehaviorExternalInterface& behav
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, anim),
+    DelegateIfInControl(new TriggerAnimationAction(robot, anim),
                 &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
@@ -128,7 +128,7 @@ void BehaviorReactToRobotOnSide::HoldingLoop(BehaviorExternalInterface& behavior
       Robot& robot = behaviorExternalInterface.GetRobot();
       // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should
       // we be playing a specific loop here?
-      StartActing(new CompoundActionSequential(robot, {
+      DelegateIfInControl(new CompoundActionSequential(robot, {
                     new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredIntro),
                     new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredEvent),
                     new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredOutro) }),
@@ -139,7 +139,7 @@ void BehaviorReactToRobotOnSide::HoldingLoop(BehaviorExternalInterface& behavior
       // be removed
       Robot& robot = behaviorExternalInterface.GetRobot();
       // otherwise, we just loop this animation
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::WaitOnSideLoop),
+      DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::WaitOnSideLoop),
                   &BehaviorReactToRobotOnSide::HoldingLoop);
     }
   }

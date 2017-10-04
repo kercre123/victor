@@ -893,7 +893,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
           new MoveLiftToHeightAction(robot, LIFT_HEIGHT_CARRY),
           new MoveHeadToAngleAction(robot, DEG_TO_RAD(2.f)),
         });
-        StartActing(headAndLiftAction,
+        DelegateIfInControl(headAndLiftAction,
                     [this,&robot](ActionResult result){
                       if (result != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::INIT_LIFT_OR_HEAD_FAILED);
@@ -910,7 +910,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
                       // Play sound
                       if (kBFT_PlaySound) {
                         PlayAnimationAction* soundAction = new PlayAnimationAction(robot, "soundTestAnim");
-                        StartActing(soundAction,
+                        DelegateIfInControl(soundAction,
                                     [this,&robot](ActionResult result){
                                       if (result != ActionResult::SUCCESS) {
                                         EndTest(robot, FactoryTestResultCode::PLAY_SOUND_FAILED);
@@ -979,7 +979,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
           headAction->SetMaxSpeed(DEG_TO_RAD(20.f));
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction, liftAction});
           
-          StartActing(compoundAction,
+          DelegateIfInControl(compoundAction,
                       [this](ActionResult result){
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.0f;
                       });
@@ -1040,7 +1040,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         action->SetDecel(1000);
         
         // Go to camera calibration pose
-        StartActing(action,
+        DelegateIfInControl(action,
                     [this,&robot](ActionResult result){
                       if (result != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::GOTO_CALIB_POSE_ACTION_FAILED);
@@ -1120,7 +1120,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
             ptAction->SetMaxPanSpeed(_motionProfile.pointTurnSpeed_rad_per_sec);
             ptAction->SetPanAccel(_motionProfile.pointTurnAccel_rad_per_sec2);
             ptAction->SetMoveEyes(false);
-            StartActing(ptAction);
+            DelegateIfInControl(ptAction);
             ++_camCalibPoseIndex;
           } else {
             robot.GetVisionComponent().StoreNextImageForCameraCalibration();
@@ -1136,7 +1136,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         _expectedLightCubePose.SetParent(robot.GetWorldOrigin());
         // Turn towards block
         TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, _expectedLightCubePose, M_PI_2_F);
-        StartActing(turnAction);
+        DelegateIfInControl(turnAction);
 
         
         // Start calibration computation
@@ -1259,7 +1259,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
           ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
           
           // Read lift tool code
-          StartActing(toolCodeAction,
+          DelegateIfInControl(toolCodeAction,
                       [this,&robot](const ExternalInterface::RobotCompletedAction& rca){
                         const ActionResult& result = rca.result;
                         
@@ -1392,7 +1392,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         TurnTowardsPoseAction* turnAction = new TurnTowardsPoseAction(robot, blockPose, M_PI_2_F);
         CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, {driveAction, turnAction});
         
-        StartActing(compoundAction,
+        DelegateIfInControl(compoundAction,
                     [](ActionResult result){
 //                      // NOTE: This result check should be ok, but in sim the action often doesn't result in
 //                      // the robot being exactly where it's supposed to be so the action itself sometimes fails.
@@ -1518,7 +1518,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         ++_attemptCounter;
         PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectID);
         action->SetShouldCheckForObjectOnTopOf(false);
-        StartActing(action,
+        DelegateIfInControl(action,
                     pickupCallback);
         SetCurrState(FactoryTestState::PickingUpBlock);
         break;
@@ -1556,7 +1556,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         
         // Put block down
         PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
-        StartActing(action,
+        DelegateIfInControl(action,
                     placementCallback);
         ++_numPlacementAttempts;
         SetCurrState(FactoryTestState::PlacingBlock);
@@ -1568,7 +1568,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
       {
         // Play animation that backs up 3 times. If there's a sticky wheel hopefully this cause some turns.
         auto action = new PlayAnimationAction(robot, "anim_triple_backup");
-        StartActing(action);
+        DelegateIfInControl(action);
         
         SetCurrState(FactoryTestState::BackAndForth);
         break;

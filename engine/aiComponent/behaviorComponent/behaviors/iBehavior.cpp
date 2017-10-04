@@ -325,14 +325,21 @@ void IBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInterfac
   
   std::shared_ptr<IExternalInterface> externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr) {
-    // NOTE: this won't get sent down to derived classes (unless they also subscribe)
-    _eventHandles.push_back(externalInterface->Subscribe(
-                                                         EngineToGameTag::RobotCompletedAction,
-                                                         [this](const EngineToGameEvent& event) {
-                                                           DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
-                                                                      "IBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
-                                                           HandleActionComplete(event.GetData().Get_RobotCompletedAction());
-                                                         } ));
+
+    if( !USE_BSM ) {
+      // the BSM will directly call HandleActionComplete, so only register as an event if we aren't using it
+      
+      // NOTE: this won't get sent down to derived classes (unless they also subscribe)
+      _eventHandles.push_back(externalInterface->Subscribe(
+                                EngineToGameTag::RobotCompletedAction,
+                                [this](const EngineToGameEvent& event) {
+                                  DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
+                                             "IBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
+                                  if( event.GetData().Get_RobotCompletedAction().idTag == _lastActionTag ) {
+                                    HandleActionComplete(event.GetData().Get_RobotCompletedAction());
+                                  }
+                                } ));
+    }
     
     _eventHandles.push_back(externalInterface->Subscribe(
                                                          EngineToGameTag::BehaviorObjectiveAchieved,
@@ -407,7 +414,7 @@ Result IBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& behavior
   Robot& robot = behaviorExternalInterface.GetRobot();
   
   // Check if there are any engine-generated actions in the action list, because there shouldn't be!
-  // If there is, a behavior probably didn't use StartActing() where it should have.
+  // If there is, a behavior probably didn't use DelegateIfInControl() where it should have.
   bool engineActionStillRunning = false;
   for (auto listIt = robot.GetActionList().begin();
        listIt != robot.GetActionList().end() && !engineActionStillRunning;
@@ -534,13 +541,7 @@ IBehavior::Status IBehavior::Update(BehaviorExternalInterface& behaviorExternalI
     }
 
     if(WasControlDelegatedLastTick()){
-      
       ScoredActingStateChanged(false);
-      
-      if( IsRunning() && _actingCallback) {
-        _actingCallback(_lastCompletedMsgCopy);
-        _actingCallback = nullptr;
-      }
     }
   }
   
@@ -744,7 +745,7 @@ void IBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterf
   }
   
   if(IsRunning()){
-    UpdateInternal_WhileRunning(behaviorExternalInterface);
+    Update(behaviorExternalInterface);
     if(!IsControlDelegated()){
       auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
       if(delegationComponent != nullptr){
@@ -825,7 +826,7 @@ bool IBehavior::WasControlDelegatedLastTick()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback callback)
+bool IBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback)
 {
   auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
   if(delegationComponent == nullptr) {
@@ -871,16 +872,21 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   }
 
   _actingCallback = callback;
+  if( !USE_BSM ) {
+    _lastActionTag = action->GetTag();
+  }
   
   ScoredActingStateChanged(true);
   
-  return delegateWrapper->Delegate(this, action);
+  return delegateWrapper->Delegate(this,
+                                   action,
+                                   std::bind(&IBehavior::HandleActionComplete, this, std::placeholders::_1));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback)
+bool IBehavior::DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback)
 {
-  return StartActing(action,
+  return DelegateIfInControl(action,
                      [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
                        callback(msg, *_behaviorExternalInterface);
                      });
@@ -888,9 +894,9 @@ bool IBehavior::StartActing(IActionRunner* action, BehaviorRobotCompletedActionW
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StartActing(IActionRunner* action, ActionResultCallback callback)
+bool IBehavior::DelegateIfInControl(IActionRunner* action, ActionResultCallback callback)
 {
-  return StartActing(action,
+  return DelegateIfInControl(action,
                      [callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
                        callback(msg.result);
                      });
@@ -898,9 +904,9 @@ bool IBehavior::StartActing(IActionRunner* action, ActionResultCallback callback
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StartActing(IActionRunner* action, ActionResultWithRobotCallback callback)
+bool IBehavior::DelegateIfInControl(IActionRunner* action, ActionResultWithRobotCallback callback)
 {
-  return StartActing(action,
+  return DelegateIfInControl(action,
                      [this, callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
                        callback(msg.result, *_behaviorExternalInterface);
                      });
@@ -908,24 +914,75 @@ bool IBehavior::StartActing(IActionRunner* action, ActionResultWithRobotCallback
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StartActing(IActionRunner* action, SimpleCallback callback)
+bool IBehavior::DelegateIfInControl(IActionRunner* action, SimpleCallback callback)
 {
-  return StartActing(action, [callback = std::move(callback)](ActionResult ret){ callback(); });
+  return DelegateIfInControl(action, [callback = std::move(callback)](ActionResult ret){ callback(); });
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::StartActing(IActionRunner* action, SimpleCallbackWithRobot callback)
+bool IBehavior::DelegateIfInControl(IActionRunner* action, SimpleCallbackWithRobot callback)
 {
-  return StartActing(action, [this, callback = std::move(callback)](ActionResult ret){ callback(*_behaviorExternalInterface); });
+  return DelegateIfInControl(action, [this, callback = std::move(callback)](ActionResult ret){ callback(*_behaviorExternalInterface); });
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface, IBSRunnable* delegate)
+{
+  auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
+  if((delegationComponent != nullptr) &&
+     !delegationComponent->IsControlDelegated(this)) {
+    
+    auto delegator = delegationComponent->GetDelegator(this).lock();
+    if( delegator != nullptr ) {
+      delegator->Delegate(this, delegate);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBSRunnable* delegate)
+{
+  auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
+  if(delegationComponent != nullptr) {
+    if( delegationComponent->IsControlDelegated(this) ) {
+      delegationComponent->CancelDelegates(this);
+    }
+    
+    DEV_ASSERT(!delegationComponent->IsControlDelegated(this), "IBSRunnable.DelegateNow.CanceledButStillNotInControl");
+    
+    auto delegator = delegationComponent->GetDelegator(this).lock();
+    if( delegator != nullptr ) {
+      delegator->Delegate(this, delegate);
+      return true;
+    }
+  }
+  
+  return false;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
 {
-  if( IsControlDelegated()) {
-    _lastCompletedMsgCopy = msg;
+  if( ! USE_BSM ) {
+    auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
+    if(delegationComponent != nullptr){
+      delegationComponent->HandleActionComplete(msg);
+    }
+  }
+
+  if( _actingCallback ) {
+
+    // Note that the callback may itself call start acting and set _actingCallback. Because of that, we create
+    // a copy here so we can null out the member variable such that it can be re-set by callback (if desired)
+    auto callback = _actingCallback;
+    _actingCallback = nullptr;
+    
+    callback(msg);
   }
 }
 

@@ -83,7 +83,7 @@ Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterfa
     Robot& robot = behaviorExternalInterface.GetRobot();
     // Don't run the animation. Instead, run a motor cal since his head may be out of calibration.
     LOG_EVENT("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robot.GetPitchAngle().getDegrees());
-    StartActing(new CalibrateMotorAction(robot, true, false));
+    DelegateIfInControl(new CalibrateMotorAction(robot, true, false));
     _endedOnInclineLastTime = false;
   } else {
     // Play the animation then check if we're still on a slope or if we were perched on something:
@@ -101,7 +101,7 @@ Result BehaviorReactToPlacedOnSlope::OnBehaviorActivated(BehaviorExternalInterfa
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TriggerAnimationAction(robot, reactionAnim),
+    DelegateIfInControl(new TriggerAnimationAction(robot, reactionAnim),
                 &BehaviorReactToPlacedOnSlope::CheckPitch);
   }
 

@@ -226,15 +226,15 @@ IBehavior::Status IHelper::OnDelegateFailure(BehaviorExternalInterface& behavior
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::StartActing(IActionRunner* action, IBehavior::ActionResultWithRobotCallback callback)
+bool IHelper::DelegateIfInControl(IActionRunner* action, IBehavior::ActionResultWithRobotCallback callback)
 {
-  return _behaviorToCallActionsOn.StartActing(action, callback);
+  return _behaviorToCallActionsOn.DelegateIfInControl(action, callback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback)
+bool IHelper::DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback)
 {
-  return _behaviorToCallActionsOn.StartActing(action, callback);
+  return _behaviorToCallActionsOn.DelegateIfInControl(action, callback);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -385,7 +385,7 @@ void IHelper::RespondToActionWithAnim(const T& res, ActionResult actionResult,
         // DEPRECATED - Grabbing robot to support current cozmo code, but this should
         // be removed
         Robot& robot = behaviorExternalInterface.GetRobot();
-        StartActing(new TriggerAnimationAction(robot, responseAnim),
+        DelegateIfInControl(new TriggerAnimationAction(robot, responseAnim),
                     [res, &callback](ActionResult animPlayed, BehaviorExternalInterface& behaviorExternalInterface){
                       // Pass through the true action result, not the played animation result
                       auto tmpCallback = callback;

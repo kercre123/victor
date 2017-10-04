@@ -223,7 +223,7 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(BehaviorExternalInterf
   }
   
   action->AddAction(new TriggerLiftSafeAnimationAction(robot, _reachForBlockTrigger));
-  StartActing(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
+  DelegateIfInControl(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
   
 }
   
@@ -280,7 +280,7 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(BehaviorExternalInter
   
   // make sure we only account for blocks flipped during the actual knock over action
   PrepareForKnockOverAttempt();
-  StartActing(flipAndWaitAction, flipCallback);
+  DelegateIfInControl(flipAndWaitAction, flipCallback);
   
 }
   
@@ -301,7 +301,7 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(BehaviorExternalInterfa
   }
   
   PrepareForKnockOverAttempt();
-  StartActing(flipAndWaitAction, &BehaviorKnockOverCubes::TransitionToPlayingReaction);
+  DelegateIfInControl(flipAndWaitAction, &BehaviorKnockOverCubes::TransitionToPlayingReaction);
 }
 
   
@@ -326,7 +326,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(BehaviorExternalInterfa
   
   // play a reaction if not streamlined
   if(!ShouldStreamline()){
-    StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
   }
 }
   

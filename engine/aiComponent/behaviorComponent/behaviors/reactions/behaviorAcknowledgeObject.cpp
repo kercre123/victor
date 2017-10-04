@@ -198,7 +198,7 @@ void BehaviorAcknowledgeObject::BeginIteration(BehaviorExternalInterface& behavi
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
   }
 
-  StartActing(action,
+  DelegateIfInControl(action,
               [this, &behaviorExternalInterface](ActionResult result)
               {
                 if(result == ActionResult::SUCCESS)
@@ -404,7 +404,7 @@ void BehaviorAcknowledgeObject::LookAtGhostBlock(BehaviorExternalInterface& beha
   compoundAction->AddAction(new WaitForImagesAction(robot, _params.numImagesToWaitFor,
                                                     VisionMode::DetectingMarkers));
   
-  StartActing(compoundAction, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+  DelegateIfInControl(compoundAction, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
   
   
@@ -440,7 +440,7 @@ void BehaviorAcknowledgeObject::FinishIteration(BehaviorExternalInterface& behav
     Robot& robot = behaviorExternalInterface.GetRobot();
     // There's nothing else to react to, so turn back towards the target so we're
     // left facing it (as long as it wasn't too far to turn towards to begin with)
-    StartActing(new TurnTowardsObjectAction(robot, _currTarget, _params.maxTurnAngle_rad), callback);
+    DelegateIfInControl(new TurnTowardsObjectAction(robot, _currTarget, _params.maxTurnAngle_rad), callback);
   }
 }
  

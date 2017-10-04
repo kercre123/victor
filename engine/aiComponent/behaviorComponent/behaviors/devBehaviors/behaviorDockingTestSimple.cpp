@@ -267,7 +267,7 @@ namespace Anki {
           _initialPreActionPoseAngle_rad = kInvalidAngle;
           
           CompoundActionSequential* action = new CompoundActionSequential(robot, {new MoveHeadToAngleAction(robot, 0, DEG_TO_RAD(1), 0), new WaitAction(robot, 2)});
-          StartActing(robot, action,
+          DelegateIfInControl(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
                           EndAttempt(robot, result, "MoveHead", true);
@@ -318,7 +318,7 @@ namespace Anki {
             
             
             DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::ROLLING);
-            StartActing(robot, driveAction,
+            DelegateIfInControl(robot, driveAction,
                         [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
                           if(result == ActionResult::SUCCESS)
                           {
@@ -328,7 +328,7 @@ namespace Anki {
                             action->SetDockingMethod((DockingMethod)kTestDockingMethod);
                             action->EnableDeepRoll(kDoDeepRoll);
                             
-                            StartActing(robot, action,
+                            DelegateIfInControl(robot, action,
                                         [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
                                           if (result != ActionResult::SUCCESS) {
                                             if(_numSawObject < 5)
@@ -459,7 +459,7 @@ namespace Anki {
               PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
               action->SetDockingMethod((DockingMethod)kTestDockingMethod);
               action->SetDoNearPredockPoseCheck(false);
-              StartActing(robot, action,
+              DelegateIfInControl(robot, action,
                           [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                             if (result != ActionResult::SUCCESS) {
                               if(_numSawObject < 5)
@@ -506,7 +506,7 @@ namespace Anki {
                 static_cast<DriveToPickupObjectAction*>(action)->SetDockingMethod((DockingMethod)kTestDockingMethod);
               }
               
-              StartActing(robot, action,
+              DelegateIfInControl(robot, action,
                           [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                             if (result != ActionResult::SUCCESS) {
                               if(_numSawObject < 5)
@@ -536,14 +536,14 @@ namespace Anki {
                                                                          0,
                                                                          true,
                                                                           _initialPreActionPoseAngle_rad);
-              StartActing(robot, driveAction,
+              DelegateIfInControl(robot, driveAction,
                           [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
                             if(result == ActionResult::SUCCESS)
                             {
                               _initialRobotPose = robot.GetPose();
                               PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
                               action->SetDockingMethod((DockingMethod)kTestDockingMethod);
-                              StartActing(robot, action,
+                              DelegateIfInControl(robot, action,
                                           [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
                                             if (result != ActionResult::SUCCESS) {
                                               if(_numSawObject < 5)
@@ -583,7 +583,7 @@ namespace Anki {
           PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot,
                                                                                         _cubePlacementPose,
                                                                                         true);
-          StartActing(robot, action,
+          DelegateIfInControl(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
                           EndAttempt(robot, result, "PlaceOnGround", true);
@@ -714,7 +714,7 @@ namespace Anki {
           DriveToPoseAction* driveAction = new DriveToPoseAction(robot, p, kDriveWithDown);
           action->AddAction(driveAction);
           
-          StartActing(robot, action,
+          DelegateIfInControl(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
                           EndAttempt(robot, result, "DriveToPose", true);
@@ -744,7 +744,7 @@ namespace Anki {
             }
             
             IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Test Complete", SayTextIntent::Text), new WaitAction(robot, 3)});
-            StartActing(robot, action,
+            DelegateIfInControl(robot, action,
                         [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                           if(result == ActionResult::SUCCESS)
                           {
@@ -763,7 +763,7 @@ namespace Anki {
             }
             
             IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Help", SayTextIntent::Text), new WaitAction(robot, 3)});
-            StartActing(robot, action,
+            DelegateIfInControl(robot, action,
                         [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                           if(result == ActionResult::SUCCESS)
                           {
@@ -1065,7 +1065,7 @@ namespace Anki {
       }
     }
     
-    void BehaviorDockingTestSimple::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback)
+    void BehaviorDockingTestSimple::DelegateIfInControl(Robot& robot, IActionRunner* action, ActionResultCallback callback)
     {
       assert(_actionCallbackMap.count(action->GetTag()) == 0);
       

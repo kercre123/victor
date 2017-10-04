@@ -234,7 +234,7 @@ void BehaviorLookAround::TransitionToRoaming(BehaviorExternalInterface& behavior
       new MoveHeadToAngleAction(robot, _lookAroundHeadAngle_rads),
       new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK) });
 
-  StartActing(new CompoundActionSequential(robot, {setHeadAndLiftAction, goToPoseAction}),
+  DelegateIfInControl(new CompoundActionSequential(robot, {setHeadAndLiftAction, goToPoseAction}),
               [this, &behaviorExternalInterface](ActionResult result) {
                 const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
                 if( resCat == ActionResultCategory::SUCCESS || resCat == ActionResultCategory::RETRY ) {
@@ -295,7 +295,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(BehaviorExternalInt
   
   // Note that in the positive case, this drive to action is likely to get canceled
   // because we discover it is a real object
-  StartActing(action,
+  DelegateIfInControl(action,
               [this,&behaviorExternalInterface](ActionResult result) {
                 if( IActionRunner::GetActionResultCategory(result) != ActionResultCategory::CANCELLED ) {
                   // we finished without observing an object, so go back to roaming
@@ -328,7 +328,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new CompoundActionSequential(robot, {
+  DelegateIfInControl(new CompoundActionSequential(robot, {
                   new TurnTowardsObjectAction(robot, recentObjectID),
                   new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BlockReact) }),
                [this, &behaviorExternalInterface, recentObjectID](ActionResult result) {

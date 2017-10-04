@@ -142,7 +142,9 @@ void BehaviorComponent::Update(Robot& robot,
                                std::string& behaviorDebugStr)
 {
   _behaviorHelperComponent->Update(*_behaviorExternalInterface);
-  
+
+  _delegationComponent->Update();
+
   if(USE_BSM){
     _behaviorSysMgr->Update(*_behaviorExternalInterface);
   }else{

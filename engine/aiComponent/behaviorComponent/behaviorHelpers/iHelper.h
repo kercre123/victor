@@ -138,10 +138,10 @@ protected:
   
   // Use the set behavior's start acting to perform an action
   template <typename T>
-  bool StartActing(IActionRunner* action, void(T::*callback)(ActionResult,BehaviorExternalInterface&));
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult,BehaviorExternalInterface&));
   
   template <typename T>
-  bool StartActing(IActionRunner* action, void(T::*callback)(const ExternalInterface::RobotCompletedAction&,
+  bool DelegateIfInControl(IActionRunner* action, void(T::*callback)(const ExternalInterface::RobotCompletedAction&,
                                                              BehaviorExternalInterface&));
   
   // Pass in a function that maps action results to UserFacingActionResults so that the
@@ -157,8 +157,8 @@ protected:
                                    void(T::*callback)(const ExternalInterface::RobotCompletedAction&, BehaviorExternalInterface&),
                                    UserFacingActionResultMapFunc mapFunc = nullptr);
 
-  bool StartActing(IActionRunner* action, BehaviorActionResultWithExternalInterfaceCallback callback);
-  bool StartActing(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
+  bool DelegateIfInControl(IActionRunner* action, BehaviorActionResultWithExternalInterfaceCallback callback);
+  bool DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
 
   // Stop the behavior acting so that the delegate can issue a new action
   bool StopActing(bool allowCallback);
@@ -218,18 +218,18 @@ private:
 
   
 template<typename T>
-bool IHelper::StartActing(IActionRunner* action, void(T::*callback)(ActionResult,BehaviorExternalInterface&))
+bool IHelper::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult,BehaviorExternalInterface&))
 {
-  return StartActing(action, 
+  return DelegateIfInControl(action, 
           std::bind(callback, static_cast<T*>(this), std::placeholders::_1,
                                                      std::placeholders::_2));
 }
 
 template<typename T>
-bool IHelper::StartActing(IActionRunner* action,
+bool IHelper::DelegateIfInControl(IActionRunner* action,
                           void(T::*callback)(const ExternalInterface::RobotCompletedAction&,BehaviorExternalInterface&))
 {
-  return StartActing(action,
+  return DelegateIfInControl(action,
                      std::bind(callback,
                                static_cast<T*>(this),
                                std::placeholders::_1,
@@ -250,7 +250,7 @@ bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
   DEV_ASSERT(_callbackAfterResponseAnim != nullptr,
              "IHelper.StartActingWithResponseAnim.NullActionResultCallback");
   
-  return StartActing(action, &IHelper::RespondToResultWithAnim);
+  return DelegateIfInControl(action, &IHelper::RespondToResultWithAnim);
 }
 
 template<typename T>
@@ -267,7 +267,7 @@ bool IHelper::StartActingWithResponseAnim(IActionRunner* action,
   DEV_ASSERT(_callbackAfterResponseAnimUsingRCA != nullptr,
              "IHelper.StartActingWithResponseAnim.NullRCACallback");
   
-  return StartActing(action, &IHelper::RespondToRCAWithAnim);
+  return DelegateIfInControl(action, &IHelper::RespondToRCAWithAnim);
 }
 
 } // namespace Cozmo

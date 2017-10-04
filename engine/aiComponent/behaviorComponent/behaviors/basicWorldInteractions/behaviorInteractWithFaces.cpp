@@ -251,7 +251,7 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(BehaviorExternalInte
     action->AddAction(turnAndAnimateAction);
   }
   
-  StartActing(action, [this, &behaviorExternalInterface](ActionResult ret ) {
+  DelegateIfInControl(action, [this, &behaviorExternalInterface](ActionResult ret ) {
       if( ret == ActionResult::SUCCESS ) {
         TransitionToGlancingDown(behaviorExternalInterface);
       }
@@ -303,7 +303,7 @@ void BehaviorInteractWithFaces::TransitionToGlancingDown(BehaviorExternalInterfa
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new MoveHeadToAngleAction(robot, kLowHeadAngle_rads),
+    DelegateIfInControl(new MoveHeadToAngleAction(robot, kLowHeadAngle_rads),
                 &BehaviorInteractWithFaces::TransitionToDrivingForward);
   }
   else {
@@ -359,7 +359,7 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(BehaviorExternalInter
   }
   
   // TODO:(bn) alternate driving animations?
-  StartActing(action, &BehaviorInteractWithFaces::TransitionToTrackingFace);
+  DelegateIfInControl(action, &BehaviorInteractWithFaces::TransitionToTrackingFace);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -389,7 +389,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(BehaviorExternalInterfa
   // loop animation forever to keep the eyes moving
   action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::InteractWithFaceTrackingIdle, 0));
   
-  StartActing(action, &BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent);
+  DelegateIfInControl(action, &BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -79,7 +79,7 @@ Result BehaviorReactToMotorCalibration::OnBehaviorActivated(BehaviorExternalInte
   Robot& robot = behaviorExternalInterface.GetRobot();
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
-  StartActing(new WaitAction(robot, _kTimeout_sec), [&robot](ActionResult res)
+  DelegateIfInControl(new WaitAction(robot, _kTimeout_sec), [&robot](ActionResult res)
     {
       if (IActionRunner::GetActionResultCategory(res) != ActionResultCategory::CANCELLED  &&
           (!robot.IsHeadCalibrated() || !robot.IsLiftCalibrated())) {

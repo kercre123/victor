@@ -159,7 +159,7 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(BehaviorExternalInter
   const unsigned long animIndex = _metadata.GetUprightAnimIndex() < kUprightAnims.size() ?
                                          _metadata.GetUprightAnimIndex() : kUprightAnims.size() - 1;
   turnAndReact->AddAction(new TriggerLiftSafeAnimationAction(robot, kUprightAnims[animIndex]));
-  StartActing(turnAndReact, [this](ActionResult result){
+  DelegateIfInControl(turnAndReact, [this](ActionResult result){
     if((result == ActionResult::SUCCESS) ||
        (result == ActionResult::VISUAL_OBSERVATION_FAILED)){
       _metadata.SetPlayedUprightAnim();
@@ -186,7 +186,7 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(BehaviorExternalInter
     _metadata.SetPlayedOnSideAnim();
   }
   
-  StartActing(turnAndReact, &BehaviorRespondPossiblyRoll::DelegateToRollHelper);
+  DelegateIfInControl(turnAndReact, &BehaviorRespondPossiblyRoll::DelegateToRollHelper);
 }
 
   

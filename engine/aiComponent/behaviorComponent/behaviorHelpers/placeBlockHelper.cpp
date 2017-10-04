@@ -58,7 +58,7 @@ BehaviorStatus PlaceBlockHelper::Init(BehaviorExternalInterface& behaviorExterna
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
-    StartActing(new TurnInPlaceAction(robot, (float) turn_rad, false),
+    DelegateIfInControl(new TurnInPlaceAction(robot, (float) turn_rad, false),
                 &PlaceBlockHelper::RespondToTurnAction);
   }
 
@@ -96,7 +96,7 @@ void PlaceBlockHelper::RespondToTurnAction(ActionResult result, BehaviorExternal
   //   action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
   // }  
   
-  StartActing(action, &PlaceBlockHelper::RespondToPlacedAction);
+  DelegateIfInControl(action, &PlaceBlockHelper::RespondToPlacedAction);
 }
   
   

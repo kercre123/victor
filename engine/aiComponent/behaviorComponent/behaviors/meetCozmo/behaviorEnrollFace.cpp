@@ -605,7 +605,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
   // a tracking action)
   StopActing(false);
   
-  StartActing(action, [this](BehaviorExternalInterface& behaviorExternalInterface)
+  DelegateIfInControl(action, [this](BehaviorExternalInterface& behaviorExternalInterface)
               {
                 if(_lastFaceSeenTime_ms == 0)
                 {
@@ -621,7 +621,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
                                   "Trying again. FaceID:%d",
                                   _faceID);
                     
-                    StartActing(CreateLookAroundAction(behaviorExternalInterface),
+                    DelegateIfInControl(CreateLookAroundAction(behaviorExternalInterface),
                                 &BehaviorEnrollFace::TransitionToLookingForFace);
                   }
                 }
@@ -663,7 +663,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace(BehaviorExternalInterface& b
                     action = getInAnimAction;
                   }
                   
-                  StartActing(action, &BehaviorEnrollFace::TransitionToEnrolling);
+                  DelegateIfInControl(action, &BehaviorEnrollFace::TransitionToEnrolling);
                 }
               });
   
@@ -704,7 +704,7 @@ void BehaviorEnrollFace::TransitionToEnrolling(BehaviorExternalInterface& behavi
   // Tracking never completes. UpdateInternal will watch for timeout or for
   // face enrollment to complete and stop this behavior or transition to
   // a completion state.
-  StartActing(compoundAction);
+  DelegateIfInControl(compoundAction);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -719,7 +719,7 @@ void BehaviorEnrollFace::TransitionToScanningInterrupted(BehaviorExternalInterfa
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
 
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt),
+  DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::MeetCozmoLookFaceInterrupt),
               [this]() {
                 SET_STATE(TimedOut);
               });
@@ -792,7 +792,7 @@ void BehaviorEnrollFace::TransitionToSayingName(BehaviorExternalInterface& behav
   }
   
   // Note: even if the animation fails for some reason, we will still continue with the behavior
-  StartActing(finalAnimation, [this,&behaviorExternalInterface](ActionResult result)
+  DelegateIfInControl(finalAnimation, [this,&behaviorExternalInterface](ActionResult result)
   {
     if(ActionResult::SUCCESS != result)
     {
@@ -888,7 +888,7 @@ void BehaviorEnrollFace::TransitionToSavingToRobot(BehaviorExternalInterface& be
   const f32 kMaxSaveTime_sec = 5.f; // Don't wait the default (long) time for save to complete
   WaitForLambdaAction* action = new WaitForLambdaAction(robot, waitForSave, kMaxSaveTime_sec);
   
-  StartActing(action, [this](ActionResult actionResult) {
+  DelegateIfInControl(action, [this](ActionResult actionResult) {
     if (ActionResult::SUCCESS == actionResult) {
       SET_STATE(Success);
     } else {

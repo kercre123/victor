@@ -63,13 +63,28 @@ public:
   virtual void GetAllDelegates(std::set<IBSRunnable*>& delegates) const = 0;
 
 protected:
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual void OnEnteredActivatableScopeInternal() = 0;
-  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+
+  // Called once after this runnable is constructed
+  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
+
+  // Returns true if this runnable wants to be active, false otherwise
+  // TODO:(bn) default to true??
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const = 0;
-  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) = 0;
-  virtual void OnLeftActivatableScopeInternal() = 0;
+
+  // Called when this runnable has entered activatable scope (it could be delegated to)
+  virtual void OnEnteredActivatableScopeInternal() { }
+
+  // Called when this runnable is no longer in activatable scope (no longer valid to be delegated to)
+  virtual void OnLeftActivatableScopeInternal() { }
+
+  // Called once per tick with the runnable is in activatable scope
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
+
+  // Called when this behavior becomes active and has control
+  virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
+
+  // Called when this behavior is deactivated (it no longer has control)
+  virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) { }
   
 private:
   // tmp string for identifying BSRunnables until IDs are combined
@@ -79,17 +94,23 @@ private:
   mutable size_t _lastTickWantsToBeActivatedCheckedOn;
   size_t _lastTickOfUpdate;
   
-#if ANKI_DEV_CHEATS
   enum class ActivationState{
     NotInitialized,
     OutOfScope,
     InScope,
     Activated
   };
-  ActivationState _currentActivationState;
   std::string ActivationStateToString(ActivationState state) const;
-#endif
   
+  // Functions for ensuring apropriate activation state is maintained
+  void SetActivationState_DevOnly(ActivationState newState);
+  void AssertActivationState_DevOnly(ActivationState state) const;
+  void AssertNotActivationState_DevOnly(ActivationState state) const;
+
+  
+  #if ANKI_DEV_CHEATS
+    ActivationState _currentActivationState;
+  #endif
 };
 
 } // namespace Cozmo

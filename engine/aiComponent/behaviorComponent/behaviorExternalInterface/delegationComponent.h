@@ -16,6 +16,7 @@
 
 #include "anki/common/types.h"
 
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
 
@@ -35,11 +36,11 @@ class Robot;
 
 class Delegator{
 public:
-  Delegator(Robot& robot,
-                  BehaviorSystemManager& bsm);
+  Delegator(Robot& robot, BehaviorSystemManager& bsm);
   virtual ~Delegator(){};
   
-  bool Delegate(IBSRunnable* delegatingRunnable, IActionRunner* action);
+  bool Delegate(IBSRunnable* delegatingRunnable, IActionRunner* action,
+                BehaviorRobotCompletedActionCallback callback);
   bool Delegate(IBSRunnable* delegatingRunnable, IBSRunnable* delegated);
   bool Delegate(IBSRunnable* delegatingRunnable,
                 BehaviorExternalInterface& behaviorExternalInterface,
@@ -56,12 +57,16 @@ private:
   // Naive tracking for action delegation
   IBSRunnable* _runnableThatDelegatedAction;
   u32 _lastActionTag;
+
+  // hold the callback along with a copy of it's arguments so it can be called during Update
+  BehaviorRobotCompletedActionCallback _actionCallback;
+  std::shared_ptr<ExternalInterface::RobotCompletedAction> _lastCompletedMsgCopy;
   
   // Naive tracking for helper delegation
   IBSRunnable* _runnableThatDelegatedHelper;
   WeakHelperHandle _delegateHelperHandle;
   BehaviorSystemManager* _bsm;
-  
+
   void EnsureHandleIsUpdated();
 };
 
@@ -71,11 +76,15 @@ public:
   DelegationComponent() {}; // Constructor for tests
   DelegationComponent(Robot& robot, BehaviorSystemManager& bsm);
   virtual ~DelegationComponent(){};
+
+  void Update();
   
   bool IsControlDelegated(const IBSRunnable* delegatingRunnable);
   void CancelDelegates(IBSRunnable* delegatingRunnable);
   void CancelSelf(IBSRunnable* delegatingRunnable);
-  
+
+  // TODO:(bn) // TEMP: try to avoid the needing to pass in 'this'. Should be easy to just make "delegator"
+  // optional like we did for components in the external interface
   std::weak_ptr<Delegator> GetDelegator(IBSRunnable* delegatingRunnable);
   
 private:
@@ -83,13 +92,19 @@ private:
   friend class IBehavior;
   bool IsActing(const IBSRunnable* delegatingRunnable);
   std::shared_ptr<Delegator>   _delegator;
-  std::weak_ptr<Delegator>     _invalidDelegator;
+  std::weak_ptr<Delegator>     _invalidDelegator; // TODO:(bn) change to not weak? Keep consistent with components
   std::vector<::Signal::SmartHandle> _eventHandles;
+    
+  BehaviorSystemManager* _bsm;
+
+#if !USE_BSM
+  // needs to be public so IBehavior can call in. With USE_BSM this handler is the "real" one that gets the
+  // event, with !USE_BSM, the IBehavior one is "real" and call this one
+public:
+#endif
   
   // this is an internal handler just for StartActing
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
-  
-  BehaviorSystemManager* _bsm;
 };
   
   

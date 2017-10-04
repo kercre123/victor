@@ -167,7 +167,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(BehaviorExternalInterf
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
-  StartActing(new TriggerLiftSafeAnimationAction(robot,
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(robot,
                      AnimationTrigger::SparkPickupInitialCubeReaction),
               &BehaviorPickUpCube::TransitionToPickingUpCube);
 
@@ -197,7 +197,7 @@ void BehaviorPickUpCube::TransitionToSuccessReaction(BehaviorExternalInterface& 
     // be removed
     Robot& robot = behaviorExternalInterface.GetRobot();
     DEBUG_SET_STATE(DoingFinalReaction);
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess));
   }
 }
 
