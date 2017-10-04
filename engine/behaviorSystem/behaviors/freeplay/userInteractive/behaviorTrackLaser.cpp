@@ -47,7 +47,7 @@ namespace {
   
 static const constexpr char* const kLogChannelName              = "Behaviors";
 static const constexpr char* const kSkipGetOutAnimKey           = "skipGetOutAnim";
-static const constexpr char* const kMaxLostLaserTimeoutGraphKey = "maxLostLaserTimeoutGraph_s";
+static const constexpr char* const kMaxLostLaserTimeoutGraphKey = "maxLostLaserTimeoutGraph_sec";
   
 } 
   
@@ -119,7 +119,7 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
                  "BehaviorTrackLaser.SetParamsFromConfig.MissingLostLaserGraphKey",
                  "No key found for lost laser timeout graph")){
     const Json::Value& maxLostLaserTimeoutGraph = config[kMaxLostLaserTimeoutGraphKey];
-    _params.maxLostLaserTimeoutGraph_ms.ReadFromJson(maxLostLaserTimeoutGraph);
+    _params.maxLostLaserTimeoutGraph_sec.ReadFromJson(maxLostLaserTimeoutGraph);
   }
 
   
@@ -215,7 +215,7 @@ void BehaviorTrackLaser::InitHelper(Robot& robot)
   
   _exposureChangedTime_ms = 0;
   _imageMean = -1;
-  _currentLostLaserTimeout = _params.maxLostLaserTimeoutGraph_ms.EvaluateY(0);
+  _currentLostLaserTimeout_s = _params.maxLostLaserTimeoutGraph_sec.EvaluateY(0);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -346,14 +346,14 @@ bool BehaviorTrackLaser::CheckForTimeout(Robot& robot)
   const TimeStamp_t lastImgTime_ms = robot.GetLastImageTimeStamp();
   
   if (_haveEverConfirmedLaser &&
-      (_lastLaserObservation.timestamp_ms + _currentLostLaserTimeout) < lastImgTime_ms )
+      (_lastLaserObservation.timestamp_ms + (_currentLostLaserTimeout_s * 1000)) < lastImgTime_ms )
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.NoLaserTimeout",
-                  "No laser found, giving up after %fms",
-                  _currentLostLaserTimeout);
+                  "No laser found, giving up after %fs",
+                  _currentLostLaserTimeout_s);
     
     Util::sEventF("robot.laser_behavior.no_laser_timeout", {{DDATA, (_haveEverConfirmedLaser ? "0" : "1")}},
-                  "%f", _currentLostLaserTimeout);
+                  "%f", (_currentLostLaserTimeout_s * 1000));
     
     isTimedOut = true;
   }
@@ -603,7 +603,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
                 const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _startedTracking_sec;
 
                 const float behaviorRunningElapsed = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s());
-                _currentLostLaserTimeout = _params.maxLostLaserTimeoutGraph_ms.EvaluateY(behaviorRunningElapsed);
+                _currentLostLaserTimeout_s = _params.maxLostLaserTimeoutGraph_sec.EvaluateY(behaviorRunningElapsed);
                 
                 PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToTrackLaser.TrackingFinished",
                                "Result: %s Time: %fsec WillPounce: %s", EnumToString(result), trackingTime_sec,
