@@ -455,22 +455,40 @@
 
 
   "codeLabFeaturedProject_HotPotato.projectName": {
-      "translation": "A Featured Project Name Two Lines"
+      "translation": "Hot Potato"
   },
   "codeLabFeaturedProject_HotPotato.projectDescription": {
-      "translation": "Multiple lines of text. This project is amazing! Let me tell you why."
+      "translation": "When the music stops, don't get stuck with the hot potato!"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectName": {
-      "translation": "A Featured Project!"
+      "translation": "Tiny Orchestra"
   },
   "codeLabFeaturedProject_TinyOrchestra.projectDescription": {
-      "translation":  "This project is amazing!"
+      "translation":  "It's your own tiny orchestra, and Cubes are your instrument!"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectName": {
       "translation": "Magic Fortune Teller"
   },
   "codeLabFeaturedProject_MagicFortuneTeller.projectDescription": {
-      "translation":  "Shake Cozmo and have your fortune told!"
+      "translation":  "Shake Cozmo and have your fortune told."
+  },
+  "codeLabFeaturedProject_CubeWhack.projectName": {
+      "translation": "Cube Whack"
+  },
+  "codeLabFeaturedProject_CubeWhack.projectDescription": {
+      "translation":  "Whack that Cube! What's your high score?"
+  },
+  "codeLabFeaturedProject_FiretruckAlarm.projectName": {
+      "translation": "Fire Truck Alarm"
+  },
+  "codeLabFeaturedProject_FiretruckAlarm.projectDescription": {
+      "translation":  "Tick, tock! Timers are more fun when they're a Cozmo."
+  },
+  "codeLabFeaturedProject_LightShow.projectName": {
+      "translation": "Light Show"
+  },
+  "codeLabFeaturedProject_LightShow.projectDescription": {
+      "translation":  "Turn off the lights and groove to the music."
   },
 
 
