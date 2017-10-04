@@ -101,6 +101,7 @@ bool BehaviorDistractedByMotion::CarryingObjectHandledInternally() const
 Result BehaviorDistractedByMotion::InitInternal(Robot &robot)
 {
   PRINT_CH_INFO("Behaviors", "BehaviorDistractedByMotion.InitInternal", "InitInternal called");
+  //robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
 
   TransitionToStartState(robot);
   return Result::RESULT_OK;
