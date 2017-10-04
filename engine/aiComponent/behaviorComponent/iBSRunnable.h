@@ -16,6 +16,7 @@
 
 #include "anki/common/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "util/global/globalDefinitions.h"
 
 #include <set>
 #include <string>
@@ -71,24 +72,23 @@ protected:
   virtual void OnLeftActivatableScopeInternal() = 0;
   
 private:
+  // tmp string for identifying BSRunnables until IDs are combined
+  std::string _idString;
+  // Track the number of EnteredScope requests
+  uint32_t _currentInScopeCount;
+  mutable size_t _lastTickWantsToBeActivatedCheckedOn;
+  size_t _lastTickOfUpdate;
+  
+#if ANKI_DEV_CHEATS
   enum class ActivationState{
     NotInitialized,
     OutOfScope,
     InScope,
     Activated
   };
-  
-  // tmp string for identifying BSRunnables until IDs are combined
-  std::string _idString;
-  // Track the number of EnteredScope requests
-  uint32_t _currentInScopeCount;
   ActivationState _currentActivationState;
-  mutable size_t _lastTickWantsToBeActivatedCheckedOn;
-  size_t _lastTickOfUpdate;
-
-  
   std::string ActivationStateToString(ActivationState state) const;
-  
+#endif
   
 };
 

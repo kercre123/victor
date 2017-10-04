@@ -12,10 +12,89 @@
 * --gtest_filter=BehaviorSystemManager*
 **/
 
+// Access protected BSM functions for test purposes
+#define private public
+#define protected public
+
+#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/cozmoContext.h"
+#include "engine/robotDataLoader.h"
+#include "engine/robot.h"
 #include "gtest/gtest.h"
+
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
+
+using namespace Anki::Cozmo;
+
+void SetupBSM(BehaviorSystemManager& bsm,
+              std::unique_ptr<Robot>& robot,
+              std::unique_ptr<BehaviorContainer>& bc,
+              std::unique_ptr<BehaviorExternalInterface>& bei,
+              std::unique_ptr<IBSRunnable>& baseRunnable){
+  TestBehaviorFramework::GenerateCoreBehaviorTestingComponents(robot, bc, bei);
+  
+  bc->Init(*bei, !static_cast<bool>(USE_BSM));
+  
+  baseRunnable = std::make_unique<TestSuperPoweredRunnable>(*bc);
+
+  bsm.InitConfiguration(*bei, baseRunnable.get());
+  bsm.Update(*bei);
+}
+
+void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
+                                IBSRunnable* delegator,
+                                IBSRunnable* delegated){
+  auto iter = bsm._runnableStack->_delegatesMap.find(delegator);
+  if(iter != bsm._runnableStack->_delegatesMap.end()){
+    iter->second.insert(delegated);
+  }
+}
 
 TEST(BehaviorSystemManager, TestDelegationVariants)
 {
+  //
+  std::unique_ptr<Robot> robot;
+  std::unique_ptr<BehaviorContainer> bc;
+  std::unique_ptr<BehaviorExternalInterface> bei;
+  std::unique_ptr<IBSRunnable> baseRunnable;
+  BehaviorSystemManager bsm;
+  SetupBSM(bsm, robot, bc, bei, baseRunnable);
+  
+  // Check to make sure that the stack exists and control is appropriately delegated
+  ASSERT_TRUE(bsm._runnableStack->IsInStack(baseRunnable.get()));
+  IBSRunnable* runnableDelegating = bsm._runnableStack->GetTopOfStack();
+  ASSERT_NE(runnableDelegating, nullptr);
+  EXPECT_FALSE(bsm.IsControlDelegated(runnableDelegating));
+  
+
+  // Build up an arbitrarily large stack of delegates
+  const int arbitraryDelegationNumber = 100;
+  std::vector<std::unique_ptr<TestSuperPoweredRunnable>> bunchOfDelegates;
+  for(int i = 0; i < arbitraryDelegationNumber; i++){
+    bunchOfDelegates.push_back(std::make_unique<TestSuperPoweredRunnable>(*bc));
+    bunchOfDelegates.back()->Init(*bei);
+    bunchOfDelegates.back()->OnEnteredActivatableScope();
+    bunchOfDelegates.back()->WantsToBeActivatedInternal(*bei);
+    InjectValidDelegateIntoBSM(bsm, runnableDelegating, bunchOfDelegates.back().get());
+    
+    bsm.Delegate(bsm._runnableStack->GetTopOfStack(),
+                 bunchOfDelegates.back().get());
+    
+    // Assert control is delegated properly
+    for(auto& entry: bunchOfDelegates){
+      if(entry == bunchOfDelegates.back()){
+        EXPECT_FALSE(bsm.IsControlDelegated(entry.get()));
+      }else{
+        EXPECT_TRUE(bsm.IsControlDelegated(entry.get()));
+      }
+    }
+    
+    runnableDelegating = bunchOfDelegates.back().get();
+  }
+
   // TODO: Set up a BSM and then delegate to vairous combinations of
   // runnables, helpers, actions etc.
 }

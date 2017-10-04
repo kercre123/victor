@@ -20,7 +20,7 @@
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "gtest/gtest.h"
-#include "test/engine/behaviorComponent/testBehaviorFramework.cpp"
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -45,7 +45,7 @@ TEST(BehaviorInterface, Create)
   b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b.IsRunning() );
-  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kNotRunningScore);
   EXPECT_TRUE( b.WantsToBeActivated(*behaviorExternalInterface));
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
@@ -71,10 +71,10 @@ TEST(BehaviorInterface, Init)
   b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b._inited );
-  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kNotRunningScore );
   b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
-  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kRunningScore );
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._stopped );
@@ -127,12 +127,12 @@ TEST(BehaviorInterface, Run)
 
   BaseStationTimer::getInstance()->UpdateTime(0);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kNotRunningScore );
   
   b.WantsToBeActivated(*behaviorExternalInterface);
   b.OnActivated(*behaviorExternalInterface);
   for(int i=0; i<5; i++) {
-    EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kRunningScore );
+    EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kRunningScore );
     BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 0.01 * i ) );
     b.Update(*behaviorExternalInterface);
   }
@@ -141,7 +141,7 @@ TEST(BehaviorInterface, Run)
 
   b.OnDeactivated(*behaviorExternalInterface);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kNotRunningScore );
 
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 5 );
@@ -183,13 +183,13 @@ TEST(BehaviorInterface, ScoreWhileRunning)
 
   BaseStationTimer::getInstance()->UpdateTime(0);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kNotRunningScore );
 
   {
     SCOPED_TRACE("");
     b.WantsToBeActivated(*behaviorExternalInterface);
     b.OnActivated(*behaviorExternalInterface);
-    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore);
   }
 
   // this should have no effect, since we aren't acting
@@ -197,46 +197,46 @@ TEST(BehaviorInterface, ScoreWhileRunning)
 
   {
     SCOPED_TRACE("");
-    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore);
   }
 
   bool done = false;
   {
     SCOPED_TRACE("");
     EXPECT_TRUE( b.CallStartActing(robot, done) );
-    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore);
   }
 
   {
     SCOPED_TRACE("");
     b.CallIncreaseScoreWhileActing(0.1f);
-    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore + 0.1f);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore + 0.1f);
   }
 
   {
     SCOPED_TRACE("");
     b.CallIncreaseScoreWhileActing(1.0f);
-    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore + 0.1f + 1.0f);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore + 0.1f + 1.0f);
   }
 
   {
     SCOPED_TRACE("");
     done = true;
     // now the behavior is not acting so the score should revert back
-    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore);
   }
 
   {
     SCOPED_TRACE("");
     b.CallIncreaseScoreWhileActing(0.999f);
-    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, kRunningScore);
+    TickAndCheckScore(robot, b, *behaviorExternalInterface, 5, TestBehavior::kRunningScore);
   }
 
   BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( 2.0 ) );
 
   b.OnDeactivated(*behaviorExternalInterface);
 
-  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), kNotRunningScore );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(*behaviorExternalInterface), TestBehavior::kNotRunningScore );
 
   EXPECT_TRUE( b._inited );
   EXPECT_TRUE( b._stopped );

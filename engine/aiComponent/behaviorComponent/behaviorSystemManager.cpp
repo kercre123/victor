@@ -14,7 +14,6 @@
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
-#include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -38,99 +37,34 @@ class IReactionTriggerStrategy;
 
 
 namespace{
+const int kArbitrarilyLargeCancelBound = 1000000;
 }
-
-
-/////////
-// BehaviorSystemManager implementation
-/////////
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorSystemManager::BehaviorSystemManager()
-: _initializationStage(InitializationStage::SystemNotInitialized)
-{
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorSystemManager::~BehaviorSystemManager()
-{
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
-                                                const Json::Value& behaviorSystemConfig)
-{
-  // do not support multiple initialization. A) we don't need it, B) it's easy to forget to clean up everything properly
-  // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
-  // potentially double Init was never supported
-  DEV_ASSERT(_initializationStage == InitializationStage::SystemNotInitialized,
-             "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
-  _initializationStage = InitializationStage::StackNotInitialized;
-
-
-  // Assumes there's only one instance of the behavior external Intarfec
-  _behaviorExternalInterface = &behaviorExternalInterface;
   
-  if(!behaviorSystemConfig.empty()){
-    ActivityType type = IActivity::ExtractActivityTypeFromConfig(behaviorSystemConfig);
-    
-    IBSRunnable* baseRunnable = ActivityFactory::CreateActivity(behaviorExternalInterface,
-                                                                type,
-                                                                behaviorSystemConfig);
-    baseRunnable->Init(behaviorExternalInterface);
-    PushOntoStack(baseRunnable);
-  }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSystemManager::RunnableStack::InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+                                                             IBSRunnable* baseOfStack)
+{
+  ANKI_VERIFY(_runnableStack.empty(),
+              "BehaviorSystemManager.RunnableStack.InitRunnableStack.StackNotEmptyOnInit",
+              "");
   
-  return RESULT_OK;
+  baseOfStack->Init(behaviorExternalInterface);
+  baseOfStack->OnEnteredActivatableScope();
+  ANKI_VERIFY(baseOfStack->WantsToBeActivated(behaviorExternalInterface),
+              "BehaviorSystemManager.RunnableStack.InitConfig.BaseRunnableDoesn'tWantToRun",
+              "");
+  PushOntoStack(baseOfStack);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalInterface)
-{
-  ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
-  
-  if(_initializationStage == InitializationStage::SystemNotInitialized) {
-    PRINT_NAMED_ERROR("BehaviorSystemManager.Update.NotInitialized", "");
-    return;
-  }
-  
-  
-  
-  std::set<IBSRunnable*> runnableUpdatesTickedInStack;
-  // First update the runnable stack and allow it to make any delegation/canceling
-  // decisions that it needs to make
-  UpdateRunnableStack(behaviorExternalInterface, runnableUpdatesTickedInStack);
-  // Then once all of that's done, update anything that's in activatable scope
-  // but isn't currently on the runnable stack
-  UpdateInActivatableScope(behaviorExternalInterface, runnableUpdatesTickedInStack);
-  
-} // Update()
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface, std::set<IBSRunnable*>& tickedInStack)
+void BehaviorSystemManager::RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+                                                               std::set<IBSRunnable*>& tickedInStack)
 {
   if(_runnableStack.size() == 0){
-    PRINT_NAMED_WARNING("BehaviorSystemManager.UpdateRunnableStack.NoStackInitialized",
+    PRINT_NAMED_WARNING("BehaviorSystemManager.RunnableStack.UpdateRunnableStack.NoStackInitialized",
                         "");
     return;
-  }
-  
-  // There's a delay between init and first robot update tick - this messes with
-  // time checks in iBSRunnable, so Activate the base here instead of in init
-  if(_initializationStage == InitializationStage::StackNotInitialized){
-    _initializationStage = InitializationStage::Initialized;
-    
-    auto base = _runnableStack.begin();
-    (*base)->OnEnteredActivatableScope();
-    ANKI_VERIFY((*base)->WantsToBeActivated(behaviorExternalInterface),
-                "BehaviorSystemManager.InitConfig.BaseRunnableDoesn'tWantToRun",
-                "");
-    (*base)->OnActivated(behaviorExternalInterface);
-    PrepareDelegatesToEnterScope(*base);
   }
 
   
@@ -149,11 +83,128 @@ void BehaviorSystemManager::UpdateRunnableStack(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSystemManager::RunnableStack::PushOntoStack(IBSRunnable* runnable)
+{
+  _runnableToIndexMap.insert(std::make_pair(runnable, _runnableStack.size()));
+  _runnableStack.push_back(runnable);
+  
+  PrepareDelegatesToEnterScope(runnable);
+  runnable->OnActivated(*_behaviorExternalInterface);
+  
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSystemManager::RunnableStack::PopStack()
+{
+  for(auto& entry: _delegatesMap[_runnableStack.back()]){
+    PrepareDelegateForRemovalFromStack(entry);
+  }
+  _runnableStack.back()->OnDeactivated(*_behaviorExternalInterface);
+  
+  _delegatesMap.erase(_runnableStack.back());
+  _runnableToIndexMap.erase(_runnableStack.back());
+  _runnableStack.pop_back();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSystemManager::RunnableStack::PrepareDelegatesToEnterScope(IBSRunnable* delegated)
+{
+  // Add the new available delegates to the map
+  std::set<IBSRunnable*> newAvailableDelegates;
+  delegated->GetAllDelegates(newAvailableDelegates);
+  for(auto& entry: newAvailableDelegates){
+    entry->OnEnteredActivatableScope();
+  }
+  
+  _delegatesMap.insert(std::make_pair(delegated, std::move(newAvailableDelegates)));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSystemManager::RunnableStack::PrepareDelegateForRemovalFromStack(IBSRunnable* delegated)
+{
+  auto availableDelegates = _delegatesMap.find(delegated);
+  for(auto& entry: availableDelegates->second){
+    entry->OnLeftActivatableScope();
+  }
+  
+  _delegatesMap.erase(availableDelegates);
+}
+
+
+/////////
+// BehaviorSystemManager implementation
+/////////
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorSystemManager::BehaviorSystemManager()
+: _initializationStage(InitializationStage::SystemNotInitialized)
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
+                                                IBSRunnable* baseRunnable)
+{
+  // do not support multiple initialization. A) we don't need it, B) it's easy to forget to clean up everything properly
+  // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
+  // potentially double Init was never supported
+  DEV_ASSERT(_initializationStage == InitializationStage::SystemNotInitialized &&
+             baseRunnable != nullptr,
+             "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
+  _initializationStage = InitializationStage::StackNotInitialized;
+
+
+  // Assumes there's only one instance of the behavior external Intarfec
+  _behaviorExternalInterface = &behaviorExternalInterface;
+  _runnableStack.reset(new RunnableStack(_behaviorExternalInterface));
+  
+  _baseRunnableTmp = baseRunnable;
+  
+  return RESULT_OK;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
+  
+  if(_initializationStage == InitializationStage::SystemNotInitialized) {
+    PRINT_NAMED_ERROR("BehaviorSystemManager.Update.NotInitialized", "");
+    return;
+  }
+  
+  // There's a delay between init and first robot update tick - this messes with
+  // time checks in iBSRunnable, so Activate the base here instead of in init
+  if(_initializationStage == InitializationStage::StackNotInitialized){
+    _initializationStage = InitializationStage::Initialized;
+    _runnableStack->InitRunnableStack(behaviorExternalInterface, _baseRunnableTmp);
+    _baseRunnableTmp = nullptr;
+  }
+  
+  std::set<IBSRunnable*> runnableUpdatesTickedInStack;
+  // First update the runnable stack and allow it to make any delegation/canceling
+  // decisions that it needs to make
+  _runnableStack->UpdateRunnableStack(behaviorExternalInterface, runnableUpdatesTickedInStack);
+  // Then once all of that's done, update anything that's in activatable scope
+  // but isn't currently on the runnable stack
+  UpdateInActivatableScope(behaviorExternalInterface, runnableUpdatesTickedInStack);
+  
+} // Update()
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBSRunnable*>& tickedInStack)
 {
   // This is innefficient and should be replaced, but not overengineering right now
   std::set<IBSRunnable*> allInActivatableScope;
-  for(auto& entry: _delegatesMap){
+  const RunnableStack::DelegatesMap& delegatesMap = _runnableStack->GetDelegatesMap();
+  for(auto& entry: delegatesMap){
     for(auto& runnable : entry.second){
       if(tickedInStack.find(runnable)  == tickedInStack.end()){
           allInActivatableScope.insert(runnable);
@@ -169,19 +220,15 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSystemManager::IsControlDelegated(const IBSRunnable* delegator)
 {
-  // If it's not on top of the stack, control is delegated
-  auto res = _runnableToIndexMap.find(delegator);
-  if(res != _runnableToIndexMap.end()){
-    return ((res->second - 1) == _runnableStack.size());
-  }
-  return false;
+  return (_runnableStack->IsInStack(delegator)) &&
+         (_runnableStack->GetTopOfStack() != delegator);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSystemManager::CanDelegate(IBSRunnable* delegator)
 {
-  return _runnableStack.back() == delegator;
+  return _runnableStack->GetTopOfStack() == delegator;
 }
 
 
@@ -189,7 +236,7 @@ bool BehaviorSystemManager::CanDelegate(IBSRunnable* delegator)
 bool BehaviorSystemManager::Delegate(IBSRunnable* delegator, IBSRunnable* delegated)
 {
   // Ensure that the delegator is on top of the stack
-  if(!ANKI_VERIFY(delegator == _runnableStack.back(),
+  if(!ANKI_VERIFY(delegator == _runnableStack->GetTopOfStack(),
                   "BehaviorSystemManager.Delegate.DelegatorNotOnTopOfStack",
                   "")){
     return false;
@@ -197,8 +244,10 @@ bool BehaviorSystemManager::Delegate(IBSRunnable* delegator, IBSRunnable* delega
   
   {
     // Ensure that the delegated runnable is in the delegates map
-    auto& availableDelegates = _delegatesMap[delegator];
-    if(!ANKI_VERIFY(availableDelegates.find(delegated) != availableDelegates.end(),
+    const RunnableStack::DelegatesMap& delegatesMap =  _runnableStack->GetDelegatesMap();
+    auto iter = delegatesMap.find(delegator);
+    if(!ANKI_VERIFY((iter != delegatesMap.end()) &&
+                    (iter->second.find(delegated) != iter->second.end()),
                    "BehaviorSystemManager.Delegate.DelegateNotInAvailableDelegateMap",
                    "Delegator %s asked to delegate to %s which is not in available delegates map",
                    delegator->GetPrintableID().c_str(),
@@ -207,11 +256,8 @@ bool BehaviorSystemManager::Delegate(IBSRunnable* delegator, IBSRunnable* delega
     }
   }
   
-  PrepareDelegatesToEnterScope(delegated);
-  
   // Activate the new runnable and add it to the top of the stack
-  PushOntoStack(delegated);
-  delegated->OnActivated(*_behaviorExternalInterface);
+  _runnableStack->PushOntoStack(delegated);
   
   return true;
 }
@@ -220,28 +266,12 @@ bool BehaviorSystemManager::Delegate(IBSRunnable* delegator, IBSRunnable* delega
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSystemManager::CancelDelegates(IBSRunnable* delegator)
 {
-  auto iter = _runnableStack.begin();
-  while((*iter != delegator) &&
-        (iter != _runnableStack.end())){
-    ++iter;
+  if(_runnableStack->IsInStack(delegator)){
+    BOUNDED_WHILE(kArbitrarilyLargeCancelBound,
+                  _runnableStack->GetTopOfStack() != delegator){
+      _runnableStack->PopStack();
+    }
   }
-  
-  DEV_ASSERT(iter != _runnableStack.end(),
-             "BehaviorSystemManager.CancelSelf.DelegatorNotInStack");
-  auto revIter = _runnableStack.rbegin();
-  while((*revIter != *iter) &&
-        (revIter != _runnableStack.rend())){
-    PrepareDelegateForRemovalFromStack(*revIter);
-    ++revIter;
-  }
-  
-  DEV_ASSERT(revIter != _runnableStack.rend(),
-             "BehaviorSystemManager.CancelSelf.IteratorsNeverMet");
-  
-  // Clear off the stack on top of the delegator
-  iter++;
-  _runnableStack.erase(iter, _runnableStack.end());
-  
 }
 
 
@@ -253,52 +283,8 @@ void BehaviorSystemManager::CancelSelf(IBSRunnable* delegator)
   if(ANKI_VERIFY(!IsControlDelegated(delegator),
                  "BehaviorSystemManager.CancelSelf.ControlStillDelegated",
                  "CancelDelegates was called, but the delegator is not on the top of the stack")){
-    PrepareDelegateForRemovalFromStack(delegator);
-    PopStack();
+    _runnableStack->PopStack();
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::PushOntoStack(IBSRunnable* runnable)
-{
-  _runnableToIndexMap.insert(std::make_pair(runnable, _runnableStack.size()));
-  _runnableStack.push_back(runnable);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::PopStack()
-{
-  _runnableToIndexMap.erase(_runnableStack.back());
-  _runnableStack.pop_back();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::PrepareDelegatesToEnterScope(IBSRunnable* delegated)
-{
-  // Add the new available delegates to the map
-  std::set<IBSRunnable*> newAvailableDelegates;
-  delegated->GetAllDelegates(newAvailableDelegates);
-  for(auto& entry: newAvailableDelegates){
-    entry->OnEnteredActivatableScope();
-  }
-  
-  _delegatesMap.insert(std::make_pair(delegated, std::move(newAvailableDelegates)));
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::PrepareDelegateForRemovalFromStack(IBSRunnable* delegated)
-{
-  delegated->OnDeactivated(*_behaviorExternalInterface);
-  auto availableDelegates = _delegatesMap.find(delegated);
-  for(auto& entry: availableDelegates->second){
-    entry->OnLeftActivatableScope();
-  }
-  
-  _delegatesMap.erase(availableDelegates);
 }
 
 

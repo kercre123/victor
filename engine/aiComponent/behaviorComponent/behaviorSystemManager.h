@@ -38,11 +38,11 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   BehaviorSystemManager();
-  ~BehaviorSystemManager();
+  virtual ~BehaviorSystemManager() {};
   
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
-                           const Json::Value& behaviorSystemConfig);
+                           IBSRunnable* baseRunnable);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
@@ -71,15 +71,12 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   InitializationStage _initializationStage;
-  
+  // Store the base runnable until the stack is initialized
+  IBSRunnable* _baseRunnableTmp;
   
   // - - - - - - - - - - - - - - -
   // others/shared
   // - - - - - - - - - - - - - - -
-  
-  std::vector<IBSRunnable*> _runnableStack;
-  std::unordered_map<const IBSRunnable*, int> _runnableToIndexMap;
-  std::map<IBSRunnable*,std::set<IBSRunnable*>> _delegatesMap;
   
   BehaviorExternalInterface* _behaviorExternalInterface;
   
@@ -87,18 +84,45 @@ private:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  void PushOntoStack(IBSRunnable* runnable);
-  void PopStack();
-  
-  void UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface, std::set<IBSRunnable*>& tickedInStack);
   void UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBSRunnable*>& tickedInStack);
   
-  // calls all appropriate functions to prep the delegates of something about to be added to the stack
-  void PrepareDelegatesToEnterScope(IBSRunnable* delegated);
+  // Defined within .h file so tests can access runnable stack functions
+  class RunnableStack{
+  public:
+    RunnableStack(BehaviorExternalInterface* behaviorExternalInterface)
+    :_behaviorExternalInterface(behaviorExternalInterface){};
+    virtual ~RunnableStack(){}
+    
+    void InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+                           IBSRunnable* baseOfStack);
+    void UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+                             std::set<IBSRunnable*>& tickedInStack);
+    
+    inline IBSRunnable* GetTopOfStack(){ return _runnableStack.empty() ? nullptr : _runnableStack.back();}
+    inline bool IsInStack(const IBSRunnable* runnable) { return _runnableToIndexMap.find(runnable) != _runnableToIndexMap.end();}
+    
+    void PushOntoStack(IBSRunnable* runnable);
+    void PopStack();
+    
+    using DelegatesMap = std::map<IBSRunnable*,std::set<IBSRunnable*>>;
+    const DelegatesMap& GetDelegatesMap(){ return _delegatesMap;}
+    
+  private:
+    BehaviorExternalInterface* _behaviorExternalInterface;
+    std::vector<IBSRunnable*> _runnableStack;
+    std::unordered_map<const IBSRunnable*, int> _runnableToIndexMap;
+    std::map<IBSRunnable*,std::set<IBSRunnable*>> _delegatesMap;
+    
+    
+    
+    // calls all appropriate functions to prep the delegates of something about to be added to the stack
+    void PrepareDelegatesToEnterScope(IBSRunnable* delegated);
+    
+    // calls all appropriate functions to prepare a delegate to be removed from the stack
+    void PrepareDelegateForRemovalFromStack(IBSRunnable* delegated);
+  };
   
-  // calls all appropriate functions to prepare a delegate to be removed from the stack
-  void PrepareDelegateForRemovalFromStack(IBSRunnable* delegated);
-  
+  std::unique_ptr<RunnableStack> _runnableStack;
   
 }; // class BehaviorSystemManager
 

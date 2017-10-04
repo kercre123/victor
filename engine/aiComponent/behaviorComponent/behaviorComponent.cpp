@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 
+#include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -42,7 +43,6 @@ BehaviorComponent::BehaviorComponent(Robot& robot)
 }
 
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorComponent::~BehaviorComponent()
 {
@@ -111,8 +111,15 @@ void BehaviorComponent::Init(Robot& robot)
                                          reactionTriggerConfig);
     
     if(USE_BSM){
-      _behaviorSysMgr->InitConfiguration(*_behaviorExternalInterface,
-                                         behaviorSystemConfig);
+      if(!behaviorSystemConfig.empty()){
+        ActivityType type = IActivity::ExtractActivityTypeFromConfig(behaviorSystemConfig);
+        
+        IBSRunnable* baseRunnable = ActivityFactory::CreateActivity(*_behaviorExternalInterface,
+                                                                    type,
+                                                                    behaviorSystemConfig);
+        _behaviorSysMgr->InitConfiguration(*_behaviorExternalInterface,
+                                           baseRunnable);
+      }
     }
   }
 }

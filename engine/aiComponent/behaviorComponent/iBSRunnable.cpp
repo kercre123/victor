@@ -30,9 +30,11 @@ static const int kBSTickInterval = 1;
 IBSRunnable::IBSRunnable(const std::string& idString)
 : _idString(idString)
 , _currentInScopeCount(0)
-, _currentActivationState(ActivationState::NotInitialized)
 , _lastTickWantsToBeActivatedCheckedOn(0)
 , _lastTickOfUpdate(0)
+#ifdef ANKI_DEV_CHEATS
+, _currentActivationState(ActivationState::NotInitialized)
+#endif
 {
   
 }
@@ -49,7 +51,9 @@ void IBSRunnable::Init(BehaviorExternalInterface& behaviorExternalInterface)
   
   InitInternal(behaviorExternalInterface);
   
-  _currentActivationState = ActivationState::OutOfScope;
+  if(ANKI_DEV_CHEATS){
+    _currentActivationState = ActivationState::OutOfScope;
+  }
 }
 
 
@@ -63,7 +67,8 @@ void IBSRunnable::OnEnteredActivatableScope()
                  ActivationStateToString(_currentActivationState).c_str());
   
   _currentInScopeCount++;
-  if(_currentActivationState != ActivationState::OutOfScope){
+  if(ANKI_DEV_CHEATS &&
+     (_currentActivationState != ActivationState::OutOfScope)){
     PRINT_CH_INFO("Behaviors",
                   "IBSRunnable.OnEnteredActivatableScope.AlreadyInScope",
                   "Runnable %s is already in scope %s, ignoring request to enter scope",
@@ -72,10 +77,13 @@ void IBSRunnable::OnEnteredActivatableScope()
     return;
   }
 
+  if(ANKI_DEV_CHEATS){
+    _currentActivationState = ActivationState::InScope;
+  }
+  
   // Update should be called immediately after entering activatable scope
   // so set the last tick count as being one tickInterval before the current tickCount
   _lastTickOfUpdate = (BaseStationTimer::getInstance()->GetTickCount() - kBSTickInterval);
-  _currentActivationState = ActivationState::InScope;
   OnEnteredActivatableScopeInternal();
 }
 
@@ -139,7 +147,9 @@ void IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterfa
                    _lastTickWantsToBeActivatedCheckedOn);
   }
   
-  _currentActivationState = ActivationState::Activated;
+  if(ANKI_DEV_CHEATS){
+    _currentActivationState = ActivationState::Activated;
+  }
   OnActivatedInternal(behaviorExternalInterface);
 }
 
@@ -154,7 +164,10 @@ void IBSRunnable::OnDeactivated(BehaviorExternalInterface& behaviorExternalInter
                    _idString.c_str(),
                    ActivationStateToString(_currentActivationState).c_str());
   }
-  _currentActivationState = ActivationState::InScope;
+  if(ANKI_DEV_CHEATS){
+    _currentActivationState = ActivationState::InScope;
+  }
+  
   OnDeactivatedInternal(behaviorExternalInterface);
 }
 
@@ -183,11 +196,15 @@ void IBSRunnable::OnLeftActivatableScope()
     return;
   }
   
-  _currentActivationState = ActivationState::OutOfScope;
+  if(ANKI_DEV_CHEATS){
+    _currentActivationState = ActivationState::OutOfScope;
+  }
+  
   OnLeftActivatableScopeInternal();
 }
   
 
+#if ANKI_DEV_CHEATS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string IBSRunnable::ActivationStateToString(ActivationState state) const
 {
@@ -198,8 +215,7 @@ std::string IBSRunnable::ActivationStateToString(ActivationState state) const
     case ActivationState::InScope        : return "InScope";
   }
 }
-
-  
+#endif
   
 } // namespace Cozmo
 } // namespace Anki

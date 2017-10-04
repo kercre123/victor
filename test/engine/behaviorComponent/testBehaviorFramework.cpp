@@ -11,110 +11,196 @@
 *
 **/
 
+// Access internals for tests
+#define private public
+#define protected public
+
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/cozmoContext.h"
+#include "engine/robotDataLoader.h"
+#include "engine/robot.h"
+#include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
 namespace {
-const float kNotRunningScore = 0.25f;
-const float kRunningScore = 0.5f;
+
 }
+
+using namespace Anki::Cozmo;
+
+
+//////////
+/// Setup constructor functions for building parts of the behavior component
+//////////
+
+namespace TestBehaviorFramework{
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::unique_ptr<Robot> CreateRobot(int robotID){
+  return std::make_unique<Robot>(robotID, cozmoContext);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::unique_ptr<BehaviorContainer> CreateBehaviors(){
+  return std::make_unique<BehaviorContainer>(cozmoContext->GetDataLoader()->GetBehaviorJsons());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Behavior external interface relies on both robot and behavior container - you
+// must maintain the unique ptr references to all 3 in order to run tests using
+// a functional BEI
+void GenerateCoreBehaviorTestingComponents(std::unique_ptr<Robot>& robot,
+                                           std::unique_ptr<BehaviorContainer>& bc,
+                                           std::unique_ptr<BehaviorExternalInterface>& bei){
+  robot = CreateRobot(1);
+  bc = CreateBehaviors();
+  bei.reset(new BehaviorExternalInterface(*robot,
+                                          robot->GetAIComponent(),
+                                          *bc,
+                                          robot->GetBlockWorld(),
+                                          robot->GetFaceWorld()));
+}
+
+}
+
+
 
 namespace Anki{
 namespace Cozmo{
 
-class TestBehavior : public IBehavior
-{
-public:
+
+//////////
+/// Setup a test runnable class that tracks data for testing
+//////////
   
-  TestBehavior(const Json::Value& config)
-  : IBehavior(config)
-  {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestSuperPoweredRunnable::GetAllDelegates(std::set<IBSRunnable*>& delegates) const {
+  for(auto& entry: _bc._idToBehaviorMap){
+    delegates.insert(entry.second.get());
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestSuperPoweredRunnable::InitInternal(BehaviorExternalInterface& behaviorExternalInterface) {
   
-  bool _inited = false;
-  int _numUpdates = 0;
-  bool _stopped = false;
-  virtual bool CarryingObjectHandledInternally() const override {return true;}
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestSuperPoweredRunnable::OnEnteredActivatableScopeInternal() {
   
-  void InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) override{
-    auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-    if(robotExternalInterface != nullptr) {
-      SubscribeToTags({EngineToGameTag::Ping});
-    }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestSuperPoweredRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TestSuperPoweredRunnable::WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const {
+  return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestSuperPoweredRunnable::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestSuperPoweredRunnable::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) {
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestSuperPoweredRunnable::OnLeftActivatableScopeInternal() {
+  
+}
+
+
+//////////
+/// Setup a test behavior class that tracks data for testing
+//////////
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {
+  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  if(robotExternalInterface != nullptr) {
+    SubscribeToTags({EngineToGameTag::Ping});
   }
-  
-  virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override {
-    return true;
-  }
-  
-  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override {
-    _inited = true;
-    return RESULT_OK;
-  }
-  
-  virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override {
-    _numUpdates++;
-    return Status::Running;
-  }
-  virtual void   OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override {
-    _stopped = true;
-  }
-  
-  int _alwaysHandleCalls = 0;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override {
-    _alwaysHandleCalls++;
-  }
-  
-  int _handleWhileRunningCalls = 0;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override {
-    _handleWhileRunningCalls++;
-  }
-  
-  int _handleWhileNotRunningCalls = 0;
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override {
-    _handleWhileNotRunningCalls++;
-  }
-  
-  int _calledVoidFunc = 0;
-  void Foo() {
-    _calledVoidFunc++;
-  }
-  
-  int _calledRobotFunc = 0;
-  void Bar(BehaviorExternalInterface& behaviorExternalInterface) {
-    _calledRobotFunc++;
-  }
-  
-  bool CallStartActing(Robot& robot, bool& actionCompleteRef);
-  
-  void CallIncreaseScoreWhileActing(float extraScore) { IncreaseScoreWhileActing(extraScore); }
-  
-  bool CallStartActingExternalCallback1(Robot& robot,
-                                        bool& actionCompleteRef,
-                                        IBehavior::RobotCompletedActionCallback callback);
-  
-  bool CallStartActingExternalCallback2(Robot& robot,
-                                        bool& actionCompleteRef,
-                                        IBehavior::ActionResultCallback callback);
-  
-  bool CallStartActingInternalCallbackVoid(Robot& robot,
-                                           bool& actionCompleteRef);
-  bool CallStartActingInternalCallbackRobot(Robot& robot,
-                                            bool& actionCompleteRef);
-  
-  bool CallStopActing() { return StopActing(); }
-  bool CallStopActing(bool val) { return StopActing(val); }
-  
-protected:
-  
-  virtual float EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
-    return kRunningScore;
-  }
-  virtual float EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
-    return kNotRunningScore;
-  }
-  
-};
-  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result TestBehavior::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)  {
+  _inited = true;
+  return RESULT_OK;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStatus TestBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)  {
+  _numUpdates++;
+  return Status::Running;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehavior::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)  {
+  _stopped = true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehavior::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+  _alwaysHandleCalls++;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehavior::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+  _handleWhileRunningCalls++;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehavior::HandleWhileNotRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)  {
+  _handleWhileNotRunningCalls++;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehavior::Foo() {
+  _calledVoidFunc++;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehavior::Bar(BehaviorExternalInterface& behaviorExternalInterface) {
+  _calledRobotFunc++;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float TestBehavior::EvaluateRunningScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const  {
+  return kRunningScore;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float TestBehavior::EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const {
+  return kNotRunningScore;
+}
+
 }
 }
 

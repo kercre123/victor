@@ -61,16 +61,15 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-protected:
-  // BehaviorCompononent should be the only clas that directly interacts with the
-  // container
-  friend class BehaviorComponent;
   
+  // BehaviorCompononent should be the only class that directly interacts with the
+  // container
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
   BehaviorContainer(const BehaviorIDJsonMap& behaviorData);
+  
   void Init(BehaviorExternalInterface& behaviorExternalInterface,
             const bool shouldAddToActivatableScope);
-  
+protected:
   // Check to ensure that the factory only includes one behavior per executable
   // type
   void VerifyExecutableBehaviors() const;
