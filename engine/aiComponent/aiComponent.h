@@ -28,6 +28,7 @@ class AIWhiteboard;
 class BehaviorEventAnimResponseDirector;
 class BehaviorHelperComponent;
 class DoATrickSelector;
+class FeedingSoundEffectManager;
 class FreeplayDataTracker;
 class ObjectInteractionInfoCache;
 class RequestGameComponent;
@@ -78,6 +79,8 @@ public:
   inline RequestGameComponent& GetRequestGameComponent()  { assert(_requestGameComponent); return *_requestGameComponent;}
   inline RequestGameComponent& GetNonConstRequestGameComponent() const { assert(_requestGameComponent); return *_requestGameComponent;}
 
+  inline FeedingSoundEffectManager& GetFeedingSoundEffectManager() { assert(_feedingSoundEffectManager); return  *_feedingSoundEffectManager; };
+  
   inline DoATrickSelector& GetDoATrickSelector()  { assert(_doATrickSelector); return *_doATrickSelector; }
 
   inline FreeplayDataTracker& GetFreeplayDataTracker()  { assert(_freeplayDataTracker); return *_freeplayDataTracker; }  
@@ -141,6 +144,9 @@ private:
   // component which behaviors can delegate to for selecting a random Trick / Spark
   std::unique_ptr<DoATrickSelector>    _doATrickSelector;
 
+  // Coordinates sound effect events across various feeding cubes/activities etc
+  std::unique_ptr<FeedingSoundEffectManager> _feedingSoundEffectManager;
+  
   // component for tracking freeplay DAS data
   std::unique_ptr<FreeplayDataTracker> _freeplayDataTracker;
   

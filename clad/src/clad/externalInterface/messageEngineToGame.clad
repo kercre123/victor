@@ -915,7 +915,8 @@ message SupportInfo {
 //  4 - Stop__SFX__Cube_Feeding_Loop_Stop - stop looping sfx
 
 message FeedingSFXStageUpdate {
-  uint_8 stage
+  uint_8 stage,
+  float_32 chargePercentage = 0.0
 }
 
 message ResponseLocale {
