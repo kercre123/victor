@@ -70,8 +70,14 @@ namespace Cozmo.Notifications {
       // on platforms that require a prompt ( iOS ) this is set by either our settings menu notification panel, 
       //              or first time onboarding, or the weekly repeat of that same onboarding.
       if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.OSNotificationsPermissionsPromptShown) {
-        // causes the actual system prompt and sets up UTNotifications
-        UTNotifications.Manager.Instance.Initialize(false);
+        // On iOS just needing a callback for a click counts as "needing to handle" notifications.
+        // This every frame process is required for proper DAS logging
+#if UNITY_IOS && !UNITY_EDITOR
+        bool appHandlesRecievedNotification = true;
+#else
+        bool appHandlesRecievedNotification = false;
+#endif
+        UTNotifications.Manager.Instance.Initialize(appHandlesRecievedNotification);
       }
     }
 
