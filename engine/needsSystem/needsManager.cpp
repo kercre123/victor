@@ -1535,6 +1535,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg
   // the needs system
 
   Util::FileUtils::DeleteFile(kPathToSavedStateFile + kNeedsStateFile);
+  // ensures onboarding starts from the beginning & w/o option to skip
+  _robotOnboardingStageCompleted = 0;
 
   InitInternal(_currentTime_s);
 }
@@ -1567,6 +1569,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotNeedsData& ms
                                                const auto& extInt = _cozmoContext->GetExternalInterface();
                                                extInt->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(true, success)));
 
+                                               // ensures onboarding starts from the beginning & w/o option to skip
+                                               _robotOnboardingStageCompleted = 0;
                                                InitInternal(_currentTime_s);
                                              }))
   {
