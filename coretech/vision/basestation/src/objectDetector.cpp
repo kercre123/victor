@@ -58,13 +58,23 @@ ObjectDetector::~ObjectDetector()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Init(const std::string& modelPath, const Json::Value& config)
 {
-  Result result = _model->LoadModel(modelPath, config);
+  const Result result = _model->LoadModel(modelPath, config);
+  if(RESULT_OK == result)
+  {
+    _isInitialized = true;
+  }
   return result;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Detect(ImageCache& imageCache, std::list<DetectedObject>& objects)
 {
+  if(!_isInitialized)
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Detect.NotInitialized", "");
+    return RESULT_FAIL;
+  }
+    
   Result result = RESULT_OK;
   
   objects.clear();

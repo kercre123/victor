@@ -57,6 +57,8 @@ private:
   class Model;
   std::unique_ptr<Model> _model;
   
+  bool _isInitialized = false;
+  
 }; // class ObjectDetector
   
 } // namespace Vision
