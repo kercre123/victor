@@ -8,11 +8,6 @@ include(okao)
 
 include(anki_build_cxx_library)
 
-if(USE_TENSORFLOW)
-  message(STATUS "Including TensorFlow in coretech-vision")
-  include(tensorflow)
-endif()
-
 # add_library()
 anki_build_cxx_library(cti_vision ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -26,7 +21,6 @@ target_link_libraries(cti_vision
   util
   ${OPENCV_LIBS}
   ${OKAO_LIBS}
-  ${TENSORFLOW_LIBS}
 )
 
 target_compile_options(cti_vision
@@ -43,6 +37,8 @@ target_include_directories(cti_vision
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/basestation/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h 
+  ${TENSORFLOW_INCLUDE_DIR}/protobuf
+  ${TENSORFLOW_INCLUDE_DIR}/tensorflow
   )
 
 target_compile_definitions(cti_vision PRIVATE

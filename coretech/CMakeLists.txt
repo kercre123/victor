@@ -7,6 +7,11 @@ include(import)
 
 include(opencv)
 
+if(USE_TENSORFLOW)
+  message(STATUS "Including TensorFlow in coretech-vision")
+  include(tensorflow)
+endif()
+
 add_definitions(-DUSE_TENSORFLOW=${USE_TENSORFLOW})
 
 #set(CTI_COMMON_GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/common)
@@ -78,15 +83,16 @@ add_executable(test_coretech
 )
 
 target_link_libraries(test_coretech
-PRIVATE
-# anki libs
-util
-cti_common
-cti_planning
-cti_vision
-cti_messaging
-# platform
-${PLATFORM_LIBS}
+  PRIVATE
+  # anki libs
+  util
+  cti_common
+  cti_planning
+  cti_vision
+  cti_messaging
+  # platform
+  ${PLATFORM_LIBS}
+  ${TENSORFLOW_LIBS}
 )
 
 target_compile_definitions(test_coretech PRIVATE                                                       

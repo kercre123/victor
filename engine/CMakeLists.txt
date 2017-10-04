@@ -10,6 +10,11 @@ include(voice-recognition)
 include(routing_http_server)
 include(android_strip)
 
+if(USE_TENSORFLOW)
+  message(STATUS "Including TensorFlow in engine")
+  include(tensorflow)
+endif()
+
 include(anki_build_cxx_library)
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
 
@@ -64,6 +69,7 @@ PRIVATE
   ${TEXT2SPEECH_LIBS}
   ${VOICE_RECOGNITION_LIBS}
   ${BREAKPAD_LIBS}
+  ${TENSORFLOW_LIBS}
 # system
   z
 # platform
