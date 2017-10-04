@@ -112,6 +112,7 @@ namespace Cozmo {
   , _imageCache(new Vision::ImageCache())
   , _context(context)
   , _imagingPipeline(new Vision::ImagingPipeline())
+  , _poseOrigin("VisionSystemOrigin")
   , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
   , _petTracker(new Vision::PetTracker())
   , _markerDetector(new Vision::MarkerDetector(_camera))
@@ -457,6 +458,17 @@ namespace Cozmo {
     std::swap(_prevPoseData, _poseData);
     _poseData = poseData;
     
+    // Update cameraPose and historical state's pose to use the vision system's pose origin
+    {
+      // We expect the passed-in historical pose to be w.r.t. to an origin and have its parent removed
+      // so that we can set its parent to be our poseOrigin on this thread. The cameraPose
+      // should use the histState's pose as its parent.
+      DEV_ASSERT(!poseData.histState.GetPose().HasParent(), "VisionSystem.UpdatePoseData.HistStatePoseHasParent");
+      DEV_ASSERT(poseData.cameraPose.IsChildOf(poseData.histState.GetPose()),
+                 "VisionSystem.UpdatePoseData.BadPoseDataCameraPose");
+      _poseData.histState.SetPoseParent(_poseOrigin);
+    }
+    
     if(_wasCalledOnce) {
       _havePrevPoseData = true;
     } else {
@@ -466,32 +478,6 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateRobotState()
   
-  
-  void VisionSystem::GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
-  {
-    DEV_ASSERT(_havePrevPoseData, "VisionSystem.GetPoseChange.NoPreviousPoseData");
-    
-    const Pose3d& crntPose = _poseData.histState.GetPose();
-    const Pose3d& prevPose = _prevPoseData.histState.GetPose();
-    const Radians crntAngle = crntPose.GetRotation().GetAngleAroundZaxis();
-    const Radians prevAngle = prevPose.GetRotation().GetAngleAroundZaxis();
-    const Vec3f& crntT = crntPose.GetTranslation();
-    const Vec3f& prevT = prevPose.GetTranslation();
-    
-    angleChange = crntAngle - prevAngle;
-    
-    //PRINT_STREAM_INFO("angleChange = %.1f", angleChange.getDegrees());
-    
-    // Position change in world (mat) coordinates
-    const f32 dx = crntT.x() - prevT.x();
-    const f32 dy = crntT.y() - prevT.y();
-    
-    // Get change in robot coordinates
-    const f32 cosAngle = cosf(-prevAngle.ToFloat());
-    const f32 sinAngle = sinf(-prevAngle.ToFloat());
-    xChange = dx*cosAngle - dy*sinAngle;
-    yChange = dx*sinAngle + dy*cosAngle;
-  } // GetPoseChange()
   
   Radians VisionSystem::GetCurrentHeadAngle()
   {
@@ -841,6 +827,11 @@ namespace Cozmo {
       headPose.SetParent(_poseData.cameraPose);
       headPose = headPose.GetWithRespectToRoot();
 
+      DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadHeadPoseParent");
+      
+      // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
+      headPose.ClearParent();
+      
       currentFace.SetHeadPose(headPose);
     }
     

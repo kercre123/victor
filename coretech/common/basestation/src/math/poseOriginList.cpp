@@ -89,7 +89,7 @@ const PoseOrigin& PoseOriginList::GetOriginByID(PoseOriginID_t ID) const
   auto iter = _origins.find(ID);
   if(!ANKI_VERIFY(iter != _origins.end(), "PoseOriginList.GetOriginByID.BadID", "%d", ID))
   {
-    static const PoseOrigin DefaultOrigin;
+    static const PoseOrigin DefaultOrigin("OriginListDefaultOrigin");
     return DefaultOrigin;
   }
   

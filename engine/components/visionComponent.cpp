@@ -459,15 +459,21 @@ namespace Cozmo {
       // Get most recent pose data in history
       Anki::Cozmo::HistRobotState lastHistState;
       _robot.GetStateHistory()->GetLastStateWithFrameID(_robot.GetPoseFrameID(), lastHistState);
-           
-      Lock();
-      _nextPoseData.histState = imageHistState;
-      _nextPoseData.timeStamp = imageHistTimeStamp;
-      _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.histState, _nextPoseData.timeStamp);
-      _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.histState.GetHeadAngle_rad(),
-                                                                     _nextPoseData.groundPlaneHomography);
-      _nextPoseData.imuDataHistory = _imuHistory;
-      Unlock();
+      
+      {
+        const Pose3d& cameraPose = _robot.GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
+        Matrix_3x3f groundPlaneHomography;
+        const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
+                                                                    groundPlaneHomography);
+        Lock();
+        _nextPoseData.Set(imageHistTimeStamp,
+                          imageHistState,
+                          cameraPose,
+                          groundPlaneVisible,
+                          groundPlaneHomography,
+                          _imuHistory);
+        Unlock();
+      }
       
       // Experimental:
       //UpdateOverheadMap(image, _nextPoseData);

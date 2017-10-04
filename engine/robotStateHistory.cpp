@@ -51,6 +51,16 @@ namespace Anki {
       _state.liftAngle = liftAngle_rad;
     }
     
+    void HistRobotState::SetPoseParent(const Pose3d& newParent)
+    {
+      _pose.SetParent(newParent);
+    }
+    
+    void HistRobotState::ClearPoseParent()
+    {
+      _pose.ClearParent();
+    }
+    
     const f32 HistRobotState::GetLiftHeight_mm() const
     {
       return Robot::ConvertLiftAngleToLiftHeightMM(_state.liftAngle);

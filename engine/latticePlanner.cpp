@@ -898,6 +898,9 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
   _context.forceReplanFromScratch = forceReplanFromScratch;
 
+  DEV_ASSERT(startPose.IsRoot() || startPose.GetParent().IsRoot(),
+             "LatticePlannerImpl.StartPlanning.StartPoseNotWrtRoot");
+  
   State_c currentRobotState(startPose.GetTranslation().x(),
                             startPose.GetTranslation().y(),
                             startPose.GetRotationAngle<'Z'>().ToFloat());
@@ -1059,6 +1062,8 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
 
 
   // consider trimming actions if the robot has moved past the beginning of the path
+  DEV_ASSERT(currentRobotPose.IsRoot() || currentRobotPose.GetParent().IsRoot(),
+             "LatticePlannerImpl.GetCompletePath.RobotPoseNotWrtRoot");
   State_c currentRobotState(currentRobotPose.GetTranslation().x(),
                             currentRobotPose.GetTranslation().y(),
                             currentRobotPose.GetRotationAngle<'Z'>().ToFloat());

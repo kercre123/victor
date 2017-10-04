@@ -129,6 +129,7 @@ TEST(VisionSystem, MarkerDetectionTests)
       imageCache.Reset(img);
 
       Cozmo::VisionPoseData robotState; // not needed just to detect markers
+      robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
       result = visionSystem.Update(robotState, imageCache);
       ASSERT_EQ(RESULT_OK, result);
 
@@ -261,6 +262,7 @@ TEST(VisionSystem, ImageQuality)
       imageCache.Reset(img);
 
       Cozmo::VisionPoseData robotState; // not needed for image quality check
+      robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
       result = visionSystem.Update(robotState, imageCache);
       ASSERT_EQ(RESULT_OK, result);
 

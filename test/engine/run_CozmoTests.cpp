@@ -890,12 +890,17 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   const Vision::FaceID_t faceID = 123;
   {
     Vision::TrackedFace face;
-    Pose3d headPose(0, Z_AXIS_3D(), {300.f, 300.f, 300.f}, robot.GetWorldOrigin());
+    Pose3d headPose(0, Z_AXIS_3D(), {300.f, 300.f, 300.f});
     face.SetID(faceID);
     face.SetTimeStamp(fakeTime);
     face.SetHeadPose(headPose);
     
     std::list<Vision::TrackedFace> faces{std::move(face)};
+    
+    // Need a state message for the observation time first
+    stateMsg.timestamp = fakeTime;
+    lastResult = robot.UpdateFullRobotState(stateMsg);
+    ASSERT_EQ(RESULT_OK, lastResult);
     
     lastResult = robot.GetFaceWorld().Update(faces);
     ASSERT_EQ(RESULT_OK, lastResult);
