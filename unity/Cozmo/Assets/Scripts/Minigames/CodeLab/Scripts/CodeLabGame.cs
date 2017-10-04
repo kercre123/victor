@@ -713,6 +713,19 @@ namespace CodeLab {
         }
       }
 
+      // Stop any audio the user may have started in their Code Lab program
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Sfx_Global_Stop,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Global_Stop,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+
+      // Restore background music in case it was turned off
+      GameAudioClient.PostCodeLabEvent(Anki.AudioMetaData.GameEvent.Codelab.Music_Background_Silence_Off,
+                                        Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete,
+                                        (callbackInfo) => { /* callback */ });
+
       if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos) != (uint)ActionConstants.INVALID_TAG) {
         ++_PendingResetToHomeActions;
         // Ensure subsequent reset actions run in parallel with this
