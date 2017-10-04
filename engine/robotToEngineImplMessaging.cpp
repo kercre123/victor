@@ -214,7 +214,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuTemperature,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::imuTemperature");
-                                                       robot->SetImuTemperature(message.GetData().Get_imuTemperature().temperature_degC);
+                                                       
+                                                       const auto temp_degC = message.GetData().Get_imuTemperature().temperature_degC;
+                                                       // This prints an info every time we receive this message. This is useful for gathering data
+                                                       // in the prototype stages, and could probably be removed in production.
+                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature", "IMU temperature: %.3f degC", temp_degC);
+                                                       robot->SetImuTemperature(temp_degC);
                                                      }));
   
   if (robot->HasExternalInterface())
