@@ -158,7 +158,9 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleVariable* va
   if ( !result.second )
   {
     // Fail!  We're attempting to add a duplicate name.
-    assert( false );
+    PRINT_NAMED_WARNING("ConsoleSystem.Register.DuplicateVariable",
+      "Console variable '%s' has already been registered. Duplicate will be ignored.", 
+      key.c_str());
   }
   else
   {
@@ -197,10 +199,12 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
   result = consolefunctions_.emplace( key, function );
   
   // We require unique console function names so that we can call them by name.
-  if ( !result.second )
+  if (!result.second)
   {
     // Fail!  We're attempting to add a duplicate name.
-    assert( false );
+    PRINT_NAMED_WARNING("ConsoleSystem.Register.DuplicateFunction", 
+      "Console function '%s' has already been registered. Duplicate will be ignored.", 
+      key.c_str());
   }
   else
   {
