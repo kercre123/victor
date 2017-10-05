@@ -63,9 +63,9 @@ Result IBehaviorPlaypen::InitInternal(Robot& robot)
   // Add a timer to force the behavior to end if runs too long
   AddTimer(PlaypenConfig::kDefaultTimeout_ms, [this](){
     PRINT_NAMED_WARNING("IBehaviorPlaypen.Timeout",
-                        "Behavior %s has timed out and we are %s ignoring failures",
+                        "Behavior %s has timed out and we are %signoring failures",
                         GetIDStr().c_str(),
-                        (ShouldIgnoreFailures() ? "" : "NOT"));
+                        (ShouldIgnoreFailures() ? "" : "NOT "));
     
     if(!ShouldIgnoreFailures())
     {
@@ -113,15 +113,18 @@ void IBehaviorPlaypen::HandleWhileRunning(const EngineToGameEvent& event, Robot&
     {
       case EngineToGameTag::RobotState:
       {
+        // TODO(Al): Anything interesting in RobotState to look at for immediate failure
         break;
       }
       case EngineToGameTag::CliffEvent:
       {
         PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
+        break;
       }
       case EngineToGameTag::RobotStopped:
       {
         PLAYPEN_SET_RESULT(FactoryTestResultCode::CLIFF_UNEXPECTED);
+        break;
       }
       case EngineToGameTag::ChargerEvent:
       {
@@ -179,6 +182,7 @@ void IBehaviorPlaypen::HandleWhileRunning(const EngineToGameEvent& event, Robot&
       case EngineToGameTag::UnexpectedMovement:
       {
         PLAYPEN_SET_RESULT(FactoryTestResultCode::UNEXPECTED_MOVEMENT_DETECTED);
+        break;
       }
       default:
       {
@@ -286,6 +290,11 @@ void IBehaviorPlaypen::AddToResultList(FactoryTestResultCode result)
 const std::map<std::string, std::vector<FactoryTestResultCode>>& IBehaviorPlaypen::GetAllPlaypenResults()
 {
   return results;
+}
+
+void IBehaviorPlaypen::ResetAllPlaypenResults()
+{
+  results.clear();
 }
   
 }

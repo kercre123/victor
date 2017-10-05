@@ -807,7 +807,6 @@ bool Robot::IsPoseInWorldOrigin(const Pose3d& pose) const
   
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
-  
   ANKI_CPU_PROFILE("Robot::UpdateFullRobotState");
   
   Result lastResult = RESULT_OK;
@@ -822,7 +821,58 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Set flag indicating that robot state messages have been received
   _lastMsgTimestamp = msg.timestamp;
   _newStateMsgAvailable = true;
-      
+  
+  
+  static bool wasTouched = false;
+  if(msg.backpackTouchSensorRaw < 1000)
+  {
+    
+    wasTouched = _isTouched;
+    static f32 filt = 0;
+    filt = (msg.backpackTouchSensorRaw * 0.1) + (filt * 0.9);
+    if(filt > 625)
+    {
+      _isTouched = true;
+    }
+    else
+    {
+      _isTouched = false;
+    }
+  }
+  
+  static TimeStamp_t touchTime = 0;
+  
+  if(_isTouched && !wasTouched)
+  {
+    touchTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    
+    static const BackpackLights lights = {
+      .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+      .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+      .onPeriod_ms            = {{1000,1000,1000}},
+      .offPeriod_ms           = {{100,100,100}},
+      .transitionOnPeriod_ms  = {{450,450,450}},
+      .transitionOffPeriod_ms = {{450,450,450}},
+      .offset                 = {{0,0,0}}
+    };
+    GetBodyLightComponent().SetBackpackLights(lights);
+  }
+  else if(!_isTouched && wasTouched)
+  {
+    touchTime = 0;
+    
+    static const BackpackLights lights = {
+      .onColors               = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
+      .offColors              = {{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}},
+      .onPeriod_ms            = {{1000,1000,1000}},
+      .offPeriod_ms           = {{100,100,100}},
+      .transitionOnPeriod_ms  = {{450,450,450}},
+      .transitionOffPeriod_ms = {{450,450,450}},
+      .offset                 = {{0,0,0}}
+    };
+    GetBodyLightComponent().SetBackpackLights(lights);
+  }
+  
   // Update head angle
   SetHeadAngle(msg.headAngle);
       
@@ -900,6 +950,18 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
   _hasMovedSinceLocalization |= GetMoveComponent().IsCameraMoving() || _offTreadsState != OffTreadsState::OnTreads;
+  
+  
+  if(touchTime != 0 && BaseStationTimer::getInstance()->GetCurrentTimeStamp() > touchTime + 1000)
+  {
+    if(IsCharging())
+    {
+      PRINT_NAMED_WARNING("STARTING PLAYPEN", "");
+      GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::PlaypenTest)));
+      touchTime = 0;
+    }
+  }
+  
   
   if ( isDelocalizing )
   {

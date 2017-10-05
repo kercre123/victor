@@ -164,6 +164,7 @@ namespace Messages {
         
         // TODO: Need to hook this up to AnimationStreamer
         //       Maybe _animStreamer->Abort(msg.abortAnimation.tag)?
+        return;
       }
         
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:

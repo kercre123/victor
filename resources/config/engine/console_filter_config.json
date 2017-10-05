@@ -13,50 +13,50 @@
   {
     "channels":
     [
-      { "channel": "Unnamed" ,             "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "CoreTech",             "enabled": false },
+      { "channel": "Unnamed" ,             "enabled": true }, // Unnamed is currently the default channel
+      { "channel": "CoreTech",             "enabled": true },
       { "channel": "Unfiltered",           "enabled": true  }, // Things that are always required (like callstack on assert)
       { "channel": "CpuProfiler",          "enabled": true  },
       { "channel": "Keyboard",             "enabled": true },
-      { "channel": "Network",              "enabled": false },
-      { "channel": "Profiler",             "enabled": false },
-      { "channel": "Unity"   ,             "enabled": false },
-      { "channel": "VisionComponent",      "enabled": false },
-      { "channel": "VisionSystem",         "enabled": false },
-      { "channel": "UnlockComponent",      "enabled": false },
-      { "channel": "Actions",              "enabled": false },
-      { "channel": "Behaviors",            "enabled": false },
-      { "channel": "BehaviorHelpers",      "enabled": false },
-      { "channel": "BuildPyramid",         "enabled": false },
-      { "channel": "AIWhiteboard",         "enabled": false },
-      { "channel": "AIInfoAnalysis",       "enabled": false },
-      { "channel": "Audio",                "enabled": false },
-      { "channel": "FaceRecognizer",       "enabled": false },
-      { "channel": "Feeding",              "enabled": false },
-      { "channel": "UiComms",              "enabled": false },
-      { "channel": "Mood",                 "enabled": false },
-      { "channel": "PoseConfirmer",        "enabled": false },
-      { "channel": "BlockWorld",           "enabled": false },
-      { "channel": "BlockPool",            "enabled": false },
-      { "channel": "NVStorage",            "enabled": false },
-      { "channel": "Animations",           "enabled": false }, // Print every animation that is triggered
-      { "channel": "Planner",              "enabled": false },
-      { "channel": "CubeLightComponent",   "enabled": false },
-      { "channel": "BodyLightComponent",   "enabled": false },
-      { "channel": "ReactionTriggers",     "enabled": false },
-      { "channel": "Loading",              "enabled": false },
-      { "channel": "RobotStateHistory",    "enabled": false },
-      { "channel": "PublicStateBroadcast", "enabled": false },
-      { "channel": "CubeAccelComponent",   "enabled": false },
-      { "channel": "NeedsSystem",          "enabled": false },
-      { "channel": "VoiceCommands",        "enabled": false },
-      { "channel": "InventoryComponent",   "enabled": false },
-      { "channel": "TextToSpeech",         "enabled": false }
+      { "channel": "Network",              "enabled": true },
+      { "channel": "Profiler",             "enabled": true },
+      { "channel": "Unity"   ,             "enabled": true },
+      { "channel": "VisionComponent",      "enabled": true },
+      { "channel": "VisionSystem",         "enabled": true },
+      { "channel": "UnlockComponent",      "enabled": true },
+      { "channel": "Actions",              "enabled": true },
+      { "channel": "Behaviors",            "enabled": true },
+      { "channel": "BehaviorHelpers",      "enabled": true },
+      { "channel": "BuildPyramid",         "enabled": true },
+      { "channel": "AIWhiteboard",         "enabled": true },
+      { "channel": "AIInfoAnalysis",       "enabled": true },
+      { "channel": "Audio",                "enabled": true },
+      { "channel": "FaceRecognizer",       "enabled": true },
+      { "channel": "Feeding",              "enabled": true },
+      { "channel": "UiComms",              "enabled": true },
+      { "channel": "Mood",                 "enabled": true },
+      { "channel": "PoseConfirmer",        "enabled": true },
+      { "channel": "BlockWorld",           "enabled": true },
+      { "channel": "BlockPool",            "enabled": true },
+      { "channel": "NVStorage",            "enabled": true },
+      { "channel": "Animations",           "enabled": true }, // Print every animation that is triggered
+      { "channel": "Planner",              "enabled": true },
+      { "channel": "CubeLightComponent",   "enabled": true },
+      { "channel": "BodyLightComponent",   "enabled": true },
+      { "channel": "ReactionTriggers",     "enabled": true },
+      { "channel": "Loading",              "enabled": true },
+      { "channel": "RobotStateHistory",    "enabled": true },
+      { "channel": "PublicStateBroadcast", "enabled": true },
+      { "channel": "CubeAccelComponent",   "enabled": true },
+      { "channel": "NeedsSystem",          "enabled": true },
+      { "channel": "VoiceCommands",        "enabled": true },
+      { "channel": "InventoryComponent",   "enabled": true },
+      { "channel": "TextToSpeech",         "enabled": true }
     ],
     "levels":
     [
-      { "level" : "event", "enabled" : false },
-      { "level" : "debug", "enabled" : false }
+      { "level" : "event", "enabled" : true },
+      { "level" : "debug", "enabled" : true }
     ]
   },
   

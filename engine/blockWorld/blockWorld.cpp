@@ -1717,8 +1717,8 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
                                                                                 wasRobotMoving,
                                                                                 distToObjSeen);
         if ( !isConfirmingObservation ) {
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
-            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
+//          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
+//            "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
           
           // TODO should we broadcast RobotObservedPossibleObject here?
           continue;

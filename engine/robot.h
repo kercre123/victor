@@ -720,6 +720,8 @@ public:
   
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
+  bool IsBeingTouched() const { return _isTouched; }
+  
 protected:
   
   const CozmoContext* _context;
@@ -859,6 +861,7 @@ protected:
   u8               _setBodyModeTicDelay      = 0;
   bool             _gotStateMsgAfterTimeSync = false;
   u32              _lastStatusFlags          = 0;
+  bool             _isTouched                = false;
 
   OffTreadsState   _offTreadsState                 = OffTreadsState::OnTreads;
   OffTreadsState   _awaitingConfirmationTreadState = OffTreadsState::OnTreads;

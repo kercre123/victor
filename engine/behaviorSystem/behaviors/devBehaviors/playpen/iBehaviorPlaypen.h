@@ -73,6 +73,7 @@ public:
   void Reset() { Stop(); _timers.clear(); _result = FactoryTestResultCode::UNKNOWN; }
   
   static const std::map<std::string, std::vector<FactoryTestResultCode>>& GetAllPlaypenResults();
+  static void ResetAllPlaypenResults();
 
 protected:
   

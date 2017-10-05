@@ -896,6 +896,8 @@ namespace Anki {
 
           // XXX rescale the signal strength to fit within a u16 (to match real sensor)
           u16 ss = Util::numeric_cast_clamped<u16>(signalStrength);
+          // HACK: Temp scaling to rough actual values
+          ss = (u16)((((700 - 600) * (ss - 0)) / (20000.f)) + 600);
           return ss;
         }
 

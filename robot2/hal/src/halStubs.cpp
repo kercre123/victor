@@ -332,6 +332,16 @@ namespace Anki {
 #endif
         
         result =  GetSpineDataFrame();
+        
+        #if 0
+        static FILE* fp = nullptr;
+        if(fp == nullptr)
+        {
+          fp = fopen("/data/misc/test/touch.txt", "w+");
+        }
+        fprintf(fp, "%d\n", bodyData_->touchLevel[0]);
+        #endif
+        
         PrintConsoleOutput();
       }
 #endif
