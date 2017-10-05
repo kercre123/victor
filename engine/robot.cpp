@@ -152,19 +152,19 @@ static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //Thi
 
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
-#ifdef COZMO_V2
-  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-     0,     0,   1.f,
-    -1.f,   0,   0,
-     0,    -1.f, 0,
-  });
-#else
+//#ifdef COZMO_V2
+//  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+//     0,     0,   1.f,
+//    -1.f,   0,   0,
+//     0,    -1.f, 0,
+//  });
+//#else
   const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
     0,      -0.0698f,  0.9976f,
   -1.0000f,  0,        0,
     0,      -0.9976f, -0.0698f,
   });
-#endif
+//#endif
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)

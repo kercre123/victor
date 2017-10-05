@@ -351,8 +351,6 @@ namespace Anki {
           repeater = FRAMES_PER_RESPONSE;
           headData_.framecounter++;
           
-//          printf("\n");
-          
           hal_send_frame(PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
         }
 
