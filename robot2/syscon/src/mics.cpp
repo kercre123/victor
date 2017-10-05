@@ -108,7 +108,8 @@ static void decimate(const uint8_t* input_a, const uint8_t* input_b, int16_t* ou
   uint16_t word;
   uint8_t byte;
 
-  for (int i = 0; i < SAMPLES_PER_IRQ; i += 4) {
+  // Process 4x4 samples (rotating through the accumulators for speed)
+  for (int i = 0; i < SAMPLES_PER_IRQ / 4; i++) {
     PASS(3);
     PASS(2);
     PASS(1);
