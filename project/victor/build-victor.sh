@@ -142,7 +142,9 @@ fi
 : ${CMAKE_MODULE_DIR:="${TOPLEVEL}/cmake"}
 
 if [ ! -f ${CMAKE_EXE} ]; then
-  echo "CMake executable not found. For use with Android, install CMake with Android SDK"
+  echo "Missing CMake executable: ${CMAKE_EXE}"
+  echo "Fetch the required CMake version by running ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py"
+  echo "Alternatively, specify a CMake executable using the -x flag."
   exit 1
 fi
 
