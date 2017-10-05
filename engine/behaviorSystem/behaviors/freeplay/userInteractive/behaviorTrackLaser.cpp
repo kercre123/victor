@@ -48,7 +48,7 @@ namespace {
 static const constexpr char* const kLogChannelName              = "Behaviors";
 static const constexpr char* const kSkipGetOutAnimKey           = "skipGetOutAnim";
 static const constexpr char* const kMaxLostLaserTimeoutGraphKey = "maxLostLaserTimeoutGraph_sec";
-  
+static const constexpr float kInvalidStartedTime_sec            = -1.f;
 } 
   
 // Cozmo's low head angle for watching for lasers
@@ -250,7 +250,7 @@ IBehavior::Status BehaviorTrackLaser::UpdateInternal(Robot& robot)
       if(LaserObservation::Type::Confirmed == _lastLaserObservation.type)
       {
         LOG_EVENT("robot.laser_behavior.confirmed_laser", "");
-        TransitionToTrackLaser(robot);
+        TransitionToRespondToLaser(robot);
         break;
       }
       else
@@ -281,12 +281,18 @@ IBehavior::Status BehaviorTrackLaser::UpdateInternal(Robot& robot)
   
     case State::TrackLaser: // Let tracking action deal with timing out
     {
-      const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _startedTracking_sec;
-      if(trackingTime_sec > _params.trackingTimeToAchieveObjective_sec)
-      {
-        _shouldSendTrackingObjectiveAchieved = true;
+      if(_lastLaserObservation.type != LaserObservation::None){
+        if(_startedTracking_sec == kInvalidStartedTime_sec){
+          _startedTracking_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        }
+        
+        const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _startedTracking_sec;
+        if(trackingTime_sec > _params.trackingTimeToAchieveObjective_sec)
+        {
+          _shouldSendTrackingObjectiveAchieved = true;
+        }
+        break;
       }
-      break;
     }
     case State::GetOutBored:
     case State::Pouncing:
@@ -514,12 +520,12 @@ void BehaviorTrackLaser::TransitionToWaitForLaser(Robot& robot)
 {
   SET_STATE(WaitingForLaser);
 }
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
+void BehaviorTrackLaser::TransitionToRespondToLaser(Robot& robot)
 {
-  SET_STATE(TrackLaser);
-  
+  SET_STATE(RespondToLaser);
   // Wait until we actually confirm a laser to adjust the idle/driving animations, to
   // avoid eyes changing if we see a possible laser and end up _not_ confirming.
   // However, don't override sparks driving or idle animations (i.e. when "streamlining").
@@ -528,10 +534,10 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
     SmartPushIdleAnimation(robot, AnimationTrigger::LaserFace);
     
     robot.GetDrivingAnimationHandler().PushDrivingAnimations(
-     {AnimationTrigger::LaserDriveStart,
-      AnimationTrigger::LaserDriveLoop,
-      AnimationTrigger::LaserDriveEnd},
-       GetIDStr());
+                                                             {AnimationTrigger::LaserDriveStart,
+                                                               AnimationTrigger::LaserDriveLoop,
+                                                               AnimationTrigger::LaserDriveEnd},
+                                                             GetIDStr());
     
     _haveAdjustedAnimations = true;
   }
@@ -545,10 +551,26 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
                                Util::EnumToUnderlying(AnimTrackFlag::HEAD_TRACK))
   });
   
+  StartActing(action, &BehaviorTrackLaser::TransitionToTrackLaser);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
+{
+  SET_STATE(TrackLaser);
+  
+  // re-set laser observation so that we can ensure Cozmo reacquire the laser
+  // after playing his react to laser animation
+  _lastLaserObservation.type = LaserObservation::Type::None;
+  _startedTracking_sec = kInvalidStartedTime_sec;
+  
+
+  auto const& laserMsgTag = ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint;
+  TrackGroundPointAction* trackAction = new TrackGroundPointAction(robot, laserMsgTag);
+  
+  // set params on track action
   {
-    auto const& laserMsgTag = ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint;
-    TrackGroundPointAction* trackAction = new TrackGroundPointAction(robot, laserMsgTag);
-    
     trackAction->SetUpdateTimeout(_params.trackingTimeout_sec);
     trackAction->SetMoveEyes(true);
     
@@ -585,33 +607,28 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
                "BehaviorTrackLaser.TransitionToTrackLaser.BadTimeToReachLaserParams");
     const f32 driveTime_sec = GetRNG().RandDblInRange(_params.minTimeToReachLaser_sec, _params.maxTimeToReachLaser_sec);
     trackAction->SetDesiredTimeToReachTarget(driveTime_sec);
-    
-    action->AddAction(trackAction);
   }
+
   
-  // For logging how long tracking ran
-  // NOTE: this actually includes the time it took to turn towards and play the acknowledge animation (in
-  //       addition to the actual tracking time) but it's just used for logging an event so high precision
-  //       isn't really worth the complexity of adding an additional behavior state to separate this
-  //       compound action.
-  _startedTracking_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float startedActionTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  StartActing(action,
-              [this,&robot](ActionResult result)
+  StartActing(trackAction,
+              [this,&robot, startedActionTime_sec](ActionResult result)
               {
                 const bool doPounce = (ActionResult::SUCCESS == result);
-                const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _startedTracking_sec;
+                const f32  actionTrackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - startedActionTime_sec;
 
                 const float behaviorRunningElapsed = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s());
                 _currentLostLaserTimeout_s = _params.maxLostLaserTimeoutGraph_sec.EvaluateY(behaviorRunningElapsed);
                 
                 PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToTrackLaser.TrackingFinished",
-                               "Result: %s Time: %fsec WillPounce: %s", EnumToString(result), trackingTime_sec,
+                               "Result: %s Time: %fsec WillPounce: %s", EnumToString(result), actionTrackingTime_sec,
                                doPounce ? "Y" : "N");
                 
                 // Log DAS event indicating how long we tracked in seconds in s_val and whether we pounced in
                 // ddata (1 for pounce, 0 otherwise)
-                Util::sEventF("robot.laser_behavior.tracking_completed", {{DDATA, (doPounce ? "1" : "0")}}, "%f", trackingTime_sec);
+                Util::sEventF("robot.laser_behavior.tracking_completed",
+                              {{DDATA, (doPounce ? "1" : "0")}}, "%f", actionTrackingTime_sec);
                 
                 if(doPounce) {
                   TransitionToPounce(robot);

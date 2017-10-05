@@ -50,6 +50,7 @@ private:
     RotateToWatchingNewArea,
     WaitingForExposureChange,
     WaitingForLaser,
+    RespondToLaser,
     TrackLaser,
     Pouncing,
     GetOutBored,
@@ -175,6 +176,7 @@ private:
   void TransitionToRotateToWatchingNewArea(Robot& robot);
   void TransitionToWaitForExposureChange(Robot& robot);
   void TransitionToWaitForLaser(Robot& robot);
+  void TransitionToRespondToLaser(Robot& robot);
   void TransitionToTrackLaser(Robot& robot);
   void TransitionToPounce(Robot& robot);
   void TransitionToGetOutBored(Robot& robot);
