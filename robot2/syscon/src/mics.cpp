@@ -5,12 +5,12 @@
 #include "timer.h"
 
 #include "mics.h"
-#include "mic_tables.h"
+#include "decimator.h"
 
 extern "C" void start_mic_spi(int16_t a, int16_t b, void* tim);
 
 static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
-static const int SAMPLES_PER_IRQ = 20;
+static const int SAMPLES_PER_IRQ = 20; // MUST BE A MULTIPLE OF 4
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
 
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
@@ -101,53 +101,18 @@ void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
 
-#define TABLE(i, sa, sb, ta, tb) \
-  values = DECIMATION_TABLE[0][*(i++)]; \
-  sa = ta + values[0]; \
-  ta = values[1]; \
-  sb = tb + values[2]; \
-  tb = values[3]; \
-  values = DECIMATION_TABLE[1][*(i++)]; \
-  sa += values[0]; \
-  ta += values[1]; \
-  sb += values[2]; \
-  tb += values[3]; \
-  values = DECIMATION_TABLE[2][*(i++)]; \
-  sa = (sa + values[0]) >> 16; \
-  ta += values[1]; \
-  sb = (sb + values[2]) >> 16; \
-  tb += values[3]
-#define Q1(i, t1, t2, d1, d2) \
-  TABLE(i, sample12[0], sample12[1], dec12[d1], dec12[d2]); \
-  sample8[0] = DECIMATION_TAP_##t1 * sample12[0] + dec8[d1]; dec8[d1] = DECIMATION_TAP_##t2 * sample12[0]; \
-  sample8[1] = DECIMATION_TAP_##t1 * sample12[1] + dec8[d2]; dec8[d2] = DECIMATION_TAP_##t2 * sample12[1]
-#define Q2(i, t1, t2, d1, d2) \
-  TABLE(i, sample12[0], sample12[1], dec12[d1], dec12[d2]); \
-  sample8[0] += DECIMATION_TAP_##t1 * sample12[0]; dec8[d1] += DECIMATION_TAP_##t2 * sample12[0]; \
-  sample8[1] += DECIMATION_TAP_##t1 * sample12[1]; dec8[d2] += DECIMATION_TAP_##t2 * sample12[0]
-#define SAMP(i, d1, d2) \
-  Q1(i, 7, 0, d1, d2); \
-  Q2(i, 6, 1, d1, d2); \
-  Q2(i, 5, 2, d1, d2); \
-  Q2(i, 4, 3, d1, d2); \
-  Q2(i, 3, 4, d1, d2); \
-  Q2(i, 2, 5, d1, d2); \
-  Q2(i, 1, 6, d1, d2); \
-  Q2(i, 0, 7, d1, d2); \
-  *(output++) = sample8[0] >> 16; \
-  *(output++) = sample8[1] >> 16
+static void decimate(const uint8_t* input_a, const uint8_t* input_b, int16_t* output) {
+  static int32_t accumulator[4][4];
 
-static inline void decimate(uint8_t* input1, uint8_t* input2, int16_t*& output) {
-  static int32_t dec8[4] = { 0, 0, 0, 0 };
-  static int32_t dec12[4] = { 0, 0, 0, 0 };
+  const int32_t* coff_set;
+  uint16_t word;
+  uint8_t byte;
 
-  int32_t sample8[2];
-  int32_t sample12[2];
-  const int32_t* values;
-
-  for (int i = 0; i < SAMPLES_PER_IRQ; i++) {
-    SAMP(input1, 0, 1);
-    SAMP(input2, 2, 3);
+  for (int i = 0; i < SAMPLES_PER_IRQ; i += 4) {
+    PASS(3);
+    PASS(2);
+    PASS(1);
+    PASS(0);
   }
 }
 
