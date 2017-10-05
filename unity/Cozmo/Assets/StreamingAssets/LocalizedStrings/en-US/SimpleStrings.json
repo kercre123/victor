@@ -167,5 +167,11 @@
   },
   "button.buyACozmo": {
     "translation": "BUY A COZMO"
+  },
+  "label.noInternetTitle": {
+    "translation": "No Internet Connection"
+  },
+  "label.noInternetBody": {
+    "translation": "Connect to the Internet in order to visit Anki.com and buy your own Cozmo!"
   }
 }
