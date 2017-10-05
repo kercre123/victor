@@ -6,6 +6,7 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
 include(flatbuffers)
 include(opencv)
+include(signalessence)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
@@ -27,6 +28,7 @@ endif()
 target_link_libraries(victor_anim
   PRIVATE
   util
+  util_audio
   # cti
   cti_common_robot
   cti_vision
@@ -39,6 +41,7 @@ target_link_libraries(victor_anim
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
+  ${SIGNALESSENCE_LIBS}
   # platform
   PUBLIC
   # these need to be public until we remove android-specific classes from androidHAL.h

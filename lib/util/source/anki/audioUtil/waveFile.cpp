@@ -47,6 +47,8 @@ struct WaveFileHeaderData
                                                         _subchunk1ID.size() + sizeof(_subchunk1Size) + _subchunk1Size +
                                                         _subchunk2ID.size() + sizeof(uint32_t); // Should be 44
   
+  static constexpr std::size_t _numChannelsOffset = 22;
+  
   static std::vector<uint8_t> GetHeaderData(uint32_t numSamples, uint16_t numChannels)
   {
     const auto& subchunk2Size = Util::numeric_cast<uint32_t>(numSamples * numChannels * (_bitsPerSample / 8));
@@ -160,6 +162,58 @@ bool WaveFile::SaveFile(const std::string& filename, const AudioChunkList& chunk
   
   bool shouldAppend = !isFirstWrite;
   return Util::FileUtils::WriteFile(filename, dataToWrite, shouldAppend);
+}
+
+AudioChunkList WaveFile::ReadFile(const std::string& filename, std::size_t desiredSamplesPerChunk)
+{
+  auto binaryData = Util::FileUtils::ReadFileAsBinary(filename);
+  
+  if (binaryData.size() <= WaveFileHeaderData::_headerDataSize)
+  {
+    PRINT_NAMED_WARNING("WaveFile.ReadFile.HeaderDataMissing", "File only %zu bytes", binaryData.size());
+    return AudioChunkList();
+  }
+  
+  uint16_t numChannels = *reinterpret_cast<uint16_t*>(binaryData.data() + WaveFileHeaderData::_numChannelsOffset);
+  if (numChannels == 0)
+  {
+    PRINT_NAMED_WARNING("WaveFile.ReadFile.NoChannels", "Wave file header claims 0 channels. Aborting");
+    return AudioChunkList();
+  }
+  
+  AudioChunkList audioData;
+  const auto* endDataMarker = binaryData.data() + binaryData.size();
+  auto* currentData = binaryData.data() + WaveFileHeaderData::_headerDataSize;
+  const auto bytesPerChunk = desiredSamplesPerChunk * numChannels * sizeof(AudioSample);
+  while(currentData + bytesPerChunk <= endDataMarker)
+  {
+    AudioChunk nextChunk;
+    nextChunk.resize(desiredSamplesPerChunk * numChannels);
+    const auto* dataStart = reinterpret_cast<AudioSample*>(currentData);
+    std::copy(dataStart, dataStart + (desiredSamplesPerChunk * numChannels), nextChunk.data());
+    audioData.push_back(std::move(nextChunk));
+    currentData += bytesPerChunk;
+  }
+  
+  if (currentData < endDataMarker && ((endDataMarker - currentData) % sizeof(AudioSample)) != 0)
+  {
+    auto extraBytesLen = (endDataMarker - currentData) % sizeof(AudioSample);
+    endDataMarker -= extraBytesLen;
+    PRINT_NAMED_WARNING("WaveFile.ReadFile.NotEvenlyDivisible", "Clipping %zu bytes", extraBytesLen);
+  }
+  
+  if (currentData < endDataMarker)
+  {
+    auto extraSamples = (endDataMarker - currentData) / sizeof(AudioSample);
+    AudioChunk nextChunk;
+    nextChunk.resize(extraSamples);
+    const auto* dataStart = reinterpret_cast<AudioSample*>(currentData);
+    std::copy(dataStart, dataStart + extraSamples, nextChunk.data());
+    audioData.push_back(std::move(nextChunk));
+    PRINT_NAMED_WARNING("WaveFile.ReadFile.SmallFinalChunk", "Final chunk only %zu samples", extraSamples);
+  }
+  
+  return audioData;
 }
 
 } // namespace AudioUtil

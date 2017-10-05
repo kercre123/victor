@@ -17,6 +17,8 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+#include "cozmoAnim/cozmoAnimContext.h"
+#include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -57,8 +59,9 @@ namespace Messages {
     const int MAX_PACKET_BUFFER_SIZE = 2048;
     u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
     
-    AnimationStreamer* _animStreamer = nullptr;
+    AnimationStreamer*            _animStreamer = nullptr;
     Audio::EngineRobotAudioInput* _audioInput = nullptr;
+    const CozmoAnimContext*       _context = nullptr;
     
     
     const u32 kMaxNumAvailableAnimsToReportPerTic = 100;
@@ -74,13 +77,14 @@ namespace Messages {
   // Forward declarations
   extern "C" TimeStamp_t GetTimeStamp(void);
   
-  void ProcessMessage(RobotInterface::EngineToRobot& msg);
+  void ProcessMessageToRobot(const RobotInterface::EngineToRobot& msg);
+  void ProcessMessageToEngine(const RobotInterface::RobotToEngine& msg);
   extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
 
   
 // #pragma mark --- Messages Method Implementations ---
 
-  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput)
+  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput, const CozmoAnimContext& context)
   {
     
     // Setup robot and engine sockets
@@ -92,6 +96,7 @@ namespace Messages {
 
     _animStreamer = &animStreamer;
     _audioInput   = &audioInput;
+    _context      = &context;
     
     return RESULT_OK;
   }
@@ -129,7 +134,7 @@ namespace Messages {
     }
   }
   
-  void ProcessMessage(RobotInterface::EngineToRobot& msg)
+  void ProcessMessageToRobot(const RobotInterface::EngineToRobot& msg)
   {
     //PRINT_NAMED_WARNING("ProcessMessage.EngineToRobot", "%d", msg.tag);
     
@@ -142,14 +147,14 @@ namespace Messages {
         
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_lockAnimTracks:
       {
-        PRINT_NAMED_INFO("EngineMessages.ProcessMessage.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
+        PRINT_NAMED_INFO("EngineMessages.ProcessMessageToRobot.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
         _animStreamer->SetLockedTracks(msg.lockAnimTracks.whichTracks);
         return;
       }
         
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
       {
-        PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim",
+        PRINT_NAMED_INFO("EngineMesssages.ProcessMessageToRobot.PlayAnim",
                          "AnimID: %d, Tag: %d",
                          msg.playAnim.animID, msg.playAnim.tag);
         
@@ -158,7 +163,7 @@ namespace Messages {
       }
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_abortAnimation:
       {
-        PRINT_NAMED_INFO("EngineMessages.ProcessMessage.AbortAnim",
+        PRINT_NAMED_INFO("EngineMessages.ProcessMessageToRobot.AbortAnim",
                          "Tag: %d",
                          msg.abortAnimation.tag);
         
@@ -200,7 +205,49 @@ namespace Messages {
     // Send message along to robot if it wasn't handled here
     CozmoAnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
 
-  } // ProcessMessage()
+  } // ProcessMessageToRobot()
+
+
+  static void ProcessAudioInputMessage(const RobotInterface::AudioInput& payload)
+  {
+    auto* micDataProcessor = _context->GetMicDataProcessor();
+    if (micDataProcessor == nullptr)
+    {
+      return;
+    }
+
+    static uint32_t sLatestSequenceID = 0;
+    
+    // Since mic data is sent unreliably, make sure the sequence id increases appropriately
+    if (payload.sequenceID > sLatestSequenceID ||
+        (sLatestSequenceID - payload.sequenceID) > (UINT32_MAX / 2)) // To handle rollover case
+    {
+      sLatestSequenceID = payload.sequenceID;
+      micDataProcessor->ProcessNextAudioChunk(payload.data);
+    }
+  }
+  
+  void ProcessMessageToEngine(const RobotInterface::RobotToEngine& msg)
+  {
+    switch(msg.tag)
+    {
+      case RobotInterface::RobotToEngine::Tag_audioInput:
+      {
+        const auto& payload = msg.audioInput;
+        ProcessAudioInputMessage(payload);
+      }
+      break;
+      default:
+      {
+
+      }
+      break;
+    }
+
+    // Send up to engine
+    const int tagSize = sizeof(msg.tag);
+    SendToEngine(msg.GetBuffer()+tagSize, msg.Size()-tagSize, msg.tag);
+  } // ProcessMessageToEngine()
 
 
 // #pragma --- Message Dispatch Functions ---
@@ -279,20 +326,15 @@ namespace Messages {
       if (!msgBuf.IsValid())
       {
         PRINT_NAMED_WARNING("Receiver.ReceiveData.Invalid", "Receiver got %02x[%d] invalid", pktBuffer_[0], dataLen);
+        continue;
       }
-      else if (msgBuf.Size() != dataLen)
+      if (msgBuf.Size() != dataLen)
       {
         PRINT_NAMED_WARNING("Receiver.ReceiveData.SizeError", "Parsed message size error %d != %d (Tag %02x)", dataLen, msgBuf.Size(), msgBuf.tag);
+        continue;
       }
-      else
-      {
-        // Send up to engine
-        const int tagSize = sizeof(msgBuf.tag);
-        SendToEngine(msgBuf.GetBuffer()+tagSize, msgBuf.Size()-tagSize, msgBuf.tag);
-      }
-      
+      ProcessMessageToEngine(msgBuf);
     }
-
   }
 
   // Required by reliableTransport.c
@@ -365,7 +407,7 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
   }
   else
   {
-    Anki::Cozmo::Messages::ProcessMessage(msgBuf);
+    Anki::Cozmo::Messages::ProcessMessageToRobot(msgBuf);
   }
 }
 

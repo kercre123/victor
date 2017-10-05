@@ -3,7 +3,7 @@
 
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
-
+#include "cozmoAnim/micDataProcessor.h"
 #include "cozmoAnim/robotDataLoader.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -30,6 +30,10 @@ CozmoAnimContext::CozmoAnimContext(Util::Data::DataPlatform* dataPlatform)
   , _dataLoader(new RobotDataLoader(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
+  if (dataPlatform != nullptr)
+  {
+    _micDataProcessor.reset(new MicDataProcessor(_dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata")));
+  }
   InitAudio(_dataPlatform);
 }
 
