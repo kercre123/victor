@@ -80,8 +80,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf17c1e495c7476ea5b23aa170bc0b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _TooltipPrefab: {fileID: 114901523654011268, guid: 4ed76da1f74e6475f83c0bce6cbf7228,
-    type: 2}
+  _TooltipPrefabs:
+  - {fileID: 114901523654011268, guid: f71deb1a4c61b4cbd8b8bb72e4b8350b, type: 2}
+  - {fileID: 114901523654011268, guid: 54810b2f9d4cb4a1d8a27752090b1b9c, type: 2}
+  - {fileID: 114901523654011268, guid: 8a6917b24223e4f328cb9e784df8b8e1, type: 2}
+  - {fileID: 114901523654011268, guid: c1df08d6ad78b48ff9046e135ae7a89d, type: 2}
+  - {fileID: 114901523654011268, guid: eb9892e22479f40fb9af310878542bf0, type: 2}
+  - {fileID: 114901523654011268, guid: 1b4c6c523f10f4a2ba3925f15114880c, type: 2}
   _TooltipShowTime_Sec: 5
   _MinBorderSpaceToEdge: {x: 20, y: 20}
 --- !u!114 &114701708522348244

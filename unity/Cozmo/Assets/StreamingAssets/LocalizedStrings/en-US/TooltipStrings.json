@@ -86,5 +86,11 @@
   },
   "tooltip.bonusbar.body.dayincomplete": {
     "translation": "Fill Cozmo’s Play Need to earn a Play Token. Day ends in {0}h {1}m."
+  },
+  "tooltip.sparks.header": {
+    "translation": "Sparks"
+  },
+  "tooltip.sparks.body.main": {
+    "translation": "Cozmo will do tricks and play games for sparks."
   }
 }
