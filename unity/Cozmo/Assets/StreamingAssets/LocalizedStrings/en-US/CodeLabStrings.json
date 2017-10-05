@@ -417,9 +417,15 @@
   },
 
 
-
-
-
+  "codeLab.renameProjectModal.saveButtonLabel": {
+      "translation": "Save"
+  },
+  "codeLab.renameProjectModal.cancelButtonLabel": {
+      "translation": "Cancel"
+  },
+  "codeLab.renameProjectModal.renameProjectPrompt": {
+      "translation": "Project Name:"
+  },
 
 
 
@@ -1031,7 +1037,7 @@
   "codeLabGlossary.block_definitions.description.cozmo_vert_wait_for_actions": {
     "translation": "Wait for any active actions that match the given type to complete"
   },
-  
+
   "codeLabGlossary.block_definitions.title.cozmo_vert_cancel_actions": {
     "translation": "Cancel [drive, head, lift, say, anim, all] actions"
   },

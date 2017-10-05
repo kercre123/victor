@@ -1184,6 +1184,10 @@ namespace CodeLab {
         SessionState.DAS_Event("robot.code_lab.create_project", "");
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null, scratchRequest.argBool);
         return true;
+      case "cozmoRequestToRenameProject":
+        SessionState.DAS_Event("robot.code_lab.rename_project", "");
+        RenameCodeLabProject(scratchRequest);
+        return true;
       case "cozmoDeleteUserProject":
         OnCozmoDeleteUserProject(scratchRequest);
         return true;
@@ -1701,17 +1705,9 @@ namespace CodeLab {
           InProgressScratchBlockPool.CancelActionsOfType(ActionType.Say);
         }
 
-        string cozmoSaysText = scratchRequest.argString;
-        string cozmoSaysTextCleaned = "";
-
         // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
-        for (int i = 0; i < cozmoSaysText.Length; i++) {
-          char currentChar = cozmoSaysText[i];
-          if (CozmoInputFilter.IsValidInput(currentChar, allowPunctuation: true, allowDigits: true)) {
-            cozmoSaysTextCleaned += currentChar;
-          }
-        }
-
+        string cozmoSaysText = scratchRequest.argString;
+        string cozmoSaysTextCleaned = RemoveUnsupportedChars(cozmoSaysText);
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(cozmoSaysTextCleaned);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(hasBadWords.ToString()));  // deliberately don't send string as it's PII
         uint idTag;
@@ -2219,6 +2215,28 @@ namespace CodeLab {
       }
     }
 
+    private void RenameCodeLabProject(ScratchRequest scratchRequest) {
+      string projectUUID = scratchRequest.argUUID;
+      string jsCallback = scratchRequest.argString;
+      string newProjectName = scratchRequest.argString2;
+
+      CodeLabProject projectToUpdate = null;
+      try {
+        projectToUpdate = FindUserProjectWithUUID(scratchRequest.argUUID);
+        projectToUpdate.ProjectName = RemoveUnsupportedChars(newProjectName);
+        projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+
+        this.EvaluateJS(jsCallback + "('" + projectToUpdate.ProjectName + "');");
+
+        _SessionState.OnUpdatedProject(projectToUpdate);
+
+        DataPersistenceManager.Instance.Save();
+      }
+      catch (NullReferenceException) {
+        DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. projectUUID = " + projectUUID + ", new project name = " + newProjectName);
+      }
+    }
+
     // Display blue "Cozmo is getting ready to play" while the Scratch workspace is finishing setup
     private void ShowGettingReadyScreen() {
       _WebViewObjectComponent.SetVisibility(false);
@@ -2658,6 +2676,17 @@ namespace CodeLab {
       stats.PostPendingChanges(ProjectStats.EventCategory.loaded_from_file);
 
       return true;
+    }
+
+    public static string RemoveUnsupportedChars(string rawString) {
+      string cleanedString = "";
+      for (int i = 0; i < rawString.Length; i++) {
+        char currentChar = rawString[i];
+        if (CozmoInputFilter.IsValidInput(currentChar, allowPunctuation: true, allowDigits: true)) {
+          cleanedString += currentChar;
+        }
+      }
+      return cleanedString;
     }
 
     public static void PushImportError(string errorLocString) {

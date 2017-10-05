@@ -204,6 +204,10 @@
         var startTime = performance.now()
 
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
+        window.isCozmoSampleProject = isCozmoSampleProject;
+
+        // Must be called after window.isCozmoSampleProject is set.
+        RenameProject.init();
 
         // TODO: Special case to fix localized text for intruder sample project. Rip out and revisit post-2.0.0.
         // TODO After sample projects are converted to JSON, must revisit this.
@@ -216,7 +220,6 @@
 
         window.cozmoProjectUUID = projectUUID;
         window.cozmoProjectName = projectName;
-        window.isCozmoSampleProject = isCozmoSampleProject;
         window.previouslySavedProjectJSON = null;
 
         if (window.saveProjectTimerId) {

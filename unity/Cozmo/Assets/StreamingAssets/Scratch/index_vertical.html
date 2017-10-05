@@ -41,7 +41,8 @@
         <script src="./js/CozmoSaveLoadAPI.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
-        <script src="./extra/glossary.js"></script>
+        <script src="./js/glossary.js"></script>
+        <script src="./js/rename-project.js"></script>
 
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
         <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
@@ -53,7 +54,8 @@
         <!-- CSS Styles -->
         <link rel="stylesheet" href="./css/normalize.css"/>
         <link rel="stylesheet" href="./css/common_vertical.css">
-        <link rel="stylesheet" href="./extra/glossary.css"/>
+        <link rel="stylesheet" href="./css/glossary.css"/>
+        <link rel="stylesheet" href="./css/rename-project.css"/>
 	</head>
 
 	<body>
@@ -760,5 +762,23 @@
             </div>
           </div>
         </div>
+
+        <div id="rename-project-modal">
+          <div class="hd">
+            <button id="btn-close-rename-project"></button>
+            <div class="original-project-name"></div>
+          </div>
+          <div class="bd">
+            <form id="rename-project-form">
+              <div id="rename-project-prompt"></div>
+              <input id="rename-project-text-box" value="" autocomplete="off"/>
+              <div class="buttons">
+                <button id="btn-cancel-rename"></button>
+                <button id="btn-save-rename"></button>
+              </div>
+            </form>
+          </div>
+        </div>
+
 	</body>
 </html>

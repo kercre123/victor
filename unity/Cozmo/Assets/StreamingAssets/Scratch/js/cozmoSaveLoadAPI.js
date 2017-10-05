@@ -48,6 +48,11 @@
         window.Unity.call({requestId: -1, command: "cozmoRequestToCreateProject", argBool: isVertical});
     }
 
+    // Rename existing file. Only used for user files, not featured and sample files.
+    window.renameProject = function(callback, projectUUID, newProjectName) {
+        window.Unity.call({requestId: -1, command: "cozmoRequestToRenameProject", argString: callback, argUUID: projectUUID, argString2: newProjectName});
+    }
+
     // Close minigame.
     window.closeCodeLab = function() {
         window.Unity.call({requestId: -1, command: "cozmoCloseCodeLab"});

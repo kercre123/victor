@@ -168,8 +168,8 @@ button:focus {
     width: 100%;
     height: 175px;
     z-index: 1;
-    pointer-events: none;
     text-align: right;
+    pointer-events: none;
 }
 
 #projecttext .primary {
@@ -185,13 +185,16 @@ button:focus {
     display: inline-block;
     font-weight: bold;
     font-size: 32px;
+    min-height: 20px;
     background-color: #525253;
     color: #1fadda;
-    max-width: calc(100vw - 210px);
+    max-width: calc(100vw - 290px);
+    min-width: 200px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: hidden;
     padding: 0 5px;
+    pointer-events: all;
 }
 #projecttext .primary #app-title.long-title {
   font-size: 24px;
