@@ -7858,8 +7858,8 @@ MonoBehaviour:
   _CubeHelpButton: {fileID: 114856745758513194}
   _CubeHelpGroup: {fileID: 1173673252814966}
   _AlreadyFullTriggerHiccupOdds: 0.2
-  _ShakeProgressBarFill: {fileID: 114149872540132948}
-  _ShakeProgressBarBG: {fileID: 114499229319958302}
+  _ShakeProgressBarFill: {fileID: 0}
+  _ShakeProgressBarBG: {fileID: 0}
 --- !u!114 &114799865976658986
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -8347,7 +8347,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 70
+  m_fontSize: 62.2
   m_fontSizeBase: 72
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -10734,10 +10734,10 @@ RectTransform:
   m_Father: {fileID: 224858903917422486}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -747.61035, y: -1361}
-  m_SizeDelta: {x: 786.22, y: 23.915}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 606.1, y: 176}
+  m_SizeDelta: {x: 794.4, y: 23.9}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &224377004320948430
 RectTransform:
@@ -11588,11 +11588,11 @@ RectTransform:
   m_Father: {fileID: 224369478793646298}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 786.22, y: 23.915}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0.0861969}
+  m_SizeDelta: {x: 786.22, y: 18}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224724251355291868
 RectTransform:
   m_ObjectHideFlags: 1
