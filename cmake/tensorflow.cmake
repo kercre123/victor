@@ -13,19 +13,36 @@ set(include_paths
 
 if (ANDROID)
   set(TENSORFLOW_LIB_PATH ${TENSORFLOW_DIR}/lib/android)
+  
+  # TensorFlow uses a factory pattern that requires we forcibly include 
+  # everything from the the library
   set(WHOLE_ARCHIVE_FLAG "-Wl,--whole-archive")
   set(NO_WHOLE_ARCHIVE_FLAG "-Wl,--no-whole-archive")
+
+  # Force the linker to use the static protobuf we are specifying here, 
+  # not the dynamic one available in the system libs, which is the
+  # wrong version
+  set(STATIC_FLAG "-Wl,-Bstatic")
+  set(NO_STATIC_FLAG "-Wl,-Bdynamic")
 else()
   set(TENSORFLOW_LIB_PATH ${TENSORFLOW_DIR}/lib/mac)
+
+  # TensorFlow uses a factory pattern that requires we forcibly include 
+  # everything from the the library
   set(WHOLE_ARCHIVE_FLAG "-Wl,-force_load,")
   set(NO_WHOLE_ARCHIVE_FLAG "")
+
+  set(STATIC_FLAG "")
+  set(NO_STATIC_FLAG "")
 endif()
 
 set(TENSORFLOW_LIBS
     ${WHOLE_ARCHIVE_FLAG}
     libtensorflow-core
     ${NO_WHOLE_ARCHIVE_FLAG}
-    libprotobuf)
+    ${STATIC_FLAG}
+    libprotobuf
+    ${NO_STATIC_FLAG})
 
 add_library(libtensorflow-core STATIC IMPORTED)
 
