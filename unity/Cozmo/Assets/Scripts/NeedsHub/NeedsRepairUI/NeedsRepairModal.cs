@@ -919,7 +919,7 @@ namespace Cozmo.Repair.UI {
           _RoundIndex++;
           var robot = RobotEngineManager.Instance.CurrentRobot;
           if (robot != null) {
-            robot.CancelCallback(HandleCalibrateAnimMiddle);
+            robot.CancelCallback(HandleClibrateAnimPlayed);
             robot.CancelCallback(HandleRobotResponseDone);
           }
           PlayRobotRepairIdleAnim();
@@ -989,18 +989,10 @@ namespace Cozmo.Repair.UI {
     }
 
     // light up the next arrow, note: this may be removed if deemed too distracting by design
-    private void HandleCalibrateAnimMiddle(bool success) {
+    private void HandleClibrateAnimPlayed(bool success) {
       if (success) {
         if (_RobotResponseIndex < _UpDownArrows.Count) {
           _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch[_RobotResponseIndex]);
-        }
-
-        if (_RobotResponseIndex >= _UpDownArrows.Count && _RoundIndex >= _RoundData.Length - 1) {
-          NeedsStateManager nsm = NeedsStateManager.Instance;
-          bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
-          if (severe) {
-            HandleRobotResponseDone(true);
-          }
         }
 
         _RobotResponseIndex++;
@@ -1013,6 +1005,7 @@ namespace Cozmo.Repair.UI {
     }
 
     private void HandleRobotResponseDone(bool success) {
+      HandleClibrateAnimPlayed(success);
       if (!_WaitingForAnimationsToBeRunnable) {
         _RobotResponseDone = true;
       }
@@ -1219,7 +1212,7 @@ namespace Cozmo.Repair.UI {
         int finalAnimIdx = _TuneUpPatternToMatch.Count - 1;
         for (int i = 0; i < finalAnimIdx; i++) {
           robot.SendAnimationTrigger(GetRobotArrowAnimation(_TuneUpPatternToMatch[i], severe),
-                                     HandleCalibrateAnimMiddle,
+                                     HandleClibrateAnimPlayed,
                                      QueueActionPosition.AT_END);
         }
 
