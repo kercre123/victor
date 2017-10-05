@@ -32,9 +32,3 @@ target_link_libraries(utilUnitTest PRIVATE
   ${GTEST_LIBRARY}
 )
 
-#
-# Enable ctest
-#
-enable_testing()
-
-add_test(NAME utilUnitTest COMMAND utilUnitTest)

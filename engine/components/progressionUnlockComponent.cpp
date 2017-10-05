@@ -152,8 +152,10 @@ bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)
 void ProgressionUnlockComponent::NotifyGameDefaultUnlocksSet()
 {
   // Let unity know what the default unlocks were.
-  _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
-                                               ExternalInterface::UnlockedDefaults(std::vector<UnlockId>(_defaultUnlocks.begin(), _defaultUnlocks.end()))));
+  if (_robot.HasExternalInterface()) {
+    using namespace ExternalInterface;
+    _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(UnlockedDefaults(std::vector<UnlockId>(_defaultUnlocks.begin(), _defaultUnlocks.end()))));
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

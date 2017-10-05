@@ -58,8 +58,10 @@ namespace Anki
       const CameraCalibration* GetHeadCamInfo();
       
       // Assign Webots supervisor
-      // Must do this before creating AndroidHAL for the first time
+      // Webots processes must do this before creating AndroidHAL for the first time.
+      // Unit test processes must call SetSupervisor(nullptr) to run without a supervisor.
       static void SetSupervisor(webots::Supervisor *sup);
+      
 #endif
 
 // #pragma mark --- IMU ---

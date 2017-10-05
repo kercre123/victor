@@ -106,6 +106,9 @@ if (ANDROID)
 endif()
 
 if (MACOSX)
-    add_subdirectory("test")
-    add_subdirectory("simulator") # webots
+  add_subdirectory("test")
+  add_subdirectory("simulator") # webots
+
+  enable_testing()
+
 endif()
