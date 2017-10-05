@@ -34,6 +34,7 @@ struct AudioPlayerData
   AudioChunkList::const_iterator        _endChunkIter;
   uint32_t                              _nextSampleIndex = 0;
   std::mutex                            _dataMutex;
+  uint32_t                              _samplesPerChunk = kSamplesPerChunk;
   
   void EnqueueAllBuffers()
   {
@@ -49,8 +50,8 @@ struct AudioPlayerData
     if(_playing)
     {
       const auto samplesRemainingInChunk = _currentChunkIter->size() - _nextSampleIndex;
-      uint32_t numToCopy = static_cast<uint32_t>(samplesRemainingInChunk <= kSamplesPerChunk ?
-                                                 samplesRemainingInChunk : kSamplesPerChunk);
+      uint32_t numToCopy = static_cast<uint32_t>(samplesRemainingInChunk <= _samplesPerChunk ?
+                                                 samplesRemainingInChunk : _samplesPerChunk);
       
       const auto nextSampleIter = _currentChunkIter->begin() + _nextSampleIndex;
       std::copy(nextSampleIter, nextSampleIter + numToCopy, reinterpret_cast<short*>(inBuffer->mAudioData));
@@ -84,9 +85,10 @@ static void HandleCallbackEntry(void * __nullable       inUserData,
   if (data) { data->EnqueueBuffer(inAQ, inBuffer); }
 }
 
-AudioPlayer::AudioPlayer()
-  : _impl(new AudioPlayerData{})
+AudioPlayer::AudioPlayer(uint32_t samplesPerChunk)
+: _impl(new AudioPlayerData{})
 {
+  _impl->_samplesPerChunk = samplesPerChunk;
   AudioStreamBasicDescription standardAudioFormat;
   GetStandardAudioDescriptionFormat(standardAudioFormat);
   OSStatus status = AudioQueueNewOutput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);

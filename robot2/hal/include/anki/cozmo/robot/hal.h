@@ -131,6 +131,12 @@ namespace Anki
  * \section Motors
  */
 
+      /** Returns the calibration power to be used for the specified motor
+       * @param[in] Motor for which to retrieve calibration power
+       * @return Calibration power in unitless range [-1.0, 1.0]
+       */
+      float MotorGetCalibPower(MotorID motor);
+
       /** Set motor drive voltage and direction
        * Positive numbers move the motor forward or up, negative is back or down
        * @param[in] motor The motor to Update

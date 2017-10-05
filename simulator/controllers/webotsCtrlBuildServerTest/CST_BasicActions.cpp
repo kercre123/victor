@@ -260,7 +260,7 @@ namespace Anki {
                                                 _lastActionResult == ActionResult::SUCCESS,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 20),
-                                                NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(4.f), HEAD_ANGLE_TOL))
+                                                NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(0.0f), HEAD_ANGLE_TOL))
           {
             StartingAction(RobotActionType::TURN_TOWARDS_OBJECT);
             

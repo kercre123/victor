@@ -2070,8 +2070,8 @@ namespace Anki {
       #ifdef COZMO_V2
         Pose3d origin;
         Pose3d enginePose = GetPose3dOfNode(_robotEngineNode);
-        Pose3d newEnginePose = newPose;
         Pose3d cpyRobotPose = _robotPoseActual;
+        Pose3d newEnginePose = newPose;
         
         enginePose.SetParent(origin);
         newEnginePose.SetParent(origin);

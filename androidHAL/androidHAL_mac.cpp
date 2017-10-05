@@ -36,12 +36,16 @@
 
 namespace Anki {
   namespace Cozmo {
-    
-    webots::Supervisor* _engineSupervisor = nullptr;
-    
+
     namespace { // "Private members"
 
-      // Const paramters / settings
+      // Has SetSupervisor() been called yet?
+      bool _engineSupervisorSet = false;
+
+      // Current supervisor (if any)
+      webots::Supervisor* _engineSupervisor = nullptr;
+
+      // Const parameters / settings
       const u32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
 
       // Cameras / Vision Processing
@@ -72,82 +76,94 @@ namespace Anki {
     
     
     // Definition of static field
-    AndroidHAL* AndroidHAL::_instance = 0;
-    
+    AndroidHAL* AndroidHAL::_instance = nullptr;
+
     /**
      * Returns the single instance of the object.
      */
     AndroidHAL* AndroidHAL::getInstance() {
+      // Did you remember to call SetSupervisor()?
+      DEV_ASSERT(_engineSupervisorSet, "sim_androidHAL.NoSupervisorSet");
       // check if the instance has been created yet
-      if(0 == _instance) {
+      if (nullptr == _instance) {
         // if not, then create it
-        _instance = new AndroidHAL;
+        _instance = new AndroidHAL();
       }
       // return the single instance
       return _instance;
     }
-    
+
     /**
      * Removes instance
      */
     void AndroidHAL::removeInstance() {
       // check if the instance has been created yet
-      if(0 != _instance) {
+      if (nullptr != _instance) {
         delete _instance;
-        _instance = 0;
+        _instance = nullptr;
       }
     };
-    
+
     void AndroidHAL::SetSupervisor(webots::Supervisor *sup)
     {
       _engineSupervisor = sup;
+      _engineSupervisorSet = true;
     }
     
     AndroidHAL::AndroidHAL()
     {
-      // Did you remember to call SetSupervisor()?
-      DEV_ASSERT(_engineSupervisor != nullptr, "sim_androidHAL.NullWebotsSupervisor");
-      
-      // Is the step time defined in the world file >= than the robot time? It should be!
-      DEV_ASSERT(TIME_STEP >= _engineSupervisor->getBasicTimeStep(), "sim_androidHAL.UnexpectedTimeStep");
+      if (nullptr != _engineSupervisor) {
 
-      headCam_ = _engineSupervisor->getCamera("HeadCamera");
+        // Is the step time defined in the world file >= than the robot time? It should be!
+        DEV_ASSERT(TIME_STEP >= _engineSupervisor->getBasicTimeStep(), "sim_androidHAL.UnexpectedTimeStep");
 
-      if(VISION_TIME_STEP % static_cast<u32>(_engineSupervisor->getBasicTimeStep()) != 0) {
-        PRINT_NAMED_WARNING("sim_androidHAL.InvalidVisionTimeStep",
-                            "VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).",
-                            VISION_TIME_STEP, _engineSupervisor->getBasicTimeStep());
-        return;
+        if (VISION_TIME_STEP % static_cast<u32>(_engineSupervisor->getBasicTimeStep()) != 0) {
+          PRINT_NAMED_WARNING("sim_androidHAL.InvalidVisionTimeStep",
+                              "VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).",
+                              VISION_TIME_STEP, _engineSupervisor->getBasicTimeStep());
+          return;
+        }
+
+        // Head Camera
+        headCam_ = _engineSupervisor->getCamera("HeadCamera");
+        if (nullptr != headCam_) {
+          headCam_->enable(VISION_TIME_STEP);
+          FillCameraInfo(headCam_, headCamInfo_);
+        }
+
+        // Gyro
+        gyro_ = _engineSupervisor->getGyro("gyro");
+        if (nullptr != gyro_) {
+          gyro_->enable(TIME_STEP);
+        }
+
+        // Accelerometer
+        accel_ = _engineSupervisor->getAccelerometer("accel");
+        if (nullptr != accel_) {
+          accel_->enable(TIME_STEP);
+        }
       }
-      headCam_->enable(VISION_TIME_STEP);
-      FillCameraInfo(headCam_, headCamInfo_);
-
-      // Gyro
-      gyro_ = _engineSupervisor->getGyro("gyro");
-      gyro_->enable(TIME_STEP);
-
-      // Accelerometer
-      accel_ = _engineSupervisor->getAccelerometer("accel");
-      accel_->enable(TIME_STEP);
     }
 
     AndroidHAL::~AndroidHAL()
     {
-      if(imageBuffer_ != nullptr)
+      if (imageBuffer_ != nullptr)
       {
         free(imageBuffer_);
         imageBuffer_ = nullptr;
       }
     }
-    
 
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
     {
-      return static_cast<TimeStamp_t>(_engineSupervisor->getTime() * 1000.0);
+      if (nullptr != _engineSupervisor) {
+        return static_cast<TimeStamp_t>(_engineSupervisor->getTime() * 1000.0);
+      }
+      return 0;
     }
 
     // TODO: If we want higher resolution IMU data than this we need to change this
-    //       function and tic the supervisor at a faster rate than engine.
+    //       function and tick the supervisor at a faster rate than engine.
     bool AndroidHAL::IMUReadData(IMU_DataStructure &IMUData)
     {
       const double* vals = gyro_->getValues();  // rad/s
@@ -170,20 +186,18 @@ namespace Anki {
 
     Result AndroidHAL::Update()
     {
-
-      if(_engineSupervisor->step(Cozmo::TIME_STEP) == -1) {
-        return RESULT_FAIL;
-      } else {
-        //AudioUpdate();
-        return RESULT_OK;
+      if (nullptr != _engineSupervisor) {
+        if (_engineSupervisor->step(Cozmo::TIME_STEP) == -1) {
+          return RESULT_FAIL;
+        }
+        // AudioUpdate();
       }
-
-    } // step()
+      return RESULT_OK;
+    }
 
 
     // Helper function to create a CameraInfo struct from Webots camera properties:
-    void FillCameraInfo(const webots::Camera *camera,
-                        CameraCalibration &info)
+    void FillCameraInfo(const webots::Camera *camera, CameraCalibration &info)
     {
 
       const u16 nrows  = static_cast<u16>(camera->getHeight());
@@ -271,9 +285,13 @@ namespace Anki {
     // Starts camera frame synchronization
     bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
+      if (nullptr == headCam_) {
+        return false;
+      }
+
       // Malloc to get around being unable to create a static array with unknown size
       // Also assumes that image size does not change at runtime
-      if(imageBuffer_ == nullptr)
+      if (imageBuffer_ == nullptr)
       {
         imageBuffer_ = (u8*)(malloc(headCamInfo_.nrows * headCamInfo_.ncols * 3));
       }
@@ -294,7 +312,7 @@ namespace Anki {
         }
       }
 
-      if(kUseLensDistortion)
+      if (kUseLensDistortion)
       {
         // Apply radial/lens distortion. Note that cv::remap uses in inverse lookup to find where the pixels in
         // the output (distorted) image came from in the source. So we have to compute the inverse distortion here.
@@ -341,7 +359,7 @@ namespace Anki {
         cv::remap(cvFrame, cvFrame, x_undistorted, y_undistorted, CV_INTER_LINEAR);
       }
       
-      if(BLUR_CAPTURED_IMAGES)
+      if (BLUR_CAPTURED_IMAGES)
       {
         // Add some blur to simulated images
         cv::Mat cvImg(headCamInfo_.nrows, headCamInfo_.ncols, CV_8UC3, frame);

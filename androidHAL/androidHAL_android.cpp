@@ -209,8 +209,6 @@ namespace Anki {
 
     bool AndroidHAL::CameraGetFrame(u8*& frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
-      DEV_ASSERT(frame != NULL, "androidHAL.CameraGetFrame.NullFramePointer");
-
       if(_currentFrame != nullptr && _frameReady)
       {
         _frameReady = false;

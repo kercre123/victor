@@ -1,4 +1,7 @@
 
+include(anki_build_cxx_compile_definitions)
+include(anki_build_cxx_compile_options)
+
 macro(__anki_build_cxx_source_list target_name srclist_dir)
 file(STRINGS "${srclist_dir}/${target_name}.srcs.lst" SRCS)
 file(STRINGS "${srclist_dir}/${target_name}.headers.lst" HEADERS)
@@ -39,6 +42,17 @@ add_library(${target_name} ${extra_argv}
   ${_abcxx_PLATFORM_SRCS}
   ${_abcxx_PLATFORM_HEADERS}
 )
+
+target_compile_definitions(${target_name}
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
+
+target_compile_options(${target_name}
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
 endmacro()
 
 macro(anki_build_cxx_executable target_name srclist_dir)
@@ -57,4 +71,15 @@ add_executable(${target_name} ${extra_argv}
   ${_abcxx_PLATFORM_SRCS}
   ${_abcxx_PLATFORM_HEADERS}
 )
+
+target_compile_definitions(${target_name}
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
+
+target_compile_options(${target_name}
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
 endmacro()

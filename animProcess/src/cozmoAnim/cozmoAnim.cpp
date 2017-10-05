@@ -82,7 +82,8 @@ Result CozmoAnimEngine::Init() {
   
   // Setup Engine Message
   Messages::Init( *_animationStreamer,
-                  *static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )) );
+                  *static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput( regId )),
+                  *(_context.get()) );
   
   
   

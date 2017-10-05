@@ -127,7 +127,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::timeProfStat,                              &RobotToEngineImplMessaging::HandleTimeProfileStat);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::audioInput,                     &RobotToEngineImplMessaging::HandleAudioInput);
   
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -214,7 +213,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   GetSignalHandles().push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuTemperature,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
                                                        ANKI_CPU_PROFILE("RobotTag::imuTemperature");
-                                                       robot->SetImuTemperature(message.GetData().Get_imuTemperature().temperature_degC);
+                                                       
+                                                       const auto temp_degC = message.GetData().Get_imuTemperature().temperature_degC;
+                                                       // This prints an info every time we receive this message. This is useful for gathering data
+                                                       // in the prototype stages, and could probably be removed in production.
+                                                       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageImuTemperature", "IMU temperature: %.3f degC", temp_degC);
+                                                       robot->SetImuTemperature(temp_degC);
                                                      }));
   
   if (robot->HasExternalInterface())
@@ -1105,58 +1109,6 @@ void RobotToEngineImplMessaging::HandleTimeProfileStat(const AnkiEvent<RobotInte
   else
   {
     PRINT_NAMED_INFO("Profile", "name:%s avg:%u max:%u", payload.profName.c_str(), payload.avg, payload.max);
-  }
-}
-
-void RobotToEngineImplMessaging::HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  static uint32_t sLatestSequenceID = 0;
-  static AudioUtil::AudioChunkList audioData{};
-  static uint32_t totalAudioSize = 0;
-  
-  const auto & payload = message.GetData().Get_audioInput();
-
-  constexpr int kNumChannels = 4;
-  const int channelsToSave = 4;
-  
-  if (payload.sequenceID > sLatestSequenceID ||
-      (sLatestSequenceID - payload.sequenceID) > (UINT32_MAX / 2)) // To handle rollover case
-  {
-    audioData.resize(audioData.size() + 1);
-    auto& newData = audioData.back();
-    constexpr int kSamplesPerChunk = 80; // 80 Samples 4 channels = 320 samples total
-    newData.resize(kSamplesPerChunk * channelsToSave);
-    
-    if (channelsToSave == 1)
-    {
-      // For testing purposes lets only save off the first channel
-      for (int j=0; j<kSamplesPerChunk; j++)
-      {
-        newData.data()[j] = payload.data.data()[j * kNumChannels];
-      }
-    }
-    else
-    {
-      std::copy(payload.data.begin(), payload.data.end(), newData.data());
-    }
-    
-    totalAudioSize += kSamplesPerChunk;
-    sLatestSequenceID = payload.sequenceID;
-  }
-  
-  if (totalAudioSize >= (AudioUtil::kSampleRate_hz * 20))
-  {
-    ANKI_CPU_PROFILE("HandleAudioInput.WriteWavFile");
-    if (!robot->IsPhysical())
-    {
-      std::string writeLocation = robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "testoutput.wav");
-      auto saveWaveFile = [dest = std::move(writeLocation), channelsToSave, data = std::move(audioData)] () {
-        AudioUtil::WaveFile::SaveFile(dest, data, channelsToSave);
-      };
-      std::thread(saveWaveFile).detach();
-    }
-    audioData.clear();
-    totalAudioSize = 0;
   }
 }
 
