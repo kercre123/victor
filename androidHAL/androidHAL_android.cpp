@@ -82,12 +82,12 @@ namespace Anki {
     , _imageFrameID(1)
     {
       //InitIMU();
-      InitCamera();
+      // InitCamera();
     }
     
     AndroidHAL::~AndroidHAL()
     {
-      DeleteCamera();
+      // DeleteCamera();
     }
 
     

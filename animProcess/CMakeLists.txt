@@ -7,6 +7,7 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 include(flatbuffers)
 include(opencv)
 include(signalessence)
+include(speexdsp)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
@@ -42,6 +43,7 @@ target_link_libraries(victor_anim
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
   ${SIGNALESSENCE_LIBS}
+  ${SPEEXDSP_LIBS}
   # platform
   PUBLIC
   # these need to be public until we remove android-specific classes from androidHAL.h

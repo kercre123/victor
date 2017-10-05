@@ -20,7 +20,7 @@ typedef uint32_t crc_t;
 
 #define SKIP_CRC_CHECK 0
 
-#define SPINE_MAX_BYTES 1048
+#define SPINE_MAX_BYTES 1208
 
 #define BODY_TAG_PREFIX ((uint8_t*)&SyncKey)
 #define SPINE_TAG_LEN sizeof(SpineSync)

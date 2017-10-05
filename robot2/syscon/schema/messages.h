@@ -185,8 +185,7 @@ struct SpineMessageFooter
 /// Start Packets
 struct BodyToHead
 {
-  // TODO(Al/Lee): Put back once mics and camera can co-exist
-//  int16_t audio[320];     // NOTE: This needs to be immediately followed by the uin32_t framecounter, since that is packed
+  int16_t audio[480];     // NOTE: This needs to be immediately followed by the uin32_t framecounter, since that is packed
   uint32_t framecounter;  // as part of the AudioInput struct to the engine process.
   PowerState powerState;
   struct MotorState motor[4];
