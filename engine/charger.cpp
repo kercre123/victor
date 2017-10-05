@@ -66,13 +66,6 @@ namespace Anki {
       _marker = &AddMarker(Vision::MARKER_CHARGERHOME, frontPose, Point2f(MarkerWidth, MarkerHeight));
       
     } // Charger() Constructor
-    
-    Charger::Charger(ActiveID activeID, FactoryID factoryID, ObjectType objectType)
-    : Charger(objectType)
-    {     
-      _activeID = activeID;
-      _factoryID = factoryID;
-    }
 
     
     Charger::~Charger()

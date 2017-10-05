@@ -26,6 +26,7 @@ namespace Cozmo {
   
 // Forward declarations
 class AnimationStreamer;
+class CozmoAnimContext;
 namespace Audio {
 class EngineRobotAudioInput;
 }
@@ -36,7 +37,7 @@ namespace Messages {
   // manually in messages.cpp).
   //#include "clad/robotInterface/messageEngineToRobot_declarations.def"
 
-  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput);
+  Result Init(AnimationStreamer& animStreamer, Audio::EngineRobotAudioInput& audioInput, const CozmoAnimContext& context);
 
   void Update();
   

@@ -39,9 +39,10 @@ namespace Anki {
       AnimationGroupEntry();
       
       // For reading animation groups from files.
+      // TODO: Restore check that animation actually exists somehow (VIC-370)
       // If cannedAnimations is non-null, the animation's name will be verified to exist in
       // in the container and RESULT_FAIL will be returned if it doesn't.
-      Result DefineFromJson(const Json::Value& json, const CannedAnimationContainer* cannedAnimations);
+      Result DefineFromJson(const Json::Value& json);
       
       const std::string& GetName() const { return _name; }
       f32 GetWeight() const { return _weight; }

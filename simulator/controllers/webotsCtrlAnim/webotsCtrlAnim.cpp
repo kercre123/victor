@@ -100,7 +100,7 @@ int main(int argc, char **argv)
   }
 
   // Start with a step so that we can attach to the process here for debugging
-  animSupervisor.step(ANIM_TIME_STEP);
+  animSupervisor.step(ANIM_TIME_STEP_MS);
   
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
   // Main Execution loop: step the world forward forever
   //
   auto tick_start = std::chrono::system_clock::now();
-  while (animSupervisor.step(ANIM_TIME_STEP) != -1)
+  while (animSupervisor.step(ANIM_TIME_STEP_MS) != -1)
   {
     double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
     cozmoAnim.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));

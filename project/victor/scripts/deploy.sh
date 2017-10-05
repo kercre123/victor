@@ -124,3 +124,10 @@ find "${TOPLEVEL}/project/victor/runtime" -type f -depth 1 \
 find "${TOPLEVEL}/project/victor/runtime/config" -type f -depth 1 \
     -exec bash -c \
     'adb_deploy "${0}" "${INSTALL_ROOT}/config"' {} \;
+
+# Move the hal.conf file (which contains robot-specific calibration values) to its proper home if needed
+HAL_CONF_PATH=/data/persist
+$ADB shell mkdir -p $HAL_CONF_PATH
+# If hal.conf already exists in com.anki.cozmoengine directory, move it to /data/persist (if folder exists)
+$ADB shell test -f ${INSTALL_ROOT}/hal.conf && $ADB shell mv ${INSTALL_ROOT}/hal.conf $HAL_CONF_PATH
+

@@ -6,7 +6,6 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "engine/animations/animationContainers/cannedAnimationContainer.h"
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/cozmoContext.h"
@@ -24,6 +23,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/animationTrigger.h"
 #include "json/json.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -48,7 +48,6 @@ RobotManager::RobotManager(const CozmoContext* context)
 : _context(context)
 , _robotEventHandler(context)
 , _backpackLightAnimations(context->GetDataLoader()->GetBackpackLightAnimations())
-, _cannedAnimations(context->GetDataLoader()->GetCannedAnimations())
 , _cubeLightAnimations(context->GetDataLoader()->GetCubeLightAnimations())
 , _animationGroups(context->GetDataLoader()->GetAnimationGroups())
 , _animationTriggerResponses(context->GetDataLoader()->GetAnimationTriggerResponses())
@@ -269,11 +268,6 @@ void RobotManager::UpdateRobotConnection()
   _robotMessageHandler->ProcessMessages();
 }
 
-void RobotManager::ReadAnimationDir()
-{
-  _context->GetDataLoader()->LoadAnimations();
-}
-
 void RobotManager::ReadFaceAnimationDir()
 {
   _context->GetDataLoader()->LoadFaceAnimations();
@@ -290,10 +284,6 @@ void RobotManager::BroadcastAvailableAnimationGroups()
   }
 }
 
-bool RobotManager::HasCannedAnimation(const std::string& animName)
-{
-  return _cannedAnimations->HasAnimation(animName);
-}
 bool RobotManager::HasAnimationGroup(const std::string& groupName)
 {
   return _animationGroups->HasGroup(groupName);

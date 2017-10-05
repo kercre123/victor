@@ -251,7 +251,7 @@ void TrackLayerComponent::AddOrUpdateEyeShift(AnimationTag& tag,
                                       outerEyeScaleIncrease,
                                       duration_ms, eyeShift);
   
-  if(AnimationStreamer::NotAnimatingTag == tag)
+  if(AnimationStreamer::kNotAnimatingTag == tag)
   {
     AnimationStreamer::FaceTrack faceTrack;
     if(duration_ms > 0)

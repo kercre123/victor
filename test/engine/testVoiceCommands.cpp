@@ -36,6 +36,11 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::VoiceCommand;
 
+//
+// Use this to enable/disable all tests in the suite
+//#define SUITE VoiceCommands
+#define SUITE DISABLED_VoiceCommands
+
 //----------------------------------------------------------------------------------------------------------------------
 // "calculating" examples, uses VoiceCommandTuning to determine good param values (for phrasespotting) or good config
 // values (for the command list context)
@@ -46,7 +51,7 @@ using namespace Anki::Cozmo::VoiceCommand;
 // code to rot so it's still in the first test below
 #define DO_CALCULATION_TEST 0
 
-TEST(VoiceCommands, SpeechRecognizer_calculation_params)
+TEST(SUITE, SpeechRecognizer_calculation_params)
 {
   using namespace Anki::Cozmo::VoiceCommand;
   
@@ -79,7 +84,7 @@ TEST(VoiceCommands, SpeechRecognizer_calculation_params)
 } // SpeechRecognizer_calculation_params
 
 
-TEST(VoiceCommands, SpeechRecognizer_calculation_configs)
+TEST(SUITE, SpeechRecognizer_calculation_configs)
 {
   using namespace Anki::Cozmo::VoiceCommand;
   
@@ -179,7 +184,7 @@ static double GetScoreRatio(const CommandPhraseData& commandPhraseData, const Ut
 
 const static auto& _kYesNoCommandSet = VCSetType{VoiceCommandType::YesPlease, VoiceCommandType::NoThankYou};
 
-TEST(VoiceCommands, SpeechRecognizer_simple_en)
+TEST(SUITE, SpeechRecognizer_simple_en)
 {
   // Make sure voice command config data is loaded
   cozmoContext->GetDataLoader()->LoadVoiceCommandConfigs();
@@ -196,7 +201,7 @@ TEST(VoiceCommands, SpeechRecognizer_simple_en)
 }
 
 
-TEST(VoiceCommands, SpeechRecognizer_simple_de)
+TEST(SUITE, SpeechRecognizer_simple_de)
 {
   // Make sure voice command config data is loaded
   cozmoContext->GetDataLoader()->LoadVoiceCommandConfigs();
@@ -213,7 +218,7 @@ TEST(VoiceCommands, SpeechRecognizer_simple_de)
 }
 
 
-TEST(VoiceCommands, SpeechRecognizer_simple_fr)
+TEST(SUITE, SpeechRecognizer_simple_fr)
 {
   // Make sure voice command config data is loaded
   cozmoContext->GetDataLoader()->LoadVoiceCommandConfigs();
@@ -230,7 +235,7 @@ TEST(VoiceCommands, SpeechRecognizer_simple_fr)
 }
 
 
-TEST(VoiceCommands, SpeechRecognizer_simple_ja)
+TEST(SUITE, SpeechRecognizer_simple_ja)
 {
   // Make sure voice command config data is loaded
   cozmoContext->GetDataLoader()->LoadVoiceCommandConfigs();
@@ -252,7 +257,7 @@ TEST(VoiceCommands, SpeechRecognizer_simple_ja)
 // "complex" tests, checking both the trigger phrase and command within the same clip
 //----------------------------------------------------------------------------------------------------------------------
 
-TEST(VoiceCommands, SpeechRecognizer_complex_en)
+TEST(SUITE, SpeechRecognizer_complex_en)
 {
   using namespace Anki::Cozmo::VoiceCommand;
   

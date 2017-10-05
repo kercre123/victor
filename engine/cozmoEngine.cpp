@@ -649,7 +649,9 @@ std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 {
-  _context->GetRobotManager()->ReadAnimationDir();
+  // TODO: Tell animation process to read the anim dir?
+  PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.ReadAnimationFile.NotHookedUp", "");
+  //_context->GetRobotManager()->ReadAnimationDir();
 }
 
 template<>

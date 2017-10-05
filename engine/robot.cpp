@@ -25,7 +25,6 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
-#include "engine/animations/proceduralFace.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/behaviorSystem/activities/activities/iActivity.h"
@@ -181,7 +180,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _behaviorSysMgr(new BehaviorSystemManager(*this))
   , _audioClient(new Audio::EngineRobotAudioClient())
   , _pathComponent(new PathComponent(*this, robotID, context))
-  , _animationStreamer(_context) // v1
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
@@ -339,18 +337,8 @@ void Robot::SetOnCharger(bool onCharger)
     if ( nullptr == chargerInstance )
     {
       // there's currently no located instance, we need to create one.
-      ActiveID unconnectedActiveID = ObservableObject::InvalidActiveID;
-      FactoryID unconnectedFactoryID = ObservableObject::InvalidFactoryID;
-      chargerInstance = CreateActiveObjectByType(ObjectType::Charger_Basic, unconnectedActiveID, unconnectedFactoryID);
-
-      // check if there is a connected instance, because we can inherit its ID (objectID)
-      // note that setting ActiveID and FactoryID is responsibility of whenever we Add the object to the BlockWorld
-      ActiveObject* connectedInstance = GetBlockWorld().FindConnectedActiveMatchingObject(filter);
-      if ( nullptr != connectedInstance ) {
-        chargerInstance->CopyID(connectedInstance);
-      } else {
-        chargerInstance->SetID();
-      }
+      chargerInstance = new Charger();
+      chargerInstance->SetID();
     }
 
     // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
@@ -1193,7 +1181,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetContext()->GetVizManager()->SendRobotState(
     stateMsg,
     static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
-    AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
+    -1, // AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
     (u8)MIN(((u8)imageFrameRate), std::numeric_limits<u8>::max()),
     (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
     _enabledAnimTracks,
@@ -1292,12 +1280,12 @@ Pose3d Robot::GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp
 // Future hardware may support different values.
 u32 Robot::GetDisplayWidthInPixels() const
 {
-    return FaceAnimationManager::IMAGE_WIDTH;
+  return FACE_DISPLAY_WIDTH;
 }
   
 u32 Robot::GetDisplayHeightInPixels() const
 {
-  return FaceAnimationManager::IMAGE_HEIGHT;
+  return FACE_DISPLAY_HEIGHT;
 }
   
 Vision::Camera Robot::GetHistoricalCamera(const HistRobotState& histState, TimeStamp_t t) const
@@ -1510,15 +1498,6 @@ Result Robot::Update()
     PRINT_NAMED_INFO("Robot.Update.ActionList", "Robot %d had an action list failure (%d)", robotID, result);
   }
   
-  //////// Stream Animations /////////
-  if (_timeSynced) { // Don't stream anything before we've connected
-    result = _animationStreamer.Update(*this);
-    if (result != RESULT_OK) {
-      PRINT_NAMED_WARNING("Robot.Update.AnimationStreamer",
-                          "Robot %d had an animation streamer failure (%d)", robotID, result);
-    }
-  }
-
   /////////// Update NVStorage //////////
   _nvStorageComponent->Update();
 

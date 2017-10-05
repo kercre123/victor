@@ -12,6 +12,7 @@
 
 #include "visionSystem.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
@@ -111,7 +112,6 @@ namespace Cozmo {
   , _petTracker(new Vision::PetTracker())
   , _markerDetector(new Vision::MarkerDetector(_camera))
   , _laserPointDetector(new LaserPointDetector(_vizManager))
-  , _motionDetector(new MotionDetector(_camera, _vizManager))
   , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
   , _cameraCalibrator(new CameraCalibrator(*this))
   , _clahe(cv::createCLAHE())
@@ -195,6 +195,8 @@ namespace Cozmo {
                   "With model path %s.", dataPath.c_str());
     _faceTracker.reset(new Vision::FaceTracker(dataPath, config));
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
+
+    _motionDetector.reset(new MotionDetector(_camera, _vizManager, config));
     
     const Result petTrackerInitResult = _petTracker->Init(config);
     if(RESULT_OK != petTrackerInitResult) {

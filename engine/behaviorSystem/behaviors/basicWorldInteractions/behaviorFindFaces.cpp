@@ -14,6 +14,7 @@
 
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
 #include "engine/actions/basicActions.h"

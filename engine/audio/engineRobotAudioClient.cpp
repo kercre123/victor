@@ -19,6 +19,7 @@
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/logging/logging.h"

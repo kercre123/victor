@@ -338,7 +338,8 @@ namespace Anki {
         printf("              Cycle block select:  .\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
-        printf("    Travel up/down selected ramp:  r\n");
+        printf("          Mount selected charger:  r\n");
+        printf(" Mount charger w/o cliff sensors:  Shift+r\n");
         printf("                      Face plant:  Alt+r\n");
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
@@ -353,7 +354,6 @@ namespace Anki {
         printf("              Reset 'owner' face:  Alt+Shift+f\n");
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
-        printf("       Force-add specified robot:  Shift+r\n");
         printf("                 Select behavior:  Shift+c\n");
         printf("         Select behavior chooser:  h\n");
         printf("       Select spark (unlockName):  Shift+h\n");
@@ -1415,19 +1415,17 @@ namespace Anki {
                 
               case (s32)'R':
               {
-                bool usePreDockPose = !shiftKeyPressed;
                 bool useManualSpeed = false;
                 
                 if (altKeyPressed) {
-//                  SendTraverseSelectedObject(pathMotionProfile_,
-//                                             usePreDockPose,
-//                                             useManualSpeed);
+                  bool usePreDockPose = !shiftKeyPressed;
                   SendFacePlant(-1,
                                 pathMotionProfile_,
                                 usePreDockPose);
                 } else {
+                  bool useCliffSensorCorrection = !shiftKeyPressed;
                   SendMountSelectedCharger(pathMotionProfile_,
-                                           usePreDockPose,
+                                           useCliffSensorCorrection,
                                            useManualSpeed);
                 }
                 break;

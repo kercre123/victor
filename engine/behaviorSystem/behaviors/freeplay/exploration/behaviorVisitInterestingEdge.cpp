@@ -24,6 +24,7 @@
 #include "engine/groundPlaneROI.h"
 #include "engine/robot.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"

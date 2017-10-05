@@ -7,6 +7,9 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/types.h"
+
+#include "androidHAL/androidHAL.h"
+
 #include "engine/activeObject.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
@@ -66,7 +69,7 @@ TEST(Cozmo, SimpleCozmoTest)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, AddAndRemoveObject)
+TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 {
   using namespace Anki;
   using namespace Cozmo;
@@ -2888,7 +2891,10 @@ int main(int argc, char ** argv)
   
   // Suppress break-on-error for duration of these tests
   Anki::Util::_errBreakOnError = false;
-  
+
+  // Initialize AndroidHAL singleton without supervisor
+  AndroidHAL::SetSupervisor(nullptr);
+
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
   cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, nullptr);

@@ -1,0 +1,46 @@
+set(SIGNALESSENCE_HOME "${ANKI_EXTERNAL_DIR}/anki-thirdparty/signalEssence")
+
+set(SIGNALESSENCE_EXTRA_INCLUDE_DIR "")
+set(SIGNALESSENCE_LIB_PATH "")
+set(SIGNALESSENCE_PLATFORM_DIR "")
+
+if (ANDROID)
+  set(SIGNALESSENCE_PLATFORM_DIR "android")
+  set(SIGNALESSENCE_EXTRA_INCLUDE_DIR "cpu_arm")
+elseif (MACOSX)
+  set(SIGNALESSENCE_PLATFORM_DIR "mac")
+  set(SIGNALESSENCE_EXTRA_INCLUDE_DIR "cpu_none")
+endif()
+
+set(SIGNALESSENCE_LIB_PATH "${SIGNALESSENCE_HOME}/${SIGNALESSENCE_PLATFORM_DIR}/platform/anki_victor_example/build")
+
+set(SIGNALESSENCE_INCLUDE_PATHS 
+  "${SIGNALESSENCE_HOME}/${SIGNALESSENCE_PLATFORM_DIR}/project/anki_victor"
+  "${SIGNALESSENCE_HOME}/${SIGNALESSENCE_PLATFORM_DIR}/se_lib_public"
+  "${SIGNALESSENCE_HOME}/${SIGNALESSENCE_PLATFORM_DIR}/se_lib_public/${SIGNALESSENCE_EXTRA_INCLUDE_DIR}"
+)
+
+set(SIGNALESSENCE_LIBS
+  mmif
+  mmfx
+)
+
+if (ANDROID)
+  foreach(LIB ${SIGNALESSENCE_LIBS})
+      add_library(${LIB} STATIC IMPORTED)
+      set_target_properties(${LIB} PROPERTIES
+          IMPORTED_LOCATION
+          "${SIGNALESSENCE_LIB_PATH}/lib${LIB}.a"
+          INTERFACE_INCLUDE_DIRECTORIES
+          "${SIGNALESSENCE_INCLUDE_PATHS}")
+  endforeach()
+elseif (MACOSX)
+  foreach(LIB ${SIGNALESSENCE_LIBS})
+      add_library(${LIB} SHARED IMPORTED)
+      set_target_properties(${LIB} PROPERTIES
+          IMPORTED_LOCATION
+          "${SIGNALESSENCE_LIB_PATH}/lib${LIB}.dylib"
+          INTERFACE_INCLUDE_DIRECTORIES
+          "${SIGNALESSENCE_INCLUDE_PATHS}")
+  endforeach()
+endif()

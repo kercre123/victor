@@ -11,7 +11,7 @@
 *
 **/
 
-
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "engine/behaviorSystem/behaviorManager.h"

@@ -7,9 +7,6 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-#ifndef TARGET_K02
-#include "animationController.h"
-#endif
 #include "backpackLightController.h"
 #include "dockingController.h"
 #include "liftController.h"
@@ -109,9 +106,6 @@ namespace Anki {
 #ifndef TARGET_K02
         lastResult = HAL::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 219, "CozmoBot.InitFail.HAL", 305, "", 0);
-        
-        lastResult = AnimationController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 227, "CozmoBot.InitFail.AnimationController", 305, "", 0);
 #endif
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 1249, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
@@ -248,7 +242,6 @@ namespace Anki {
 
 #ifndef TARGET_K02
           TestModeController::Start(TestMode::TM_NONE);
-          AnimationController::EnableTracks( EnumToUnderlyingType(AnimTrackFlag::ALL_TRACKS));
 #endif
 
           wasConnected_ = false;
@@ -268,15 +261,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
-        MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
-#ifndef TARGET_K02
-        if (Messages::ReceivedInit()) {
-          if(AnimationController::Update() != RESULT_OK) {
-            AnkiWarn( 230, "CozmoBot.Main.AnimationControllerUpdateFailed", 305, "", 0);
-            AnimationController::Clear();
-          }
-        }
-#endif
+
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();

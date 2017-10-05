@@ -56,27 +56,7 @@ namespace Anki {
       }
       
     }
-    
-    PlayAnimationAction::PlayAnimationAction(Robot& robot,
-                                             Animation* animation,
-                                             u32 numLoops,
-                                             bool interruptRunning,
-                                             u8 tracksToLock,
-                                             float timeout_sec)
-    : IAction(robot,
-              "PlayAnimation" + animation->GetName(),
-              RobotActionType::PLAY_ANIMATION,
-              tracksToLock)
-    , _animName(animation->GetName())
-    , _numLoopsRemaining(numLoops)
-    , _interruptRunning(interruptRunning)
-    , _animPointer(animation)
-    , _timeout_sec(timeout_sec)
-    {
-      // TODO: This constructor is broken now since engine should no longer be dealing with Animation class.
-      //       Need to figure out different way to do what this was doing.
-    }
-    
+        
     PlayAnimationAction::~PlayAnimationAction()
     {
       if (HasStarted() && !_stoppedPlaying) {

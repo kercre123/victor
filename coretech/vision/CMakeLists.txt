@@ -37,16 +37,15 @@ target_include_directories(cti_vision
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/basestation/src>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>  # For access to engine/vision/nearestNeighborLibraryData.h
   )
 
-target_compile_definitions(cti_vision PRIVATE
-  -DCORETECH_BASESTATION
-  -DANKICORETECH_USE_OPENCV=1
-  -DFACE_TRACKER_OKAO=3
-  -DFACE_TRACKER_PROVIDER=3
-  -DANKICORETECH_EMBEDDED_USE_OPENCV=1
-) 
+target_compile_definitions(cti_vision
+  PRIVATE
+  CORETECH_BASESTATION
+  FACE_TRACKER_OKAO=3
+  FACE_TRACKER_PROVIDER=3
+)
 
 if(UNIT_TEST)
   add_subdirectory(basestation/test)

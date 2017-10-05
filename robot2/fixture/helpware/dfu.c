@@ -9,21 +9,15 @@
 #include <assert.h>
 #include <termios.h>
 
+#include "core/common.h"
+#include "core/serial.h"
+
 
 #define MAX_FIRMWARE_SZ 0xa0000
 #define FIXTURE_TTY "/dev/ttyHSL1"
 #define FIXTURE_BAUD B1000000
 
 
-
-#define DEBUG_DFU
-#ifdef DEBUG_DFU
-#define dprint printf
-#else
-#define dprint(s, ...)
-#endif
-#define SERIAL_STREAM_DEBUG_IN 1
-#define SERIAL_STREAM_DEBUG_OUT 0
 
 
 #define USAGE_STRING "USAGE:\n%s [-v] <filename> [-f]\n"  \
@@ -39,21 +33,6 @@ static struct {
 } gDFU = {0};
 
 
-enum DfuAppErrorCode {
-  app_SUCCESS = 0,
-  app_USAGE = -1,
-  app_FILE_OPEN_ERROR = -2,
-  app_FILE_READ_ERROR = -3,
-  app_SEND_DATA_ERROR = -4,
-  app_INIT_ERROR = -5,
-  app_FLASH_ERASE_ERROR = -6,
-  app_VALIDATION_ERROR = -7,
-  app_FILE_SIZE_ERROR = -8,
-  app_MEMORY_ERROR = -9,
-  app_IO_ERROR = -10,
-};
-
-
 
 //Clean up open file handles and memory
 void on_exit(void)
@@ -63,7 +42,7 @@ void on_exit(void)
     gDFU.imageFd = 0;
   }
   if (gDFU.serialFd) {
-    close(gDFU.serialFd);
+    serial_close(gDFU.serialFd);
     gDFU.serialFd = 0;
   }
   if (gDFU.safefile) {
@@ -71,94 +50,6 @@ void on_exit(void)
     gDFU.safefile = 0;
   }
 }
-
-void error_exit(enum DfuAppErrorCode code, const char* msg, ...)
-{
-  va_list args;
-
-  printf("ERROR %d: ", code);
-  va_start(args, msg);
-  vprintf(msg, args);
-  va_end(args);
-  printf("\n\n");
-  on_exit();
-  exit(code);
-}
-
-
-//Opens serial port at `devicename` with given `baud` enum. Returns file descriptor.
-int serial_init(const char* devicename, int baud)
-{
-  assert(devicename!=NULL);
-   
-  int serialFd = open(devicename, O_RDWR | O_NONBLOCK);
-  if (serialFd <= 0) {
-    error_exit(app_INIT_ERROR, "Can't init serial port at %s. (%d)",
-               FIXTURE_TTY, serialFd);
-  }
-  gDFU.serialFd = serialFd;
-
-  /* Configure device */
-  {
-    struct termios cfg;
-    if (tcgetattr(gDFU.serialFd, &cfg)) {
-      error_exit(app_IO_ERROR, "tcgetattr() failed");
-    }
-    cfmakeraw(&cfg);
-
-    cfsetispeed(&cfg, baud);
-    cfsetospeed(&cfg, baud);
-
-    cfg.c_cflag |= (CS8 | CSTOPB);    // Use N82 bit words
-
-    printf("configuring port %s (fd=%d)\n", devicename, gDFU.serialFd);
-
-    if (tcsetattr(gDFU.serialFd, TCSANOW, &cfg)) {
-      error_exit(app_IO_ERROR, "tcsetattr() failed");
-    }
-  }
-  return gDFU.serialFd;
-}
-
-
-int serial_write(int serial_fd, const uint8_t* buffer, int len)
-{
-#if SERIAL_STREAM_DEBUG_OUT
-  printf("sending %d chars: ", len);
-  int i;
-  for (i = 0; i < len ; i++) {
-    printf("%c", buffer[i]);
-  }
-  printf("\n");
-#endif
-  int r =  write(serial_fd, buffer, len);
-  return r;
-}
-
-int serial_read(int serial_fd, uint8_t* buffer, int len) //->bytes_rcvd
-{
-  int result = read(serial_fd, buffer, len);
-  if (result < 0) {
-    if (errno == EAGAIN) { //nonblocking no-data
-      result = 0; //not an error
-    }
-    else {
-      error_exit(app_IO_ERROR, "Serial read eror %d\n", errno);
-    }
-  }
-#if SERIAL_STREAM_DEBUG_IN
-  if (result > 0) {
-
-    int i;
-    for (i = 0; i < result; i++) {
-      printf("%c", buffer[i]);
-    }
-  }
-#endif
-  return result;
-}
-
-
 
 
 const uint8_t* read_safefile(int safefp, int* szOut)
@@ -222,34 +113,33 @@ int main(int argc, const char* argv[])
     error_exit(app_USAGE, USAGE_STRING, argv[0]);
   }
 
-  dprint("Initializing comms\n");
+  dprintf("Initializing comms\n");
 
-  serial_init(FIXTURE_TTY, FIXTURE_BAUD);
+  gDFU.serialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
 
   //verify existing one first?
 
-  dprint("opening file\n");
+  dprintf("opening file\n");
   gDFU.imageFd = open(argv[1], O_RDONLY);
-  if (!gDFU.imageFd) {
-    error_exit(app_FILE_OPEN_ERROR, "Can't open %s", argv[1]);
+  if (gDFU.imageFd <=0) {
+    error_exit(app_FILE_OPEN_ERROR, "Can't open '%s' (%d)", argv[1], errno);
   }
   int safefilesz = 0;
   gDFU.safefile = read_safefile(gDFU.imageFd, &safefilesz);
 
-
   // Attention
-  dprint("Sending escape\n");
-  char esc[] = {27, 0};
+  dprintf("Sending escape\n");
+  uint8_t esc[] = {27, 0};
   serial_write(gDFU.serialFd, esc, 1);
   serial_write(gDFU.serialFd, esc, 1);
 
-  dprint("Waiting for response\n");
+  dprintf("Waiting for response\n");
   readTo(gDFU.serialFd, ">");
 
 
   //Exit Command Line mode
-  dprint("Sending Exit\n");
-  serial_write(gDFU.serialFd, "Exit\n", 5);
+  dprintf("Sending Exit\n");
+  serial_write(gDFU.serialFd, (uint8_t*)"Exit\n", 5);
   sleep(1); // 1 sec to drain buffers
   int n_read = 0;
   do {
@@ -259,7 +149,7 @@ int main(int argc, const char* argv[])
   while (n_read > 0);
 
   // Download.
-  dprint("Sending new image\n");
+  dprintf("Sending new image\n");
 
   // Erase is 7.8s worst case, 6.5s typical case at voltage level 2 * 5 128KB blocks
   //TODOO : add this to serial open code              port.ReadTimeout = 13000;

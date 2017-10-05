@@ -45,7 +45,7 @@ message CalibrateMotors {
 // DisplayFaceImage
 message DisplayFaceImage {
     uint_32  duration_ms,
-    uint_8   faceData[1024]          // Bit-image: one bit for each of 128x64 pixels
+    uint_8   faceData[2208]          // Bit-image: one bit for each of 184x96 pixels
 }
 
 // DisplayProceduralFace
@@ -107,7 +107,7 @@ message GotoPose {
 message MountCharger {
   int_32 objectID,
   PathMotionProfile motionProf,
-  bool usePreDockPose,
+  bool useCliffSensorCorrection,
   bool useManualSpeed
 }
 

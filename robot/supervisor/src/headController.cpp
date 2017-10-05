@@ -76,7 +76,6 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
-      const f32 HEAD_CALIB_POWER = 0.4f;
       bool isCalibrated_ = false;
       u32 lastHeadMovedTime_ms = 0;
 
@@ -188,7 +187,7 @@ namespace HeadController {
             break;
 
           case HCS_LOWER_HEAD:
-            power_ = -HEAD_CALIB_POWER;
+            power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
             HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;

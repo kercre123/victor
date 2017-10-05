@@ -134,7 +134,7 @@ namespace Cozmo {
                           GetStreamingAnimationName().c_str());
       }
 
-      return SetStreamingAnimation(nullptr, NotAnimatingTag);
+      return SetStreamingAnimation(nullptr, kNotAnimatingTag);
     }
     
     return SetStreamingAnimation(_animationContainer.GetAnimation(name), tag, numLoops, interruptRunning);
@@ -332,12 +332,12 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const Vision::ImageRGB& faceImg)
   {
-    ANKI_VERIFY(faceImg.GetNumCols() == FaceDisplay::FACE_DISPLAY_WIDTH &&
-                faceImg.GetNumRows() == FaceDisplay::FACE_DISPLAY_HEIGHT,
+    ANKI_VERIFY(faceImg.GetNumCols() == FACE_DISPLAY_WIDTH &&
+                faceImg.GetNumRows() == FACE_DISPLAY_HEIGHT,
                 "AnimationStreamer.BufferFaceToSend.InvalidImageSize",
                 "Got %d x %d. Expected %d x %d",
                 faceImg.GetNumCols(), faceImg.GetNumRows(),
-                FaceDisplay::FACE_DISPLAY_WIDTH, FaceDisplay::FACE_DISPLAY_HEIGHT);
+                FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
     // Draws frame to face display
     cv::Mat img565;
@@ -648,7 +648,7 @@ namespace Cozmo {
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
-      _streamingTime_ms += ANIM_TIME_STEP;  //RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+      _streamingTime_ms += ANIM_TIME_STEP_MS;  //RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
     } // while(buffering frames)
     
@@ -719,7 +719,7 @@ namespace Cozmo {
       // conditions to even be in this function, then we should make sure we've
       // got neutral face back on the screen
       if(_wasAnimationInterruptedWithNothing) {
-        SetStreamingAnimation(_neutralFaceAnimation, NotAnimatingTag );
+        SetStreamingAnimation(_neutralFaceAnimation, kNotAnimatingTag );
         _wasAnimationInterruptedWithNothing = false;
       }
       

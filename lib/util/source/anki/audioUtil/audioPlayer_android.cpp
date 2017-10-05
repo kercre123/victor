@@ -26,11 +26,13 @@ struct AudioPlayerData
   AudioChunkList::const_iterator        _endChunkIter;
   uint32_t                              _nextSampleIndex = 0;
   std::mutex                            _dataMutex;
+  uint32_t                              _samplesPerChunk = kSamplesPerChunk;
 };
   
-AudioPlayer::AudioPlayer()
+AudioPlayer::AudioPlayer(uint32_t samplesPerChunk)
 : _impl(new AudioPlayerData{})
 {
+  _impl->_samplesPerChunk = samplesPerChunk;
 }
   
 AudioPlayer& AudioPlayer::operator=(AudioPlayer&&) = default;

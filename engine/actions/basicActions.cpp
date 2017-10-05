@@ -23,7 +23,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
-#include "engine/components/trackLayerComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
@@ -58,10 +57,10 @@ namespace Anki {
       if(_moveEyes)
       {
         // Make sure eye shift gets removed no matter what
-        if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
+        if(kNotAnimatingTag != _eyeShiftTag) {
           // TODO: Restore eye shifts (VIC-363)
           //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
-          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+          _eyeShiftTag = kNotAnimatingTag;
         }
       }
     }
@@ -250,7 +249,7 @@ namespace Anki {
           angleDiff_rad = Anki::Util::Clamp(angleDiff_rad, DEG_TO_RAD(-89.f), DEG_TO_RAD(89.f));
 
           const f32 x_mm = std::tan(angleDiff_rad) * HEAD_CAM_POSITION[0];
-          const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
+          const f32 xPixShift = x_mm * (static_cast<f32>(_robot.GetDisplayWidthInPixels()) / (4*SCREEN_SIZE[0]));
           // TODO: Restore eye shifts (VIC-363)
           /*
           _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
@@ -318,7 +317,7 @@ namespace Anki {
       _previousAngle = _currentAngle;
 
       // When we've turned at least halfway, remove eye dart
-      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
+      if(kNotAnimatingTag != _eyeShiftTag) {
         if(_inPosition || (std::abs(_angularDistTraversed_rad) > _absAngularDistToRemoveEyeDart_rad))
         {
           PRINT_CH_DEBUG("Actions", "TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
@@ -329,7 +328,7 @@ namespace Anki {
           // TODO: Restore eye shifts (VIC-363)
           //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
           //                                                                       3*IKeyFrame::SAMPLE_LENGTH_MS);
-          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+          _eyeShiftTag = kNotAnimatingTag;
         }
       }
 
@@ -841,16 +840,16 @@ namespace Anki {
     
     MoveHeadToAngleAction::~MoveHeadToAngleAction()
     {
-      if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
+      if(kNotAnimatingTag != _eyeShiftTag)
       {
         // Make sure eye shift gets removed, by this action, or by the MoveComponent if "hold" is enabled
         if(_holdEyes) {
-          _robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
+          _robot.GetMoveComponent().RemoveFaceLayerWhenHeadMoves(_eyeShiftTag, 3*ANIM_TIME_STEP_MS);
         } else {
           // TODO: Restore eye shifts (VIC-363)
           //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
         }
-        _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+        _eyeShiftTag = kNotAnimatingTag;
       }
     }
     
@@ -885,7 +884,7 @@ namespace Anki {
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
           Radians angleDiff =  _robot.GetHeadAngle() - _headAngle;
           const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-          const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/4) / SCREEN_SIZE[1]);
+          const f32 yPixShift = y_mm * (static_cast<f32>(_robot.GetDisplayHeightInPixels()/4) / SCREEN_SIZE[1]);
           // TODO: Restore eye shifts (VIC-363)
           /*
           _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
@@ -913,7 +912,7 @@ namespace Anki {
         _inPosition = IsHeadInPosition();
       }
       
-      if(!_holdEyes && AnimationStreamer::NotAnimatingTag != _eyeShiftTag)
+      if(!_holdEyes && kNotAnimatingTag != _eyeShiftTag)
       {
         // If we're not there yet but at least halfway, and we're not supposed
         // to "hold" the eyes, then remove eye shift
@@ -930,7 +929,7 @@ namespace Anki {
           // TODO: Restore eye shifts (VIC-363)
           //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag,
           //                                                                       3*IKeyFrame::SAMPLE_LENGTH_MS);
-          _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+          _eyeShiftTag = kNotAnimatingTag;
         }
       }
       

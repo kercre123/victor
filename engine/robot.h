@@ -22,7 +22,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
-#include "engine/animations/animationStreamer.h"
+#include "anki/cozmo/shared/animationTag.h"
 #include "engine/encodedImage.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/ramp.h"
@@ -50,6 +50,7 @@ namespace Anki {
 class PoseOriginList;
 
 namespace Util {
+class RandomGenerator;
 namespace Data {
 class DataPlatform;
 }
@@ -764,13 +765,11 @@ protected:
   std::unique_ptr<PathComponent> _pathComponent;
   
   ///////// Animation /////////
-  // TODO:(bn) make animation streamer a pointer, pull Tag out into a constants / definitions file
-  AnimationStreamer _animationStreamer;
   s32               _numAnimationBytesPlayed         = 0;
   s32               _numAnimationBytesStreamed       = 0;
   s32               _numAnimationAudioFramesPlayed   = 0;
   s32               _numAnimationAudioFramesStreamed = 0;
-  u8                _animationTag                    = 0;
+  AnimationTag      _animationTag                    = kNotAnimatingTag;
   
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
   

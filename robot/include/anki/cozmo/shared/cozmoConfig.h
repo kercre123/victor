@@ -123,6 +123,10 @@ namespace Cozmo {
   // Face LCD Screen size
   const f32 SCREEN_SIZE[2] = {26.f, 13.f};
   
+  // Face display resolution, in pixels
+  const s32 FACE_DISPLAY_WIDTH = 184;
+  const s32 FACE_DISPLAY_HEIGHT = 96;
+  
   /***************************************************************************
    *
    *                          Geometries
@@ -240,8 +244,7 @@ namespace Cozmo {
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
   
-  // TODO: Move to a config file for animation process
-  const s32 ANIM_TIME_STEP = 33; //ms
+  const s32 ANIM_TIME_STEP_MS = 33; //ms
   
   /***************************************************************************
    *

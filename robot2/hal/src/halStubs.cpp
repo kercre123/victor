@@ -76,6 +76,10 @@ namespace Anki {
         1.0,1.0,1.0,1.0
       };
 
+      static f32 HAL_HEAD_MOTOR_CALIB_POWER = -0.4f;
+
+      static f32 HAL_LIFT_MOTOR_CALIB_POWER = -0.4f;
+
       s32 robotID_ = -1;
 
       // TimeStamp offset
@@ -102,7 +106,7 @@ namespace Anki {
         CONSOLE_DATA(f32 motorPower[MOTOR_COUNT]);
       } internalData_;
 
-      static const char* HAL_INI_PATH = "./hal.conf";
+      static const char* HAL_INI_PATH = "/data/persist/hal.conf";
       const HALConfig::Item  configitems_[]  = {
         {"LeftTread mm/count",  HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_LEFT]},
         {"RightTread mm/count", HALConfig::FLOAT, &HAL_MOTOR_POSITION_SCALE[MOTOR_RIGHT]},
@@ -112,6 +116,8 @@ namespace Anki {
         {"RightTread Motor Direction", HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_RIGHT]},
         {"Lift Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_LIFT]},
         {"Head Motor Direction",       HALConfig::FLOAT, &HAL_MOTOR_DIRECTION[MOTOR_HEAD]},
+        {"Lift Motor Calib Power",     HALConfig::FLOAT, &HAL_LIFT_MOTOR_CALIB_POWER},
+        {"Head Motor Calib Power",     HALConfig::FLOAT, &HAL_HEAD_MOTOR_CALIB_POWER},
         {0} //Need zeros as end-of-list marker
       };
       
@@ -145,7 +151,11 @@ namespace Anki {
 
     Result HAL::Init()
     {
-      HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+      Result res = HALConfig::ReadConfigFile(HAL_INI_PATH, configitems_);
+      if (res != RESULT_OK) {
+        printf("Failed to read hal.conf file (result 0x%08X)\n", res);
+        return res;
+      }
 
       // Set ID
       robotID_ = 1;
@@ -197,6 +207,26 @@ namespace Anki {
 
       return RESULT_OK;
     }  // Init()
+
+    // Returns the motor power used for calibration [-1.0, 1.0]
+    float HAL::MotorGetCalibPower(MotorID motor)
+    {
+      f32 power = 0.f;
+      switch (motor) 
+      {
+        case MotorID::MOTOR_LIFT:
+          power = HAL_LIFT_MOTOR_CALIB_POWER;
+          break;
+        case MotorID::MOTOR_HEAD:
+          power = HAL_HEAD_MOTOR_CALIB_POWER;
+          break;
+        default:
+          printf("HAL::MotorGetCalibPower.InvalidMotorType - No calib power for %s\n", EnumToString(motor));
+          assert(false);
+          break;
+      }
+      return power;
+    }
 
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
@@ -443,24 +473,25 @@ namespace Anki {
     {
       // TEMP!! This should be fixed once syscon reports the correct flags for isCharging, etc.
       static bool isCharging = false;
-      static u32 transitionTime_ms = HAL::GetTimeStamp();
+      static bool wasAboveThresh = false;
+      static u32 lastTransition_ms = HAL::GetTimeStamp();
       
       const int32_t thresh = 2000; // raw ADC value?
-      const u32 debounceTime_ms = 300U;
+      const u32 debounceTime_ms = 200U;
       
-      const bool aboveThreshNow = bodyData_->battery.charger > thresh;
-      const bool canTransition = HAL::GetTimeStamp() > transitionTime_ms + debounceTime_ms;
+      const bool isAboveThresh = bodyData_->battery.charger > thresh;
       
-      if (canTransition) {
-        if (isCharging && !aboveThreshNow) {
-            isCharging = false;
-            transitionTime_ms = HAL::GetTimeStamp();
-        } else if (!isCharging && aboveThreshNow) {
-            isCharging = true;
-            transitionTime_ms = HAL::GetTimeStamp();
-        }
+      if (isAboveThresh != wasAboveThresh) {
+        lastTransition_ms = HAL::GetTimeStamp();
       }
       
+      const bool canTransition = HAL::GetTimeStamp() > lastTransition_ms + debounceTime_ms;
+      
+      if (canTransition) {
+        isCharging = isAboveThresh;
+      }
+      
+      wasAboveThresh = isAboveThresh;
       return isCharging;
       //return bodyData_->battery.flags & isCharging;
     }

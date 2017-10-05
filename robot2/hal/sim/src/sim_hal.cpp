@@ -602,6 +602,21 @@ namespace Anki {
       return newReading;
     }
 
+    // Returns the motor power used for calibration [-1.0, 1.0]
+    float HAL::MotorGetCalibPower(MotorID motor)
+    {
+      float power = 0.f;
+      switch (motor) {
+        case MotorID::MOTOR_LIFT:
+        case MotorID::MOTOR_HEAD:
+          power = -0.4f;
+          break;
+        default:
+          PRINT_NAMED_ERROR("simHAL.MotorGetCalibPower.UndefinedType", "%d", EnumToUnderlyingType(motor));
+          break;
+      }
+      return power;
+    }
 
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)

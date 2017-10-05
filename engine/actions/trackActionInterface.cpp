@@ -15,7 +15,7 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/components/movementComponent.h"
-#include "engine/components/trackLayerComponent.h"
+//#include "engine/components/trackLayerComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -42,7 +42,7 @@ ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActi
           name,
           type,
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
-, _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
+, _eyeShiftTag(kNotAnimatingTag)
 , _originalEyeDartDist(-1.f)
 {
 
@@ -51,11 +51,11 @@ ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::~ITrackAction()
 {
-  if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
+  if(_eyeShiftTag != kNotAnimatingTag) {
     // Make sure any eye shift gets removed
     // TODO: Restore eye shifts (VIC-363)
     //_robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
-    _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+    _eyeShiftTag = kNotAnimatingTag;
   }
 
   if(_originalEyeDartDist >= 0.f) {
@@ -455,7 +455,7 @@ ActionResult ITrackAction::CheckIfDone()
         
         if(_moveEyes) {
           const f32 y_mm = std::tan(-relTiltAngle) * HEAD_CAM_POSITION[0];
-          eyeShiftY = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/2) / SCREEN_SIZE[1]);
+          eyeShiftY = y_mm * (static_cast<f32>(_robot.GetDisplayHeightInPixels()/2) / SCREEN_SIZE[1]);
         }
       }
       
@@ -560,7 +560,7 @@ ActionResult ITrackAction::CheckIfDone()
           // Compute horizontal eye movement
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
           const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
-          eyeShiftX = x_mm * (static_cast<f32>(ProceduralFace::WIDTH/2) / SCREEN_SIZE[0]);
+          eyeShiftX = x_mm * (static_cast<f32>(_robot.GetDisplayWidthInPixels()/2) / SCREEN_SIZE[0]);
         }
       }
       
@@ -580,8 +580,8 @@ ActionResult ITrackAction::CheckIfDone()
       if(_moveEyes && (eyeShiftX != 0.f || eyeShiftY != 0.f))
       {
         // Clip, but retain sign
-        eyeShiftX = CLIP(eyeShiftX, (f32)-ProceduralFace::WIDTH/4,  (f32)ProceduralFace::WIDTH/4);
-        eyeShiftY = CLIP(eyeShiftY, (f32)-ProceduralFace::HEIGHT/4, (f32)ProceduralFace::HEIGHT/4);
+        eyeShiftX = CLIP(eyeShiftX, (f32)-_robot.GetDisplayWidthInPixels()/4,  (f32)_robot.GetDisplayWidthInPixels()/4);
+        eyeShiftY = CLIP(eyeShiftY, (f32)-_robot.GetDisplayHeightInPixels()/4, (f32)_robot.GetDisplayHeightInPixels()/4);
         
         if(DEBUG_TRACKING_ACTIONS) {
           PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
@@ -593,8 +593,8 @@ ActionResult ITrackAction::CheckIfDone()
         const f32 kMaxLookUpScale   = 1.1f;
         const f32 kMinLookDownScale = 0.8f;
         const f32 kOuterEyeScaleIncrease = 0.1f;
-        const f32 kXMax = static_cast<f32>(ProceduralFace::WIDTH/4);
-        const f32 kYMax = static_cast<f32>(ProceduralFace::HEIGHT/4);
+        const f32 kXMax = static_cast<f32>(_robot.GetDisplayWidthInPixels()/4);
+        const f32 kYMax = static_cast<f32>(_robot.GetDisplayHeightInPixels()/4);
         
         // TODO: Restore eye shifts (VIC-363)
         /*

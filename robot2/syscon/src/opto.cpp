@@ -7,6 +7,7 @@
 #include "opto.h"
 #include "messages.h"
 #include "lights.h"
+#include "flash.h"
 
 //#define DISABLE_TOF
 
@@ -180,7 +181,11 @@ static void multiOp(I2C_Op func, uint8_t channel, uint8_t slave, uint8_t reg, in
   int max_retries = 15;
   do {
     // Welp, something went wrong, we should just give up
-    if (max_retries-- == 0) Power::softReset();
+    if (max_retries-- == 0) {
+      Flash::writeFaultReason(FAULT_I2C_FAILED);
+      Power::softReset();
+      Power::eject();
+    }
 
     I2C_Operation opTable[] = {
       { func, channel, slave, reg, size, data },

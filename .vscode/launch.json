@@ -66,6 +66,22 @@
                 "platform shell killall victor_animator || true",
                 "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
             ]
+        },
+        {
+            "name": "robot:debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/_build/android/Debug/bin/robot_supervisor",
+            "env": {
+                "LD_LIBRARY_PATH": "/data/data/com.anki.cozmoengine/lib"
+            },
+            "stopOnEntry": false,
+            "initCommands": [
+                "platform select remote-android",
+                "platform connect connect://localhost:55001",
+                "platform shell killall robot_supervisor || true",
+                "settings set target.exec-search-paths ${workspaceRoot}/_build/android/Debug/lib",
+            ]
         }
     ]
 }
