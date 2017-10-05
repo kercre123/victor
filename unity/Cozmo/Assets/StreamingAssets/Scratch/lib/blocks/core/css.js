@@ -1225,6 +1225,7 @@ Blockly.Css.CONTENT = [
     'width: 80px;',
     'padding: 0px 0px 0px 10px;',
     'background: #bcbdbe;',
+    '-webkit-tap-highlight-color: transparent;',
     // 'background: $colour_toolbox;',
     // 'color: $colour_toolboxText;',
     // 'font-size: .7em;',
