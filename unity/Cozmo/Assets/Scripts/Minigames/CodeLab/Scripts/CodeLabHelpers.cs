@@ -10,6 +10,8 @@ namespace CodeLab {
     public Vector2 camPos;
     public bool isValid;
     public bool isVisible;
+    public bool wasJustTapped;
+    public int framesSinceTapped = CodeLabGame.kMaxFramesSinceCubeTapped;
     public float pitch_d;
     public float roll_d;
     public float yaw_d;
@@ -62,6 +64,7 @@ namespace CodeLab {
     public float poseYaw_d;
     public float liftHeightPercentage;
     public float headAngle_d;
+    public int lastTappedCube; // 1..3 (0 for none)
     public Vector3 pos;
     public CubeStateForCodeLab cube1 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube2 = new CubeStateForCodeLab();

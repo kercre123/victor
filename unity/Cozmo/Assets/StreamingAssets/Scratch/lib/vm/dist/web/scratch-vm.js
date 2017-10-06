@@ -18953,6 +18953,8 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_face_get_position_3d: this.verticalFaceGet3d,
         cozmo_vert_face_get_expression: this.verticalFaceGetExpression,
         // Cubes
+        cozmo_vert_cube_get_last_tapped: this.verticalCubeGetLastTapped,
+        cozmo_vert_cube_get_was_tapped: this.verticalCubeGetWasTapped,
         cozmo_vert_cube_get_is_visible: this.verticalCubeGetIsVisible,
         cozmo_vert_cube_get_position_2d: this.verticalCubeGetPosition2d,
         cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d,
@@ -19004,6 +19006,8 @@ function InitCubeState(cubeNum) {
     jsonData.camPos = InitVectorState(0.0, 0.0, null);
     jsonData.isValid = false;
     jsonData.isVisible = false;
+    jsonData.wasJustTapped = false;
+    jsonData.framesSinceTapped = 999999999;
     jsonData.pitch_d = 0.0;
     jsonData.roll_d = 0.0;
     jsonData.yaw_d = 0.0;
@@ -19038,6 +19042,7 @@ function InitTestCozmoWorldState() {
     jsonData.poseYaw_d = 0.0;
     jsonData.liftHeightPercentage = 0.0;
     jsonData.headAngle_d = 0.0;
+    jsonData.lastTappedCube = 0;
     jsonData.pos = InitVectorState(0.0, 0.0, 0.0);
     jsonData.cube1 = InitCubeState(1);
     jsonData.cube2 = InitCubeState(2);
@@ -19739,6 +19744,20 @@ Scratch3CozmoBlocks.prototype.getCubeHelper = function (cubeIndex) {
         default:
             console.error("Invalid cubeIndex '" + cubeIndex + "'");
             return null;
+    }
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetLastTapped = function (args, util) {
+    return Cast.toNumber(gCozmoWorldState.lastTappedCube);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetWasTapped = function (args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    if (srcCube != null) {
+        return Cast.toBoolean(srcCube.wasJustTapped);
+    } else {
+        return false;
     }
 };
 
@@ -40334,7 +40353,7 @@ function extend() {
 /* 157 */
 /***/ (function(module, exports) {
 
-module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.8.0","eslint-config-scratch":"^4.0.0","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"0.1.0-prerelease.1505757278","scratch-render":"0.1.0-prerelease.1505763609","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.9.1"}}
+module.exports = {"name":"scratch-vm","version":"0.1.0","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"BSD-3-Clause","homepage":"https://github.com/LLK/scratch-vm#readme","repository":{"type":"git","url":"git+ssh://git@github.com/LLK/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","scripts":{"build":"./node_modules/.bin/webpack --progress --colors --bail","coverage":"./node_modules/.bin/tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","deploy":"touch playground/.nojekyll && ./node_modules/.bin/gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"","lint":"./node_modules/.bin/eslint .","prepublish":"in-publish && npm run build || not-in-publish","start":"./node_modules/.bin/webpack-dev-server","tap":"./node_modules/.bin/tap ./test/{unit,integration}/*.js","tap:unit":"./node_modules/.bin/tap ./test/unit/*.js","tap:integration":"./node_modules/.bin/tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"./node_modules/.bin/webpack --progress --colors --watch","version":"./node_modules/.bin/json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""},"devDependencies":{"adm-zip":"0.4.7","babel-core":"^6.24.1","babel-eslint":"^7.1.1","babel-loader":"^7.0.0","babel-preset-es2015":"^6.24.1","copy-webpack-plugin":"4.0.1","eslint":"^4.8.0","eslint-config-scratch":"^4.0.1","expose-loader":"0.7.3","gh-pages":"^0.12.0","got":"5.7.1","highlightjs":"^9.8.0","htmlparser2":"3.9.2","immutable":"3.8.1","in-publish":"^2.0.0","json":"^9.0.4","lodash.defaultsdeep":"4.6.0","minilog":"3.1.0","promise":"7.1.1","scratch-audio":"latest","scratch-blocks":"0.1.0-prerelease.1505757278","scratch-render":"0.1.0-prerelease.1505763609","scratch-storage":"^0.2.0","script-loader":"0.7.0","socket.io-client":"1.7.3","stats.js":"^0.17.0","tap":"^10.2.0","tiny-worker":"^2.1.1","webpack":"^2.4.1","webpack-dev-server":"^2.9.1"}}
 
 /***/ }),
 /* 158 */

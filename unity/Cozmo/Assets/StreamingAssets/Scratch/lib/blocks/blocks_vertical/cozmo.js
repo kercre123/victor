@@ -576,8 +576,14 @@ Blockly.Blocks['cozmo_event_on_see_cube'] = {
       "message0": "%{BKY_WHEN_CUBE_SEEN}",
       "args0": [
         {
-          "type": "input_value",
+          "type": "field_dropdown",
           "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3'],
+            ['%{BKY_ANY}', '4']
+          ]
         }
       ],
       "inputsInline": true,
@@ -601,8 +607,14 @@ Blockly.Blocks['cozmo_event_on_cube_tap'] = {
       "message0": "%{BKY_WHEN_CUBE_TAPPED}",
       "args0": [
         {
-          "type": "input_value",
+          "type": "field_dropdown",
           "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3'],
+            ['%{BKY_ANY}', '4']
+          ]
         }
       ],
       "inputsInline": true,
@@ -626,8 +638,14 @@ Blockly.Blocks['cozmo_event_on_cube_moved'] = {
       "message0": "%{BKY_WHEN_CUBE_MOVED}",
       "args0": [
         {
-          "type": "input_value",
+          "type": "field_dropdown",
           "name": "CUBE_SELECT",
+          "options": [
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3'],
+            ['%{BKY_ANY}', '4']
+          ]
         }
       ],
       "inputsInline": true,
@@ -916,33 +934,45 @@ Blockly.Blocks['cozmo_cube_sensor_select_menu'] = {
   }
 };
 
-Blockly.Blocks['cozmo_external_cube_sensor_select_menu'] = {
+Blockly.Blocks['cozmo_vert_cube_get_last_tapped'] = {
   /**
-   * Cube ID drop-down menu. Includes the word cube, for external use (vs small embedded version)
+   * Block to read id (1,2,3) of the most recently tapped cube
    * @this Blockly.Block
    */
   init: function() {
-    this.jsonInit(
-      {
-        "message0": "%{BKY_CUBE_X}",
-        "args0": [
-          {
-            "type": "field_dropdown",
-            "name": "CUBE_SELECT",
-            "options": [
-              ['1', '1'],
-              ['2', '2'],
-              ['3', '3']
-            ]
-          }
-        ],
-        "inputsInline": true,
-        "output": "Number",
-        "colour": Blockly.Colours.sensing.primary,
-        "colourSecondary": Blockly.Colours.sensing.secondary,
-        "colourTertiary": Blockly.Colours.sensing.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-      });
+    this.jsonInit({
+      "message0": "%{BKY_LAST_TAPPED_CUBE}",
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Boolean",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_vert_cube_get_was_tapped'] = {
+  /**
+   * Block to read if a given cube was recently tapped
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%{BKY_CUBE_WAS_TAPPED}",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "CUBE_SELECT"
+        }
+      ],
+      "category": Blockly.Categories.sensing,
+      "colour": Blockly.Colours.sensing.primary,
+      "colourSecondary": Blockly.Colours.sensing.secondary,
+      "colourTertiary": Blockly.Colours.sensing.tertiary,
+      "output": "Boolean",
+      "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+    });
   }
 };
 

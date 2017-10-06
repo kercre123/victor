@@ -200,11 +200,15 @@ namespace CodeLab {
     private const string kHorizontalIndexFilename = "index.html";
     private const string kVerticalIndexFilename = "index_vertical.html";
 
+    public const int kMaxFramesSinceCubeTapped = 999999999;
+    private const int kMaxFramesToReportCubeTap = 15; // 15 frames ~=0.5 seconds
+
     private const float kMaxAngleClamp = 3600.0f; // 10 full rotations
     private const float kMinAngularSpeedClamp = 2.5f; // 2.5 degrees per second
-    private const float kMaxAngularSpeedClamp = 360.0f; // 1 full rotation per second
+    private const float kMaxAngularSpeedClamp = 1800.0f; // 5 full rotations per second - Cozmo's lift can supposedly do up to 1700
     private const float kMaxDistanceClamp = 100000.0f; // 100 meters
-    private const float kMaxSpeedClamp = 1000.0f; // 1 m/s
+    private const float kMinSpeedClamp = 3.0f; // 3 m/s is extremely slow
+    private const float kMaxSpeedClamp = 1000.0f; // 1 m/s (Cozmo's real max is ~220m/s)
 
     private float ClampAngleInput(float inputAngle) {
       return Mathf.Clamp(inputAngle, -kMaxAngleClamp, kMaxAngleClamp);
@@ -228,6 +232,10 @@ namespace CodeLab {
 
     private float ClampSpeedInput(float inputSpeed) {
       return Mathf.Clamp(inputSpeed, -kMaxSpeedClamp, kMaxSpeedClamp);
+    }
+
+    private float ClampPositiveSpeedInput(float inputSpeed) {
+      return Mathf.Clamp(inputSpeed, kMinSpeedClamp, kMaxSpeedClamp);
     }
 
     private float ClampPercentageInput(float inputValue, float maxValue = 100.0f) {
@@ -445,6 +453,18 @@ namespace CodeLab {
 
     private CozmoStateForCodeLab _LatestCozmoState = new CozmoStateForCodeLab(); // The latest world state sent to JS
 
+    private void ResetLatestCozmoState() {
+      // Only reset data that persists or affects multiple frames (most data is set directly each frame before sending)
+      _LatestCozmoState.cube1.framesSinceTapped = kMaxFramesSinceCubeTapped;
+      _LatestCozmoState.cube2.framesSinceTapped = kMaxFramesSinceCubeTapped;
+      _LatestCozmoState.cube2.framesSinceTapped = kMaxFramesSinceCubeTapped;
+    }
+
+    private void ResetCozmoOnNewWorkspace() {
+      ResetLatestCozmoState();
+      _CozmoFaceDisplay.ClearScreen();
+    }
+
     private float ConvertEngineYawToCodeLabYaw(float inYaw) {
       // We invert yaw so that that it increases with clockwise rotation of Cozmo
       // (this matches how we invert turn angles so they're clockwise).
@@ -471,6 +491,8 @@ namespace CodeLab {
         cubeDest.roll_d = cubeSrc.RollDegrees;
         cubeDest.yaw_d = ConvertEngineYawToCodeLabYaw(cubeSrc.YawDegrees);
       }
+
+      cubeDest.wasJustTapped = (cubeDest.framesSinceTapped < kMaxFramesToReportCubeTap);
     }
 
     public void EvaluateJS(string text) {
@@ -500,6 +522,14 @@ namespace CodeLab {
       }
     }
 
+    private int CheckLatestCubeTapped(CubeStateForCodeLab cubeState, int cubeId, int mostRecentTap) {
+      if (cubeState.framesSinceTapped < mostRecentTap) {
+        _LatestCozmoState.lastTappedCube = cubeId;
+        mostRecentTap = cubeState.framesSinceTapped;
+      }
+      return mostRecentTap;
+    }
+
     private void SendWorldStateToWebView() {
       // Send entire current world state over to JS in Web View
 
@@ -524,6 +554,12 @@ namespace CodeLab {
         SetCubeStateForCodeLab(_LatestCozmoState.cube1, cube1);
         SetCubeStateForCodeLab(_LatestCozmoState.cube2, cube2);
         SetCubeStateForCodeLab(_LatestCozmoState.cube3, cube3);
+
+        _LatestCozmoState.lastTappedCube = 0;
+        int mostRecentTap = kMaxFramesSinceCubeTapped;
+        mostRecentTap = CheckLatestCubeTapped(_LatestCozmoState.cube1, 1, mostRecentTap);
+        mostRecentTap = CheckLatestCubeTapped(_LatestCozmoState.cube2, 2, mostRecentTap);
+        mostRecentTap = CheckLatestCubeTapped(_LatestCozmoState.cube3, 3, mostRecentTap);
 
         // Set Face data
 
@@ -580,10 +616,23 @@ namespace CodeLab {
       return expressionName;
     }
 
+    static int ClampedIncrement(int intValue, int maxValue) {
+      // Increment up to a maximum, avoiding overflow
+      return (intValue < maxValue) ? (intValue + 1) : maxValue;
+    }
+
+    static void ClampedPostIncrement(ref int inOutValue, int maxValue) {
+      inOutValue = ClampedIncrement(inOutValue, maxValue);
+    }
+
     protected override void Update() {
       base.Update();
 
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical && IsDisplayingWorkspacePage()) {
+        ClampedPostIncrement(ref _LatestCozmoState.cube1.framesSinceTapped, kMaxFramesSinceCubeTapped);
+        ClampedPostIncrement(ref _LatestCozmoState.cube2.framesSinceTapped, kMaxFramesSinceCubeTapped);
+        ClampedPostIncrement(ref _LatestCozmoState.cube3.framesSinceTapped, kMaxFramesSinceCubeTapped);
+
         SendWorldStateToWebView();
         // NOTE:" UpdateBlocks is currently only required on Vertical workspaces, and is purely to allow custom blocks
         // like "WaitForActions(ActionType)" to work, as they need to be polled each update.
@@ -1324,7 +1373,7 @@ namespace CodeLab {
     private bool HandleDrawOnFaceRequest(ScratchRequest scratchRequest) {
       switch (scratchRequest.command) {
       case "cozVertCozmoFaceClear":
-        _CozmoFaceDisplay.ClearScreen(0);
+        _CozmoFaceDisplay.ClearScreen();
         return true;
       case "cozVertCozmoFaceDisplay":
         _CozmoFaceDisplay.Display();
@@ -1418,7 +1467,7 @@ namespace CodeLab {
         float sinAngle = Mathf.Sin(currentAngle);
         float newX = robot.WorldPosition.x + cosAngle * offsetX - sinAngle * offsetY;
         float newY = robot.WorldPosition.y + sinAngle * offsetX + cosAngle * offsetY;
-        float newAngle = robot.PoseAngle + offsetAngle;
+        float newAngle = robot.PoseAngle - offsetAngle; // Subtract offset as Angle / Yaw is inverted for CodeLab (so that positive angle turns right)
         bool level = false;
         bool useManualSpeed = false;
         // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
@@ -1430,7 +1479,7 @@ namespace CodeLab {
       else if (scratchRequest.command == "cozVertPathTo") {
         float newX = ClampDistanceInput(scratchRequest.argFloat);
         float newY = ClampDistanceInput(scratchRequest.argFloat2);
-        float newAngle = ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad;
+        float newAngle = -ClampAngleInput(scratchRequest.argFloat3) * Mathf.Deg2Rad; // Angle / Yaw is inverted for CodeLab (so that positive angle turns right)
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(newX.ToString() + " , " + newY.ToString() + " , " + newAngle.ToString()));
         bool level = false;
         bool useManualSpeed = false;
@@ -1514,7 +1563,7 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozVertDrive") {
         float dist_mm = ClampDistanceInput(scratchRequest.argFloat);
-        float speed = ClampSpeedInput(scratchRequest.argFloat2);
+        float speed = ClampPositiveSpeedInput(scratchRequest.argFloat2);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
         // Cancel any current driving actions, and any wheel motor usage, so that this new action can run
         InProgressScratchBlockPool.CancelActionsOfType(ActionType.Drive);
@@ -2148,11 +2197,12 @@ namespace CodeLab {
       case 3:
         return ObjectType.Block_LIGHTCUBE3;
       default:
-        DAS.Error("CodeLab.BadCubeIndex", "cubeIndex: " + cubeIndex.ToString());
+        // This is now quite likely as users can set the index
+        DAS.Info("CodeLab.BadCubeIndex", "cubeIndex: " + cubeIndex.ToString());
         return ObjectType.UnknownObject;
       }
     }
-    private ObjectType GetLightCubeIndexFromId(int cubeId) {
+    private ObjectType GetLightCubeIndexFromId(int cubeId, bool warnIfCharger = true) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       var cube1 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE1);
       var cube2 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE2);
@@ -2167,7 +2217,16 @@ namespace CodeLab {
         return ObjectType.Block_LIGHTCUBE3;
       }
       else {
-        DAS.Error("CodeLab.BadCubeId", "cubeId " + cubeId.ToString());
+        var charger = robot.GetLightCubeWithObjectType(ObjectType.Charger_Basic);
+        if (charger != null && cubeId == charger.ID) {
+          if (warnIfCharger) {
+            DAS.Error("CodeLab.ChargerCubeId", "cubeId " + cubeId.ToString());
+          }
+        }
+        else {
+          DAS.Error("CodeLab.BadCubeId", "cubeId " + cubeId.ToString());
+        }
+
         return ObjectType.UnknownObject;
       }
     }
@@ -2333,6 +2392,8 @@ namespace CodeLab {
         // Lobby music: plays for tutorial and save/load UI
         GameAudioClient.SetMusicRoundState((int)MusicRoundStates.LobbyMusicRound);
       }
+
+      ResetCozmoOnNewWorkspace();
     }
 
     private void OnExitWorkspace() {
@@ -2582,13 +2643,37 @@ namespace CodeLab {
     private const int kAnyCubeId = 4;
 
     public void RobotObservedObjectVerticalHatBlock(RobotObservedObject message) {
-      int lightCubeIndex = ((int)GetLightCubeIndexFromId(message.objectID));
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
-      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
+      ObjectType objectType = GetLightCubeIndexFromId(message.objectID, false);
+      if (objectType != ObjectType.UnknownObject) {
+        int lightCubeIndex = (int)objectType;
+        EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
+        EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
+      }
     }
 
     public void CubeTappedVerticalHatBlock(int id, int tappedTimes, float timeStamp) {
-      int lightCubeIndex = ((int)GetLightCubeIndexFromId(id));
+      ObjectType objectType = GetLightCubeIndexFromId(id, false);
+
+      switch (objectType) {
+      case ObjectType.Block_LIGHTCUBE1:
+        _LatestCozmoState.cube1.framesSinceTapped = 0;
+        break;
+      case ObjectType.Block_LIGHTCUBE2:
+        _LatestCozmoState.cube2.framesSinceTapped = 0;
+        break;
+      case ObjectType.Block_LIGHTCUBE3:
+        _LatestCozmoState.cube3.framesSinceTapped = 0;
+        break;
+      default:
+        DAS.Error("CodeLab.CubeTapped.BadCubeId", "cubeId " + id.ToString());
+        return;
+      }
+
+      // Must send latest state so that the new tap information is reflected before anything attempts to read it
+      // in response to the tap event.
+      SendWorldStateToWebView();
+
+      int lightCubeIndex = (int)objectType;
       EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + lightCubeIndex + "\"});");
       EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', {CUBE_SELECT: \"" + kAnyCubeId + "\"});");
     }

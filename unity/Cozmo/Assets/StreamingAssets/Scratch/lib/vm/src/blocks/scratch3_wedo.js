@@ -106,6 +106,8 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_vert_face_get_position_3d: this.verticalFaceGet3d,
         cozmo_vert_face_get_expression: this.verticalFaceGetExpression,
         // Cubes
+        cozmo_vert_cube_get_last_tapped: this.verticalCubeGetLastTapped,
+        cozmo_vert_cube_get_was_tapped: this.verticalCubeGetWasTapped,
         cozmo_vert_cube_get_is_visible: this.verticalCubeGetIsVisible,
         cozmo_vert_cube_get_position_2d: this.verticalCubeGetPosition2d,
         cozmo_vert_cube_get_position_3d: this.verticalCubeGetPosition3d,
@@ -157,6 +159,8 @@ function InitCubeState(cubeNum) {
     jsonData.camPos = InitVectorState(0.0, 0.0, null);
     jsonData.isValid = false;
     jsonData.isVisible = false;
+    jsonData.wasJustTapped = false;
+    jsonData.framesSinceTapped = 999999999;
     jsonData.pitch_d = 0.0;
     jsonData.roll_d = 0.0;
     jsonData.yaw_d = 0.0;
@@ -191,6 +195,7 @@ function InitTestCozmoWorldState() {
     jsonData.poseYaw_d = 0.0;
     jsonData.liftHeightPercentage = 0.0;
     jsonData.headAngle_d = 0.0;
+    jsonData.lastTappedCube = 0;
     jsonData.pos = InitVectorState(0.0, 0.0, 0.0);
     jsonData.cube1 = InitCubeState(1);
     jsonData.cube2 = InitCubeState(2);
@@ -921,6 +926,21 @@ Scratch3CozmoBlocks.prototype.getCubeHelper = function(cubeIndex) {
             return null;
     }
 }
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetLastTapped = function(args, util) {
+    return Cast.toNumber(gCozmoWorldState.lastTappedCube);
+};
+
+Scratch3CozmoBlocks.prototype.verticalCubeGetWasTapped = function(args, util) {
+    var cubeIndex = Cast.toNumber(args.CUBE_SELECT);
+    var srcCube = this.getCubeHelper(cubeIndex);
+    if (srcCube != null) {
+        return Cast.toBoolean(srcCube.wasJustTapped);
+    }
+    else {
+        return false;
+    }
+};
 
 Scratch3CozmoBlocks.prototype.verticalCubeGetIsVisible = function(args, util) {
     var cubeIndex = Cast.toNumber(args.CUBE_SELECT);

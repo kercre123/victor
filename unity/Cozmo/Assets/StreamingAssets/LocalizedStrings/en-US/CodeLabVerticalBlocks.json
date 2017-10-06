@@ -99,8 +99,11 @@
   "codeLabVertical.FACE_EXPRESSION": {
     "translation": "face expression"
   },
-  "codeLabVertical.CUBE_X": {
-    "translation": "Cube %1"
+  "codeLabVertical.LAST_TAPPED_CUBE": {
+    "translation": "last tapped Cube"
+  },
+  "codeLabVertical.CUBE_WAS_TAPPED": {
+    "translation": "was Cube %1 tapped"
   },
   "codeLabVertical.CUBE_IS_VISIBLE": {
     "translation": "is Cube %1 visible"

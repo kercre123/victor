@@ -23,7 +23,7 @@ namespace CodeLab {
     private const float kDefaultFontSpaceWidth = 20.0f;
     private float _FontSpaceWidth = kDefaultFontSpaceWidth;
 
-    public void ClearScreen(byte clearCol) {
+    public void ClearScreen(byte clearCol = 0) {
       int i = 0;
       for (int y = 0; y < kFaceTextureHeight; ++y) {
         for (int x = 0; x < kFaceTextureWidth; ++x) {
