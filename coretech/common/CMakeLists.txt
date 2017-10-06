@@ -2,7 +2,20 @@
 
 project(cti_common)
 
+if (NOT DEFINED CORETECH)
+  set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
+endif()
+
+if (NOT DEFINED UTIL)
+  set(UTIL ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/util)
+endif()
+
+if (NOT DEFINED GTEST)
+  set(GTEST ${UTIL}/libs/framework/gtest.framework)
+endif()
+
 include(anki_build_cxx_library)
+
 anki_build_cxx_library(cti_common ${ANKI_SRCLIST_DIR} STATIC)
 
 target_compile_definitions(cti_common
@@ -38,14 +51,15 @@ target_link_libraries(cti_common
   ${CTI_GENERATED_LIBS}
   util
   jsoncpp
-  PRIVATE
   opencv_interface
-  #  ${OPENCV_LIBS}
+  ${OPENCV_LIBS}
+  PRIVATE
   z
 )
 
 #
 # cti_common_robot
+#
 
 anki_build_cxx_library(cti_common_robot ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -73,8 +87,63 @@ target_include_directories(cti_common_robot
 )
 
 
+if (MACOSX)
 
-if (UNIT_TEST)
-  add_subdirectory(basestation/test)
+  #
+  # cti_common_shared_test
+  #
+
+  anki_build_cxx_executable(cti_common_shared_test ${ANKI_SRCLIST_DIR})
+
+  target_compile_options(cti_common_shared_test
+    PRIVATE
+    -Wno-undef
+  )
+
+  target_compile_definitions(cti_common_shared_test
+    PRIVATE
+    TEST_DATA_PATH=${CORETECH}
+  )
+
+  target_link_libraries(cti_common_shared_test
+    PRIVATE
+    cti_common
+    util
+    ${OPENCV_LIBS}
+    ${GTEST}
+  )
+
+  #
+  # cti_common_basestation_test
+  #
+
+  anki_build_cxx_executable(cti_common_basestation_test ${ANKI_SRCLIST_DIR})
+
+  target_compile_options(cti_common_basestation_test
+    PRIVATE
+    -Wno-undef
+  )
+
+  target_compile_definitions(cti_common_basestation_test
+    PRIVATE
+    TEST_DATA_PATH=${CORETECH}
+  )
+
+  target_link_libraries(cti_common_basestation_test
+    PRIVATE
+    cti_common
+    util
+    ${OPENCV_LIBS}
+    ${GTEST}
+  )
+
+  #
+  # test harness
+  #
+  enable_testing()
+
+  add_test(NAME cti_common_shared_test COMMAND cti_common_shared_test)
+  add_test(NAME cti_common_basestation_test COMMAND cti_common_basestation_test)
+
 endif()
 

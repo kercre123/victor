@@ -44,6 +44,7 @@ PUBLIC
   clad
   util
   cti_common
+  cti_messaging
   robot_interface
   audio_engine
   audio_multiplexer_engine
@@ -57,7 +58,6 @@ PRIVATE
   cti_common
   cti_vision
   cti_planning
-  cti_messaging
 # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
@@ -88,7 +88,8 @@ target_compile_definitions(cozmo_engine
   "${PLATFORM_COMPILE_DEFS}"
 )
 
-target_include_directories(cozmo_engine PUBLIC
+target_include_directories(cozmo_engine 
+  PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # allows reference to engine/
   #PRIVATE

@@ -2364,18 +2364,21 @@ namespace Cozmo {
       // Create ImageRGB object from image buffer
       Vision::ImageRGB imgRGB(numRows, numCols, buffer);
       
-      if(_imageSaveMode == ImageSendMode::SingleShot)
+      if (_imageSaveMode != ImageSendMode::Off)
       {
         const std::string path = "/data/misc/camera/test/" + std::to_string(imageId) + ".png";
-        PRINT_CH_INFO("VisionComponent",
-                      "VisionComponent.CaptureAndSendImage.SavingImage",
-                      "Saving image to %s",
-                      path.c_str());
-        
+        PRINT_CH_DEBUG("VisionComponent",
+                       "VisionComponent.CaptureAndSendImage.SavingImage",
+                       "Saving %s to %s",
+                       (_imageSaveMode == ImageSendMode::SingleShot ? "single image" : "image stream"),
+                       path.c_str());
         imgRGB.Save(path);
-        _imageSaveMode = ImageSendMode::Off;
+        if (_imageSaveMode == ImageSendMode::SingleShot)
+        {
+          _imageSaveMode = ImageSendMode::Off;
+        }
       }
-      
+
       if(kDisplayUndistortedImages)
       {
         Vision::ImageRGB imgUndistorted(numRows,numCols);
@@ -2498,12 +2501,14 @@ namespace Cozmo {
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
-    if(payload.mode == ImageSendMode::SingleShot)
-    {
-      _imageSaveMode = payload.mode;
-    }
+
+    _imageSaveMode = payload.mode;
+    PRINT_CH_DEBUG("VisionComponent", "VisionComponent.HandleMessage.SaveImages",
+                   "Setting image save mode to %s",
+                   EnumToString(payload.mode));
+
   }
-  
+
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
   {

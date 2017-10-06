@@ -2,6 +2,19 @@
 
 project(cti_vision)
 
+
+if (NOT DEFINED CORETECH)
+  set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
+endif()
+
+if (NOT DEFINED UTIL)
+  set(UTIL ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/util)
+endif()
+
+if (NOT DEFINED GTEST)
+  set(GTEST ${UTIL}/libs/framework/gtest.framework)
+endif()
+
 set(CORETECH_VISION_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/anki/vision)
 
 include(okao)
@@ -47,10 +60,6 @@ target_compile_definitions(cti_vision
   FACE_TRACKER_PROVIDER=3
 )
 
-if(UNIT_TEST)
-  add_subdirectory(basestation/test)
-endif()
-
 if(MATLAB)
   add_subdirectory(robot/mex)
 
@@ -63,3 +72,20 @@ if(MATLAB)
     add_subdirectory(tools/decisionTree)
   endif()
 endif()
+
+if (MACOSX)
+
+  anki_build_cxx_executable(cti_vision_basestation_test ${ANKI_SRCLIST_DIR})
+
+  target_link_libraries(cti_vision_basestation_test
+    PRIVATE
+    cti_vision
+    ${GTEST}
+  )
+
+  enable_testing()
+
+  add_test(NAME cti_vision_basestation_test COMMAND cti_vision_basestation_test)
+
+endif()
+
