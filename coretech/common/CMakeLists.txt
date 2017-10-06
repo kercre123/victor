@@ -51,9 +51,9 @@ target_link_libraries(cti_common
   ${CTI_GENERATED_LIBS}
   util
   jsoncpp
-  PRIVATE
   opencv_interface
-  #  ${OPENCV_LIBS}
+  ${OPENCV_LIBS}
+  PRIVATE
   z
 )
 

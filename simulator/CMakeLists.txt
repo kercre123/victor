@@ -55,13 +55,7 @@ target_compile_definitions(cozmo_physics
 
 target_link_libraries(cozmo_physics
   PRIVATE
-  # anki libs
-  util
   cozmo_engine
-  cti_common
-  cti_vision
-  cti_messaging
-  # platform
   ${PLATFORM_LIBS}
 )
 
