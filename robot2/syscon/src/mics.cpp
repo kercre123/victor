@@ -5,12 +5,13 @@
 #include "timer.h"
 
 #include "mics.h"
-#include "decimator.h"
+#include "mic_tables.h"
 
 extern "C" void start_mic_spi(int16_t a, int16_t b, void* tim);
 
 static const int WORDS_PER_SAMPLE = (AUDIO_DECIMATION * 2) / 8;
-static const int SAMPLES_PER_IRQ = 20; // MUST BE A MULTIPLE OF 4
+static const int SAMPLES_PER_IRQ = 20;
+static const int SAMPLE_LOOPS = SAMPLES_PER_IRQ / 4;
 static const int IRQS_PER_FRAME = AUDIO_SAMPLES_PER_FRAME / SAMPLES_PER_IRQ;
 
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
@@ -101,19 +102,72 @@ void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
 
+#define SETUP_ACC(a,b,c,d) \
+  coff_set = DECIMATION_TABLE[0][*source]; \
+    source = &source[4]; \
+  acc##d  = coff_set[0]; \
+  acc##c += coff_set[1]; \
+  acc##b += coff_set[2]; \
+  acc##a += coff_set[3]
+
+#define ACCUMULATE(a,b,c,d,block) \
+  coff_set = DECIMATION_TABLE[block][*source]; \
+    source = &source[4]; \
+  acc##d += coff_set[0]; \
+  acc##c += coff_set[1]; \
+  acc##b += coff_set[2]; \
+  acc##a += coff_set[3]
+
+#define STAGE(a,b,c,d) \
+     SETUP_ACC(a,b,c,d);   \
+    ACCUMULATE(a,b,c,d,1); \
+    ACCUMULATE(a,b,c,d,2); \
+    ACCUMULATE(a,b,c,d,3); \
+    ACCUMULATE(a,b,c,d,4); \
+    ACCUMULATE(a,b,c,d,5); \
+    ACCUMULATE(a,b,c,d,6); \
+    ACCUMULATE(a,b,c,d,7); \
+    *result = acc##a >> 16; \
+    result = &result[4]
+
 static void decimate(const uint8_t* input_a, const uint8_t* input_b, int16_t* output) {
-  static int32_t accumulator[4][4];
+  // Deinterlace the input streams
+  uint8_t deinter[4][32 * SAMPLE_LOOPS];
+  uint16_t* target = (uint16_t*)&deinter;
+    uint8_t* reverse = (uint8_t*)target;
 
-  const int32_t* coff_set;
-  uint16_t word;
-  uint8_t byte;
+  // Eight LUTs per channel, 4 channels
+  for (int i = 0; i < 8 * 4 * SAMPLE_LOOPS; i++) {
+    uint16_t word;
 
-  // Process 4x4 samples (rotating through the accumulators for speed)
-  for (int i = 0; i < SAMPLES_PER_IRQ / 4; i++) {
-    PASS(3);
-    PASS(2);
-    PASS(1);
-    PASS(0);
+        word        = DEINTERLACE_TABLE[0][*(input_a++)];
+        *(target++) = word | DEINTERLACE_TABLE[1][*(input_a++)];
+        word        = DEINTERLACE_TABLE[0][*(input_b++)];
+        *(target++) = word | DEINTERLACE_TABLE[1][*(input_b++)];
+  }
+
+  // Run accumulators on the program
+    static int32_t accumulator[3][4];
+    int32_t acc0, acc1, acc2, acc3;
+
+    const int32_t* coff_set;
+
+  for (int channel = 0; channel < 4; channel++) {
+        const uint8_t* source = &deinter[0][channel];
+        int16_t* result = &output[channel];
+
+        acc2 = accumulator[2][channel];
+        acc1 = accumulator[1][channel];
+        acc0 = accumulator[0][channel];
+        for (int i = 0; i < SAMPLE_LOOPS; i++) {
+            STAGE(0,1,2,3);
+            STAGE(1,2,3,0);
+            STAGE(2,3,0,1);
+            STAGE(3,0,1,2);
+        }
+        accumulator[2][channel] = acc2;
+        accumulator[1][channel] = acc1;
+        accumulator[0][channel] = acc0;
   }
 }
 
