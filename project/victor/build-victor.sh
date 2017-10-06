@@ -234,6 +234,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -G${CMAKE_GENERATOR} \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=1 \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
         "${PLATFORM_ARGS[@]}"
         
 fi
