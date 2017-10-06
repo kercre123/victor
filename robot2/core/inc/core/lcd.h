@@ -10,9 +10,9 @@ typedef struct LcdFrame_t {
 
 enum LcdColor {
   lcd_BLACK = 0x0000,
-  lcd_BLUE  = 0x001F,
-  lcd_GREEN = 0x07E0,
-  lcd_RED   = 0xF800,
+  lcd_GREEN   = 0x001F,
+  lcd_RED     = 0x07E0,
+  lcd_BLUE    = 0xF800,
   lcd_WHITE = 0xFFFF,
 };
 
