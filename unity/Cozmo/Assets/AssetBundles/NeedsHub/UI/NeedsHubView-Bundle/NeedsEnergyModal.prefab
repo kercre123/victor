@@ -7858,8 +7858,8 @@ MonoBehaviour:
   _CubeHelpButton: {fileID: 114856745758513194}
   _CubeHelpGroup: {fileID: 1173673252814966}
   _AlreadyFullTriggerHiccupOdds: 0.2
-  _ShakeProgressBarFill: {fileID: 0}
-  _ShakeProgressBarBG: {fileID: 0}
+  _ShakeProgressBarFill: {fileID: 114149872540132948}
+  _ShakeProgressBarBG: {fileID: 114499229319958302}
 --- !u!114 &114799865976658986
 MonoBehaviour:
   m_ObjectHideFlags: 1
