@@ -21,7 +21,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 
@@ -49,7 +49,7 @@ Delegator::Delegator(Robot& robot,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Delegator::Delegate(IBSRunnable* delegatingRunnable,
+bool Delegator::Delegate(IBehavior* delegatingRunnable,
                          IActionRunner* action,
                          BehaviorRobotCompletedActionCallback callback)
 {
@@ -65,7 +65,7 @@ bool Delegator::Delegate(IBSRunnable* delegatingRunnable,
   
   Result result = _robot.GetActionList().QueueAction(QueueActionPosition::NOW, action);
   if (RESULT_OK != result) {
-    PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotQueued",
+    PRINT_NAMED_WARNING("ICozmoBehavior.StartActing.Failure.NotQueued",
                         "Behavior '%s' can't queue action '%s' (error %d)",
                         delegatingRunnable->GetPrintableID().c_str(),
                         action->GetName().c_str(), result);
@@ -81,7 +81,7 @@ bool Delegator::Delegate(IBSRunnable* delegatingRunnable,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Delegator::Delegate(IBSRunnable* delegatingRunnable, IBSRunnable* delegated)
+bool Delegator::Delegate(IBehavior* delegatingRunnable, IBehavior* delegated)
 {
   if(USE_BSM){
     return _bsm->Delegate(delegatingRunnable, delegated);
@@ -91,7 +91,7 @@ bool Delegator::Delegate(IBSRunnable* delegatingRunnable, IBSRunnable* delegated
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Delegator::Delegate(IBSRunnable* delegatingRunnable,
+bool Delegator::Delegate(IBehavior* delegatingRunnable,
                                BehaviorExternalInterface& behaviorExternalInterface,
                                HelperHandle helper,
                                BehaviorSimpleCallbackWithExternalInterface successCallback,
@@ -142,7 +142,7 @@ DelegationComponent::DelegationComponent(Robot& robot,
                                 EngineToGameTag::RobotCompletedAction,
                                 [this](const EngineToGameEvent& event) {
                                   DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
-                                             "IBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
+                                             "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
                                   HandleActionComplete(event.GetData().Get_RobotCompletedAction());
                                 } ));
     }
@@ -187,7 +187,7 @@ void DelegationComponent::Update()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::IsControlDelegated(const IBSRunnable* delegatingRunnable)
+bool DelegationComponent::IsControlDelegated(const IBehavior* delegatingRunnable)
 {
   if( delegatingRunnable == nullptr ) {
     return false;
@@ -209,7 +209,7 @@ bool DelegationComponent::IsControlDelegated(const IBSRunnable* delegatingRunnab
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool DelegationComponent::IsActing(const IBSRunnable* delegatingRunnable)
+bool DelegationComponent::IsActing(const IBehavior* delegatingRunnable)
 {
   if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
     return _delegator->_lastActionTag != ActionConstants::INVALID_TAG;
@@ -219,7 +219,7 @@ bool DelegationComponent::IsActing(const IBSRunnable* delegatingRunnable)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::CancelDelegates(IBSRunnable* delegatingRunnable)
+void DelegationComponent::CancelDelegates(IBehavior* delegatingRunnable)
 {
   if(_delegator->_runnableThatDelegatedAction != nullptr &&
      _delegator->_runnableThatDelegatedAction == delegatingRunnable ){
@@ -254,7 +254,7 @@ void DelegationComponent::CancelDelegates(IBSRunnable* delegatingRunnable)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::CancelSelf(IBSRunnable* delegatingRunnable)
+void DelegationComponent::CancelSelf(IBehavior* delegatingRunnable)
 {
   if(USE_BSM){
     _bsm->CancelSelf(delegatingRunnable);
@@ -263,7 +263,7 @@ void DelegationComponent::CancelSelf(IBSRunnable* delegatingRunnable)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::weak_ptr<Delegator> DelegationComponent::GetDelegator(IBSRunnable* delegatingRunnable)
+std::weak_ptr<Delegator> DelegationComponent::GetDelegator(IBehavior* delegatingRunnable)
 {
   if(USE_BSM){
     if(_bsm->CanDelegate(delegatingRunnable)){

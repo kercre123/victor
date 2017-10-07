@@ -75,7 +75,7 @@ static const Radians tiltRads(MIN_HEAD_ANGLE);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(const Json::Value& config)
-  : IBehavior(config)
+  : ICozmoBehavior(config)
   , _cumulativeTurn_rad(0)
   , _observedX(0)
   , _observedY(0)
@@ -127,7 +127,7 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(BehaviorExternalInterface& b
       multiplier = _boredomMultiplier;
     }
   }
-  return IBehavior::EvaluateScoreInternal(behaviorExternalInterface) * multiplier;
+  return ICozmoBehavior::EvaluateScoreInternal(behaviorExternalInterface) * multiplier;
 }
 
 

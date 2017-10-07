@@ -24,7 +24,7 @@ namespace Cozmo {
 
 class DriveToHelper : public IHelper{
 public:
-  DriveToHelper(BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior,
+  DriveToHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
                 BehaviorHelperFactory& helperFactory,
                 const ObjectID& targetID,
                 const DriveToParameters& params = {});

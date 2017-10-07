@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_Sparkable_BehaviorCubeLiftWorkout_H__
 #define __Cozmo_Basestation_Behaviors_Sparkable_BehaviorCubeLiftWorkout_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "anki/common/basestation/objectIDs.h"
 #include "clad/types/animationTrigger.h"
@@ -22,10 +22,10 @@
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorCubeLiftWorkout : public IBehavior
+class BehaviorCubeLiftWorkout : public ICozmoBehavior
 {
 protected:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;

@@ -71,7 +71,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersWorkoutAr
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 
@@ -149,7 +149,7 @@ void BehaviorCubeLiftWorkout::OnBehaviorDeactivated(BehaviorExternalInterface& b
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

@@ -27,7 +27,7 @@ using namespace ExternalInterface;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEarnedSparks::BehaviorEarnedSparks(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

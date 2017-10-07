@@ -88,7 +88,7 @@ const float kMovementScoreDecay = 0.5f;    // movement score decay
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorGuardDog::BehaviorGuardDog(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _connectedCubesOnlyFilter(std::make_unique<BlockWorldFilter>())
 {
   

@@ -34,7 +34,7 @@ class BehaviorDriveToFace;
 class BehaviorExternalInterface;
 class BehaviorPlayArbitraryAnim;
 class CozmoContext;
-class IBehavior;
+class ICozmoBehavior;
 class MoodManager;
 class Robot;
 
@@ -43,7 +43,7 @@ template <typename Type> class AnkiEvent;
 class ActivityVoiceCommand : public IActivity
 {
 public:
-  using ChooseNextBehaviorFunc = std::function<IBehaviorPtr(const IBehaviorPtr)>;
+  using ChooseNextBehaviorFunc = std::function<ICozmoBehaviorPtr(const ICozmoBehaviorPtr)>;
   using ChooseNextBehaviorQueue = std::queue<ChooseNextBehaviorFunc>;
 
   ActivityVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
@@ -55,7 +55,7 @@ public:
   void HandleMessage(const T& msg);
   
 protected:  
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
   
 
   
@@ -81,11 +81,11 @@ private:
     void ClearResponseQueue();
     
     // Return the behavior to run based on the response queue
-    IBehaviorPtr GetDesiredActiveBehavior(const IBehaviorPtr currentBehavior);
+    ICozmoBehaviorPtr GetDesiredActiveBehavior(const ICozmoBehaviorPtr currentBehavior);
     
   private:
     ChooseNextBehaviorQueue        _respondToVCQueue;
-    IBehaviorPtr                   _currentResponseBehavior;
+    ICozmoBehaviorPtr                   _currentResponseBehavior;
     VoiceCommand::VoiceCommandType _currentResponseType = VoiceCommand::VoiceCommandType::Invalid;
     const CozmoContext*            _context;
     // Returns true if ResponseData has not previously returned a behavior to run
@@ -102,17 +102,17 @@ private:
   std::unique_ptr<VCResponseData> _vcResponseData;
   
   // Behaviors VC activity runs directly
-  IBehaviorPtr                         _danceBehavior;
+  ICozmoBehaviorPtr                         _danceBehavior;
   std::shared_ptr<BehaviorDriveToFace> _driveToFaceBehavior;
-  IBehaviorPtr                         _searchForFaceBehavior;
-  IBehaviorPtr                         _fistBumpBehavior;
-  IBehaviorPtr                         _peekABooBehavior;
-  IBehaviorPtr                         _laserBehavior;
-  IBehaviorPtr                         _goToSleepBehavior;
-  IBehaviorPtr                         _pounceBehavior;
-  IBehaviorPtr                         _alrightyBehavior;
+  ICozmoBehaviorPtr                         _searchForFaceBehavior;
+  ICozmoBehaviorPtr                         _fistBumpBehavior;
+  ICozmoBehaviorPtr                         _peekABooBehavior;
+  ICozmoBehaviorPtr                         _laserBehavior;
+  ICozmoBehaviorPtr                         _goToSleepBehavior;
+  ICozmoBehaviorPtr                         _pounceBehavior;
+  ICozmoBehaviorPtr                         _alrightyBehavior;
   
-  std::map<UnlockId, IBehaviorPtr> _letsPlayMap;
+  std::map<UnlockId, ICozmoBehaviorPtr> _letsPlayMap;
   
   std::shared_ptr<BehaviorPlayArbitraryAnim> _playAnimBehavior;
   std::vector<Signal::SmartHandle> _signalHandles;

@@ -63,7 +63,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRobotShak
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 
@@ -100,7 +100,7 @@ Result BehaviorReactToRobotShaken::OnBehaviorActivated(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorReactToRobotShaken::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
 
   // Master state machine:

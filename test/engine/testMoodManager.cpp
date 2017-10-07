@@ -19,10 +19,10 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/scoringBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/emotionAffector.h"
 #include "engine/moodSystem/emotionEvent.h"
@@ -467,12 +467,12 @@ TEST(MoodManager, BehaviorScoring)
                                                                                        testRobot.GetFaceWorld());
   
   // have to alloc the behaviors - they're freed by the chooser
-  IBehaviorPtr testBehaviorReqHappy = behaviorContainer.CreateBehavior(testBehavior1Json);
+  ICozmoBehaviorPtr testBehaviorReqHappy = behaviorContainer.CreateBehavior(testBehavior1Json);
   testBehaviorReqHappy->ReadFromScoredJson(testBehavior1Json);
   testBehaviorReqHappy->Init(*behaviorExternalInterface);
   testBehaviorReqHappy->OnEnteredActivatableScope();
 
-  IBehaviorPtr testBehaviorReqCalm  = behaviorContainer.CreateBehavior(testBehavior2Json);
+  ICozmoBehaviorPtr testBehaviorReqCalm  = behaviorContainer.CreateBehavior(testBehavior2Json);
   testBehaviorReqCalm->ReadFromScoredJson(testBehavior2Json);
   testBehaviorReqCalm->Init(*behaviorExternalInterface);
   testBehaviorReqCalm->OnEnteredActivatableScope();
@@ -482,7 +482,7 @@ TEST(MoodManager, BehaviorScoring)
   
   Json::Value chooserConfig;
   chooserConfig["behaviors"] = "";
-  ScoringBSRunnableChooser behaviorChooser(*behaviorExternalInterface, chooserConfig);
+  ScoringBehaviorChooser behaviorChooser(*behaviorExternalInterface, chooserConfig);
   
   behaviorChooser.TryAddBehavior(testBehaviorReqHappy);
   behaviorChooser.TryAddBehavior(testBehaviorReqCalm);
@@ -501,7 +501,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.16666666f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
+    ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -515,7 +515,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.0f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
+    ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -529,7 +529,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.5f);
   
   {
-    IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
+    ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqCalm);
   }
 
@@ -549,7 +549,7 @@ TEST(MoodManager, BehaviorScoring)
 
     for (uint32_t i=0; i < kNumTests; ++i)
     {
-      IBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
+      ICozmoBehaviorPtr behaviorChosen = behaviorChooser.GetDesiredActiveBehavior(*behaviorExternalInterface, nullptr);
       if (behaviorChosen == testBehaviorReqHappy)
       {
         ++behaviorCountHappy;

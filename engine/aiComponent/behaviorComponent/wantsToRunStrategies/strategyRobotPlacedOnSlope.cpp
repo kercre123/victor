@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyRobotPlacedOnSlope.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 

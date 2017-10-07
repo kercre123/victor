@@ -16,7 +16,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 
 namespace Anki {

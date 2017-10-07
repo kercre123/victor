@@ -50,7 +50,7 @@ BehaviorSystemManager::BehaviorSystemManager()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
-                                                IBSRunnable* baseRunnable)
+                                                IBehavior* baseRunnable)
 {
   // do not support multiple initialization. A) we don't need it, B) it's easy to forget to clean up everything properly
   // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
@@ -82,7 +82,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   }
   
   // There's a delay between init and first robot update tick - this messes with
-  // time checks in iBSRunnable, so Activate the base here instead of in init
+  // time checks in IBehavior, so Activate the base here instead of in init
   if(_initializationStage == InitializationStage::StackNotInitialized){
     _initializationStage = InitializationStage::Initialized;
 
@@ -93,7 +93,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
     _baseRunnableTmp = nullptr;
   }
   
-  std::set<IBSRunnable*> runnableUpdatesTickedInStack;
+  std::set<IBehavior*> runnableUpdatesTickedInStack;
   // First update the runnable stack and allow it to make any delegation/canceling
   // decisions that it needs to make
   _runnableStack->UpdateRunnableStack(behaviorExternalInterface, runnableUpdatesTickedInStack);
@@ -105,10 +105,10 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBSRunnable*>& tickedInStack)
+void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBehavior*>& tickedInStack)
 {
   // This is innefficient and should be replaced, but not overengineering right now
-  std::set<IBSRunnable*> allInActivatableScope;
+  std::set<IBehavior*> allInActivatableScope;
   const RunnableStack::DelegatesMap& delegatesMap = _runnableStack->GetDelegatesMap();
   for(auto& entry: delegatesMap){
     for(auto& runnable : entry.second){
@@ -124,7 +124,7 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSystemManager::IsControlDelegated(const IBSRunnable* delegator)
+bool BehaviorSystemManager::IsControlDelegated(const IBehavior* delegator)
 {
   return (_runnableStack->IsInStack(delegator)) &&
          (_runnableStack->GetTopOfStack() != delegator);
@@ -132,14 +132,14 @@ bool BehaviorSystemManager::IsControlDelegated(const IBSRunnable* delegator)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSystemManager::CanDelegate(IBSRunnable* delegator)
+bool BehaviorSystemManager::CanDelegate(IBehavior* delegator)
 {
   return _runnableStack->GetTopOfStack() == delegator;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorSystemManager::Delegate(IBSRunnable* delegator, IBSRunnable* delegated)
+bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
 {
   // Ensure that the delegator is on top of the stack
   if(!ANKI_VERIFY(delegator == _runnableStack->GetTopOfStack(),
@@ -177,7 +177,7 @@ bool BehaviorSystemManager::Delegate(IBSRunnable* delegator, IBSRunnable* delega
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::CancelDelegates(IBSRunnable* delegator)
+void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 {
   if(_runnableStack->IsInStack(delegator)){
     BOUNDED_WHILE(kArbitrarilyLargeCancelBound,
@@ -196,7 +196,7 @@ void BehaviorSystemManager::CancelDelegates(IBSRunnable* delegator)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO:(bn) kevink: consider rename to "stop" rather than cancel
-void BehaviorSystemManager::CancelSelf(IBSRunnable* delegator)
+void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 {
   CancelDelegates(delegator);
   
@@ -214,24 +214,24 @@ void BehaviorSystemManager::CancelSelf(IBSRunnable* delegator)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorSystemManager::FindBehaviorByID(BehaviorID behaviorID) const
+ICozmoBehaviorPtr BehaviorSystemManager::FindBehaviorByID(BehaviorID behaviorID) const
 {
   if(_behaviorExternalInterface != nullptr){
     return _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByID(behaviorID);
   }else{
-    IBehaviorPtr empty;
+    ICozmoBehaviorPtr empty;
     return empty;
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorSystemManager::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
+ICozmoBehaviorPtr BehaviorSystemManager::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
   if(_behaviorExternalInterface != nullptr){
     return _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByExecutableType(type);
   }else{
-    IBehaviorPtr empty;
+    ICozmoBehaviorPtr empty;
     return empty;
   }
 }

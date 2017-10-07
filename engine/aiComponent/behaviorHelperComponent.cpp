@@ -24,7 +24,7 @@
 #include "util/helpers/boundedWhile.h"
 
 #include <iterator>
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -130,7 +130,7 @@ void BehaviorHelperComponent::CheckInactiveStackHelpers(BehaviorExternalInterfac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  IBehavior::Status helperStatus = IBehavior::Status::Running;
+  ICozmoBehavior::Status helperStatus = ICozmoBehavior::Status::Running;
   if(!_helperStack.empty()){
     auto activeIter = _helperStack.end();
     activeIter--;
@@ -146,9 +146,9 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
           activeIter != _helperStack.end()){
       
       // First, check to see if we've just completed a helper
-      if(helperStatus == IBehavior::Status::Complete){
+      if(helperStatus == ICozmoBehavior::Status::Complete){
         helperStatus = (*activeIter)->OnDelegateSuccess(behaviorExternalInterface);
-      }else if(helperStatus == IBehavior::Status::Failure){
+      }else if(helperStatus == ICozmoBehavior::Status::Failure){
         helperStatus = (*activeIter)->OnDelegateFailure(behaviorExternalInterface);
       }
       
@@ -158,20 +158,20 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
       // Override the helper status to fail out of all delegates and return
       // to the lowest level delegate
       if(blockWorldOriginChange && _helperStack.size() != 1){
-        helperStatus = IBehavior::Status::Failure;
+        helperStatus = ICozmoBehavior::Status::Failure;
       }else if(blockWorldOriginChange && _helperStack.size() == 1){
         blockWorldOriginChange = false;
       }
       
       // Allows Delegate to directly check on success/failure
-      if(helperStatus == IBehavior::Status::Running){
+      if(helperStatus == ICozmoBehavior::Status::Running){
         // Give helper update tick
         helperStatus = (*activeIter)->UpdateWhileActive(behaviorExternalInterface, newDelegate);
       }
       
       // If helper completed, start the next helper, or if the
       // helper specified a new delegate, make that the actiev helper
-      if(helperStatus != IBehavior::Status::Running){
+      if(helperStatus != ICozmoBehavior::Status::Running){
 
         PRINT_CH_INFO("Behaviors", "HelperComponent.UpdateActive.Complete", "%s no longer running",
                       (*activeIter)->GetName().c_str());
@@ -206,16 +206,16 @@ void BehaviorHelperComponent::UpdateActiveHelper(BehaviorExternalInterface& beha
   }
 
   // If the helpers have just completed, notify the behavior appropriately
-  if(_helperStack.empty() && helperStatus != IBehavior::Status::Running){
+  if(_helperStack.empty() && helperStatus != ICozmoBehavior::Status::Running){
     // Copy the callback function so that it can be called after
     // this helper stack has been cleared in case it wants to set up a
     // new helper stack/callbacks
     BehaviorSimpleCallbackWithExternalInterface behaviorCallbackToRun = nullptr;
     
-    if(helperStatus == IBehavior::Status::Complete &&
+    if(helperStatus == ICozmoBehavior::Status::Complete &&
        _behaviorSuccessCallback != nullptr){
       behaviorCallbackToRun = _behaviorSuccessCallback;
-    }else if(helperStatus == IBehavior::Status::Failure &&
+    }else if(helperStatus == ICozmoBehavior::Status::Failure &&
              _behaviorFailureCallback != nullptr){
       behaviorCallbackToRun = _behaviorFailureCallback;
     }

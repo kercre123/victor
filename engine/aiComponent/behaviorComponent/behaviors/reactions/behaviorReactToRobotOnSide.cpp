@@ -29,7 +29,7 @@ static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

@@ -63,7 +63,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersDriveOffC
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
   _distToDrive_mm = Charger::GetLength() + extraDist_mm;
@@ -139,7 +139,7 @@ void BehaviorDriveOffCharger::OnBehaviorDeactivated(BehaviorExternalInterface& b
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorDriveOffCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

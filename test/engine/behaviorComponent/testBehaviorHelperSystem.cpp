@@ -19,7 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/iHelper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -36,12 +36,12 @@ static constexpr BehaviorID emptyID = BehaviorID::Wait;
 // Test behavior to run actions and delegate to helpers
 ////////////////////////////////////////////////////////////////////////////////
 
-class TestBehaviorWithHelpers : public IBehavior
+class TestBehaviorWithHelpers : public ICozmoBehavior
 {
 public:
 
   TestBehaviorWithHelpers(const Json::Value& config)
-    : IBehavior(config)
+    : ICozmoBehavior(config)
     {
     }
 
@@ -114,7 +114,7 @@ public:
     switch(_updateResult) {
       case UpdateResult::UseBaseClass: {
         printf("TestBehaviorWithHelpers.Update UseBaseClass: IsActing:%d\n", IsControlDelegated());
-        return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+        return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
       }
       case UpdateResult::Running: {
         printf("TestBehaviorWithHelpers.Update Running\n");
@@ -155,7 +155,7 @@ class TestHelper : public IHelper
 {
 public:
 
-  TestHelper(BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior, const std::string& name = "")
+  TestHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior, const std::string& name = "")
     : IHelper("", behaviorExternalInterface, behavior, behaviorExternalInterface.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory())
     , _name(name)
     , _behavior(behavior)
@@ -208,17 +208,17 @@ public:
     return ret;
   }
 
-  virtual IBehavior::Status Init(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual ICozmoBehavior::Status Init(BehaviorExternalInterface& behaviorExternalInterface) override {
     _initCount++;
 
     printf("%s: Init. Action=%p\n", _name.c_str(), _nextActionToRun);
 
     CheckActions();
 
-    return IBehavior::Status::Running;
+    return ICozmoBehavior::Status::Running;
   }
 
-  virtual IBehavior::Status UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
+  virtual ICozmoBehavior::Status UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
     _updateCount++;
 
     printf("%s: Update. IsActing:%d, _delegateAfter:%d\n",
@@ -238,16 +238,16 @@ public:
       delegateProperties.SetDelegateToSet(newHelperHandle);
       delegateProperties.SetOnSuccessFunction([this](BehaviorExternalInterface& behaviorExternalInterface) {
           if( _immediateCompleteOnSubSuccess ) {
-            return IBehavior::Status::Complete;
+            return ICozmoBehavior::Status::Complete;
           }
           else {
-            _updateResult = IBehavior::Status::Complete;
-            return IBehavior::Status::Running;
+            _updateResult = ICozmoBehavior::Status::Complete;
+            return ICozmoBehavior::Status::Running;
           }
         });
       
       DelegateAfterUpdate(delegateProperties);
-      return IBehavior::Status::Running;
+      return ICozmoBehavior::Status::Running;
     }      
     
     return _updateResult;
@@ -258,7 +258,7 @@ public:
       DelegateIfInControl(_nextActionToRun, [this](ActionResult res, BehaviorExternalInterface& behaviorExternalInterface) {
           _actionCompleteCount++;
           if( _thisSucceedsOnActionSuccess ) {
-            _updateResult = IBehavior::Status::Complete;
+            _updateResult = ICozmoBehavior::Status::Complete;
           }});
       _nextActionToRun = nullptr;
     }
@@ -272,7 +272,7 @@ public:
     return _subHelperRaw;
   }
 
-  IBehavior::Status _updateResult = IBehavior::Status::Running;
+  ICozmoBehavior::Status _updateResult = ICozmoBehavior::Status::Running;
   mutable bool _cancelDelegates = false;
   bool _delegateAfterAction = false;
   bool _thisSucceedsOnActionSuccess = false;
@@ -292,7 +292,7 @@ private:
 
   bool _selfActionDone = false;
 
-  IBehavior& _behavior;
+  ICozmoBehavior& _behavior;
 
   WeakHelperHandle _subHelper;
   TestHelper* _subHelperRaw = nullptr;
@@ -307,7 +307,7 @@ void DoTicks_(Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool exp
   int updateTicks = behavior._updateCount;
 
   DelegationComponent delegationComp;
-  IBehavior::Status status = IBehavior::Status::Running;
+  ICozmoBehavior::Status status = ICozmoBehavior::Status::Running;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -325,15 +325,15 @@ void DoTicks_(Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool exp
     updateTicks++;
     ASSERT_EQ(behavior._updateCount, updateTicks) << "behavior not ticked as often as it should be";
 
-    if( expectComplete && status == IBehavior::Status::Complete ) {
+    if( expectComplete && status == ICozmoBehavior::Status::Complete ) {
       behavior.OnDeactivated(*behaviorExternalInterface);
       break;
     }
-    ASSERT_EQ(status, IBehavior::Status::Running) << "behavior should still be running i="<<i;
+    ASSERT_EQ(status, ICozmoBehavior::Status::Running) << "behavior should still be running i="<<i;
   }
 
   if( expectComplete ) {
-    ASSERT_EQ(status, IBehavior::Status::Complete) << "behavior was expected to complete";
+    ASSERT_EQ(status, ICozmoBehavior::Status::Complete) << "behavior was expected to complete";
   }
 }
 
@@ -345,7 +345,7 @@ TEST(BehaviorHelperSystem, BehaviorComplete)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -375,7 +375,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -433,7 +433,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -480,7 +480,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   ASSERT_EQ(rawPtr->_stopCount, 0);
   ASSERT_EQ(rawPtr->_shouldCancelCount, 0) << "no sub-helper, so shouldn't tick this";
 
-  rawPtr->_updateResult = IBehavior::Status::Complete;
+  rawPtr->_updateResult = ICozmoBehavior::Status::Complete;
 
   DoTicks(robot, b, 3);
 
@@ -520,7 +520,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   ASSERT_EQ(rawPtr->_stopCount, 0);
   ASSERT_EQ(rawPtr->_shouldCancelCount, 0) << "no sub-helper, so shouldn't tick this";
 
-  rawPtr->_updateResult = IBehavior::Status::Failure;
+  rawPtr->_updateResult = ICozmoBehavior::Status::Failure;
 
   DoTicks(robot, b, 3);
 
@@ -539,7 +539,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -645,7 +645,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -876,7 +876,7 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
                                                                                        robot.GetBlockWorld(),
                                                                                        robot.GetFaceWorld());
   
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
   b.OnEnteredActivatableScope();
@@ -984,7 +984,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -1165,7 +1165,7 @@ TEST(BehaviorHelperSystem, StopBehavior)
                                                                                        robot.GetBlockWorld(),
                                                                                        robot.GetFaceWorld());
   
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(empty);
   b.Init(*behaviorExternalInterface);
   b.OnEnteredActivatableScope();

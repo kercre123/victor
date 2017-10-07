@@ -10,7 +10,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
@@ -32,7 +32,7 @@ TEST(BehaviorInterface, Create)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -56,7 +56,7 @@ TEST(BehaviorInterface, Init)
 {
   CozmoContext context{};
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -85,7 +85,7 @@ TEST(BehaviorInterface, InitWithInterface)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -113,7 +113,7 @@ TEST(BehaviorInterface, Run)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -148,7 +148,7 @@ TEST(BehaviorInterface, Run)
   EXPECT_TRUE( b._stopped );
 }
 
-void TickAndCheckScore( Robot& robot, IBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num, float expectedScore )
+void TickAndCheckScore( Robot& robot, ICozmoBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num, float expectedScore )
 {
   auto startTime = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   const float dt = 0.01f;
@@ -167,7 +167,7 @@ TEST(BehaviorInterface, ScoreWhileRunning)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -247,7 +247,7 @@ TEST(BehaviorInterface, HandleMessages)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -286,7 +286,7 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._handleWhileNotRunningCalls,  1);
 };
 
-void DoTicks(Robot& robot, IBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num=1)
+void DoTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorExternalInterface& behaviorExternalInterface, int num=1)
 {
   for(int i=0; i<num; i++) {
     robot.GetActionList().Update();
@@ -301,7 +301,7 @@ TEST(BehaviorInterface, OutsideAction)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
@@ -353,7 +353,7 @@ bool TestBehavior::CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef
 
 bool TestBehavior::CallStartActingExternalCallback1(Robot& robot,
                                                     bool& actionCompleteRef,
-                                                    IBehavior::RobotCompletedActionCallback callback)
+                                                    ICozmoBehavior::RobotCompletedActionCallback callback)
 {
   WaitForLambdaAction* action =
     new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
@@ -363,7 +363,7 @@ bool TestBehavior::CallStartActingExternalCallback1(Robot& robot,
 
 bool TestBehavior::CallStartActingExternalCallback2(Robot& robot,
                                                     bool& actionCompleteRef,
-                                                    IBehavior::ActionResultCallback callback)
+                                                    ICozmoBehavior::ActionResultCallback callback)
 {
   WaitForLambdaAction* action =
     new WaitForLambdaAction(robot, [&actionCompleteRef](Robot& r){ return actionCompleteRef; });
@@ -394,7 +394,7 @@ TEST(BehaviorInterface, StartActingSimple)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -437,7 +437,7 @@ TEST(BehaviorInterface, StartActingFailures)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -511,7 +511,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -587,7 +587,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -662,7 +662,7 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
@@ -725,12 +725,12 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
 
 }
 
-class TestInitBehavior : public IBehavior
+class TestInitBehavior : public ICozmoBehavior
 {
 public:
 
   TestInitBehavior(const Json::Value& config)
-    :IBehavior(config)
+    :ICozmoBehavior(config)
     {
     }
 
@@ -780,7 +780,7 @@ TEST(BehaviorInterface, StartActingInsideInit)
                                                                                        robot.GetBlockWorld(),
                                                                                        robot.GetFaceWorld());
   
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
+  Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   TestInitBehavior b(empty);
   b.Init(*behaviorExternalInterface);

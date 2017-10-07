@@ -29,7 +29,7 @@ namespace {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSearchForFace::BehaviorSearchForFace(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   
 }
@@ -57,7 +57,7 @@ Result BehaviorSearchForFace::OnBehaviorActivated(BehaviorExternalInterface& beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorSearchForFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorSearchForFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if((_behaviorState == State::SearchingForFace) &&
      (behaviorExternalInterface.GetFaceWorld().HasAnyFaces())){

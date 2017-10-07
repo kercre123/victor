@@ -41,7 +41,7 @@ static const char* kConfigParamsKey = "params";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _configParams{}
 , _iterationStartingBodyFacing_rad(0.0f)
 , _behaviorBodyFacingDone_rad(0.0f)

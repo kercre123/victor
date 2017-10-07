@@ -144,7 +144,7 @@ void BehaviorDriveInDesperation::OnBehaviorDeactivated(BehaviorExternalInterface
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorDriveInDesperation::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( behaviorExternalInterface.GetOffTreadsState() != OffTreadsState::OnTreads ) {
     if( !_wasPickedUp ) {

@@ -20,7 +20,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorFactoryCentroidExtractor_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorFactoryCentroidExtractor_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 
@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  class BehaviorFactoryCentroidExtractor : public IBehavior
+  class BehaviorFactoryCentroidExtractor : public ICozmoBehavior
   {
   protected:
     

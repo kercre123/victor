@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToMotorCalibration_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToMotorCalibration_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -22,10 +22,10 @@ namespace Cozmo {
 
 class Robot;
   
-class BehaviorReactToMotorCalibration : public IBehavior
+class BehaviorReactToMotorCalibration : public ICozmoBehavior
 {
 private:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
   
   friend class BehaviorContainer;
   BehaviorReactToMotorCalibration(const Json::Value& config);

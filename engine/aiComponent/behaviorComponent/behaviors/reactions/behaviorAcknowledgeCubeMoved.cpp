@@ -68,7 +68,7 @@ using namespace ExternalInterface;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _state(State::PlayingSenseReaction)
 , _activeObjectSeen(false)
 {  
@@ -105,7 +105,7 @@ Result BehaviorAcknowledgeCubeMoved::OnBehaviorActivated(BehaviorExternalInterfa
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // object seen - cancel turn and play response
   if(_state == State::TurningToLastLocationOfBlock
@@ -120,7 +120,7 @@ IBehavior::Status BehaviorAcknowledgeCubeMoved::UpdateInternal_WhileRunning(Beha
     SET_STATE(ReactingToBlockPresence);
   }
   
-  return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
   

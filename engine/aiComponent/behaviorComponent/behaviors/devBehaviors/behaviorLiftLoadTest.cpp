@@ -59,7 +59,7 @@ namespace Anki {
 
     
     BehaviorLiftLoadTest::BehaviorLiftLoadTest(const Json::Value& config)
-    : IBehavior(config)
+    : ICozmoBehavior(config)
     {
       
       SubscribeToTags({
@@ -130,7 +130,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    IBehavior::Status BehaviorLiftLoadTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+    ICozmoBehavior::Status BehaviorLiftLoadTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
     {
       if(_numLiftRaises == kNumLiftRaises || _abortTest)
       {

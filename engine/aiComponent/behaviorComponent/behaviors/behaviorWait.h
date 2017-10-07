@@ -13,19 +13,19 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorWait_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorWait_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorWait: public IBehavior
+class BehaviorWait: public ICozmoBehavior
 {
 private:
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorWait(const Json::Value& config)
-  : IBehavior(config)
+  : ICozmoBehavior(config)
   {
   }
   

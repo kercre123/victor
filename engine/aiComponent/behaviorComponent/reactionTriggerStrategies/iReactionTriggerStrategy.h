@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
 
 #include "engine/events/ankiEvent.h"
@@ -48,7 +48,7 @@ public:
   // behavior manager checks the return value of this function every tick
   // to see if the reactionary behavior has requested a computational switch
   // override to trigger a reactionary behavior based on something other than a message
-  bool ShouldTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior);
+  bool ShouldTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior);
   
   // if true, the previously running behavior will be resumed (if possible) after the behavior triggered by
   // this trigger is complete. Otherwise, a new behavior will be selected by the chooser.
@@ -64,7 +64,7 @@ public:
   
   // Derived classes can override this function if they want to add listeners
   // to the behavior they will trigger
-  void BehaviorThatStrategyWillTrigger(IBehaviorPtr behavior);
+  void BehaviorThatStrategyWillTrigger(ICozmoBehaviorPtr behavior);
 
   // A random number generator all subclasses can share
   Util::RandomGenerator& GetRNG() const;
@@ -100,16 +100,16 @@ protected:
 
   // Debug user is about to force a behavior
   // each behavior needs to be able to handle "gracefully" a transition into starting the behavior
-  virtual void SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior) = 0;
+  virtual void SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) = 0;
 
   // behavior manager checks the return value of this function every tick
   // to see if the reactionary behavior has requested a computational switch
   // override to trigger a reactionary behavior based on something other than a message
-  virtual bool ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior) = 0;
+  virtual bool ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) = 0;
  
   // Derived classes can override this function if they want to add listeners
   // to the behavior they will trigger
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior){}
+  virtual void BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior){}
   
   // Behaviors can call this if there are any needs changes
   void NeedActionCompleted(NeedsActionId needsActionId);

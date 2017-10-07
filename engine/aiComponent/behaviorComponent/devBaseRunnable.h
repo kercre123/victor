@@ -15,7 +15,7 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_DevBaseRunnable_H__
 #define __Engine_AiComponent_BehaviorComponent_DevBaseRunnable_H__
 
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 #include <set>
@@ -23,16 +23,16 @@
 namespace Anki {
 namespace Cozmo {
 
-class DevBaseRunnable : public IBSRunnable
+class DevBaseRunnable : public IBehavior
 {
 public:
 
   // pass in the delegate that this runnable should default to (or nullptr for it to not delegate at all)
-  explicit DevBaseRunnable( IBSRunnable* initialDelegate );
+  explicit DevBaseRunnable( IBehavior* initialDelegate );
 
 protected:
 
-  virtual void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
     return true;
@@ -45,12 +45,12 @@ protected:
 
 private:
 
-  std::set<IBSRunnable*> _possibleDelegates;
+  std::set<IBehavior*> _possibleDelegates;
   
   std::vector<Signal::SmartHandle> _eventHandlers;
-  IBSRunnable* _initialDelegate = nullptr;
+  IBehavior* _initialDelegate = nullptr;
 
-  IBSRunnable* _pendingDelegate = nullptr;
+  IBehavior* _pendingDelegate = nullptr;
   int _pendingDelegateRepeatCount = 0;
   bool _shouldCancelDelegates = false;
 

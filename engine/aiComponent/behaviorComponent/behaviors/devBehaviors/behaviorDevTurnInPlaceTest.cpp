@@ -27,7 +27,7 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevTurnInPlaceTest::BehaviorDevTurnInPlaceTest(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   using namespace JsonTools;
   const char* debugName = "BehaviorDevTurnInPlaceTest";

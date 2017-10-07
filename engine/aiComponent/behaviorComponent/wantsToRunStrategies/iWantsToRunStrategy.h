@@ -15,7 +15,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IWantsToRunStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IWantsToRunStrategy_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"

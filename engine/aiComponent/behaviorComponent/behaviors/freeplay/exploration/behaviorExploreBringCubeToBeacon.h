@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorExploreBringCubeToBeacon_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreBringCubeToBeacon_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/AIBeacon.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 
@@ -39,7 +39,7 @@ class BlockWorld;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorExploreBringCubeToBeacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorExploreBringCubeToBeacon : public IBehavior
+class BehaviorExploreBringCubeToBeacon : public ICozmoBehavior
 {
 private:
 
@@ -63,7 +63,7 @@ public:
   virtual ~BehaviorExploreBringCubeToBeacon() override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
@@ -78,7 +78,7 @@ public:
 protected:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

@@ -18,10 +18,10 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/scoringBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
 #include "engine/cozmoContext.h"
 
@@ -49,7 +49,7 @@ static const char* kTestBehavior3Json =
 "}";
 
 
-bool LoadTestBehaviors(Robot& testRobot, ScoringBSRunnableChooser& behaviorChooser)
+bool LoadTestBehaviors(Robot& testRobot, ScoringBehaviorChooser& behaviorChooser)
 {
   bool allAddedOk = true;
   BehaviorContainer& behaviorContainer = testRobot.GetAIComponent().GetBehaviorContainer();
@@ -74,7 +74,7 @@ bool LoadTestBehaviors(Robot& testRobot, ScoringBSRunnableChooser& behaviorChoos
                                                           behaviorContainer,
                                                           testRobot.GetBlockWorld(),
                                                           testRobot.GetFaceWorld());
-      IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
+      ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
       newBehavior->Init(*behaviorExternalInterface);
       EXPECT_NE(newBehavior, nullptr);
       if (newBehavior)

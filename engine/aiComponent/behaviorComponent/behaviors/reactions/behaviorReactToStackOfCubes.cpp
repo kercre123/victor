@@ -28,7 +28,7 @@ const constexpr float kTimeBetweenReactions_s = 100.f;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {  
 }
 

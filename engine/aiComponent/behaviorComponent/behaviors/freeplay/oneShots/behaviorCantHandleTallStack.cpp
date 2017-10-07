@@ -42,7 +42,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _isLastReactionPoseValid(false)
 {
     

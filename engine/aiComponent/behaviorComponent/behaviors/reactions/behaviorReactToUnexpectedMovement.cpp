@@ -26,7 +26,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {  
   SubscribeToTags({
     EngineToGameTag::UnexpectedMovement

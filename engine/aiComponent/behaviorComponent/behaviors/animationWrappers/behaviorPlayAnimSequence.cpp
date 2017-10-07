@@ -25,7 +25,7 @@ static const char* kAnimTriggerKey = "animTriggers";
 static const char* kLoopsKey = "num_loops";
 
 BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(const Json::Value& config, bool triggerRequired)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _numLoops(0)
 , _sequenceLoopsDone(0)
 {

@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "engine/cozmoContext.h"
@@ -120,14 +120,14 @@ void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, Beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IReactionTriggerStrategy::BehaviorThatStrategyWillTrigger(IBehaviorPtr behavior)
+void IReactionTriggerStrategy::BehaviorThatStrategyWillTrigger(ICozmoBehaviorPtr behavior)
 {
   _DebugBehaviorID = behavior->GetID();
   BehaviorThatStrategyWillTriggerInternal(behavior);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IReactionTriggerStrategy::ShouldTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool IReactionTriggerStrategy::ShouldTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   //  if the user is forcing
   //  try to trigger normally but if that fails

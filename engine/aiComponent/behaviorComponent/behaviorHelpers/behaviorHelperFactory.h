@@ -25,40 +25,40 @@ namespace Cozmo {
 
 class BehaviorExternalInterface;
 class BehaviorHelperComponent;
-class IBehavior;
+class ICozmoBehavior;
 
 class BehaviorHelperFactory{
 public:
   BehaviorHelperFactory(BehaviorHelperComponent& component);
   
   HelperHandle CreateDriveToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                   IBehavior& behavior,
+                                   ICozmoBehavior& behavior,
                                    const ObjectID& targetID,
                                    const DriveToParameters& parameters = {});
   
   HelperHandle CreatePickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                       IBehavior& behavior,
+                                       ICozmoBehavior& behavior,
                                        const ObjectID& targetID,
                                        const PickupBlockParamaters& parameters = {});
   
   HelperHandle CreatePlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                      IBehavior& behavior);
+                                      ICozmoBehavior& behavior);
   
   HelperHandle CreatePlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                          IBehavior& behavior,
+                                          ICozmoBehavior& behavior,
                                           const ObjectID& targetID,
                                           const bool placingOnGround = false,
                                           const PlaceRelObjectParameters& parameters = {});
   
   
   HelperHandle CreateRollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                     IBehavior& behavior,
+                                     ICozmoBehavior& behavior,
                                      const ObjectID& targetID,
                                      bool rollToUpright = true,
                                      const RollBlockParameters& parameters = {});
   
   HelperHandle CreateSearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                          IBehavior& behavior,
+                                          ICozmoBehavior& behavior,
                                           const SearchParameters& params = {});
   
   

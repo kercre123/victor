@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorRespondPossiblyRoll_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorRespondPossiblyRoll_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/common/basestation/objectIDs.h"
 
 #include "clad/types/animationTrigger.h"
@@ -76,7 +76,7 @@ private:
 };
   
 
-class BehaviorRespondPossiblyRoll: public IBehavior
+class BehaviorRespondPossiblyRoll: public ICozmoBehavior
 {
 private:
   // Enforce creation through BehaviorContainer

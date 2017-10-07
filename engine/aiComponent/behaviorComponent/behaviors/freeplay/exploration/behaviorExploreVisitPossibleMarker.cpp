@@ -42,7 +42,7 @@ CONSOLE_VAR(float, kBEVPM_backupSpeed_mmps, "BehaviorExploreLookAroundInPlace", 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreVisitPossibleMarker::BehaviorExploreVisitPossibleMarker(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

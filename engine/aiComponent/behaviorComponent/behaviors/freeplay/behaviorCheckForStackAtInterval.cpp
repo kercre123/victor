@@ -33,7 +33,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _delayBetweenChecks_s(0)
 , _nextCheckTime_s(0)
 , _knownBlockIndex(-1)

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorVisitInterestingEdge_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorVisitInterestingEdge_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/navMap/iNavMap.h"
 
 #include "anki/common/basestation/math/pose.h"
@@ -25,11 +25,11 @@ namespace Cozmo {
 
 class IActionRunner;
   
-class BehaviorVisitInterestingEdge : public IBehavior
+class BehaviorVisitInterestingEdge : public ICozmoBehavior
 {
 private:
   
-  using BaseClass = IBehavior;
+  using BaseClass = ICozmoBehavior;
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
@@ -45,7 +45,7 @@ public:
   virtual ~BehaviorVisitInterestingEdge();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // true if currently there are edges that Cozmo would like to visit
@@ -55,7 +55,7 @@ public:
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

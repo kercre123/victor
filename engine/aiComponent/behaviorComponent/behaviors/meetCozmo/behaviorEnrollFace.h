@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorEnrollFace_H__
 
 #include "engine/ankiEventUtil.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -40,7 +40,7 @@ namespace Cozmo {
 class FaceWorld;
 
   
-class BehaviorEnrollFace : public IBehavior
+class BehaviorEnrollFace : public ICozmoBehavior
 {
 protected:
     
@@ -58,7 +58,7 @@ public:
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)   override;

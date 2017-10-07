@@ -28,7 +28,7 @@ const constexpr float kTimeBetweenReactions_s = 100.f;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPyramid::BehaviorReactToPyramid(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _nextValidReactionTime_s(0)
 {
 }

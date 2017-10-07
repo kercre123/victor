@@ -65,7 +65,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRamIntoBl
 using namespace ExternalInterface;
 
 BehaviorRamIntoBlock::BehaviorRamIntoBlock(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

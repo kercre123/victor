@@ -1,5 +1,5 @@
 /**
-* File: iBSRunnable.h
+* File: IBehavior.h
 *
 * Author: Kevin M. Karol
 * Created: 08/251/17
@@ -11,11 +11,11 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_IBSRunnable_H__
-#define __Cozmo_Basestation_BehaviorSystem_IBSRunnable_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_IBehavior_H__
+#define __Cozmo_Basestation_BehaviorSystem_IBehavior_H__
 
 #include "anki/common/types.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 #include "util/global/globalDefinitions.h"
 
 #include <set>
@@ -29,10 +29,10 @@ class BehaviorExternalInterface;
 class BehaviorManager;
 class BehaviorSystemManager;
   
-class IBSRunnable {
+class IBehavior {
 public:
-  IBSRunnable(const std::string& idString);
-  virtual ~IBSRunnable(){};
+  IBehavior(const std::string& idString);
+  virtual ~IBehavior(){};
   
   const std::string& GetPrintableID(){ return _idString;}
   
@@ -60,7 +60,7 @@ public:
   // the runnable should stop any processes it started on entering selectable scope
   void OnLeftActivatableScope();
   
-  virtual void GetAllDelegates(std::set<IBSRunnable*>& delegates) const = 0;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const = 0;
 
 protected:
 
@@ -116,4 +116,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_BehaviorSystem_IBSRunnable_H__
+#endif // __Cozmo_Basestation_BehaviorSystem_IBehavior_H__

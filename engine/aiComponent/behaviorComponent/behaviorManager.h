@@ -19,7 +19,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/robotDataLoader.h"
@@ -132,7 +132,7 @@ public:
   Result Update(BehaviorExternalInterface& behaviorExternalInterface);
         
   // Set the current Activity. Note this results in the destruction of the current Activity
-  // (if there is one) and the IBehaviors it contains
+  // (if there is one) and the ICozmoBehaviors it contains
   // ignorePreviousActivity is used during behaviorManager setup to indicate that there
   // is no previous high level activity that needs to be stopped - aviods a crash
   void SetCurrentActivity(BehaviorExternalInterface& behaviorExternalInterface,
@@ -147,7 +147,7 @@ public:
   void RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom);
   
   // returns nullptr if there is no current behavior
-  const IBehaviorPtr GetCurrentBehavior() const;
+  const ICozmoBehaviorPtr GetCurrentBehavior() const;
   bool CurrentBehaviorTriggeredAsReaction() const;
   ReactionTrigger GetCurrentReactionTrigger() const;
 
@@ -182,8 +182,8 @@ public:
   // Allows other parts of the system to determine whether a reaction is enabled
   bool IsReactionTriggerEnabled(ReactionTrigger reaction) const;
   
-  IBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
-  IBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
+  ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
+  ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
 
   // TODO:(bn) automatically infer requiredClass from T
   
@@ -244,10 +244,10 @@ private:
   
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
   bool SwitchToReactionTrigger(BehaviorExternalInterface& behaviorExternalInterface,
-                               IReactionTriggerStrategy& triggerStrategy, IBehaviorPtr nextBehavior);
+                               IReactionTriggerStrategy& triggerStrategy, ICozmoBehaviorPtr nextBehavior);
   bool SwitchToBehaviorBase(BehaviorExternalInterface& behaviorExternalInterface, BehaviorRunningAndResumeInfo& nextBehaviorInfo);
   bool SwitchToVoiceCommandBehavior(BehaviorExternalInterface& behaviorExternalInterface,
-                                    IBehaviorPtr nextBehavior);
+                                    ICozmoBehaviorPtr nextBehavior);
   void SwitchToUIGameRequestBehavior(BehaviorExternalInterface& behaviorExternalInterface);
   
   // checks the chooser and switches to a new behavior if neccesary
@@ -262,7 +262,7 @@ private:
   
   // Called at the Complete or Failed state of a behavior in order to switch to a new one
   void FinishCurrentBehavior(BehaviorExternalInterface& behaviorExternalInterface,
-                             IBehaviorPtr activeBehavior, bool shouldAttemptResume);
+                             ICozmoBehaviorPtr activeBehavior, bool shouldAttemptResume);
   
   // Allow reactionary behaviors to request a switch without a message
   bool CheckReactionTriggerStrategies(BehaviorExternalInterface& behaviorExternalInterface);
@@ -296,8 +296,8 @@ private:
   // Clears flags and attributes related to running a ui-driven game request
   void EnsureRequestGameIsClear(BehaviorExternalInterface& behaviorExternalInterface);
 
-  // helper to avoid including iBehavior.h here
-  BehaviorClass GetBehaviorClass(IBehaviorPtr behavior) const;
+  // helper to avoid including ICozmoBehavior.h here
+  BehaviorClass GetBehaviorClass(ICozmoBehaviorPtr behavior) const;
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

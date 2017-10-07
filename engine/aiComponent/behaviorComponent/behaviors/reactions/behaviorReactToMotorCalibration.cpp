@@ -53,7 +53,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersMotorCali
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {  
   SubscribeToTags({
     EngineToGameTag::MotorCalibration

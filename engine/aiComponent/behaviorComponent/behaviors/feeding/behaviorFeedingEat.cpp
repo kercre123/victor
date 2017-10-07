@@ -91,7 +91,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableCliffWhileEating
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFeedingEat::BehaviorFeedingEat(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _timeCubeIsSuccessfullyDrained_sec(FLT_MAX)
 , _hasRegisteredActionComplete(false)
 , _currentState(State::DrivingToFood)
@@ -159,7 +159,7 @@ Result BehaviorFeedingEat::OnBehaviorActivated(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorFeedingEat::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Feeding should be considered "complete" so long as the animation has reached
   // the point where all light has been drained from the cube.  If the behavior

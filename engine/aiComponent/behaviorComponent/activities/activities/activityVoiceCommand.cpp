@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveToFace.h"
 #include "engine/components/inventoryComponent.h"
@@ -98,7 +98,7 @@ bool ActivityVoiceCommand::VCResponseData::WillStartRespondingToCommand()
   return (_currentResponseBehavior == nullptr) && !_respondToVCQueue.empty();
 }
 
-IBehaviorPtr ActivityVoiceCommand::VCResponseData::GetDesiredActiveBehavior(const IBehaviorPtr currentBehavior)
+ICozmoBehaviorPtr ActivityVoiceCommand::VCResponseData::GetDesiredActiveBehavior(const ICozmoBehaviorPtr currentBehavior)
 {
   using namespace ::Anki::Cozmo::VoiceCommand;
 
@@ -160,7 +160,7 @@ IBehaviorPtr ActivityVoiceCommand::VCResponseData::GetDesiredActiveBehavior(cons
   // command responded to
   ClearResponseData();
   
-  IBehaviorPtr emptyPtr;
+  ICozmoBehaviorPtr emptyPtr;
   return emptyPtr;
 }
 
@@ -196,7 +196,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorEx
              "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
   {
-    IBehaviorPtr comeHereBehavior = BM.FindBehaviorByID(BehaviorID::VC_ComeHere);
+    ICozmoBehaviorPtr comeHereBehavior = BM.FindBehaviorByID(BehaviorID::VC_ComeHere);
     if(ANKI_DEV_CHEATS){
       _driveToFaceBehavior = std::dynamic_pointer_cast<BehaviorDriveToFace>(comeHereBehavior);
 
@@ -235,7 +235,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorEx
              "VoiceCommandBehaviorChooser.PounceOnMotion.ImproperClassRetrievedForID");
   
   //Create an arbitrary animation behavior
-  IBehaviorPtr playAnimPtr = BM.FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
+  ICozmoBehaviorPtr playAnimPtr = BM.FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
   _playAnimBehavior = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
   
   DEV_ASSERT(_playAnimBehavior != nullptr &&
@@ -255,9 +255,9 @@ ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorEx
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
   
   // setup the let's play map
-  IBehaviorPtr VC_Keepaway = BM.FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
-  IBehaviorPtr VC_QT = BM.FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
-  IBehaviorPtr VC_MM = BM.FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
+  ICozmoBehaviorPtr VC_Keepaway = BM.FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
+  ICozmoBehaviorPtr VC_QT = BM.FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
+  ICozmoBehaviorPtr VC_MM = BM.FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
 
   _letsPlayMap.insert(std::make_pair(UnlockId::KeepawayGame, VC_Keepaway));
   _letsPlayMap.insert(std::make_pair(UnlockId::QuickTapGame, VC_QT));
@@ -281,9 +281,9 @@ ActivityVoiceCommand::ActivityVoiceCommand(BehaviorExternalInterface& behaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityVoiceCommand::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivityVoiceCommand::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  IBehaviorPtr emptyPtr;
+  ICozmoBehaviorPtr emptyPtr;
   
   auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
   if (!ANKI_VERIFY(voiceCommandComponent != nullptr, "ActivityVoiceCommand.ChooseNextBehavior", "VoiceCommandComponent invalid"))
@@ -420,9 +420,9 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
                          "Unlock ID %s not found in map",
                          UnlockIdToString(requestGameID))){
             
-            IBehaviorPtr ptrCopy = iter->second;
-            responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-            responseQueue.push([this, &behaviorExternalInterface, ptrCopy, currentCommand](const IBehaviorPtr currentBehavior){
+            ICozmoBehaviorPtr ptrCopy = iter->second;
+            responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+            responseQueue.push([this, &behaviorExternalInterface, ptrCopy, currentCommand](const ICozmoBehaviorPtr currentBehavior){
               RemoveSparksForCommand(behaviorExternalInterface, currentCommand);
               return ptrCopy;
             });
@@ -432,14 +432,14 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
       }
       case VoiceCommandType::DoADance:
       {
-        responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-        responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _danceBehavior;});
+        responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+        responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _danceBehavior;});
         break;
       }
       case VoiceCommandType::DoATrick:
       {
-        responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-        responseQueue.push([this, currentCommand, &behaviorExternalInterface](const IBehaviorPtr currentBehavior){
+        responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+        responseQueue.push([this, currentCommand, &behaviorExternalInterface](const ICozmoBehaviorPtr currentBehavior){
           RemoveSparksForCommand(behaviorExternalInterface, currentCommand);
           behaviorExternalInterface.GetAIComponent().GetDoATrickSelector().RequestATrick(behaviorExternalInterface);
           return nullptr;
@@ -473,9 +473,9 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
             const auto& face = robot.GetFaceWorld().GetFace(desiredFace);
             if(face != nullptr){
               if(!_driveToFaceBehavior->IsCozmoAlreadyCloseEnoughToFace(behaviorExternalInterface, face->GetID())){
-                 responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+                 responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
               }
-              responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _driveToFaceBehavior;});
+              responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _driveToFaceBehavior;});
             }
           }else{
             shouldSearchForFaces = true;
@@ -488,16 +488,16 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
           if(ANKI_VERIFY(_searchForFaceBehavior->WantsToBeActivated(behaviorExternalInterface),
                          "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotRunnable",
                          "No way to respond to the voice command")){
-            responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _searchForFaceBehavior;});
+            responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _searchForFaceBehavior;});
             // If we find a face while searching, drive towards it
-            responseQueue.push([this, &robot](const IBehaviorPtr currentBehavior){
+            responseQueue.push([this, &robot](const ICozmoBehaviorPtr currentBehavior){
               Pose3d facePose;
               robot.GetFaceWorld().GetLastObservedFace(facePose, true);
               const bool lastFaceInCurrentOrigin = robot.IsPoseInWorldOrigin(facePose);
               if(lastFaceInCurrentOrigin){
-                return std::static_pointer_cast<IBehavior>(_driveToFaceBehavior);
+                return std::static_pointer_cast<ICozmoBehavior>(_driveToFaceBehavior);
               }else{
-                IBehaviorPtr emptyPtr;
+                ICozmoBehaviorPtr emptyPtr;
                 return emptyPtr;
               }
             });
@@ -511,8 +511,8 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
         //Ensure fist bump is runnable
         if(_fistBumpBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this, &behaviorExternalInterface, currentCommand](const IBehaviorPtr currentBehavior){
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this, &behaviorExternalInterface, currentCommand](const ICozmoBehaviorPtr currentBehavior){
             RemoveSparksForCommand(behaviorExternalInterface, currentCommand);
             const bool isSoftSpark = false;
             // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -533,8 +533,8 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
         //Ensure PeekABoo is runnable
         if(_peekABooBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this, &behaviorExternalInterface, currentCommand](const IBehaviorPtr currentBehavior){
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this, &behaviorExternalInterface, currentCommand](const ICozmoBehaviorPtr currentBehavior){
             RemoveSparksForCommand(behaviorExternalInterface, currentCommand);
             const bool isSoftSpark = false;
             // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -554,8 +554,8 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
       {
         if(_goToSleepBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _goToSleepBehavior;});
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _goToSleepBehavior;});
         }
         else
         {
@@ -572,10 +572,10 @@ Result ActivityVoiceCommand::Update_Legacy(BehaviorExternalInterface& behaviorEx
       {
         if(_laserBehavior->WantsToBeActivated(behaviorExternalInterface))
         {
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _laserBehavior;   });
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _pounceBehavior;  });
-          responseQueue.push([this](const IBehaviorPtr currentBehavior){
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _laserBehavior;   });
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){ return _pounceBehavior;  });
+          responseQueue.push([this](const ICozmoBehaviorPtr currentBehavior){
             _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VC_LookDownNoLaser, 1);
             return _playAnimBehavior;
           });
@@ -778,14 +778,14 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(BehaviorExternalInterface
                                                        ChooseNextBehaviorQueue& responseQueue) const
 {
   const BehaviorContainer& BC = behaviorExternalInterface.GetBehaviorContainer();
-  IBehaviorPtr refuseBehavior = BC.FindBehaviorByID(whichRefuse);
+  ICozmoBehaviorPtr refuseBehavior = BC.FindBehaviorByID(whichRefuse);
   DEV_ASSERT(refuseBehavior != nullptr &&
              refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
              "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");
   
   if(refuseBehavior->WantsToBeActivated(behaviorExternalInterface))
   {
-    responseQueue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
+    responseQueue.push([refuseBehavior](const ICozmoBehaviorPtr currentBehavior){ return refuseBehavior;});
     return true;
   }
   return false;
@@ -871,7 +871,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(BehaviorExternalInterface
   howAreYouDoingBehavior->SetAnimationsToPlay(howAreYouDoingAnims);
   if(howAreYouDoingBehavior->WantsToBeActivated(behaviorExternalInterface))
   {
-    responseQueue.push([howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
+    responseQueue.push([howAreYouDoingBehavior](const ICozmoBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
   }
   else
   {

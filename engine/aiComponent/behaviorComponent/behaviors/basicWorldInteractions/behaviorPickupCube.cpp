@@ -42,7 +42,7 @@ static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
@@ -86,7 +86,7 @@ Result BehaviorPickUpCube::OnBehaviorActivated(BehaviorExternalInterface& behavi
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorPickUpCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorPickUpCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // If the block we're going to pickup ever becomes part of an illegal configuration
   // immediately stop the behavior

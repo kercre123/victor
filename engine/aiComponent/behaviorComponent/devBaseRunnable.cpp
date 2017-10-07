@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 
@@ -26,8 +26,8 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DevBaseRunnable::DevBaseRunnable( IBSRunnable* initialDelegate )
-  : IBSRunnable("DevBase")
+DevBaseRunnable::DevBaseRunnable( IBehavior* initialDelegate )
+  : IBehavior("DevBase")
   , _initialDelegate(initialDelegate)
 {
 }
@@ -40,7 +40,7 @@ void DevBaseRunnable::InitInternal(BehaviorExternalInterface& behaviorExternalIn
   // as possible delegates
   for( int i=0; i<(int)BehaviorIDNumEntries; ++i ) {
     const BehaviorID bID = static_cast<BehaviorID>(i);
-    IBehaviorPtr behavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID( bID );
+    ICozmoBehaviorPtr behavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID( bID );
     if( behavior != nullptr ) {
       _possibleDelegates.insert(behavior.get());
     }
@@ -48,7 +48,7 @@ void DevBaseRunnable::InitInternal(BehaviorExternalInterface& behaviorExternalIn
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DevBaseRunnable::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+void DevBaseRunnable::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   // add all behaviors (stored during init)
   delegates.insert(_possibleDelegates.begin(), _possibleDelegates.end());

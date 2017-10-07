@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorPickUpCube_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 
 #include <vector>
@@ -35,9 +35,9 @@ class CompoundActionSequential;
 class ObservableObject;
 
   
-class BehaviorPickUpCube : public IBehavior
+class BehaviorPickUpCube : public ICozmoBehavior
 {
-using super = IBehavior;
+using super = ICozmoBehavior;
 protected:  
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;

@@ -16,7 +16,7 @@
 #define private public
 #define protected public
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
@@ -33,7 +33,7 @@ void SetupBSM(BehaviorSystemManager& bsm,
               std::unique_ptr<Robot>& robot,
               std::unique_ptr<BehaviorContainer>& bc,
               std::unique_ptr<BehaviorExternalInterface>& bei,
-              std::unique_ptr<IBSRunnable>& baseRunnable){
+              std::unique_ptr<IBehavior>& baseRunnable){
   TestBehaviorFramework::GenerateCoreBehaviorTestingComponents(robot, bc, bei);
   
   bc->Init(*bei, !static_cast<bool>(USE_BSM));
@@ -45,8 +45,8 @@ void SetupBSM(BehaviorSystemManager& bsm,
 }
 
 void InjectValidDelegateIntoBSM(BehaviorSystemManager& bsm,
-                                IBSRunnable* delegator,
-                                IBSRunnable* delegated){
+                                IBehavior* delegator,
+                                IBehavior* delegated){
   auto iter = bsm._runnableStack->_delegatesMap.find(delegator);
   if(iter != bsm._runnableStack->_delegatesMap.end()){
     iter->second.insert(delegated);
@@ -59,13 +59,13 @@ TEST(BehaviorSystemManager, TestDelegationVariants)
   std::unique_ptr<Robot> robot;
   std::unique_ptr<BehaviorContainer> bc;
   std::unique_ptr<BehaviorExternalInterface> bei;
-  std::unique_ptr<IBSRunnable> baseRunnable;
+  std::unique_ptr<IBehavior> baseRunnable;
   BehaviorSystemManager bsm;
   SetupBSM(bsm, robot, bc, bei, baseRunnable);
   
   // Check to make sure that the stack exists and control is appropriately delegated
   ASSERT_TRUE(bsm._runnableStack->IsInStack(baseRunnable.get()));
-  IBSRunnable* runnableDelegating = bsm._runnableStack->GetTopOfStack();
+  IBehavior* runnableDelegating = bsm._runnableStack->GetTopOfStack();
   ASSERT_NE(runnableDelegating, nullptr);
   EXPECT_FALSE(bsm.IsControlDelegated(runnableDelegating));
   

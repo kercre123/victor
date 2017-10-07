@@ -167,7 +167,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
 // BehaviorExploreBringCubeToBeacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreBringCubeToBeacon::BehaviorExploreBringCubeToBeacon(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

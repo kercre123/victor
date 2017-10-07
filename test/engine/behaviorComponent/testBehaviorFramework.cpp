@@ -15,7 +15,7 @@
 #define private public
 #define protected public
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/cozmoContext.h"
@@ -77,7 +77,7 @@ namespace Cozmo{
 //////////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TestSuperPoweredRunnable::GetAllDelegates(std::set<IBSRunnable*>& delegates) const {
+void TestSuperPoweredRunnable::GetAllDelegates(std::set<IBehavior*>& delegates) const {
   for(auto& entry: _bc._idToBehaviorMap){
     delegates.insert(entry.second.get());
   }

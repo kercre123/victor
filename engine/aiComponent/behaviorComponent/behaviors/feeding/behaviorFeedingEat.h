@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingEat_H__
 #define __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingEat_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/feedingCubeController.h"
 #include "engine/components/bodyLightComponent.h"
 
@@ -30,7 +30,7 @@ namespace CubeAccelListeners {
 class MovementListener;
 }
 
-class BehaviorFeedingEat : public IBehavior
+class BehaviorFeedingEat : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer
@@ -48,7 +48,7 @@ public:
   void SetTargetObject(const ObjectID& objID){_targetID = objID;}
   
 protected:
-  using base = IBehavior;
+  using base = ICozmoBehavior;
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   // This behavior can't be resumed (cube might not be valid and the None/Robot version of IsRunnable isn't

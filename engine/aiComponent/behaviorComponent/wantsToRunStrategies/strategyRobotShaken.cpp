@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyRobotShaken.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 

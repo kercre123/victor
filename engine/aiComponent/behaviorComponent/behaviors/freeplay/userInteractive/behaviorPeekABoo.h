@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPeekABoo_H__
 #define __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPeekABoo_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorPeekABoo : public IBehavior
+class BehaviorPeekABoo : public ICozmoBehavior
 {
   
 public:
@@ -29,7 +29,7 @@ public:
   void PeekABooSparkStarted(float sparkTimeout);
   
 protected:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
   
   enum State
   {

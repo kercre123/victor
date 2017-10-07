@@ -14,12 +14,12 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorDriveOffCharger_H__
 
 #include "anki/common/basestation/math/pose.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorDriveOffCharger : public IBehavior
+class BehaviorDriveOffCharger : public ICozmoBehavior
 {
 protected:
 
@@ -53,7 +53,7 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  using BaseClass = IBehavior;
+  using BaseClass = ICozmoBehavior;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods

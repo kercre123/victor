@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_GameRequest_BehaviorGameRequest_H__
 #define __Cozmo_Basestation_Behaviors_GameRequest_BehaviorGameRequest_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
@@ -31,11 +31,11 @@ struct RobotDeletedFace;
 struct RobotObservedFace;
 }
 
-class IBehaviorRequestGame : public IBehavior
+class ICozmoBehaviorRequestGame : public ICozmoBehavior
 {
 public:
 
-  IBehaviorRequestGame(const Json::Value& config);
+  ICozmoBehaviorRequestGame(const Json::Value& config);
 
   // final to ensure subclass does not skip. If you need to override in subclass I suggest another internal one
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const final override;
@@ -92,7 +92,7 @@ protected:
   virtual void HandleCliffEvent(BehaviorExternalInterface& behaviorExternalInterface, const EngineToGameEvent& event) {};
 
   // --------------------------------------------------------------------------------
-  // Functions from IBehavior which aren't exposed to children
+  // Functions from ICozmoBehavior which aren't exposed to children
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;
   virtual void AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface) final override;

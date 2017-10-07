@@ -21,7 +21,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorLiftLoadTest_H__
 
 #include "anki/common/basestation/math/pose.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -32,7 +32,7 @@
 namespace Anki {
   namespace Cozmo {
     
-    class BehaviorLiftLoadTest : public IBehavior
+    class BehaviorLiftLoadTest : public ICozmoBehavior
     {
       protected:
         friend class BehaviorContainer;
@@ -51,7 +51,7 @@ namespace Anki {
       
         virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
       
-        virtual IBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+        virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
       
         virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
         

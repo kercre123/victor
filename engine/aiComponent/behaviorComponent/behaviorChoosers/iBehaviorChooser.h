@@ -1,5 +1,5 @@
 /**
- * File: IBSRunnableChooser.h
+ * File: IBehaviorChooser.h
  *
  * Author: Lee
  * Created: 08/20/15, raul 05/03/16
@@ -13,8 +13,8 @@
 #ifndef __Cozmo_Basestation_BehaviorChooser_H__
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "anki/common/types.h"
 #include "util/helpers/noncopyable.h"
 #include <vector>
@@ -31,7 +31,7 @@ namespace Cozmo {
 class Robot;
 
 // Interface for the container and logic associated with holding and choosing behaviors
-class IBSRunnableChooser : public IBSRunnable, private Util::noncopyable
+class IBehaviorChooser : public IBehavior, private Util::noncopyable
 {
 public:
 
@@ -40,30 +40,30 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // constructor/destructor
-  IBSRunnableChooser(BehaviorExternalInterface& behaviorExternalInterface,
-                     const Json::Value& config):IBSRunnable("chooser"){};
-  virtual ~IBSRunnableChooser() {}
+  IBehaviorChooser(BehaviorExternalInterface& behaviorExternalInterface,
+                     const Json::Value& config):IBehavior("chooser"){};
+  virtual ~IBehaviorChooser() {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) = 0;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) = 0;
   
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override {}
+  void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
   
 
 protected:
-  // Functions called by iBSRunnable
+  // Functions called by IBehavior
   virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
 
-  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
+  // Currently unused overrides of IBehavior since no equivalence in old BM system
   void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
@@ -71,7 +71,7 @@ protected:
 
   virtual void OnLeftActivatableScopeInternal() override {};
   
-}; // class IBSRunnableChooser
+}; // class IBehaviorChooser
   
   
 } // namespace Cozmo

@@ -14,16 +14,16 @@
 #define __Cozmo_Basestation_Behaviors_Sparkable_BehaviorPickUpAndPutDownCube_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorPickUpAndPutDownCube : public IBehavior
+class BehaviorPickUpAndPutDownCube : public ICozmoBehavior
 {
-using super = IBehavior;
+using super = ICozmoBehavior;
 protected:  
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;

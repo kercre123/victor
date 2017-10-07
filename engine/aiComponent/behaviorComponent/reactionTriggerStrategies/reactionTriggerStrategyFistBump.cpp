@@ -14,7 +14,7 @@
 
 
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyFistBump.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "util/console/consoleInterface.h"
@@ -111,14 +111,14 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyFistBump::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+void ReactionTriggerStrategyFistBump::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ReactionTriggerStrategyFistBump::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool ReactionTriggerStrategyFistBump::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
@@ -188,7 +188,7 @@ void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEve
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyFistBump::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
+void ReactionTriggerStrategyFistBump::BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior)
 {
   behavior->AddListener(this);
 }

@@ -17,11 +17,11 @@
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
 
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
@@ -525,10 +525,10 @@ void ActivityFreeplay::CalculateDesiredActivityFromObjects(BehaviorExternalInter
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivityFreeplay::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
   // returned variable
-  IBehaviorPtr chosenBehavior = nullptr;
+  ICozmoBehaviorPtr chosenBehavior = nullptr;
   const bool hasActivityAtStart = (_currentActivityPtr != nullptr);
   
   // see if anything causes an activity change

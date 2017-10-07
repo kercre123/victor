@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include <vector>
 
 namespace Anki {
@@ -21,10 +21,10 @@ namespace Cozmo {
 
 class ICompoundAction;
   
-class BehaviorReactToCliff : public IBehavior
+class BehaviorReactToCliff : public ICozmoBehavior
 {
 private:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
@@ -45,7 +45,7 @@ protected:
   virtual Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
 
 private:
-  using base = IBehavior;
+  using base = ICozmoBehavior;
   enum class State {
     PlayingStopReaction,
     PlayingCliffReaction,

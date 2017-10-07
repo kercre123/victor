@@ -62,7 +62,7 @@ ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(BehaviorExter
 bool ActivityStrategyFPPlayWithHumans::WantsToStartInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityRanSec) const
 {
   // TODO if it requires a face, check that we have one registered
-  // Check which behaviors need face, how the do it (specially IBehaviorRequestGame::HasFace), and make the proper
+  // Check which behaviors need face, how the do it (specially ICozmoBehaviorRequestGame::HasFace), and make the proper
   // checks here for whether we should start
   
   // In any case, at least having games available is a requirement

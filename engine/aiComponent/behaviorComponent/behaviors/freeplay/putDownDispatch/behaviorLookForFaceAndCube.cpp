@@ -38,7 +38,7 @@ static constexpr const int kNumFramesToWaitForUnNamedFace = 3;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLookForFaceAndCube::BehaviorLookForFaceAndCube(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _configParams{}
 , _currentSidePicksDone(0)
 , _currentState(State::Done)

@@ -18,8 +18,8 @@
 #include "engine/aiComponent/severeNeedsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/bsRunnableChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
@@ -187,7 +187,7 @@ ActivityFeeding::ActivityFeeding(BehaviorExternalInterface& behaviorExternalInte
   ////////
   {
     const Json::Value& universalChooserJSON = config[kUniversalChooser];
-    _universalResponseChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(
+    _universalResponseChooser = BehaviorChooserFactory::CreateBehaviorChooser(
                                     behaviorExternalInterface,
                                     universalChooserJSON);
     DEV_ASSERT(_universalResponseChooser != nullptr,
@@ -214,10 +214,10 @@ ActivityFeeding::ActivityFeeding(BehaviorExternalInterface& behaviorExternalInte
     {FeedingActivityStage::WaitingForFullyCharged,        _waitBehavior},
     {FeedingActivityStage::ReactingToFullyCharged,        _reactFullCubeBehavior},
     {FeedingActivityStage::ReactingToFullyCharged_Severe, _reactFullCubeBehavior_Severe},
-    {FeedingActivityStage::SearchingForCube,              std::static_pointer_cast<IBehavior>(_searchForCubeBehavior)},
+    {FeedingActivityStage::SearchingForCube,              std::static_pointer_cast<ICozmoBehavior>(_searchForCubeBehavior)},
     {FeedingActivityStage::ReactingToSeeCharged,         _reactSeeCharged},
     {FeedingActivityStage::ReactingToSeeCharged_Severe,  _reactSeeCharged_Severe},
-    {FeedingActivityStage::EatFood,                       std::static_pointer_cast<IBehavior>(_eatFoodBehavior)}
+    {FeedingActivityStage::EatFood,                       std::static_pointer_cast<ICozmoBehavior>(_eatFoodBehavior)}
   };
   
   // TODO:(bn) maybe this should be a function with a switch statement instead?
@@ -383,9 +383,9 @@ void ActivityFeeding::OnDeactivatedActivity(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  IBehaviorPtr bestBehavior;
+  ICozmoBehaviorPtr bestBehavior;
 
   // First check for universal responses - eg drive off charger
   if(_universalResponseChooser){
@@ -726,7 +726,7 @@ void ActivityFeeding::TransitionToBestActivityStage(BehaviorExternalInterface& b
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityFeeding::GetBestBehaviorFromMap() const
+ICozmoBehaviorPtr ActivityFeeding::GetBestBehaviorFromMap() const
 {
   const auto& iter = _stageToBehaviorMap.find(_activityStage);
   if(iter != _stageToBehaviorMap.end()){
@@ -985,7 +985,7 @@ void ActivityFeeding::SetIdleForCurrentStage(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ActivityFeeding::HasSingleBehaviorStageStarted(IBehaviorPtr behavior)
+bool ActivityFeeding::HasSingleBehaviorStageStarted(ICozmoBehaviorPtr behavior)
 {
   if(behavior != nullptr){
     return behavior->GetTimeStartedRunning_s() >= _lastStageChangeTime_s;

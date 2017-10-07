@@ -15,7 +15,7 @@
 
 #include "engine/robot.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -34,14 +34,14 @@ ReactionTriggerStrategySparked::ReactionTriggerStrategySparked(BehaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategySparked::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+void ReactionTriggerStrategySparked::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   behavior->WantsToBeActivated(behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -60,7 +60,7 @@ bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(BehaviorExter
   const bool cancelCurrentReaction = (robot.GetBehaviorManager().GetRequestedSpark() != UnlockId::Count) &&
                                      (robot.GetBehaviorManager().GetActiveSpark() != robot.GetBehaviorManager().GetRequestedSpark());
   
-  const IBehaviorPtr currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
+  const ICozmoBehaviorPtr currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
   const bool behaviorWhitelisted = (currentBehavior != nullptr &&
                                     ((currentBehavior->GetClass() == BehaviorClass::ReactToCliff) ||
                                      (currentBehavior->GetClass() == BehaviorClass::ReactToSparked)));

@@ -22,7 +22,7 @@
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/robot.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -46,23 +46,23 @@ void IHelper::DelegateProperties::ClearDelegateProperties()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::DelegateProperties::SucceedImmediatelyOnDelegateFailure()
 {
-  SetOnSuccessFunction( [](BehaviorExternalInterface& behaviorExternalInterface) { return IBehavior::Status::Complete; } );
+  SetOnSuccessFunction( [](BehaviorExternalInterface& behaviorExternalInterface) { return ICozmoBehavior::Status::Complete; } );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::DelegateProperties::FailImmediatelyOnDelegateFailure()
 {
-  SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface) { return IBehavior::Status::Failure; } );
+  SetOnFailureFunction( [](BehaviorExternalInterface& behaviorExternalInterface) { return ICozmoBehavior::Status::Failure; } );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IHelper::IHelper(const std::string& name,
                  BehaviorExternalInterface& behaviorExternalInterface,
-                 IBehavior& behavior,
+                 ICozmoBehavior& behavior,
                  BehaviorHelperFactory& helperFactory)
-: IBSRunnable(name)
-, _status(IBehavior::Status::Complete)
+: IBehavior(name)
+, _status(ICozmoBehavior::Status::Complete)
 , _name(name)
 , _hasStarted(false)
 , _onSuccessFunction(nullptr)
@@ -75,7 +75,7 @@ IHelper::IHelper(const std::string& name,
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status IHelper::UpdateWhileActive(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle& delegateToSet)
+ICozmoBehavior::Status IHelper::UpdateWhileActive(BehaviorExternalInterface& behaviorExternalInterface, HelperHandle& delegateToSet)
 {
   
   bool tickUpdate = true;
@@ -87,7 +87,7 @@ IBehavior::Status IHelper::UpdateWhileActive(BehaviorExternalInterface& behavior
     _timeStarted_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _status = Init(behaviorExternalInterface);
     // If a delegate has been set, don't tick update while active
-    if(_status != IBehavior::Status::Running ||
+    if(_status != ICozmoBehavior::Status::Running ||
        _delegateAfterUpdate.GetDelegateToSet() != nullptr){
       tickUpdate = false;
     }
@@ -111,7 +111,7 @@ IBehavior::Status IHelper::UpdateWhileActive(BehaviorExternalInterface& behavior
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  _status = IBehavior::Status::Running;
+  _status = ICozmoBehavior::Status::Running;
   _hasStarted = false;
   _onSuccessFunction = nullptr;
   _onFailureFunction = nullptr;
@@ -168,17 +168,17 @@ void IHelper::LogStopEvent(bool isActive)
   };    
 
   switch( _status ) {
-    case IBehavior::Status::Complete: {
+    case ICozmoBehavior::Status::Complete: {
       logEventWithName("robot.behavior_helper.success");
       break;
     }
 
-    case IBehavior::Status::Failure: {
+    case ICozmoBehavior::Status::Failure: {
       logEventWithName("robot.behavior_helper.failure");
       break;
     }
 
-    case IBehavior::Status::Running:
+    case ICozmoBehavior::Status::Running:
       // if we were running, then we must have been canceled. If we were active, then we were canceled
       // directly, if we are not active, we were canceled as part of the stack being cleared
       if( isActive ) {
@@ -193,7 +193,7 @@ void IHelper::LogStopEvent(bool isActive)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status IHelper::OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status IHelper::OnDelegateSuccess(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_DEBUG("BehaviorHelpers", "IHelper.OnDelegateSuccess", "%s",
                  GetName().c_str());
@@ -210,7 +210,7 @@ IBehavior::Status IHelper::OnDelegateSuccess(BehaviorExternalInterface& behavior
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status IHelper::OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status IHelper::OnDelegateFailure(BehaviorExternalInterface& behaviorExternalInterface)
 {
   PRINT_CH_INFO("BehaviorHelpers", "IHelper.OnDelegateFailure", "%s",
                 GetName().c_str());
@@ -226,7 +226,7 @@ IBehavior::Status IHelper::OnDelegateFailure(BehaviorExternalInterface& behavior
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IHelper::DelegateIfInControl(IActionRunner* action, IBehavior::ActionResultWithRobotCallback callback)
+bool IHelper::DelegateIfInControl(IActionRunner* action, ICozmoBehavior::ActionResultWithRobotCallback callback)
 {
   return _behaviorToCallActionsOn.DelegateIfInControl(action, callback);
 }

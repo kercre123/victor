@@ -15,7 +15,7 @@
 
 
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/externalInterface/externalInterface_fwd.h"
 #include "json/json-forwards.h"
 #include "util/helpers/templateHelpers.h"
@@ -93,7 +93,7 @@ public:
 protected:
 
   // get next behavior by properly managing the sub-activities
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
   
 private:
 

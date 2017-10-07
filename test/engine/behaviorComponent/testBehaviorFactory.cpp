@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/cozmoContext.h"
@@ -102,7 +102,7 @@ static const char* kTestBehaviorJson =
 static const BehaviorID expectedID = BehaviorID::Wait;
 
 // verifies that behavior matches expected data based on the Json above and factory contains it correctly
-void VerifyBehavior(const IBehaviorPtr inBehavior, const BehaviorContainer& behaviorContainer, size_t expectedBehaviorCount)
+void VerifyBehavior(const ICozmoBehaviorPtr inBehavior, const BehaviorContainer& behaviorContainer, size_t expectedBehaviorCount)
 {
   EXPECT_EQ(inBehavior->GetID(), expectedID);
   
@@ -149,7 +149,7 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
                                                                                        testRobot.GetBlockWorld(),
                                                                                        testRobot.GetFaceWorld());
 
-  IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
+  ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
   newBehavior->Init(*behaviorExternalInterface);
   ASSERT_NE(newBehavior, nullptr);
   

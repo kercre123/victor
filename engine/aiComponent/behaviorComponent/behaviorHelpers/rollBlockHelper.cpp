@@ -37,7 +37,7 @@ static const int kMaxNumRetrys = 3;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RollBlockHelper::RollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                 IBehavior& behavior,
+                                 ICozmoBehavior& behavior,
                                  BehaviorHelperFactory& helperFactory,
                                  const ObjectID& targetID,
                                  bool rollToUpright,

@@ -48,7 +48,7 @@ static const char* kRandomDriveMaxAngleKey_deg = "randomDriveMaxAngle_deg";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToFrustration::BehaviorReactToFrustration(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   LoadJson(config);
 }

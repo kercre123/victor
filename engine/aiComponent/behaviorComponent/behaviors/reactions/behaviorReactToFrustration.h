@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToFrustration_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToFrustration_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
 #include <vector>
 
@@ -22,7 +22,7 @@ namespace Cozmo {
 
 class IFrustrationListener;
   
-class BehaviorReactToFrustration : public IBehavior
+class BehaviorReactToFrustration : public ICozmoBehavior
 {
 private:
   // Enforce creation through BehaviorContainer

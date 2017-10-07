@@ -12,12 +12,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToOnCharger_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToOnCharger_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToOnCharger : public IBehavior
+class BehaviorReactToOnCharger : public ICozmoBehavior
 {
 private:
   

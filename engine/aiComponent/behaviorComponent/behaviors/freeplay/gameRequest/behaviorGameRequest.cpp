@@ -37,12 +37,12 @@ static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorRequestGame::IBehaviorRequestGame(const Json::Value& config)
-: IBehavior(config)
+ICozmoBehaviorRequestGame::ICozmoBehaviorRequestGame(const Json::Value& config)
+: ICozmoBehavior(config)
 , _blockworldFilter( new BlockWorldFilter )
 {
   if( config.isNull() ) {
-    PRINT_NAMED_ERROR("IBehaviorRequestGame.Config.Error",
+    PRINT_NAMED_ERROR("ICozmoBehaviorRequestGame.Config.Error",
                         "Empty json config! This behavior will not function correctly");
   }
   else {
@@ -51,7 +51,7 @@ IBehaviorRequestGame::IBehaviorRequestGame(const Json::Value& config)
       if( val.isUInt() ) {
         _maxFaceAge_ms = val.asUInt();
 
-        PRINT_NAMED_DEBUG("IBehaviorRequestGame.MaxFaceAgeOverride",
+        PRINT_NAMED_DEBUG("ICozmoBehaviorRequestGame.MaxFaceAgeOverride",
                           "custom max face age value %dms",
                           _maxFaceAge_ms);
       }
@@ -71,14 +71,14 @@ IBehaviorRequestGame::IBehaviorRequestGame(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
   
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
-  _blockworldFilter->SetFilterFcn( std::bind( &IBehaviorRequestGame::FilterBlocks,
+  _blockworldFilter->SetFilterFcn( std::bind( &ICozmoBehaviorRequestGame::FilterBlocks,
                                              this,
                                              &robot,
                                              std::placeholders::_1) );
@@ -86,7 +86,7 @@ void IBehaviorRequestGame::InitBehavior(BehaviorExternalInterface& behaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
+bool ICozmoBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {  
   // Save some computation by checking wether this request is the one the request component
   // wants next first
@@ -99,7 +99,7 @@ bool IBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInterface&
   const bool hasFace = HasFace(behaviorExternalInterface);
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
-    PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable",
+    PRINT_NAMED_DEBUG("ICozmoBehaviorRequestGame.IsRunnable",
                       "'%s': hasFace?%d (numBlocks=%d)",
                       GetIDStr().c_str(),
                       hasFace,
@@ -111,7 +111,7 @@ bool IBehaviorRequestGame::WantsToBeActivatedBehavior(BehaviorExternalInterface&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result IBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
+Result ICozmoBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _requestTime_s = -1.0f;
   _robotsBlockID.UnSet();
@@ -122,7 +122,7 @@ Result IBehaviorRequestGame::OnBehaviorActivated(BehaviorExternalInterface& beha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::SendRequest(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::SendRequest(BehaviorExternalInterface& behaviorExternalInterface)
 {
   using namespace ExternalInterface;
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -138,7 +138,7 @@ void IBehaviorRequestGame::SendRequest(BehaviorExternalInterface& behaviorExtern
   robot.GetPublicStateBroadcaster().UpdateRequestingGame(true);
 }
 
-void IBehaviorRequestGame::SendDeny(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::SendDeny(BehaviorExternalInterface& behaviorExternalInterface)
 {
   using namespace ExternalInterface;
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -150,7 +150,7 @@ void IBehaviorRequestGame::SendDeny(BehaviorExternalInterface& behaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const ObservableObject* obj) const
+bool ICozmoBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const ObservableObject* obj) const
 {
 
   // if we have the "cube roll" behavior unlocked, then only do a game request with an upright
@@ -181,7 +181,7 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-u32 IBehaviorRequestGame::GetNumBlocks(BehaviorExternalInterface& behaviorExternalInterface) const
+u32 ICozmoBehaviorRequestGame::GetNumBlocks(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   std::vector<const ObservableObject*> blocks;
   behaviorExternalInterface.GetBlockWorld().FindLocatedMatchingObjects(*_blockworldFilter, blocks);
@@ -191,14 +191,14 @@ u32 IBehaviorRequestGame::GetNumBlocks(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ObservableObject* IBehaviorRequestGame::GetClosestBlock(BehaviorExternalInterface& behaviorExternalInterface) const
+const ObservableObject* ICozmoBehaviorRequestGame::GetClosestBlock(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   return behaviorExternalInterface.GetBlockWorld().FindMostRecentlyObservedObject( *_blockworldFilter );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID IBehaviorRequestGame::GetRobotsBlockID(BehaviorExternalInterface& behaviorExternalInterface)
+ObjectID ICozmoBehaviorRequestGame::GetRobotsBlockID(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( ! _robotsBlockID.IsSet() ) {
     // set the block ID, but then leave it the same for the duration of the behavior
@@ -217,7 +217,7 @@ ObjectID IBehaviorRequestGame::GetRobotsBlockID(BehaviorExternalInterface& behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorRequestGame::SwitchRobotsBlock(BehaviorExternalInterface& behaviorExternalInterface)
+bool ICozmoBehaviorRequestGame::SwitchRobotsBlock(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( ! _robotsBlockID.IsSet() ) {
     // robot doesn't have a block, so just try to get it now
@@ -251,7 +251,7 @@ bool IBehaviorRequestGame::SwitchRobotsBlock(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
+bool ICozmoBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 {
   if( _hasBlockPose ) {
     pose = _lastBlockPose;
@@ -261,7 +261,7 @@ bool IBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status IBehaviorRequestGame::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status ICozmoBehaviorRequestGame::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const ObservableObject* obj = GetClosestBlock(behaviorExternalInterface);
   if( obj != nullptr ) {
@@ -274,7 +274,7 @@ IBehavior::Status IBehaviorRequestGame::UpdateInternal_WhileRunning(BehaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorRequestGame::HasFace(BehaviorExternalInterface& behaviorExternalInterface) const
+bool ICozmoBehaviorRequestGame::HasFace(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   Pose3d waste;
   return GetFacePose(behaviorExternalInterface, waste);
@@ -282,7 +282,7 @@ bool IBehaviorRequestGame::HasFace(BehaviorExternalInterface& behaviorExternalIn
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehaviorRequestGame::GetFacePose(BehaviorExternalInterface& behaviorExternalInterface, Pose3d& facePoseWrtRobotOrigin) const
+bool ICozmoBehaviorRequestGame::GetFacePose(BehaviorExternalInterface& behaviorExternalInterface, Pose3d& facePoseWrtRobotOrigin) const
 {
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001f ) );
@@ -297,7 +297,7 @@ bool IBehaviorRequestGame::GetFacePose(BehaviorExternalInterface& behaviorExtern
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -314,7 +314,7 @@ void IBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, Behavior
       break;
 
     default:
-      PRINT_NAMED_WARNING("IBehaviorRequestGame.InvalidTag",
+      PRINT_NAMED_WARNING("ICozmoBehaviorRequestGame.InvalidTag",
                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
       break;
   }
@@ -322,7 +322,7 @@ void IBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, Behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(event.GetData().GetTag())
   {
@@ -335,7 +335,7 @@ void IBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, Behavior
       break;
       
     default:
-      PRINT_NAMED_WARNING("IBehaviorRequestGame.AlwaysHandle.InvalidTag",
+      PRINT_NAMED_WARNING("ICozmoBehaviorRequestGame.AlwaysHandle.InvalidTag",
                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
       break;
   }
@@ -343,7 +343,7 @@ void IBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, Behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( event.GetData().GetTag() == EngineToGameTag::CliffEvent ) {
     HandleCliffEvent(behaviorExternalInterface, event);
@@ -352,7 +352,7 @@ void IBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, Be
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( event.GetData().GetTag() == GameToEngineTag::DenyGameStart ) {
     HandleGameDeniedRequest(behaviorExternalInterface);
@@ -368,14 +368,14 @@ void IBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, Be
     }
   }
   else {
-    PRINT_NAMED_WARNING("IBehaviorRequestGame.HandleWhileRunning.InvalidTag",
+    PRINT_NAMED_WARNING("ICozmoBehaviorRequestGame.HandleWhileRunning.InvalidTag",
                         "Received unexpected event with tag %hhu.", event.GetData().GetTag());
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::HandleObservedFace(BehaviorExternalInterface& behaviorExternalInterface,
+void ICozmoBehaviorRequestGame::HandleObservedFace(BehaviorExternalInterface& behaviorExternalInterface,
                                               const ExternalInterface::RobotObservedFace& msg)
 {
   // If faceID not already set or we're not currently tracking the update the faceID
@@ -389,7 +389,7 @@ void IBehaviorRequestGame::HandleObservedFace(BehaviorExternalInterface& behavio
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg)
+void ICozmoBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg)
 {
   if (_faceID == msg.faceID) {
     _faceID = Vision::UnknownFaceID;
@@ -398,7 +398,7 @@ void IBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::RobotDelet
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehaviorRequestGame::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void ICozmoBehaviorRequestGame::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed

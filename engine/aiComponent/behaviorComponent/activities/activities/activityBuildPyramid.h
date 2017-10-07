@@ -54,7 +54,7 @@ public:
   };
   
 protected:
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -70,9 +70,9 @@ private:
   /// General Chooser structs/tracking
   ///////  
   // Scored behavior choosers that take over when strict priority isn't necessary
-  IBSRunnableChooser*                  _activeBehaviorChooser; // One of the two choosers from below
-  std::unique_ptr<IBSRunnableChooser>  _setupSimpleChooser;
-  std::unique_ptr<IBSRunnableChooser>  _buildSimpleChooser;
+  IBehaviorChooser*                  _activeBehaviorChooser; // One of the two choosers from below
+  std::unique_ptr<IBehaviorChooser>  _setupSimpleChooser;
+  std::unique_ptr<IBehaviorChooser>  _buildSimpleChooser;
   
   std::vector<Signal::SmartHandle> _eventHandlers;
   // Maps a light cube type (in case objectIDs are re-assigned for disconnected objects)
@@ -136,18 +136,18 @@ private:
   ///////
   
   // sub-behaviors to keep choosing behavior code cleaner based on stage
-  IBehaviorPtr ChooseNextBehaviorSetup(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
-  IBehaviorPtr ChooseNextBehaviorBuilding(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
+  ICozmoBehaviorPtr ChooseNextBehaviorSetup(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
+  ICozmoBehaviorPtr ChooseNextBehaviorBuilding(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
   
   // These behaviors return a behavior pointer that should be choosen if they want something run
   // and nullptr if the requester should select a behavior given its own criteria
-  IBehaviorPtr CheckForShouldThankUser(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
-  IBehaviorPtr CheckForResponsePossiblyRoll(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
+  ICozmoBehaviorPtr CheckForShouldThankUser(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
+  ICozmoBehaviorPtr CheckForResponsePossiblyRoll(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
   
   // Some behaviors run directly by the chooser set properties once they've reached a
   // certain state.  This function ticks those behaviors when appropriate to find out
   // whether the PropertiesTracker needs to be updated to reflect the behavior's success
-  void UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
+  void UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
   
   
   ////////

@@ -48,7 +48,7 @@ public:
   virtual void EatingInterrupted(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 protected:
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -94,23 +94,23 @@ private:
   std::vector<Signal::SmartHandle> _eventHandlers;
   
   // Chooser which manages universal response behaviors
-  std::unique_ptr<IBSRunnableChooser> _universalResponseChooser;
+  std::unique_ptr<IBehaviorChooser> _universalResponseChooser;
   
   // Behaviors that the chooser calls directly
-  IBehaviorPtr _searchingForFaceBehavior;
-  IBehaviorPtr _searchingForFaceBehavior_Severe;
-  IBehaviorPtr _turnToFaceBehavior;
-  IBehaviorPtr _turnToFaceBehavior_Severe;
+  ICozmoBehaviorPtr _searchingForFaceBehavior;
+  ICozmoBehaviorPtr _searchingForFaceBehavior_Severe;
+  ICozmoBehaviorPtr _turnToFaceBehavior;
+  ICozmoBehaviorPtr _turnToFaceBehavior_Severe;
   std::shared_ptr<BehaviorFeedingSearchForCube> _searchForCubeBehavior;
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
   
-  IBehaviorPtr _waitBehavior;
-  IBehaviorPtr _reactCubeShakeBehavior;
-  IBehaviorPtr _reactCubeShakeBehavior_Severe;
-  IBehaviorPtr _reactFullCubeBehavior;
-  IBehaviorPtr _reactFullCubeBehavior_Severe;
-  IBehaviorPtr _reactSeeCharged;
-  IBehaviorPtr _reactSeeCharged_Severe;
+  ICozmoBehaviorPtr _waitBehavior;
+  ICozmoBehaviorPtr _reactCubeShakeBehavior;
+  ICozmoBehaviorPtr _reactCubeShakeBehavior_Severe;
+  ICozmoBehaviorPtr _reactFullCubeBehavior;
+  ICozmoBehaviorPtr _reactFullCubeBehavior_Severe;
+  ICozmoBehaviorPtr _reactSeeCharged;
+  ICozmoBehaviorPtr _reactSeeCharged_Severe;
 
   
   
@@ -130,14 +130,14 @@ private:
   // e.g. wait for a cube to shake, search for a shaken cube etc.
   void TransitionToBestActivityStage(BehaviorExternalInterface& behaviorExternalInterface);
 
-  IBehaviorPtr GetBestBehaviorFromMap() const;
+  ICozmoBehaviorPtr GetBestBehaviorFromMap() const;
   
   // Handle object connection state issues
   void HandleObjectConnectionStateChange(BehaviorExternalInterface& behaviorExternalInterface, const ObjectConnectionState& connectionState);
   
   void ClearSevereAnims(BehaviorExternalInterface& behaviorExternalInterface);
   
-  bool HasSingleBehaviorStageStarted(IBehaviorPtr behavior);
+  bool HasSingleBehaviorStageStarted(ICozmoBehaviorPtr behavior);
 
   bool HasFaceToTurnTo(BehaviorExternalInterface& behaviorExternalInterface) const;
   
@@ -146,7 +146,7 @@ private:
   void SendCubeDasEventsIfNeeded();
   
   // Setup map
-  std::map<FeedingActivityStage, IBehaviorPtr> _stageToBehaviorMap;
+  std::map<FeedingActivityStage, ICozmoBehaviorPtr> _stageToBehaviorMap;
 };
 
 

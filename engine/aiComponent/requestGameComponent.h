@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_AIComponent_RequestGameComponent_H__
 
 #include "anki/common/types.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
@@ -58,7 +58,7 @@ protected:
   // RequestGame should be the only class that registers a game has been requested
   // when it's actually completed making the request so that the behavior isn't
   // penalized if it's interrupted before it makes the request
-  friend class IBehaviorRequestGame;
+  friend class ICozmoBehaviorRequestGame;
   void RegisterRequestingGameType(UnlockId unlockID);
   
 private:

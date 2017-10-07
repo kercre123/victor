@@ -1,5 +1,5 @@
 /**
- * File: SelectionBSRunnableChooser.h
+ * File: SelectionBehaviorChooser.h
  *
  * Author: Lee Crippen
  * Created: 10/15/15
@@ -10,10 +10,10 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBSRunnableChooser_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBSRunnableChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
 
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -24,19 +24,19 @@ namespace Anki {
 namespace Cozmo {
   
 // forward declarations
-class IBehavior;
+class ICozmoBehavior;
 class Robot;
 namespace ExternalInterface {
   class MessageGameToEngine;
 }
 template<typename T>class AnkiEvent;
   
-class SelectionBSRunnableChooser : public IBSRunnableChooser
+class SelectionBehaviorChooser : public IBehaviorChooser
 {
 public:
-  SelectionBSRunnableChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  SelectionBehaviorChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
   
-  virtual IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
   
   // events to notify the chooser when it becomes (in)active
   virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -45,13 +45,13 @@ public:
 protected:
   BehaviorExternalInterface& _behaviorExternalInterface;
   std::vector<Signal::SmartHandle> _eventHandlers;
-  IBehaviorPtr _selectedBehavior = nullptr;
-  IBehaviorPtr _behaviorWait;
+  ICozmoBehaviorPtr _selectedBehavior = nullptr;
+  ICozmoBehaviorPtr _behaviorWait;
   
   void HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
     
   // requests enabling processes required by behaviors when they are the selected one
-  void SetProcessEnabled(const IBehaviorPtr behavior, bool newValue);
+  void SetProcessEnabled(const ICozmoBehaviorPtr behavior, bool newValue);
   
 private:
   // Number of times to run the selected behavior
@@ -61,9 +61,9 @@ private:
   // Whether or not the selected behavior is running
   bool _selectedBehaviorIsRunning = false;
   
-}; // class SelectionBSRunnableChooser
+}; // class SelectionBehaviorChooser
   
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_SelectionBSRunnableChooser_H__
+#endif // __Cozmo_Basestation_SelectionBehaviorChooser_H__

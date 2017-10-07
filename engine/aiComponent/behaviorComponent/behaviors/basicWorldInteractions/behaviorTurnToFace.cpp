@@ -28,7 +28,7 @@ namespace {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTurnToFace::BehaviorTurnToFace(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   
 }

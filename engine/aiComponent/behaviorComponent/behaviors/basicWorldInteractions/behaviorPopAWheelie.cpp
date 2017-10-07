@@ -68,7 +68,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPopAWheel
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

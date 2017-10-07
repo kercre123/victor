@@ -36,7 +36,7 @@ static const int kMaxNumRetrys = 3;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DriveToHelper::DriveToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                   IBehavior& behavior,
+                                   ICozmoBehavior& behavior,
                                    BehaviorHelperFactory& helperFactory,
                                    const ObjectID& targetID,
                                    const DriveToParameters& params)

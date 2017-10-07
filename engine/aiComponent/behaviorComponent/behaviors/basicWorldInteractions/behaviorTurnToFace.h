@@ -15,13 +15,13 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorTurnToFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorTurnToFace_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorTurnToFace : public IBehavior
+class BehaviorTurnToFace : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer

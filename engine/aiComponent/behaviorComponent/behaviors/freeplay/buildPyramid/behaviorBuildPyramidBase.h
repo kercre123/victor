@@ -15,7 +15,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorBuildPyramidBase_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/common/basestation/objectIDs.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -29,7 +29,7 @@ class BuildPyramidPersistentUpdate;
 enum class AnimationTrigger;
 struct ObjectLights;
   
-class BehaviorBuildPyramidBase : public IBehavior
+class BehaviorBuildPyramidBase : public ICozmoBehavior
 {
 protected:
   friend class BuildPyramidBehaviorChooser;

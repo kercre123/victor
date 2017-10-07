@@ -111,7 +111,7 @@ BehaviorContainer::BehaviorContainer(const BehaviorIDJsonMap& behaviorData)
     if (!behaviorJson.empty())
     {
       // PRINT_NAMED_DEBUG("BehaviorContainer.Constructor", "Loading '%s'", fullFileName.c_str());
-      IBehaviorPtr newBehaviorPtr = CreateBehavior(behaviorJson);
+      ICozmoBehaviorPtr newBehaviorPtr = CreateBehavior(behaviorJson);
       if ( newBehaviorPtr == nullptr ) {
         PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed",
                           "Failed to create a behavior for behavior id '%s'",
@@ -168,9 +168,9 @@ void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorContainer::FindBehaviorByID(BehaviorID behaviorID) const
+ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByID(BehaviorID behaviorID) const
 {
-  IBehaviorPtr foundBehavior = nullptr;
+  ICozmoBehaviorPtr foundBehavior = nullptr;
   
   auto scoredIt = _idToBehaviorMap.find(behaviorID);
   if (scoredIt != _idToBehaviorMap.end())
@@ -184,7 +184,7 @@ IBehaviorPtr BehaviorContainer::FindBehaviorByID(BehaviorID behaviorID) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
+ICozmoBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
   for(const auto behavior : _idToBehaviorMap)
   {
@@ -205,7 +205,7 @@ void BehaviorContainer::VerifyExecutableBehaviors() const
   std::map< ExecutableBehaviorType, BehaviorID > executableBehaviorMap;
     
   for( const auto& it : _idToBehaviorMap ) {
-    IBehaviorPtr behaviorPtr = it.second;
+    ICozmoBehaviorPtr behaviorPtr = it.second;
     const ExecutableBehaviorType executableBehaviorType = behaviorPtr->GetExecutableType();
     if( executableBehaviorType != ExecutableBehaviorType::Count )
     {
@@ -235,305 +235,305 @@ void BehaviorContainer::VerifyExecutableBehaviors() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorContainer::CreateBehavior(const Json::Value& behaviorJson)
+ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(const Json::Value& behaviorJson)
 {
-  const BehaviorClass behaviorClass = IBehavior::ExtractBehaviorClassFromConfig(behaviorJson);
-  IBehaviorPtr newBehavior = CreateBehavior(behaviorClass, behaviorJson);
+  const BehaviorClass behaviorClass = ICozmoBehavior::ExtractBehaviorClassFromConfig(behaviorJson);
+  ICozmoBehaviorPtr newBehavior = CreateBehavior(behaviorClass, behaviorJson);
   return newBehavior;  
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, const Json::Value& config)
+ICozmoBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, const Json::Value& config)
 {
-  IBehaviorPtr newBehavior;
+  ICozmoBehaviorPtr newBehavior;
   
   switch (behaviorType)
   {
     case BehaviorClass::Wait:
     {
-      newBehavior = IBehaviorPtr(new BehaviorWait(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorWait(config));
       break;
     }
     case BehaviorClass::Bouncer:
     {
-      newBehavior = IBehaviorPtr(new BehaviorBouncer(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBouncer(config));
       break;
     }
     case BehaviorClass::LookAround:
     {
-      newBehavior = IBehaviorPtr(new BehaviorLookAround(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLookAround(config));
       break;
     }
     case BehaviorClass::InteractWithFaces:
     {
-      newBehavior = IBehaviorPtr(new BehaviorInteractWithFaces(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorInteractWithFaces(config));
       break;
     }
     case BehaviorClass::PlayAnim:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPlayAnimSequence(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimSequence(config));
       break;
     }
     case BehaviorClass::PlayAnimWithFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPlayAnimSequenceWithFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimSequenceWithFace(config));
       break;
     }
     case BehaviorClass::PlayArbitraryAnim:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPlayArbitraryAnim(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayArbitraryAnim(config));
       break;
     }
     case BehaviorClass::PounceOnMotion:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPounceOnMotion(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPounceOnMotion(config));
       break;
     }
     case BehaviorClass::FindFaces:
     {
-      newBehavior = IBehaviorPtr(new BehaviorFindFaces(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFindFaces(config));
       break;
     }
     case BehaviorClass::FistBump:
     {
-      newBehavior = IBehaviorPtr(new BehaviorFistBump(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFistBump(config));
       break;
     }
     case BehaviorClass::GuardDog:
     {
-      newBehavior = IBehaviorPtr(new BehaviorGuardDog(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorGuardDog(config));
       break;
     }
     case BehaviorClass::RequestGameSimple:
     {
-      newBehavior = IBehaviorPtr(new BehaviorRequestGameSimple(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorRequestGameSimple(config));
       break;
     }
     case BehaviorClass::ExploreLookAroundInPlace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorExploreLookAroundInPlace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorExploreLookAroundInPlace(config));
       break;
     }
     case BehaviorClass::ExploreVisitPossibleMarker:
     {
-      newBehavior = IBehaviorPtr(new BehaviorExploreVisitPossibleMarker(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorExploreVisitPossibleMarker(config));
       break;
     }
     case BehaviorClass::BringCubeToBeacon:
     {
-      newBehavior = IBehaviorPtr(new BehaviorExploreBringCubeToBeacon(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorExploreBringCubeToBeacon(config));
       break;
     }
     case BehaviorClass::LookInPlaceMemoryMap:
     {
-      newBehavior = IBehaviorPtr(new BehaviorLookInPlaceMemoryMap(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLookInPlaceMemoryMap(config));
       break;
     }
     case BehaviorClass::ThinkAboutBeacons:
     {
-      newBehavior = IBehaviorPtr(new BehaviorThinkAboutBeacons(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorThinkAboutBeacons(config));
       break;
     }
     case BehaviorClass::VisitInterestingEdge:
     {
-      newBehavior = IBehaviorPtr(new BehaviorVisitInterestingEdge(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorVisitInterestingEdge(config));
       break;
     }
     case BehaviorClass::RollBlock:
     {
-      newBehavior = IBehaviorPtr(new BehaviorRollBlock(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorRollBlock(config));
       break;
     }
     case BehaviorClass::FactoryTest:
     {
-      newBehavior = IBehaviorPtr(new BehaviorFactoryTest(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFactoryTest(config));
       break;
     }
     case BehaviorClass::FactoryCentroidExtractor:
     {
-      newBehavior = IBehaviorPtr(new BehaviorFactoryCentroidExtractor(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFactoryCentroidExtractor(config));
       break;
     }
     case BehaviorClass::DockingTestSimple:
     {
-      newBehavior = IBehaviorPtr(new BehaviorDockingTestSimple(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDockingTestSimple(config));
       break;
     }
     case BehaviorClass::SearchForFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorSearchForFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSearchForFace(config));
       break;
     }
     case BehaviorClass::StackBlocks:
     {
-      newBehavior = IBehaviorPtr(new BehaviorStackBlocks(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorStackBlocks(config));
       break;
     }
     case BehaviorClass::PutDownBlock:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPutDownBlock(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPutDownBlock(config));
       break;
     }
     case BehaviorClass::DriveOffCharger:
     {
-      newBehavior = IBehaviorPtr(new BehaviorDriveOffCharger(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDriveOffCharger(config));
       break;
     }
     case BehaviorClass::PopAWheelie:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPopAWheelie(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPopAWheelie(config));
       break;
     }
     case BehaviorClass::PeekABoo:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPeekABoo(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPeekABoo(config));
       break;
     }
     case BehaviorClass::DrivePath:
     {
-      newBehavior = IBehaviorPtr(new BehaviorDrivePath(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDrivePath(config));
       break;
     }
     case BehaviorClass::PickUpCube:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPickUpCube(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPickUpCube(config));
       break;
     }
     case BehaviorClass::PickUpAndPutDownCube:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPickUpAndPutDownCube(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPickUpAndPutDownCube(config));
       break;
     }
     case BehaviorClass::KnockOverCubes:
     {
-      newBehavior = IBehaviorPtr(new BehaviorKnockOverCubes(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorKnockOverCubes(config));
       break;
     }
     case BehaviorClass::BuildPyramid:
     {
-      newBehavior = IBehaviorPtr(new BehaviorBuildPyramid(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBuildPyramid(config));
       break;
     }
     case BehaviorClass::BuildPyramidBase:
     {
-      newBehavior = IBehaviorPtr(new BehaviorBuildPyramidBase(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorBuildPyramidBase(config));
       break;
     }
     case BehaviorClass::CantHandleTallStack:
     {
-      newBehavior = IBehaviorPtr(new BehaviorCantHandleTallStack(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCantHandleTallStack(config));
       break;
     }
     case BehaviorClass::OnboardingShowCube:
     {
-      newBehavior = IBehaviorPtr(new BehaviorOnboardingShowCube(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingShowCube(config));
       break;
     }
     case BehaviorClass::OnConfigSeen:
     {
-      newBehavior = IBehaviorPtr(new BehaviorOnConfigSeen(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnConfigSeen(config));
       break;
     }
     case BehaviorClass::LookForFaceAndCube:
     {
-      newBehavior = IBehaviorPtr(new BehaviorLookForFaceAndCube(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLookForFaceAndCube(config));
       break;
     }
     case BehaviorClass::CubeLiftWorkout:
     {
-      newBehavior = IBehaviorPtr(new BehaviorCubeLiftWorkout(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCubeLiftWorkout(config));
       break;
     }
     case BehaviorClass::CheckForStackAtInterval:
     {
-      newBehavior = IBehaviorPtr(new BehaviorCheckForStackAtInterval(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCheckForStackAtInterval(config));
       break;
     }
     case BehaviorClass::EnrollFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorEnrollFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorEnrollFace(config));
       break;
     }
     case BehaviorClass::LiftLoadTest:
     {
-      newBehavior = IBehaviorPtr(new BehaviorLiftLoadTest(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLiftLoadTest(config));
       break;
     }
     case BehaviorClass::RamIntoBlock:
     {
-      newBehavior = IBehaviorPtr(new BehaviorRamIntoBlock(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorRamIntoBlock(config));
       break;
     }
     case BehaviorClass::RespondPossiblyRoll:
     {
-      newBehavior = IBehaviorPtr(new BehaviorRespondPossiblyRoll(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorRespondPossiblyRoll(config));
       break;
     }
     case BehaviorClass::RespondToRenameFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorRespondToRenameFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorRespondToRenameFace(config));
       break;
     }
     case BehaviorClass::PyramidThankYou:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPyramidThankYou(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPyramidThankYou(config));
       break;
     }
       
     case BehaviorClass::FeedingEat:
     {
-      newBehavior = IBehaviorPtr(new BehaviorFeedingEat(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFeedingEat(config));
       break;
     }
     case BehaviorClass::FeedingSearchForCube:
     {
-      newBehavior = IBehaviorPtr(new BehaviorFeedingSearchForCube(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorFeedingSearchForCube(config));
       break;
     }
     case BehaviorClass::Singing:
     {
-      newBehavior = IBehaviorPtr(new BehaviorSinging(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSinging(config));
       break;
     }
     case BehaviorClass::TrackLaser:
     {
-      newBehavior = IBehaviorPtr(new BehaviorTrackLaser(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTrackLaser(config));
       break;
     }
     case BehaviorClass::Dance:
     {
-      newBehavior = IBehaviorPtr(new BehaviorDance(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDance(config));
       break;
     }
     case BehaviorClass::DevTurnInPlaceTest:
     {
-      newBehavior = IBehaviorPtr(new BehaviorDevTurnInPlaceTest(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevTurnInPlaceTest(config));
       break;
     }
     case BehaviorClass::DriveToFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorDriveToFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDriveToFace(config));
       break;
     }
     case BehaviorClass::EarnedSparks:
     {
-      newBehavior = IBehaviorPtr(new BehaviorEarnedSparks(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorEarnedSparks(config));
       break;
     }
     case BehaviorClass::TurnToFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorTurnToFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTurnToFace(config));
       break;
     }
     case BehaviorClass::ExpressNeeds:
     {
-      newBehavior = IBehaviorPtr(new BehaviorExpressNeeds(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorExpressNeeds(config));
       break;
     }
     case BehaviorClass::PlayAnimOnNeedsChange:
     {
-      newBehavior = IBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(config));
       break;
     }
     
@@ -543,107 +543,107 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, const
 
     case BehaviorClass::ReactToPickup:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToPickup(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPickup(config));
       break;
     }
     case BehaviorClass::ReactToPlacedOnSlope:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToPlacedOnSlope(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPlacedOnSlope(config));
       break;
     }
     case BehaviorClass::ReactToCliff:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToCliff(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCliff(config));
       break;
     }
     case BehaviorClass::ReactToReturnedToTreads:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToReturnedToTreads(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToReturnedToTreads(config));
       break;
     }
     case BehaviorClass::ReactToRobotOnBack:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToRobotOnBack(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToRobotOnBack(config));
       break;
     }
     case BehaviorClass::ReactToRobotOnFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToRobotOnFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToRobotOnFace(config));
       break;
     }
     case BehaviorClass::ReactToRobotOnSide:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToRobotOnSide(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToRobotOnSide(config));
       break;
     }
     case BehaviorClass::ReactToRobotShaken:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToRobotShaken(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToRobotShaken(config));
       break;
     }
     case BehaviorClass::ReactToOnCharger:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToOnCharger(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToOnCharger(config));
       break;
     }
     case BehaviorClass::AcknowledgeObject:
     {
-      newBehavior = IBehaviorPtr(new BehaviorAcknowledgeObject(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAcknowledgeObject(config));
       break;
     }
     case BehaviorClass::AcknowledgeFace:
     {
-      newBehavior = IBehaviorPtr(new BehaviorAcknowledgeFace(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAcknowledgeFace(config));
       break;
     }
     case BehaviorClass::ReactToUnexpectedMovement:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToUnexpectedMovement(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnexpectedMovement(config));
       break;
     }
     case BehaviorClass::ReactToMotorCalibration:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToMotorCalibration(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMotorCalibration(config));
       break;
     }
     case BehaviorClass::ReactToCubeMoved:
     {
-      newBehavior = IBehaviorPtr(new BehaviorAcknowledgeCubeMoved(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorAcknowledgeCubeMoved(config));
       break;
     }
     case BehaviorClass::ReactToFrustration:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToFrustration(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToFrustration(config));
       break;
     }
     case BehaviorClass::ReactToSparked:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToSparked(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSparked(config));
       break;
     }
     case BehaviorClass::ReactToStackOfCubes:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToStackOfCubes(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToStackOfCubes(config));
       break;
     }
     case BehaviorClass::ReactToPyramid:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToPyramid(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPyramid(config));
       break;
     }
     case BehaviorClass::ReactToPet:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToPet(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPet(config));
       break;
     }
     case BehaviorClass::ReactToVoiceCommand:
     {
-      newBehavior = IBehaviorPtr(new BehaviorReactToVoiceCommand(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToVoiceCommand(config));
       break;
     }
     case BehaviorClass::DriveInDesperation:
     {
-      newBehavior = IBehaviorPtr(new BehaviorDriveInDesperation(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDriveInDesperation(config));
       break;
     }
        
@@ -665,7 +665,7 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorContainer::AddToFactory(IBehaviorPtr newBehavior)
+ICozmoBehaviorPtr BehaviorContainer::AddToFactory(ICozmoBehaviorPtr newBehavior)
 {
   assert(newBehavior);
   
@@ -692,14 +692,14 @@ IBehaviorPtr BehaviorContainer::AddToFactory(IBehaviorPtr newBehavior)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorContainer::RemoveBehaviorFromMap(IBehaviorPtr behavior)
+bool BehaviorContainer::RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior)
 {
   // check the scored behavior map
   const auto& scoredIt = _idToBehaviorMap.find(behavior->GetID());
   if (scoredIt != _idToBehaviorMap.end())
   {
     // check it's the same pointer
-    IBehaviorPtr existingBehavior = scoredIt->second;
+    ICozmoBehaviorPtr existingBehavior = scoredIt->second;
     if (existingBehavior == behavior)
     {
       _idToBehaviorMap.erase(scoredIt);
@@ -727,7 +727,7 @@ void BehaviorContainer::HandleMessage(const ExternalInterface::RequestAllBehavio
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorClass BehaviorContainer::GetBehaviorClass(IBehaviorPtr behavior) const
+BehaviorClass BehaviorContainer::GetBehaviorClass(ICozmoBehaviorPtr behavior) const
 {
   return behavior->GetClass();
 }

@@ -14,7 +14,7 @@
 
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/strategyPlacedOnCharger.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/common/basestation/utils/timer.h"
 
 namespace Anki {

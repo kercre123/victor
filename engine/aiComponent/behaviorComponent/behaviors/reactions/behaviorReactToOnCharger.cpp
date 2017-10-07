@@ -66,7 +66,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersOnCharger
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _onChargerCanceled(false)
 , _timeTilSleepAnimation_s(-1.0)
 , _timeTilDisconnect_s(0.0)
@@ -127,7 +127,7 @@ void BehaviorReactToOnCharger::OnBehaviorDeactivated(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorReactToOnCharger::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _onChargerCanceled )
   {

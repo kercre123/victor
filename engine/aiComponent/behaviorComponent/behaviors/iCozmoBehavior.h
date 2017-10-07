@@ -1,5 +1,5 @@
 /**
- * File: iBehavior.h
+ * File: ICozmoBehavior.h
  *
  * Author: Andrew Stein : Kevin M. Karol
  * Date:   7/30/15  : 12/1/16
@@ -9,15 +9,15 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_IBehavior_H__
-#define __Cozmo_Basestation_Behaviors_IBehavior_H__
+#ifndef __Cozmo_Basestation_Behaviors_ICozmoBehavior_H__
+#define __Cozmo_Basestation_Behaviors_ICozmoBehavior_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "engine/aiComponent/AIWhiteboard.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
@@ -86,7 +86,7 @@ struct BehaviorObjectiveAchieved;
 template<typename TYPE> class AnkiEvent;
 
 // Base Behavior Interface specification
-class IBehavior : public IBSRunnable
+class ICozmoBehavior : public IBehavior
 {
 protected:  
   friend class BehaviorContainer;
@@ -94,11 +94,11 @@ protected:
   // delegated to them
   friend class IHelper;
 
-  // Can't create a public IBehavior, but derived classes must pass a robot
+  // Can't create a public ICozmoBehavior, but derived classes must pass a robot
   // reference into this protected constructor.
-  IBehavior(const Json::Value& config);
+  ICozmoBehavior(const Json::Value& config);
     
-  virtual ~IBehavior();
+  virtual ~ICozmoBehavior();
     
 public:
   using Status = BehaviorStatus;
@@ -222,8 +222,8 @@ public:
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
 protected:
-  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
-  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override {}
+  // Currently unused overrides of IBehavior since no equivalence in old BM system
+  void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void OnLeftActivatableScopeInternal() override {};
   
@@ -355,12 +355,12 @@ protected:
   
   // If possible (without canceling anything), delegate to the given runnable and return true. Otherwise,
   // return false
-  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface, IBSRunnable* delegate);
+  bool DelegateIfInControl(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
   
   // If possible (even if it means canceling delegated, delegate to the given runnable and return
   // true. Otherwise, return false (e.g. if the passed in interface doesn't have access to the delegation
   // component)
-  bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBSRunnable* delegate);
+  bool DelegateNow(BehaviorExternalInterface& behaviorExternalInterface, IBehavior* delegate);
   
   // This function cancels the action started by StartActing (if there is one). Returns true if an action was
   // canceled, false otherwise. Note that if you are running, this will trigger a callback for the
@@ -378,7 +378,7 @@ protected:
 
   /////////////
   /// "Smart" helpers - Behaviors can call these functions to set properties that
-  /// need to be cleared when the behavior stops.  IBehavior will hold the reference
+  /// need to be cleared when the behavior stops.  ICozmoBehavior will hold the reference
   /// and clear it appropriately.  Functions also exist to clear these properties
   /// before the behavior stops.
   ////////////////
@@ -407,7 +407,7 @@ protected:
   // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
   // use the specified motion profile for all motions. Note that this will result in an error if the behavior
   // tries to manually set a speed or acceleration on an action. This may be called automatically based on
-  // behavior json data here at the IBehavior level
+  // behavior json data here at the ICozmoBehavior level
   void SmartSetMotionProfile(const PathMotionProfile& motionProfile);
   void SmartClearMotionProfile();
   
@@ -645,25 +645,25 @@ private:
   int _timesResumedFromPossibleInfiniteLoop = 0;
   float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0;
   
-}; // class IBehavior
+}; // class ICozmoBehavior
 
   
   
 template<typename T>
-bool IBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
+bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(BehaviorExternalInterface& behaviorExternalInterface))
 {
   return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
 
 template<typename T>
-bool IBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(void))
+bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(void))
 {
   std::function<void(void)> boundCallback = std::bind(callback, static_cast<T*>(this));
   return DelegateIfInControl(action, boundCallback);
 }
 
 template<typename T>
-bool IBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface))
+bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(ActionResult, BehaviorExternalInterface& behaviorExternalInterface))
 {
   return DelegateIfInControl(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1, std::placeholders::_2));
 }
@@ -671,7 +671,7 @@ bool IBehavior::DelegateIfInControl(IActionRunner* action, void(T::*callback)(Ac
 
 
 template<typename T>
-bool IBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
+bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
                                       HelperHandle handleToRun,
                                       void(T::*successCallback)(BehaviorExternalInterface& behaviorExternalInterface))
 {
@@ -680,7 +680,7 @@ bool IBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExterna
 }
 
 template<typename T>
-bool IBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
+bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExternalInterface,
                                       HelperHandle handleToRun,
                                       void(T::*successCallback)(BehaviorExternalInterface& behaviorExternalInterface),
                                       void(T::*failureCallback)(BehaviorExternalInterface& behaviorExternalInterface))
@@ -691,7 +691,7 @@ bool IBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorExterna
 }
   
 template<class EventType>
-void IBehavior::HandleEvent(const EventType& event)
+void ICozmoBehavior::HandleEvent(const EventType& event)
 {
   if(_behaviorExternalInterface != nullptr){
     AlwaysHandle(event, *_behaviorExternalInterface);
@@ -709,13 +709,13 @@ void IBehavior::HandleEvent(const EventType& event)
 //// Scored Behavior functions
 ///////
   
-inline bool IBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing) {
+inline bool ICozmoBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing) {
   IncreaseScoreWhileActing(extraScoreWhileActing);
   return DelegateIfInControl(action);
 }
 
 template<typename CallbackType>
-inline bool IBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing, CallbackType callback) {
+inline bool ICozmoBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing, CallbackType callback) {
   IncreaseScoreWhileActing(extraScoreWhileActing);
   return DelegateIfInControl(action, callback);
 }
@@ -723,4 +723,4 @@ inline bool IBehavior::StartActingExtraScore(IActionRunner* action, float extraS
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_IBehavior_H__
+#endif // __Cozmo_Basestation_Behaviors_ICozmoBehavior_H__

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorLookForFaceAndCube_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorLookForFaceAndCube_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 #include <set>
@@ -30,11 +30,11 @@ class IAction;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorLookForFaceAndCube
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorLookForFaceAndCube : public IBehavior
+class BehaviorLookForFaceAndCube : public ICozmoBehavior
 {
 private:
   
-  using BaseClass = IBehavior;
+  using BaseClass = ICozmoBehavior;
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
@@ -50,7 +50,7 @@ public:
   virtual ~BehaviorLookForFaceAndCube() override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // This behavior is runnable if when we check the memory map around the current robot position, there are still
@@ -70,7 +70,7 @@ protected:
   void LoadConfig(const Json::Value& config);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

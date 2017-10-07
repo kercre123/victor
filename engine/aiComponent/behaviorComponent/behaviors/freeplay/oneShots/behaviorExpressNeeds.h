@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Behaviors_Freeplay_OneShots_BehaviorExpressNeeds_H__
 #define __Cozmo_Basestation_BehaviorSystem_Behaviors_Freeplay_OneShots_BehaviorExpressNeeds_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/needsSystemTypes.h"
 
@@ -30,7 +30,7 @@ namespace Cozmo {
 
 class Robot;
 
-class BehaviorExpressNeeds : public IBehavior
+class BehaviorExpressNeeds : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer

@@ -114,7 +114,7 @@ namespace Anki {
     };
     
     BehaviorDockingTestSimple::BehaviorDockingTestSimple(const Json::Value& config)
-    : IBehavior(config)
+    : ICozmoBehavior(config)
     , _initialVisionMarker(Vision::MARKER_UNKNOWN)
     , _markerBeingSeen(Vision::MARKER_UNKNOWN)
     {
@@ -214,7 +214,7 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    IBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+    ICozmoBehavior::Status BehaviorDockingTestSimple::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
     {
       // DEPRECATED - Grabbing robot to support current cozmo code, but this should
       // be removed

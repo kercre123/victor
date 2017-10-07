@@ -35,7 +35,7 @@ const constexpr float kMaxIntervalBetweenRunnableCheck_s = 5.f;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnConfigSeen::BehaviorOnConfigSeen(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _animTriggerIndex(0)
 , _lastRunnableCheck_s(0)
 , _lastTimeNewConfigSeen_s(0)

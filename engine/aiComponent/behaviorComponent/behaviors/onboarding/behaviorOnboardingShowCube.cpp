@@ -77,7 +77,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kOnboardingTriggerAffect
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {  
   SubscribeToTags({
     MessageGameToEngineTag::TransitionToNextOnboardingState
@@ -225,7 +225,7 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& eve
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This behavior is killed by unity switching to none
-IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorOnboardingShowCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( !IsControlDelegated() && !IsSequenceComplete() )
   {

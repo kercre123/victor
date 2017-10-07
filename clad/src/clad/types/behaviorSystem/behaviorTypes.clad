@@ -6,7 +6,7 @@
 namespace Anki {
 namespace Cozmo {
 
-// BehaviorClass identifies the iBehavior child class
+// BehaviorClass identifies the ICozmoBehavior child class
 // which the behavior is an instance of
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorClass {

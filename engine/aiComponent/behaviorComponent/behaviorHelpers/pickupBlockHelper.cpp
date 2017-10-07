@@ -31,7 +31,7 @@ static const int kMaxDockRetries = 2;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PickupBlockHelper::PickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                     IBehavior& behavior,
+                                     ICozmoBehavior& behavior,
                                      BehaviorHelperFactory& helperFactory,
                                      const ObjectID& targetID,
                                      const PickupBlockParamaters& parameters)

@@ -42,7 +42,7 @@ CONSOLE_VAR(float, kSecondSearchLength_s, "Feeding.SearchForCube", 5.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFeedingSearchForCube::BehaviorFeedingSearchForCube(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _currentState(State::FirstSearchForCube)
 , _timeEndSearch_s(0)
 {
@@ -64,7 +64,7 @@ Result BehaviorFeedingSearchForCube::OnBehaviorActivated(BehaviorExternalInterfa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorFeedingSearchForCube::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if((_currentState == State::FirstSearchForCube) ||
      (_currentState == State::SecondSearchForCube)){

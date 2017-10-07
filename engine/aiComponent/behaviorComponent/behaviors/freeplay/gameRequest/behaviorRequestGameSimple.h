@@ -20,7 +20,7 @@
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorRequestGameSimple : public IBehaviorRequestGame
+class BehaviorRequestGameSimple : public ICozmoBehaviorRequestGame
 {
 private:
   

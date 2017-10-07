@@ -66,7 +66,7 @@ static_assert(MemoryMapTypes::IsSequentialArray(typesWeWantToVisit),
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLookInPlaceMemoryMap::BehaviorLookInPlaceMemoryMap(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _configParams{}
 {  
   // set the proper size of sectors only once

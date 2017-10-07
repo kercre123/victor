@@ -15,7 +15,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorExploreLookAroundInPlace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreLookAroundInPlace_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/pose.h"
@@ -37,7 +37,7 @@ struct PathMotionProfile;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorExploreLookAroundInPlace
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorExploreLookAroundInPlace : public IBehavior
+class BehaviorExploreLookAroundInPlace : public ICozmoBehavior
 {
 protected:
   
@@ -55,7 +55,7 @@ public:
   virtual ~BehaviorExploreLookAroundInPlace() override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
@@ -79,7 +79,7 @@ protected:
   void LoadConfig(const Json::Value& config);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) final override;

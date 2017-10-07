@@ -31,10 +31,10 @@ public:
   virtual void ClearDesiredTargets(BehaviorExternalInterface& behaviorExternalInterface) override;
   
 protected:
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior) override;
   void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual bool ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior) override;
-  virtual void SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) override;
   
 private:
   BehaviorClass _classTriggerMapsTo = BehaviorClass::Wait;

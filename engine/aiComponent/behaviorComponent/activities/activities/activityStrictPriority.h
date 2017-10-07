@@ -33,9 +33,9 @@ public:
 
 protected:
   // get next behavior by properly managing the sub-activities
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
-  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
+  void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
 private:
   using ActivityVector = std::vector< std::unique_ptr<IActivity>>;

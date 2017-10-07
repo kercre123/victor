@@ -25,9 +25,9 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityFreeplay.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/bsRunnableChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
@@ -160,14 +160,14 @@ const char* kDisableReactionsUIRequestGameLock = "bm_ui_request_game_lock";
   
 // struct which defines information about the currently running behavior
 struct BehaviorRunningAndResumeInfo{
-  void SetCurrentBehavior(IBehaviorPtr newScoredBehavior){_currentBehavior = newScoredBehavior;}
+  void SetCurrentBehavior(ICozmoBehaviorPtr newScoredBehavior){_currentBehavior = newScoredBehavior;}
   // return the active behavior based on the category set in the struct
-  IBehaviorPtr GetCurrentBehavior() const{return _currentBehavior;}
+  ICozmoBehaviorPtr GetCurrentBehavior() const{return _currentBehavior;}
   
-  void SetBehaviorToResume(IBehaviorPtr resumeBehavior){
+  void SetBehaviorToResume(ICozmoBehaviorPtr resumeBehavior){
     _behaviorToResume = resumeBehavior;
   }
-  IBehaviorPtr GetBehaviorToResume() const{ return _behaviorToResume;}
+  ICozmoBehaviorPtr GetBehaviorToResume() const{ return _behaviorToResume;}
   
   void SetCurrentReactionType(ReactionTrigger trigger){
     DEV_ASSERT(trigger != ReactionTrigger::Count, "Invalid ReactionTrigger state");
@@ -179,9 +179,9 @@ struct BehaviorRunningAndResumeInfo{
 private:
   // only one behavior should be active at a time
   // either a scored behavior or a reactionary behavior
-  IBehaviorPtr _currentBehavior;
+  ICozmoBehaviorPtr _currentBehavior;
   // the scored behavior to resume once a reactionary behavior ends
-  IBehaviorPtr _behaviorToResume;
+  ICozmoBehaviorPtr _behaviorToResume;
   ReactionTrigger _currentReactionType = ReactionTrigger::NoneTrigger;
 };
   
@@ -192,11 +192,11 @@ private:
   
 struct TriggerBehaviorInfo{
 public:
-  using StrategyBehaviorMap = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehaviorPtr>;
+  using StrategyBehaviorMap = std::pair<std::unique_ptr<IReactionTriggerStrategy>, ICozmoBehaviorPtr>;
 
   bool  IsReactionEnabled() const { return _disableIDs.empty();}
   
-  bool AddStrategyMapping(IReactionTriggerStrategy*& strategy, IBehaviorPtr behavior);
+  bool AddStrategyMapping(IReactionTriggerStrategy*& strategy, ICozmoBehaviorPtr behavior);
   const std::vector<StrategyBehaviorMap>& GetStrategyMap() const { return _strategyBehaviorMap;}
   
   // For enabling/disabling the strategy
@@ -211,7 +211,7 @@ private:
 };
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TriggerBehaviorInfo::AddStrategyMapping(IReactionTriggerStrategy*& strategy, IBehaviorPtr behavior)
+bool TriggerBehaviorInfo::AddStrategyMapping(IReactionTriggerStrategy*& strategy, ICozmoBehaviorPtr behavior)
 {
   DEV_ASSERT_MSG(behavior != nullptr, "TriggerBehaviorInfo.BehaviorNullptr",
                  "Nullptr passed in to triggerBehavior info for behavior");
@@ -492,11 +492,11 @@ Result BehaviorManager::InitReactionTriggerMap(BehaviorExternalInterface& behavi
     for(const auto& triggerMap: reactionTriggerArray){
       const std::string& reactionTriggerString = triggerMap.get(kReactionTriggerKey,
                                                             EnumToString(ReactionTrigger::Count)).asString();
-      BehaviorID behaviorID = IBehavior::ExtractBehaviorIDFromConfig(triggerMap);
+      BehaviorID behaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(triggerMap);
       
       ReactionTrigger trigger = ReactionTriggerFromString(reactionTriggerString);
       IReactionTriggerStrategy* strategy = ReactionTriggerStrategyFactory::CreateReactionTriggerStrategy(behaviorExternalInterface, triggerMap, trigger);
-      IBehaviorPtr behavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(behaviorID);
+      ICozmoBehaviorPtr behavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(behaviorID);
       
       {
         DEV_ASSERT_MSG(behavior != nullptr, "BehaviorManager.InitReactionTriggerMap.BehaviorNullptr Behavior name",
@@ -534,7 +534,7 @@ Result BehaviorManager::InitReactionTriggerMap(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const IBehaviorPtr BehaviorManager::GetCurrentBehavior() const{
+const ICozmoBehaviorPtr BehaviorManager::GetCurrentBehavior() const{
   return GetRunningAndResumeInfo().GetCurrentBehavior();
 }
  
@@ -618,7 +618,7 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorExternalInterface& behaviorEx
                                            BehaviorRunningAndResumeInfo& nextBehaviorInfo)
 {
   BehaviorRunningAndResumeInfo oldInfo = GetRunningAndResumeInfo();
-  IBehaviorPtr nextBehavior = nextBehaviorInfo.GetCurrentBehavior();
+  ICozmoBehaviorPtr nextBehavior = nextBehaviorInfo.GetCurrentBehavior();
 
   StopAndNullifyCurrentBehavior(behaviorExternalInterface);
   bool initSuccess = true;
@@ -661,8 +661,8 @@ void BehaviorManager::SendDasTransitionMessage(BehaviorExternalInterface& behavi
   auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
   if(robotExternalInterface != nullptr){
-    const IBehaviorPtr oldBehavior = oldBehaviorInfo.GetCurrentBehavior();
-    const IBehaviorPtr newBehavior = newBehaviorInfo.GetCurrentBehavior();
+    const ICozmoBehaviorPtr oldBehavior = oldBehaviorInfo.GetCurrentBehavior();
+    const ICozmoBehaviorPtr newBehavior = newBehaviorInfo.GetCurrentBehavior();
     
     
     BehaviorID oldBehaviorID = nullptr != oldBehavior ? oldBehavior->GetID()  : BehaviorID::Wait;
@@ -699,7 +699,7 @@ void BehaviorManager::SendDasTransitionMessage(BehaviorExternalInterface& behavi
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::SwitchToReactionTrigger(BehaviorExternalInterface& behaviorExternalInterface,
-                                              IReactionTriggerStrategy& triggerStrategy, IBehaviorPtr nextBehavior)
+                                              IReactionTriggerStrategy& triggerStrategy, ICozmoBehaviorPtr nextBehavior)
 {
   // a null here means "no reaction", not "switch to the null behavior"
   if( nullptr == nextBehavior ) {
@@ -739,7 +739,7 @@ bool BehaviorManager::SwitchToReactionTrigger(BehaviorExternalInterface& behavio
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::SwitchToVoiceCommandBehavior(BehaviorExternalInterface& behaviorExternalInterface,
-                                                   IBehaviorPtr nextBehavior)
+                                                   ICozmoBehaviorPtr nextBehavior)
 {
   BehaviorRunningAndResumeInfo newBehaviorInfo;
   newBehaviorInfo.SetCurrentBehavior(nextBehavior);
@@ -789,7 +789,7 @@ void BehaviorManager::ChooseNextScoredBehaviorAndSwitch(BehaviorExternalInterfac
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CurrentBehaviorIsNotRunning");
  
   // ask the current activity for the next behavior
-  IBehaviorPtr nextBehavior = GetCurrentActivity()->
+  ICozmoBehaviorPtr nextBehavior = GetCurrentActivity()->
         GetDesiredActiveBehavior(behaviorExternalInterface, GetRunningAndResumeInfo().GetCurrentBehavior());
   if(nextBehavior != GetRunningAndResumeInfo().GetCurrentBehavior()){
     BehaviorRunningAndResumeInfo scoredInfo;
@@ -830,7 +830,7 @@ void BehaviorManager::TryToResumeBehavior(BehaviorExternalInterface& behaviorExt
     ReactionTrigger resumingFromTrigger = ReactionTrigger::NoneTrigger;
     resumingFromTrigger = GetRunningAndResumeInfo().GetCurrentReactionTrigger();
     
-    IBehaviorPtr behaviorToResume = GetRunningAndResumeInfo().GetBehaviorToResume();
+    ICozmoBehaviorPtr behaviorToResume = GetRunningAndResumeInfo().GetBehaviorToResume();
     const Result resumeResult = behaviorToResume->Resume(behaviorExternalInterface, resumingFromTrigger);
     if( resumeResult == RESULT_OK )
     {
@@ -950,11 +950,11 @@ Result BehaviorManager::Update(BehaviorExternalInterface& behaviorExternalInterf
   // check for voice commands
   _highLevelActivityMap[HighLevelActivity::VoiceCommand]->Update(behaviorExternalInterface);
   // Identify whether there is a voice command-response behavior we want to be running
-  IBehaviorPtr voiceCommandBehavior = _highLevelActivityMap[HighLevelActivity::VoiceCommand]->
+  ICozmoBehaviorPtr voiceCommandBehavior = _highLevelActivityMap[HighLevelActivity::VoiceCommand]->
                  GetDesiredActiveBehavior(behaviorExternalInterface, GetRunningAndResumeInfo().GetCurrentBehavior());
   
   if ((voiceCommandBehavior == nullptr) && _shouldRequestGame){
-    // Set IBehaviorPtr for requested game
+    // Set ICozmoBehaviorPtr for requested game
     SelectUIRequestGameBehavior(behaviorExternalInterface);
     _shouldRequestGame = false;
     if(GetRunningAndResumeInfo().GetCurrentBehavior() != nullptr &&
@@ -1010,15 +1010,15 @@ Result BehaviorManager::Update(BehaviorExternalInterface& behaviorExternalInterf
       (voiceCommandBehavior != nullptr);
     
     // We have a current behavior, update it.
-    const IBehavior::Status status = currentBehavior->Update(behaviorExternalInterface);
+    const ICozmoBehavior::Status status = currentBehavior->Update(behaviorExternalInterface);
      
     switch(status)
     {
-      case IBehavior::Status::Running:
+      case ICozmoBehavior::Status::Running:
         // Nothing to do! Just keep on truckin'....
         break;
           
-      case IBehavior::Status::Complete:
+      case ICozmoBehavior::Status::Complete:
         // behavior is complete, switch to null (will also handle stopping current). If it was reactionary,
         // switch now to give the last behavior a chance to resume (if appropriate)
         PRINT_CH_DEBUG("Behaviors", "BehaviorManager.Update.BehaviorComplete",
@@ -1028,7 +1028,7 @@ Result BehaviorManager::Update(BehaviorExternalInterface& behaviorExternalInterf
                               currentBehavior, shouldAttemptResume);
         break;
           
-      case IBehavior::Status::Failure:
+      case ICozmoBehavior::Status::Failure:
         PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                           "Behavior '%s' failed to Update().",
                           BehaviorIDToString(currentBehavior->GetID()));
@@ -1128,7 +1128,7 @@ void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& st
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::StopAndNullifyCurrentBehavior(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  IBehaviorPtr currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
+  ICozmoBehaviorPtr currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
   
   if ( nullptr != currentBehavior && currentBehavior->IsRunning() ) {
     currentBehavior->OnDeactivated(behaviorExternalInterface);
@@ -1140,7 +1140,7 @@ void BehaviorManager::StopAndNullifyCurrentBehavior(BehaviorExternalInterface& b
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::FinishCurrentBehavior(BehaviorExternalInterface& behaviorExternalInterface,
-                                            IBehaviorPtr currentBehavior, bool shouldAttemptResume)
+                                            ICozmoBehaviorPtr currentBehavior, bool shouldAttemptResume)
 {
   // Currently we assume that game requests do not have a resume behavior, so we should
   // not attempt to resume if _uiRequestGameBehavior is non-null and just finished
@@ -1214,7 +1214,7 @@ void BehaviorManager::EnsureRequestGameIsClear(BehaviorExternalInterface& behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorClass BehaviorManager::GetBehaviorClass(IBehaviorPtr behavior) const
+BehaviorClass BehaviorManager::GetBehaviorClass(ICozmoBehaviorPtr behavior) const
 {
   return behavior->GetClass();
 }
@@ -1251,7 +1251,7 @@ bool BehaviorManager::CheckReactionTriggerStrategies(BehaviorExternalInterface& 
     
     for(const auto& entry: strategyMap){
       IReactionTriggerStrategy& strategy = *entry.first;
-      IBehaviorPtr rBehavior = entry.second;
+      ICozmoBehaviorPtr rBehavior = entry.second;
 
       bool shouldCheckStrategy = true;
       
@@ -1446,24 +1446,24 @@ bool BehaviorManager::IsReactionTriggerEnabled(ReactionTrigger reaction) const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorManager::FindBehaviorByID(BehaviorID behaviorID) const
+ICozmoBehaviorPtr BehaviorManager::FindBehaviorByID(BehaviorID behaviorID) const
 {
   if(_behaviorExternalInterface != nullptr){
     return _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByID(behaviorID);
   }else{
-    IBehaviorPtr empty;
+    ICozmoBehaviorPtr empty;
     return empty;
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr BehaviorManager::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
+ICozmoBehaviorPtr BehaviorManager::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
   if(_behaviorExternalInterface != nullptr){
     return _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByExecutableType(type);
   }else{
-    IBehaviorPtr empty;
+    ICozmoBehaviorPtr empty;
     return empty;
   }
 }
@@ -1580,7 +1580,7 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
     if(stopCurrent &&
        _runningAndResumeInfo->GetCurrentReactionTrigger() == triggerEnum)
     {
-      IBehaviorPtr currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+      ICozmoBehaviorPtr currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
       if(currentBehavior!= nullptr && currentBehavior->IsRunning())
       {
         currentBehavior->OnDeactivated(*_behaviorExternalInterface);

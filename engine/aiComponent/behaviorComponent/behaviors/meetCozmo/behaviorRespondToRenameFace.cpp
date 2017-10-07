@@ -29,7 +29,7 @@ namespace JsonKeys {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRespondToRenameFace::BehaviorRespondToRenameFace(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _name("")
 , _faceID(Vision::UnknownFaceID)
 {
@@ -103,7 +103,7 @@ Result BehaviorRespondToRenameFace::OnBehaviorActivated(BehaviorExternalInterfac
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorRespondToRenameFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorRespondToRenameFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(!IsControlDelegated())
   {

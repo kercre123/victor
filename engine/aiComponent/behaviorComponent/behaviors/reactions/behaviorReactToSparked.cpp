@@ -21,7 +21,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToSparked::BehaviorReactToSparked(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   
   

@@ -120,7 +120,7 @@ const MemoryMapTypes::BorderSegment& BehaviorVisitInterestingEdge::BorderRegionS
 // BehaviorVisitInterestingEdge
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _configParams{}
 , _waitForImagesActionTag(ActionConstants::INVALID_TAG)
 , _squintLoopAnimActionTag(ActionConstants::INVALID_TAG)

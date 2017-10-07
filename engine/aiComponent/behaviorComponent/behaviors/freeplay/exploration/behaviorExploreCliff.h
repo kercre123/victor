@@ -20,7 +20,7 @@
 //#ifndef __Cozmo_Basestation_Behaviors_BehaviorExploreCliff_H__
 //#define __Cozmo_Basestation_Behaviors_BehaviorExploreCliff_H__
 //
-//#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+//#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 //#include "engine/navMemoryMap/iNavMemoryMap.h"
 //
 //#include "anki/common/basestation/math/pose.h"
@@ -28,7 +28,7 @@
 //namespace Anki {
 //namespace Cozmo {
 //  
-//class BehaviorExploreCliff : public IBehavior
+//class BehaviorExploreCliff : public ICozmoBehavior
 //{
 //private:
 //  
@@ -46,7 +46,7 @@
 //  virtual ~BehaviorExploreCliff();
 //
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//  // IBehavior API
+//  // ICozmoBehavior API
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 //  // true if currently there are cliffs that Cozmo would like to explore
@@ -56,7 +56,7 @@
 //protected:
 //
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//  // IBehavior API
+//  // ICozmoBehavior API
 //  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //  
 //  virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

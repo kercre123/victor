@@ -18,7 +18,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -36,10 +36,10 @@ namespace ExternalInterface {
 }
   
   
-class BehaviorAcknowledgeFace : public IBehavior
+class BehaviorAcknowledgeFace : public ICozmoBehavior
 {
 private:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
 
 public:
   virtual bool CarryingObjectHandledInternally() const override {return false;}

@@ -24,7 +24,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToReturnedToTreads::BehaviorReactToReturnedToTreads(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 
 }

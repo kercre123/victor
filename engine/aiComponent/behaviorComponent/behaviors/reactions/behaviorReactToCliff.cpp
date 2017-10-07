@@ -72,7 +72,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersReactToCl
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _shouldStopDueToCharger(false)
 {
   SubscribeToTags({{
@@ -263,7 +263,7 @@ void BehaviorReactToCliff::OnBehaviorDeactivated(BehaviorExternalInterface& beha
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorReactToCliff::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(_shouldStopDueToCharger){
     _shouldStopDueToCharger = false;

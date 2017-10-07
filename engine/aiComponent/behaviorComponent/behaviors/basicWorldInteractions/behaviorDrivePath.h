@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorDrivePath_H__
 
 #include "anki/common/basestation/math/pose.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/planning/shared/path.h"
 
 namespace Anki {
@@ -24,7 +24,7 @@ class Pose3d;
   
 namespace Cozmo {
   
-class BehaviorDrivePath : public IBehavior
+class BehaviorDrivePath : public ICozmoBehavior
 {
 protected:
   

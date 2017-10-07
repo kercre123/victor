@@ -12,7 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/runnableStack.h"
 
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -24,7 +24,7 @@ namespace{
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RunnableStack::InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
-                                                             IBSRunnable* baseOfStack)
+                                                             IBehavior* baseOfStack)
 {
   ANKI_VERIFY(_runnableStack.empty(),
               "BehaviorSystemManager.RunnableStack.InitRunnableStack.StackNotEmptyOnInit",
@@ -40,7 +40,7 @@ void RunnableStack::InitRunnableStack(BehaviorExternalInterface& behaviorExterna
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
-                                                               std::set<IBSRunnable*>& tickedInStack)
+                                                               std::set<IBehavior*>& tickedInStack)
 {
   if(_runnableStack.size() == 0){
     PRINT_NAMED_WARNING("BehaviorSystemManager.RunnableStack.UpdateRunnableStack.NoStackInitialized",
@@ -64,7 +64,7 @@ void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PushOntoStack(IBSRunnable* runnable)
+void RunnableStack::PushOntoStack(IBehavior* runnable)
 {
   _runnableToIndexMap.insert(std::make_pair(runnable, _runnableStack.size()));
   _runnableStack.push_back(runnable);
@@ -91,10 +91,10 @@ void RunnableStack::PopStack()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PrepareDelegatesToEnterScope(IBSRunnable* delegated)
+void RunnableStack::PrepareDelegatesToEnterScope(IBehavior* delegated)
 {
   // Add the new available delegates to the map
-  std::set<IBSRunnable*> newAvailableDelegates;
+  std::set<IBehavior*> newAvailableDelegates;
   delegated->GetAllDelegates(newAvailableDelegates);
   for(auto& entry: newAvailableDelegates){
     entry->OnEnteredActivatableScope();
@@ -105,7 +105,7 @@ void RunnableStack::PrepareDelegatesToEnterScope(IBSRunnable* delegated)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RunnableStack::PrepareDelegateForRemovalFromStack(IBSRunnable* delegated)
+void RunnableStack::PrepareDelegateForRemovalFromStack(IBehavior* delegated)
 {
   auto availableDelegates = _delegatesMap.find(delegated);
   for(auto& entry: availableDelegates->second){

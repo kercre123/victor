@@ -39,7 +39,7 @@ BehaviorHelperFactory::BehaviorHelperFactory(BehaviorHelperComponent& component)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle BehaviorHelperFactory::CreateDriveToHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                        IBehavior& behavior,
+                                                        ICozmoBehavior& behavior,
                                                         const ObjectID& targetID,
                                                         const DriveToParameters& parameters)
 {
@@ -50,7 +50,7 @@ HelperHandle BehaviorHelperFactory::CreateDriveToHelper(BehaviorExternalInterfac
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle BehaviorHelperFactory::CreatePickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                            IBehavior& behavior,
+                                                            ICozmoBehavior& behavior,
                                                             const ObjectID& targetID,
                                                             const PickupBlockParamaters& parameters)
 {
@@ -61,7 +61,7 @@ HelperHandle BehaviorHelperFactory::CreatePickupBlockHelper(BehaviorExternalInte
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle BehaviorHelperFactory::CreatePlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                           IBehavior& behavior)
+                                                           ICozmoBehavior& behavior)
 {
   IHelper* helper = new PlaceBlockHelper(behaviorExternalInterface, behavior, *this);
   return _helperComponent.AddHelperToComponent(helper);
@@ -70,7 +70,7 @@ HelperHandle BehaviorHelperFactory::CreatePlaceBlockHelper(BehaviorExternalInter
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle BehaviorHelperFactory::CreatePlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                               IBehavior& behavior,
+                                                               ICozmoBehavior& behavior,
                                                                const ObjectID& targetID,
                                                                const bool placingOnGround,
                                                                const PlaceRelObjectParameters& parameters)
@@ -85,7 +85,7 @@ HelperHandle BehaviorHelperFactory::CreatePlaceRelObjectHelper(BehaviorExternalI
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle BehaviorHelperFactory::CreateRollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                          IBehavior& behavior,
+                                                          ICozmoBehavior& behavior,
                                                           const ObjectID& targetID,
                                                           bool rollToUpright,
                                                           const RollBlockParameters& parameters)
@@ -97,7 +97,7 @@ HelperHandle BehaviorHelperFactory::CreateRollBlockHelper(BehaviorExternalInterf
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle BehaviorHelperFactory::CreateSearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                                               IBehavior& behavior,
+                                                               ICozmoBehavior& behavior,
                                                                const SearchParameters& params)
 {
   IHelper* helper = new SearchForBlockHelper(behaviorExternalInterface, behavior, *this, params);

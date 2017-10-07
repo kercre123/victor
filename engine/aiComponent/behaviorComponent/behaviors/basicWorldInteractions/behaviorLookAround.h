@@ -15,7 +15,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/math/math.h"
 
 #include <vector>
@@ -30,7 +30,7 @@ namespace ExternalInterface {
 struct RobotObservedObject;
 }
   
-class BehaviorLookAround : public IBehavior
+class BehaviorLookAround : public ICozmoBehavior
 {
 protected:
   

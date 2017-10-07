@@ -28,7 +28,7 @@ namespace Cozmo {
 
 class SearchForBlockHelper : public IHelper{
 public:
-  SearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior,
+  SearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
                        BehaviorHelperFactory& helperFactory,
                        const SearchParameters& params = {});
   virtual ~SearchForBlockHelper();

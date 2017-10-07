@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorContainer_H__
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
@@ -43,8 +43,8 @@ class BehaviorContainer : private Util::noncopyable
 public:
   ~BehaviorContainer();
   
-  IBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
-  IBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
+  ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
+  ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
   
   // Sometimes it's necessary to downcast to a behavior to a specific behavior pointer, e.g. so an Activity
   // can access it's member functions. This function will help with that and provide a few assert checks along
@@ -74,10 +74,10 @@ protected:
   // type
   void VerifyExecutableBehaviors() const;
   
-  using BehaviorIDToBehaviorMap = std::map<BehaviorID, IBehaviorPtr>;
+  using BehaviorIDToBehaviorMap = std::map<BehaviorID, ICozmoBehaviorPtr>;
 
-  IBehaviorPtr CreateBehavior(BehaviorClass behaviorType, const Json::Value& config);
-  IBehaviorPtr CreateBehavior(const Json::Value& behaviorJson);
+  ICozmoBehaviorPtr CreateBehavior(BehaviorClass behaviorType, const Json::Value& config);
+  ICozmoBehaviorPtr CreateBehavior(const Json::Value& behaviorJson);
   
 #if ANKI_DEV_CHEATS
   const BehaviorIDToBehaviorMap& GetBehaviorMap() const { return _idToBehaviorMap; }
@@ -89,16 +89,16 @@ private:
   // ============================== Private Member Funcs ==============================
   
   // NOTE: can modify newBehavior (e.g. on name collision if rule is to reuse existing behavior)
-  IBehaviorPtr AddToFactory(IBehaviorPtr newBehavior);
+  ICozmoBehaviorPtr AddToFactory(ICozmoBehaviorPtr newBehavior);
   
-  bool RemoveBehaviorFromMap(IBehaviorPtr behavior);
+  bool RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior);
   
   // ============================== Private Member Vars ==============================
   BehaviorIDToBehaviorMap _idToBehaviorMap;
   std::vector<Signal::SmartHandle> _signalHandles;
   
-  // helper to avoid including iBehavior.h here
-  BehaviorClass GetBehaviorClass(IBehaviorPtr behavior) const;
+  // helper to avoid including ICozmoBehavior.h here
+  BehaviorClass GetBehaviorClass(ICozmoBehaviorPtr behavior) const;
 };
 
 template<typename T>
@@ -107,7 +107,7 @@ bool BehaviorContainer::FindBehaviorByIDAndDowncast(BehaviorID behaviorID,
                                                     std::shared_ptr<T>& outPtr) const
 {
   
-  IBehaviorPtr behavior = FindBehaviorByID(behaviorID);
+  ICozmoBehaviorPtr behavior = FindBehaviorByID(behaviorID);
   if( ANKI_VERIFY(behavior != nullptr,
                   "BehaviorContainer.FindBehaviorByIDAndDowncast.NoBehavior",
                   "BehaviorID: %s requiredClass: %s",

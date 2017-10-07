@@ -30,7 +30,7 @@ namespace Anki {
 namespace Cozmo {
 
 //Forward declarations
-class IBehavior;
+class ICozmoBehavior;
 class MoodManager;
 class Robot;
 class BehaviorExternalInterface;
@@ -54,7 +54,7 @@ public:
   void HandleMessage(const T& msg);
 
 protected:
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnDeactivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -123,9 +123,9 @@ private:
   // a spark starts and when it has to play its get out;
   std::shared_ptr<BehaviorPeekABoo> _behaviorPeekABoo;
   
-  IBehaviorPtr _behaviorWait = nullptr;
+  ICozmoBehaviorPtr _behaviorWait = nullptr;
   
-  IBehaviorPtr SelectNextSparkInternalBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
+  ICozmoBehaviorPtr SelectNextSparkInternalBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
 
 };
 

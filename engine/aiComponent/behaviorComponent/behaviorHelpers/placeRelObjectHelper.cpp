@@ -33,7 +33,7 @@ static const int kMaxNumRetrys = 3;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PlaceRelObjectHelper::PlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                           IBehavior& behavior,
+                                           ICozmoBehavior& behavior,
                                            BehaviorHelperFactory& helperFactory,
                                            const ObjectID& targetID,
                                            const bool placingOnGround,

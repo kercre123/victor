@@ -49,7 +49,7 @@ using namespace ExternalInterface;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLookAround::BehaviorLookAround(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   _shouldHandleConfirmedObjectOverved = config.get(kShouldHandleConfirmedKey, true).asBool();
   _shouldHandlePossibleObjectOverved = config.get(kShouldHandlePossibleKey, true).asBool();
@@ -85,7 +85,7 @@ float BehaviorLookAround::EvaluateRunningScoreInternal(BehaviorExternalInterface
     minScore = 0.8f;
   }
 
-  return std::max( minScore, IBehavior::EvaluateRunningScoreInternal(behaviorExternalInterface) );
+  return std::max( minScore, ICozmoBehavior::EvaluateRunningScoreInternal(behaviorExternalInterface) );
 }
 
 
@@ -348,7 +348,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(BehaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorLookAround::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
 
 #if SAFE_ZONE_VIZ

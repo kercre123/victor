@@ -42,7 +42,7 @@ static const char* kCaresAboutExpressedStateConfigKey = "caresAboutExpressedStat
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExpressNeeds::BehaviorExpressNeeds(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _need(NeedId::Count)
 , _requiredBracket(NeedBracketId::Count)
 , _cooldownEvaluator( new Util::GraphEvaluator2d() )

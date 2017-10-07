@@ -15,7 +15,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
@@ -110,9 +110,9 @@ ActivityStrictPriority::ActivityStrictPriority(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityStrictPriority::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivityStrictPriority::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  IBehaviorPtr desiredActiveBehavior;
+  ICozmoBehaviorPtr desiredActiveBehavior;
   BOUNDED_WHILE(5, true)
   {
     // Check to see if the current
@@ -152,7 +152,7 @@ IBehaviorPtr ActivityStrictPriority::GetDesiredActiveBehaviorInternal(BehaviorEx
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityStrictPriority::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+void ActivityStrictPriority::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   for(auto activityIter = _activities.begin(); activityIter != _activities.end(); ++activityIter){
     (*activityIter)->GetAllDelegates(delegates);
@@ -168,7 +168,7 @@ void ActivityStrictPriority::UpdateInternal(BehaviorExternalInterface& behaviorE
     auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
     if((delegationComponent != nullptr) &&
        !delegationComponent->IsControlDelegated(this)){
-      IBehaviorPtr nextBehavior = GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
+      ICozmoBehaviorPtr nextBehavior = GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
       auto delegationWrap = delegationComponent->GetDelegator(this).lock();
       if((delegationWrap != nullptr) &&
          (nextBehavior != nullptr)){

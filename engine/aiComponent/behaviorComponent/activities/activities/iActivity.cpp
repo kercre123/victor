@@ -23,9 +23,9 @@
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/iActivityStrategy.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/bsRunnableChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubeLightComponent.h"
@@ -63,7 +63,7 @@ static const std::string kIdleLockPrefix              = "Activity_";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IActivity::IActivity(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IBSRunnable(ActivityIDToString(ExtractActivityIDFromConfig(config)))
+: IBehavior(ActivityIDToString(ExtractActivityIDFromConfig(config)))
 , _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
 , _driveEndAnimTrigger(AnimationTrigger::Count)
@@ -196,7 +196,7 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
   _behaviorChooserPtr.reset();
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   if(!chooserConfig.isNull()){
-    _behaviorChooserPtr = BSRunnableChooserFactory::CreateBSRunnableChooser
+    _behaviorChooserPtr = BehaviorChooserFactory::CreateBehaviorChooser
                               (behaviorExternalInterface, chooserConfig);
   }
 
@@ -204,7 +204,7 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
   _interludeBehaviorChooserPtr.reset();
   const Json::Value& interludeChooserConfig = config[kInterludeBehaviorChooserConfigKey];
   if( !interludeChooserConfig.isNull() ) {
-    _interludeBehaviorChooserPtr = BSRunnableChooserFactory::CreateBSRunnableChooser
+    _interludeBehaviorChooserPtr = BehaviorChooserFactory::CreateBehaviorChooser
                                        (behaviorExternalInterface, interludeChooserConfig);
   }
     
@@ -222,7 +222,7 @@ void IActivity::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterf
     if((_behaviorChooserPtr != nullptr) &&
        (delegationComponent != nullptr) &&
        !delegationComponent->IsControlDelegated(this)){
-      IBehaviorPtr nextBehavior = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
+      ICozmoBehaviorPtr nextBehavior = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, nullptr);
       auto delegationWrap = delegationComponent->GetDelegator(this).lock();
       if(delegationWrap != nullptr){
         delegationWrap->Delegate(this, nextBehavior.get());
@@ -234,7 +234,7 @@ void IActivity::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+void IActivity::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
  if(_behaviorChooserPtr.get() != nullptr){
    _behaviorChooserPtr->GetAllDelegates(delegates);
@@ -380,7 +380,7 @@ void IActivity::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExterna
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
 
   // if an interlude behavior was chosen and is still running, return that
@@ -392,7 +392,7 @@ IBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface& beha
     _lastChosenInterludeBehavior.reset();
   }
 
-  IBehaviorPtr ret = GetDesiredActiveBehaviorInternal(behaviorExternalInterface, currentRunningBehavior);
+  ICozmoBehaviorPtr ret = GetDesiredActiveBehaviorInternal(behaviorExternalInterface, currentRunningBehavior);
 
   const bool hasInterludeChooser = _interludeBehaviorChooserPtr != nullptr;
   const bool switchingBehaviors = ret != currentRunningBehavior;
@@ -421,15 +421,15 @@ IBehaviorPtr IActivity::GetDesiredActiveBehavior(BehaviorExternalInterface& beha
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr IActivity::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr IActivity::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  IBehaviorPtr ret;
+  ICozmoBehaviorPtr ret;
   if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
                  "IActivity.ChooseNextBehaviorInternal.ChooserNotOverwritten",
                  "ChooseNextBehaviorInternal called without behavior chooser overwritten")){
     // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
     // note we pass
-    IBehaviorPtr ret = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
+    ICozmoBehaviorPtr ret = _behaviorChooserPtr->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
     return ret;
   }
   

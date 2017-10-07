@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorOnConfigSeen_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorOnConfigSeen_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,7 +24,7 @@ namespace BlockConfigurations{
 enum class ConfigurationType;
 }
   
-class BehaviorOnConfigSeen: public IBehavior
+class BehaviorOnConfigSeen: public ICozmoBehavior
 {
 private:
   // Enforce creation through BehaviorContainer

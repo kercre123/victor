@@ -33,7 +33,7 @@ const float kTimeSinceFaceSeenForTurn = 20;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPyramidThankYou::BehaviorPyramidThankYou(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

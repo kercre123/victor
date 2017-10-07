@@ -15,7 +15,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorSinging_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorSinging_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/cubeAccelComponentListeners.h"
 
 #include "clad/audio/audioSwitchTypes.h"
@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorSinging : public IBehavior
+class BehaviorSinging : public ICozmoBehavior
 {
 protected:
   friend class BehaviorContainer;

@@ -1,17 +1,17 @@
 /**
- * File: iBehavior_fwd.h
+ * File: ICozmoBehavior_fwd.h
  *
  * Author: Brad Neuman
  * Created: 2017-02-17
  *
- * Description: Forward declarations for IBehavior
+ * Description: Forward declarations for ICozmoBehavior
  *
  * Copyright: Anki, Inc. 2017
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_IBehavior_fwd_H__
-#define __Cozmo_Basestation_Behaviors_IBehavior_fwd_H__
+#ifndef __Cozmo_Basestation_Behaviors_ICozmoBehavior_fwd_H__
+#define __Cozmo_Basestation_Behaviors_ICozmoBehavior_fwd_H__
 
 #include <functional>
 #include "clad/types/actionResults.h"
@@ -19,7 +19,7 @@
 namespace Anki {
 namespace Cozmo {
 
-class IBehavior;
+class ICozmoBehavior;
 
 enum class BehaviorStatus {
   Failure,
@@ -33,7 +33,7 @@ struct RobotCompletedAction;
 
 class BehaviorExternalInterface;
 
-using IBehaviorPtr                                              = std::shared_ptr<IBehavior>;
+using ICozmoBehaviorPtr                                              = std::shared_ptr<ICozmoBehavior>;
 using BehaviorRobotCompletedActionCallback                      = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
 using BehaviorRobotCompletedActionWithExternalInterfaceCallback = std::function<void(const ExternalInterface::RobotCompletedAction&, BehaviorExternalInterface&)>;
 using BehaviorActionResultCallback                              = std::function<void(ActionResult)>;

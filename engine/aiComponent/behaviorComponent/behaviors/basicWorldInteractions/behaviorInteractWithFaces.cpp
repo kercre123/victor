@@ -93,7 +93,7 @@ static_assert(MemoryMapTypes::IsSequentialArray(typesToBlockDriving),
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInteractWithFaces::BehaviorInteractWithFaces(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   LoadConfig(config["params"]);
 
@@ -153,7 +153,7 @@ Result BehaviorInteractWithFaces::OnBehaviorActivated(BehaviorExternalInterface&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorInteractWithFaces::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

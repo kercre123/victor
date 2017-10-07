@@ -16,7 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPet.h"
 #include "engine/robot.h"
 #include "engine/petWorld.h"
@@ -52,7 +52,7 @@ ReactionTriggerStrategyPetInitialDetection::ReactionTriggerStrategyPetInitialDet
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyPetInitialDetection::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+void ReactionTriggerStrategyPetInitialDetection::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -85,7 +85,7 @@ void ReactionTriggerStrategyPetInitialDetection::SetupForceTriggerBehavior(Behav
 // Return true if behavior should become active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   // Keep track of petIDs observed during cooldown.  This prevents Cozmo from
   // suddenly reacting to a "known" pet when cooldown expires.
@@ -159,7 +159,7 @@ bool ReactionTriggerStrategyPetInitialDetection::RecentlyReacted() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
+void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior)
 {
   behavior->AddListener(this);
 }

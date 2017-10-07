@@ -169,7 +169,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   static constexpr int _kBackupFromCliffDist_mm = 70;
   
   BehaviorFactoryTest::BehaviorFactoryTest(const Json::Value& config)
-  : IBehavior(config)
+  : ICozmoBehavior(config)
   , _currentState(FactoryTestState::GetPrevTestResults)
   , _lastHandlerResult(RESULT_OK)
   , _stationID(-1)
@@ -702,7 +702,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   }
   
   
-  IBehavior::Status BehaviorFactoryTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+  ICozmoBehavior::Status BehaviorFactoryTest::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
   {
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
     // be removed

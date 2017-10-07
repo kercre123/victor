@@ -62,23 +62,23 @@ ReactionTriggerStrategyPositionUpdate::ReactionTriggerStrategyPositionUpdate(
 //   using namespace JsonTools;
   
 //   if(GetValueOptional(config, kCoolDownDurationKey , _params.coolDownDuration_ms)) {
-//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetCoolDownDuration",
+//     PRINT_CH_DEBUG("ReactionTriggers","ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetCoolDownDuration",
 //                       "%ums", _params.coolDownDuration_ms);
 //   }
   
 //   if(GetValueOptional(config, kSamePoseDistKey , _params.samePoseDistThreshold_mm)) {
-//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThresh",
+//     PRINT_CH_DEBUG("ReactionTriggers","ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThresh",
 //                       "%.1f", _params.samePoseDistThreshold_mm);
 //   }
   
 //   if(GetValueOptional(config, kSamePoseDistSparkedKey, _params.samePoseDistThreshold_sparked_mm)) {
-//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThreshSparked",
+//     PRINT_CH_DEBUG("ReactionTriggers","ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThreshSparked",
 //                       "%.1f", _params.samePoseDistThreshold_sparked_mm);
 //   }
   
   
 //   if(GetAngleOptional(config, kSamePoseAngleKey, _params.samePoseAngleThreshold_rad, true)) {
-//     PRINT_CH_DEBUG("ReactionTriggers","IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseAngleThresh",
+//     PRINT_CH_DEBUG("ReactionTriggers","ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseAngleThresh",
 //                       "%.1fdeg", _params.samePoseAngleThreshold_rad.getDegrees());
 //   }
 // }

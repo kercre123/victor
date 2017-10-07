@@ -41,7 +41,7 @@ PotentialObjectives::PotentialObjectives(const Json::Value& config)
   probabilityToRequire = config.get("probabilityToRequireObjective", 1.0f).asFloat();
   randCompletionsMin = config.get("randomCompletionsNeededMin", 1).asUInt();
   randCompletionsMax = config.get("randomCompletionsNeededMax", 1).asUInt();
-  behaviorID = IBehavior::ExtractBehaviorIDFromConfig(config);
+  behaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(config);
   
   DEV_ASSERT(randCompletionsMax >= randCompletionsMin, "FPSocialize.ObjectiveRequirement.InvalidConfig.MaxLTMin");
   DEV_ASSERT(FLT_GE_ZERO( probabilityToRequire ), "FPSocialize.ObjectiveRequirement.InvalidConfig.NegativeProb");
@@ -72,7 +72,7 @@ ActivitySocialize::ActivitySocialize(BehaviorExternalInterface& behaviorExternal
 {
   // choosers and activities are created after the behaviors are added to the factory, so grab those now
   const BehaviorContainer& BC = behaviorExternalInterface.GetBehaviorContainer();
-  IBehaviorPtr facesBehavior = BC.FindBehaviorByID(BehaviorID::FindFaces_socialize);
+  ICozmoBehaviorPtr facesBehavior = BC.FindBehaviorByID(BehaviorID::FindFaces_socialize);
   assert(std::static_pointer_cast<BehaviorExploreLookAroundInPlace>(facesBehavior));
   _findFacesBehavior = std::static_pointer_cast<BehaviorExploreLookAroundInPlace>(facesBehavior);
   DEV_ASSERT(nullptr != _findFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.FindFaces");
@@ -102,9 +102,9 @@ void ActivitySocialize::OnActivatedActivity(BehaviorExternalInterface& behaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  IBehaviorPtr bestBehavior;
+  ICozmoBehaviorPtr bestBehavior;
   
   bestBehavior = IActivity::GetDesiredActiveBehaviorInternal(behaviorExternalInterface, currentRunningBehavior);
   
@@ -184,7 +184,7 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
       // Has objectives we might want to do
       if( !_objectivesLeft.empty() )
       {
-        std::vector<IBehaviorPtr> wantsRunnableBehaviors;
+        std::vector<ICozmoBehaviorPtr> wantsRunnableBehaviors;
         // fill in _playingBehavior with one of the valid objectives
         for( const auto& reqPtr : _potentialObjectives )
         {
@@ -192,7 +192,7 @@ IBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorExterna
           if( _objectivesLeft.find(reqPtr->objective) != _objectivesLeft.end() )
           {
             const BehaviorContainer& BC = behaviorExternalInterface.GetBehaviorContainer();
-            IBehaviorPtr beh = BC.FindBehaviorByID(reqPtr->behaviorID);
+            ICozmoBehaviorPtr beh = BC.FindBehaviorByID(reqPtr->behaviorID);
             if( beh != nullptr )
             {
               // Check if runnable and valid.

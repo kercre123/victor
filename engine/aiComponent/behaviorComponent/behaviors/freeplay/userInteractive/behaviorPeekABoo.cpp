@@ -78,7 +78,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPeekABooA
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPeekABoo::BehaviorPeekABoo(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _cachedFace(Vision::UnknownFaceID)
 , _numPeeksRemaining(0)
 , _numPeeksTotal(1)
@@ -179,7 +179,7 @@ Result BehaviorPeekABoo::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorPeekABoo::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   UpdateTimestampSets(behaviorExternalInterface);
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should

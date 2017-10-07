@@ -17,7 +17,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/objectFamilies.h"
 #include "anki/common/constantsAndMacros.h"
@@ -34,10 +34,10 @@ struct RobotObservedObject;
 }
 class ObservableObject;
   
-class BehaviorAcknowledgeObject : public IBehavior
+class BehaviorAcknowledgeObject : public ICozmoBehavior
 {
 private:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
 
 public:
   virtual bool CarryingObjectHandledInternally() const override { return true;}
@@ -87,7 +87,7 @@ private:
   template<typename T>
   void LookAtGhostBlock(BehaviorExternalInterface& behaviorExternalInterface, bool backupFirst, void(T::*callback)(BehaviorExternalInterface&));
   
-  // NOTE: uses s32 instead of ObjectID to match IBehaviorPoseBasedAcknowledgement's generic ids
+  // NOTE: uses s32 instead of ObjectID to match ICozmoBehaviorPoseBasedAcknowledgement's generic ids
   ObjectID _currTarget;
 
   // fake object to try to look at to check for possible stacks

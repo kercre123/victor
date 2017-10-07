@@ -14,12 +14,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPounceOnMotion_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPounceOnMotion_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorPounceOnMotion : public IBehavior
+class BehaviorPounceOnMotion : public ICozmoBehavior
 {
 private:
   

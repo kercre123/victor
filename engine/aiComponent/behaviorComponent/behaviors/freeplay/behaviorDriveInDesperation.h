@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Behaviors_Freeplay_BehaviorDriveInDesperation_H__
 #define __Cozmo_Basestation_BehaviorSystem_Behaviors_Freeplay_BehaviorDriveInDesperation_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include <memory>
 
 namespace Anki {
@@ -25,9 +25,9 @@ namespace Cozmo {
 class Robot;
 class BlockWorldFilter;
 
-class BehaviorDriveInDesperation : public IBehavior
+class BehaviorDriveInDesperation : public ICozmoBehavior
 {
-  using Base = IBehavior;
+  using Base = ICozmoBehavior;
 public:
   virtual ~BehaviorDriveInDesperation();
 
@@ -48,7 +48,7 @@ protected:
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 private:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
   enum class State {
     Idle,
     DriveRandom,

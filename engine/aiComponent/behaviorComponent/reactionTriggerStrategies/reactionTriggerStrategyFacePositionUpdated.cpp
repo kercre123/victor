@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
 #include "engine/faceWorld.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -50,7 +50,7 @@ ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionU
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   std::shared_ptr<BehaviorAcknowledgeFace> directPtr;
   behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByIDAndDowncast(behavior->GetID(),
@@ -75,7 +75,7 @@ void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(Behav
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   std::shared_ptr<BehaviorAcknowledgeFace> directPtr;
   behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByIDAndDowncast(behavior->GetID(),
@@ -220,7 +220,7 @@ void ReactionTriggerStrategyFacePositionUpdated::AlwaysHandlePoseBasedInternal(c
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
+void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior)
 {
   behavior->AddListener(this);
 }

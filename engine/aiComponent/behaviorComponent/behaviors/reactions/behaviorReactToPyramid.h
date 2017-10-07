@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToPyramid_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToPyramid_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToPyramid : public IBehavior
+class BehaviorReactToPyramid : public ICozmoBehavior
 {
 private:
   // Enforce creation through BehaviorContainer

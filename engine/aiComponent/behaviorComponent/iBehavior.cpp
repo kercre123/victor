@@ -1,5 +1,5 @@
 /**
-* File: iBSRunnable.cpp
+* File: IBehavior.cpp
 *
 * Author: Kevin M. Karol
 * Created: 08/251/17
@@ -16,7 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 
 #include "util/logging/logging.h"
 
@@ -29,7 +29,7 @@ static const int kBSTickInterval = 1;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBSRunnable::IBSRunnable(const std::string& idString)
+IBehavior::IBehavior(const std::string& idString)
 : _idString(idString)
 , _currentInScopeCount(0)
 , _lastTickWantsToBeActivatedCheckedOn(0)
@@ -43,7 +43,7 @@ IBSRunnable::IBSRunnable(const std::string& idString)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::Init(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
   AssertActivationState_DevOnly(ActivationState::NotInitialized);
   SetActivationState_DevOnly(ActivationState::OutOfScope);
@@ -53,7 +53,7 @@ void IBSRunnable::Init(BehaviorExternalInterface& behaviorExternalInterface)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::OnEnteredActivatableScope()
+void IBehavior::OnEnteredActivatableScope()
 {
   AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
   
@@ -61,7 +61,7 @@ void IBSRunnable::OnEnteredActivatableScope()
   // If this isn't the first EnteredActivatableScope don't call internal functions
   if(_currentInScopeCount != 1){
     PRINT_CH_INFO("Behaviors",
-                  "IBSRunnable.OnEnteredActivatableScope.AlreadyInScope",
+                  "IBehavior.OnEnteredActivatableScope.AlreadyInScope",
                   "Runnable %s is already in scope, ignoring request to enter scope",
                   _idString.c_str());
     return;
@@ -77,7 +77,7 @@ void IBSRunnable::OnEnteredActivatableScope()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
     AssertNotActivationState_DevOnly(ActivationState::NotInitialized);
@@ -86,7 +86,7 @@ void IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
     // Ensure update is ticked every tick while in activatable scope
     const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
     DEV_ASSERT_MSG(_lastTickOfUpdate == (tickCount - kBSTickInterval),
-                   "IBSRunnable.Update.TickCountMismatch",
+                   "IBehavior.Update.TickCountMismatch",
                    "BSRunnable %s is receiving tick on %zu, but hasn't been ticked since %zu",
                    _idString.c_str(),
                    _lastTickOfUpdate,
@@ -99,7 +99,7 @@ void IBSRunnable::Update(BehaviorExternalInterface& behaviorExternalInterface)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBSRunnable::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const
+bool IBehavior::WantsToBeActivated(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if(USE_BSM){
     AssertActivationState_DevOnly(ActivationState::InScope);
@@ -110,14 +110,14 @@ bool IBSRunnable::WantsToBeActivated(BehaviorExternalInterface& behaviorExternal
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::OnActivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
     AssertActivationState_DevOnly(ActivationState::InScope);
 
     const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
     DEV_ASSERT_MSG(tickCount == _lastTickWantsToBeActivatedCheckedOn,
-                   "IBSRunnable.OnActivated.WantsToRunNotCheckedThisTick",
+                   "IBehavior.OnActivated.WantsToRunNotCheckedThisTick",
                    "Attempted to activate %s on tick %zu, but wants to run was last checked on %zu",
                    _idString.c_str(),
                    tickCount,
@@ -130,7 +130,7 @@ void IBSRunnable::OnActivated(BehaviorExternalInterface& behaviorExternalInterfa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
+void IBehavior::OnDeactivated(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if(USE_BSM){
     AssertActivationState_DevOnly(ActivationState::Activated);
@@ -142,7 +142,7 @@ void IBSRunnable::OnDeactivated(BehaviorExternalInterface& behaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::OnLeftActivatableScope()
+void IBehavior::OnLeftActivatableScope()
 {
   AssertActivationState_DevOnly(ActivationState::InScope);
   
@@ -154,7 +154,7 @@ void IBSRunnable::OnLeftActivatableScope()
   _currentInScopeCount--;
   if(_currentInScopeCount != 0){
     PRINT_CH_INFO("Behaviors",
-                  "IBSRunnable.OnLeftActivatableScope.StillInScope",
+                  "IBehavior.OnLeftActivatableScope.StillInScope",
                   "There's still an in scope count of %d on %s",
                   _currentInScopeCount,
                   _idString.c_str());
@@ -168,10 +168,10 @@ void IBSRunnable::OnLeftActivatableScope()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::SetActivationState_DevOnly(ActivationState state)
+void IBehavior::SetActivationState_DevOnly(ActivationState state)
 {
   PRINT_CH_INFO("Behaviors",
-                "IBSRunnable.SetActivationState",
+                "IBehavior.SetActivationState",
                 "Activation state set to %s",
                 ActivationStateToString(state).c_str());
   
@@ -182,11 +182,11 @@ void IBSRunnable::SetActivationState_DevOnly(ActivationState state)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::AssertActivationState_DevOnly(ActivationState state) const
+void IBehavior::AssertActivationState_DevOnly(ActivationState state) const
 {
   #if ANKI_DEV_CHEATS
   DEV_ASSERT_MSG(_currentActivationState == state,
-                 "IBSRunnable.AssertActivationState_DevOnly.WrongActivationState",
+                 "IBehavior.AssertActivationState_DevOnly.WrongActivationState",
                  "Runnable %s is not in state %s which it should be",
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
@@ -195,11 +195,11 @@ void IBSRunnable::AssertActivationState_DevOnly(ActivationState state) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBSRunnable::AssertNotActivationState_DevOnly(ActivationState state) const
+void IBehavior::AssertNotActivationState_DevOnly(ActivationState state) const
 {
   #if ANKI_DEV_CHEATS
   DEV_ASSERT_MSG(_currentActivationState != state,
-                 "IBSRunnable.AssertNotActivationState_DevOnly.WrongActivationState",
+                 "IBehavior.AssertNotActivationState_DevOnly.WrongActivationState",
                  "Runnable %s is in state %s when it shouldn't be",
                  _idString.c_str(),
                  ActivationStateToString(_currentActivationState).c_str());
@@ -208,7 +208,7 @@ void IBSRunnable::AssertNotActivationState_DevOnly(ActivationState state) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string IBSRunnable::ActivationStateToString(ActivationState state) const
+std::string IBehavior::ActivationStateToString(ActivationState state) const
 {
   switch(state){
     case ActivationState::NotInitialized : return "NotInitialized";

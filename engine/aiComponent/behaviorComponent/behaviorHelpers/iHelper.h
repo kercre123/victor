@@ -17,8 +17,8 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "clad/types/actionResults.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/userFacingResults.h"
@@ -32,7 +32,7 @@ class Robot;
 class IActionRunner;
 class BehaviorHelperFactory;
 
-class IHelper : public IBSRunnable{
+class IHelper : public IBehavior{
   // Enforce creation/interaction through HelperComponent
   friend class BehaviorHelperComponent;
   friend class BehaviorHelperFactory;
@@ -47,11 +47,11 @@ protected:
   // the BSM. While this is true it will be impossible to delegate to helpers in the way
   // other BSRunnables are delegated to - so don't tie this UpdateInternal in just yet
   
-  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
+  // Currently unused overrides of IBehavior since no equivalence in old BM system
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override { return false;};
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
-  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override {}
+  void GetAllDelegates(std::set<IBehavior*>& delegates) const override {}
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void OnLeftActivatableScopeInternal() override {};
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
@@ -85,7 +85,7 @@ protected:
   
   // Initialize the helper with the behavior to start actions on, and a reference to the factory to delegate
   // out to new helpers
-  IHelper(const std::string& name, BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior, BehaviorHelperFactory& _helperFactory);
+  IHelper(const std::string& name, BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior, BehaviorHelperFactory& _helperFactory);
 
   void SetName(const std::string& name) { _name = name; }
   
@@ -195,7 +195,7 @@ private:
   float _timeStarted_s = 0.0f;
 
 
-  IBehavior& _behaviorToCallActionsOn;
+  ICozmoBehavior& _behaviorToCallActionsOn;
   BehaviorHelperFactory& _helperFactory;
   
   // Functions for responding to action results with StartActingWithResponseAnim

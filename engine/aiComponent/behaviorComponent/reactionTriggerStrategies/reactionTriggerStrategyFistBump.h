@@ -32,10 +32,10 @@ public:
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }
   
 protected:
-  virtual bool ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior) override;
-  virtual void SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) override;
 
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior) override;
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void ResetTrigger(bool updateLastCompletionTime) override;
   
@@ -45,7 +45,7 @@ private:
   
   struct BehaviorObjectiveTriggerParams {
     float cooldownTime_s;      // Amount of time that must have expired since the last time fist bump completed before this can trigger it again.
-                               // NB: This cooldown is slightly different from the one in IBehavior in that it is specified on a per-trigger basis.
+                               // NB: This cooldown is slightly different from the one in ICozmoBehavior in that it is specified on a per-trigger basis.
     float triggerProbability;  // Probability (0,1) of fist bump executing when objective is achieved and cooldown time has expired
     float triggerExpiration_s; // Amount of time since the trigger is set to true that it should automatically become false.
                                // Note: Playing the fist bump too long after the objective that it's triggered off of is achieved is confusing.

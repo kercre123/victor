@@ -48,7 +48,7 @@ using namespace ExternalInterface;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRespondPossiblyRoll::BehaviorRespondPossiblyRoll(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
   
@@ -109,7 +109,7 @@ Result BehaviorRespondPossiblyRoll::ResumeInternal(BehaviorExternalInterface& be
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const auto& targetAxisChanged = _upAxisChangedIDs.find(_metadata.GetObjectID());
   
@@ -121,7 +121,7 @@ IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal_WhileRunning(Behav
   }
   
   _upAxisChangedIDs.clear();
-  return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
 
 

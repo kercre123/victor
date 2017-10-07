@@ -46,7 +46,7 @@ CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _isBlockRotationImportant(true)
 , _didCozmoAttemptDock(false)
 , _upAxisOnBehaviorStart(AxisName::X_POS)
@@ -81,7 +81,7 @@ Result BehaviorRollBlock::OnBehaviorActivated(BehaviorExternalInterface& behavio
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr && _behaviorState == State::RollingBlock){
@@ -107,7 +107,7 @@ IBehavior::Status BehaviorRollBlock::UpdateInternal_WhileRunning(BehaviorExterna
           if(_targetID.IsSet()){
             TransitionToPerformingAction(behaviorExternalInterface);
           }else{
-            return IBehavior::Status::Complete;
+            return ICozmoBehavior::Status::Complete;
           }
         }
       }

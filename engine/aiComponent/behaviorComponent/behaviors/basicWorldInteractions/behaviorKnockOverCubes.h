@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorKnockOverCubes_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/blockWorld/blockConfiguration.h"
 #include "engine/blockWorld/stackConfigurationContainer.h"
 #include "clad/types/animationTrigger.h"
@@ -26,7 +26,7 @@ class BlockWorldFilter;
 class ObservableObject;
 class Robot;
 
-class BehaviorKnockOverCubes : public IBehavior
+class BehaviorKnockOverCubes : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer

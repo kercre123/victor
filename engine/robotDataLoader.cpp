@@ -23,7 +23,7 @@
 #include "engine/animations/cozmo_anim_generated.h"
 #include "engine/animations/faceAnimationManager.h"
 #include "engine/animations/proceduralFace.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/components/bodyLightComponent.h"
@@ -533,7 +533,7 @@ void RobotDataLoader::LoadBehaviors()
     const bool success = _platform->readAsJson(filename, behaviorJson);
     if (success && !behaviorJson.empty())
     {
-      BehaviorID behaviorID = IBehavior::ExtractBehaviorIDFromConfig(behaviorJson, filename);
+      BehaviorID behaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorJson, filename);
       auto result = _behaviors.emplace(std::piecewise_construct,
                                        std::forward_as_tuple(behaviorID),
                                        std::forward_as_tuple(std::move(behaviorJson)));

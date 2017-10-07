@@ -78,7 +78,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFistBumpA
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFistBump::BehaviorFistBump(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _startLookingForFaceTime_s(0.f)
 , _nextGazeChangeTime_s(0.f)
 , _nextGazeChangeIndex(0)
@@ -132,7 +132,7 @@ Result BehaviorFistBump::OnBehaviorActivated(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorFistBump::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   f32 now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   

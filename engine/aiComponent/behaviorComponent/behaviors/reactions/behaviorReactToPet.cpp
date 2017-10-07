@@ -91,7 +91,7 @@ Result BehaviorReactToPet::OnBehaviorActivated(BehaviorExternalInterface& behavi
 // Called each tick while behavior is active.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorReactToPet::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   //
   // If target disappears during iteration, end iteration immediately.

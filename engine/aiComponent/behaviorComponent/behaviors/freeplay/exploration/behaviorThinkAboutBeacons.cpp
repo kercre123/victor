@@ -26,7 +26,7 @@ static const char* kConfigParamsKey = "params";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorThinkAboutBeacons::BehaviorThinkAboutBeacons(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {  
   // load parameters from json
   LoadConfig(config[kConfigParamsKey]);

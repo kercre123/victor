@@ -24,7 +24,7 @@ namespace Cozmo {
 
 // forward declarations
 class BehaviorExternalInterface;
-class IBSRunnable;
+class IBehavior;
   
 // Defined within .h file so tests can access runnable stack functions
 class RunnableStack{
@@ -34,17 +34,17 @@ public:
   virtual ~RunnableStack(){}
   
   void InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
-                         IBSRunnable* baseOfStack);
+                         IBehavior* baseOfStack);
   void UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
-                           std::set<IBSRunnable*>& tickedInStack);
+                           std::set<IBehavior*>& tickedInStack);
   
-  inline IBSRunnable* GetTopOfStack(){ return _runnableStack.empty() ? nullptr : _runnableStack.back();}
-  inline bool IsInStack(const IBSRunnable* runnable) { return _runnableToIndexMap.find(runnable) != _runnableToIndexMap.end();}
+  inline IBehavior* GetTopOfStack(){ return _runnableStack.empty() ? nullptr : _runnableStack.back();}
+  inline bool IsInStack(const IBehavior* runnable) { return _runnableToIndexMap.find(runnable) != _runnableToIndexMap.end();}
   
-  void PushOntoStack(IBSRunnable* runnable);
+  void PushOntoStack(IBehavior* runnable);
   void PopStack();
   
-  using DelegatesMap = std::map<IBSRunnable*,std::set<IBSRunnable*>>;
+  using DelegatesMap = std::map<IBehavior*,std::set<IBehavior*>>;
   const DelegatesMap& GetDelegatesMap(){ return _delegatesMap;}
   
   // for debug only, prints stack info
@@ -52,17 +52,17 @@ public:
   
 private:
   BehaviorExternalInterface* _behaviorExternalInterface;
-  std::vector<IBSRunnable*> _runnableStack;
-  std::unordered_map<const IBSRunnable*, int> _runnableToIndexMap;
-  std::map<IBSRunnable*,std::set<IBSRunnable*>> _delegatesMap;
+  std::vector<IBehavior*> _runnableStack;
+  std::unordered_map<const IBehavior*, int> _runnableToIndexMap;
+  std::map<IBehavior*,std::set<IBehavior*>> _delegatesMap;
   
   
   
   // calls all appropriate functions to prep the delegates of something about to be added to the stack
-  void PrepareDelegatesToEnterScope(IBSRunnable* delegated);
+  void PrepareDelegatesToEnterScope(IBehavior* delegated);
   
   // calls all appropriate functions to prepare a delegate to be removed from the stack
-  void PrepareDelegateForRemovalFromStack(IBSRunnable* delegated);
+  void PrepareDelegateForRemovalFromStack(IBehavior* delegated);
 };
 
 

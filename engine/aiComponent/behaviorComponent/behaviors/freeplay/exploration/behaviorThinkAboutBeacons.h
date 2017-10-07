@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorThinkAboutBeacons_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorThinkAboutBeacons_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorThinkAboutBeacons : public IBehavior
+class BehaviorThinkAboutBeacons : public ICozmoBehavior
 {
 private:
   
@@ -36,7 +36,7 @@ public:
   virtual ~BehaviorThinkAboutBeacons();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // true if currently there are edges that Cozmo would like to visit
@@ -46,7 +46,7 @@ public:
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;

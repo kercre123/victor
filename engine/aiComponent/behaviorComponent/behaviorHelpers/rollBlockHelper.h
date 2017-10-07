@@ -27,7 +27,7 @@ protected:
 
 public:
   RollBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                  IBehavior& behavior,
+                  ICozmoBehavior& behavior,
                   BehaviorHelperFactory& helperFactory,
                   const ObjectID& targetID,
                   bool rollToUpright = true,

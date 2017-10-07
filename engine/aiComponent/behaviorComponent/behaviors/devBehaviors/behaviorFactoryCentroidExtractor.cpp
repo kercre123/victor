@@ -70,7 +70,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
   static const BackpackLEDArray fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
 
   BehaviorFactoryCentroidExtractor::BehaviorFactoryCentroidExtractor(const Json::Value& config)
-  : IBehavior(config)
+  : ICozmoBehavior(config)
   {
     
     SubscribeToTags({{
@@ -129,14 +129,14 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     return Result::RESULT_OK;
   }
   
-  IBehavior::Status BehaviorFactoryCentroidExtractor::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+  ICozmoBehavior::Status BehaviorFactoryCentroidExtractor::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
   {
     if(_waitingForDots || !_liftCalibrated || !_headCalibrated)
     {
       return Status::Running;
     }
     
-    return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+    return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
   }
   
   void BehaviorFactoryCentroidExtractor::OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface)

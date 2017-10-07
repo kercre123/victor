@@ -1,5 +1,5 @@
 /**
- * File: SelectionBSRunnableChooser.h
+ * File: SelectionBehaviorChooser.h
  *
  * Author: Lee Crippen
  * Created: 10/15/15
@@ -10,13 +10,13 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/selectionBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/selectionBehaviorChooser.h"
 
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -29,8 +29,8 @@ namespace{
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SelectionBSRunnableChooser::SelectionBSRunnableChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IBSRunnableChooser(behaviorExternalInterface, config)
+SelectionBehaviorChooser::SelectionBehaviorChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
+: IBehaviorChooser(behaviorExternalInterface, config)
 , _behaviorExternalInterface(behaviorExternalInterface)
 {
   auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
@@ -38,12 +38,12 @@ SelectionBSRunnableChooser::SelectionBSRunnableChooser(BehaviorExternalInterface
   {
     _eventHandlers.push_back(robotExternalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID,
-                               std::bind(&SelectionBSRunnableChooser::HandleExecuteBehavior,
+                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
                                          this, std::placeholders::_1)));
     
     _eventHandlers.push_back(robotExternalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType,
-                               std::bind(&SelectionBSRunnableChooser::HandleExecuteBehavior,
+                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
                                          this, std::placeholders::_1)));
   }
   
@@ -51,14 +51,14 @@ SelectionBSRunnableChooser::SelectionBSRunnableChooser(BehaviorExternalInterface
   _behaviorWait = _behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BehaviorID::Wait);
   DEV_ASSERT(_behaviorWait != nullptr &&
              _behaviorWait->GetClass() == BehaviorClass::Wait,
-             "SelectionBSRunnableChooser.BehaviorWaitNotLoaded");
+             "SelectionBehaviorChooser.BehaviorWaitNotLoaded");
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr SelectionBSRunnableChooser::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr SelectionBehaviorChooser::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  auto runnable = [this, &behaviorExternalInterface](const IBehaviorPtr behavior)
+  auto runnable = [this, &behaviorExternalInterface](const ICozmoBehaviorPtr behavior)
   {
     const bool behaviorIsRunning = nullptr != behavior && behavior->IsRunning();
     bool ret = (nullptr != behavior && (behaviorIsRunning || behavior->WantsToBeActivated(behaviorExternalInterface)));
@@ -101,10 +101,10 @@ IBehaviorPtr SelectionBSRunnableChooser::GetDesiredActiveBehavior(BehaviorExtern
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SelectionBSRunnableChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
 
-  IBehaviorPtr selectedBehavior;
+  ICozmoBehaviorPtr selectedBehavior;
 
   switch( event.GetData().GetTag() ) {
     case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID: {
@@ -113,10 +113,10 @@ void SelectionBSRunnableChooser::HandleExecuteBehavior(const AnkiEvent<ExternalI
       _numRuns = msg.numRuns;
 
       if( selectedBehavior != nullptr ) {
-        PRINT_NAMED_INFO("SelectionBSRunnableChooser.HandleExecuteBehaviorByName.SelectBehavior",
+        PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehaviorByName.SelectBehavior",
                          "selecting behavior name '%s'", BehaviorIDToString(msg.behaviorID));
       } else {
-        PRINT_NAMED_WARNING("SelectionBSRunnableChooser.HandleExecuteBehaviorByName.UnknownBehavior",
+        PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehaviorByName.UnknownBehavior",
                             "Unknown behavior %s",
                             BehaviorIDToString(msg.behaviorID));
       }
@@ -131,10 +131,10 @@ void SelectionBSRunnableChooser::HandleExecuteBehavior(const AnkiEvent<ExternalI
       _numRuns = msg.numRuns;
       
       if( selectedBehavior != nullptr ) {
-        PRINT_NAMED_INFO("SelectionBSRunnableChooser.ExecuteBehaviorByExecutableType.SelectBehavior",
+        PRINT_NAMED_INFO("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.SelectBehavior",
                          "selecting behavior '%s' exec type '%s'", selectedBehavior->GetIDStr().c_str(), EnumToString(msg.behaviorType) );
       } else {
-        PRINT_NAMED_WARNING("SelectionBSRunnableChooser.ExecuteBehaviorByExecutableType.NoBehavior",
+        PRINT_NAMED_WARNING("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.NoBehavior",
                             "No behavior for exec type %s",
                             EnumToString(msg.behaviorType));
       }
@@ -143,7 +143,7 @@ void SelectionBSRunnableChooser::HandleExecuteBehavior(const AnkiEvent<ExternalI
     }
 
     default:
-      PRINT_NAMED_ERROR("SelectionBSRunnableChooser.HandleMessage.UnknownTag",
+      PRINT_NAMED_ERROR("SelectionBehaviorChooser.HandleMessage.UnknownTag",
                         "got a tag we didn't subscribe to");
       break;
   }
@@ -160,7 +160,7 @@ void SelectionBSRunnableChooser::HandleExecuteBehavior(const AnkiEvent<ExternalI
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SelectionBSRunnableChooser::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void SelectionBehaviorChooser::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // enable process for selected behavior
   SetProcessEnabled(_selectedBehavior, true);
@@ -168,7 +168,7 @@ void SelectionBSRunnableChooser::OnActivatedInternal(BehaviorExternalInterface& 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SelectionBSRunnableChooser::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void SelectionBehaviorChooser::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // disable process for selected behavior
   SetProcessEnabled(_selectedBehavior, false);
@@ -176,9 +176,9 @@ void SelectionBSRunnableChooser::OnDeactivatedInternal(BehaviorExternalInterface
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SelectionBSRunnableChooser::SetProcessEnabled(const IBehaviorPtr behavior, bool newValue)
+void SelectionBehaviorChooser::SetProcessEnabled(const ICozmoBehaviorPtr behavior, bool newValue)
 {
-  const char* const kAIInformationAnalyzerLock = "SelectionBSRunnableChooser";
+  const char* const kAIInformationAnalyzerLock = "SelectionBehaviorChooser";
 
   if ( nullptr != behavior )
   {

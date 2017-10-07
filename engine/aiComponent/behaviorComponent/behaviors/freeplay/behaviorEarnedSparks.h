@@ -13,14 +13,14 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorEarnedSparks_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorEarnedSparks_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
 
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorEarnedSparks : public IBehavior
+class BehaviorEarnedSparks : public ICozmoBehavior
 {
 
 private:

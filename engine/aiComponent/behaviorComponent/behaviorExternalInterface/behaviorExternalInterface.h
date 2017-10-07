@@ -32,7 +32,7 @@ class BlockWorld;
 class DelegationComponent;
 class FaceWorld;
 class IActivity;
-class IBehavior;
+class ICozmoBehavior;
 class IExternalInterface;
 class NeedsManager;
 class MoodManager;

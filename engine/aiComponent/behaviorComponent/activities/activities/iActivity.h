@@ -15,8 +15,8 @@
 #define __Cozmo_Basestation_BehaviorSystem_Activities_Activities_IActivity_H__
 
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
-#include "engine/aiComponent/behaviorComponent/iBSRunnable.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
 #include "anki/common/types.h"
@@ -36,12 +36,12 @@ namespace Cozmo {
 
 class BehaviorExternalInterface;
 class IActivityStrategy;
-class IBSRunnableChooser;  
+class IBehaviorChooser;  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // IActivity
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class IActivity : public IBSRunnable
+class IActivity : public IBehavior
 {
 public:
   
@@ -74,14 +74,14 @@ public:
   virtual const char* GetIDStr() const { return ActivityIDToString(_id); }
 
 protected:
-  // Functions called by iBSRunnable
+  // Functions called by IBehavior
   virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool WantsToBeActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   virtual void OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface) override final;
   
-  // Currently unused overrides of iBSRunnable since no equivalence in old BM system
-  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
+  // Currently unused overrides of IBehavior since no equivalence in old BM system
+  void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {};
   virtual void OnEnteredActivatableScopeInternal() override {};
   virtual void OnLeftActivatableScopeInternal() override {};
@@ -106,7 +106,7 @@ protected:
   float GetLastTimeStoppedSecs() const { return _lastTimeActivityStoppedSecs; }
   
   // choose next behavior for this activity
-  IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
+  ICozmoBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
   
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) { return Result::RESULT_OK;}
   
@@ -116,7 +116,7 @@ protected:
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
   
   // can be overridden by derived classes to chose behaviors. Defaults to using the config defined behavior chooser
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior);
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior);
   
   // Push an idle animation which will be removed when the activity is deselected
   void SmartPushIdleAnimation(BehaviorExternalInterface& behaviorExternalInterface, AnimationTrigger animation);
@@ -168,16 +168,16 @@ private:
   
   // behavior chooser for activity (if one is passed in). This is the default used if the derived class
   // doesn't override ChooseNextBehaviorInternal
-  std::unique_ptr<IBSRunnableChooser> _behaviorChooserPtr;
+  std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
 
   // Behavior chooser for interludes. An interlude behavior is one that runs in between two other behaviors
   // chosen by GetDesiredActiveBehaviorInternal(). It will get the behavior that is _about_ to run passed in as
   // currentRunningBehavior
-  std::unique_ptr<IBSRunnableChooser> _interludeBehaviorChooserPtr;
+  std::unique_ptr<IBehaviorChooser> _interludeBehaviorChooserPtr;
 
   // The last chosen interlude behavior. When an interlude behavior is chosen, it is always allowed to run to
   // completion before another behavior gets selected
-  IBehaviorPtr _lastChosenInterludeBehavior;
+  ICozmoBehaviorPtr _lastChosenInterludeBehavior;
   
   // activity name - defined in config or passed up from sub-activity
   ActivityID _id;

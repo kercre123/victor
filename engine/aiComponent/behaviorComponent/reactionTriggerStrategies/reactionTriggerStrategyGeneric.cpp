@@ -12,7 +12,7 @@
 **/
 
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyGeneric.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/messageHelpers.h"
 #include "engine/robot.h"
@@ -89,7 +89,7 @@ ReactionTriggerStrategyGeneric::ReactionTriggerStrategyGeneric(BehaviorExternalI
   }
 }
 
-void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   if (_needsRobotPreReq)
   {
@@ -104,7 +104,7 @@ void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(BehaviorExternalI
 // Overrides interface to allow for instances with different configurations to decide how they should trigger.
 // If the ShouldTriggerCallback isn't set, there are no relevant events being watched, and other values are
 // default, this boils down to only checking behavior->IsRunnable with no prereqs.
-bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
                  "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",

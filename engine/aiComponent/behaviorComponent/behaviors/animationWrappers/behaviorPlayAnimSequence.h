@@ -13,14 +13,14 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPlayAnimSequence_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iSubtaskListener.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorPlayAnimSequence : public IBehavior
+class BehaviorPlayAnimSequence : public ICozmoBehavior
 {
 protected:
   

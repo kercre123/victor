@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -48,7 +48,7 @@ ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPosit
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior) {
+void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior) {
   if (HasDesiredReactionTargets(behaviorExternalInterface)){
     std::set<s32> targets;
     GetDesiredReactionTargets(behaviorExternalInterface, targets);
@@ -68,7 +68,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(Beh
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -136,7 +136,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
       // be removed
       const Robot& robot = behaviorExternalInterface.GetRobot();
       // only update target blocks if we are running
-      const IBehaviorPtr currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
+      const ICozmoBehaviorPtr currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
       if(currentBehavior != nullptr &&
          currentBehavior->GetClass() != _classTriggerMapsTo){
         HandleObjectObserved(behaviorExternalInterface, event.GetData().Get_RobotObservedObject());
@@ -162,7 +162,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
+void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior)
 {
   behavior->AddListener(this);
   _classTriggerMapsTo = behavior->GetClass();

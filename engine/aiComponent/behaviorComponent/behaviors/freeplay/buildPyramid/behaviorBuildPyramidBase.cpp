@@ -57,7 +57,7 @@ RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::Ro
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _lastBasesCount(0)
 , _timeFirstBaseFormed(-1.f)
 , _timeLastBaseDestroyed(-1.f)
@@ -103,7 +103,7 @@ Result BehaviorBuildPyramidBase::OnBehaviorActivated(BehaviorExternalInterface& 
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   using namespace BlockConfigurations;
   const auto& pyramidBases = behaviorExternalInterface.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
@@ -134,20 +134,20 @@ IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal_WhileRunning(Behavior
 
   if(baseAppearedWhileNotPlacing || baseDestroyedWhileNotPlacing){
     StopWithoutImmediateRepetitionPenalty(behaviorExternalInterface);
-    return IBehavior::Status::Complete;
+    return ICozmoBehavior::Status::Complete;
   }
   
   // prevent against visual verify failures
   if(_checkForFullPyramidVisualVerifyFailure){
     if(!pyramids.empty()){
       StopWithoutImmediateRepetitionPenalty(behaviorExternalInterface);
-      return IBehavior::Status::Complete;
+      return ICozmoBehavior::Status::Complete;
     }
   }
   
   _lastBasesCount = Util::numeric_cast<int>(pyramidBases.size());
   
-  IBehavior::Status ret = IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  ICozmoBehavior::Status ret = ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
   return ret;
 }
   

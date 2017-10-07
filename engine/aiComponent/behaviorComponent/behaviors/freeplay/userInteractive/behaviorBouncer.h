@@ -8,7 +8,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorBouncer_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorBouncer_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
 
 // Forward declarations
@@ -22,7 +22,7 @@ namespace Anki {
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorBouncer : public IBehavior
+class BehaviorBouncer : public ICozmoBehavior
 {
 public:
   
@@ -32,7 +32,7 @@ protected:
   friend class BehaviorContainer;
   BehaviorBouncer(const Json::Value& config);
   
-  // IBehavior interface
+  // ICozmoBehavior interface
   virtual bool WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false; }
   

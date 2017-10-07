@@ -55,7 +55,7 @@ static const char * const kNumImagesToWaitForKey  = "NumImagesToWaitFor";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _ghostStackedObject(new Block_Cube1x1(ObjectType::Block_LIGHTCUBE_GHOST))
 , _shouldCheckBelowTarget(true)
 {
@@ -96,7 +96,7 @@ Result BehaviorAcknowledgeObject::OnBehaviorActivated(BehaviorExternalInterface&
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorAcknowledgeObject::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorAcknowledgeObject::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _shouldStart ) {
     _shouldStart = false;
@@ -116,22 +116,22 @@ void BehaviorAcknowledgeObject::LoadConfig(const Json::Value& config)
   JsonTools::GetValueOptional(config,kReactionAnimGroupKey,_params.reactionAnimTrigger);
   
   if(GetAngleOptional(config, kMaxTurnAngleKey, _params.maxTurnAngle_rad, true)) {
-    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetMaxTurnAngle",
+    PRINT_NAMED_DEBUG("ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetMaxTurnAngle",
                       "%.1fdeg", _params.maxTurnAngle_rad.getDegrees());
   }
   
   if(GetAngleOptional(config, kPanToleranceKey, _params.panTolerance_rad, true)) {
-    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPanTolerance",
+    PRINT_NAMED_DEBUG("ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetPanTolerance",
                       "%.1fdeg", _params.panTolerance_rad.getDegrees());
   }
   
   if(GetAngleOptional(config, kTiltToleranceKey, _params.tiltTolerance_rad, true)) {
-    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetTiltTolerance",
+    PRINT_NAMED_DEBUG("ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetTiltTolerance",
                       "%.1fdeg", _params.tiltTolerance_rad.getDegrees());
   }
   
   if(GetValueOptional(config, kNumImagesToWaitForKey, _params.numImagesToWaitFor)) {
-    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetNumImagesToWaitFor",
+    PRINT_NAMED_DEBUG("ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetNumImagesToWaitFor",
                       "%d", _params.numImagesToWaitFor);
   }
 } // LoadConfig()

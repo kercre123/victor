@@ -56,7 +56,7 @@ static const Radians kAbsHeadDown_rad(MIN_HEAD_ANGLE);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTrackLaser::BehaviorTrackLaser(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _cumulativeTurn_rad(0)
 , _lastTimeRotate(0.0f)
 {
@@ -225,7 +225,7 @@ void BehaviorTrackLaser::InitHelper(BehaviorExternalInterface& behaviorExternalI
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorTrackLaser::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   switch(_state)
   {

@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorRollBlock_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 
 #include "clad/types/animationTrigger.h"
@@ -26,10 +26,10 @@ class BlockWorldFilter;
 class ObservableObject;
 class Robot;
 
-class BehaviorRollBlock : public IBehavior
+class BehaviorRollBlock : public ICozmoBehavior
 {
 protected:
-  using base = IBehavior;
+  using base = ICozmoBehavior;
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorRollBlock(const Json::Value& config);

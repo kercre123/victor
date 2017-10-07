@@ -42,7 +42,7 @@ static const int kSearchAdditionalSegments = 2;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SearchForBlockHelper::SearchForBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                           IBehavior& behavior,
+                                           ICozmoBehavior& behavior,
                                            BehaviorHelperFactory& helperFactory,
                                            const SearchParameters& params)
 : IHelper("SearchForBlockHelper", behaviorExternalInterface, behavior, helperFactory)

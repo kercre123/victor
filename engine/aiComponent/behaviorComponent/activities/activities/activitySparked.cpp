@@ -22,7 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/events/animationTriggerHelpers.h"
@@ -127,13 +127,13 @@ ActivitySparked::ActivitySparked(BehaviorExternalInterface& behaviorExternalInte
   
   const BehaviorContainer& BC = behaviorExternalInterface.GetBehaviorContainer();
   // be able to reset the objects that Cozmo has reacted to when a spark starts
-  IBehaviorPtr acknowledgeObjectBehavior = BC.FindBehaviorByID(BehaviorID::AcknowledgeObject);
+  ICozmoBehaviorPtr acknowledgeObjectBehavior = BC.FindBehaviorByID(BehaviorID::AcknowledgeObject);
   assert(std::static_pointer_cast< BehaviorAcknowledgeObject>(acknowledgeObjectBehavior));
   _behaviorAcknowledgeObject = std::static_pointer_cast<BehaviorAcknowledgeObject>(acknowledgeObjectBehavior);
   DEV_ASSERT(nullptr != _behaviorAcknowledgeObject, "ActivitySparked.BehaviorAcknowledgeObjectNotFound");
   
   // for COZMO-8914
-  IBehaviorPtr sparksPeekABoo = BC.FindBehaviorByID(BehaviorID::SparksPeekABoo);
+  ICozmoBehaviorPtr sparksPeekABoo = BC.FindBehaviorByID(BehaviorID::SparksPeekABoo);
   assert(std::static_pointer_cast<BehaviorAcknowledgeObject>(acknowledgeObjectBehavior));
   _behaviorPeekABoo = std::static_pointer_cast<BehaviorPeekABoo>(sparksPeekABoo);
   DEV_ASSERT(_behaviorPeekABoo != nullptr, "ActivitySparked.BehaviorPeekABooNotFound");
@@ -386,15 +386,15 @@ Result ActivitySparked::Update_Legacy(BehaviorExternalInterface& behaviorExterna
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface,
-                                                               const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface,
+                                                               const ICozmoBehaviorPtr currentRunningBehavior)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
   const BehaviorManager& mngr = robot.GetBehaviorManager();
   
-  IBehaviorPtr bestBehavior;
+  ICozmoBehaviorPtr bestBehavior;
   
   // Handle behavior selection based on current state
   switch(_state){
@@ -496,9 +496,9 @@ IBehaviorPtr ActivitySparked::GetDesiredActiveBehaviorInternal(BehaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivitySparked::SelectNextSparkInternalBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivitySparked::SelectNextSparkInternalBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
-  IBehaviorPtr bestBehavior = nullptr;
+  ICozmoBehaviorPtr bestBehavior = nullptr;
   // If the spark has specified an alternate chooser, call
   // its choose next behavior here
   if(_subActivityDelegate == nullptr){
@@ -605,7 +605,7 @@ void ActivitySparked::CheckIfSparkShouldEnd(BehaviorExternalInterface& behaviorE
   // be removed
   Robot& robot = behaviorExternalInterface.GetRobot();
   BehaviorManager& mngr = robot.GetBehaviorManager();
-  const IBehaviorPtr currentRunningBehavior = mngr.GetCurrentBehavior();
+  const ICozmoBehaviorPtr currentRunningBehavior = mngr.GetCurrentBehavior();
   
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   

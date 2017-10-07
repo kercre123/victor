@@ -14,15 +14,15 @@
 #ifndef __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingSearchForCube_H__
 #define __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingSearchForCube_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorFeedingSearchForCube : public IBehavior
+class BehaviorFeedingSearchForCube : public ICozmoBehavior
 {
 protected:
-  using Base = IBehavior;
+  using Base = ICozmoBehavior;
   
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;

@@ -21,7 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
@@ -36,7 +36,7 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CreateStackBehavior(Robot& robot, IBehaviorPtr& stackBehavior)
+void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior)
 {
   ASSERT_TRUE(stackBehavior == nullptr) << "test bug: should not have behavior yet";
 
@@ -118,7 +118,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, BehaviorExternalInterface& behaviorExternalInterface,
+void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior, BehaviorExternalInterface& behaviorExternalInterface,
                     ObjectID& objID1, ObjectID& objID2)
 {
   auto& aiComponent = robot.GetAIComponent();
@@ -185,7 +185,7 @@ TEST(StackBlocksBehavior, InitBehavior)
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
                                                                                        robot.GetFaceWorld());
-  IBehaviorPtr stackBehavior = nullptr;
+  ICozmoBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, *behaviorExternalInterface, objID1, objID2);
   
@@ -211,7 +211,7 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();
 
-  IBehaviorPtr stackBehavior = nullptr;
+  ICozmoBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, *behaviorExternalInterface,
                  objID1, objID2);

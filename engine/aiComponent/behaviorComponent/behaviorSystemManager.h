@@ -15,7 +15,7 @@
 
 #include "anki/common/types.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/runnableStack.h"
 #include "json/json-forwards.h"
 
@@ -27,7 +27,7 @@ namespace Cozmo {
 
 // Forward declarations
 class BehaviorExternalInterface;
-class IBSRunnable;
+class IBehavior;
 
 struct BehaviorRunningInfo;
 
@@ -43,7 +43,7 @@ public:
   
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
-                           IBSRunnable* baseRunnable);
+                           IBehavior* baseRunnable);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
@@ -52,14 +52,14 @@ public:
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
   void Update(BehaviorExternalInterface& behaviorExternalInterface);
   
-  bool IsControlDelegated(const IBSRunnable* delegator);
-  bool CanDelegate(IBSRunnable* delegator);
-  bool Delegate(IBSRunnable* delegator, IBSRunnable* delegated);
-  void CancelDelegates(IBSRunnable* delegator);
-  void CancelSelf(IBSRunnable* delegator);
+  bool IsControlDelegated(const IBehavior* delegator);
+  bool CanDelegate(IBehavior* delegator);
+  bool Delegate(IBehavior* delegator, IBehavior* delegated);
+  void CancelDelegates(IBehavior* delegator);
+  void CancelSelf(IBehavior* delegator);
   
-  IBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
-  IBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
+  ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
+  ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
   
 private:
   enum class InitializationStage{
@@ -73,7 +73,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   InitializationStage _initializationStage;
   // Store the base runnable until the stack is initialized
-  IBSRunnable* _baseRunnableTmp;
+  IBehavior* _baseRunnableTmp;
   
   // - - - - - - - - - - - - - - -
   // others/shared
@@ -84,8 +84,8 @@ private:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  void UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBSRunnable*>& tickedInStack);
-
+  void UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBehavior*>& tickedInStack);
+  
   std::unique_ptr<RunnableStack> _runnableStack;
   
 }; // class BehaviorSystemManager

@@ -54,8 +54,8 @@ public:
   
 protected:
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface,
-                                                        const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface,
+                                                        const ICozmoBehaviorPtr currentRunningBehavior) override;
 
   // reset the state and populate the objective which we will require for this run (they are randomized each
   // time the activity is selected)
@@ -82,9 +82,9 @@ private:
   // Parameters set during init / construction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   std::shared_ptr<BehaviorExploreLookAroundInPlace> _findFacesBehavior = nullptr;
-  IBehaviorPtr _interactWithFacesBehavior = nullptr;
+  ICozmoBehaviorPtr _interactWithFacesBehavior = nullptr;
   
-  IBehaviorPtr _playingBehavior = nullptr;
+  ICozmoBehaviorPtr _playingBehavior = nullptr;
   
   unsigned int _maxNumIterationsToAllowForSearch = 0; // 0 means infinite
   

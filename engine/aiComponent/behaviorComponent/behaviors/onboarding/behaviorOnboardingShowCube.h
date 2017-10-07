@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorOnboardingShowCube_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorOnboardingShowCube_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/externalInterface/messageEngineToGame.h" // OnboardingStateEnum are in here.
 #include "anki/common/basestation/objectIDs.h"
 
@@ -26,7 +26,7 @@ namespace ExternalInterface {
   struct RobotObservedObject;
 }
 
-class BehaviorOnboardingShowCube : public IBehavior
+class BehaviorOnboardingShowCube : public ICozmoBehavior
 {
   
 protected:
@@ -58,7 +58,7 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  using BaseClass = IBehavior;
+  using BaseClass = ICozmoBehavior;
   using State = ExternalInterface::OnboardingStateEnum;
   State _state = State::Inactive;
   uint8_t     _numErrors = 0;

@@ -13,15 +13,15 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorSearchForFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorSearchForFace_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorSearchForFace : public IBehavior
+class BehaviorSearchForFace : public ICozmoBehavior
 {
 protected:
-  using base = IBehavior;
+  using base = ICozmoBehavior;
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorSearchForFace(const Json::Value& config);

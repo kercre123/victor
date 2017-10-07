@@ -25,7 +25,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/cozmoObservableObject.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/components/nvStorageComponent.h"
@@ -40,7 +40,7 @@ namespace Cozmo {
 
   class Robot;
   
-  class BehaviorFactoryTest : public IBehavior
+  class BehaviorFactoryTest : public ICozmoBehavior
   {
   protected:
     

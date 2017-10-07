@@ -41,7 +41,7 @@ const float kArbitraryDecelFactor = 3.0f;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _currentState(State::TurnTowardsFace)
 , _timeCancelTracking_s(0)
 {
@@ -87,7 +87,7 @@ Result BehaviorDriveToFace::OnBehaviorActivated(BehaviorExternalInterface& behav
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorDriveToFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorDriveToFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(_currentState == State::TrackFace &&

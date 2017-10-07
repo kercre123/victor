@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDevTurnInPlaceTest_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDevTurnInPlaceTest_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -21,7 +21,7 @@ namespace Cozmo {
 // forward decl:
 class CompoundActionSequential;
   
-class BehaviorDevTurnInPlaceTest : public IBehavior
+class BehaviorDevTurnInPlaceTest : public ICozmoBehavior
 {
 public:
   

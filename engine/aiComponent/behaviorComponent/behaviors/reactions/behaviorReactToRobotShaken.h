@@ -13,12 +13,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotShaken_H__
 #define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotShaken_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToRobotShaken : public IBehavior
+class BehaviorReactToRobotShaken : public ICozmoBehavior
 {
 private:
   

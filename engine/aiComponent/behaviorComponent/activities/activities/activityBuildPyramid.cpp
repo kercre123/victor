@@ -21,8 +21,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorPyramidThankYou.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/bsRunnableChooserFactory.h"
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/scoringBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockConfigurationPyramid.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -200,7 +200,7 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
   
   // Get the build pyramid base behavior
   const BehaviorContainer& behaviorContainer = behaviorExternalInterface.GetBehaviorContainer();
-  IBehaviorPtr baseRaw = behaviorContainer.FindBehaviorByID(BehaviorID::BuildPyramidBase);
+  ICozmoBehaviorPtr baseRaw = behaviorContainer.FindBehaviorByID(BehaviorID::BuildPyramidBase);
   DEV_ASSERT(baseRaw != nullptr &&
              baseRaw->GetClass() == BehaviorClass::BuildPyramidBase,
              "BuildPyramidBehaviorChooser.BuildPyramidBase.ImproperClassRetrievedForName");
@@ -210,7 +210,7 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
              "BuildPyramidBehaviorChooser.BehaviorBuildBase.PointerNotSet");
   
   // Get the build pyramid behavior
-  IBehaviorPtr pyramidRaw = behaviorContainer.FindBehaviorByID(BehaviorID::BuildPyramid);
+  ICozmoBehaviorPtr pyramidRaw = behaviorContainer.FindBehaviorByID(BehaviorID::BuildPyramid);
   DEV_ASSERT(pyramidRaw != nullptr &&
              pyramidRaw->GetClass() == BehaviorClass::BuildPyramid,
              "BuildPyramidBehaviorChooser.BuildPyramid.ImproperClassRetrievedForName");
@@ -220,13 +220,13 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
              "BuildPyramidBehaviorChooser.BehaviorBuildPyramid.PointerNotSet");
   
   // Get the put down cube behavior
-  IBehaviorPtr putDownRaw = behaviorContainer.FindBehaviorByID(BehaviorID::PyramidPutDownBlock);
+  ICozmoBehaviorPtr putDownRaw = behaviorContainer.FindBehaviorByID(BehaviorID::PyramidPutDownBlock);
   DEV_ASSERT(putDownRaw != nullptr &&
              putDownRaw->GetClass() == BehaviorClass::PutDownBlock,
              "BuildPyramidBehaviorChooser.PutDownBlock.ImproperClassRetrievedForName");
   
   // Get the respond possibly roll behavior
-  IBehaviorPtr respondRoll = behaviorContainer.FindBehaviorByID(BehaviorID::PyramidRespondPossiblyRoll);
+  ICozmoBehaviorPtr respondRoll = behaviorContainer.FindBehaviorByID(BehaviorID::PyramidRespondPossiblyRoll);
   DEV_ASSERT(respondRoll != nullptr &&
              respondRoll->GetClass() == BehaviorClass::RespondPossiblyRoll,
              "BuildPyramidBehaviorChooser.RespondRoll.ImproperClassRetrievedForName");
@@ -236,7 +236,7 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
              "BuildPyramidBehaviorChooser.RespondRoll.PointerNotSet");
   
   // Get the pyramid thank you behavior
-  IBehaviorPtr pyramidThankYou = behaviorContainer.FindBehaviorByID(BehaviorID::PyramidThankYou);
+  ICozmoBehaviorPtr pyramidThankYou = behaviorContainer.FindBehaviorByID(BehaviorID::PyramidThankYou);
   DEV_ASSERT(pyramidThankYou != nullptr &&
              pyramidThankYou->GetClass() == BehaviorClass::PyramidThankYou,
              "BuildPyramidBehaviorChooser.PyramidThankYou.ImproperClassRetrievedForName");
@@ -252,8 +252,8 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
   const Json::Value& simpleChooserJSON = config[kSetupChooserConfigKey];
   const Json::Value& buildChooserJSON  = config[kBuildChooserConfigKey];
   
-  _setupSimpleChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(behaviorExternalInterface, simpleChooserJSON);
-  _buildSimpleChooser = BSRunnableChooserFactory::CreateBSRunnableChooser(behaviorExternalInterface, buildChooserJSON);
+  _setupSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, simpleChooserJSON);
+  _buildSimpleChooser = BehaviorChooserFactory::CreateBehaviorChooser(behaviorExternalInterface, buildChooserJSON);
   _activeBehaviorChooser = _setupSimpleChooser.get();
   
   /////////
@@ -611,12 +611,12 @@ void ActivityBuildPyramid::UpdatePyramidAssignments(const std::shared_ptr<Behavi
 //////////////////////////////////////////////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityBuildPyramid::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivityBuildPyramid::GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(behaviorExternalInterface,
                                                     currentRunningBehavior);
   
-  IBehaviorPtr behavior = nullptr;
+  ICozmoBehaviorPtr behavior = nullptr;
   switch(_chooserPhase){
     case ChooserPhase::SetupBlocks:
     {
@@ -647,7 +647,7 @@ IBehaviorPtr ActivityBuildPyramid::GetDesiredActiveBehaviorInternal(BehaviorExte
   
   
   // Thank the user if possible
-  IBehaviorPtr customBehavior = CheckForShouldThankUser(behaviorExternalInterface, currentRunningBehavior);
+  ICozmoBehaviorPtr customBehavior = CheckForShouldThankUser(behaviorExternalInterface, currentRunningBehavior);
   
   // Otherwise, see if we have to roll or respond to a block
   if(customBehavior == nullptr){
@@ -662,21 +662,21 @@ IBehaviorPtr ActivityBuildPyramid::GetDesiredActiveBehaviorInternal(BehaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorSetup(BehaviorExternalInterface& behaviorExternalInterface,
-                                                          const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorSetup(BehaviorExternalInterface& behaviorExternalInterface,
+                                                          const ICozmoBehaviorPtr currentRunningBehavior)
 {
   return _activeBehaviorChooser->GetDesiredActiveBehavior(behaviorExternalInterface, currentRunningBehavior);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(BehaviorExternalInterface& behaviorExternalInterface,
-                                                             const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(BehaviorExternalInterface& behaviorExternalInterface,
+                                                             const ICozmoBehaviorPtr currentRunningBehavior)
 {
   //  Priority of functions:
   //    Build full pyramid -> Build pyramid base -> Search/fast forward behaviors
   
-  IBehaviorPtr bestBehavior = nullptr;
+  ICozmoBehaviorPtr bestBehavior = nullptr;
   
   if(_behaviorBuildPyramid->IsRunning() ||
      _behaviorBuildPyramid->WantsToBeActivated(behaviorExternalInterface)){
@@ -710,12 +710,12 @@ IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(BehaviorExternalI
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(BehaviorExternalInterface& behaviorExternalInterface,
-                                                           const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(BehaviorExternalInterface& behaviorExternalInterface,
+                                                           const ICozmoBehaviorPtr currentRunningBehavior)
 {
   // Run through all of the axis changes to find if thank you can run
   // and to update the pyramidCubeProperties tracking information
-  IBehaviorPtr bestBehavior = nullptr;
+  ICozmoBehaviorPtr bestBehavior = nullptr;
   for(const auto& objectID: _objectAxisChangeIDs){
     PyramidCubePropertiesTracker* pyramidCubeProperties = nullptr;
     
@@ -762,8 +762,8 @@ IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(BehaviorExternalInter
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(BehaviorExternalInterface& behaviorExternalInterface,
-                                                                     const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                     const ICozmoBehaviorPtr currentRunningBehavior)
 {
   // If any of the manually set behaviors are running, keep them running
   if(currentRunningBehavior != nullptr &&
@@ -774,7 +774,7 @@ IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(BehaviorExternal
     }
   }
   
-  IBehaviorPtr bestBehavior = nullptr;
+  ICozmoBehaviorPtr bestBehavior = nullptr;
   int numberOfCubesOnSide = 0;
   
   for(auto& entry: _pyramidCubePropertiesTrackers){
@@ -828,7 +828,7 @@ IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(BehaviorExternal
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityBuildPyramid::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(BehaviorExternalInterface& behaviorExternalInterface,
-                                                                             const IBehaviorPtr currentRunningBehavior)
+                                                                             const ICozmoBehaviorPtr currentRunningBehavior)
 {
   // The respond possibly roll behavior may have updated properties while running
   const bool respondCurrentlyRunning = currentRunningBehavior != nullptr &&

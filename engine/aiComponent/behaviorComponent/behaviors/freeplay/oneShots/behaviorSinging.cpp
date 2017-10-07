@@ -77,7 +77,7 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSinging::BehaviorSinging(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
   std::string value;
   // Assert that displayNameKey exists in the config. All the singing behaviors

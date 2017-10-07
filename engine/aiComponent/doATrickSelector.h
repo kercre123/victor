@@ -24,7 +24,7 @@ namespace Anki {
 namespace Cozmo {
   
 // forward declarations
-class IBehavior;
+class ICozmoBehavior;
 class BehaviorExternalInterface;
   
 class DoATrickSelector{

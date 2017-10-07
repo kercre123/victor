@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorCheckForStackAtInterval_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorCheckForStackAtInterval_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/common/basestation/objectIDs.h"
 
 #include <vector>
@@ -23,7 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 
-class BehaviorCheckForStackAtInterval : public IBehavior
+class BehaviorCheckForStackAtInterval : public ICozmoBehavior
 {
 protected:
   // Enforce creation through BehaviorContainer

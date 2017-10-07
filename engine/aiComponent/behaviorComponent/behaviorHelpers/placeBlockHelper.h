@@ -22,7 +22,7 @@ namespace Cozmo {
 
 class PlaceBlockHelper : public IHelper{
 public:
-  PlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior, BehaviorHelperFactory& helperFactory);
+  PlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior, BehaviorHelperFactory& helperFactory);
   virtual ~PlaceBlockHelper();
 
 protected:

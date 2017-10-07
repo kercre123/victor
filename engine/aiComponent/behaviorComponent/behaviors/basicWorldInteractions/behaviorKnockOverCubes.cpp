@@ -120,7 +120,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPreparing
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnockOverCubes::BehaviorKnockOverCubes(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _numRetries(0)
 {
   LoadConfig(config);

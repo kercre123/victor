@@ -18,7 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
 
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -31,7 +31,7 @@ namespace Cozmo {
 class BehaviorManager;
 class BehaviorSystemManager;
 class IActionRunner;
-class IBSRunnable;
+class IBehavior;
 class Robot;
 
 class Delegator{
@@ -39,10 +39,10 @@ public:
   Delegator(Robot& robot, BehaviorSystemManager& bsm);
   virtual ~Delegator(){};
   
-  bool Delegate(IBSRunnable* delegatingRunnable, IActionRunner* action,
+  bool Delegate(IBehavior* delegatingRunnable, IActionRunner* action,
                 BehaviorRobotCompletedActionCallback callback);
-  bool Delegate(IBSRunnable* delegatingRunnable, IBSRunnable* delegated);
-  bool Delegate(IBSRunnable* delegatingRunnable,
+  bool Delegate(IBehavior* delegatingRunnable, IBehavior* delegated);
+  bool Delegate(IBehavior* delegatingRunnable,
                 BehaviorExternalInterface& behaviorExternalInterface,
                 HelperHandle helper,
                 BehaviorSimpleCallbackWithExternalInterface successCallback,
@@ -55,7 +55,7 @@ private:
   Robot& _robot;
   
   // Naive tracking for action delegation
-  IBSRunnable* _runnableThatDelegatedAction;
+  IBehavior* _runnableThatDelegatedAction;
   u32 _lastActionTag;
 
   // hold the callback along with a copy of it's arguments so it can be called during Update
@@ -63,7 +63,7 @@ private:
   std::shared_ptr<ExternalInterface::RobotCompletedAction> _lastCompletedMsgCopy;
   
   // Naive tracking for helper delegation
-  IBSRunnable* _runnableThatDelegatedHelper;
+  IBehavior* _runnableThatDelegatedHelper;
   WeakHelperHandle _delegateHelperHandle;
   BehaviorSystemManager* _bsm;
 
@@ -79,18 +79,18 @@ public:
 
   void Update();
   
-  bool IsControlDelegated(const IBSRunnable* delegatingRunnable);
-  void CancelDelegates(IBSRunnable* delegatingRunnable);
-  void CancelSelf(IBSRunnable* delegatingRunnable);
+  bool IsControlDelegated(const IBehavior* delegatingRunnable);
+  void CancelDelegates(IBehavior* delegatingRunnable);
+  void CancelSelf(IBehavior* delegatingRunnable);
 
   // TODO:(bn) // TEMP: try to avoid the needing to pass in 'this'. Should be easy to just make "delegator"
   // optional like we did for components in the external interface
-  std::weak_ptr<Delegator> GetDelegator(IBSRunnable* delegatingRunnable);
+  std::weak_ptr<Delegator> GetDelegator(IBehavior* delegatingRunnable);
   
 private:
   // For supporting legacy code
-  friend class IBehavior;
-  bool IsActing(const IBSRunnable* delegatingRunnable);
+  friend class ICozmoBehavior;
+  bool IsActing(const IBehavior* delegatingRunnable);
   std::shared_ptr<Delegator>   _delegator;
   std::weak_ptr<Delegator>     _invalidDelegator; // TODO:(bn) change to not weak? Keep consistent with components
   std::vector<::Signal::SmartHandle> _eventHandles;
@@ -98,8 +98,8 @@ private:
   BehaviorSystemManager* _bsm;
 
 #if !USE_BSM
-  // needs to be public so IBehavior can call in. With USE_BSM this handler is the "real" one that gets the
-  // event, with !USE_BSM, the IBehavior one is "real" and call this one
+  // needs to be public so ICozmoBehavior can call in. With USE_BSM this handler is the "real" one that gets the
+  // event, with !USE_BSM, the ICozmoBehavior one is "real" and call this one
 public:
 #endif
   

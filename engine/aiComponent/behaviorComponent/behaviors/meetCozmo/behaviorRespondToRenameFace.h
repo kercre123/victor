@@ -13,13 +13,13 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorRespondToRenameFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorRespondToRenameFace_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorRespondToRenameFace : public IBehavior
+class BehaviorRespondToRenameFace : public ICozmoBehavior
 {
 private:
   

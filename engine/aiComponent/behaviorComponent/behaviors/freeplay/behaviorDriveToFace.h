@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorDriveToFace_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorDriveToFace_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
 
 namespace Anki {
@@ -21,7 +21,7 @@ namespace Cozmo {
 
 class Robot;
 
-class BehaviorDriveToFace : public IBehavior
+class BehaviorDriveToFace : public ICozmoBehavior
 {
 public:
   // Returns true if Cozmo is close enough to the face that he won't actually
@@ -36,7 +36,7 @@ protected:
   BehaviorDriveToFace(const Json::Value& config);
 
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
-  virtual IBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void OnBehaviorDeactivated(BehaviorExternalInterface& behaviorExternalInterface) override;
 
   
@@ -44,7 +44,7 @@ protected:
   virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 private:
-  using base = IBehavior;
+  using base = ICozmoBehavior;
   enum class State {
     TurnTowardsFace,
     DriveToFace,

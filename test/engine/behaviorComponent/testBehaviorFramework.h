@@ -12,7 +12,7 @@
 **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
@@ -34,12 +34,12 @@ namespace Cozmo{
   
 // An implementation of BSRunnable that has tons of power vested to it
 // so that reasonably arbitrary tests can be written easily
-class TestSuperPoweredRunnable : public IBSRunnable
+class TestSuperPoweredRunnable : public IBehavior
 {
 public:
-  TestSuperPoweredRunnable(const BehaviorContainer& bc): IBSRunnable("TestSuperPoweredRunnable"), _bc(bc){};
+  TestSuperPoweredRunnable(const BehaviorContainer& bc): IBehavior("TestSuperPoweredRunnable"), _bc(bc){};
   
-  virtual void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   
 protected:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -56,11 +56,11 @@ private:
 };
   
 
-class TestBehavior : public IBehavior
+class TestBehavior : public ICozmoBehavior
 {
 public:
   TestBehavior(const Json::Value& config)
-  : IBehavior(config)
+  : ICozmoBehavior(config)
   {
   }
   
@@ -106,11 +106,11 @@ public:
   
   bool CallStartActingExternalCallback1(Robot& robot,
                                         bool& actionCompleteRef,
-                                        IBehavior::RobotCompletedActionCallback callback);
+                                        ICozmoBehavior::RobotCompletedActionCallback callback);
   
   bool CallStartActingExternalCallback2(Robot& robot,
                                         bool& actionCompleteRef,
-                                        IBehavior::ActionResultCallback callback);
+                                        ICozmoBehavior::ActionResultCallback callback);
   
   bool CallStartActingInternalCallbackVoid(Robot& robot,
                                            bool& actionCompleteRef);

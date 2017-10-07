@@ -73,7 +73,7 @@ static constexpr ReactionTriggerHelpers::FullReactionArray kHiccupDisableTrigger
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStackBlocks::BehaviorStackBlocks(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _stackInAnyOrientation(false)
 , _hasBottomTargetSwitched(false)
 {
@@ -144,7 +144,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   auto topBlockIntention  = ObjectInteractionIntention::StackTopObjectAxisCheck;
   auto bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectAxisCheck;
@@ -211,7 +211,7 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal_WhileRunning(BehaviorExter
   }
   
 
-  IBehavior::Status ret = IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  ICozmoBehavior::Status ret = ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
   
   return ret;
 }

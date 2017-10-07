@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorRamIntoBlock_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorRamIntoBlock_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/common/basestation/objectIDs.h"
 #include <vector>
 
@@ -24,7 +24,7 @@ namespace ExternalInterface {
 struct RobotObservedObject;
 }
 
-class BehaviorRamIntoBlock : public IBehavior
+class BehaviorRamIntoBlock : public ICozmoBehavior
 {
   
 private:

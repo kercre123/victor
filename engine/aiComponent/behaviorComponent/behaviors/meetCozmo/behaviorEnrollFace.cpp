@@ -118,7 +118,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersEnrollFac
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 , _settings(new ExternalInterface::SetFaceToEnroll())
 {
   
@@ -278,7 +278,7 @@ Result BehaviorEnrollFace::OnBehaviorActivated(BehaviorExternalInterface& behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
@@ -379,7 +379,7 @@ IBehavior::Status BehaviorEnrollFace::UpdateInternal_WhileRunning(BehaviorExtern
       
   } // switch(_state) 
   
-  return IBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
+  return ICozmoBehavior::UpdateInternal_WhileRunning(behaviorExternalInterface);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

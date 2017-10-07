@@ -22,7 +22,7 @@ namespace Cozmo {
 
 class PlaceRelObjectHelper : public IHelper{
 public:
-  PlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior,
+  PlaceRelObjectHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
                        BehaviorHelperFactory& helperFactory,
                        const ObjectID& targetID,
                        const bool placingOnGround = false,

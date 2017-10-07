@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorGuardDog_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorGuardDog_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,7 +24,7 @@ namespace CubeAccelListeners {
   class MovementListener;
 }
   
-class BehaviorGuardDog : public IBehavior
+class BehaviorGuardDog : public ICozmoBehavior
 {
 protected:
   

@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "engine/cozmoContext.h"
@@ -51,7 +51,7 @@ ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(Behavio
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -66,7 +66,7 @@ void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(BehaviorExte
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr behavior)
+bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr behavior)
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -162,7 +162,7 @@ Vision::FaceID_t ReactionTriggerStrategyVoiceCommand::GetDesiredFace(BehaviorExt
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionTriggerStrategyVoiceCommand::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
+void ReactionTriggerStrategyVoiceCommand::BehaviorThatStrategyWillTriggerInternal(ICozmoBehaviorPtr behavior)
 {
   if(behavior != nullptr)
   {

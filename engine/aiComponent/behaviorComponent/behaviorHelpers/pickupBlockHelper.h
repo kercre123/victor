@@ -24,7 +24,7 @@ namespace Cozmo {
 
 class PickupBlockHelper : public IHelper{
 public:
-  PickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, IBehavior& behavior,
+  PickupBlockHelper(BehaviorExternalInterface& behaviorExternalInterface, ICozmoBehavior& behavior,
                     BehaviorHelperFactory& helperFactory,
                     const ObjectID& targetID,
                     const PickupBlockParamaters& parameters = {});

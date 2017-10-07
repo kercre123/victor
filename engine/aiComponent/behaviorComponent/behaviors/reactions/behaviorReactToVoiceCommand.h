@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
 namespace Anki {
@@ -21,10 +21,10 @@ namespace Cozmo {
 
 class Robot;
   
-class BehaviorReactToVoiceCommand : public IBehavior
+class BehaviorReactToVoiceCommand : public ICozmoBehavior
 {
 private:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
   
   friend class BehaviorContainer;
   BehaviorReactToVoiceCommand(const Json::Value& config);

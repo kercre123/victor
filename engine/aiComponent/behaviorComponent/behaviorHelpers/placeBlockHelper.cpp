@@ -25,7 +25,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PlaceBlockHelper::PlaceBlockHelper(BehaviorExternalInterface& behaviorExternalInterface,
-                                   IBehavior& behavior,
+                                   ICozmoBehavior& behavior,
                                    BehaviorHelperFactory& helperFactory)
 : IHelper("PlaceBlock", behaviorExternalInterface, behavior, helperFactory)
 {

@@ -63,7 +63,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPutDownBl
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPutDownBlock::BehaviorPutDownBlock(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 
 }

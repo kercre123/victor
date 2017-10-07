@@ -56,7 +56,7 @@
 //
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //BehaviorExploreMarkedCube::BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config)
-//: IBehavior(behaviorExternalInterface, config)
+//: ICozmoBehavior(behaviorExternalInterface, config)
 //, _currentActionTag(ActionConstants::INVALID_TAG)
 //{
 //

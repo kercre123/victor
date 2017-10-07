@@ -1,5 +1,5 @@
 /**
-* File: StrictPriorityBSRunnableChooser.cpp
+* File: StrictPriorityBehaviorChooser.cpp
 *
 * Author: Kevin M. Karol
 * Created: 05/18/2017
@@ -9,10 +9,10 @@
 * Copyright: Anki, Inc. 2017
 *
 **/
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/strictPriorityBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/strictPriorityBehaviorChooser.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
 
 #include "util/logging/logging.h"
@@ -25,13 +25,13 @@ namespace{
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrictPriorityBSRunnableChooser::StrictPriorityBSRunnableChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-:IBSRunnableChooser(behaviorExternalInterface, config)
+StrictPriorityBehaviorChooser::StrictPriorityBehaviorChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
+:IBehaviorChooser(behaviorExternalInterface, config)
 {
   const char* kBehaviorsInChooserConfigKey     = "behaviors";
   const Json::Value& behaviorArray = config[kBehaviorsInChooserConfigKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
-                 "StrictPriorityBSRunnableChooser.BehaviorsNotSpecified",
+                 "StrictPriorityBehaviorChooser.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorArray.isNull()){
     // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -43,7 +43,7 @@ StrictPriorityBSRunnableChooser::StrictPriorityBSRunnableChooser(BehaviorExterna
     {
       BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr.asString());
       
-      IBehaviorPtr behavior =  behaviorManager.FindBehaviorByID(behaviorID);
+      ICozmoBehaviorPtr behavior =  behaviorManager.FindBehaviorByID(behaviorID);
       DEV_ASSERT_MSG(behavior != nullptr,
                      "ScoringBehaviorChooser.ReloadFromConfig.FailedToFindBehavior",
                      "Behavior not found: %s",
@@ -56,13 +56,13 @@ StrictPriorityBSRunnableChooser::StrictPriorityBSRunnableChooser(BehaviorExterna
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrictPriorityBSRunnableChooser::~StrictPriorityBSRunnableChooser()
+StrictPriorityBehaviorChooser::~StrictPriorityBehaviorChooser()
 {
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehaviorPtr StrictPriorityBSRunnableChooser::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior)
+ICozmoBehaviorPtr StrictPriorityBehaviorChooser::GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior)
 {
   // Iterate through available behaviors, and return the first one that is runnable
   // since this is the highest priority behavior
@@ -77,7 +77,7 @@ IBehaviorPtr StrictPriorityBSRunnableChooser::GetDesiredActiveBehavior(BehaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StrictPriorityBSRunnableChooser::GetAllDelegates(std::set<IBSRunnable*>& delegates) const
+void StrictPriorityBehaviorChooser::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
   for(const auto& entry: _behaviors){
     delegates.insert(entry.get());

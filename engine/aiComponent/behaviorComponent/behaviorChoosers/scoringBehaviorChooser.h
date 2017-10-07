@@ -1,5 +1,5 @@
 /**
-* File: ScoringBSRunnableChooser.h
+* File: ScoringBehaviorChooser.h
 *
 * Author: Lee
 * Created: 08/20/15, raul 05/03/16
@@ -11,10 +11,10 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBSRunnableChooser_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBSRunnableChooser_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBehaviorChooser_H__
+#define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_ScoringBehaviorChooser_H__
 
-#include "engine/aiComponent/behaviorComponent/bsRunnableChoosers/iBSRunnableChooser.h"
+#include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/common/types.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -36,34 +36,34 @@ namespace Anki {
 namespace Cozmo {
   
 //Forward declarations
-class IBehavior;
+class ICozmoBehavior;
 class MoodManager;
 class Robot;
 template <typename Type> class AnkiEvent;
  
 // A simple implementation for choosing behaviors based on score only
-class ScoringBSRunnableChooser : public IBSRunnableChooser
+class ScoringBehaviorChooser : public IBehaviorChooser
 {
 public:
   // constructor/destructor
-  ScoringBSRunnableChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
-  virtual ~ScoringBSRunnableChooser();
+  ScoringBehaviorChooser(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  virtual ~ScoringBehaviorChooser();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehaviorChooser API
+  // ICozmoBehaviorChooser API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const IBehaviorPtr currentRunningBehavior) override;
+  virtual ICozmoBehaviorPtr GetDesiredActiveBehavior(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // adds a specific behavior to the table of behaviors if name doesn't exist, otherwise fail
-  Result TryAddBehavior(IBehaviorPtr behavior);
+  Result TryAddBehavior(ICozmoBehaviorPtr behavior);
   
-  void GetAllDelegates(std::set<IBSRunnable*>& delegates) const override;
+  void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   
 protected:  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -77,18 +77,18 @@ protected:
   void ClearBehaviors();
   
   // returns a pointer to the behavior in our table whose key matches the passed name, nullptr if not found
-  IBehaviorPtr FindBehaviorInTableByID(BehaviorID behaviorID);
+  ICozmoBehaviorPtr FindBehaviorInTableByID(BehaviorID behaviorID);
   
   float ScoreBonusForCurrentBehavior(float runningDuration) const;
 
   // Allows derived classes to modify a score for a particular behavior. Updates passed in score value (if desired)
-  virtual void ModifyScore(const IBehaviorPtr behavior, float& score) const {}
+  virtual void ModifyScore(const ICozmoBehaviorPtr behavior, float& score) const {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  using BehaviorIDToScoredBehaviorInfoMap = std::map<BehaviorID, IBehaviorPtr>;
+  using BehaviorIDToScoredBehaviorInfoMap = std::map<BehaviorID, ICozmoBehaviorPtr>;
   BehaviorIDToScoredBehaviorInfoMap _idToScoredBehaviorMap;
   
   Util::GraphEvaluator2d  _scoreBonusForCurrentBehavior;  
@@ -97,4 +97,4 @@ protected:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_ScoringBSRunnableChooser_H__
+#endif // __Cozmo_Basestation_ScoringBehaviorChooser_H__

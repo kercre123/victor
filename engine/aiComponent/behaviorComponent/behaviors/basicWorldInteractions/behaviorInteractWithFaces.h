@@ -17,7 +17,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
@@ -38,7 +38,7 @@ struct RobotDeletedFace;
 struct RobotChangedObservedFaceID;
 }
 
-class BehaviorInteractWithFaces : public IBehavior
+class BehaviorInteractWithFaces : public ICozmoBehavior
 {
 protected:
     
@@ -54,7 +54,7 @@ public:
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // IBehavior API
+  // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
@@ -68,7 +68,7 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     
-  using BaseClass = IBehavior;
+  using BaseClass = ICozmoBehavior;
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //

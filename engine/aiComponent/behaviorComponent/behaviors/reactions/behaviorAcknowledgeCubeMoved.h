@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeCubeMoved_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorAcknowledgeCubeMoved_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/common/basestation/objectIDs.h"
 #include <vector>
 
@@ -24,7 +24,7 @@ namespace ExternalInterface {
 struct RobotObservedObject;
 }
 
-class BehaviorAcknowledgeCubeMoved : public IBehavior
+class BehaviorAcknowledgeCubeMoved : public ICozmoBehavior
 {
   
 private:
@@ -43,7 +43,7 @@ protected:
   virtual Result OnBehaviorActivated(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   // allows the reaction to interrupt itself
-  virtual IBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
+  virtual ICozmoBehavior::Status UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   

@@ -119,7 +119,7 @@ void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Val
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRequestGameSimple::BehaviorRequestGameSimple(const Json::Value& config)
-: IBehaviorRequestGame(config)
+: ICozmoBehaviorRequestGame(config)
 , _numRetriesDrivingToFace(0)
 , _numRetriesPlacingBlock(0)
 , _wasTriggeredAsInterrupt(false)
@@ -233,7 +233,7 @@ Result BehaviorRequestGameSimple::RequestGame_OnBehaviorActivated(BehaviorExtern
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+ICozmoBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
   if( _state == State::SearchingForBlock ) {
     // if we are searching for a block, stop immediately when we find one
@@ -283,7 +283,7 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExtern
                      "behavior is denying it's own request");
 
     SendDeny(behaviorExternalInterface);
-    // action is can canceled automatically by IBehavior
+    // action is can canceled automatically by ICozmoBehavior
     
   }
 
@@ -298,7 +298,7 @@ void BehaviorRequestGameSimple::RequestGame_OnBehaviorDeactivated(BehaviorExtern
 float BehaviorRequestGameSimple::EvaluateScoreInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   // NOTE: can't use _activeConfig because we haven't been Init'd yet  
-  float score = IBehavior::EvaluateScoreInternal(behaviorExternalInterface);
+  float score = ICozmoBehavior::EvaluateScoreInternal(behaviorExternalInterface);
   if( GetNumBlocks(behaviorExternalInterface) == 0 ) {
     score *= _zeroBlockConfig.scoreFactor;
   }
@@ -649,7 +649,7 @@ void BehaviorRequestGameSimple::SetState_internal(State state, const std::string
 u32 BehaviorRequestGameSimple::GetNumBlocks(BehaviorExternalInterface& behaviorExternalInterface) const
 {
   if( _shouldUseBlocks ) {
-    return IBehaviorRequestGame::GetNumBlocks(behaviorExternalInterface);
+    return ICozmoBehaviorRequestGame::GetNumBlocks(behaviorExternalInterface);
   }
   else {
     return 0;

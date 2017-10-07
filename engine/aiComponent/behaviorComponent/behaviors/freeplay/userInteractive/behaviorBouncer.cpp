@@ -279,7 +279,7 @@ void BehaviorBouncer::StartAnimation(BehaviorExternalInterface& behaviorExternal
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBouncer::BehaviorBouncer(const Json::Value& config)
-: IBehavior(config)
+: ICozmoBehavior(config)
 {
 }
 

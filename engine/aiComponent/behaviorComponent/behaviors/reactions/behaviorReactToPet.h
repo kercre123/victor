@@ -11,7 +11,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_ReactToPet_H__
 #define __Cozmo_Basestation_Behaviors_ReactToPet_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/petTypes.h"
@@ -27,7 +27,7 @@ namespace ExternalInterface {
   struct RobotObservedPet;
 }
 
-class BehaviorReactToPet : public IBehavior
+class BehaviorReactToPet : public ICozmoBehavior
 {
   
 public:
@@ -48,7 +48,7 @@ protected:
   virtual void AddListener(IReactToPetListener* listener) override;
   
 private:
-  using super = IBehavior;
+  using super = ICozmoBehavior;
   
   static constexpr float NEVER = -1.0f;
   

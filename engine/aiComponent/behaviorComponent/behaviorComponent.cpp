@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityFactory.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -152,7 +152,7 @@ void BehaviorComponent::Update(Robot& robot,
     static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
     if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
     {
-      IBehaviorPtr currentBehavior;
+      ICozmoBehaviorPtr currentBehavior;
 
       Result res = _behaviorMgr->Update(*_behaviorExternalInterface);
       if(res == RESULT_OK){
