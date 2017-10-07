@@ -19,7 +19,7 @@
     ]
   },
   "codeLabVertical.COZMO_VERT_DRIVE": {
-    "translation": "drive %1 mm at %2 mm/s"
+    "translation": "drive %1mm at %2mm/s"
   },
   "codeLabVertical.COZMO_VERT_SETBACKPACKCOLOR": {
     "translation": "set backpack light %1"
@@ -32,6 +32,15 @@
   },
   "codeLabVertical.PLAY_ANIMATION": {
     "translation": "play %1 animation"
+  },
+  "codeLabVertical.ANIMATION_BLOCK": {
+    "translation": "%1 animation"
+  },
+  "codeLabVertical.ANIMATION_SDK_BLOCK": {
+    "translation": "advanced: play %1 SDK animation"
+  },
+  "codeLabVertical.ANIMATION_TRIGGER_SDK_BLOCK": {
+    "translation": "advanced: play %1 SDK animation group"
   },
   "codeLabVertical.PLAY_SOUND": {
     "translation": "play %1 sound"
@@ -67,7 +76,7 @@
     "translation": "when Cube %1 moved"
   },
   "codeLabVertical.COZMO_POSITION": {
-    "translation": "Cozmo map position %1"
+    "translation": "Cozmo position %1 in world"
   },
   "codeLabVertical.COZMO_PITCH": {
     "translation": "Cozmo pitch °"
@@ -94,7 +103,7 @@
     "translation": "face position in camera %1"
   },
   "codeLabVertical.FACE_POSITION": {
-    "translation": "face position in map %1"
+    "translation": "face position in world %1"
   },
   "codeLabVertical.FACE_EXPRESSION": {
     "translation": "face expression"
@@ -112,7 +121,7 @@
     "translation": "Cube %1 position in camera %2"
   },
   "codeLabVertical.CUBE_POSITION": {
-    "translation": "Cube %1 position in map %2"
+    "translation": "Cube %1 position in world %2"
   },
   "codeLabVertical.CUBE_PITCH": {
     "translation": "Cube %1 pitch ° in camera"
@@ -133,7 +142,7 @@
     "translation": "device yaw °"
   },
   "codeLabVertical.DRIVE_WHEELS": {
-    "translation": "drive left wheel %1 mm/s, right %2 mm/s"
+    "translation": "drive left wheel %1mm/s, right %2mm/s"
   },
   "codeLabVertical.ENABLE_WAIT_FOR_ACTIONS": {
     "translation": "enable: always wait for Cozmo to finish"
@@ -151,58 +160,58 @@
     "translation": "stop %1"
   },
   "codeLabVertical.PATH_FORWARD": {
-    "translation": "navigate %1 forward, %2 left/right, %3 °"
+    "translation": "navigate %1forward, %2to side,%3°"
   },
   "codeLabVertical.PATH_TO_X_Y_ANGLE": {
-    "translation": "navigate on map to %1 x, %2 y, %3 °"
+    "translation": "navigate in world to %1x, %2y, %3°"
   },
   "codeLabVertical.TURN": {
-    "translation": "turn %1 ° at %2 °/s"
+    "translation": "turn %1° at %2°/s"
   },
   "codeLabVertical.MOVE_LIFT_TO_X": {
-    "translation": "move lift %2 °/s to %1 %"
+    "translation": "move lift to %1% at %2°/s"
   },
   "codeLabVertical.MOVE_LIFT": {
-    "translation": "move lift %1 °/s"
+    "translation": "move lift %1°/s"
   },
   "codeLabVertical.MOVE_HEAD_TO_X": {
-    "translation": "move head %2 °/s to %1 °"
+    "translation": "move head to %1° at %2°/s"
   },
   "codeLabVertical.SET_X_ON_CUBE": {
-    "translation": "on cube %2 set %1 to %3"
+    "translation": "on Cube %2 set %1 to %3"
   },
   "codeLabVertical.CUBE_ANIM": {
-    "translation": "on cube %2 %1 lights in %3"
+    "translation": "on Cube %2 %1 lights in %3"
   },
   "codeLabVertical.DRAW_CLEAR_SCREEN": {
-    "translation": "erase all pixels"
+    "translation": "clear all pixels"
   },
   "codeLabVertical.DRAW_COLOR": {
     "translation": "set drawing mode to %1"
   },
   "codeLabVertical.DRAW_TEXT_SCALE": {
-    "translation": "set text scale to %1 %"
+    "translation": "set text scale to %1%"
   },
   "codeLabVertical.DRAW_TEXT_ALIGNMENT": {
     "translation": "set text alignment to %1 %2"
   },
   "codeLabVertical.DRAW_LINE": {
-    "translation": "draw line from %1, %2 to %3, %4"
+    "translation": "draw line from %1,%2 to %3,%4"
   },
   "codeLabVertical.DRAW_FILL_RECT": {
-    "translation": "fill rectangle from %1, %2 to %3, %4"
+    "translation": "fill rectangle from %1,%2 to %3,%4"
   },
   "codeLabVertical.DRAW_RECT": {
-    "translation": "draw rectangle from %1, %2 to %3, %4"
+    "translation": "draw rectangle from %1,%2 to %3,%4"
   },
   "codeLabVertical.DRAW_FILL_CIRCLE": {
-    "translation": "fill circle at %1, %2 with radius %3"
+    "translation": "fill circle at %1,%2 with radius %3"
   },
   "codeLabVertical.DRAW_CIRCLE": {
-    "translation": "draw circle at %1, %2 with radius %3"
+    "translation": "draw circle at %1,%2 with radius %3"
   },
   "codeLabVertical.DRAW_TEXT": {
-    "translation": "draw %1 at %2, %3"
+    "translation": "draw %1 at %2,%3"
   },
   "codeLabVertical.DRAW_DISPLAY_ON_FACE": {
     "translation": "display on Cozmo's face"
@@ -258,11 +267,20 @@
   "codeLabVertical.HEAD": {
     "translation": "head"
   },
+  "codeLabVertical.MOVING_HEAD": {
+    "translation": "moving head"
+  },
   "codeLabVertical.LIFT": {
     "translation": "lift"
   },
+  "codeLabVertical.MOVING_LIFT": {
+    "translation": "moving lift"
+  },
   "codeLabVertical.ALL": {
     "translation": "all"
+  },
+  "codeLabVertical.EVERYTHING": {
+    "translation": "everything"
   },
   "codeLabVertical.SELECT": {
     "translation": "select"
@@ -413,5 +431,11 @@
   },
   "codeLabVertical.RIGHT": {
     "translation": "right"
+  },
+  "codeLabVertical.RECEIVE_MESSAGE_BLOCK": {
+    "translation": "when %1 received"
+  },
+  "codeLabVertical.codeLabVertical.BROADCAST_MESSAGE_AND_WAIT_BLOCK": {
+    "translation": "broadcast %1 and wait to complete"
   }
 }

@@ -677,655 +677,693 @@
 
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_drive": {
-    "translation": "Drive (X) at speed (Y)"
+    "translation": "drive [X] mm at [Y] mm/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_drive": {
-    "translation": "Drive forward X mm at Speed Y mm/s (doesn't use path planner, won't avoid anything)"
+    "translation": "Drive a distance of [X] millimeters at a speed of [Y] millimeters per second. Use a negative [X] distance to drive backwards. Max [Y] speed: 220 mm/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_wheels_speed": {
-    "translation": "Drive wheels left (X) right (Y) "
+    "translation": "drive left wheel [X] mm/s, right [Y] mm/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_wheels_speed": {
-    "translation": "Drive the left wheel at X mm/s and right wheel at Y mm/s"
+    "translation": "Drive the left wheel at [X] millimeters per second and the right wheel at [Y] millimeters per second. Use negative [X]/[Y] speed to rotate wheels counter-clockwise. Max speed: [X]/[Y] 220 mm/s."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_stop_motor": {
-    "translation": "Stop motors [wheels / head / lift / all] "
+    "translation": "stop [wheels/head/lift/all]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_stop_motor": {
-    "translation": "Stop any current movement on the selected motor(s)"
+    "translation": "Stop any current movement on the selected motor(s)."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_path_offset": {
-    "translation": "Path forward: (X) left: (Y) turn: (Z)"
+    "translation": "navigate [X] forward, [Y] to side, [Z] °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_path_offset": {
-    "translation": "Make Cozmo drive (using his path planner, so he will attempt to avoid obstacles) to a position Xmm to the left of Cozmo, and Ymm in front of Cozmo, facing an angle Z degrees offset from his current angle"
+    "translation": "Navigate Cozmo to a position relative to his current position: [X] millimeters to the front, [Y] millimeters to the side, and angled at [Z] degrees. A negative [X] forward value moves him backward. A positive [Y] side value moves him right, while a negative moves him left. A positive [Z] angle turns him right, and a negative turns him left. Cozmo will use his path planner to try to avoid obstacles."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_path_to": {
-    "translation": "Path to x: (X) y: (Y) angle: (Z)"
+    "translation": "navigate in world to [X] x, [Y] y, [Z] °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_path_to": {
-    "translation": "(Same as above, but with absolute instead of relative coordinates). Make Cozmo drive (using his path planner, so he will attempt to avoid obstacles) to the position X,Y facing angle Z."
+    "translation": "ADVANCED CODE BLOCK. Navigate Cozmo to a coordinate within his world map: [X] millimeters on the x-axis, [Y] millimeters on the y-axis, and facing a [Z] degree angle. Cozmo will use his path planner to try to avoid obstacles. Tip: This can be used to precisely map where you would like Cozmo to go. Note that because the origin point of Cozmo's internal map is something he controls (and not you), this code block is often most useful once you've calculated the relative distance between points you'd like him to navigate."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_turn": {
-    "translation": "Turn (X) at speed (Y) "
+    "translation": "turn [X] ° at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_turn": {
-    "translation": "Turn X degrees at speed Y degrees/s"
-  },
-
-  "codeLabGlossary.block_definitions.title.": {
-    "translation": "Dock with cube"
-  },
-  "codeLabGlossary.block_definitions.description.": {
-    "translation": "Make Cozmo drive to the first visible cube and dock with it (get in position to be able to pick up the cube, but without then raising the lift)"
+    "translation": "Turn [X] degrees at a speed of [Y] degrees per second. A positive [X] angle turns him right, and a negative turns him left. Max [Y] speed: 200 °/s"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_dock_with_cube_by_id": {
-    "translation": "Dock with cube [1, 2, 3]"
+    "translation": "dock with Cube [#]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_dock_with_cube_by_id": {
-    "translation": "Make Cozmo drive to the specified cube and dock with it (get in position to be able to pick up the cube, but without then raising the lift)"
+    "translation": "Make Cozmo drive to a specific Cube and dock with it, which means he will get in position to be able to pick up the Cube but without raising his lift. Tip: Cozmo must see the specific Cube in order to dock with it, so it is often useful to do a check with the \"is Cube [#] visible\" sensor. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
 
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_liftheight": {
-    "translation": "Move lift to (X) at speed (Y)"
+    "translation": "move lift to [X] % at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_liftheight": {
-    "translation": "Move the lift to X (0.0 = bottom, 1.0 = top) at speed Y degrees/s (note: it's an angular speed because the lift arm is technically rotating)"
+    "translation": "Move the lift to [X] percent of max (0% = bottom, 100% = top) at a speed to [Y] degrees per second. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_move_lift": {
-    "translation": "Move lift at speed (X)"
+    "translation": "move lift [X] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_move_lift": {
-    "translation": "Set the lift to move at X degrees/s until either you stop it, or it reaches the top / bottom. (note: it's an angular speed because the lift arm is technically rotating)"
+    "translation": "Move the lift at a speed to [Y] degrees per second. It will keep moving until stopped, or until min/max height reached. Note: the lift uses an angular speed because the its arm is technically rotating. Max [Y] speed: 200 °/s"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_headangle": {
-    "translation": "Move head to (X) at speed (Y) "
+    "translation": "move head to [X]° at [Y] °/s"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_headangle": {
-    "translation": "Move the head to angle X degrees (it's clamped internally to between -25 and 45 degrees as they are the limits for looking down and up)"
+    "translation": "Move the head to [X] degrees (-25° = max down, 0° = level, 45° = max up) at a speed of [Y] degrees per second. Max [Y] speed: 150 °/s"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_setbackpackcolor": {
-    "translation": "Set backpack color to (X)"
+    "translation": "set backpack light [color]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_setbackpackcolor": {
-    "translation": "Set the backpack color (all 3 center LEDs) to the specified color (use black to turn off the lights)."
+    "translation": "Set Cozmo's backpack lights to the specified color. Use black to turn off the lights."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_says": {
-    "translation": "Say (X)"
+    "translation": "say [text]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_says": {
-    "translation": "Make Cozmo speak the specified text"
+    "translation": "Make Cozmo speak the specified [text]."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_set_cube_light_corner": {
-    "translation": "Set light [1,2,3,4,all] on cube [1,2,3] to (X)"
+    "translation": "Set light [#/all] on Cube [#] to [color]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_set_cube_light_corner": {
-    "translation": "Set the specified edge (1,2,3,4 or all 4 at once) of the specified cube to color X. (Use black to turn off the light)"
+    "translation": "Set the specified edge [1, 2, 3, 4 or all 4 at once] of the specified Cube [#] to [color]. Use black to turn off the lights. Tip: Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_anim": {
-    "translation": "Play [spin, blink] anim on cube [1,2,3] with color (X)"
+    "translation": "on Cube [#] [spin/blink] lights in [color]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_anim": {
-    "translation": "Play an animation (lights spin or blink) on the specified cube with the specified color"
+    "translation": "On Cube [1, 2, or 3], [spin or blink] lights in [color]. The color black indicates \" lights off \". Tip: Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
 
 
 
   "codeLabGlossary.block_definitions.title.cozmo_play_animation_from_dropdown": {
-    "translation": "Play [happy, winner, sad, ...] animation"
+    "translation": "play [animation name] animation"
   },
   "codeLabGlossary.block_definitions.description.cozmo_play_animation_from_dropdown": {
-    "translation": "Play the specified animation on Cozmo"
+    "translation": "Play the specified animation on Cozmo. If you would like to lock his wheels, lift, or head, use the enable/disable animation blocks."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_animation_external_select_menu": {
-    "translation": "[happy, winner, sad, ...] animation"
+    "translation": "[animation name] animation"
   },
   "codeLabGlossary.block_definitions.description.cozmo_animation_external_select_menu": {
-    "translation": "A dropdown that contains each of the available animations, can be plugged in to the play animation block"
+    "translation": "ADVANCED CODE BLOCK. This block provides animation names on their own, able to be used to set a variable. Tip: Using the \"play [animation name] animation\" block, drag out the [animation name] and replace it with a variable. Then you can have the flexibility to set that variable to whichever animation you'd like depending on the conditions."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_enable_animation_track": {
-    "translation": "Enable [Wheels, Head, Lift] animation track"
+    "translation": "enable: [wheels/head/lift] in animations"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_enable_animation_track": {
-    "translation": "Enable [Wheels, Head, Lift] animation track (all are enabled by default)"
+    "translation": "If you have previously disabled Cozmo's wheels, head, or lift during animations, use this block to turn them on again. Cozmo's wheels, head, and lift are enabled by default."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_disable_animation_track": {
-    "translation": "Disable [Wheels, Head, Lift] animation track"
+    "translation": "disable: [wheels/head/lift] in animations"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_disable_animation_track": {
-    "translation": "Disable [Wheels, Head, Lift] animation track (all are enabled by default)"
+    "translation": "Disable Cozmo's wheels, head, or lift during all animations from now on, until the are enabled. Tip: This block can be useful if your project depends on Cozmo being aligned in a certain way. For example, if you want Cozmo to play a happy animation, but it's important he stays aligned to tap on a Cube, you can disable his wheels."
   },
 
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_clear": {
-    "translation": "Clear screen"
+    "translation": "clear all pixels"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_clear": {
-    "translation": "Clear the screen on the current pending face image"
+    "translation": "Clear all pixels on the current pending image for Cozmo's face. Note that this does not immediately turn off all pixels on Cozmo's face. To do that, use this code block, then \"display on Cozmo's face\"."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_display": {
-    "translation": "Display on face"
+    "translation": "display on Cozmo's face"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_display": {
-    "translation": "Display the pending image on Cozmo's face (will stay there for up to 30 seconds, or when something else, e.g. another animation, interrupts it)."
+    "translation": "Display the pending image on Cozmo's face. Note that the image will stay on Cozmo's face for 30 seconds unless interrupted (by an animation, the program ending, another image being displayed, etc.)."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_set_draw_color": {
-    "translation": "Set Draw Color [light, erase]"
+    "translation": "set drawing mode to [draw/erase] pixels"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_draw_color": {
-    "translation": "Set Draw Color for subsequent draw operations, default draws light, can be switched to erase"
+    "translation": "Sets the drawing mode for whether you are adding or erasing pixels. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_set_text_scale": {
-    "translation": "Set Text Scale"
+    "translation": "set text scale to [X] %"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_text_scale": {
-    "translation": "Set Text Scale, default is 1.0, larger values will draw larger text"
+    "translation": "Set how large the text on Cozmo's face is to [X] percent. 100% is the default size. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_set_text_alignment": {
+    "translation": "set text alignment to [top/center/bottom] [left/center/right]"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_set_text_alignment": {
+    "translation": "Aligns the text on Cozmo's face. [top/center/bottom] places the text in that alignment relative to Cozmo's face. [left/center/right] determines the text's alignment relative to the text position you've set with the \"draw text at\" block. For example, to draw text coming from the right side of Cozmo's face, set text alignment to \"right\", and in the \"draw text at\" block set the [X] value to 127 pixels. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_text": {
-    "translation": "Draw text at (X),(Y)"
+    "translation": "draw [text] at [X],[Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_text": {
-    "translation": "Draw the specified text at the given position."
+    "translation": "Draw the specified [text] at the given pixel position, using [X],[Y] coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_line": {
-    "translation": "Draw line from (X),(Y) to (X2), (Y2)"
+    "translation": "draw line from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_line": {
-    "translation": "Draw a line between the 2 coordinates."
+    "translation": "Draw a line between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_rect": {
-    "translation": "Fill rectangle from (X),(Y) to (X2), (Y2)"
+    "translation": "fill rectangle from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_rect": {
-    "translation": "Draw a filled rectangle between the 2 coordinates"
+    "translation": "Draw a filled rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_rect": {
-    "translation": "Draw rectangle from (X),(Y) to (X2), (Y2)"
+    "translation": "draw rectangle from [X],[Y] to [X2],[Y2]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_rect": {
-    "translation": "Draws an outlined (not filled) rectangle between the 2 coordinates"
+    "translation": "Draw a rectangle between the 2 pixel coordinates. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_draw_circle": {
-    "translation": "Draw circle at (X),(Y) radius (Z)"
+    "translation": "draw circle at [X],[Y] with radius [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_draw_circle": {
-    "translation": "Draw an outlined (not filled) circle at the given position with the given radius."
+    "translation": "Draw a circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cozmoface_fill_circle": {
-    "translation": "Fill circle at (X),(Y) radius (Z)"
+    "translation": "fill circle at [X],[Y] with radius [Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cozmoface_fill_circle": {
-    "translation": "Draws a filled circle at the given position with the given radius."
+    "translation": "Draw a filled circle at the given [X],[Y] pixel coordinate with the given [Z] radius in pixels. Cozmo's face screen is 128 pixels wide and 64 pixels tall, so the visible [X] range is 0-127 and the visible [Y] range is 1-63. Tip: to see what you're drawing, use the \"display on Cozmo's face\" block."
   },
 
 
 
 
   "codeLabGlossary.block_definitions.title.event_whenflagclicked": {
-    "translation": "When (green-flag) clicked"
+    "translation": "when green flag clicked"
   },
   "codeLabGlossary.block_definitions.description.event_whenflagclicked": {
-    "translation": "Self explanatory..."
+    "translation": "This block triggers when the green flag (start) button is tapped. Note that tapping the green flag button does two things: 1) Triggers all \"when green flag clicked\" blocks, and 2) Makes the other Event category blocks able to be triggered. For example, as you're working on your project and the green flag button isn't active, if Cozmo sees your face, a \"when face is seen\" block WON'T be triggered. Once the green flag button is tapped and is active, if Cozmo sees your face, a \"when face is seen\" block WILL be triggered."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_face": {
-    "translation": "When see face"
+    "translation": "when face seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_face": {
-    "translation": "Activates (and runs the code underneath it) every-time Cozmo sees a face"
+    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a face. Note that the green flag (start) button must be active for this block to trigger."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_happy_face": {
-    "translation": "When see happy face"
+    "translation": "when happy face seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_happy_face": {
-    "translation": "Same as above, but only fires when the face has a happy expression"
+    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a happy face. Note that the green flag (start) button must be active for this block to trigger. Tip: Smile big!"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_sad_face": {
-    "translation": "When see sad face"
+    "translation": "when sad face seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_sad_face": {
-    "translation": "Same as above, but only fires when the face has a sad expression"
+    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a happy face. Note that the green flag (start) button must be active for this block to trigger. Tip: Make a particularly upset frown."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_see_cube": {
-    "translation": "When cube [1,2,3,any] seen"
+    "translation": "when Cube seen"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_see_cube": {
-    "translation": "Activates (and runs the code underneath it) every-time Cozmo sees a cube"
+    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees a Cube."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_tap": {
-    "translation": "When cube [1,2,3,any] is tapped"
+    "translation": "when Cube [#] tapped"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_tap": {
-    "translation": "Activates (and runs the code underneath it) every-time the given cube is tapped"
+    "translation": "Triggers this code block and runs the code blocks underneath it every time Cozmo sees the specified Cube [#]."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_event_on_cube_moved": {
-    "translation": "When cube [1,2,3,any] is moved"
+    "translation": "when Cube [#] moved"
   },
   "codeLabGlossary.block_definitions.description.cozmo_event_on_cube_moved": {
-    "translation": "Activates (and runs the code underneath it) every-time the given cube is moved"
+    "translation": "Triggers this code block, and runs the code blocks underneath it, every time Cozmo the specified Cube [#] is moved. Tip: Moving a Cube means to placing it in a slightly different position or location. Tapping a Cube means to give it deliberate, quick tap."
   },
 
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived": {
-    "translation": "When I receive [message1, message2, ...]"
+    "translation": "when [message#] received"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived": {
-    "translation": "Executes the code under that hat block whenever something else broadcasts the corresponding message."
+    "translation": "Triggers this code block and runs the code blocks underneath it whenever another code block broadcasts the corresponding message. Tip: For experienced coders, think of messages like functions."
   },
 
   "codeLabGlossary.block_definitions.title.event_broadcast": {
-    "translation": "Broadcast [message1, message2, ...]"
+    "translation": "broadcast [message#]"
   },
   "codeLabGlossary.block_definitions.description.event_broadcast": {
-    "translation": "Sends a message, that can be handled by the \"when I receive ...\" block, note that the stack continues to execute, so the stacks under any receive hats will run in parallel with this - equivalent to starting a new thread in most programming languages."
+    "translation": "Broadcasts (sends) a message to trigger the \"when [message#] received\" block. Tip: After broadcasting a message, the blocks under this block will continue to execute. Therefore, both this original stack of blocks and the blocks underneath the \"when [message#] received\" block will run in parallel. For experienced coders, think of this like starting a new thread in most programming languages."
   },
 
   "codeLabGlossary.block_definitions.title.event_broadcastandwait": {
-    "translation": "Broadcast [message1, message2, ...] and wait"
+    "translation": "broadcast [message#] and wait to complete"
   },
   "codeLabGlossary.block_definitions.description.event_broadcastandwait": {
-    "translation": "Same as above, but waits for any events that handle that message to complete before continuing - is equivalent to a function call in most programming languages."
+    "translation": "Broadcasts (sends) a message to trigger the \"when [message#] received\" block, and then waits for the blocks under the \"when [message#] received\" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages."
   },
 
 
 
 
   "codeLabGlossary.block_definitions.title.control_wait": {
-    "translation": "Wait (X) secs"
+    "translation": "wait [X] secs"
   },
   "codeLabGlossary.block_definitions.description.control_wait": {
-    "translation": "Wait X seconds"
+    "translation": "Wait [X] seconds. Troubleshooting: Does a project end before you're expecting it to? If no code blocks are executing, a project will automatically end after a few seconds. Imagine you're waiting for the player to tap a Cube, and you want them to be able to have more than a few seconds before the project stops running. Adding a \"wait\" block can make sure your project doesn't end before you want it to."
   },
 
   "codeLabGlossary.block_definitions.title.control_repeat": {
-    "translation": "Repeat (X)"
+    "translation": "repeat [X]"
   },
   "codeLabGlossary.block_definitions.description.control_repeat": {
-    "translation": "Repeat the enclosed code X times"
+    "translation": "Repeat the enclosed code [X] times."
   },
 
   "codeLabGlossary.block_definitions.title.control_forever": {
-    "translation": "Forever"
+    "translation": "forever"
   },
   "codeLabGlossary.block_definitions.description.control_forever": {
-    "translation": "Repeat the enclosed code forever (until program is stopped)"
+    "translation": "Repeat the enclosed code forever until program is stopped. Troubleshooting: Seeing your code run slowly? Try adding a short \"wait\" block to your forever loop. Sometimes the code can use a moment to catch its breath."
   },
 
   "codeLabGlossary.block_definitions.title.control_if": {
-    "translation": "If <condition> then A"
+    "translation": "if <condition> then [A]"
   },
   "codeLabGlossary.block_definitions.description.control_if": {
-    "translation": "If the condition is true then do the blocks in A"
+    "translation": "If the <condition> is true, then do the blocks in [A]."
   },
 
   "codeLabGlossary.block_definitions.title.control_if_else": {
-    "translation": "If <condition> then A else B"
+    "translation": "If <condition> then [A] else [B]"
   },
   "codeLabGlossary.block_definitions.description.control_if_else": {
-    "translation": "If the condition is true then do the blocks in A, otherwise do the blocks in B"
+    "translation": "If the <condition> is true, then do the blocks in [A], otherwise do the blocks in [B]."
   },
 
   "codeLabGlossary.block_definitions.title.control_wait_until": {
-    "translation": "Wait until <condition>"
+    "translation": "wait until <condition>"
   },
   "codeLabGlossary.block_definitions.description.control_wait_until": {
-    "translation": "Wait until the condition evaluates to true"
+    "translation": "Wait until the <condition> evaluates to true."
   },
 
   "codeLabGlossary.block_definitions.title.control_repeat_until": {
     "translation": "Repeat until <condition>"
   },
   "codeLabGlossary.block_definitions.description.control_repeat_until": {
-    "translation": "Repeat until the condition evaluated to true"
+    "translation": "Repeat forever until the <condition> evaluates to true. Troubleshooting: Seeing your code behaving slowly? Try adding a short \"wait\" block to your forever loop. Sometimes the code can use a moment to catch its breath."
   },
 
   "codeLabGlossary.block_definitions.title.control_stop": {
-    "translation": "Stop [all, this script]"
+    "translation": "stop [all/this script]"
   },
   "codeLabGlossary.block_definitions.description.control_stop": {
-    "translation": "Stop the given stack of blocks (or all = entire program)"
+    "translation": "Use this block to either stop [all] code blocks in the entire project, or to stop [this script] and end all code blocks in the current stack of blocks."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_enable_wait_for_actions": {
-    "translation": "Enable wait for actions to complete"
+    "translation": "enable: always wait for Cozmo to finish"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_enable_wait_for_actions": {
-    "translation": "Enable automatically waiting for every action to complete before moving to the next block (this is the default behavior)"
+    "translation": "Enable automatically waiting for Cozmo to complete what he's doing before moving onto the next block. Note: This is the default behavior."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_disable_wait_for_actions": {
-    "translation": "Disable wait for actions to complete"
+    "translation": "disable: always wait for Cozmo to finish"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_disable_wait_for_actions": {
-    "translation": "Disable automatically waiting for every action to complete before moving to the next block"
+    "translation": "Disable automatically waiting for Cozmo to complete what he's doing before moving onto the next block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_wait_for_actions": {
-    "translation": "Wait for [drive, head, lift, say, anim, all] actions to complete"
+    "translation": "wait for Cozmo to finish [what Cozmo's doing]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_wait_for_actions": {
-    "translation": "Wait for any active actions that match the given type to complete"
+    "translation": "Wait for Cozmo to complete [driving/moving head/moving lift/animations/saying text/everything] before moving onto the next block."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cancel_actions": {
-    "translation": "Cancel [drive, head, lift, say, anim, all] actions"
+    "translation": "stop [what Cozmo's doing]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cancel_actions": {
-    "translation": "Cancel any active actions that match the given type"
+    "translation": "Stop what Cozmo's doing: [driving/moving head/moving lift/animations/saying text/everything]."
   },
 
 
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_position_3d": {
-    "translation": "Cozmo position [x/y/z]"
+    "translation": "Cozmo position [X/Y/Z] in world"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_position_3d": {
-    "translation": "The X, Y or Z component of Cozmo's world position"
+    "translation": "ADVANCED CODE BLOCK. Returns the [X], [Y] or [Z] component of Cozmo's world position, using Cozmo's internal map. Tip: This can be used with the \"navigate in world to [X] x, [Y] y, [Z] °\" block to precisely map where you would like Cozmo to go. Note that because the origin point of Cozmo's internal map is something he controls (and not you), this code block is often most useful once you've calculated the relative distance between points you'd like him to navigate."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_pitch": {
-    "translation": "Cozmo pitch"
+    "translation": "Cozmo pitch °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_pitch": {
-    "translation": "The angle, in degrees, that Cozmo is tilted forwards/backwards"
+    "translation": "Returns the angle, in degrees, that Cozmo is tilted forwards/backwards. Forward values are negative, backward values are positive."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_roll": {
-    "translation": "Cozmo roll"
+    "translation": "Cozmo roll °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_roll": {
-    "translation": "The angle, in degrees, that Cozmo is tilted left/right"
+    "translation": "Returns the angle, in degrees, that Cozmo is tilted right/left. Right values are positive, left values are negative."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_yaw": {
-    "translation": "Cozmo yaw"
+    "translation": "Cozmo yaw °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_yaw": {
-    "translation": "The angle that Cozmo is face (turning left/right)"
+    "translation": "Returns the angle that Cozmo is facing right/left. Right values are positive, left values are negative."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_lift_height": {
-    "translation": "Cozmo lift height"
+    "translation": "Cozmo lift height %"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_lift_height": {
-    "translation": "The height of Cozmo's lift (between 0.0 and 1.0)"
+    "translation": "The height of Cozmo's lift as a % of its maximum (100%) height."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_get_head_angle": {
-    "translation": "Cozmo head angle"
+    "translation": "Cozmo head angle °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_get_head_angle": {
-    "translation": "The angle of Cozmo's head in degrees (between -25 (looking down) and 45 (looking up))"
+    "translation": "Returns the angle of Cozmo's head in degrees. (-25° = max down, 0° = level, 45° = max up)"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_is_visible": {
-    "translation": "Face is visible"
+    "translation": "is face visible"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_is_visible": {
-    "translation": "Is the face currently visible"
+    "translation": "Returns \"true\" or \"false\" depending on if Cozmo currently sees a face."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_name": {
-    "translation": "Face name"
+    "translation": "face name"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_name": {
-    "translation": "The name of the face (i.e. the name entered in Meet Cozmo) will be a zero-length string for unrecognized faces."
+    "translation": "Returns the name of the face (i.e. the name entered in Meet Cozmo). Returns a zero-length string if he sees a face he doesn't recognize."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_position_2d": {
-    "translation": "Face camera [x/y]"
+    "translation": "face position in camera [X/Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_position_2d": {
-    "translation": "If visible, the X or Y component of the 2D position of the center of the face in Cozmo's camera view (0,0 to 320,240)"
+    "translation": "If a face is visible, returns the [X] or [Y] component of the 2D position of the center of the face in Cozmo's camera view. (Cozmo's camera's range: 0,0 to 320,240) Tip: Try using face position as an input. If you move to the left or right, how would you like Cozmo to react?"
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_position_3d": {
-    "translation": "Face position [x/y/z]"
+    "translation": "face position in world [X/Y/Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_position_3d": {
-    "translation": "The X, Y or Z component of the face's world position"
+    "translation": "ADVANCED CODE BLOCK. If a face is visible, returns the [X], [Y], or [Z] (height) position in Cozmo's world. Note that the origin point of Cozmo's internal map is something he controls (and not you). This is useful for determining the relationship between objects in Cozmo's world."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_face_get_expression": {
-    "translation": "Face expression"
+    "translation": "face expression"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_face_get_expression": {
-    "translation": "The current expression on the face, one of \"happy\", \"upset\" and \"unknown\""
+    "translation": "The current expression on a visible face. Returns a string of \"happy\", \"upset\" and \"unknown\"."
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_last_tapped": {
+    "translation": "last tapped Cube"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_last_tapped": {
+    "translation": "Returns [1/2/3] corresponding to the last Cube tapped. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
+  },
+
+  "codeLabGlossary.block_definitions.title.cozmo_vert_cube_was_tapped": {
+    "translation": "was Cube [#] tapped"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_vert_cube_was_tapped": {
+    "translation": "Returns \"true\" or \"false\" depending on if a specified Cube was tapped. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_external_cube_sensor_select_menu": {
-    "translation": "Cube ID [1,2,3]"
+    "translation": "Cube [#]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_external_cube_sensor_select_menu": {
-    "translation": "Cube ID [1,2,3] for setting variables or passing into cube blocks"
+    "translation": "Cube [1,2,3] for setting variables."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_is_visible": {
-    "translation": "Cube [1,2,3] is visible"
+    "translation": "is Cube [#] visible"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_is_visible": {
-    "translation": "Is that cube currently visible (can Cozmo clearly see a marker)"
+    "translation": "Returns \"true\" or \"false\" depending on if a specified Cube is visible. Note that a Cube being visible means that Cozmo can clearly see its marker, so the entire Cube needs to within his line of sight and not too close, and the lighting conditions must be not too bright or dark. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_position_2d": {
-    "translation": "Cube [1,2,3] camera [x/y]"
+    "translation": "Cube [#] position in camera [X/Y]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_position_2d": {
-    "translation": "If visible, the X or Y component of the 2D position of the center of the cube in Cozmo's camera view (0,0 to 320,240)"
+    "translation": "If the specified Cube is visible, returns the [X] or [Y] component of the 2D position of the center of the Cube in Cozmo's camera view. (Cozmo's camera's range: 0,0 to 320,240) Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_position_3d": {
-    "translation": "Cube [1,2,3] position [x/y/z]"
+    "translation": "Cube [#] position in world [X/Y/Z]"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_position_3d": {
-    "translation": "The X, Y or Z component of the cube's world position"
+    "translation": "ADVANCED CODE BLOCK. If a specified Cube is visible, returns the [X], [Y], or [Z] (height) position in Cozmo's world map. Note that the origin point of Cozmo's internal map is something he controls (and not you). This is useful for determining the relationship between objects in Cozmo's world. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_pitch": {
-    "translation": "Cube [1,2,3] pitch"
+    "translation": "Cube [#] pitch ° in camera"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_pitch": {
-    "translation": "The angle, in degrees, of the cube forward/backwards"
+    "translation": "Returns the angle, in degrees, of the specified Cube's tip forwards/backwards as seen in Cozmo's camera. Note that this requires Cozmo to see the Cube. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_roll": {
-    "translation": "Cube [1,2,3] roll"
+    "translation": "Cube [#] roll ° in camera"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_roll": {
-    "translation": "The angle, in degrees, of the cube's tilt left/right"
+    "translation": "Returns the angle, in degrees, of the specified Cube's tilt right/left as seen in Cozmo's camera. Note that this requires Cozmo to see the Cube. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_cube_get_yaw": {
-    "translation": "Cube [1,2,3] yaw"
+    "translation": "Cube [#] yaw °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_cube_get_yaw": {
-    "translation": "The angle, in degrees, that the cube is turned (if looking down from above)"
+    "translation": "Returns the angle, in degrees, of the Cube facing right/left (as if flat on a surface) as seen in Cozmo's camera. Note that this requires Cozmo to see the Cube. Cube 1: looks like a paper clip. Cube 2: looks like a lamp or heart. Cube 3: looks like a baby in a baby seat."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_pitch": {
-    "translation": "Device pitch"
+    "translation": "device pitch °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_pitch": {
-    "translation": "The angle, in degrees, that the mobile device is tilted forward/backwards"
+    "translation": "The angle, in degrees, that the mobile device is tilted forward/backwards."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_roll": {
-    "translation": "Device roll"
+    "translation": "device roll °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_roll": {
-    "translation": "The angle, in degrees, that the mobile device is tilted left/right"
+    "translation": "The angle, in degrees, that the mobile device is tilted right/left."
   },
 
   "codeLabGlossary.block_definitions.title.cozmo_vert_device_get_yaw": {
-    "translation": "Device yaw"
+    "translation": "device yaw °"
   },
   "codeLabGlossary.block_definitions.description.cozmo_vert_device_get_yaw": {
-    "translation": "The angle, in degrees, that the mobile device is rotated left/right (if viewed from above)"
+    "translation": "The angle, in degrees, that the mobile device is facing right/left (as if flat on a surface)."
   },
 
   "codeLabGlossary.block_definitions.title.sensing_current": {
-    "translation": "Current [year/month/date/day-of-week/hour/minute/second]"
+    "translation": "Current [time]"
   },
   "codeLabGlossary.block_definitions.description.sensing_current": {
-    "translation": "Standard Scratch block, pretty self explanatory."
+    "translation": "Returns current [year/month/date/day-of-week/hour/minute/second]."
   },
 
 
 
   "codeLabGlossary.block_definitions.title.operator_add": {
-    "translation": "(X) + (Y)"
+    "translation": "[X] + [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_add": {
-    "translation": "Returns the sum of X and Y"
+    "translation": "Returns the sum of [X] plus [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_subtract": {
-    "translation": "(X) - (Y)"
+    "translation": "[X] - [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_subtract": {
-    "translation": "Returns X minus Y"
+    "translation": "Returns [X] minus [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_multiply": {
-    "translation": "(X) * (Y)"
+    "translation": "[X] * [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_multiply": {
-    "translation": "Returns X multiplied by Y"
+    "translation": "Returns [X] multiplied by [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_divide": {
-    "translation": "(X) / (Y)"
+    "translation": "[X] / [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_divide": {
-    "translation": "Returns X divided by Y"
+    "translation": "Returns [X] divided by [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_random": {
-    "translation": "Pick random (X) to (Y)"
+    "translation": "pick random [X] to [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_random": {
-    "translation": "Returns a random value between X and Y"
+    "translation": "Returns a random integer (whole number) between [X] and [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_lt": {
-    "translation": "< (X) < (Y) >"
+    "translation": "< [X] < [Y] >"
   },
   "codeLabGlossary.block_definitions.description.operator_lt": {
-    "translation": "True if X less than Y"
+    "translation": "True if [X] is less than [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_equals": {
-    "translation": "< (X) = (Y) > "
+    "translation": "< [X] = [Y] > "
   },
   "codeLabGlossary.block_definitions.description.operator_equals": {
-    "translation": "True if X equal to Y"
+    "translation": "True if [X] is equal to [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_gt": {
-    "translation": "< (X) > (Y) >"
+    "translation": "< [X] > [Y] >"
   },
   "codeLabGlossary.block_definitions.description.operator_gt": {
-    "translation": "True if X greater than Y"
+    "translation": "True if [X] is greater than [Y]."
   },
 
   "codeLabGlossary.block_definitions.title.operator_and": {
     "translation": "< <X> and <Y> >"
   },
   "codeLabGlossary.block_definitions.description.operator_and": {
-    "translation": "True if both X and Y sub-conditions are true"
+    "translation": "True if both <X> and <Y> sub-conditions are true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_or": {
     "translation": "< <X> or <Y> >"
   },
   "codeLabGlossary.block_definitions.description.operator_or": {
-    "translation": "True if either the X or Y sub-conditions are true"
+    "translation": "True if either the <X> or <Y> sub-conditions are true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_not": {
     "translation": "< not <Y> >"
   },
   "codeLabGlossary.block_definitions.description.operator_not": {
-    "translation": "True if Y is false, false if Y is true"
+    "translation": "True if <Y> is false, false if <Y> is true."
   },
 
   "codeLabGlossary.block_definitions.title.operator_join": {
-    "translation": "Join (String1) and (String2)"
+    "translation": "Join [text1] and [text2]"
   },
   "codeLabGlossary.block_definitions.description.operator_join": {
-    "translation": "Concatenate 2 strings together"
+    "translation": "Concatenate (combine) 2 strings of text together. For example: \"Cozmo\" and \"says\" becomes \"Cozmosays\"."
   },
 
   "codeLabGlossary.block_definitions.title.operator_letter_of": {
-    "translation": "Letter (N) of (STRING)"
+    "translation": "letter [#] of [text]"
   },
   "codeLabGlossary.block_definitions.description.operator_letter_of": {
-    "translation": "The Nth letter of the given string."
+    "translation": "Returns the [#] letter of the given string of text. For example the #1 letter of \"Cozmo\" is \"C\". Advanced Coder Tip: It's possible to creatively use strings and this block to make and navigate a list."
   },
 
   "codeLabGlossary.block_definitions.title.operator_length": {
-    "translation": "Length of (STRING)"
+    "translation": "length of [text]"
   },
   "codeLabGlossary.block_definitions.description.operator_length": {
-    "translation": "The length of the given string."
+    "translation": "The length of the given string of text."
   },
 
   "codeLabGlossary.block_definitions.title.operator_contains": {
-    "translation": "Contains"
+    "translation": "[text1] contains [text2]"
   },
   "codeLabGlossary.block_definitions.description.operator_contains": {
-    "translation": "True if the second string is contained within the first string"
+    "translation": "True if the second string of text is contained within the first string of text. For example, it is true \"Coz\" is contained inside of \"Cozmo\"."
   },
 
   "codeLabGlossary.block_definitions.title.operator_mod": {
-    "translation": "(X) mod (Y)"
+    "translation": "[X] mod [Y]"
   },
   "codeLabGlossary.block_definitions.description.operator_mod": {
-    "translation": "The modulo division of X and Y (i.e. what's the remainder if you divide X by Y)"
+    "translation": "The modulo division of [X] and [Y] (i.e. what's the remainder if you divide [X] by [Y])."
   },
 
   "codeLabGlossary.block_definitions.title.operator_round": {
-    "translation": "Round (X)"
+    "translation": "round [X]"
   },
   "codeLabGlossary.block_definitions.description.operator_round": {
-    "translation": "Round (X) to nearest integer value"
+    "translation": "Round [X] to nearest integer value (whole number), up or down."
   },
 
   "codeLabGlossary.block_definitions.title.operator_mathop": {
-    "translation": "abs/floor/ceiling/sqrt/sin/cos/tan/asin/acos/atan/ln/log/e^/10^] of (X)"
+    "translation": "[operators] of [X]"
   },
   "codeLabGlossary.block_definitions.description.operator_mathop": {
-    "translation": "Standard math operators from Scratch, should be familiar to anyone that's used a scientific calculator."
+    "translation": "Standard math operators: think operators that would be found on a scientific calculator. [abs] = absolute value of [X], [floor] = floor of [X], [ceiling] = ceiling of [X], [sqrt] = square root of [X], [sin] = sine of [X], [cos] = cosine of [X], [tan] = tangent of [X], [asin] = inverse of sine of [X], [acos] = inverse of cosine of [X], [atan] = inverse of tangent of [X], [ln] = natural logarithm of [X], [log] = logarithm of [X], [e^] = e to the power of [X], [10^] = 10 to the power of [X]."
+  },
+  "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_name": {
+    "translation": "advanced: play [text] SDK animation"
+  },
+  "codeLabGlossary.block_definitions.description.Cozmo_play_animation_by_name": {
+    "translation": "ADVANCED CODE BLOCK. The Cozmo python SDK provides access to hundreds more of Cozmo's animations. The animation's id string can be played using this block. Learn more about the SDK at developer.anki.com."
+  },
+  "codeLabGlossary.block_definitions.title.Cozmo_play_animation_by_triggername": {
+    "translation": "advanced: play [text] SDK animation group"
+  },
+  "codeLabGlossary.block_definitions.Cozmo_play_animation_by_triggername": {
+    "translation": "ADVANCED CODE BLOCK. The Cozmo python SDK provides access to hundreds more of Cozmo's animations. The animation group's id string can be played using this block. Learn more about the SDK at developer.anki.com."
+  },
+  "codeLabGlossary.block_definitions.title.Cozmo_sound_play": {
+    "translation": "Play [sound name] sound"
+  },
+  "codeLabGlossary.block_definitions.description.Cozmo_sound_play": {
+    "translation": "Stop the [sound name] sound."
+  },
+  "codeLabGlossary.block_definitions.title.Cozmo_sound_stop": {
+    "translation": "stop [sound name] sound"
+  },
+  "codeLabGlossary.block_definitions.Cozmo_sound_stop": {
+    "translation": "Stop the [sound name] sound. Tip: To turn off Code Lab's default background music, stop \"background\" sound."
   }
 }
