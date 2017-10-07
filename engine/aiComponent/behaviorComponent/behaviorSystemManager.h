@@ -16,6 +16,7 @@
 #include "anki/common/types.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/iBehaviorRunner.h"
 #include "engine/aiComponent/behaviorComponent/runnableStack.h"
 #include "json/json-forwards.h"
 
@@ -31,7 +32,7 @@ class IBehavior;
 
 struct BehaviorRunningInfo;
 
-class BehaviorSystemManager
+class BehaviorSystemManager : public IBehaviorRunner
 {
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -50,16 +51,13 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
-  void Update(BehaviorExternalInterface& behaviorExternalInterface);
+  void Update(BehaviorExternalInterface& behaviorExternalInterface) override;
   
-  bool IsControlDelegated(const IBehavior* delegator);
-  bool CanDelegate(IBehavior* delegator);
-  bool Delegate(IBehavior* delegator, IBehavior* delegated);
-  void CancelDelegates(IBehavior* delegator);
-  void CancelSelf(IBehavior* delegator);
-  
-  ICozmoBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
-  ICozmoBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
+  bool IsControlDelegated(const IBehavior* delegator) override;
+  bool CanDelegate(IBehavior* delegator) override;
+  bool Delegate(IBehavior* delegator, IBehavior* delegated) override;
+  void CancelDelegates(IBehavior* delegator) override;
+  void CancelSelf(IBehavior* delegator) override;
   
 private:
   enum class InitializationStage{

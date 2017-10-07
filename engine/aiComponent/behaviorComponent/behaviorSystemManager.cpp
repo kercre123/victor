@@ -213,30 +213,6 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
   _runnableStack->DebugPrintStack("AfterCancelSelf");
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorSystemManager::FindBehaviorByID(BehaviorID behaviorID) const
-{
-  if(_behaviorExternalInterface != nullptr){
-    return _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByID(behaviorID);
-  }else{
-    ICozmoBehaviorPtr empty;
-    return empty;
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ICozmoBehaviorPtr BehaviorSystemManager::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
-{
-  if(_behaviorExternalInterface != nullptr){
-    return _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByExecutableType(type);
-  }else{
-    ICozmoBehaviorPtr empty;
-    return empty;
-  }
-}
-
-
 
 } // namespace Cozmo
 } // namespace Anki
