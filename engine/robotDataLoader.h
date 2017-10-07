@@ -82,22 +82,22 @@ public:
   BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
   // robot configuration json files
-  const Json::Value& GetRobotMoodConfig() const          { return _robotMoodConfig; }
-  const Json::Value& GetRobotActivitiesConfig() const    { return _robotActivitiesConfig; }
-  const Json::Value& GetBehaviorSystemConfig() const     { return _behaviorSystemConfig; }
-  const Json::Value& GetRobotWorkoutConfig() const       { return _robotWorkoutConfig; }
-  const Json::Value& GetRobotVisionConfig() const        { return _robotVisionConfig; }
-  const Json::Value& GetReactionTriggerMap() const       { return _reactionTriggerMap; }
-  const Json::Value& GetVoiceCommandConfig() const       { return _voiceCommandConfig; }
-  const Json::Value& GetRobotNeedsConfig() const         { return _needsSystemConfig; }
-  const Json::Value& GetStarRewardsConfig() const        { return _starRewardsConfig; }
-  const Json::Value& GetRobotNeedsActionsConfig() const  { return _needsActionConfig; }
-  const Json::Value& GetRobotNeedsDecayConfig() const    { return _needsDecayConfig; }
-  const Json::Value& GetRobotNeedsHandlersConfig() const { return _needsHandlersConfig; }
-  const Json::Value& GetLocalNotificationConfig() const  { return _localNotificationConfig; }
-  const Json::Value& GetTextToSpeechConfig() const       { return _textToSpeechConfig; }
-  const Json::Value& GetInventoryConfig() const          { return _inventoryConfig; }
-  const Json::Value& GetDasEventConfig() const           { return _dasEventConfig; }
+  const Json::Value& GetRobotMoodConfig() const              { return _robotMoodConfig; }
+  const Json::Value& GetLegacyCozmoActivitiesConfig() const  { return _legacyCozmoActivitiesConfig; }
+  const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
+  const Json::Value& GetRobotWorkoutConfig() const           { return _robotWorkoutConfig; }
+  const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
+  const Json::Value& GetReactionTriggerMap() const           { return _reactionTriggerMap; }
+  const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
+  const Json::Value& GetRobotNeedsConfig() const             { return _needsSystemConfig; }
+  const Json::Value& GetStarRewardsConfig() const            { return _starRewardsConfig; }
+  const Json::Value& GetRobotNeedsActionsConfig() const      { return _needsActionConfig; }
+  const Json::Value& GetRobotNeedsDecayConfig() const        { return _needsDecayConfig; }
+  const Json::Value& GetRobotNeedsHandlersConfig() const     { return _needsHandlersConfig; }
+  const Json::Value& GetLocalNotificationConfig() const      { return _localNotificationConfig; }
+  const Json::Value& GetTextToSpeechConfig() const           { return _textToSpeechConfig; }
+  const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
+  const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
   
   // voice command configs
   const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
@@ -165,8 +165,8 @@ private:
 
   // robot configs
   Json::Value _robotMoodConfig;
-  Json::Value _robotActivitiesConfig;
-  Json::Value _behaviorSystemConfig;
+  Json::Value _legacyCozmoActivitiesConfig;
+  Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
   Json::Value _reactionTriggerMap;
   Json::Value _robotWorkoutConfig;

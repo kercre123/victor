@@ -523,7 +523,7 @@ void RobotDataLoader::LoadEmotionEvents()
 
 void RobotDataLoader::LoadBehaviors()
 {
-  static const std::string path = "config/engine/behaviorSystem/behaviors/";
+  const std::string path =  "config/engine/behaviorComponent/behaviors/";
 
   const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
@@ -553,7 +553,7 @@ void RobotDataLoader::LoadBehaviors()
   
 void RobotDataLoader::LoadActivities()
 {
-  static const std::string path = "config/engine/behaviorSystem/activities/";
+  const std::string path =  "config/engine/behaviorComponent/activities/";
   
   const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
@@ -628,7 +628,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 
 void RobotDataLoader::LoadReactionTriggerMap()
 {
-  static const std::string filename = "config/engine/behaviorSystem/reactionTrigger_behavior_map.json";
+  const std::string filename = "config/engine/behaviorComponent/reactionTrigger_behavior_map.json";
 
   Json::Value reactionJSON;
   const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
@@ -678,33 +678,33 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // activities config
   {
-    static const std::string jsonFilename = "config/engine/behaviorSystem/activities_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);
+    static const std::string jsonFilename = "config/engine/behaviorComponent/legacy_cozmo_activities_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _legacyCozmoActivitiesConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
                         "Behavior Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
-      _robotActivitiesConfig.clear();
+      _legacyCozmoActivitiesConfig.clear();
     }
   }
   
   // victor behavior systems config
   {
-    static const std::string jsonFilename = "config/engine/behaviorSystem/behavior_system_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _behaviorSystemConfig);
+    static const std::string jsonFilename = "config/engine/behaviorComponent/victor_freeplay_behavior_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _victorFreeplayBehaviorConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorSystemJsonFailed",
                         "Behavior Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
-      _behaviorSystemConfig.clear();
+      _victorFreeplayBehaviorConfig.clear();
     }
   }
 
   // Workout config
   {
-    static const std::string jsonFilename = "config/engine/behaviorSystem/workout_config.json";
+    static const std::string jsonFilename = "config/engine/behaviorComponent/workout_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
     if (!success)
     {

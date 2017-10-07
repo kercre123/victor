@@ -98,13 +98,13 @@ void BehaviorComponent::Init(Robot& robot)
     }
     
     const Json::Value& oldActivitesConfig = (dataLoader != nullptr) ?
-              dataLoader->GetRobotActivitiesConfig() : blankActivitiesConfig;
+              dataLoader->GetLegacyCozmoActivitiesConfig() : blankActivitiesConfig;
     
     const Json::Value& reactionTriggerConfig = (dataLoader != nullptr) ?
               dataLoader->GetReactionTriggerMap() : blankActivitiesConfig;
     
     const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
-              dataLoader->GetBehaviorSystemConfig() : blankActivitiesConfig;
+              dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
     
     _behaviorMgr->InitConfiguration(*_behaviorExternalInterface,
                                     oldActivitesConfig);
