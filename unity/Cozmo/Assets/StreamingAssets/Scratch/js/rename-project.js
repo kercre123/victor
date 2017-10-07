@@ -133,14 +133,7 @@ var RenameProject = function(){
    * @returns {void}
    */
   function _handleSaveButton(e) {
-    // call the Unity rename project method, or fake it for dev
-    var newName = projectNameTextbox.value;
-    if (typeof window.renameProject === 'function') {
-      window.renameProject("RenameProject.callbackAfterProjectRename", window.cozmoProjectUUID, projectNameTextbox.value);
-    } else {
-      // fake the callback
-      callbackAfterProjectRename(newName);
-    }
+    window.renameProject("RenameProject.callbackAfterProjectRename", window.cozmoProjectUUID, projectNameTextbox.value);
   }
 
   /**

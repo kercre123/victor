@@ -2286,14 +2286,20 @@ namespace CodeLab {
       CodeLabProject projectToUpdate = null;
       try {
         projectToUpdate = FindUserProjectWithUUID(scratchRequest.argUUID);
-        projectToUpdate.ProjectName = RemoveUnsupportedChars(newProjectName);
-        projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+        if (projectToUpdate != null) {
+          // Don't let the project name get set to empty string.
+          string cleansedName = RemoveUnsupportedChars(newProjectName);
+          if (cleansedName != "") {
+            projectToUpdate.ProjectName = RemoveUnsupportedChars(newProjectName);
+            projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+          }
 
-        this.EvaluateJS(jsCallback + "('" + projectToUpdate.ProjectName + "');");
+          this.EvaluateJS(jsCallback + "('" + projectToUpdate.ProjectName + "');");
 
-        _SessionState.OnUpdatedProject(projectToUpdate);
+          _SessionState.OnUpdatedProject(projectToUpdate);
 
-        DataPersistenceManager.Instance.Save();
+          DataPersistenceManager.Instance.Save();
+        }
       }
       catch (NullReferenceException) {
         DAS.Error("RenameCodeLabProject.NullReferenceException", "Failure during servicing user's request to rename project. projectUUID = " + projectUUID + ", new project name = " + newProjectName);
