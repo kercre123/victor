@@ -438,27 +438,37 @@ namespace Cozmo.Needs.Sparks.UI {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
         _SparkButton.Interactable = false;
-        _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
+        if (_SparksCostText != null) {
+          _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
+        }
         _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
         _ButtonPromptDescription.text = Localization.Get(_UnlockInfo.SparkedStateDescription);
-        _SparkSpinnerContainer.gameObject.SetActive(true);
+        if (_SparkSpinnerContainer != null) {
+          _SparkSpinnerContainer.gameObject.SetActive(true);
+        }
       }
       else {
         Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
         if (playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId,
                                                 _UnlockInfo.RequestTrickCostAmount)) {
           _SparkButton.Interactable = true;
-          _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CanAffordColor;
+          if (_SparksCostText != null) {
+            _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CanAffordColor;
+          }
           _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparkCozmo);
           _ButtonPromptDescription.text = Localization.Get(_UnlockInfo.SparkButtonDescription);
         }
         else {
           _SparkButton.Interactable = false;
-          _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
+          if (_SparksCostText != null) {
+            _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
+          }
           _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksNotEnoughSparksTitle);
           _ButtonPromptDescription.text = Localization.Get(LocalizationKeys.kSparksNotEnoughSparksDesc);
         }
-        _SparkSpinnerContainer.gameObject.SetActive(false);
+        if (_SparkSpinnerContainer != null) {
+          _SparkSpinnerContainer.gameObject.SetActive(false);
+        }
       }
 
       // Force the text to update
