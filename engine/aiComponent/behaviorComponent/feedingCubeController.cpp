@@ -535,7 +535,6 @@ void FeedingCubeController::UpdateChargeAudioRound(BehaviorExternalInterface& be
 
   robot.GetAIComponent().GetFeedingSoundEffectManager().NotifyChargeStateChange(
     robot, _cubeStateTracker->_id, _cubeStateTracker->_currentChargeLevel, changeEnumVal);
-
 }
 
   

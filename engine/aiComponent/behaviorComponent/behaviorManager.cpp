@@ -324,6 +324,7 @@ BehaviorManager::~BehaviorManager()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorManager::InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
+                                          IExternalInterface* robotExternalInterface,
                                           const Json::Value &activitiesConfig)
 {
   BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
@@ -334,6 +335,7 @@ Result BehaviorManager::InitConfiguration(BehaviorExternalInterface& behaviorExt
   DEV_ASSERT(!_isInitialized, "BehaviorManager.InitConfiguration.AlreadyInitialized");
   
   _behaviorExternalInterface = &behaviorExternalInterface;
+  _robotExternalInterface = robotExternalInterface;
   // create activities
   if ( !activitiesConfig.isNull() )
   {
@@ -393,10 +395,9 @@ Result BehaviorManager::InitConfiguration(BehaviorExternalInterface& behaviorExt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr){
+  if(_robotExternalInterface != nullptr){
     // Disable reaction triggers by locking the specified triggers with the given lockID
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(
                                 ExternalInterface::MessageGameToEngineTag::DisableReactionsWithLock,
                                 [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                                 {
@@ -408,7 +409,7 @@ void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behavio
                                 }));
     
     // Remove a specified lockID from all reaction triggers
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(
                                 ExternalInterface::MessageGameToEngineTag::RemoveDisableReactionsLock,
                                 [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                                 {
@@ -417,7 +418,7 @@ void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behavio
                                 }));
 
     // Listen for a lock to disable all reactions with - only used by SDK
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(
                                 ExternalInterface::MessageGameToEngineTag::DisableAllReactionsWithLock,
                                 [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                                 {
@@ -428,7 +429,7 @@ void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behavio
                                                            true);
                                 }));
     
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(
                               ExternalInterface::MessageGameToEngineTag::ActivateHighLevelActivity,
                               [this, &behaviorExternalInterface] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                               {
@@ -452,7 +453,7 @@ void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behavio
                                 
                               }));
     
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(
                               ExternalInterface::MessageGameToEngineTag::SetDefaultHeadAndLiftState,
                               [this, &behaviorExternalInterface] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                               {
@@ -463,14 +464,14 @@ void BehaviorManager::InitializeEventHandlers(BehaviorExternalInterface& behavio
                                                            enable, headAngle, liftHeight);
                               }));
         
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(
                               ExternalInterface::MessageGameToEngineTag::RequestReactionTriggerMap,
                               [this, &behaviorExternalInterface] (const AnkiEvent<ExternalInterface::MessageGameToEngine> &event)
                               {
                                 BroadcastReactionTriggerMap(behaviorExternalInterface);
                               }));
     
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
+    _eventHandlers.push_back(_robotExternalInterface->Subscribe(
                               ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage,
                               [this, &behaviorExternalInterface] (const AnkiEvent<ExternalInterface::MessageGameToEngine> &event)
                               {
@@ -495,7 +496,8 @@ Result BehaviorManager::InitReactionTriggerMap(BehaviorExternalInterface& behavi
       BehaviorID behaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(triggerMap);
       
       ReactionTrigger trigger = ReactionTriggerFromString(reactionTriggerString);
-      IReactionTriggerStrategy* strategy = ReactionTriggerStrategyFactory::CreateReactionTriggerStrategy(behaviorExternalInterface, triggerMap, trigger);
+      IReactionTriggerStrategy* strategy = ReactionTriggerStrategyFactory::CreateReactionTriggerStrategy(behaviorExternalInterface, _robotExternalInterface,
+                                                                                                         triggerMap, trigger);
       ICozmoBehaviorPtr behavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(behaviorID);
       
       {
@@ -552,7 +554,7 @@ ReactionTrigger BehaviorManager::GetCurrentReactionTrigger() const
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::BroadcastReactionTriggerMap(BehaviorExternalInterface& behaviorExternalInterface) const {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(robotExternalInterface){
     std::vector<ReactionTriggerToBehavior> reactionTriggerToBehaviors;
 
@@ -570,7 +572,7 @@ void BehaviorManager::BroadcastReactionTriggerMap(BehaviorExternalInterface& beh
     }
     
     robotExternalInterface->BroadcastToGame<ExternalInterface::RespondReactionTriggerMap>(reactionTriggerToBehaviors);
-  }
+  }**/
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -658,9 +660,9 @@ void BehaviorManager::SendDasTransitionMessage(BehaviorExternalInterface& behavi
                                                const BehaviorRunningAndResumeInfo& oldBehaviorInfo,
                                                const BehaviorRunningAndResumeInfo& newBehaviorInfo)
 {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  //auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
-  if(robotExternalInterface != nullptr){
+  //if(robotExternalInterface != nullptr){
     const ICozmoBehaviorPtr oldBehavior = oldBehaviorInfo.GetCurrentBehavior();
     const ICozmoBehaviorPtr newBehavior = newBehaviorInfo.GetCurrentBehavior();
     
@@ -692,8 +694,8 @@ void BehaviorManager::SendDasTransitionMessage(BehaviorExternalInterface& behavi
     msg.newBehaviorClass = nullptr != newBehavior ? newBehavior->GetClass() : BehaviorClass::Wait;
     msg.newBehaviorExecType = nullptr != newBehavior ? newBehavior->GetExecutableType() : ExecutableBehaviorType::Wait;
     msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";
-    robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
-  }
+    //robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorTransition>(msg);
+  //}
 }
 
 
@@ -869,14 +871,14 @@ void BehaviorManager::SetRunningAndResumeInfo(BehaviorExternalInterface& behavio
   // On any reaction trigger transition, let the game know
   if(_runningAndResumeInfo->GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger ||
      newInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger){
-    auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+    /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
     if(robotExternalInterface != nullptr){
       robotExternalInterface->BroadcastToGame<
         ExternalInterface::ReactionTriggerTransition>(
            _runningAndResumeInfo->GetCurrentReactionTrigger(),
            newInfo.GetCurrentReactionTrigger()
         );
-    }
+    }**/
   }
   
   // If switching into or out of reactions fully enable/disable robot properties

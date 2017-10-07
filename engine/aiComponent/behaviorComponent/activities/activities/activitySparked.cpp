@@ -17,6 +17,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
@@ -107,8 +108,9 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFinalAnim
               "Reaction triggers duplicate or non-sequential");
 
 } // end namespace
-  
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivitySparked::ActivitySparked(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
 : IActivity(behaviorExternalInterface, config)
 , _state(ChooserState::ChooserSelected)
@@ -141,14 +143,11 @@ ActivitySparked::ActivitySparked(BehaviorExternalInterface& behaviorExternalInte
   // grab none behavior
   _behaviorWait = BC.FindBehaviorByID(BehaviorID::Wait);
   
-  // Listen for behavior objective achieved messages for spark repetitions counter
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr) {
-    auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _signalHandles);
-    using namespace ExternalInterface;
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::BehaviorObjectiveAchieved>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
-  }
+  
+  std::set<ExternalInterface::MessageEngineToGameTag> tags;
+  tags.insert(ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved);
+  tags.insert(ExternalInterface::MessageEngineToGameTag::RobotObservedObject);
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,std::move(tags));
 }
 
   
@@ -200,13 +199,13 @@ void ActivitySparked::OnActivatedActivity(BehaviorExternalInterface& behaviorExt
     
     _idleAnimationsSet = true;
     
-    auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+    /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
     if(robotExternalInterface != nullptr){
       // Notify the game that the spark has started
       ExternalInterface::HardSparkStartedByEngine sparkStarted;
       sparkStarted.sparkStarted = mngr.GetRequestedSpark();
       robotExternalInterface->BroadcastToGame<ExternalInterface::HardSparkStartedByEngine>(sparkStarted);
-    }
+    }**/
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
@@ -320,33 +319,32 @@ void ActivitySparked::ResetLightsAndAnimations(BehaviorExternalInterface& behavi
     robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
     _idleAnimationsSet = false;
   }
-  
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void ActivitySparked::HandleMessage(const ExternalInterface::BehaviorObjectiveAchieved& msg)
-{
-  BehaviorObjective objectiveAchieved = msg.behaviorObjective;
-  if(objectiveAchieved == _objectiveToListenFor){
-    _currentObjectiveCompletedCount++;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void ActivitySparked::HandleMessage(const ExternalInterface::RobotObservedObject& msg)
-{
-  if( msg.objectFamily == ObjectFamily::Block || msg.objectFamily == ObjectFamily::LightCube ) {
-    _observedObjectsSinceStarted.insert( msg.objectID );
-  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivitySparked::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  // Event Handling
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved){
+      const auto& msg = event.GetData().Get_BehaviorObjectiveAchieved();
+
+      BehaviorObjective objectiveAchieved = msg.behaviorObjective;
+      if(objectiveAchieved == _objectiveToListenFor){
+        _currentObjectiveCompletedCount++;
+      }
+    }else if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotObservedObject){
+      const auto& msg = event.GetData().Get_RobotObservedObject();
+      if( msg.objectFamily == ObjectFamily::Block ||
+          msg.objectFamily == ObjectFamily::LightCube ) {
+        _observedObjectsSinceStarted.insert( msg.objectID );
+      }
+    }
+  }
+  
+  
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   const Robot& robot = behaviorExternalInterface.GetRobot();
@@ -586,13 +584,13 @@ void ActivitySparked::CompleteSparkLogic(BehaviorExternalInterface& behaviorExte
     }
     
     if(!mngr.IsActiveSparkSoft()){
-      auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+      /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
       if(robotExternalInterface != nullptr){
         // Notify the game that the spark ended with some success state
         ExternalInterface::HardSparkEndedByEngine sparkEnded;
         sparkEnded.success = completedObjectives;
         robotExternalInterface->BroadcastToGame<ExternalInterface::HardSparkEndedByEngine>(sparkEnded);
-      }
+      }**/
     }
   }
 }

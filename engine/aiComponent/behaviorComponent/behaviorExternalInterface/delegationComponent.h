@@ -18,7 +18,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 #include "util/signals/simpleSignal_fwd.h"
 

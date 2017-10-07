@@ -19,7 +19,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "engine/components/cubeLightComponent.h"
 #include "engine/robotDataLoader.h"
@@ -53,6 +53,7 @@ class BehaviorContainer;
 class BehaviorExternalInterface;
 class BehaviorRequestGameSimple;
 class IActivity;
+class IExternalInterface;
 class IReactionTriggerStrategy;
 class Robot;
 struct BehaviorRunningAndResumeInfo;
@@ -107,6 +108,7 @@ public:
 
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
+                           IExternalInterface* robotExternalInterface,
                            const Json::Value& activitiesConfig);
   Result InitReactionTriggerMap(BehaviorExternalInterface& behaviorExternalInterface,
                                 const Json::Value& config);
@@ -303,6 +305,7 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BehaviorExternalInterface* _behaviorExternalInterface = nullptr;
+  IExternalInterface* _robotExternalInterface = nullptr;
   
   bool _isInitialized = false;
       

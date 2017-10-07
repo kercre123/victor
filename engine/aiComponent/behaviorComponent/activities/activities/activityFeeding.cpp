@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/behaviorChooserFactory.h"
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/iBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
@@ -272,18 +273,11 @@ void ActivityFeeding::OnActivatedActivity(BehaviorExternalInterface& behaviorExt
     }
   }
   
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr){
-    // Setup messages to listen for. Only listen while we are selected, these handles will be cleared on
-    // Deselect
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-       ExternalInterface::MessageEngineToGameTag::ObjectConnectionState,
-       [this, &behaviorExternalInterface] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
-       {
-         HandleObjectConnectionStateChange(behaviorExternalInterface, event.GetData().Get_ObjectConnectionState());
-       })
-    );
-  }
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  {
+    ExternalInterface::MessageEngineToGameTag::ObjectConnectionState
+  });
+
   // Start the feeding cube controllers
   using CS = FeedingCubeController::ControllerState;
   for(auto& entry: _cubeControllerMap){
@@ -354,7 +348,7 @@ void ActivityFeeding::OnDeactivatedActivity(BehaviorExternalInterface& behaviorE
     entry.second->SetControllerState(behaviorExternalInterface, CS::Deactivated);
   }
   _cubeControllerMap.clear();
-  _eventHandlers.clear();
+  //_eventHandlers.clear();
   
   
   auto publicStateBroadcaster = behaviorExternalInterface.GetRobotPublicStateBroadcaster().lock();
@@ -415,6 +409,15 @@ ICozmoBehaviorPtr ActivityFeeding::GetDesiredActiveBehaviorInternal(BehaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivityFeeding::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  // event handling
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::ObjectConnectionState){
+      HandleObjectConnectionStateChange(behaviorExternalInterface, event.GetData().Get_ObjectConnectionState());
+    }
+  }
+  
+  
   // Maintain appropriate music state and disables
   const NeedId currentSevereExpression = behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression();
   if(!_severeBehaviorLocksSet &&

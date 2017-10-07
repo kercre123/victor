@@ -54,11 +54,11 @@ Result ActivityGatherCubes::Update_Legacy(BehaviorExternalInterface& behaviorExt
     }
     
     // Send event to start animations and end spark
-    auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+    /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
     if(robotExternalInterface != nullptr){
       robotExternalInterface->BroadcastToGame<
          ExternalInterface::BehaviorObjectiveAchieved>(BehaviorObjective::GatheredCubes);
-    }
+    }**/
     auto needsManager = behaviorExternalInterface.GetNeedsManager().lock();
     if(needsManager != nullptr){
       needsManager->RegisterNeedsActionCompleted(NeedsActionId::GatherCubes);

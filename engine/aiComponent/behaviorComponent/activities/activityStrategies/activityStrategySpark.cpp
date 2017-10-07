@@ -19,8 +19,10 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrategySpark::ActivityStrategySpark(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivityStrategy(behaviorExternalInterface, config)
+ActivityStrategySpark::ActivityStrategySpark(BehaviorExternalInterface& behaviorExternalInterface,
+                                             IExternalInterface* robotExternalInterface,
+                                             const Json::Value& config)
+: IActivityStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
   SetActivityShouldEndSecs(FLT_MAX);
 }

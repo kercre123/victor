@@ -35,7 +35,9 @@ class IActivityStrategy
 public:
 
   // construction/destruction
-  IActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  IActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                    IExternalInterface* robotExternalInterface,
+                    const Json::Value& config);
   virtual ~IActivityStrategy();
 
   // true when this activity would be happy to start, false if it doens't want to be fired now
@@ -69,7 +71,6 @@ protected:
   
   // signal handles for events strategies register to
   std::vector<Signal::SmartHandle> _eventHandles;
-
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

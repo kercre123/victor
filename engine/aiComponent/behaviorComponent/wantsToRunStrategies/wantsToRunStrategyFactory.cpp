@@ -38,6 +38,7 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IWantsToRunStrategy* WantsToRunStrategyFactory::CreateWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                         IExternalInterface* robotExternalInterface,
                                                                          const Json::Value& config)
 {
 
@@ -48,42 +49,42 @@ IWantsToRunStrategy* WantsToRunStrategyFactory::CreateWantsToRunStrategy(Behavio
   switch (strategyType) {
     case WantsToRunStrategyType::AlwaysRun:
     {
-      strategy = new StrategyAlwaysRun(behaviorExternalInterface, config);
+      strategy = new StrategyAlwaysRun(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::ExpressNeedsTransition:
     {
-      strategy = new StrategyExpressNeedsTransition(behaviorExternalInterface, config);
+      strategy = new StrategyExpressNeedsTransition(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::Generic:
     {
-      strategy = new StrategyGeneric(behaviorExternalInterface, config);
+      strategy = new StrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::InNeedsBracket:
     {
-      strategy = new StrategyInNeedsBracket(behaviorExternalInterface, config);
+      strategy = new StrategyInNeedsBracket(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::ObstacleDetected:
     {
-      strategy = new StrategyObstacleDetected(behaviorExternalInterface, config);
+      strategy = new StrategyObstacleDetected(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::PlacedOnCharger:
     {
-      strategy = new StrategyPlacedOnCharger(behaviorExternalInterface, config);
+      strategy = new StrategyPlacedOnCharger(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::RobotPlacedOnSlope:
     {
-      strategy = new StrategyRobotPlacedOnSlope(behaviorExternalInterface, config);
+      strategy = new StrategyRobotPlacedOnSlope(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::RobotShaken:
     {
-      strategy = new StrategyRobotShaken(behaviorExternalInterface, config);
+      strategy = new StrategyRobotShaken(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case WantsToRunStrategyType::Invalid:

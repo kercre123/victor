@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorContainer_H__
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"

@@ -39,8 +39,11 @@ WantsToRunStrategyType IWantsToRunStrategy::ExtractStrategyType(const Json::Valu
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IWantsToRunStrategy::IWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
+IWantsToRunStrategy::IWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                         IExternalInterface* robotExternalInterface,
+                                         const Json::Value& config)
 : _behaviorExternalInterface(behaviorExternalInterface)
+, _robotExternalInterface(robotExternalInterface)
 , _strategyType(ExtractStrategyType(config))
 {
 }
@@ -49,14 +52,13 @@ IWantsToRunStrategy::IWantsToRunStrategy(BehaviorExternalInterface& behaviorExte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IWantsToRunStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
-  auto robotExternalInterface = _behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr) {
+  if(_robotExternalInterface != nullptr) {
     auto handlerCallback = [this](const GameToEngineEvent& event) {
       HandleEvent(event);
     };
     
     for(auto tag : tags) {
-      _eventHandles.push_back(robotExternalInterface->Subscribe(tag, handlerCallback));
+      _eventHandles.push_back(_robotExternalInterface->Subscribe(tag, handlerCallback));
     }
   }
 }
@@ -65,14 +67,13 @@ void IWantsToRunStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IWantsToRunStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
-  auto robotExternalInterface = _behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr) {
+  if(_robotExternalInterface != nullptr) {
     auto handlerCallback = [this](const EngineToGameEvent& event) {
       HandleEvent(event);
     };
     
     for(auto tag : tags) {
-      _eventHandles.push_back(robotExternalInterface->Subscribe(tag, handlerCallback));
+      _eventHandles.push_back(_robotExternalInterface->Subscribe(tag, handlerCallback));
     }
   }
 }

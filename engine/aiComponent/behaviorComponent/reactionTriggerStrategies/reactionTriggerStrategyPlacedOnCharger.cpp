@@ -25,8 +25,11 @@ static const char* kTriggerStrategyName = "Trigger Strategy placed on charger";
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyPlacedOnCharger::ReactionTriggerStrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyPlacedOnCharger::ReactionTriggerStrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                               IExternalInterface* robotExternalInterface,
+                                                                               const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 {
 }
   

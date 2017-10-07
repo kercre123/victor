@@ -23,7 +23,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategyFacePositionUpdated : public ReactionTriggerStrategyPositionUpdate, IReactToFaceListener {
 public:
-  ReactionTriggerStrategyFacePositionUpdated(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyFacePositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
+                                             IExternalInterface* robotExternalInterface,
+                                             const Json::Value& config);
 
    // Implement IReactToFaceListener
   virtual void FinishedReactingToFace(BehaviorExternalInterface& behaviorExternalInterface,Vision::FaceID_t faceID) override;

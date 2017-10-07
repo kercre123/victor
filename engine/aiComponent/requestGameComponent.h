@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_AIComponent_RequestGameComponent_H__
 
 #include "anki/common/types.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 

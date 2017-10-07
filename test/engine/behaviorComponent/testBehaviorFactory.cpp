@@ -19,6 +19,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robot.h"
@@ -143,11 +144,13 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
   EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), nullptr); // this behavior shouldn't exist by default
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(testRobot,
                                                                                        testRobot.GetAIComponent(),
                                                                                        behaviorContainer,
                                                                                        testRobot.GetBlockWorld(),
-                                                                                       testRobot.GetFaceWorld());
+                                                                                       testRobot.GetFaceWorld(),
+                                                                                       stateChangeComp);
 
   ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
   newBehavior->Init(*behaviorExternalInterface);

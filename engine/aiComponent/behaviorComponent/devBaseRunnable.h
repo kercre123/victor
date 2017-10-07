@@ -47,7 +47,6 @@ private:
 
   std::set<IBehavior*> _possibleDelegates;
   
-  std::vector<Signal::SmartHandle> _eventHandlers;
   IBehavior* _initialDelegate = nullptr;
 
   IBehavior* _pendingDelegate = nullptr;

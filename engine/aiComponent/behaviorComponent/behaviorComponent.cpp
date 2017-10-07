@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/devBaseRunnable.h"
@@ -61,21 +62,26 @@ void BehaviorComponent::Init(Robot& robot)
   _behaviorSysMgr = std::make_unique<BehaviorSystemManager>();
   
   _delegationComponent.reset(new DelegationComponent(robot, *_behaviorSysMgr));
+  _stateChangeComponent.reset(new StateChangeComponent(*this));
   
   _behaviorExternalInterface = std::make_unique<BehaviorExternalInterface>(robot,
                                                                            robot.GetAIComponent(),
                                                                            *_behaviorContainer,
                                                                            robot.GetBlockWorld(),
-                                                                           robot.GetFaceWorld());
+                                                                           robot.GetFaceWorld(),
+                                                                           *_stateChangeComponent);
   
   _behaviorExternalInterface->SetOptionalInterfaces(_delegationComponent.get(),
                                                     &robot.GetMoodManager(),
                                                     robot.GetContext()->GetNeedsManager(),
                                                     &robot.GetProgressionUnlockComponent(),
-                                                    &robot.GetPublicStateBroadcaster(),
-                                                    robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr);
+                                                    &robot.GetPublicStateBroadcaster());
 
-  
+  _asyncMessageComponent.reset(new AsyncMessageGateComponent(
+     robot.HasExternalInterface() ? robot.GetExternalInterface(): nullptr,
+     robot.GetRobotMessageHandler(),
+     robot.GetID()));
+
   assert(_behaviorContainer);
   _behaviorContainer->Init(*_behaviorExternalInterface, !static_cast<bool>(USE_BSM));
   
@@ -107,6 +113,7 @@ void BehaviorComponent::Init(Robot& robot)
               dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
     
     _behaviorMgr->InitConfiguration(*_behaviorExternalInterface,
+                                    robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr,
                                     oldActivitesConfig);
     _behaviorMgr->InitReactionTriggerMap(*_behaviorExternalInterface,
                                          reactionTriggerConfig);
@@ -129,6 +136,7 @@ void BehaviorComponent::Init(Robot& robot)
         }
         
         _behaviorSysMgr->InitConfiguration(*_behaviorExternalInterface,
+                                           _asyncMessageComponent.get(),
                                            baseRunnable);
       }
     }
@@ -195,6 +203,26 @@ void BehaviorComponent::OnRobotDelocalized()
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const
+{
+  _asyncMessageComponent->SubscribeToTags(subscriber, std::move(tags));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const
+{
+  _asyncMessageComponent->SubscribeToTags(subscriber, std::move(tags));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorComponent::SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const
+{
+  _asyncMessageComponent->SubscribeToTags(subscriber, std::move(tags));
+}
 
   
 } // namespace Cozmo

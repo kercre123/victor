@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -153,17 +154,11 @@ ActivityFreeplay::ActivityFreeplay(BehaviorExternalInterface& behaviorExternalIn
 {
   CreateFromConfig(behaviorExternalInterface, config);
   
-  // register to events
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if (robotExternalInterface != nullptr)
+  
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
   {
-    using namespace ExternalInterface;
-    auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _signalHandles);
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
-  }
-  else {
-    PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
-  }
+    ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged
+  });
   
   #if ( ANKI_DEV_CHEATS )
   {
@@ -197,6 +192,47 @@ void ActivityFreeplay::SetActivityIDFromSubActivity(ActivityID activityID){
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivityFreeplay::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  // Event Handling
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged){
+      auto& msg = event.GetData().Get_RobotOffTreadsStateChanged();
+      // if we return to OnTreads and we are in freeplay without sparks, clear the activity to pick a new one as soon
+      // as we regain control.
+      const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
+      if ( onTreads )
+      {
+        if ( _currentActivityPtr != nullptr)
+        {
+          const UnlockId curActivitySpark = _currentActivityPtr->GetRequiredSpark();
+          const bool isSparkless = (curActivitySpark == UnlockId::Count);
+          const bool isRunningDebugActivity = (_currentActivityPtr->GetID() ==
+                                               _debugConsoleRequestedActivity);
+          const bool isSevereNeedsActivity =
+          (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowEnergy) ||
+          (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowRepair);
+          
+          if ( isSparkless && !isRunningDebugActivity && !isSevereNeedsActivity)
+          {
+            PRINT_CH_INFO("Behaviors", "ActivityFreeplay.RobotOffTreadsStateChanged.KickingOutActivityOnPutDown",
+                          "Kicking out '%s' on put down so we pick up a new one",
+                          EnumToString(_currentActivityPtr->GetID()));
+            
+            // note: this will set the activity on cooldown, which may not be desired if it didn't run for some time
+            
+            // stop current activity
+            _currentActivityPtr->OnDeactivated(_behaviorExternalInterface);
+            _currentActivityPtr = nullptr;
+          }
+        }
+      }
+      
+      
+    }
+  }
+  
+  
+  
   auto result = Result::RESULT_OK;
   if(_currentActivityPtr != nullptr){
     result = _currentActivityPtr->Update_Legacy(behaviorExternalInterface);
@@ -213,40 +249,6 @@ void ActivityFreeplay::OnDeactivatedActivity(BehaviorExternalInterface& behavior
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void ActivityFreeplay::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
-{
-  // if we return to OnTreads and we are in freeplay without sparks, clear the activity to pick a new one as soon
-  // as we regain control.
-  const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
-  if ( onTreads )
-  {
-    if ( _currentActivityPtr != nullptr)
-    {
-      const UnlockId curActivitySpark = _currentActivityPtr->GetRequiredSpark();
-      const bool isSparkless = (curActivitySpark == UnlockId::Count);
-      const bool isRunningDebugActivity = (_currentActivityPtr->GetID() ==
-                                                 _debugConsoleRequestedActivity);
-      const bool isSevereNeedsActivity =
-                      (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowEnergy) ||
-                      (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowRepair);
-      
-      if ( isSparkless && !isRunningDebugActivity && !isSevereNeedsActivity)
-      {
-        PRINT_CH_INFO("Behaviors", "ActivityFreeplay.RobotOffTreadsStateChanged.KickingOutActivityOnPutDown",
-                      "Kicking out '%s' on put down so we pick up a new one",
-                      EnumToString(_currentActivityPtr->GetID()));
-      
-        // note: this will set the activity on cooldown, which may not be desired if it didn't run for some time
-        
-        // stop current activity
-        _currentActivityPtr->OnDeactivated(_behaviorExternalInterface);
-        _currentActivityPtr = nullptr;
-      }
-    }
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFreeplay::CreateFromConfig(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)

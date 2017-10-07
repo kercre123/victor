@@ -40,6 +40,7 @@ namespace Cozmo {
 // We have a static function for creating an instance because we want to pull some data out of the config
 // and pass it into the constructor
 ReactionTriggerStrategyGeneric* ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                                                     IExternalInterface* robotExternalInterface,
                                                                                                      const Json::Value& config)
 {
   std::string strategyName = "Trigger Strategy Generic";
@@ -63,14 +64,16 @@ ReactionTriggerStrategyGeneric* ReactionTriggerStrategyGeneric::CreateReactionTr
   Json::Value configCopy = config;
   configCopy[kWantsToRunStrategyConfigKey] = genericStrategyConfig;
   
-  return new ReactionTriggerStrategyGeneric(behaviorExternalInterface, configCopy, strategyName);
+  return new ReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface,
+                                            configCopy, strategyName);
 }
 
 // Private constructor so that only the static creation function above can make an instance
 ReactionTriggerStrategyGeneric::ReactionTriggerStrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
+                                                               IExternalInterface* robotExternalInterface,
                                                                const Json::Value& config,
                                                                std::string strategyName)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, strategyName)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface, config, strategyName)
 , _strategyName(std::move(strategyName))
 , _canInterruptOtherTriggeredBehavior(IReactionTriggerStrategy::CanInterruptOtherTriggeredBehavior())
 {

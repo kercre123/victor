@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_IBehavior_H__
 
 #include "anki/common/types.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/global/globalDefinitions.h"
 
 #include <set>

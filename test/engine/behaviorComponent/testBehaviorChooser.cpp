@@ -18,6 +18,7 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorChoosers/scoringBehaviorChooser.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
@@ -67,13 +68,15 @@ bool LoadTestBehaviors(Robot& testRobot, ScoringBehaviorChooser& behaviorChooser
     if (parsedOK)
     {
       DelegationComponent delegationComp;
+      StateChangeComponent stateChangeComp;
       // Factory will automatically delete the behaviors later when robot is destroyed
       BehaviorExternalInterface* behaviorExternalInterface =
                             new BehaviorExternalInterface(testRobot,
                                                           testRobot.GetAIComponent(),
                                                           behaviorContainer,
                                                           testRobot.GetBlockWorld(),
-                                                          testRobot.GetFaceWorld());
+                                                          testRobot.GetFaceWorld(),
+                                                          stateChangeComp);
       ICozmoBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson);
       newBehavior->Init(*behaviorExternalInterface);
       EXPECT_NE(newBehavior, nullptr);

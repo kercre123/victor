@@ -245,11 +245,11 @@ void BehaviorOnboardingShowCube::SetState_internal(State state, const std::strin
   _state = state;
   SetDebugStateName(stateName);
   
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(robotExternalInterface != nullptr){
     // because this is called from some places where Robot is const, uses const safe version rather than just robot.Broadcast
     robotExternalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::OnboardingState(_state)));
-  }
+  }**/
 }
   
   

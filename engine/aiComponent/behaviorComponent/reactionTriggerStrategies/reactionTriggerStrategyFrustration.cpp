@@ -34,8 +34,11 @@ static const char* kCooldownTime_sKey = "cooldownTime_s";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyFrustration::ReactionTriggerStrategyFrustration(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyFrustration::ReactionTriggerStrategyFrustration(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                       IExternalInterface* robotExternalInterface,
+                                                                       const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 {
   LoadJson(config);
 }

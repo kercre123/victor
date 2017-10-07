@@ -40,7 +40,14 @@ void SetupBSM(BehaviorSystemManager& bsm,
   
   baseRunnable = std::make_unique<TestSuperPoweredRunnable>(*bc);
 
-  bsm.InitConfiguration(*bei, baseRunnable.get());
+  std::unique_ptr<AsyncMessageGateComponent> gate =
+       std::make_unique<AsyncMessageGateComponent>(
+           robot->HasExternalInterface() ? robot->GetExternalInterface(): nullptr,
+           robot->GetRobotMessageHandler(),
+           robot->GetID());
+
+  
+  bsm.InitConfiguration(*bei, gate.get(), baseRunnable.get());
   bsm.Update(*bei);
 }
 

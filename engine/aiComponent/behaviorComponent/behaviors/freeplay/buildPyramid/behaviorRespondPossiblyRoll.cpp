@@ -18,6 +18,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorHelperComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperFactory.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/robot.h"
@@ -70,16 +71,11 @@ void BehaviorRespondPossiblyRoll::InitBehavior(BehaviorExternalInterface& behavi
                              );
   };
   
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr){
-    using namespace ExternalInterface;
-    _eventHalders.push_back(robotExternalInterface->Subscribe(
-                                                              MessageEngineToGameTag::ObjectUpAxisChanged,
-                                                              upAxisChangedCallback));
-  }
+  SubscribeToTag(ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged,
+                 upAxisChangedCallback);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRespondPossiblyRoll::WantsToBeActivatedBehavior(BehaviorExternalInterface& behaviorExternalInterface) const
 {

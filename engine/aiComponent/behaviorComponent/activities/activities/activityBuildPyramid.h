@@ -34,6 +34,7 @@ class BehaviorExternalInterface;
 class BehaviorPlayArbitraryAnim;
 class BehaviorPyramidThankYou;
 class BehaviorRespondPossiblyRoll;
+class StateChangeComponent;
 struct PyramidCubePropertiesTracker;
 struct ObjectConnectionState;
 struct ObjectLights;
@@ -74,7 +75,6 @@ private:
   std::unique_ptr<IBehaviorChooser>  _setupSimpleChooser;
   std::unique_ptr<IBehaviorChooser>  _buildSimpleChooser;
   
-  std::vector<Signal::SmartHandle> _eventHandlers;
   // Maps a light cube type (in case objectIDs are re-assigned for disconnected objects)
   // to knowledge about how we've altered the light/axis state
   std::map<ObjectType, PyramidCubePropertiesTracker> _pyramidCubePropertiesTrackers;
@@ -179,6 +179,8 @@ private:
   ObjectLights GetBaseFormedStaticLightsModifier(BehaviorExternalInterface& behaviorExternalInterface,
                                                  const ObjectID& staticID,
                                                  const ObjectID& baseID) const;
+  
+  void HandleMessageEvents(BehaviorExternalInterface& behaviorExternalInterface);
 
 };
 

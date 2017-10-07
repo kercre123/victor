@@ -19,6 +19,7 @@ namespace Anki {
 namespace Cozmo {
 // forward declarations
 class BehaviorExternalInterface;
+class IExternalInterface;
 class IReactionTriggerStrategy;
 class Robot;
 enum class ReactionTrigger : uint8_t;
@@ -26,6 +27,7 @@ enum class ReactionTrigger : uint8_t;
 class ReactionTriggerStrategyFactory{
 public:
   static IReactionTriggerStrategy* CreateReactionTriggerStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                 IExternalInterface* robotExternalInterface,
                                                                  const Json::Value& config,
                                                                  ReactionTrigger trigger);
   

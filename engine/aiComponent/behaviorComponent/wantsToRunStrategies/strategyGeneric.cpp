@@ -17,8 +17,10 @@
 namespace Anki {
 namespace Cozmo {
 
-StrategyGeneric::StrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: Anki::Cozmo::IWantsToRunStrategy(behaviorExternalInterface, config)
+StrategyGeneric::StrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
+                                 IExternalInterface* robotExternalInterface,
+                                 const Json::Value& config)
+: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
   
 }

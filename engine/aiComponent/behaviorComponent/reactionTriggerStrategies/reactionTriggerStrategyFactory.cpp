@@ -48,6 +48,7 @@ using namespace ExternalInterface;
 
 IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
                              CreateReactionTriggerStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                                           IExternalInterface* robotExternalInterface,
                                                            const Json::Value& config,
                                                            ReactionTrigger trigger)
 {
@@ -63,7 +64,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
   switch (trigger) {
     case ReactionTrigger::CliffDetected:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       std::set<MessageEngineToGameTag> relevantTypes =
       {
         MessageEngineToGameTag::CliffEvent,
@@ -86,32 +87,32 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::CubeMoved:
     {
-      strategy = new ReactionTriggerStrategyCubeMoved(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyCubeMoved(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::FacePositionUpdated:
     {
-      strategy = new ReactionTriggerStrategyFacePositionUpdated(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyFacePositionUpdated(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::FistBump:
     {
-      strategy = new ReactionTriggerStrategyFistBump(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyFistBump(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::Frustration:
     {
-      strategy = new ReactionTriggerStrategyFrustration(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyFrustration(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::Hiccup:
     {
-      strategy = new ReactionTriggerStrategyHiccup(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyHiccup(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::MotorCalibration:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       std::set<MessageEngineToGameTag> relevantTypes =
       {
         MessageEngineToGameTag::MotorCalibration
@@ -126,27 +127,27 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::NoPreDockPoses:
     {
-      strategy = new ReactionTriggerStrategyNoPreDockPoses(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyNoPreDockPoses(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::ObjectPositionUpdated:
     {
-      strategy = new ReactionTriggerStrategyObjectPositionUpdated(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyObjectPositionUpdated(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::PlacedOnCharger:
     {
-      strategy = new ReactionTriggerStrategyPlacedOnCharger(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyPlacedOnCharger(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::PetInitialDetection:
     {
-      strategy = new ReactionTriggerStrategyPetInitialDetection(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyPetInitialDetection(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::RobotPickedUp:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       genericStrategy->SetShouldTriggerCallback([] (BehaviorExternalInterface& behaviorExternalInterface) -> bool {
         return behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::InAir;
       });
@@ -156,12 +157,12 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::RobotPlacedOnSlope:
     {
-      strategy = new ReactionTriggerStrategyRobotPlacedOnSlope(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyRobotPlacedOnSlope(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::ReturnedToTreads:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       std::set<MessageEngineToGameTag> relevantTypes =
       {
         MessageEngineToGameTag::RobotOffTreadsStateChanged
@@ -179,7 +180,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::RobotOnBack:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       genericStrategy->SetShouldTriggerCallback([] (BehaviorExternalInterface& behaviorExternalInterface) -> bool {
         return behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnBack;
       });
@@ -189,7 +190,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::RobotOnFace:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       genericStrategy->SetShouldTriggerCallback([] (BehaviorExternalInterface& behaviorExternalInterface) -> bool {
         return behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnFace;
       });
@@ -199,7 +200,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::RobotOnSide:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       genericStrategy->SetShouldTriggerCallback([] (BehaviorExternalInterface& behaviorExternalInterface) -> bool {
         return behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnLeftSide
             || behaviorExternalInterface.GetOffTreadsState() == OffTreadsState::OnRightSide;
@@ -210,17 +211,17 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::RobotShaken:
     {
-      strategy = new ReactionTriggerStrategyRobotShaken(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategyRobotShaken(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::Sparked:
     {
-      strategy = new ReactionTriggerStrategySparked(behaviorExternalInterface, config);
+      strategy = new ReactionTriggerStrategySparked(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ReactionTrigger::UnexpectedMovement:
     {
-      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+      auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
       std::set<MessageEngineToGameTag> relevantTypes =
       {
         MessageEngineToGameTag::UnexpectedMovement
@@ -240,7 +241,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
         // on the charger and we don't want that to trigger the strategy).
         // This strategy is used to trigger reactToVoiceCommand_Wakeup when sleeping is cancelled via a cancel
         // button
-        auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, config);
+        auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(behaviorExternalInterface, robotExternalInterface, config);
         std::set<MessageGameToEngineTag> relevantTypes =
         {
           MessageGameToEngineTag::CancelIdleTimeout
@@ -265,7 +266,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       }
       else
       {
-        strategy = new ReactionTriggerStrategyVoiceCommand(behaviorExternalInterface, config);
+        strategy = new ReactionTriggerStrategyVoiceCommand(behaviorExternalInterface, robotExternalInterface, config);
       }
       break;
     }

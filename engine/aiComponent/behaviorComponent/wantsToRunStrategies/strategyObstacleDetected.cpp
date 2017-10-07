@@ -25,8 +25,10 @@ namespace Cozmo {
 /////
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyObstacleDetected::StrategyObstacleDetected(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config) 
-: StrategyGeneric(behaviorExternalInterface, config)
+StrategyObstacleDetected::StrategyObstacleDetected(BehaviorExternalInterface& behaviorExternalInterface,
+                                                   IExternalInterface* robotExternalInterface,
+                                                   const Json::Value& config)
+: StrategyGeneric(behaviorExternalInterface, robotExternalInterface, config)
 {
   SetShouldTriggerCallback(
     [](BehaviorExternalInterface& behaviorExternalInterface) -> bool { return behaviorExternalInterface.GetAIComponent().IsSuddenObstacleDetected(); }

@@ -21,7 +21,9 @@ namespace Cozmo {
 class ReactionTriggerStrategyRobotShaken : public IReactionTriggerStrategy
 {
 public:
-  ReactionTriggerStrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface,
+                                     IExternalInterface* robotExternalInterface,
+                                     const Json::Value& config);
   
   virtual bool ShouldResumeLastBehavior() const override { return false;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

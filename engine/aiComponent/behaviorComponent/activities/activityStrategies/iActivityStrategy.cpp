@@ -45,7 +45,9 @@ static const char* kActivityFeatureGate           = "featureGate";
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActivityStrategy::IActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
+IActivityStrategy::IActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                     IExternalInterface* robotExternalInterface,
+                                     const Json::Value& config)
 : _wantsToRunStrategy(nullptr)
 , _activityCanEndSecs(-1.0f)
 , _activityShouldEndSecs(-1.0f)
@@ -107,7 +109,9 @@ IActivityStrategy::IActivityStrategy(BehaviorExternalInterface& behaviorExternal
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface, wantsToRunConfig));
+    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+                                                                                  robotExternalInterface,
+                                                                                  wantsToRunConfig));
   }
 
 }

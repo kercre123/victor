@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/activityStrategyNeedBasedCooldown.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/cozmoContext.h"
 #include "engine/needsSystem/needsManager.h"
@@ -29,10 +30,12 @@ static const char* kNeedCooldownRandomnessGraphKey = "needCooldownRandomnessGrap
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrategyNeedBasedCooldown::ActivityStrategyNeedBasedCooldown(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivityStrategy(behaviorExternalInterface, config)
+ActivityStrategyNeedBasedCooldown::ActivityStrategyNeedBasedCooldown(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                     IExternalInterface* robotExternalInterface,
+                                                                     const Json::Value& config)
+: IActivityStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+
   if(robotExternalInterface != nullptr)
   {
     auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _eventHandles);

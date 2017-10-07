@@ -21,7 +21,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategyRobotPlacedOnSlope : public IReactionTriggerStrategy{
 public:
-  ReactionTriggerStrategyRobotPlacedOnSlope(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyRobotPlacedOnSlope(BehaviorExternalInterface& behaviorExternalInterface,
+                                            IExternalInterface* robotExternalInterface,
+                                            const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return false; }
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

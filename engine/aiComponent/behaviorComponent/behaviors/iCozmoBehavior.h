@@ -12,7 +12,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_ICozmoBehavior_H__
 #define __Cozmo_Basestation_Behaviors_ICozmoBehavior_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
@@ -27,9 +27,7 @@
 #include "engine/robotInterface/messageHandler.h"
 #include <set>
 
-#include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/externalInterface/messageGameToEngineTag.h"
-#include "clad/robotInterface/messageRobotToEngineTag.h"
+
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorSystem/behaviorObjectives.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
@@ -38,7 +36,6 @@
 #include "clad/types/behaviorSystem/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
-#include "util/signals/simpleSignal_fwd.h"
 
 //Transforms enum into string
 #define DEBUG_SET_STATE(s) SetDebugStateName(#s)
@@ -79,11 +76,8 @@ struct BehaviorStateLightInfo;
 struct PathMotionProfile;
 
 namespace ExternalInterface {
-class MessageEngineToGame;
-class MessageGameToEngine;
 struct BehaviorObjectiveAchieved;
 }
-template<typename TYPE> class AnkiEvent;
 
 // Base Behavior Interface specification
 class ICozmoBehavior : public IBehavior
@@ -256,15 +250,11 @@ protected:
 
   Util::RandomGenerator& GetRNG() const;
     
-  // Convenience aliases
-  using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
-  using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
-  using RobotToEngineEvent= AnkiEvent<RobotInterface::RobotToEngine>;
-  using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
-  using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
-    
   // Derived classes should use these methods to subscribe to any tags they
   // are interested in handling.
+  void SubscribeToTag(GameToEngineTag   tag, std::function<void(const GameToEngineEvent&)> messageHandler = nullptr);
+  void SubscribeToTag(EngineToGameTag   tag, std::function<void(const EngineToGameEvent&)> messageHandler = nullptr);
+  
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
   void SubscribeToTags(std::set<RobotInterface::RobotToEngineTag>&& tags);
@@ -463,7 +453,6 @@ private:
   
   NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
 
-  std::vector<::Signal::SmartHandle> _eventHandles;
   Robot* _robot;
   BehaviorExternalInterface* _behaviorExternalInterface;
   float _lastRunTime_s;
@@ -479,9 +468,6 @@ private:
   bool WantsToBeActivatedBase(BehaviorExternalInterface& behaviorExternalInterface) const;
   
   bool ReadFromJson(const Json::Value& config);
-  
-  template<class EventType>
-  void HandleEvent(const EventType& event);
   
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
   
@@ -552,10 +538,10 @@ private:
   ///////
   // Tracking subscribe tags for initialization
   ///////
-  std::set<GameToEngineTag> _gameToEngineTags;
-  std::set<EngineToGameTag> _engineToGameTags;
+  std::unordered_map<GameToEngineTag, std::function<void(const GameToEngineEvent&)>> _gameToEngineCallbackMap;
+  std::unordered_map<EngineToGameTag, std::function<void(const EngineToGameEvent&)>> _engineToGameCallbackMap;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
-  
+
   // Tracking wants to run configs for initialization
   Json::Value _wantsToRunConfig;
   
@@ -689,21 +675,7 @@ bool ICozmoBehavior::SmartDelegateToHelper(BehaviorExternalInterface& behaviorEx
                                std::bind(successCallback, static_cast<T*>(this), std::placeholders::_1),
                                std::bind(failureCallback, static_cast<T*>(this), std::placeholders::_1));
 }
-  
-template<class EventType>
-void ICozmoBehavior::HandleEvent(const EventType& event)
-{
-  if(_behaviorExternalInterface != nullptr){
-    AlwaysHandle(event, *_behaviorExternalInterface);
-      
-    if(IsRunning()) {
-      HandleWhileRunning(event, *_behaviorExternalInterface);
-    } else {
-      HandleWhileNotRunning(event, *_behaviorExternalInterface);
-    }
-  }
-}
-  
+
 
 ////////
 //// Scored Behavior functions

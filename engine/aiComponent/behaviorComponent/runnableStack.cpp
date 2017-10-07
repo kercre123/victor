@@ -12,6 +12,9 @@
 
 #include "engine/aiComponent/behaviorComponent/runnableStack.h"
 
+#include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "util/logging/logging.h"
 
@@ -40,7 +43,8 @@ void RunnableStack::InitRunnableStack(BehaviorExternalInterface& behaviorExterna
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
-                                                               std::set<IBehavior*>& tickedInStack)
+                                        AsyncMessageGateComponent& asyncMessageGateComp,
+                                        std::set<IBehavior*>& tickedInStack)
 {
   if(_runnableStack.size() == 0){
     PRINT_NAMED_WARNING("BehaviorSystemManager.RunnableStack.UpdateRunnableStack.NoStackInitialized",
@@ -48,6 +52,7 @@ void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExter
     return;
   }
 
+  
   
   // The stack can be altered during update ticks through the cancel delegation
   // functions - so track the index in the stack rather than the iterator directly
@@ -58,6 +63,17 @@ void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExter
   // in the future
   for(int idx = 0; idx < _runnableStack.size(); idx++){
     tickedInStack.insert(_runnableStack.at(idx));
+    
+    asyncMessageGateComp.GetEventsForBehavior(
+       _runnableStack.at(idx),
+       behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents);
+    asyncMessageGateComp.GetEventsForBehavior(
+       _runnableStack.at(idx),
+       behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents);
+    asyncMessageGateComp.GetEventsForBehavior(
+       _runnableStack.at(idx),
+       behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents);
+    
     _runnableStack.at(idx)->Update(behaviorExternalInterface);
   }
 }

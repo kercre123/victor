@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robot.h"
@@ -55,13 +56,16 @@ std::unique_ptr<BehaviorContainer> CreateBehaviors(){
 void GenerateCoreBehaviorTestingComponents(std::unique_ptr<Robot>& robot,
                                            std::unique_ptr<BehaviorContainer>& bc,
                                            std::unique_ptr<BehaviorExternalInterface>& bei){
+  StateChangeComponent stateChangeComp;
+
   robot = CreateRobot(1);
   bc = CreateBehaviors();
   bei.reset(new BehaviorExternalInterface(*robot,
                                           robot->GetAIComponent(),
                                           *bc,
                                           robot->GetBlockWorld(),
-                                          robot->GetFaceWorld()));
+                                          robot->GetFaceWorld(),
+                                          stateChangeComp));
 }
 
 }
@@ -132,7 +136,8 @@ void TestSuperPoweredRunnable::OnLeftActivatableScopeInternal() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehavior::InitBehavior(BehaviorExternalInterface& behaviorExternalInterface) {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  
+  auto robotExternalInterface = _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr;
   if(robotExternalInterface != nullptr) {
     SubscribeToTags({EngineToGameTag::Ping});
   }

@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/iWantsToRunStrategy.h"
 
 #include "engine/events/ankiEvent.h"
@@ -29,6 +29,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class IExternalInterface;
 class Robot;
   
 class IReactionTriggerStrategy{
@@ -38,7 +39,9 @@ public:
   // Allows the behaviorManager to notify of enabled state changes
   friend class BehaviorManager;
   
-  IReactionTriggerStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config, const std::string& strategyName);
+  IReactionTriggerStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                           IExternalInterface* robotExternalInterface,
+                           const Json::Value& config, const std::string& strategyName);
   virtual ~IReactionTriggerStrategy() {};
 
   const std::string& GetName() const { return _strategyName;}
@@ -116,6 +119,7 @@ protected:
 
 private:
   BehaviorExternalInterface& _behaviorExternalInterface;
+  IExternalInterface* _robotExternalInterface = nullptr;
   const std::string _strategyName;
   ReactionTrigger _triggerID = ReactionTrigger::NoneTrigger;
   std::vector<::Signal::SmartHandle> _eventHandles;

@@ -20,7 +20,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategySparked : public IReactionTriggerStrategy{
 public:
-  ReactionTriggerStrategySparked(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategySparked(BehaviorExternalInterface& behaviorExternalInterface,
+                                 IExternalInterface* robotExternalInterface,
+                                 const Json::Value& config);
   
   virtual bool ShouldResumeLastBehavior() const override { return false;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

@@ -38,8 +38,11 @@ static const char* kTriggerExpirationKey  = "triggerExpiration_s";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyFistBump::ReactionTriggerStrategyFistBump(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyFistBump::ReactionTriggerStrategyFistBump(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                 IExternalInterface* robotExternalInterface,
+                                                                 const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
   , _shouldTrigger(false)
   , _shouldTriggerExpirationTime_sec(0)
   , _lastFistBumpCompleteTime_sec(0)

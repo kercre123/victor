@@ -44,7 +44,6 @@ public:
   
 protected:
   BehaviorExternalInterface& _behaviorExternalInterface;
-  std::vector<Signal::SmartHandle> _eventHandlers;
   ICozmoBehaviorPtr _selectedBehavior = nullptr;
   ICozmoBehaviorPtr _behaviorWait;
   
@@ -52,6 +51,9 @@ protected:
     
   // requests enabling processes required by behaviors when they are the selected one
   void SetProcessEnabled(const ICozmoBehaviorPtr behavior, bool newValue);
+  
+  virtual void UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
+
   
 private:
   // Number of times to run the selected behavior

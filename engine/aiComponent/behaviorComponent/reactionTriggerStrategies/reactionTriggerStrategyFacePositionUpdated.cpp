@@ -39,9 +39,10 @@ static const char* kTriggerStrategyName = "Strategy React To Face Position Updat
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                                       IExternalInterface* robotExternalInterface,
                                                                                        const Json::Value& config)
-: ReactionTriggerStrategyPositionUpdate(behaviorExternalInterface, config,
-                                        kTriggerStrategyName, ReactionTrigger::FacePositionUpdated)
+: ReactionTriggerStrategyPositionUpdate(behaviorExternalInterface, robotExternalInterface,
+                                        config, kTriggerStrategyName, ReactionTrigger::FacePositionUpdated)
 {
   SubscribeToTags({
     EngineToGameTag::RobotObservedFace

@@ -22,7 +22,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategyObjectPositionUpdated : public ReactionTriggerStrategyPositionUpdate, public IReactToObjectListener{
 public:
-  ReactionTriggerStrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
+                                               IExternalInterface* robotExternalInterface,
+                                               const Json::Value& config);
 
   void HandleObjectObserved(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg);
   

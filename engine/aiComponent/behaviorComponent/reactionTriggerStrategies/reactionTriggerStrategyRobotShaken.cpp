@@ -26,8 +26,11 @@ static const char* kTriggerStrategyName = "Trigger strategy robot shaken";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyRobotShaken::ReactionTriggerStrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyRobotShaken::ReactionTriggerStrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                       IExternalInterface* robotExternalInterface,
+                                                                       const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 {
 }
 

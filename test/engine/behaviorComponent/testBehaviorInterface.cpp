@@ -15,6 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -32,12 +33,14 @@ TEST(BehaviorInterface, Create)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -59,11 +62,13 @@ TEST(BehaviorInterface, Init)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
 
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -88,11 +93,13 @@ TEST(BehaviorInterface, InitWithInterface)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
 
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -113,12 +120,14 @@ TEST(BehaviorInterface, Run)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -170,11 +179,13 @@ TEST(BehaviorInterface, ScoreWhileRunning)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
   b.ReadFromScoredJson(empty);
@@ -250,11 +261,13 @@ TEST(BehaviorInterface, HandleMessages)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -301,12 +314,14 @@ TEST(BehaviorInterface, OutsideAction)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -397,11 +412,13 @@ TEST(BehaviorInterface, StartActingSimple)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -440,11 +457,13 @@ TEST(BehaviorInterface, StartActingFailures)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -514,11 +533,13 @@ TEST(BehaviorInterface, StartActingCallbacks)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -590,11 +611,13 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -665,11 +688,13 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   TestBehavior b(empty);
   b.Init(*behaviorExternalInterface);
@@ -774,11 +799,13 @@ TEST(BehaviorInterface, StartActingInsideInit)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BehaviorClass::Wait, BehaviorID::Wait);
 

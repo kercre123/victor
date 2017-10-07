@@ -19,12 +19,14 @@ namespace Anki {
 namespace Cozmo {
 // forward declarations
 class BehaviorExternalInterface;
+class IExternalInterface;
 class IWantsToRunStrategy;
 class Robot;
   
 class WantsToRunStrategyFactory{
 public:
   static IWantsToRunStrategy* CreateWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                                       IExternalInterface* robotExternalInterface,
                                                        const Json::Value& config);
   
 }; // class WantsToRunStrategyFactory

@@ -15,10 +15,14 @@
 
 #include "anki/common/types.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+
+
+#include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/iBehaviorRunner.h"
 #include "engine/aiComponent/behaviorComponent/runnableStack.h"
 #include "json/json-forwards.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <set>
 #include <unordered_map>
@@ -44,6 +48,7 @@ public:
   
   // initialize this behavior manager from the given Json config
   Result InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
+                           AsyncMessageGateComponent* asyncMessageComponent,
                            IBehavior* baseRunnable);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,7 +63,7 @@ public:
   bool Delegate(IBehavior* delegator, IBehavior* delegated) override;
   void CancelDelegates(IBehavior* delegator) override;
   void CancelSelf(IBehavior* delegator) override;
-  
+
 private:
   enum class InitializationStage{
     SystemNotInitialized,
@@ -78,13 +83,15 @@ private:
   // - - - - - - - - - - - - - - -
   BehaviorExternalInterface* _behaviorExternalInterface;
   
+  AsyncMessageGateComponent* _asyncMessageComponent;
+
+  std::unique_ptr<RunnableStack> _runnableStack;
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   void UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBehavior*>& tickedInStack);
-  
-  std::unique_ptr<RunnableStack> _runnableStack;
   
 }; // class BehaviorSystemManager
 

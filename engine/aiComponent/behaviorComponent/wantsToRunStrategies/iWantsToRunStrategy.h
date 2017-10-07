@@ -15,7 +15,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IWantsToRunStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_WantsToRunStrategies_IWantsToRunStrategy_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 #include "engine/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -31,11 +31,14 @@ namespace Anki {
 namespace Cozmo {
 
 class BehaviorExternalInterface;
+class IExternalInterface;
 class Robot;
   
 class IWantsToRunStrategy{
 public:
-  IWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  IWantsToRunStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                      IExternalInterface* robotExternalInterface,
+                      const Json::Value& config);
   virtual ~IWantsToRunStrategy() {};
 
   bool WantsToRun(BehaviorExternalInterface& behaviorExternalInterface) const;
@@ -65,6 +68,7 @@ protected:
 
 private:
   BehaviorExternalInterface& _behaviorExternalInterface;
+  IExternalInterface* _robotExternalInterface;
   std::vector<::Signal::SmartHandle> _eventHandles;
   WantsToRunStrategyType _strategyType;
 

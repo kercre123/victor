@@ -28,7 +28,9 @@ class ActivityStrategyNeedBasedCooldown : public IActivityStrategy
 {
 public:
   
-  ActivityStrategyNeedBasedCooldown(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityStrategyNeedBasedCooldown(BehaviorExternalInterface& behaviorExternalInterface,
+                                    IExternalInterface* robotExternalInterface,
+                                    const Json::Value& config);
   
   virtual bool WantsToStartInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityRanSec) const override { return true; }
   
@@ -42,9 +44,7 @@ private:
   Util::GraphEvaluator2d _needCooldownGraph;
   Util::GraphEvaluator2d _needCooldownRandomnessGraph;
   
-  NeedId _needId = NeedId::Count;
-  
-  std::vector<Signal::SmartHandle> _eventHandles;
+  NeedId _needId = NeedId::Count;  
 };
 
 }

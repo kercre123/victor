@@ -83,13 +83,6 @@ public:
 
   virtual const char* GetIDStr() const override { return _freeplayIDString.c_str();}
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Events
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // template for all events we subscribe to
-  template<typename T> void HandleMessage(const T& msg);
-
 protected:
 
   // get next behavior by properly managing the sub-activities

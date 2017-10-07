@@ -28,6 +28,7 @@ namespace Cozmo {
 class ReactionTriggerStrategyPositionUpdate : public IReactionTriggerStrategy{
 public:
   ReactionTriggerStrategyPositionUpdate(BehaviorExternalInterface& behaviorExternalInterface,
+                                        IExternalInterface* robotExternalInterface,
                                         const Json::Value& config,
                                         const std::string& strategyName,
                                         ReactionTrigger triggerAssociated);

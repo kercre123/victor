@@ -27,7 +27,9 @@ namespace Cozmo {
   
 class ReactionTriggerStrategyVoiceCommand : public IReactionTriggerStrategy, public ISubtaskListener {
 public:
-  ReactionTriggerStrategyVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface,
+                                      IExternalInterface* robotExternalInterface,
+                                      const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

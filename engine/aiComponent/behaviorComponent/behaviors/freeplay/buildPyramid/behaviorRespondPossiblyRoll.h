@@ -106,7 +106,6 @@ private:
   RespondPossiblyRollMetadata _metadata;
   
   std::map<ObjectID, UpAxis> _upAxisChangedIDs;
-  std::vector<Signal::SmartHandle> _eventHalders;
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
   
   void DetermineNextResponse(BehaviorExternalInterface& behaviorExternalInterface);

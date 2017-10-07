@@ -41,7 +41,6 @@ protected:
   
 private:
   SearchParameters _params;
-  std::vector<Signal::SmartHandle> _eventHandlers;
   
   SearchIntensity _nextSearchIntensity;
   Vision::Camera _robotCameraAtSearchStart;

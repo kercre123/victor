@@ -90,9 +90,7 @@ private:
 
   AnimationTrigger _currIdle;
   bool _hasSetIdle;
-  
-  std::vector<Signal::SmartHandle> _eventHandlers;
-  
+    
   // Chooser which manages universal response behaviors
   std::unique_ptr<IBehaviorChooser> _universalResponseChooser;
   

@@ -26,7 +26,9 @@ class ActivityStrategyFPPlayWithHumans : public IActivityStrategy
 public:
 
   // constructor
-  ActivityStrategyFPPlayWithHumans(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityStrategyFPPlayWithHumans(BehaviorExternalInterface& behaviorExternalInterface,
+                                   IExternalInterface* robotExternalInterface,
+                                   const Json::Value& config);
 
   // true when this activity would be happy to start, false if it doens't want to be fired now
   virtual bool WantsToStartInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityRanSec) const override;

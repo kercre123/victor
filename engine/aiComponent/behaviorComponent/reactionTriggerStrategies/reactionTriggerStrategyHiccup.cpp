@@ -76,9 +76,12 @@ namespace {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyHiccup::ReactionTriggerStrategyHiccup(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
-, _externalInterface(behaviorExternalInterface.GetRobotExternalInterface().lock().get())
+ReactionTriggerStrategyHiccup::ReactionTriggerStrategyHiccup(BehaviorExternalInterface& behaviorExternalInterface,
+                                                             IExternalInterface* robotExternalInterface,
+                                                             const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
+, _externalInterface(robotExternalInterface)
 , _rng(behaviorExternalInterface.GetRNG())
 , _whiteboard(behaviorExternalInterface.GetAIComponent().GetWhiteboard())
 {

@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "engine/components/cubeLightComponent.h"
@@ -314,7 +315,9 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   assert(_robot);
   
   if(_wantsToRunConfig.size() > 0){
-    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface, _wantsToRunConfig));
+    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+                                                                                  _robot->HasExternalInterface() ? _robot->GetExternalInterface() : nullptr,
+                                                                                  _wantsToRunConfig));
     _wantsToRunConfig.clear();
   }
 
@@ -323,79 +326,83 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   ScoredInit(behaviorExternalInterface);
   InitBehavior(behaviorExternalInterface);
   
-  std::shared_ptr<IExternalInterface> externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(externalInterface != nullptr) {
 
-    if( !USE_BSM ) {
-      // the BSM will directly call HandleActionComplete, so only register as an event if we aren't using it
-      
-      // NOTE: this won't get sent down to derived classes (unless they also subscribe)
-      _eventHandles.push_back(externalInterface->Subscribe(
-                                EngineToGameTag::RobotCompletedAction,
-                                [this](const EngineToGameEvent& event) {
-                                  DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
-                                             "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
-                                  if( event.GetData().Get_RobotCompletedAction().idTag == _lastActionTag ) {
-                                    HandleActionComplete(event.GetData().Get_RobotCompletedAction());
-                                  }
-                                } ));
-    }
-    
-    _eventHandles.push_back(externalInterface->Subscribe(
-                                                         EngineToGameTag::BehaviorObjectiveAchieved,
-                                                         [this](const EngineToGameEvent& event) {
-                                                           DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
-                                                                      "ICozmoBehavior.BehaviorObjectiveAchieved.WrongEventTypeFromCallback");
-                                                           HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
-                                                         } ));
-    ///////
-    //// Subscribe to tags
-    ///////
-    
-    /// Game to engine tags
-    auto gameHandlerCallback = [this](const GameToEngineEvent& event) {
-      HandleEvent(event);
-    };
-    
-    for(auto tag : _gameToEngineTags) {
-      _eventHandles.push_back(externalInterface->Subscribe(tag, gameHandlerCallback));
-    }
-    
-    // engine to game tags
-    auto engineHandlerCallback = [this](const EngineToGameEvent& event) {
-      HandleEvent(event);
-    };
-    
-    for(auto tag : _engineToGameTags) {
-      _eventHandles.push_back(externalInterface->Subscribe(tag, engineHandlerCallback));
-    }
-    
-    // robot to engine tags
-    auto robotHandlerCallback = [this](const RobotToEngineEvent& event) {
-      HandleEvent(event);
-    };
-    
-    for(auto tag: _robotToEngineTags) {
-      _eventHandles.push_back(_robot->GetRobotMessageHandler()->Subscribe(_robot->GetID(),
-                                                                          tag,
-                                                                          robotHandlerCallback));
-    }
-    
-  }
-}
 
   
+  if( !USE_BSM ) {
+    // the BSM will directly call HandleActionComplete, so only register as an event if we aren't using it
+    
+    // NOTE: this won't get sent down to derived classes (unless they also subscribe)
+    SubscribeToTag(EngineToGameTag::RobotCompletedAction,
+                   [this](const EngineToGameEvent& event) {
+                     DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
+                                "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
+                     if( event.GetData().Get_RobotCompletedAction().idTag == _lastActionTag ) {
+                       HandleActionComplete(event.GetData().Get_RobotCompletedAction());
+                     }
+                   });
+  }
+  
+  SubscribeToTag(EngineToGameTag::BehaviorObjectiveAchieved,
+                    [this](const EngineToGameEvent& event) {
+                      DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
+                                 "ICozmoBehavior.BehaviorObjectiveAchieved.WrongEventTypeFromCallback");
+                      HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
+                    }
+                 );
+  ///////
+  //// Subscribe to tags
+  ///////
+  
+  for(auto& pair : _gameToEngineCallbackMap) {
+    SubscribeToTag(pair.first, pair.second);
+  }
+  
+  for(auto& pair : _engineToGameCallbackMap) {
+    SubscribeToTag(pair.first, pair.second);
+  }
+  
+  for(auto tag: _robotToEngineTags) {
+    behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+    {
+      tag
+    });
+  }
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SubscribeToTag(GameToEngineTag  tag,
+                                    std::function<void(const GameToEngineEvent&)> messageHandler)
+{
+  _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SubscribeToTag(EngineToGameTag  tag,
+                                    std::function<void(const EngineToGameEvent&)> messageHandler)
+{
+  _behaviorExternalInterface->GetStateChangeComponent().SubscribeToTags(this, {tag});
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
-  _gameToEngineTags = tags;
+  for(auto& tag: tags){
+    _gameToEngineCallbackMap.insert(std::make_pair(tag, nullptr));
+  }
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
-  _engineToGameTags = tags;
+  for(auto& tag: tags){
+    _engineToGameCallbackMap.insert(std::make_pair(tag, nullptr));
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -532,23 +539,66 @@ Result ICozmoBehavior::Resume(BehaviorExternalInterface& behaviorExternalInterfa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status ICozmoBehavior::Update(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  if(IsActing()){
-    _actionFinishedRunningOnTick = BaseStationTimer::getInstance()->GetTickCount();
-  }else{
-    if(_stopRequestedAfterAction) {
-      // we've been asked to stop, don't bother ticking update
-      return Status::Complete;
-    }
-
-    if(WasControlDelegatedLastTick()){
-      ScoredActingStateChanged(false);
+  //// Event handling
+  // Call message handling convenience functions
+  //////
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
+    // Handle specific callbacks
+    auto pairIter = _gameToEngineCallbackMap.find(event.GetData().GetTag());
+    if(pairIter != _gameToEngineCallbackMap.end()){
+      if(pairIter->second != nullptr){
+        pairIter->second(event);
+      }
+      AlwaysHandle(event, behaviorExternalInterface);
+      if(IsRunning()){
+        HandleWhileRunning(event, behaviorExternalInterface);
+      }else{
+        HandleWhileNotRunning(event, behaviorExternalInterface);
+      }
     }
   }
   
-
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    // Handle specific callbacks
+    auto pairIter = _engineToGameCallbackMap.find(event.GetData().GetTag());
+    if(pairIter != _engineToGameCallbackMap.end()){
+      if(pairIter->second != nullptr){
+        pairIter->second(event);
+      }
+      
+      AlwaysHandle(event, behaviorExternalInterface);
+      if(IsRunning()){
+        HandleWhileRunning(event, behaviorExternalInterface);
+      }else{
+        HandleWhileNotRunning(event, behaviorExternalInterface);
+      }
+    }
+  }
   
-  DEV_ASSERT(IsRunning(), "ICozmoBehavior::UpdateNotRunning");  
-  return UpdateInternal_WhileRunning(behaviorExternalInterface);
+  for(const auto& event: stateChangeComp.GetRobotToEngineEvents()){
+    AlwaysHandle(event, behaviorExternalInterface);
+    if(IsRunning()){
+      HandleWhileRunning(event, behaviorExternalInterface);
+    }else{
+      HandleWhileNotRunning(event, behaviorExternalInterface);
+    }
+  }
+  
+  //////
+  //// end Event handling
+  //////
+  ICozmoBehavior::Status status = Status::Complete;
+  if(IsRunning()){
+    if(!IsControlDelegated()){
+      auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
+      if(delegationComponent != nullptr){
+        delegationComponent->CancelSelf(this);
+      }
+    }
+    status = UpdateInternal_WhileRunning(behaviorExternalInterface);
+  }
+  return status;
 }
 
   
@@ -744,21 +794,29 @@ void ICozmoBehavior::UpdateInternal(BehaviorExternalInterface& behaviorExternalI
                "This function is BSM specific - please  don't call it if you're using the behavior manager");
   }
   
-  if(IsRunning()){
-    Update(behaviorExternalInterface);
-    if(!IsControlDelegated()){
-      auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
-      if(delegationComponent != nullptr){
-        delegationComponent->CancelSelf(this);
-      }
-    }
-  }
+  Update(behaviorExternalInterface);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::Status ICozmoBehavior::UpdateInternal_WhileRunning(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  if(IsActing()){
+    _actionFinishedRunningOnTick = BaseStationTimer::getInstance()->GetTickCount();
+  }else{
+    if(_stopRequestedAfterAction) {
+      // we've been asked to stop, don't bother ticking update
+      return Status::Complete;
+    }
+    
+    if(WasControlDelegatedLastTick()){
+      ScoredActingStateChanged(false);
+    }
+  }
+  
+  //DEV_ASSERT(IsRunning(), "ICozmoBehavior::UpdateNotRunning");
+  
+  
   if( IsControlDelegated() ) {  
     return Status::Running;
   }
@@ -1020,10 +1078,10 @@ bool ICozmoBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame) const
 {
-  auto robotExternalInterface = _behaviorExternalInterface->GetRobotExternalInterface().lock();
+  /**auto robotExternalInterface = _behaviorExternalInterface->GetRobotExternalInterface().lock();
   if(broadcastToGame && (robotExternalInterface != nullptr)){
     robotExternalInterface->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
-  }
+  }**/
   PRINT_CH_INFO("Behaviors", "ICozmoBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetIDStr().c_str(), EnumToString(objectiveAchieved));
   // send das event
   Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetIDStr().c_str());
@@ -1597,17 +1655,12 @@ void ICozmoBehavior::ScoredActingStateChanged(bool isActing)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::ScoredInit(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  std::shared_ptr<IExternalInterface> externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(externalInterface != nullptr) {
-    _eventHandles.push_back(externalInterface->Subscribe(
-       EngineToGameTag::BehaviorObjectiveAchieved,
-       [this](const EngineToGameEvent& event) {
-         DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
-                    "ICozmoBehavior.ScoredConstructor.WrongEventTypeFromCallback");
-         HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
-       } ));
-  }
-
+  SubscribeToTag(EngineToGameTag::BehaviorObjectiveAchieved,
+                 [this](const EngineToGameEvent& event) {
+                   DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
+                              "ICozmoBehavior.ScoredConstructor.WrongEventTypeFromCallback");
+                   HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
+                 });
 }
 
 

@@ -20,6 +20,7 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
@@ -56,11 +57,13 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior)
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
 
   stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
                                                    config);
@@ -180,11 +183,13 @@ TEST(StackBlocksBehavior, InitBehavior)
   Robot robot(0, &context);
 
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   ICozmoBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, *behaviorExternalInterface, objID1, objID2);
@@ -202,11 +207,13 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   Robot robot(0, &context);
   
   DelegationComponent delegationComp;
+  StateChangeComponent stateChangeComp;
   BehaviorExternalInterface* behaviorExternalInterface = new BehaviorExternalInterface(robot,
                                                                                        robot.GetAIComponent(),
                                                                                        robot.GetBehaviorManager().GetBehaviorContainer(),
                                                                                        robot.GetBlockWorld(),
-                                                                                       robot.GetFaceWorld());
+                                                                                       robot.GetFaceWorld(),
+                                                                                       stateChangeComp);
   
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();

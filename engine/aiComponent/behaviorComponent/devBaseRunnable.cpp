@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -62,43 +63,10 @@ void DevBaseRunnable::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBaseRunnable::OnActivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if (robotExternalInterface != nullptr)
-  {
-    // TODO:(bn) figure out how message handling should work in the new behavior system (it's not this!)
-
-    const auto& behaviorContainer = behaviorExternalInterface.GetBehaviorContainer();
-
-    using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
-    
-    auto handleExecuteByID = [this, &behaviorContainer](const GameToEngineEvent& event) {
-      const auto& msg = event.GetData().Get_ExecuteBehaviorByID();
-      auto behaviorPtr = behaviorContainer.FindBehaviorByID( msg.behaviorID );
-        
-      if( behaviorPtr ) {
-
-        if( _pendingDelegate != nullptr ) {
-          PRINT_NAMED_WARNING("DevBaseRunnable.HandleMessage.ExecuteBehaviorByID.AlreadyPending",
-                              "Setting pending behavior to '%s', but '%s' is already pending",
-                              behaviorPtr->GetIDStr().c_str(),
-                              _pendingDelegate->GetPrintableID().c_str());
-        }
-    
-        _pendingDelegate = behaviorPtr.get();
-        _pendingDelegateRepeatCount = msg.numRuns;
-        _shouldCancelDelegates = true;
-      }
-      else {
-        PRINT_NAMED_WARNING("DevBaseRunnable.HandleMessage.ExecuteBehaviorByID.NoBehavior",
-                            "Couldn't find behavior for id '%s'",
-                            BehaviorIDToString(msg.behaviorID));
-      }
-    };
-    
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                               ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID,
-                               handleExecuteByID));
-  }
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+    {
+       ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID
+    });
 
   if( _initialDelegate != nullptr ) {
     _pendingDelegate = _initialDelegate;
@@ -110,13 +78,40 @@ void DevBaseRunnable::OnActivatedInternal(BehaviorExternalInterface& behaviorExt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBaseRunnable::OnDeactivatedInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  _eventHandlers.clear();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DevBaseRunnable::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  const auto& events = behaviorExternalInterface.GetStateChangeComponent().GetGameToEngineEvents();
+  if(events.size() > 0){
+    for(const auto& event: events){
+      const auto& msg = event.GetData().Get_ExecuteBehaviorByID();
+      auto behaviorPtr = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID( msg.behaviorID );
+      
+      if( behaviorPtr ) {
+        
+        if( _pendingDelegate != nullptr ) {
+          PRINT_NAMED_WARNING("DevBaseRunnable.HandleMessage.ExecuteBehaviorByID.AlreadyPending",
+                              "Setting pending behavior to '%s', but '%s' is already pending",
+                              behaviorPtr->GetIDStr().c_str(),
+                              _pendingDelegate->GetPrintableID().c_str());
+        }
+        
+        _pendingDelegate = behaviorPtr.get();
+        _pendingDelegateRepeatCount = msg.numRuns;
+        _shouldCancelDelegates = true;
+      }
+      else {
+        PRINT_NAMED_WARNING("DevBaseRunnable.HandleMessage.ExecuteBehaviorByID.NoBehavior",
+                            "Couldn't find behavior for id '%s'",
+                            BehaviorIDToString(msg.behaviorID));
+      }
+    }
+  }
 
+  
+  
   auto delegationComponent = behaviorExternalInterface.GetDelegationComponent().lock();
   if( !delegationComponent ) {
     return;

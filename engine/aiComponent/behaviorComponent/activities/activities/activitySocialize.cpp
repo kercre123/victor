@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/robot.h"
 #include "util/math/math.h"
@@ -83,12 +84,11 @@ ActivitySocialize::ActivitySocialize(BehaviorExternalInterface& behaviorExternal
   // defaults to 0 to mean allow infinite iterations
   _maxNumIterationsToAllowForSearch = config.get("maxNumFindFacesSearchIterations", 0).asUInt();
   
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr) {
-    auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _signalHandles);
-    using namespace ExternalInterface;
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::BehaviorObjectiveAchieved>();
-  }
+  
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  {
+    ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved
+  });
 }
 
   
@@ -98,6 +98,54 @@ void ActivitySocialize::OnActivatedActivity(BehaviorExternalInterface& behaviorE
   // we always want to do the search first, if possible
   _state = State::Initial;
   PopulatePotentialObjectives(behaviorExternalInterface);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ActivitySocialize::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) {
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved){
+      // transition out of the interacting state if needed
+      auto& msg = event.GetData().Get_BehaviorObjectiveAchieved();
+      if( _state == State::Interacting && msg.behaviorObjective == BehaviorObjective::InteractedWithFace ) {
+        PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.GotInteraction",
+                      "Got interacted objective, advancing to next behavior");
+        _state = State::FinishedInteraction;
+        return Result::RESULT_OK;
+      }
+      
+      // update objective counts needed
+      int numObjectivesRemaining = Util::numeric_cast<int>(_objectivesLeft.size());
+      auto objectiveIt = _objectivesLeft.find(msg.behaviorObjective);
+      if( objectiveIt != _objectivesLeft.end() ) {
+        DEV_ASSERT(objectiveIt->second > 0, "FPSocializeStrategy.HandleMessage.CorruptObjectiveData");
+        
+        objectiveIt->second--;
+        numObjectivesRemaining = objectiveIt->second;
+        if( objectiveIt->second == 0 ) {
+          _objectivesLeft.erase( objectiveIt );
+        }
+      }
+      
+      PrintDebugObjectivesLeft("FPSocialize.HandleObjectiveAchieved.StillLeft");
+      // _objectivesLeft might contain other objectives we decided not to do.
+      if( numObjectivesRemaining == 0 && _state == State::Playing ) {
+        PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedPlaying",
+                      "Got enough objectives to be done with pouncing, will transition out");
+        if( _playingBehavior != nullptr && _playingBehavior->IsRunning() )
+        {
+          // tell the behavior to end nicely (when it's not acting)
+          _playingBehavior->StopOnNextActionComplete();
+        }
+        
+        _state = State::FinishedPlaying;
+      }
+
+    }
+  }
+  
+  return Result::RESULT_OK;
 }
 
 
@@ -272,47 +320,6 @@ ICozmoBehaviorPtr ActivitySocialize::GetDesiredActiveBehaviorInternal(BehaviorEx
   return bestBehavior;      
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void ActivitySocialize::HandleMessage(const ExternalInterface::BehaviorObjectiveAchieved& msg)
-{
-  // transition out of the interacting state if needed
-  
-  if( _state == State::Interacting && msg.behaviorObjective == BehaviorObjective::InteractedWithFace ) {
-    PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.GotInteraction",
-                  "Got interacted objective, advancing to next behavior");
-    _state = State::FinishedInteraction;
-    return;
-  }
-  
-  // update objective counts needed
-  int numObjectivesRemaining = Util::numeric_cast<int>(_objectivesLeft.size());
-  auto objectiveIt = _objectivesLeft.find(msg.behaviorObjective);
-  if( objectiveIt != _objectivesLeft.end() ) {
-    DEV_ASSERT(objectiveIt->second > 0, "FPSocializeStrategy.HandleMessage.CorruptObjectiveData");
-    
-    objectiveIt->second--;
-    numObjectivesRemaining = objectiveIt->second;
-    if( objectiveIt->second == 0 ) {
-      _objectivesLeft.erase( objectiveIt );
-    }
-  }
-  
-  PrintDebugObjectivesLeft("FPSocialize.HandleObjectiveAchieved.StillLeft");
-  // _objectivesLeft might contain other objectives we decided not to do.
-  if( numObjectivesRemaining == 0 && _state == State::Playing ) {
-    PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedPlaying",
-                  "Got enough objectives to be done with pouncing, will transition out");
-    if( _playingBehavior != nullptr && _playingBehavior->IsRunning() )
-    {
-      // tell the behavior to end nicely (when it's not acting)
-      _playingBehavior->StopOnNextActionComplete();
-    }
-    
-    _state = State::FinishedPlaying;
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySocialize::PopulatePotentialObjectives(BehaviorExternalInterface& behaviorExternalInterface)

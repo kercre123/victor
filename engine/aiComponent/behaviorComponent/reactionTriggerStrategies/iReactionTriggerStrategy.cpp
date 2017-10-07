@@ -33,9 +33,12 @@ static const char* kWantsToRunStrategyConfigKey = "wantsToRunStrategyConfig";
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IReactionTriggerStrategy::IReactionTriggerStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config, const std::string& strategyName)
+IReactionTriggerStrategy::IReactionTriggerStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                                   IExternalInterface* robotExternalInterface,
+                                                   const Json::Value& config, const std::string& strategyName)
 : _wantsToRunStrategy(nullptr)
 , _behaviorExternalInterface(behaviorExternalInterface)
+, _robotExternalInterface(robotExternalInterface)
 , _strategyName(strategyName)
 , _userForcingTrigger(false)
 {
@@ -44,7 +47,9 @@ IReactionTriggerStrategy::IReactionTriggerStrategy(BehaviorExternalInterface& be
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface, wantsToRunConfig));
+    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+                                                                                  robotExternalInterface,
+                                                                                  wantsToRunConfig));
   }
   
   
@@ -54,15 +59,13 @@ IReactionTriggerStrategy::IReactionTriggerStrategy(BehaviorExternalInterface& be
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IReactionTriggerStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
-  auto robotExternalInterface = _behaviorExternalInterface.GetRobotExternalInterface().lock();
-  
-  if(robotExternalInterface != nullptr) {
+  if(_robotExternalInterface != nullptr) {
     auto handlerCallback = [this](const GameToEngineEvent& event) {
       HandleEvent(event);
     };
     
     for(auto tag : tags) {
-      _eventHandles.push_back(robotExternalInterface->Subscribe(tag, handlerCallback));
+      _eventHandles.push_back(_robotExternalInterface->Subscribe(tag, handlerCallback));
     }
   }
 }
@@ -71,15 +74,13 @@ void IReactionTriggerStrategy::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IReactionTriggerStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
 {
-  auto robotExternalInterface = _behaviorExternalInterface.GetRobotExternalInterface().lock();
-
-  if(robotExternalInterface != nullptr) {
+  if(_robotExternalInterface != nullptr) {
     auto handlerCallback = [this](const EngineToGameEvent& event) {
       HandleEvent(event);
     };
     
     for(auto tag : tags) {
-      _eventHandles.push_back(robotExternalInterface->Subscribe(tag, handlerCallback));
+      _eventHandles.push_back(_robotExternalInterface->Subscribe(tag, handlerCallback));
     }
   }
 }

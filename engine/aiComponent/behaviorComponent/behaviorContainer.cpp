@@ -148,13 +148,13 @@ BehaviorContainer::~BehaviorContainer()
 void BehaviorContainer::Init(BehaviorExternalInterface& behaviorExternalInterface,
                              const bool shouldAddToActivatableScope)
 {
-  auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr) {
     _robotExternalInterface = externalInterface.get();
     auto helper = MakeAnkiEventUtil((*externalInterface.get()), *this, _signalHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAllBehaviorsList>();
-  }
+  }**/
   
   for(auto& behaviorMap: _idToBehaviorMap){
     behaviorMap.second->Init(behaviorExternalInterface);

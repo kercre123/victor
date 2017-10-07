@@ -32,8 +32,11 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyNoPreDockPoses::ReactionTriggerStrategyNoPreDockPoses(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyNoPreDockPoses::ReactionTriggerStrategyNoPreDockPoses(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                             IExternalInterface* robotExternalInterface,
+                                                                             const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 {
 }
 

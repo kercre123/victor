@@ -26,6 +26,7 @@ class ReactionTriggerStrategyGeneric : public IReactionTriggerStrategy {
 public:
   // Static function for creating instances that makes use of json configuration during construction
   static ReactionTriggerStrategyGeneric* CreateReactionTriggerStrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                              IExternalInterface* robotExternalInterface,
                                                                               const Json::Value& config);
   
   // Functionality being overridden from base class
@@ -58,6 +59,7 @@ private:
   
   // Private constructor because we want to create instances using the static creation function above
   ReactionTriggerStrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
+                                 IExternalInterface* robotExternalInterface,
                                  const Json::Value& config,
                                  std::string strategyName);
 };

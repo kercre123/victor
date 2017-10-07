@@ -210,7 +210,11 @@ void IActivity::ReadConfig(BehaviorExternalInterface& behaviorExternalInterface,
     
   // strategy
   const Json::Value& strategyConfig = config[kStrategyConfigKey];
-  IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(behaviorExternalInterface, strategyConfig);
+  IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(
+     behaviorExternalInterface,
+     behaviorExternalInterface.GetRobot().HasExternalInterface() ? behaviorExternalInterface.GetRobot().GetExternalInterface()
+                                                                 : nullptr,
+     strategyConfig);
   _strategy.reset( newStrategy );
 }
 

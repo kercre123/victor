@@ -102,11 +102,11 @@ Result BehaviorReactToOnCharger::OnBehaviorActivated(BehaviorExternalInterface& 
 {
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersOnCharger);
 
-  auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
     externalInterface->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
     externalInterface->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
-  }
+  }**/
   
   if(NeedId::Count == behaviorExternalInterface.GetAIComponent().GetSevereNeedsComponent().GetSevereNeedExpression()){
     SmartPushIdleAnimation(behaviorExternalInterface, AnimationTrigger::Count);

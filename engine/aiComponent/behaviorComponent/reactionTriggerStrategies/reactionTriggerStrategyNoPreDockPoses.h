@@ -23,7 +23,9 @@ class Robot;
   
 class ReactionTriggerStrategyNoPreDockPoses : public IReactionTriggerStrategy{
 public:
-  ReactionTriggerStrategyNoPreDockPoses(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyNoPreDockPoses(BehaviorExternalInterface& behaviorExternalInterface,
+                                        IExternalInterface* robotExternalInterface,
+                                        const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return false;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

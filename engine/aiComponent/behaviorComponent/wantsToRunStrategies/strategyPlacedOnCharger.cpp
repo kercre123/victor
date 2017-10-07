@@ -26,8 +26,10 @@ const float kDisableReactionForInitialTime_sec = 20.f;
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyPlacedOnCharger::StrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, config)
+StrategyPlacedOnCharger::StrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface,
+                                                 IExternalInterface* robotExternalInterface,
+                                                 const Json::Value& config)
+: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
 , _dontRunUntilTime_sec(-1.f)
 {
   

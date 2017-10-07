@@ -23,7 +23,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategyPetInitialDetection : public IReactionTriggerStrategy, public IReactToPetListener {
 public:
-  ReactionTriggerStrategyPetInitialDetection(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyPetInitialDetection(BehaviorExternalInterface& behaviorExternalInterface,
+                                             IExternalInterface* robotExternalInterface,
+                                             const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return true;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

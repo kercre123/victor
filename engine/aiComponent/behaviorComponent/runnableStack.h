@@ -23,6 +23,7 @@ namespace Anki {
 namespace Cozmo {
 
 // forward declarations
+class AsyncMessageGateComponent;
 class BehaviorExternalInterface;
 class IBehavior;
   
@@ -36,6 +37,7 @@ public:
   void InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
                          IBehavior* baseOfStack);
   void UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+                           AsyncMessageGateComponent& asyncMessageGateComp,
                            std::set<IBehavior*>& tickedInStack);
   
   inline IBehavior* GetTopOfStack(){ return _runnableStack.empty() ? nullptr : _runnableStack.back();}

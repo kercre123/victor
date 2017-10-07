@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/activities/activityStrategies/activityStrategyPyramid.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/blockWorld/blockConfigurationManager.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -32,16 +33,18 @@ static const float  kUpdateRunnabilityInterval_s = 300;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrategyPyramid::ActivityStrategyPyramid(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivityStrategy(behaviorExternalInterface, config)
+ActivityStrategyPyramid::ActivityStrategyPyramid(BehaviorExternalInterface& behaviorExternalInterface,
+                                                 IExternalInterface* robotExternalInterface,
+                                                 const Json::Value& config)
+: IActivityStrategy(behaviorExternalInterface, robotExternalInterface, config)
 , _nextTimeUpdateRunability_s(0)
 , _wantsToRunRandomized(false)
 , _pyramidBuilt(false)
 {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  
   // Listen for behavior objective achieved messages for spark repetitions counter
   if(robotExternalInterface != nullptr) {
-    auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _signalHandles);
+    auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::BehaviorObjectiveAchieved>();
   }

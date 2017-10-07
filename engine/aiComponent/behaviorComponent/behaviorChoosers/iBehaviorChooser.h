@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorChooser_H__
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "anki/common/types.h"
 #include "util/helpers/noncopyable.h"

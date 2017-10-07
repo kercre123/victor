@@ -24,7 +24,9 @@ class StrategyAlwaysRun : public IWantsToRunStrategy
 {
 public:
   // constructor
-  StrategyAlwaysRun(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  StrategyAlwaysRun(BehaviorExternalInterface& behaviorExternalInterface,
+                    IExternalInterface* robotExternalInterface,
+                    const Json::Value& config);
 
 protected:
   virtual bool WantsToRunInternal(BehaviorExternalInterface& behaviorExternalInterface) const override{ return true;}

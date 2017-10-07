@@ -26,8 +26,11 @@ static const char* kTriggerStrategyName = "Trigger strategy Sparked";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategySparked::ReactionTriggerStrategySparked(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategySparked::ReactionTriggerStrategySparked(BehaviorExternalInterface& behaviorExternalInterface,
+                                                               IExternalInterface* robotExternalInterface,
+                                                               const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 {
   
 }

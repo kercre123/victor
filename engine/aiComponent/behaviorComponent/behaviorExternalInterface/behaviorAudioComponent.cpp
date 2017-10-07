@@ -115,7 +115,7 @@ BehaviorAudioComponent::BehaviorAudioComponent(Audio::RobotAudioClient* robotAud
 void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Get the appropriate spark music state from unity
-  auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(externalInterface != nullptr){
     auto handleSetSparkMusicState = [this, &behaviorExternalInterface](const AnkiEvent<ExternalInterface::MessageGameToEngine>& musicState){
       _sparkedMusicState = musicState.GetData().Get_SetSparkedMusicState().sparkedMusicState;
@@ -125,7 +125,7 @@ void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInt
     _eventHandles.push_back(externalInterface->Subscribe(
                                                          ExternalInterface::MessageGameToEngineTag::SetSparkedMusicState,
                                                          handleSetSparkMusicState));
-  }
+  }**/
   
   // Get state change info from the robot
   auto handleStateChangeWrapper = [this, &behaviorExternalInterface](const AnkiEvent<RobotPublicState>& stateEvent){

@@ -22,7 +22,9 @@ namespace Cozmo {
 
 class StrategyPlacedOnCharger : public IWantsToRunStrategy{
 public:
-  StrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  StrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface,
+                          IExternalInterface* robotExternalInterface,
+                          const Json::Value& config);
 
 protected:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;

@@ -20,7 +20,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategyPlacedOnCharger : public IReactionTriggerStrategy{
 public:
-  ReactionTriggerStrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyPlacedOnCharger(BehaviorExternalInterface& behaviorExternalInterface,
+                                         IExternalInterface* robotExternalInterface,
+                                         const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return false;}  
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

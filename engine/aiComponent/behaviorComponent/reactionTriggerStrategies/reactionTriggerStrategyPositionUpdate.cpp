@@ -44,10 +44,14 @@ void ReactionTriggerStrategyPositionUpdate::ReactionData::FakeReaction()
 
 
 ReactionTriggerStrategyPositionUpdate::ReactionTriggerStrategyPositionUpdate(
-                                          BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config,
+                                          BehaviorExternalInterface& behaviorExternalInterface,
+                                          IExternalInterface* robotExternalInterface,
+                                          const Json::Value& config,
                                           const std::string& strategyName,
                                           ReactionTrigger triggerAssociated)
-: super(behaviorExternalInterface, config, strategyName)
+: super(behaviorExternalInterface,
+        robotExternalInterface,
+        config, strategyName)
 , _triggerAssociated(triggerAssociated)
 {
   

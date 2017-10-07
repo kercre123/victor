@@ -19,8 +19,10 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrategySimple::ActivityStrategySimple(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivityStrategy(behaviorExternalInterface, config)
+ActivityStrategySimple::ActivityStrategySimple(BehaviorExternalInterface& behaviorExternalInterface,
+                                               IExternalInterface* robotExternalInterface,
+                                               const Json::Value& config)
+: IActivityStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
 }
 

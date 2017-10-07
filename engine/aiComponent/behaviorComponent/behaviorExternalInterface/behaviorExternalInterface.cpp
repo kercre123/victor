@@ -39,19 +39,20 @@ BehaviorExternalInterface::BehaviorExternalInterface(Robot& robot,
                                                      AIComponent& aiComponent,
                                                      const BehaviorContainer& behaviorContainer,
                                                      BlockWorld& blockWorld,
-                                                     FaceWorld& faceWorld)
+                                                     FaceWorld& faceWorld,
+                                                     StateChangeComponent& stateChangeComponent)
 : _robot(robot)
 , _aiComponent(aiComponent)
 , _behaviorContainer(behaviorContainer)
 , _faceWorld(faceWorld)
 , _blockWorld(blockWorld)
+,_stateChangeComponent(stateChangeComponent)
 {
   SetOptionalInterfaces(nullptr,
                         &robot.GetMoodManager(),
                         robot.GetContext()->GetNeedsManager(),
                         &robot.GetProgressionUnlockComponent(),
-                        &robot.GetPublicStateBroadcaster(),
-                        robot.HasExternalInterface() ? robot.GetExternalInterface() : nullptr);
+                        &robot.GetPublicStateBroadcaster());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -59,8 +60,7 @@ void BehaviorExternalInterface::SetOptionalInterfaces(DelegationComponent* deleg
                                                       MoodManager* moodManager,
                                                       NeedsManager* needsManager,
                                                       ProgressionUnlockComponent* progressionUnlockComponent,
-                                                      PublicStateBroadcaster* publicStateBroadcaster,
-                                                      IExternalInterface* robotExternalInterface)
+                                                      PublicStateBroadcaster* publicStateBroadcaster)
 {
   // This is kindof a dirty hack and deserves an explanation
   // Robot doesn't store what the BehaviorExternalInterface considers
@@ -78,14 +78,12 @@ void BehaviorExternalInterface::SetOptionalInterfaces(DelegationComponent* deleg
   auto needsNullDeleter = [](NeedsManager *) {};
   auto progNullDeleter = [](ProgressionUnlockComponent *) {};
   auto pubStateNullDeleter = [](PublicStateBroadcaster *) {};
-  auto robotInterNullDeleter = [](IExternalInterface *) {};
 
   _delegationComponent        = std::shared_ptr<DelegationComponent>(delegationComponent, delegationNullDeleter);
   _moodManager                = std::shared_ptr<MoodManager>(moodManager, moodNullDeleter);
   _needsManager               = std::shared_ptr<NeedsManager>(needsManager, needsNullDeleter);
   _progressionUnlockComponent = std::shared_ptr<ProgressionUnlockComponent>(progressionUnlockComponent, progNullDeleter);
   _publicStateBroadcaster     = std::shared_ptr<PublicStateBroadcaster>(publicStateBroadcaster, pubStateNullDeleter);
-  _robotExternalInterface     = std::shared_ptr<IExternalInterface>(robotExternalInterface, robotInterNullDeleter);
 }
 
 

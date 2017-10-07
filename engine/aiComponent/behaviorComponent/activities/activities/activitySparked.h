@@ -45,13 +45,7 @@ public:
   ActivitySparked(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
   ~ActivitySparked();
   
-
   virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
-  // ==================== Event/Message Handling ====================
-  // Handle various message types
-  template<typename T>
-  void HandleMessage(const T& msg);
 
 protected:
   virtual ICozmoBehaviorPtr GetDesiredActiveBehaviorInternal(BehaviorExternalInterface& behaviorExternalInterface, const ICozmoBehaviorPtr currentRunningBehavior) override;

@@ -14,6 +14,7 @@
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
+#include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
@@ -50,6 +51,7 @@ BehaviorSystemManager::BehaviorSystemManager()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behaviorExternalInterface,
+                                                AsyncMessageGateComponent* asyncMessageComponent,
                                                 IBehavior* baseRunnable)
 {
   // do not support multiple initialization. A) we don't need it, B) it's easy to forget to clean up everything properly
@@ -61,6 +63,7 @@ Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behav
   _initializationStage = InitializationStage::StackNotInitialized;
 
 
+  _asyncMessageComponent = asyncMessageComponent;
   // Assumes there's only one instance of the behavior external Intarfec
   _behaviorExternalInterface = &behaviorExternalInterface;
   _runnableStack.reset(new RunnableStack(_behaviorExternalInterface));
@@ -93,14 +96,19 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
     _baseRunnableTmp = nullptr;
   }
   
+  _asyncMessageComponent->PrepareCache();
+  
   std::set<IBehavior*> runnableUpdatesTickedInStack;
   // First update the runnable stack and allow it to make any delegation/canceling
   // decisions that it needs to make
-  _runnableStack->UpdateRunnableStack(behaviorExternalInterface, runnableUpdatesTickedInStack);
+  _runnableStack->UpdateRunnableStack(behaviorExternalInterface,
+                                      *_asyncMessageComponent,
+                                      runnableUpdatesTickedInStack);
   // Then once all of that's done, update anything that's in activatable scope
   // but isn't currently on the runnable stack
   UpdateInActivatableScope(behaviorExternalInterface, runnableUpdatesTickedInStack);
   
+  _asyncMessageComponent->ClearCache();
 } // Update()
 
 
@@ -118,6 +126,16 @@ void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& 
     }
   }
   for(auto& entry: allInActivatableScope){
+    _asyncMessageComponent->GetEventsForBehavior(
+       entry,
+       behaviorExternalInterface.GetStateChangeComponent()._gameToEngineEvents);
+    _asyncMessageComponent->GetEventsForBehavior(
+       entry,
+       behaviorExternalInterface.GetStateChangeComponent()._engineToGameEvents);
+    _asyncMessageComponent->GetEventsForBehavior(
+       entry,
+       behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents);
+
     entry->Update(behaviorExternalInterface);
   }
 }
@@ -212,7 +230,6 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 
   _runnableStack->DebugPrintStack("AfterCancelSelf");
 }
-
 
 } // namespace Cozmo
 } // namespace Anki

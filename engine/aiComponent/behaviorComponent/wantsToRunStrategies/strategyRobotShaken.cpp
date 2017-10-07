@@ -26,8 +26,10 @@ const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyRobotShaken::StrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, config)
+StrategyRobotShaken::StrategyRobotShaken(BehaviorExternalInterface& behaviorExternalInterface,
+                                         IExternalInterface* robotExternalInterface,
+                                         const Json::Value& config)
+: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
 }
 

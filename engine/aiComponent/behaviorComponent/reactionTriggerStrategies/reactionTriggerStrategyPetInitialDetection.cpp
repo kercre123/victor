@@ -43,8 +43,11 @@ namespace Cozmo {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyPetInitialDetection::ReactionTriggerStrategyPetInitialDetection(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyPetInitialDetection::ReactionTriggerStrategyPetInitialDetection(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                                       IExternalInterface* robotExternalInterface,
+                                                                                       const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 , _behaviorExternalInterface(behaviorExternalInterface)
 {
   

@@ -17,7 +17,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/behaviorHelperParameters.h"
 #include "engine/aiComponent/behaviorComponent/behaviorHelpers/helperHandle.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/ICozmoBehavior_fwd.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "clad/types/actionResults.h"
 #include "clad/types/animationTrigger.h"

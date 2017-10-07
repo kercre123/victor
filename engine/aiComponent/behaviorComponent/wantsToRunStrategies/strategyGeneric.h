@@ -22,7 +22,9 @@ class StrategyGeneric : public IWantsToRunStrategy
 {
 public:
 
-  StrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  StrategyGeneric(BehaviorExternalInterface& behaviorExternalInterface,
+                  IExternalInterface* robotExternalInterface,
+                  const Json::Value& config);
   
   using E2GHandleCallbackType = std::function<bool(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)>;
   

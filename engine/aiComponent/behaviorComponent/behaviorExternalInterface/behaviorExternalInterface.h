@@ -39,6 +39,7 @@ class MoodManager;
 class ProgressionUnlockComponent;
 class PublicStateBroadcaster;
 class Robot;
+class StateChangeComponent;
   
 namespace Audio {
 class BehaviorAudioComponent;
@@ -50,24 +51,25 @@ public:
                             AIComponent& aiComponent,
                             const BehaviorContainer& behaviorContainer,
                             BlockWorld& blockWorld,
-                            FaceWorld& faceWorld);
+                            FaceWorld& faceWorld,
+                            StateChangeComponent& stateChangeComponent);
   
   void SetOptionalInterfaces(DelegationComponent* delegationComponent,
                              MoodManager* moodManager,
                              NeedsManager* needsManager,
                              ProgressionUnlockComponent* progressionUnlockComponent,
-                             PublicStateBroadcaster* publicStateBroadcaster,
-                             IExternalInterface* robotExternalInterface);
+                             PublicStateBroadcaster* publicStateBroadcaster);
   
   virtual ~BehaviorExternalInterface(){};
   
   // Access components which the BehaviorSystem can count on will always exist
   // when making decisions
-  AIComponent&             GetAIComponent()         const { return _aiComponent;}
-  const FaceWorld&         GetFaceWorld()           const { return _faceWorld;}
-  const BlockWorld&        GetBlockWorld()          const { return _blockWorld;}
-  const BehaviorContainer& GetBehaviorContainer()   const { return _behaviorContainer;}
-  
+  AIComponent&             GetAIComponent()             const { return _aiComponent;}
+  const FaceWorld&         GetFaceWorld()               const { return _faceWorld;}
+  const BlockWorld&        GetBlockWorld()              const { return _blockWorld;}
+  const BehaviorContainer& GetBehaviorContainer()       const { return _behaviorContainer;}
+  StateChangeComponent& GetStateChangeComponent()       const { return _stateChangeComponent;}
+
   // Give behaviors/activities access to robot
   // THIS IS DEPRECATED
   // THIS FUNCTION IS SOLEY TO FACILITATE THE TRANISITON BETWEEN COZMO BEHAVIORS
@@ -79,7 +81,6 @@ public:
   // premise no critical decisions on the existance of these components
   std::weak_ptr<DelegationComponent>        GetDelegationComponent() const { return _delegationComponent;}
   std::weak_ptr<PublicStateBroadcaster>     GetRobotPublicStateBroadcaster() const { return _publicStateBroadcaster; }
-  std::weak_ptr<IExternalInterface>         GetRobotExternalInterface() const { return _robotExternalInterface; }
   std::weak_ptr<ProgressionUnlockComponent> GetProgressionUnlockComponent() const { return _progressionUnlockComponent; }
   std::weak_ptr<MoodManager>                GetMoodManager()  const { return _moodManager;}
   std::weak_ptr<NeedsManager>               GetNeedsManager() const { return _needsManager;}
@@ -94,12 +95,13 @@ private:
   const BehaviorContainer&                    _behaviorContainer;
   const FaceWorld&                            _faceWorld;
   const BlockWorld&                           _blockWorld;
+  StateChangeComponent&                       _stateChangeComponent;
+  
   std::shared_ptr<DelegationComponent>        _delegationComponent;
   std::shared_ptr<MoodManager>                _moodManager;
   std::shared_ptr<NeedsManager>               _needsManager;
   std::shared_ptr<ProgressionUnlockComponent> _progressionUnlockComponent;
   std::shared_ptr<PublicStateBroadcaster>     _publicStateBroadcaster;
-  std::shared_ptr<IExternalInterface>         _robotExternalInterface;
 
 };
 

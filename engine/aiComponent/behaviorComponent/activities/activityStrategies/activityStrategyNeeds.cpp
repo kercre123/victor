@@ -33,8 +33,10 @@ const char* kHigherPriorityStrategyConfigKey = "higherPriorityStrategyConfig";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrategyNeeds::ActivityStrategyNeeds(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivityStrategy(behaviorExternalInterface, config)
+ActivityStrategyNeeds::ActivityStrategyNeeds(BehaviorExternalInterface& behaviorExternalInterface,
+                                             IExternalInterface* robotExternalInterface,
+                                             const Json::Value& config)
+: IActivityStrategy(behaviorExternalInterface, robotExternalInterface, config)
 , _higherPriorityWantsToRunStrategy(nullptr)
 {
   if(config.isMember(kHigherPriorityStrategyConfigKey)){
@@ -42,6 +44,7 @@ ActivityStrategyNeeds::ActivityStrategyNeeds(BehaviorExternalInterface& behavior
 
     _higherPriorityWantsToRunStrategy.reset(
         WantsToRunStrategyFactory::CreateWantsToRunStrategy(behaviorExternalInterface,
+                                                            robotExternalInterface,
                                                             higherPriorityWantsToRunConfig));
     ANKI_VERIFY(_higherPriorityWantsToRunStrategy->GetStrategyType() == WantsToRunStrategyType::InNeedsBracket,
                 "ActivityStrategyNeeds.Constructor.IncorrectStrategyType",

@@ -49,8 +49,7 @@ public:
   ActivitySocialize(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
   ~ActivitySocialize() {};
   
-  template<typename T>
-  void HandleMessage(const T& msg);
+  
   
 protected:
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
@@ -60,7 +59,8 @@ protected:
   // reset the state and populate the objective which we will require for this run (they are randomized each
   // time the activity is selected)
   virtual void OnActivatedActivity(BehaviorExternalInterface& behaviorExternalInterface) override;
-  
+  virtual Result Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface) override;
+
 private:
   // use the objective requirements to populate _objectivesLeft, taking into account unlocks and random
   // probabilities.
@@ -110,9 +110,6 @@ private:
   
   // contains an entry for each objective we need to complete, mapping to the number of times we need to complete it
   std::map< BehaviorObjective, unsigned int > _objectivesLeft;
-  
-  std::vector<Signal::SmartHandle> _signalHandles;
-  
 };
 
 

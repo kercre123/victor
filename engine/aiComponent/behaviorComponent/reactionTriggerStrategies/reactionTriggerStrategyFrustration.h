@@ -22,7 +22,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategyFrustration : public IReactionTriggerStrategy, public ISubtaskListener{
 public:
-  ReactionTriggerStrategyFrustration(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyFrustration(BehaviorExternalInterface& behaviorExternalInterface,
+                                     IExternalInterface* robotExternalInterface,
+                                     const Json::Value& config);
   
   virtual bool ShouldResumeLastBehavior() const override { return false;}
 

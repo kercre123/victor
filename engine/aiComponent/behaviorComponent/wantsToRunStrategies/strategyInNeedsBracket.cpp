@@ -30,8 +30,10 @@ const char* kNeedBracketKey = "needBracket";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StrategyInNeedsBracket::StrategyInNeedsBracket(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IWantsToRunStrategy(behaviorExternalInterface, config)
+StrategyInNeedsBracket::StrategyInNeedsBracket(BehaviorExternalInterface& behaviorExternalInterface,
+                                               IExternalInterface* robotExternalInterface,
+                                               const Json::Value& config)
+: IWantsToRunStrategy(behaviorExternalInterface, robotExternalInterface, config)
 {
   {
     const auto& needStr = JsonTools::ParseString(config,

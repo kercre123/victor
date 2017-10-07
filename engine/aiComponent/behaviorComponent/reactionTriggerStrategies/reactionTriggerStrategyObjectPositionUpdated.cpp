@@ -38,8 +38,11 @@ std::set<ObjectFamily> _objectFamilies = {{
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-:ReactionTriggerStrategyPositionUpdate(behaviorExternalInterface, config, kTriggerStrategyName, ReactionTrigger::ObjectPositionUpdated)
+ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPositionUpdated(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                                           IExternalInterface* robotExternalInterface,
+                                                                                           const Json::Value& config)
+:ReactionTriggerStrategyPositionUpdate(behaviorExternalInterface, robotExternalInterface,
+                                       config, kTriggerStrategyName, ReactionTrigger::ObjectPositionUpdated)
 {
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,

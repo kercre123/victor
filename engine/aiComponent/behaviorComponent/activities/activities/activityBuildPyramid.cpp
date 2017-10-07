@@ -16,6 +16,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorRespondPossiblyRoll.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
@@ -260,56 +261,17 @@ ActivityBuildPyramid::ActivityBuildPyramid(BehaviorExternalInterface& behaviorEx
   // Setup callbacks to update cube light patterns/phase
   ///////
   
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  {
+    ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged,
+    ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved,
+    ExternalInterface::MessageEngineToGameTag::ObjectConnectionState
+  });
   
-  // Listen for up-axis changes to update response scenarios
-  auto upAxisChangedCallback = [this, &behaviorExternalInterface](const EngineToGameEvent& event) {
-    PyramidCubePropertiesTracker* propertyTracker = nullptr;
-    ObjectID objID = event.GetData().Get_ObjectUpAxisChanged().objectID;
-    if(!GetCubePropertiesTrackerByID(objID, propertyTracker))
-    {
-      UpdateStateTrackerForUnrecognizedID(behaviorExternalInterface, objID);
-      ANKI_VERIFY(GetCubePropertiesTrackerByID(objID, propertyTracker),
-                  "BuildPyramidBehaviorChooser.ObjectNotAddedToTracker.TrackerIsStillNullptr", "");
-    }
-    if(propertyTracker != nullptr){
-      propertyTracker->SetUpAxis(event.GetData().Get_ObjectUpAxisChanged().upAxis);
-      _objectAxisChangeIDs.insert(event.GetData().Get_ObjectUpAxisChanged().objectID);
-    }
-  };
-  
-  auto objectiveAchievedCallback = [this](const EngineToGameEvent& event){
-    if(event.GetData().Get_BehaviorObjectiveAchieved().behaviorObjective ==
-       BehaviorObjective::BuiltPyramid){
-      _pyramidObjectiveAchieved = true;
-    }
-  };
-  
-  auto requestPyramidPreReqState = [this, &behaviorExternalInterface](const GameToEngineEvent& event){
-    NotifyGameOfPyramidPreReqs(behaviorExternalInterface);
-  };
-  
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr){
-    using namespace ExternalInterface;
-    
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                                      MessageEngineToGameTag::ObjectUpAxisChanged,
-                                      upAxisChangedCallback));
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                                      MessageEngineToGameTag::BehaviorObjectiveAchieved,
-                                      objectiveAchievedCallback));
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                                      MessageGameToEngineTag::RequestPyramidPreReqState,
-                                      requestPyramidPreReqState));
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                                      MessageEngineToGameTag::ObjectConnectionState,
-                                      [this, &behaviorExternalInterface] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
-                                      {
-                                        HandleObjectConnectionStateChange(behaviorExternalInterface,
-                                                                          event.GetData().Get_ObjectConnectionState());
-                                      }));
-    
-  }
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  {
+    ExternalInterface::MessageGameToEngineTag::RequestPyramidPreReqState
+  });
 }
   
   
@@ -885,6 +847,8 @@ void ActivityBuildPyramid::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(Beh
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivityBuildPyramid::Update_Legacy(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  HandleMessageEvents(behaviorExternalInterface);
+  
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_s > _nextTimeCheckBlockOrientations_s){
     CheckBlockWorldCubeOrientations(behaviorExternalInterface);
@@ -990,7 +954,7 @@ int  ActivityBuildPyramid::GetNumberOfBlocksUpright()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityBuildPyramid::NotifyGameOfPyramidPreReqs(BehaviorExternalInterface& behaviorExternalInterface)
 {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
+  /**auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   if(robotExternalInterface != nullptr){
     const int countOfBlocksUpright = GetNumberOfBlocksUpright();
 
@@ -1024,7 +988,7 @@ void ActivityBuildPyramid::NotifyGameOfPyramidPreReqs(BehaviorExternalInterface&
     }else if(shouldSendPreReqsNoLongerMet){
       robotExternalInterface->BroadcastToGame<ExternalInterface::PyramidPreReqState>(false);
     }
-  }
+  }**/
 }
 
 
@@ -1502,7 +1466,47 @@ ObjectLights ActivityBuildPyramid::GetDenouementBottomLightsModifier() const
 }
 
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityBuildPyramid::HandleMessageEvents(BehaviorExternalInterface& behaviorExternalInterface)
+{
   
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::RequestPyramidPreReqState){
+      NotifyGameOfPyramidPreReqs(behaviorExternalInterface);
+    }
+  }
+  
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged){
+      
+      PyramidCubePropertiesTracker* propertyTracker = nullptr;
+      ObjectID objID = event.GetData().Get_ObjectUpAxisChanged().objectID;
+      if(!GetCubePropertiesTrackerByID(objID, propertyTracker))
+      {
+        UpdateStateTrackerForUnrecognizedID(behaviorExternalInterface, objID);
+        ANKI_VERIFY(GetCubePropertiesTrackerByID(objID, propertyTracker),
+                    "BuildPyramidBehaviorChooser.ObjectNotAddedToTracker.TrackerIsStillNullptr", "");
+      }
+      if(propertyTracker != nullptr){
+        propertyTracker->SetUpAxis(event.GetData().Get_ObjectUpAxisChanged().upAxis);
+        _objectAxisChangeIDs.insert(event.GetData().Get_ObjectUpAxisChanged().objectID);
+      }
+      
+    }else if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::BehaviorObjectiveAchieved){
+      
+      if(event.GetData().Get_BehaviorObjectiveAchieved().behaviorObjective ==
+         BehaviorObjective::BuiltPyramid){
+        _pyramidObjectiveAchieved = true;
+      }
+      
+    }else if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::ObjectConnectionState){
+      HandleObjectConnectionStateChange(behaviorExternalInterface,
+                                        event.GetData().Get_ObjectConnectionState());
+    }
+  }
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

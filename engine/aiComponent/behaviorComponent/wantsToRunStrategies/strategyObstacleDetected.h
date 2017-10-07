@@ -26,7 +26,9 @@ class Robot;
 class StrategyObstacleDetected : public StrategyGeneric 
 {
 public:
-  StrategyObstacleDetected(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  StrategyObstacleDetected(BehaviorExternalInterface& behaviorExternalInterface,
+                           IExternalInterface* robotExternalInterface,
+                           const Json::Value& config);
 };
 
 

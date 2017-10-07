@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -33,19 +34,13 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(BehaviorExternalInterface& be
 : IBehaviorChooser(behaviorExternalInterface, config)
 , _behaviorExternalInterface(behaviorExternalInterface)
 {
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if (robotExternalInterface != nullptr)
-  {
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                               ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID,
-                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
-                                         this, std::placeholders::_1)));
-    
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                               ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType,
-                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
-                                         this, std::placeholders::_1)));
-  }
+  
+  std::set<ExternalInterface::MessageGameToEngineTag> tags;
+  tags.insert(ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID);
+  tags.insert(ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType);
+
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this, std::move(tags));
+
   
   // Setup Behavior wait now since it's always the fallback
   _behaviorWait = _behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BehaviorID::Wait);
@@ -195,6 +190,21 @@ void SelectionBehaviorChooser::SetProcessEnabled(const ICozmoBehaviorPtr behavio
     }
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SelectionBehaviorChooser::UpdateInternal(BehaviorExternalInterface& behaviorExternalInterface)
+{
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID){
+      HandleExecuteBehavior(event);
+    }else if(event.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType){
+      HandleExecuteBehavior(event);
+    }
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

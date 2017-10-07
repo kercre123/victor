@@ -17,6 +17,7 @@
 #include "engine/aiComponent/requestGameComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -36,16 +37,16 @@ namespace Cozmo {
   };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IActivityStrategy(behaviorExternalInterface, config)
+ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                   IExternalInterface* robotExternalInterface,
+                                                                   const Json::Value& config)
+: IActivityStrategy(behaviorExternalInterface, robotExternalInterface, config)
 , _lastGameRequestTimestampSec(0.0f)
 , _cooldownRejectionBaseSecs(0.0f)
 , _cooldownRejectionExponent(1.0f)
 , _numRejections(0)
 , _whiteboardRef(behaviorExternalInterface.GetAIComponent().GetWhiteboard())
 {
-  
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
   // register to receive notifications of game requests
   if (robotExternalInterface != nullptr) {
     auto helper = MakeAnkiEventUtil(*robotExternalInterface, *this, _eventHandles);

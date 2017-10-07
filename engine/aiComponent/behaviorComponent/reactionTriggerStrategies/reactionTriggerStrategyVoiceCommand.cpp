@@ -42,8 +42,11 @@ static const char* kIsWakeUpReaction      = "isWakeUpReaction";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                         IExternalInterface* robotExternalInterface,
+                                                                         const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 {
   const auto& params = config[kVoiceCommandParamsKey];
   JsonTools::GetValueOptional(params, kIsWakeUpReaction, _isWakeUpReaction);

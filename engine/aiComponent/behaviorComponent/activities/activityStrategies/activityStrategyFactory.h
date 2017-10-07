@@ -19,13 +19,16 @@ namespace Cozmo {
 
 class BehaviorExternalInterface;
 class IActivityStrategy;
+class IExternalInterface;
 
 namespace ActivityStrategyFactory {
 
 // creates and initializes the proper activity strategy from the given config. Returns a new instance if
 // the config is valid, or nullptr if the configuration was not valid. Freeing the memory is responsibility
 // of the caller. This factory does not store the created pointers.
-IActivityStrategy* CreateActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+IActivityStrategy* CreateActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                          IExternalInterface* robotExternalInterface,
+                                          const Json::Value& config);
 
 }; // namespace
 

@@ -26,7 +26,9 @@ namespace Cozmo {
 
 class ReactionTriggerStrategyFistBump : public IReactionTriggerStrategy, IFistBumpListener {
 public:
-  ReactionTriggerStrategyFistBump(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyFistBump(BehaviorExternalInterface& behaviorExternalInterface,
+                                  IExternalInterface* robotExternalInterface,
+                                  const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return false; }
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }

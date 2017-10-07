@@ -26,7 +26,9 @@ class AIWhiteboard;
 class ReactionTriggerStrategyHiccup : public IReactionTriggerStrategy
 {
 public:
-  ReactionTriggerStrategyHiccup(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyHiccup(BehaviorExternalInterface& behaviorExternalInterface,
+                                IExternalInterface* robotExternalInterface,
+                                const Json::Value& config);
   virtual ~ReactionTriggerStrategyHiccup();
   
   virtual bool ShouldResumeLastBehavior() const override { return true;}

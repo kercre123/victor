@@ -25,6 +25,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/stateChangeComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
 #include "engine/robot.h"
@@ -49,38 +50,10 @@ SearchForBlockHelper::SearchForBlockHelper(BehaviorExternalInterface& behaviorEx
 , _params(params)
 , _nextSearchIntensity(SearchIntensity::QuickSearch)
 {
-
-  auto observedObjectCallback =
-  [this, &behaviorExternalInterface](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event){
-    const ObjectID& objSeen = event.GetData().Get_RobotObservedObject().objectID;
-    
-    if(_params.searchingForID.IsSet()){
-      // Search should stop if we either 1) see the cube we're looking for and have
-      // therefore updated its known pose or 2) see an object that may have been
-      // obstructing the robots view without its knowledge previously
-      if(objSeen == _params.searchingForID){
-        _status = BehaviorStatus::Complete;
-      }else if(_objectsSeenDuringSearch.count(objSeen) == 0){
-        if(!ShouldBeAbleToFindTarget(behaviorExternalInterface)){
-          _status = BehaviorStatus::Failure;
-        }
-        _objectsSeenDuringSearch.insert(objSeen);
-      }
-    }else if((_params.numberOfBlocksToLocate > 0) &&
-               (_objectsSeenDuringSearch.size() >= _params.numberOfBlocksToLocate)){
-      // Search can also stop if we've seen the requested number of blocks
-      _status = BehaviorStatus::Complete;
-    }
-  };
-  
-  auto robotExternalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
-  if(robotExternalInterface != nullptr){
-    using namespace ExternalInterface;
-    _eventHandlers.push_back(robotExternalInterface->Subscribe(
-                    ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
-                    observedObjectCallback));
-  }
-  
+  behaviorExternalInterface.GetStateChangeComponent().SubscribeToTags(this,
+  {
+    ExternalInterface::MessageEngineToGameTag::RobotObservedObject
+  });
   
   // Three options - search without a purpose, search for a located block
   // or search until x many blocks are acquired - but you're not allowed to
@@ -132,6 +105,33 @@ BehaviorStatus SearchForBlockHelper::Init(BehaviorExternalInterface& behaviorExt
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStatus SearchForBlockHelper::UpdateWhileActiveInternal(BehaviorExternalInterface& behaviorExternalInterface)
 {
+  // Event handles
+  const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  for(const auto& event: stateChangeComp.GetEngineToGameEvents()){
+    if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::RobotObservedObject){
+      const ObjectID& objSeen = event.GetData().Get_RobotObservedObject().objectID;
+      
+      if(_params.searchingForID.IsSet()){
+        // Search should stop if we either 1) see the cube we're looking for and have
+        // therefore updated its known pose or 2) see an object that may have been
+        // obstructing the robots view without its knowledge previously
+        if(objSeen == _params.searchingForID){
+          _status = BehaviorStatus::Complete;
+        }else if(_objectsSeenDuringSearch.count(objSeen) == 0){
+          if(!ShouldBeAbleToFindTarget(behaviorExternalInterface)){
+            _status = BehaviorStatus::Failure;
+          }
+          _objectsSeenDuringSearch.insert(objSeen);
+        }
+      }else if((_params.numberOfBlocksToLocate > 0) &&
+               (_objectsSeenDuringSearch.size() >= _params.numberOfBlocksToLocate)){
+        // Search can also stop if we've seen the requested number of blocks
+        _status = BehaviorStatus::Complete;
+      }
+    }
+  }
+  
+  
   if(_status != BehaviorStatus::Running){
     StopActing(false);
   }

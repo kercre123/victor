@@ -39,7 +39,9 @@ static const char* kStrategyTypeConfigKey = "type";
 namespace ActivityStrategyFactory {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActivityStrategy* CreateActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
+IActivityStrategy* CreateActivityStrategy(BehaviorExternalInterface& behaviorExternalInterface,
+                                          IExternalInterface* robotExternalInterface,
+                                          const Json::Value& config)
 {
   IActivityStrategy* newStrategy = nullptr;
 
@@ -52,37 +54,37 @@ IActivityStrategy* CreateActivityStrategy(BehaviorExternalInterface& behaviorExt
   switch(strategyType){
     case ActivityStrategy::PlayWithHumans:
     {
-      newStrategy = new ActivityStrategyFPPlayWithHumans(behaviorExternalInterface, config);
+      newStrategy = new ActivityStrategyFPPlayWithHumans(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ActivityStrategy::Pyramid:
     {
-      newStrategy = new ActivityStrategyPyramid(behaviorExternalInterface, config);
+      newStrategy = new ActivityStrategyPyramid(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ActivityStrategy::Simple:
     {
-      newStrategy = new ActivityStrategySimple(behaviorExternalInterface, config);
+      newStrategy = new ActivityStrategySimple(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ActivityStrategy::Spark:
     {
-      newStrategy = new ActivityStrategySpark(behaviorExternalInterface, config);
+      newStrategy = new ActivityStrategySpark(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ActivityStrategy::NeedBasedCooldown:
     {
-      newStrategy = new ActivityStrategyNeedBasedCooldown(behaviorExternalInterface, config);
+      newStrategy = new ActivityStrategyNeedBasedCooldown(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ActivityStrategy::Needs:
     {
-      newStrategy = new ActivityStrategyNeeds(behaviorExternalInterface, config);
+      newStrategy = new ActivityStrategyNeeds(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }
     case ActivityStrategy::SevereNeedTransition:
     {
-      newStrategy = new ActivityStrategySevereNeedsTransition(behaviorExternalInterface, config);
+      newStrategy = new ActivityStrategySevereNeedsTransition(behaviorExternalInterface, robotExternalInterface, config);
       break;
     }     
     case ActivityStrategy::Count:

@@ -68,8 +68,11 @@ private:
 /// ReactAcknowledge Cube Moved
 /////
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config)
-: IReactionTriggerStrategy(behaviorExternalInterface, config, kTriggerStrategyName)
+ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(BehaviorExternalInterface& behaviorExternalInterface,
+                                                                   IExternalInterface* robotExternalInterface,
+                                                                   const Json::Value& config)
+: IReactionTriggerStrategy(behaviorExternalInterface, robotExternalInterface,
+                           config, kTriggerStrategyName)
 {
   SubscribeToTags({{
     EngineToGameTag::ObjectMoved,

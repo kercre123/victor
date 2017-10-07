@@ -25,7 +25,9 @@ class Robot;
   
 class ReactionTriggerStrategyCubeMoved : public IReactionTriggerStrategy{
 public:
-  ReactionTriggerStrategyCubeMoved(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ReactionTriggerStrategyCubeMoved(BehaviorExternalInterface& behaviorExternalInterface,
+                                   IExternalInterface* robotExternalInterface,
+                                   const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return true;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }

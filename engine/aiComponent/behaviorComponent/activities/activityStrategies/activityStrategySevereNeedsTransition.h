@@ -24,7 +24,9 @@ namespace Cozmo {
 class ActivityStrategySevereNeedsTransition : public IActivityStrategy
 {
 public:
-  ActivityStrategySevereNeedsTransition(BehaviorExternalInterface& behaviorExternalInterface, const Json::Value& config);
+  ActivityStrategySevereNeedsTransition(BehaviorExternalInterface& behaviorExternalInterface,
+                                        IExternalInterface* robotExternalInterface,
+                                        const Json::Value& config);
 
   // Wants to run when in the specified needs bracket, and wants to end once it's not in that bracket anymore
   virtual bool WantsToStartInternal(BehaviorExternalInterface& behaviorExternalInterface, float lastTimeActivityRanSec) const override;

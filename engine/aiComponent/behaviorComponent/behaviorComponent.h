@@ -15,10 +15,15 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorComponent_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorComponent_H__
 
+#include "clad/externalInterface/messageEngineToGameTag.h"
+#include "clad/externalInterface/messageGameToEngineTag.h"
+#include "clad/robotInterface/messageRobotToEngineTag.h"
+
 #include "util/helpers/noncopyable.h"
 
 #include <assert.h>
 #include <memory>
+#include <set>
 
 #define USE_BSM 1
 
@@ -27,6 +32,7 @@ namespace Anki {
 namespace Cozmo {
 
 // Forward declarations
+class AsyncMessageGateComponent;
 class BehaviorContainer;
 class BehaviorEventAnimResponseDirector;
 class BehaviorExternalInterface;
@@ -34,7 +40,9 @@ class BehaviorHelperComponent;
 class BehaviorManager;
 class BehaviorSystemManager;
 class DelegationComponent;
+class IBehavior;
 class Robot;
+class StateChangeComponent;
   
 namespace Audio {
 class BehaviorAudioComponent;
@@ -53,6 +61,10 @@ public:
               std::string& behaviorDebugStr);
   
   void OnRobotDelocalized();
+  
+  void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const;
+  void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const;
+  void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const;
   
   inline const BehaviorEventAnimResponseDirector& GetBehaviorEventAnimResponseDirector() const
            { assert(_behaviorEventAnimResponseDirector); return *_behaviorEventAnimResponseDirector; }
@@ -84,6 +96,9 @@ private:
   // Interface that the behavior system can use to communicate with the rest of engine
   std::unique_ptr<BehaviorExternalInterface> _behaviorExternalInterface;
   
+  std::unique_ptr<StateChangeComponent> _stateChangeComponent;
+  std::unique_ptr<AsyncMessageGateComponent> _asyncMessageComponent;
+
   // components which manage the behavior system
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
