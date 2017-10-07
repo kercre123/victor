@@ -1,5 +1,5 @@
 /**
- * File: behaviorAudioClient.h
+ * File: BehaviorAudioComponent.h
  *
  * Author: Jordan Rivas
  * Created: 11/02/2016
@@ -13,8 +13,8 @@
  **/
 
 
-#ifndef __Basestation_Audio_BehaviorAudioClient_H__
-#define __Basestation_Audio_BehaviorAudioClient_H__
+#ifndef __Basestation_Audio_BehaviorAudioComponent_H__
+#define __Basestation_Audio_BehaviorAudioComponent_H__
 
 #include "engine/events/ankiEventMgr.h"
 
@@ -39,10 +39,10 @@ namespace Audio {
 
 class RobotAudioClient;
 
-class BehaviorAudioClient {
+class BehaviorAudioComponent {
   
 public:
-  BehaviorAudioClient(Audio::RobotAudioClient* robotAudioClient);
+  BehaviorAudioComponent(Audio::RobotAudioClient* robotAudioClient);
   
   void Init(BehaviorExternalInterface& behaviorExternalInterface);
 
@@ -65,7 +65,7 @@ protected:
                             const AudioMetaData::SwitchState::Sparked sparkedState,
                             const int round = kBehaviorRound);
   
-  // This deactivates the BehaviorAudioClient and set new music state to freeplay
+  // This deactivates the BehaviorAudioComponent and set new music state to freeplay
   void DeactivateSparkedMusic();
   
   // Update the behavior's current round
@@ -137,4 +137,4 @@ private:
 
 
 
-#endif /* __Basestation_Audio_BehaviorAudioClient_H__ */
+#endif /* __Basestation_Audio_BehaviorAudioComponent_H__ */

@@ -37,7 +37,7 @@ class DelegationComponent;
 class Robot;
   
 namespace Audio {
-class BehaviorAudioClient;
+class BehaviorAudioComponent;
 }
 
 class BehaviorComponent : private Util::noncopyable
@@ -89,7 +89,7 @@ private:
   std::unique_ptr<BehaviorSystemManager> _behaviorSysMgr;
   
   // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
-  std::unique_ptr<Audio::BehaviorAudioClient> _audioClient;
+  std::unique_ptr<Audio::BehaviorAudioComponent> _audioClient;
   
   std::unique_ptr<DelegationComponent>   _delegationComponent;
   

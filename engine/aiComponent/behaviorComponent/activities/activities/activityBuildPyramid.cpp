@@ -13,7 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/activities/activities/activityBuildPyramid.h"
 
 #include "engine/activeObject.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioClient.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"

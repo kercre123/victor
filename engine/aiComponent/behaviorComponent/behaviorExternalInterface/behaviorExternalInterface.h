@@ -41,7 +41,7 @@ class PublicStateBroadcaster;
 class Robot;
   
 namespace Audio {
-class BehaviorAudioClient;
+class BehaviorAudioComponent;
 }
   
 class BehaviorExternalInterface {

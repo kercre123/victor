@@ -1,5 +1,5 @@
 /**
- * File: behaviorAudioClient.cpp
+ * File: BehaviorAudioComponent.cpp
  *
  * Author: Jordan Rivas
  * Created: 11/02/2016
@@ -13,7 +13,7 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioClient.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 
 #include "engine/audio/cozmoAudioController.h"
 #include "engine/audio/robotAudioClient.h"
@@ -101,7 +101,7 @@ const StageTagMultiMap activityAllowedStagesMap
 } // end anonymous namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorAudioClient::BehaviorAudioClient(Audio::RobotAudioClient* robotAudioClient)
+BehaviorAudioComponent::BehaviorAudioComponent(Audio::RobotAudioClient* robotAudioClient)
 : _prevActivity(ActivityID::Invalid)
 , _activeBehaviorStage(BehaviorStageTag::Count)
 , _prevGuardDogStage(GuardDogStage::Count)
@@ -112,7 +112,7 @@ BehaviorAudioClient::BehaviorAudioClient(Audio::RobotAudioClient* robotAudioClie
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::Init(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorAudioComponent::Init(BehaviorExternalInterface& behaviorExternalInterface)
 {
   // Get the appropriate spark music state from unity
   auto externalInterface = behaviorExternalInterface.GetRobotExternalInterface().lock();
@@ -149,7 +149,7 @@ void BehaviorAudioClient::Init(BehaviorExternalInterface& behaviorExternalInterf
       const ActivityID activityID = activity->GetID();
 
       DEV_ASSERT_MSG(freeplayStateMap.find(activityID) != freeplayStateMap.end(),
-                     "BehaviorAudioClient.Init.MissingFreeplayActivity",
+                     "BehaviorAudioComponent.Init.MissingFreeplayActivity",
                      "Freeplay activity %s does not exist in freeplayStateMap",
                      EnumToString(activityID));
     }
@@ -158,7 +158,7 @@ void BehaviorAudioClient::Init(BehaviorExternalInterface& behaviorExternalInterf
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, const int round)
+bool BehaviorAudioComponent::UpdateBehaviorRound(const UnlockId behaviorUnlockId, const int round)
 {
   if (_activeSparkMusicID != behaviorUnlockId) {
     return false;
@@ -173,7 +173,7 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
   }
   else {
     DEV_ASSERT_MSG(false,
-                   "BehaviorAudioClient.SetBehaviorStateLevel.InvalidRound",
+                   "BehaviorAudioComponent.SetBehaviorStateLevel.InvalidRound",
                    "round: %d", round);
   }
   
@@ -188,7 +188,7 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::UpdateActivityMusicState(ActivityID activityID)
+void BehaviorAudioComponent::UpdateActivityMusicState(ActivityID activityID)
 {
   PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                 "RobotAudioClient.SetFreeplayMusic",
@@ -216,7 +216,7 @@ void BehaviorAudioClient::UpdateActivityMusicState(ActivityID activityID)
   
 // Protected Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAudioClient::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
+bool BehaviorAudioComponent::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
                                                const AudioMetaData::GameState::Music musicState,
                                                const AudioMetaData::SwitchState::Sparked sparkedState,
                                                const int round)
@@ -247,7 +247,7 @@ bool BehaviorAudioClient::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::DeactivateSparkedMusic()
+void BehaviorAudioComponent::DeactivateSparkedMusic()
 {
   _sparkedMusicState = AudioMetaData::SwitchState::Sparked::Invalid;
   _isActive = false;
@@ -257,7 +257,7 @@ void BehaviorAudioClient::DeactivateSparkedMusic()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleRobotPublicStateChange(BehaviorExternalInterface& behaviorExternalInterface,
+void BehaviorAudioComponent::HandleRobotPublicStateChange(BehaviorExternalInterface& behaviorExternalInterface,
                                                        const RobotPublicState& stateEvent)
 {
   // Check for changes in "world events" that audio is interested in
@@ -308,7 +308,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(BehaviorExternalInterface
         }
       }
       DEV_ASSERT_MSG(activityIsValid,
-                     "BehaviorAudioClient.HandleRobotPublicStateChange.IncorrectBehaviorStage",
+                     "BehaviorAudioComponent.HandleRobotPublicStateChange.IncorrectBehaviorStage",
                      "Behavior stage is %s but activity is %s",
                      BehaviorStageTagToString(GetActiveBehaviorStage()),
                      ActivityIDToString(currActivity));
@@ -318,7 +318,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(BehaviorExternalInterface
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateEvent)
+void BehaviorAudioComponent::HandleWorldEventUpdates(const RobotPublicState& stateEvent)
 {
   // COZMO-14148 - Firing world events during feeding causes improper
   // audio state transitions, so short circuit this function here
@@ -363,14 +363,14 @@ void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateE
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleSparkUpdates(BehaviorExternalInterface& behaviorExternalInterface,
+void BehaviorAudioComponent::HandleSparkUpdates(BehaviorExternalInterface& behaviorExternalInterface,
                                              const UnlockId& sparkID, const int behaviorRound)
 {
   if(_activeSparkMusicID != sparkID){
     if(sparkID == UnlockId::Count){
       DeactivateSparkedMusic();
     }else if(_sparkedMusicState == AudioMetaData::SwitchState::Sparked::Invalid){
-      PRINT_NAMED_INFO("BehaviorAudioClient.HandleRobotPublicStateChange.InvalidMusicState",
+      PRINT_NAMED_INFO("BehaviorAudioComponent.HandleRobotPublicStateChange.InvalidMusicState",
                        "Attempted to activate sparked music state with invalid music state");
     }else{
       // Special handling for Workout (blergghhhhbleghgh... ahemm, excuse me)
@@ -405,7 +405,7 @@ void BehaviorAudioClient::HandleSparkUpdates(BehaviorExternalInterface& behavior
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct)
+void BehaviorAudioComponent::HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
   // Update the Guard Dog music mood/round if appropriate
   if (currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog) {
@@ -437,7 +437,7 @@ void BehaviorAudioClient::HandleGuardDogUpdates(const BehaviorStageStruct& currP
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct)
+void BehaviorAudioComponent::HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
   // If this is dancing then post dancing switch
   /**if((currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Dance) &&
@@ -451,7 +451,7 @@ void BehaviorAudioClient::HandleDancingUpdates(const BehaviorStageStruct& currPu
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct)
+void BehaviorAudioComponent::HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct)
 {
   const bool stageOrRoundChanged = (GetActiveBehaviorStage() != BehaviorStageTag::Feeding) ||
                                      (_prevFeedingStage != currPublicStateStruct.currentFeedingStage);
@@ -467,7 +467,7 @@ void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPu
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleNeedsUpdates(const NeedsLevels& needsLevel)
+void BehaviorAudioComponent::HandleNeedsUpdates(const NeedsLevels& needsLevel)
 {
   using AGO = AudioMetaData::GameObjectType;
   if(!FLT_NEAR(needsLevel.energy, _needsLevel.energy)){
@@ -495,18 +495,18 @@ void BehaviorAudioClient::HandleNeedsUpdates(const NeedsLevels& needsLevel)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorStageTag BehaviorAudioClient::GetActiveBehaviorStage()
+BehaviorStageTag BehaviorAudioComponent::GetActiveBehaviorStage()
 {
   return _activeBehaviorStage;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::SetActiveBehaviorStage(BehaviorStageTag stageTag)
+void BehaviorAudioComponent::SetActiveBehaviorStage(BehaviorStageTag stageTag)
 {
   DEV_ASSERT_MSG((stageTag == BehaviorStageTag::Count) ||
                  (_activeBehaviorStage == BehaviorStageTag::Count),
-                 "BehaviorAudioClient.SetActiveBehaviorStage.StageAlreadySet",
+                 "BehaviorAudioComponent.SetActiveBehaviorStage.StageAlreadySet",
                  "Trying to set new stage tag %s, but stage tag is already set as %s",
                  BehaviorStageTagToString(stageTag),
                  BehaviorStageTagToString(_activeBehaviorStage));
@@ -515,7 +515,7 @@ void BehaviorAudioClient::SetActiveBehaviorStage(BehaviorStageTag stageTag)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAudioClient::HandleDimMusicForActivity(const RobotPublicState& stateEvent)
+void BehaviorAudioComponent::HandleDimMusicForActivity(const RobotPublicState& stateEvent)
 {
   using AE = AudioMetaData::GameEvent::GenericEvent;
   if(_prevActivity != stateEvent.currentActivity)

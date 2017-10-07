@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/activities/activities/iActivity.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioClient.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorAudioComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorManager.h"
@@ -38,7 +38,7 @@ BehaviorComponent::BehaviorComponent(Robot& robot)
 : _behaviorEventAnimResponseDirector(new BehaviorEventAnimResponseDirector())
 , _behaviorHelperComponent( new BehaviorHelperComponent())
 , _behaviorContainer(new BehaviorContainer(robot.GetContext()->GetDataLoader()->GetBehaviorJsons()))
-, _audioClient(new Audio::BehaviorAudioClient(robot.GetRobotAudioClient()))
+, _audioClient(new Audio::BehaviorAudioComponent(robot.GetRobotAudioClient()))
 {
 
 }
