@@ -190,6 +190,7 @@
         }
         catch(err) {
             window.cozmoDASError("Codelab.OpenCozmoProjectJSON.JavaScriptError", err.message);
+            window.notifyProjectIsLoaded();
         }
     }
 
@@ -233,24 +234,21 @@
             projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y); // TODO need JSON solution
         }
 
-        var startBlocklyTime = performance.now()
-        var methodCalledForDAS;
+        window.startLoadingProject();
         if (projectJSON != null) {
             window.Scratch.vm.fromJSON(JSON.stringify(projectJSON));
-            methodCalledForDAS = "Scratch.vm.fromJSON";
         }
         else {
             // User project was build pre-Cozmo app 2.1 release. Open projectXML.
             openBlocklyXML(projectXML);
-            methodCalledForDAS = "openBlocklyXML";
+            window.notifyProjectIsLoaded();
         }
-        var blocklyXmlTime = (performance.now() - startBlocklyTime) * 0.001;
         setProjectNameAndSavedText(projectName, isCozmoSampleProject);
 
         window.startSaveProjectTimer();
         
         var loadTime = (performance.now() - startTime) * 0.001;
-        window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s - " + blocklyXmlTime.toFixed(3) + "s in " + methodCalledForDAS);
+        window.cozmoDASLog("openCozmoProject", "Took: " + loadTime.toFixed(3) + "s");
     }
 
     window.setProjectNameAndSavedText = function(projectName, isSampleProject) {

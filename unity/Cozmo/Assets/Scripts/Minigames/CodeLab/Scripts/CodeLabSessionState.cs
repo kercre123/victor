@@ -479,6 +479,9 @@ namespace CodeLab {
     }
 
     public void StartSession(GrammarMode grammarMode) {
+      if (_CurrentGrammar != GrammarMode.None) {
+        EndSession();
+      }
       DAS_Event("robot.code_lab.open", "");
       Reset();
       _EnterCodeLabDateTime = System.DateTime.UtcNow;

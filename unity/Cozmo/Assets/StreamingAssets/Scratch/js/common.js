@@ -43,6 +43,15 @@
         window.Unity.call({command: "cozmoDASError", argString: eventName, argString2: messageContents});
     }
 
+    window.startLoadingProject = function() {
+        window.isLoadingProject = true;
+    }
+
+    window.notifyProjectIsLoaded = function() {
+        window.Unity.call({command: "cozmoWorkspaceLoaded"});
+        window.isLoadingProject = false;
+    }
+
     /**
      * Window "onload" handler.
      * @return {void}
@@ -151,6 +160,9 @@
             var dom = window.Blockly.Xml.textToDom(data.xml);
             window.Blockly.Xml.domToWorkspace(dom, workspace);
             Scratch.workspace.clearUndo();
+            if (window.isLoadingProject) {
+                window.notifyProjectIsLoaded();
+            }
         });
 
         // Run threads

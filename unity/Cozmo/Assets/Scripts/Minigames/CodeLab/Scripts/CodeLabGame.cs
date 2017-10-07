@@ -1265,6 +1265,10 @@ namespace CodeLab {
       case "cozmoSwitchProjectTab":
         OnCozmoSwitchProjectTab(scratchRequest);
         return true;
+      case "cozmoWorkspaceLoaded":
+        DAS.Info("CodeLab.WorkspaceLoaded", "");
+        Invoke("UnhideWebView", 0.25f);
+        return true;
       case "cozmoDASLog":
         // Use for debugging from JavaScript
         DAS.Warn(scratchRequest.argString, scratchRequest.argString2);
@@ -2463,6 +2467,7 @@ namespace CodeLab {
     private void WebViewLoaded(string text) {
       DAS.Info("Codelab.WebViewLoaded", string.Format("CallOnLoaded[{0}]", text));
       RequestToOpenProjectOnWorkspace cachedRequestToOpenProject = _RequestToOpenProjectOnWorkspace;
+      bool isOpeningProject = false;
 
       switch (_RequestToOpenProjectOnWorkspace) {
       case RequestToOpenProjectOnWorkspace.CreateNewProject:
@@ -2485,6 +2490,7 @@ namespace CodeLab {
               // Open requested project in webview
               this.EvaluateJS("window.openCozmoProjectXML('" + projectToOpen.ProjectUUID + "','" + projectNameEscaped + "',\"" + projectXMLEscaped + "\",'false');");
             }
+            isOpeningProject = true;
           }
         }
         else {
@@ -2516,6 +2522,7 @@ namespace CodeLab {
             // Open requested project in webview
             this.EvaluateJS("window.openCozmoProjectXML('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectNameEscaped + "',\"" + projectXMLEscaped + "\",'true');");
           }
+          isOpeningProject = true;
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
@@ -2536,6 +2543,7 @@ namespace CodeLab {
 
             // Open requested project in webview
             OpenCozmoProjectJSON(featuredProjectNameEscaped, codeLabFeaturedProject.ProjectJSON, codeLabFeaturedProject.ProjectUUID, "true");
+            isOpeningProject = true;
           }
         }
         else {
@@ -2550,14 +2558,19 @@ namespace CodeLab {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
       // If we are displaying workspace, give the webview a little time to get ready.
-      uint delayInSeconds = 0;
+      float delayInSeconds = 0.0f;
       if (cachedRequestToOpenProject != RequestToOpenProjectOnWorkspace.DisplayNoProject) {
 #if UNITY_EDITOR || UNITY_IOS
-        delayInSeconds = 1;
+        delayInSeconds = 1.0f;
 #elif UNITY_ANDROID
-        delayInSeconds = 2;
+      delayInSeconds = 2.0f;
 #endif
       }
+      if (isOpeningProject) {
+        // Unhide will happen after we receive load success, or in 60 seconds, whichever occurs first
+        delayInSeconds = 60.0f;
+      }
+
       Invoke("UnhideWebView", delayInSeconds);
 
       SetupCubeLights();
