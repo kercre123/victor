@@ -355,8 +355,8 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
     auto dotIndex = jsonName.find_last_of(".");
     std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
 
-    PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
-                  "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
+    //PRINT_CH_DEBUG("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
+    //               "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
 
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     _animationGroups->DefineFromJson(animGroupDef, animationGroupName);

@@ -1761,7 +1761,7 @@ void Robot::LoadEmotionEvents()
     const auto& eventJson = fileJsonPair.second;
     if (!eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
     {
-      PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
+      //PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
     }
     else
     {
