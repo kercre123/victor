@@ -185,7 +185,6 @@ body.show-glossary-modal #glossary-modal {
 
 #glossary .block-def-container .block-def-title {
   font-family: "Avenir Next Bold";
-  text-transform: capitalize;
   margin-top: 0;
   margin-bottom: 5px;
 }
