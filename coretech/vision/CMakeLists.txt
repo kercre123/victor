@@ -76,6 +76,11 @@ if (MACOSX)
 
   anki_build_cxx_executable(cti_vision_basestation_test ${ANKI_SRCLIST_DIR})
 
+  target_compile_options(cti_vision_basestation_test
+    PRIVATE
+    -Wno-undef
+  )
+
   target_link_libraries(cti_vision_basestation_test
     PRIVATE
     cti_vision
