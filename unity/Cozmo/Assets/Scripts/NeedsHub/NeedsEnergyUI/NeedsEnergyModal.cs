@@ -277,8 +277,10 @@ namespace Cozmo.Energy.UI {
         _FillBarLerpTween.Kill();
       }
       // Because the stages are quite large, just fake some fill time.
-      const float kFillTime = 0.4f;
-      _FillBarLerpTween = _ShakeProgressBarFill.DOFillAmount(amount, kFillTime);
+      if (_ShakeProgressBarFill != null) {
+        const float kFillTime = 0.4f;
+        _FillBarLerpTween = _ShakeProgressBarFill.DOFillAmount(amount, kFillTime);
+      }
     }
 
     private void HandleFeedingSFXStageUpdate(FeedingSFXStageUpdate message) {
