@@ -2289,7 +2289,18 @@ namespace CodeLab {
         if (projectToUpdate != null) {
           // Don't let the project name get set to empty string.
           string cleansedName = RemoveUnsupportedChars(newProjectName);
-          if (cleansedName != "") {
+
+          // Check that the entire name is not just spaces.
+          bool allCharsAreSpaces = true;
+          for (int i = 0; i < cleansedName.Length; i++) {
+            char currentChar = cleansedName[i];
+            if (currentChar != ' ') {
+              allCharsAreSpaces = false;
+              break;
+            }
+          }
+
+          if (cleansedName != "" && !allCharsAreSpaces) {
             projectToUpdate.ProjectName = RemoveUnsupportedChars(newProjectName);
             projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
           }
