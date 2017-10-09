@@ -3,8 +3,6 @@ project(test_engine)
 
 set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/assets/cozmo_resources")
 
-set(GTEST_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/../lib/util/libs/framework/gtest.framework")
-
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
@@ -13,9 +11,9 @@ if (ANDROID)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   include(webots)
+  include(gtest)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
-    ${GTEST_LIBS}
     ${FOUNDATION}
   )
   set(PLATFORM_FLAGS -fobjc-arc)
@@ -39,6 +37,7 @@ target_link_libraries(test_engine
   androidHAL
   util
   util_audio
+  gtest
   # platform
   ${PLATFORM_LIBS}
 )
@@ -54,11 +53,6 @@ target_include_directories(test_engine
 symlink_target(TARGET test_engine
   SRC ${BUILT_RESOURCES_DIR}
   DST resources#
-)
-
-target_compile_options(test_engine
-  PRIVATE
-  -Wno-undef
 )
 
 target_compile_definitions(test_engine 

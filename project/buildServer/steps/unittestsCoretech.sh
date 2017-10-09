@@ -69,7 +69,7 @@ echo "Entering directory \`${BUILDPATH}'"
 cd ${BUILDPATH}
 
 # clean
-rm -rf ${XML} ${LOG} ${LOGZIP}
+rm -rf ${LOGZIP} ${LOG} */${XML}
 
 # prepare
 mkdir -p testdata
@@ -85,7 +85,7 @@ EXIT_STATUS=$?
 set -e
 
 #  publish results
-tar czf ${LOGZIP} ${LOG} ${XML}
+tar czf ${LOGZIP} ${LOG} */${XML}
 
 # exit
 exit $EXIT_STATUS

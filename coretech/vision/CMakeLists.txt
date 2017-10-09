@@ -2,19 +2,6 @@
 
 project(cti_vision)
 
-
-if (NOT DEFINED CORETECH)
-  set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
-endif()
-
-if (NOT DEFINED UTIL)
-  set(UTIL ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/util)
-endif()
-
-if (NOT DEFINED GTEST)
-  set(GTEST ${UTIL}/libs/framework/gtest.framework)
-endif()
-
 set(CORETECH_VISION_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/anki/vision)
 
 include(okao)
@@ -74,20 +61,17 @@ endif()
 
 if (MACOSX)
 
-  anki_build_cxx_executable(cti_vision_basestation_test ${ANKI_SRCLIST_DIR})
+  enable_testing()
 
-  target_compile_options(cti_vision_basestation_test
-    PRIVATE
-    -Wno-undef
-  )
+  include(gtest)
+
+  anki_build_cxx_executable(cti_vision_basestation_test ${ANKI_SRCLIST_DIR})
 
   target_link_libraries(cti_vision_basestation_test
     PRIVATE
     cti_vision
-    ${GTEST}
+    gtest
   )
-
-  enable_testing()
 
   add_test(NAME cti_vision_basestation_test COMMAND cti_vision_basestation_test)
 

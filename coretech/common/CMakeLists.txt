@@ -6,14 +6,6 @@ if (NOT DEFINED CORETECH)
   set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
 endif()
 
-if (NOT DEFINED UTIL)
-  set(UTIL ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/util)
-endif()
-
-if (NOT DEFINED GTEST)
-  set(GTEST ${UTIL}/libs/framework/gtest.framework)
-endif()
-
 include(anki_build_cxx_library)
 
 anki_build_cxx_library(cti_common ${ANKI_SRCLIST_DIR} STATIC)
@@ -89,6 +81,7 @@ target_include_directories(cti_common_robot
 
 if (MACOSX)
 
+  include(gtest)
   #
   # cti_common_shared_test
   #
@@ -109,8 +102,8 @@ if (MACOSX)
     PRIVATE
     cti_common
     util
+    gtest
     ${OPENCV_LIBS}
-    ${GTEST}
   )
 
   #
@@ -118,11 +111,6 @@ if (MACOSX)
   #
 
   anki_build_cxx_executable(cti_common_basestation_test ${ANKI_SRCLIST_DIR})
-
-  target_compile_options(cti_common_basestation_test
-    PRIVATE
-    -Wno-undef
-  )
 
   target_compile_definitions(cti_common_basestation_test
     PRIVATE
@@ -133,8 +121,8 @@ if (MACOSX)
     PRIVATE
     cti_common
     util
+    gtest
     ${OPENCV_LIBS}
-    ${GTEST}
   )
 
   #
