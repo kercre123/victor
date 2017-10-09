@@ -84,6 +84,8 @@ private:
   BehaviorExternalInterface* _behaviorExternalInterface;
   
   AsyncMessageGateComponent* _asyncMessageComponent;
+  std::vector<ExternalInterface::RobotCompletedAction> _actionsCompletedThisTick;
+  std::vector<Signal::SmartHandle> _eventHandles;
 
   std::unique_ptr<RunnableStack> _runnableStack;
 

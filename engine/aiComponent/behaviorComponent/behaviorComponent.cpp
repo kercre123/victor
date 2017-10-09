@@ -151,8 +151,6 @@ void BehaviorComponent::Update(Robot& robot,
 {
   _behaviorHelperComponent->Update(*_behaviorExternalInterface);
 
-  _delegationComponent->Update();
-
   if(USE_BSM){
     _behaviorSysMgr->Update(*_behaviorExternalInterface);
   }else{

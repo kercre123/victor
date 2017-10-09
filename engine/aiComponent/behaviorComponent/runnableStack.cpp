@@ -43,6 +43,7 @@ void RunnableStack::InitRunnableStack(BehaviorExternalInterface& behaviorExterna
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+                                        std::vector<ExternalInterface::RobotCompletedAction>& actionsCompletedThisTick,
                                         AsyncMessageGateComponent& asyncMessageGateComp,
                                         std::set<IBehavior*>& tickedInStack)
 {
@@ -73,6 +74,11 @@ void RunnableStack::UpdateRunnableStack(BehaviorExternalInterface& behaviorExter
     asyncMessageGateComp.GetEventsForBehavior(
        _runnableStack.at(idx),
        behaviorExternalInterface.GetStateChangeComponent()._robotToEngineEvents);
+    
+    // Set the actions completed this tick for the top of the stack
+    if(idx == (_runnableStack.size() - 1)){
+      behaviorExternalInterface.GetStateChangeComponent()._actionsCompletedThisTick = actionsCompletedThisTick;
+    }
     
     _runnableStack.at(idx)->Update(behaviorExternalInterface);
   }

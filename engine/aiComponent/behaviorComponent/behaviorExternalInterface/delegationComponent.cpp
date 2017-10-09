@@ -50,8 +50,7 @@ Delegator::Delegator(Robot& robot,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool Delegator::Delegate(IBehavior* delegatingRunnable,
-                         IActionRunner* action,
-                         BehaviorRobotCompletedActionCallback callback)
+                         IActionRunner* action)
 {
   EnsureHandleIsUpdated();
 
@@ -75,7 +74,6 @@ bool Delegator::Delegate(IBehavior* delegatingRunnable,
   
   _runnableThatDelegatedAction = delegatingRunnable;
   _lastActionTag = action->GetTag();
-  _actionCallback = callback;
   return true;
 }
 
@@ -132,59 +130,10 @@ DelegationComponent::DelegationComponent(Robot& robot,
 : _delegator( new Delegator(robot, bsm))
 , _bsm(&bsm)
 {
-  if(robot.HasExternalInterface()){
-    IExternalInterface* externalInterface = robot.GetExternalInterface();
-    using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
-    using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
-
-    if( USE_BSM ) {
-      _eventHandles.push_back(externalInterface->Subscribe(
-                                EngineToGameTag::RobotCompletedAction,
-                                [this](const EngineToGameEvent& event) {
-                                  DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
-                                             "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
-                                  HandleActionComplete(event.GetData().Get_RobotCompletedAction());
-                                } ));
-    }
-  }
-  {
-    // Create a weak ptr with no strong references to return when delegation is locked
-    _invalidDelegator = std::weak_ptr<Delegator>();
-  }
+  // Create a weak ptr with no strong references to return when delegation is locked
+  _invalidDelegator = std::weak_ptr<Delegator>();
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
-{
-  if(IsControlDelegated(_delegator->_runnableThatDelegatedAction) &&
-     (msg.idTag == _delegator->_lastActionTag))
-  {
-    _delegator->_lastActionTag = ActionConstants::INVALID_TAG;
-    _delegator->_runnableThatDelegatedAction = nullptr;
-
-    if( _delegator->_actionCallback) {
-      // save a copy of the message so we can call the callback before Update
-      _delegator->_lastCompletedMsgCopy.reset( new ExternalInterface::RobotCompletedAction(msg) );
-    }
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DelegationComponent::Update()
-{
-  if( USE_BSM ) {
-    if( _delegator != nullptr &&
-        _delegator->_lastCompletedMsgCopy != nullptr ) {
-      // deferred call of action callback
-      if( _delegator->_actionCallback ) {
-        _delegator->_actionCallback( *_delegator->_lastCompletedMsgCopy );
-        _delegator->_lastCompletedMsgCopy.reset();
-      }
-    }
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool DelegationComponent::IsControlDelegated(const IBehavior* delegatingRunnable)
@@ -227,8 +176,6 @@ void DelegationComponent::CancelDelegates(IBehavior* delegatingRunnable)
     u32 tagToCancel = _delegator->_lastActionTag;
     if(_delegator->_runnableThatDelegatedAction == delegatingRunnable){
       _delegator->_runnableThatDelegatedAction = nullptr; // TEMP:  // TODO:(bn) redundant checks now
-      _delegator->_actionCallback = nullptr;
-      _delegator->_lastCompletedMsgCopy.reset();
       ret = _delegator->_robot.GetActionList().Cancel(tagToCancel);
     }
     // note that the callback, if there was one (and it was allowed to run), should have already been called

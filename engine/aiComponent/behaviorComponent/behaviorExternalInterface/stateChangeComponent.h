@@ -43,12 +43,16 @@ public:
   const std::vector<const EngineToGameEvent>& GetEngineToGameEvents() const   { return _engineToGameEvents;}
   const std::vector<const RobotToEngineEvent>& GetRobotToEngineEvents() const { return _robotToEngineEvents;}
 
+  const std::vector<ExternalInterface::RobotCompletedAction>& GetActionsCompletedThisTick() const { return _actionsCompletedThisTick;}
+  
 protected:
   friend class BehaviorSystemManager;
   friend class RunnableStack;
   std::vector<const GameToEngineEvent>  _gameToEngineEvents;
   std::vector<const EngineToGameEvent>  _engineToGameEvents;
   std::vector<const RobotToEngineEvent> _robotToEngineEvents;
+  
+  std::vector<ExternalInterface::RobotCompletedAction> _actionsCompletedThisTick;
   
 private:
   std::unique_ptr<BehaviorComponent> _behaviorComponent;

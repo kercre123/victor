@@ -70,6 +70,16 @@ Result BehaviorSystemManager::InitConfiguration(BehaviorExternalInterface& behav
   
   _baseRunnableTmp = baseRunnable;
   
+  Robot& robot = behaviorExternalInterface.GetRobot();
+  if(robot.HasExternalInterface()){
+    _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(EngineToGameTag::RobotCompletedAction,
+                                            [this](const EngineToGameEvent& event) {
+                                              DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
+                                                         "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
+                                              _actionsCompletedThisTick.push_back(event.GetData().Get_RobotCompletedAction());
+                                            }));
+  }
+  
   return RESULT_OK;
 }
 
@@ -102,8 +112,10 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   // First update the runnable stack and allow it to make any delegation/canceling
   // decisions that it needs to make
   _runnableStack->UpdateRunnableStack(behaviorExternalInterface,
+                                      _actionsCompletedThisTick,
                                       *_asyncMessageComponent,
                                       runnableUpdatesTickedInStack);
+  _actionsCompletedThisTick.clear();
   // Then once all of that's done, update anything that's in activatable scope
   // but isn't currently on the runnable stack
   UpdateInActivatableScope(behaviorExternalInterface, runnableUpdatesTickedInStack);

@@ -326,22 +326,6 @@ void ICozmoBehavior::InitInternal(BehaviorExternalInterface& behaviorExternalInt
   ScoredInit(behaviorExternalInterface);
   InitBehavior(behaviorExternalInterface);
   
-
-
-  
-  if( !USE_BSM ) {
-    // the BSM will directly call HandleActionComplete, so only register as an event if we aren't using it
-    
-    // NOTE: this won't get sent down to derived classes (unless they also subscribe)
-    SubscribeToTag(EngineToGameTag::RobotCompletedAction,
-                   [this](const EngineToGameEvent& event) {
-                     DEV_ASSERT(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
-                                "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
-                     if( event.GetData().Get_RobotCompletedAction().idTag == _lastActionTag ) {
-                       HandleActionComplete(event.GetData().Get_RobotCompletedAction());
-                     }
-                   });
-  }
   
   SubscribeToTag(EngineToGameTag::BehaviorObjectiveAchieved,
                     [this](const EngineToGameEvent& event) {
@@ -462,7 +446,7 @@ Result ICozmoBehavior::OnActivatedInternal_Legacy(BehaviorExternalInterface& beh
   
   _isRunning = true;
   _stopRequestedAfterAction = false;
-  _actingCallback = nullptr;
+  _actionCallback = nullptr;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _hasSetIdle = false;
   Result initResult = OnBehaviorActivated(behaviorExternalInterface);
@@ -542,7 +526,15 @@ ICozmoBehavior::Status ICozmoBehavior::Update(BehaviorExternalInterface& behavio
   //// Event handling
   // Call message handling convenience functions
   //////
+  
   const auto& stateChangeComp = behaviorExternalInterface.GetStateChangeComponent();
+  const auto& actionsCompleted = stateChangeComp.GetActionsCompletedThisTick();
+  for(auto& entry: actionsCompleted){
+    if(entry.idTag == _lastActionTag){
+      HandleActionComplete(entry);
+    }
+  }
+  
   for(const auto& event: stateChangeComp.GetGameToEngineEvents()){
     // Handle specific callbacks
     auto pairIter = _gameToEngineCallbackMap.find(event.GetData().GetTag());
@@ -658,7 +650,7 @@ void ICozmoBehavior::StopOnNextActionComplete()
   
   // clear the callback and don't let any new actions start
   _stopRequestedAfterAction = true;
-  _actingCallback = nullptr;
+  _actionCallback = nullptr;
 }
 
 
@@ -929,16 +921,13 @@ bool ICozmoBehavior::DelegateIfInControl(IActionRunner* action, RobotCompletedAc
     return false;
   }
 
-  _actingCallback = callback;
-  if( !USE_BSM ) {
-    _lastActionTag = action->GetTag();
-  }
+  _actionCallback = callback;
+  _lastActionTag = action->GetTag();
   
   ScoredActingStateChanged(true);
   
   return delegateWrapper->Delegate(this,
-                                   action,
-                                   std::bind(&ICozmoBehavior::HandleActionComplete, this, std::placeholders::_1));
+                                   action);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1026,19 +1015,12 @@ bool ICozmoBehavior::DelegateNow(BehaviorExternalInterface& behaviorExternalInte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)
 {
-  if( ! USE_BSM ) {
-    auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
-    if(delegationComponent != nullptr){
-      delegationComponent->HandleActionComplete(msg);
-    }
-  }
+  if( _actionCallback ) {
 
-  if( _actingCallback ) {
-
-    // Note that the callback may itself call start acting and set _actingCallback. Because of that, we create
+    // Note that the callback may itself call start acting and set _actionCallback. Because of that, we create
     // a copy here so we can null out the member variable such that it can be re-set by callback (if desired)
-    auto callback = _actingCallback;
-    _actingCallback = nullptr;
+    auto callback = _actionCallback;
+    _actionCallback = nullptr;
     
     callback(msg);
   }
@@ -1062,7 +1044,7 @@ bool ICozmoBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
   
   if( IsControlDelegated() ) {
     if(!allowCallback){
-      _actingCallback = nullptr;
+      _actionCallback = nullptr;
     }
     auto delegationComponent = _behaviorExternalInterface->GetDelegationComponent().lock();
     if(delegationComponent != nullptr){

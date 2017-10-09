@@ -308,7 +308,7 @@ protected:
   //
   // Start an action now, and optionally provide a callback which will be called with the
   // RobotCompletedAction that corresponds to the action
-  using RobotCompletedActionCallback = BehaviorRobotCompletedActionCallback;
+  using RobotCompletedActionCallback =  BehaviorRobotCompletedActionCallback;
   bool DelegateIfInControl(IActionRunner* action, RobotCompletedActionCallback callback = {});
 
   bool DelegateIfInControl(IActionRunner* action, BehaviorRobotCompletedActionWithExternalInterfaceCallback callback);
@@ -502,7 +502,7 @@ private:
   int _startCount = 0;
 
   // for Start/StopActing if invalid, no action
-  RobotCompletedActionCallback  _actingCallback;
+  RobotCompletedActionCallback _actionCallback;
   bool _stopRequestedAfterAction = false;
   
   bool _isRunning;
@@ -534,6 +534,8 @@ private:
   
   // Whether or not the behavior is always be streamlined (set via json)
   bool _alwaysStreamline = false;
+  
+
   
   ///////
   // Tracking subscribe tags for initialization

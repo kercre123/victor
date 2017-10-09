@@ -27,6 +27,10 @@ class AsyncMessageGateComponent;
 class BehaviorExternalInterface;
 class IBehavior;
   
+namespace ExternalInterface{
+struct RobotCompletedAction;
+}
+  
 // Defined within .h file so tests can access runnable stack functions
 class RunnableStack{
 public:
@@ -37,6 +41,7 @@ public:
   void InitRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
                          IBehavior* baseOfStack);
   void UpdateRunnableStack(BehaviorExternalInterface& behaviorExternalInterface,
+                          std::vector<ExternalInterface::RobotCompletedAction>& actionsCompletedThisTick,
                            AsyncMessageGateComponent& asyncMessageGateComp,
                            std::set<IBehavior*>& tickedInStack);
   

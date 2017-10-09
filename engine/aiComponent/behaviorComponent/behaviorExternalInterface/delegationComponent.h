@@ -39,8 +39,7 @@ public:
   Delegator(Robot& robot, BehaviorSystemManager& bsm);
   virtual ~Delegator(){};
   
-  bool Delegate(IBehavior* delegatingRunnable, IActionRunner* action,
-                BehaviorRobotCompletedActionCallback callback);
+  bool Delegate(IBehavior* delegatingRunnable, IActionRunner* action);
   bool Delegate(IBehavior* delegatingRunnable, IBehavior* delegated);
   bool Delegate(IBehavior* delegatingRunnable,
                 BehaviorExternalInterface& behaviorExternalInterface,
@@ -58,10 +57,6 @@ private:
   IBehavior* _runnableThatDelegatedAction;
   u32 _lastActionTag;
 
-  // hold the callback along with a copy of it's arguments so it can be called during Update
-  BehaviorRobotCompletedActionCallback _actionCallback;
-  std::shared_ptr<ExternalInterface::RobotCompletedAction> _lastCompletedMsgCopy;
-  
   // Naive tracking for helper delegation
   IBehavior* _runnableThatDelegatedHelper;
   WeakHelperHandle _delegateHelperHandle;
@@ -76,8 +71,6 @@ public:
   DelegationComponent() {}; // Constructor for tests
   DelegationComponent(Robot& robot, BehaviorSystemManager& bsm);
   virtual ~DelegationComponent(){};
-
-  void Update();
   
   bool IsControlDelegated(const IBehavior* delegatingRunnable);
   void CancelDelegates(IBehavior* delegatingRunnable);
@@ -96,15 +89,6 @@ private:
   std::vector<::Signal::SmartHandle> _eventHandles;
     
   BehaviorSystemManager* _bsm;
-
-#if !USE_BSM
-  // needs to be public so ICozmoBehavior can call in. With USE_BSM this handler is the "real" one that gets the
-  // event, with !USE_BSM, the ICozmoBehavior one is "real" and call this one
-public:
-#endif
-  
-  // this is an internal handler just for StartActing
-  void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
 };
   
   
