@@ -13,6 +13,10 @@ include(android_strip)
 include(anki_build_cxx_library)
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
 
+if (NOT DEFINED USE_DAS)
+  set(USE_DAS 0)
+endif()
+
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
@@ -44,6 +48,7 @@ PUBLIC
   clad
   util
   cti_common
+  cti_messaging
   robot_interface
   audio_engine
   audio_multiplexer_engine
@@ -57,7 +62,6 @@ PRIVATE
   cti_common
   cti_vision
   cti_planning
-  cti_messaging
 # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
@@ -82,13 +86,15 @@ target_compile_definitions(cozmo_engine
   COZMO_BASESTATION
   COZMO_V2
   CORETECH_BASESTATION
+  USE_DAS=${USE_DAS}
   VOICE_RECOG_NONE=0
   VOICE_RECOG_THF=1
   VOICE_RECOG_PROVIDER=VOICE_RECOG_THF
   "${PLATFORM_COMPILE_DEFS}"
 )
 
-target_include_directories(cozmo_engine PUBLIC
+target_include_directories(cozmo_engine 
+  PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # allows reference to engine/
   #PRIVATE

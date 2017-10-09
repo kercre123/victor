@@ -31,3 +31,20 @@ cxx_project(
         ('android', glob(['include/anki/common/**/*_android.h']))
     ]
 )
+
+cxx_project(
+    name = 'cti_common_shared_test',
+    srcs = cxx_src_glob(['shared/test']),
+    platform_srcs = [],
+    headers = cxx_header_glob(['shared/test']),
+    platform_headers = [],
+)
+
+cxx_project(
+    name = 'cti_common_basestation_test',
+    srcs = cxx_src_glob(['basestation/test']),
+    platform_srcs = [],
+    headers = cxx_header_glob(['basestation/test']),
+    platform_headers = [],
+)
+

@@ -46,10 +46,6 @@ target_compile_definitions(cti_vision
   FACE_TRACKER_PROVIDER=3
 )
 
-if(UNIT_TEST)
-  add_subdirectory(basestation/test)
-endif()
-
 if(MATLAB)
   add_subdirectory(robot/mex)
 
@@ -62,3 +58,22 @@ if(MATLAB)
     add_subdirectory(tools/decisionTree)
   endif()
 endif()
+
+if (MACOSX)
+
+  enable_testing()
+
+  include(gtest)
+
+  anki_build_cxx_executable(cti_vision_basestation_test ${ANKI_SRCLIST_DIR})
+
+  target_link_libraries(cti_vision_basestation_test
+    PRIVATE
+    cti_vision
+    gtest
+  )
+
+  add_test(NAME cti_vision_basestation_test COMMAND cti_vision_basestation_test)
+
+endif()
+

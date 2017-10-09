@@ -121,9 +121,9 @@ bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::V
         UnlockId uid = UnlockIdFromString(unlockIdJson.asString());
         _defaultUnlocks.insert(uid);
         
-        PRINT_CH_INFO("ProgressionUnlockComponent.InitDefaults", "ProgressionUnlockComponent.DefaultValue",
-                      "%s defaults to true",
-                      UnlockIdToString(uid));
+        //PRINT_CH_DEBUG("ProgressionUnlockComponent.InitDefaults", "ProgressionUnlockComponent.DefaultValue",
+        //               "%s defaults to true",
+        //               UnlockIdToString(uid));
       }
     }
     else {

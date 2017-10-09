@@ -265,8 +265,8 @@ Result ScoringBSRunnableChooser::TryAddBehavior(IBehaviorPtr behavior)
   else
   {
     // added to the map as expected
-    PRINT_NAMED_DEBUG("ScoringBSRunnableChooser.TryAddBehavior.Addition",
-      "Added behavior '%s' from factory", BehaviorIDToString(behaviorID));
+    // PRINT_NAMED_DEBUG("ScoringBSRunnableChooser.TryAddBehavior.Addition",
+    //  "Added behavior '%s' from factory", BehaviorIDToString(behaviorID));
   }
   
   // return code

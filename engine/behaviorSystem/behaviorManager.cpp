@@ -467,10 +467,10 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
       }
         
       if(strategy != nullptr && behavior != nullptr){
-        PRINT_CH_INFO("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
-                      "Strategy %s maps to behavior %s",
-                      strategy->GetName().c_str(),
-                      BehaviorIDToString(behavior->GetID()));
+        //PRINT_CH_DEBUG("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
+        //              "Strategy %s maps to behavior %s",
+        //              strategy->GetName().c_str(),
+        //              BehaviorIDToString(behavior->GetID()));
         
         // Add the strategy to the trigger
         _reactionTriggerMap[trigger].AddStrategyMapping(strategy, behavior);
