@@ -65,5 +65,41 @@
   },
   "whatsNew.content7.description": {
     "translation": "Start Date: 2/1/2018\nEnd Date: 2/8/2018\nPyramid"
+  },
+  "whatsNew.CodeLab_VerticalLaunch.title": {
+    "translation": "Code Lab 2.0!"
+  },
+  "whatsNew.CodeLab_VerticalLaunch.description": {
+    "translation": "It's all new and filled with featured projects like Light Show!"
+  },
+  "whatsNew.CodeLab_TinyOrchestra.title": {
+    "translation": "Tiny Orchestra!"
+  },
+  "whatsNew.CodeLab_TinyOrchestra.description": {
+    "translation": "It's your own tiny orchestra, and Cubes are your instrument!"
+  },
+  "whatsNew.CodeLab_MagicFortuneTeller.title": {
+    "translation": "Magic Fortune Teller!"
+  },
+  "whatsNew.CodeLab_MagicFortuneTeller.description": {
+    "translation": "Shake Cozmo and have your fortune told!"
+  },
+  "whatsNew.CodeLab_HotPotato.title": {
+    "translation": "Hot Potato!"
+  },
+  "whatsNew.CodeLab_HotPotato.description": {
+    "translation": "When the music stops, don't get stuck with the hot potato!"
+  },
+  "whatsNew.CodeLab_FireTruckAlarm.title": {
+    "translation": "Fire Truck Alarm!"
+  },
+  "whatsNew.CodeLab_FireTruckAlarm.description": {
+    "translation": "Tick, tock! Timers are more fun when they're a Cozmo."
+  },
+  "whatsNew.CodeLab_CubeWhack.title": {
+    "translation": "Cube Whack!"
+  },
+  "whatsNew.CodeLab_CubeWhack.description": {
+    "translation": "Whack that Cube! What's your high score?"
   }
 }
