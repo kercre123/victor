@@ -838,7 +838,7 @@ namespace Anki {
         case BUTTON_POWER: { return 0; }
         default: 
         {
-          AnkiError( 1234, "sim_hal.GetButtonState.UnexpectedButtonType", 648, "Button ID=%d does not have a sensible return value", 1, button_id);
+          AnkiError( 1235, "sim_hal.GetButtonState.UnexpectedButtonType", 649, "Button ID=%d does not have a sensible return value", 1, button_id);
           return 0; 
         }
       }

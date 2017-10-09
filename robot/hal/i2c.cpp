@@ -13,7 +13,7 @@
 #include "MK02F12810.h"
 #include "hal/hardware.h"
 
-#define MAX_IRQS 4    // We have time for up to 4 I2C operations per drop
+#define MAX_IRQS 3    // We have time for up to 4 I2C operations per drop
 
 // Cribbed from core_cm4.h - these versions inline properly
 #define EnableIRQ(IRQn) NVIC->ISER[(uint32_t)((int32_t)IRQn) >> 5] = (uint32_t)(1 << ((uint32_t)((int32_t)IRQn) & (uint32_t)0x1F))
