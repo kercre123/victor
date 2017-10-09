@@ -104,7 +104,7 @@ void Mics::transmit(int16_t* payload) {
 
 #define SETUP_ACC(a,b,c,d) \
   coff_set = DECIMATION_TABLE[0][*source]; \
-    source = &source[4]; \
+  source = &source[2]; \
   acc##d  = coff_set[0]; \
   acc##c += coff_set[1]; \
   acc##b += coff_set[2]; \
@@ -112,62 +112,59 @@ void Mics::transmit(int16_t* payload) {
 
 #define ACCUMULATE(a,b,c,d,block) \
   coff_set = DECIMATION_TABLE[block][*source]; \
-    source = &source[4]; \
+  source = &source[2]; \
   acc##d += coff_set[0]; \
   acc##c += coff_set[1]; \
   acc##b += coff_set[2]; \
   acc##a += coff_set[3]
 
 #define STAGE(a,b,c,d) \
-     SETUP_ACC(a,b,c,d);   \
-    ACCUMULATE(a,b,c,d,1); \
-    ACCUMULATE(a,b,c,d,2); \
-    ACCUMULATE(a,b,c,d,3); \
-    ACCUMULATE(a,b,c,d,4); \
-    ACCUMULATE(a,b,c,d,5); \
-    ACCUMULATE(a,b,c,d,6); \
-    ACCUMULATE(a,b,c,d,7); \
-    *result = acc##a >> 16; \
-    result = &result[4]
+   SETUP_ACC(a,b,c,d);   \
+  ACCUMULATE(a,b,c,d,1); \
+  ACCUMULATE(a,b,c,d,2); \
+  ACCUMULATE(a,b,c,d,3); \
+  ACCUMULATE(a,b,c,d,4); \
+  ACCUMULATE(a,b,c,d,5); \
+  ACCUMULATE(a,b,c,d,6); \
+  ACCUMULATE(a,b,c,d,7); \
+  *result = acc##a >> 16; \
+  result = &result[4]
 
-static void decimate(const uint8_t* input_a, const uint8_t* input_b, int16_t* output) {
+static void decimate(const uint8_t* input, int16_t* output) {
   // Deinterlace the input streams
-  uint8_t deinter[4][32 * SAMPLE_LOOPS];
+  uint8_t deinter[2 * 32 * SAMPLE_LOOPS];
   uint16_t* target = (uint16_t*)&deinter;
-    uint8_t* reverse = (uint8_t*)target;
 
   // Eight LUTs per channel, 4 channels
   for (int i = 0; i < 8 * 4 * SAMPLE_LOOPS; i++) {
     uint16_t word;
 
-        word        = DEINTERLACE_TABLE[0][*(input_a++)];
-        *(target++) = word | DEINTERLACE_TABLE[1][*(input_a++)];
-        word        = DEINTERLACE_TABLE[0][*(input_b++)];
-        *(target++) = word | DEINTERLACE_TABLE[1][*(input_b++)];
+    word        = DEINTERLACE_TABLE[0][*(input++)];
+    *(target++) = word | DEINTERLACE_TABLE[1][*(input++)];
   }
 
   // Run accumulators on the program
-    static int32_t accumulator[3][4];
-    int32_t acc0, acc1, acc2, acc3;
+  static int32_t accumulator[3][4];
+  int32_t acc0, acc1, acc2, acc3;
 
-    const int32_t* coff_set;
+  const int32_t* coff_set;
 
-  for (int channel = 0; channel < 4; channel++) {
-        const uint8_t* source = &deinter[0][channel];
-        int16_t* result = &output[channel];
+  for (int channel = 0; channel < 2; channel++) {
+    const uint8_t* source = &deinter[channel];
+    int16_t* result = &output[channel];
 
-        acc2 = accumulator[2][channel];
-        acc1 = accumulator[1][channel];
-        acc0 = accumulator[0][channel];
-        for (int i = 0; i < SAMPLE_LOOPS; i++) {
-            STAGE(0,1,2,3);
-            STAGE(1,2,3,0);
-            STAGE(2,3,0,1);
-            STAGE(3,0,1,2);
-        }
-        accumulator[2][channel] = acc2;
-        accumulator[1][channel] = acc1;
-        accumulator[0][channel] = acc0;
+    acc2 = accumulator[2][channel];
+    acc1 = accumulator[1][channel];
+    acc0 = accumulator[0][channel];
+    for (int i = 0; i < SAMPLE_LOOPS; i++) {
+        STAGE(0,1,2,3);
+        STAGE(1,2,3,0);
+        STAGE(2,3,0,1);
+        STAGE(3,0,1,2);
+    }
+    accumulator[2][channel] = acc2;
+    accumulator[1][channel] = acc1;
+    accumulator[0][channel] = acc0;
   }
 }
 
@@ -175,14 +172,20 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   static int16_t *index = audio_data[0];
 
   if (DMA1->ISR & DMA_ISR_HTIF2) {
-    decimate(pdm_data[0][0], pdm_data[1][0], index);
     DMA1->IFCR = DMA_IFCR_CHTIF2;
+
+    decimate(pdm_data[0][0], &index[0]);
+    decimate(pdm_data[1][0], &index[2]);
+    index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
-  if (DMA1->ISR & DMA_ISR_TCIF2) {
-    decimate(pdm_data[0][1], pdm_data[1][1], index);
+  else if (DMA1->ISR & DMA_ISR_TCIF2) {
     DMA1->IFCR = DMA_IFCR_CTCIF2;
+
+    decimate(pdm_data[0][1], &index[0]);
+    decimate(pdm_data[1][1], &index[2]);
+    index += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
