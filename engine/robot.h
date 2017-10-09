@@ -96,6 +96,7 @@ class PathComponent;
 class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
+class ProxSensorComponent;
 class TouchSensorComponent;
 class MapComponent;
 
@@ -307,6 +308,9 @@ public:
   
   inline const CliffSensorComponent& GetCliffSensorComponent() const { return *_cliffSensorComponent; }
   inline       CliffSensorComponent& GetCliffSensorComponent()       { return *_cliffSensorComponent; }
+  
+  inline const ProxSensorComponent& GetProxSensorComponent() const { return *_proxSensorComponent; }
+  inline       ProxSensorComponent& GetProxSensorComponent()       { return *_proxSensorComponent; }
   
   inline const TouchSensorComponent& GetTouchSensorComponent() const { return *_touchSensorComponent; }
   inline       TouchSensorComponent& GetTouchSensorComponent()       { return *_touchSensorComponent; }
@@ -781,6 +785,7 @@ protected:
   std::unique_ptr<DockingComponent>       _dockingComponent;
   std::unique_ptr<CarryingComponent>      _carryingComponent;
   std::unique_ptr<CliffSensorComponent>   _cliffSensorComponent;
+  std::unique_ptr<ProxSensorComponent>    _proxSensorComponent;
   std::unique_ptr<TouchSensorComponent>   _touchSensorComponent;
 
   // Hash to not spam debug messages

@@ -201,6 +201,7 @@ namespace Anki {
         for (int i=0 ; i < CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
         }
+        robotState_.proxData = HAL::GetRawProxData();
         
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
 #else

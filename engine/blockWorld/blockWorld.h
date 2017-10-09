@@ -66,6 +66,9 @@ namespace Anki
       // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
       
+      // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
+      void UpdateProxObstaclePoses();
+      
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
       

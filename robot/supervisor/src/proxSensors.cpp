@@ -86,6 +86,14 @@ namespace Anki {
         #endif // COZMO_V2
       }
       
+      u16 GetRawProxValue()
+      {
+        #ifdef COZMO_V2
+        return HAL::GetRawProxData().distance_mm;
+        #else
+        return 0;
+        #endif // COZMO_V2
+      }
       // Stops robot if cliff detected as wheels are driving forward.
       // Delays cliff event to allow pickup event to cancel it in case the
       // reason for the cliff was actually a pickup.

@@ -1052,6 +1052,10 @@ message LogRawCliffData {
   uint_32 length_ms // length of time to record data for. Data will appear in <CACHE>/sensorData/cliffSensors
 }
 
+message LogRawProxData {
+  uint_32 length_ms // length of time to record data for. Data will appear in <CACHE>/sensorData/proxSensor
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // BlockPool
 ///////////////////////////////////////////////////////////////////////////////

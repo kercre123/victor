@@ -1106,6 +1106,12 @@ namespace Anki {
       return 0;
     }
 
+    u16 HAL::GetRawProxData()
+    {
+      const u16 val = static_cast<u16>( proxCenter_->getValue() );
+      return val;
+    }
+
     u16 HAL::GetRawCliffData()
     {
       return static_cast<u16>(cliffSensor_->getValue());
