@@ -21,7 +21,7 @@ namespace Cozmo {
 namespace {
 
 inline bool SetEdgePosition(const Matrix_3x3f &invH,
-                            s32 i, s32 j,
+                            const s32 i, const s32 j,
                             OverheadEdgePoint &edgePoint);
 
 bool LiftInterferesWithEdges(bool isLiftTopInCamera, float liftTopY,
@@ -115,7 +115,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   // do edge detection at all. Note: if this becomes a nuisance, we can revisit this and craft a better
   // hardware slack margin, and try to detect edges below the lift when the lift is on the ground plane projection
   // by shrinking bbox's top Y to liftBottomY
-  const bool kDebugRenderBboxVsLift = false;
+  static const bool kDebugRenderBboxVsLift = false;
 
   // virtual points in the lift to identify whether the lift is our camera view
   float liftBotY = .0f;
@@ -128,11 +128,11 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     // 2) the ground plane does not start at the robot, but in front of it, which accounts for the top of the lift
     //    when the camera is pointing down. Once we start moving the lift up, the fall slack kicks in and gives
     //    breathing room with respect to the top of
-    const float kHardwareFallSlackMargin_mm = LIFT_HARDWARE_FALL_SLACK_MM;
+    static const float kHardwareFallSlackMargin_mm = LIFT_HARDWARE_FALL_SLACK_MM;
 
     // offsets we are going to calculate (point at the top and front of the lift, and at the bottom and back of the lift)
-    Anki::Vec3f offsetTopFrontPoint{LIFT_FRONT_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT};
-    Anki::Vec3f offsetBotBackPoint{LIFT_BACK_WRT_WRIST_JOINT, 0.f,
+    static const Anki::Vec3f offsetTopFrontPoint{LIFT_FRONT_WRT_WRIST_JOINT, 0.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT};
+    static const Anki::Vec3f offsetBotBackPoint{LIFT_BACK_WRT_WRIST_JOINT, 0.f,
                                    LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - kHardwareFallSlackMargin_mm};
 
     // calculate the lift pose with respect to the poseStamp's origin
@@ -150,13 +150,13 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     }
 
     // project lift's top onto camera and store Y
-    Anki::Vec3f liftTopWrtCamera = liftPoseWrtCamera * offsetTopFrontPoint;
+    const Anki::Vec3f liftTopWrtCamera = liftPoseWrtCamera * offsetTopFrontPoint;
     Anki::Point2f liftTopCameraPoint;
     isLiftTopInCamera = _camera.Project3dPoint(liftTopWrtCamera, liftTopCameraPoint);
     liftTopY = liftTopCameraPoint.y();
 
     // project lift's bot onto camera and store Y
-    Anki::Vec3f liftBotWrtCamera = liftPoseWrtCamera * offsetBotBackPoint;
+    const Anki::Vec3f liftBotWrtCamera = liftPoseWrtCamera * offsetBotBackPoint;
     Anki::Point2f liftBotCameraPoint;
     isLiftBotInCamera = _camera.Project3dPoint(liftBotWrtCamera, liftBotCameraPoint);
     liftBotY = liftBotCameraPoint.y();
@@ -190,7 +190,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   // in the middle to help detect soft edges
   // (scaled such that each half has absolute sum of 1.0, so it's normalized)
   _profiler.Tic("EdgeDetection");
-  const SmallMatrix<7, 5, f32> kernel{
+  static const SmallMatrix<7, 5, f32> kernel{
       0.0168, 0.0754, 0.1242, 0.0754, 0.0168,
       0.0377, 0.1689, 0.2784, 0.1689, 0.0377,
       0, 0, 0, 0, 0,
@@ -313,7 +313,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     tempQuad += dispOffset;
     dispImg.DrawQuad(tempQuad, NamedColors::RED, 1);
 
-    for (auto &chain : candidateChains) {
+    for (const auto &chain : candidateChains) {
       if (chain.points.size() >= _kMinChainLength) {
         for (s32 i = 1; i < chain.points.size(); ++i) {
           Anki::Point2f startPoint(chain.points[i - 1].position);
@@ -349,7 +349,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
     edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
 
     // Project edges on the ground back into image for display
-    for (auto &chain : candidateChains) {
+    for (const auto &chain : candidateChains) {
       for (s32 i = 0; i < chain.points.size(); ++i) {
         const Anki::Point2f &groundPoint = chain.points[i].position;
         Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
@@ -373,7 +373,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   roi.GetVisibleGroundQuad(H, image.GetNumCols(), image.GetNumRows(), edgeFrame.groundplane);
 
   // Copy only the chains with at least k points (less is considered noise)
-  for (auto &chain : candidateChains) {
+  for (const auto &chain : candidateChains) {
     // filter chains that don't have a minimum number of points
     if (chain.points.size() >= _kMinChainLength) {
       edgeFrame.chains.emplace_back(std::move(chain));
@@ -382,7 +382,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
 
   // Transform border points into 3D, and into camera view and render
-  const bool kRenderEdgesInCameraView = false;
+  static const bool kRenderEdgesInCameraView = false;
   if (kRenderEdgesInCameraView) {
     _vizManager->EraseSegments("kRenderEdgesInCameraView");
     for (const auto &chain : edgeFrame.chains) {
@@ -391,9 +391,9 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
       }
       for (const auto &point : chain.points) {
         // project the point to 3D
-        Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f),
+        const Pose3d pointAt3D(0.f, Y_AXIS_3D(), Point3f(point.position.x(), point.position.y(), 0.0f),
                          crntPoseData.histState.GetPose(), "ChainPoint");
-        Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToRoot();
+        const Pose3d pointWrtOrigin = pointAt3D.GetWithRespectToRoot();
         // disabled 3D render
         // _vizManager->DrawSegment("kRenderEdgesInCameraView", pointWrtOrigin.GetTranslation(), pointWrtOrigin.GetTranslation() + Vec3f{0,0,30}, NamedColors::WHITE, false);
 
@@ -417,13 +417,13 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
 namespace {
 
 inline bool SetEdgePosition(const Matrix_3x3f& invH,
-                            s32 i, s32 j,
+                            const s32 i, const s32 j,
                             OverheadEdgePoint& edgePoint)
 {
   // Project point onto ground plane
   // Note that b/c we are working transposed, i is x and j is y in the
   // original image.
-  Point3f temp = invH * Point3f(i, j, 1.f);
+  const Point3f temp = invH * Point3f(i, j, 1.f);
   if(temp.z() <= 0.f) {
     PRINT_NAMED_WARNING("VisionSystem.SetEdgePositionHelper.BadProjectedZ", "z=%f", temp.z());
     return false;
@@ -510,7 +510,7 @@ bool LiftInterferesWithEdges(bool isLiftTopInCamera, float liftTopY,
 
 void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector<OverheadEdgePointChain>& imageChains )
 {
-  const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
+  static const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
 
   // can we add to the current image chain?
   bool addToCurrentChain = false;

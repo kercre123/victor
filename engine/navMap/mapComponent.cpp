@@ -540,13 +540,13 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
       // updating the pose of an object, decide if we update the report. As an optimization, we don't update
       // it if the poses are close enough
       const int objectIdInt = objectID.GetValue();
-      OriginToPoseInMapInfo& reportedPosesForObject = _reportedPoses[objectIdInt];
+      const OriginToPoseInMapInfo& reportedPosesForObject = _reportedPoses[objectIdInt];
       const PoseOrigin& curOrigin = object.GetPose().FindRoot();
       const PoseOriginID_t curOriginID = curOrigin.GetID();
       DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(curOriginID),
                      "MapComponent.OnObjectPoseChanged.ObjectOriginNotInOriginList",
                      "ID:%d", curOriginID);
-      auto poseInNewOriginIter = reportedPosesForObject.find( curOriginID );
+      const auto poseInNewOriginIter = reportedPosesForObject.find( curOriginID );
       if ( poseInNewOriginIter != reportedPosesForObject.end() )
       {
         // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
@@ -591,7 +591,6 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::AddObservableObject(const ObservableObject& object, const Pose3d& newPose)
 {
-  const int objectId = object.GetID().GetValue();
   const ObjectFamily objectFam = object.GetFamily();
   const MemoryMapTypes::EContentType addType = ObjectFamilyToMemoryMapContentType(objectFam, true);
   if ( addType == MemoryMapTypes::EContentType::Unknown )
@@ -602,7 +601,9 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
                   ObjectFamilyToString(objectFam) );
     return;
   }
-  
+
+  const int objectId = object.GetID().GetValue();
+
   // find the memory map for the given origin
   const PoseOriginID_t originID = newPose.GetRootID();
   auto matchPair = _navMaps.find(originID);
@@ -682,7 +683,6 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
 {
   using namespace MemoryMapTypes;
     
-  const ObjectID id = object.GetID();
   const ObjectFamily objectFam = object.GetFamily();
   const MemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
   if ( removalType == MemoryMapTypes::EContentType::Unknown )
@@ -693,7 +693,9 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
                         ObjectFamilyToString(objectFam) );
     return;
   }
-  
+
+  const ObjectID id = object.GetID();
+
   // find the memory map for the given origin
   auto matchPair = _navMaps.find(originID);
   if ( matchPair != _navMaps.end() )
@@ -706,7 +708,7 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
         // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
         // however, we have no mechanism for merging data, so for now we are just completely replacing
         // the NodeContent if the ID matches.
-        auto currentCubeData = std::static_pointer_cast<const MemoryMapData_ObservableObject>(data);
+        const auto currentCubeData = std::static_pointer_cast<const MemoryMapData_ObservableObject>(data);
         if (currentCubeData->id == id) 
         {
           return MemoryMapData(removalType, timeStamp); 

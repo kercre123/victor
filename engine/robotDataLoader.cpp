@@ -364,7 +364,7 @@ void RobotDataLoader::LoadAnimationGroups()
 void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps, const std::function<void(const std::string&)>& walkFunc)
 {
   const std::string animationFolder = _platform->pathToResource(Util::Data::Scope::Resources, animationDir);
-  const std::vector<const char*> fileExts = {"json", "bin"};
+  static const std::vector<const char*> fileExts = {"json", "bin"};
   auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, fileExts, true);
 
   for (const auto& path : filePaths) {
@@ -523,7 +523,7 @@ void RobotDataLoader::LoadEmotionEvents()
 
 void RobotDataLoader::LoadBehaviors()
 {
-  const std::string path =  "config/engine/behaviorSystem/behaviors/";
+  static const std::string path = "config/engine/behaviorSystem/behaviors/";
 
   const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
@@ -553,7 +553,7 @@ void RobotDataLoader::LoadBehaviors()
   
 void RobotDataLoader::LoadActivities()
 {
-  const std::string path =  "config/engine/behaviorSystem/activities/";
+  static const std::string path = "config/engine/behaviorSystem/activities/";
   
   const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
@@ -628,7 +628,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 
 void RobotDataLoader::LoadReactionTriggerMap()
 {
-  const std::string filename = "config/engine/behaviorSystem/reactionTrigger_behavior_map.json";
+  static const std::string filename = "config/engine/behaviorSystem/reactionTrigger_behavior_map.json";
 
   Json::Value reactionJSON;
   const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
