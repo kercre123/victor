@@ -237,6 +237,7 @@ void SetWiFiPsk(void)
    }
 }
 
+
 /** User initialization function
  * This function is responsible for setting all the wireless parameters and
  * Setting up any user application code to run on the espressif.
@@ -248,6 +249,7 @@ void user_init(void)
   int8 err;
   int8 db_mod;
 
+  
   wifi_status_led_uninstall();
 
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
@@ -263,7 +265,6 @@ void user_init(void)
   //find correct dB reduction:
   db_mod = ((getHardwareRevision() & 0xFF) >= COZMO_HARDWARE_REV_1_5) ? TPW_MODIFICATION_V1_5 : TPW_MODIFICATION_V1_0;
   system_phy_set_max_tpw(MAX_TPW + db_mod);
-
 
   os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
   os_printf("Hardware rev 1.%d, %dB\r\n",getHardwareRevision()&0xFF, db_mod);
