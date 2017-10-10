@@ -266,6 +266,7 @@ void tryExecuteBackgroundTransfers()
 
   UIViewController *vc = self.window.rootViewController;
   activityController.popoverPresentationController.sourceView = vc.view;
+  activityController.popoverPresentationController.permittedArrowDirections = 0;
 
   [activityController setCompletionWithItemsHandler:^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
     _currentActivityController = nil;
