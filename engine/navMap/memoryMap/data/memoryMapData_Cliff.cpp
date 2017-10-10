@@ -16,8 +16,9 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MemoryMapData_Cliff::MemoryMapData_Cliff()
-: MemoryMapData(MemoryMapTypes::EContentType::Cliff)
+MemoryMapData_Cliff::MemoryMapData_Cliff(Vec2f dir, TimeStamp_t t)
+: MemoryMapData(MemoryMapTypes::EContentType::Cliff, t)
+, directionality(dir)
 {
 
 }

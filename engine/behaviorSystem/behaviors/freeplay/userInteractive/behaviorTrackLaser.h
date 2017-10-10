@@ -50,6 +50,7 @@ private:
     RotateToWatchingNewArea,
     WaitingForExposureChange,
     WaitingForLaser,
+    RespondToLaser,
     TrackLaser,
     Pouncing,
     GetOutBored,
@@ -87,7 +88,7 @@ private:
     float    searchAmplitude_deg; // E.g. 90deg
     
     // Various timeouts
-    float    maxTimeSinceNoLaser_ms; // Eg.g 3000ms (3 sec)
+    Util::GraphEvaluator2d maxLostLaserTimeoutGraph_sec; // E.g. time behavior's been running -> s to search
     float    maxTimeBehaviorTimeout_sec;  // E.g. 30sec
     float    maxTimeBeforeRotate_sec;  // E.g. 4sec
     float    trackingTimeout_sec;  // E.g. 1.5fsec
@@ -144,12 +145,14 @@ private:
   LaserObservation _lastLaserObservation;
   bool  _haveEverConfirmedLaser = false;
   bool  _haveAdjustedAnimations = false;
+  bool  _shouldSendTrackingObjectiveAchieved = false;
   
   s16 _imageMean = -1;
   TimeStamp_t _exposureChangedTime_ms = 0;
   
   float _lastTimeRotate = 0.f;
   float _startedTracking_sec = 0.f;
+  float _currentLostLaserTimeout_s = 0.f;
   
   State _state = State::Inactive;
   
@@ -173,6 +176,7 @@ private:
   void TransitionToRotateToWatchingNewArea(Robot& robot);
   void TransitionToWaitForExposureChange(Robot& robot);
   void TransitionToWaitForLaser(Robot& robot);
+  void TransitionToRespondToLaser(Robot& robot);
   void TransitionToTrackLaser(Robot& robot);
   void TransitionToPounce(Robot& robot);
   void TransitionToGetOutBored(Robot& robot);

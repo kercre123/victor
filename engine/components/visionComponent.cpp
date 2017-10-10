@@ -20,6 +20,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
@@ -461,15 +462,21 @@ namespace Cozmo {
       // Get most recent pose data in history
       Anki::Cozmo::HistRobotState lastHistState;
       _robot.GetStateHistory()->GetLastStateWithFrameID(_robot.GetPoseFrameID(), lastHistState);
-           
-      Lock();
-      _nextPoseData.histState = imageHistState;
-      _nextPoseData.timeStamp = imageHistTimeStamp;
-      _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.histState, _nextPoseData.timeStamp);
-      _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.histState.GetHeadAngle_rad(),
-                                                                     _nextPoseData.groundPlaneHomography);
-      _nextPoseData.imuDataHistory = _imuHistory;
-      Unlock();
+      
+      {
+        const Pose3d& cameraPose = _robot.GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
+        Matrix_3x3f groundPlaneHomography;
+        const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
+                                                                    groundPlaneHomography);
+        Lock();
+        _nextPoseData.Set(imageHistTimeStamp,
+                          imageHistState,
+                          cameraPose,
+                          groundPlaneVisible,
+                          groundPlaneHomography,
+                          _imuHistory);
+        Unlock();
+      }
       
       // Experimental:
       //UpdateOverheadMap(image, _nextPoseData);
@@ -1034,7 +1041,7 @@ namespace Cozmo {
       }
     } // if(!procResult.observedMarkers.empty())
 
-    lastResult = _robot.GetBlockWorld().Update(observedMarkers);
+    lastResult = _robot.GetBlockWorld().UpdateObservedMarkers(observedMarkers);
     if(RESULT_OK != lastResult)
     {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionResults.BlockWorldUpdateFailed", "");
@@ -1124,7 +1131,7 @@ namespace Cozmo {
   {
     for(auto & edgeFrame : procResult.overheadEdges)
     {
-      _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
+      _robot.GetMapComponent().ProcessVisionOverheadEdges(edgeFrame);
     }
     
     return RESULT_OK;
@@ -1412,7 +1419,7 @@ namespace Cozmo {
             WasBodyRotatingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
   }
 
-  void VisionComponent::AddLiftOccluder(TimeStamp_t t_request)
+  void VisionComponent::AddLiftOccluder(const TimeStamp_t t_request)
   {
     // TODO: More precise check for position of lift in FOV given head angle
     HistRobotState histState;
@@ -1437,29 +1444,12 @@ namespace Cozmo {
     const Transform3d& liftPoseWrtCamera = _robot.GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
                                                                             histState.GetHeadAngle_rad());
     
-    const f32 padding = _robot.IsPhysical() ? LIFT_HARDWARE_FALL_SLACK_MM : 0.f;
-    std::vector<Point3f> liftCrossBar{
-      // NOTE: adding points for front and back because which will be outermost in projection
-      //       depends on lift angle, so let Occluder, which uses bounding box of all the
-      //       points, take care of that for us
-      
-      // Top:
-      Point3f(LIFT_FRONT_WRT_WRIST_JOINT, -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
-      Point3f(LIFT_FRONT_WRT_WRIST_JOINT,  LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
-      Point3f(LIFT_BACK_WRT_WRIST_JOINT,  -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
-      Point3f(LIFT_BACK_WRT_WRIST_JOINT,   LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
-      
-      // Bottom
-      Point3f(LIFT_FRONT_WRT_WRIST_JOINT, -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
-      Point3f(LIFT_FRONT_WRT_WRIST_JOINT,  LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
-      Point3f(LIFT_BACK_WRT_WRIST_JOINT,  -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
-      Point3f(LIFT_BACK_WRT_WRIST_JOINT,   LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
-    };
-    
-    liftPoseWrtCamera.ApplyTo(liftCrossBar, liftCrossBar);
+    std::vector<Point3f> liftCrossBar;
+    liftPoseWrtCamera.ApplyTo(_liftCrossBarSource, liftCrossBar);
     
     std::vector<Point2f> liftCrossBarProj;
     _camera.Project3dPoints(liftCrossBar, liftCrossBarProj);
+
     _camera.AddOccluder(liftCrossBarProj, liftPoseWrtCamera.GetTranslation().Length());
   }
   
@@ -2402,6 +2392,30 @@ namespace Cozmo {
   f32 VisionComponent::GetBodyTurnSpeedThresh_degPerSec() const
   {
     return kBodyTurnSpeedThreshBlock_degs;
+  }
+
+  void VisionComponent::SetPhysicalRobot(const bool isPhysical)
+  {
+    const f32 padding = isPhysical ? LIFT_HARDWARE_FALL_SLACK_MM : 0.f;
+    const std::vector<Point3f> liftCrossBar{
+      // NOTE: adding points for front and back because which will be outermost in projection
+      //       depends on lift angle, so let Occluder, which uses bounding box of all the
+      //       points, take care of that for us
+
+      // Top:
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT, -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT,  LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,  -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,   LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+
+      // Bottom
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT, -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT,  LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,  -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,   LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+    };
+
+    _liftCrossBarSource = std::move(liftCrossBar);
   }
   
 #pragma mark -

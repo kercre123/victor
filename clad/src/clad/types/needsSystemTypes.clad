@@ -101,6 +101,7 @@ enum int_32 NeedsActionId
   SeeFace,
   PlacedOnSide,
   BoredOnSide,
+  Laser_Sparked,
 
   Count
 }

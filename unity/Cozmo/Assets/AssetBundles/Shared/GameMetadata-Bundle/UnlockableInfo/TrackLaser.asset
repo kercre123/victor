@@ -15,7 +15,6 @@ MonoBehaviour:
     _EnumValueAsString: TrackLaser
     _EnumValue: 64
   UnlockableType: 1
-  _ComingSoon: 0
   DescriptionKey: unlockable.TrackLaser.Description
   TitleKey: unlockable.TrackLaser.Title
   SparkButtonDescription: unlockable.TrackLaser.SparkButtonDescription
@@ -29,6 +28,6 @@ MonoBehaviour:
     _EnumValue: 20
   CoreUpgradeIcon: {fileID: 21300000, guid: 73938083e71544931ae93550739df331, type: 3}
   CubesRequired: 0
-  SortOrder: 900
+  SortOrder: 60
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0

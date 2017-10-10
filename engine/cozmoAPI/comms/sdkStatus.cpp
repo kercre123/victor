@@ -90,6 +90,7 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
   if (_isInExternalSdkMode) {
     // Turn off all Cube Lights
     _externalInterface->Broadcast( GToE(ExternalInterface::EnableCubeSleep(true, true)) );
+    _externalInterface->Broadcast( GToE(ExternalInterface::EnableLightStates(false, -1)) );
   }
   
   // Ensure auto-exposure is (re) enabled

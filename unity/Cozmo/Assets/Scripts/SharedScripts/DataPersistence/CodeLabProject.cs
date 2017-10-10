@@ -7,26 +7,30 @@ namespace DataPersistence {
     public Guid ProjectUUID;
     public bool IsVertical;
     public string ProjectXML;
+    public string ProjectJSON;
     public string ProjectName;
     public DateTime DateTimeCreatedUTC;
     public DateTime DateTimeLastModifiedUTC;
+
+    // History:
+    // App version     VersionNum
+    // 1.6             1 
+    // 1.7             1
+    // 2.0             2
+    // 2.1             3
+    public static uint kCurrentVersionNum = 3;
 
     public CodeLabProject() {
       ProjectUUID = Guid.NewGuid();
       DateTimeCreatedUTC = DateTime.UtcNow;
       DateTimeLastModifiedUTC = DateTime.UtcNow;
 
-      // History:
-      // App version     VersionNum
-      // 1.6             1 
-      // 1.7             1
-      // 2.0             2
-      VersionNum = 2;
+      VersionNum = kCurrentVersionNum;
     }
 
-    public CodeLabProject(string projectName, string projectXML, bool isVertical) : this() {
+    public CodeLabProject(string projectName, string projectJSON, bool isVertical) : this() {
       ProjectName = projectName;
-      ProjectXML = projectXML;
+      ProjectJSON = projectJSON;
       IsVertical = isVertical;
     }
 

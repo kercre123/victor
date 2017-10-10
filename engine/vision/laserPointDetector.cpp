@@ -76,14 +76,14 @@ namespace Params
 LaserPointDetector::LaserPointDetector(VizManager* vizManager)
 : _vizManager(vizManager)
 {
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline static u8 GetValue(const u8 p) {
   return p;
 }
-  
+
 inline static u8 GetValue(const Vision::PixelRGB& p) {
   return p.max();
 }
@@ -97,57 +97,57 @@ static void ConnCompValidityHelper(const Array2d<s32>& labelImage,
                                    std::vector<bool> &isConnCompValid)
 {
   DEV_ASSERT(!img.IsEmpty(), "LaserPointDetector.ConnCompValidityHelper.EmptyImage");
-  
+
   DEV_ASSERT(labelImage.GetNumRows() == img.GetNumRows() &&
              labelImage.GetNumCols() == img.GetNumCols(),
              "LaserPointDetector.ConnCompValidityHelper.LabelImageSizeMismatch");
-  
+
   DEV_ASSERT(!isConnCompValid.empty(), "LaserPointDetector.ConnCompValidityHelper.EmptyValidityVector");
-  
+
   // Skip background label by starting iStat=1
   for(s32 iStat=1; iStat<ccStats.size(); ++iStat)
   {
     const Vision::Image::ConnectedComponentStats& stat = ccStats[iStat];
-    
+
     // Get ROI around this connected component in the label image and the color/gray image
     Rectangle<s32> bbox(stat.boundingBox);
     Array2d<s32> labelROI  = labelImage.GetROI(bbox);
     const ImageType imgROI = img.GetROI(bbox);
-    
+
     // Check if any pixel in the connected component is above high threshold
     bool markedValid = false;
     for(s32 i=0; i<labelROI.GetNumRows(); ++i)
     {
       const s32* labelROI_i = labelROI.GetRow(i);
       const auto* imgROI_i = imgROI.GetRow(i);
-      
+
       for(s32 j=0; j<labelROI.GetNumCols(); ++j)
       {
         const s32 label = labelROI_i[j];
-        
+
         if((label == iStat) && (GetValue(imgROI_i[j]) > highThreshold) )
         {
           markedValid = true;
-          
+
           // As soon as any pixel is above high threshold, we can quit
           // looking at this connected component
           break;
         }
       }
-      
+
       if(markedValid)
       {
         break;
       }
     }
-    
+
     if(markedValid)
     {
       isConnCompValid[iStat] = true;
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgColor,
                                                    const Vision::Image& imgGray,
@@ -155,10 +155,10 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
                                                    const u8 highThreshold)
 {
   DEV_ASSERT(!imgGray.IsEmpty(), "LaserPointDetector.FindConnectedComponents.EmptyGrayImage");
-  
+
   // Find pixels above the low threshold
   Vision::Image aboveLowThreshImg;
-  
+
   const bool isColorAvailable = !imgColor.IsEmpty();
   if(isColorAvailable)
   {
@@ -171,24 +171,24 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
     // Simple grayscale threshold
     aboveLowThreshImg = imgGray.Threshold(lowThreshold);
   }
-  
+
   DEV_ASSERT(aboveLowThreshImg.GetNumRows() == imgGray.GetNumRows() &&
              aboveLowThreshImg.GetNumCols() == imgGray.GetNumCols(),
              "LaserPointDetector.FindConnectedComponents.LowThreshImageSizeMismatch");
-  
+
   // Get connected components of the regions above the low threshold
   Array2d<s32> labelImage;
   std::vector<Vision::Image::ConnectedComponentStats> allConnCompStats;
   size_t numRegions = aboveLowThreshImg.GetConnectedComponents(labelImage, allConnCompStats);
-  
+
   // Make the min/max area threshold resolution-independent
   const f32 tuningArea = Params::kRadiusAtResolution.x() * Params::kRadiusAtResolution.y();
   const f32 minAreaFraction = (f32)(Params::kLaser_minRadius_pix * Params::kLaser_minRadius_pix * M_PI_F)/tuningArea;
   const f32 maxAreaFraction = (f32)(Params::kLaser_maxRadius_pix * Params::kLaser_maxRadius_pix * M_PI_F)/tuningArea;
-  
+
   const size_t minArea = minAreaFraction * (f32)imgGray.GetNumElements();
   const size_t maxArea = maxAreaFraction * (f32)imgGray.GetNumElements();
-  
+
   // If any pixel within a connected component is above the high threshold,
   // mark that connected component as one we want to keep
   std::vector<bool> isConnCompValid(numRegions,false);
@@ -200,7 +200,7 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
   {
     ConnCompValidityHelper(labelImage, allConnCompStats, imgGray, highThreshold, isConnCompValid);
   }
-  
+
   // Keep only connected components we selected above that are also within area limits
   // Note: start at iStat=1 because we don't care about the 0th connected component, which is "background"
   _connCompStats.clear();
@@ -215,7 +215,7 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
       }
     }
   }
-  
+
   if(DEBUG_LASER_DETECTION > 1)
   {
     _debugImage.Allocate(aboveLowThreshImg.GetNumRows(), aboveLowThreshImg.GetNumCols());
@@ -225,7 +225,7 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
     {
       const s32* labelImage_i = labelImage.GetRow(i);
       Vision::PixelRGB* debugImg_i = _debugImage.GetRow(i);
-      
+
       for(s32 j=0; j<labelImage.GetNumCols(); ++j)
       {
         const s32 label = labelImage_i[j];
@@ -233,10 +233,10 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
       }
     }
   }
-  
+
   return RESULT_OK;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
                                   const VisionPoseData& poseData,
@@ -249,22 +249,22 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     // Can't look for laser points unless we can see the ground
     return RESULT_OK;
   }
-  
+
   Point2f centroid(0.f,0.f);
   Point2f groundPlaneCentroid(0.f,0.f);
   Point2f groundCentroidInImage(0.f, 0.f);
-  
+
   const Vision::ImageCache::Size scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier,
                                                                          Vision::ResizeMethod::NearestNeighbor);
-  
+
   Vision::ImageRGB imageColor;
   if(imageCache.HasColor())
   {
     imageColor = imageCache.GetRGB(scaleSize);
   }
-  
+
   const Vision::Image& imageGray = imageCache.GetGray(scaleSize);
-  
+
   // Choose the thresholds based on the exposure
   const u8 lowThreshold  = (isDarkExposure ? Params::kLaser_lowThreshold_darkExposure  : Params::kLaser_lowThreshold_normalExposure );
   const u8 highThreshold = (isDarkExposure ? Params::kLaser_highThreshold_darkExposure : Params::kLaser_highThreshold_normalExposure);
@@ -276,15 +276,15 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     PRINT_NAMED_WARNING("LaserPointDetector.Detect.FindConnectedComponentsFailed", "");
     return result;
   }
-  
+
   // Get centroid of all the motion within the ground plane, if we have one to reason about
   Quad2f imgQuad;
   poseData.groundPlaneROI.GetImageQuad(poseData.groundPlaneHomography,
                                        imageCache.GetOrigNumCols(), imageCache.GetOrigNumRows(),
                                        imgQuad);
-  
+
   imgQuad *= 1.f/(f32)Params::kLaser_scaleMultiplier;
-  
+
   // Find centroid(s) of saliency inside the ground plane
   const f32 imgQuadArea = imgQuad.ComputeArea();
   f32 groundRegionArea = FindLargestRegionCentroid(imageColor, imageGray, imgQuad, isDarkExposure,
@@ -299,7 +299,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
   // Switch centroid back to original resolution, since that's where the
   // homography information is valid
   groundCentroidInImage *= (f32)Params::kLaser_scaleMultiplier;
-  
+
   // Map the centroid onto the ground plane, by doing inv(H) * centroid
   Point3f temp;
   Result solveResult = LeastSquares(poseData.groundPlaneHomography,
@@ -316,7 +316,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     PRINT_NAMED_WARNING("LaserPointDetector.Detect.BadProjectedZ",
                         "z<=0 (%f) when projecting laser centroid to ground. Bad homography at head angle %.3fdeg?",
                         temp.z(), RAD_TO_DEG(poseData.histState.GetHeadAngle_rad()));
-    
+
     // Don't report this centroid
     groundRegionArea = 0.f;
     groundCentroidInImage = 0.f;
@@ -324,7 +324,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
     const f32 divisor = 1.f/temp.z();
     groundPlaneCentroid.x() = temp.x() * divisor;
     groundPlaneCentroid.y() = temp.y() * divisor;
-    
+
     // This is just a sanity check that the centroid is reasonable
     if(ANKI_DEVELOPER_CODE)
     {
@@ -338,30 +338,30 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
       }
     }
   }
-  
+
   if(DEBUG_LASER_DETECTION)
   {
     PRINT_CH_INFO(kLogChannelName, "LaserPointDetector.Detect.FoundCentroid",
                   "Found %.1f-pixel laser point centered at (%.1f,%.1f)",
                   groundRegionArea, groundPlaneCentroid.x(), groundPlaneCentroid.y());
   }
-  
+
   {
     // Nove that we convert area to fraction of image area (to be resolution-independent)
     ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray.GetTimestamp(),
                                                           groundRegionArea / imgQuadArea,
                                                           std::round(groundPlaneCentroid.x()),
                                                           std::round(groundPlaneCentroid.y()));
-    
+
     points.emplace_back(std::move(laserPoint));
   }
-  
+
   if(Params::kLaser_DrawDetectionsInCameraView && (nullptr != _vizManager))
   {
     const f32 groundOvalSize = std::max(0.5f, Params::kLaser_scaleMultiplier * std::sqrtf(groundRegionArea / M_PI_F));
     _vizManager->DrawCameraOval(groundCentroidInImage, groundOvalSize, groundOvalSize, NamedColors::GREEN);
   }
-  
+
   if(DEBUG_LASER_DETECTION > 1)
   {
     Vision::ImageRGB saliencyImageFullSize;
@@ -370,14 +370,14 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
       saliencyImageFullSize.Allocate(imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols());
       _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
     }
-    
+
     _debugImage.DrawCircle(groundCentroidInImage * (1.f / (f32)Params::kLaser_scaleMultiplier), NamedColors::RED, 4);
     char tempText[128];
     //snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, salientPoint.img_x, salientPoint.img_y);
     //cv::putText(saliencyImgDisp.get_CvMat_(), std::string(tempText),
     //            cv::Point(0,saliencyImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
     debugImageRGBs.push_back({"LaserSaliencyImage", _debugImage});
-    
+
     Vision::ImageRGB saliencyImageDispGround(poseData.groundPlaneROI.GetOverheadImage(saliencyImageFullSize,
                                                                                       poseData.groundPlaneHomography));
     if(groundRegionArea > 0.f) {
@@ -394,9 +394,104 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
   }
 
   return RESULT_OK;
+
+} // Detect (with pose)
+
+Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
+                                  const bool isDarkExposure,
+                                  std::list<ExternalInterface::RobotObservedLaserPoint>& points,
+                                  DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+{
+
+  Point2f centroid(0.f,0.f);
+  Point2f centroidInImage(0.f, 0.f);
+
+  const Vision::ImageCache::Size scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier,
+                                                                         Vision::ResizeMethod::NearestNeighbor);
+
+  Vision::ImageRGB imageColor;
+  if(imageCache.HasColor())
+  {
+    imageColor = imageCache.GetRGB(scaleSize);
+  }
+
+  const Vision::Image& imageGray = imageCache.GetGray(scaleSize);
+
+  // Choose the thresholds based on the exposure
+  const u8 lowThreshold  = (isDarkExposure ? Params::kLaser_lowThreshold_darkExposure  : Params::kLaser_lowThreshold_normalExposure );
+  const u8 highThreshold = (isDarkExposure ? Params::kLaser_highThreshold_darkExposure : Params::kLaser_highThreshold_normalExposure);
+
+  Result result = FindConnectedComponents(imageColor, imageGray, lowThreshold, highThreshold);
+
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_WARNING("LaserPointDetector.Detect.FindConnectedComponentsFailed", "");
+    return result;
+  }
+
+  // Find centroid(s) of saliency inside the image
+  // Use a whole image quad to search everywhere
+  const Quad2f wholeImageQuad(Point2f(0, 0),
+                              Point2f(0, imageGray.GetNumRows()),
+                              Point2f(imageGray.GetNumCols(), 0),
+                              Point2f(imageGray.GetNumCols(), imageGray.GetNumRows()));
   
-} // FindCentroids()
-  
+  f32 regionArea = FindLargestRegionCentroid(imageColor, imageGray,
+                                             wholeImageQuad,
+                                             isDarkExposure,
+                                             centroidInImage);
+
+  if(Util::IsNearZero(regionArea))
+  {
+    // No laser point
+    return RESULT_OK;
+  }
+
+  // Switch centroid back to original resolution, since that's where the
+  // homography information is valid
+  centroidInImage *= (f32)Params::kLaser_scaleMultiplier;
+
+
+  if(DEBUG_LASER_DETECTION)
+  {
+    PRINT_CH_INFO(kLogChannelName, "LaserPointDetector.Detect.FoundCentroid",
+                  "Found %.1f-pixel laser point centered at (%.1f,%.1f)",
+                  regionArea, centroidInImage.x(), centroidInImage.y());
+  }
+
+  {
+    // Note that we convert area to fraction of image area (to be resolution-independent)
+    ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray.GetTimestamp(),
+                                                          regionArea / imageGray.GetNumElements(),
+                                                          std::round(centroidInImage.x()),
+                                                          std::round(centroidInImage.y()));
+
+    points.emplace_back(std::move(laserPoint));
+  }
+
+  if(Params::kLaser_DrawDetectionsInCameraView && (nullptr != _vizManager))
+  {
+    const f32 groundOvalSize = std::max(0.5f, Params::kLaser_scaleMultiplier * std::sqrtf(regionArea / M_PI_F));
+    _vizManager->DrawCameraOval(centroidInImage, groundOvalSize, groundOvalSize, NamedColors::GREEN);
+  }
+
+  if(DEBUG_LASER_DETECTION > 1)
+  {
+    Vision::ImageRGB saliencyImageFullSize;
+    if(Params::kLaser_scaleMultiplier > 1)
+    {
+      saliencyImageFullSize.Allocate(imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols());
+      _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
+    }
+
+    _debugImage.DrawCircle(centroidInImage * (1.f / (f32)Params::kLaser_scaleMultiplier), NamedColors::RED, 4);
+    debugImageRGBs.push_back({"LaserSaliencyImage", _debugImage});
+  }
+
+  return RESULT_OK;
+
+} // Detect (without pose)
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 size_t LaserPointDetector::FindLargestRegionCentroid(const Vision::ImageRGB& imgColor,
                                                      const Vision::Image&    imgGray,
@@ -405,11 +500,11 @@ size_t LaserPointDetector::FindLargestRegionCentroid(const Vision::ImageRGB& img
                                                      Point2f& centroid)
 {
   const bool isColorAvailable = !imgColor.IsEmpty();
-  
+
   const f32 darkThresholdFraction = (isDarkExposure ?
                                      Params::kLaser_darkThresholdFraction_darkExposure :
                                      Params::kLaser_darkThresholdFraction_normalExposure);
-  
+
   // Find largest connected component that passes the filter
   size_t largestArea = 0;
   for(auto const& stat : _connCompStats)
@@ -424,7 +519,7 @@ size_t LaserPointDetector::FindLargestRegionCentroid(const Vision::ImageRGB& img
       centroid = stat.centroid;
     }
   }
-  
+
   return largestArea;
 }
 

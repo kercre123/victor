@@ -13,12 +13,10 @@ namespace Cozmo.UI {
   public class ChallengeStartEdgeCaseAlertController {
     private ModalPriorityData _BasePriority;
     private ChallengeEdgeCases _EdgeCaseBitfield;
-    private HasHiccupsAlertController _HasHiccupsAlertController;
 
     public ChallengeStartEdgeCaseAlertController(ModalPriorityData basePriority, ChallengeEdgeCases checkEdgeCaseBitfield) {
       _BasePriority = basePriority;
       _EdgeCaseBitfield = checkEdgeCaseBitfield;
-      _HasHiccupsAlertController = new HasHiccupsAlertController();
     }
 
     public bool ShowEdgeCaseAlertIfNeeded(string challengeTitleLocKey,
@@ -48,7 +46,7 @@ namespace Cozmo.UI {
           OpenCozmoNotOnTreadsAlert();
         }
         else if (CheckEdgeCase(ChallengeEdgeCases.CheckForHiccups) && robot.HasHiccups) {
-          _HasHiccupsAlertController.OpenCozmoHasHiccupsAlert(_BasePriority);
+          HasHiccupsAlertController.Instance.OpenCozmoHasHiccupsAlert(_BasePriority);
         }
         else if (CheckEdgeCase(ChallengeEdgeCases.CheckForOS) && !isOSSupported) {
           OpenOsNotSupportedAlert(requiredOs);
@@ -66,9 +64,7 @@ namespace Cozmo.UI {
     }
 
     public void CleanUp() {
-      if (_HasHiccupsAlertController != null) {
-        _HasHiccupsAlertController.Cleanup();
-      }
+      HasHiccupsAlertController.Instance.CloseCozmoHasHiccupsAlert();
     }
 
     // Cozmo isn't done driving off the charger.
@@ -105,7 +101,7 @@ namespace Cozmo.UI {
                    LocalizationKeys.kUnlockableOSNotSupportedTitle,
                    LocalizationKeys.kUnlockableOSNotSupportedDescription,
                    new AlertModalButtonData("os_not_supported_okay_button", LocalizationKeys.kButtonOkay),
-                   showCloseButton: true,
+                   showCloseButton: false,
                    descLocArgs: new object[] { requiredOs });
 
       UIManager.OpenAlert(osNotSupportedAlertData, ModalPriorityData.CreateSlightlyHigherData(_BasePriority));

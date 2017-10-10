@@ -34,7 +34,8 @@ rm -rf node_modules
 echo removing dist
 rm -rf dist
 
-echo reverting msg
-git checkout -- msg
-git clean -fd msg
-
+echo reverting msg/json
+cd msg
+git checkout -- json
+git clean -fd json
+cd ..

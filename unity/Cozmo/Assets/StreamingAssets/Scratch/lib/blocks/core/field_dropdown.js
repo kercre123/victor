@@ -204,8 +204,12 @@ Blockly.FieldDropdown.prototype.showEditor_ = function() {
   }
   function callbackTouchEnd(e) {
     var control = this.getOwnerControl(/** @type {Node} */ (e.target));
+    // *** ANKI CHANGE ***
+    // We don't need to perform the action because Closure does handle this already.
+    // We do however want to clear the highlight from the menu item.
+    control.handleMouseUp(e);
     // Activate the menu item.
-    control.performActionInternal(e);
+    // control.performActionInternal(e);
   }
   menu.getHandler().listen(menu.getElement(), goog.events.EventType.TOUCHSTART,
                            callbackTouchStart);

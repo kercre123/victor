@@ -9,7 +9,7 @@ html {
 body {
   font-family: 'Avenir Next Bold';
   user-select: none;
-  background-color: #525253;
+  background-color: #5e5e5e;
 
   /* prevent page from scrolling inside the webview */
   position: fixed;
@@ -40,8 +40,15 @@ button:focus {
   outline: none;
 }
 
-
-#projects {position: relative; width: 100%; height: 100vh; color: #1fadda; visibility: hidden;}
+#projects {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  color: #1fadda;
+  visibility: hidden;
+}
 
 #projects .hd {
   display: flex;
@@ -64,11 +71,79 @@ button:focus {
 #projects .hd #btn-close-page img {width: 100%; height: 100%;}
 
 
-#projects .bd {height: 72vh; padding: 3vh 0 0 0;}
-#projects #projects-list {
-  height: 100%; list-style-type: none; padding: 0 0 9vh 7vw; margin: 0; text-align: left;
-  overflow-x: scroll; overflow-y: hidden; white-space: nowrap;
+#projects .bd {
+  position: relative;
+  height: 70vh;
+  padding: 3vh 0 0 0;
+  color: #fff;
+  overflow-x: scroll;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+}
+
+#projects .tab-hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+  width: 50%;
+  height: 100%;
+  background-repeat: no-repeat;
+  font-size: 3.5vh;
+}
+
+#projects .tab-hero .tab-hero-text {
+  position: absolute;
+  left: 8vh;
+  bottom: 6vh;
+  width: 85%;
+  padding: 0 5% 0 0;
+  line-height: 1.25em;
+}
+
+#projects .tab-hero .tab-hero-text .tab-hero-title {
+  font-size: 1.25em;
+  text-transform: uppercase;
+  margin: 0;
+  white-space: pre;
+  line-height: 1.1em;
+}
+#projects .tab-hero .tab-hero-text .tab-hero-detail {
+  margin: 1vh 0 0 0;
+  font-weight: normal;
+  color: #d2d3d4;
+  font-family: 'Avenir Next';
+  padding-right: .5vw;
+}
+
+#projects #horizontal-tab-hero {
+  background-image: url(images/img_codeLab_horizontalBG.png);
+  background-position: 30px -8px;
+  background-size: 100%;
+}
+#projects #vertical-tab-hero {
+  background-image: url(images/img_codeLab_verticalBG.png);
+  background-position: top left;
+  background-size: 100% auto;
+}
+#projects #featured-tab-hero {
+  background-image: url(images/img_codeLab_featuredBG.png);
+  background-size: 100%;
+}
+
+
+
+
+#projects #projects-list {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  list-style-type: none;
+  padding: 0 0 9vh 50%;   /* use padding to shift so dragging hero img scrolls projects */
+  margin: 0;
+  text-align: left;
+  white-space: nowrap;
 }
 #projects-list li {
   max-height: 350px;
@@ -81,10 +156,13 @@ button:focus {
   min-width: 145px;
   white-space: normal;
   text-align: left;
-  margin-right: 1.25vw;
+  margin-right: 2vw;
   display: none;
   cursor: pointer;
-  font-size: 4.3vh;
+  font-size: 3.6vh;
+  line-height: 1.4em;
+  color: #555657;
+  text-transform: uppercase;
 }
 .project img {height: 100%; width: auto;}
 
@@ -92,8 +170,7 @@ button:focus {
   position: absolute;
   bottom: 0;
   width: 100%;
-  padding: 0 7% 4% 7%;
-  color: #fff;
+  padding: 0 7% 7.5% 7%;
   line-height: 1.2em;
 }
 .project .project-title.long-title {
@@ -104,20 +181,25 @@ button:focus {
   position: absolute;
   top: 0;
   width: 100%;
-  color: #8A897D;
-  font-size: 70%;
-  padding: 10% 0 0 7%;
-  text-transform: uppercase;
+  font-size: 80%;
+  color: #fff;
+  padding: 7% 0 0 7%;
 }
 .project .btn-delete-project {
   position: absolute;
   top: 2vh;
-  right: 2vh;
-  width: 7vh;
+  right: 1vh;
+  width: 8vh;
   height: 7vh;
 }
 
-#new-project-label-outer {
+
+.project-new {
+  display: inline-block;
+  margin-right: 4vw;
+}
+
+.project-new .new-project-label-outer {
   position: absolute;
   top: 0;
   left: 0;
@@ -125,21 +207,12 @@ button:focus {
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
-}
-
-#project-new.project-new {
-  display: inline-block;
-}
-#project-new #new-project-label {
-  color: #fff;
+  justify-content: flex-end;
+  padding: 7%;
   text-align: center;
-  line-height: 1.1em;
-  word-spacing: 9999px;  /* each word on its own line */
-  margin-top: 5%;
-  font-size: 110%;
+}
+.project-new .new-project-label {
+  font-size: 102%;
 }
 
 .project.project-sample {
@@ -170,13 +243,19 @@ button:focus {
   cursor: pointer;
 }
 
-
-#projects #projects-list .divider {
-  display: inline-block;
-  height: 100%;
-  width: 2px;
-  background-color: #767677;
-  margin-right: 1vw;
+.project-featured .project-title {
+  top: 2vh;
+  color: #e3e4e5;
+}
+.project-featured .project-description {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  padding: 0 7% 5% 7%;
+  text-transform: none;
+  line-height: 1.3em;
+  font-family: 'Avenir Next';
+  color: #353535;
 }
 
 
@@ -185,7 +264,7 @@ button:focus {
   bottom: 0;
   width: 100%;
   height: 15vh;
-  padding: 0 0 2.5vh 0;
+  padding: 0;
   text-align: right;
   background-color: #575a5b;
   border-top: 1px solid #989899;
@@ -223,35 +302,55 @@ button:focus {
   margin-left: .9em;
 }
 
-#tabs {
+#project-tabs {
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  align-content: center;
+  align-content: flex-end;
+  padding: 0 1vw;
 }
-#tabs .tab {
+
+#project-tabs .project-tab {
   display: inline-block;
-  font-size: 4vh;
+  font-family: 'Avenir Next';
+  font-size: 3.5vh;
   text-align: center;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   color: #fff;
   text-decoration: none;
+  text-transform: uppercase;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
   text-align: center;
+  margin: 4.5vh 1vw 0 1vw;
+  border-radius: 10px 10px 0 0;
+  padding-top: 2vh;
 }
-#tabs .tab.tab-selected {
-  background-color: #989899;
-  color: #525253;
+
+#project-tabs .project-tab.tab-selected {
+  border: 2px solid #fff;
+  border-bottom: 0;
+  margin-top: 3.5vh;
 }
-#tabs .tab:nth-of-type(even) {
-  border: 1px solid #989899;
-  border-width: 0 1px;
-}
+
+#featured-projects-tab {background-image: linear-gradient(to bottom, #ab3cd5, #8c36ba);}
+#horizontal-projects-tab {background-image: linear-gradient(to bottom, #2db5da, #34add6);}
+#vertical-projects-tab {background-image: linear-gradient(to bottom, #e3c02d, #d1b133);}
+
+#projects.featured-projects-tab .featured-tab-visible {display: block;}
+#projects.horizontal-projects-tab .horizontal-tab-visible {display:block;}
+#projects.vertical-projects-tab .vertical-tab-visible {display: block;}
+
+.vertical-tab-inline {display: none;}
+.horizontal-tab-inline {display: none;}
+#projects.featured-projects-tab .featured-tab-inline {display: inline-block;}
+#projects.horizontal-projects-tab .horizontal-tab-inline {display: inline-block;}
+#projects.vertical-projects-tab .vertical-tab-inline {display: inline-block;}
+
 
 
 
@@ -261,12 +360,25 @@ button:focus {
 
 @media screen and (min-height: 416px) {
   .project {
-    font-size: 3.5vh;
+    font-size: 3.0vh;
+    line-height: 1.2em;
+  }
+  #projects .tab-hero .tab-hero-text {
+    font-size: 3.0vh;
+  }
+  #project-tabs .project-tab {
+    font-size: 3vh;
+  }
+  .project.project-featured {
+    font-size: 2.7vh;
   }
 }
 
 @media screen and (min-height: 769px) {
   .project {
-    font-size: 3vh;
+    font-size: 2.5vh;
+  }
+  .project.project-featured {
+    font-size: 2.1vh;
   }
 }

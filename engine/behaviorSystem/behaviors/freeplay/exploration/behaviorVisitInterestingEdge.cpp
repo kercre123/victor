@@ -18,7 +18,7 @@
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/AIWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/blockWorld/blockWorld.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
 #include "engine/groundPlaneROI.h"
@@ -308,11 +308,12 @@ void BehaviorVisitInterestingEdge::StartWaitingForEdges(Robot& robot)
   DEV_ASSERT(!IsWaitingForImages(), "BehaviorVisitInterestingEdge.StartWaitingForEdges.AlreadyWaiting");
 
   // clear the borders in front of us, so that we can get new ones
-  robot.GetBlockWorld().FlagGroundPlaneROIInterestingEdgesAsUncertain();
+  robot.GetMapComponent().FlagGroundPlaneROIInterestingEdgesAsUncertain();
 
   // after we have removed edges we expect to capture
   // cache the current interesting edge area so that when we get new ones we know how much we have grown
-  _interestingEdgesArea_m2 = robot.GetBlockWorld().GetNavMemoryMap()->GetInterestingEdgeAreaM2();
+  const INavMap* currentMap = robot.GetMapComponent().GetCurrentMemoryMap();
+  _interestingEdgesArea_m2 = currentMap->GetInterestingEdgeAreaM2();
   
   // create an action and store the tag so we know when it's done
   {
@@ -412,7 +413,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
     const Vec3f robotLoc = robot.GetPose().GetWithRespectToRoot().GetTranslation();
 
     // define what a small region is in order to discard them as noise
-    const float memMapPrecision_mm = robot.GetBlockWorld().GetNavMemoryMap()->GetContentPrecisionMM();
+    const float memMapPrecision_mm = robot.GetMapComponent().GetCurrentMemoryMap()->GetContentPrecisionMM();
     const float memMapPrecision_m  = MM_TO_M(memMapPrecision_mm);
     const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
   
@@ -472,7 +473,7 @@ void BehaviorVisitInterestingEdge::PickGoals(const Robot& robot, BorderRegionSco
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const Vec3f& goalPosition) const
 {
-  const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+  const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
   DEV_ASSERT(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
   
   const Vec3f fromRobot = robot.GetPose().GetWithRespectToRoot().GetTranslation();
@@ -566,7 +567,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(const Robot& robot, con
         const float clearDistanceBehind  = _configParams.additionalClearanceBehind_mm  + robotBack;
         const Vec3f& toPoint   = vantagePointPos - (normalFromLookAtTowardsVantage * clearDistanceInFront);
         const Vec3f& fromPoint = vantagePointPos + (normalFromLookAtTowardsVantage * clearDistanceBehind );
-        const INavMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+        const INavMap* memoryMap = robot.GetMapComponent().GetCurrentMemoryMap();
         assert(memoryMap); // otherwise we are not even runnable
         
         // the vantage point is valid if there's no collision with the invalid types (would block the view or the pose)
@@ -765,7 +766,7 @@ void BehaviorVisitInterestingEdge::FlagVisitedQuadAsNotInteresting(Robot& robot,
   const Point3f& cornerTR = robotPoseWrtOrigin * Vec3f{ +farPlaneDistFromRobot_mm, -halfWidthAtFarPlane_mm, 0.f};
 
   const Quad2f robotToFarPlaneQuad{ cornerTL, cornerBL, cornerTR, cornerBR };
-  robot.GetBlockWorld().FlagQuadAsNotInterestingEdges(robotToFarPlaneQuad);
+  robot.GetMapComponent().FlagQuadAsNotInterestingEdges(robotToFarPlaneQuad);
 
   // render the quad we are flagging as not interesting anymore
   if ( kVieDrawDebugInfo ) {
@@ -791,7 +792,7 @@ void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(Robot& rob
 
   // creat
   const Quad2f quadAroundGoal{ cornerTL, cornerBL, cornerTR, cornerBR };
-  robot.GetBlockWorld().FlagQuadAsNotInterestingEdges(quadAroundGoal);
+  robot.GetMapComponent().FlagQuadAsNotInterestingEdges(quadAroundGoal);
   
   // render the quad we are flagging as not interesting beacuse
   if ( kVieDrawDebugInfo ) {
@@ -827,9 +828,10 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
   {
     // are the new edges big enough? otherwise this is probably a reflection, noise, or something whose border
     // changes drastically depending on where we look from
-    const double newArea_m2 = robot.GetBlockWorld().GetNavMemoryMap()->GetInterestingEdgeAreaM2();
+    const INavMap* currentMap = robot.GetMapComponent().GetCurrentMemoryMap();
+    const double newArea_m2 = currentMap->GetInterestingEdgeAreaM2();
     const double changeInArea_m2 = newArea_m2 - _interestingEdgesArea_m2;
-    const float memMapPrecision_mm = robot.GetBlockWorld().GetNavMemoryMap()->GetContentPrecisionMM();
+    const float memMapPrecision_mm = currentMap->GetContentPrecisionMM();
     const float memMapPrecision_m  = MM_TO_M(memMapPrecision_mm);
     const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
     if ( changeInArea_m2 < kMinRegionArea_m2 )

@@ -238,7 +238,7 @@ struct RobotAudio FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *audioName() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_AUDIONAME); }
   const flatbuffers::Vector<int64_t> *audioEventId() const { return GetPointer<const flatbuffers::Vector<int64_t> *>(VT_AUDIOEVENTID); }
   float volume() const { return GetField<float>(VT_VOLUME, 1.0f); }
-  float probability() const { return GetField<float>(VT_PROBABILITY, 1.0f); }
+  const flatbuffers::Vector<float> *probability() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_PROBABILITY); }
   bool hasAlts() const { return GetField<uint8_t>(VT_HASALTS, 1) != 0; }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -249,7 +249,8 @@ struct RobotAudio FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<flatbuffers::uoffset_t>(verifier, VT_AUDIOEVENTID) &&
            verifier.Verify(audioEventId()) &&
            VerifyField<float>(verifier, VT_VOLUME) &&
-           VerifyField<float>(verifier, VT_PROBABILITY) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROBABILITY) &&
+           verifier.Verify(probability()) &&
            VerifyField<uint8_t>(verifier, VT_HASALTS) &&
            verifier.EndTable();
   }
@@ -262,7 +263,7 @@ struct RobotAudioBuilder {
   void add_audioName(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> audioName) { fbb_.AddOffset(RobotAudio::VT_AUDIONAME, audioName); }
   void add_audioEventId(flatbuffers::Offset<flatbuffers::Vector<int64_t>> audioEventId) { fbb_.AddOffset(RobotAudio::VT_AUDIOEVENTID, audioEventId); }
   void add_volume(float volume) { fbb_.AddElement<float>(RobotAudio::VT_VOLUME, volume, 1.0f); }
-  void add_probability(float probability) { fbb_.AddElement<float>(RobotAudio::VT_PROBABILITY, probability, 1.0f); }
+  void add_probability(flatbuffers::Offset<flatbuffers::Vector<float>> probability) { fbb_.AddOffset(RobotAudio::VT_PROBABILITY, probability); }
   void add_hasAlts(bool hasAlts) { fbb_.AddElement<uint8_t>(RobotAudio::VT_HASALTS, static_cast<uint8_t>(hasAlts), 1); }
   RobotAudioBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   RobotAudioBuilder &operator=(const RobotAudioBuilder &);
@@ -277,7 +278,7 @@ inline flatbuffers::Offset<RobotAudio> CreateRobotAudio(flatbuffers::FlatBufferB
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> audioName = 0,
     flatbuffers::Offset<flatbuffers::Vector<int64_t>> audioEventId = 0,
     float volume = 1.0f,
-    float probability = 1.0f,
+    flatbuffers::Offset<flatbuffers::Vector<float>> probability = 0,
     bool hasAlts = true) {
   RobotAudioBuilder builder_(_fbb);
   builder_.add_probability(probability);
@@ -294,9 +295,9 @@ inline flatbuffers::Offset<RobotAudio> CreateRobotAudioDirect(flatbuffers::FlatB
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *audioName = nullptr,
     const std::vector<int64_t> *audioEventId = nullptr,
     float volume = 1.0f,
-    float probability = 1.0f,
+    const std::vector<float> *probability = nullptr,
     bool hasAlts = true) {
-  return CreateRobotAudio(_fbb, triggerTime_ms, audioName ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*audioName) : 0, audioEventId ? _fbb.CreateVector<int64_t>(*audioEventId) : 0, volume, probability, hasAlts);
+  return CreateRobotAudio(_fbb, triggerTime_ms, audioName ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*audioName) : 0, audioEventId ? _fbb.CreateVector<int64_t>(*audioEventId) : 0, volume, probability ? _fbb.CreateVector<float>(*probability) : 0, hasAlts);
 }
 
 struct BackpackLights FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

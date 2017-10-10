@@ -275,37 +275,13 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
   return affected;
 }
 
+const ReactionTriggerHelpers::FullReactionArray& GetAffectAllArray();
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
-  {ReactionTrigger::CliffDetected,                true},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     true},
-  {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
-  {ReactionTrigger::MotorCalibration,             true},
-  {ReactionTrigger::NoPreDockPoses,               true},
-  {ReactionTrigger::ObjectPositionUpdated,        true},
-  {ReactionTrigger::PlacedOnCharger,              true},
-  {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::RobotPickedUp,                true},
-  {ReactionTrigger::RobotPlacedOnSlope,           true},
-  {ReactionTrigger::ReturnedToTreads,             true},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  true},
-  {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  true},
-  {ReactionTrigger::Sparked,                      true},
-  {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           true},
-};
-  
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectAllArray),
-              "Reaction triggers duplicate or non-sequential");
+
   
 static const AllTriggersConsidered kAffectAllReactions =
-         ConvertReactionArrayToAllTriggersConsidered(kAffectAllArray);
+         ConvertReactionArrayToAllTriggersConsidered(GetAffectAllArray());
   
 } // namespace ReactionTriggerHelpers
 } // namespace Cozmo

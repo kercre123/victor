@@ -446,7 +446,7 @@ MonoBehaviour:
   - -1
   _ForceNeedValuesOnEventId:
     _EnumValueAsString: Count
-    _EnumValue: 48
+    _EnumValue: 49
   _ForceNeedValuesOnEvent:
   - -1
   - -1
@@ -458,7 +458,7 @@ MonoBehaviour:
   _ButtonStatePlay: 3
   _ContinueButtonInstance: {fileID: 114296261723702756}
   _ShowAfterWait: {fileID: 1997215763499232}
-  _WaitTimeSec: 2.75
+  _WaitTimeSec: 5
 --- !u!114 &114137310380797714
 MonoBehaviour:
   m_ObjectHideFlags: 1

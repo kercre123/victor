@@ -53,7 +53,7 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 #define AP_MAX_CONNECTIONS 4
 #define AP_IP       "172.31.1.1"
 #define AP_NETMASK  "255.255.255.0"
-#define AP_GATEWAY  "172.31.1.1"
+#define AP_GATEWAY  "0.0.0.0"
 // Last digit should match AP_MAX_CONNECTIONS
 #define DHCP_START  "172.31.1.4"
 // Shorten by two groups because don't want to allow 0,1,255 in group

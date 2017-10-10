@@ -19,6 +19,7 @@
 
 #include "engine/viz/vizManager.h"
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
+#include "engine/navMap/memoryMap/data/memoryMapData.h"
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/triangle.h"
@@ -89,7 +90,8 @@ public:
 
   // Crete node
   // it will allow subdivision as long as level is greater than 0
-  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent);
+  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant,
+                      QuadTreeNode* parent, MemoryMapData& data);
   
   // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
   // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
@@ -114,9 +116,9 @@ public:
 
   // consider using the concrete checks if you are going to do GetContentType() == X, in case the meaning of that
   // comparison changes
-  ENodeContentType GetContentType() const { return _content.type; }
-  std::shared_ptr<const MemoryMapData> GetData() const { return _content.data; }
-  bool IsContentTypeUnknown() const { return _content.type == ENodeContentType::Unknown; }
+  ENodeType GetNodeType() const { return _content.type; }
+  std::shared_ptr<MemoryMapData> GetData() const { return _content.data; }
+  bool IsContentTypeUnknown() const { return _content.data->type == MemoryMapTypes::EContentType::Unknown; }
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
   bool Contains(const Quad2f& quad) const;
@@ -225,6 +227,10 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // attempt to apply a transformation function to the node, returns true of content changes
+  bool TransformContent_Recursive(MemoryMapTypes::NodeTransformFunction transform,
+                                  QuadTreeNode* insertFrom, 
+                                  QuadTreeProcessor& processor);
 
   // checks if the given point is contained in the quad, and properly acts, delegating on children if needed
   bool AddPoint_Recursive(const Point2f& point, const NodeContent& detectedContent, QuadTreeProcessor& processor);
@@ -270,8 +276,8 @@ private:
   // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
   // removed by Clear. Note that eventually we have to support that since it's possible that the player
   // actually covers the cliff with something transitable
-  bool CanOverrideSelfWithContent(ENodeContentType newContentType, EContentOverlap overlap ) const;
-  bool CanOverrideSelfAndChildrenWithContent(ENodeContentType newContentType, EContentOverlap overlap) const;
+  bool CanOverrideSelfWithContent(MemoryMapTypes::EContentType newContentType, EContentOverlap overlap ) const;
+  bool CanOverrideSelfAndChildrenWithContent(MemoryMapTypes::EContentType newContentType, EContentOverlap overlap) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification

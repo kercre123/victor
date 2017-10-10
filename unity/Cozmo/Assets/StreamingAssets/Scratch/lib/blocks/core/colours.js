@@ -91,7 +91,7 @@ Blockly.Colours = {
   "text": "#575E75",
   "workspace": "#535252", // *** ANKI CHANGE ***
   "toolboxHover": "#4C97FF",
-  "toolboxSelected": "#e9eef2",
+  //"toolboxSelected": "#e9eef2", // *** ANKI CHANGE ***
   "toolboxText": "#575E75",
   "toolbox": "#FFFFFF",
   "flyout": "#F9F9F9",  // *** ANKI CHANGE ***

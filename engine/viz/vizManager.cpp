@@ -710,11 +710,7 @@ namespace Anki {
     
     void VizManager::EraseAllPlannerObstacles(const bool isReplan)
     {
-      if(isReplan) {
-        EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE_REPLAN);
-      } else {
-        EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE);
-      }
+      EraseAllPaths();
     }
     
     void VizManager::EraseAllMatMarkers()

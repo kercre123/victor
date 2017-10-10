@@ -43,7 +43,7 @@ protected:
     // stub in our own outgoing message handler
     cozmoContext->GetRobotManager()->_robotMessageHandler.reset(_msgHandler);
     
-    _robot = new Robot(1, cozmoContext);
+    _robot.reset(new Robot(1, cozmoContext));
     _pathComponent = &(_robot->GetPathComponent());
 
     LatticePlanner* planner = dynamic_cast<LatticePlanner*>(_pathComponent->_longPathPlanner.get());
@@ -61,11 +61,7 @@ protected:
     ASSERT_EQ(result, RESULT_OK);
   }
 
-  virtual void TearDown() override {
-    Util::SafeDelete(_robot);
-  }
-
-  Robot* _robot = nullptr;
+  std::unique_ptr<Robot> _robot;
   PathComponent* _pathComponent = nullptr;
   StubMessageHandler* _msgHandler = nullptr;
 };

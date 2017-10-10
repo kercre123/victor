@@ -112,16 +112,22 @@ namespace Cozmo {
     uint32_t messageSize = 0;
     constexpr uint32_t kMaxFlushSize = 1024;
     
-    for ( auto& entry : varDatabase )
+    for (const auto& entry : varDatabase)
     {
       const Anki::Util::IConsoleVariable* consoleVar = entry.second;
+      if (nullptr == consoleVar) {
+        PRINT_NAMED_ERROR("DebugConsoleManager.SendAllDebugConsoleVars.InvalidConsoleVariable",
+                          "Console variable %s is NULL", entry.first.c_str());
+        continue;
+      }
+
       ExternalInterface::DebugConsoleVar varObject;
       SetCladVarFromConsoleVar(varObject, consoleVar);
       
       dataVals.push_back(varObject);
       
       messageSize += varObject.Size();
-      if( messageSize >= kMaxFlushSize)
+      if (messageSize >= kMaxFlushSize)
       {
         DEV_ASSERT(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "DebugConsoleManager.VarDatabaseOverMaxSize");
         FlushBuffer(std::move(dataVals), _externalInterface);
@@ -131,16 +137,22 @@ namespace Cozmo {
     }
     
     const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
-    for ( auto& entry : funcDatabase )
+    for (const auto& entry : funcDatabase)
     {
       const Anki::Util::IConsoleFunction* consoleFunc = entry.second;
+      if (nullptr == consoleFunc) {
+        PRINT_NAMED_ERROR("DebugConsoleManager.SendAllDebugConsoleVars.InvalidConsoleFunction",
+                          "Console function %s is NULL", entry.first.c_str());
+        continue;
+      }
+
       ExternalInterface::DebugConsoleVar varObject;
       SetCladVarFromConsoleFunc(varObject, consoleFunc);
       
       dataVals.push_back(varObject);
       
       messageSize += varObject.Size();
-      if( messageSize >= kMaxFlushSize)
+      if (messageSize >= kMaxFlushSize)
       {
         DEV_ASSERT(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "DebugConsoleManager.FuncDatabaseOverMaxSize");
         FlushBuffer(std::move(dataVals), _externalInterface);

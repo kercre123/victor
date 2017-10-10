@@ -144,14 +144,24 @@ namespace DataPersistence {
 
     public void ResetSaveData() {
       Data.DefaultProfile.Inventory.DestroyInventory();
+      // Because we can only show this screen once per device, we need to save it's state.
+      bool oldOSNotificationpromptShown = Data.DefaultProfile.OSNotificationsPermissionsPromptShown;
+
       // Reset what is normally a read only value.
       typeof(DataPersistenceManager).GetField("Data").SetValue(Instance, new SaveData());
       InitSaveData();
-      Save();
 
+      // If systems are caching any one time init variables, reset them by hooking into this event
+      // After an erase should be similar to a fresh boot
       if (OnSaveDataReset != null) {
         OnSaveDataReset();
       }
+
+      // Restore settings from previous save that need to stick
+      Data.DefaultProfile.OSNotificationsPermissionsPromptShown = oldOSNotificationpromptShown;
+
+      // Save all the new defaults
+      Save();
     }
 
     // Helper function to clean up code that checks for SDK mode
@@ -177,7 +187,7 @@ namespace DataPersistence {
         if (lastSession != null && lastSession.Date == DataPersistenceManager.Today) {
           return lastSession;
         }
-        return null;
+        return StartNewSession();
       }
     }
 

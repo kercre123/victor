@@ -13,10 +13,6 @@ public class UnlockableInfo : ScriptableObject, IComparable {
 
   public UnlockableType UnlockableType;
 
-  [SerializeField, Tooltip("Will never leave the 'locked' state and shows a 'Coming Soon' graphic")]
-  private bool _ComingSoon;
-  public bool ComingSoon { get { return _ComingSoon; } }
-
   public bool FeatureIsEnabled {
     get {
       if (FeatureGate.Instance.FeatureMap.ContainsKey(Id.Value.ToString().ToLower())) {

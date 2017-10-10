@@ -34,6 +34,9 @@
 #include "util/logging/rollingFileLogger.h"
 #endif
 
+// TODO:(bn) create build config option for this
+// #define NO_WEBOTS
+
 #ifndef NO_WEBOTS
 #include <webots/Supervisor.hpp>
 webots::Supervisor basestationController;
@@ -42,13 +45,15 @@ webots::Supervisor basestationController;
 #include <thread>
 class BSTimer {
 public:
+  using TimeStep_t = unsigned long long int;
+
   BSTimer() {_time = 0;}
   
   // TODO: This needs to wait until actual time has elapsed
-  int step(int ms) {_time += ms; return 0;}
-  int getTime() {return _time;}
+  TimeStep_t step(TimeStep_t ms) {_time += ms; return 0;}
+  TimeStep_t getTime() {return _time;}
 private:
-  int _time;
+  TimeStep_t _time;
 };
 BSTimer basestationController;
 #endif
@@ -60,7 +65,7 @@ BSTimer basestationController;
 //#error TEMP_DATA_PATH not defined.
 //#endif
 
-
+ 
 // Set to 1 if you want to use BLE to communicate with robot.
 // Set to 0 if you want to use TCP to communicate with robot.
 #define USE_BLE_ROBOT_COMMS 0
@@ -210,22 +215,15 @@ int main(int argc, char **argv)
     config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = SDK_ON_DEVICE_TCP_PORT;
   }
   
-  int numUIDevicesToWaitFor = 1;
-  webots::Field* numUIsField = basestationController.getSelf()->getField("numUIDevicesToWaitFor");
-  if (numUIsField) {
-    numUIDevicesToWaitFor = numUIsField->getSFInt32();
-  } else {
-    PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
-  }
-  
   bool sleepUntilEndOfTic = false;
+#ifndef NO_WEBOTS
   webots::Field* sleepUntilEndOfTicField = basestationController.getSelf()->getField("sleepUntilEndOfTic");
   if (sleepUntilEndOfTicField) {
     sleepUntilEndOfTic = sleepUntilEndOfTicField->getSFBool();
   } else {
     PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.MissingSleepField", "sleepUntilEndOfTic not found in BlockworldComms");
   }
-  
+#endif  
   
   config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
@@ -275,7 +273,7 @@ int main(int argc, char **argv)
       PRINT_NAMED_INFO("EngineHeartbeat.SlowTick", "Update took %f ms (tick heartbeat is %dms)", timeMS, BS_TIME_STEP);
     }
     
-    if (sleepUntilEndOfTicField) {
+    if (sleepUntilEndOfTic) {
       auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::steady_clock::now() - tick_start);
       
       // ms_left is almost always negative when connected to a sim robot. The amount of time that step() takes depends

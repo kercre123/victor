@@ -1,5 +1,5 @@
 /**
- * File: reactionTriggerStrategyPoseDifference.h
+ * File: reactionTriggerStrategyPositionUpdate.h
  *
  * Author: Kevin M. Karol
  * Created: 12/08/16
@@ -83,7 +83,6 @@ protected:
   // "easiest" (for some definition of easiest defined in the cpp file) to TurnTowards. It returns true if one
   // was found, false otherwise
   bool GetBestTarget(const Robot& robot, s32& bestTarget, bool matchAnyPose = false) const;
-  bool GetBestTarget(const Robot& robot, s32& bestTarget, Pose3d& poseWrtRobot, bool matchAnyPose = false) const;
   
   // tells this class that the robot has reacted to a given id, assuming the reaction happened at the last
   // time the object was observed

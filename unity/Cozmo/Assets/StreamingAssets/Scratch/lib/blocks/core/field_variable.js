@@ -200,6 +200,10 @@ Blockly.FieldVariable.dropdownCreate = function() {
     // Set the uuid as the internal representation of the variable.
     options[i] = [variableModelList[i].name, variableModelList[i].getId()];
   }
+
+  // *** ANKI CHANGE ***
+  // Suppress the "Rename variable..." option
+  // TODO Turn this back off before 2.1 release
   options.push([Blockly.Msg.RENAME_VARIABLE, Blockly.RENAME_VARIABLE_ID]);
   options.push([Blockly.Msg.DELETE_VARIABLE.replace('%1', name),
                Blockly.DELETE_VARIABLE_ID]);

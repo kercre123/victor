@@ -67,7 +67,9 @@ namespace Onboarding {
     protected void HandleSkipClicked() {
       // No tutorials needed for the next few phases either
       for (int i = 0; i < OnboardingManager.kRequiredPhases.Length; ++i) {
-        if (OnboardingManager.kRequiredPhases[i] != OnboardingManager.OnboardingPhases.InitialSetup) {
+        // Notifications permissions are unskippable, except in debug.
+        if (OnboardingManager.kRequiredPhases[i] != OnboardingManager.OnboardingPhases.InitialSetup &&
+            OnboardingManager.kRequiredPhases[i] != OnboardingManager.OnboardingPhases.NotificationsPermission) {
           OnboardingManager.Instance.CompletePhase(OnboardingManager.kRequiredPhases[i]);
         }
       }

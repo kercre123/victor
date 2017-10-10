@@ -137,7 +137,6 @@ namespace Onboarding {
 
     public virtual void OnEnable() {
       Cozmo.PauseManager.Instance.AllowFreeplayOnResume = false;
-      Cozmo.PauseManager.Instance.OnPauseStateChanged += HandlePauseStateChanged;
 
       if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
         if (OnboardingManager.Instance.OnOverrideTickerString != null) {
@@ -186,13 +185,6 @@ namespace Onboarding {
         }
       }
       Cozmo.PauseManager.Instance.AllowFreeplayOnResume = true;
-      Cozmo.PauseManager.Instance.OnPauseStateChanged -= HandlePauseStateChanged;
-    }
-
-    protected virtual void HandlePauseStateChanged(bool isPaused) {
-      if (!isPaused) {
-        Init();
-      }
     }
 
     // This will get called when first enabled and when coming back from backgrounding when pause manager has suspended idles, etc.

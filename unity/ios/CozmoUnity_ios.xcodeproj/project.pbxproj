@@ -21,6 +21,7 @@
 		1DEBB85E53BFF0C17783A20E /* SplashScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = EB52651E2359DD957762D896 /* SplashScreen.mm */; };
 		200BF7971F2964820009F3E2 /* libcladutil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 200BF7961F2964820009F3E2 /* libcladutil.a */; };
 		2225EFBD9266DE2D57FF9965 /* UTNotificationsTools.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6C07DD59FF4D152E66BFC7F9 /* UTNotificationsTools.mm */; };
+		2385EC481F7DA765000DC45E /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2385EC471F7DA765000DC45E /* UserNotifications.framework */; };
 		2578606216A9027870B5C447 /* iPhone_Sensors.mm in Sources */ = {isa = PBXBuildFile; fileRef = 66D75C4832F5ED6E030216F1 /* iPhone_Sensors.mm */; };
 		273EE5B9B92AC683D0CE786B /* CameraCapture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2167B9C45B33ACBC132A8820 /* CameraCapture.mm */; };
 		29A2840A00D5FA9F2ED8D140 /* AppDelegateListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 57B55EC3DAD9586C8674C1B4 /* AppDelegateListener.mm */; };
@@ -140,6 +141,7 @@
 		200BF7961F2964820009F3E2 /* libcladutil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcladutil.a; path = "../../lib/util/project/gyp/build/Debug-iphoneos/libcladutil.a"; sourceTree = "<group>"; };
 		2167B9C45B33ACBC132A8820 /* CameraCapture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = CameraCapture.mm; path = UnityBuild/Classes/Unity/CameraCapture.mm; sourceTree = "<group>"; };
 		22B540F24D35CDDA4795F67E /* OnDemandResources.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = OnDemandResources.mm; path = UnityBuild/Classes/Unity/OnDemandResources.mm; sourceTree = "<group>"; };
+		2385EC471F7DA765000DC45E /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		2B17DB8090B090FCA8D40B33 /* IUnityGraphicsMetal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IUnityGraphicsMetal.h; path = UnityBuild/Classes/Unity/IUnityGraphicsMetal.h; sourceTree = "<group>"; };
 		2B76A5B81E4E102800990EC0 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		2C45B2AF6726FF2E7C80FB13 /* VideoPlayerPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = VideoPlayerPlugin.mm; path = UnityBuild/Libraries/Plugins/iOS/VideoPlayerPlugin.mm; sourceTree = "<group>"; };
@@ -282,6 +284,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2385EC481F7DA765000DC45E /* UserNotifications.framework in Frameworks */,
 				200BF7971F2964820009F3E2 /* libcladutil.a in Frameworks */,
 				70CFC6131ED500CE001C0FAA /* libunity-generated.a in Frameworks */,
 				6FC123581E932B6F008DDC49 /* MediaToolbox.framework in Frameworks */,
@@ -434,6 +437,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2385EC471F7DA765000DC45E /* UserNotifications.framework */,
 				200BF7961F2964820009F3E2 /* libcladutil.a */,
 				70CFC6121ED500CE001C0FAA /* libunity-generated.a */,
 				6FC123571E932B6F008DDC49 /* MediaToolbox.framework */,

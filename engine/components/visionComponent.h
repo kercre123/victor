@@ -180,7 +180,7 @@ struct DockingErrorSignal;
 
     // Add an occluder to the camera for the cross-bar of the lift in its position
     // at the requested time
-    void AddLiftOccluder(TimeStamp_t t_request);
+    void AddLiftOccluder(const TimeStamp_t t_request);
     
     // Camera calibration
     void StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI);
@@ -284,8 +284,13 @@ struct DockingErrorSignal;
 
     f32 GetBodyTurnSpeedThresh_degPerSec() const;
     
+    void SetPhysicalRobot(const bool isPhysical);
+
+    // Non-rotated points representing the lift cross bar
+    std::vector<Point3f> _liftCrossBarSource;
+
   protected:
-    
+
     bool _isInitialized = false;
     
     Robot& _robot;

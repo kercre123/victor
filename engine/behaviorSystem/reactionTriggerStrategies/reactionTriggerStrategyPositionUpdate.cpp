@@ -1,10 +1,11 @@
 /**
- * File: reactionTriggerStrategyPoseDifference.cpp
+ * File: reactionTriggerStrategyPositionUpdate.cpp
  *
  * Author: Andrew Stein :: Kevin M. Karol
  * Created: 2016-06-16 :: 12/08/16
  *
  * Description: Reaction Trigger strategy for responding to an object moving more than
+ * a given threshold
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -127,7 +128,7 @@ void ReactionTriggerStrategyPositionUpdate::HandleNewObservation(s32 id,
                                                                  u32 timestamp,
                                                                  bool reactionEnabled)
 {
-  auto reactionIt = _reactionData.find(id);
+  const auto reactionIt = _reactionData.find(id);
   
   if( reactionIt == _reactionData.end() ) {
     ReactionData reaction{
@@ -300,13 +301,8 @@ bool ReactionTriggerStrategyPositionUpdate::HasDesiredReactionTargets(const Robo
   return false;
 }
 
+// NOTE:  Currently not called
 bool ReactionTriggerStrategyPositionUpdate::GetBestTarget(const Robot& robot, s32& bestTarget, bool matchAnyPose) const
-{
-  Pose3d poseWrtRobot;
-  return GetBestTarget(robot, bestTarget, poseWrtRobot, matchAnyPose);
-}
-
-bool ReactionTriggerStrategyPositionUpdate::GetBestTarget(const Robot& robot, s32& bestTarget, Pose3d& poseWrtRobot, bool matchAnyPose) const
 {
   // TODO:(bn) cache targets instead of doing this per-tick?
   std::set<s32> targets;
@@ -318,10 +314,10 @@ bool ReactionTriggerStrategyPositionUpdate::GetBestTarget(const Robot& robot, s3
   if( targets.size() == 1 ) {
     bestTarget = *targets.begin();
     
-    auto reactionDataIter = _reactionData.find(bestTarget);
+    const auto reactionDataIter = _reactionData.find(bestTarget);
     DEV_ASSERT(reactionDataIter != _reactionData.end(), "ReactionTriggerStrategyPoseDifference.BadBestTargetId");
-    
-    if (false == reactionDataIter->second.lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot))
+
+    if (false == reactionDataIter->second.lastPose.HasSameRootAs(robot.GetPose()))
     {
       // no transform, probably a different origin
       return false;
@@ -332,10 +328,11 @@ bool ReactionTriggerStrategyPositionUpdate::GetBestTarget(const Robot& robot, s3
                       bestTarget);
     return true;
   }
-  
+
   float bestCost = std::numeric_limits<float>::max();
   bool ret = false;
-  for( auto targetID : targets ) {
+  Pose3d poseWrtRobot;
+  for( const auto targetID : targets ) {
     DEV_ASSERT(_reactionData.find(targetID) != _reactionData.end(), "ReactionTriggerStrategyPoseDifference.BadTargetId");
     
     if( ! _reactionData.at(targetID).lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {

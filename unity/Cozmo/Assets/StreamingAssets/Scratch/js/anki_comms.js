@@ -5,20 +5,21 @@ window.Unity = {
         // Encode the stringified JSON object so that special chars like ', " and \ to make it all the way to unity.
         var encodedJsonMsg = encodeURIComponent(jsonMsg);
 
-        var iframe = document.createElement('IFRAME');
-
-        // The src attribute of an iframe is a URL. If we don't encode the JSON, this call will replace \" with /", which will break when Unity tries to read the string.
-        iframe.setAttribute('src', 'unity:' + encodedJsonMsg); 
-
-        document.documentElement.appendChild(iframe);
-        iframe.parentNode.removeChild(iframe);
-        iframe = null;
-        
         // Support running codelab in a remote browser connected via the SDK
         if (gEnableSdkConnection) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "sdk_call", true);
             xhr.send(encodedJsonMsg);
+        }
+        else {
+            var iframe = document.createElement('IFRAME');
+    
+            // The src attribute of an iframe is a URL. If we don't encode the JSON, this call will replace \" with /", which will break when Unity tries to read the string.
+            iframe.setAttribute('src', 'unity:' + encodedJsonMsg); 
+    
+            document.documentElement.appendChild(iframe);
+            iframe.parentNode.removeChild(iframe);
+            iframe = null;    
         }
     }
 }
@@ -57,7 +58,13 @@ if (gEnableSdkConnection) {
                 }
                 else if (xhr.responseText != "OK") {
                     // TODO - encode multiple commands in one response to lower latency / allow higher command rate
-                    eval(xhr.responseText);
+                    try {
+                        eval(xhr.responseText);
+                    }
+                    catch(err) {
+                        console.log("updateSdk.eval.error: " + err.message);
+                        console.log("" + xhr.responseText)
+                    }
                 }
             }
         }

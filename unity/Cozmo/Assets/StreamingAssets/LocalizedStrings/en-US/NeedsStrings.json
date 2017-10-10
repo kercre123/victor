@@ -37,7 +37,7 @@
     "translation": "Cozmo needs to be fed to stay energized and upbeat."
   },
   "needs.NeedsEnergyModal.Instruction1": {
-    "translation": "Grab any Cube that is pulsing blue."
+    "translation": "Grab any Cube with circling blue lights."
   },
   "needs.NeedsEnergyModal.Instruction2": {
     "translation": "Shake that Cube until all lights glow brightly."
@@ -175,7 +175,7 @@
     "translation": "Cozmo got the Hiccups"
   },
   "needs.FeedingOverfedHiccups.Description": {
-    "translation": "Cozmo is too full - now he has the hiccups!"
+    "translation": "Cozmo is too full - now he has the hiccups! Try to help Cozmo by putting him upside-down."
   },
   "needs.severeAlert.energy.title": {
     "translation": "Cozmo Really Needs Feeding"

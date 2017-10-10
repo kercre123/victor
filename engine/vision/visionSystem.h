@@ -97,7 +97,6 @@ namespace Cozmo {
     std::list<Vision::ObservedMarker>                           observedMarkers;
     std::list<Vision::TrackedFace>                              faces;
     std::list<Vision::TrackedPet>                               pets;
-    std::list<Pose3d>                                           dockingPoses;
     std::list<OverheadEdgeFrame>                                overheadEdges;
     std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
     std::list<ToolCodeInfo>                                     toolCodes;
@@ -281,6 +280,7 @@ namespace Cozmo {
     // Snapshots of robot state
     bool _wasCalledOnce    = false;
     bool _havePrevPoseData = false;
+    const Pose3d _poseOrigin;
     VisionPoseData _poseData, _prevPoseData;
   
     // For sending images to basestation
@@ -306,7 +306,6 @@ namespace Cozmo {
     bool                          _isReadingToolCode;
     
     Result UpdatePoseData(const VisionPoseData& newPoseData);
-    void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Radians GetCurrentHeadAngle();
     Radians GetPreviousHeadAngle();
     

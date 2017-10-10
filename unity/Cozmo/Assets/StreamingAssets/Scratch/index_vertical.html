@@ -35,14 +35,14 @@
         <!-- BOTTOM UNCOMPRESSED FILES -->
 
         <script src="./lib/blocks/media/sounds.js"></script>
-        <script src="./lib/blocks/msg/messages.js"></script>
         <script src="./js/anki_comms_settings.js"></script>
         <script src="./js/anki_comms.js"></script>
         <script src="./js/common.js"></script>
-        <script src="./js/CozmoSaveLoadAPI.js"></script>
+        <script src="./js/cozmoSaveLoadAPI.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
-        <script src="./extra/glossary.js"></script>
+        <script src="./js/glossary.js"></script>
+        <script src="./js/rename-project.js"></script>
 
         <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
         <!-- For debugging the vm, use scratch-vm.js instead of scratch-vm.min.js -->
@@ -54,14 +54,15 @@
         <!-- CSS Styles -->
         <link rel="stylesheet" href="./css/normalize.css"/>
         <link rel="stylesheet" href="./css/common_vertical.css">
-        <link rel="stylesheet" href="./extra/glossary.css"/>
+        <link rel="stylesheet" href="./css/glossary.css"/>
+        <link rel="stylesheet" href="./css/rename-project.css"/>
 	</head>
 
 	<body>
 
         <!-- Toolbox -->
         <xml id="toolbox">
-            <category name="Drive" colour="#0898c4" secondaryColour="0">
+            <category name="codeLab.Category.Drive" colour="#0898c4" secondaryColour="0">
               <block type="cozmo_vert_drive">
                   <value name="DISTANCE">
                       <shadow type="math_number">
@@ -138,9 +139,13 @@
                       </shadow>
                   </value>
               </block>
-              <block type="cozmo_vert_dock_with_cube_by_id"></block>
+              <block type="cozmo_vert_dock_with_cube_by_id">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_motion_select_menu"></shadow>
+                </value>
+              </block>
             </category>
-            <category name="Actions" colour="#5e3dfc" secondaryColour="0">
+            <category name="codeLab.Category.Actions" colour="#5e3dfc" secondaryColour="0">
 
               <block type="cozmo_vert_set_liftheight">
                   <value name="HEIGHT_RATIO">
@@ -190,18 +195,31 @@
               </block>
               <block type="cozmo_vert_set_cube_light_corner">
                 <field name="LIGHT_SELECT">4</field>
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_looks_select_menu"></shadow>
+                </value>
                 <value name="COLOR">
                       <shadow type="colour_picker"></shadow>
                 </value>
               </block>
               <block type="cozmo_vert_cube_anim">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_looks_select_menu"></shadow>
+                </value>
                 <value name="COLOR">
                       <shadow type="colour_picker"></shadow>
                 </value>
               </block>
             </category>
-            <category name="Animations" colour="#a03c87" secondaryColour="0">
-              <block type="cozmo_play_animation_from_dropdown"></block>
+            <category name="codeLab.Category.Animations" colour="#a03c87" secondaryColour="0">
+              <block type="cozmo_play_animation_from_dropdown">
+                <value name="ANIMATION">
+                    <shadow type="cozmo_animation_select_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_animation_external_select_menu"></block>
+              <block type="cozmo_vert_enable_animation_track"></block>
+              <block type="cozmo_vert_disable_animation_track"></block>
               <!--Begin temporary dev-only blocks prototyping-->
               <block type="cozmo_play_animation_by_name">
                 <value name="ANIM_NAME">
@@ -218,14 +236,19 @@
                 </value>
               </block>
               <!--End temporary dev-only blocks prototyping-->
-              <block type="cozmo_sound_play" id="sound_play">
+              <block type="cozmo_sound_play">
+                <value name="SOUND_MENU">
+                  <shadow type="cozmo_sound_sounds_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_sound_stop">
                 <value name="SOUND_MENU">
                   <shadow type="cozmo_sound_sounds_menu"></shadow>
                 </value>
               </block>
             </category>
 
-            <category name="Events" colour="#f4b606" secondaryColour="0">
+            <category name="codeLab.Category.Events" colour="#f4b606" secondaryColour="0">
               <block type="event_whenflagclicked"></block>
               <block type="cozmo_event_on_face"></block>
               <block type="cozmo_event_on_happy_face"></block>
@@ -248,7 +271,7 @@
               </block>
             </category>
 
-            <category name="Control" colour="#e5580a" secondaryColour="0">
+            <category name="codeLab.Category.Control" colour="#e5580a" secondaryColour="0">
               <block type="control_forever"></block>
               <block type="control_if"></block>
               <block type="control_if_else"></block>
@@ -268,10 +291,19 @@
                   </value>
               </block>
               <block type="control_repeat_until"></block>
-              <block type="control_stop"></block>
+              <block type="control_stop">
+                <value name="STOP_OPTION">
+                  <shadow type="stop_option_menu"></shadow>
+                </value>
+              </block>
+
+              <block type="cozmo_vert_enable_wait_for_actions"></block>
+              <block type="cozmo_vert_disable_wait_for_actions"></block>
+              <block type="cozmo_vert_wait_for_actions"></block>
+              <block type="cozmo_vert_cancel_actions"></block>
             </category>
 
-            <category name="Sensors" colour="#5CB1D6" secondaryColour="0">
+            <category name="codeLab.Category.Sensors" colour="#5CB1D6" secondaryColour="0">
               <!-- Cozmo -->
               <block type="cozmo_vert_get_position_3d"></block>
               <block type="cozmo_vert_get_pitch"></block>
@@ -286,12 +318,43 @@
               <block type="cozmo_vert_face_get_position_3d"></block>
               <block type="cozmo_vert_face_get_expression"></block>
               <!-- Cubes -->
-              <block type="cozmo_vert_cube_get_is_visible"></block>
-              <block type="cozmo_vert_cube_get_position_2d"></block>
-              <block type="cozmo_vert_cube_get_position_3d"></block>
-              <block type="cozmo_vert_cube_get_pitch"></block>
-              <block type="cozmo_vert_cube_get_roll"></block>
-              <block type="cozmo_vert_cube_get_yaw"></block>
+              <block type="cozmo_vert_cube_get_last_tapped"></block>
+              <block type="cozmo_vert_cube_get_was_tapped">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_vert_cube_get_is_visible">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_vert_cube_get_position_2d">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_vert_cube_get_position_3d">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_vert_cube_get_pitch"><
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_vert_cube_get_roll">
+                <value name="CUBE_SELECT">
+                    <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              <block type="cozmo_vert_cube_get_yaw">
+                <value name="CUBE_SELECT">
+                  <shadow type="cozmo_cube_sensor_select_menu"></shadow>
+                </value>
+              </block>
+              </block>
               <!-- Device -->
               <block type="cozmo_vert_device_get_pitch"></block>
               <block type="cozmo_vert_device_get_roll"></block>
@@ -303,9 +366,18 @@
                 </value>
               </block>
             </category>
-            <category name="Display" colour="#0fBD8C" secondaryColour="0">
+            <category name="codeLab.Category.Display" colour="#0fBD8C" secondaryColour="0">
                 <block type="cozmo_vert_cozmoface_clear"></block>
                 <block type="cozmo_vert_cozmoface_display"></block>
+                <block type="cozmo_vert_cozmoface_set_draw_color"></block>
+                <block type="cozmo_vert_cozmoface_set_text_scale">
+                    <value name="SCALE">
+                        <shadow type="math_number">
+                            <field name="NUM">1.0</field>
+                        </shadow>
+                    </value>
+                </block>
+                <block type="cozmo_vert_cozmoface_set_text_alignment"></block>
                 <block type="cozmo_vert_cozmoface_draw_text">
                   <value name="TEXT">
                       <shadow type="text">
@@ -314,100 +386,95 @@
                   </value>
                   <value name="X1">
                       <shadow type="math_number">
-                          <field name="NUM">0.0</field>
+                          <field name="NUM">0</field>
                       </shadow>
                   </value>
                   <value name="Y1">
                       <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="SCALE">
-                      <shadow type="math_positive_number">
-                          <field name="NUM">1.0</field>
+                          <field name="NUM">0</field>
                       </shadow>
                   </value>
                 </block>
                 <block type="cozmo_vert_cozmoface_draw_line">
                   <value name="X1">
                       <shadow type="math_number">
-                          <field name="NUM">0.0</field>
+                          <field name="NUM">0</field>
                       </shadow>
                   </value>
                   <value name="Y1">
                       <shadow type="math_number">
-                          <field name="NUM">0.0</field>
+                          <field name="NUM">0</field>
                       </shadow>
                   </value>
                   <value name="X2">
                       <shadow type="math_number">
-                          <field name="NUM">1.0</field>
+                          <field name="NUM">127</field>
                       </shadow>
                   </value>
                   <value name="Y2">
                       <shadow type="math_number">
-                          <field name="NUM">1.0</field>
-                      </shadow>
-                  </value>
-                </block>
-                <block type="cozmo_vert_cozmoface_fill_rect">
-                  <value name="X1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="Y1">
-                      <shadow type="math_number">
-                          <field name="NUM">0.0</field>
-                      </shadow>
-                  </value>
-                  <value name="X2">
-                      <shadow type="math_number">
-                          <field name="NUM">1.0</field>
-                      </shadow>
-                  </value>
-                  <value name="Y2">
-                      <shadow type="math_number">
-                          <field name="NUM">1.0</field>
+                          <field name="NUM">63</field>
                       </shadow>
                   </value>
                 </block>
                 <block type="cozmo_vert_cozmoface_draw_rect">
+                    <value name="X1">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="Y1">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="X2">
+                        <shadow type="math_number">
+                            <field name="NUM">127</field>
+                        </shadow>
+                    </value>
+                    <value name="Y2">
+                        <shadow type="math_number">
+                            <field name="NUM">63</field>
+                        </shadow>
+                    </value>
+                </block>
+                <block type="cozmo_vert_cozmoface_fill_rect">
                   <value name="X1">
                       <shadow type="math_number">
-                          <field name="NUM">0.0</field>
+                          <field name="NUM">0</field>
                       </shadow>
                   </value>
                   <value name="Y1">
                       <shadow type="math_number">
-                          <field name="NUM">0.0</field>
+                          <field name="NUM">0</field>
                       </shadow>
                   </value>
                   <value name="X2">
                       <shadow type="math_number">
-                          <field name="NUM">1.0</field>
+                          <field name="NUM">127</field>
                       </shadow>
                   </value>
                   <value name="Y2">
                       <shadow type="math_number">
-                          <field name="NUM">1.0</field>
+                          <field name="NUM">63</field>
                       </shadow>
                   </value>
                 </block>
                 <block type="cozmo_vert_cozmoface_draw_circle">
                   <value name="X1">
                       <shadow type="math_number">
-                          <field name="NUM">0.5</field>
+                          <field name="NUM">63</field>
                       </shadow>
                   </value>
                   <value name="Y1">
                       <shadow type="math_number">
-                          <field name="NUM">0.5</field>
+                          <field name="NUM">31</field>
                       </shadow>
                   </value>
                   <value name="RADIUS">
                       <shadow type="math_positive_number">
-                          <field name="NUM">0.5</field>
+                          <field name="NUM">32</field>
                       </shadow>
                   </value>
                 </block>
@@ -415,23 +482,23 @@
                 <block type="cozmo_vert_cozmoface_fill_circle">
                   <value name="X1">
                       <shadow type="math_number">
-                          <field name="NUM">0.5</field>
+                          <field name="NUM">64</field>
                       </shadow>
                   </value>
                   <value name="Y1">
                       <shadow type="math_number">
-                          <field name="NUM">0.5</field>
+                          <field name="NUM">32</field>
                       </shadow>
                   </value>
                   <value name="RADIUS">
                       <shadow type="math_positive_number">
-                          <field name="NUM">0.5</field>
+                          <field name="NUM">32</field>
                       </shadow>
                   </value>
                 </block>
             </category>
 
-            <category name="Operators" colour="#40BF4A" secondaryColour="0">
+            <category name="codeLab.Category.Operators" colour="#40BF4A" secondaryColour="0">
               <block type="operator_add">
                   <value name="NUM1">
                       <shadow type="math_number">
@@ -534,12 +601,12 @@
               <block type="operator_join">
                   <value name="STRING1">
                   <shadow type="text">
-                      <field name="TEXT">hello</field>
+                      <field name="TEXT">anki</field>
                   </shadow>
                   </value>
                   <value name="STRING2">
                   <shadow type="text">
-                      <field name="TEXT">world</field>
+                      <field name="TEXT">cozmo</field>
                   </shadow>
                   </value>
               </block>
@@ -551,18 +618,18 @@
                   </value>
                   <value name="STRING">
                   <shadow type="text">
-                      <field name="TEXT">world</field>
+                      <field name="TEXT">cozmo</field>
                   </shadow>
                   </value>
               </block>
               <block type="operator_length">
                   <value name="STRING">
                   <shadow type="text">
-                      <field name="TEXT">world</field>
+                      <field name="TEXT">cozmo</field>
                   </shadow>
                   </value>
               </block>
-              <block type="operator_contains" id="operator_contains">
+              <block type="operator_contains">
                 <value name="STRING1">
                   <shadow type="text">
                     <field name="TEXT">cozmo</field>
@@ -594,18 +661,15 @@
                   </value>
               </block>
               <block type="operator_mathop">
-                  <value name="OPERATOR">
-                  <shadow type="operator_mathop_menu"></shadow>
-                  </value>
                   <value name="NUM">
-                  <shadow type="math_number">
+                    <shadow type="math_number">
                       <field name="NUM"></field>
-                  </shadow>
+                    </shadow>
                   </value>
               </block>
             </category>
 
-            <category name="Data" colour="#FF8C1A" secondaryColour="0" custom="VARIABLE">
+            <category name="codeLab.Category.Data" colour="#FF8C1A" secondaryColour="0" custom="VARIABLE">
             </category>
         </xml>
 
@@ -641,16 +705,6 @@
             </div>
         </div>
 
-        <!-- Undo/Redo -->
-        <div id="undoRedo">
-            <div class="undo">
-                <button id="undo" />
-            </div>
-            <div class="redo">
-                <button id="redo" />
-            </div>
-        </div>
-
         <!-- Navigation -->
         <div id="navigation">
             <div class="greenflag">
@@ -661,12 +715,34 @@
             </div>
         </div>
 
+        <!-- Undo/Redo -->
+        <div id="undoRedo">
+            <div class="redo">
+                <button id="redo" />
+            </div>
+            <div class="undo">
+                <button id="undo" />
+            </div>
+        </div>
+
+        <!-- Zoom controls -->
+        <div id="zoomControls">
+            <div class="zoomIn">
+                <button id="zoomIn" />
+            </div>
+            <div class="zoomOut">
+                <button id="zoomOut" />
+            </div>
+            <div class="zoomReset">
+                <button id="zoomReset" />
+            </div>
+        </div>
+
         <div id="glossary-modal">
           <div class="modal-background" data-type="close-glossary"></div>
           <div id="glossary">
             <div class="hd">
               <button class="close-button" data-type="close-glossary">
-                <img src="./extra/images/icon_closeButton.svg"/>
               </button>
               <div id="glossary-title"></div>
             </div>
@@ -679,5 +755,23 @@
             </div>
           </div>
         </div>
+
+        <div id="rename-project-modal">
+          <div class="hd">
+            <button id="btn-close-rename-project"></button>
+            <div class="original-project-name"></div>
+          </div>
+          <div class="bd">
+            <form id="rename-project-form">
+              <div id="rename-project-prompt"></div>
+              <input id="rename-project-text-box" value="" autocomplete="off"/>
+              <div class="buttons">
+                <button id="btn-cancel-rename"></button>
+                <button id="btn-save-rename"></button>
+              </div>
+            </form>
+          </div>
+        </div>
+
 	</body>
 </html>
