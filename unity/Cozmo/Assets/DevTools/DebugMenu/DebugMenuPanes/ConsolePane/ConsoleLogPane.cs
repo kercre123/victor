@@ -48,9 +48,6 @@ public class ConsoleLogPane : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Toggle _PauseToggle;
 
-  [SerializeField]
-  private UnityEngine.UI.Toggle _LatencyToggle;
-
   private SimpleObjectPool<AnkiTextLegacy> _TextLabelPool;
   private List<AnkiTextLegacy> _TextLabelsUsed;
   private AnkiTextLegacy _NewestTextLabel;
@@ -63,9 +60,6 @@ public class ConsoleLogPane : MonoBehaviour {
 
     _PauseToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled;
     _PauseToggle.onValueChanged.AddListener(HandleTogglePause);
-
-    _LatencyToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled;
-    _LatencyToggle.onValueChanged.AddListener(HandleToggleLatency);
   }
 
   private void OnDestroy() {
@@ -89,15 +83,6 @@ public class ConsoleLogPane : MonoBehaviour {
       }
     }
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled = enable;
-    DataPersistence.DataPersistenceManager.Instance.Save();
-  }
-
-  public void HandleToggleLatency(bool enable) {
-    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled = enable;
-    // The first time you hit this checkbox, it forces it up immediately. 
-    // You can then close it on the popup if you don't want it.
-    // It will pop up again on subsequent runs when it's in a "warning" stage
-    DebugMenuManager.Instance.EnableLatencyPopup(enable, enable);
     DataPersistence.DataPersistenceManager.Instance.Save();
   }
 

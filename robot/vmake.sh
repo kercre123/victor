@@ -11,6 +11,5 @@ echo Building...
 ssh nathan@anki-vm-keil 'bash -lc "cd '"$HOSTNAME/$PRJ"';./convert_projx_to_uv4.sh;/cygdrive/c/Keil_v4/UV4/UV4.exe -j0 -b robot41.uvproj -o build.log;cat build.log;rm build.log"; bash -lc "cd '"$HOSTNAME/$PRJ/syscon"';/cygdrive/c/Keil_v4/UV4/UV4.exe -j0 -b ota_bin.uvproj -o build.log;cat build.log;rm build.log"; bash -lc "cd '"$HOSTNAME/$PRJ/syscon"';/cygdrive/c/Keil_v4/UV4/UV4.exe -j0 -b syscon.uvproj -o build.log;cat build.log;rm build.log"'
 echo Copying back...
 rsync -rte "ssh" nathan@anki-vm-keil:$HOSTNAME/$PRJ ..
-make k02_fix
-python ./tools/boot_header.py build/syscon.axf
+make k02_fix nrf_fix
 ls -la build/$PRJ.bin

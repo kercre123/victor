@@ -101,7 +101,7 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
     // Disable reactionary behaviors
     robot.GetBehaviorManager().DisableReactionsWithLock(
                                    kBehaviorTestName,
-                                   ReactionTriggerHelpers::kAffectAllArray);
+                                   ReactionTriggerHelpers::GetAffectAllArray());
     
     
     

@@ -88,8 +88,8 @@ Blockly.Toolbox = function(workspace) {
  * @type {number}
  */
 // *** ANKI CHANGE ***
-// Width of the toolbox. msintov, 9/1/17
-Blockly.Toolbox.prototype.width = 60;
+// Width of the toolbox. Matches scratchCategoryMenu plus padding in css.js. msintov, 9/1/17
+Blockly.Toolbox.prototype.width = 90;
 //Blockly.Toolbox.prototype.width = 310;
 
 /**
@@ -120,6 +120,13 @@ Blockly.Toolbox.prototype.init = function() {
   
   this.HtmlDiv =
       goog.dom.createDom(goog.dom.TagName.DIV, toolboxDiv); // *** ANKI CHANGE ***
+
+  // *** ANKI CHANGE ***
+  // Move toolbox down different amount for phones.
+  if (window.isVertical && window.innerWidth < window.TABLET_WIDTH) {
+    this.HtmlDiv.style.top = "60px";
+  }
+
   this.HtmlDiv.setAttribute('dir', workspace.RTL ? 'RTL' : 'LTR');
   svg.parentNode.insertBefore(this.HtmlDiv, svg);
 
@@ -134,7 +141,7 @@ Blockly.Toolbox.prototype.init = function() {
           Blockly.hideChaff(true);
         }
         Blockly.Touch.clearTouchIdentifier();  // Don't block future drags.
-      });
+      }, /*opt_noCaptureIdentifier*/ false, /*opt_noPreventDefault*/ true);
 
   this.createFlyout_();
   this.categoryMenu_ = new Blockly.Toolbox.CategoryMenu(this, this.HtmlDiv);
@@ -235,7 +242,15 @@ Blockly.Toolbox.prototype.position = function() {
     } else {  // Left
       treeDiv.style.left = '0';
     }
-    treeDiv.style.height = '100%';
+
+    // *** ANKI CHANGE ***
+    // In order to size height of toolbox correctly for screen,
+    // get the current toolbox top value and subtract from height.
+    var toolboxTop = this.HtmlDiv.style.top // toolboxTop value is like "60px"
+    var pxStrPosition = toolboxTop.indexOf("px");
+    var topValueNum = toolboxTop.substring(0, pxStrPosition); // strip the number out of toolboxTop
+    treeDiv.style.height = (window.innerHeight - topValueNum) + "px";
+    //treeDiv.style.height = '100%';
   }
   this.flyout_.position();
 };
@@ -440,7 +455,14 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     // Create a single column of categories
     for (var i = 0; i < categories.length; i++) {
       var child = categories[i];
-      var row = goog.dom.createDom('div', 'scratchCategoryMenuRow');
+      var row = goog.dom.createDom('div', 'scratchCategoryMenuRowVertical');
+
+      // *** ANKI CHANGE ***
+      // Make categories less tall on phones.
+      if (window.innerWidth < window.TABLET_WIDTH) {
+        row.style.padding = 0;
+      }
+
       this.table.appendChild(row);
       if (child) {
         this.categories_.push(new Blockly.Toolbox.Category(this, row,
@@ -479,14 +501,10 @@ Blockly.Toolbox.Category = function(parent, parentHtml, domTree) {
   this.parent_ = parent;
   this.parentHtml_ = parentHtml;
 
-  if (!window.isVertical) {
-    // ANKI CHANGE: Look up category name using localized keys
-    var key = domTree.getAttribute('name');
-    this.name_ = $t(key);
-  }
-  else {
-    this.name_ = domTree.getAttribute('name');
-  }
+  // *** ANKI CHANGE *** 
+  // Look up category name using localized keys
+  var key = domTree.getAttribute('name');
+  this.name_ = $t(key);
 
   this.setColour(domTree);
   this.custom_ = domTree.getAttribute('custom');
@@ -554,7 +572,7 @@ Blockly.Toolbox.Category.prototype.createDom = function() {
     this.item_.appendChild(this.label_);
     this.parentHtml_.appendChild(this.item_);
     Blockly.bindEvent_(this.item_, 'mousedown', toolbox,
-      toolbox.setSelectedItemFactory(this));
+      toolbox.setSelectedItemFactory(this), true);
   }
 };
 

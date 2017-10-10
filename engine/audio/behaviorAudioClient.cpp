@@ -305,6 +305,13 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateEvent)
 {
+// // COZMO-14148 - Firing world events during feeding causes improper
+// // audio state transitions, so short circuit this function here
+// // to avoid posting events
+// if(stateEvent.currentActivity == ActivityID::Feeding){
+//   return;
+// }
+//
 //  using AE = AudioMetaData::GameEvent::GenericEvent;
 //  
 //  if(_isCubeInLift != stateEvent.isCubeInLift){

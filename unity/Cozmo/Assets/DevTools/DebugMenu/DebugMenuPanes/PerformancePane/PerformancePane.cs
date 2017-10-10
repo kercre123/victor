@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
+using System.Collections.Generic;
 
 public class PerformancePane : MonoBehaviour {
 
@@ -47,6 +47,9 @@ public class PerformancePane : MonoBehaviour {
   private Button _ShowFPSCounterButton;
 
   [SerializeField]
+  private Dropdown _PerfWarningHUDDropdown;
+
+  [SerializeField]
   private Text _BatteryVoltage;
 
   [SerializeField]
@@ -56,6 +59,8 @@ public class PerformancePane : MonoBehaviour {
     _ShowFPSCounterButton.onClick.AddListener(HandleShowCounterButtonClicked);
     InitQualityLevelDropdown();
     _QualityDropDown.onValueChanged.AddListener(HandleQualityChanged);
+    InitPerfHUDDropdown();
+    _PerfWarningHUDDropdown.onValueChanged.AddListener(HandlePerfHUDModeChanged);
     RaisePerformancePaneOpened(this);
   }
 
@@ -80,6 +85,27 @@ public class PerformancePane : MonoBehaviour {
 
   private void HandleShowCounterButtonClicked() {
     RaisePerformanceCounterButtonClicked();
+  }
+
+  private void InitPerfHUDDropdown() {
+    _PerfWarningHUDDropdown.ClearOptions();
+    var enum_values = System.Enum.GetValues(typeof(PerfWarningDisplay.PerfWarningDisplayMode));
+    List<UnityEngine.UI.Dropdown.OptionData> options = new List<UnityEngine.UI.Dropdown.OptionData>();
+    for (int i = 0; i < enum_values.Length; ++i) {
+      UnityEngine.UI.Dropdown.OptionData option = new UnityEngine.UI.Dropdown.OptionData();
+      option.text = System.Enum.GetValues(typeof(PerfWarningDisplay.PerfWarningDisplayMode)).GetValue(i).ToString();
+      options.Add(option);
+    }
+    _PerfWarningHUDDropdown.AddOptions(options);
+    _PerfWarningHUDDropdown.value = (int)DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.PerfInfoDisplayMode;
+    _PerfWarningHUDDropdown.Select();
+    _PerfWarningHUDDropdown.RefreshShownValue();
+  }
+
+  private void HandlePerfHUDModeChanged(int value_changed) {
+#if ANKI_DEV_CHEATS
+    Cozmo.PerformanceManager.Instance.PerfHUD.SetPerfWarningDisplayState((PerfWarningDisplay.PerfWarningDisplayMode)value_changed);
+#endif
   }
 
   private void InitQualityLevelDropdown() {

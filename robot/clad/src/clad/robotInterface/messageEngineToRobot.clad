@@ -480,6 +480,7 @@ union EngineToRobot
   // 0x00 Is invalid message
 
   // 0x01 to 0x2f: Messages to the body / test fixture
+  // ALL TO BODY MESSAGES MUST BE 41 BYTES OR LESS
   AdjustTimestamp               adjustTimestamp             = 0x01,
   BackpackSetLayer              setBackpackLayer            = 0x02,
   BackpackLightsMiddle          setBackpackLightsMiddle     = 0x03,
@@ -505,6 +506,7 @@ union EngineToRobot
   BLE::Disconnect               bleDisconnect               = 0x27,
 
   // 0x30 to 0x7f: To RTIP
+  // ALL TO RTIP MESSAGE MUST BE 44 BYTES OR LESS
   OTA::EnterRecoveryMode        enterRecoveryMode           = 0x30,
   //          FREE SLOT!!!                                  = 0x31,
   DriveWheels                   drive                       = 0x32,

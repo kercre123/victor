@@ -45,7 +45,7 @@
   },
   {
     "feature": "LocalNotifications",
-    "enabled": false
+    "enabled": true
   }
 ]
 

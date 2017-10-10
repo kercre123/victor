@@ -8,7 +8,7 @@ namespace DataPersistence {
   [System.Serializable]
   public class DebugProfile {
     public static string kNoFreelpayOnStartLock = "no_freeplay_on_start";
-    public bool LatencyDisplayEnabled;
+    public PerfWarningDisplay.PerfWarningDisplayMode PerfInfoDisplayMode;
     public bool DebugPauseEnabled;
     public bool NoFreeplayOnStart;
     public bool ShowDroneModeDebugInfo;
@@ -20,11 +20,11 @@ namespace DataPersistence {
     public bool ForceFirstTimeConnectFlow;
     public bool ForceNotFirstTimeConnectFlow;
     public bool FakeGermanLocale;
-    public bool UseVerticalGrammarCodelab;
     public bool EnableAutoBlockPoolOnStart;
+    public bool LoadTestCodeLabProjects;
 
     public DebugProfile() {
-      LatencyDisplayEnabled = false;
+      PerfInfoDisplayMode = PerfWarningDisplay.PerfWarningDisplayMode.TurnsOnWhenWarning;
       DebugPauseEnabled = false;
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
@@ -33,8 +33,8 @@ namespace DataPersistence {
       ForceFirstTimeConnectFlow = false;
       ForceNotFirstTimeConnectFlow = false;
       FakeGermanLocale = false;
-      UseVerticalGrammarCodelab = false;
       EnableAutoBlockPoolOnStart = true;
+      LoadTestCodeLabProjects = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("EnableAutoBlockPoolOnStart", "Animator", this);
@@ -47,7 +47,7 @@ namespace DataPersistence {
       DebugConsoleData.Instance.AddConsoleVar("ForceNotFirstTimeConnectFlow", "UIMockFlow", this);
       DebugConsoleData.Instance.AddConsoleVar("FakeGermanLocale", "UIMockFlow", this);
 #endif
-      DebugConsoleData.Instance.AddConsoleVar("UseVerticalGrammarCodelab", "CodeLab", this);
+      DebugConsoleData.Instance.AddConsoleVar("LoadTestCodeLabProjects", "CodeLab", this);
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
         OverrideLanguage = false;
@@ -95,8 +95,8 @@ namespace DataPersistence {
         }
         break;
       case "UseFastConnectivityFlow":
-      case "UseVerticalGrammarCodelab":
       case "EnableAutoBlockPoolOnStart":
+      case "LoadTestCodeLabProjects":
         DataPersistence.DataPersistenceManager.Instance.Save();
         break;
       }

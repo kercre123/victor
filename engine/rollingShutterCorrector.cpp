@@ -99,7 +99,7 @@ namespace Anki {
                                                         const int numToLookBack,
                                                         const f32 rateX, const f32 rateY, const f32 rateZ) const
     {
-      if(_history.size() == 0)
+      if(_history.empty())
       {
         return false;
       }
@@ -155,8 +155,6 @@ namespace Anki {
       _pixelShifts.clear();
       _pixelShifts.reserve(_rsNumDivisions);
 
-      Pose3d pose = poseData.cameraPose.GetWithRespectToRoot();
-      
       // Time difference between subdivided rows in the image
       const f32 timeDif = timeBetweenFrames_ms/_rsNumDivisions;
       
@@ -254,18 +252,18 @@ namespace Anki {
                                                                  const int line,
                                                                  const u32 numRows)
     {
-      std::deque<ImuDataHistory::ImuData>::const_iterator ImuBeforeT;
-      std::deque<ImuDataHistory::ImuData>::const_iterator ImuAfterT;
-      
-      float rateY = 0;
-      float rateZ = 0;
-      
-      if(poseData.imuDataHistory.size() == 0)
+      if(poseData.imuDataHistory.empty())
       {
         shift = Vec2f(0,0);
         return false;
       }
       
+      std::deque<ImuDataHistory::ImuData>::const_iterator ImuBeforeT;
+      std::deque<ImuDataHistory::ImuData>::const_iterator ImuAfterT;
+
+      float rateY = 0;
+      float rateZ = 0;
+
       bool beforeAfterSet = false;
       // Find the ImuData before and after the timestamp if it exists
       for(auto iter = poseData.imuDataHistory.begin(); iter != poseData.imuDataHistory.end(); ++iter)

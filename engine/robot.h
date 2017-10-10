@@ -93,7 +93,6 @@ class RobotToEngineImplMessaging;
 class TextToSpeechComponent;
 class PublicStateBroadcaster;
 class VisionComponent;
-struct RobotState;
 class PathComponent;
 class DockingComponent;
 class CarryingComponent;
@@ -101,6 +100,7 @@ class CliffSensorComponent;
 class ProxSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
+class MapComponent;
 
 namespace Audio {
   class EngineRobotAudioClient;
@@ -113,11 +113,6 @@ class RobotToEngine;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
-
-//
-// Compile-time switch for Animation Streamer 2.0
-//
-#define BUILD_NEW_ANIMATION_CODE 0
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -173,6 +168,9 @@ public:
 
   inline VisionComponent&       GetVisionComponent()       { assert(_visionComponent); return *_visionComponent; }
   inline const VisionComponent& GetVisionComponent() const { assert(_visionComponent); return *_visionComponent; }
+  
+  inline MapComponent&       GetMapComponent()       {assert(_mapComponent); return *_mapComponent;}
+  inline const MapComponent& GetMapComponent() const {assert(_mapComponent); return *_mapComponent;}
   
   inline BlockTapFilterComponent& GetBlockTapFilter() {
     assert(_tapFilterComponent);
@@ -242,7 +240,7 @@ public:
     assert(_progressionUnlockComponent);
     return *_progressionUnlockComponent;
   }
-  //InventoryComponent
+
   inline const InventoryComponent& GetInventoryComponent() const {
     assert(_inventoryComponent);
     return *_inventoryComponent;
@@ -417,8 +415,8 @@ public:
   const Pose3d&       GetWorldOrigin()  const;
   PoseOriginID_t      GetWorldOriginID()const;
   
-  Pose3d              GetCameraPose(f32 atAngle) const;
-  Transform3d         GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
+  Pose3d              GetCameraPose(const f32 atAngle) const;
+  Transform3d         GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const;
 
   OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
@@ -770,11 +768,11 @@ protected:
   AnimationTag      _animationTag                    = kNotAnimatingTag;
   
   std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
-  
-  
+    
   std::unique_ptr<ActionList>             _actionList;
   std::unique_ptr<MovementComponent>      _movementComponent;
   std::unique_ptr<VisionComponent>        _visionComponent;
+  std::unique_ptr<MapComponent>           _mapComponent;  
   std::unique_ptr<NVStorageComponent>     _nvStorageComponent;
   std::unique_ptr<AIComponent>            _aiComponent;
   std::unique_ptr<TextToSpeechComponent>  _textToSpeechComponent;
@@ -1027,6 +1025,12 @@ inline const RobotID_t Robot::GetID(void) const
 
 inline const Pose3d& Robot::GetPose(void) const
 {
+  ANKI_VERIFY(_pose.GetRootID() == GetWorldOriginID(),
+              "Robot.GetPose.BadPoseRootOrWorldOriginID",
+              "WorldOriginID:%d(%s), RootID:%d",
+              GetWorldOriginID(), GetWorldOrigin().GetName().c_str(),
+              _pose.GetRootID());
+  
   // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
   ANKI_VERIFY(_pose.HasSameRootAs(GetWorldOrigin()), 
               "Robot.GetPose.PoseOriginNotWorldOrigin",

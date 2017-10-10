@@ -9,6 +9,8 @@ ALL_TRACKS = ["LiftHeightKeyFrame", "HeadAngleKeyFrame", "ProceduralFaceKeyFrame
 
 BODY_RADIUS_ATTR = "radius_mm"
 
+PROBABILITY_ATTR = "probability"
+
 DURATION_TIME_ATTR = "durationTime_ms"
 
 TRIGGER_TIME_ATTR = "triggerTime_ms"
@@ -116,11 +118,18 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
             except KeyError:
                 pass
 
-        # Some old anim files have an "durationTime_ms" attribute for audio keyframes, but those
-        # aren't used anymore and thus not defined in the schema, so they should be removed here.
         if track == ROBOT_AUDIO_TRACK:
+            # Some old anim files have an "durationTime_ms" attribute for audio keyframes, but those
+            # aren't used anymore and thus not defined in the schema, so they are removed here.
             try:
                 keyframe.pop(DURATION_TIME_ATTR)
+            except KeyError:
+                pass
+            # The "probability" attribute used to be a single float value, but that has now changed
+            # to a list of probabilities, so we convert it to a list here if needed.
+            try:
+                if not isinstance(keyframe[PROBABILITY_ATTR], list):
+                    keyframe[PROBABILITY_ATTR] = [keyframe[PROBABILITY_ATTR]]
             except KeyError:
                 pass
 

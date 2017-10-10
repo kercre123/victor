@@ -32,6 +32,23 @@ fonts['Avenir Next Bold'] = fontSrcPrefix + '/AvenirLTStd-Heavy.otf';
 // write the locale specific translations javascript file
 document.write('<script src="' + translationsUrl + '"></script>');
 
+// add Scratch/Blockly translation files
+var blocklyStrings = "en.js";
+if (LOCALE == 'fr-FR') {
+	blocklyStrings = "fr.js";
+}
+else if (LOCALE == 'de-DE') {
+	blocklyStrings = "de.js";
+}
+else if (LOCALE == 'ja-JP') {
+	blocklyStrings = "ja.js";
+}
+document.write('<script src="' + "./lib/blocks/msg/js/" + blocklyStrings + '"></script>');
+
+// add Cozmo vertical blocks translation files
+var cozmoVerticalBlocksUrl = 'LocalizedStrings/' + LOCALE + '/CodeLabVerticalBlocks.js';
+document.write('<script src="' + cozmoVerticalBlocksUrl + '"></script>');
+
 // write out style tags with the localized @font-face declarations
 document.write('<style>');
 for (var family in fonts) {

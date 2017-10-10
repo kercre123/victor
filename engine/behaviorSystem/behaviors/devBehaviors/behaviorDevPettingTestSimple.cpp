@@ -72,7 +72,7 @@ bool BehaviorDevPettingTestSimple::IsRunnableInternal(const Robot& robot) const
 Result BehaviorDevPettingTestSimple::InitInternal(Robot& robot)
 {
   // Disable all reactions
-  SmartDisableReactionsWithLock(GetIDStr(), ReactionTriggerHelpers::kAffectAllArray);
+  SmartDisableReactionsWithLock(GetIDStr(), ReactionTriggerHelpers::GetAffectAllArray());
   
   return RESULT_OK;
 }

@@ -42,10 +42,21 @@ Blockly.ScrollbarPair = function(workspace) {
     'blocklyMainWorkspaceScrollbar');
   this.vScroll = new Blockly.Scrollbar(workspace, false, true,
     'blocklyMainWorkspaceScrollbar');
+
+  // *** ANKI CHANGE ***
+  var background = 'blocklyScrollbarBackground';
+  if (window.isVertical) {
+    background = 'blocklyScrollbarBackgroundVertical';
+  }
   this.corner_ = Blockly.utils.createSvgElement('rect',
       {'height': Blockly.Scrollbar.scrollbarThickness,
       'width': Blockly.Scrollbar.scrollbarThickness,
-      'class': 'blocklyScrollbarBackground'}, null);
+      'class': background}, null);
+  // this.corner_ = Blockly.utils.createSvgElement('rect',
+  //     {'height': Blockly.Scrollbar.scrollbarThickness,
+  //     'width': Blockly.Scrollbar.scrollbarThickness,
+  //     'class': 'blocklyScrollbarBackground'}, null);
+
   Blockly.utils.insertAfter_(this.corner_, workspace.getBubbleCanvas());
 };
 
@@ -604,8 +615,17 @@ Blockly.Scrollbar.prototype.createDom_ = function(opt_class) {
   this.outerSvg_ = Blockly.utils.createSvgElement('svg', {'class': className},
                                                   null);
   this.svgGroup_ = Blockly.utils.createSvgElement('g', {}, this.outerSvg_);
+
+  // *** ANKI CHANGE ***
+  var background = 'blocklyScrollbarBackground';
+  if (window.isVertical) {
+    background = 'blocklyScrollbarBackgroundVertical';
+  }
   this.svgBackground_ = Blockly.utils.createSvgElement('rect',
-      {'class': 'blocklyScrollbarBackground'}, this.svgGroup_);
+      {'class': background}, this.svgGroup_);
+  // this.svgBackground_ = Blockly.utils.createSvgElement('rect',
+  //     {'class': 'blocklyScrollbarBackground'}, this.svgGroup_);
+
   var radius = Math.floor((Blockly.Scrollbar.scrollbarThickness - 5) / 2);
   this.svgHandle_ = Blockly.utils.createSvgElement('rect',
       {'class': 'blocklyScrollbarHandle', 'rx': radius, 'ry': radius},

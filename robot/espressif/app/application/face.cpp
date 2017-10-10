@@ -354,10 +354,10 @@ static const uint8_t PSK_DIGITS[] ICACHE_RODATA_ATTR STORE_ATTR = {
     return false;
   }
 
-  static void CreateRects(u64* frame, u8 sx = 0, u8 sy = 0, u8 ex = COLS, u8 ey = PAGES) {
-    if (m_mode & suspended) return;
+  static bool CreateRects(u64* frame, u8 sx = 0, u8 sy = 0, u8 ex = COLS, u8 ey = PAGES) {
+    if (m_mode & suspended) return true;
     // We cannot create new rects while we are currently transmitting
-    if (m_remainingRects > 0) return ;
+    if (m_remainingRects > 0) return false;
 
     m_rectLock = true;
 
@@ -398,6 +398,8 @@ static const uint8_t PSK_DIGITS[] ICACHE_RODATA_ATTR STORE_ATTR = {
     m_lastUpdateTime = system_get_time();
 
     m_rectLock = false;
+    
+    return true;
   }
 
   void FillScreenData(void)
@@ -796,7 +798,7 @@ namespace HAL {
 
     else if (length == MAX_FACE_FRAME_SIZE) // If it's this size, it's raw
     {
-      Face::CreateRects((u64*) image);
+      AnkiConditionalWarn(Face::CreateRects((u64*) image), 1253, "face_animate.dropped_frame", 659, "Dropping frame because %d rects remaining", 1, m_remainingRects);
     }
     else
     {

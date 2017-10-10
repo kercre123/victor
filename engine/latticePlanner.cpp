@@ -18,6 +18,9 @@
 #include "anki/common/basestation/math/rotatedRect.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/navMap/mapComponent.h"
+#include "engine/navMap/memoryMap/memoryMapTypes.h"
+#include "engine/navMap/memoryMap/memoryMapToPlanner.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
@@ -27,6 +30,7 @@
 #include "anki/planning/basestation/xythetaPlannerContext.h"
 #include "json/json.h"
 #include "latticePlanner.h"
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/jsonWriter/jsonWriter.h"
@@ -83,12 +87,16 @@ namespace Cozmo {
 
 using namespace Planning;
 
+// Enable NavMemoryMap borders to be imported into planner
+CONSOLE_VAR(bool, kUseNavMapObstacles, "LatticePlanner.ImportBlockworldObstaclesIfNeeded", false);
+
 class LatticePlannerImpl : private Util::noncopyable
 {
 public:
 
   LatticePlannerImpl(Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
     : _robot(robot)
+    , _blockWorld(&robot->GetBlockWorld())
     , _planner(_context)
     , _parent(parent)
   {
@@ -183,7 +191,8 @@ public:
   // run the planner until it stops, update internal status
   void DoPlanning();
 
-  const Robot* _robot;
+  Robot* _robot;
+  BlockWorld*  _blockWorld;
   xythetaPlannerContext _context;
   xythetaPlanner _planner;
   xythetaPlan _totalPlan;
@@ -729,7 +738,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
   }
 
-  const TimeStamp_t timeOfLastChange = _robot->GetBlockWorld().GetTimeOfLastChange();
+  const TimeStamp_t timeOfLastChange = _blockWorld->GetTimeOfLastChange();
   const bool didObjectsChange = (_timeOfLastObjectsImport < timeOfLastChange);
   
   if(!isReplanning ||  // get obstacles if theyve changed or we're not replanning
@@ -737,8 +746,62 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
   {
     _timeOfLastObjectsImport = timeOfLastChange;
     std::vector<std::pair<Quad2f,ObjectID> > boundingBoxes;
+    std::vector<Poly2f> navMapConvexHulls;
 
-    _robot->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
+    _blockWorld->GetObstacles(boundingBoxes, obstaclePadding);
+    
+    // Configuration of memory map to check for obstacles
+    constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithInterestingEdges =
+    {
+      {MemoryMapTypes::EContentType::Unknown               , true},
+      {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+      {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+      {MemoryMapTypes::EContentType::ObstacleCube          , true},
+      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+      {MemoryMapTypes::EContentType::ObstacleProx          , true},
+      {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+      {MemoryMapTypes::EContentType::Cliff                 , true},
+      {MemoryMapTypes::EContentType::InterestingEdge       , false},
+      {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
+    };
+    static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithInterestingEdges),
+      "This array does not define all types once and only once.");
+      
+      
+    constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithNotInterestingEdges =
+    {
+      {MemoryMapTypes::EContentType::Unknown               , true},
+      {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+      {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+      {MemoryMapTypes::EContentType::ObstacleCube          , true},
+      {MemoryMapTypes::EContentType::ObstacleCubeRemoved   , true},
+      {MemoryMapTypes::EContentType::ObstacleCharger       , true},
+      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+      {MemoryMapTypes::EContentType::ObstacleProx          , true},
+      {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+      {MemoryMapTypes::EContentType::Cliff                 , true},
+      {MemoryMapTypes::EContentType::InterestingEdge       , true},
+      {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
+    };
+    static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithNotInterestingEdges),
+      "This array does not define all types once and only once.");
+    
+    // GetNavMap Polys
+    std::vector<Poly2f> convexHulls;
+    if (kUseNavMapObstacles) {
+      INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
+      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
+      GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);    
+    }
+
+    // add Blockworld polys
+    for(const auto& boundingQuad : boundingBoxes) {
+      Poly2f boundingPoly;
+      boundingPoly.ImportQuad2d(boundingQuad.first);
+      convexHulls.push_back(boundingPoly);
+    }
     
     _context.env.ClearObstacles();
     
@@ -763,13 +826,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
       robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding) );
-
-      for(const auto& boundingQuad : boundingBoxes) {
-
-        Poly2f boundingPoly;
-        boundingPoly.ImportQuad2d(boundingQuad.first);
-
-        /*const FastPolygon& expandedPoly =*/
+      
+      for(const auto& boundingPoly : convexHulls) {
         _context.env.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         // only draw the angle we are currently at
@@ -783,11 +841,10 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
           // _robot->GetContext()->GetVizManager()->DrawPlannerObstacle(isReplanning, vizID++ , expandedPoly, *vizColor);
 
           // TODO:(bn) figure out a good way to visualize the
-          // multi-angle stuff. For now just draw the quads with
+          // multi-angle stuff. For now just draw the poly with
           // padding
-          _robot->GetContext()->GetVizManager()->DrawQuad (
-            isReplanning ? VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE,
-            vizID++, boundingQuad.first, 0.1f, *vizColor );
+          _robot->GetContext()->GetVizManager()->DrawPoly (
+            vizID++, boundingPoly, *vizColor );
         }
         numAdded++;
       }
@@ -841,6 +898,9 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
   _context.forceReplanFromScratch = forceReplanFromScratch;
 
+  DEV_ASSERT(startPose.IsRoot() || startPose.GetParent().IsRoot(),
+             "LatticePlannerImpl.StartPlanning.StartPoseNotWrtRoot");
+  
   State_c currentRobotState(startPose.GetTranslation().x(),
                             startPose.GetTranslation().y(),
                             startPose.GetRotationAngle<'Z'>().ToFloat());
@@ -1002,6 +1062,8 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
 
 
   // consider trimming actions if the robot has moved past the beginning of the path
+  DEV_ASSERT(currentRobotPose.IsRoot() || currentRobotPose.GetParent().IsRoot(),
+             "LatticePlannerImpl.GetCompletePath.RobotPoseNotWrtRoot");
   State_c currentRobotState(currentRobotPose.GetTranslation().x(),
                             currentRobotPose.GetTranslation().y(),
                             currentRobotPose.GetRotationAngle<'Z'>().ToFloat());

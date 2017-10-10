@@ -3,8 +3,14 @@
     // cozmoSaveLoadAPI.js is a list of calls for the save/load UI page and should not contain any references to
     // code in Scratch/lib (i.e., Blockly, scratch-blocks or scratch-vm code).
 
+    // Retrieve one list of projects: featured projects that are all vertical, sorted by the order
+    // it should be displayed.
+    //
+    // Callback method has one parameters, a JSON array of the featured projects.
+    // The callback has only been tested with a method on window.
+    // Example: window.myCallback(featuredProjectList)
     window.getCozmoFeaturedProjectList = function(callback) {
-        // TODO Implement
+        window.Unity.call({requestId: -1, command: "getCozmoFeaturedProjectList", argString: callback});
     }
 
     // For horizontal or vertical: retrieve two lists of projects: user projects and sample projects. Each is sorted by the order
@@ -22,19 +28,29 @@
         window.Unity.call({requestId: -1, command: "cozmoDeleteUserProject", argString: projectUUID});
     }
 
-    // For horizontal or vertical user project, calls Unity with projectUUID, requesting Unity to send project data to window.openCozmoUserProject()
+    // For horizontal or vertical user project, calls Unity with projectUUID and requests Unity to open project.
     window.requestToOpenCozmoUserProject = function(projectUUID, isVertical) {
         window.Unity.call({requestId: -1, command: "cozmoRequestToOpenUserProject", argString: projectUUID, argBool: isVertical});
     }
 
-    // For horizontal or vertical sample project, calls Unity with projectUUID, requesting Unity to send project data to window.openCozmoSampleProject()
+    // For horizontal or vertical sample project, calls Unity with projectUUID and requests Unity to open project.
     window.requestToOpenCozmoSampleProject = function(projectUUID, isVertical) {
         window.Unity.call({requestId: -1, command: "cozmoRequestToOpenSampleProject", argString: projectUUID, argBool: isVertical});
+    }
+
+    // For featured project, calls Unity with projectUUID and requests Unity to open project.
+    window.requestToOpenCozmoFeaturedProject = function(projectUUID) {
+        window.Unity.call({requestId: -1, command: "cozmoRequestToOpenFeaturedProject", argString: projectUUID});
     }
 
     // Request that horizontal or vertical workspace be presented with only a green flag on the workspace.
     window.requestToCreateCozmoProject = function(isVertical) {
         window.Unity.call({requestId: -1, command: "cozmoRequestToCreateProject", argBool: isVertical});
+    }
+
+    // Rename existing file. Only used for user files, not featured and sample files.
+    window.renameProject = function(callback, projectUUID, newProjectName) {
+        window.Unity.call({requestId: -1, command: "cozmoRequestToRenameProject", argString: callback, argUUID: projectUUID, argString2: newProjectName});
     }
 
     // Close minigame.

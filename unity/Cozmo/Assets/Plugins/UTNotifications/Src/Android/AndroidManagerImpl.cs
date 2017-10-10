@@ -11,6 +11,7 @@ namespace UTNotifications
     //public
         public override bool Initialize(bool willHandleReceivedNotifications, int startId = 0, bool incrementalId = false)
         {
+            m_initialized = true;
             m_willHandleReceivedNotifications = willHandleReceivedNotifications;
 
             try

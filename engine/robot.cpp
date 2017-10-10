@@ -54,6 +54,7 @@
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -183,6 +184,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _actionList(new ActionList())
   , _movementComponent(new MovementComponent(*this))
   , _visionComponent( new VisionComponent(*this, _context))
+  , _mapComponent(new MapComponent(this))
   , _nvStorageComponent(new NVStorageComponent(*this, _context))
   , _aiComponent(new AIComponent(*this))
   , _textToSpeechComponent(new TextToSpeechComponent(_context))
@@ -292,6 +294,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     
 Robot::~Robot()
 {
+  LOG_EVENT("robot.destructor", "%d", GetID());
+  
   // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
   GetAIComponent().GetFreeplayDataTracker().ForceUpdate();
   
@@ -318,6 +322,15 @@ Robot::~Robot()
   Util::SafeDelete(_progressionUnlockComponent);
   Util::SafeDelete(_tapFilterComponent);
   Util::SafeDelete(_blockFilter);
+  
+  // Destroy these components (which may hold poses parented to _pose) *before* _pose is destroyed (despite
+  // order of declaration)
+  _objectPoseConfirmerPtr.reset();
+  _aiComponent.reset();
+  _pathComponent.reset();
+  _petWorld.reset();
+  _faceWorld.reset();
+  _blockWorld.reset();
 }
     
 void Robot::SetOnCharger(bool onCharger)
@@ -700,6 +713,7 @@ void Robot::Delocalize(bool isCarryingObject)
         PRINT_NAMED_WARNING("Robot.Delocalize.UpdateObjectOriginFailed",
                             "Object %d", objectID.GetValue());
       }
+      
     }
   }
 
@@ -1175,6 +1189,8 @@ void Robot::SetPhysicalRobot(bool isPhysical)
     Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
   }
   #endif // !(ANKI_PLATFORM_IOS || ANKI_PLATFORM_ANDROID)
+
+  _visionComponent->SetPhysicalRobot(_isPhysical);
 }
 
 Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const
@@ -1335,7 +1351,7 @@ Result Robot::Update()
   ///////// MemoryMap ///////////
       
   // update the memory map based on the current's robot pose
-  _blockWorld->UpdateRobotPoseInMemoryMap();
+  _mapComponent->UpdateRobotPose();
   
   // Check if we have driven off the charger platform - this has to happen before the behaviors which might
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
@@ -1478,7 +1494,7 @@ Result Robot::Update()
   ConnectToRequestedObjects();
   
   // Send nav memory map data
-  _blockWorld->BroadcastNavMemoryMap();
+  _mapComponent->BroadcastMap();
   
   /////////// Update AnimationComponent /////////
   _animationComponent->Update();
@@ -1489,7 +1505,7 @@ Result Robot::Update()
   _blockWorld->DrawAllObjects();
       
   // Nav memory map
-  _blockWorld->DrawNavMemoryMap();
+  _mapComponent->DrawMap();
       
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();
@@ -1559,7 +1575,11 @@ Result Robot::Update()
     SendDebugString(buffer);
     _lastDebugStringHash = curr_hash;
   }
-
+  
+#if ANKI_DEV_CHEATS
+  Broadcast( ExternalInterface::MessageEngineToGame(ExternalInterface::DebugPerformanceTick(
+                                                    "Vision",_visionComponent->GetProcessingPeriod_ms())));
+#endif
   _cubeLightComponent->Update();
   _bodyLightComponent->Update();
   
@@ -1672,7 +1692,7 @@ void Robot::SetPose(const Pose3d &newPose)
       
 } // SetPose()
     
-Pose3d Robot::GetCameraPose(f32 atAngle) const
+Pose3d Robot::GetCameraPose(const f32 atAngle) const
 {
   // Start with canonical (untilted) headPose
   Pose3d newHeadPose(_headCamPose);
@@ -1683,7 +1703,7 @@ Pose3d Robot::GetCameraPose(f32 atAngle) const
   newHeadPose.SetName("Camera");
 
   return newHeadPose;
-} // GetCameraHeadPose()
+} // GetCameraPose()
     
 void Robot::SetHeadAngle(const f32& angle)
 {
@@ -1950,6 +1970,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
       // Now we need to go through all objects and faces whose poses have been adjusted
       // by this origin switch and notify the outside world of the change.
       _blockWorld->UpdateObjectOrigins(origOriginID, newOriginID);
+      _mapComponent->UpdateMapOrigins(origOriginID, newOriginID);
       _faceWorld->UpdateFaceOrigins(origOriginID, newOriginID); 
       
       // after updating all block world objects, flatten out origins to remove grandparents
@@ -2314,7 +2335,7 @@ Result Robot::SetOnRamp(bool t)
       
   return RESULT_OK;
       
-} // SetOnPose()
+} // SetOnRamp()
     
     
 Result Robot::SetPoseOnCharger()
@@ -2349,7 +2370,7 @@ Result Robot::SetPoseOnCharger()
       
   return RESULT_OK;
       
-} // SetOnPose()
+} // SetPoseOnCharger()
   
 // ============ Messaging ================
     
@@ -2560,7 +2581,7 @@ Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) cons
       
   return boundingQuad;
       
-} // GetBoundingBoxXY()
+} // GetBoundingQuadXY()
     
 f32 Robot::GetHeight() const
 {
@@ -2572,19 +2593,19 @@ f32 Robot::GetLiftHeight() const
   return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
 }
     
-Transform3d Robot::GetLiftTransformWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
+Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const
 {
   Pose3d liftPose(_liftPose);
   ComputeLiftPose(atLiftAngle, liftPose);
-      
+
   Pose3d camPose = GetCameraPose(atHeadAngle);
-      
+
   Pose3d liftPoseWrtCam;
   const bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
-  
+
   DEV_ASSERT(result, "Robot.GetLiftTransformWrtCamera.LiftWrtCamPoseFailed");
 # pragma unused(result)
-  
+
   return liftPoseWrtCam.GetTransform();
 }
     

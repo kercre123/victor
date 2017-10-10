@@ -14,6 +14,9 @@
 #define DIST_EQ_THRESH 0.00001
 #define ANGLE_EQ_THRESH 0.00001
 
+// Single origin for all the poses here to use, which will not destruct before anything that uses it
+const Anki::Pose3d origin(0, Anki::Z_AXIS_3D(), {0,0,0}, "Origin");
+
 TEST(RobotStateHistory, AddGetPose)
 {
   using namespace Anki;
@@ -22,8 +25,6 @@ TEST(RobotStateHistory, AddGetPose)
   RobotStateHistory hist;
   HistRobotState histState;
   TimeStamp_t t;
-  
-  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, "Origin");
   
   // Pose 1, 2, and 3
   const Pose3d p1(0, Z_AXIS_3D(), Vec3f(0,0,0), origin );
@@ -141,8 +142,6 @@ TEST(RobotStateHistory, GroundTruthPose)
   
   PoseFrameID_t frameID = 0;
   
-  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, "Origin");
-  
   // Pose 1, 2, and 3
   const Pose3d p1(0.25*M_PI_F, Z_AXIS_3D(), Vec3f(1,0,0), origin );
   const Pose3d p2(M_PI_2_F, Z_AXIS_3D(), Vec3f(1,2,0), origin );
@@ -244,7 +243,6 @@ TEST(RobotStateHistory, CullToWindowSizeTest)
   
   RobotStateHistory hist;
   
-  const Pose3d origin(0, Z_AXIS_3D(), {0,0,0}, "Origin");
   const Pose3d p(0, Z_AXIS_3D(), Vec3f(0,0,0), origin );
   RobotState state(Robot::GetDefaultRobotState());
   HistRobotState histState(p, state);

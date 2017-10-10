@@ -42,34 +42,35 @@ TEST(PoseTest, ConstructionAndAssignment)
     EXPECT_EQ(1, P_orig.GetNodeOwnerCount());
   }
   
-  // Test rvalue constructor
-  {
-    Pose3d P_orig2(P_orig); // copy (which we've tested above) so we can move and still reuse P_orig below
-    P_orig2.SetName("Original2");
-    P_orig2.SetID(123);
-    Pose3d P_move(std::move(P_orig2));
-    EXPECT_EQ(P_orig.GetTranslation(), P_move.GetTranslation());
-    EXPECT_EQ(P_orig.GetRotation(), P_move.GetRotation());
-    EXPECT_TRUE(P_move.HasSameRootAs(P_orig));
-    EXPECT_EQ(123, P_move.GetID()); // IDs *are* moved!
-    EXPECT_EQ("Original2", P_move.GetName());
-    EXPECT_EQ(1, P_move.GetNodeOwnerCount());
-  }
-  
-  // Test rvalue assignment
-  {
-    Pose3d P_orig2(P_orig);
-    P_orig2.SetName("Original2");
-    P_orig2.SetID(123);
-    Pose3d P_move;
-    P_move = std::move(P_orig2);
-    EXPECT_EQ(P_orig.GetTranslation(), P_move.GetTranslation());
-    EXPECT_EQ(P_orig.GetRotation(), P_move.GetRotation());
-    EXPECT_TRUE(P_move.HasSameRootAs(P_orig));
-    EXPECT_EQ(123, P_move.GetID()); // IDs *are* moved!
-    EXPECT_EQ("Original2", P_move.GetName());
-    EXPECT_EQ(1, P_move.GetNodeOwnerCount());
-  }
+// COZMO-10891: Put these back if we discover Rvalue construction/assignment don't have anything to do with this ticket
+//  // Test rvalue constructor
+//  {
+//    Pose3d P_orig2(P_orig); // copy (which we've tested above) so we can move and still reuse P_orig below
+//    P_orig2.SetName("Original2");
+//    P_orig2.SetID(123);
+//    Pose3d P_move(std::move(P_orig2));
+//    EXPECT_EQ(P_orig.GetTranslation(), P_move.GetTranslation());
+//    EXPECT_EQ(P_orig.GetRotation(), P_move.GetRotation());
+//    EXPECT_TRUE(P_move.HasSameRootAs(P_orig));
+//    EXPECT_EQ(123, P_move.GetID()); // IDs *are* moved!
+//    EXPECT_EQ("Original2", P_move.GetName());
+//    EXPECT_EQ(1, P_move.GetNodeOwnerCount());
+//  }
+//  
+//  // Test rvalue assignment
+//  {
+//    Pose3d P_orig2(P_orig);
+//    P_orig2.SetName("Original2");
+//    P_orig2.SetID(123);
+//    Pose3d P_move;
+//    P_move = std::move(P_orig2);
+//    EXPECT_EQ(P_orig.GetTranslation(), P_move.GetTranslation());
+//    EXPECT_EQ(P_orig.GetRotation(), P_move.GetRotation());
+//    EXPECT_TRUE(P_move.HasSameRootAs(P_orig));
+//    EXPECT_EQ(123, P_move.GetID()); // IDs *are* moved!
+//    EXPECT_EQ("Original2", P_move.GetName());
+//    EXPECT_EQ(1, P_move.GetNodeOwnerCount());
+//  }
   
 }
 
@@ -126,6 +127,10 @@ TEST(PoseTest, RotateBy)
 TEST(PoseTest, PoseTreeValidity)
 {
   using namespace Anki;
+  
+  // So we can restore later
+  const bool originalAllowUnownedParents = Pose3d::AreUnownedParentsAllowed();
+  
   Pose3d poseOrigin("Origin");
   PoseOriginID_t uniqueID = 1;
   poseOrigin.SetID(uniqueID++);
@@ -229,6 +234,36 @@ TEST(PoseTest, PoseTreeValidity)
   ASSERT_EQ(poseOrigin.GetID(), grandChild2.GetRootID());
   
   ASSERT_EQ(1, poseOrigin.GetNodeOwnerCount());
+  
+  // Verify parents are hooked up as expected with GetWRT and SetParent calls
+  {
+    Pose3d::AllowUnownedParents(false);
+    Pose3d otherPose("Other");
+    otherPose.SetParent(child1.GetParent());
+    ASSERT_EQ(otherPose.GetParent().GetID(), poseOrigin.GetID());
+    
+    child2.SetID(uniqueID++);
+    ASSERT_TRUE(child3.GetWithRespectTo(child2, otherPose));
+    ASSERT_EQ(otherPose.GetParent().GetID(), child2.GetID());
+    
+    ASSERT_TRUE(child3.GetWithRespectTo(child2.GetParent(), otherPose));
+    ASSERT_EQ(otherPose.GetParent().GetID(), poseOrigin.GetID());
+    
+    ASSERT_TRUE(child3.GetWithRespectTo(grandChild1.FindRoot(), otherPose));
+    ASSERT_EQ(otherPose.GetParent().GetID(), poseOrigin.GetID());
+    
+    ASSERT_TRUE(child3.GetWithRespectTo(grandChild1.GetParent().GetParent(), otherPose));
+    ASSERT_EQ(otherPose.GetParent().GetID(), poseOrigin.GetID());
+    
+    otherPose = grandChild1.GetWithRespectToRoot();
+    ASSERT_EQ(otherPose.GetParent().GetID(), poseOrigin.GetID());
+    
+    // Let the poses with IDs destruct without complaint
+    Pose3d::AllowUnownedParents(true);
+  }
+  
+  // Make sure we restore to whatever the setting was at the start
+  Pose3d::AllowUnownedParents(originalAllowUnownedParents);
 }
 
 TEST(PoseOriginList, IDs)
@@ -254,6 +289,8 @@ TEST(PoseOriginList, IDs)
   
   const PoseID_t id3 = id2 + 1;
   ASSERT_TRUE(originList.AddOriginWithID(id3));
+  
+  ASSERT_EQ(3, originList.GetSize());
 }
 
 TEST(PoseOriginList, Lookup)

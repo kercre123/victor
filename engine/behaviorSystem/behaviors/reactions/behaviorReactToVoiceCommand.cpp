@@ -68,8 +68,7 @@ bool BehaviorReactToVoiceCommand::IsRunnableInternal(const Robot& robot) const
   {
     // If we don't know where this face is right now, switch it to Invalid so we just look toward the last face pose
     const auto* face = robot.GetFaceWorld().GetFace(_desiredFace);
-    Pose3d pose;
-    if(nullptr == face || !face->GetHeadPose().GetWithRespectTo(robot.GetPose(), pose))
+    if(nullptr == face || !face->GetHeadPose().HasSameRootAs(robot.GetPose()))
     {
       _desiredFace = Vision::UnknownFaceID;
     }

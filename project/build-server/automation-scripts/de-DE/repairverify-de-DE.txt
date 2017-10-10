@@ -6,10 +6,9 @@
 0.088089:text:Laufwerke werden ausgerichtet...
 0.808412:text:Hebearm wird kalibriert...
 0.751699:text:Kopf wird justiert...
-0.968476:text:Tippe die Teile an, die du tunen möchtest.
-0.475801:text:Die Laufwerke müssen ausgerichtet werden.
-0.27196:text:Der Hebearm muss kalibriert werden.
-0.051554:text:Der Kopf muss justiert werden.
+0.475801:text:Die Laufwerke wurden ausgerichtet.
+0.27196:text:Der Hebearm wurde kalibriert.
+0.051554:text:Der Kopf wurde justiert.
 0.404448:text:Für Cozmo muss ein Tuning durchgeführt werden, damit er weiterhin optimiert ist und mobil bleibt.
 0.667428:text:Cozmo-Tuning
 0.168061:click:default_close_view_button:0.107605

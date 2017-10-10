@@ -115,34 +115,41 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetUnlockablesByType(UnlockableType unlockableType) {
     List<UnlockableInfo> unlockables = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      if (_UnlockableInfoList.UnlockableInfoData[i].UnlockableType == unlockableType) {
-        unlockables.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+      UnlockableInfo unlockInfo = _UnlockableInfoList.UnlockableInfoData[i];
+      if (unlockInfo.UnlockableType == unlockableType) {
+        unlockables.Add(unlockInfo);
       }
     }
     return unlockables;
   }
 
-  public List<UnlockableInfo> GetUnlocked() {
+  public List<UnlockableInfo> GetUnlocked(UnlockableType? typeToCheck = null) {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      if (_UnlockableInfoList.UnlockableInfoData[i].FeatureIsEnabled) {
-        if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value]) {
-          unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
-        }
+      UnlockableInfo unlockInfo = _UnlockableInfoList.UnlockableInfoData[i];
+
+      if (unlockInfo.FeatureIsEnabled
+          && (!typeToCheck.HasValue || typeToCheck.Value == unlockInfo.UnlockableType)
+          && _UnlockablesState[unlockInfo.Id.Value]) {
+
+        unlocked.Add(unlockInfo);
       }
     }
     return unlocked;
   }
 
   // explicit unlocks only.
-  public List<UnlockableInfo> GetAvailableAndLocked() {
+  public List<UnlockableInfo> GetAvailableAndLocked(UnlockableType? typeToCheck = null) {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
-      bool featureIsEnabled = _UnlockableInfoList.UnlockableInfoData[i].FeatureIsEnabled;
-      bool isAvailable = featureIsEnabled && IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
-      if (locked && isAvailable) {
-        available.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+      UnlockableInfo unlockInfo = _UnlockableInfoList.UnlockableInfoData[i];
+
+      if (unlockInfo.FeatureIsEnabled
+          && (!typeToCheck.HasValue || typeToCheck.Value == unlockInfo.UnlockableType)
+          && !_UnlockablesState[unlockInfo.Id.Value]
+          && IsUnlockableAvailable(unlockInfo.Id.Value)) {
+
+        available.Add(unlockInfo);
       }
     }
     return available;
@@ -193,7 +200,7 @@ public class UnlockablesManager : MonoBehaviour {
       return false;
     }
 
-    if (unlockableInfo.ComingSoon || !unlockableInfo.FeatureIsEnabled) {
+    if (!unlockableInfo.FeatureIsEnabled) {
       return false;
     }
 

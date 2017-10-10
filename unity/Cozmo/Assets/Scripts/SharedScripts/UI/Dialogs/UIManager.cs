@@ -650,7 +650,11 @@ public class UIManager : MonoBehaviour {
   }
 
   private static void SendDialogDasEvent(string eventId, BaseDialog dialogToSend) {
-    DAS.Event(eventId, dialogToSend.DASEventDialogName);
+    Dictionary<string, string> extraData = null;
+    if (!string.IsNullOrEmpty(dialogToSend.DASEventExtraData)) {
+      extraData = DASUtil.FormatExtraData(dialogToSend.DASEventExtraData);
+    }
+    DAS.Event(eventId, dialogToSend.DASEventDialogName, extraData);
   }
   #endregion // private functions
 

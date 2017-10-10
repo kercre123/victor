@@ -27,17 +27,40 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
   private DateTime _StartTime;
 
   private void Start() {
-    DasTracker.Instance.TrackConnectFlowStarted();
+
+    // COZMO-14287: Catch & report unexpected System.ArgumentException
+    try {
+      DasTracker.Instance.TrackConnectFlowStarted();
+    }
+    catch (ArgumentException ex) {
+      DAS.Error("AndroidConnectToNetwork.Start.TrackConnectFlowStarted", ex.ToString());
+    }
+
     _StartTime = DateTime.Now;
 
-    _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel_button", "android_connect_to_network");
+    try {
+      _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel_button", "android_connect_to_network");
+    }
+    catch (ArgumentException ex) {
+      DAS.Error("AndroidConnectToNetwork.Start.InitCancelButton", ex.ToString());
+    }
 
-    UpdateStatusLabels(AndroidConnectionFlow.CallJava<string>("getCurrentSSID"), AndroidConnectionFlow.CallJava<string>("getCurrentStatus"));
+    try {
+      UpdateStatusLabels(AndroidConnectionFlow.CallJava<string>("getCurrentSSID"), AndroidConnectionFlow.CallJava<string>("getCurrentStatus"));
+    }
+    catch (ArgumentException ex) {
+      DAS.Error("AndroidConnectToNetwork.Start.UpdateStatusLabels", ex.ToString());
+    }
 
     // register message listeners to get updates on when connection attempt completes, and when wifi status changes
-    var receiver = AndroidConnectionFlow.Instance.GetMessageReceiver();
-    RegisterJavaListener(receiver, "connectionFinished", HandleConnectionFinished);
-    RegisterJavaListener(receiver, "wifiStatus", HandleWifiStatus);
+    try {
+      var receiver = AndroidConnectionFlow.Instance.GetMessageReceiver();
+      RegisterJavaListener(receiver, "connectionFinished", HandleConnectionFinished);
+      RegisterJavaListener(receiver, "wifiStatus", HandleWifiStatus);
+    }
+    catch (ArgumentException ex) {
+      DAS.Error("AndroidConnectToNetwork.Start.RegisterJavaListener", ex.ToString());
+    }
   }
 
   private void HandleConnectionFinished(string[] args) {

@@ -39,6 +39,7 @@ namespace Cozmo {
   
 CONSOLE_VAR(bool, kDebugTrackLocking, "Robot", false);
 CONSOLE_VAR(bool, kCreateUnexpectedMovementObstacles, "Robot", true);
+CONSOLE_VAR(bool, kAllowMovementOnChargerInSdkMode, "Robot", false);
   
 using namespace ExternalInterface;
 
@@ -121,6 +122,11 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
   }
   
   CheckForUnexpectedMovement(robotState);
+
+  if(kAllowMovementOnChargerInSdkMode) {
+    UnlockTracks(GetTracksLockedBy(kOnChargerInSdkStr), kOnChargerInSdkStr); //Unlock only if the SDK locked the tracks
+  }
+
 }
 
 void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robotState)
@@ -529,7 +535,7 @@ void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ChargerEvent& msg)
 {
-  if(_robot.GetContext()->IsInSdkMode())
+  if(!kAllowMovementOnChargerInSdkMode && _robot.GetContext()->IsInSdkMode())
   {
     if(msg.onCharger)
     {
@@ -550,7 +556,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::ChargerEvent& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
 {
-  if(_robot.IsOnCharger() && !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
+  if(!kAllowMovementOnChargerInSdkMode && 
+    _robot.IsOnCharger() &&
+    !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
   {
     // If SDK mode starts _while_ we are on the charger (and not already locked), lock tracks
     LockTracks(kAllMotorTracks, kOnChargerInSdkStr, kOnChargerInSdkStr);
@@ -560,7 +568,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
 {
-  if(_robot.IsOnCharger())
+  if(!kAllowMovementOnChargerInSdkMode && _robot.IsOnCharger())
   {
     // If SDK ends _while_ we are on the charger, make sure to unlock tracks
     UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
@@ -671,7 +679,22 @@ AnimTrackFlag MovementComponent::GetFlagFromIndex(int index)
 {
   return (AnimTrackFlag)((u32)1 << index);
 }
-  
+
+
+uint8_t MovementComponent::GetTracksLockedBy(const std::string& who) const
+{
+  uint8_t lockedTracks = 0;
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    auto iter = _trackLockCount[i].find({who, ""});
+    if(iter != _trackLockCount[i].end())
+    {
+      lockedTracks |= (1 << i);
+    }
+  }
+  return lockedTracks;
+}
+
 bool MovementComponent::AreAnyTracksLocked(u8 tracks) const
 {
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)

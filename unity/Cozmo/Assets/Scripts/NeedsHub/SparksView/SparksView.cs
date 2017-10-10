@@ -58,7 +58,6 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private float _FreeplayPanelNormalizedWidth;
 
-    private List<UnlockableInfo> _AllUnlockData;
     private List<ChallengeManager.ChallengeStatePacket> _MinigameData;
 
     private bool _IsDisablingTouches = false;
@@ -81,9 +80,6 @@ namespace Cozmo.Needs.Sparks.UI {
       UpdateButtonState();
 
       _MinigameData = minigameData;
-
-      _AllUnlockData = UnlockablesManager.Instance.GetUnlockablesByType(UnlockableType.Action);
-      _AllUnlockData.Sort();
 
       Inventory.ItemAdded += HandleItemValueChanged;
       Inventory.ItemRemoved += HandleItemValueChanged;
@@ -197,6 +193,9 @@ namespace Cozmo.Needs.Sparks.UI {
         OnboardingManager.Instance.GoToNextStage();
       }
       else if (RobotEngineManager.Instance.CurrentRobot != null) {
+        // In case we can't start the trick right away, let the user know we caught their button press
+        ContextManager.Instance.ShowForeground();
+
         // Prevent the player from doing other things
         DisableTouches();
 
@@ -248,7 +247,7 @@ namespace Cozmo.Needs.Sparks.UI {
                                                                    HighPriorityModalAction.Stack);
       UIManager.OpenModal(_SparksListModalPrefab, sparksListPriority, (obj) => {
         _SparksListModalInstance = (SparksListModal)obj;
-        _SparksListModalInstance.InitializeSparksListModal(_MinigameData, _AllUnlockData);
+        _SparksListModalInstance.InitializeSparksListModal(_MinigameData);
       });
     }
 

@@ -313,7 +313,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
     // Disable reactionary behaviors
     robot.GetBehaviorManager().DisableReactionsWithLock(
                                  kBehaviorTestName,
-                                 ReactionTriggerHelpers::kAffectAllArray);
+                                 ReactionTriggerHelpers::GetAffectAllArray());
     
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!

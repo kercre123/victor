@@ -209,18 +209,25 @@ namespace Cozmo {
   Result FaceWorld::AddOrUpdateFace(const Vision::TrackedFace& face)
   {
     // Head pose is stored w.r.t. historical world origin, but needs its parent
-    // set up to be the robot's world origin here:
-    Pose3d headPoseWrtWorldOrigin;
-    const bool success = face.GetHeadPose().GetWithRespectTo(_robot.GetWorldOrigin(), headPoseWrtWorldOrigin);
-    if(!success)
+    // set up to be the robot's world origin here, using the origin ID from the
+    // time the face was seen
+    DEV_ASSERT(!face.GetHeadPose().HasParent(), "FaceWorld.AddOrUpdateFace.HeadPoseHasParent");
+    TimeStamp_t t=0;
+    HistRobotState* histStatePtr = nullptr;
+    HistStateKey histStateKey;
+    const Result histStateResult = _robot.GetStateHistory()->ComputeAndInsertStateAt(face.GetTimeStamp(), t,
+                                                                                     &histStatePtr, &histStateKey,
+                                                                                     true);
+    
+    if(RESULT_OK != histStateResult || histStatePtr == nullptr)
     {
-      PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.MismatchedOrigins",
-                       "Receveid observation of face %d from different origin (%s) than robot (%s). Ignoring",
-                       face.GetID(), face.GetHeadPose().FindRoot().GetName().c_str(),
-                       _robot.GetWorldOrigin().GetName().c_str());
-      
-      return RESULT_FAIL_ORIGIN_MISMATCH;
+      PRINT_NAMED_WARNING("FaceWorld.AddOrUpdateFace.GetComputedStateAtFailed", "face timestamp=%u", face.GetTimeStamp());
+      return histStateResult;
     }
+    
+    const PoseOriginID_t histOriginID = histStatePtr->GetPose().GetRootID();
+    Pose3d headPoseWrtWorldOrigin(face.GetHeadPose());
+    headPoseWrtWorldOrigin.SetParent(_robot.GetPoseOriginList().GetOriginByID(histOriginID));
     
     const bool robotOnTreads = _robot.GetOffTreadsState() == OffTreadsState::OnTreads;
     const bool headBelowRobot = headPoseWrtWorldOrigin.GetTranslation().z() < 0.f;

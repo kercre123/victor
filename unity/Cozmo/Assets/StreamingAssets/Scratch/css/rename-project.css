@@ -1,0 +1,112 @@
+.show-rename-project-modal #rename-project-modal {
+  display: block;
+}
+#rename-project-modal {
+  box-sizing: border-box;
+  display: none;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+
+  background-color: #5d5e5f;
+}
+#rename-project-modal *, #rename-project-modal *:before, #rename-project-modal *:after {
+  box-sizing: inherit;
+}
+
+
+#rename-project-modal .hd {
+  padding: 4vh;
+  font-size: 6vh;
+  height: 14vh;
+}
+
+#rename-project-modal #btn-close-rename-project {
+  border: 0;
+  background-color: transparent;
+  background-image: url('../images/ui/btn_back.svg');
+  width: 6vh;
+  height: 6vh;
+  background-repeat: no-repeat;
+  background-size: 6vh 12vh;
+  cursor: hand;
+  float: left;
+}
+
+#rename-project-modal #btn-close-rename-project:active {
+  background-position: 0 -8vh;
+}
+
+
+#rename-project-modal .original-project-name {
+  text-align: right;
+  color: #22a9d8;
+  font-family: 'Avenir Next Bold';
+}
+
+
+#rename-project-modal .bd {
+  text-align: left;
+  width: 60%;
+  margin: 0 auto;
+  color: #d4d5d6;
+  font-size: 4vh;
+}
+
+#rename-project-modal .bd #rename-project-text-box {
+  width: 100%;
+  margin: .4em 0 .6em 0;
+  padding: .4em .5em;
+  border-radius: 14px;
+  background-color: #d3d4d5;
+}
+#rename-project-modal .bd #rename-project-text-box:focus{
+  border-radius: 14px;
+}
+
+#rename-project-modal .bd .buttons {
+  text-align: right;
+  font-size: 80%;
+}
+
+#rename-project-modal .buttons button {
+  background-image: linear-gradient(to bottom, #41c5e9, #2794d1 );
+  border-radius: 7px;
+  border: 0;
+  color: #e4e4e5;
+  padding: .5em 1.5em;
+  margin-left: .6em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+#rename-project-modal .buttons button[disabled='disabled'] {
+  color: #535E62;
+  background-image: linear-gradient(to bottom, #686868, #717171);
+}
+
+#rename-project-modal .buttons button#btn-cancel-rename {
+  background-image: linear-gradient(to bottom, #f7632a, #de4210);
+}
+
+
+@media screen and (min-height: 416px) {
+  #rename-project-modal .hd {
+    font-size: 5vh;
+  }
+}
+
+@media screen and (min-height: 769px) {
+}
+
+
+
+
+
+
+
