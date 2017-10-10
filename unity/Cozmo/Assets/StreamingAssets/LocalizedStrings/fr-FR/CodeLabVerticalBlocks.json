@@ -204,50 +204,110 @@
   "codeLabVertical.DRAW_DISPLAY_ON_FACE": {
     "translation": "display on Cozmo's face"
   },
-  "codeLabVertical.HAPPY": {
-    "translation": "happy"
+  "codeLabVertical.ANIM_MYSTERY": {
+    "translation": "0 - mystery"
   },
-  "codeLabVertical.WINNER": {
-    "translation": "winner"
+  "codeLabVertical.ANIM_HAPPY": {
+    "translation": "1 - happy"
   },
-  "codeLabVertical.SAD": {
-    "translation": "sad"
+  "codeLabVertical.ANIM_WINNER": {
+    "translation": "2 - winner"
   },
-  "codeLabVertical.SURPRISED": {
-    "translation": "surprised"
+  "codeLabVertical.ANIM_SAD": {
+    "translation": "3 - sad"
   },
-  "codeLabVertical.DOG": {
-    "translation": "dog"
+  "codeLabVertical.ANIM_SURPRISED": {
+    "translation": "4 - surprised"
   },
-  "codeLabVertical.CAT": {
-    "translation": "cat"
+  "codeLabVertical.ANIM_DOG": {
+    "translation": "5 - dog"
   },
-  "codeLabVertical.SNEEZE": {
-    "translation": "sneeze"
+  "codeLabVertical.ANIM_CAT": {
+    "translation": "6 - cat"
   },
-  "codeLabVertical.EXCITED": {
-    "translation": "excited"
+  "codeLabVertical.ANIM_SNEEZE": {
+    "translation": "7 - sneeze"
   },
-  "codeLabVertical.THINK_HARD": {
-    "translation": "think hard"
+  "codeLabVertical.ANIM_EXCITED": {
+    "translation": "8 - excited"
   },
-  "codeLabVertical.BORED": {
-    "translation": "bored"
+  "codeLabVertical.ANIM_THINK_HARD": {
+    "translation": "9 - think hard"
   },
-  "codeLabVertical.FRUSTRATED": {
-    "translation": "frustrated"
+  "codeLabVertical.ANIM_BORED": {
+    "translation": "10 - bored"
   },
-  "codeLabVertical.CHATTY": {
-    "translation": "chatty"
+  "codeLabVertical.ANIM_FRUSTRATED": {
+    "translation": "11 - frustrated"
   },
-  "codeLabVertical.DISAPPOINTED": {
-    "translation": "disappointed"
+  "codeLabVertical.ANIM_CHATTY": {
+    "translation": "12 - chatty"
   },
-  "codeLabVertical.SNORE": {
-    "translation": "snore"
+  "codeLabVertical.ANIM_DISAPPOINTED": {
+    "translation": "13 - disappointed"
   },
-  "codeLabVertical.MYSTERY": {
-    "translation": "mystery"
+  "codeLabVertical.ANIM_SNORE": {
+    "translation": "14 - snore"
+  },
+  "codeLabVertical.ANIM_REACT_HAPPY": {
+    "translation": "15 - react happy"
+  },
+  "codeLabVertical.ANIM_CELEBRATE": {
+    "translation": "16 - celebrate"
+  },
+  "codeLabVertical.ANIM_TAKA_TAKA": {
+    "translation": "17 - talka-talka"
+  },
+  "codeLabVertical.ANIM_AMAZED": {
+    "translation": "18 - amazed"
+  },
+  "codeLabVertical.ANIM_CURIOUS": {
+    "translation": "19 - curious"
+  },
+  "codeLabVertical.ANIM_AGREE": {
+    "translation": "20 - agree"
+  },
+  "codeLabVertical.ANIM_DISAGREE": {
+    "translation": "21 - disagree"
+  },
+  "codeLabVertical.ANIM_UNSURE": {
+    "translation": "22 - unsure"
+  },
+  "codeLabVertical.ANIM_CONDUCTING": {
+    "translation": "23 - conducting"
+  },
+  "codeLabVertical.ANIM_DANCING_MAMBO": {
+    "translation": "24 - dancing mambo"
+  },
+  "codeLabVertical.ANIM_FIRE_TRUCK": {
+    "translation": "25 - fire truck"
+  },
+  "codeLabVertical.ANIM_PARTY_TIME": {
+    "translation": "26 - partytime"
+  },
+  "codeLabVertical.ANIM_DIZZY": {
+    "translation": "27 - dizzy"
+  },
+  "codeLabVertical.ANIM_DIZZY_END": {
+    "translation": "28 - dizzy (end)"
+  },
+  "codeLabVertical.ANIM_ONE_TWO_THREE_GO": {
+    "translation": "29 - one, two, three, go!"
+  },
+  "codeLabVertical.ANIM_WIN_GAME": {
+    "translation": "30 - win game"
+  },
+  "codeLabVertical.ANIM_LOSE_GAME": {
+    "translation": "31 - lose game"
+  },
+  "codeLabVertical.ANIM_TAP_CUBE": {
+    "translation": "32 - tap cube"
+  },
+  "codeLabVertical.ANIM_GET_IN_POSITION": {
+    "translation": "33 - get in position"
+  },
+  "codeLabVertical.ANIM_IDLE": {
+    "translation": "34 - idle"
   },
   "codeLabVertical.WHEELS": {
     "translation": "wheels"

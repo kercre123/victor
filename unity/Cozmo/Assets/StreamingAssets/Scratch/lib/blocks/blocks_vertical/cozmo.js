@@ -49,63 +49,41 @@ Blockly.Blocks['cozmo_animation_select_menu'] = {
             "type": "field_dropdown",
             "name": "ANIMATION_SELECT",
             "options": [
-              ['%{BKY_HAPPY}', 'happy'],
-              ['%{BKY_WINNER}', 'victory'],
-              ['%{BKY_SAD}', 'unhappy'],
-              ['%{BKY_SURPRISED}', 'surprise'],
-              ['%{BKY_DOG}', 'dog'],
-              ['%{BKY_CAT}', 'cat'],
-              ['%{BKY_SNEEZE}', 'sneeze'],
-              ['%{BKY_EXCITED}', 'excited'],
-              ['%{BKY_THINK_HARD}', 'thinking'],
-              ['%{BKY_BORED}', 'bored'],
-              ['%{BKY_FRUSTRATED}', 'frustrated'],
-              ['%{BKY_CHATTY}', 'chatty'],
-              ['%{BKY_DISAPPOINTED}', 'dejected'],
-              ['%{BKY_SNORE}', 'sleep'],
-              ['%{BKY_MYSTERY}', 'mystery']
-            ]
-          }
-        ],
-        "inputsInline": true,
-        "output": "Number",
-        "colour": Blockly.Colours.actions.primary,
-        "colourSecondary": Blockly.Colours.actions.secondary,
-        "colourTertiary": Blockly.Colours.actions.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-      });
-  }
-};
-
-Blockly.Blocks['cozmo_animation_external_select_menu'] = {
-  /**
-   * Animation drop-down menu.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit(
-      {
-        "message0": "%1 anim",
-        "args0": [
-          {
-            "type": "field_dropdown",
-            "name": "ANIMATION_SELECT",
-            "options": [
-              ['%{BKY_HAPPY}', 'happy'],
-              ['%{BKY_WINNER}', 'victory'],
-              ['%{BKY_SAD}', 'unhappy'],
-              ['%{BKY_SURPRISED}', 'surprise'],
-              ['%{BKY_DOG}', 'dog'],
-              ['%{BKY_CAT}', 'cat'],
-              ['%{BKY_SNEEZE}', 'sneeze'],
-              ['%{BKY_EXCITED}', 'excited'],
-              ['%{BKY_THINK_HARD}', 'thinking'],
-              ['%{BKY_BORED}', 'bored'],
-              ['%{BKY_FRUSTRATED}', 'frustrated'],
-              ['%{BKY_CHATTY}', 'chatty'],
-              ['%{BKY_DISAPPOINTED}', 'dejected'],
-              ['%{BKY_SNORE}', 'sleep'],
-              ['%{BKY_MYSTERY}', 'mystery']
+              ['%{BKY_ANIM_MYSTERY}', '0'],
+              ['%{BKY_ANIM_HAPPY}', '1'],
+              ['%{BKY_ANIM_WINNER}', '2'],
+              ['%{BKY_ANIM_SAD}', '3'],
+              ['%{BKY_ANIM_SURPRISED}', '4'],
+              ['%{BKY_ANIM_DOG}', '5'],
+              ['%{BKY_ANIM_CAT}', '6'],
+              ['%{BKY_ANIM_SNEEZE}', '7'],
+              ['%{BKY_ANIM_EXCITED}', '8'],
+              ['%{BKY_ANIM_THINK_HARD}', '9'],
+              ['%{BKY_ANIM_BORED}', '10'],
+              ['%{BKY_ANIM_FRUSTRATED}', '11'],
+              ['%{BKY_ANIM_CHATTY}', '12'],
+              ['%{BKY_ANIM_DISAPPOINTED}', '13'],
+              ['%{BKY_ANIM_SNORE}', '14'],
+              ['%{BKY_ANIM_REACT_HAPPY}', '15'],
+              ['%{BKY_ANIM_CELEBRATE}', '16'],
+              ['%{BKY_ANIM_TAKA_TAKA}', '17'],
+              ['%{BKY_ANIM_AMAZED}', '18'],
+              ['%{BKY_ANIM_CURIOUS}', '19'],
+              ['%{BKY_ANIM_AGREE}', '20'],
+              ['%{BKY_ANIM_DISAGREE}', '21'],
+              ['%{BKY_ANIM_UNSURE}', '22'],
+              ['%{BKY_ANIM_CONDUCTING}', '23'],
+              ['%{BKY_ANIM_DANCING_MAMBO}', '24'],
+              ['%{BKY_ANIM_FIRE_TRUCK}', '25'],
+              ['%{BKY_ANIM_PARTY_TIME}', '26'],
+              ['%{BKY_ANIM_DIZZY}', '27'],
+              ['%{BKY_ANIM_DIZZY_END}', '28'],
+              ['%{BKY_ANIM_ONE_TWO_THREE_GO}', '29'],
+              ['%{BKY_ANIM_WIN_GAME}', '30'],
+              ['%{BKY_ANIM_LOSE_GAME}', '31'],
+              ['%{BKY_ANIM_TAP_CUBE}', '32'],
+              ['%{BKY_ANIM_GET_IN_POSITION}', '33'],
+              ['%{BKY_ANIM_IDLE}', '34']
             ]
           }
         ],
@@ -279,38 +257,38 @@ Blockly.Blocks['cozmo_sound_sounds_menu'] = {
             "type": "field_dropdown",
             "name": "SOUND_MENU",
             "options": [
-              ['%{BKY_EIGHTIES_MUSIC}','eighties music'], 
-              ['%{BKY_MAMBO_MUSIC}','mambo music'], 
-              ['%{BKY_BACKGROUND_MUSIC}','background music'], 
-              ['%{BKY_SELECT}', 'select'],
-              ['%{BKY_WIN}', 'win'],
-              ['%{BKY_LOSE}', 'lose'],
-              ['%{BKY_GAME_START}','game start'], 
-              ['%{BKY_CLOCK_TICK}','clock tick'], 
-              ['%{BKY_BLING}','bling'], 
-              ['%{BKY_SUCCESS}','success'], 
-              ['%{BKY_FAIL}','fail'], 
-              ['%{BKY_TIMER_WARNING}','timer warning'], 
-              ['%{BKY_TIMER_END}','timer end'], 
-              ['%{BKY_SPARKLE}','sparkle'], 
-              ['%{BKY_SWOOSH}','swoosh'], 
-              ['%{BKY_PING}','ping'], 
-              ['%{BKY_HOT_POTATO_END}','hot potato end'], 
-              ['%{BKY_HOT_POTATO_MUSIC_SLOW}','hot potato music slow'], 
-              ['%{BKY_HOT_POTATO_MUSIC_MEDIUM}','hot potato music medium'], 
-              ['%{BKY_HOT_POTATO_MUSIC_FAST}','hot potato music fast'], 
-              ['%{BKY_HOT_POTATO_MUSIC_SUPERFAST}','hot potato music superfast'], 
-              ['%{BKY_MAGNET_PULL}','magnet pull'], 
-              ['%{BKY_MAGNET_REPEL}','magnet repel'], 
-              ['%{BKY_INSTRUMENT_1_MODE_1}','instrument 1 mode 1'], 
-              ['%{BKY_INSTRUMENT_1_MODE_2}','instrument 1 mode 2'], 
-              ['%{BKY_INSTRUMENT_1_MODE_3}','instrument 1 mode 3'], 
-              ['%{BKY_INSTRUMENT_2_MODE_1}','instrument 2 mode 1'], 
-              ['%{BKY_INSTRUMENT_2_MODE_2}','instrument 2 mode 2'], 
-              ['%{BKY_INSTRUMENT_2_MODE_3}','instrument 2 mode 3'], 
-              ['%{BKY_INSTRUMENT_3_MODE_1}','instrument 3 mode 1'], 
-              ['%{BKY_INSTRUMENT_3_MODE_2}','instrument 3 mode 2'], 
-              ['%{BKY_INSTRUMENT_3_MODE_3}','instrument 3 mode 3'] 
+              ['%{BKY_EIGHTIES_MUSIC}','1'],
+              ['%{BKY_MAMBO_MUSIC}','2'],
+              ['%{BKY_BACKGROUND_MUSIC}','3'],
+              ['%{BKY_SELECT}', '4'],
+              ['%{BKY_WIN}', '5'],
+              ['%{BKY_LOSE}', '6'],
+              ['%{BKY_GAME_START}','7'],
+              ['%{BKY_CLOCK_TICK}','8'],
+              ['%{BKY_BLING}','9'],
+              ['%{BKY_SUCCESS}','10'],
+              ['%{BKY_FAIL}','11'],
+              ['%{BKY_TIMER_WARNING}','12'],
+              ['%{BKY_TIMER_END}','13'],
+              ['%{BKY_SPARKLE}','14'],
+              ['%{BKY_SWOOSH}','15'],
+              ['%{BKY_PING}','16'],
+              ['%{BKY_HOT_POTATO_END}','17'],
+              ['%{BKY_HOT_POTATO_MUSIC_SLOW}','18'],
+              ['%{BKY_HOT_POTATO_MUSIC_MEDIUM}','19'],
+              ['%{BKY_HOT_POTATO_MUSIC_FAST}','20'],
+              ['%{BKY_HOT_POTATO_MUSIC_SUPERFAST}','21'],
+              ['%{BKY_MAGNET_PULL}','22'],
+              ['%{BKY_MAGNET_REPEL}','23'],
+              ['%{BKY_INSTRUMENT_1_MODE_1}','24'],
+              ['%{BKY_INSTRUMENT_1_MODE_2}','25'],
+              ['%{BKY_INSTRUMENT_1_MODE_3}','26'],
+              ['%{BKY_INSTRUMENT_2_MODE_1}','27'],
+              ['%{BKY_INSTRUMENT_2_MODE_2}','28'],
+              ['%{BKY_INSTRUMENT_2_MODE_3}','29'],
+              ['%{BKY_INSTRUMENT_3_MODE_1}','30'],
+              ['%{BKY_INSTRUMENT_3_MODE_2}','31'],
+              ['%{BKY_INSTRUMENT_3_MODE_3}','32']
             ]
           }
         ],

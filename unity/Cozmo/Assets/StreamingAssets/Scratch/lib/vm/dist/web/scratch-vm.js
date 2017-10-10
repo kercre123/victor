@@ -19117,32 +19117,25 @@ Scratch3CozmoBlocks.prototype.driveBlocksHelper = function (args, util, command)
     return commandPromise;
 };
 
-Scratch3CozmoBlocks.prototype.playAnimationHelper = function (args, util, animName, isMystery) {
-    isMystery = isMystery || 0; // if undefined force to 0 as a default value
+Scratch3CozmoBlocks.prototype.playAnimationHelper = function (args, util, animIndex) {
     var requestId = this._getRequestId();
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery });
+    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argInt: animIndex });
 
     return commandPromise;
 };
 
-Scratch3CozmoBlocks.prototype.playAnimationHelperVertical = function (args, util, animName, isMystery) {
-    isMystery = isMystery || 0; // if undefined force to 0 as a default value
+Scratch3CozmoBlocks.prototype.playAnimationHelperVertical = function (args, util, animIndex) {
     var requestId = this._getRequestId();
     var commandPromise = this._promiseForCommand(requestId);
-    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argString: animName, argUInt: isMystery });
+    window.Unity.call({ requestId: requestId, command: "cozmoPlayAnimation", argInt: animIndex });
 
     return commandPromise;
 };
 
 Scratch3CozmoBlocks.prototype.playAnimationFromDropdown = function (args, util) {
-    var animName = Cast.toString(args.ANIMATION);
-    if (animName == 'mystery') {
-        var randomAnim = this._getAnimation(animName);
-        return this.playAnimationHelperVertical(args, util, randomAnim, 1);
-    } else {
-        return this.playAnimationHelperVertical(args, util, animName);
-    }
+    var animIndex = Cast.toNumber(args.ANIMATION);
+    return this.playAnimationHelperVertical(args, util, animIndex);
 };
 
 // ============================================================
@@ -19167,65 +19160,67 @@ Scratch3CozmoBlocks.prototype.playAnimationByTriggerName = function (args, util)
 // End temporary dev-only blocks prototyping
 // ============================================================
 
+// See https://docs.google.com/spreadsheets/d/1wF0AjExf9p-yjOkt4LKdKsxIiO1KPxu5Knjv_q0EBQc/edit#gid=461013084
+// for the animation mapping
+
 Scratch3CozmoBlocks.prototype.playHappyAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "happy");
+    return this.playAnimationHelper(args, util, 1); // "happy"
 };
 
 Scratch3CozmoBlocks.prototype.playVictoryAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "victory");
+    return this.playAnimationHelper(args, util, 2); // "victory"
 };
 
 Scratch3CozmoBlocks.prototype.playUnhappyAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "unhappy");
+    return this.playAnimationHelper(args, util, 3); // "unhappy"
 };
 
 Scratch3CozmoBlocks.prototype.playSurpriseAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "surprise");
+    return this.playAnimationHelper(args, util, 4); // "surprise"
 };
 
 Scratch3CozmoBlocks.prototype.playDogAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "dog");
+    return this.playAnimationHelper(args, util, 5); // "dog"
 };
 
 Scratch3CozmoBlocks.prototype.playCatAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "cat");
+    return this.playAnimationHelper(args, util, 6); // "cat"
 };
 
 Scratch3CozmoBlocks.prototype.playSneezeAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "sneeze");
+    return this.playAnimationHelper(args, util, 7); // "sneeze"
 };
 
 Scratch3CozmoBlocks.prototype.playExcitedAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "excited");
+    return this.playAnimationHelper(args, util, 8); // "excited"
 };
 
 Scratch3CozmoBlocks.prototype.playThinkingAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "thinking");
+    return this.playAnimationHelper(args, util, 9); // "thinking"
 };
 
 Scratch3CozmoBlocks.prototype.playBoredAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "bored");
+    return this.playAnimationHelper(args, util, 10); // "bored"
 };
 
 Scratch3CozmoBlocks.prototype.playFrustratedAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "frustrated");
+    return this.playAnimationHelper(args, util, 11); // "frustrated"
 };
 
 Scratch3CozmoBlocks.prototype.playChattyAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "chatty");
+    return this.playAnimationHelper(args, util, 12); // "chatty"
 };
 
 Scratch3CozmoBlocks.prototype.playDejectedAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "dejected");
+    return this.playAnimationHelper(args, util, 13); // "dejected"
 };
 
 Scratch3CozmoBlocks.prototype.playSleepAnimation = function (args, util) {
-    return this.playAnimationHelper(args, util, "sleep");
+    return this.playAnimationHelper(args, util, 14); // "sleep"
 };
 
 Scratch3CozmoBlocks.prototype.playMysteryAnimation = function (args, util) {
-    var animationName = this._getAnimation("mystery");
-    return this.playAnimationHelper(args, util, animationName, 1);
+    return this.playAnimationHelper(args, util, 0);
 };
 
 Scratch3CozmoBlocks.prototype.setLiftHeight = function (args, util) {
@@ -19379,24 +19374,6 @@ Scratch3CozmoBlocks.prototype._getColor = function (colorName) {
     }
 
     return colorHexToReturn;
-};
-
-/**
- * Convert a string to a Cozmo animation trigger index.
- * Supports 'mystery' for a random animation.
- * @param animationName The animation to retrieve.
- * @returns {number} The Cozmo animation trigger index.
- * @private
- */
-Scratch3CozmoBlocks.prototype._getAnimation = function (animationName) {
-    var animationTable = ['happy', 'victory', 'unhappy', 'surprise', 'dog', 'cat', 'sneeze', 'excited', 'thinking', 'bored', 'frustrated', 'chatty', 'dejected', 'sleep'];
-
-    if (animationName == 'mystery') {
-        var randomValue = Math.floor(Math.random() * animationTable.length);
-        return animationTable[randomValue];
-    }
-
-    return animationName;
 };
 
 Scratch3CozmoBlocks.prototype._getColorIntFromColorObject = function (rgbColor) {
@@ -19568,13 +19545,13 @@ Scratch3CozmoBlocks.prototype.verticalCubeAnim = function (args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.verticalPlaySound = function (args, util) {
-    var soundSelection = Cast.toString(args.SOUND_MENU);
-    window.Unity.call({ requestId: -1, command: "cozVertPlaySoundEffects", argString: soundSelection });
+    var soundSelection = Cast.toNumber(args.SOUND_MENU);
+    window.Unity.call({ requestId: -1, command: "cozVertPlaySoundEffects", argInt: soundSelection });
 };
 
 Scratch3CozmoBlocks.prototype.verticalStopSound = function (args, util) {
-    var soundSelection = Cast.toString(args.SOUND_MENU);
-    window.Unity.call({ requestId: -1, command: "cozVertStopSoundEffects", argString: soundSelection });
+    var soundSelection = Cast.toNumber(args.SOUND_MENU);
+    window.Unity.call({ requestId: -1, command: "cozVertStopSoundEffects", argInt: soundSelection });
 };
 
 // Drawing on Cozmo's Face
