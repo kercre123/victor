@@ -243,15 +243,15 @@ namespace Anki {
         case RobotActionType::PLAY_ANIMATION:
         {
           const AnimationCompleted info = msg.completionInfo.Get_animationCompleted();
-          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot finished playing animation %s. [Tag=%d]",
-                 info.animationName.c_str(), msg.idTag);
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot finished playing animation %s with result %s. [Tag=%d]",
+                 info.animationName.c_str(), ActionResultToString(msg.result), msg.idTag);
         }
           break;
           
         default:
         {
-          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot completed %s action with tag=%d: %s.",
-                 EnumToString(msg.actionType), msg.idTag, ActionResultToString(msg.result));
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot completed %s action with result %s [Tag=%d].",
+                 EnumToString(msg.actionType), ActionResultToString(msg.result), msg.idTag);
         }
       }
       

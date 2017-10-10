@@ -163,12 +163,13 @@ namespace Messages {
       }
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_abortAnimation:
       {
-        PRINT_NAMED_INFO("EngineMessages.ProcessMessageToRobot.AbortAnim",
-                         "Tag: %d",
-                         msg.abortAnimation.tag);
+        PRINT_NAMED_WARNING("EngineMessages.ProcessMessageToRobot.AbortAnimNotHookedup",
+                            "Tag: %d",
+                            msg.abortAnimation.tag);
         
         // TODO: Need to hook this up to AnimationStreamer
         //       Maybe _animStreamer->Abort(msg.abortAnimation.tag)?
+        return;
       }
         
       case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_requestAvailableAnimations:
