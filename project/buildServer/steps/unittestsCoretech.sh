@@ -1,9 +1,10 @@
-set -e
+#!/usr/bin/env bash
+#
+set -eu
 
-# change dir to the project dir, no matter where script is executed from
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo "Entering directory \`${DIR}'"
-cd $DIR
+# change dir to the script dir, no matter where we are executed from
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPTNAME=="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 GIT=`which git`
 if [ -z $GIT ];then
@@ -11,22 +12,64 @@ if [ -z $GIT ];then
   exit 1
 fi
 
-: ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
-
 # configure
-PROJECT=${TOPLEVEL}/coretech
-PLATFORM=mac
-CONFIG=Debug
 
-BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIG}/coretech
+function usage() {
+    echo "$SCRIPTNAME [OPTIONS]"
+    echo "  -h                      print this message"
+    echo "  -v                      verbose output"
+    echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
+    echo "  -p [PLATFORM]           build target platform {android,mac}"
+}
+
+: ${PLATFORM:=mac}
+: ${CONFIGURATION:=Debug}
+: ${VERBOSE:=0}
+
+while getopts "hvc:p" opt; do
+  case $opt in
+    h)
+      usage
+      exit 1
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    c)
+      CONFIGURATION="${OPTARG}"
+      ;;
+    p)
+      PLATFORM="${OPTARG}"
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+echo "Entering directory \`${SCRIPTDIR}'"
+cd $SCRIPTDIR
+
+: ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
+BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/coretech
+
+XML=ctiGoogleTest.xml
 LOG=ctiGoogleTest.log
 LOGZIP=ctiGoogleTest.tar.gz
+
+GTEST_OUTPUT="xml:${XML}"
+CTEST="ctest --output-on-failure -O ${LOG}"
+
+if (( ${VERBOSE} )); then
+  CTEST="${CTEST} -V"
+fi
 
 echo "Entering directory \`${BUILDPATH}'"
 cd ${BUILDPATH}
 
 # clean
-rm -rf ${LOG} ${LOGZIP} ${PROJECT}/${LOGZIP}
+rm -rf ${LOGZIP} ${LOG} */${XML}
 
 # prepare
 mkdir -p testdata
@@ -34,14 +77,15 @@ mkdir -p testdata
 # execute
 set +e
 set -o pipefail
-ctest -V -O ${LOG}
+
+GTEST_OUTPUT=${GTEST_OUTPUT} ${CTEST}
 
 EXIT_STATUS=$?
+
 set -e
 
 #  publish results
-tar czf ${LOGZIP} ${LOG}
-mv ${LOGZIP} ${PROJECT}/${LOGZIP}
+tar czf ${LOGZIP} ${LOG} */${XML}
 
 # exit
 exit $EXIT_STATUS

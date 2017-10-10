@@ -8,14 +8,6 @@ if (NOT DEFINED CORETECH)
   set(CORETECH ${CMAKE_CURRENT_SOURCE_DIR}/..)
 endif()
 
-if (NOT DEFINED UTIL)
-  set(UTIL ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/util)
-endif()
-
-if (NOT DEFINED GTEST)
-  set(GTEST ${UTIL}/libs/framework/gtest.framework)
-endif()
-
 include(anki_build_cxx_library)
 
 #
@@ -55,16 +47,15 @@ target_include_directories(cti_planning
 
 if (MACOSX)
 
+  enable_testing()
+
+  include(gtest)
+
   #
   # cti_planning_test
   #
 
   anki_build_cxx_executable(cti_planning_test ${ANKI_SRCLIST_DIR})
-
-  target_compile_options(cti_planning_test
-    PRIVATE
-    -Wno-undef
-  )
 
   target_compile_definitions(cti_planning_test
     PRIVATE
@@ -75,17 +66,15 @@ if (MACOSX)
   target_include_directories(cti_planning_test
     PRIVATE
     basestation/src
-    ${GTEST}
   )
 
   target_link_libraries(cti_planning_test
     PRIVATE
     cti_planning
+    gtest
     ${OPENCV_LIBS}
-    ${GTEST}
   )
 
-  enable_testing()
 
   add_test(NAME cti_planning_test COMMAND cti_planning_test)
 

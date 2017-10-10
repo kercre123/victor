@@ -151,20 +151,18 @@ static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //Thi
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
 // For tool code reading
-// 4-degree look down: (Make sure to update cozmoBot.proto to match!)
-//#ifdef COZMO_V2
-//  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-//     0,     0,   1.f,
-//    -1.f,   0,   0,
-//     0,    -1.f, 0,
-//  });
-//#else
-  const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-    0,      -0.0698f,  0.9976f,
-  -1.0000f,  0,        0,
-    0,      -0.9976f, -0.0698f,
-  });
-//#endif
+// Camera looking straight:
+//const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+//   0,     0,   1.f,
+//  -1.f,   0,   0,
+//   0,    -1.f, 0,
+//});
+// 4-degree look down:
+const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+  0,      -0.0698f,  0.9976f,
+-1.0000f,  0,        0,
+  0,      -0.9976f, -0.0698f,
+});
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
@@ -1823,7 +1821,7 @@ void Robot::LoadEmotionEvents()
     const auto& eventJson = fileJsonPair.second;
     if (!eventJson.empty() && _moodManager->LoadEmotionEvents(eventJson))
     {
-      PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
+      //PRINT_NAMED_DEBUG("Robot.LoadEmotionEvents", "Loaded '%s'", filename.c_str());
     }
     else
     {

@@ -589,6 +589,8 @@ ActionResult ITrackAction::CheckIfDone()
                             eyeShiftX, eyeShiftY, _eyeShiftTag);
         }
         
+        // TODO: Restore eye shifts (VIC-363)
+        /*
         // Expose as params?
         const f32 kMaxLookUpScale   = 1.1f;
         const f32 kMinLookDownScale = 0.8f;
@@ -596,8 +598,6 @@ ActionResult ITrackAction::CheckIfDone()
         const f32 kXMax = static_cast<f32>(_robot.GetDisplayWidthInPixels()/4);
         const f32 kYMax = static_cast<f32>(_robot.GetDisplayHeightInPixels()/4);
         
-        // TODO: Restore eye shifts (VIC-363)
-        /*
         _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
                                                                                     "TrackActionEyeShift",
                                                                                     eyeShiftX, eyeShiftY,
