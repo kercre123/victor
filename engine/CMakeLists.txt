@@ -24,6 +24,10 @@ set(PLATFORM_FLAGS "")
 if (ANDROID)
   include(breakpad)
   set(PLATFORM_LIBS android log GLESv2)
+  set(PLATFORM_COMPILE_DEFS
+    THF_FUNCTIONALITY=0
+    VC_AUDIOCAPTURE_FUNCTIONALITY=0
+  )
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   include(webots)
@@ -34,17 +38,17 @@ elseif (MACOSX)
     ${WEBOTS_LIBS}
   )
   set(PLATFORM_COMPILE_DEFS
-      SIMULATOR
-      THF_FUNCTIONALITY=1
-      VC_AUDIOCAPTURE_FUNCTIONALITY=1
+    SIMULATOR
+    THF_FUNCTIONALITY=1
+    VC_AUDIOCAPTURE_FUNCTIONALITY=1
   )
   set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
 
 target_link_libraries(cozmo_engine
-PUBLIC
-# anki libs
+  PUBLIC
+  # anki libs
   clad
   util
   cti_common
@@ -53,24 +57,24 @@ PUBLIC
   audio_engine
   audio_multiplexer_engine
   engine_clad
-PRIVATE
+  PRIVATE
   util_audio
   ble_cozmo
   DAS 
   androidHAL
-# cti
+  # cti
   cti_common
   cti_vision
   cti_planning
-# vendor
+  # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
   ${TEXT2SPEECH_LIBS}
   ${VOICE_RECOGNITION_LIBS}
   ${BREAKPAD_LIBS}
-# system
+  # system
   z
-# platform
+  # platform
   ${PLATFORM_LIBS}
 )
 
@@ -101,7 +105,7 @@ target_include_directories(cozmo_engine
   #$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/anki/cozmo/basestation/cozmoAPI>
 )
 
-if(ANDROID)
+if (ANDROID)
   copy_opencv_android_libs()
   copy_tts_android_libs()
   add_dependencies(cozmo_engine

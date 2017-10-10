@@ -373,8 +373,8 @@ void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const EngineToGameEvent
         {
           if(HasHiccups() && _hiccupsCured == HiccupsCured::NotCured)
           {
-            const f32 kTimeout_s = 5.f;
             // TODO: Restore KeepFaceAlive controls (VIC-364)
+            //const f32 kTimeout_s = 5.f;
             //const_cast<Robot&>(robot).GetAnimationStreamer().SetKeepFaceAliveLastStreamTimeout(kTimeout_s);
             _hiccupsCured = HiccupsCured::PendingCure;
           }

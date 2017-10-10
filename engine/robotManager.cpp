@@ -40,8 +40,6 @@
 namespace Anki {
 namespace Cozmo {
 
-
-const int kHighestVersion = 0;
 const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";
 
 RobotManager::RobotManager(const CozmoContext* context)
