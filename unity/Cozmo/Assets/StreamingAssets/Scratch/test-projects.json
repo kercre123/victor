@@ -108,7 +108,15 @@
         "VersionNum": 3,
         "IsVertical": "true",
         "DisplayOrder": "64"
+    },
+    {
+        "ProjectUUID": "1c4e71dc-0eda-449f-afe1-226cf457cb9c",
+        "ProjectXML": null,
+        "ProjectJSON": "{\"targets\":[{\"id\":\";a(@aQLcPD!luIE0M~s%\",\"name\":\"Stage\",\"isStage\":true,\"x\":0,\"y\":0,\"size\":100,\"direction\":90,\"draggable\":false,\"currentCostume\":0,\"costumeCount\":0,\"visible\":true,\"rotationStyle\":\"all around\",\"blocks\":{},\"variables\":{},\"lists\":{},\"costumes\":[],\"sounds\":[]},{\"id\":\"PGaF(Encl2%6[:VWZGz2\",\"name\":\"Sprite1\",\"isStage\":false,\"x\":0,\"y\":0,\"size\":100,\"direction\":90,\"draggable\":false,\"currentCostume\":0,\"costumeCount\":0,\"visible\":true,\"rotationStyle\":\"all around\",\"blocks\":{\"RqohItYC/XpjZ2]xiar5\":{\"id\":\"RqohItYC/XpjZ2]xiar5\",\"opcode\":\"event_whenflagclicked\",\"inputs\":{},\"fields\":{},\"next\":\"@Ht20}u$JzO(kcg.b,d*\",\"topLevel\":true,\"parent\":null,\"shadow\":false,\"x\":480,\"y\":200},\"@Ht20}u$JzO(kcg.b,d*\":{\"id\":\"@Ht20}u$JzO(kcg.b,d*\",\"opcode\":\"cozmo_says\",\"inputs\":{\"STRING\":{\"name\":\"STRING\",\"block\":\"^h;mG;}Rhq}P2F#9^.Ab\",\"shadow\":\"^h;mG;}Rhq}P2F#9^.Ab\"}},\"fields\":{},\"next\":null,\"topLevel\":false,\"parent\":\"RqohItYC/XpjZ2]xiar5\",\"shadow\":false,\"x\":\"6\",\"y\":\"374\"},\"^h;mG;}Rhq}P2F#9^.Ab\":{\"id\":\"^h;mG;}Rhq}P2F#9^.Ab\",\"opcode\":\"text\",\"inputs\":{},\"fields\":{\"TEXT\":{\"name\":\"TEXT\",\"value\":\"You should never see this program\"}},\"next\":null,\"topLevel\":false,\"parent\":\"@Ht20}u$JzO(kcg.b,d*\",\"shadow\":true}},\"variables\":{},\"lists\":{},\"costumes\":[],\"sounds\":[]}],\"meta\":{\"semver\":\"3.0.0\",\"vm\":\"0.1.0\",\"agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36\"}}",
+        "ProjectName": "Test: You Should Never See This",
+        "ProjectIconName" : "control_repeat",
+        "VersionNum": 99999999,
+        "IsVertical": "true",
+        "DisplayOrder": "65"
     }
-
-
 ]

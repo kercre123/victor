@@ -950,7 +950,13 @@ namespace CodeLab {
         proj.ProjectIconName = project.ProjectIconName;
         proj.ProjectName = project.ProjectName; // value is string key
         proj.IsVertical = project.IsVertical;
-        copyCodeLabSampleProjectList.Add(proj);
+        proj.VersionNum = project.VersionNum;
+        if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+          DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "sample project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
+        }
+        else {
+          copyCodeLabSampleProjectList.Add(proj);
+        }
       }
 
       string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
@@ -975,13 +981,19 @@ namespace CodeLab {
         CodeLabFeaturedProject proj = new CodeLabFeaturedProject();
         proj.ProjectUUID = project.ProjectUUID;
         proj.ProjectName = project.ProjectName; // value is string key
+        proj.VersionNum = project.VersionNum;
         proj.FeaturedProjectDescription = project.FeaturedProjectDescription; // value is string key
         proj.FeaturedProjectImageName = project.FeaturedProjectImageName;
         proj.FeaturedProjectBackgroundColor = project.FeaturedProjectBackgroundColor;
         proj.FeaturedProjectTitleTextColor = project.FeaturedProjectTitleTextColor;
         proj.FeaturedProjectInstructions = project.FeaturedProjectInstructions;
 
-        copyCodeLabFeaturedProjectList.Add(proj);
+        if (proj.VersionNum > CodeLabProject.kCurrentVersionNum) {
+          DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "featured project " + proj.ProjectName + "'s version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
+        }
+        else {
+          copyCodeLabFeaturedProjectList.Add(proj);
+        }
       }
 
       string featuredProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabFeaturedProjectList);
@@ -1128,8 +1140,6 @@ namespace CodeLab {
           if (sampleProject != null) {
             projectToExport = new CodeLabProject(sampleProject.ProjectName, sampleProject.ProjectJSON, sampleProject.IsVertical);
             projectToExport.VersionNum = sampleProject.VersionNum;
-
-            // @TODO: The MinAppVersionNum will need to be set when that is added
             break;
           }
 
@@ -1138,10 +1148,7 @@ namespace CodeLab {
           if (featuredProject != null) {
             projectToExport = new CodeLabProject(featuredProject.ProjectName, featuredProject.ProjectJSON, true);
             projectToExport.VersionNum = featuredProject.VersionNum;
-
-            // @TODO: The MinAppVersionNum will need to be set when that is added
           }
-
 
           break;
         }
@@ -2822,8 +2829,6 @@ namespace CodeLab {
           DataPersistence.CodeLabProject project = JsonConvert.DeserializeObject<DataPersistence.CodeLabProject>(unescapedString);
           DataPersistence.PlayerProfile defaultProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
 
-          // @TODO: Deal with changes in versionNum, check minimum version number
-
           if (defaultProfile == null) {
             DAS.Error("Codelab.OnAppLoadedFromData.NullDefaultProfile", "In creating new Code Lab project from external data, defaultProfile is null");
           }
@@ -2835,6 +2840,9 @@ namespace CodeLab {
           }
           else if (project.ProjectJSON.Length > kMaximumCodelabDataLength) {
             DAS.Error("Codelab.OnAppLoadedFromData.BadFileData.Length", "new project's internal data is unreasonably long " + project.ProjectJSON.Length.ToString());
+          }
+          else if (project.VersionNum > CodeLabProject.kCurrentVersionNum) {
+            DAS.Warn("Codelab.OnAppLoadedFromData.BadVersionNumber", "new project's version number " + project.VersionNum.ToString() + " is greater than the app's codelab version " + CodeLabProject.kCurrentVersionNum.ToString());
           }
           else {
             while (defaultProfile.CodeLabProjects.Find(p => p.ProjectUUID == project.ProjectUUID) != null) {
